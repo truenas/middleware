@@ -5,7 +5,7 @@ from lexicon.providers.ovh import ENDPOINTS
 from pydantic import BeforeValidator, ConfigDict, Field, FilePath, PlainSerializer, Secret
 
 from middlewared.api.base import (
-    BaseModel, single_argument_args, ForUpdateMetaclass, LongString, NonEmptyString,
+    BaseModel, single_argument_args, ForUpdateMetaclass, NonEmptyString,
 )
 
 
@@ -13,9 +13,8 @@ __all__ = [
     'ACMEDNSAuthenticatorEntry', 'ACMEDNSAuthenticatorCreateArgs', 'ACMEDNSAuthenticatorCreateResult',
     'ACMEDNSAuthenticatorUpdateArgs', 'ACMEDNSAuthenticatorUpdateResult', 'ACMEDNSAuthenticatorDeleteArgs',
     'ACMEDNSAuthenticatorDeleteResult', 'ACMEDNSAuthenticatorSchemasArgs', 'ACMEDNSAuthenticatorSchemasResult',
-    'ACMEDNSAuthenticatorPerformChallengeArgs', 'ACMEDNSAuthenticatorPerformChallengeResult', 'Route53SchemaArgs',
-    'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'DigitalOceanSchemaArgs', 'OVHSchemaArgs', 'ShellSchemaArgs',
-    'TrueNASConnectSchemaArgs',
+    'Route53SchemaArgs', 'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'DigitalOceanSchemaArgs',
+    'OVHSchemaArgs', 'ShellSchemaArgs', 'TrueNASConnectSchemaArgs',
 ]
 
 
@@ -149,18 +148,6 @@ class ACMEDNSAuthenticatorDeleteArgs(BaseModel):
 
 class ACMEDNSAuthenticatorDeleteResult(BaseModel):
     result: bool
-
-
-@single_argument_args('acme_dns_authenticator_performance_challenge')
-class ACMEDNSAuthenticatorPerformChallengeArgs(BaseModel):
-    authenticator: int | None
-    key: LongString
-    domain: str
-    challenge: LongString
-
-
-class ACMEDNSAuthenticatorPerformChallengeResult(BaseModel):
-    result: None
 
 
 class ACMEDNSAuthenticatorAttributeSchema(BaseModel):

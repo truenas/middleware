@@ -4,10 +4,22 @@ import json
 from acme import messages
 
 from middlewared.api import api_method
-from middlewared.api.current import ACMEDNSAuthenticatorPerformChallengeArgs, ACMEDNSAuthenticatorPerformChallengeResult
+from middlewared.api.base import BaseModel, single_argument_args, LongString
 from middlewared.service import private, Service
 
 from .authenticators.factory import auth_factory
+
+
+@single_argument_args('acme_dns_authenticator_performance_challenge')
+class ACMEDNSAuthenticatorPerformChallengeArgs(BaseModel):
+    authenticator: int | None
+    key: LongString
+    domain: str
+    challenge: LongString
+
+
+class ACMEDNSAuthenticatorPerformChallengeResult(BaseModel):
+    result: None
 
 
 class DNSAuthenticatorService(Service):

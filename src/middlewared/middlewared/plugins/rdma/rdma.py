@@ -4,8 +4,9 @@ from pathlib import Path
 from .constants import RDMAprotocols
 
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel
 from middlewared.api.current import (
-    RdmaLinkConfigArgs, RdmaLinkConfigResult,
+    RdmaLinkConfig,
     RdmaCardConfigArgs, RdmaCardConfigResult,
     RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult
 )
@@ -17,6 +18,14 @@ from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (jus
 PRODUCT_NAME_PREFIX = 'Product Name: '
 SERIAL_NUMBER_PREFIX = '[SN] Serial number: '
 PART_NUMBER_PREFIX = '[PN] Part number: '
+
+
+class RdmaLinkConfigArgs(BaseModel):
+    all: bool = False
+
+
+class RdmaLinkConfigResult(BaseModel):
+    result: list[RdmaLinkConfig]
 
 
 class RDMAService(Service):

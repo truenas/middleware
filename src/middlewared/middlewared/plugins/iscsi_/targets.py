@@ -10,9 +10,10 @@ from pydantic import IPvAnyNetwork
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel
 from middlewared.api.current import (IscsiTargetCreateArgs, IscsiTargetCreateResult, IscsiTargetDeleteArgs,
-                                     IscsiTargetDeleteResult, IscsiTargetEntry, IscsiTargetRemoveArgs,
-                                     IscsiTargetRemoveResult, IscsiTargetUpdateArgs, IscsiTargetUpdateResult,
+                                     IscsiTargetDeleteResult, IscsiTargetEntry,
+                                     IscsiTargetUpdateArgs, IscsiTargetUpdateResult,
                                      IscsiTargetValidateNameArgs, IscsiTargetValidateNameResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.utils import UnexpectedFailure, run
@@ -53,6 +54,14 @@ class iSCSITargetGroupModel(sa.Model):
     iscsi_target_authtype = sa.Column(sa.String(120), default='None')
     iscsi_target_authgroup = sa.Column(sa.Integer(), nullable=True)
     iscsi_target_initialdigest = sa.Column(sa.String(120), default='Auto')
+
+
+class IscsiTargetRemoveArgs(BaseModel):
+    name: str
+
+
+class IscsiTargetRemoveResult(BaseModel):
+    result: None
 
 
 class iSCSITargetService(CRUDService):

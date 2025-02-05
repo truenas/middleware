@@ -8,8 +8,7 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass
 __all__ = [
     "InitShutdownScriptEntry", "InitShutdownScriptCreateArgs", "InitShutdownScriptCreateResult",
     "InitShutdownScriptUpdateArgs", "InitShutdownScriptUpdateResult", "InitShutdownScriptDeleteArgs",
-    "InitShutdownScriptDeleteResult", "InitShutdownScriptExecuteInitTasksArgs",
-    "InitShutdownScriptExecuteInitTasksResult"
+    "InitShutdownScriptDeleteResult",
 ]
 
 
@@ -68,11 +67,3 @@ class InitShutdownScriptDeleteArgs(BaseModel):
 class InitShutdownScriptDeleteResult(BaseModel):
     result: Literal[True]
     """Always return `True`."""  # FIXME: Should return False or raise exception if no record was deleted.
-
-
-class InitShutdownScriptExecuteInitTasksArgs(BaseModel):
-    when: Literal["PREINIT", "POSTINIT", "SHUTDOWN"]
-
-
-class InitShutdownScriptExecuteInitTasksResult(BaseModel):
-    result: None

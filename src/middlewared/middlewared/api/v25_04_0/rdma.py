@@ -2,23 +2,15 @@ from middlewared.api.base import BaseModel
 from typing import Literal
 
 __all__ = [
-    "RdmaLinkConfigArgs", "RdmaLinkConfigResult",
+    "RdmaLinkConfig",
     "RdmaCardConfigArgs", "RdmaCardConfigResult",
     "RdmaCapableProtocolsArgs", "RdmaCapableProtocolsResult"
 ]
 
 
-class RdmaLinkConfigArgs(BaseModel):
-    all: bool = False
-
-
 class RdmaLinkConfig(BaseModel):
     rdma: str
     netdev: str
-
-
-class RdmaLinkConfigResult(BaseModel):
-    result: list[RdmaLinkConfig]
 
 
 class RdmaCardConfigArgs(BaseModel):

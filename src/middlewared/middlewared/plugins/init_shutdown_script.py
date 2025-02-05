@@ -2,12 +2,14 @@ import asyncio
 import os
 import stat
 import subprocess
+from typing import Literal
 
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     InitShutdownScriptEntry, InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult,
     InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult, InitShutdownScriptDeleteArgs,
-    InitShutdownScriptDeleteResult, InitShutdownScriptExecuteInitTasksArgs, InitShutdownScriptExecuteInitTasksResult
+    InitShutdownScriptDeleteResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CRUDService, job, private
@@ -27,6 +29,14 @@ class InitShutdownScriptModel(sa.Model):
     ini_enabled = sa.Column(sa.Boolean(), default=True)
     ini_timeout = sa.Column(sa.Integer(), default=10)
     ini_comment = sa.Column(sa.String(255))
+
+
+class InitShutdownScriptExecuteInitTasksArgs(BaseModel):
+    when: Literal["PREINIT", "POSTINIT", "SHUTDOWN"]
+
+
+class InitShutdownScriptExecuteInitTasksResult(BaseModel):
+    result: None
 
 
 class InitShutdownScriptService(CRUDService):

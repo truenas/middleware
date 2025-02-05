@@ -6,16 +6,14 @@ from pydantic import Secret
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
                                   NonEmptyString, single_argument_args, single_argument_result)
 
-__all__ = ["KeychainCredentialEntry",
+__all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
            "KeychainCredentialCreateArgs", "KeychainCredentialCreateResult",
            "KeychainCredentialUpdateArgs", "KeychainCredentialUpdateResult",
            "KeychainCredentialDeleteArgs", "KeychainCredentialDeleteResult",
            "KeychainCredentialUsedByArgs", "KeychainCredentialUsedByResult",
-           "KeychainCredentialGetOfTypeArgs", "KeychainCredentialGetOfTypeResult",
            "KeychainCredentialGenerateSSHKeyPairArgs", "KeychainCredentialGenerateSSHKeyPairResult",
            "KeychainCredentialRemoteSSHHostKeyScanArgs", "KeychainCredentialRemoteSSHHostKeyScanResult",
            "KeychainCredentialRemoteSSHSemiautomaticSetupArgs", "KeychainCredentialRemoteSSHSemiautomaticSetupResult",
-           "KeychainCredentialSSHPairArgs", "KeychainCredentialSSHPairResult",
            "KeychainCredentialSetupSSHConnectionArgs", "KeychainCredentialSetupSSHConnectionResult"]
 
 
@@ -121,15 +119,6 @@ class KeychainCredentialUsedByResult(BaseModel):
     result: list[UsedKeychainCredential]
 
 
-class KeychainCredentialGetOfTypeArgs(BaseModel):
-    id: int
-    type: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"]
-
-
-class KeychainCredentialGetOfTypeResult(BaseModel):
-    result: SSHKeyPairEntry | SSHCredentialsEntry
-
-
 class KeychainCredentialGenerateSSHKeyPairArgs(BaseModel):
     pass
 
@@ -171,19 +160,6 @@ class KeychainCredentialRemoteSSHSemiautomaticSetupArgs(BaseModel):
 
 class KeychainCredentialRemoteSSHSemiautomaticSetupResult(BaseModel):
     result: SSHCredentialsEntry
-
-
-@single_argument_args("keychain_ssh_pair")
-class KeychainCredentialSSHPairArgs(BaseModel):
-    remote_hostname: NonEmptyString
-    username: str = "root"
-    public_key: NonEmptyString
-
-
-@single_argument_result
-class KeychainCredentialSSHPairResult(BaseModel):
-    port: int
-    host_key: LongString
 
 
 class KeychainCredentialSetupSSHConnectionKeyNew(BaseModel):

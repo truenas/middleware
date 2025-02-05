@@ -6,11 +6,17 @@ import pathlib
 import shutil
 import stat as statlib
 import time
+from typing import Literal
 
 import pyinotify
 
 from itertools import product
 from middlewared.api import api_method
+from middlewared.api.base import (
+    BaseModel,
+    LongNonEmptyString,
+    NonEmptyString,
+)
 from middlewared.api.current import (
     FilesystemListdirArgs, FilesystemListdirResult,
     FilesystemMkdirArgs, FilesystemMkdirResult,
@@ -20,7 +26,6 @@ from middlewared.api.current import (
     FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult,
     FilesystemGetFileArgs, FilesystemGetFileResult,
     FilesystemPutFileArgs, FilesystemPutFileResult,
-    FilesystemReceiveFileArgs, FilesystemReceiveFileResult,
 )
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
@@ -28,13 +33,30 @@ from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import private, CallError, filterable_api_method, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
-from middlewared.utils.filesystem.acl import acl_is_present
+from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
 from middlewared.utils.filesystem.utils import timespec_convert_float
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
+
+
+class FilesystemReceiveFileOptions(BaseModel):
+    append: bool = False
+    mode: int = None
+    uid: int = ACL_UNDEFINED_ID
+    gid: int = ACL_UNDEFINED_ID
+
+
+class FilesystemReceiveFileArgs(BaseModel):
+    path: NonEmptyString
+    content: LongNonEmptyString
+    options: FilesystemReceiveFileOptions = FilesystemReceiveFileOptions()
+
+
+class FilesystemReceiveFileResult(BaseModel):
+    result: Literal[True]
 
 
 class FilesystemService(Service):
