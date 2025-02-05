@@ -32,6 +32,17 @@ class _NotRequiredMixin(PydanticBaseModel):
         }
 
 
+def _not_required_field(field):
+    annotation_ = field.annotation
+
+    if typing.get_origin(annotation_) is Secret:
+        annotation_ = Secret[typing.get_args(annotation_)[0] | _NotRequired]
+    else:
+        annotation_ |= _NotRequired
+
+    return (annotation_, field)
+
+
 class _BaseModelMetaclass(ModelMetaclass):
     """Any BaseModel subclass that uses the NotRequired default value on any of its fields receives the appropriate
     model serializer."""
@@ -46,20 +57,25 @@ class _BaseModelMetaclass(ModelMetaclass):
         if skip_patching or name == "BaseModel":
             return cls
 
-        for field in cls.model_fields.values():
+        has_not_required = False
+        updated_fields = {}
+        for name, field in cls.model_fields.items():
             if getattr(field, "default", None) is NotRequired:
-                return create_model(
-                    cls.__name__,
-                    __base__=(cls, _NotRequiredMixin),
-                    __module__=cls.__module__,
-                    __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
-                    **{
-                        k: (Secret[typing.get_args(v.annotation)[0] | _NotRequired] if typing.get_origin(v.annotation) is Secret else (v.annotation | _NotRequired), v)
-                        for k, v in cls.model_fields.items()
-                    }
-                )
-        else:
-            return cls
+                has_not_required = True
+                updated_fields[name] = _not_required_field(field)
+            else:
+                updated_fields[name] = (field.annotation, field)
+
+        if has_not_required:
+            return create_model(
+                cls.__name__,
+                __base__=(cls, _NotRequiredMixin),
+                __module__=cls.__module__,
+                __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
+                **updated_fields
+            )
+
+        return cls
 
 
 class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
