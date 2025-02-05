@@ -9,8 +9,7 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 __all__ = [
     'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',
     'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
-    'AlertRestoreResult', 'AlertOneshotCreateArgs', 'AlertOneshotCreateResult', 'AlertOneshotDeleteArgs',
-    'AlertOneshotDeleteResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
+    'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
     'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent',
 ]
 
@@ -86,24 +85,6 @@ class AlertListPoliciesArgs(BaseModel):
 
 class AlertListPoliciesResult(BaseModel):
     result: list[str]
-
-
-class AlertOneshotCreateArgs(BaseModel):
-    klass: str
-    args: Any
-
-
-class AlertOneshotCreateResult(BaseModel):
-    result: None
-
-
-class AlertOneshotDeleteArgs(BaseModel):
-    klass: str | list[str]
-    query: Any = None
-
-
-class AlertOneshotDeleteResult(BaseModel):
-    result: None
 
 
 class AlertRestoreArgs(BaseModel):

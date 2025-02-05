@@ -1,14 +1,19 @@
 import asyncio
+from copy import deepcopy
 import errno
 import middlewared.sqlalchemy as sa
 import os
 from pathlib import Path
+from typing import Literal
 import uuid
 import unicodedata
 
-from copy import deepcopy
-
 from middlewared.api import api_method
+from middlewared.api.base import (
+    BaseModel,
+    NonEmptyString,
+    single_argument_args,
+)
 from middlewared.api.current import (
     GetSmbAclArgs, GetSmbAclResult,
     SetSmbAclArgs, SetSmbAclResult,
@@ -16,7 +21,6 @@ from middlewared.api.current import (
     SmbServiceUnixCharsetChoicesArgs, SmbServiceUnixCharsetChoicesResult,
     SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult,
     SmbSharePresetsArgs, SmbSharePresetsResult,
-    SmbSharePrecheckArgs, SmbSharePrecheckResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -85,6 +89,15 @@ class SMBModel(sa.Model):
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
     cifs_srv_encryption = sa.Column(sa.String(120), nullable=True)
+
+
+@single_argument_args('smb_share_precheck')
+class SmbSharePrecheckArgs(BaseModel):
+    name: NonEmptyString | None = None
+
+
+class SmbSharePrecheckResult(BaseModel):
+    result: Literal[None]
 
 
 class SMBService(ConfigService):

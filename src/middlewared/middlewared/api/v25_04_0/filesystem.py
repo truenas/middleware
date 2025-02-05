@@ -1,6 +1,5 @@
 from middlewared.api.base import (
     BaseModel,
-    LongNonEmptyString,
     NonEmptyString,
     UnixPerm,
     single_argument_args,
@@ -28,7 +27,6 @@ __all__ = [
     'FilesystemGetZfsAttrsArgs', 'FilesystemGetZfsAttrsResult',
     'FilesystemGetFileArgs', 'FilesystemGetFileResult',
     'FilesystemPutFileArgs', 'FilesystemPutFileResult',
-    'FilesystemReceiveFileArgs', 'FilesystemReceiveFileResult',
 ]
 
 
@@ -368,21 +366,4 @@ class FilesystemPutFileArgs(BaseModel):
 
 
 class FilesystemPutFileResult(BaseModel):
-    result: Literal[True]
-
-
-class FilesystemReceiveFileOptions(BaseModel):
-    append: bool = False
-    mode: int = None
-    uid: int = ACL_UNDEFINED_ID
-    gid: int = ACL_UNDEFINED_ID
-
-
-class FilesystemReceiveFileArgs(BaseModel):
-    path: NonEmptyString
-    content: LongNonEmptyString
-    options: FilesystemReceiveFileOptions = FilesystemReceiveFileOptions()
-
-
-class FilesystemReceiveFileResult(BaseModel):
     result: Literal[True]

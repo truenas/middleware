@@ -27,9 +27,7 @@ __all__ = ["UserEntry",
            "UserHasLocalAdministratorSetUpArgs", "UserHasLocalAdministratorSetUpResult",
            "UserSetupLocalAdministratorArgs", "UserSetupLocalAdministratorResult",
            "UserSetPasswordArgs", "UserSetPasswordResult",
-           "UserProvisioningUriArgs", "UserProvisioningUriResult",
-           "UserTwofactorConfigArgs", "UserTwofactorConfigResult",
-           "UserVerifyTwofactorTokenArgs", "UserVerifyTwofactorTokenResult",
+           "UserTwofactorConfigEntry",
            "UserUnset2faSecretArgs", "UserUnset2faSecretResult",
            "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
 
@@ -239,37 +237,11 @@ class UserSetPasswordResult(BaseModel):
     result: None
 
 
-class UserProvisioningUriArgs(BaseModel):
-    username: str
-
-
-class UserProvisioningUriResult(BaseModel):
-    result: str
-
-
-class UserTwofactorConfigArgs(BaseModel):
-    username: str
-
-
 class UserTwofactorConfigEntry(BaseModel):
     provisioning_uri: str | None
     secret_configured: bool
     interval: int
     otp_digits: int
-
-
-@single_argument_result
-class UserTwofactorConfigResult(UserTwofactorConfigEntry):
-    pass
-
-
-class UserVerifyTwofactorTokenArgs(BaseModel):
-    username: str
-    token: Secret[str | None] = None
-
-
-class UserVerifyTwofactorTokenResult(BaseModel):
-    result: bool
 
 
 class UserUnset2faSecretArgs(BaseModel):
