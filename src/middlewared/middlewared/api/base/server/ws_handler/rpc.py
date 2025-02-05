@@ -51,14 +51,14 @@ class RpcWebSocketApp(App):
         try:
             data_ = json.dumps(data)
         except Exception as e:
+            self.middleware.logger.exception(str(e))
             self.send_truenas_error(
                 data.get("id"),
                 JSONRPCError.INTERNAL_ERROR.value,
                 "Failed to JSON serialize server message",
                 None,
                 str(e),
-                sys.exc_info(),
-                str(data.get("result"))
+                sys.exc_info()
             )
         else:
             asyncio.run_coroutine_threadsafe(self.ws.send_str(data_), self.middleware.loop)
