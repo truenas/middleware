@@ -32,7 +32,9 @@ class SystemSecurityService(ConfigService):
         if not is_ha:
             return
 
-        await self.middleware.call('failover.sync_to_peer')
+        # Send the datastore to the remote node to ensure that the
+        # FIPS configuration has been synced up before reboot
+        await self.middleware.call('failover.datastore.send')
         await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
