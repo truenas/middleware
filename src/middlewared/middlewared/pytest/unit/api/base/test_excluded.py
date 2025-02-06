@@ -37,7 +37,10 @@ def test_not_required():
     class NestedModel(BaseModel):
         a: int = NotRequired
 
-    class NotRequiredTestModel(BaseModel):
+    class ParentModel(BaseModel):
+        k: int
+
+    class NotRequiredTestModel(ParentModel):
         b: int
         c: int = 3
         d: int = NotRequired
@@ -48,6 +51,7 @@ def test_not_required():
         h: list[NestedModel] = NotRequired
         i_: int = Field(alias="i", default=NotRequired)
         j: Secret[int] = NotRequired
+        k: Excluded = excluded_field()
 
     test_cases = (
         (

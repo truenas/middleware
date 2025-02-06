@@ -17,21 +17,30 @@ __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item
            "NotRequired"]
 
 
+class _NotRequired:...
+NotRequired = _NotRequired()
+"""Use as the default value for fields that may be excluded from the model."""
+
+
 class _NotRequiredMixin(PydanticBaseModel):
     @model_serializer(mode="wrap")
     def serialize_basemodel(self, serializer):
-        obj = serializer(self)
-        if isinstance(obj, dict):
-            return {
-                k: v
-                for k, v in obj.items()
-                if v is not undefined
-            }
-        return obj
+        return {
+            k: v
+            for k, v in serializer(self).items()
+            if v is not NotRequired
+        }
 
 
-NotRequired = undefined
-"""Use as the default value for fields that may be excluded from the model."""
+def _not_required_field(field):
+    annotation_ = field.annotation
+
+    if typing.get_origin(annotation_) is Secret:
+        annotation_ = Secret[typing.get_args(annotation_)[0] | _NotRequired]
+    else:
+        annotation_ |= _NotRequired
+
+    return (annotation_, field)
 
 
 class _BaseModelMetaclass(ModelMetaclass):
@@ -48,20 +57,25 @@ class _BaseModelMetaclass(ModelMetaclass):
         if skip_patching or name == "BaseModel":
             return cls
 
-        for field in cls.model_fields.values():
-            if getattr(field, "default", None) is undefined:
-                return create_model(
-                    cls.__name__,
-                    __base__=(cls, _NotRequiredMixin),
-                    __module__=cls.__module__,
-                    __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
-                    **{
-                        k: (v.annotation, v)
-                        for k, v in cls.model_fields.items()
-                    }
-                )
-        else:
-            return cls
+        has_not_required = False
+        updated_fields = {}
+        for name, field in cls.model_fields.items():
+            if getattr(field, "default", None) is NotRequired:
+                has_not_required = True
+                updated_fields[name] = _not_required_field(field)
+            else:
+                updated_fields[name] = (field.annotation, field)
+
+        if has_not_required:
+            return create_model(
+                cls.__name__,
+                __base__=(cls, _NotRequiredMixin),
+                __module__=cls.__module__,
+                __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
+                **updated_fields
+            )
+
+        return cls
 
 
 class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
@@ -70,6 +84,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         strict=True,
         str_max_length=1024,
         use_attribute_docstrings=True,
+        arbitrary_types_allowed=True,
     )
 
     @classmethod
@@ -99,7 +114,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         exclude_none: bool = False,
         round_trip: bool = False,
         warnings: bool | typing.Literal['none', 'warn', 'error'] = True,
-        serialize_as_any: bool = True,  # so that nested models set to `NotRequired` do not serialize
+        serialize_as_any: bool = False
     ) -> dict[str, typing.Any]:
         return self.__pydantic_serializer__.to_python(
             self,
