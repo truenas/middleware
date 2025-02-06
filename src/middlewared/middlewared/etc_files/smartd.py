@@ -26,7 +26,7 @@ async def ensure_smart_enabled(args):
 
     p = await smartctl(args + ["-i", "--json=c"], check=False, stderr=subprocess.STDOUT, encoding="utf8", errors="ignore")
     pjson = json.loads(p.stdout)
-    if not pjson["smart_support"]["available"]:
+    if not pjson.get("smart_support", {}).get("available"):
         logger.debug("SMART is not supported on %r", args)
         return False
 
