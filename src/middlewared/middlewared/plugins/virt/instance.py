@@ -58,6 +58,11 @@ class VirtInstanceService(CRUDService):
                 status = 'UNKNOWN'
             else:
                 status = i['state']['status'].upper()
+            secureboot = None
+            if i['config'].get('image.requirements.secureboot') == 'true':
+                secureboot = True
+            elif i['config'].get('image.requirements.secureboot') == 'false':
+                secureboot = False
             entry = {
                 'id': i['name'],
                 'name': i['name'],
@@ -75,6 +80,7 @@ class VirtInstanceService(CRUDService):
                     'serial': i['config'].get('image.serial'),
                     'type': i['config'].get('image.type'),
                     'variant': i['config'].get('image.variant'),
+                    'secureboot': secureboot,
                 },
                 **get_vnc_info_from_config(i['config']),
                 'raw': None,  # Default required by pydantic
