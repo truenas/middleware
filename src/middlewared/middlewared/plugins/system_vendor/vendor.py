@@ -2,9 +2,7 @@ import json
 import os
 
 from middlewared.api import api_method
-from middlewared.api.current import (
-    VendorNameArgs, VendorNameResult, UnvendorArgs, UnvendorResult, IsVendoredArgs, IsVendoredResult
-)
+from middlewared.api.base import BaseModel
 from middlewared.service import Service
 
 
@@ -14,6 +12,30 @@ SENTINEL_FILE_PATH = '/data/.vendor'
 def get_vendor() -> str | None:
     with open(SENTINEL_FILE_PATH, 'r') as file:
         return json.load(file).get('name') or None  # Don't return an empty string.
+
+
+class VendorNameArgs(BaseModel):
+    pass
+
+
+class VendorNameResult(BaseModel):
+    result: str | None
+
+
+class UnvendorArgs(BaseModel):
+    pass
+
+
+class UnvendorResult(BaseModel):
+    result: None
+
+
+class IsVendoredArgs(BaseModel):
+    pass
+
+
+class IsVendoredResult(BaseModel):
+    result: bool
 
 
 class VendorService(Service):

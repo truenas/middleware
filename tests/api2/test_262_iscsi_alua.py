@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import random
 import string
 from time import sleep
@@ -30,6 +31,10 @@ def other_domain(hadomain):
     raise ValueError(f'Invalid HA domain name: {hadomain}')
 
 
+def _debug(message):
+    print(datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S]'), message)
+
+
 class TestFixtureConfiguredALUA:
     """Fixture for with iSCSI enabled and ALUA configured"""
 
@@ -40,16 +45,16 @@ class TestFixtureConfiguredALUA:
 
     def wait_for_settle(self):
         if self.VERBOSE:
-            print('Checking ALUA status...')
+            _debug('Checking ALUA status...')
         retries = 12
         while retries:
             if call('iscsi.alua.settled'):
                 if self.VERBOSE:
-                    print('ALUA is settled')
+                    _debug('ALUA is settled')
                 break
             retries -= 1
             if self.VERBOSE:
-                print('Waiting for ALUA to settle')
+                _debug('Waiting for ALUA to settle')
             sleep(5)
 
     def wait_for_master(self, timeout=120):
@@ -57,45 +62,45 @@ class TestFixtureConfiguredALUA:
             try:
                 if call('failover.status') == 'MASTER':
                     if self.VERBOSE:
-                        print('Can communicate with new MASTER')
+                        _debug('Can communicate with new MASTER')
                     break
                 if self.VERBOSE:
-                    print('Waiting for new MASTER')
-                sleep(1)
+                    _debug('Waiting for new MASTER')
+                sleep(10)
             except Exception:
                 if self.VERBOSE:
-                    print('Exception while waiting for new MASTER')
-                sleep(1)
+                    _debug('Exception while waiting for new MASTER')
+                sleep(10)
 
     def wait_for_ready(self, timeout=120):
         for _ in range(timeout):
             try:
                 if call('system.ready'):
                     if self.VERBOSE:
-                        print('System is ready')
+                        _debug('System is ready')
                     break
                 if self.VERBOSE:
-                    print('Waiting for ready')
-                sleep(1)
+                    _debug('Waiting for ready')
+                sleep(10)
             except Exception:
                 if self.VERBOSE:
-                    print('Exception while waiting for ready')
-                sleep(1)
+                    _debug('Exception while waiting for ready')
+                sleep(10)
 
     def wait_for_backup(self, timeout=120):
         for _ in range(timeout):
             try:
                 if not call('failover.disabled.reasons'):
                     if self.VERBOSE:
-                        print('Both controllers available')
+                        _debug('Both controllers available')
                     break
                 if self.VERBOSE:
-                    print('Waiting for BACKUP')
-                sleep(1)
+                    _debug('Waiting for BACKUP')
+                sleep(10)
             except Exception:
                 if self.VERBOSE:
-                    print('Exception while waiting for BACKUP')
-                sleep(1)
+                    _debug('Exception while waiting for BACKUP')
+                sleep(10)
 
     def wait_for_new_master(self, oldnode, timeout=60):
         for _ in range(timeout):
@@ -104,30 +109,30 @@ class TestFixtureConfiguredALUA:
                 if oldnode != newnode:
                     if call('failover.status') == 'MASTER':
                         if self.VERBOSE:
-                            print('Can communicate with new MASTER', newnode)
+                            _debug(f'Can communicate with new MASTER {newnode}')
                         return newnode
                 if self.VERBOSE:
-                    print('Waiting for new MASTER')
-                sleep(1)
+                    _debug('Waiting for new MASTER')
+                sleep(10)
             except Exception:
                 if self.VERBOSE:
-                    print('Exception while waiting for new MASTER')
-                sleep(1)
+                    _debug('Exception while waiting for new MASTER')
+                sleep(10)
 
     def wait_for_failover_in_progress(self, timeout=120):
         for _ in range(timeout):
             try:
                 if not call('failover.in_progress'):
                     if self.VERBOSE:
-                        print('Failover event complete')
+                        _debug('Failover event complete')
                     return
                 if self.VERBOSE:
-                    print('Waiting for failover event to complete')
-                sleep(1)
+                    _debug('Waiting for failover event to complete')
+                sleep(10)
             except Exception:
                 if self.VERBOSE:
-                    print('Exception while waiting for failover event to complete')
-                sleep(1)
+                    _debug('Exception while waiting for failover event to complete')
+                sleep(10)
 
     @pytest.fixture(scope='class')
     def alua_configured(self):
@@ -138,9 +143,9 @@ class TestFixtureConfiguredALUA:
                 with initiator_portal() as config:
                     yield config
             if self.VERBOSE:
-                print('Tore down ALUA')
+                _debug('Tore down ALUA')
         if self.VERBOSE:
-            print('Tore down iSCSI')
+            _debug('Tore down iSCSI')
 
     @pytest.fixture(scope='class')
     def fix_complex_alua_config(self, alua_configured):
@@ -155,7 +160,7 @@ class TestFixtureConfiguredALUA:
             for i in range(self.NUM_TARGETS):
                 namebase = f'{digits}x{i}'
                 if self.VERBOSE:
-                    print(f'Creating target {i}...')
+                    _debug(f'Creating target {i}...')
                 target_config = es.enter_context(target(f'target{namebase}', [{'portal': portal_id}]))
                 target_id = target_config['id']
                 target_config['luns'] = {}
@@ -167,7 +172,7 @@ class TestFixtureConfiguredALUA:
                     else:
                         lun = j
                     if self.VERBOSE:
-                        print(f'Creating extent (LUN {lun} {sizemb}MB)...')
+                        _debug(f'Creating extent (LUN {lun} {sizemb}MB)...')
                     target_config['luns'][lun] = es.enter_context(
                         self.target_lun(target_id, f'extent{namebase}l{lun}', sizemb, lun)
                     )
@@ -176,9 +181,9 @@ class TestFixtureConfiguredALUA:
             self.wait_for_settle()
             yield targets
             if self.VERBOSE:
-                print(f'Tearing down {self.NUM_TARGETS} targets ...')
+                _debug(f'Tearing down {self.NUM_TARGETS} targets ...')
         if self.VERBOSE:
-            print(f'Tore down {self.NUM_TARGETS} targets')
+            _debug(f'Tore down {self.NUM_TARGETS} targets')
 
     @contextlib.contextmanager
     def target_lun(self, target_id, zvol_name, mb, lun):
@@ -306,7 +311,7 @@ class TestFixtureConfiguredALUA:
             if 'zvol' in lun_config:
                 verify_capacity(s, lun_config['zvol']['volsize']['parsed'])
             if self.VERBOSE:
-                print(f'Target {target_num} LUN {lun} shape OK')
+                _debug(f'Target {target_num} LUN {lun} shape OK')
         self.visit_luns(ip, config, validate_lun)
 
     @pytest.fixture(scope='class')
@@ -314,15 +319,15 @@ class TestFixtureConfiguredALUA:
         """Fixture that validates that the complex ALUA config has the right shape."""
         # Make sure that each controller is exporting the targets/LUNs we expect
         if self.VERBOSE:
-            print('Validate shape seen by Node A...')
+            _debug('Validate shape seen by Node A...')
         self.validate_shape(truenas_server.nodea_ip, fix_complex_alua_config)
 
         if self.VERBOSE:
-            print('Validate shape seen by Node B...')
+            _debug('Validate shape seen by Node B...')
         self.validate_shape(truenas_server.nodeb_ip, fix_complex_alua_config)
 
         if self.VERBOSE:
-            print('Validated shape')
+            _debug('Validated shape')
         yield fix_complex_alua_config
 
     def zero_luns(self, ip, config):
@@ -349,7 +354,7 @@ class TestFixtureConfiguredALUA:
         self.check_zero_luns(truenas_server.nodeb_ip, fix_validate_shapes)
 
         if self.VERBOSE:
-            print('LUNs zeroed')
+            _debug('LUNs zeroed')
         return fix_validate_shapes
 
     def page_pattern(self, target_num, lun):
@@ -379,7 +384,7 @@ class TestFixtureConfiguredALUA:
             r = s.read16(3, 1)
             assert r.datain == self.ZEROS, r.datain
             if self.VERBOSE:
-                print(f'Target {target_num} LUN {lun} pattern OK:', pattern[:16])
+                _debug(f'Target {target_num} LUN {lun} pattern OK: {pattern[:16]}')
         self.visit_luns(ip, config, check_pattern)
 
     @pytest.fixture(scope='class')
@@ -388,18 +393,20 @@ class TestFixtureConfiguredALUA:
         # Write the pattern
         self.write_patterns(truenas_server.nodea_ip, fix_zero_luns)
         if self.VERBOSE:
-            print('Wrote LUN patterns')
+            _debug('Wrote LUN patterns')
 
         # Check that the LUNs have the correct patterns
         if self.VERBOSE:
-            print('Validate data pattern seen by Node A...')
+            _debug('Validate data pattern seen by Node A...')
         self.check_patterns(truenas_server.nodea_ip, fix_zero_luns)
         if self.VERBOSE:
-            print('Validate data pattern seen by Node B...')
+            _debug('Validate data pattern seen by Node B...')
         self.check_patterns(truenas_server.nodeb_ip, fix_zero_luns)
 
         if self.VERBOSE:
-            print('LUNs have pattern written / checked')
+            _debug('LUNs have pattern written / checked')
+        # Delay for a few seconds to give host a chance
+        sleep(5)
         return fix_zero_luns
 
     @pytest.fixture(scope='class')
@@ -465,9 +472,9 @@ class TestFixtureConfiguredALUA:
 
         # Shutdown the current MASTER.
         if self.VERBOSE:
-            print('Powering off VM', domain)
+            _debug(f'Powering off VM {domain} (Node {node})')
         poweroff_vm(domain)
-        sleep(3)
+        sleep(10)
 
         # Wait for the new MASTER to come up
         newnode = self.wait_for_new_master(node)
@@ -482,10 +489,10 @@ class TestFixtureConfiguredALUA:
             new_ip = truenas_server.nodeb_ip
 
         if self.VERBOSE:
-            print(f'Validate shape seen by Node {newnode}...')
+            _debug(f'Validate shape seen by Node {newnode}...')
         self.validate_shape(new_ip, fix_write_patterns, 0)
         if self.VERBOSE:
-            print(f'Validate data pattern seen by Node {newnode}...')
+            _debug(f'Validate data pattern seen by Node {newnode}...')
         self.check_patterns(new_ip, fix_write_patterns)
 
     @pytest.mark.timeout(900)
@@ -500,12 +507,12 @@ class TestFixtureConfiguredALUA:
         # Reset the MASTER
         reset_vm(domain)
         if self.VERBOSE:
-            print('Reset VM', domain)
+            _debug(f'Reset VM {domain}')
 
         # Power the shutdown node back on.
         start_vm(orig_domain)
         if self.VERBOSE:
-            print('Started VM', orig_domain)
+            _debug(f'Started VM {orig_domain}')
 
         sleep(5)
 
@@ -534,28 +541,31 @@ class TestFixtureConfiguredALUA:
 
         # Ensure that the targets look OK on MASTER
         if self.VERBOSE:
-            print(f'Validate shape seen by Node {newnode}...')
+            _debug(f'Validate shape seen by Node {newnode}...')
         self.validate_shape(new_ip, fix_write_patterns, None)
 
         if self.VERBOSE:
-            print(f'Validate data pattern seen by Node {newnode}...')
+            _debug(f'Validate data pattern seen by Node {newnode}...')
         self.check_patterns(new_ip, fix_write_patterns)
 
         # Ensure that the targets look OK on BACKUP
         if self.VERBOSE:
-            print(f'Validate shape seen by Node {othernode}...')
+            _debug(f'Validate shape seen by Node {othernode}...')
         self.validate_shape(other_ip, fix_write_patterns, 1)
 
         if self.VERBOSE:
-            print(f'Validate data pattern seen by Node {othernode}...')
+            _debug(f'Validate data pattern seen by Node {othernode}...')
         self.check_patterns(other_ip, fix_write_patterns)
 
         # Finally, we want to ensure that we have the same MASTER node as
         # when these tests started.
         if newnode != fix_orig_active_node:
             if self.VERBOSE:
-                print(f'Restoring {fix_orig_active_node} as MASTER')
-            call('system.reboot', 'iSCSI ALUA test')
+                _debug(f'Restoring {fix_orig_active_node} as MASTER')
+            try:
+                call('system.reboot', 'iSCSI ALUA test')
+            except Exception:
+                pass
             newnode2 = self.wait_for_new_master(newnode)
             assert newnode2 == fix_orig_active_node
             self.wait_for_backup()

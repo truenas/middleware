@@ -8,7 +8,7 @@ from middlewared.validators import Netmask, PasswordComplexity, Range
 
 
 @cache
-def lan_channels():
+def lan_channels() -> tuple[int]:
     channels = []
     out = run(['bmc-info', '--get-channel-info'], capture_output=True)
     lines = out.stdout.decode().split('\n')
@@ -22,7 +22,7 @@ def lan_channels():
             except (IndexError, ValueError):
                 continue
 
-    return channels
+    return tuple(channels)
 
 
 def apply_config(channel, data):

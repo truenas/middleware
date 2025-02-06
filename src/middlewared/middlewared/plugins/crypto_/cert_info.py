@@ -34,7 +34,7 @@ class CertificateService(Service):
     )
     def country_choices(self):
         """Returns country choices for creating a certificate/csr."""
-        return get_country_codes()
+        return dict(get_country_codes())
 
     @api_method(
         CertificateAcmeServerChoicesArgs,

@@ -1,5 +1,6 @@
 import glob
 import os
+from contextlib import suppress
 
 from middlewared.api import api_method
 from middlewared.api.current import IscsiGlobalSessionsArgs, IscsiGlobalSessionsResult
@@ -55,6 +56,10 @@ class ISCSIGlobalService(Service):
                 }
                 with open(ip_file[0], 'r') as f:
                     session_dict['initiator_addr'] = f.read().strip()
+                transport = os.path.join(os.path.dirname(ip_file[0]), 'transport')
+                with suppress(FileNotFoundError):
+                    with open(transport, 'r') as f:
+                        session_dict['iser'] = 'iSER' == f.read().strip()
                 for k, f, op in (
                     ('header_digest', 'HeaderDigest', None),
                     ('data_digest', 'DataDigest', None),

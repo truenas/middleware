@@ -2,8 +2,6 @@ from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service, pass_app
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
-from middlewared.utils import PRODUCT
-from middlewared.utils.time_utils import utc_now
 
 import enum
 import errno
@@ -453,37 +451,6 @@ class UpdateService(Service):
         os.makedirs(path, exist_ok=True)
         return path
 
-    @private
-    def take_systemdataset_samba4_snapshot(self):
-        basename = self.middleware.call_sync('systemdataset.config')['basename']
-        if basename is None:
-            self.logger.warning('System dataset is not available, not taking snapshot')
-            return
-
-        dataset = f'{basename}/samba4'
-
-        proc = subprocess.run(['zfs', 'list', '-t', 'snapshot', '-H', '-o', 'name', '-s', 'name', '-d', '1', dataset],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8', errors='ignore')
-        if proc.returncode != 0:
-            self.logger.warning('Unable to list dataset %s snapshots: %s', dataset, proc.stderr)
-            return
-
-        snapshots = [s.split('@')[1] for s in proc.stdout.strip().splitlines()]
-        for snapshot in [s for s in snapshots if s.startswith('update--')][:-4]:
-            self.logger.info('Deleting dataset %s snapshot %s', dataset, snapshot)
-            subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
-
-        current_version = self.middleware.call_sync('system.version_short')
-        snapshot = f'update--{utc_now().strftime("%Y-%m-%d-%H-%M")}--{PRODUCT}-{current_version}'
-        subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
-
-
-async def post_update_hook(middleware):
-    is_ha = await middleware.call('failover.licensed')
-    if not is_ha or await middleware.call('failover.status') != 'BACKUP':
-        await middleware.call('update.take_systemdataset_samba4_snapshot')
-
 
 async def setup(middleware):
     await middleware.call('network.general.register_activity', 'update', 'Update')
-    middleware.register_hook('update.post_update', post_update_hook, sync=True)

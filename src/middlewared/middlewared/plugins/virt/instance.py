@@ -302,6 +302,11 @@ class VirtInstanceService(CRUDService):
                                 instance_types.add('VM')
                         if not instance_types:
                             continue
+                        secureboot = None
+                        if v['requirements'].get('secureboot') == 'false':
+                            secureboot = False
+                        elif v['requirements'].get('secureboot') == 'true':
+                            secureboot = True
                         choices[alias] = {
                             'label': f'{v["os"]} {v["release"]} ({v["arch"]}, {v["variant"]})',
                             'os': v['os'],
@@ -309,6 +314,7 @@ class VirtInstanceService(CRUDService):
                             'archs': [v['arch']],
                             'variant': v['variant'],
                             'instance_types': list(instance_types),
+                            'secureboot': secureboot,
                         }
                     else:
                         choices[alias]['archs'].append(v['arch'])

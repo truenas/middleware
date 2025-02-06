@@ -67,6 +67,9 @@ def api_method(
     if list(returns.model_fields.keys()) != ["result"]:
         raise TypeError("`returns` model must only have one field called `result`")
 
+    check_model_module(accepts, private)
+    check_model_module(returns, private)
+
     def wrapper(func):
         if pass_app:
             # Pass the application instance as parameter to the method
@@ -129,3 +132,27 @@ def api_method(
         return wrapped
 
     return wrapper
+
+
+def check_model_module(model: type[BaseModel], private: bool):
+    module_name = model.__module__
+
+    if module_name in ["middlewared.service.crud_service"]:
+        return
+
+    if private:
+        if model.__name__ == "QueryArgs" or model.__name__.endswith("QueryResult"):
+            # `filterable_api_method`
+            return
+
+        if module_name.startswith("middlewared.api."):
+            raise ValueError(
+                "Private methods must have their accepts/returns models defined in the corresponding plugin class. "
+                f"{model.__name__} is defined in {module_name}."
+            )
+    else:
+        if not module_name.startswith("middlewared.api."):
+            raise ValueError(
+                "Public methods must have their accepts/returns models defined in middlewared.api package. "
+                f"{model.__name__} is defined in {module_name}."
+            )

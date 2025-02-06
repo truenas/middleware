@@ -1,8 +1,10 @@
 import glob
 import logging
 
+from pydantic import Field
+
 from middlewared.api import api_method
-from middlewared.api.current import ChartMetricsArgs, ChartMetricsResult, ChartDetailsArgs, ChartDetailsResult
+from middlewared.api.base import BaseModel, NonEmptyString
 from middlewared.service import Service
 from middlewared.utils.cpu import cpu_info
 from middlewared.utils.disk_stats import get_disk_stats
@@ -12,6 +14,28 @@ from .utils import calculate_disk_space_for_netdata, get_metrics_approximation, 
 
 
 logger = logging.getLogger('netdata_api')
+
+
+class ChartMetricsDataArgs(BaseModel):
+    before: int = 0
+    after: int = -1
+
+
+class ChartMetricsArgs(BaseModel):
+    chart: NonEmptyString
+    data: ChartMetricsDataArgs = Field(default_factory=lambda: ChartMetricsDataArgs())
+
+
+class ChartMetricsResult(BaseModel):
+    result: dict
+
+
+class ChartDetailsArgs(BaseModel):
+    chart: NonEmptyString
+
+
+class ChartDetailsResult(BaseModel):
+    result: dict
 
 
 class NetdataService(Service):

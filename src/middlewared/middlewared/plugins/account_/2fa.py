@@ -1,11 +1,38 @@
 import errno
+
 import pyotp
 
 from middlewared.api import api_method
 from middlewared.api.current import *
-from middlewared.service import CallError, no_authz_required, pass_app, private, Service
+from middlewared.service import CallError, pass_app, private, Service
 from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user
+
+
+class UserProvisioningUriArgs(BaseModel):
+    username: str
+
+
+class UserProvisioningUriResult(BaseModel):
+    result: str
+
+
+class UserTwofactorConfigArgs(BaseModel):
+    username: str
+
+
+@single_argument_result
+class UserTwofactorConfigResult(UserTwofactorConfigEntry):
+    pass
+
+
+class UserVerifyTwofactorTokenArgs(BaseModel):
+    username: str
+    token: Secret[str | None] = None
+
+
+class UserVerifyTwofactorTokenResult(BaseModel):
+    result: bool
 
 
 class UserService(Service):
@@ -21,11 +48,13 @@ class UserService(Service):
             'iXsystems'
         )
 
-    @api_method(UserProvisioningUriArgs, UserProvisioningUriResult, roles=['ACCOUNT_WRITE'])
+    @api_method(UserProvisioningUriArgs, UserProvisioningUriResult, private=True)
     async def provisioning_uri(self, username):
         """
         Returns the provisioning URI for the OTP for `username`. This can then be encoded in a QR code and used
         to provision an OTP app like Google Authenticator.
+
+        WARNING: response for this endpoint includes the 2FA secret for the user
         """
         user = await self.translate_username(username)
         user_twofactor_config = await self.middleware.call(
@@ -36,10 +65,12 @@ class UserService(Service):
 
         return await self.provisioning_uri_internal(username, user_twofactor_config)
 
-    @api_method(UserTwofactorConfigArgs, UserTwofactorConfigResult, roles=['ACCOUNT_READ'])
+    @api_method(UserTwofactorConfigArgs, UserTwofactorConfigResult, private=True)
     async def twofactor_config(self, username):
         """
         Returns two-factor authentication configuration settings for specified `username`.
+
+        WARNING: response for this endpoint includes the 2FA secret for the user
         """
         user = await self.translate_username(username)
         user_twofactor_config = await self.middleware.call(
@@ -57,7 +88,7 @@ class UserService(Service):
             'otp_digits': user_twofactor_config['otp_digits'],
         }
 
-    @api_method(UserVerifyTwofactorTokenArgs, UserVerifyTwofactorTokenResult, roles=['FULL_ADMIN'])
+    @api_method(UserVerifyTwofactorTokenArgs, UserVerifyTwofactorTokenResult, private=True)
     def verify_twofactor_token(self, username, token):
         """
         Returns boolean true if provided `token` is successfully authenticated for `username`.
@@ -179,4 +210,6 @@ class UserService(Service):
             # This needs to be reloaded so that user's new secret can be reflected in sshd configuration
             await self.middleware.call('service.reload', 'ssh')
 
-        return await self.translate_username(username)
+        user_entry = await self.translate_username(username)
+        twofactor_config = await self.twofactor_config(username)
+        return user_entry | {'twofactor_config': twofactor_config}

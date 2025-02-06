@@ -297,6 +297,9 @@ class SystemAdvancedService(ConfigService):
 
             await self.middleware.call('system.advanced.configure_tty', original_data, config_data, generate_grub)
 
+            if config_data['debugkernel'] and not original_data['debugkernel']:
+                await self.middleware.call('boot.update_initramfs')
+
         if consolemsg is not None:
             await self.middleware.call('system.general.update', {'ui_consolemsg': consolemsg})
 

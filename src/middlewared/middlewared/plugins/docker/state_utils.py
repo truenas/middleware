@@ -59,6 +59,8 @@ class Status(enum.Enum):
     STOPPED = 'STOPPED'
     UNCONFIGURED = 'UNCONFIGURED'
     FAILED = 'FAILED'
+    MIGRATING = 'MIGRATING'
+    MIGRATION_FAILED = 'MIGRATION FAILED'
 
 
 STATUS_DESCRIPTIONS = {
@@ -69,6 +71,8 @@ STATUS_DESCRIPTIONS = {
     Status.STOPPED: 'Application(s) have been stopped',
     Status.UNCONFIGURED: 'Application(s) are not configured',
     Status.FAILED: 'Application(s) have failed to start',
+    Status.MIGRATING: 'Application(s) are being migrated',
+    Status.MIGRATION_FAILED: 'Application(s) failed to migrate to new pool',
 }
 
 

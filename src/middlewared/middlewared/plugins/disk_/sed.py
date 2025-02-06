@@ -30,11 +30,11 @@ class DiskService(Service):
     async def map_disks_to_passwd(self, disk_name=None):
         global_passwd = await self.middleware.call('system.advanced.sed_global_password')
         disks = []
-        filters = [] if disk_name is None else [('name', '=', disk_name)]
+        filters = [] if disk_name is None else [('real_name', '=', disk_name)]
         for disk in await self.middleware.call(
-            'disk.query', filters, {'extra': {'passwords': True}}
+            'disk.query', filters, {'extra': {'passwords': True, 'real_names': True}}
         ):
-            path = f'/dev/{disk["name"]}'
+            path = f'/dev/{disk["real_name"]}'
             # user can specify a per-disk password and/or a global password
             # we default to using the per-disk password with fallback to global
             passwd = disk['passwd'] if disk['passwd'] else global_passwd
@@ -61,9 +61,11 @@ class DiskService(Service):
             # means disk supports SED and we failed to unlock
             # the disk (either bad password or unhandled error)
             if info.query_cp and info.query_cp.returncode:
-                errmsg += f' QUERY ERROR: {info.query_cp.stderr.decode(errors="ignore")!r}'
+                errmsg += f' QUERY ERROR {info.query_cp.returncode}: {info.query_cp.stderr.decode(errors="ignore")!r}'
             if info.unlock_cp and info.unlock_cp.returncode:
-                errmsg += f' UNLOCK ERROR: {info.unlock_cp.stderr.decode(errrors="ignore")!r}'
+                errmsg += (
+                    f' UNLOCK ERROR {info.unlock_cp.returncode}: {info.unlock_cp.stderr.decode(errors="ignore")!r}'
+                )
             self.logger.warning(errmsg)
 
         if info.mbr_cp and info.mbr_cp.returncode:
@@ -113,7 +115,7 @@ class DiskService(Service):
         if not disk:
             return
 
-        info = await unlock_impl(disk[0]["path"], disk[0]["passwd"])
+        info = await unlock_impl(disk[0])
         failed = await self.parse_unlock_info(info)
 
         return failed is None or not info.locked

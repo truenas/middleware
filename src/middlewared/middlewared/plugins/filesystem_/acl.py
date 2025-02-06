@@ -3,15 +3,18 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from typing import Literal
+
+from pydantic import Field
 
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 from middlewared.api.current import (
-    FilesystemAddToAclArgs, FilesystemAddToAclResult,
     FilesystemGetAclArgs, FilesystemGetAclResult,
     FilesystemSetAclArgs, FilesystemSetAclResult,
-    FilesystemGetInheritedAclArgs, FilesystemGetInheritedAclResult,
     FilesystemChownArgs, FilesystemChownResult,
     FilesystemSetPermArgs, FilesystemSetPermResult,
+    NFS4ACE, POSIXACE,
 )
 from middlewared.service import private, job, ValidationErrors, Service
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
@@ -20,6 +23,7 @@ from middlewared.utils.filesystem.acl import (
     FS_ACL_Type,
     NFS4ACE_Tag,
     POSIXACE_Tag,
+    NFS4ACE_MaskSimple,
     normalize_acl_ids,
     path_get_acltype,
     strip_acl_path,
@@ -28,6 +32,45 @@ from middlewared.utils.filesystem.acl import (
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.path import FSLocation, path_location
 from .utils import acltool, AclToolAction, calculate_inherited_acl, canonicalize_nfs4_acl, gen_aclstring_posix1e
+
+
+class SimplifiedAclEntry(BaseModel):
+    id_type: Literal[NFS4ACE_Tag.USER, NFS4ACE_Tag.GROUP]
+    id: int
+    access: Literal[
+        NFS4ACE_MaskSimple.READ,
+        NFS4ACE_MaskSimple.MODIFY,
+        NFS4ACE_MaskSimple.FULL_CONTROL
+    ]
+
+
+class FilesystemAddToAclOptions(BaseModel):
+    force: bool = False
+
+
+@single_argument_args('add_to_acl')
+class FilesystemAddToAclArgs(BaseModel):
+    path: NonEmptyString
+    entries: list[SimplifiedAclEntry]
+    options: FilesystemAddToAclOptions = Field(default=FilesystemAddToAclOptions())
+
+
+class FilesystemAddToAclResult(BaseModel):
+    result: bool
+
+
+class FSGetInheritedAclOptions(BaseModel):
+    directory: bool = True
+
+
+@single_argument_args('calculate_inherited_acl')
+class FilesystemGetInheritedAclArgs(BaseModel):
+    path: NonEmptyString
+    options: FSGetInheritedAclOptions = Field(default=FSGetInheritedAclOptions())
+
+
+class FilesystemGetInheritedAclResult(BaseModel):
+    result: list[NFS4ACE] | list[POSIXACE]
 
 
 class FilesystemService(Service):
