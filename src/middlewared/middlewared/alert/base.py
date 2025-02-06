@@ -180,6 +180,7 @@ class AlertCategory(enum.Enum):
     STORAGE = "STORAGE"
     SYSTEM = "SYSTEM"
     TASKS = "TASKS"
+    TRUENAS_CONNECT = "TRUENAS_CONNECT"
     UPS = "UPS"
 
 
@@ -199,6 +200,7 @@ alert_category_names = {
     AlertCategory.STORAGE: "Storage",
     AlertCategory.SYSTEM: "System",
     AlertCategory.TASKS: "Tasks",
+    AlertCategory.TRUENAS_CONNECT: "TrueNAS Connect Service",
     AlertCategory.UPS: "UPS",
 }
 

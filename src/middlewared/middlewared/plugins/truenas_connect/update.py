@@ -9,7 +9,7 @@ from middlewared.service import CallError, ConfigService, private, ValidationErr
 from .mixin import TNCAPIMixin
 from .status_utils import Status
 from .urls import get_account_service_url
-from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id
+from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id, get_unset_payload
 
 
 logger = logging.getLogger('truenas_connect')
@@ -34,6 +34,10 @@ class TrueNASConnectModel(sa.Model):
     tnc_base_url = sa.Column(
         sa.String(255), nullable=False, default='https://truenas.connect.dev.ixsystems.net/'
     )
+    heartbeat_url = sa.Column(
+        sa.String(255), nullable=False, default='https://heartbeat-service.dev.ixsystems.net/'
+    )
+    last_heartbeat_failure_datetime = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 class TrueNASConnectService(ConfigService, TNCAPIMixin):
@@ -50,6 +54,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     async def config_extend(self, config):
         config['status_reason'] = Status[config['status']].value
         config.pop('jwt_token', None)
+        config.pop('last_heartbeat_failure_datetime', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
         return config
@@ -80,7 +85,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             )
 
         if data['enabled'] and old_config['enabled']:
-            for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url'):
+            for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url'):
                 if data[k] != old_config[k]:
                     verrors.add(
                         f'tn_connect_update.{k}', 'This field cannot be changed when TrueNAS Connect is enabled'
@@ -101,21 +106,19 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         db_payload = {
             'enabled': data['enabled'],
             'ips': data['ips'],
-        } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url')}
+        } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token
             with contextlib.suppress(KeyError):
                 await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
             db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
+            logger.debug('Removing any stale TNC unconfigured alert or heartbeat alert')
+            await self.middleware.call('alert.oneshot_delete', 'TNCDisabledAutoUnconfigured')
+            await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
         elif config['enabled'] is True and data['enabled'] is False:
             await self.unset_registration_details()
-            db_payload.update({
-                'registration_details': {},
-                'jwt_token': None,
-                'status': Status.DISABLED.name,
-                'certificate': None,
-            })
+            db_payload.update(get_unset_payload())
 
         if (
             config['status'] == Status.CONFIGURED.name and db_payload.get(
@@ -138,6 +141,9 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         logger.debug('Unsetting registration details')
         with contextlib.suppress(KeyError):
             await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
+
+        logger.debug('TNC is being disabled, removing any stale TNC heartbeat failure alert')
+        await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
 
         config = await self.config_internal()
         creds = get_account_id_and_system_id(config)
