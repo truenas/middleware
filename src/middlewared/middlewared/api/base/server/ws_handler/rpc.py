@@ -48,7 +48,20 @@ class RpcWebSocketApp(App):
         self.subscriptions = {}
 
     def send(self, data):
-        asyncio.run_coroutine_threadsafe(self.ws.send_str(json.dumps(data)), self.middleware.loop)
+        try:
+            data_ = json.dumps(data)
+        except Exception as e:
+            self.middleware.logger.error(f"Failed to JSON serialize server message: {e}", exc_info=True)
+            self.send_truenas_error(
+                data.get("id"),
+                JSONRPCError.INTERNAL_ERROR.value,
+                "Failed to JSON serialize server message",
+                None,
+                str(e),
+                sys.exc_info()
+            )
+        else:
+            asyncio.run_coroutine_threadsafe(self.ws.send_str(data_), self.middleware.loop)
 
     def send_error(self, id_: Any, code: int, message: str, data: Any = None):
         error = {
