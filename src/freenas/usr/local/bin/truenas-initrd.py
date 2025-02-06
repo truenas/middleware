@@ -217,14 +217,26 @@ if __name__ == "__main__":
         try:
             database = args.database or os.path.join(root, FREENAS_DATABASE[1:])
 
-            if update_required := any((
-                args.force,
+            adv_config = query_config_table("system_advanced", database, "adv_")
+            debug_kernel = adv_config["debugkernel"]
+
+            update_required = any((
                 update_zfs_default(root, readonly_rootfs),
                 update_pci_initramfs_config(root, readonly_rootfs, database),
                 update_zfs_module_config(root, readonly_rootfs, database),
-            )):
-                readonly_rootfs.make_writeable()
-                subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
+            ))
+
+            for kernel in os.listdir(f"{root}/boot"):
+                if not kernel.startswith("vmlinuz-"):
+                    continue
+
+                kernel_name = kernel.removeprefix("vmlinuz-")
+                if "debug" in kernel_name and not debug_kernel:
+                    continue
+
+                if args.force or update_required or not os.path.exists(f"{root}/boot/initrd.img-{kernel_name}"):
+                    readonly_rootfs.make_writeable()
+                    subprocess.run(["chroot", root, "update-initramfs", "-k", kernel_name, "-u"], check=True)
         except Exception:
             logger.error("Failed to update initramfs", exc_info=True)
             exit(2)
