@@ -216,6 +216,18 @@ def main(output_dir):
     shutil.rmtree(f"{output_dir}/rst")
     shutil.rmtree(f"{output_dir}/html")
 
+    for root, dirs, files in os.walk(output_dir):
+        for filename in files:
+            if filename.endswith(".html"):
+                with open(f"{root}/{filename}") as f:
+                    contents = f.read()
+
+                # Make sphinx show a summary of the search result (sphinxbootstrap4theme breaks this)
+                contents = contents.replace('<div class="bodywrapper">', '<div class="bodywrapper" role="main">')
+
+                with open(f"{root}/{filename}", "w") as f:
+                    f.write(contents)
+
 
 if __name__ == "__main__":
     main(sys.argv[1])
