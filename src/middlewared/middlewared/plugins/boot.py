@@ -1,11 +1,14 @@
 import asyncio
 import os
 
+from pydantic import Field
+
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     BootGetDisksArgs, BootGetDisksResult, BootAttachArgs, BootAttachResult, BootDetachArgs,
     BootDetachResult, BootReplaceArgs, BootReplaceResult, BootScrubArgs, BootScrubResult,
-    BootSetScrubIntervalArgs, BootSetScrubIntervalResult, BootUpdateInitramfsArgs, BootUpdateInitramfsResult
+    BootSetScrubIntervalArgs, BootSetScrubIntervalResult
 )
 from middlewared.schema import accepts, returns, Patch
 from middlewared.service import CallError, Service, job, private
@@ -16,6 +19,19 @@ from middlewared.utils.disks import valid_zfs_partition_uuids
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
 BOOT_POOL_NAME = BOOT_POOL_DISKS = None
 BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
+
+
+class BootUpdateInitramfsOptions(BaseModel):
+    database: str | None = None
+    force: bool = False
+
+
+class BootUpdateInitramfsArgs(BaseModel):
+    options: BootUpdateInitramfsOptions = Field(default_factory=BootUpdateInitramfsOptions)
+
+
+class BootUpdateInitramfsResult(BaseModel):
+    result: bool
 
 
 class BootService(Service):

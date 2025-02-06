@@ -1,7 +1,25 @@
+from typing import Literal
+
+from pydantic import Field
+
 from middlewared.api import api_method
-from middlewared.api.current import BootFormatArgs, BootFormatResult
+from middlewared.api.base import BaseModel, NotRequired
 from middlewared.service import CallError, Service
 from middlewared.utils import run
+
+
+class BootFormatOptions(BaseModel):
+    size: int = NotRequired
+    legacy_schema: Literal["BIOS_ONLY", "EFI_ONLY", None] = None
+
+
+class BootFormatArgs(BaseModel):
+    dev: str
+    options: BootFormatOptions = Field(default_factory=BootFormatOptions)
+
+
+class BootFormatResult(BaseModel):
+    result: None
 
 
 class BootService(Service):
