@@ -15,7 +15,7 @@ from .utils import (
 class ContainerRegistryClientMixin:
 
     @staticmethod
-    async def _api_call(url, options=None, headers=None, mode='get'):
+    async def _api_call(url, options=None, headers=None, mode='get', auth=None):
         options = options or {}
         timeout = options.get('timeout', 15)
         assert mode in ('get', 'head')
@@ -25,7 +25,9 @@ class ContainerRegistryClientMixin:
                 async with aiohttp.ClientSession(
                     raise_for_status=True, trust_env=True,
                 ) as session:
-                    req = await getattr(session, mode)(url, headers=headers)
+                    req = await getattr(session, mode)(
+                        url, headers=headers, auth=aiohttp.BasicAuth(**auth) if auth else None
+                    )
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with {url} in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
@@ -50,12 +52,12 @@ class ContainerRegistryClientMixin:
                     response['error'] = 'Timed out waiting for a response'
         return response
 
-    async def _get_token(self, scope, auth_url=DOCKER_AUTH_URL, service=DOCKER_AUTH_SERVICE):
+    async def _get_token(self, scope, auth_url=DOCKER_AUTH_URL, service=DOCKER_AUTH_SERVICE, auth=None):
         query_params = urllib.parse.urlencode({
             'service': service,
             'scope': scope,
         })
-        response = await self._api_call(f'{auth_url}?{query_params}')
+        response = await self._api_call(f'{auth_url}?{query_params}', auth=auth)
         if response['error']:
             raise CallError(f'Unable to retrieve token for {scope!r}: {response["error"]}')
 
@@ -99,9 +101,10 @@ class ContainerRegistryClientMixin:
         digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
         return digests
 
-    async def get_docker_hub_rate_limit_preview(self):
+    async def get_docker_hub_rate_limit_preview(self, auth=None):
+        token = (await self._get_token(scope="repository:ratelimitpreview/test:pull", auth=auth))
         return await self._api_call(
             url=DOCKER_RATELIMIT_URL,
-            headers={'Authorization': f'Bearer {await self._get_token(scope="repository:ratelimitpreview/test:pull")}'},
+            headers={'Authorization': f'Bearer {token}'},
             mode='head'
         )
