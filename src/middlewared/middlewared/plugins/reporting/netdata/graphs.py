@@ -16,11 +16,6 @@ class CPUPlugin(GraphBase):
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'truenas_cpu_usage.cpu'
 
-    async def get_identifiers(self) -> typing.Optional[list]:
-        cpu_usage = [f'cpu{i}' for i in cpu_info()['core']]
-        cpu_usage.append('cpu')
-        return cpu_usage
-
 
 class CPUTempPlugin(GraphBase):
 
