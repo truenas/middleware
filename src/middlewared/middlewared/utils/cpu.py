@@ -20,8 +20,15 @@ RE_CORE = re.compile(r'^Core ([0-9]+)$')
 
 class CpuInfo(typing.TypedDict):
     cpu_model: str | None
-    core_count: str | None
-    physical_core_count: str | None
+    """The CPU model"""
+    core_count: int
+    """The total number of online CPUs"""
+    physical_core_count: int
+    """The total number of physical CPU cores"""
+    ht_map: tuple[tuple[str, str]]
+    """A mapping of hyper-threaded ids to their
+        parent physical core id
+        (i.e. {"cpu8": "cpu0", "cpu9": "cpu1"})"""
 
 
 @functools.cache
@@ -33,22 +40,47 @@ def cpu_info_impl() -> CpuInfo:
     cc = os.sysconf('SC_NPROCESSORS_ONLN') or None
 
     cm = None
-    with open('/proc/cpuinfo') as f:
-        for line in filter(lambda x: x.startswith('model name'), f):
-            cm = line.split(':')[-1].strip() or None
+    with open('/proc/cpuinfo', 'rb') as f:
+        for line in filter(lambda x: x.startswith(b'model name'), f):
+            cm = line.split(b':')[-1].strip().decode() or None
             break
 
     pcc = set()
+    ht_map = dict()
     with os.scandir('/sys/devices/system/cpu/') as sdir:
         for i in filter(lambda x: x.is_dir() and x.name.startswith('cpu'), sdir):
             try:
                 with open(os.path.join(i.path, 'topology/core_cpus_list')) as f:
-                    pcc.add(f.read().strip())
+                    _pcc = f.read().strip()
+                    pcc.add(_pcc)
+                    pcid, htid = _pcc.split(',')
+                    if i.name[len('cpu'):] == htid:
+                        # the directory we're in is named `cpu0/1/2/etc`
+                        # and if the 1st number in the cores_cpus_list
+                        # file is the same as the directory, then it's
+                        # a physical core. Otherwise, it's a HT core.
+                        # Hyper-Threaded Example:
+                        #   directory name == cpu8
+                        #   file contents == 0,8
+                        #   This means `cpu8` is a hyper-threaded core
+                        #   because the `8` in `cpu8` doesn't match the
+                        #   first number in the file (0,8)
+                        # Physical Core Example:
+                        #   directory name == cpu0
+                        #   file contents == 0,8
+                        #   This means `cpu0` is a physical core because
+                        #   the `0` in `cpu0` matches the first number
+                        #   in the file (0,8)
+                        ht_map[i.name] = f'cpu{pcid}'
             except FileNotFoundError:
                 continue
-    pcc = len(pcc) or None
 
-    return CpuInfo(cpu_model=cm, core_count=cc, physical_core_count=pcc)
+    return CpuInfo(
+        cpu_model=cm,
+        core_count=cc,
+        physical_core_count=len(pcc),
+        ht_map=tuple(ht_map),
+    )
 
 
 def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
