@@ -1,7 +1,7 @@
 import abc
-from typing import Literal
+from typing import Annotated, Literal, Union
 
-from pydantic import Secret
+from pydantic import Discriminator, Secret
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
                                   NonEmptyString, single_argument_args, single_argument_result)
@@ -182,10 +182,13 @@ class SetupSSHConnectionManualSetup(SSHCredentials):
 
 
 class SetupSSHConnectionManual(BaseModel):
-    private_key: KeychainCredentialSetupSSHConnectionKeyNew | KeychainCredentialSetupSSHConnectionKeyExisting
+    private_key: Annotated[
+        Union[KeychainCredentialSetupSSHConnectionKeyNew, KeychainCredentialSetupSSHConnectionKeyExisting],
+        Discriminator("generate_key"),
+    ]
     connection_name: NonEmptyString
     setup_type: Literal["MANUAL"] = "MANUAL"
-    manual_setup: SSHCredentials
+    manual_setup: SetupSSHConnectionManualSetup
 
 
 class SetupSSHConnectionSemiautomatic(SetupSSHConnectionManual):
@@ -195,7 +198,10 @@ class SetupSSHConnectionSemiautomatic(SetupSSHConnectionManual):
 
 
 class KeychainCredentialSetupSSHConnectionArgs(BaseModel):
-    options: SetupSSHConnectionManual | SetupSSHConnectionSemiautomatic
+    options: Annotated[
+        Union[SetupSSHConnectionManual, SetupSSHConnectionSemiautomatic],
+        Discriminator("setup_type"),
+    ]
 
 
 class KeychainCredentialSetupSSHConnectionResult(BaseModel):
