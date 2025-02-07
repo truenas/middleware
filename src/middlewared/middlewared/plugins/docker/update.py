@@ -110,7 +110,7 @@ class DockerService(ConfigService):
             if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
-            elif config['pool'] and address_pools_changed:
+            elif config['pool'] and (address_pools_changed or nvidia_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
                 if catalog_sync_job:
