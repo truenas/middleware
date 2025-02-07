@@ -155,6 +155,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     vnc_password: Secret[NonEmptyString | None]
     '''Setting vnc_password to null will unset VNC password'''
     secure_boot: bool = False
+    root_disk_size: int | None = Field(ge=5, default=None)
 
 
 class VirtInstanceUpdateArgs(BaseModel):
