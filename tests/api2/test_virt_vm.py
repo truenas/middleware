@@ -112,6 +112,7 @@ def test_vm_props(vm):
         'description': None,
         'os': None,
         'release': None,
+        'secureboot': None,
         'type': None,
         'serial': None,
         'variant': None,
