@@ -745,7 +745,7 @@ class AuthService(Service):
                                 'credentials': cred_type,
                                 'credentials_data': {'username': data['username']},
                             },
-                        'error': 'User does not have two factor authentication enabled.'
+                            'error': 'User does not have two factor authentication enabled.'
                         }, False)
 
                     else:
@@ -754,7 +754,7 @@ class AuthService(Service):
                                 'credentials': cred_type,
                                 'credentials_data': {'username': data['username']},
                             },
-                        'error': 'Bad username or password'
+                            'error': 'Bad username or password'
                         }, False)
 
                     return response
