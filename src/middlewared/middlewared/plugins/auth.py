@@ -394,6 +394,11 @@ class AuthService(Service):
 
         if token.single_use:
             self.token_manager.destroy(token)
+        else:
+            if CURRENT_AAL.level != AA_LEVEL1:
+                raise CallError('Multi-use API tokens are not supported '
+                                'at the current security level',
+                                errno.EOPNOTSUPP)
 
         return {
             'attributes': token.attributes,
@@ -412,6 +417,11 @@ class AuthService(Service):
 
         if token.single_use:
             self.token_manager.destroy(token)
+        else:
+            if CURRENT_AAL.level != AA_LEVEL1:
+                raise CallError('Multi-use API tokens are not supported '
+                                'at the current security level',
+                                errno.EOPNOTSUPP)
 
         return TokenSessionManagerCredentials(self.token_manager, token)
 
@@ -735,7 +745,7 @@ class AuthService(Service):
                                 'credentials': cred_type,
                                 'credentials_data': {'username': data['username']},
                             },
-                        'error': 'User does not have two factor authentication enabled.'
+                            'error': 'User does not have two factor authentication enabled.'
                         }, False)
 
                     else:
@@ -744,7 +754,7 @@ class AuthService(Service):
                                 'credentials': cred_type,
                                 'credentials_data': {'username': data['username']},
                             },
-                        'error': 'Bad username or password'
+                            'error': 'Bad username or password'
                         }, False)
 
                     return response

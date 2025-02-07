@@ -72,13 +72,15 @@ def parse_credentials(request):
 
 
 async def authenticate(middleware, request, credentials, method, resource):
-    if CURRENT_AAL.level is not AA_LEVEL1:
-        raise web.HTTPForbidden(text='REST authentication not permitted by server authentication security level')
 
     if credentials['credentials'] == 'TOKEN':
         origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
-        token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
-                                      origin, method, resource)
+        try:
+            token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
+                                          origin, method, resource)
+        except CallError as ce:
+            raise web.HTTPForbidden(text=ce.errmsg)
+
         if token is None:
             raise web.HTTPForbidden(text='Invalid token')
 
@@ -96,6 +98,9 @@ async def authenticate(middleware, request, credentials, method, resource):
 
         return LoginPasswordSessionManagerCredentials(resp['user_data'], assurance=CURRENT_AAL.level)
     elif credentials['credentials'] == 'API_KEY':
+        if CURRENT_AAL.level is not AA_LEVEL1:
+            raise web.HTTPForbidden(text='API key authentication is not permitted by server authentication security level')
+
         api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'])
         if api_key is None:
             raise web.HTTPUnauthorized(text='Invalid API key')
