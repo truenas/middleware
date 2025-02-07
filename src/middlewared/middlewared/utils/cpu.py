@@ -25,7 +25,7 @@ class CpuInfo(typing.TypedDict):
     """The total number of online CPUs"""
     physical_core_count: int
     """The total number of physical CPU cores"""
-    ht_map: tuple[tuple[str, str]]
+    ht_map: dict[str, str]
     """A mapping of hyper-threaded ids to their
         parent physical core id
         (i.e. {"cpu8": "cpu0", "cpu9": "cpu1"})"""
@@ -53,7 +53,14 @@ def cpu_info_impl() -> CpuInfo:
                 with open(os.path.join(i.path, 'topology/core_cpus_list')) as f:
                     _pcc = f.read().strip()
                     pcc.add(_pcc)
-                    pcid, htid = _pcc.split(',')
+                    pcid, htid = '', ''
+                    for sep in (',', '-'):
+                        # file is written with commas or hyphens
+                        try:
+                            pcid, htid = _pcc.split(sep)
+                        except ValueError:
+                            continue
+
                     if i.name[len('cpu'):] == htid:
                         # the directory we're in is named `cpu0/1/2/etc`
                         # and if the 1st number in the cores_cpus_list
@@ -79,7 +86,7 @@ def cpu_info_impl() -> CpuInfo:
         cpu_model=cm,
         core_count=cc,
         physical_core_count=len(pcc),
-        ht_map=tuple(ht_map),
+        ht_map=ht_map,
     )
 
 
