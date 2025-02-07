@@ -84,7 +84,12 @@ class FailoverDatastoreService(Service):
             start_daemon_thread(target=send_retry)
 
     def send(self):
-        token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
+        token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token', [
+            300,  # ttl
+            {},  # Attributes (not required for file uploads)
+            True,  # match origin
+            True,  # single-use (required if STIG enabled)
+        ])
         self.middleware.call_sync('failover.send_file', token, FREENAS_DATABASE, FREENAS_DATABASE_REPLICATED, {'mode': db_utils.FREENAS_DATABASE_MODE})
         self.middleware.call_sync('failover.call_remote', 'failover.datastore.receive')
 
