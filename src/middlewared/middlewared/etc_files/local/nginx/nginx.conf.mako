@@ -138,7 +138,7 @@ http {
     }
 
     map $http_origin $allow_origin {
-        ~^truenas.connect.(dev.|staging.)?ixsystems.net$ $http_origin;
+        ~^https://truenas.connect.(dev.|staging.)?ixsystems.net$ $http_origin;
         default "";
     }
 
