@@ -21,7 +21,13 @@ class K8stoDockerMigrationService(Service):
         namespace = 'k8s_to_docker'
         cli_namespace = 'k8s_to_docker'
 
-    @api_method(K8sToDockerMigrateArgs, K8sToDockerMigrateResult, roles=['DOCKER_WRITE'])
+    @api_method(
+        K8sToDockerMigrateArgs,
+        K8sToDockerMigrateResult,
+        audit='K8s_to_docker: Migrating backup from',
+        audit_extended=lambda kubernetes_pool, options=None: f'{kubernetes_pool!r} kubernetes pool to docker',
+        roles=['DOCKER_WRITE']
+    )
     @job(lock='k8s_to_docker_migrate')
     def migrate(self, job, kubernetes_pool, options):
         """

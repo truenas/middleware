@@ -21,7 +21,9 @@ from middlewared.api.current import (
     VirtInstanceRestartArgs, VirtInstanceRestartResult,
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
-from .utils import get_vnc_info_from_config, Status, incus_call, incus_call_and_wait, VNC_BASE_PORT
+from .utils import (
+    get_vnc_info_from_config, get_root_device_dict, Status, incus_call, incus_call_and_wait, VNC_BASE_PORT
+)
 
 
 LC_IMAGES_SERVER = 'https://images.linuxcontainers.org'
@@ -58,6 +60,11 @@ class VirtInstanceService(CRUDService):
                 status = 'UNKNOWN'
             else:
                 status = i['state']['status'].upper()
+            secureboot = None
+            if i['config'].get('image.requirements.secureboot') == 'true':
+                secureboot = True
+            elif i['config'].get('image.requirements.secureboot') == 'false':
+                secureboot = False
             entry = {
                 'id': i['name'],
                 'name': i['name'],
@@ -75,6 +82,7 @@ class VirtInstanceService(CRUDService):
                     'serial': i['config'].get('image.serial'),
                     'type': i['config'].get('image.type'),
                     'variant': i['config'].get('image.variant'),
+                    'secureboot': secureboot,
                 },
                 **get_vnc_info_from_config(i['config']),
                 'raw': None,  # Default required by pydantic
@@ -360,23 +368,22 @@ class VirtInstanceService(CRUDService):
             data_devices.append(root_device_to_add)
 
         devices = {
-            'root': {
-                'path': '/',
-                'pool': 'default',
-                'type': 'disk',
-                'size': f'{data["root_disk_size"] * (1024**3)}',
-            }
+            'root': get_root_device_dict(data['root_disk_size']),
         } if data['instance_type'] == 'VM' else {}
         for i in data_devices:
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
             )
             if i['name'] is None:
-                i['name'] = await self.middleware.call('virt.instance.generate_device_name', devices.keys(), i['dev_type'])
+                i['name'] = await self.middleware.call(
+                    'virt.instance.generate_device_name', devices.keys(), i['dev_type']
+                )
             devices[i['name']] = await self.middleware.call('virt.instance.device_to_incus', data['instance_type'], i)
 
         if not verrors and data['devices']:
-            await self.middleware.call('virt.instance.validate_devices', data['devices'], 'virt_instance_create', verrors)
+            await self.middleware.call(
+                'virt.instance.validate_devices', data['devices'], 'virt_instance_create', verrors
+            )
 
         verrors.check()
 
@@ -433,12 +440,27 @@ class VirtInstanceService(CRUDService):
 
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_update', verrors, old=instance)
-        if instance['type'] == 'CONTAINER' and data.get('enable_vnc'):
-            verrors.add('virt_instance_update.vnc_port', 'VNC is not supported for containers')
+        if instance['type'] == 'CONTAINER':
+            if data.get('enable_vnc'):
+                verrors.add('virt_instance_update.enable_vnc', 'VNC is not supported for containers')
+            if data.get('root_disk_size'):
+                verrors.add(
+                    'virt_instance_update.root_disk_size', 'Updating root_disk_size is not supported for containers'
+                )
+
+        if instance['type'] == 'VM' and data.get('root_disk_size'):
+            if ((instance['root_disk_size'] or 0) / (1024 ** 3)) >= data['root_disk_size']:
+                verrors.add(
+                    'virt_instance_update.root_disk_size',
+                    'Specified size if set should be greater than the current root disk size.'
+                )
 
         verrors.check()
 
         instance['raw']['config'].update(self.__data_to_config(data, instance['raw']['config'], instance['type']))
+        if data.get('root_disk_size'):
+            instance['raw']['devices']['root'] = get_root_device_dict(data['root_disk_size'])
+
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
 
         return await self.middleware.call('virt.instance.get_instance', id)

@@ -135,6 +135,11 @@ http {
         '' close;
     }
 
+    map $http_origin $allow_origin {
+        ~ixsystems.net$ $http_origin;
+        default "";
+    }
+
     server {
         server_name  localhost;
 % if ssl_configuration:
@@ -317,6 +322,10 @@ http {
         }
 
         location /_download {
+            # Allow all internal origins.
+            add_header Access-Control-Allow-Origin $allow_origin always;
+            add_header Access-Control-Allow-Headers "*" always;
+
             proxy_pass http://127.0.0.1:6000;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;

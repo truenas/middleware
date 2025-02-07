@@ -5,6 +5,7 @@ import sys
 import enum
 import errno
 
+from ixhardware.dmi import parse_dmi
 from truenas_api_client import Client, ClientException
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 
@@ -52,14 +53,13 @@ def handle_status_command(client, status):
     failover_status = getattr(StatusEnum, status, StatusEnum.UNKNOWN).value
     print(failover_status)
 
-    # print local and remote serial info
-    local_serial = client.call('system.dmidecode_info')['system-serial-number']
+    print(f'This node serial: {parse_dmi().system_serial_number}')
     timeout = 2
     connect_timeout = 2.0
     options = {'timeout': timeout, 'connect_timeout': connect_timeout}
     try:
-        remote_serial = client.call('failover.call_remote', 'system.dmidecode_info', [], options)
-        remote_serial = remote_serial['system-serial-number']
+        remote_serial = client.call('failover.call_remote', 'system.info', [], options)
+        remote_serial = remote_serial['system_serial']
     except Exception as e:
         remote_serial = 'UNKNOWN'
         if isinstance(e, ClientException):
@@ -71,7 +71,6 @@ def handle_status_command(client, status):
         if remote_serial == 'UNKNOWN':
             remote_serial = f'{e}'
 
-    print(f'This node serial: {local_serial}')
     print(f'Other node serial: {remote_serial}')
 
     # print failover disabled reason(s) (if any)

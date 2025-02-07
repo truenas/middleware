@@ -3,6 +3,7 @@ import re
 
 from pydantic import BaseModel
 
+from middlewared.role import RoleManager
 from ..jsonschema import replace_refs
 from .api import API
 from .event import Event
@@ -30,9 +31,10 @@ class APIDumpEvent(BaseModel):
 
 
 class APIDumper:
-    def __init__(self, version: str, api: API):
+    def __init__(self, version: str, api: API, role_manager: RoleManager):
         self.version = version
         self.api = api
+        self.role_manager = role_manager
 
     def dump(self):
         return APIDump(version=self.version, methods=self._dump_methods(), events=self._dump_events())
@@ -74,7 +76,7 @@ class APIDumper:
 
         return APIDumpMethod(
             name=name,
-            roles=method.methodobj.roles,
+            roles=sorted(self.role_manager.atomic_roles_for_method(name)),
             doc=doc,
             schemas=self._dump_method_schemas(method),
         )
@@ -122,7 +124,7 @@ class APIDumper:
     def _dump_event(self, event: Event):
         return APIDumpEvent(
             name=event.name,
-            roles=event.event["roles"],
+            roles=sorted(self.role_manager.atomic_roles_for_event(event.name)),
             doc=event.event["description"],
             schemas=self._dump_event_schemas(event),
         )

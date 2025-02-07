@@ -55,6 +55,8 @@ class TNCACMEService(Service, TNCAPIMixin):
         else:
             logger.debug('TNC cert configured successfully')
             await self.middleware.call('tn_connect.set_status', Status.CONFIGURED.name)
+            logger.debug('Initiating TNC heartbeat')
+            self.middleware.create_task(self.middleware.call('tn_connect.heartbeat.start'))
             # Let's restart UI now
             # TODO: Hash this out with everyone
             await self.middleware.call('system.general.ui_restart', 2)
