@@ -200,7 +200,7 @@ class FailoverService(ConfigService):
         """
         return await self.middleware.call('failover.internal_interface.detect')
 
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(Str())
     @pass_app(rest=True)
     async def status(self, app):
@@ -278,14 +278,14 @@ class FailoverService(ConfigService):
         )
         return bool(event)
 
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(List('ips', items=[Str('ip')]))
     @pass_app(rest=True)
     async def get_ips(self, app):
         """Get a list of IPs for which the webUI can be accessed."""
         return await self.middleware.call('system.general.get_ui_urls')
 
-    @accepts(audit='Failover become passive')
+    @accepts(audit='Failover become passive', roles=['FAILOVER_WRITE'])
     @returns()
     def become_passive(self):
         """
@@ -789,7 +789,12 @@ class FailoverService(ConfigService):
             if not options['resume']:
                 # Replicate uploaded or downloaded update it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
-                token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
+                token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token', [
+                    300,  # ttl
+                    {},  # Attributes (not required for file uploads)
+                    True,  # match origin
+                    True,  # single-use (required if STIG enabled)
+                ])
                 self.middleware.call_sync(
                     'failover.send_file',
                     token,
