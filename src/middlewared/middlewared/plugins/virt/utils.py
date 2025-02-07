@@ -103,3 +103,12 @@ def get_vnc_info_from_config(config: dict):
         return vnc_config
 
     return json.loads(vnc_raw_config)
+
+
+def get_root_device_dict(size: int) -> dict:
+    return {
+        'path': '/',
+        'pool': 'default',
+        'type': 'disk',
+        'size': f'{size * (1024**3)}',
+    }

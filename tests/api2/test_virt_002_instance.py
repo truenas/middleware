@@ -82,6 +82,29 @@ def test_virt_instance_update():
     assert rv.strip() == ''
 
 
+def test_virt_instance_update_root_disk_size():
+    current_root_disk_size = call(
+        'virt.instance.query', [['id', '=', INS1_NAME]], {'select': ['root_disk_size'], 'get': True}
+    )['root_disk_size']
+    # updating root_disk_size of VM
+    call('virt.instance.update', INS1_NAME, {'root_disk_size': 11}, job=True)
+    updated_root_disk_size = call(
+        'virt.instance.query', [['id', '=', INS1_NAME]], {'select': ['root_disk_size'], 'get': True}
+    )['root_disk_size']
+
+    assert current_root_disk_size != updated_root_disk_size
+    assert updated_root_disk_size == 11 * (1024 ** 3)
+
+    # not updating root_disk_size
+    current_root_disk_size = updated_root_disk_size
+    call('virt.instance.update', INS1_NAME, {}, job=True)
+    updated_root_disk_size = call(
+        'virt.instance.query', [['id', '=', INS1_NAME]], {'select': ['root_disk_size'], 'get': True}
+    )['root_disk_size']
+
+    assert current_root_disk_size == updated_root_disk_size
+
+
 def test_virt_instance_stop():
     wait_status_event = Event()
 
