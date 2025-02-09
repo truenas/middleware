@@ -75,8 +75,7 @@ class SystemService(Service):
 
         return self.HOST_ID
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Datetime('system_build_time'))
+    @private
     async def build_time(self):
         """Retrieve build time of the system."""
         # NOTE: at time of writing, UI team is using this value

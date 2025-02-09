@@ -12,8 +12,6 @@ def test_truecommand_readonly_role(unprivileged_user_fixture):
 @pytest.mark.parametrize('endpoint,role,should_work,valid_role_exception', [
     ('truecommand.config', 'TRUECOMMAND_READ', True, False),
     ('truecommand.config', 'TRUECOMMAND_WRITE', True, False),
-    ('truecommand.info', 'TRUECOMMAND_READ', True, False),
-    ('truecommand.info', 'TRUECOMMAND_WRITE', True, False),
     ('truecommand.update', 'TRUECOMMAND_READ', False, True),
     ('truecommand.update', 'TRUECOMMAND_WRITE', True, True),
 ])
