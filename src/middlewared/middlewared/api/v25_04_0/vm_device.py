@@ -16,8 +16,8 @@ __all__ = [
     'VMDeviceNICAttachChoicesResult', 'VMDeviceBindChoicesArgs', 'VMDeviceBindChoicesResult',
     'VMDevicePassthroughDeviceArgs', 'VMDevicePassthroughDeviceResult', 'VMDeviceIOMMUEnabledArgs',
     'VMDeviceIOMMUEnabledResult', 'VMDevicePassthroughDeviceChoicesArgs', 'VMDevicePassthroughDeviceChoicesResult',
-    'VMDevicePPTDevChoicesArgs', 'VMDevicePPTDevChoicesResult', 'VMDeviceGetPCIIdsForIsolationArgs',
-    'VMDeviceGetPCIIdsForIsolationResult', 'VMDeviceUSBPassthroughDeviceArgs', 'VMDeviceUSBPassthroughDeviceResult',
+    'VMDevicePPTDevChoicesArgs', 'VMDevicePPTDevChoicesResult',
+    'VMDeviceUSBPassthroughDeviceArgs', 'VMDeviceUSBPassthroughDeviceResult',
     'VMDeviceUSBPassthroughDeviceChoicesArgs', 'VMDeviceUSBPassthroughDeviceChoicesResult',
     'VMDeviceUSBControllerChoicesArgs', 'VMDeviceUSBControllerChoicesResult',
 ]
@@ -280,14 +280,6 @@ class VMDevicePPTDevChoicesArgs(BaseModel):
 
 class VMDevicePPTDevChoicesResult(BaseModel):
     result: VMDevicePassthroughInfo
-
-
-class VMDeviceGetPCIIdsForIsolationArgs(BaseModel):
-    gpu_pci_id: NonEmptyString
-
-
-class VMDeviceGetPCIIdsForIsolationResult(BaseModel):
-    result: list[NonEmptyString]
 
 
 class USBCapability(BaseModel):

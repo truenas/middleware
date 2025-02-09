@@ -2,8 +2,7 @@ import asyncio
 import re
 import time
 
-from middlewared.schema import Bool, Dict, IPAddr, returns, Str
-from middlewared.service import accepts, CallError, periodic, private, Service
+from middlewared.service import CallError, periodic, private, Service
 from middlewared.utils import run
 
 from .enums import Status
@@ -93,30 +92,6 @@ class TruecommandService(Service):
                         # We have return code of 0 if we heard at least one response from the host
                         health_error = True
         return not health_error
-
-    @accepts(roles=['TRUECOMMAND_READ'])
-    @returns(Dict(
-        'truecommand_connected',
-        Bool('connected', required=True),
-        IPAddr('truecommand_ip', null=True, required=True),
-        Str('truecommand_url', null=True, required=True),
-        Str('status', required=True),
-        Str('status_reason', required=True),
-    ))
-    async def info(self):
-        """
-        Returns information which shows if system has an authenticated api key
-        and has initiated a VPN connection with TrueCommand.
-        """
-        tc_config = await self.middleware.call('truecommand.config')
-        connected = Status(tc_config['status']) == Status.CONNECTED
-        return {
-            'connected': connected,
-            'truecommand_ip': tc_config['remote_ip_address'] if connected else None,
-            'truecommand_url': tc_config['remote_url'] if connected else None,
-            'status': tc_config['status'],
-            'status_reason': tc_config['status_reason'],
-        }
 
     @private
     async def start_truecommand_service(self):
