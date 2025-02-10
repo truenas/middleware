@@ -472,43 +472,6 @@ class FailoverService(ConfigService):
 
         return result
 
-    @accepts(Dict(
-        'options',
-        List(
-            'pools', items=[
-                Dict(
-                    'pool_keys',
-                    Str('name', required=True),
-                    Str('passphrase', required=True)
-                )
-            ],
-        ),
-        List(
-            'datasets', items=[
-                Dict(
-                    'dataset_keys',
-                    Str('name', required=True),
-                    Str('passphrase', required=True),
-                )
-            ],
-        ),
-    ))
-    @returns(Bool())
-    async def unlock(self, options):
-        """
-        Unlock datasets in HA, syncing passphrase between controllers and forcing this controller
-        to be MASTER importing the pools.
-        """
-        if options['pools'] or options['datasets']:
-            await self.middleware.call(
-                'failover.update_encryption_keys', {
-                    'pools': options['pools'],
-                    'datasets': options['datasets'],
-                },
-            )
-
-        return await self.middleware.call('failover.force_master')
-
     @private
     @job(lock='failover_dataset_unlock')
     async def unlock_zfs_datasets(self, job, pool_name):
@@ -609,42 +572,6 @@ class FailoverService(ConfigService):
     @private
     async def is_single_master_node(self):
         return await self.middleware.call('failover.status') in ('MASTER', 'SINGLE')
-
-    @accepts(
-        Str('action', enum=['ENABLE', 'DISABLE']),
-        Dict(
-            'options',
-            Bool('active'),
-        ),
-        roles=['FAILOVER_WRITE']
-    )
-    @returns()
-    async def control(self, action, options):
-        if not options:
-            # The node making the call is the one we want to make MASTER by default
-            node = await self._master_node((await self.middleware.call('failover.node')))
-        else:
-            node = await self._master_node(options.get('active'))
-
-        failover = await self.middleware.call('datastore.config', 'system.failover')
-        if action == 'ENABLE':
-            if failover['disabled'] is False:
-                # Already enabled
-                return False
-            update = {
-                'disabled': False,
-                'master_node': node,
-            }
-        elif action == 'DISABLE':
-            if failover['disabled'] is True:
-                # Already disabled
-                return False
-            update = {
-                'disabled': True,
-                'master_node': node,
-            }
-
-        await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
 
     @private
     def upgrade_version(self):
