@@ -11,6 +11,20 @@ from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.audit import expect_audit_log
 
 
+@pytest.fixture(scope="module")
+def job_with_pipe():
+    job_id, url = call("core.download", "config.save" , [], "debug.txz")
+    try:
+        yield job_id
+    finally:
+        call("core.job_abort", job_id)
+
+
+@pytest.fixture(scope="module")
+def download_token(job_with_pipe):
+    return call("auth.generate_token", 300, {"filename": "debug.txz", "job": job_with_pipe}, True)
+
+
 @pytest.fixture(scope='function')
 def sharing_admin_user(unprivileged_user_fixture):
     privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
@@ -315,9 +329,7 @@ def test_token_login_failed():
             c.call("auth.login_with_token", "invalid_token")
 
 
-def test_token_attributes_login_failed():
-    token = call("auth.generate_token", 300, {"filename": "debug.txz", "job": 1020}, True)
-
+def test_token_attributes_login_failed(download_token):
     with client(auth=None) as c:
         with expect_audit_log([
             {
@@ -326,7 +338,7 @@ def test_token_attributes_login_failed():
                     "credentials": {
                         "credentials": "TOKEN",
                         "credentials_data": {
-                            "token": token,
+                            "token": download_token,
                         },
                     },
                     "error": "Bad token",
@@ -334,7 +346,7 @@ def test_token_attributes_login_failed():
                 "success": False,
             }
         ], include_logins=True):
-            c.call("auth.login_with_token", token)
+            c.call("auth.login_with_token", download_token)
 
 
 def test_api_key_login():
