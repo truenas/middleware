@@ -1,7 +1,5 @@
-import errno
 import pytest
 
-from middlewared.service_exception import CallError
 from middlewared.service_exception import ValidationErrors as Verr
 from middlewared.test.integration.assets.product import product_type, set_fips_available
 from middlewared.test.integration.assets.two_factor_auth import (
@@ -11,7 +9,7 @@ from middlewared.test.integration.utils import call, client, password
 from truenas_api_client import ValidationErrors
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(autouse=True)
 def clear_ratelimit():
     call('rate.limit.cache_clear')
 
