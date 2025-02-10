@@ -85,7 +85,7 @@ class Service(SimpleService):
                 # for filling in the hyper-threaded ids
                 # temperatures. (i.e. we just copy the
                 # temp of the parent physical core id)
-                data[cinfo['ht_map'][core]] = temp
+                data[cinfo['ht_map'][f'cpu{core}']] = temp
                 total_temp += temp
             except KeyError:
                 continue
