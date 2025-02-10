@@ -9,7 +9,7 @@ from middlewared.test.integration.utils import call, client, password
 from truenas_api_client import ValidationErrors
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(autouse=True)
 def clear_ratelimit():
     call('rate.limit.cache_clear')
 
