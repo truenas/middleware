@@ -156,8 +156,7 @@ class FailoverService(ConfigService):
         # NOTE: `failover.enclosure.detect` is cached
         return await self.middleware.call('failover.enclosure.detect')
 
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(Str())
+    @private
     async def hardware(self):
         """
         Returns the hardware type for an HA system.
@@ -185,8 +184,6 @@ class FailoverService(ConfigService):
         return (await self.ha_mode())[1]
 
     @private
-    @accepts()
-    @returns(List(Str('interface')))
     async def internal_interfaces(self):
         """
         This is a p2p ethernet connection on HA systems.
@@ -255,8 +252,7 @@ class FailoverService(ConfigService):
         await self.middleware.call('failover.status')
         await self.middleware.call('failover.disabled.reasons')
 
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(Bool())
+    @private
     def in_progress(self):
         """
         Returns True if there is an ongoing failover event.
@@ -316,8 +312,7 @@ class FailoverService(ConfigService):
                 # this shouldn't be reached but better safe than sorry
                 os.system('shutdown -r now')
 
-    @accepts(roles=['FAILOVER_WRITE'], audit='Failover force master')
-    @returns(Bool())
+    @private
     async def force_master(self):
         """
         Force this controller to become MASTER, if it's not already.
@@ -477,57 +472,8 @@ class FailoverService(ConfigService):
 
         return result
 
-    @accepts(Dict(
-        'options',
-        List(
-            'pools', items=[
-                Dict(
-                    'pool_keys',
-                    Str('name', required=True),
-                    Str('passphrase', required=True)
-                )
-            ],
-        ),
-        List(
-            'datasets', items=[
-                Dict(
-                    'dataset_keys',
-                    Str('name', required=True),
-                    Str('passphrase', required=True),
-                )
-            ],
-        ),
-    ))
-    @returns(Bool())
-    async def unlock(self, options):
-        """
-        Unlock datasets in HA, syncing passphrase between controllers and forcing this controller
-        to be MASTER importing the pools.
-        """
-        if options['pools'] or options['datasets']:
-            await self.middleware.call(
-                'failover.update_encryption_keys', {
-                    'pools': options['pools'],
-                    'datasets': options['datasets'],
-                },
-            )
-
-        return await self.middleware.call('failover.force_master')
-
     @private
-    @accepts(
-        Str('pool_name'),
-    )
-    @returns(Dict(
-        List('unlocked', items=[Str('dataset')], required=True),
-        Dict(
-            'failed',
-            required=True,
-            additional_attrs=True,
-            example={'vol1/enc': {'error': 'Invalid Key', 'skipped': []}},
-        ),
-    ))
-    @job(lock=lambda args: f'failover_dataset_unlock_{args[0]}')
+    @job(lock='failover_dataset_unlock')
     async def unlock_zfs_datasets(self, job, pool_name):
         # Unnlock all (if any) zfs datasets for `pool_name`
         # that we have keys for in the cache or the database.
@@ -548,7 +494,6 @@ class FailoverService(ConfigService):
         return await job.wrap(unlock_job)
 
     @private
-    @accepts()
     async def encryption_keys(self):
         # TODO: remove GELI key since it's
         # not supported in SCALE
@@ -557,33 +502,30 @@ class FailoverService(ConfigService):
         )
 
     @private
-    @accepts(
-        Dict(
-            'update_encryption_keys',
-            Bool('sync_keys', default=True),
-            List(
-                'pools', items=[
-                    Dict(
-                        'pool_geli_keys',
-                        Str('name', required=True),
-                        Str('passphrase', required=True),
-                    )
+    async def update_encryption_keys(self, options: dict):
+        """
+        `options` should look like
+            {
+                'sync_keys': True,
+                'pools': [
+                    {
+                        'name': 'tank',
+                        'passphrase': 'blah',
+                    },
                 ],
-            ),
-            List(
-                'datasets', items=[
-                    Dict(
-                        'dataset_keys',
-                        Str('name', required=True),
-                        Str('passphrase', required=True),
-                    )
-                ],
-            ),
-        )
-    )
-    async def update_encryption_keys(self, options):
+                'datasets': [
+                    {
+                        'name': 'tank/dataset',
+                        'passphrase': 'blah',
+                    },
+                ]
+            }
+        """
         # TODO: remove `pools` key and `geli` logic
         # since GELI is not supported in SCALE
+        options.setdefault('sync_keys', True)
+        options.setdefault('pools', [])
+        options.setdefault('datasets', [])
         if not options['pools'] and not options['datasets']:
             raise CallError('Please specify pools/datasets to update')
 
@@ -598,17 +540,20 @@ class FailoverService(ConfigService):
                 await self.sync_keys_to_remote_node(lock=False)
 
     @private
-    @accepts(
-        Dict(
-            'remove_encryption_keys',
-            Bool('sync_keys', default=True),
-            List('pools', items=[Str('pool')]),
-            List('datasets', items=[Str('dataset')]),
-        )
-    )
     async def remove_encryption_keys(self, options):
+        """
+        `options` should look like
+            {
+                'sync_keys': True,
+                'pools': ['tank',],
+                'datasets': ['tank/dataset',]
+            }
+        """
         # TODO: remove `pools` key and `geli` logic
         # since GELI is not supported in SCALE
+        options.setdefault('sync_keys', True)
+        options.setdefault('pools', [])
+        options.setdefault('datasets', [])
         if not options['pools'] and not options['datasets']:
             raise CallError('Please specify pools/datasets to remove')
 
@@ -627,42 +572,6 @@ class FailoverService(ConfigService):
     @private
     async def is_single_master_node(self):
         return await self.middleware.call('failover.status') in ('MASTER', 'SINGLE')
-
-    @accepts(
-        Str('action', enum=['ENABLE', 'DISABLE']),
-        Dict(
-            'options',
-            Bool('active'),
-        ),
-        roles=['FAILOVER_WRITE']
-    )
-    @returns()
-    async def control(self, action, options):
-        if not options:
-            # The node making the call is the one we want to make MASTER by default
-            node = await self._master_node((await self.middleware.call('failover.node')))
-        else:
-            node = await self._master_node(options.get('active'))
-
-        failover = await self.middleware.call('datastore.config', 'system.failover')
-        if action == 'ENABLE':
-            if failover['disabled'] is False:
-                # Already enabled
-                return False
-            update = {
-                'disabled': False,
-                'master_node': node,
-            }
-        elif action == 'DISABLE':
-            if failover['disabled'] is True:
-                # Already disabled
-                return False
-            update = {
-                'disabled': True,
-                'master_node': node,
-            }
-
-        await self.middleware.call('datastore.update', 'system.failover', failover['id'], update)
 
     @private
     def upgrade_version(self):
