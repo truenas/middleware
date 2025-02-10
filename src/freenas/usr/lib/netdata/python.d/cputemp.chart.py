@@ -86,11 +86,12 @@ class Service(SimpleService):
                 # temperatures. (i.e. we just copy the
                 # temp of the parent physical core id)
                 data[cinfo['ht_map'][core]] = temp
+                total_temp += temp
             except KeyError:
                 continue
 
         if total_temp:
-            data['cpu'] = total_temp / len(data.keys())
+            data['cpu'] = total_temp / len(data)
 
         return data or ({f'cpu{i}': 0 for i in range(cinfo['core_count'])} | {'cpu': 0})
 
