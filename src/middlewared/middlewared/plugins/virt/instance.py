@@ -141,7 +141,7 @@ class VirtInstanceService(CRUDService):
                     entry['aliases'].append({
                         'type': address['family'].upper(),
                         'address': address['address'],
-                        'netmask': int(address['netmask']),
+                        'netmask': int(address['netmask']) if address['netmask'] else None,
                     })
 
         return filter_list(entries, filters, options)
