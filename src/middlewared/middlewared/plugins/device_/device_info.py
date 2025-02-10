@@ -4,12 +4,9 @@ import pyudev
 
 import libsgio
 from middlewared.plugins.disk_.disk_info import get_partition_size_info
-from middlewared.schema import Dict, returns
-from middlewared.service import Service, accepts, private
-from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_names, get_disk_serial_from_block_device, safe_retrieval
-from middlewared.utils.functools_ import cache
+from middlewared.service import Service, private
+from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
 from middlewared.utils.gpu import get_gpus
-from middlewared.utils.serial import serial_port_choices
 
 
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
@@ -29,30 +26,8 @@ class DeviceService(Service):
     DISK_ROTATION_ERROR_LOG_CACHE = set()
 
     @private
-    @cache
-    def host_type(self):
-        return self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-
-    @private
-    def get_serials(self):
-        return serial_port_choices()
-
-    @private
     def get_disk_serial(self, dev):
         return get_disk_serial_from_block_device(dev)
-
-    @private
-    def get_disk_names(self):
-        """
-        This endpoint serves almost exclusively to be called in our
-        reporting plugin. It just needs the block device names
-        (sda/nvme0n1/pmem0/etc) and so this will very quickly enumerate
-        that information.
-
-        NOTE: The return of this method should match the keys retrieved
-        when running `self.get_disks`.
-        """
-        return get_disk_names()
 
     @private
     def get_disks(self, get_partitions=False, serial_only=False):
@@ -215,28 +190,6 @@ class DeviceService(Service):
             return
         except Exception:
             self.logger.debug('Failed to retrieve disk details for %s', name, exc_info=True)
-
-    def _get_type_and_rotation_rate(self, disk_data, device_path):
-        if disk_data['rota']:
-            if self.HOST_TYPE == 'QEMU':
-                # qemu/kvm guests do not support necessary ioctl for
-                # retrieving rotational rate
-                type_ = 'HDD'
-                rotation_rate = None
-            else:
-                rotation_rate = self._get_rotation_rate(device_path)
-                if rotation_rate:
-                    type_ = 'HDD'
-                else:
-                    # Treat rotational devices without rotation rate as SSDs
-                    # (some USB bridges report SSDs as rotational devices, see
-                    # https://jira.ixsystems.com/browse/NAS-112230)
-                    type_ = 'SSD'
-        else:
-            type_ = 'SSD'
-            rotation_rate = None
-
-        return type_, rotation_rate
 
     def _get_rotation_rate(self, device_path):
         try:
