@@ -26,9 +26,9 @@ class CpuInfo(typing.TypedDict):
     physical_core_count: int
     """The total number of physical CPU cores"""
     ht_map: dict[str, str]
-    """A mapping of hyper-threaded ids to their
-        parent physical core id
-        (i.e. {"cpu8": "cpu0", "cpu9": "cpu1"})"""
+    """A mapping of physical core ids to their
+        hyper-threaded ids
+        (i.e. {"cpu0": "cpu8", "cpu1": "cpu9"})"""
 
 
 @functools.cache
@@ -78,7 +78,7 @@ def cpu_info_impl() -> CpuInfo:
                         #   This means `cpu0` is a physical core because
                         #   the `0` in `cpu0` matches the first number
                         #   in the file (0,8)
-                        ht_map[i.name] = f'cpu{pcid}'
+                        ht_map[f'cpu{pcid}'] = i.name
             except FileNotFoundError:
                 continue
 
