@@ -24,7 +24,7 @@ from .device import *  # noqa
 from .disk import *  # noqa
 from .docker import *  # noqa
 from .docker_network import *  # noqa
-from enclosure2 import *  # noqa
+from .enclosure2 import *  # noqa
 from .enclosure_label import *  # noqa
 from .failover_reboot import *  # noqa
 from .fc import *  # noqa
