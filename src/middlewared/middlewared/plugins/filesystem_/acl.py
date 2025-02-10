@@ -965,7 +965,6 @@ class FilesystemService(Service):
     @api_method(
         FilesystemAddToAclArgs,
         FilesystemAddToAclResult,
-        roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem add to ACL',
         audit_extended=lambda data: data['path'],
         private=True

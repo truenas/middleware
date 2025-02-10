@@ -1338,7 +1338,7 @@ class SharingSMBService(SharingService):
                     'This feature may be enabled in the general SMB server configuration.'
                 )
 
-    @api_method(SmbSharePrecheckArgs, SmbSharePrecheckResult, roles=['READONLY_ADMIN'], private=True)
+    @api_method(SmbSharePrecheckArgs, SmbSharePrecheckResult, private=True)
     async def share_precheck(self, data):
         verrors = ValidationErrors()
         ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']

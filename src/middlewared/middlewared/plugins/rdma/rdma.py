@@ -54,7 +54,7 @@ class RDMAService(Service):
                 result['part'] = sline[len(PART_NUMBER_PREFIX):]
         return result
 
-    @api_method(RdmaLinkConfigArgs, RdmaLinkConfigResult, private=True, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(RdmaLinkConfigArgs, RdmaLinkConfigResult, private=True)
     async def get_link_choices(self, all):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
