@@ -25,7 +25,7 @@ REMOTE_CHOICES: TypeAlias = Literal['LINUX_CONTAINERS']
 class VirtInstanceAlias(BaseModel):
     type: Literal['INET', 'INET6']
     address: NonEmptyString
-    netmask: int
+    netmask: int | None
 
 
 class Image(BaseModel):
