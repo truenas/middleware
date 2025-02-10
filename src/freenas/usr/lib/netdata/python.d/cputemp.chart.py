@@ -3,8 +3,7 @@ from collections import defaultdict
 from copy import deepcopy
 from third_party import lm_sensors as sensors
 
-from middlewared.utils.cpu import amd_cpu_temperatures, generic_cpu_temperatures, cpu_info
-
+from middlewared.utils.cpu import amd_cpu_temperatures, cpu_info, generic_cpu_temperatures
 
 CPU_TEMPERATURE_FEAT_TYPE = 2
 
@@ -77,13 +76,24 @@ class Service(SimpleService):
 
         data = {}
         total_temp = 0
+        cinfo = cpu_info()
         for core, temp in cpu_temps.items():
             data[f'cpu{core}'] = temp
             total_temp += temp
+            try:
+                # we follow the paradigm that htop uses
+                # for filling in the hyper-threaded ids
+                # temperatures. (i.e. we just copy the
+                # temp of the parent physical core id)
+                data[cinfo['ht_map'][f'cpu{core}']] = temp
+                total_temp += temp
+            except KeyError:
+                continue
 
         if total_temp:
-            data['cpu'] = total_temp / len(data.keys())
-        return data or ({f'cpu{i}': 0 for i in range(cpu_info()['core_count'])} | {'cpu': 0})
+            data['cpu'] = total_temp / len(data)
+
+        return data or ({f'cpu{i}': 0 for i in range(cinfo['core_count'])} | {'cpu': 0})
 
     def check(self):
         try:
