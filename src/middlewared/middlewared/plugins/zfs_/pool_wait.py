@@ -1,10 +1,7 @@
 import libzfs
 
-from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, Service
-
-
-POOL_ACTIVITY_TYPES = [a.name for a in libzfs.ZpoolWaitActivity]
+from middlewared.service_exception import ValidationError
 
 
 class ZFSPoolService(Service):
@@ -14,14 +11,22 @@ class ZFSPoolService(Service):
         private = True
         process_pool = True
 
-    @accepts(
-        Str('pool_name'),
-        Dict(
-            'options',
-            Str('activity_type', enum=POOL_ACTIVITY_TYPES, required=True),
-        )
-    )
-    def wait(self, pool_name, options):
+    def wait(self, pool_name: str, options: dict):
+        """Wait on zpool operations to complete.
+
+        Args:
+            pool_name: (required) str the name of the zpool
+            options: (required) dictionary with a top-level key of
+                "activity_type" whose value may be one of
+                the values in `libzfs.ZpoolWaitActivity`
+        """
+        avail = tuple([a.name for a in libzfs.ZpoolWaitActivity])
+        if options['activity_type'] not in avail:
+            raise ValidationError(
+                'activity_type',
+                f'{options["activity_type"]!r} not a valid type. Must be one of {", ".join(avail)}'
+            )
+
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(pool_name)
