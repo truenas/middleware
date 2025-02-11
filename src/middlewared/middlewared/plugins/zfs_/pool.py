@@ -3,7 +3,7 @@ import libzfs
 
 from middlewared.service import CallError, Service, job, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.utils.zfs import guid_fast_impl, state_fast_impl, query_imported_fast_impl
+from middlewared.utils.zfs import query_imported_fast_impl
 from .pool_utils import convert_topology, find_vdev
 
 
@@ -129,20 +129,6 @@ class ZFSPoolService(Service):
         # the equivalent of running `zpool list -H -o guid,name` from cli
         # name_filters will be a list of pool names
         return query_imported_fast_impl(name_filters)
-
-    def guid_fast(self, pool: str):
-        """
-        Lockless read of zpool guid. Raises FileNotFoundError
-        if pool not imported.
-        """
-        return guid_fast_impl(pool)
-
-    def state_fast(self, pool: str):
-        """
-        Lockless read of zpool state. Raises FileNotFoundError
-        if pool not imported.
-        """
-        return state_fast_impl(pool)
 
     def validate_draid_configuration(self, topology_type, numdisks, nparity, vdev):
         verrors = ValidationErrors()
