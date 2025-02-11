@@ -27,9 +27,9 @@ class CloudFlareAuthenticator(Authenticator):
         verrors = ValidationErrors()
         if data.get('api_token'):
             if data.get('cloudflare_email'):
-                verrors.add('cloudflare_email', 'Should not be specified when using "api_token".')
+                verrors.add('cloudflare_email', 'The Cloudflare email should not be specified when using an "api_token." It is only required when using an "api_key."')
             if data.get('api_key'):
-                verrors.add('api_key', 'Should not be specified when using "api_token".')
+                verrors.add('api_key', 'You can use either an "api_token" or the combination of "Cloudflare email + api_key" (old way) for verification, but not both.')
 
         elif data.get('cloudflare_email') or data.get('api_key'):
             if not data.get('cloudflare_email'):
