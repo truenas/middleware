@@ -1,13 +1,13 @@
 import errno
 import libzfs
 
-from middlewared.service import CallError, Service, job, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.zfs import query_imported_fast_impl
 from .pool_utils import convert_topology, find_vdev
 
 
-class ZFSPoolService(Service):
+class ZFSPoolService(CRUDService):
 
     class Config:
         namespace = 'zfs.pool'
