@@ -171,26 +171,28 @@ class SystemGeneralService(ConfigService):
 
         tnc_config = await self.middleware.call('tn_connect.config')
         certificate_id = data.get('ui_certificate')
-        cert = await self.middleware.call(
-            'certificate.query',
-            [["id", "=", certificate_id]]
-        )
-        if not cert:
-            verrors.add(
-                f'{schema}.ui_certificate',
-                'Please specify a valid certificate which exists in the system'
+        if certificate_id != old_config['ui_certificate']:
+            # Only validate cert if it has been changed
+            cert = await self.middleware.call(
+                'certificate.query',
+                [["id", "=", certificate_id]]
             )
-        elif tnc_config['certificate'] and tnc_config['certificate'] != certificate_id:
-            verrors.add(
-                f'{schema}.ui_certificate',
-                'Certificate cannot be changed when TrueNAS Connect has been configured'
-            )
-        else:
-            verrors.extend(
-                await self.middleware.call(
-                    'certificate.cert_services_validation', certificate_id, f'{schema}.ui_certificate', False
+            if not cert:
+                verrors.add(
+                    f'{schema}.ui_certificate',
+                    'Please specify a valid certificate which exists in the system'
                 )
-            )
+            elif tnc_config['certificate'] and tnc_config['certificate'] != certificate_id:
+                verrors.add(
+                    f'{schema}.ui_certificate',
+                    'Certificate cannot be changed when TrueNAS Connect has been configured'
+                )
+            else:
+                verrors.extend(
+                    await self.middleware.call(
+                        'certificate.cert_services_validation', certificate_id, f'{schema}.ui_certificate', False
+                    )
+                )
 
         return verrors
 
