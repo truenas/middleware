@@ -1,6 +1,5 @@
 import libzfs
 
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import CallError, job, Service
 from middlewared.utils import filter_list
 
@@ -15,20 +14,23 @@ class ZFSDatasetService(Service):
         private = True
         process_pool = True
 
-    @accepts(
-        Ref('query-filters'),
-        Ref('query-options'),
-        List(
-            'additional_information',
-            items=[Str('desideratum', enum=['SIZE', 'RO', 'DEVID', 'ATTACHMENT'])]
-        )
-    )
-    def unlocked_zvols_fast(self, filters, options, additional_information):
+    def unlocked_zvols_fast(
+        self,
+        filters: list | None = None,
+        options: dict | None = None,
+        additional_information: list | None = None
+    ):
         """
         Fast check for zvol information. Supports `additional_information` to
         expand output on an as-needed basis. Adding additional_information to
         the output may impact performance of 'fast' method.
         """
+        if filters is None:
+            filters = []
+        if options is None:
+            options = dict()
+        if additional_information is None:
+            additional_information = []
 
         def get_attachments():
             extents = self.middleware.call_sync(
@@ -113,17 +115,15 @@ class ZFSDatasetService(Service):
         if not ds.encrypted:
             raise CallError(f'{id_} is not encrypted')
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'load_key_options',
-            Bool('mount', default=True),
-            Bool('recursive', default=False),
-            Any('key', default=None, null=True),
-            Str('key_location', default=None, null=True),
-        ),
-    )
-    def load_key(self, id_, options):
+    def load_key(self, id_: str, options: dict | None = None):
+        if options is None:
+            options = {
+                'mount': True,
+                'recursive': False,
+                'key': None,
+                'key_location': None,
+            }
+
         mount_ds = options.pop('mount')
         recursive = options.pop('recursive')
         try:
@@ -138,18 +138,16 @@ class ZFSDatasetService(Service):
             if mount_ds:
                 self.middleware.call_sync('zfs.dataset.mount', id_, {'recursive': recursive})
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'check_key',
-            Any('key', default=None, null=True),
-            Str('key_location', default=None, null=True),
-        )
-    )
-    def check_key(self, id_, options):
+    def check_key(self, id_: str, options: dict | None = None):
         """
         Returns `true` if the `key` is valid, `false` otherwise.
         """
+        if options is None:
+            options = {
+                'key': None,
+                'key_location': None,
+            }
+
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id_)
@@ -159,16 +157,14 @@ class ZFSDatasetService(Service):
             self.logger.error(f'Failed to check key for {id_}', exc_info=True)
             raise CallError(f'Failed to check key for {id_}: {e}')
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'unload_key_options',
-            Bool('recursive', default=False),
-            Bool('force_umount', default=False),
-            Bool('umount', default=False),
-        )
-    )
-    def unload_key(self, id_, options):
+    def unload_key(self, id_: str, options: dict | None = None):
+        if options is None:
+            options = {
+                'recursive': False,
+                'force_umount': False,
+                'umount': False,
+            }
+
         force = options.pop('force_umount')
         if options.pop('umount') and self.middleware.call_sync(
                 'zfs.dataset.query', [['id', '=', id_]], {'extra': {'retrieve_children': False}, 'get': True}
@@ -185,21 +181,14 @@ class ZFSDatasetService(Service):
             self.logger.error(f'Failed to unload key for {id_}', exc_info=True)
             raise CallError(f'Failed to unload key for {id_}: {e}')
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'change_key_options',
-            Dict(
-                'encryption_properties',
-                Str('keyformat'),
-                Str('keylocation'),
-                Int('pbkdf2iters')
-            ),
-            Bool('load_key', default=True),
-            Any('key', default=None, null=True),
-        ),
-    )
-    def change_key(self, id_, options):
+    def change_key(self, id_: str, options: dict | None = None):
+        if options is None:
+            options = {
+                'encryption_properties': {},
+                'load_key': True,
+                'key': None,
+            }
+
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id_)
@@ -209,14 +198,10 @@ class ZFSDatasetService(Service):
             self.logger.error(f'Failed to change key for {id_}', exc_info=True)
             raise CallError(f'Failed to change key for {id_}: {e}')
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'change_encryption_root_options',
-            Bool('load_key', default=True),
-        )
-    )
-    def change_encryption_root(self, id_, options):
+    def change_encryption_root(self, id_: str, options: dict | None = None):
+        if options is None:
+            options = {'load_key': True}
+
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id_)
@@ -224,9 +209,8 @@ class ZFSDatasetService(Service):
         except libzfs.ZFSException as e:
             raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
-    @accepts(Str('name'), List('params', private=True))
     @job()
-    def bulk_process(self, job, name, params):
+    def bulk_process(self, job, name: str, params: list):
         f = getattr(self, name, None)
         if not f:
             raise CallError(f'{name} method not found in zfs.dataset')
