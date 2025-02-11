@@ -97,15 +97,6 @@ class SystemService(Service):
         """Returns the full name of the software version of the system."""
         return sw_info()['fullname']
 
-    @no_authz_required
-    @accepts()
-    @returns(Str('is_stable'))
-    def is_stable(self):
-        """
-        Returns whether software version of the system is stable.
-        """
-        return sw_info()['stable']
-
     @private
     async def platform(self):
         return 'LINUX'
