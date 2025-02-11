@@ -198,4 +198,4 @@ class SmbSharePrecheckArgs(BaseModel):
 
 
 class SmbSharePrecheckResult(BaseModel):
-    result: Literal[None]
+    result: None
