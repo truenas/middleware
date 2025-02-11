@@ -3,16 +3,6 @@ import pytest
 from middlewared.test.integration.assets.roles import common_checks
 
 
-@pytest.mark.parametrize('method, role, valid_role', (
-    ('certificate.profiles', 'CERTIFICATE_READ', True),
-    ('certificateauthority.profiles', 'CERTIFICATE_AUTHORITY_READ', True),
-    ('certificate.profiles', 'CERTIFICATE_AUTHORITY_READ', False),
-    ('certificateauthority.profiles', 'CERTIFICATE_READ', False),
-))
-def test_profiles_read_roles(unprivileged_user_fixture, method, role, valid_role):
-    common_checks(unprivileged_user_fixture, method, role, valid_role, valid_role_exception=False)
-
-
 @pytest.mark.parametrize('role, valid_role', (
     ('CERTIFICATE_AUTHORITY_WRITE', True),
     ('CERTIFICATE_AUTHORITY_READ', False),

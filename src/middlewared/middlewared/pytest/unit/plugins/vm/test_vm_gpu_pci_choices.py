@@ -1,7 +1,4 @@
-from unittest.mock import Mock, patch
-
 from middlewared.pytest.unit.helpers import load_compound_service
-from middlewared.pytest.unit.middleware import Middleware
 
 
 VMDeviceService = load_compound_service('vm.device')
@@ -206,11 +203,3 @@ IOMMU_GROUPS = {
         ]
     },
 }
-
-
-def test_get_pci_ids_for_gpu_isolation():
-    with patch('middlewared.plugins.vm.pci.get_iommu_groups_info', Mock(return_value=IOMMU_GROUPS)):
-        with patch('middlewared.plugins.vm.pci.get_gpus', Mock(return_value=AVAILABLE_GPUs)):
-            assert set(VMDeviceService(Middleware()).get_pci_ids_for_gpu_isolation('0000:16:0e.0')) == {
-                'pci_0000_16_0e_0', 'pci_0000_16_0e_2'
-            }
