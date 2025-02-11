@@ -1,22 +1,25 @@
 import errno
 import libzfs
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import CallError, CRUDService, filterable, job, ValidationErrors
+from middlewared.service import CallError, Service, job, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.zfs import guid_fast_impl, state_fast_impl, query_imported_fast_impl
 from .pool_utils import convert_topology, find_vdev
 
 
-class ZFSPoolService(CRUDService):
+class ZFSPoolService(Service):
 
     class Config:
         namespace = 'zfs.pool'
         private = True
         process_pool = True
 
-    @filterable
-    def query(self, filters, options):
+    def query(self, filters: list | None = None, options: dict | None = None):
+        if filters is None:
+            filters = list()
+        if options is None:
+            options = dict()
+
         # We should not get datasets, there is zfs.dataset.query for that
         state_kwargs = {'datasets_recursive': False}
         with libzfs.ZFS() as zfs:
@@ -30,40 +33,27 @@ class ZFSPoolService(CRUDService):
                 pools = [i.asdict(**state_kwargs) for i in zfs.pools]
         return filter_list(pools, filters, options)
 
-    @accepts(
-        Dict(
-            'zfspool_create',
-            Str('name', required=True),
-            List('vdevs', items=[
-                Dict(
-                    'vdev',
-                    Str('root', enum=['DATA', 'CACHE', 'LOG', 'SPARE', 'SPECIAL', 'DEDUP'], required=True),
-                    Str(
-                        'type', enum=[
-                            'DRAID1', 'DRAID2', 'DRAID3', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'
-                        ], required=True,
-                    ),
-                    List('devices', items=[Str('disk')], required=True),
-                    Int('draid_data_disks'),
-                    Int('draid_spare_disks'),
-                ),
-            ], required=True),
-            Dict('options', additional_attrs=True),
-            Dict('fsoptions', additional_attrs=True),
-        ),
-    )
-    def do_create(self, data):
+    def create(self, data: dict):
+        """
+        Create a zpool.
+            Cf. `pool.create` public endpoint for schema documentation'
+        """
+        data.setdefault('options', dict())
+        data.setdefault('fsoptions', dict())
         with libzfs.ZFS() as zfs:
             topology = convert_topology(zfs, data['vdevs'])
             zfs.create(data['name'], topology, data['options'], data['fsoptions'])
-
         return self.middleware.call_sync('zfs.pool.get_instance', data['name'])
 
-    @accepts(Str('pool'), Dict(
-        'options',
-        Dict('properties', additional_attrs=True),
-    ))
-    def do_update(self, name, options):
+    def update(self, name: str, options: dict | None = None):
+        """
+        Update a zpool.
+            Cf. `pool.update` public endpoint for schema documentation'
+        """
+        if options is None:
+            options = dict()
+
+        options.setdefault('properties', dict())
         try:
             with libzfs.ZFS() as zfs:
                 pool = zfs.get(name)
@@ -78,11 +68,14 @@ class ZFSPoolService(CRUDService):
         else:
             return options
 
-    @accepts(Str('pool'), Dict(
-        'options',
-        Bool('force', default=False),
-    ))
-    def do_delete(self, name, options):
+    def delete(self, name: str, options: dict | None = None):
+        """
+        Delete a zpool.
+            Cf. `pool.delete` public endpoint for schema documentation'
+        """
+        if options is None:
+            options = dict()
+        options.setdefault('force', False)
         try:
             with libzfs.ZFS() as zfs:
                 zfs.destroy(name, force=options['force'])
@@ -94,24 +87,18 @@ class ZFSPoolService(CRUDService):
         else:
             return True
 
-    @accepts(
-        Str('name'),
-        List('new', default=None, null=True),
-        List('existing', items=[
-            Dict(
-                'attachvdev',
-                Str('target'),
-                Str('type', enum=['DISK']),
-                Str('path'),
-            ),
-        ], null=True, default=None),
-    )
     @job()
-    def extend(self, job, name, new, existing):
+    def extend(
+        self,
+        job,
+        name: str,
+        new: list[str] | None = None,
+        existing: list[dict[str, str]] | None = None
+    ):
         """
-        Extend a zfs pool `name` with `new` vdevs or attach to `existing` vdevs.
+        Extend a zpool.
+            Cf. `pool.extend` public endpoint for schema documentation'
         """
-
         if new is None and existing is None:
             raise CallError('New or existing vdevs must be provided', errno.EINVAL)
 
@@ -143,16 +130,14 @@ class ZFSPoolService(CRUDService):
         # name_filters will be a list of pool names
         return query_imported_fast_impl(name_filters)
 
-    @accepts(Str('pool'))
-    def guid_fast(self, pool):
+    def guid_fast(self, pool: str):
         """
         Lockless read of zpool guid. Raises FileNotFoundError
         if pool not imported.
         """
         return guid_fast_impl(pool)
 
-    @accepts(Str('pool'))
-    def state_fast(self, pool):
+    def state_fast(self, pool: str):
         """
         Lockless read of zpool state. Raises FileNotFoundError
         if pool not imported.
