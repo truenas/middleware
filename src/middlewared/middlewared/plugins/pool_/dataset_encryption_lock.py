@@ -26,7 +26,8 @@ class PoolDatasetService(Service):
         Dict(
             'lock_options',
             Bool('force_umount', default=False),
-        )
+        ),
+        roles=['DATASET_WRITE']
     )
     @returns(Bool('locked'))
     @job(lock=lambda args: 'dataset_lock')
@@ -104,7 +105,8 @@ class PoolDatasetService(Service):
                     )
                 ],
             ),
-        )
+        ),
+        roles=['DATASET_WRITE']
     )
     @returns(Dict(
         List('unlocked', items=[Str('dataset')], required=True),
