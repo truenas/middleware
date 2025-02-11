@@ -3,10 +3,9 @@ import libzfs
 import subprocess
 import functools
 
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, Service
-from middlewared.validators import Range
+from middlewared.utils import BOOT_POOL_NAME_VALID
 
 from .pool_utils import find_vdev, SEARCH_PATHS
 

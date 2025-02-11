@@ -12,13 +12,12 @@ from middlewared.api.current import (
 )
 from middlewared.schema import accepts, returns, Patch
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils import run
+from middlewared.utils import run, BOOT_POOL_NAME_VALID
 from middlewared.utils.disks import valid_zfs_partition_uuids
 
 
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
 BOOT_POOL_NAME = BOOT_POOL_DISKS = None
-BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
 
 
 class BootUpdateInitramfsOptions(BaseModel):
