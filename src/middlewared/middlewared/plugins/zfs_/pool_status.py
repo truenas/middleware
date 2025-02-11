@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import Service
 
 from .status_util import get_normalized_disk_info, get_zfs_vdev_disks, get_zpool_status
@@ -67,16 +66,14 @@ class ZPoolService(Service):
 
         return final
 
-    @accepts(Dict(
-        Str('name', required=False, default=None),
-        Bool('real_paths', required=False, default=False),
-    ))
-    def status(self, data):
+    def status(self, data: dict | None = None):
         """The equivalent of running 'zpool status' from the cli.
 
-        `name`: str the name of the zpool for which to return the status info
-        `real_paths`: bool if True, resolve the underlying devices to their
-            real device (i.e. /dev/disk/by-id/blah -> /dev/sda1)
+        Args:
+            data: dictionary with the following top-level keys.
+                `name`: str the name of the zpool for which to return the status info
+                `real_paths`: bool if True, resolve the underlying devices to their
+                    real device (i.e. /dev/disk/by-id/blah -> /dev/sda1)
 
         An example of what this returns looks like the following:
             {
@@ -118,6 +115,11 @@ class ZPoolService(Service):
                 }
             }
         """
+        if data is None:
+            data = dict()
+        data.setdefault('name', None)
+        data.setdefault('real_paths', False)
+
         final = {'disks': dict(), 'pools': dict()}
         for pool_name, pool_info in get_zpool_status(data.get('name')).items():
             final['pools'][pool_name] = dict()
