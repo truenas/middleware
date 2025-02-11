@@ -16,5 +16,5 @@ class DeviceService(Service):
         if method == 'device.get_disks':
             return await self.middleware.call(method, data['get_partitions'], data['serials_only'])
         elif method == 'device.get_serials':
-            return await self.middleware.run_in_thread(serial_port_choices())
+            return await self.middleware.run_in_thread(serial_port_choices)
         return await self.middleware.call(method)
