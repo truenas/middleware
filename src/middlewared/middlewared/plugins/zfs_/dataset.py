@@ -104,7 +104,7 @@ class ZFSDatasetService(CRUDService):
 
         return filter_list(datasets, filters, options)
 
-    def do_create(self, data: dict):
+    def create(self, data: dict):
         """Creates a ZFS dataset or zvol.
 
         Args: a dictionary with following keys
@@ -155,7 +155,7 @@ class ZFSDatasetService(CRUDService):
         else:
             return data
 
-    def do_update(self, id_: str, data: dict):
+    def update(self, id_: str, data: dict):
         """Update a ZFS dataset or zvol.
 
         Args:
@@ -191,7 +191,7 @@ class ZFSDatasetService(CRUDService):
         else:
             return data
 
-    def do_delete(self, id_: str, options: dict | None = None):
+    def delete(self, id_: str, options: dict | None = None):
         """Delete a ZFS dataset or zvol.
 
         Args:
