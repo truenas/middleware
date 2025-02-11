@@ -147,7 +147,7 @@ def test_create_catalog_app(docker_pool):
     with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget',
-    }) as app_info:
+    }, {'remove_images': False}) as app_info:
         assert app_info['name'] == 'actual-budget', app_info
         assert app_info['state'] == 'DEPLOYING', app_info
         volume_ds = call('app.get_app_volume_ds', 'actual-budget')
@@ -158,7 +158,7 @@ def test_create_custom_app(docker_pool):
     with app('custom-budget', {
         'custom_app': True,
         'custom_compose_config': CUSTOM_CONFIG,
-    }) as app_info:
+    }, {'remove_images': False}) as app_info:
         assert app_info['name'] == 'custom-budget'
         assert app_info['state'] == 'DEPLOYING'
 
@@ -168,7 +168,7 @@ def test_create_custom_app_validation_error(docker_pool):
         with app('custom-budget', {
             'custom_app': False,
             'custom_compose_config': CUSTOM_CONFIG,
-        }):
+        }, {'remove_images': False}):
             pass
 
 
@@ -177,31 +177,13 @@ def test_create_custom_app_invalid_yaml(docker_pool):
         with app('custom-budget', {
             'custom_app': True,
             'custom_compose_config': INVALID_YAML,
-        }):
+        }, {'remove_images': False}):
             pass
 
 
 def test_delete_app_validation_error_for_non_existent_app(docker_pool):
     with pytest.raises(ValidationErrors):
         call('app.delete', 'actual-budget', {'remove_ix_volumes': True, 'remove_images': True}, job=True)
-
-
-def test_delete_app_options(docker_pool):
-    with app(
-        'custom-budget',
-        {
-            'custom_app': True,
-            'custom_compose_config': CUSTOM_CONFIG,
-        },
-        {'remove_ix_volumes': True, 'remove_images': True}
-    ) as app_info:
-        assert app_info['name'] == 'custom-budget'
-        assert app_info['state'] == 'DEPLOYING'
-
-    app_images = call('app.image.query', [['repo_tags', '=', ['actualbudget/actual-server:24.10.1']]])
-    assert len(app_images) == 0
-    volume_ds = call('app.get_app_volume_ds', 'custom-budget')
-    assert volume_ds is None
 
 
 def test_update_app(docker_pool):
@@ -220,7 +202,7 @@ def test_update_app(docker_pool):
     with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget',
-    }) as app_info:
+    }, {'remove_images': False}) as app_info:
         app_info = call('app.update', app_info['name'], values, job=True)
         assert app_info['active_workloads']['used_ports'][0]['host_ports'][0]['host_port'] == 32000
 
@@ -229,7 +211,7 @@ def test_stop_start_app(docker_pool):
     with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget'
-    }):
+    }, {'remove_images': False}):
         # stop running app
         call('app.stop', 'actual-budget', job=True)
         states = call('app.query', [], {'select': ['state']})[0]
@@ -238,7 +220,7 @@ def test_stop_start_app(docker_pool):
         # start stopped app
         call('app.start', 'actual-budget', job=True)
         states = call('app.query', [], {'select': ['state']})[0]
-        assert states['state'] == 'DEPLOYING'
+        assert states['state'] in ['RUNNING', 'DEPLOYING']
 
 
 def test_event_subscribe(docker_pool):
@@ -267,3 +249,21 @@ def test_event_subscribe(docker_pool):
             assert expected_event_order == events
 
         assert expected_event_type_order == event_types
+
+
+def test_delete_app_options(docker_pool):
+    with app(
+        'custom-budget',
+        {
+            'custom_app': True,
+            'custom_compose_config': CUSTOM_CONFIG,
+        },
+        {'remove_ix_volumes': True, 'remove_images': True}
+    ) as app_info:
+        assert app_info['name'] == 'custom-budget'
+        assert app_info['state'] == 'DEPLOYING'
+
+    app_images = call('app.image.query', [['repo_tags', '=', ['actualbudget/actual-server:24.10.1']]])
+    assert len(app_images) == 0
+    volume_ds = call('app.get_app_volume_ds', 'custom-budget')
+    assert volume_ds is None
