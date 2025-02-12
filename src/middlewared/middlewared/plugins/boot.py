@@ -1,16 +1,36 @@
 import asyncio
 import os
 
-from contextlib import asynccontextmanager
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns, Patch
+from pydantic import Field
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
+from middlewared.api.current import (
+    BootGetDisksArgs, BootGetDisksResult, BootAttachArgs, BootAttachResult, BootDetachArgs,
+    BootDetachResult, BootReplaceArgs, BootReplaceResult, BootScrubArgs, BootScrubResult,
+    BootSetScrubIntervalArgs, BootSetScrubIntervalResult
+)
+from middlewared.schema import accepts, returns, Patch
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils import run
+from middlewared.utils import run, BOOT_POOL_NAME_VALID
 from middlewared.utils.disks import valid_zfs_partition_uuids
-from middlewared.validators import Range
+
 
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
 BOOT_POOL_NAME = BOOT_POOL_DISKS = None
-BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
+
+
+class BootUpdateInitramfsOptions(BaseModel):
+    database: str | None = None
+    force: bool = False
+
+
+class BootUpdateInitramfsArgs(BaseModel):
+    options: BootUpdateInitramfsOptions = Field(default_factory=BootUpdateInitramfsOptions)
+
+
+class BootUpdateInitramfsResult(BaseModel):
+    result: bool
 
 
 class BootService(Service):
@@ -62,8 +82,7 @@ class BootService(Service):
         global BOOT_POOL_DISKS
         BOOT_POOL_DISKS = None
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(List('disks', items=[Str('disk')]))
+    @api_method(BootGetDisksArgs, BootGetDisksResult, roles=['DISK_READ'])
     async def get_disks(self):
         """
         Returns disks of the boot pool.
@@ -81,14 +100,7 @@ class BootService(Service):
         # https://wiki.debian.org/UEFI
         return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
 
-    @accepts(
-        Str('dev'),
-        Dict(
-            'options',
-            Bool('expand', default=False),
-        ),
-    )
-    @returns()
+    @api_method(BootAttachArgs, BootAttachResult, roles=['DISK_WRITE'])
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def attach(self, job, dev, options):
         """
@@ -138,8 +150,7 @@ class BootService(Service):
         await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
         await self.update_initramfs()
 
-    @accepts(Str('dev'))
-    @returns()
+    @api_method(BootDetachArgs, BootDetachResult, roles=['DISK_WRITE'])
     async def detach(self, dev):
         """
         Detach given `dev` from boot pool.
@@ -148,8 +159,7 @@ class BootService(Service):
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
         await self.update_initramfs()
 
-    @accepts(Str('label'), Str('dev'))
-    @returns()
+    @api_method(BootReplaceArgs, BootReplaceResult, roles=['DISK_WRITE'])
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def replace(self, job, label, dev):
         """
@@ -187,8 +197,7 @@ class BootService(Service):
         await self.middleware.call('boot.install_loader', dev)
         await self.update_initramfs()
 
-    @accepts()
-    @returns()
+    @api_method(BootScrubArgs, BootScrubResult, roles=['BOOT_ENV_WRITE'])
     @job(lock='boot_scrub')
     async def scrub(self, job):
         """
@@ -197,10 +206,7 @@ class BootService(Service):
         subjob = await self.middleware.call('pool.scrub.scrub', BOOT_POOL_NAME)
         return await job.wrap(subjob)
 
-    @accepts(
-        Int('interval', validators=[Range(min_=1)])
-    )
-    @returns(Int('interval'))
+    @api_method(BootSetScrubIntervalArgs, BootSetScrubIntervalResult, roles=['BOOT_ENV_WRITE'])
     async def set_scrub_interval(self, interval):
         """
         Set Automatic Scrub Interval value in days.
@@ -213,12 +219,7 @@ class BootService(Service):
         )
         return interval
 
-    @accepts(Dict(
-        'options',
-        Str('database', default=None, null=True),
-        Bool('force', default=False),
-    ))
-    @private
+    @api_method(BootUpdateInitramfsArgs, BootUpdateInitramfsResult, private=True)
     async def update_initramfs(self, options):
         """
         Returns true if initramfs was updated and false otherwise.

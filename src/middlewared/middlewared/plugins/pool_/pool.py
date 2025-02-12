@@ -5,10 +5,10 @@ import middlewared.sqlalchemy as sa
 
 from fenced.fence import ExitCode as FencedExitCodes
 
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.schema import Bool, Dict, Int, List, Patch, Str
 from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
+from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
 

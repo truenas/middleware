@@ -4,14 +4,12 @@ import logging
 import os
 import re
 
+from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import is_child
-from middlewared.plugins.audit.utils import (
-    AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
-)
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.utils.tdb import (
     get_tdb_handle,
     TDBBatchAction,
