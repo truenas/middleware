@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import ConfigDict
+
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_result
 
 __all__ = [
@@ -23,6 +25,13 @@ class CorePingResult(BaseModel):
 
 
 class CoreSetOptionsOptions(BaseModel, metaclass=ForUpdateMetaclass):
+    # We can't use `extra="forbid"` here because newer version clients might try to set more options than we support
+    model_config = ConfigDict(
+        strict=True,
+        str_max_length=1024,
+        use_attribute_docstrings=True,
+    )
+
     py_exceptions: bool
 
 
