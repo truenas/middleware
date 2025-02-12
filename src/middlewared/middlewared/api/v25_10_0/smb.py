@@ -21,6 +21,7 @@ __all__ = [
     'SmbServiceUnixCharsetChoicesArgs', 'SmbServiceUnixCharsetChoicesResult',
     'SmbServiceBindIPChoicesArgs', 'SmbServiceBindIPChoicesResult',
     'SmbSharePresetsArgs', 'SmbSharePresetsResult',
+    'SmbSharePrecheckArgs', 'SmbSharePrecheckResult',
 ]
 
 EMPTY_STRING = ''
@@ -189,3 +190,12 @@ class SmbSharePresetsArgs(BaseModel):
 
 class SmbSharePresetsResult(BaseModel):
     result: dict[str, dict]
+
+
+@single_argument_args('smb_share_precheck')
+class SmbSharePrecheckArgs(BaseModel):
+    name: NonEmptyString | None = None
+
+
+class SmbSharePrecheckResult(BaseModel):
+    result: None

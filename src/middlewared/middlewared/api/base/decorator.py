@@ -97,23 +97,28 @@ def api_method(
 
                 return result
 
-        if roles:
+        if private:
+            if roles or not authentication_required or not authorization_required:
+                raise ValueError('Cannot set roles, no authorization, or no authentication on private methods.')
+
+        elif roles:
             if not authorization_required or not authentication_required:
                 raise ValueError('Authentication and authorization must be enabled in order to use roles.')
-        elif not authentication_required and not authorization_required:
-            # Although this is technically valid the concern is that dev has fat-fingered something
-            raise ValueError('Either authentication or authorization may be disabled, but not both simultaneously.')
+
+        elif not authorization_required:
+            if not authentication_required:
+                # Although this is technically valid the concern is that dev has fat-fingered something
+                raise ValueError('Either authentication or authorization may be disabled, but not both simultaneously.')
+            wrapped._no_authz_required = True
+
         elif not authentication_required:
             wrapped._no_auth_required = True
-        elif not authorization_required:
-            wrapped._no_authz_required = True
-        elif not private:
+
+        elif func.__name__ not in CONFIG_CRUD_METHODS and not func.__name__.endswith('choices'):
             # All public methods should have a roles definition. This is a rough check to help developers not write
             # methods that are only accesssible to full_admin. We don't bother checking CONFIG and CRUD methods
             # and choices because they may have implicit roles through the role_prefix configuration.
-
-            if func.__name__ not in CONFIG_CRUD_METHODS and not func.__name__.endswith('choices'):
-                raise ValueError(f'{func.__name__}: Role definition is required for public API endpoints')
+            raise ValueError(f'{func.__name__}: Role definition is required for public API endpoints')
 
         wrapped.audit = audit
         wrapped.audit_callback = audit_callback
