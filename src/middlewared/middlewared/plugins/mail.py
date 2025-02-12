@@ -11,7 +11,7 @@ from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formatdate, make_msgid
+from email.utils import formataddr, formatdate, make_msgid
 import html2text
 from threading import Lock
 
@@ -461,13 +461,11 @@ class MailService(ConfigService):
 
     def _from_addr(self, config):
         if config['fromname']:
-            from_addr = Header(config['fromname'], 'utf-8')
+            pair = (config['fromname'], config['fromemail'])
             try:
-                config['fromemail'].encode('ascii')
+                return formataddr(pair, 'ascii')
             except UnicodeEncodeError:
-                from_addr.append(f'<{config["fromemail"]}>', 'utf-8')
-            else:
-                from_addr.append(f'<{config["fromemail"]}>', 'ascii')
+                return formataddr(pair, 'utf-8')
         else:
             try:
                 config['fromemail'].encode('ascii')
@@ -476,7 +474,7 @@ class MailService(ConfigService):
             else:
                 from_addr = Header(config['fromemail'], 'ascii')
 
-        return from_addr
+            return from_addr
 
     @private
     async def local_administrators_emails(self):
