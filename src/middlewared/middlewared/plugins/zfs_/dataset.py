@@ -1,11 +1,9 @@
 import errno
-import libzfs
 import subprocess
 
-from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
+import libzfs
+from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.utils import filter_list
-
 from .dataset_utils import flatten_datasets
 from .utils import get_snapshot_count_cached
 
@@ -17,8 +15,7 @@ class ZFSDatasetService(CRUDService):
         private = True
         process_pool = True
 
-    @filterable
-    def query(self, filters, options):
+    def query(self, filters: list | None = None, options: dict | None = None):
         """
         In `query-options` we can provide `extra` arguments which control which data should be retrieved
         for a dataset.
@@ -51,6 +48,11 @@ class ZFSDatasetService(CRUDService):
         `query-options.extra.retrieve_properties` which if set to false will make sure that no property is retrieved
         whatsoever and overrides any other property retrieval attribute.
         """
+        if filters is None:
+            filters = list()
+        if options is None:
+            options = dict()
+
         options = options or {}
         extra = options.get('extra', {}).copy()
         props = extra.get('properties', None)
@@ -102,27 +104,30 @@ class ZFSDatasetService(CRUDService):
 
         return filter_list(datasets, filters, options)
 
-    @accepts(Dict(
-        'dataset_create',
-        Bool('create_ancestors', default=False),
-        Str('name', required=True),
-        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
-        Dict(
-            'properties',
-            Bool('sparse'),
-            additional_attrs=True,
-        ),
-    ))
-    def do_create(self, data):
+    def create(self, data: dict):
+        """Creates a ZFS dataset or zvol.
+
+        Args: a dictionary with following keys
+            name: str (i.e. "tank/new-dataset")
+            create_ancestors: bool, default is False, if set to True, will
+                create any ancestors that do not exist
+            type: str default is FILESYSTEM. Can also be VOLUME to create a
+                zvol.
+            properties: dictionary with desired properties to be applied
+                to the dataset/zvol during creation.
         """
-        Creates a ZFS dataset.
-        """
+        data.setdefault('name', '')
+        data.setdefault('create_ancestors', False)
+        data.setdefault('type', 'FILESYSTEM')
+        data.setdefault('properties', {})
 
         verrors = ValidationErrors()
-
-        if '/' not in data['name']:
+        if not data['name']:
+            verrors.add('name', 'name must be provided')
+        elif data['name'] == '/':
+            verrors.add('name', 'Invalid name')
+        elif '/' not in data['name']:
             verrors.add('name', 'You need a full name, e.g. pool/newdataset')
-
         verrors.check()
 
         properties = data.get('properties') or {}
@@ -150,17 +155,24 @@ class ZFSDatasetService(CRUDService):
         else:
             return data
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'dataset_update',
-            Dict(
-                'properties',
-                additional_attrs=True,
-            ),
-        ),
-    )
-    def do_update(self, id_, data):
+    def update(self, id_: str, data: dict):
+        """Update a ZFS dataset or zvol.
+
+        Args:
+            id: str (i.e. "tank/dataset")
+            properties: A nested dictionary whose top-level key should be
+                `properties` and value should be a dictionary whose keys
+                    represent the properties and values represent what
+                    to update.
+                    i.e.
+                        {
+                            'properties': {
+                                'prop_name1': 'value',
+                                'prop_name2': 'value',
+                            }
+                        }
+        """
+        data.setdefault('properties', {})
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(id_)
@@ -179,26 +191,33 @@ class ZFSDatasetService(CRUDService):
         else:
             return data
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('force', default=False),
-            Bool('recursive', default=False),
-            Bool('recursively_remove_dependents', default=False),
-        )
-    )
-    def do_delete(self, id_, options):
-        force = options['force']
-        recursive = options['recursive']
-        recursively_remove_dependents = options['recursively_remove_dependents']
+    def delete(self, id_: str, options: dict | None = None):
+        """Delete a ZFS dataset or zvol.
+
+        Args:
+            id: str (i.e. "tank/dataset")
+            options: A dictionary with follow top-level keys
+                force: boolean, default False, when True will forcefully
+                    delete the dataset/zvol
+                recursive: boolean, default False, when True will delete
+                    the dataset/zvol recursively
+                recursively_remove_dependents: boolean, default False, when
+                    True will recursively remove any dependents associated
+                    to the dataset/zvol
+        """
+        if options is None:
+            options = dict()
+
+        options.setdefault('force', False)
+        options.setdefault('recursive', False)
+        options.setdefault('recursively_remove_dependents', False)
 
         args = []
-        if force:
+        if options['force']:
             args += ['-f']
-        if recursively_remove_dependents:
+        if options['recursively_remove_dependents']:
             args += ['-R']
-        elif recursive:
+        elif options['recursive']:
             args += ['-r']
 
         # If dataset is mounted and has receive_resume_token, we should destroy it or ZFS will say
