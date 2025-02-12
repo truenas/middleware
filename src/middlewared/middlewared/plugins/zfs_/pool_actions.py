@@ -196,7 +196,7 @@ class ZFSPoolService(Service):
     ):
         if import_options is None:
             import_options = dict()
-        import_options.setdefault('missing_log', True)
+        import_options.setdefault('missing_log', False)
 
         with libzfs.ZFS() as zfs:
             found = None
