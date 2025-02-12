@@ -1,8 +1,8 @@
 import errno
 import libzfs
 
-from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, Service
+from middlewared.service_exception import ValidationError
 from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
 
@@ -43,15 +43,12 @@ class ZFSDatasetService(Service):
         except libzfs.ZFSException as e:
             raise CallError(f'Failed retrieving child datsets for {path} with error {e}')
 
-    @accepts(
-        Str('name'),
-        Dict(
-            'options',
-            Bool('recursive', default=False),
-            Bool('force_mount', default=False),
-        )
-    )
-    def mount(self, name, options):
+    def mount(self, name: str, options: dict | None = None):
+        if options is None:
+            options = dict()
+        options.setdefault('recursive', False)
+        options.setdefault('force_mount', False)
+
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(name)
@@ -64,8 +61,11 @@ class ZFSDatasetService(Service):
             handle_ds_not_found(e.code, name)
             raise CallError(f'Failed to mount dataset: {e}')
 
-    @accepts(Str('name'), Dict('options', Bool('force', default=False)))
-    def umount(self, name, options):
+    def umount(self, name: str, options: dict | None = None):
+        if options is None:
+            options = dict()
+        options.setdefault('force', False)
+
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(name)
@@ -75,15 +75,12 @@ class ZFSDatasetService(Service):
             handle_ds_not_found(e.code, name)
             raise CallError(f'Failed to umount dataset: {e}')
 
-    @accepts(
-        Str('dataset'),
-        Dict(
-            'options',
-            Str('new_name', required=True, empty=False),
-            Bool('recursive', default=False)
-        )
-    )
-    def rename(self, name, options):
+    def rename(self, name: str, options: dict):
+        options.setdefault('recursive', False)
+        options.setdefault('new_name', None)
+        if not options['new_name']:
+            raise ValidationError('new_name', 'new_name is required')
+
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(name)
