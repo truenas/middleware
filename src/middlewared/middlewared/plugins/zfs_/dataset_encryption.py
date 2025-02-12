@@ -123,6 +123,10 @@ class ZFSDatasetService(Service):
                 'key': None,
                 'key_location': None,
             }
+        options.setdefault('mount', True)
+        options.setdefault('recursive', False)
+        options.setdefault('key', None)
+        options.setdefault('key_location', None)
 
         mount_ds = options.pop('mount')
         recursive = options.pop('recursive')
@@ -164,6 +168,9 @@ class ZFSDatasetService(Service):
                 'force_umount': False,
                 'umount': False,
             }
+        options.setdefault('recursive', False)
+        options.setdefault('force_umount', False)
+        options.setdefault('umount', False)
 
         force = options.pop('force_umount')
         if options.pop('umount') and self.middleware.call_sync(
