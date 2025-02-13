@@ -30,6 +30,7 @@ class CoreSetOptionsOptions(BaseModel, metaclass=ForUpdateMetaclass):
         strict=True,
         str_max_length=1024,
         use_attribute_docstrings=True,
+        extra="ignore",
     )
 
     py_exceptions: bool
