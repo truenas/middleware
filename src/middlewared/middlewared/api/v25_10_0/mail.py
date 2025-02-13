@@ -12,6 +12,7 @@ __all__ = ["MailEntry", "MailUpdateArgs", "MailUpdateResult", "MailSendArgs", "M
 
 class MailEntryOAuth(BaseModel):
     provider: str
+    """An email provider, e.g. "gmail", "outlook"."""
     client_id: str
     client_secret: str
     refresh_token: Secret[str]
@@ -29,13 +30,16 @@ class MailEntry(BaseModel):
     smtp: bool
     """Whether SMTP authentication is enabled and `user`, `pass` are required."""
     user: str | None
+    """SMTP username."""
     pass_: Secret[str | None] = Field(alias="pass")
+    """SMTP password."""
     oauth: Secret[MailEntryOAuth | None]
     id: int
 
 
 class MailUpdateOAuth(MailEntryOAuth):
     provider: str = NotRequired
+    """An email provider, e.g. "gmail", "outlook"."""
     refresh_token: Secret[LongString]
 
 
@@ -51,12 +55,17 @@ class MailSendMessage(BaseModel):
     html: LongString | None = NotRequired
     """Custom HTML (overrides `text`). If null, no HTML MIME part will be added to the email."""
     to: list[str] = NotRequired
+    """Email recipients. Defaults to all local administrators."""
     cc: list[str] = NotRequired
+    """Email CC recipients, if any."""
     interval: int | None = NotRequired
+    """In seconds."""
     channel: str | None = NotRequired
+    """Defaults to "truenas"."""
     timeout: int = 300
+    """Time limit for connecting to the SMTP server in seconds."""
     attachments: bool = False
-    """If set to true, a list compromised of the following dict is required via HTTP upload:
+    """If set to true, an array compromised of the following object is required via HTTP upload:
         - headers (array)
             - name (string)
             - value (string)
@@ -83,15 +92,19 @@ class MailSendMessage(BaseModel):
         ]```
     """
     queue: bool = True
+    """Whether to queue the message to be sent later if it fails to send."""
     extra_headers: dict = NotRequired
+    """Any additional headers to include in the email message."""
 
 
 class MailUpdateArgs(BaseModel):
     data: MailUpdate
+    """Mail configuration fields to update."""
 
 
 class MailUpdateResult(BaseModel):
     result: MailEntry
+    """The resulting mail configuration."""
 
 
 class MailSendArgs(BaseModel):
