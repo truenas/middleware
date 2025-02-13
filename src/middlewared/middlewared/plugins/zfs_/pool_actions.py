@@ -3,10 +3,9 @@ import libzfs
 import subprocess
 import functools
 
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.service import CallError, Service
 from middlewared.service_exception import ValidationError
-
+from middlewared.utils import BOOT_POOL_NAME_VALID
 from .pool_utils import find_vdev, SEARCH_PATHS
 
 

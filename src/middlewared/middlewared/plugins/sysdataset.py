@@ -11,13 +11,12 @@ from pathlib import Path
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.service_exception import InstanceNotFound
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
