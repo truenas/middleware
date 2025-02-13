@@ -2021,6 +2021,7 @@ def test__alua_config(iscsi_running):
     _ensure_alua_state(False)
 
     if ha:
+        assert call('failover.config')['disabled'] is False
         _check_ha_node_configuration()
 
     # Next create a target
