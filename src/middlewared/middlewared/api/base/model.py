@@ -6,6 +6,7 @@ import typing
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
 from pydantic._internal._model_construction import ModelMetaclass
+from pydantic.json_schema import SkipJsonSchema
 from pydantic.main import IncEx
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
@@ -82,6 +83,14 @@ class BaseModel(PydanticBaseModel):
                 return SECRET_VALUE
 
         return value
+
+    @classmethod
+    def schema_model_fields(cls):
+        return {
+            name: field
+            for name, field in cls.model_fields.items()
+            if not any(isinstance(metadata, SkipJsonSchema) for metadata in field.metadata)
+        }
 
     @classmethod
     def from_previous(cls, value):
