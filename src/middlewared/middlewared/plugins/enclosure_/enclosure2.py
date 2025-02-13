@@ -6,7 +6,6 @@ import errno
 
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import Service, filterable
-from middlewared.service import Service, filterable_api_method
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 
@@ -133,7 +132,7 @@ class Enclosure2Service(Service):
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)
 
-    @filterable
+    @filterable(roles=['ENCLOSURE_READ'])
     def query(self, filters, options):
         enclosures = []
         if not self.middleware.call_sync('truenas.is_ix_hardware'):
