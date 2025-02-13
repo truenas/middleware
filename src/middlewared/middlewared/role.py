@@ -235,6 +235,9 @@ ROLES = {
     'SYSTEM_CRON_READ': Role(),
     'SYSTEM_CRON_WRITE': Role(includes=['SYSTEM_CRON_READ']),
 
+    'SYSTEM_UPDATE_READ': Role(),
+    'SYSTEM_UPDATE_WRITE': Role(includes=['SYSTEM_UPDATE_READ']),
+
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),
     'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ'], stig=None),

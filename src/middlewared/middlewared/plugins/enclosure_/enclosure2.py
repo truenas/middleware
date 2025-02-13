@@ -73,7 +73,7 @@ class Enclosure2Service(Service):
         Str('enclosure_id', required=True),
         Int('slot', required=True),
         Str('status', required=True, enum=['CLEAR', 'ON', 'OFF'])
-    ))
+    ), roles=['ENCLOSURE_WRITE'])
     def set_slot_status(self, data):
         """Set enclosure bay number `slot` to `status` for `enclosure_id`.
 
@@ -132,7 +132,7 @@ class Enclosure2Service(Service):
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)
 
-    @filterable
+    @filterable(roles=['ENCLOSURE_READ'])
     def query(self, filters, options):
         enclosures = []
         if not self.middleware.call_sync('truenas.is_ix_hardware'):
