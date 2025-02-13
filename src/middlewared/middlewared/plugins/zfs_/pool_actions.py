@@ -3,10 +3,9 @@ import libzfs
 import subprocess
 import functools
 
-from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, Service
+from middlewared.service_exception import ValidationError
 from middlewared.utils import BOOT_POOL_NAME_VALID
-
 from .pool_utils import find_vdev, SEARCH_PATHS
 
 
@@ -36,19 +35,17 @@ class ZFSPoolService(Service):
 
             return all((i.state in enabled for i in pool.features))
 
-    @accepts(Str('pool', required=True))
-    def upgrade(self, pool):
+    def upgrade(self, pool: str):
+        if not pool:
+            raise ValidationError('pool', 'name of pool required')
+
         try:
             with libzfs.ZFS() as zfs:
                 zfs.get(pool).upgrade()
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
-    @accepts(Str('pool'), Dict(
-        'options',
-        Bool('force', default=False),
-    ))
-    def export(self, name, options):
+    def export(self, name: str, options: dict | None = None):
         try:
             with libzfs.ZFS() as zfs:
                 # FIXME: force not yet implemented
@@ -57,8 +54,7 @@ class ZFSPoolService(Service):
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
-    @accepts(Str('pool'))
-    def get_devices(self, name):
+    def get_devices(self, name: str):
         try:
             with libzfs.ZFS() as zfs:
                 return [i.replace('/dev/', '') for i in zfs.get(name).disks]
@@ -76,11 +72,11 @@ class ZFSPoolService(Service):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    @accepts(Str('pool'), Str('label'), Dict('options', Bool('clear_label', default=False)))
-    def detach(self, name, label, options):
-        """
-        Detach device `label` from the pool `pool`.
-        """
+    def detach(self, name: str, label: str, options: dict | None = None):
+        """Detach device `label` from the pool `pool`."""
+        if options is None:
+            options = dict()
+        options.setdefault('clear_label', False)
         self.detach_remove_impl('detach', name, label, options)
 
     def detach_remove_impl(self, op, name, label, options):
@@ -90,41 +86,35 @@ class ZFSPoolService(Service):
                 self.clear_label(target.path)
         self.__zfs_vdev_operation(name, label, impl)
 
-    @accepts(Str('device'))
-    def clear_label(self, device):
-        """
-        Clear label from `device`.
-        """
+    def clear_label(self, device: str):
+        """Clear label from `device`."""
         try:
             libzfs.clear_label(device)
         except (libzfs.ZFSException, OSError) as e:
             raise CallError(str(e))
 
-    @accepts(Str('pool'), Str('label'))
-    def offline(self, name, label):
+    def offline(self, name: str, label: str):
         """
         Offline device `label` from the pool `pool`.
         """
         self.__zfs_vdev_operation(name, label, lambda target: target.offline())
 
-    @accepts(
-        Str('pool'), Str('label'), Bool('expand', default=False)
-    )
-    def online(self, name, label, expand):
+    def online(self, name: str, label: str, expand: bool = False):
         """
         Online device `label` from the pool `pool`.
         """
         self.__zfs_vdev_operation(name, label, lambda target, *args: target.online(*args), expand)
 
-    @accepts(Str('pool'), Str('label'), Dict('options', Bool('clear_label', default=False)))
-    def remove(self, name, label, options):
+    def remove(self, name: str, label: str, options: dict | None = None):
         """
         Remove device `label` from the pool `pool`.
         """
+        if options is None:
+            options = dict()
+        options.setdefault('clear_label', False)
         self.detach_remove_impl('remove', name, label, options)
 
-    @accepts(Str('pool'), Str('label'), Str('dev'))
-    def replace(self, name, label, dev):
+    def replace(self, name: str, label: str, dev: str):
         """
         Replace device `label` with `dev` in pool `name`.
         """
@@ -144,14 +134,12 @@ class ZFSPoolService(Service):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    @accepts(
-        Str('name', required=True),
-        Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
-    )
-    def scrub_action(self, name, action):
-        """
-        Start/Stop/Pause a scrub on pool `name`.
-        """
+    def scrub_action(self, name: str, action: str = 'START'):
+        """Start/Stop/Pause a scrub on pool `name`."""
+        allowed_acts = ('START', 'STOP', 'PAUSE')
+        if action not in allowed_acts:
+            raise ValidationError('action', f'action must be one of {",".join(allowed_acts)}')
+
         if action != 'PAUSE':
             try:
                 with libzfs.ZFS() as zfs:
@@ -191,24 +179,24 @@ class ZFSPoolService(Service):
         with libzfs.ZFS() as zfs:
             return zfs.get(name).expand.asdict()
 
-    @accepts()
     def find_import(self):
         sp = self.get_search_paths()
         with libzfs.ZFS() as zfs:
             return [i.asdict() for i in zfs.find_import(search_paths=sp)]
 
-    @accepts(
-        Str('name_or_guid'),
-        Dict('properties', additional_attrs=True),
-        Bool('any_host', default=True),
-        Str('cachefile', null=True, default=None),
-        Str('new_name', null=True, default=None),
-        Dict(
-            'import_options',
-            Bool('missing_log', default=False),
-        ),
-    )
-    def import_pool(self, name_or_guid, properties, any_host, cachefile, new_name, import_options):
+    def import_pool(
+        self,
+        name_or_guid: str,
+        properties: dict,
+        any_host: bool = True,
+        cachefile: str | None = None,
+        new_name: str | None = None,
+        import_options: dict | None = None
+    ):
+        if import_options is None:
+            import_options = dict()
+        import_options.setdefault('missing_log', False)
+
         with libzfs.ZFS() as zfs:
             found = None
             sp = self.get_search_paths()
@@ -270,8 +258,7 @@ class ZFSPoolService(Service):
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
 
-    @accepts(Str('pool'))
-    def find_not_online(self, pool):
+    def find_not_online(self, pool: str):
         pool = self.middleware.call_sync('zfs.pool.query', [['id', '=', pool]], {'get': True})
 
         unavails = []
