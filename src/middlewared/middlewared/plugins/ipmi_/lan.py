@@ -44,7 +44,7 @@ def apply_config(channel, data):
 
     rc = 0
     options = {'stdout': DEVNULL, 'stderr': DEVNULL}
-    if data.get('dhcp'):
+    if data['dhcp']:
         rc |= run(base_cmd + ['ipsrc', 'dhcp'], **options).returncode
     else:
         rc |= run(base_cmd + ['ipsrc', 'static'], **options).returncode
@@ -52,7 +52,7 @@ def apply_config(channel, data):
         rc |= run(base_cmd + ['netmask', data['netmask']], **options).returncode
         rc |= run(base_cmd + ['defgw', 'ipaddr', data['gateway']], **options).returncode
 
-    vlan = data.get("vlan")
+    vlan = data["vlan"]
     if vlan is None:
         vlan = "off"
     rc |= run(base_cmd + ['vlan', 'id', str(vlan)], **options).returncode
@@ -68,7 +68,7 @@ def apply_config(channel, data):
     run(base_cmd + ['arp', 'respond', 'on'], **options)
     run(base_cmd + ['arp', 'generate', 'on'], **options)
 
-    if passwd := data.get('password'):
+    if passwd := data['password']:
         cp = run(['ipmitool', 'user', 'set', 'password', '2', passwd], capture_output=True)
         if cp.returncode != 0:
             err = '\n'.join(cp.stderr.decode().split('\n'))
@@ -183,10 +183,6 @@ class IPMILanService(Service):
             verrors.add(schema, '/dev/ipmi0 could not be found')
         elif id_ not in self.channels():
             verrors.add(schema, f'IPMI channel number {id_!r} not found')
-        elif not data.get('dhcp'):
-            for k in ('ipaddress', 'netmask', 'gateway'):
-                if not data.get(k):
-                    verrors.add(schema, f'{k} field is required when dhcp is false.')
         verrors.check()
 
         # It's _very_ important to pop this key so that

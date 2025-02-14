@@ -1,9 +1,9 @@
 from ipaddress import IPv4Address
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field, SecretStr
 
-from middlewared.api.base import BaseModel, NotRequired, query_result, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, query_result, ForUpdateMetaclass
 from middlewared.api.base.validators import passwd_complexity_validator
 from .common import QueryFilters, QueryOptions
 
@@ -40,15 +40,9 @@ class IPMILanQuery(BaseModel):
     ipmi_options: IPMILanQueryOptions = Field(alias='ipmi-options', default_factory=IPMILanQueryOptions)
 
 
-class IPMILanUpdateOptions(BaseModel):
-    dhcp: bool = NotRequired
-    """Turn on DHCP protocol for ip address management."""
-    ipddress: IPv4Address = NotRequired
-    """The IPv4 address in the form of `192.168.1.150`."""
-    netmask: IPv4Address = NotRequired
-    """The netmask in the form of `255.255.255.0`."""
-    gateway: IPv4Address = NotRequired
-    """The gateway in the form of `192.168.1.1`."""
+class IPMILanUpdateOptionsDHCP(BaseModel):
+    dhcp: Literal[True] = True
+    """Turn on DHCP protocol for IP address management."""
     password: Annotated[
         SecretStr,
         AfterValidator(
@@ -59,14 +53,25 @@ class IPMILanUpdateOptions(BaseModel):
                 max_length=16,
             )
         )
-    ] = NotRequired
+    ] | None = None
     """The password to be applied. Must be between 8 and 16 characters long and
     contain only ascii upper,lower, 0-9, and special characters."""
-    vlan: int | None = Field(ge=0, le=4096, default=NotRequired)
+    vlan: Annotated[int, Field(ge=0, le=4096)] | None = None
     """The vlan tag number. A null value disables tagging."""
     apply_remote: bool = False
     """If on an HA system, and this field is set to True,
     the settings will be sent to the remote controller."""
+
+
+class IPMILanUpdateOptionsStatic(IPMILanUpdateOptionsDHCP):
+    dhcp: Literal[False] = False
+    """Provide a static IP address."""
+    ipaddress: IPv4Address
+    """The IPv4 address in the form of `192.168.1.150`."""
+    netmask: IPv4Address
+    """The netmask in the form of `255.255.255.0`."""
+    gateway: IPv4Address
+    """The gateway in the form of `192.168.1.1`."""
 
 
 class IPMILanQueryArgs(BaseModel):
@@ -86,7 +91,7 @@ class IPMILanChannelsResult(BaseModel):
 
 class IPMILanUpdateArgs(BaseModel):
     channel: int
-    data: IPMILanUpdateOptions
+    data: IPMILanUpdateOptionsDHCP | IPMILanUpdateOptionsStatic = Field(discriminator="dhcp")
 
 
 class IPMILanUpdateResult(BaseModel):
