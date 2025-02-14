@@ -19,7 +19,6 @@ from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
 
-from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
     CronService,
     KmipService,
@@ -61,8 +60,6 @@ all_services = [
     OpenIpmiService,
     KeepalivedService,
     OpenVmToolsService,
-    LibvirtdService,
-    LibvirtGuestService,
     CronService,
     KmipService,
     IncusService,
