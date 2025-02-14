@@ -631,7 +631,7 @@ class SharingNFSService(SharingService):
                 )
 
         if data["expose_snapshots"]:
-            if await self.middleware.call("system.product_type") == ProductType.ENTERPRISE:
+            if await self.middleware.call("system.is_enterprise"):
                 # check if mountpoint and whether snapdir is enabled
                 try:
                     # We're using statfs output because in future it should expose
