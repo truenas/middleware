@@ -1,7 +1,5 @@
 from middlewared.api.base import BaseModel
 
-from pydantic import Field
-
 
 class IPMISELClearArgs(BaseModel):
     pass
@@ -37,10 +35,10 @@ class IPMISELInfoResult(BaseModel):
 
 
 class IPMISELElistEntry(BaseModel):
-    id_: str = Field(alias="id")
+    id: str
     date: str
     time: str
     name: str
-    type_: str = Field(alias="type")
+    type: str
     event_direction: str
     event: str
