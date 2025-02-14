@@ -36,6 +36,7 @@ from .group import *  # noqa
 from .initshutdownscript import *  # noqa
 from .ipmi import *  # noqa
 from .ipmi_chassis import *  # noqa
+from .ipmi_lan import *  # noqa
 from .iscsi_auth import *  # noqa
 from .iscsi_extent import *  # noqa
 from .iscsi_global import *  # noqa
