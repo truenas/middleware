@@ -70,7 +70,7 @@ class IPMILanUpdateOptions(BaseModel):
 
 
 class IPMILanQueryArgs(BaseModel):
-    data: IPMILanQuery
+    data: IPMILanQuery = Field(default_factory=IPMILanQuery)
 
 
 IPMILanQueryResult = query_result(IPMILanEntry)
