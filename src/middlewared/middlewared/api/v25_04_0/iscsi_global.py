@@ -1,6 +1,7 @@
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
+from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, excluded_field, query_result,
+                                  single_argument_args)
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
@@ -84,5 +85,4 @@ class IscsiGlobalSessionsArgs(BaseModel):
     query_options: QueryOptions = QueryOptions()
 
 
-class IscsiGlobalSessionsResult(BaseModel):
-    result: list[IscsiSession]
+IscsiGlobalSessionsResult = query_result(IscsiSession)
