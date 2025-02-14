@@ -103,7 +103,7 @@ class IPMILanService(Service):
                 # We cannot expose IPMI lan channel 8 on the f-series platform
                 channels = [i for i in channels if i != 8]
 
-        return channels
+        return list(channels)
 
     @private
     def query_impl(self):
