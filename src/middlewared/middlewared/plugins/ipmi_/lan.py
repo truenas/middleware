@@ -14,7 +14,7 @@ from middlewared.api.current import (
 from middlewared.service import (
     private,
     CallError,
-    CRUDService,
+    Service,
     ValidationError,
     ValidationErrors,
 )
@@ -82,7 +82,7 @@ def apply_config(channel, data):
     return rc
 
 
-class IPMILanService(CRUDService):
+class IPMILanService(Service):
 
     class Config:
         namespace = 'ipmi.lan'
