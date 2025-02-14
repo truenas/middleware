@@ -1,17 +1,15 @@
 from subprocess import run
 
 from middlewared.service import Service
-from middlewared.schema import accepts, returns, Dict
 
 
 class IpmiMcService(Service):
 
     class Config:
         namespace = 'ipmi.mc'
+        private = True
         cli_namespace = 'service.ipmi.mc'
 
-    @accepts(roles=['IPMI_READ'])
-    @returns(Dict('mc_info', additional_attrs=True))
     def info(self):
         """Return looks like:
             {
