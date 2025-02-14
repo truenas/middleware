@@ -5,8 +5,10 @@ import socket
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (IscsiGlobalAluaEnabledArgs, IscsiGlobalAluaEnabledResult, IscsiGlobalEntry,
-                                     IscsiGlobalUpdateArgs, IscsiGlobalUpdateResult)
+                                     IscsiGlobalISEREnabledArgs, IscsiGlobalISEREnabledResult, IscsiGlobalUpdateArgs,
+                                     IscsiGlobalUpdateResult)
 from middlewared.async_validators import validate_port
+from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
 from middlewared.validators import IpAddress, Port
@@ -23,6 +25,7 @@ class ISCSIGlobalModel(sa.Model):
     iscsi_pool_avail_threshold = sa.Column(sa.Integer(), nullable=True)
     iscsi_alua = sa.Column(sa.Boolean(), default=False)
     iscsi_listen_port = sa.Column(sa.Integer(), nullable=False, default=3260)
+    iscsi_iser = sa.Column(sa.Boolean(), default=False)
 
 
 class ISCSIGlobalService(SystemServiceService):
@@ -138,6 +141,14 @@ class ISCSIGlobalService(SystemServiceService):
             self.middleware, 'iscsiglobal_update.listen_port', new['listen_port'], 'iscsi.global'
         ))
 
+        if new['iser'] and old['iser'] != new['iser']:
+            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
+            if RDMAprotocols.ISER.value not in available_rdma_protocols:
+                verrors.add(
+                    "iscsiglobal_update.iser",
+                    "This platform cannot support iSER or is missing an RDMA capable NIC."
+                )
+
         verrors.check()
 
         new['isns_servers'] = '\n'.join(servers)
@@ -166,6 +177,14 @@ class ISCSIGlobalService(SystemServiceService):
                     await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
                 except Exception:
                     self.logger.error('Unhandled exception in stop_active_isns on remote controller', exc_info=True)
+
+        # If we have changed the iSER setting and the service is running then restart it
+        if old['iser'] != new['iser']:
+            if await self.middleware.call('service.started', 'iscsitarget'):
+                await self.middleware.call('service.restart', 'iscsitarget', {'ha_propagate': False})
+                if licensed and new['alua'] and old['alua']:
+                    # Only need to restart the remote service if it was already running
+                    await self.middleware.call('failover.call_remote', 'service.restart', ['iscsitarget'])
 
         return await self.config()
 
@@ -201,3 +220,17 @@ class ISCSIGlobalService(SystemServiceService):
         #     return True
 
         return (await self.middleware.call('iscsi.global.config'))['alua']
+
+    @api_method(
+        IscsiGlobalISEREnabledArgs,
+        IscsiGlobalISEREnabledResult,
+        roles=['SHARING_ISCSI_GLOBAL_READ']
+    )
+    async def iser_enabled(self):
+        """
+        Returns whether iSER is enabled or not.
+        """
+        if not await self.middleware.call('system.is_enterprise'):
+            return False
+
+        return (await self.middleware.call('iscsi.global.config'))['iser']

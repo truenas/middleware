@@ -136,6 +136,7 @@ class TestFixtureConfiguredALUA:
 
     @pytest.fixture(scope='class')
     def alua_configured(self):
+        assert call('failover.config')['disabled'] is False
         with ensure_service_enabled(SERVICE_NAME):
             call('service.start', SERVICE_NAME)
             with alua_enabled():
