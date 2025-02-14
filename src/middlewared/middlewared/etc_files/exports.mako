@@ -203,6 +203,9 @@
         options = []
         params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
 
+        if share["expose_snapshots"]:
+            params += ",zfs_snapdir"
+
         for host in share["hosts"]:
             anonymous = False
             export_host = parse_host(host, gaierrors)
