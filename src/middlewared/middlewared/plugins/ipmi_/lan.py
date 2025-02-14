@@ -175,7 +175,7 @@ class IPMILanService(Service):
         roles=['IPMI_WRITE'],
         audit='Update IPMI configuration'
     )
-    def do_update(self, id_, data):
+    def update(self, id_, data):
         """Update IPMI channel configuration"""
         verrors = ValidationErrors()
         schema = 'ipmi.lan.update'
