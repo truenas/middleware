@@ -3,6 +3,7 @@ from functools import cache
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    IPMILanEntry,
     IPMILanChannelsArgs,
     IPMILanChannelsResult,
     IPMILanUpdateArgs,
@@ -87,6 +88,7 @@ class IPMILanService(CRUDService):
         namespace = 'ipmi.lan'
         cli_namespace = 'network.ipmi'
         role_prefix = 'IPMI'
+        entry = IPMILanEntry
 
     @api_method(
         IPMILanChannelsArgs,

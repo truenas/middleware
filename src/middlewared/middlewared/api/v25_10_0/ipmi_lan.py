@@ -3,12 +3,18 @@ from typing import Annotated
 
 from pydantic import AfterValidator, Field, SecretStr
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NotRequired, query_result
+from middlewared.api.base import BaseModel, NotRequired, query_result
 from middlewared.api.base.validators import passwd_complexity_validator
 from .common import QueryFilters, QueryOptions
 
 
-class IPMILanQueryEntry(BaseModel, metaclass=ForUpdateMetaclass):
+__all__ = [
+    "IPMILanEntry", "IPMILanQueryArgs", "IPMILanQueryResult", "IPMILanChannelsArgs",
+    "IPMILanChannelsResult", "IPMILanUpdateArgs", "IPMILanUpdateResult",
+]
+
+
+class IPMILanEntry(BaseModel):
     channel: int
     id_: int = Field(alias="id")
     ip_address_source: str
@@ -28,22 +34,10 @@ class IPMILanQueryOptions(BaseModel):
     query_remote: bool = Field(alias='query-remote', default=False)
 
 
-class IPMILanQueryArgs(BaseModel):
+class IPMILanQuery(BaseModel):
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
-    query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
-    ipmi_options: IPMILanQueryOptions = Field(alias='ipmi-options', default=IPMILanQueryOptions())
-
-
-class IPMILanQueryResult(BaseModel):
-    result: query_result(IPMILanQueryEntry)
-
-
-class IPMILanChannelsArgs(BaseModel):
-    pass
-
-
-class IPMILanChannelsResult(BaseModel):
-    result: list[int]
+    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+    ipmi_options: IPMILanQueryOptions = Field(alias='ipmi-options', default_factory=IPMILanQueryOptions)
 
 
 class IPMILanUpdateOptions(BaseModel):
@@ -65,14 +59,29 @@ class IPMILanUpdateOptions(BaseModel):
                 max_length=16,
             )
         )
-    ] | None = None
+    ] = NotRequired
     """The password to be applied. Must be between 8 and 16 characters long and
     contain only ascii upper,lower, 0-9, and special characters."""
-    vlan_id: int = Field(ge=0, le=4096, default=NotRequired)
+    vlan: int | None = Field(ge=0, le=4096, default=NotRequired)
     """The vlan tag number"""
-    apply_remote: bool = Field(default=False)
+    apply_remote: bool = False
     """If on an HA system, and this field is set to True,
     the settings will be sent to the remote controller."""
+
+
+class IPMILanQueryArgs(BaseModel):
+    data: IPMILanQuery
+
+
+IPMILanQueryResult = query_result(IPMILanEntry)
+
+
+class IPMILanChannelsArgs(BaseModel):
+    pass
+
+
+class IPMILanChannelsResult(BaseModel):
+    result: list[int]
 
 
 class IPMILanUpdateArgs(BaseModel):
