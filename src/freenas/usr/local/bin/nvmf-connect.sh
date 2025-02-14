@@ -36,7 +36,7 @@ while [ -s $queue ]; do
       connect_nqns=$(nvme discover "$@" | grep subnqn: | awk '{gsub(/^subnqn: */,"")}1' \
           | tr -s '\n' | sort)
 
-      if [ "$local_nqns" != "$connect_nqns" ]; then
+      if [[ -n "$local_nqns" && "$local_nqns" != "$connect_nqns" ]]; then
         break
       fi
 
