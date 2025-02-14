@@ -423,6 +423,7 @@ class NFSShareModel(sa.Model):
     nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default='')
     nfs_mapall_group = sa.Column(sa.String(120), nullable=True, default='')
     nfs_security = sa.Column(sa.MultiSelectField())
+    nfs_expose_snapshots = sa.Column(sa.Boolean(), default=False)
     nfs_enabled = sa.Column(sa.Boolean(), default=True)
 
 
@@ -458,6 +459,9 @@ class SharingNFSService(SharingService):
         `hosts` is a list of IP's/hostnames which are allowed to access the share. If empty, all IP's/hostnames are
         allowed.
 
+        `expose_snapshots` enable TrueNAS Enterprise feature to allow access
+        to the ZFS snapshot directory over NFS. This feature requires a valid
+        enterprise license.
         """
         verrors = ValidationErrors()
 
@@ -623,6 +627,29 @@ class SharingNFSService(SharingService):
                 verrors.add(
                     f"{schema_name}.security",
                     f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."
+                )
+
+        if data["expose_snapshots"]:
+            if await self.middleware.call("system.is_enterprise"):
+                # check if mountpoint and whether snapdir is enabled
+                try:
+                    # We're using statfs output because in future it should expose
+                    # whether snapdir is enabled
+                    sfs = await self.middleware.call("filesystem.statfs", data["path"])
+                    if sfs["dest"] != data["path"]:
+                        verrors.add(
+                            f"{schema_name}.expose_snapshots",
+                            f"{data['path']}: export path is not the root directory of a dataset."
+                        )
+                except Exception:
+                    # we can't get info on unmounted / locked datasets but this
+                    # doesn't have to be perfect. We can improve in GE with newer pylibzfs
+                    # that doesn't use a process pool
+                    pass
+            else:
+                verrors.add(
+                    f"{schema_name}.expose_snapshots",
+                    "This is an enterprise feature and may not be enabled without a valid license."
                 )
 
     @private
