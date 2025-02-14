@@ -5,7 +5,7 @@ from pydantic import AfterValidator, Field, SecretStr
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NotRequired, query_result
 from middlewared.api.base.validators import passwd_complexity_validator
-from .comon import QueryFilters, QueryOptions
+from .common import QueryFilters, QueryOptions
 
 
 class IPMILanQueryEntry(BaseModel, metaclass=ForUpdateMetaclass):
