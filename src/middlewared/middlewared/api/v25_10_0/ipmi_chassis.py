@@ -1,11 +1,14 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass
+from middlewared.api.base import BaseModel
 
 from pydantic import Field
 
 
-class ChassisInfoEntry(BaseModel):
+__all__ = ["ChassisIdentifyArgs", "ChassisIdentifyResult", "ChassisInfoArgs", "ChassisInfoResult"]
+
+
+class ChassisInfo(BaseModel):
     system_power: str
     power_overload: str
     interlock: str
@@ -21,16 +24,16 @@ class ChassisInfoEntry(BaseModel):
 
 
 class ChassisIdentifyArgs(BaseModel):
-    verb: Literal["ON", "OFF"]
+    verb: Literal["ON", "OFF"] = "ON"
 
 
 class ChassisIdentifyResult(BaseModel):
-    pass
+    result: None
 
 
 class ChassisInfoArgs(BaseModel):
     pass
 
 
-class ChassisInfoResult(ChassisInfoEntry, metaclass=ForUpdateMetaclass):
-    pass
+class ChassisInfoResult(BaseModel):
+    result: ChassisInfo | dict
