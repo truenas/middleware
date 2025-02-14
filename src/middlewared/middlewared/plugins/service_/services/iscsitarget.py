@@ -29,6 +29,7 @@ class ISCSITargetService(SimpleService):
                 self.middleware.logger.debug(f'Waited sucessfully for {self.name} to enter {curstate} state')
 
     async def before_start(self):
+        await self.middleware.call("iscsi.iser.before_start")
         await self.middleware.call("iscsi.alua.before_start")
         # Because we are a systemd_async_start service, it is possible that
         # a start could be requested while a stop is still in progress.
