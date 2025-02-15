@@ -2,9 +2,8 @@ from random import uniform
 from subprocess import run
 from time import sleep
 
-from middlewared.service import Service, filterable, filterable_returns, private
+from middlewared.service import Service
 from middlewared.utils import filter_list
-from middlewared.schema import List, Dict
 
 
 def get_sensors_data():
@@ -28,9 +27,9 @@ class IpmiSensorsService(Service):
 
     class Config:
         namespace = 'ipmi.sensors'
+        private = True
         cli_namespace = 'service.ipmi.sensors'
 
-    @private
     def query_impl(self):
         rv, reread = [], None
         if not self.middleware.call_sync('ipmi.is_loaded'):
@@ -66,9 +65,12 @@ class IpmiSensorsService(Service):
 
         return rv, reread
 
-    @filterable(roles=['IPMI_READ'])
-    @filterable_returns(List('sensors', items=[Dict('sensor', additional_attrs=True)]))
-    def query(self, filters, options):
+    def query(self, filters: list | None = None, options: dict | None = None):
+        if filters is None:
+            filters = list()
+        if options is None:
+            options = dict()
+
         sensors, reread = self.query_impl()
         if reread is not None:
             max_retries = 3
