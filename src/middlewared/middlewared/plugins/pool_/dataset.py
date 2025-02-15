@@ -1013,7 +1013,7 @@ class PoolDatasetService(CRUDService):
         return verrors
 
     @item_method
-    @accepts(Str('id'))
+    @accepts(Str('id'), roles=['DATASET_WRITE'])
     @returns()
     async def promote(self, id_):
         """

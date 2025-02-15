@@ -123,7 +123,8 @@ class PoolDatasetService(Service):
             Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
             Str('passphrase', empty=False, default=None, null=True, private=True),
             Str('key', validators=[Range(min_=64, max_=64)], default=None, null=True, private=True),
-        )
+        ),
+        roles=['DATASET_WRITE']
     )
     @returns()
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
@@ -223,7 +224,7 @@ class PoolDatasetService(Service):
         data['old_key_format'] = ds['key_format']['value']
         await self.middleware.call_hook('dataset.change_key', data)
 
-    @accepts(Str('id'))
+    @accepts(Str('id'), roles=['DATASET_WRITE'])
     @returns()
     async def inherit_parent_encryption_properties(self, id_):
         """
