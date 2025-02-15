@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel, NotRequired, single_argument_args
+from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, single_argument_args
 
 from pydantic import HttpUrl
 
@@ -89,7 +89,7 @@ class FailoverUpdateResult(BaseModel):
 
 
 class FailoverUpgradeArgs(BaseModel):
-    train: str = NotRequired
+    train: NonEmptyString = NotRequired
     resume: bool = False
     """Should be set to true if a previous call to this method returned a
     `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed
