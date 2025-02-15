@@ -39,12 +39,10 @@ class ISCSITargetService(SimpleService):
             await self._wait_to_avoid_states(['deactivating'])
 
     async def after_start(self):
-        await self.middleware.call("iscsi.host.injection.start")
         await self.middleware.call("iscsi.alua.after_start")
 
     async def before_stop(self):
         await self.middleware.call("iscsi.alua.before_stop")
-        await self.middleware.call("iscsi.host.injection.stop")
 
     async def reload(self):
         return (await run(

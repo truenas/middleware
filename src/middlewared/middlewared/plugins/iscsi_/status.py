@@ -18,4 +18,5 @@ class ISCSIGlobalService(Service):
         """
         Return currently connected clients count.
         """
-        return len({host.ip for host in await self.middleware.call("iscsi.host.injection.collect")})
+        addrs = await self.middleware.call('iscsi.global.sessions', [], {'select': ['initiator_addr']})
+        return len({addr['initiator_addr'] for addr in addrs})
