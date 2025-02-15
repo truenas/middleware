@@ -18,7 +18,7 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @item_method
-    @accepts(Str('id', required=True), roles=['READONLY_ADMIN'])
+    @accepts(Str('id', required=True), roles=['DATASET_READ'])
     @returns(Ref('processes'))
     async def processes(self, oid):
         """
