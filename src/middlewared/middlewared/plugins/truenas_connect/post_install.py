@@ -58,5 +58,7 @@ class TNCPostInstallService(Service):
                 'leca_service_base_url', 'tnc_base_url',
             )}
         )
+        logger.debug('TNC Post Install: Configuring nginx to consume TNC certificate')
+        await self.middleware.call('tn_connect.acme.update_ui_impl')
 
         logger.debug('TNC Post Install: TNC setup completed successfully')
