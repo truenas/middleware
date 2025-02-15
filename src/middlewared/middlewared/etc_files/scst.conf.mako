@@ -277,9 +277,6 @@
 
     # FIXME: SSD is not being reflected in the initiator, please look into it
 
-    target_hosts = middleware.call_sync('iscsi.host.get_target_hosts')
-    hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
-
     if alua_enabled and failover_status == "BACKUP":
         cml = calc_copy_manager_luns(list(itertools.chain.from_iterable([x for x in logged_in_targets.values() if x is not None])), True)
     else:
@@ -452,12 +449,6 @@ TARGET_DRIVER iscsi {
     mutual_chap = None
     chap_users = set()
     iscsi_initiator_portal_access = set()
-    has_per_host_access = False
-    for host in target_hosts[target['id']]:
-        for iqn in hosts_iqns[host['id']]:
-            if not is_fc_addr(iqn):
-                iscsi_initiator_portal_access.add(f'{iqn}\#{host["ip"]}')
-                has_per_host_access = True
     for group in target['groups']:
         if group['authmethod'] != 'NONE' and authenticators[group['auth']]:
             auth_list = authenticators[group['auth']]
@@ -479,10 +470,7 @@ TARGET_DRIVER iscsi {
                     pair = listen_ip_choices[address].split('/')
                     address = pair[0] if node == 'A' else pair[1]
 
-            group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
-            if not has_per_host_access:
-                group_initiators = group_initiators or ['*']
-            for initiator in group_initiators:
+            for initiator in ((initiators[group['initiator']]['initiators'] if group['initiator'] else []) or ['*']):
                 if not is_fc_addr(initiator):
                     iscsi_initiator_portal_access.add(f'{initiator}\#{address}')
 %>\

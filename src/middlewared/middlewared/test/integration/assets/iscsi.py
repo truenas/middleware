@@ -35,16 +35,6 @@ def iscsi_extent(data):
 
 
 @contextlib.contextmanager
-def iscsi_host(data):
-    host = call("iscsi.host.create", data)
-
-    try:
-        yield host
-    finally:
-        call("iscsi.host.delete", host["id"])
-
-
-@contextlib.contextmanager
 def iscsi_initiator(data):
     initiator = call("iscsi.initiator.create", data)
 
