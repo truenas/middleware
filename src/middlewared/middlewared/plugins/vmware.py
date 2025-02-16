@@ -3,18 +3,46 @@ from datetime import datetime
 import errno
 import socket
 import ssl
+from typing import Any
 import uuid
 
+from pydantic import Secret
+from pyVim import connect, task as VimTask
+from pyVmomi import vim, vmodl
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
+from middlewared.api.current import (
+    VMWareEntry,
+    VMWareCreateArgs, VMWareCreateResult,
+    VMWareUpdateArgs, VMWareUpdateResult,
+    VMWareDeleteArgs, VMWareDeleteResult,
+    VMWareGetDatastoresArgs, VMWareGetDatastoresResult,
+    VMWareMatchDatastoresWithDatasetsArgs, VMWareMatchDatastoresWithDatasetsResult,
+    VMWareDatasetHasVmsArgs, VMWareDatasetHasVmsResult,
+)
 from middlewared.async_validators import resolve_hostname
-from middlewared.schema import accepts, Any, Bool, Dict, Int, Str, Password, Patch
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.time_utils import utc_now
 
-from pyVim import connect, task as VimTask
-from pyVmomi import vim, vmodl
-
 NFS_VOLUME_TYPES = ('NFS', 'NFS41')
+
+
+class VMWarePeriodicSnapshotTaskProceedArgs(BaseModel):
+    context: Secret[Any]
+
+
+class VMWarePeriodicSnapshotTaskProceedResult(BaseModel):
+    result: Any
+
+
+class VMWarePeriodicSnapshotTaskEndArgs(BaseModel):
+    context: Secret[Any]
+
+
+class VMWarePeriodicSnapshotTaskEndResult(BaseModel):
+    result: Any
 
 
 class VMWareModel(sa.Model):
@@ -34,14 +62,8 @@ class VMWareService(CRUDService):
     class Config:
         datastore = 'storage.vmwareplugin'
         cli_namespace = 'storage.vmware'
+        entry = VMWareEntry
         role_prefix = 'SNAPSHOT_TASK'
-
-    ENTRY = Patch(
-        "vmware_create",
-        "vmware_entry",
-        ("add", Int("id")),
-        ("add", Dict("state", additional_attrs=True)),
-    )
 
     @private
     async def validate_data(self, data, schema_name):
@@ -79,27 +101,10 @@ class VMWareService(CRUDService):
 
         verrors.check()
 
-    @accepts(
-        Dict(
-            'vmware_create',
-            Str('datastore', required=True),
-            Str('filesystem', required=True),
-            Str('hostname', required=True),
-            Password('password', required=True),
-            Str('username', required=True),
-            register=True
-        )
-    )
+    @api_method(VMWareCreateArgs, VMWareCreateResult)
     async def do_create(self, data):
         """
         Create VMWare snapshot.
-
-        `hostname` is a valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for
-        the cluster.
-
-        `username` and `password` are the credentials used to authorize access to the VMWare host.
-
-        `datastore` is a valid datastore name which exists on the VMWare host.
         """
         await self.middleware.call('vmware.validate_data', data, 'vmware_create')
 
@@ -111,10 +116,7 @@ class VMWareService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id', required=True),
-        Patch('vmware_create', 'vmware_update', ('attr', {'update': True}))
-    )
+    @api_method(VMWareUpdateArgs, VMWareUpdateResult)
     async def do_update(self, id_, data):
         """
         Update VMWare snapshot of `id`.
@@ -138,9 +140,7 @@ class VMWareService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id')
-    )
+    @api_method(VMWareDeleteArgs, VMWareDeleteResult)
     async def do_delete(self, id_):
         """
         Delete VMWare snapshot of `id`.
@@ -158,73 +158,23 @@ class VMWareService(CRUDService):
 
         return response
 
-    @accepts(Dict(
-        'vmware-creds',
-        Str('hostname', required=True),
-        Str('username', required=True),
-        Str('password', private=True, required=True),
-    ), roles=['READONLY_ADMIN'])
+    @api_method(VMWareGetDatastoresArgs, VMWareGetDatastoresResult, roles=['READONLY_ADMIN'])
     def get_datastores(self, data):
         """
         Get datastores from VMWare.
         """
         return sorted(list(self.__get_datastores(data).keys()))
 
-    @accepts(Dict(
-        'vmware-creds',
-        Str('hostname', required=True),
-        Str('username', required=True),
-        Str('password', private=True, required=True),
-    ))
+    @api_method(
+        VMWareMatchDatastoresWithDatasetsArgs,
+        VMWareMatchDatastoresWithDatasetsResult,
+        roles=['READONLY_ADMIN'],
+    )
     def match_datastores_with_datasets(self, data):
         """
         Requests datastores from vCenter server and tries to match them with local filesystems.
 
         Returns a list of datastores, a list of local filesystems and guessed relationship between them.
-
-        .. examples(websocket)::
-
-            :::javascript
-            {
-              "id": "d51da71b-bb48-4b8b-a8f7-6046fcc892b4",
-              "msg": "method",
-              "method": "vmware.match_datastores_with_datasets",
-              "params": [{"hostname": "10.215.7.104", "username": "root", "password": "password"}]
-            }
-
-            returns
-
-            {
-              "datastores": [
-                {
-                  "name": "10.215.7.102",
-                  "description": "NFS mount '/mnt/tank' on 10.215.7.102",
-                  "filesystems": ["tank"]
-                },
-                {
-                  "name": "datastore1",
-                  "description": "mpx.vmhba0:C0:T0:L0",
-                  "filesystems": []
-                },
-                {
-                  "name": "zvol",
-                  "description": "iSCSI extent naa.6589cfc000000b3f0a891a2c4e187594",
-                  "filesystems": ["tank/vol"]
-                }
-              ],
-              "filesystems": [
-                {
-                  "type": "FILESYSTEM",
-                  "name": "tank",
-                  "description": "NFS mount '/mnt/tank' on 10.215.7.102"
-                },
-                {
-                  "type": "VOLUME",
-                  "name": "tank/vol",
-                  "description": "iSCSI extent naa.6589cfc000000b3f0a891a2c4e187594"
-                }
-              ]
-            }
         """
 
         datastores = []
@@ -357,7 +307,7 @@ class VMWareService(CRUDService):
 
         return datastores
 
-    @accepts(Str('dataset'), Bool('recursive'), roles=['READONLY_ADMIN'])
+    @api_method(VMWareDatasetHasVmsArgs, VMWareDatasetHasVmsResult, roles=['READONLY_ADMIN'])
     def dataset_has_vms(self, dataset, recursive):
         """
         Returns "true" if `dataset` is configured with a VMWare snapshot
@@ -537,14 +487,12 @@ class VMWareService(CRUDService):
                 "qs": qs,
             }
 
-    @private
-    @accepts(Any("context", private=True))
+    @api_method(VMWarePeriodicSnapshotTaskProceedArgs, VMWarePeriodicSnapshotTaskProceedResult, private=True)
     @job()
     def periodic_snapshot_task_proceed(self, job, context):
         return self.snapshot_proceed(context["dataset"], context["qs"])
 
-    @private
-    @accepts(Any("context", private=True))
+    @api_method(VMWarePeriodicSnapshotTaskEndArgs, VMWarePeriodicSnapshotTaskEndResult, private=True)
     @job()
     def periodic_snapshot_task_end(self, job, context):
         return self.snapshot_end(context)
