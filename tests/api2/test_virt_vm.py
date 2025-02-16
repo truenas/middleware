@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import time
 import uuid
 
 import pytest
@@ -189,6 +190,19 @@ def test_vm_creation_with_zvol(virt_pool, vm, iso_volume):
         'type': 'VOLUME',
         'properties': {'volsize': '514MiB'}
     })
+    found = False
+    sleep_time, wait_time, max_wait = 0.5, 0, 30
+    while wait_time < max_wait:
+        found = call('zfs.dataset.unlocked_zvols_fast', [["name", "=", zvol_name]])
+        if not found:
+            # symlink for the `zd` device can take a bit of time before it
+            # appears on our VMs. Try for a bit before we fail.
+            wait_time += sleep_time
+            time.sleep(sleep_time)
+
+    if not found:
+        assert False, f'Waited {wait_time} seconds but zd symlink did not appear'
+
     call('virt.instance.create', {
         'name': virt_instance_name,
         'instance_type': 'VM',
