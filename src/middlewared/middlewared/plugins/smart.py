@@ -8,19 +8,30 @@ from typing import Any
 
 from humanize import ordinal
 
-from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SmartTestEntry,
+    SmartTestCreateArgs, SmartTestCreateResult,
+    SmartTestUpdateArgs, SmartTestUpdateResult,
+    SmartTestDeleteArgs, SmartTestDeleteResult,
+    SmartTestQueryForDiskArgs, SmartTestQueryForDiskResult,
+    SmartTestDiskChoicesArgs, SmartTestDiskChoicesResult,
+    SmartTestManualTestArgs, SmartTestManualTestResult,
+    SmartTestResultsArgs, SmartTestResultsResult,
+    SmartTestAbortArgs, SmartTestAbortResult,
+    SmartEntry,
+    SmartUpdateArgs, SmartUpdateResult,
+    AtaSelfTest, NvmeSelfTest, ScsiSelfTest,
+)
 from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece_values
-from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, List, Patch, returns, Str
+from middlewared.schema import Cron
 from middlewared.service import (
-    CRUDService, filterable, filterable_returns, filter_list, job, private, SystemServiceService, ValidationErrors
+    CRUDService, filter_list, job, private, SystemServiceService, ValidationErrors
 )
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.time_utils import utc_now
-from middlewared.api.current import (
-    AtaSelfTest, NvmeSelfTest, ScsiSelfTest
-)
 
 
 RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
@@ -268,7 +279,7 @@ class SmartTestModel(sa.Model):
     smarttest_daymonth = sa.Column(sa.String(100))
     smarttest_month = sa.Column(sa.String(100))
     smarttest_dayweek = sa.Column(sa.String(100))
-    smarttest_all_disks = sa.Column(sa.Boolean(), default=False)
+    smarttest_all_disks = sa.Column(sa.Boolean())
 
     smarttest_disks = sa.relationship('DiskModel', secondary=lambda: SmartTestDiskModel.__table__)
 
@@ -292,12 +303,8 @@ class SMARTTestService(CRUDService):
         datastore_prefix = 'smarttest_'
         namespace = 'smart.test'
         cli_namespace = 'task.smart_test'
+        entry = SmartTestEntry
         role_prefix = 'DISK'
-
-    ENTRY = Patch(
-        'smart_task_create', 'smart_task_entry',
-        ('add', Int('id')),
-    )
 
     @private
     async def smart_test_extend(self, data):
@@ -343,7 +350,7 @@ class SMARTTestService(CRUDService):
 
         return verrors
 
-    @accepts(Str('disk'), roles=['REPORTING_READ'])
+    @api_method(SmartTestQueryForDiskArgs, SmartTestQueryForDiskResult, roles=['REPORTING_READ'])
     async def query_for_disk(self, disk_name):
         """
         Query S.M.A.R.T. tests for the specified disk name.
@@ -356,7 +363,7 @@ class SMARTTestService(CRUDService):
             if test['all_disks'] or disk['identifier'] in test['disks']
         ]
 
-    @accepts(Bool('full_disk', default=False))
+    @api_method(SmartTestDiskChoicesArgs, SmartTestDiskChoicesResult, roles=['DISK_READ'])
     async def disk_choices(self, full_disk):
         """
         Returns disk choices for S.M.A.R.T. test.
@@ -369,52 +376,10 @@ class SMARTTestService(CRUDService):
             if await self.middleware.call('disk.smartctl_args', disk['name']) is not None
         }
 
-    @accepts(
-        Dict(
-            'smart_task_create',
-            Cron(
-                'schedule',
-                exclude=['minute']
-            ),
-            Str('desc'),
-            Bool('all_disks', default=False),
-            List('disks', items=[Str('disk')]),
-            Str('type', enum=['LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE'], required=True),
-            register=True
-        )
-    )
+    @api_method(SmartTestCreateArgs, SmartTestCreateResult)
     async def do_create(self, data):
         """
         Create a SMART Test Task.
-
-        `disks` is a list of valid disks which should be monitored in this task.
-
-        `type` is specified to represent the type of SMART test to be executed.
-
-        `all_disks` when enabled sets the task to cover all disks in which case `disks` is not required.
-
-        .. examples(websocket)::
-
-          Create a SMART Test Task which executes after every 30 minutes.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "smart.test.create",
-                "params": [{
-                    "schedule": {
-                        "minute": "30",
-                        "hour": "*",
-                        "dom": "*",
-                        "month": "*",
-                        "dow": "*"
-                    },
-                    "all_disks": true,
-                    "type": "OFFLINE",
-                    "disks": []
-                }]
-            }
         """
         verrors = ValidationErrors()
         verrors.add_child('smart_test_create', await self._validate(data))
@@ -435,11 +400,12 @@ class SMARTTestService(CRUDService):
 
         return await self.get_instance(data['id'])
 
+    @api_method(SmartTestUpdateArgs, SmartTestUpdateResult)
     async def do_update(self, id_, data):
         """
         Update SMART Test Task of `id`.
         """
-        old = await self.query(filters=[('id', '=', id_)], options={'get': True})
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -463,6 +429,7 @@ class SMARTTestService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(SmartTestDeleteArgs, SmartTestDeleteResult)
     async def do_delete(self, id_):
         """
         Delete SMART Test Task of `id`.
@@ -477,31 +444,10 @@ class SMARTTestService(CRUDService):
 
         return response
 
-    @accepts(
-        List(
-            'disks', items=[
-                Dict(
-                    'disk_run',
-                    Str('identifier', required=True),
-                    Str('mode', enum=['FOREGROUND', 'BACKGROUND'], default='BACKGROUND'),
-                    Str('type', enum=['LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE'], required=True),
-                )
-            ]
-        )
-    )
-    @returns(List('smart_manual_test', items=[Dict(
-        'smart_manual_test_disk_response',
-        Str('disk', required=True),
-        Str('identifier', required=True),
-        Str('error', required=True, null=True),
-        Datetime('expected_result_time'),
-        Int('job'),
-    )]))
+    @api_method(SmartTestManualTestArgs, SmartTestManualTestResult, roles=['DISK_WRITE'])
     async def manual_test(self, disks):
         """
         Run manual SMART tests for `disks`.
-
-        `type` indicates what type of SMART test will be ran and must be specified.
         """
         verrors = ValidationErrors()
         test_disks_list = []
@@ -598,132 +544,10 @@ class SMARTTestService(CRUDService):
             **output
         }
 
-    @filterable(roles=['REPORTING_READ'])
-    @filterable_returns(Dict(
-        'disk_smart_test_result',
-        Str('disk', required=True),
-        List('tests', items=[Dict(
-            'test_result',
-            Int('num', required=True),
-            Str('description', required=True),
-            Str('status', required=True),
-            Str('status_verbose', required=True),
-            Int('segment_number', null=True),
-            Float('remaining'),
-            Int('lifetime', null=True, required=True),
-            Str('lba_of_first_error', null=True, required=True),
-        )]),
-        Dict(
-            'current_test',
-            Int('progress', required=True),
-            null=True,
-        ),
-        additional_attrs=True,
-    ))
+    @api_method(SmartTestResultsArgs, SmartTestResultsResult, roles=['REPORTING_READ'])
     async def results(self, filters, options):
         """
         Get disk(s) S.M.A.R.T. test(s) results.
-
-        `options.extra.tests_filter` is an optional filter for tests results.
-
-        .. examples(websocket)::
-
-          Get all disks tests results
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "smart.test.results",
-                "params": []
-            }
-
-            returns
-
-            :::javascript
-
-            [
-              # ATA disk
-              {
-                "disk": "sda",
-                "tests": [
-                  {
-                    "num": 1,
-                    "description": "Short offline",
-                    "status": "SUCCESS",
-                    "status_verbose": "Completed without error",
-                    "remaining": 0.0,
-                    "lifetime": 16590,
-                    "lba_of_first_error": None,
-                  }
-                ]
-              },
-              # NVME disk
-              {
-                "disk": "nvme0n1",
-                "tests: [
-                  {
-                    "num": 0,
-                    "description": "Short",
-                    "status": "SUCCESS",
-                    "status_verbose": "Completed without error",
-                    "power_on_hours": 18636,
-                    "failing_lba": None,
-                    "nsid": None,
-                    "seg": None,
-                    "sct": "0x0",
-                    "code": "0x00",
-                  },
-                ]
-              },
-              # SCSI disk
-              {
-                "disk": "sdb",
-                "tests": [
-                  {
-                    "num": 1,
-                    "description": "Background long",
-                    "status": "FAILED",
-                    "status_verbose": "Completed, segment failed",
-                    "segment_number": None,
-                    "lifetime": 3943,
-                    "lba_of_first_error": None,
-                  }
-                ]
-              },
-            ]
-
-          Get specific disk test results
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "smart.test.results",
-                "params": [
-                  [["disk", "=", "ada0"]],
-                  {"get": true}
-                ]
-            }
-
-            returns
-
-            :::javascript
-
-            {
-              "disk": "ada0",
-              "tests": [
-                {
-                  "num": 1,
-                  "description": "Short offline",
-                  "status": "SUCCESS",
-                  "status_verbose": "Completed without error",
-                  "remaining": 0.0,
-                  "lifetime": 16590,
-                  "lba_of_first_error": None,
-                }
-              ]
-            }
         """
 
         get = options.pop("get", False)
@@ -771,8 +595,7 @@ class SMARTTestService(CRUDService):
             await self.middleware.call('smart.test.abort', disk['disk'])
             raise
 
-    @accepts(Str('disk'))
-    @returns()
+    @api_method(SmartTestAbortArgs, SmartTestAbortResult, roles=['DISK_WRITE'])
     async def abort(self, disk):
         """
         Abort non-captive S.M.A.R.T. tests for disk.
@@ -800,33 +623,18 @@ class SmartService(SystemServiceService):
         datastore_extend = "smart.smart_extend"
         datastore_prefix = "smart_"
         cli_namespace = "service.smart"
+        entry = SmartEntry
         role_prefix = 'DISK'
-
-    ENTRY = Dict(
-        'smart_entry',
-        Int('interval', required=True),
-        Int('id', required=True),
-        Str('powermode', required=True, enum=SMARTCTL_POWERMODES),
-        Int('difference', required=True),
-        Int('informational', required=True),
-        Int('critical', required=True),
-    )
 
     @private
     async def smart_extend(self, smart):
         smart["powermode"] = smart["powermode"].upper()
         return smart
 
+    @api_method(SmartUpdateArgs, SmartUpdateResult)
     async def do_update(self, data):
         """
         Update SMART Service Configuration.
-
-        `interval` is an integer value in minutes which defines how often smartd activates to check if any tests
-        are configured to run.
-
-        `critical`, `informational` and `difference` are integer values on which alerts for SMART are configured if
-        the disks temperature crosses the assigned threshold for each respective attribute. They default to 0 which
-        indicates they are disabled.
         """
         old = await self.config()
 
