@@ -258,10 +258,16 @@ def single_argument_result(klass, klass_name=None):
     else:
         klass_name = klass_name or klass.__name__
 
+    module = inspect.getmodule(inspect.stack()[1][0])
+    if module:
+        module_name = module.__name__
+    else:
+        module_name = None
+
     model = create_model(
         klass_name,
         __base__=(BaseModel,),
-        __module__=inspect.getmodule(inspect.stack()[1][0]).__name__,
+        __module__=module_name,
         result=typing.Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):
