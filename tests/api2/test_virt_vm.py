@@ -230,10 +230,10 @@ def test_vm_creation_with_zvol(virt_pool, vm, iso_volume):
 def test_iso_param_validation_on_vm_create(virt_pool, iso_volume, error_msg):
     with pytest.raises(ValidationErrors) as ve:
         call('virt.instance.create', {
-             'name': 'test-iso-vm2',
-             'instance_type': 'VM',
-             'source_type': 'ISO',
-             'iso_volume': iso_volume
+            'name': 'test-iso-vm2',
+            'instance_type': 'VM',
+            'source_type': 'ISO',
+            'iso_volume': iso_volume
         }, job=True)
 
     assert ve.value.errors[0].errmsg == error_msg
@@ -248,12 +248,12 @@ def test_iso_param_validation_on_vm_create(virt_pool, iso_volume, error_msg):
 def test_vnc_validation_on_vm_create(virt_pool, enable_vnc, vnc_password, vnc_port, error_msg):
     with pytest.raises(ValidationErrors) as ve:
         call('virt.instance.create', {
-             'name': 'test-vnc-vm',
-             'instance_type': 'VM',
-             'source_type': None,
-             'vnc_port': vnc_port,
-             'vnc_password': vnc_password,
-             'enable_vnc': enable_vnc,
+            'name': 'test-vnc-vm',
+            'instance_type': 'VM',
+            'source_type': None,
+            'vnc_port': vnc_port,
+            'vnc_password': vnc_password,
+            'enable_vnc': enable_vnc,
         }, job=True)
 
     assert ve.value.errors[0].errmsg == error_msg
