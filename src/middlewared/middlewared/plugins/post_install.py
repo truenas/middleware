@@ -5,7 +5,7 @@ import jsonschema
 
 from middlewared.service import Service
 
-PATH = "/data/post_install.json"
+PATH = "/data/post-install.json"
 
 SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
