@@ -6,7 +6,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
-from middlewared.api.current import KMIPEntry, KMIPUpdateArgs, KMIPUpdateResult
+from middlewared.api.current import KmipEntry, KmipUpdateArgs, KmipUpdateResult
 from middlewared.async_validators import validate_port
 from middlewared.service import CallError, ConfigService, job, private, ValidationErrors
 
@@ -31,7 +31,7 @@ class KMIPService(ConfigService):
         datastore_extend = 'kmip.kmip_extend'
         cli_namespace = 'system.kmip'
         role_prefix = 'KMIP'
-        entry = KMIPEntry
+        entry = KmipEntry
 
     @private
     async def kmip_extend(self, data):
@@ -39,7 +39,7 @@ class KMIPService(ConfigService):
             data[k] = data[k]['id']
         return data
 
-    @api_method(KMIPUpdateArgs, KMIPUpdateResult)
+    @api_method(KmipUpdateArgs, KmipUpdateResult)
     @job(lock='kmip_update')
     async def do_update(self, job, data):
         """
