@@ -63,8 +63,8 @@ SCHEMA = {
             "required": [
                 "jwt_token", "registration_details", "ips", "certificate_public_key", "certificate_private_key",
                 "csr_public_key", "account_service_base_url", "leca_service_base_url", "tnc_base_url", "claim_token",
-                "registration_finalization_expiration", "enabled", "systemd_id", "truenas_version",
-                "initialization_in_progress", "initialization_completed", "initialization_error",
+                "enabled", "system_id", "truenas_version", "initialization_in_progress",
+                "initialization_completed", "initialization_error",
             ],
         },
     },
