@@ -139,7 +139,7 @@ class WebSocketApplication(RpcWebSocketApp):
                 passthrough_nonexistent_methods=True,
             )
             if lam.accepts_model:
-                params = lam._adapt_params(params)
+                params = await lam._adapt_params(params)
 
             async with self._softhardsemaphore:
                 result = await self.middleware.call_with_audit(
@@ -154,7 +154,7 @@ class WebSocketApplication(RpcWebSocketApp):
                 result = [i async for i in result]
             else:
                 if lam.returns_model:
-                    result = lam._dump_result(self, methodobj, result)
+                    result = await lam._dump_result(self, methodobj, result)
                 else:
                     result = self.middleware.dump_result(
                         serviceobj, methodobj, self, result

@@ -3,17 +3,18 @@ import pytest
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
+from middlewared.pytest.unit.helpers import TestModelProvider
 
 
-class Settings(BaseModel):
+class SettingsV1(BaseModel):
     email: EmailStr | None = None
 
 
 class UpdateSettingsArgsV1(BaseModel):
-    settings: Settings
+    settings: SettingsV1
 
 
-class Settings(BaseModel):
+class SettingsV2(BaseModel):
     emails: list[EmailStr]
 
     @classmethod
@@ -40,10 +41,10 @@ class Settings(BaseModel):
 
 
 class UpdateSettingsArgsV2(BaseModel):
-    settings: Settings
+    settings: SettingsV2
 
 
-class Settings(BaseModel):
+class SettingsV3(BaseModel):
     contacts: list[dict]
 
     @classmethod
@@ -65,20 +66,21 @@ class Settings(BaseModel):
 
 
 class UpdateSettingsArgsV3(BaseModel):
-    settings: Settings
+    settings: SettingsV3
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("version1,value,version2,result", [
     ("v1", {"settings": {"email": "alice@ixsystems.com"}},
      "v3", {"settings": {"contacts": [{"name": "Alice", "email": "alice@ixsystems.com"}]}}),
     ("v3", {"settings": {"contacts": [{"name": "Alice", "email": "alice@ixsystems.com"}]}},
      "v1", {"settings": {"email": "alice@ixsystems.com"}}),
 ])
-def test_adapt(version1, value, version2, result):
+async def test_adapt(version1, value, version2, result):
     adapter = APIVersionsAdapter([
-        APIVersion("v1", {"UpdateSettingsArgs": UpdateSettingsArgsV1}),
-        APIVersion("v2", {"UpdateSettingsArgs": UpdateSettingsArgsV2}),
-        APIVersion("v3", {"UpdateSettingsArgs": UpdateSettingsArgsV3}),
+        APIVersion("v1", TestModelProvider({"UpdateSettingsArgs": UpdateSettingsArgsV1})),
+        APIVersion("v2", TestModelProvider({"UpdateSettingsArgs": UpdateSettingsArgsV2})),
+        APIVersion("v3", TestModelProvider({"UpdateSettingsArgs": UpdateSettingsArgsV3})),
     ])
 
-    assert adapter.adapt(value, "UpdateSettingsArgs", version1, version2) == result
+    assert await adapter.adapt(value, "UpdateSettingsArgs", version1, version2) == result
