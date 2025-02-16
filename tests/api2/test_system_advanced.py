@@ -42,7 +42,7 @@ def test_debugkernel_initrd():
     assert "debug" not in initrds[0]
 
     try:
-        call("system.advanced.update", {"debugkernel": True})
+        call("system.advanced.update", {"debugkernel": True}, timeout=300)
 
         initrds = [initrd for initrd in ssh("ls -1 /boot").split() if "initrd" in initrd]
         assert len(initrds) == 2
