@@ -2,18 +2,19 @@ import pytest
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
+from middlewared.pytest.unit.helpers import TestModelProvider
 
 
-class Contact(BaseModel):
+class ContactV1(BaseModel):
     name: str
     email: str
 
 
 class SettingsV1(BaseModel):
-    contacts: list[Contact]
+    contacts: list[ContactV1]
 
 
-class Contact(BaseModel):
+class ContactV2(BaseModel):
     first_name: str
     last_name: str
     email: str
@@ -36,19 +37,20 @@ class Contact(BaseModel):
 
 
 class SettingsV2(BaseModel):
-    contacts: list[Contact]
+    contacts: list[ContactV2]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("version1,value,version2,result", [
     ("v1", {"contacts": [{"name": "Jane Doe", "email": "jane@ixsystems.com"}]},
      "v2", {"contacts": [{"first_name": "Jane", "last_name": "Doe", "email": "jane@ixsystems.com"}]}),
     ("v2", {"contacts": [{"first_name": "Jane", "last_name": "Doe", "email": "jane@ixsystems.com"}]},
      "v1", {"contacts": [{"name": "Jane Doe", "email": "jane@ixsystems.com"}]}),
 ])
-def test_adapt(version1, value, version2, result):
+async def test_adapt(version1, value, version2, result):
     adapter = APIVersionsAdapter([
-        APIVersion("v1", {"Settings": SettingsV1}),
-        APIVersion("v2", {"Settings": SettingsV2}),
+        APIVersion("v1", TestModelProvider({"Settings": SettingsV1})),
+        APIVersion("v2", TestModelProvider({"Settings": SettingsV2})),
     ])
 
-    assert adapter.adapt(value, "Settings", version1, version2) == result
+    assert await adapter.adapt(value, "Settings", version1, version2) == result

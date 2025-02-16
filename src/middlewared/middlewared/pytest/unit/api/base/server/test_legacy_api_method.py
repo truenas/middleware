@@ -1,9 +1,11 @@
+import pytest
 from unittest.mock import Mock
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.decorator import api_method
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 from middlewared.api.base.server.legacy_api_method import LegacyAPIMethod
+from middlewared.pytest.unit.helpers import TestModelProvider
 
 
 class MethodArgs(BaseModel):
@@ -44,8 +46,8 @@ def method(number, text, multiplier):
 
 
 adapter = APIVersionsAdapter([
-    APIVersion("v1", {"MethodArgs": MethodArgsV1, "MethodResult": MethodResultV1}),
-    APIVersion("v2", {"MethodArgs": MethodArgs, "MethodResult": MethodResult}),
+    APIVersion("v1", TestModelProvider({"MethodArgs": MethodArgsV1, "MethodResult": MethodResultV1})),
+    APIVersion("v2", TestModelProvider({"MethodArgs": MethodArgs, "MethodResult": MethodResult})),
 ])
 legacy_api_method = LegacyAPIMethod(
     Mock(
@@ -57,5 +59,6 @@ legacy_api_method = LegacyAPIMethod(
 )
 
 
-def test_adapt_params():
-    assert legacy_api_method._adapt_params([1]) == [1, "Default", 2]
+@pytest.mark.asyncio
+async def test_adapt_params():
+    assert await legacy_api_method._adapt_params([1]) == [1, "Default", 2]

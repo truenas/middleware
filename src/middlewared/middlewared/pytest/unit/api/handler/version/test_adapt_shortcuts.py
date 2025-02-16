@@ -3,6 +3,8 @@ import pytest
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args, single_argument_result
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 
+from .utils import TestModelProvider
+
 
 class ModelV1(BaseModel, metaclass=ForUpdateMetaclass):
     number: int = 1
@@ -13,12 +15,13 @@ class ModelV2(BaseModel, metaclass=ForUpdateMetaclass):
     text: str = "1"
 
 
-def test_adapt_for_update_metaclass():
+@pytest.mark.asyncio
+async def test_adapt_for_update_metaclass():
     adapter = APIVersionsAdapter([
-        APIVersion("v1", {"Model": ModelV1}),
-        APIVersion("v2", {"Model": ModelV2}),
+        APIVersion("v1", TestModelProvider({"Model": ModelV1})),
+        APIVersion("v2", TestModelProvider({"Model": ModelV2})),
     ])
-    assert adapter.adapt({}, "Model", "v1", "v2") == {}
+    assert await adapter.adapt({}, "Model", "v1", "v2") == {}
 
 
 class ArgsV1(BaseModel):
@@ -39,15 +42,16 @@ class ArgsV2(BaseModel):
         }
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("version1,value,version2,result", [
     ("v1", {"count": 1}, "v2", {"options": {"count": 1, "force": False}}),
 ])
-def test_adapt_single_argument_args(version1, value, version2, result):
+async def test_adapt_single_argument_args(version1, value, version2, result):
     adapter = APIVersionsAdapter([
-        APIVersion("v1", {"Args": ArgsV1}),
-        APIVersion("v2", {"Args": ArgsV2}),
+        APIVersion("v1", TestModelProvider({"Args": ArgsV1})),
+        APIVersion("v2", TestModelProvider({"Args": ArgsV2})),
     ])
-    assert adapter.adapt(value, "Args", version1, version2) == result
+    assert await adapter.adapt(value, "Args", version1, version2) == result
 
 
 class ResultV1(BaseModel):
@@ -69,12 +73,13 @@ class ResultV2(BaseModel):
         }
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("version1,value,version2,result", [
     ("v1", {"result": 1}, "v2", {"result": {"value": 1, "status": "OK"}}),
 ])
-def test_adapt_single_argument_result(version1, value, version2, result):
+async def test_adapt_single_argument_result(version1, value, version2, result):
     adapter = APIVersionsAdapter([
-        APIVersion("v1", {"Result": ResultV1}),
-        APIVersion("v2", {"Result": ResultV2}),
+        APIVersion("v1", TestModelProvider({"Result": ResultV1})),
+        APIVersion("v2", TestModelProvider({"Result": ResultV2})),
     ])
-    assert adapter.adapt(value, "Result", version1, version2) == result
+    assert await adapter.adapt(value, "Result", version1, version2) == result
