@@ -6,11 +6,9 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
-from middlewared.api.current import (
-    KMIPEntry, KMIPUpdateArgs, KMIPUpdateResult,
-)
+from middlewared.api.current import KMIPEntry, KMIPUpdateArgs, KMIPUpdateResult
 from middlewared.async_validators import validate_port
-from middlewared.service import accepts, CallError, ConfigService, job, private, ValidationErrors
+from middlewared.service import CallError, ConfigService, job, private, ValidationErrors
 
 
 class KMIPModel(sa.Model):
