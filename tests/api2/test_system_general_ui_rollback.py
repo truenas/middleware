@@ -6,6 +6,17 @@ import requests
 from middlewared.test.integration.utils import call, ssh, url
 
 
+# Sometimes, nginx is restarted 10 seconds after we make `system.general.update` call:
+# [2025/02/14 09:58:10] Starting integration test test_system_general_ui_rollback
+# Feb 14 09:58:18 Stopping nginx.service - A high performance web server and a reverse proxy server...
+# Feb 14 09:58:23 nginx.service: Stopping timed out. Terminating.
+# That breaks our tight timings (we reasonably expect nginx to be restarted `ui_restart_delay` seconds after we make
+# the call).
+# I was not able to reproduce this locally. This issue won't affect the production systems (once in a while UI will
+# take N more seconds to restart).
+# We can make set `rollback_timeout` to 60 (as we do in production), but that'll increase the test run time in every run
+# It's better to just re-run the test once in a while.
+@pytest.mark.flaky(reruns=5, reruns_delay=30)
 def test_system_general_ui_rollback():
     try:
         # Apply incorrect changes
@@ -33,7 +44,7 @@ def test_system_general_ui_rollback():
         # Bring things back to normal via SSH in case of any error
         ssh("midclt call system.general.update '{\"ui_port\": 80}'")
         ssh("midclt call system.general.ui_restart 0")
-        time.sleep(10)
+        time.sleep(20)
         raise
 
 
