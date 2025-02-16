@@ -74,7 +74,7 @@ class FailoverUpdateArgs(BaseModel):
     master: bool = NotRequired
     """Marks the particular node in the chassis as the master node.
     The standby node will have the opposite value."""
-    timeout: int
+    timeout: int = NotRequired
     """The time to WAIT (in seconds) until a failover occurs when a network
     event occurs on an interface that is marked critical for failover AND
     HA is enabled and working appropriately. The default time to wait is
