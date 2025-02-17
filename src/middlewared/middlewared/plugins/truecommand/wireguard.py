@@ -2,10 +2,10 @@ import asyncio
 import re
 import time
 
+from middlewared.api.current import TruecommandStatus
 from middlewared.service import CallError, periodic, private, Service
 from middlewared.utils import run
 
-from .enums import Status
 from .utils import WIREGUARD_INTERFACE_NAME
 
 HEALTH_CHECK_SECONDS = 1800
@@ -38,15 +38,15 @@ class TruecommandService(Service):
         # The purpose of this method is to ensure that the wireguard connection
         # is active. If wireguard service is running, we want to make sure that the last
         # handshake we have had was under 30 minutes.
-        if not await self.middleware.call('failover.is_single_master_node') or Status(
+        if not await self.middleware.call('failover.is_single_master_node') or TruecommandStatus(
             (await self.middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
-        ) != Status.CONNECTED:
+        ) != TruecommandStatus.CONNECTED:
             await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
             return
 
         if not await self.wireguard_connection_health():
             # Stop wireguard if it's running and start polling the api to see what's up
-            await self.middleware.call('truecommand.set_status', Status.CONNECTING.value)
+            await self.middleware.call('truecommand.set_status', TruecommandStatus.CONNECTING.value)
             await self.stop_truecommand_service()
             await self.middleware.call('alert.oneshot_create', 'TruecommandConnectionHealth', None)
             await self.middleware.call('truecommand.poll_api_for_status')
@@ -54,7 +54,7 @@ class TruecommandService(Service):
             # Mark the connection as connected - we do this for just in case user never called
             # truecommand.config and is in WAITING state right now assuming that an event will be
             # raised when TC finally connects
-            await self.middleware.call('truecommand.set_status', Status.CONNECTED.value)
+            await self.middleware.call('truecommand.set_status', TruecommandStatus.CONNECTED.value)
             await self.middleware.call('truecommand.dismiss_alerts', False, True)
 
     @private
@@ -97,7 +97,7 @@ class TruecommandService(Service):
     async def start_truecommand_service(self):
         config = await self.middleware.call('datastore.config', 'system.truecommand')
         if config['enabled'] and await self.middleware.call('failover.is_single_master_node'):
-            if Status(config['api_key_state']) == Status.CONNECTED and all(
+            if TruecommandStatus(config['api_key_state']) == TruecommandStatus.CONNECTED and all(
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
                 await self.middleware.call('service.start', 'truecommand', {'ha_propagate': False})

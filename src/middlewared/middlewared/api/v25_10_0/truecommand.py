@@ -3,18 +3,18 @@ from typing import Literal
 
 from pydantic import Field, Secret, SecretStr
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args
 
 
 __all__ = [
-    'CONNECTING_STATUS_REASON', 'Status', 'StatusReason', 'TruecommandEntry', 'TruecommandUpdateArgs',
-    'TrueCommandUpdateResult',
+    'TRUECOMMAND_CONNECTING_STATUS_REASON', 'TruecommandStatus', 'TruecommandStatusReason',
+    'TruecommandEntry', 'TruecommandUpdateArgs', 'TrueCommandUpdateResult',
 ]
 
-CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
+TRUECOMMAND_CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
 
 
-class Status(enum.Enum):
+class TruecommandStatus(enum.Enum):
     CONNECTED = 'CONNECTED'
     CONNECTING = 'CONNECTING'
     DISABLED = 'DISABLED'
@@ -33,7 +33,7 @@ class Status(enum.Enum):
 # check
 
 
-class StatusReason(enum.Enum):
+class TruecommandStatusReason(enum.Enum):
     CONNECTED = 'Truecommand service is connected.'
     CONNECTING = 'Pending Confirmation From iX Portal for Truecommand API Key.'
     DISABLED = 'Truecommand service is disabled.'
@@ -43,8 +43,10 @@ class StatusReason(enum.Enum):
 class TruecommandEntry(BaseModel):
     id: int
     api_key: Secret[str | None]
-    status: Literal[tuple(s.value for s in Status)]
-    status_reason: Literal[tuple(s.value for s in StatusReason) + tuple([CONNECTING_STATUS_REASON])]
+    status: Literal[tuple(s.value for s in TruecommandStatus)]
+    status_reason: Literal[
+        tuple(s.value for s in TruecommandStatusReason) + tuple([TRUECOMMAND_CONNECTING_STATUS_REASON])
+    ]
     remote_url: str | None
     remote_ip_address: str | None
     enabled: bool
