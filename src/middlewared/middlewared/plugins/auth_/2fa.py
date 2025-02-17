@@ -4,11 +4,11 @@ import pyotp
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch
+from middlewared.api import api_method
+from middlewared.api.current import TwoFactorAuthEntry, TwoFactorAuthUpdateArgs, TwoFactorAuthUpdateResult
 from middlewared.service import CallError, ConfigService, periodic, private
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
-from middlewared.validators import Range
 
 
 class TwoFactoryUserAuthModel(sa.Model):
@@ -39,18 +39,7 @@ class TwoFactorAuthService(ConfigService):
         namespace = 'auth.twofactor'
         cli_namespace = 'auth.two_factor'
         role_prefix = 'SYSTEM_SECURITY'
-
-    ENTRY = Dict(
-        'auth_twofactor_entry',
-        Bool('enabled', required=True),
-        Dict(
-            'services',
-            Bool('ssh', default=False),
-            required=True
-        ),
-        Int('window', validators=[Range(min_=0)], required=True),
-        Int('id', required=True),
-    )
+        entry = TwoFactorAuthEntry
 
     @private
     async def two_factor_extend(self, data):
@@ -59,12 +48,9 @@ class TwoFactorAuthService(ConfigService):
 
         return data
 
-    @accepts(
-        Patch(
-            'auth_twofactor_entry', 'auth_twofactor_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        ),
+    @api_method(
+        TwoFactorAuthUpdateArgs,
+        TwoFactorAuthUpdateResult,
         audit='Update two-factor authentication service configuration'
     )
     async def do_update(self, data):
