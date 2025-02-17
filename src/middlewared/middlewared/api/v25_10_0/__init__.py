@@ -55,6 +55,7 @@ from .pool_snapshottask import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
 from .rdma_interface import *  # noqa
+from .replication import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
 from .smartctl import *  # noqa
