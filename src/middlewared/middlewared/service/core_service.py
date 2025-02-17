@@ -646,7 +646,12 @@ class CoreService(Service):
             pipes=Pipes(output=self.middleware.pipe(buffered))
         )
         token = await self.middleware.call(
-            'auth.generate_token', 300, {'filename': filename, 'job': job.id}, True, True, app=app
+            'auth.generate_token',
+            300,  # ttl
+            {'filename': filename, 'job': job.id},  # attrs
+            True,  # match origin
+            True,  # single-use token
+            app=app
         )
         self.middleware.fileapp.register_job(job.id, buffered)
         return job.id, f'/_download/{job.id}?auth_token={token}'

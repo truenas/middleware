@@ -72,7 +72,6 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         self.last_used_at = now
 
         if assurance:
-            self.may_create_auth_token = AuthMech.TOKEN_PLAIN in assurance.mechanisms
             self.expiry = now + self.assurance.max_session_age
             self.inactivity_timeout = self.assurance.max_inactivity
 
