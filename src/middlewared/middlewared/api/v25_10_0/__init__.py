@@ -68,6 +68,7 @@ from .system_ntpserver import *  # noqa
 from .system_reboot import *  # noqa
 from .system_security import *  # noqa
 from .tn_connect import *  # noqa
+from .truecommand import *  # noqa
 from .truenas import *  # noqa
 from .user import *  # noqa
 from .virt_device import *  # noqa
