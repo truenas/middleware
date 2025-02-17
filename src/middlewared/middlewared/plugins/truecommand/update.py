@@ -2,14 +2,13 @@ import asyncio
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict, Int, IPAddr, Password, Str
-from middlewared.service import accepts, ConfigService, private, ValidationErrors
-from middlewared.validators import Range
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CONNECTING_STATUS_REASON, Status, StatusReason, TruecommandEntry, TruecommandUpdateArgs, TrueCommandUpdateResult,
+)
+from middlewared.service import ConfigService, private, ValidationErrors
 
-from .enums import Status, StatusReason
 
-
-CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
 TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
 
 
@@ -37,17 +36,7 @@ class TruecommandService(ConfigService):
         datastore_extend = 'truecommand.tc_extend'
         cli_namespace = 'system.truecommand'
         role_prefix = 'TRUECOMMAND'
-
-    ENTRY = Dict(
-        'truecommand_entry',
-        Int('id', required=True),
-        Password('api_key', required=True, null=True),
-        Str('status', required=True, enum=[s.value for s in Status]),
-        Str('status_reason', required=True, enum=[s.value for s in StatusReason] + [CONNECTING_STATUS_REASON]),
-        Str('remote_url', required=True, null=True),
-        IPAddr('remote_ip_address', required=True, null=True),
-        Bool('enabled', required=True),
-    )
+        entry = TruecommandEntry
 
     @private
     async def tc_extend(self, config):
@@ -80,13 +69,7 @@ class TruecommandService(ConfigService):
         })
         return config
 
-    @accepts(
-        Dict(
-            'truecommand_update',
-            Bool('enabled'),
-            Password('api_key', null=True, validators=[Range(min_=16, max_=16)]),
-        )
-    )
+    @api_method(TruecommandUpdateArgs, TrueCommandUpdateResult)
     async def do_update(self, data):
         """
         Update Truecommand service settings.
