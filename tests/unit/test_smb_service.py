@@ -465,3 +465,11 @@ def test__enable_stig():
     )
     assert conf['client use kerberos'] == 'required'
     assert conf['ntlm auth'] == 'disabled'
+
+
+def test__multiprotocol_share_leases():
+    conf = generate_smb_conf_dict(
+        None, None, BASE_SMB_CONFIG, [BASE_SMB_SHARE | {'purpose': 'MULTI_PROTOCOL_NFS'}],
+        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert conf['smb2 leases'] is False
