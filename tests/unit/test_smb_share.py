@@ -252,8 +252,6 @@ def test__durablehandle(nfsacl_dataset, enabled):
 
     if enabled:
         assert conf['posix locking'] is False
-    else:
-        assert conf['kernel oplocks'] is True
 
 
 @pytest.mark.parametrize('enabled', [True, False])
@@ -382,6 +380,16 @@ def test__worm_preset(nfsacl_dataset):
         TrueNASVfsObjects.IO_URING,
         TrueNASVfsObjects.WORM,
     ]
+
+
+def test__multiprotocol_nfs_preset(nfsacl_dataset):
+    conf = generate_smb_share_conf_dict(None, BASE_SMB_SHARE | {
+        'path': nfsacl_dataset,
+        'purpose': 'MULTI_PROTOCOL_NFS',
+    }, BASE_SMB_CONFIG)
+
+    assert conf['path'] == nfsacl_dataset
+    assert conf['kernel oplocks'] is True
 
 
 def test__shadow_copy_off(nfsacl_dataset):
