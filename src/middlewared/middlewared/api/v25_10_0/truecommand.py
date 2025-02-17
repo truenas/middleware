@@ -1,13 +1,14 @@
 import enum
 from typing import Literal
 
-from pydantic import Secret
+from pydantic import Field, Secret, SecretStr
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
 
 
 __all__ = [
-    'CONNECTING_STATUS_REASON', 'Status', 'StatusReason', 'TruecommandEntry',
+    'CONNECTING_STATUS_REASON', 'Status', 'StatusReason', 'TruecommandEntry', 'TruecommandUpdateArgs',
+    'TrueCommandUpdateResult',
 ]
 
 CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
@@ -47,3 +48,13 @@ class TruecommandEntry(BaseModel):
     remote_url: str | None
     remote_ip_address: str | None
     enabled: bool
+
+
+@single_argument_args('truecommand_update')
+class TruecommandUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
+    enabled: bool
+    api_key: SecretStr | None = Field(min_length=16, max_length=16)
+
+
+class TrueCommandUpdateResult(BaseModel):
+    result: TruecommandEntry
