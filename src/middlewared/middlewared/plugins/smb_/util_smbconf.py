@@ -181,8 +181,6 @@ def generate_smb_share_conf_dict(
 
     if share_config['durablehandle']:
         config_out['posix locking'] = False
-    else:
-        config_out['kernel oplocks'] = True
 
     if share_config['timemachine']:
         config_out['fruit:timemachine'] = True
@@ -294,6 +292,7 @@ def generate_smb_conf_dict(
         case _:
             pass
 
+    has_mixed_mode = filter_list(smb_shares, [['purpose', '=', 'MULTI_PROTOCOL_NFS']])
     home_share = filter_list(smb_shares, [['home', '=', True]])
     if home_share:
         if ds_type is DSType.AD:
@@ -558,6 +557,13 @@ def generate_smb_conf_dict(
                     value = v
 
             smbconf.update({f'{idmap_prefix} {backend_parameter}': value})
+
+    """
+    Mixed NFS / SMB shares enables kernel oplock support, which requires
+    globally disabling SMB2 leases
+    """
+    if has_mixed_mode:
+        smbconf['smb2 leases'] = False
 
     for e in smb_service_config['smb_options'].splitlines():
         # Add relevant auxiliary parameters
