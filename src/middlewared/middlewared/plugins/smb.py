@@ -1328,7 +1328,7 @@ class SharingSMBService(SharingService):
             verrors.add(
                 f'{schema_name}.purpose',
                 'MULTI_PROTOCOL_NFS purpose requires global changes that are incompatible '
-                'with the enabling Apple SMB protocol extensions.'
+                'with the enabling of Apple SMB protocol extensions.'
             )
 
         if data['timemachine'] or data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
