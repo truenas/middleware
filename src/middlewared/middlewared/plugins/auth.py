@@ -739,7 +739,7 @@ class AuthService(Service):
                     if resp['pam_response'] == 'SUCCESS':
                         # Insert a failure delay so that we don't leak information about
                         # the PAM response
-                        await asyncio.sleep(random.uniform(4, 5))
+                        await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': cred_type,
@@ -749,7 +749,7 @@ class AuthService(Service):
                         }, False)
 
                     else:
-                        await asyncio.sleep(random.uniform(3, 4))
+                        await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': cred_type,
@@ -769,10 +769,6 @@ class AuthService(Service):
 
                         await login_fn(app, cred)
                     case pam.PAM_AUTH_ERR:
-                        if CURRENT_AAL.level != AA_LEVEL1:
-                            # Insert a minimum additional failure delay to ensure at least 4 seconds required by STIG
-                            await asyncio.sleep(random.uniform(3, 4))
-
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': cred_type,
@@ -781,10 +777,6 @@ class AuthService(Service):
                             'error': 'Bad username or password'
                         }, False)
                     case _:
-                        if CURRENT_AAL.level != AA_LEVEL1:
-                            # Insert a minimum additional failure delay to ensure at least 4 seconds required by STIG
-                            await asyncio.sleep(random.uniform(3, 4))
-
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': cred_type,
@@ -909,10 +901,7 @@ class AuthService(Service):
                     await login_fn(app, cred)
                 else:
                     # Add a sleep like pam_delay() would add for pam_oath
-                    if CURRENT_AAL.level == AA_LEVEL1:
-                        await asyncio.sleep(random.uniform(1, 2))
-                    else:
-                        await asyncio.sleep(random.uniform(4, 5))
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
 
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
@@ -944,11 +933,7 @@ class AuthService(Service):
                 token_str = data['token']
                 token = self.token_manager.get(token_str, app.origin)
                 if token is None:
-                    if CURRENT_AAL.level == AA_LEVEL1:
-                        await asyncio.sleep(random.uniform(1, 2))
-                    else:
-                        await asyncio.sleep(random.uniform(4, 5))
-
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'TOKEN',
@@ -961,11 +946,7 @@ class AuthService(Service):
                     return response
 
                 if token.attributes:
-                    if CURRENT_AAL.level == AA_LEVEL1:
-                        await asyncio.sleep(random.uniform(1, 2))
-                    else:
-                        await asyncio.sleep(random.uniform(4, 5))
-
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'TOKEN',
