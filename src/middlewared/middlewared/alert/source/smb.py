@@ -1,5 +1,5 @@
 import time
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, SimpleOneShotAlertClass
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.service_exception import ValidationErrors
 
@@ -147,3 +147,18 @@ class SMBPathAlertSource(AlertSource):
             return
 
         return Alert(SMBPathAlertClass, {'err': msg}, key=None)
+
+
+class SMBUserMissingHashAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = "SMB user is missing required password hash"
+    text = (
+        "The following users lack valid password hashes. "
+        "This may occur if the TrueNAS configuration was restored without the "
+        "secret seed and may be fixed by resetting the user password through the "
+        "TrueNAS UI or API: %(entries)s"
+    )
+
+    async def delete(self, alerts, query):
+        return []
