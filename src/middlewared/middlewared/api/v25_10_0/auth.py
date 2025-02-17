@@ -161,6 +161,7 @@ class AuthSessionEntry(BaseModel):
         'UNIX_SOCKET',
         'LOGIN_PASSWORD',
         'LOGIN_TWOFACTOR',
+        'LOGIN_ONETIME_PASSWORD',
         'API_KEY',
         'TOKEN',
         'TRUENAS_NODE',
