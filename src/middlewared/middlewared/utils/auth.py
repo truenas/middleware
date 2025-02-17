@@ -1,6 +1,7 @@
 import enum
 import threading
 from dataclasses import dataclass
+from random import uniform
 from time import monotonic
 from .crypto import generate_string, sha512_crypt, check_unixhash
 
@@ -36,11 +37,18 @@ class AuthenticatorAssuranceLevel:
     max_inactivity: int | None
     mechanisms: tuple[AuthMech] | None
     otp_mandatory: bool
+    min_fail_delay: int
 
 
 @dataclass(slots=True)
 class ServerAAL:
     level: AuthenticatorAssuranceLevel
+
+    def get_delay_interval(self):
+        return uniform(
+            self.min_fail_delay,
+            self.min_fail_delay + 1
+        )
 
 
 def aal_auth_mechanism_check(mechanism_str: str, aal: AuthenticatorAssuranceLevel) -> bool:
@@ -68,7 +76,8 @@ AA_LEVEL1 = AuthenticatorAssuranceLevel(
         AuthMech.TOKEN_PLAIN,
         AuthMech.PASSWORD_PLAIN,
     ),
-    otp_mandatory=False
+    otp_mandatory=False,
+    min_fail_delay=1
 )
 
 # NIST SP 800-63B Section 4.2 Authenticator Assurance Level 2
@@ -86,7 +95,8 @@ AA_LEVEL2 = AuthenticatorAssuranceLevel(
     max_session_age=12 * 60 * 60,
     max_inactivity=30 * 60,
     mechanisms=(AuthMech.PASSWORD_PLAIN,),
-    otp_mandatory=True
+    otp_mandatory=True,
+    min_fail_delay=4
 )
 
 # NIST SP 800-63B Section 4.3 Authenticator Assurance Level 3
@@ -96,7 +106,8 @@ AA_LEVEL3 = AuthenticatorAssuranceLevel(
     max_session_age=13 * 60,
     max_inactivity=15 * 60,
     mechanisms=(),
-    otp_mandatory=True
+    otp_mandatory=True,
+    min_fail_delay=4
 )
 
 CURRENT_AAL = ServerAAL(AA_LEVEL1)
