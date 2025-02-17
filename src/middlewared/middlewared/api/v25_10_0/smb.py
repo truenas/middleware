@@ -161,11 +161,13 @@ class SmbServiceEntry(BaseModel):
     @field_validator('bindip')
     @classmethod
     def normalize_bindips(cls, values: list[IPvAnyInterface]) -> list[str]:
-        """We'll be passed a list of IPv4AnyInterface types, and we
+        """We'll be passed a list of IPvAnyInterface types, and we
         deserialize these values by simply doing `str(value)`. Since this
         is an `Interface` type from `ipaddress` module, it will contain
         the netmask in the string (i.e. '192.168.1.150/32'). We don't
-        need the netmask info, so this simply removes it."""
+        need the netmask info because the smb.bindip_choices method
+        returns a dictionary of addresses without the netmask info.
+        (i.e. {'192.168.1.150': '192.168.1.150'})."""
         return [str(i.ip) for i in values]
 
 
