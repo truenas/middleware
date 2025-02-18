@@ -26,7 +26,7 @@ class RdmaInterfaceEntry(BaseModel):
     @field_validator('address')
     @classmethod
     def normalize_address(cls, value: IPvAnyAddress) -> str:
-        return str(value.ip)
+        return str(value)
 
 
 class RdmaInterfaceCreateCheck(BaseModel):
