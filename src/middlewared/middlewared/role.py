@@ -25,7 +25,7 @@ ROLES = {
     'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
 
     'API_KEY_READ': Role(),
-    'API_KEY_WRITE': Role(includes=['API_KEY_READ']),
+    'API_KEY_WRITE': Role(includes=['API_KEY_READ'], stig=None),
 
     'BOOT_ENV_READ': Role(),
     'BOOT_ENV_WRITE': Role(includes=['BOOT_ENV_READ']),
