@@ -8,15 +8,18 @@ from fenced.fence import ExitCode as FencedExitCodes
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
-    PoolEntry, PoolCreateArgs, PoolCreateResult, PoolUpdateArgs,
-    PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
+    PoolEntry, PoolUpdateArgs, PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
 )
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, List, Str
+from middlewared.service import accepts, CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
+from middlewared.validators import Range
 
-from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
+from .utils import (
+    ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
+)
 
 
 class PoolPoolNormalizeInfo(PoolEntry):
@@ -329,7 +332,70 @@ class PoolService(CRUDService):
 
         return verrors
 
-    @api_method(PoolCreateArgs, PoolCreateResult, audit='Pool create', audit_extended=lambda data: data['name'])
+    @accepts(Dict(
+        'pool_create',
+        Str('name', max_length=50, required=True),
+        Bool('encryption', default=False),
+        Str('dedup_table_quota', default='AUTO', enum=['AUTO', None, 'CUSTOM'], null=True),
+        Int('dedup_table_quota_value', null=True, default=None, validators=[Range(min_=1)]),
+        Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
+        Str('checksum', enum=[None] + ZFS_CHECKSUM_CHOICES, default=None, null=True),
+        Dict(
+            'encryption_options',
+            Bool('generate_key', default=False),
+            Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
+            Str('algorithm', default='AES-256-GCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
+            Str('passphrase', default=None, null=True, validators=[Range(min_=8)], empty=False, private=True),
+            Str('key', default=None, null=True, validators=[Range(min_=64, max_=64)], private=True),
+            register=True
+        ),
+        Dict(
+            'topology',
+            List('data', items=[
+                Dict(
+                    'datavdevs',
+                    Str('type', enum=[
+                        'DRAID1', 'DRAID2', 'DRAID3', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'
+                    ], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                    Int('draid_data_disks'),
+                    Int('draid_spare_disks'),
+                ),
+            ], required=True),
+            List('special', items=[
+                Dict(
+                    'specialvdevs',
+                    Str('type', enum=['MIRROR', 'STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
+            List('dedup', items=[
+                Dict(
+                    'dedupvdevs',
+                    Str('type', enum=['MIRROR', 'STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
+            List('cache', items=[
+                Dict(
+                    'cachevdevs',
+                    Str('type', enum=['STRIPE'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
+            List('log', items=[
+                Dict(
+                    'logvdevs',
+                    Str('type', enum=['STRIPE', 'MIRROR'], required=True),
+                    List('disks', items=[Str('disk')], required=True),
+                ),
+            ]),
+            List('spares', items=[Str('disk')]),
+            required=True,
+        ),
+        Bool('allow_duplicate_serials', default=False),
+        register=True,
+    ), audit='Pool create', audit_extended=lambda data: data['name'])
     @job(lock='pool_createupdate')
     async def do_create(self, job, data):
         """
