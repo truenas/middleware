@@ -1,29 +1,3 @@
-# Copyright 2017 iXsystems, Inc.
-# All rights reserved
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted providing that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
-#####################################################################
-
 import asyncio
 import asyncssh
 import contextlib
@@ -34,10 +8,17 @@ import pathlib
 import shlex
 import tempfile
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    RsyncTaskEntry,
+    RsyncTaskCreateArgs, RsyncTaskCreateResult,
+    RsyncTaskUpdateArgs, RsyncTaskUpdateResult,
+    RsyncTaskDeleteArgs, RsyncTaskDeleteResult,
+    RsyncTaskRunArgs, RsyncTaskRunResult,
+)
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials
-from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch, returns
-from middlewared.validators import Range
+from middlewared.schema import Cron
 from middlewared.service import (
     CallError, ValidationErrors, job, item_method, private, TaskPathService,
 )
@@ -94,26 +75,26 @@ class RsyncTaskModel(sa.Model):
     rsync_remotemodule = sa.Column(sa.String(120), nullable=True)
     rsync_ssh_credentials_id = sa.Column(sa.ForeignKey('system_keychaincredential.id'), index=True, nullable=True)
     rsync_desc = sa.Column(sa.String(120))
-    rsync_minute = sa.Column(sa.String(100), default="00")
-    rsync_hour = sa.Column(sa.String(100), default="*")
-    rsync_daymonth = sa.Column(sa.String(100), default="*")
-    rsync_month = sa.Column(sa.String(100), default='*')
-    rsync_dayweek = sa.Column(sa.String(100), default="*")
+    rsync_minute = sa.Column(sa.String(100))
+    rsync_hour = sa.Column(sa.String(100))
+    rsync_daymonth = sa.Column(sa.String(100))
+    rsync_month = sa.Column(sa.String(100))
+    rsync_dayweek = sa.Column(sa.String(100))
     rsync_user = sa.Column(sa.String(60))
-    rsync_recursive = sa.Column(sa.Boolean(), default=True)
-    rsync_times = sa.Column(sa.Boolean(), default=True)
-    rsync_compress = sa.Column(sa.Boolean(), default=True)
-    rsync_archive = sa.Column(sa.Boolean(), default=False)
-    rsync_delete = sa.Column(sa.Boolean(), default=False)
-    rsync_quiet = sa.Column(sa.Boolean(), default=False)
-    rsync_preserveperm = sa.Column(sa.Boolean(), default=False)
-    rsync_preserveattr = sa.Column(sa.Boolean(), default=False)
+    rsync_recursive = sa.Column(sa.Boolean())
+    rsync_times = sa.Column(sa.Boolean())
+    rsync_compress = sa.Column(sa.Boolean())
+    rsync_archive = sa.Column(sa.Boolean())
+    rsync_delete = sa.Column(sa.Boolean())
+    rsync_quiet = sa.Column(sa.Boolean())
+    rsync_preserveperm = sa.Column(sa.Boolean())
+    rsync_preserveattr = sa.Column(sa.Boolean())
     rsync_extra = sa.Column(sa.Text())
-    rsync_enabled = sa.Column(sa.Boolean(), default=True)
+    rsync_enabled = sa.Column(sa.Boolean())
     rsync_mode = sa.Column(sa.String(20))
     rsync_remotepath = sa.Column(sa.String(255))
     rsync_direction = sa.Column(sa.String(10))
-    rsync_delayupdates = sa.Column(sa.Boolean(), default=True)
+    rsync_delayupdates = sa.Column(sa.Boolean())
     rsync_job = sa.Column(sa.JSON(None))
 
 
@@ -128,18 +109,8 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         datastore_extend = 'rsynctask.rsync_task_extend'
         datastore_extend_context = 'rsynctask.rsync_task_extend_context'
         cli_namespace = 'task.rsync'
+        entry = RsyncTaskEntry
         role_prefix = 'SNAPSHOT_TASK'
-
-    ENTRY = Patch(
-        'rsync_task_create', 'rsync_task_entry',
-        ('rm', {'name': 'ssh_credentials'}),
-        ('rm', {'name': 'validate_rpath'}),
-        ('rm', {'name': 'ssh_keyscan'}),
-        ('add', Int('id')),
-        ('add', Dict('ssh_credentials', null=True, additional_attrs=True)),
-        ('add', Bool('locked')),
-        ('add', Dict('job', null=True, additional_attrs=True)),
-    )
 
     @private
     async def rsync_task_extend(self, data, context):
@@ -389,100 +360,10 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         return verrors, data
 
-    @accepts(Dict(
-        'rsync_task_create',
-        Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
-        Str('user', required=True),
-        Str('mode', enum=['MODULE', 'SSH'], default='MODULE'),
-        Str('remotehost', null=True, default=None),
-        Int('remoteport', null=True, default=None),
-        Str('remotemodule', null=True, default=None),
-        Int('ssh_credentials', null=True, default=None),
-        Str('remotepath'),
-        Bool('validate_rpath', default=True),
-        Bool('ssh_keyscan', default=False),
-        Str('direction', enum=['PULL', 'PUSH'], default='PUSH'),
-        Str('desc'),
-        Cron(
-            'schedule',
-            defaults={'minute': '00'},
-        ),
-        Bool('recursive'),
-        Bool('times'),
-        Bool('compress'),
-        Bool('archive'),
-        Bool('delete'),
-        Bool('quiet'),
-        Bool('preserveperm'),
-        Bool('preserveattr'),
-        Bool('delayupdates'),
-        List('extra', items=[Str('extra')]),
-        Bool('enabled', default=True),
-        register=True,
-    ))
+    @api_method(RsyncTaskCreateArgs, RsyncTaskCreateResult)
     async def do_create(self, data):
         """
         Create a Rsync Task.
-
-        See the comment in Rsyncmod about `path` length limits.
-
-        `remotehost` is ip address or hostname of the remote system. If username differs on the remote host,
-        "username@remote_host" format should be used.
-
-        `mode` represents different operating mechanisms for Rsync i.e Rsync Module mode / Rsync SSH mode.
-
-        In SSH mode, if `ssh_credentials` (a keychain credential of `SSH_CREDENTIALS` type) is specified then it is used
-        to connect to the remote host. If it is not specified, then keys in `user`'s .ssh directory are used.
-        `remotehost` and `remoteport` are not used in this case.
-
-        `remotemodule` is the name of remote module, this attribute should be specified when `mode` is set to MODULE.
-
-        `remotepath` specifies the path on the remote system.
-
-        `validate_rpath` is a boolean which when sets validates the existence of the remote path.
-
-        `ssh_keyscan` will automatically add remote host key to user's known_hosts file.
-
-        `direction` specifies if data should be PULLED or PUSHED from the remote system.
-
-        `compress` when set reduces the size of the data which is to be transmitted.
-
-        `archive` when set makes rsync run recursively, preserving symlinks, permissions, modification times, group,
-        and special files.
-
-        `delete` when set deletes files in the destination directory which do not exist in the source directory.
-
-        `preserveperm` when set preserves original file permissions.
-
-        .. examples(websocket)::
-
-          Create a Rsync Task which pulls data from a remote system every 5 minutes.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "rsynctask.create",
-                "params": [{
-                    "enabled": true,
-                    "schedule": {
-                        "minute": "5",
-                        "hour": "*",
-                        "dom": "*",
-                        "month": "*",
-                        "dow": "*"
-                    },
-                    "desc": "Test rsync task",
-                    "user": "root",
-                    "mode": "MODULE",
-                    "remotehost": "root@192.168.0.10",
-                    "compress": true,
-                    "archive": true,
-                    "direction": "PULL",
-                    "path": "/mnt/vol1/rsync_dataset",
-                    "remotemodule": "remote_module1"
-                }]
-            }
         """
         verrors, data = await self.validate_rsync_task(data, 'rsync_task_create')
         verrors.check()
@@ -499,10 +380,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id', validators=[Range(min_=1)]),
-        Patch('rsync_task_create', 'rsync_task_update', ('attr', {'update': True}))
-    )
+    @api_method(RsyncTaskUpdateArgs, RsyncTaskUpdateResult)
     async def do_update(self, id_, data):
         """
         Update Rsync Task of `id`.
@@ -510,7 +388,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         data.setdefault('validate_rpath', True)
         data.setdefault('ssh_keyscan', False)
 
-        old = await self.query(filters=[('id', '=', id_)], options={'get': True})
+        old = await self.get_instance(id_)
         old.pop(self.locked_field)
         old.pop('job')
 
@@ -535,6 +413,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         return await self.get_instance(id_)
 
+    @api_method(RsyncTaskDeleteArgs, RsyncTaskDeleteResult)
     async def do_delete(self, id_):
         """
         Delete Rsync Task of `id`.
@@ -633,8 +512,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             yield ' '.join(line)
 
     @item_method
-    @accepts(Int('id'))
-    @returns()
+    @api_method(RsyncTaskRunArgs, RsyncTaskRunResult, roles=['SNAPSHOT_TASK_WRITE'])
     @job(lock=lambda args: args[-1], lock_queue_size=1, logs=True)
     def run(self, job, id_):
         """
