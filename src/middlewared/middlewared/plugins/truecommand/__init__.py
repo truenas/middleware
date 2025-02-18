@@ -1,4 +1,4 @@
-from .enums import Status
+from middlewared.api.current import TruecommandStatus
 
 
 async def _event_system_ready(middleware, event_type, args):
@@ -16,9 +16,9 @@ async def setup(middleware):
         roles=['READONLY_ADMIN']
     )
 
-    status = Status((await middleware.call('datastore.config', 'system.truecommand'))['api_key_state'])
-    if status == Status.CONNECTED:
-        status = Status.CONNECTING
+    status = TruecommandStatus((await middleware.call('datastore.config', 'system.truecommand'))['api_key_state'])
+    if status == TruecommandStatus.CONNECTED:
+        status = TruecommandStatus.CONNECTING
 
     await middleware.call('truecommand.set_status', status.value)
 
@@ -26,3 +26,4 @@ async def setup(middleware):
     if await middleware.call('system.ready'):
         if not await middleware.call('failover.licensed'):
             middleware.create_task(middleware.call('truecommand.start_truecommand_service'))
+
