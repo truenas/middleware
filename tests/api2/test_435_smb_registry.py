@@ -173,6 +173,8 @@ def test__test_presets(setup_for_tests, share_presets, preset):
     mp, ds, SHARE_DICT = setup_for_tests
     if 'TIMEMACHINE' in preset:
         call('smb.update', {'aapl_extensions': True})
+    elif preset == 'MULTI_PROTOCOL_NFS':
+        call('smb.update', {'aapl_extensions': False})
 
     to_test = share_presets[preset]['params']
     to_test_aux = to_test['auxsmbconf']
