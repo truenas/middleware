@@ -5,12 +5,10 @@
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.api import api_method
+from middlewared.api.current import KmipEntry, KmipUpdateArgs, KmipUpdateResult
 from middlewared.async_validators import validate_port
-from middlewared.schema import Bool, Dict, Int, Patch, Str
-from middlewared.service import accepts, CallError, ConfigService, job, private, returns, ValidationErrors
-from middlewared.validators import Port
-
-from .utils import SUPPORTED_SSL_VERSIONS
+from middlewared.service import CallError, ConfigService, job, private, ValidationErrors
 
 
 class KMIPModel(sa.Model):
@@ -33,19 +31,7 @@ class KMIPService(ConfigService):
         datastore_extend = 'kmip.kmip_extend'
         cli_namespace = 'system.kmip'
         role_prefix = 'KMIP'
-
-    ENTRY = Dict(
-        'kmip_entry',
-        Int('id', required=True),
-        Bool('enabled', required=True),
-        Bool('manage_sed_disks', required=True),
-        Bool('manage_zfs_keys', required=True),
-        Int('certificate', null=True, required=True),
-        Int('certificate_authority', null=True, required=True),
-        Int('port', validators=[Port()], required=True),
-        Str('server', required=True, null=True),
-        Str('ssl_version', required=True, enum=SUPPORTED_SSL_VERSIONS),
-    )
+        entry = KmipEntry
 
     @private
     async def kmip_extend(self, data):
@@ -53,17 +39,7 @@ class KMIPService(ConfigService):
             data[k] = data[k]['id']
         return data
 
-    @accepts(
-        Patch(
-            'kmip_entry', 'kmip_update',
-            ('rm', {'name': 'id'}),
-            ('add', Bool('enabled')),
-            ('add', Bool('force_clear')),
-            ('add', Bool('change_server')),
-            ('add', Bool('validate')),
-            ('attr', {'update': True}),
-        )
-    )
+    @api_method(KmipUpdateArgs, KmipUpdateResult)
     @job(lock='kmip_update')
     async def do_update(self, job, data):
         """
