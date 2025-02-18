@@ -10,7 +10,7 @@ class AtaSelfTest(BaseModel):
     status_verbose: str
     remaining: float
     lifetime: int
-    power_on_hours_ago: int
+    power_on_hours_ago: int | None
     lba_of_first_error: int | None = None
 
 
@@ -20,7 +20,7 @@ class NvmeSelfTest(BaseModel):
     status: str
     status_verbose: str
     power_on_hours: int
-    power_on_hours_ago: int
+    power_on_hours_ago: int | None
     failing_lba: int | None = None
     nsid: int | None = None
     seg: int | None = None
@@ -33,7 +33,7 @@ class ScsiSelfTest(BaseModel):
     description: str
     status: str
     status_verbose: str
-    power_on_hours_ago: int
+    power_on_hours_ago: int | None
     segment_number: int | None = None
     lifetime: int | None = None
     lba_of_first_error: int | None = None
