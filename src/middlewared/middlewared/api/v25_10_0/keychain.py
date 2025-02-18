@@ -137,7 +137,7 @@ class KeychainCredentialRemoteSSHHostKeyScanArgs(BaseModel):
 
 
 class KeychainCredentialRemoteSSHHostKeyScanResult(BaseModel):
-    result: str
+    result: LongString
 
 
 class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):
