@@ -254,7 +254,7 @@ class UpdateService(Service):
         Bool('resume', default=False),
         Str('train', null=True, default=None),
         Bool('reboot', default=False),
-    ), roles=['FULL_ADMIN'])
+    ), roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     @pass_app(rest=True)
     async def update(self, app, job, attrs):
@@ -293,7 +293,7 @@ class UpdateService(Service):
 
         return True
 
-    @accepts(roles=['FULL_ADMIN'])
+    @accepts(roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='updatedownload')
     def download(self, job):
         """
@@ -317,7 +317,7 @@ class UpdateService(Service):
             Bool('resume', default=False),
             Bool('cleanup', default=True),
         ),
-        roles=['FULL_ADMIN']
+        roles=['SYSTEM_UPDATE_WRITE']
     )
     @job(lock='update')
     def manual(self, job, path, options):
@@ -426,7 +426,7 @@ class UpdateService(Service):
         'updatefile',
         Bool('resume', default=False),
         Str('destination', null=True, default=None),
-    ), roles=['FULL_ADMIN'])
+    ), roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     async def file(self, job, options):
         """
