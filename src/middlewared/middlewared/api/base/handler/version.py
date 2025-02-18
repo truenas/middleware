@@ -125,8 +125,14 @@ class APIVersionsAdapter:
 
         return model, await value_factory()
 
-    async def _adapt_model(self, value_factory: Callable[[], Awaitable[dict]], model_name: str,
-                           current_version: APIVersion, new_version: APIVersion, direction: Direction):
+    async def _adapt_model(
+        self,
+        value_factory: Callable[[], Awaitable[dict]],
+        model_name: str,
+        current_version: APIVersion,
+        new_version: APIVersion,
+        direction: Direction,
+    ):
         try:
             current_model = await current_version.get_model(model_name)
         except KeyError:
@@ -139,8 +145,13 @@ class APIVersionsAdapter:
 
         return self._adapt_value(await value_factory(), current_model, new_model, direction)
 
-    def _adapt_value(self, value: dict, current_model: type[BaseModel], new_model: type[BaseModel],
-                     direction: Direction):
+    def _adapt_value(
+        self,
+        value: dict,
+        current_model: type[BaseModel],
+        new_model: type[BaseModel],
+        direction: Direction,
+    ):
         for k in value:
             if k in current_model.model_fields and k in new_model.model_fields:
                 current_model_field = current_model.model_fields[k].annotation
