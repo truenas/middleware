@@ -1,6 +1,5 @@
 from sqlalchemy.ext.declarative import declared_attr
 
-from middlewared.schema import Bool, Cron, Dict, Int, List, Str
 import middlewared.sqlalchemy as sa
 
 
@@ -27,23 +26,3 @@ class CloudTaskModelMixin:
     args = sa.Column(sa.Text())
     enabled = sa.Column(sa.Boolean(), default=True)
     job = sa.Column(sa.JSON(None))
-
-
-cloud_task_schema = [
-    Str("description", default=""),
-    Str("path", required=True),
-    Int("credentials", required=True),
-    Dict("attributes", additional_attrs=True, required=True),
-    Cron(
-        "schedule",
-        defaults={"minute": "00"},
-        required=True
-    ),
-    Str("pre_script", default="", max_length=None),
-    Str("post_script", default="", max_length=None),
-    Bool("snapshot", default=False),
-    List("include", items=[Str("path", empty=False)]),
-    List("exclude", items=[Str("path", empty=False)]),
-    Str("args", default="", max_length=None),
-    Bool("enabled", default=True),
-]

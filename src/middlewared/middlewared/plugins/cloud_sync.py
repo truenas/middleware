@@ -4,25 +4,35 @@ from middlewared.api.current import (CloudCredentialEntry,
                                      CloudCredentialCreateArgs, CloudCredentialCreateResult,
                                      CloudCredentialUpdateArgs, CloudCredentialUpdateResult,
                                      CloudCredentialDeleteArgs, CloudCredentialDeleteResult,
-                                     CloudCredentialVerifyArgs, CloudCredentialVerifyResult)
+                                     CloudCredentialVerifyArgs, CloudCredentialVerifyResult,
+                                     CloudSyncEntry,
+                                     CloudSyncCreateArgs, CloudSyncCreateResult,
+                                     CloudSyncUpdateArgs, CloudSyncUpdateResult,
+                                     CloudSyncDeleteArgs, CloudSyncDeleteResult,
+                                     CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult,
+                                     CloudSyncListBucketsArgs, CloudSyncListBucketsResult,
+                                     CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult,
+                                     CloudSyncSyncArgs, CloudSyncSyncResult,
+                                     CloudSyncSyncOneTimeArgs, CloudSyncSyncOneTimeResult,
+                                     CloudSyncAbortArgs, CloudSyncAbortResult,
+                                     CloudSyncProvidersArgs, CloudSyncProvidersResult)
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
-from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
+from middlewared.plugins.cloud.model import CloudTaskModelMixin
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.rclone.remote.storjix import StorjIxError
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Password, Patch, Str
+from middlewared.schema import Cron
 from middlewared.service import (
-    CallError, CRUDService, ValidationError, ValidationErrors, item_method, job, pass_app, private, TaskPathService,
+    CallError, CRUDService, ValidationError, ValidationErrors, item_method, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
-from middlewared.validators import Range, Time
 
 import aiorwlock
 import asyncio
@@ -642,16 +652,8 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         datastore_extend = "cloudsync.extend"
         datastore_extend_context = "cloudsync.extend_context"
         cli_namespace = "task.cloud_sync"
+        entry = CloudSyncEntry
         role_prefix = "CLOUD_SYNC"
-
-    ENTRY = Patch(
-        'cloud_sync_create',
-        'cloud_sync_entry',
-        ('add', Int('id')),
-        ("replace", Dict("credentials", additional_attrs=True, private_keys=["provider"])),
-        ("add", Dict("job", additional_attrs=True, null=True)),
-        ("add", Bool("locked")),
-    )
 
     @private
     async def extend_context(self, rows, extra):
@@ -739,60 +741,11 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
             if provider.readonly:
                 verrors.add(f"{name}.direction", "This remote is read-only")
 
-    @accepts(Dict(
-        "cloud_sync_create",
-        *cloud_task_schema,
-
-        List("bwlimit", items=[Dict(
-            "cloud_sync_bwlimit",
-            Str("time", validators=[Time()]),
-            Int("bandwidth", validators=[Range(min_=1)], null=True)
-        )]),
-        Int("transfers", null=True, default=None, validators=[Range(min_=1)]),
-
-        Str("direction", enum=["PUSH", "PULL"], required=True),
-        Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"], required=True),
-
-        Bool("encryption", default=False),
-        Bool("filename_encryption", default=False),
-        Password("encryption_password", default=""),
-        Str("encryption_salt", default=""),
-
-        Bool("create_empty_src_dirs", default=False),
-        Bool("follow_symlinks", default=False),
-        register=True,
-    ))
-    @pass_app(rest=True)
+    @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, pass_app=True, pass_app_rest=True)
     async def do_create(self, app, cloud_sync):
         """
         Creates a new cloud_sync entry.
-
-        .. examples(websocket)::
-
-          Create a new cloud_sync using amazon s3 attributes, which is supposed to run every hour.
-
-            :::javascript
-            {
-              "id": "6841f242-840a-11e6-a437-00e04d680384",
-              "msg": "method",
-              "method": "cloudsync.create",
-              "params": [{
-                "description": "s3 sync",
-                "path": "/mnt/tank",
-                "credentials": 1,
-                "minute": "00",
-                "hour": "*",
-                "daymonth": "*",
-                "month": "*",
-                "attributes": {
-                  "bucket": "mybucket",
-                  "folder": ""
-                },
-                "enabled": true
-              }]
-            }
         """
-
         verrors = ValidationErrors()
 
         await self._validate(app, verrors, "cloud_sync_create", cloud_sync)
@@ -810,8 +763,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         return await self.get_instance(cloud_sync["id"])
 
-    @accepts(Int("id"), Patch("cloud_sync_create", "cloud_sync_update", ("attr", {"update": True})))
-    @pass_app(rest=True)
+    @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, pass_app=True, pass_app_rest=True)
     async def do_update(self, app, id_, data):
         """
         Updates the cloud_sync entry `id` with `data`.
@@ -841,7 +793,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         return await self.get_instance(id_)
 
-    @accepts(Int("id"))
+    @api_method(CloudSyncDeleteArgs, CloudSyncDeleteResult)
     async def do_delete(self, id_):
         """
         Deletes cloud_sync entry `id`.
@@ -852,7 +804,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         await self.middleware.call("service.restart", "cron")
         return rv
 
-    @accepts(Int("credentials_id"), Str("name"), roles=["CLOUD_SYNC_WRITE"])
+    @api_method(CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult, roles=["CLOUD_SYNC_WRITE"])
     async def create_bucket(self, credentials_id, name):
         """
         Creates a new bucket `name` using ` credentials_id`.
@@ -871,7 +823,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         except StorjIxError as e:
             raise ValidationError("cloudsync.create_bucket", e.errmsg, e.errno)
 
-    @accepts(Int("credentials_id"), roles=["CLOUD_SYNC_WRITE"])
+    @api_method(CloudSyncListBucketsArgs, CloudSyncListBucketsResult, roles=["CLOUD_SYNC_WRITE"])
     async def list_buckets(self, credentials_id):
         credentials = await self._get_credentials(credentials_id)
         if not credentials:
@@ -899,16 +851,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         return await self.ls({"credentials": credentials}, "")
 
-    @accepts(Dict(
-        "cloud_sync_ls",
-        Int("credentials", required=True),
-        Bool("encryption", default=False),
-        Bool("filename_encryption", default=False),
-        Str("encryption_password", default=""),
-        Str("encryption_salt", default=""),
-        Dict("attributes", required=True, additional_attrs=True),
-        Str("args", default=""),
-    ), roles=["CLOUD_SYNC_WRITE"])
+    @api_method(CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult, roles=["CLOUD_SYNC_WRITE"])
     async def list_directory(self, cloud_sync):
         """
         List contents of a remote bucket / directory.
@@ -977,15 +920,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                 raise CallError(proc.stderr, extra={"excerpt": lsjson_error_excerpt(proc.stderr)})
 
     @item_method
-    @accepts(
-        Int("id"),
-        Dict(
-            "cloud_sync_sync_options",
-            Bool("dry_run", default=False),
-            register=True,
-        ),
-        roles=["CLOUD_SYNC_WRITE"],
-    )
+    @api_method(CloudSyncSyncArgs, CloudSyncSyncResult, roles=["CLOUD_SYNC_WRITE"])
     @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True,
          read_roles=["CLOUD_SYNC_READ"])
     async def sync(self, job, id_, options):
@@ -1000,11 +935,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         await self._sync(cloud_sync, options, job)
 
-    @accepts(
-        Patch("cloud_sync_create", "cloud_sync_sync_onetime"),
-        Patch("cloud_sync_sync_options", "cloud_sync_sync_onetime_options"),
-        roles=["CLOUD_SYNC_WRITE"],
-    )
+    @api_method(CloudSyncSyncOneTimeArgs, CloudSyncSyncOneTimeResult, roles=["CLOUD_SYNC_WRITE"])
     @job(logs=True, abortable=True)
     async def sync_onetime(self, job, cloud_sync, options):
         """
@@ -1064,7 +995,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                     raise
 
     @item_method
-    @accepts(Int("id"), roles=["CLOUD_SYNC_WRITE"])
+    @api_method(CloudSyncAbortArgs, CloudSyncAbortResult, roles=["CLOUD_SYNC_WRITE"])
     async def abort(self, id_):
         """
         Aborts cloud sync task.
@@ -1081,27 +1012,10 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         await self.middleware.call("core.job_abort", cloud_sync["job"]["id"])
         return True
 
-    @accepts(roles=["CLOUD_SYNC_READ"])
+    @api_method(CloudSyncProvidersArgs, CloudSyncProvidersResult, roles=["CLOUD_SYNC_READ"])
     async def providers(self):
         """
         Returns a list of dictionaries of supported providers for Cloud Sync Tasks.
-
-        `task_schema` is JSON schema for task attributes.
-
-        `buckets` is a boolean value which is set to "true" if provider supports buckets.
-
-        Example of a single provider:
-
-        [
-            {
-                "name": "AMAZON_CLOUD_DRIVE",
-                "title": "Amazon Cloud Drive",
-                "credentials_oauth": null,
-                "buckets": false,
-                "bucket_title": "Bucket",
-                "task_schema": []
-            }
-        ]
         """
         return sorted(
             [
