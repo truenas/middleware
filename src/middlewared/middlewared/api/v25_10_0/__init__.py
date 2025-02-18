@@ -14,6 +14,7 @@ from .boot import *  # noqa
 from .boot_environments import *  # noqa
 from .catalog import *  # noqa
 from .cloud_backup import *  # noqa
+from .cloud_credential import *  # noqa
 from .cloud_sync import *  # noqa
 from .common import *  # noqa
 from .config import *  # noqa
@@ -37,6 +38,8 @@ from .ftp import *  # noqa
 from .group import *  # noqa
 from .initshutdownscript import *  # noqa
 from .ipmi import *  # noqa
+from .ipmi_chassis import *  # noqa
+from .ipmi_lan import *  # noqa
 from .ipmi_sel import *  # noqa
 from .iscsi_auth import *  # noqa
 from .iscsi_extent import *  # noqa
@@ -46,6 +49,7 @@ from .iscsi_portal import *  # noqa
 from .iscsi_target import *  # noqa
 from .iscsi_target_to_extent import *  # noqa
 from .keychain import *  # noqa
+from .kmip import *  # noqa
 from .k8s_to_docker import *  # noqa
 from .mail import *  # noqa
 from .nfs import *  # noqa
@@ -73,7 +77,9 @@ from .system_ntpserver import *  # noqa
 from .system_reboot import *  # noqa
 from .system_security import *  # noqa
 from .tn_connect import *  # noqa
+from .truecommand import *  # noqa
 from .truenas import *  # noqa
+from .ups import *  # noqa
 from .user import *  # noqa
 from .virt_device import *  # noqa
 from .virt_global import *  # noqa

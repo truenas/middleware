@@ -1,67 +1,162 @@
 from typing import Literal
 
-from pydantic import Secret
+from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString,
-                                  LongString, NonEmptyString, single_argument_args, single_argument_result)
-from .cloud_sync_providers import CloudCredentialProvider
+                                  single_argument_args, TimeString)
+from .cloud import BaseCloudEntry
 
-__all__ = ["CloudCredentialEntry",
-           "CloudCredentialCreateArgs", "CloudCredentialCreateResult",
-           "CloudCredentialUpdateArgs", "CloudCredentialUpdateResult",
-           "CloudCredentialDeleteArgs", "CloudCredentialDeleteResult",
-           "CloudCredentialVerifyArgs", "CloudCredentialVerifyResult",
+__all__ = ["CloudSyncEntry",
+           "CloudSyncCreateArgs", "CloudSyncCreateResult",
+           "CloudSyncUpdateArgs", "CloudSyncUpdateResult",
+           "CloudSyncDeleteArgs", "CloudSyncDeleteResult",
+           "CloudSyncCreateBucketArgs", "CloudSyncCreateBucketResult",
+           "CloudSyncListBucketsArgs", "CloudSyncListBucketsResult",
+           "CloudSyncListDirectoryArgs", "CloudSyncListDirectoryResult",
+           "CloudSyncSyncArgs", "CloudSyncSyncResult",
+           "CloudSyncSyncOneTimeArgs", "CloudSyncSyncOneTimeResult",
+           "CloudSyncAbortArgs", "CloudSyncAbortResult",
+           "CloudSyncProvidersArgs", "CloudSyncProvidersResult",
            "CloudSyncOneDriveListDrivesArgs", "CloudSyncOneDriveListDrivesResult"]
 
 
-class CloudCredentialEntry(BaseModel):
-    id: int
-    name: NonEmptyString
-    provider: CloudCredentialProvider
+class CloudSyncBwlimit(BaseModel):
+    time: TimeString
+    bandwidth: PositiveInt | None
 
 
-class CloudCredentialCreate(CloudCredentialEntry):
+class CloudSyncEntry(BaseCloudEntry):
+    bwlimit: list[CloudSyncBwlimit] = Field(default_factory=list)
+    transfers: PositiveInt | None = None
+
+    direction: Literal["PUSH", "PULL"]
+    transfer_mode: Literal["SYNC", "COPY", "MOVE"]
+
+    encryption: bool = False
+    filename_encryption: bool = False
+    encryption_password: Secret[str] = ""
+    encryption_salt: Secret[str] = ""
+
+    create_empty_src_dirs: bool = False
+    follow_symlinks: bool = False
+
+
+class CloudSyncCreate(CloudSyncEntry):
     id: Excluded = excluded_field()
+    credentials: int
+    "ID of the cloud credential"
+    job: Excluded = excluded_field()
+    locked: Excluded = excluded_field()
 
 
-class CloudCredentialUpdate(CloudCredentialCreate, metaclass=ForUpdateMetaclass):
+class CloudSyncCreateArgs(BaseModel):
+    cloud_sync_create: CloudSyncCreate
+
+
+class CloudSyncCreateResult(BaseModel):
+    result: CloudSyncEntry
+
+
+class CloudSyncUpdate(CloudSyncCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class CloudCredentialCreateArgs(BaseModel):
-    cloud_sync_credentials_create: CloudCredentialCreate
-
-
-class CloudCredentialCreateResult(BaseModel):
-    result: CloudCredentialEntry
-
-
-class CloudCredentialUpdateArgs(BaseModel):
+class CloudSyncUpdateArgs(BaseModel):
     id: int
-    cloud_sync_credentials_update: CloudCredentialUpdate
+    cloud_sync_update: CloudSyncUpdate
 
 
-class CloudCredentialUpdateResult(BaseModel):
-    result: CloudCredentialEntry
+class CloudSyncUpdateResult(BaseModel):
+    result: CloudSyncEntry
 
 
-class CloudCredentialDeleteArgs(BaseModel):
+class CloudSyncDeleteArgs(BaseModel):
     id: int
 
 
-class CloudCredentialDeleteResult(BaseModel):
+class CloudSyncDeleteResult(BaseModel):
+    result: Literal[True]
+
+
+class CloudSyncCreateBucketArgs(BaseModel):
+    credentials_id: int
+    name: str
+
+
+class CloudSyncCreateBucketResult(BaseModel):
+    result: None
+
+
+class CloudSyncListBucketsArgs(BaseModel):
+    credentials_id: int
+
+
+class CloudSyncListBucketsResult(BaseModel):
+    result: list[dict]
+
+
+@single_argument_args("cloud_sync_ls")
+class CloudSyncListDirectoryArgs(BaseModel):
+    credentials: int
+    encryption: bool = False
+    filename_encryption: bool = False
+    encryption_password: Secret[str] = ""
+    encryption_salt: Secret[str] = ""
+    attributes: dict
+    args: str = ""
+
+
+class CloudSyncListDirectoryResult(BaseModel):
+    result: list[dict]
+
+
+class CloudSyncSyncOptions(BaseModel):
+    dry_run: bool = False
+
+
+class CloudSyncSyncArgs(BaseModel):
+    id: int
+    cloud_sync_sync_options: CloudSyncSyncOptions = Field(default_factory=CloudSyncSyncOptions)
+
+
+class CloudSyncSyncResult(BaseModel):
+    result: None
+
+
+class CloudSyncSyncOneTimeArgs(BaseModel):
+    cloud_sync_sync_onetime: CloudSyncCreate
+    cloud_sync_sync_onetime_options: CloudSyncSyncOptions = Field(default_factory=CloudSyncSyncOptions)
+
+
+class CloudSyncSyncOneTimeResult(BaseModel):
+    result: None
+
+
+class CloudSyncAbortArgs(BaseModel):
+    id: int
+
+
+class CloudSyncAbortResult(BaseModel):
     result: bool
 
 
-class CloudCredentialVerifyArgs(BaseModel):
-    cloud_sync_credentials_create: CloudCredentialProvider
+class CloudSyncProvidersArgs(BaseModel):
+    pass
 
 
-@single_argument_result
-class CloudCredentialVerifyResult(BaseModel):
-    valid: bool
-    error: LongString | None = None
-    excerpt: LongString | None = None
+class CloudSyncProvidersResult(BaseModel):
+    result: list["CloudSyncProvider"]
+
+
+class CloudSyncProvider(BaseModel):
+    name: str
+    title: str
+    credentials_oauth: str | None
+    buckets: bool
+    "set to `true if provider supports buckets"
+    bucket_title: str | None
+    task_schema: list[dict]
+    "JSON schema for task attributes"
 
 
 @single_argument_args("onedrive_list_drives")

@@ -1,10 +1,24 @@
 from subprocess import run, DEVNULL
 from functools import cache
 
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Password, Ref, returns, Str
-from middlewared.service import private, CallError, CRUDService, ValidationError, ValidationErrors
+from middlewared.api import api_method
+from middlewared.api.current import (
+    IPMILanEntry,
+    IPMILanChannelsArgs,
+    IPMILanChannelsResult,
+    IPMILanUpdateArgs,
+    IPMILanUpdateResult,
+    IPMILanQueryArgs,
+    IPMILanQueryResult,
+)
+from middlewared.service import (
+    private,
+    CallError,
+    Service,
+    ValidationError,
+    ValidationErrors,
+)
 from middlewared.utils import filter_list
-from middlewared.validators import Netmask, PasswordComplexity, Range
 
 
 @cache
@@ -30,7 +44,7 @@ def apply_config(channel, data):
 
     rc = 0
     options = {'stdout': DEVNULL, 'stderr': DEVNULL}
-    if data.get('dhcp'):
+    if data['dhcp']:
         rc |= run(base_cmd + ['ipsrc', 'dhcp'], **options).returncode
     else:
         rc |= run(base_cmd + ['ipsrc', 'static'], **options).returncode
@@ -38,7 +52,7 @@ def apply_config(channel, data):
         rc |= run(base_cmd + ['netmask', data['netmask']], **options).returncode
         rc |= run(base_cmd + ['defgw', 'ipaddr', data['gateway']], **options).returncode
 
-    vlan = data.get("vlan")
+    vlan = data["vlan"]
     if vlan is None:
         vlan = "off"
     rc |= run(base_cmd + ['vlan', 'id', str(vlan)], **options).returncode
@@ -54,7 +68,7 @@ def apply_config(channel, data):
     run(base_cmd + ['arp', 'respond', 'on'], **options)
     run(base_cmd + ['arp', 'generate', 'on'], **options)
 
-    if passwd := data.get('password'):
+    if passwd := data['password']:
         cp = run(['ipmitool', 'user', 'set', 'password', '2', passwd], capture_output=True)
         if cp.returncode != 0:
             err = '\n'.join(cp.stderr.decode().split('\n'))
@@ -68,32 +82,19 @@ def apply_config(channel, data):
     return rc
 
 
-class IPMILanService(CRUDService):
-
-    ENTRY = Dict(
-        'ipmi_channel',
-        Int('channel'),
-        Int('id'),
-        Str('ip_address_source'),
-        Str('ip_address'),
-        Str('mac_address'),
-        Str('subnet_mask'),
-        Str('default_gateway_ip_address'),
-        Str('default_gateway_mac_address'),
-        Str('backup_gateway_ip_address'),
-        Str('backup_gateway_mac_address'),
-        Int('vlan_id', null=True),
-        Bool('vlan_id_enable'),
-        Int('vlan_priority'),
-    )
+class IPMILanService(Service):
 
     class Config:
         namespace = 'ipmi.lan'
         cli_namespace = 'network.ipmi'
         role_prefix = 'IPMI'
+        entry = IPMILanEntry
 
-    @accepts(roles=['IPMI_READ'])
-    @returns(List('lan_channels', items=[Int('lan_channel')]))
+    @api_method(
+        IPMILanChannelsArgs,
+        IPMILanChannelsResult,
+        roles=['IPMI_READ'],
+    )
     def channels(self):
         """Return a list of available IPMI channels."""
         channels = []
@@ -102,7 +103,7 @@ class IPMILanService(CRUDService):
                 # We cannot expose IPMI lan channel 8 on the f-series platform
                 channels = [i for i in channels if i != 8]
 
-        return channels
+        return list(channels)
 
     @private
     def query_impl(self):
@@ -143,14 +144,9 @@ class IPMILanService(CRUDService):
 
         return result
 
-    @accepts(
-        Dict(
-            'ipmi_lan_query',
-            Ref('query-filters'),
-            Ref('query-options'),
-            Dict('ipmi-options', Bool('query-remote', default=False)),
-            register=True,
-        ),
+    @api_method(
+        IPMILanQueryArgs,
+        IPMILanQueryResult,
         roles=['IPMI_READ'],
     )
     def query(self, data):
@@ -173,48 +169,20 @@ class IPMILanService(CRUDService):
 
         return filter_list(result, data['query-filters'], data['query-options'])
 
-    @accepts(
-        Int('channel'),
-        Dict(
-            'ipmi_update',
-            IPAddr('ipaddress', v6=False),
-            Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
-            IPAddr('gateway', v6=False),
-            Password('password', validators=[
-                PasswordComplexity(["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"], 3),
-                Range(8, 16)
-            ]),
-            Bool('dhcp'),
-            Int('vlan', validators=[Range(0, 4094)], null=True),
-            Bool('apply_remote', default=False),
-            register=True
-        ),
+    @api_method(
+        IPMILanUpdateArgs,
+        IPMILanUpdateResult,
         roles=['IPMI_WRITE'],
         audit='Update IPMI configuration'
     )
-    def do_update(self, id_, data):
-        """
-        Update IPMI configuration on channel number `id`.
-
-        `ipaddress` is an IPv4 address to be assigned to channel number `id`.
-        `netmask` is the subnet mask associated with `ipaddress`.
-        `gateway` is an IPv4 address used by `ipaddress` to reach outside the local subnet.
-        `password` is a password to be assigned to channel number `id`
-        `dhcp` is a boolean. If False, `ipaddress`, `netmask` and `gateway` must be set.
-        `vlan` is an integer representing the vlan tag number. Passing null will disable vlan tagging.
-        `apply_remote` is a boolean. If True and this is an HA licensed system, will apply
-            the configuration to the remote controller.
-        """
+    def update(self, id_, data):
+        """Update IPMI channel configuration"""
         verrors = ValidationErrors()
         schema = 'ipmi.lan.update'
         if not self.middleware.call_sync('ipmi.is_loaded'):
             verrors.add(schema, '/dev/ipmi0 could not be found')
         elif id_ not in self.channels():
             verrors.add(schema, f'IPMI channel number {id_!r} not found')
-        elif not data.get('dhcp'):
-            for k in ['ipaddress', 'netmask', 'gateway']:
-                if not data.get(k):
-                    verrors.add(schema, f'{k} field is required when dhcp is false.')
         verrors.check()
 
         # It's _very_ important to pop this key so that

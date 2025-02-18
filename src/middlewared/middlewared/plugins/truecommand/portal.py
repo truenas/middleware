@@ -1,9 +1,10 @@
 import asyncio
 
+from middlewared.api.current import TruecommandStatus
 from middlewared.service import CallError, job, private, Service
 
 from .connection import TruecommandAPIMixin
-from .enums import PortalResponseState, Status
+from .enums import PortalResponseState
 
 
 class TruecommandService(Service, TruecommandAPIMixin):
@@ -13,7 +14,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
     @private
     @job(lock='poll_ix_portal_api_truecommand', lock_queue_size=1)
     async def poll_api_for_status(self, job):
-        await self.middleware.call('truecommand.set_status', Status.CONNECTING.value)
+        await self.middleware.call('truecommand.set_status', TruecommandStatus.CONNECTING.value)
         config = await self.middleware.call('datastore.config', 'system.truecommand')
 
         while config['enabled']:
@@ -36,7 +37,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                         'wg_address': status['wg_netaddr'],
                         'remote_address': status['tc_wg_netaddr'],
                         'endpoint': status['wg_accesspoint'],
-                        'api_key_state': Status.CONNECTED.value,
+                        'api_key_state': TruecommandStatus.CONNECTED.value,
                     }
                 )
                 self.middleware.send_event(
@@ -70,7 +71,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                     }
                 )
                 self.middleware.logger.debug('iX Portal has disabled API Key: %s', status['error'])
-                await self.middleware.call('truecommand.set_status', Status.FAILED.value)
+                await self.middleware.call('truecommand.set_status', TruecommandStatus.FAILED.value)
                 # Let's remove TC's address if they are there and if the api key state was enabled
                 # Also let's make sure truecommand service is not running, it shouldn't be but still enforce it
                 await self.middleware.call(
@@ -78,7 +79,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                     'system.truecommand',
                     config['id'], {
                         **{k: None for k in ('tc_public_key', 'remote_address', 'endpoint', 'wg_address')},
-                        'api_key_state': Status.FAILED.value,
+                        'api_key_state': TruecommandStatus.FAILED.value,
                     }
                 )
                 self.middleware.send_event(

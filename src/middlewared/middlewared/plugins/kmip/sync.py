@@ -2,9 +2,12 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
-
-from middlewared.schema import Bool, returns
-from middlewared.service import accepts, CallError, job, periodic, private, Service
+from middlewared.api import api_method
+from middlewared.api.current import (
+    KmipSyncPendingArgs, KmipSyncPendingResult, KmipSyncKeysArgs, KmipSyncKeysResult,
+    KmipClearSyncPendingKeysArgs, KmipClearSyncPendingKeysResult,
+)
+from middlewared.service import CallError, job, periodic, private, Service
 
 from .connection import KMIPServerMixin
 
@@ -41,8 +44,7 @@ class KMIPService(Service, KMIPServerMixin):
         else:
             return True
 
-    @accepts(roles=['KMIP_READ'])
-    @returns(Bool('pending_kmip_sync'))
+    @api_method(KmipSyncPendingArgs, KmipSyncPendingResult, roles=['KMIP_READ'])
     async def kmip_sync_pending(self):
         """
         Returns true or false based on if there are keys which are to be synced from local database to remote KMIP
@@ -53,8 +55,7 @@ class KMIPService(Service, KMIPServerMixin):
         )
 
     @periodic(interval=86400)
-    @accepts(roles=['KMIP_WRITE'])
-    @returns()
+    @api_method(KmipSyncKeysArgs, KmipSyncKeysResult, roles=['KMIP_WRITE'])
     async def sync_keys(self):
         """
         Sync ZFS/SED keys between KMIP Server and TN database.
@@ -65,8 +66,7 @@ class KMIPService(Service, KMIPServerMixin):
         await self.middleware.call('kmip.sync_zfs_keys')
         await self.middleware.call('kmip.sync_sed_keys')
 
-    @accepts(roles=['KMIP_WRITE'])
-    @returns()
+    @api_method(KmipClearSyncPendingKeysArgs, KmipClearSyncPendingKeysResult, roles=['KMIP_WRITE'])
     async def clear_sync_pending_keys(self):
         """
         Clear all keys which are pending to be synced between KMIP server and TN database.

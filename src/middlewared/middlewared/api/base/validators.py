@@ -3,7 +3,9 @@ import re
 
 from pydantic import HttpUrl
 
-__all__ = ["match_validator", "time_validator", "email_validator"]
+from .validators_.passwd_complexity import passwd_complexity_validator
+
+__all__ = ["match_validator", "time_validator", "passwd_complexity_validator", "email_validator"]
 
 
 def match_validator(pattern: re.Pattern, explanation: str | None = None):

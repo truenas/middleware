@@ -1,6 +1,13 @@
 from typing import Annotated, Any
 
-from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandler, HttpUrl as _HttpUrl, PlainSerializer
+from pydantic import (
+    AfterValidator,
+    BeforeValidator,
+    Field,
+    GetCoreSchemaHandler,
+    HttpUrl as _HttpUrl,
+    PlainSerializer,
+)
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 
 from middlewared.api.base.validators import time_validator, email_validator
@@ -63,5 +70,4 @@ EmailString = Annotated[str, AfterValidator(email_validator)]
 NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
 NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
 SnapshotNameSchema = Annotated[str, AfterValidator(lambda val: validate_snapshot_naming_schema(val) or val)]
-
 SECRET_VALUE = "********"
