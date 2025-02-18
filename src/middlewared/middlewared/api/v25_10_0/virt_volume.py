@@ -1,4 +1,6 @@
 import os
+import re
+
 from typing import Literal
 
 from pydantic import Field, field_validator
@@ -14,6 +16,18 @@ __all__ = [
 ]
 
 
+RE_VOLUME_NAME = re.compile(r'^[A-Za-z][A-Za-z0-9-._]*[A-Za-z0-9]$')
+
+
+def volume_name_validator(value: str) -> str:
+    if not RE_VOLUME_NAME.fullmatch(value):
+        raise ValueError(
+            'Name can contain only letters, numbers, dashes, underscores and dots.'
+            'Name must start with a letter, and must not end with a dash.'
+        )
+    return value
+
+
 class VirtVolumeEntry(BaseModel):
     id: NonEmptyString
     name: NonEmptyString
@@ -26,10 +40,12 @@ class VirtVolumeEntry(BaseModel):
 
 @single_argument_args('virt_volume_create')
 class VirtVolumeCreateArgs(BaseModel):
-    name: NonEmptyString
+    name: NonEmptyString = Field(min_length=1, max_length=63)
     content_type: Literal['BLOCK'] = 'BLOCK'
     size: int = Field(ge=512, default=1024)  # 1 gb default
     '''Size of volume in MB and it should at least be 512 MB'''
+
+    _validate_name = field_validator('name')(volume_name_validator)
 
 
 class VirtVolumeCreateResult(BaseModel):
@@ -59,10 +75,12 @@ class VirtVolumeDeleteResult(BaseModel):
 
 @single_argument_args('virt_volume_import_iso')
 class VirtVolumeImportISOArgs(BaseModel):
-    name: NonEmptyString
+    name: NonEmptyString = Field(min_length=1, max_length=63)
     '''Specify name of the newly created volume from the ISO specified'''
     iso_location: NonEmptyString | None = None
     upload_iso: bool = False
+
+    _validate_name = field_validator('name')(volume_name_validator)
 
     @field_validator('iso_location')
     @classmethod
