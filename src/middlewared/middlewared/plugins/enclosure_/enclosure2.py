@@ -4,8 +4,9 @@
 # See the file LICENSE.IX for complete terms and conditions
 import errno
 
-from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import Service, filterable
+from middlewared.api import api_method
+from middlewared.api.current import Enclosure2Entry, Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult
+from middlewared.service import Service, filterable_api_method
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 
@@ -69,11 +70,7 @@ class Enclosure2Service(Service):
 
         return origslot, supports_identify
 
-    @accepts(Dict(
-        Str('enclosure_id', required=True),
-        Int('slot', required=True),
-        Str('status', required=True, enum=['CLEAR', 'ON', 'OFF'])
-    ))
+    @api_method(Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult, roles=['ENCLOSURE_WRITE'])
     def set_slot_status(self, data):
         """Set enclosure bay number `slot` to `status` for `enclosure_id`.
 
@@ -132,7 +129,7 @@ class Enclosure2Service(Service):
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)
 
-    @filterable
+    @filterable_api_method(roles=['ENCLOSURE_READ'], item=Enclosure2Entry)
     def query(self, filters, options):
         enclosures = []
         if not self.middleware.call_sync('truenas.is_ix_hardware'):
