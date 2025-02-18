@@ -1,6 +1,40 @@
-from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, single_argument_args
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    excluded_field,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    NotRequired,
+    single_argument_args
+)
 
 from pydantic import HttpUrl
+
+
+class FailoverEntry(BaseModel):
+    id: int
+    disabled: bool
+    """When true HA will be administratively disabled."""
+    master: bool
+    """Marks the particular node in the chassis as the master node.
+    The standby node will have the opposite value."""
+    timeout: int
+    """The time to WAIT (in seconds) until a failover occurs when a network
+    event occurs on an interface that is marked critical for failover AND
+    HA is enabled and working appropriately. The default time to wait is
+    2 seconds.
+
+    **NOTE**
+        This setting does NOT effect the `disabled` or `master` parameters."""
+
+
+class FailoverUpdateArgs(FailoverEntry, metaclass=ForUpdateMetaclass):
+    id: Excluded = excluded_field()
+    master: bool | None
+
+
+class FailoverUpdateResult(BaseModel):
+    result: FailoverEntry
 
 
 class FailoverGetIpsArgs(BaseModel):
@@ -48,7 +82,8 @@ class FailoverSyncFromPeerArgs(BaseModel):
 
 
 class FailoverSyncFromPeerResult(BaseModel):
-    result: str
+    result: None
+
 
 @single_argument_args("sync_to_peer")
 class FailoverSyncToPeerArgs(BaseModel):
@@ -60,34 +95,7 @@ class FailoverSyncToPeerResult(BaseModel):
     result: None
 
 
-class FailoverUpdateEntry(BaseModel):
-    id: int
-    disabled: bool
-    master: bool
-    timeout: int
-
-
-@single_argument_args("failover_update")
-class FailoverUpdateArgs(BaseModel):
-    disabled: bool
-    """When true HA will be administratively disabled."""
-    master: bool = NotRequired
-    """Marks the particular node in the chassis as the master node.
-    The standby node will have the opposite value."""
-    timeout: int = NotRequired
-    """The time to WAIT (in seconds) until a failover occurs when a network
-    event occurs on an interface that is marked critical for failover AND
-    HA is enabled and working appropriately. The default time to wait is
-    2 seconds.
-    
-    **NOTE**
-        This setting does NOT effect the `disabled` or `master` parameters."""
-
-
-class FailoverUpdateResult(BaseModel):
-    result: FailoverUpdateEntry
-
-
+@single_argument_args("failover_upgrade")
 class FailoverUpgradeArgs(BaseModel):
     train: NonEmptyString = NotRequired
     resume: bool = False

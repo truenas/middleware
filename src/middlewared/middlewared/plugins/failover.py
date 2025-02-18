@@ -14,6 +14,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     FailoverBecomePassiveArgs,
     FailoverBecomePassiveResult,
+    FailoverEntry,
     FailoverGetIpsArgs,
     FailoverGetIpsResult,
     FailoverLicensedArgs,
@@ -27,7 +28,6 @@ from middlewared.api.current import (
     FailoverSyncToPeerArgs,
     FailoverSyncToPeerResult,
     FailoverUpdateArgs,
-    FailoverUpdateEntry,
     FailoverUpdateResult,
     FailoverUpgradeArgs,
     FailoverUpgradeResult,
@@ -79,7 +79,7 @@ class FailoverService(ConfigService):
         datastore_extend = 'failover.failover_extend'
         cli_private = True
         role_prefix = 'FAILOVER'
-        entry = FailoverUpdateEntry
+        entry = FailoverEntry
 
     @private
     async def failover_extend(self, data):
