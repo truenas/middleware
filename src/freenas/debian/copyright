@@ -3,8 +3,7 @@ Upstream-Name: truenas
 Source: http://www.truenas.com
 
 Files: *
-Copyright: 2019 iXsystems Inc
-           2019 William Grzybowski <william@grzy.org>
+Copyright: iXsystems Inc. dba TrueNAS
 License: BSD-3-Clause
 
 Files: debian/*
