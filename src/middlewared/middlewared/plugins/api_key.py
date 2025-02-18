@@ -306,6 +306,12 @@ class ApiKeyService(CRUDService):
             # internal session
             return
 
+        if self.middleware.call_sync('system.security.config')['enable_gpos_stig']:
+            raise CallError(
+                'Changes to API keys are not permitted in GPOS STIG mode',
+                errno.EACCES
+            )
+
         if credential_has_full_admin(app.authenticated_credentials):
             return
 
