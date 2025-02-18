@@ -40,10 +40,10 @@ def email_validator(value: str):
     max_path = 254
 
     if not value:
-        return
+        return value
 
     if len(value) > max_path:
-        raise ValueError("Maximum length is {self.max_path} characters.")
+        raise ValueError(f"Maximum length is {max_path} characters.")
 
     right_most_atsign = value.rfind("@")
     if right_most_atsign == -1:
