@@ -61,7 +61,9 @@ from .replication import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
 from .rsync_task import *  # noqa
+from .smart import *  # noqa
 from .smartctl import *  # noqa
+from .smart_test import *  # noqa
 from .smb import *  # noqa
 from .snmp import *  # noqa
 from .static_route import *  # noqa
