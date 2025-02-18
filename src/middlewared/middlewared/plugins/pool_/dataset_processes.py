@@ -191,7 +191,7 @@ class PoolDatasetService(Service):
                         with open(f'/proc/{pid}/comm') as comm:
                             name = comm.read().strip()
 
-                        proc = {'pid': pid, 'name': name}
+                        proc = {'pid': int(pid), 'name': name}
 
                         if svc := self.middleware.call_sync('service.identify_process', name):
                             proc['service'] = svc
