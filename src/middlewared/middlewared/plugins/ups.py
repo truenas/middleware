@@ -5,12 +5,15 @@ import io
 import os
 import re
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    UPSEntry, UPSUpdateArgs, UPSUpdateResult, UPSPortChoicesArgs, UPSPortChoicesResult,
+    UPSDriverChoicesArgs, UPSDriverChoicesResult,
+)
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.serial import serial_port_choices
-from middlewared.validators import Range, Port
 
 
 RE_DRIVER_CHOICE = re.compile(r'(\S+)\s+(\S+=\S+)?\s*(?:\((.+)\))?$')
@@ -51,30 +54,6 @@ def drivers_available():
 
 class UPSService(SystemServiceService):
 
-    ENTRY = Dict(
-        'ups_entry',
-        Bool('powerdown', required=True),
-        Bool('rmonitor', required=True),
-        Int('id', required=True),
-        Int('nocommwarntime', null=True, required=True),
-        Int('remoteport', validators=[Port()], required=True),
-        Int('shutdowntimer', required=True),
-        Int('hostsync', validators=[Range(min_=0)], required=True),
-        Str('description', required=True),
-        Str('driver', required=True),
-        Str('extrausers', max_length=None, required=True),
-        Str('identifier', empty=False, required=True),
-        Str('mode', enum=['MASTER', 'SLAVE'], required=True),
-        Str('monpwd', empty=False, required=True),
-        Str('monuser', empty=False, required=True),
-        Str('options', max_length=None, required=True),
-        Str('optionsupsd', max_length=None, required=True),
-        Str('port', required=True),
-        Str('remotehost', required=True),
-        Str('shutdown', enum=['LOWBATT', 'BATT'], required=True),
-        Str('shutdowncmd', null=True, required=True),
-        Str('complete_identifier', required=True),
-    )
     LOGGED_ERRORS = []
 
     class Config:
@@ -85,6 +64,7 @@ class UPSService(SystemServiceService):
         service_verb = 'restart'
         cli_namespace = 'service.ups'
         role_prefix = 'SYSTEM_GENERAL'
+        entry = UPSEntry
 
     @private
     async def ups_config_extend(self, data):
@@ -94,8 +74,7 @@ class UPSService(SystemServiceService):
         data['complete_identifier'] = f'{data["identifier"]}@{host}:{data["remoteport"]}'
         return data
 
-    @accepts()
-    @returns(List(items=[Str('port_choice')]))
+    @api_method(UPSPortChoicesArgs, UPSPortChoicesResult, roles=['SYSTEM_GENERAL_READ'])
     async def port_choices(self):
         adv_config = await self.middleware.call('system.advanced.config')
         ports = [
@@ -115,8 +94,7 @@ class UPSService(SystemServiceService):
         driver = driver.replace(' ', '\n\t')  # "genericups upstype=16"
         return f'driver = {driver}'
 
-    @accepts()
-    @returns(Dict(additional_attrs=True, example={'blazer_ser$CPM-800': 'WinPower ups 2 CPM-800 (blazer_ser)'}))
+    @api_method(UPSDriverChoicesArgs, UPSDriverChoicesResult, roles=['SYSTEM_GENERAL_READ'])
     def driver_choices(self):
         """
         Returns choices of UPS drivers supported by the system.
@@ -221,15 +199,7 @@ class UPSService(SystemServiceService):
         verrors.check()
         return data
 
-    @accepts(
-        Patch(
-            'ups_entry', 'ups_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'complete_identifier'}),
-            ('edit', {'name': 'monpwd', 'method': lambda x: setattr(x, 'empty', False)}),
-            ('attr', {'update': True}),
-        ),
-    )
+    @api_method(UPSUpdateArgs, UPSUpdateResult)
     async def do_update(self, data):
         """
         Update UPS Service Configuration.
@@ -278,9 +248,6 @@ class UPSService(SystemServiceService):
         await self.middleware.call('alert.oneshot_delete', alerts)
 
     @private
-    @accepts(
-        Str('notify_type')
-    )
     async def upssched_event(self, notify_type):
         config = await self.config()
         upsc_identifier = config['complete_identifier']
