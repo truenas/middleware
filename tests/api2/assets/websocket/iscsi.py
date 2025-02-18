@@ -15,7 +15,10 @@ def initiator(comment='Default initiator', initiators=[]):
     try:
         yield initiator_config
     finally:
-        call('iscsi.initiator.delete', initiator_config['id'])
+        # Per NAS-128872 we might have already deleted the initiator
+        # if the associated target was deleted.
+        if call('iscsi.initiator.query', [['id', '=', initiator_config['id']]]):
+            call('iscsi.initiator.delete', initiator_config['id'])
 
 
 @contextlib.contextmanager
