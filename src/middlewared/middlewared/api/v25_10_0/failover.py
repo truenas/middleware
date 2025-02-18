@@ -1,3 +1,5 @@
+from pydantic import HttpUrl
+
 from middlewared.api.base import (
     BaseModel,
     Excluded,
@@ -7,8 +9,6 @@ from middlewared.api.base import (
     NotRequired,
     single_argument_args
 )
-
-from pydantic import HttpUrl
 
 
 class FailoverEntry(BaseModel):
@@ -28,6 +28,7 @@ class FailoverEntry(BaseModel):
         This setting does NOT effect the `disabled` or `master` parameters."""
 
 
+@single_argument_args("failover_update")
 class FailoverUpdateArgs(FailoverEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     master: bool | None
