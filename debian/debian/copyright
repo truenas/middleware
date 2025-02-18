@@ -3,9 +3,9 @@ Upstream-Name: truenas
 Source: http://www.truenas.com
 
 Files: *
-Copyright: 2025 iXsystems Inc
+Copyright: iXsystems Inc. dba TrueNAS
 License: LGPL-3
 
 Files: debian/*
-Copyright: 2025 iXsystems Inc
+Copyright: iXsystems Inc. dba TrueNAS
 License: LGPL-3
