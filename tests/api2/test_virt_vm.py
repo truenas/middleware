@@ -70,6 +70,30 @@ def test_iso_import_as_volume(virt_pool):
         assert vol['content_type'] == 'ISO'
 
 
+@pytest.mark.parametrize('vol_name, should_work', [
+    (
+        '-invlaid-name', False
+    ),
+    (
+        'valid-name', True
+    ),
+    (
+        'volume-name-should-not-have-characters-more-than-sixty-three-characters--',
+        False
+    ),
+    (
+        'alpine-3.18-default.iso', True
+    ),
+])
+def test_volume_name_validation(virt_pool, vol_name, should_work):
+    if should_work:
+        call('virt.volume.create', {'name': vol_name})
+        call('virt.volume.delete', vol_name)
+    else:
+        with pytest.raises(ClientValidationErrors):
+            call('virt.volume.create', {'name': vol_name})
+
+
 def test_upload_iso_file(virt_pool):
     vol_name = 'test_uploaded_iso'
     with tempfile.TemporaryDirectory() as tmpdir:
