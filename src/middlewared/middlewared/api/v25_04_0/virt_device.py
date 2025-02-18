@@ -10,7 +10,7 @@ __all__ = [
     'VirtDeviceGPUChoicesArgs', 'VirtDeviceGPUChoicesResult', 'VirtDeviceDiskChoicesArgs',
     'VirtDeviceDiskChoicesResult', 'VirtDeviceNICChoicesArgs', 'VirtDeviceNICChoicesResult',
     'VirtDeviceExportDiskImageArgs', 'VirtDeviceExportDiskImageResult', 'VirtDeviceImportDiskImageArgs',
-    'VirtDeviceImportDiskImageResult',
+    'VirtDeviceImportDiskImageResult', 'VirtDevicePCIChoicesArgs', 'VirtDevicePCIChoicesResult',
 ]
 
 
@@ -101,8 +101,13 @@ class GPU(Device):
     vendorid: NonEmptyString | None = None
 
 
+class PCI(Device):
+    dev_type: Literal['PCI']
+    address: NonEmptyString
+
+
 DeviceType: TypeAlias = Annotated[
-    Disk | GPU | Proxy | TPM | USB | NIC,
+    Disk | GPU | Proxy | TPM | USB | NIC | PCI,
     Field(discriminator='dev_type')
 ]
 
@@ -175,3 +180,11 @@ class VirtDeviceExportDiskImageArgs(BaseModel):
 
 class VirtDeviceExportDiskImageResult(BaseModel):
     result: bool
+
+
+class VirtDevicePCIChoicesArgs(BaseModel):
+    pass
+
+
+class VirtDevicePCIChoicesResult(BaseModel):
+    result: dict

@@ -149,6 +149,11 @@ class VirtInstanceDeviceService(Service):
                             device['description'] = 'Unknown'
                     case 'mdev' | 'mig' | 'srviov':
                         return self.unsupported()
+            case 'pci':
+                device.update({
+                    'dev_type': 'PCI',
+                    'address': incus['address'],
+                })
             case _:
                 return self.unsupported()
 
@@ -224,6 +229,11 @@ class VirtInstanceDeviceService(Service):
                         new['mig.uuid'] = device['mig_uuid']
                     case 'SRIOV':
                         new['gputype'] = 'sriov'
+            case 'PCI':
+                new.update({
+                    'type': 'pci',
+                    'address': device['address'],
+                })
             case _:
                 raise Exception('Invalid device type')
         return new
@@ -337,6 +347,11 @@ class VirtInstanceDeviceService(Service):
             case 'GPU':
                 if instance_config and instance_type == 'VM' and instance_config['status'] == 'RUNNING':
                     verrors.add('virt.device.gpu_choices', 'VM must be stopped before adding a GPU device')
+            case 'PCI':
+                if device['address'] not in await self.middleware.call('virt.device.pci_choices'):
+                    verrors.add(f'{schema}.address', f'Invalid PCI {device["address"]!r} address.')
+                if instance_type != 'VM':
+                    verrors.add(schema, 'PCI passthrough is only supported for vms')
 
     @api_method(VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult, roles=['VIRT_INSTANCE_WRITE'])
     async def device_add(self, id, device):

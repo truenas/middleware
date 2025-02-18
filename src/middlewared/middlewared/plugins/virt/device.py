@@ -1,14 +1,15 @@
 import usb.core
 
-from middlewared.service import CallError, Service
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     VirtDeviceUSBChoicesArgs, VirtDeviceUSBChoicesResult,
     VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult,
     VirtDeviceDiskChoicesArgs, VirtDeviceDiskChoicesResult,
     VirtDeviceNICChoicesArgs, VirtDeviceNICChoicesResult,
+    VirtDevicePCIChoicesArgs, VirtDevicePCIChoicesResult,
 )
+from middlewared.service import CallError, Service
+from middlewared.utils.pci import get_all_pci_devices_details
 
 
 class VirtDeviceService(Service):
@@ -92,3 +93,14 @@ class VirtDeviceService(Service):
                     'interface.query',
                 )}
         return choices
+
+    @api_method(VirtDevicePCIChoicesArgs, VirtDevicePCIChoicesResult, roles=['VIRT_INSTANCE_READ'])
+    def pci_choices(self):
+        """
+        Returns choices for PCI devices valid for VM virt instances.
+        """
+        pci_choices = {}
+        for pci_addr, pci_details in get_all_pci_devices_details().items():
+            if pci_details['critical'] is False:
+                pci_choices[pci_addr] = pci_details
+        return pci_choices
