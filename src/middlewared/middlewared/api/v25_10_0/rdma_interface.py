@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import IPvAnyAddress
+from pydantic import IPvAnyAddress, field_validator
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
 
@@ -22,6 +22,11 @@ class RdmaInterfaceEntry(BaseModel):
     address: IPvAnyAddress
     prefixlen: int
     mtu: int = 5000
+
+    @field_validator('address')
+    @classmethod
+    def normalize_address(cls, value: IPvAnyAddress) -> str:
+        return str(value.ip)
 
 
 class RdmaInterfaceCreateCheck(BaseModel):
