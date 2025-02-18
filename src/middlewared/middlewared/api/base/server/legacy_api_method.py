@@ -44,13 +44,13 @@ class LegacyAPIMethod(Method):
 
     async def call(self, app: "RpcWebSocketApp", params):
         if self.accepts_model:  # FIXME: Remove this check when all models become new style
-            params = self._adapt_params(params)
+            params = await self._adapt_params(params)
 
         return await super().call(app, params)
 
-    def _adapt_params(self, params):
+    async def _adapt_params(self, params):
         try:
-            legacy_accepts_model = self.adapter.versions[self.api_version].models[self.accepts_model.__name__]
+            legacy_accepts_model = await self.adapter.versions[self.api_version].get_model(self.accepts_model.__name__)
         except KeyError:
             if self.passthrough_nonexistent_methods:
                 return params
@@ -61,7 +61,7 @@ class LegacyAPIMethod(Method):
 
         params_dict = model_dict_from_list(legacy_accepts_model, params)
 
-        adapted_params_dict = self.adapter.adapt(
+        adapted_params_dict = await self.adapter.adapt(
             params_dict,
             legacy_accepts_model.__name__,
             self.api_version,
@@ -70,10 +70,10 @@ class LegacyAPIMethod(Method):
 
         return [adapted_params_dict[field] for field in self.accepts_model.model_fields]
 
-    def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
+    async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
         if self.accepts_model:  # FIXME: Remove this check when all models become new style
             try:
-                model, result = self.adapter.adapt_model(
+                model, result = await self.adapter.adapt_model(
                     {"result": result},
                     self.returns_model.__name__,
                     self.adapter.current_version,
@@ -81,14 +81,14 @@ class LegacyAPIMethod(Method):
                 )
             except APIVersionDoesNotContainModelException:
                 if self.passthrough_nonexistent_methods:
-                    return super()._dump_result(app, methodobj, result)
+                    return await super()._dump_result(app, methodobj, result)
 
                 raise
 
             return self.middleware.dump_result(self.serviceobj, methodobj, app, result["result"],
                                                new_style_returns_model=model)
 
-        return super()._dump_result(app, methodobj, result)
+        return await super()._dump_result(app, methodobj, result)
 
     def dump_args(self, params):
         if self.accepts_model:  # FIXME: Remove this check when all models become new style

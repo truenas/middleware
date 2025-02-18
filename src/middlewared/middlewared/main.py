@@ -1,4 +1,5 @@
 from .api.base.handler.dump_params import dump_params
+from .api.base.handler.model_provider import ModuleModelProvider, LazyModuleModelProvider
 from .api.base.handler.result import serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.server.api import API
@@ -47,7 +48,6 @@ import contextlib
 from dataclasses import dataclass
 import errno
 import functools
-import importlib
 import inspect
 import itertools
 import multiprocessing
@@ -144,16 +144,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def _load_api_versions(self) -> [APIVersion]:
         versions = []
         api_dir = os.path.join(os.path.dirname(__file__), 'api')
-        for version_dir in sorted(pathlib.Path(api_dir).iterdir()):
-            if version_dir.name.startswith('v') and version_dir.is_dir():
-                version = version_dir.name.replace('_', '.')
-                self._console_write(f'loading API version {version}')
-                versions.append(
-                    APIVersion.from_module(
-                        version,
-                        importlib.import_module(f'middlewared.api.{version_dir.name}'),
-                    ),
-                )
+        api_versions = [
+            (version_dir.name.replace('_', '.'), f'middlewared.api.{version_dir.name}')
+            for version_dir in sorted(pathlib.Path(api_dir).iterdir())
+            if version_dir.name.startswith('v') and version_dir.is_dir()
+        ]
+        for i, (version, module_name) in enumerate(api_versions):
+            if i == len(api_versions) - 1:
+                module_provider = ModuleModelProvider(module_name)
+            else:
+                module_provider = LazyModuleModelProvider(io_thread_pool_executor, module_name)
+
+            versions.append(APIVersion(version, module_provider))
 
         return versions
 
@@ -1337,16 +1339,29 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         apis = self._load_apis()
 
         # FIXME: handle this in a more appropriate place
+        def create_model(model_provider, model_factory, arg_model_name):
+            try:
+                arg = model_provider.models[arg_model_name]
+            except KeyError:
+                pass
+            else:
+                return model_factory(arg)
+
         for service in self.get_services().values():
             for current_api_model, model_factory, arg_model_name in getattr(service, '_register_models', []):
-                self.api_versions[-1].models[current_api_model.__name__] = current_api_model
+                # Newest version has `ModuleModelProvider`, we can add directly to the models list
+                self.api_versions[-1].model_provider.models[current_api_model.__name__] = current_api_model
                 for api_version in self.api_versions[:-1]:
-                    try:
-                        arg = api_version.models[arg_model_name]
-                    except KeyError:
-                        pass
-                    else:
-                        api_version.models[current_api_model.__name__] = model_factory(arg)
+                    # All others have `LazyModuleModelProvider`.
+                    # FIXME: We must initialize derived models lazily since they are not loaded yet.
+                    # This abstraction exposes unnecessary implementation details, we must come up with something better
+                    model_provider = api_version.model_provider
+                    model_provider.models_factories[current_api_model.__name__] = functools.partial(
+                        create_model,
+                        model_provider,
+                        model_factory,
+                        arg_model_name,
+                    )
 
         self._console_write('registering services')
 
