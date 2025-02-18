@@ -31,12 +31,12 @@ async def post(url, data, timeout=INTERNET_TIMEOUT):
     except asyncio.TimeoutError:
         raise CallError('Connection timed out', errno.ETIMEDOUT)
     except aiohttp.ClientResponseError as e:
-        raise CallError(f'Invalid proxy server response: {e}', errno.EBADMSG)
+        raise CallError(f'Invalid server response: {e}', errno.EBADMSG)
 
     try:
         return await req.json()
     except aiohttp.client_exceptions.ContentTypeError:
-        raise CallError('Invalid proxy server response', errno.EBADMSG)
+        raise CallError(f'Invalid server response: {req.status}', errno.EBADMSG)
 
 
 class SupportModel(sa.Model):
@@ -328,7 +328,7 @@ class SupportService(ConfigService):
     @job(pipes=["input"])
     def attach_ticket(self, job, data):
         """
-        Method to attach a file to a existing ticket.
+        Method to attach a file to an existing ticket.
         """
 
         self.middleware.call_sync('network.general.will_perform_activity', 'support')
@@ -350,11 +350,14 @@ class SupportService(ConfigService):
         except requests.Timeout:
             raise CallError('Connection time out', errno.ETIMEDOUT)
 
+        if r.status_code == 413:
+            raise CallError(f'Uploaded file is too large', errno.EFBIG)
+
         try:
             data = r.json()
         except ValueError:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
-            raise CallError('Invalid proxy server response', errno.EBADMSG)
+            raise CallError(f'Invalid server response: {r.status_code}', errno.EBADMSG)
 
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)

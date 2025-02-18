@@ -144,7 +144,7 @@ def vmware():
     ("certificateauthority", certificateauthority, {}, ["privatekey", "issuer"]),
     ("cloud_backup", cloudbackup, {}, ["credentials.provider.pass", "password"]),
     ("cloudsync.credentials", cloudsync_credential, {}, ["provider.pass"]),
-    ("cloudsync", cloudsync, {}, ["credentials.provider", "encryption_password"]),
+    ("cloudsync", cloudsync, {}, ["credentials.provider.pass", "encryption_password"]),
     ("disk", disk, {"extra": {"passwords": True}}, ["passwd"]),
     ("idmap", idmap, {}, ["options.ldap_user_dn_password"]),
     ("iscsi.auth", iscsi_auth, {}, ["secret", "peersecret"]),

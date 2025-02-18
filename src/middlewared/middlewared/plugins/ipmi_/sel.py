@@ -1,8 +1,15 @@
 from subprocess import run
 
-from middlewared.service import job, Service, filterable, filterable_returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    IPMISELClearArgs,
+    IPMISELClearResult,
+    IPMISELElistEntry,
+    IPMISELInfoArgs,
+    IPMISELInfoResult,
+)
+from middlewared.service import filterable_api_method, job, Service
 from middlewared.utils import filter_list
-from middlewared.schema import accepts, returns, Dict
 from middlewared.service_exception import CallError
 
 SEL_LOCK = 'sel_lock'
@@ -31,8 +38,7 @@ class IpmiSelService(Service):
         namespace = 'ipmi.sel'
         cli_namespace = 'service.ipmi.sel'
 
-    @filterable(roles=['IPMI_READ'])
-    @filterable_returns(Dict('ipmi_elist', additional_attrs=True))
+    @filterable_api_method(item=IPMISELElistEntry, roles=['IPMI_READ'])
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def elist(self, job, filters, options):
         """Query IPMI System Event Log (SEL) extended list"""
@@ -56,8 +62,11 @@ class IpmiSelService(Service):
         job.set_progress(100, 'Parsing extended event log complete')
         return filter_list(rv, filters, options)
 
-    @accepts(roles=['IPMI_READ'])
-    @returns(Dict('ipmi_sel_info', additional_attrs=True))
+    @api_method(
+        IPMISELInfoArgs,
+        IPMISELInfoResult,
+        roles=['IPMI_READ']
+    )
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def info(self, job):
         """Query General information about the IPMI System Event Log"""
@@ -74,8 +83,11 @@ class IpmiSelService(Service):
         job.set_progress(100, 'Parsing general extended event log complete')
         return rv
 
-    @accepts(roles=['IPMI_WRITE'])
-    @returns()
+    @api_method(
+        IPMISELClearArgs,
+        IPMISELClearResult,
+        roles=['IPMI_WRITE'],
+    )
     @job(lock=SEL_LOCK, lock_queue_size=1)
     def clear(self, job):
         if self.middleware.call_sync('ipmi.is_loaded'):

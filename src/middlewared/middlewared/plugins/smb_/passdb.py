@@ -68,10 +68,16 @@ class SMBService(Service):
 
         pdb_entries = {entry['user_rid']: entry for entry in query_passdb_entries([], {})}
         to_update = []
+        broken_entries = []
 
         for entry in self.middleware.call_sync('user.query', [("smb", "=", True), ('local', '=', True)]):
             existing_entry = pdb_entries.pop(get_domain_rid(entry['sid']), None)
-            to_update.append(user_entry_to_passdb_entry(server_name, entry, existing_entry))
+            try:
+                to_update.append(user_entry_to_passdb_entry(server_name, entry, existing_entry))
+            except ValueError:
+                # This will occur if config was restored without a secret seed
+                broken_entries.append(entry['username'])
+                continue
 
             if existing_entry and existing_entry['username'] != entry['username']:
                 # username changed. Since it's part of key for one of tdb entries we have to nuke it.
@@ -88,3 +94,10 @@ class SMBService(Service):
 
             self.logger.debug('%s: removing user from SMB user database', entry['username'])
             delete_passdb_entry(entry['username'], entry['user_rid'])
+
+        if broken_entries:
+            self.middleware.call_sync("alert.oneshot_create", "SMBUserMissingHash",
+                                      {'entries': ','.join(broken_entries)}
+            )
+        else:
+            self.middleware.call_sync("alert.oneshot_delete", "SMBUserMissingHash")

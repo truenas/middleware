@@ -2,13 +2,15 @@ from typing import Annotated, Literal, TypeAlias
 
 from pydantic import Field, field_validator
 
-from middlewared.api.base import BaseModel, LocalGID, LocalUID, NonEmptyString
+from middlewared.api.base import BaseModel, LocalGID, LocalUID, NonEmptyString, single_argument_args
 
 
 __all__ = [
     'DeviceType', 'InstanceType', 'VirtDeviceUSBChoicesArgs', 'VirtDeviceUSBChoicesResult',
     'VirtDeviceGPUChoicesArgs', 'VirtDeviceGPUChoicesResult', 'VirtDeviceDiskChoicesArgs',
     'VirtDeviceDiskChoicesResult', 'VirtDeviceNICChoicesArgs', 'VirtDeviceNICChoicesResult',
+    'VirtDeviceExportDiskImageArgs', 'VirtDeviceExportDiskImageResult', 'VirtDeviceImportDiskImageArgs',
+    'VirtDeviceImportDiskImageResult',
 ]
 
 
@@ -152,3 +154,24 @@ class VirtDeviceNICChoicesArgs(BaseModel):
 
 class VirtDeviceNICChoicesResult(BaseModel):
     result: dict[str, str]
+
+
+@single_argument_args('virt_device_import_disk_image')
+class VirtDeviceImportDiskImageArgs(BaseModel):
+    diskimg: NonEmptyString
+    zvol: NonEmptyString
+
+
+class VirtDeviceImportDiskImageResult(BaseModel):
+    result: bool
+
+
+@single_argument_args('virt_device_export_disk_image')
+class VirtDeviceExportDiskImageArgs(BaseModel):
+    format: NonEmptyString
+    directory: NonEmptyString
+    zvol: NonEmptyString
+
+
+class VirtDeviceExportDiskImageResult(BaseModel):
+    result: bool

@@ -11,7 +11,7 @@ from middlewared.api.base import (
     UnixPerm,
 )
 from middlewared.utils.smb import SMBUnixCharset
-from pydantic import Field, IPvAnyInterface, model_validator
+from pydantic import Field, field_validator, IPvAnyInterface, model_validator
 from typing import Literal, Self
 
 __all__ = [
@@ -157,6 +157,18 @@ class SmbServiceEntry(BaseModel):
     debug: bool
     """ Set SMB log levels to debug. This should only be used when troubleshooting a specific SMB
     issue and should not be used in production environments. """
+
+    @field_validator('bindip')
+    @classmethod
+    def normalize_bindips(cls, values: list[IPvAnyInterface]) -> list[str]:
+        """We'll be passed a list of IPvAnyInterface types, and we
+        deserialize these values by simply doing `str(value)`. Since this
+        is an `Interface` type from `ipaddress` module, it will contain
+        the netmask in the string (i.e. '192.168.1.150/32'). We don't
+        need the netmask info because the smb.bindip_choices method
+        returns a dictionary of addresses without the netmask info.
+        (i.e. {'192.168.1.150': '192.168.1.150'})."""
+        return [str(i.ip) for i in values]
 
 
 @single_argument_args('smb_update')

@@ -229,6 +229,9 @@ ROLES = {
     'SYSTEM_CRON_READ': Role(),
     'SYSTEM_CRON_WRITE': Role(includes=['SYSTEM_CRON_READ']),
 
+    'SYSTEM_UPDATE_READ': Role(),
+    'SYSTEM_UPDATE_WRITE': Role(includes=['SYSTEM_UPDATE_READ']),
+
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),
     'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ'], stig=None),
@@ -316,8 +319,19 @@ class RoleManager:
         self.events.register_resource(event_name, roles, exist_ok)
 
     def role_stig_check(self, role_name: str, enabled_stig: STIGType) -> bool:
+        """
+        Determine whether role is available in current STIG configuration
+        enabled_stig is an intflag enum because in future we may add more
+        STIGs that can be enabled to unlock portions of product that are
+        currently unavailable under GPOS STIG.
+        """
+        if not enabled_stig:
+            # No STIG set that is limiting available roles
+            return True
+
         role = self.roles[role_name]
         if role.stig is None:
+            # No STIG settings exist that grant this role
             return False
 
         return bool(role.stig & enabled_stig)
@@ -325,11 +339,6 @@ class RoleManager:
     def roles_for_role(self, role: str, enabled_stig: STIGType | None) -> typing.Set[str]:
         if role not in self.roles:
             return set()
-
-        if not enabled_stig:
-            return set.union({role}, *[
-                self.roles_for_role(included_role, enabled_stig) for included_role in self.roles[role].includes
-            ])
 
         if self.roles[role].full_admin:
             # Convert FULL_ADMIN to all stig-allowed roles.

@@ -739,7 +739,7 @@ class AuthService(Service):
                     if resp['pam_response'] == 'SUCCESS':
                         # Insert a failure delay so that we don't leak information about
                         # the PAM response
-                        await asyncio.sleep(random.uniform(1, 2))
+                        await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': cred_type,
@@ -749,6 +749,7 @@ class AuthService(Service):
                         }, False)
 
                     else:
+                        await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': cred_type,
@@ -900,7 +901,8 @@ class AuthService(Service):
                     await login_fn(app, cred)
                 else:
                     # Add a sleep like pam_delay() would add for pam_oath
-                    await asyncio.sleep(random.uniform(1, 2))
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
+
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'LOGIN_TWOFACTOR',
@@ -931,7 +933,7 @@ class AuthService(Service):
                 token_str = data['token']
                 token = self.token_manager.get(token_str, app.origin)
                 if token is None:
-                    await asyncio.sleep(random.uniform(1, 2))
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'TOKEN',
@@ -944,7 +946,7 @@ class AuthService(Service):
                     return response
 
                 if token.attributes:
-                    await asyncio.sleep(random.uniform(1, 2))
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'TOKEN',

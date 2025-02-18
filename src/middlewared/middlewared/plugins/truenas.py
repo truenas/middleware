@@ -3,7 +3,6 @@ import os
 
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
-from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
 from middlewared.service import cli_private, job, private, Service
 from middlewared.api.current import (
     TrueNASSetProductionArgs, TrueNASSetProductionResult,
@@ -13,7 +12,7 @@ from middlewared.api.current import (
     TrueNASGetEULAArgs, TrueNASGetEULAResult,
     TrueNASIsIXHardwareArgs, TrueNASIsIXHardwareResult,
     TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult,
-    TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult
+    TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult, TruecommandStatus,
 )
 from middlewared.api import api_method
 
@@ -37,9 +36,9 @@ class TrueNASService(Service):
         """
         # NOTE: This endpoint doesn't require authentication because
         # it is used by UI on the login page
-        return TrueCommandStatus(
+        return TruecommandStatus(
             (await self.middleware.call('truecommand.config'))['status']
-        ) == TrueCommandStatus.CONNECTED
+        ) == TruecommandStatus.CONNECTED
 
     @api_method(
         TrueNASGetChassisHardwareArgs,

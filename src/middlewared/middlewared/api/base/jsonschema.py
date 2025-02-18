@@ -6,7 +6,7 @@ def get_json_schema(model):
     schema = replace_refs(schema, schema.get("$defs", {}))
     schema = add_attrs(schema)
 
-    return [schema["properties"][field] for field in model.model_fields]
+    return [schema["properties"][name] for name in model.schema_model_fields()]
 
 
 def replace_refs(data, defs=None):
@@ -25,7 +25,7 @@ def replace_refs(data, defs=None):
 def add_attrs(schema):
     # FIXME: This is only here for backwards compatibility and should be removed eventually
     if isinstance(schema, dict):
-        if isinstance(schema.get("properties"), dict):
+        if schema.get("type") == "object" and isinstance(schema.get("properties"), dict):
             schema = {
                 **schema,
                 "_attrs_order_": list(schema["properties"].keys()),

@@ -116,6 +116,11 @@ class NfsShareEntry(BaseModel):
     """ Enable or disable the share. """
     locked: bool | None
     """ Lock state of the dataset (if encrypted). """
+    expose_snapshots: bool = False
+    """
+    Enterprise feature to enable access to the ZFS snapshot directory for the export.
+    Export path must be the root directory of a ZFS dataset.
+    """
 
 
 class NfsShareCreate(NfsShareEntry):
