@@ -27,14 +27,11 @@ ROLES = {
     'API_KEY_READ': Role(),
     'API_KEY_WRITE': Role(includes=['API_KEY_READ'], stig=None),
 
-    'BOOT_ENV_READ': Role(),
-    'BOOT_ENV_WRITE': Role(includes=['BOOT_ENV_READ']),
-
-    'FAILOVER_READ': Role(),
-    'FAILOVER_WRITE': Role(includes=['FAILOVER_READ']),
-
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
+
+    'BOOT_ENV_READ': Role(),
+    'BOOT_ENV_WRITE': Role(includes=['BOOT_ENV_READ']),
 
     'DIRECTORY_SERVICE_READ': Role(),
     'DIRECTORY_SERVICE_WRITE': Role(includes=['DIRECTORY_SERVICE_READ']),
@@ -42,11 +39,8 @@ ROLES = {
     'DISK_READ': Role(),
     'DISK_WRITE': Role(includes=['DISK_READ']),
 
-    'KMIP_READ': Role(),
-    'KMIP_WRITE': Role(includes=['KMIP_READ']),
-
-    'IPMI_READ': Role(),
-    'IPMI_WRITE': Role(includes=['IPMI_READ']),
+    'FAILOVER_READ': Role(),
+    'FAILOVER_WRITE': Role(includes=['FAILOVER_READ']),
 
     'FILESYSTEM_ATTRS_READ': Role(),
     'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
@@ -54,6 +48,14 @@ ROLES = {
     'FILESYSTEM_DATA_WRITE': Role(includes=['FILESYSTEM_DATA_READ']),
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
+
+    'IPMI_READ': Role(),
+    'IPMI_WRITE': Role(includes=['IPMI_READ']),
+
+    'KMIP_READ': Role(),
+    'KMIP_WRITE': Role(includes=['KMIP_READ']),
+
+    'MAIL_WRITE': Role(),
 
     # Interact with privilege framework
     'PRIVILEGE_READ': Role(),
