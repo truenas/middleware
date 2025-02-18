@@ -46,8 +46,8 @@ class ServerAAL:
 
     def get_delay_interval(self):
         return uniform(
-            self.min_fail_delay,
-            self.min_fail_delay + 1
+            self.level.min_fail_delay,
+            self.level.min_fail_delay + 1
         )
 
 
