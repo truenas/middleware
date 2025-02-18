@@ -119,6 +119,20 @@ class SystemSecurityService(ConfigService):
                 'authentication for the currently-authenticated session.'
             )
 
+        if await self.middleware.call('app.query', [], {'count': True}):
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Apps are not supported under General Purpose OS STIG compatibility '
+                'mode.'
+            )
+
+        if await self.middleware.call('virt.instance.query', [], {'count': True}):
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'VMs are not supported under General Purpose OS STIG compatibility '
+                'mode.'
+            )
+
     @private
     async def validate(self, is_ha, ha_disabled_reasons):
         schema = 'system_security_update.enable_fips'
