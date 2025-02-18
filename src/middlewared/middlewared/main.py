@@ -1353,8 +1353,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 self.api_versions[-1].model_provider.models[current_api_model.__name__] = current_api_model
                 for api_version in self.api_versions[:-1]:
                     # All others have `LazyModuleModelProvider`.
-                    # FIXME: We must initialize derived models lazily since they are not loaded yet. This abstraction
-                    # is very leaky, we must come up with something better.
+                    # FIXME: We must initialize derived models lazily since they are not loaded yet.
+                    # This abstraction exposes unnecessary implementation details, we must come up with something better
                     model_provider = api_version.model_provider
                     model_provider.models_factories[current_api_model.__name__] = functools.partial(
                         create_model,
