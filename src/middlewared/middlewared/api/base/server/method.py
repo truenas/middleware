@@ -46,9 +46,9 @@ class Method:
         elif isinstance(result, types.AsyncGeneratorType):
             result = [i async for i in result]
 
-        return self._dump_result(app, methodobj, result)
+        return await self._dump_result(app, methodobj, result)
 
-    def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
+    async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
         return self.middleware.dump_result(self.serviceobj, methodobj, app, result)
 
     def dump_args(self, params: list) -> list:
