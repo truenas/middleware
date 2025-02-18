@@ -14,8 +14,7 @@ from middlewared.api.current import (
 from middlewared.service import job, private
 from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
-from middlewared.utils import run
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
+from middlewared.utils import run, BOOT_POOL_NAME_VALID
 
 from .utils import Status, incus_call
 if TYPE_CHECKING:

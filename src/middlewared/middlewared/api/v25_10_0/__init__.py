@@ -9,6 +9,8 @@ from .app_image import *  # noqa
 from .app_ix_volume import *  # noqa
 from .app_registry import *  # noqa
 from .auth import *  # noqa
+from .auth_two_factor import *  # noqa
+from .boot import *  # noqa
 from .boot_environments import *  # noqa
 from .catalog import *  # noqa
 from .cloud_backup import *  # noqa
@@ -24,6 +26,7 @@ from .device import *  # noqa
 from .disk import *  # noqa
 from .docker import *  # noqa
 from .docker_network import *  # noqa
+from .enclosure2 import *  # noqa
 from .enclosure_label import *  # noqa
 from .failover_reboot import *  # noqa
 from .fc import *  # noqa
@@ -34,6 +37,7 @@ from .ftp import *  # noqa
 from .group import *  # noqa
 from .initshutdownscript import *  # noqa
 from .ipmi import *  # noqa
+from .ipmi_sel import *  # noqa
 from .iscsi_auth import *  # noqa
 from .iscsi_extent import *  # noqa
 from .iscsi_global import *  # noqa
@@ -54,9 +58,13 @@ from .pool_snapshottask import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
 from .rdma_interface import *  # noqa
+from .replication import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
+from .rsync_task import *  # noqa
+from .smart import *  # noqa
 from .smartctl import *  # noqa
+from .smart_test import *  # noqa
 from .smb import *  # noqa
 from .snmp import *  # noqa
 from .static_route import *  # noqa
@@ -71,7 +79,6 @@ from .virt_device import *  # noqa
 from .virt_global import *  # noqa
 from .virt_instance import *  # noqa
 from .virt_volume import *  # noqa
-from .vm import *  # noqa
-from .vm_device import *  # noqa
+from .vmware import *  # noqa
 from .webui_enclosure import *  # noqa
 from .webui_main_dashboard import *  # noqa

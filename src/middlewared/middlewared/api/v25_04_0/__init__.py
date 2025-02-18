@@ -24,6 +24,7 @@ from .device import *  # noqa
 from .disk import *  # noqa
 from .docker import *  # noqa
 from .docker_network import *  # noqa
+from .enclosure2 import *  # noqa
 from .enclosure_label import *  # noqa
 from .failover_reboot import *  # noqa
 from .fc import *  # noqa
@@ -70,7 +71,5 @@ from .virt_device import *  # noqa
 from .virt_global import *  # noqa
 from .virt_instance import *  # noqa
 from .virt_volume import *  # noqa
-from .vm import *  # noqa
-from .vm_device import *  # noqa
 from .webui_enclosure import *  # noqa
 from .webui_main_dashboard import *  # noqa

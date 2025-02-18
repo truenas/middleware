@@ -159,54 +159,6 @@ def test_iscsi_global_audit():
             global_config = call('iscsi.global.update', payload)
 
 
-def test_iscsi_host_audit():
-    host_config = None
-    ip = '1.2.3.4'
-    iqn = 'iqn.1993-08.org.debian:01:1234567890'
-    description = 'Development VM (debian)'
-    try:
-        # CREATE
-        with expect_audit_method_calls([{
-            'method': 'iscsi.host.create',
-            'params': [
-                {
-                    'ip': ip,
-                    'iqns': [iqn],
-                }
-            ],
-            'description': f'Create iSCSI host {ip}',
-        }]):
-            payload = {
-                'ip': ip,
-                'iqns': [iqn],
-            }
-            host_config = call('iscsi.host.create', payload)
-        # UPDATE
-        with expect_audit_method_calls([{
-            'method': 'iscsi.host.update',
-            'params': [
-                host_config['id'],
-                {
-                    'description': description,
-                }],
-            'description': f'Update iSCSI host {ip}',
-        }]):
-            payload = {
-                'description': description,
-            }
-            host_config = call('iscsi.host.update', host_config['id'], payload)
-    finally:
-        if host_config is not None:
-            # DELETE
-            id_ = host_config['id']
-            with expect_audit_method_calls([{
-                'method': 'iscsi.host.delete',
-                'params': [id_],
-                'description': f'Delete iSCSI host {ip}',
-            }]):
-                call('iscsi.host.delete', id_)
-
-
 def test_iscsi_initiator_audit():
     initiator_config = None
     comment = 'Default initiator'

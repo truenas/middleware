@@ -29,6 +29,7 @@ class ISCSITargetService(SimpleService):
                 self.middleware.logger.debug(f'Waited sucessfully for {self.name} to enter {curstate} state')
 
     async def before_start(self):
+        await self.middleware.call("iscsi.iser.before_start")
         await self.middleware.call("iscsi.alua.before_start")
         # Because we are a systemd_async_start service, it is possible that
         # a start could be requested while a stop is still in progress.
@@ -38,12 +39,10 @@ class ISCSITargetService(SimpleService):
             await self._wait_to_avoid_states(['deactivating'])
 
     async def after_start(self):
-        await self.middleware.call("iscsi.host.injection.start")
         await self.middleware.call("iscsi.alua.after_start")
 
     async def before_stop(self):
         await self.middleware.call("iscsi.alua.before_stop")
-        await self.middleware.call("iscsi.host.injection.stop")
 
     async def reload(self):
         return (await run(

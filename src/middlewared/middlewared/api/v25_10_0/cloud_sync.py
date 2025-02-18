@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Secret
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString,
-                                  NonEmptyString, single_argument_args, single_argument_result)
+                                  LongString, NonEmptyString, single_argument_args, single_argument_result)
 from .cloud_sync_providers import CloudCredentialProvider
 
 __all__ = ["CloudCredentialEntry",
@@ -60,8 +60,8 @@ class CloudCredentialVerifyArgs(BaseModel):
 @single_argument_result
 class CloudCredentialVerifyResult(BaseModel):
     valid: bool
-    error: str | None = None
-    excerpt: str | None = None
+    error: LongString | None = None
+    excerpt: LongString | None = None
 
 
 @single_argument_args("onedrive_list_drives")

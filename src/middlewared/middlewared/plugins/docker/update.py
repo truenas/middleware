@@ -152,6 +152,16 @@ class DockerService(ConfigService):
             if pool_changed:
                 # We want to clear upgrade alerts for apps at this point
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')
+                # We want to stop all apps if pool attr has changed because docker on stopping service
+                # does not result in clean umount of ix-apps dataset if we have 20+ running apps
+                job.set_progress(15, 'Stopping Apps')
+                apps = await self.middleware.call('app.query', [['state', '!=', 'STOPPED']])
+                batch_size = 10
+                # Let's do this in batches to avoid creating lots of tasks at once
+                for i in range(0, len(apps), batch_size):
+                    await (await self.middleware.call(
+                        'core.bulk', 'app.stop', [[app['name']] for app in apps[i:i + batch_size]]
+                    )).wait()
 
             nvidia_changed = old_config['nvidia'] != config['nvidia']
 

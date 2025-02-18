@@ -5,7 +5,6 @@ import libzfs
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.utils.threading import start_daemon_thread
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
@@ -158,7 +157,7 @@ async def zfs_events(middleware, data):
         if pool_name:
             await middleware.call('cache.pop', 'VolumeStatusAlerts')
 
-            if pool_name == BOOT_POOL_NAME:
+            if pool_name == await middleware.call('boot.pool_name'):
                 # a change was made to the boot drive, so let's clear
                 # the disk mapping for this pool
                 await middleware.call('boot.clear_disks_cache')

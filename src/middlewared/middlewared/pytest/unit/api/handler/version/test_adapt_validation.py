@@ -5,6 +5,7 @@ import pytest
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
+from middlewared.pytest.unit.helpers import TestModelProvider
 from middlewared.service_exception import ValidationErrors, ValidationError
 
 
@@ -38,20 +39,22 @@ class SettingsV2(BaseModel):
         return value
 
 
-def test_adapt_validation():
+@pytest.mark.asyncio
+async def test_adapt_validation():
     adapter = APIVersionsAdapter([
-        APIVersion("v1", {"Settings": SettingsV1}),
-        APIVersion("v2", {"Settings": SettingsV2}),
+        APIVersion("v1", TestModelProvider({"Settings": SettingsV1})),
+        APIVersion("v2", TestModelProvider({"Settings": SettingsV2})),
     ])
     with pytest.raises(ValidationErrors) as ve:
-        assert adapter.adapt({"email": ""}, "Settings", "v1", "v2")
+        assert await adapter.adapt({"email": ""}, "Settings", "v1", "v2")
 
     assert ve.value.errors == [ValidationError("email", ANY)]
 
 
-def test_adapt_default():
+@pytest.mark.asyncio
+async def test_adapt_default():
     adapter = APIVersionsAdapter([
-        APIVersion("v1", {"Settings": SettingsV1}),
-        APIVersion("v2", {"Settings": SettingsV2}),
+        APIVersion("v1", TestModelProvider({"Settings": SettingsV1})),
+        APIVersion("v2", TestModelProvider({"Settings": SettingsV2})),
     ])
-    assert adapter.adapt({}, "Settings", "v1", "v2") == {"emails": []}
+    assert await adapter.adapt({}, "Settings", "v1", "v2") == {"emails": []}

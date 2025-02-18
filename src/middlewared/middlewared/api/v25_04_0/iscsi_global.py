@@ -1,6 +1,7 @@
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
+from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, excluded_field, query_result,
+                                  single_argument_args)
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
@@ -9,6 +10,8 @@ __all__ = [
     "IscsiGlobalUpdateResult",
     "IscsiGlobalAluaEnabledArgs",
     "IscsiGlobalAluaEnabledResult",
+    "IscsiGlobalISEREnabledArgs",
+    "IscsiGlobalISEREnabledResult",
     "IscsiGlobalClientCountArgs",
     "IscsiGlobalClientCountResult",
     "IscsiGlobalSessionsArgs",
@@ -23,6 +26,7 @@ class IscsiGlobalEntry(BaseModel):
     listen_port: int = Field(ge=1025, le=65535, default=3260)
     pool_avail_threshold: int | None = Field(ge=1, le=99, default=None)
     alua: bool
+    iser: bool
 
 
 @single_argument_args('iscsi_update')
@@ -39,6 +43,14 @@ class IscsiGlobalAluaEnabledArgs(BaseModel):
 
 
 class IscsiGlobalAluaEnabledResult(BaseModel):
+    result: bool
+
+
+class IscsiGlobalISEREnabledArgs(BaseModel):
+    pass
+
+
+class IscsiGlobalISEREnabledResult(BaseModel):
     result: bool
 
 
@@ -73,5 +85,4 @@ class IscsiGlobalSessionsArgs(BaseModel):
     query_options: QueryOptions = QueryOptions()
 
 
-class IscsiGlobalSessionsResult(BaseModel):
-    result: list[IscsiSession]
+IscsiGlobalSessionsResult = query_result(IscsiSession)

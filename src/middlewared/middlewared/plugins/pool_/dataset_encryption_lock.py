@@ -26,7 +26,8 @@ class PoolDatasetService(Service):
         Dict(
             'lock_options',
             Bool('force_umount', default=False),
-        )
+        ),
+        roles=['DATASET_WRITE']
     )
     @returns(Bool('locked'))
     @job(lock=lambda args: 'dataset_lock')
@@ -104,7 +105,8 @@ class PoolDatasetService(Service):
                     )
                 ],
             ),
-        )
+        ),
+        roles=['DATASET_WRITE']
     )
     @returns(Dict(
         List('unlocked', items=[Str('dataset')], required=True),
@@ -347,11 +349,6 @@ class PoolDatasetService(Service):
     async def unlock_handle_attachments(self, dataset):
         mountpoint = dataset_mountpoint(dataset)
         for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
-            # FIXME: put this into `VMFSAttachmentDelegate`
-            if attachment_delegate.name == 'vm':
-                await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
-                continue
-
             if mountpoint:
                 if attachments := await attachment_delegate.query(mountpoint, True, {'locked': False}):
                     await attachment_delegate.start(attachments)

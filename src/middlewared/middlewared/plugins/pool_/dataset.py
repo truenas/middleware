@@ -3,16 +3,15 @@ import errno
 import os
 
 import middlewared.sqlalchemy as sa
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.schema import (
     accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Patch, Ref, returns, Str
 )
 from middlewared.service import (
-    CallError, CRUDService, filterable, InstanceNotFound, item_method, job, private, ValidationErrors
+    CallError, CRUDService, filterable, InstanceNotFound, item_method, private, ValidationErrors
 )
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
@@ -1013,7 +1012,7 @@ class PoolDatasetService(CRUDService):
         return verrors
 
     @item_method
-    @accepts(Str('id'))
+    @accepts(Str('id'), roles=['DATASET_WRITE'])
     @returns()
     async def promote(self, id_):
         """

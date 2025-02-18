@@ -6,6 +6,7 @@ import typing
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
 from pydantic._internal._model_construction import ModelMetaclass
+from pydantic.json_schema import SkipJsonSchema
 from pydantic.main import IncEx
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
@@ -18,8 +19,10 @@ __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item
 
 
 class _NotRequired:...
-NotRequired = _NotRequired()
+
+
 """Use as the default value for fields that may be excluded from the model."""
+NotRequired = _NotRequired()
 
 
 class _NotRequiredMixin(PydanticBaseModel):
@@ -147,6 +150,14 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         return value
 
     @classmethod
+    def schema_model_fields(cls):
+        return {
+            name: field
+            for name, field in cls.model_fields.items()
+            if not any(isinstance(metadata, SkipJsonSchema) for metadata in field.metadata)
+        }
+
+    @classmethod
     def from_previous(cls, value):
         """
         Converts model value from a preceding API version to this API version. `value` can be modified in-place.
@@ -258,10 +269,16 @@ def single_argument_result(klass, klass_name=None):
     else:
         klass_name = klass_name or klass.__name__
 
+    module = inspect.getmodule(inspect.stack()[1][0])
+    if module:
+        module_name = module.__name__
+    else:
+        module_name = None
+
     model = create_model(
         klass_name,
         __base__=(BaseModel,),
-        __module__=inspect.getmodule(inspect.stack()[1][0]).__name__,
+        __module__=module_name,
         result=typing.Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):

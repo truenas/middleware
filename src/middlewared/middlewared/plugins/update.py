@@ -75,14 +75,14 @@ class UpdateService(Service):
     class Config:
         cli_namespace = 'system.update'
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @accepts(roles=['SYSTEM_UPDATE_READ'])
     async def get_auto_download(self):
         """
         Returns if update auto-download is enabled.
         """
         return (await self.middleware.call('datastore.config', 'system.update'))['upd_autocheck']
 
-    @accepts(Bool('autocheck'))
+    @accepts(Bool('autocheck'), roles=['SYSTEM_UPDATE_WRITE'])
     async def set_auto_download(self, autocheck):
         """
         Sets if update auto-download is enabled.
@@ -91,7 +91,7 @@ class UpdateService(Service):
         await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
         await self.middleware.call('service.restart', 'cron')
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @accepts(roles=['SYSTEM_UPDATE_READ'])
     def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
@@ -135,7 +135,7 @@ class UpdateService(Service):
             'selected': selected,
         }
 
-    @accepts(Str('train', empty=False))
+    @accepts(Str('train', empty=False), roles=['SYSTEM_UPDATE_WRITE'])
     def set_train(self, train):
         """
         Set an update train to be used by default in updates.
@@ -174,7 +174,7 @@ class UpdateService(Service):
         'update-check-available',
         Str('train', required=False),
         required=False,
-    ), roles=['READONLY_ADMIN'])
+    ), roles=['SYSTEM_UPDATE_READ'])
     def check_available(self, attrs):
         """
         Checks if there is an update available from update server.
@@ -232,7 +232,7 @@ class UpdateService(Service):
 
         return self.middleware.call_sync('update.check_train', train)
 
-    @accepts(Str('path', null=True, default=None), roles=['READONLY_ADMIN'])
+    @accepts(Str('path', null=True, default=None), roles=['SYSTEM_UPDATE_READ'])
     async def get_pending(self, path):
         """
         Gets a list of packages already downloaded and ready to be applied.
@@ -254,7 +254,7 @@ class UpdateService(Service):
         Bool('resume', default=False),
         Str('train', null=True, default=None),
         Bool('reboot', default=False),
-    ))
+    ), roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     @pass_app(rest=True)
     async def update(self, app, job, attrs):
@@ -293,7 +293,7 @@ class UpdateService(Service):
 
         return True
 
-    @accepts()
+    @accepts(roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='updatedownload')
     def download(self, job):
         """
@@ -316,7 +316,8 @@ class UpdateService(Service):
             Str('dataset_name', null=True, default=None),
             Bool('resume', default=False),
             Bool('cleanup', default=True),
-        )
+        ),
+        roles=['SYSTEM_UPDATE_WRITE']
     )
     @job(lock='update')
     def manual(self, job, path, options):
@@ -425,7 +426,7 @@ class UpdateService(Service):
         'updatefile',
         Bool('resume', default=False),
         Str('destination', null=True, default=None),
-    ))
+    ), roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     async def file(self, job, options):
         """

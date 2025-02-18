@@ -36,6 +36,7 @@ MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
+BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
 MANIFEST_FILE = '/data/manifest.json'
 BRAND = ProductName.PRODUCT_NAME
 NULLS_FIRST = 'nulls_first:'

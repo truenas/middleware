@@ -9,6 +9,8 @@ __all__ = [
     "IscsiGlobalUpdateResult",
     "IscsiGlobalAluaEnabledArgs",
     "IscsiGlobalAluaEnabledResult",
+    "IscsiGlobalISEREnabledArgs",
+    "IscsiGlobalISEREnabledResult",
     "IscsiGlobalClientCountArgs",
     "IscsiGlobalClientCountResult",
     "IscsiGlobalSessionsArgs",
@@ -23,6 +25,7 @@ class IscsiGlobalEntry(BaseModel):
     listen_port: int = Field(ge=1025, le=65535, default=3260)
     pool_avail_threshold: int | None = Field(ge=1, le=99, default=None)
     alua: bool
+    iser: bool
 
 
 @single_argument_args('iscsi_update')
@@ -39,6 +42,14 @@ class IscsiGlobalAluaEnabledArgs(BaseModel):
 
 
 class IscsiGlobalAluaEnabledResult(BaseModel):
+    result: bool
+
+
+class IscsiGlobalISEREnabledArgs(BaseModel):
+    pass
+
+
+class IscsiGlobalISEREnabledResult(BaseModel):
     result: bool
 
 

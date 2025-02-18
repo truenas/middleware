@@ -1,19 +1,30 @@
-from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.service import CallError, private, Service
+from typing import Literal
+
+from pydantic import Field
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, NotRequired
+from middlewared.service import CallError, Service
 from middlewared.utils import run
+
+
+class BootFormatOptions(BaseModel):
+    size: int = NotRequired
+    legacy_schema: Literal["BIOS_ONLY", "EFI_ONLY", None] = None
+
+
+class BootFormatArgs(BaseModel):
+    dev: str
+    options: BootFormatOptions = Field(default_factory=BootFormatOptions)
+
+
+class BootFormatResult(BaseModel):
+    result: None
 
 
 class BootService(Service):
 
-    @accepts(
-        Str('dev'),
-        Dict(
-            'options',
-            Int('size'),
-            Str('legacy_schema', enum=[None, 'BIOS_ONLY', 'EFI_ONLY'], null=True, default=None),
-        )
-    )
-    @private
+    @api_method(BootFormatArgs, BootFormatResult, private=True)
     async def format(self, dev, options):
         """
         Format a given disk `dev` using the appropriate partition layout

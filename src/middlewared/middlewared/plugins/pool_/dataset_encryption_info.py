@@ -411,6 +411,7 @@ class PoolDatasetService(Service):
     @accepts(
         Str('id'),
         Bool('download', default=False),
+        roles=['DATASET_WRITE']
     )
     @returns(Str('key', null=True, private=True))
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)

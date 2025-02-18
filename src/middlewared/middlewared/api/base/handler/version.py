@@ -1,11 +1,11 @@
 import enum
 import functools
-from types import ModuleType
-from typing import Callable
+from typing import Awaitable, Callable
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from .accept import validate_model
 from .inspect import model_field_is_model, model_field_is_list_of_models
+from .model_provider import ModelProvider
 from middlewared.utils.lang import Undefined
 
 
@@ -28,36 +28,24 @@ class APIVersionDoesNotContainModelException(Exception):
 
 
 class APIVersion:
-    def __init__(self, version: str, models: dict[str, type[BaseModel]]):
+    def __init__(self, version: str, model_provider: ModelProvider):
         """
         :param version: API version name
-        :param models: a dictionary which keys are model names and values are models used in the API version
+        :param model_provider: `ModelProvider` instance
         """
         self.version: str = version
-        self.models: dict[str, type[BaseModel]] = models
-
-    @classmethod
-    def from_module(cls, version: str, module: ModuleType) -> "APIVersion":
-        """
-        Create `APIVersion` from a module (e.g. `middlewared.api.v25_04_0`).
-        :param version: API version name
-        :param module: module object
-        :return: `APIVersion` instance
-        """
-        return cls(
-            version,
-            {
-                model_name: model
-                for model_name, model in [
-                    (model_name, getattr(module, model_name))
-                    for model_name in dir(module)
-                ]
-                if isinstance(model, type) and issubclass(model, BaseModel)
-            },
-        )
+        self.model_provider: ModelProvider = model_provider
 
     def __repr__(self):
         return f"<APIVersion {self.version}>"
+
+    async def get_model(self, name: str) -> type[BaseModel]:
+        """
+        Get API model by name
+        :param name:
+        :return: model
+        """
+        return await self.model_provider.get_model(name)
 
 
 class APIVersionsAdapter:
@@ -73,7 +61,7 @@ class APIVersionsAdapter:
         self.versions_history: list[str] = list(self.versions.keys())
         self.current_version: str = self.versions_history[-1]
 
-    def adapt(self, value: dict, model_name: str, version1: str, version2: str) -> dict:
+    async def adapt(self, value: dict, model_name: str, version1: str, version2: str) -> dict:
         """
         Adapts `value` (that matches a model identified by `model_name`) from API `version1` to API `version2`).
 
@@ -84,9 +72,15 @@ class APIVersionsAdapter:
         :param version2: target API version that needs `value`
         :return: converted value
         """
-        return self.adapt_model(value, model_name, version1, version2)[1]
+        return (await self.adapt_model(value, model_name, version1, version2))[1]
 
-    def adapt_model(self, value: dict, model_name: str, version1: str, version2: str) -> tuple[type[BaseModel], dict]:
+    async def adapt_model(
+        self,
+        value: dict,
+        model_name: str,
+        version1: str,
+        version2: str,
+    ) -> tuple[type[BaseModel], dict]:
         """
         Same as `adapt`, but returned value will be a tuple of `version2` model instance and converted value.
         """
@@ -102,11 +96,11 @@ class APIVersionsAdapter:
 
         current_version = self.versions[version1]
         try:
-            current_version_model = current_version.models[model_name]
+            current_version_model = await current_version.get_model(model_name)
         except KeyError:
             raise APIVersionDoesNotContainModelException(current_version.version, model_name)
 
-        value_factory = functools.partial(validate_model, current_version_model, value)
+        value_factory = functools.partial(async_validate_model, current_version_model, value)
         model = current_version_model
 
         if version1_index < version2_index:
@@ -122,28 +116,42 @@ class APIVersionsAdapter:
             value_factory = functools.partial(
                 self._adapt_model, value_factory, model_name, current_version, new_version, direction,
             )
-            model = new_version.models.get(model_name)
+            try:
+                model = await new_version.get_model(model_name)
+            except KeyError:
+                model = None
 
             current_version = new_version
 
-        return model, value_factory()
+        return model, await value_factory()
 
-    def _adapt_model(self, value_factory: Callable[[], dict], model_name: str, current_version: APIVersion,
-                     new_version: APIVersion, direction: Direction):
+    async def _adapt_model(
+        self,
+        value_factory: Callable[[], Awaitable[dict]],
+        model_name: str,
+        current_version: APIVersion,
+        new_version: APIVersion,
+        direction: Direction,
+    ):
         try:
-            current_model = current_version.models[model_name]
+            current_model = await current_version.get_model(model_name)
         except KeyError:
             raise APIVersionDoesNotContainModelException(current_version.version, model_name) from None
 
         try:
-            new_model = new_version.models[model_name]
+            new_model = await new_version.get_model(model_name)
         except KeyError:
             raise APIVersionDoesNotContainModelException(new_version.version, model_name) from None
 
-        return self._adapt_value(value_factory(), current_model, new_model, direction)
+        return self._adapt_value(await value_factory(), current_model, new_model, direction)
 
-    def _adapt_value(self, value: dict, current_model: type[BaseModel], new_model: type[BaseModel],
-                     direction: Direction):
+    def _adapt_value(
+        self,
+        value: dict,
+        current_model: type[BaseModel],
+        new_model: type[BaseModel],
+        direction: Direction,
+    ):
         for k in value:
             if k in current_model.model_fields and k in new_model.model_fields:
                 current_model_field = current_model.model_fields[k].annotation
@@ -188,3 +196,7 @@ class APIVersionsAdapter:
                 value.pop(k)
 
         return value
+
+
+async def async_validate_model(model: type[BaseModel], data: dict):
+    return validate_model(model, data)
