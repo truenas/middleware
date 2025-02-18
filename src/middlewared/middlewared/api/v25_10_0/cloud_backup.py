@@ -3,8 +3,8 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NonEmptyString
-from .cloud_sync import CloudCredentialEntry
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
+from .cloud import BaseCloudEntry
 from .common import CronModel
 
 
@@ -22,32 +22,7 @@ class CloudBackupCron(CronModel):
     minute: str = "00"
 
 
-class CloudBackupCreate(BaseModel):
-    description: str = ""
-    """The name of the task to display in the UI"""
-    path: str
-    """The local path to back up beginning with `/mnt` or `/dev/zvol`"""
-    credentials: int
-    """ID of the cloud credential to use for each backup"""
-    attributes: dict
-    """Additional information for each backup, e.g. bucket name"""
-    schedule: CloudBackupCron = CloudBackupCron()
-    """Cron schedule dictating when the task should run"""
-    pre_script: LongString = ""
-    """A Bash script to run immediately before every backup"""
-    post_script: LongString = ""
-    """A Bash script to run immediately after every backup if it succeeds"""
-    snapshot: bool = False
-    """Whether to create a temporary snapshot of the dataset before every backup"""
-    include: list[NonEmptyString] = []
-    """Paths to pass to `restic backup --include`"""
-    exclude: list[NonEmptyString] = []
-    """Paths to pass to `restic backup --exclude`"""
-    args: LongString = ""
-    """(Slated for removal)"""
-    enabled: bool = True
-    """Can enable/disable the task"""
-
+class CloudBackupEntry(BaseCloudEntry):
     password: Secret[NonEmptyString]
     """Password for the remote repository"""
     keep_last: PositiveInt
@@ -68,14 +43,12 @@ class CloudBackupCreate(BaseModel):
     """Whether to preserve absolute paths in each backup (cannot be set when `snapshot=True`)"""
 
 
-class CloudBackupEntry(CloudBackupCreate):
-    id: int
-    credentials: CloudCredentialEntry
-    """Cloud credentials to use for each backup"""
-    job: dict | None
-    """Information regarding the task's job state, e.g. progress"""
-    locked: bool
-    """A locked task cannot run"""
+class CloudBackupCreate(CloudBackupEntry):
+    id: Excluded = excluded_field()
+    credentials: int
+    """ID of the cloud credential to use for each backup"""
+    job: Excluded = excluded_field()
+    locked: Excluded = excluded_field()
 
 
 class CloudBackupUpdate(CloudBackupCreate, metaclass=ForUpdateMetaclass):

@@ -14,6 +14,7 @@ from .boot import *  # noqa
 from .boot_environments import *  # noqa
 from .catalog import *  # noqa
 from .cloud_backup import *  # noqa
+from .cloud_credential import *  # noqa
 from .cloud_sync import *  # noqa
 from .common import *  # noqa
 from .config import *  # noqa
