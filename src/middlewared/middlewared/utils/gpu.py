@@ -7,8 +7,7 @@ from typing import TextIO
 import pyudev
 
 from middlewared.service_exception import CallError
-from .iommu import get_iommu_groups_info
-from .pci import SENSITIVE_PCI_DEVICE_TYPES
+from .iommu import get_iommu_groups_info, SENSITIVE_PCI_DEVICE_TYPES
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
