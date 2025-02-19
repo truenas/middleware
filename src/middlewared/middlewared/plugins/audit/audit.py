@@ -1,7 +1,6 @@
 import asyncio
 import csv
 import errno
-import json
 import middlewared.sqlalchemy as sa
 import os
 import shutil
@@ -22,6 +21,7 @@ from .utils import (
     AUDITED_SERVICES,
     parse_query_filters,
     requires_python_filtering,
+    setup_truenas_verify,
 )
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
@@ -597,6 +597,18 @@ class AuditService(ConfigService):
         except Exception:
             await self.middleware.call('alert.oneshot_create', 'AuditSetup', None)
             self.logger.error('Failed to apply auditing dataset configuration.', exc_info=True)
+
+        # Generate the initial truenas_verify file
+        try:
+            current_version = await self.middleware.call('system.version')
+            rc, err = await setup_truenas_verify(self.middleware, current_version)
+            if rc:
+                self.logger.error(
+                    'Unexpected result from truenas_verify initial setup. '
+                    'rc=%d, error=%s', rc, err
+                )
+        except Exception:
+            self.logger.error('Error detected in truenas_verify setup.', exc_info=True)
 
     @private
     @filterable

@@ -1,27 +1,27 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, Ref, returns, Str
-from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
-import middlewared.sqlalchemy as sa
-from middlewared.utils import ProductName, BRAND
-from middlewared.utils.mako import get_template
-from middlewared.validators import Email
-
+import base64
 from collections import deque
+import contextlib
 from datetime import datetime, timedelta
 from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr, formatdate, make_msgid
-import html2text
-from threading import Lock
-
-import base64
-import contextlib
 import errno
 import html
 import json
 import os
 import smtplib
+from threading import Lock
+
+import html2text
+
+from middlewared.api import api_method
+from middlewared.api.current import MailEntry, MailUpdateArgs, MailUpdateResult, MailSendArgs, MailSendResult
+from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
+import middlewared.sqlalchemy as sa
+from middlewared.utils import ProductName, BRAND
+from middlewared.utils.mako import get_template
 
 
 class DenyNetworkActivity(Exception):
@@ -79,29 +79,7 @@ class MailService(ConfigService):
         datastore_extend = 'mail.mail_extend'
         cli_namespace = 'system.mail'
         role_prefix = 'ALERT'
-
-    ENTRY = Dict(
-        'mail_entry',
-        Str('fromemail', validators=[Email(empty=True)], required=True),
-        Str('fromname', required=True),
-        Str('outgoingserver', required=True),
-        Int('port', required=True),
-        Str('security', enum=['PLAIN', 'SSL', 'TLS'], required=True),
-        Bool('smtp', required=True),
-        Str('user', null=True, required=True),
-        Password('pass', null=True, required=True),
-        Dict(
-            'oauth',
-            Str('provider'),
-            Str('client_id'),
-            Str('client_secret'),
-            Password('refresh_token'),
-            null=True,
-            private=True,
-            required=True,
-        ),
-        Int('id', required=True),
-    )
+        entry = MailEntry
 
     @private
     async def mail_extend(self, cfg):
@@ -110,38 +88,9 @@ class MailService(ConfigService):
 
         return cfg
 
-    @accepts(
-        Patch(
-            'mail_entry', 'mail_update',
-            ('rm', {'name': 'id'}),
-            (
-                'replace', Dict(
-                    'oauth',
-                    Str('provider'),
-                    Str('client_id', required=True),
-                    Str('client_secret', required=True),
-                    Password('refresh_token', required=True, max_length=None),
-                    null=True,
-                    private=True,
-                )
-            ),
-            ('attr', {'update': True}),
-            register=True
-        )
-    )
+    @api_method(MailUpdateArgs, MailUpdateResult)
     async def do_update(self, data):
-        """
-        Update Mail Service Configuration.
-
-        `fromemail` is used as a sending address which the mail server will use for sending emails.
-
-        `outgoingserver` is the hostname or IP address of SMTP server used for sending an email.
-
-        `security` is type of encryption desired.
-
-        `smtp` is a boolean value which when set indicates that SMTP authentication has been enabled and `user`/`pass`
-        are required attributes now.
-        """
+        """Update Mail Service Configuration."""
         config = await self.config()
 
         new = config.copy()
@@ -187,57 +136,11 @@ class MailService(ConfigService):
             )
         return verrors
 
-    @accepts(Dict(
-        'mail_message',
-        Str('subject', required=True),
-        Str('text', max_length=None),
-        Str('html', null=True, max_length=None),
-        List('to', items=[Str('email')]),
-        List('cc', items=[Str('email')]),
-        Int('interval', null=True),
-        Str('channel', null=True),
-        Int('timeout', default=300),
-        Bool('attachments', default=False),
-        Bool('queue', default=True),
-        Dict('extra_headers', additional_attrs=True),
-        register=True,
-    ), Ref('mail_update'))
-    @returns(Bool('successfully_sent'))
+    @api_method(MailSendArgs, MailSendResult, roles=['MAIL_WRITE'])
     @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config):
-        """
-        Sends mail using configured mail settings.
+        """Sends mail using configured mail settings."""
 
-        `text` will be formatted to HTML using Markdown and rendered using default E-Mail template.
-        You can put your own HTML using `html`. If `html` is null, no HTML MIME part will be added to E-Mail.
-
-        If `attachments` is true, a list compromised of the following dict is required
-        via HTTP upload:
-          - headers(list)
-            - name(str)
-            - value(str)
-            - params(dict)
-          - content (str)
-
-        [
-         {
-          "headers": [
-           {
-            "name": "Content-Transfer-Encoding",
-            "value": "base64"
-           },
-           {
-            "name": "Content-Type",
-            "value": "application/octet-stream",
-            "params": {
-             "name": "test.txt"
-            }
-           }
-          ],
-          "content": "dGVzdAo="
-         }
-        ]
-        """
         gc = self.middleware.call_sync('datastore.config', 'network.globalconfiguration')
         hostname = f'{gc["gc_hostname"]}.{gc["gc_domain"]}'
         message['subject'] = f'{ProductName.PRODUCT_NAME} {hostname}: {message["subject"]}'
@@ -260,7 +163,6 @@ class MailService(ConfigService):
 
         return self.send_raw(job, message, config)
 
-    @accepts(Ref('mail_message'), Ref('mail_update'))
     @job(pipes=['input'], check_pipes=False)
     @private
     def send_raw(self, job, message, config):

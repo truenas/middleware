@@ -30,6 +30,7 @@ from .docker_network import *  # noqa
 from .enclosure2 import *  # noqa
 from .enclosure_label import *  # noqa
 from .failover import *  # noqa
+from .failover_disabled_reasons import *  # noqa
 from .failover_reboot import *  # noqa
 from .fc import *  # noqa
 from .fc_host import *  # noqa
@@ -38,6 +39,7 @@ from .filesystem import *  # noqa
 from .ftp import *  # noqa
 from .group import *  # noqa
 from .initshutdownscript import *  # noqa
+from .interface_listen import *  # noqa
 from .ipmi import *  # noqa
 from .ipmi_chassis import *  # noqa
 from .ipmi_lan import *  # noqa
@@ -52,6 +54,7 @@ from .iscsi_target_to_extent import *  # noqa
 from .keychain import *  # noqa
 from .kmip import *  # noqa
 from .k8s_to_docker import *  # noqa
+from .mail import *  # noqa
 from .nfs import *  # noqa
 from .pool import *  # noqa
 from .pool_dataset_details import *  # noqa

@@ -171,6 +171,12 @@ class ApiKeyService(CRUDService):
 
         `name` is a user-readable name for key.
         """
+        if self.middleware.call_sync('system.security.config')['enable_gpos_stig']:
+            raise CallError(
+                'Changes to API keys are not permitted in GPOS STIG mode',
+                errno.EACCES
+            )
+
         # First catch any privilege errors to avoid leaking potentially sensitive information
         self.api_key_privilege_check(app, data['username'], 'api_key.create')
 
@@ -229,6 +235,12 @@ class ApiKeyService(CRUDService):
 
         Specify `reset: true` to reset this API Key.
         """
+        if self.middleware.call_sync('system.security.config')['enable_gpos_stig']:
+            raise CallError(
+                'Changes to API keys are not permitted in GPOS STIG mode',
+                errno.EACCES
+            )
+
         reset = data.pop("reset", False)
 
         old = self.middleware.call_sync('api_key.query', [['id', '=', id_]], {'get': True})
