@@ -8,7 +8,6 @@ class HardwareMemoryService(Service):
     class Config:
         namespace = 'hardware.memory'
         private = True
-        cli_private = True
 
     def error_info(self):
         results = {}
