@@ -3,18 +3,22 @@ from typing import Annotated, Literal
 from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args, NotRequired
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass,
+    NonEmptyString, single_argument_args, NotRequired, LongString
 )
 
 
 __all__ = [
-    "PoolEntry", "DDTPruneArgs", "DDTPruneResult", "DDTPrefetchArgs", "DDTPrefetchResult", "PoolCreateArgs",
-    "PoolCreateResult", "PoolDetachArgs", "PoolDetachResult", "PoolExportArgs", "PoolExportResult",
+    "PoolEntry", "DDTPruneArgs", "DDTPruneResult", "DDTPrefetchArgs", "DDTPrefetchResult", "PoolAttachArgs",
+    "PoolAttachResult", "PoolAttachmentsArgs", "PoolAttachmentsResult", "PoolCreateArgs", "PoolCreateResult",
+    "PoolDetachArgs", "PoolDetachResult", "PoolExpandArgs", "PoolExpandResult", "PoolExportArgs", "PoolExportResult",
+    "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs", "PoolGetDisksResult",
     "PoolGetInstanceByNameArgs", "PoolGetInstanceByNameResult", "PoolImportFindArgs", "PoolImportFindResult",
-    "PoolImportPoolArgs", "PoolImportPoolResult", "PoolOfflineArgs", "PoolOfflineResult", "PoolOnlineArgs",
-    "PoolOnlineResult", "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult", "PoolScrubArgs", "PoolScrubResult",
-    "PoolUpdateArgs", "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult", "PoolValidateNameArgs",
-    "PoolValidateNameResult", "PoolCreateEncryptionOptions"
+    "PoolImportPoolArgs", "PoolImportPoolResult", "PoolIsUpgradedArgs", "PoolIsUpgradedResult", "PoolOfflineArgs",
+    "PoolOfflineResult", "PoolOnlineArgs", "PoolOnlineResult", "PoolProcessesArgs", "PoolProcessesResult",
+    "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs",
+    "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult",
+    "PoolValidateNameArgs", "PoolValidateNameResult", "PoolCreateEncryptionOptions"
 ]
 
 
@@ -91,6 +95,18 @@ class PoolEntry(BaseModel):
     topology: PoolTopology | None
 
 
+class PoolAttach(BaseModel):
+    target_vdev: str
+    new_disk: str
+    allow_duplicate_serials: bool = False
+
+
+class PoolAttachment(BaseModel):
+    type: str
+    service: str | None
+    attachments: list[str]
+
+
 class PoolCreateEncryptionOptions(BaseModel):
     generate_key: bool = False
     pbkdf2iters: Annotated[int, Field(ge=100000)] = 350000
@@ -137,10 +153,6 @@ class PoolCreateTopology(BaseModel):
     spares: list[str] = NotRequired
 
 
-class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
-    pass
-
-
 class PoolCreate(BaseModel):
     name: Annotated[str, Field(max_length=50)]
     encryption: bool = False
@@ -153,16 +165,6 @@ class PoolCreate(BaseModel):
     encryption_options: PoolCreateEncryptionOptions = Field(default_factory=PoolCreateEncryptionOptions)
     topology: PoolCreateTopology
     allow_duplicate_serials: bool = False
-
-
-class PoolUpdate(PoolCreate, metaclass=ForUpdateMetaclass):
-    autotrim: Literal["ON", "OFF"]
-    name: Excluded = excluded_field()
-    encryption: Excluded = excluded_field()
-    encryption_options: Excluded = excluded_field()
-    deduplication: Excluded = excluded_field()
-    checksum: Excluded = excluded_field()
-    topology: PoolUpdateTopology
 
 
 class PoolExport(BaseModel):
@@ -186,7 +188,36 @@ class PoolLabel(BaseModel):
     """The vdev guid or device name."""
 
 
-#################   Args and Results   #################
+class PoolProcess(BaseModel):
+    pid: int
+    name: str
+    service: str = NotRequired
+    cmdline: LongString = NotRequired
+
+
+class PoolReplace(BaseModel):
+    label: str
+    disk: str
+    force: bool = False
+    preserve_settings: bool = True
+    preserve_description: bool = True
+
+
+class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
+    pass
+
+
+class PoolUpdate(PoolCreate, metaclass=ForUpdateMetaclass):
+    autotrim: Literal["ON", "OFF"]
+    name: Excluded = excluded_field()
+    encryption: Excluded = excluded_field()
+    encryption_options: Excluded = excluded_field()
+    deduplication: Excluded = excluded_field()
+    checksum: Excluded = excluded_field()
+    topology: PoolUpdateTopology
+
+
+######################   Args and Results   ######################
 
 
 @single_argument_args("options")
@@ -208,6 +239,23 @@ class DDTPrefetchResult(BaseModel):
     result: None
 
 
+class PoolAttachArgs(BaseModel):
+    oid: int
+    options: PoolAttach
+
+
+class PoolAttachResult(BaseModel):
+    result: None
+
+
+class PoolAttachmentsArgs(BaseModel):
+    id: int
+
+
+class PoolAttachmentsResult(BaseModel):
+    result: list[PoolAttachment]
+
+
 class PoolCreateArgs(BaseModel):
     data: PoolCreate
 
@@ -225,6 +273,14 @@ class PoolDetachResult(BaseModel):
     result: Literal[True]
 
 
+class PoolExpandArgs(BaseModel):
+    id: int
+
+
+class PoolExpandResult(BaseModel):
+    result: None
+
+
 class PoolExportArgs(BaseModel):
     id: int
     options: PoolExport = Field(default_factory=PoolExport)
@@ -232,6 +288,22 @@ class PoolExportArgs(BaseModel):
 
 class PoolExportResult(BaseModel):
     result: None
+
+
+class PoolFilesystemChoicesArgs(BaseModel):
+    types: list[Literal["FILESYSTEM", "VOLUME"]] = ["FILESYSTEM", "VOLUME"]
+
+
+class PoolFilesystemChoicesResult(BaseModel):
+    result: list[str]
+
+
+class PoolGetDisksArgs(BaseModel):
+    id: int | None = None
+
+
+class PoolGetDisksResult(BaseModel):
+    result: list[str]
 
 
 class PoolGetInstanceByNameArgs(BaseModel):
@@ -262,6 +334,14 @@ class PoolImportPoolResult(BaseModel):
     result: Literal[True]
 
 
+class PoolIsUpgradedArgs(BaseModel):
+    id: int
+
+
+class PoolIsUpgradedResult(BaseModel):
+    result: bool
+
+
 class PoolOfflineArgs(BaseModel):
     id: int
     options: PoolLabel
@@ -280,6 +360,14 @@ class PoolOnlineResult(BaseModel):
     result: Literal[True]
 
 
+class PoolProcessesArgs(BaseModel):
+    id: int
+
+
+class PoolProcessesResult(BaseModel):
+    result: list[PoolProcess]
+
+
 class PoolRemoveArgs(BaseModel):
     id: int
     options: PoolLabel
@@ -289,9 +377,18 @@ class PoolRemoveResult(BaseModel):
     result: None
 
 
+class PoolReplaceArgs(BaseModel):
+    id: int
+    options: PoolReplace
+
+
+class PoolReplaceResult(BaseModel):
+    result: Literal[True]
+
+
 class PoolScrubArgs(BaseModel):
     id: int
-    action: Literal["START", "STOP", "PAUSE"] = "START"
+    action: Literal["START", "STOP", "PAUSE"]
 
 
 class PoolScrubResult(BaseModel):

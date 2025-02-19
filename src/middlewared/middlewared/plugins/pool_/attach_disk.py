@@ -1,22 +1,13 @@
 import asyncio
 
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import PoolAttachArgs, PoolAttachResult
 from middlewared.service import job, Service, ValidationErrors
 
 
 class PoolService(Service):
 
-    @accepts(
-        Int('oid'),
-        Dict(
-            'pool_attach',
-            Str('target_vdev', required=True),
-            Str('new_disk', required=True),
-            Bool('allow_duplicate_serials', default=False),
-        ),
-        roles=['POOL_WRITE']
-    )
-    @returns()
+    @api_method(PoolAttachArgs, PoolAttachResult, roles=['POOL_WRITE'])
     @job(lock=lambda args: f'pool_attach_{args[0]}')
     async def attach(self, job, oid, options):
         """
