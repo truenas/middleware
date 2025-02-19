@@ -13,10 +13,17 @@ class PoolService(Service):
         event_send = False
 
     @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('label', required=True),
-    ), audit='Disk Detach', audit_callback=True, roles=['POOL_WRITE'])
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Str('label', required=True),
+            Bool('wipe', required=False, default=False)
+        ),
+        audit='Disk Detach',
+        audit_callback=True,
+        roles=['POOL_WRITE']
+    )
     @returns(Bool('detached'))
     async def detach(self, audit_callback, oid, options):
         """
@@ -52,7 +59,7 @@ class PoolService(Service):
         audit_callback(disk)
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
-        if disk:
+        if disk and options['wipe']:
             wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
             await wipe_job.wait()
             if wipe_job.error:
