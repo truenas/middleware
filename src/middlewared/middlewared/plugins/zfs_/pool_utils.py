@@ -49,15 +49,15 @@ def find_vdev(pool, vname):
     children = []
     for vdevs in pool.groups.values():
         children += vdevs
-    while children:
-        child = children.pop()
+        while children:
+            child = children.pop()
 
-        if str(vname) == str(child.guid):
-            return child
-
-        if child.type == 'disk':
-            path = child.path.replace('/dev/', '')
-            if path == vname:
+            if str(vname) == str(child.guid):
                 return child
 
-        children += list(child.children)
+            if child.type == 'disk':
+                path = child.path.replace('/dev/', '')
+                if path == vname:
+                    return child
+
+            children += list(child.children)
