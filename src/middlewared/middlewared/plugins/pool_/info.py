@@ -2,9 +2,8 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolAttachmentsArgs, PoolAttachmentsResult, PoolGetDisksArgs,
-    PoolGetDisksResult, PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, PoolIsUpgradedArgs,
-    PoolIsUpgradedResult
+    PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs,
+    PoolFilesystemChoicesResult, PoolIsUpgradedArgs, PoolIsUpgradedResult
 )
 from middlewared.schema import accepts, Dict, Int, List, returns, Str
 from middlewared.service import CallError, item_method, private, Service, ValidationError
@@ -43,7 +42,13 @@ class PoolService(Service):
         return found
 
     @item_method
-    @api_method(PoolAttachmentsArgs, PoolAttachmentsResult, roles=['POOL_READ'])
+    @accepts(Int('id'), roles=['POOL_READ'])
+    @returns(List(items=[Dict(
+        'attachment',
+        Str('type', required=True),
+        Str('service', required=True, null=True),
+        List('attachments', items=[Str('attachment_name')]),
+    )], register=True))
     async def attachments(self, oid):
         """
         Return a list of services dependent of this pool.
