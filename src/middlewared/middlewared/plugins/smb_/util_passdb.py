@@ -364,13 +364,13 @@ def insert_passdb_entries(entries: list[PDBEntry]) -> None:
         batch_ops.extend([
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
-                key=f'{USER_PREFIX}{entry.username}',
+                key=f'{USER_PREFIX}{entry.username.lower()}',
                 value=b64encode(samu_data)
             ),
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
                 key=f'{RID_PREFIX}{entry.user_rid:08x}',
-                value=b64encode(entry.username.encode() + b'\x00')
+                value=b64encode(entry.username.lower().encode() + b'\x00')
             )
         ])
 
@@ -394,7 +394,7 @@ def delete_passdb_entry(username: str, rid: int) -> None:
             hdl.batch_op([
                 TDBBatchOperation(
                     action=TDBBatchAction.DEL,
-                    key=f'{USER_PREFIX}{username}'
+                    key=f'{USER_PREFIX}{username.lower()}'
                 ),
                 TDBBatchOperation(
                     action=TDBBatchAction.DEL,
@@ -441,7 +441,7 @@ def update_passdb_entry(entry: PDBEntry) -> None:
                 batch_ops.append(
                     TDBBatchOperation(
                         action=TDBBatchAction.DEL,
-                        key=f'{USER_PREFIX}{current_username}'
+                        key=f'{USER_PREFIX}{current_username.lower()}'
                     ),
                 )
 
@@ -449,13 +449,13 @@ def update_passdb_entry(entry: PDBEntry) -> None:
         batch_ops.extend([
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
-                key=f'{USER_PREFIX}{entry.username}',
+                key=f'{USER_PREFIX}{entry.username.lower()}',
                 value=b64encode(samu_data)
             ),
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
                 key=f'{RID_PREFIX}{entry.user_rid:08x}',
-                value=b64encode(entry.username.encode() + b'\x00')
+                value=b64encode(entry.username.lower().encode() + b'\x00')
             )
         ])
         hdl.batch_op(batch_ops)
