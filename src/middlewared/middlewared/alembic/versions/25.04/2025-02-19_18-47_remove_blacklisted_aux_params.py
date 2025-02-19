@@ -31,7 +31,7 @@ def upgrade():
         changed = False
         not_blacklisted = []
         for param in share.get('cifs_auxsmbconf', '').splitlines():
-            if param.strip().startswith(SHARE_BLACKLIST):
+            if param.lower().strip().startswith(SHARE_BLACKLIST):
                 changed = True
                 continue
 
