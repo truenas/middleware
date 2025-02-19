@@ -20,7 +20,7 @@ SHARE_BLACKLIST = (
     'wide links',
     'use sendfile',
     'vfs objects',
-    'insecure',
+    'allow insecure',
 )
 
 def upgrade():
