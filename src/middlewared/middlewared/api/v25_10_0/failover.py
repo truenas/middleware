@@ -1,4 +1,4 @@
-from pydantic import HttpUrl
+from pydantic import Field
 
 from middlewared.api.base import (
     BaseModel,
@@ -7,7 +7,6 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     NotRequired,
-    single_argument_args
 )
 
 
@@ -28,21 +27,24 @@ class FailoverEntry(BaseModel):
         This setting does NOT effect the `disabled` or `master` parameters."""
 
 
-@single_argument_args("failover_update")
-class FailoverUpdateArgs(FailoverEntry, metaclass=ForUpdateMetaclass):
+class FailoverSyncToPeer(BaseModel):
+    reboot: bool = False
+    """If set to True, will reboot the other controller."""
+
+
+class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class FailoverUpdateResult(BaseModel):
-    result: FailoverEntry
-
-
-class FailoverGetIpsArgs(BaseModel):
-    pass
-
-
-class FailoverGetIpsResult(BaseModel):
-    result: list[HttpUrl]
+class FailoverUpgrade(BaseModel):
+    train: NonEmptyString = NotRequired
+    resume: bool = False
+    """Should be set to true if a previous call to this method returned a
+    `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed
+    with a warning and that warning is accepted. In that case, you also have
+    to set `resume_manual` to `true` if a previous call to this method was
+    performed using update file upload."""
+    resume_manual: bool = False
 
 
 class FailoverBecomePassiveArgs(BaseModel):
@@ -51,6 +53,14 @@ class FailoverBecomePassiveArgs(BaseModel):
 
 class FailoverBecomePassiveResult(BaseModel):
     result: None
+
+
+class FailoverGetIpsArgs(BaseModel):
+    pass
+
+
+class FailoverGetIpsResult(BaseModel):
+    result: list[str]
 
 
 class FailoverLicensedArgs(BaseModel):
@@ -85,26 +95,24 @@ class FailoverSyncFromPeerResult(BaseModel):
     result: None
 
 
-@single_argument_args("sync_to_peer")
 class FailoverSyncToPeerArgs(BaseModel):
-    reboot: bool = False
-    """If set to True, will reboot the other controller."""
+    options: FailoverSyncToPeer = Field(default_factory=FailoverSyncToPeer)
 
 
 class FailoverSyncToPeerResult(BaseModel):
     result: None
 
 
-@single_argument_args("failover_upgrade")
+class FailoverUpdateArgs(BaseModel):
+    data: FailoverUpdate
+
+
+class FailoverUpdateResult(BaseModel):
+    result: FailoverEntry
+
+
 class FailoverUpgradeArgs(BaseModel):
-    train: NonEmptyString = NotRequired
-    resume: bool = False
-    """Should be set to true if a previous call to this method returned a
-    `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed
-    with a warning and that warning is accepted. In that case, you also have
-    to set `resume_manual` to `true` if a previous call to this method was
-    performed using update file upload."""
-    resume_manual: bool = False
+    failover_upgrade: FailoverUpgrade = Field(default_factory=FailoverUpgrade)
 
 
 class FailoverUpgradeResult(BaseModel):
