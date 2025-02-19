@@ -608,7 +608,7 @@ class AuditService(ConfigService):
                     'rc=%d, error=%s', rc, err
                 )
         except Exception:
-            self.logger.error('Error detected in truenas_verify setup.', exe_info=True)
+            self.logger.error('Error detected in truenas_verify setup.', exc_info=True)
 
     @private
     @filterable
