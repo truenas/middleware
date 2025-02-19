@@ -46,6 +46,7 @@ class PoolDatasetService(Service):
                     'volsize',
                     'sync',
                     'compression',
+                    'compressratio',
                     'dedup',
                 ],
                 'snapshots_count': True,
