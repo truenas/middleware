@@ -6,11 +6,11 @@ from middlewared.plugins.interface.netif_linux.ethernet_settings import Ethernet
 
 
 class GetCapabilities(TypedDict):
-    enabled: list[str] = list()
+    enabled: list[str]
     """Interface capabilities that are enabled."""
-    disabled: list[str] = list()
+    disabled: list[str]
     """Interface capabilities that are disabled."""
-    supported: list[str] = list()
+    supported: list[str]
     """Interface capabilities that are supported."""
 
 
@@ -27,7 +27,6 @@ class InterfaceCapabilitiesService(Service):
 
     class Config:
         private = True
-        cli_private = True
         namespace = 'interface.capabilities'
         namespace_alias = 'interface.features'
 
