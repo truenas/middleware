@@ -31,7 +31,6 @@ class FailoverEntry(BaseModel):
 @single_argument_args("failover_update")
 class FailoverUpdateArgs(FailoverEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
-    master: bool | None
 
 
 class FailoverUpdateResult(BaseModel):
