@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import argparse
-import os
 import sys
 import enum
 import errno
@@ -115,41 +114,6 @@ def handle_enable_or_disable_command(command, client, status, config):
             print_msg_and_exit(f'Failover {command}d.', exit_code=0)
 
 
-def handle_takeover_or_giveback_command(command, client, status, config):
-    if config['disabled']:
-        print_msg_and_exit('Failover must be enabled before running this command.')
-    elif command == 'takeover' and status != 'BACKUP':
-        print_msg_and_exit('This command can only be run on the standby node.')
-    elif command == 'giveback' and status != 'MASTER':
-        print_msg_and_exit('This command can only be run on the active node.')
-    elif client.call('failover.disabled.reasons'):
-        print_msg_and_exit('This command can only be run when HA is healthy.')
-    else:
-        if command == 'takeover':
-            reboot_ourself = False
-            print('This will likely cause the active node to reboot.')
-        else:
-            reboot_ourself = True
-            print('This node will reboot.')
-
-        while True:
-            ans = input(f'Proceed with {command}? (y/n): ')
-            ans = ans.lower()
-            if ans in ('y', 'yes'):
-                break
-            elif ans in ('n', 'no'):
-                print_msg_and_exit(f'Command: {command!r} cancelled.')
-            else:
-                print('Invalid input')
-                continue
-
-        if reboot_ourself:
-            client.call('failover.become_passive')
-            os.system('shutdown -r now')
-        else:
-            client.call('failover.call_remote', 'failover.become_passive')
-
-
 def main(command, quiet):
     client = get_client()
     is_ha, failover_config = get_failover_info(client)
@@ -162,8 +126,6 @@ def main(command, quiet):
         handle_status_command(client, failover_status)
     elif command in ('enable', 'disable'):
         handle_enable_or_disable_command(command, client, failover_status, failover_config)
-    elif command in ('takeover', 'giveback'):
-        handle_takeover_or_giveback_command(command, client, failover_status, failover_config)
 
 
 if __name__ == '__main__':
@@ -172,8 +134,8 @@ if __name__ == '__main__':
         'command',
         default='status',
         nargs='?',
-        help=('subcommand: enable disable status takeover giveback'),
-        choices=['enable', 'disable', 'status', 'takeover', 'giveback'],
+        help=('subcommand: enable disable status'),
+        choices=['enable', 'disable', 'status']
     )
     parser.add_argument('-q', help='Be silent if this is a non HA node', action='store_true')
     args = parser.parse_args()
