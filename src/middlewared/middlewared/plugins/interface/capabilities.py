@@ -1,6 +1,5 @@
 from middlewared.service_exception import ValidationErrors
-from middlewared.service import Service, private
-from middlewared.schema import Dict, Str, List, accepts, returns
+from middlewared.service import Service
 from middlewared.plugins.interface.netif_linux import ethernet_settings
 
 
@@ -11,10 +10,10 @@ class InterfaceCapabilitiesService(Service):
 
     class Config:
         namespace = 'interface.capabilities'
+        private = True
         namespace_alias = 'interface.features'
         cli_namespace = 'network.interface.capabilities'
 
-    @private
     async def validate(self, data, dev):
         verrors = ValidationErrors()
         unavail = [i for i in data['capabilities'] if i not in dev.supported_capabilities]
@@ -27,13 +26,6 @@ class InterfaceCapabilitiesService(Service):
             )
         verrors.check()
 
-    @accepts(Str('name', required=True), roles=['NETWORK_INTERFACE_READ'])
-    @returns(Dict(
-        'capabilties',
-        List('enabled', items=[Str('capability')], required=True),
-        List('disabled', items=[Str('capability')], required=True),
-        List('supported', items=[Str('capability')], required=True),
-    ))
     def get(self, name):
         """
         Return enabled, disabled and supported capabilities (also known as features)
@@ -44,13 +36,6 @@ class InterfaceCapabilitiesService(Service):
         with EHS(name) as dev:
             return dev._caps
 
-    @accepts(Dict(
-        'capabilities_set',
-        Str('name', required=True),
-        List('capabilties', required=True),
-        Str('action', enum=['ENABLE', 'DISABLE'], required=True),
-    ), roles=['NETWORK_INTERFACE_WRITE'])
-    @returns(List('capabilities', items=[Str('capability')], required=True))
     def set(self, data):
         """
         Enable or Disable capabilties (also known as features) on a given interface.
