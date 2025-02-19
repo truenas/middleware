@@ -2,10 +2,11 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult, PoolGetDisksArgs,
+    PoolAttachmentsArgs, PoolAttachmentsResult, PoolGetDisksArgs,
     PoolGetDisksResult, PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, PoolIsUpgradedArgs,
     PoolIsUpgradedResult
 )
+from middlewared.schema import accepts, Dict, Int, List, returns, Str
 from middlewared.service import CallError, item_method, private, Service, ValidationError
 
 
@@ -54,7 +55,14 @@ class PoolService(Service):
         return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
 
     @item_method
-    @api_method(PoolProcessesArgs, PoolProcessesResult, roles=['POOL_READ'])
+    @accepts(Int('id'), roles=['POOL_READ'])
+    @returns(List(items=[Dict(
+        'process',
+        Int('pid', required=True),
+        Str('name', required=True),
+        Str('service'),
+        Str('cmdline', max_length=None),
+    )], register=True))
     async def processes(self, oid):
         """
         Returns a list of running processes using this pool.
