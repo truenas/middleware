@@ -1,57 +1,94 @@
-from middlewared.service_exception import ValidationErrors
+from typing import get_args, Literal, TypedDict
+
+from middlewared.service_exception import ValidationError
 from middlewared.service import Service
-from middlewared.plugins.interface.netif_linux import ethernet_settings
+from middlewared.plugins.interface.netif_linux.ethernet_settings import EthernetHardwareSettings
 
 
-EHS = ethernet_settings.EthernetHardwareSettings
+class GetCapabilities(TypedDict):
+    enabled: list[str] = list()
+    """Interface capabilities that are enabled."""
+    disabled: list[str] = list()
+    """Interface capabilities that are disabled."""
+    supported: list[str] = list()
+    """Interface capabilities that are supported."""
+
+
+class SetCapabilties(TypedDict):
+    name: str
+    """Name of the ethernet device"""
+    capabilities: list[str]
+    """List of capabilities (features) to perform `action` upon"""
+    action: Literal['ENABLE', 'DISABLE']
+    """ENABLE or DISABLE `capabilities` on ethernet device"""
 
 
 class InterfaceCapabilitiesService(Service):
 
     class Config:
-        namespace = 'interface.capabilities'
         private = True
+        cli_private = True
+        namespace = 'interface.capabilities'
         namespace_alias = 'interface.features'
-        cli_namespace = 'network.interface.capabilities'
 
     async def validate(self, data, dev):
-        verrors = ValidationErrors()
-        unavail = [i for i in data['capabilities'] if i not in dev.supported_capabilities]
-        if unavail:
-            # gave us a capability that isn't supported on the device
-            # or is "fixed" (meaning it can't be changed)
-            verrors.add(
-                f'capabilities_set.{data["action"]}',
-                f'"{data["name"]}" does not support "{", ".join(unavail)}"'
+        action = data.get('action')
+        if not action or action not in get_args(SetCapabilties.__annotations__['action']):
+            raise ValidationError(
+                f'{self._config.namespace}.action',
+                '"action" needs to be "ENABLE" or "DISABLE'
             )
-        verrors.check()
 
-    def get(self, name):
+        caps = data.get('capabilities')
+        if not caps:
+            raise ValidationError(
+                f'{self._config.namespace}.capabilities',
+                '"capabilities" is required'
+            )
+
+        supported_caps = dev.supported_capabilities
+        for cap in caps:
+            if not isinstance(cap, str):
+                raise ValidationError(
+                    f'{self._config.namespace}.capabilities',
+                    '"capabilities" should be a list of strings'
+                )
+            elif cap not in supported_caps:
+                raise ValidationError(
+                    f'{self._config.namespace}.capabilities',
+                    f'{cap} is not supported on {data["name"]}'
+                )
+
+    def get(self, name: str) -> GetCapabilities:
         """
         Return enabled, disabled and supported capabilities (also known as features)
         on a given interface.
 
         `name` String representing name of the interface
         """
-        with EHS(name) as dev:
+        with EthernetHardwareSettings(name) as dev:
             return dev._caps
 
-    def set(self, data):
+    def set(self, data: SetCapabilties) -> list[str]:
         """
         Enable or Disable capabilties (also known as features) on a given interface.
 
         `name` String representing name of the interface
         `capabilities` List representing capabilities to be acted upon
-        `action` String when set to 'ENABLE' will enable `capabilities` else if set
+        `action` String when set to `ENABLE` will enable `capabilities` else if set
                     to `DISABLE` will disable `capabilities`.
         """
-        with EHS(data['name']) as dev:
-            self.middleware.call_sync('interface.capabilities.validate', data, dev)
+        if not data.get('name'):
+            raise ValidationError(
+                f'{self._config.namespace}.name',
+                '"name" is required'
+            )
 
-            if data['action'] == 'enable':
+        with EthernetHardwareSettings(data['name']) as dev:
+            self.validate(data, dev)
+            if data['action'] == 'ENABLE':
                 dev.enabled_capabilities = data['capabilities']
             else:
                 dev.disabled_capabilities = data['capabilities']
-
-        caps = self.middleware.call_sync('interface.capabilities.get', data['name'])
+        caps = self.get(data['name'])
         return caps['enabled'] if data['action'] == 'ENABLE' else caps['disabled']
