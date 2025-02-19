@@ -15,6 +15,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, Service, job, pass_app, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
+from middlewared.utils.privilege import credential_has_full_admin
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -222,8 +223,8 @@ class ConfigService(Service):
         if job.credentials is None:
             raise CallError('Unable to check credentials')
 
-        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
-            raise CallError(f'Configuration {verb} is limited to local SYS_ADMIN account ("root" or "truenas_admin")')
+        if job.credentials.is_user_session and not credential_has_full_admin(job.credentials):
+            raise CallError(f'Configuration {verb} is limited to full administrators')
 
     def _handle_failover(self, job, verb, files, db_path, reboot, reboot_reason):
         if not self.middleware.call_sync('failover.licensed'):
