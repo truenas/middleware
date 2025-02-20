@@ -306,10 +306,6 @@ class FailoverService(Service):
         options: CallRemoteOptions | None = None
     ) -> Any:
         """Call a `method` on the other node with `args`."""
-        if options.pop('job_return'):
-            options['job'] = 'RETURN'
-        raise_connect_error = options.pop('raise_connect_error')
-
         if args is None:
             args = list()
         if options is None:
@@ -322,6 +318,10 @@ class FailoverService(Service):
                 'failover.call_remote.connect_timeout',
                 'connect_timeout must be between 2.0 and 1800.0 inclusive'
             )
+
+        if opts.pop('job_return'):
+            opts['job'] = 'RETURN'
+        raise_connect_error = opts.pop('raise_connect_error')
 
         try:
             return self.CLIENT.call(method, *args, **opts)
