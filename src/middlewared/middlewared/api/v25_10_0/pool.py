@@ -13,12 +13,12 @@ __all__ = [
     "PoolAttachResult", "PoolAttachmentsArgs", "PoolAttachmentsResult", "PoolCreateArgs", "PoolCreateResult",
     "PoolDetachArgs", "PoolDetachResult", "PoolExpandArgs", "PoolExpandResult", "PoolExportArgs", "PoolExportResult",
     "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs", "PoolGetDisksResult",
-    "PoolGetInstanceByNameArgs", "PoolGetInstanceByNameResult", "PoolImportFindArgs", "PoolImportFindResult",
-    "PoolImportPoolArgs", "PoolImportPoolResult", "PoolIsUpgradedArgs", "PoolIsUpgradedResult", "PoolOfflineArgs",
-    "PoolOfflineResult", "PoolOnlineArgs", "PoolOnlineResult", "PoolProcessesArgs", "PoolProcessesResult",
-    "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs",
-    "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult",
-    "PoolValidateNameArgs", "PoolValidateNameResult", "PoolCreateEncryptionOptions"
+    "PoolImportFindArgs", "PoolImportFindResult", "PoolImportPoolArgs", "PoolImportPoolResult", "PoolIsUpgradedArgs",
+    "PoolIsUpgradedResult", "PoolOfflineArgs", "PoolOfflineResult", "PoolOnlineArgs", "PoolOnlineResult",
+    "PoolProcessesArgs", "PoolProcessesResult", "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult",
+    "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs", "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult",
+    "PoolUpgradeArgs", "PoolUpgradeResult", "PoolValidateNameArgs", "PoolValidateNameResult",
+    "PoolCreateEncryptionOptions",
 ]
 
 
@@ -304,14 +304,6 @@ class PoolGetDisksArgs(BaseModel):
 
 class PoolGetDisksResult(BaseModel):
     result: list[str]
-
-
-class PoolGetInstanceByNameArgs(BaseModel):
-    name: str
-
-
-class PoolGetInstanceByNameResult(BaseModel):
-    result: PoolEntry
 
 
 class PoolImportFindArgs(BaseModel):
