@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 import usb.core
 
 from middlewared.api import api_method
@@ -8,8 +10,11 @@ from middlewared.api.current import (
     VirtDeviceNICChoicesArgs, VirtDeviceNICChoicesResult,
     VirtDevicePCIChoicesArgs, VirtDevicePCIChoicesResult,
 )
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, private, Service
+from middlewared.utils.functools_ import cache
 from middlewared.utils.pci import get_all_pci_devices_details
+
+from .utils import PciEntry
 
 
 class VirtDeviceService(Service):
@@ -100,7 +105,18 @@ class VirtDeviceService(Service):
         Returns choices for PCI devices valid for VM virt instances.
         """
         pci_choices = {}
-        for pci_addr, pci_details in get_all_pci_devices_details().items():
+        for i in self.get_pci_devices_choices_cache():
+            pci_details = asdict(i)
             if pci_details['critical'] is False and not pci_details['error']:
-                pci_choices[pci_addr] = pci_details
+                pci_choices[pci_details['pci_addr']] = pci_details
+
         return pci_choices
+
+    @private
+    @cache
+    def get_pci_devices_choices_cache(self) -> tuple[PciEntry]:
+        result = list()
+        for pci_addr, pci_details in get_all_pci_devices_details().items():
+            result.append(PciEntry(pci_addr=pci_addr, **pci_details))
+
+        return tuple(result)
