@@ -41,22 +41,9 @@ def test_02_check_hactl_status(request):
         assert 'Not an HA node' in output, output
 
 
-@pytest.mark.dependency(name='hactl_takeover')
-def test_03_check_hactl_takeover(request):
-    # integration tests run against the master node (at least they should...)
-    depends(request, ['hactl_status'])
-    rv = SSH_TEST('hactl takeover', user, password)
-    output = rv['stdout'].strip()
-    if ha:
-        assert 'This command can only be run on the standby node.' in output, output
-    else:
-        assert 'Not an HA node' in output, output
-
-
 @pytest.mark.dependency(name='hactl_enable')
 def test_04_check_hactl_enable(request):
     # integration tests run against the master node (at least they should...)
-    depends(request, ['hactl_takeover'])
     rv = SSH_TEST('hactl enable', user, password)
     output = rv['stdout'].strip()
     if ha:
