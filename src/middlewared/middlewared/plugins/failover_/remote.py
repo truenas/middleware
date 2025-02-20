@@ -10,22 +10,67 @@ import requests
 import socket
 import threading
 import time
+from collections.abc import Callable
 from collections import defaultdict
 from functools import partial
+from typing import Any, TypedDict
 
 from websocket._exceptions import WebSocketBadStatusException
 
 from truenas_api_client import Client, ClientException, CALL_TIMEOUT
-
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
-from middlewared.service import CallError, Service, private
+from middlewared.service import CallError, Service
+from middlewared.service_exception import ValidationError
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
-from middlewared.validators import Range
 
 logger = logging.getLogger('failover.remote')
 
 NETWORK_ERRORS = (errno.ETIMEDOUT, errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
                   errno.EHOSTUNREACH)
+
+
+class CallRemoteOptions(TypedDict):
+    timeout: int
+    """Time to wait for `method` to return in seconds.
+
+    NOTE: This parameter _ONLY_ applies if the remote
+    client is connected to the other node."""
+    job: bool
+    """Whether the `method` being called is a job."""
+    job_return: bool | None
+    """If true, will return immediately and not wait
+    for the job to complete, otherwise will wait for the
+    job to complete."""
+    callback: Callable | None
+    """A function that will be called as a callback
+    on completion/failure of `method`.
+
+    NOTE: Only applies if `method` is a job"""
+    connect_timeout: float
+    """Maximum amount of time in seconds to wait for
+    the remote connection to become available."""
+    raise_connect_error: bool
+    """If false, will not raise an exception if a connection
+    error to the other node happens, or connection/call timeout
+    happens, or method does not exist on the remote node."""
+
+    @classmethod
+    def create(
+        cls,
+        timeout=CALL_TIMEOUT,
+        job=False,
+        job_return=None,
+        callback=None,
+        connect_timeout=2.0,
+        raise_connect_error=True,
+    ):
+        return CallRemoteOptions(
+            timeout=timeout,
+            job=job,
+            job_return=job_return,
+            callback=callback,
+            connect_timeout=connect_timeout,
+            raise_connect_error=raise_connect_error,
+        )
 
 
 class RemoteClient:
@@ -79,8 +124,7 @@ class RemoteClient:
                 # 24.10 middleware and earlier gives 404 when trying to access `/api/current`.
                 # We should try legacy API server in that case.
                 return self.connect_and_wait(legacy=True)
-
-            raise 
+            raise
         except OSError as e:
             if e.errno in (
                 errno.EPIPE,    # Happens when failover is configured on cxl device that has no link
@@ -231,11 +275,10 @@ class RemoteClient:
 class FailoverService(Service):
 
     class Config:
-        cli_private = True
+        private = True
 
     CLIENT = RemoteClient()
 
-    @private
     async def remote_ip(self):
         node = await self.middleware.call('failover.node')
         if node == 'A':
@@ -246,7 +289,6 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid for call_remote', errno.EHOSTUNREACH)
         return remote
 
-    @private
     async def local_ip(self):
         node = await self.middleware.call('failover.node')
         if node == 'A':
@@ -257,47 +299,32 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid', errno.EHOSTUNREACH)
         return local
 
-    @accepts(
-        Str('method'),
-        List('args'),
-        Dict(
-            'options',
-            Int('timeout', default=CALL_TIMEOUT),
-            Bool('job', default=False),
-            Bool('job_return', default=None, null=True),
-            Any('callback', default=None, null=True),
-            Float('connect_timeout', default=2.0, validators=[Range(min_=2.0, max_=1800.0)]),
-            Bool('raise_connect_error', default=True),
-        ),
-    )
-    @returns(Any(null=True))
-    def call_remote(self, method, args, options):
-        """
-        Call a method on the other node.
+    def call_remote(
+        self,
+        method: str,
+        args: list[Any] | None = None,
+        options: CallRemoteOptions | None = None
+    ) -> Any:
+        """Call a `method` on the other node with `args`."""
+        if args is None:
+            args = list()
+        if options is None:
+            opts = CallRemoteOptions.create()
+        else:
+            opts = CallRemoteOptions.create(**options)
 
-        `method` name of the method to be called
-        `args` list of arguments to be passed to `method`
-        `options` dictionary with following keys
-            `timeout`: time to wait for `method` to return
-                NOTE: This parameter _ONLY_ applies if the remote
-                    client is connected to the other node.
-            `job`: whether the `method` being called is a job
-            `job_return`: if true, will return immediately and not wait
-                for the job to complete, otherwise will wait for the
-                job to complete
-            `callback`: a function that will be called as a callback
-                on completion/failure of `method`.
-                NOTE: Only applies if `method` is a job
-            `connect_timeout`: Maximum amount of time in seconds to wait
-                for remote connection to become available.
-            `raise_connect_error`: If false, will not raise an exception if a connection error to the other node
-                happens, or connection/call timeout happens, or method does not exist on the remote node.
-        """
-        if options.pop('job_return'):
-            options['job'] = 'RETURN'
-        raise_connect_error = options.pop('raise_connect_error')
+        if opts['connect_timeout'] < 2.0 or opts['connect_timeout'] > 1800.0:
+            raise ValidationError(
+                'failover.call_remote.connect_timeout',
+                'connect_timeout must be between 2.0 and 1800.0 inclusive'
+            )
+
+        if opts.pop('job_return'):
+            opts['job'] = 'RETURN'
+        raise_connect_error = opts.pop('raise_connect_error')
+
         try:
-            return self.CLIENT.call(method, *args, **options)
+            return self.CLIENT.call(method, *args, **opts)
         except (CallError, ClientException) as e:
             if e.errno in NETWORK_ERRORS + (CallError.ENOMETHOD,):
                 if raise_connect_error:
@@ -307,16 +334,13 @@ class FailoverService(Service):
             else:
                 raise CallError(str(e), errno.EFAULT)
 
-    @private
     def get_remote_os_version(self):
         if self.CLIENT.remote_ip is not None:
             return self.CLIENT.get_remote_os_version()
 
-    @private
     def send_file(self, token, src, dst, options=None):
         self.CLIENT.send_file(token, src, dst, options)
 
-    @private
     async def ensure_remote_client(self):
         if self.CLIENT.remote_ip is not None:
             return
@@ -327,19 +351,15 @@ class FailoverService(Service):
         except CallError:
             pass
 
-    @private
     def remote_connected(self):
         return self.CLIENT.is_connected()
 
-    @private
     def remote_subscribe(self, name, callback):
         self.CLIENT.subscribe(name, callback)
 
-    @private
     def remote_on_connect(self, callback):
         self.CLIENT.register_connect(callback)
 
-    @private
     def remote_on_disconnect(self, callback):
         self.CLIENT.register_disconnect(callback)
 
