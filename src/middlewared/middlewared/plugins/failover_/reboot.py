@@ -12,6 +12,8 @@ from middlewared.api.current import (
     FailoverRebootInfoArgs, FailoverRebootInfoResult,
     FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult,
 )
+from middlewared.plugins.system.reboot import RebootReason
+from middlewared.plugins.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.service import CallError, job, private, Service
 
 
@@ -68,10 +70,34 @@ class FailoverRebootService(Service):
                 'connect_timeout': 2,
             })
         except Exception as e:
-            if not (isinstance(e, CallError) and e.errno == CallError.ENOMETHOD):
-                self.logger.warning('Unexpected error querying remote reboot info', exc_info=True)
-
+            self.logger.warning(f'Unexpected error querying remote reboot info: {e}')
             other_node = None
+        else:
+            if other_node is None:
+                # Legacy system that does not support `system.reboot.info`
+                try:
+                    other_node_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id', [], {
+                        'raise_connect_error': False,
+                        'timeout': 2,
+                        'connect_timeout': 2,
+                    })
+                except Exception as e:
+                    # Legacy system that does not have `system.boot_id`, upgrading this is not supported
+                    self.logger.warning(f'Unexpected error querying remote reboot info: {e}')
+                    other_node = None
+                else:
+                    if other_node_boot_id is not None:
+                        # Mark the remote system as needing reboot. `boot_id` is None so that the code below sends
+                        # CHANGED event
+                        self.remote_reboot_reasons.setdefault(RebootReason.UPGRADE.name, RemoteRebootReason(
+                            boot_id=None,
+                            reason=RebootReason.UPGRADE.value,
+                        ))
+                        # Fake `system.reboot.info` so that the code below functions properly
+                        other_node = {
+                            'boot_id': other_node_boot_id,
+                            'reboot_required_reasons': [],
+                        }
 
         if other_node is not None:
             for remote_reboot_reason_code, remote_reboot_reason in list(self.remote_reboot_reasons.items()):
@@ -115,12 +141,43 @@ class FailoverRebootService(Service):
         if not await self.middleware.call('failover.licensed'):
             return
 
+        job.set_progress(0, 'Checking other controller boot environment')
+        current_be_id = (await self.middleware.call(
+            'boot.environment.query',
+            [['active', '=', True]],
+            {'get': True},
+        ))['id']
+        remote_be_changed = await self._ensure_remote_be(current_be_id)
+
         remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
 
         job.set_progress(5, 'Rebooting other controller')
-        await self.middleware.call(
-            'failover.call_remote', 'failover.become_passive', [], {'raise_connect_error': False, 'timeout': 20}
-        )
+        if remote_be_changed:
+            # We try to call `system.reboot` with two possible signatures: first, with reboot reason, the actual one,
+            # and second, without reboot reason, the legacy one. One will work on 25.04+ and fail silently on 24.10
+            # (due to `job_return: true`), the other vice versa.
+            await self.middleware.call(
+                'failover.call_remote',
+                'system.reboot',
+                [SYSTEM_UPGRADE_REBOOT_REASON, {'delay': 5}],
+                {
+                    'job': True,
+                    'job_return': True,
+                },
+            )
+            await self.middleware.call(
+                'failover.call_remote',
+                'system.reboot',
+                [{'delay': 5}],
+                {
+                    'job': True,
+                    'job_return': True,
+                },
+            )
+        else:
+            await self.middleware.call(
+                'failover.call_remote', 'failover.become_passive', [], {'raise_connect_error': False, 'timeout': 20}
+            )
 
         job.set_progress(30, 'Waiting on the other controller to go offline')
         try:
@@ -153,6 +210,43 @@ class FailoverRebootService(Service):
         job.set_progress(100, 'Other controller rebooted successfully')
         return True
 
+    async def _ensure_remote_be(self, id_: str):
+        try:
+            remote_be_id = (await self.middleware.call(
+                'failover.call_remote',
+                'boot.environment.query',
+                [
+                    [['active', '=', True]],
+                    {'get': True},
+                ],
+            ))['id']
+
+            boot_environment_plugin = 'boot.environment'
+        except CallError as e:
+            if e.errno != CallError.ENOMETHOD:
+                raise
+
+            remote_be_id = (await self.middleware.call(
+                'failover.call_remote',
+                'bootenv.query',
+                [
+                    [['active', 'rin', 'R']],
+                    {'get': True},
+                ],
+            ))['id']
+
+            boot_environment_plugin = 'bootenv'
+
+        if remote_be_id == id_:
+            return False
+
+        await self.middleware.call(
+            'failover.call_remote',
+            f'{boot_environment_plugin}.activate',
+            [id_],
+        )
+        return True
+
     @private
     async def send_event(self, info=None):
         if info is None:
@@ -174,10 +268,6 @@ class FailoverRebootService(Service):
             k: asdict(v)
             for k, v in self.remote_reboot_reasons.items()
         })
-
-
-async def reboot_info(middleware, *args, **kwargs):
-    await middleware.call('failover.reboot.send_event')
 
 
 def remote_reboot_info(middleware, *args, **kwargs):
