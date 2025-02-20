@@ -38,6 +38,13 @@ class ISCSITargetService(SimpleService):
         else:
             await self._wait_to_avoid_states(['deactivating'])
 
+    async def start(self):
+        if await self.middleware.call("failover.status") not in ["MASTER", "SINGLE"]:
+            if not await self.middleware.call("iscsi.global.alua_enabled"):
+                # Do not start SCST on STANDBY node unless ALUA is enabled.
+                return
+        await super().start()
+
     async def after_start(self):
         await self.middleware.call("iscsi.alua.after_start")
 
