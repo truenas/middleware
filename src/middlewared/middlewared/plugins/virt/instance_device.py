@@ -151,9 +151,13 @@ class VirtInstanceDeviceService(Service):
                     case 'mdev' | 'mig' | 'srviov':
                         return self.unsupported()
             case 'pci':
+                if 'pci_choices' not in context:
+                    context['pci_choices'] = await self.middleware.call('virt.device.pci_choices')
+
                 device.update({
                     'dev_type': 'PCI',
                     'address': incus['address'],
+                    'description': context['pci_choices'].get(incus['address'], {}).get('description', 'Unknown')
                 })
             case _:
                 return self.unsupported()
