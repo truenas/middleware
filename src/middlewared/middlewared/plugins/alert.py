@@ -919,7 +919,11 @@ class AlertService(Service):
             await self.middleware.call("datastore.insert", "system.alert", d)
 
     @api_method(AlertOneshotCreateArgs, AlertOneshotCreateResult, private=True)
-    @job(lock="process_alerts", transient=True)
+    @job(
+        lock="process_alerts",
+        lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
+        transient=True,
+    )
     async def oneshot_create(self, job, klass, args):
         """
         Creates a one-shot alert of specified `klass`, passing `args` to `klass.create` method.
@@ -955,7 +959,11 @@ class AlertService(Service):
         await self.middleware.call("alert.send_alerts")
 
     @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True)
-    @job(lock="process_alerts", transient=True)
+    @job(
+        lock="process_alerts",
+        lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
+        transient=True,
+    )
     async def oneshot_delete(self, job, klass, query):
         """
         Deletes one-shot alerts of specified `klass` or klasses, passing `query`
