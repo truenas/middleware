@@ -150,8 +150,12 @@ class VirtGlobalService(ConfigService):
         """
         pools = {POOL_DISABLED: '[Disabled]'}
         for p in (await self.middleware.call('zfs.pool.query_imported_fast')).values():
-            if p['name'] in BOOT_POOL_NAME_VALID:
+            # Do not show boot pools or pools with spaces in their name
+            # Incus is not gracefully able to handle pools which have spaces in their names
+            # https://ixsystems.atlassian.net/browse/NAS-134244
+            if p['name'] in BOOT_POOL_NAME_VALID or ' ' in p['name']:
                 continue
+
             ds = await self.middleware.call(
                 'pool.dataset.get_instance_quick', p['name'], {'encryption': True},
             )
