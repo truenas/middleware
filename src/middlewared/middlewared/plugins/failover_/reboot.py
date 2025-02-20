@@ -140,6 +140,14 @@ class FailoverRebootService(Service):
         if not await self.middleware.call('failover.licensed'):
             return
 
+        job.set_progress(0, 'Checking other controller boot environment')
+        current_be_id = (await self.middleware.call(
+            'boot.environment.query',
+            [['active', '=', True]],
+            {'get': True},
+        ))['id']
+        await self._ensure_remote_be(current_be_id)
+
         remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
 
         job.set_progress(5, 'Rebooting other controller')
@@ -177,6 +185,45 @@ class FailoverRebootService(Service):
 
         job.set_progress(100, 'Other controller rebooted successfully')
         return True
+
+    async def _ensure_remote_be(self, id_: str):
+        try:
+            remote_be_id = (await self.middleware.call(
+                'failover.call_remote',
+                'boot.environment.query',
+                [
+                    [['active', '=', True]],
+                    {'get': True},
+                ],
+            ))['id']
+
+            boot_environment_plugin = 'boot.environment'
+        except CallError as e:
+            if e.errno != CallError.ENOMETHOD:
+                raise
+
+            remote_be_id = (await self.middleware.call(
+                'failover.call_remote',
+                'bootenv.query',
+                [
+                    [['active', 'rin', 'R']],
+                    {'get': True},
+                ],
+            ))['id']
+
+            boot_environment_plugin = 'bootenv'
+
+        if remote_be_id == id_:
+            return
+
+        await self.middleware.call(
+            'failover.call_remote',
+            f'{boot_environment_plugin}.activate',
+            [id_],
+        )
+        # `failover.become_passive` is harsh. We need to give ZFS some time to write to the disk, otherwise recent
+        # grub config updates will be lost
+        await asyncio.sleep(30)
 
     @private
     async def send_event(self, info=None):
