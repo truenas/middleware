@@ -145,10 +145,10 @@ def test__renamed_shares_in_registry(setup_for_tests):
 
 def check_aux_param(param, share, expected, fruit_enable=False):
     match expected:
-        case 'yes':
+        case 'yes' | 'True':
             expected = True
-        case 'no':
-            expeected = False
+        case 'no' | 'False':
+            expected = False
         case _:
             pass
 
@@ -173,6 +173,9 @@ def test__test_presets(setup_for_tests, share_presets, preset):
     mp, ds, SHARE_DICT = setup_for_tests
     if 'TIMEMACHINE' in preset:
         call('smb.update', {'aapl_extensions': True})
+    elif preset == 'MULTI_PROTOCOL_NFS':
+        call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {'purpose': 'NO_PRESET', 'timemachine': False})
+        call('smb.update', {'aapl_extensions': False})
 
     to_test = share_presets[preset]['params']
     to_test_aux = to_test['auxsmbconf']
