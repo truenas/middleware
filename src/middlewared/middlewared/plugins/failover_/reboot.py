@@ -13,6 +13,7 @@ from middlewared.api.current import (
     FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult,
 )
 from middlewared.plugins.system.reboot import RebootReason
+from middlewared.plugins.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.service import CallError, job, private, Service
 
 
@@ -146,14 +147,37 @@ class FailoverRebootService(Service):
             [['active', '=', True]],
             {'get': True},
         ))['id']
-        await self._ensure_remote_be(current_be_id)
+        remote_be_changed = await self._ensure_remote_be(current_be_id)
 
         remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
 
         job.set_progress(5, 'Rebooting other controller')
-        await self.middleware.call(
-            'failover.call_remote', 'failover.become_passive', [], {'raise_connect_error': False, 'timeout': 20}
-        )
+        if remote_be_changed:
+            # We try to call `system.reboot` with two possible signatures: first, with reboot reason, the actual one,
+            # and second, without reboot reason, the legacy one. One will work on 25.04+ and fail silently on 24.10
+            # (due to `job_return: true`), the other vice versa.
+            await self.middleware.call(
+                'failover.call_remote',
+                'system.reboot',
+                [SYSTEM_UPGRADE_REBOOT_REASON, {'delay': 5}],
+                {
+                    'job': True,
+                    'job_return': True,
+                },
+            )
+            await self.middleware.call(
+                'failover.call_remote',
+                'system.reboot',
+                [{'delay': 5}],
+                {
+                    'job': True,
+                    'job_return': True,
+                },
+            )
+        else:
+            await self.middleware.call(
+                'failover.call_remote', 'failover.become_passive', [], {'raise_connect_error': False, 'timeout': 20}
+            )
 
         job.set_progress(30, 'Waiting on the other controller to go offline')
         try:
@@ -214,16 +238,14 @@ class FailoverRebootService(Service):
             boot_environment_plugin = 'bootenv'
 
         if remote_be_id == id_:
-            return
+            return False
 
         await self.middleware.call(
             'failover.call_remote',
             f'{boot_environment_plugin}.activate',
             [id_],
         )
-        # `failover.become_passive` is harsh. We need to give ZFS some time to write to the disk, otherwise recent
-        # grub config updates will be lost
-        await asyncio.sleep(30)
+        return True
 
     @private
     async def send_event(self, info=None):
