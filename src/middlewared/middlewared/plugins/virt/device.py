@@ -101,6 +101,6 @@ class VirtDeviceService(Service):
         """
         pci_choices = {}
         for pci_addr, pci_details in get_all_pci_devices_details().items():
-            if pci_details['critical'] is False:
+            if pci_details['critical'] is False and not pci_details['error']:
                 pci_choices[pci_addr] = pci_details
         return pci_choices
