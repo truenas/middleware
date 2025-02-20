@@ -43,7 +43,7 @@ def test_001_net_share_enum(setup_smb_user, setup_smb_share):
         assert shares[0]['path'].replace('\\', '/')[2:] == path
         # IPC$ share should always be present
         assert shares[1]['netname'] == 'IPC$'
-        assert shares[1]['path'] == 'C:\\tmp'
+        assert shares[1]['path'] == 'C:\\var\\empty'
 
 
 def test_002_enum_users(setup_smb_user, setup_smb_share):

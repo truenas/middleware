@@ -10,14 +10,14 @@ from pydantic import (
 )
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 
-from middlewared.api.base.validators import time_validator
+from middlewared.api.base.validators import time_validator, email_validator
 from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 
 __all__ = [
     "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
-    "NetbiosName", "SnapshotNameSchema"
+    "NetbiosName", "SnapshotNameSchema", "EmailString",
 ]
 
 
@@ -66,6 +66,7 @@ LongString = Annotated[
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
 TimeString = Annotated[str, AfterValidator(time_validator)]
+EmailString = Annotated[str, AfterValidator(email_validator)]
 NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
 NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
 SnapshotNameSchema = Annotated[str, AfterValidator(lambda val: validate_snapshot_naming_schema(val) or val)]

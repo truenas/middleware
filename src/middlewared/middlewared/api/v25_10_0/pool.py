@@ -167,6 +167,11 @@ class PoolCreate(BaseModel):
     allow_duplicate_serials: bool = False
 
 
+class PoolDetachOptions(BaseModel):
+    label: str
+    wipe: bool = False
+
+
 class PoolExport(BaseModel):
     cascade: bool = False
     """Delete all attachments of the given pool (`pool.attachments`)."""
@@ -266,7 +271,7 @@ class PoolCreateResult(BaseModel):
 
 class PoolDetachArgs(BaseModel):
     id: int
-    options: PoolLabel
+    options: PoolDetachOptions
 
 
 class PoolDetachResult(BaseModel):

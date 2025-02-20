@@ -10,11 +10,37 @@ import stat
 import time
 from functools import partial
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    FailoverBecomePassiveArgs,
+    FailoverBecomePassiveResult,
+    FailoverEntry,
+    FailoverGetIpsArgs,
+    FailoverGetIpsResult,
+    FailoverLicensedArgs,
+    FailoverLicensedResult,
+    FailoverNodeArgs,
+    FailoverNodeResult,
+    FailoverStatusArgs,
+    FailoverStatusResult,
+    FailoverSyncFromPeerArgs,
+    FailoverSyncFromPeerResult,
+    FailoverSyncToPeerArgs,
+    FailoverSyncToPeerResult,
+    FailoverUpdateArgs,
+    FailoverUpdateResult,
+    FailoverUpgradeArgs,
+    FailoverUpgradeResult,
+)
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
+from middlewared.schema import NOT_PROVIDED
 from middlewared.service import (
-    job, no_authz_required, pass_app, private, CallError, ConfigService,
-    ValidationError, ValidationErrors
+    job,
+    private,
+    CallError,
+    ConfigService,
+    ValidationError,
+    ValidationErrors
 )
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
@@ -53,49 +79,24 @@ class FailoverService(ConfigService):
         datastore_extend = 'failover.failover_extend'
         cli_private = True
         role_prefix = 'FAILOVER'
-
-    ENTRY = Dict(
-        'failover_entry',
-        Int('id', required=True),
-        Bool('disabled', required=True),
-        Int('timeout', required=True),
-        Bool('master', required=True),
-    )
+        entry = FailoverEntry
 
     @private
     async def failover_extend(self, data):
         data['master'] = await self.middleware.call('failover.node') == data.pop('master_node')
         return data
 
-    @accepts(Patch(
-        'failover_entry', 'failover_update',
-        ('edit', {'name': 'master', 'method': lambda x: setattr(x, 'null', True)}),
-        ('rm', {'name': 'id'}),
-        ('attr', {'update': True}),
-    ), audit='Failover config update')
+    @api_method(
+        FailoverUpdateArgs,
+        FailoverUpdateResult,
+        audit='Failover config update',
+    )
     async def do_update(self, data):
-        """
-        Update failover state.
-
-        `disabled` When true indicates that HA will be disabled.
-        `master`  Marks the particular node in the chassis as the master node.
-                    The standby node will have the opposite value.
-
-        `timeout` is the time to WAIT until a failover occurs when a network
-            event occurs on an interface that is marked critical for failover AND
-            HA is enabled and working appropriately.
-
-            The default time to wait is 2 seconds.
-            **NOTE**
-                This setting does NOT effect the `disabled` or `master` parameters.
-        """
+        """Update failover configuration."""
         master = data.pop('master', NOT_PROVIDED)
-
         old = await self.middleware.call('datastore.config', 'system.failover')
-
         new = old.copy()
         new.update(data)
-
         if master is not NOT_PROVIDED:
             # The node making the call is the one we want to make MASTER by default
             new['master_node'] = await self.middleware.call('failover.node')
@@ -136,9 +137,11 @@ class FailoverService(ConfigService):
         else:
             raise CallError('Unable to change node state in MANUAL mode')
 
-    @no_authz_required
-    @accepts()
-    @returns(Bool())
+    @api_method(
+        FailoverLicensedArgs,
+        FailoverLicensedResult,
+        authorization_required=False,
+    )
     def licensed(self):
         """Checks whether this instance is licensed as a HA unit"""
         try:
@@ -171,8 +174,11 @@ class FailoverService(ConfigService):
         """
         return (await self.ha_mode())[0]
 
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(Str())
+    @api_method(
+        FailoverNodeArgs,
+        FailoverNodeResult,
+        roles=['FAILOVER_READ']
+    )
     async def node(self):
         """
         Returns the slot position in the chassis that
@@ -191,9 +197,12 @@ class FailoverService(ConfigService):
         ints = await self.middleware.call('failover.internal_interface.detect')
         return list(ints)
 
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(Str())
-    @pass_app(rest=True)
+    @api_method(
+        FailoverStatusArgs,
+        FailoverStatusResult,
+        pass_app=True,
+        roles=['FAILOVER_READ']
+    )
     async def status(self, app):
         """
         Get the current HA status.
@@ -268,15 +277,21 @@ class FailoverService(ConfigService):
         )
         return bool(event)
 
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(List('ips', items=[Str('ip')]))
-    @pass_app(rest=True)
-    async def get_ips(self, app):
+    @api_method(
+        FailoverGetIpsArgs,
+        FailoverGetIpsResult,
+        roles=['FAILOVER_READ']
+    )
+    async def get_ips(self):
         """Get a list of IPs for which the webUI can be accessed."""
         return await self.middleware.call('system.general.get_ui_urls')
 
-    @accepts(audit='Failover become passive', roles=['FAILOVER_WRITE'])
-    @returns()
+    @api_method(
+        FailoverBecomePassiveArgs,
+        FailoverBecomePassiveResult,
+        audit='Failover become passive',
+        roles=['FAILOVER_WRITE']
+    )
     def become_passive(self):
         """
         This method is only called manually by the end-user so we fully expect that they
@@ -333,11 +348,11 @@ class FailoverService(ConfigService):
             rc = await self.middleware.call('failover.fenced.start', True)
             return not rc if rc != 6 else bool(rc)  # 6 means already running
 
-    @accepts(Dict(
-        'options',
-        Bool('reboot', default=False),
-    ), roles=['FAILOVER_WRITE'])
-    @returns()
+    @api_method(
+        FailoverSyncToPeerArgs,
+        FailoverSyncToPeerResult,
+        roles=['FAILOVER_WRITE'],
+    )
     def sync_to_peer(self, options):
         """
         Sync database and files to the other controller.
@@ -379,8 +394,11 @@ class FailoverService(ConfigService):
         if options['reboot']:
             self.middleware.call_sync('failover.call_remote', 'system.reboot', ['Failover sync to peer', {'delay': 2}])
 
-    @accepts(roles=['FAILOVER_WRITE'])
-    @returns()
+    @api_method(
+        FailoverSyncFromPeerArgs,
+        FailoverSyncFromPeerResult,
+        roles=['FAILOVER_WRITE'],
+    )
     def sync_from_peer(self):
         """
         Sync database and files from the other controller.
@@ -577,31 +595,20 @@ class FailoverService(ConfigService):
     def upgrade_version(self):
         return 1
 
-    @accepts(Dict(
-        'failover_upgrade',
-        Str('train', empty=False),
-        Bool('resume', default=False),
-        Bool('resume_manual', default=False),
-    ), roles=['FAILOVER_WRITE'], audit='Failover upgrade')
-    @returns(Bool())
+    @api_method(
+        FailoverUpgradeArgs,
+        FailoverUpgradeResult,
+        roles=['FAILOVER_WRITE'],
+        audit='Failover upgrade',
+    )
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
     def upgrade(self, job, options):
+        """Upgrades both controllers. Files will be downloaded to the
+        Active Controller and then transferred to the Standby Controller.
+        Upgrade process will start concurrently on both nodes. Once both
+        upgrades are applied, the Standby Controller will reboot. This
+        job will wait for that job to complete before finalizing.
         """
-        Upgrades both controllers.
-
-        Files will be downloaded to the Active Controller and then transferred to the Standby
-        Controller.
-
-        Upgrade process will start concurrently on both nodes.
-
-        Once both upgrades are applied, the Standby Controller will reboot. This job will wait for
-        that job to complete before finalizing.
-
-        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
-        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, you also
-        have to set `resume_manual` to `true` if a previous call to this method was performed using update file upload.
-        """
-
         if self.middleware.call_sync('failover.status') != 'MASTER':
             raise CallError('Upgrade can only run on Active Controller.')
 
@@ -615,12 +622,11 @@ class FailoverService(ConfigService):
         else:
             updatefile = options['resume_manual']
 
-        train = options.get('train')
-        if train:
+        train = options.get('train', NOT_PROVIDED)
+        if train is not NOT_PROVIDED:
             self.middleware.call_sync('update.set_train', train)
 
         local_path = self.middleware.call_sync('update.get_update_location')
-
         updatefile_name = 'updatefile.sqsh'
         updatefile_localpath = os.path.join(local_path, updatefile_name)
         if not options['resume'] and updatefile:

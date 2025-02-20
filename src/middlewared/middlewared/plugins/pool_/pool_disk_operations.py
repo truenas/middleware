@@ -50,7 +50,7 @@ class PoolService(Service):
         audit_callback(disk)
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
-        if disk:
+        if disk and options['wipe']:
             wipe_job = await self.middleware.call('disk.wipe', disk, 'QUICK')
             await wipe_job.wait()
             if wipe_job.error:

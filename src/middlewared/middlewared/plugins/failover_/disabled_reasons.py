@@ -2,8 +2,9 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
-from middlewared.schema import accepts, returns, List, Str
-from middlewared.service import Service, pass_app, private
+from middlewared.api import api_method
+from middlewared.api.current import FailoverDisabledReasonsArgs, FailoverDisabledReasonsResult
+from middlewared.service import Service, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils.zfs import query_imported_fast_impl
 from .enums import DisabledReasonsEnum
@@ -17,9 +18,12 @@ class FailoverDisabledReasonsService(Service):
     LAST_DISABLED_REASONS = None
     SYSTEM_DATASET_SETUP_IN_PROGRESS = False
 
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(List("reasons", items=[Str("reason")]))
-    @pass_app()
+    @api_method(
+        FailoverDisabledReasonsArgs,
+        FailoverDisabledReasonsResult,
+        pass_app=True,
+        roles=['FAILOVER_READ']
+    )
     def reasons(self, app):
         """Returns a list of reasons why failover is not enabled/functional.
         See `DisabledReasonsEnum` for the reasons and their explanation.

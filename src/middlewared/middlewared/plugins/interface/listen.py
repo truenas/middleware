@@ -1,8 +1,12 @@
 from collections import namedtuple
 from itertools import zip_longest
 
-from middlewared.schema import Dict, List, returns, Str
-from middlewared.service import accepts, Service, private
+from middlewared.api import api_method
+from middlewared.api.current import (
+    InterfaceListenServicesRestartedOnSyncArgs,
+    InterfaceListenServicesRestartedOnSyncResult,
+)
+from middlewared.service import Service, private
 
 PreparedDelegate = namedtuple("PreparedDelegate", ["delegate", "state", "addresses"])
 
@@ -21,13 +25,11 @@ class InterfaceService(Service):
     def register_listen_delegate(self, delegate):
         self.delegates.append(delegate)
 
-    @accepts()
-    @returns(List('services_to_be_restarted', items=[Dict(
-        'service_restart',
-        Str('type', required=True),
-        Str('service', required=True),
-        List('ips', required=True, items=[Str('ip')]),
-    )]))
+    @api_method(
+        InterfaceListenServicesRestartedOnSyncArgs,
+        InterfaceListenServicesRestartedOnSyncResult,
+        roles=['NETWORK_INTERFACE_READ']
+    )
     async def services_restarted_on_sync(self):
         """
         Returns which services will be set to listen on 0.0.0.0 (and, thus, restarted) on sync.

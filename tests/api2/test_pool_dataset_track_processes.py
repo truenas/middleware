@@ -65,14 +65,14 @@ def test__open_path_and_check_proc(request, datasets, file_open_path, arg_path):
             assert len(res) == 1
 
             result = res[0]
-            assert result['pid'] == open_pid, f'{result["pid"]!r} does not match {open_pid!r}'
+            assert result['pid'] == int(open_pid), f'{result["pid"]!r} does not match {open_pid!r}'
             assert result['cmdline'] == cmdline, f'{result["cmdline"]!r} does not match {cmdline!r}'
             assert 'paths' not in result
 
             res = call('pool.dataset.processes_using_paths', [arg_path(ssh)], True)
             assert len(res) == 1
             result = res[0]
-            assert result['pid'] == open_pid, f'{result["pid"]!r} does not match {open_pid!r}'
+            assert result['pid'] == int(open_pid), f'{result["pid"]!r} does not match {open_pid!r}'
             assert result['cmdline'] == cmdline, f'{result["cmdline"]!r} does not match {cmdline!r}'
             assert 'paths' in result
             assert len(result['paths']) == 1
