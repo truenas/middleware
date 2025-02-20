@@ -68,6 +68,7 @@ class VirtInstanceEntry(BaseModel):
     vnc_password: Secret[NonEmptyString | None]
     secure_boot: bool | None
     root_disk_size: int | None
+    root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None]
 
 
 # Lets require at least 32MiB of reserved memory
@@ -88,6 +89,7 @@ class VirtInstanceCreateArgs(BaseModel):
     This can be specified when creating VMs so the root device's size can be configured. Root device for VMs
     is a sparse zvol and the field specifies space in GBs and defaults to 10 GBs.
     '''
+    root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI'] = 'NVME'
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
     environment: dict[str, str] | None = None
@@ -156,6 +158,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     '''Setting vnc_password to null will unset VNC password'''
     secure_boot: bool = False
     root_disk_size: int | None = Field(ge=5, default=None)
+    root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI'] = None
 
 
 class VirtInstanceUpdateArgs(BaseModel):

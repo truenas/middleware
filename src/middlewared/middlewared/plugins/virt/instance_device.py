@@ -68,6 +68,7 @@ class VirtInstanceDeviceService(Service):
                     'destination': incus.get('path'),
                     'description': f'{incus.get("source")} -> {incus.get("destination")}',
                     'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
+                    'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
                 })
             case 'nic':
                 device['dev_type'] = 'NIC'
@@ -176,6 +177,9 @@ class VirtInstanceDeviceService(Service):
                     # When incus volumes are used, we need to specify that incus needs to look in the default
                     # already configured pool
                     new['pool'] = 'default'
+                if device.get('io_bus'):
+                    new['io.bus'] = device['io_bus'].lower()
+
             case 'NIC':
                 new['type'] = 'nic'
                 new['network'] = device['network']
@@ -334,6 +338,8 @@ class VirtInstanceDeviceService(Service):
                     verrors.add(schema, 'Destination cannot be /')
                 if destination and instance_type == 'VM':
                     verrors.add(schema, 'Destination is not valid for VM')
+                if device.get('io_bus') and instance_type != 'VM':
+                    verrors.add(f'{schema}.io_bus', 'IO bus is only available for VMs')
 
             case 'NIC':
                 if await self.middleware.call('interface.has_pending_changes'):
