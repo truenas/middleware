@@ -6,6 +6,7 @@ import shlex
 import sys
 
 from base64 import b64encode, b64decode
+from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
@@ -40,7 +41,13 @@ def smb_share(path, name, options=None):
     try:
         yield share
     finally:
-        call("sharing.smb.delete", share["id"])
+        try:
+            call("sharing.smb.delete", share["id"])
+        except InstanceNotFound:
+            # for some tests we delete the share
+            # this should not cause an error
+            pass
+
         call("service.stop", "cifs")
 
 
