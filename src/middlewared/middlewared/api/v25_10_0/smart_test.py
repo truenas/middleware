@@ -25,7 +25,7 @@ class SmartTestCron(CronModel):
 class SmartTestEntry(BaseModel):
     id: int
     schedule: SmartTestCron
-    desc: str
+    desc: str = ""
     all_disks: bool = False
     "when enabled sets the task to cover all disks in which case `disks` is not required."
     disks: list[str] = Field(default_factory=list)
