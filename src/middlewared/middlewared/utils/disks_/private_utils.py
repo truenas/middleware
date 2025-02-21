@@ -26,7 +26,7 @@ class DiskEntry:
         we're using the 'ID_WWN' property of the disk
         but it is the same principle and it allows us
         to use common terms that most recognize."""
-    parts: GptPartEntry | None = None
+    parts: tuple[GptPartEntry] | None = None
     """A tuple of `GptPartEntry` information representing
         any GPT partitions on the disk."""
 
