@@ -8,7 +8,7 @@ def systemctl_service_status():
     YIELD:  systemctl output formatted into a list of strings """
 
     try:
-        raw_list_units = subprocess.run(['systemctl', 'list-units', '--type=service'], capture_output=True)
+        raw_list_units = subprocess.run(['systemctl', 'list-units', '--all', '--type=service'], capture_output=True)
         svc_data = raw_list_units.stdout.decode().strip().splitlines()
         yield svc_data
     except Exception:
@@ -33,6 +33,7 @@ def process_svc_data(svc_entry: str):
 
 @pytest.mark.parametrize('svc_name,expected', [
     ("nscd", {"state": "listed", "alarm": None, "status": ("loaded", "active", "running")}),
+    ("rpcbind", {"state": "listed", "alarm": None, "status": ("loaded", "inactive", "dead")}),
 ])
 def test__systemctl_unit_state(systemctl_service_status, svc_name, expected):
     """ Confirm status of services at boot """
