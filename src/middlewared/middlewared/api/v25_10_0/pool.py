@@ -3,8 +3,7 @@ from typing import Annotated, Literal
 from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass,
-    NonEmptyString, single_argument_args, NotRequired, LongString
+    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args, NotRequired, LongString
 )
 
 
@@ -208,8 +207,8 @@ class PoolReplace(BaseModel):
     preserve_description: bool = True
 
 
-class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
-    pass
+class PoolUpdateTopology(PoolCreateTopology):
+    data: Annotated[list[PoolCreateTopologyDataVdev], Field(min_length=1)] = NotRequired
 
 
 class PoolUpdate(PoolCreate):
