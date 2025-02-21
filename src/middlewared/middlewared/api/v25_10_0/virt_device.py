@@ -32,6 +32,7 @@ class Disk(Device):
     '''
     destination: str | None = None
     boot_priority: int | None = Field(default=None, ge=0)
+    io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None] = None
 
     @field_validator('source')
     @classmethod
