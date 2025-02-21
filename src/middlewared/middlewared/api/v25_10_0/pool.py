@@ -212,14 +212,14 @@ class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
     pass
 
 
-class PoolUpdate(PoolCreate, metaclass=ForUpdateMetaclass):
-    autotrim: Literal["ON", "OFF"]
+class PoolUpdate(PoolCreate):
+    autotrim: Literal["ON", "OFF"] = NotRequired
     name: Excluded = excluded_field()
     encryption: Excluded = excluded_field()
     encryption_options: Excluded = excluded_field()
     deduplication: Excluded = excluded_field()
     checksum: Excluded = excluded_field()
-    topology: PoolUpdateTopology
+    topology: PoolUpdateTopology = {}
 
 
 ######################   Args and Results   ######################
