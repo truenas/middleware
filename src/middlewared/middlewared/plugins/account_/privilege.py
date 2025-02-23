@@ -182,6 +182,15 @@ class PrivilegeService(CRUDService):
                     "This error may be addressed by either re-creating the missing group "
                     "with the specified group id or removing this entry from the privilege."
                 )
+
+            # Currently only local groups may have privileges
+            if groups['by_gid'][local_group_id]['userns_idmap']:
+                verrors.add(
+                    f"privilege_update.local_groups.{i}",
+                    "Privileges may not be granted to groups that have a user namespace idmap "
+                    "configured."
+                )
+
         for i, ds_group_id in enumerate(data["ds_groups"]):
             if not await self._ds_groups(groups, [ds_group_id], include_nonexistent=False):
                 verrors.add(
