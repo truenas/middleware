@@ -76,10 +76,27 @@ class PoolService(Service):
 
     @private
     async def expand_partition(self, part_data):
+        size = await self.middleware.call('disk.get_data_partition_size', part_data['disk'])
+        if size <= part_data['size']:
+            return
+
+        # Wipe potential conflicting ZFS label
+        wipe_size = 1024 ** 2
+        wipe_start = part_data['start'] + size - wipe_size
+        if wipe_start < part_data['end']:
+            return
+
+        def wipe_label():
+            with open(os.path.join('/dev', part_data['disk']), 'r+b') as f:
+                f.seek(wipe_start)
+                f.write(b'0' * wipe_size)
+
+        await self.middleware.run_in_thread(wipe_label)
+
         partition_number = part_data['partition_number']
         start = part_data['start_sector']
         await run(
-            'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:{start}:0', '-t',
+            'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:{start}:+{int(size / 1024)}KiB', '-t',
             f'{partition_number}:BF01', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
             os.path.join('/dev', part_data['disk'])
         )
