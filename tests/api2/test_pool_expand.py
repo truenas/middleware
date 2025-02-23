@@ -1,16 +1,8 @@
-import time
+import pytest
 
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
-
-
-def retry_get_parts_on_disk(disk, max_tries=10):
-    for i in range(max_tries):
-        if parts := call('disk.list_partitions', disk):
-            return parts
-        time.sleep(1)
-    else:
-        assert False, f'Failed after {max_tries} seconds for partition info on {disk!r}'
+from middlewared.test.integration.utils.disk import retry_get_parts_on_disk
 
 
 def test_expand_pool():
@@ -42,12 +34,36 @@ def test_expand_pool():
         assert ssh(f"ls /mnt/{pool['name']}") == "test\n"
 
 
-def test_expand_partition_keeps_initial_offset():
-    disk = call("disk.get_unused")[0]["name"]
+def test_expand_partition():
+    disk = call("disk.get_unused")[0]
+    size = disk["size"]
+    disk = disk["name"]
     call("disk.wipe", disk, "QUICK", job=True)
     ssh(f"sgdisk -n 0:8192:1GiB /dev/{disk}")
     partition = retry_get_parts_on_disk(disk)[0]
     call("pool.expand_partition", partition)
     expanded_partition = retry_get_parts_on_disk(disk)[0]
     assert expanded_partition["size"] > partition["size"]
+    assert expanded_partition["size"] < size * 0.99
     assert expanded_partition["start"] == partition["start"]
+
+
+def test_expand_partition_does_not_destroy_data():
+    disk = call("disk.get_unused")[0]["name"]
+    call("disk.wipe", disk, "QUICK", job=True)
+    ssh(f"sgdisk -n 0:4Gib:0 /dev/{disk}")
+    partition = retry_get_parts_on_disk(disk)[0]
+    with pytest.raises(Exception):
+        call("pool.expand_partition", partition)
+    expanded_partition = retry_get_parts_on_disk(disk)[0]
+    assert expanded_partition == partition
+
+
+def test_expand_partition_does_not_shrink_partition():
+    disk = call("disk.get_unused")[0]["name"]
+    call("disk.wipe", disk, "QUICK", job=True)
+    ssh(f"sgdisk -n 0:0:0 /dev/{disk}")
+    partition = retry_get_parts_on_disk(disk)[0]
+    call("pool.expand_partition", partition)
+    expanded_partition = retry_get_parts_on_disk(disk)[0]
+    assert expanded_partition == partition
