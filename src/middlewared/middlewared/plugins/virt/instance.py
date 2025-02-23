@@ -608,3 +608,35 @@ class VirtInstanceService(CRUDService):
                 ports[instance['id']].append(device['source_port'])
 
         return ports
+
+    @private
+    async def get_account_idmaps(self, filters=None, options=None):
+        """
+        Return the list of idmaps that are configured in our user / group plugins
+        """
+
+        out = []
+
+        idmap_filters = [
+            ['local', '=', True],
+            ['userns_idmap', 'nin', [0, None]],  # Prevent UID / GID 0 from ever being used
+            ['roles', '=', []]  # prevent using users / groups with roles
+        ]
+
+        user_idmaps = await self.middleware.call('user.query', idmap_filters)
+        group_idmaps = await self.middleware.call('group.query', idmap_filters)
+        for user in user_idmaps:
+            out.append({
+                'type': 'uid',
+                'from': user['uid'],
+                'to': user['uid'] if user['userns_idmap'] == 'DIRECT' else user['userns_idmap']
+            })
+
+        for group in group_idmaps:
+            out.append({
+                'type': 'gid',
+                'from': group['gid'],
+                'to': group['gid'] if group['userns_idmap'] == 'DIRECT' else group['userns_idmap']
+            })
+
+        return filter_list(out, filters or [], options or {})
