@@ -5,7 +5,8 @@ import time
 from truenas_api_client import ValidationErrors
 
 from middlewared.service_exception import InstanceNotFound
-from middlewared.test.integration.utils import call, fail, pool
+from middlewared.test.integration.utils import call, fail, pool, ssh
+from middlewared.test.integration.utils.disk import retry_get_parts_on_disk
 
 _1_disk_stripe_topology = (1, lambda disks: {
     "data": [{"type": "STRIPE", "disks": disks[0:1]}],
@@ -102,3 +103,33 @@ def snapshot(dataset, name, **kwargs):
             call("zfs.snapshot.delete", id_, {"recursive": True})
         except InstanceNotFound:
             pass
+
+
+@contextlib.contextmanager
+def oversize_pool():
+    # a mirror pool with vdevs that are slightly larger than they should be
+    with another_pool(topology=_2_disk_mirror_topology) as pool:
+        vdevs = [vdev for vdev in call("pool.flatten_topology", pool["topology"]) if vdev["type"] == "DISK"]
+
+        assert len(vdevs) == 2
+
+        default_partitions_sizes = [
+            retry_get_parts_on_disk(vdev["disk"])[-1]["size"]
+            for vdev in vdevs
+        ]
+        assert default_partitions_sizes[0] == default_partitions_sizes[1]
+        default_partition_size = default_partitions_sizes[0]
+
+        larger_size_k = int((default_partition_size + 10 * 1024 * 1024) / 1024.0)
+        ssh(f"zpool export {pool['name']}")
+        devices = []
+        for vdev in vdevs:
+            ssh(f"sgdisk -d 1 /dev/{vdev['disk']}")
+            ssh(f"sgdisk -n 1:0:+{larger_size_k}k -t 1:BF01 /dev/{vdev['disk']}")
+            partition = retry_get_parts_on_disk(vdev["disk"])[-1]
+            assert partition["size"] == larger_size_k * 1024
+            devices.append("disk/by-partuuid/" + partition["partition_uuid"])
+
+        ssh(f"zpool create {pool['name']} -o altroot=/mnt -f mirror {' '.join(devices)}")
+        pool = call("pool.get_instance", pool["id"])
+        yield pool

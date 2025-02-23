@@ -74,18 +74,25 @@ class PoolService(Service):
                     f'Disk {options["disk"]!r} is not clean, partitions were found.{msg}'
                 )
 
-        if not await self.middleware.call(
+        if not (found := await self.middleware.call(
             'pool.find_disk_from_topology', options['label'], pool, {'include_siblings': True}
-        ):
+        )):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
         verrors.check()
+
+        sibling_sizes = []
+        for vdev in found[2]:
+            if vdev.get('device'):
+                size = await self.middleware.call('disk.get_dev_size', vdev['device'])
+                if size is not None:
+                    sibling_sizes.append(size)
 
         vdev = []
         await self.middleware.call('pool.format_disks', job, {
             disk['devname']: {
                 'vdev': vdev,
-                'size': None,  # pool.format_disks checks size of disk
+                'size': min(sibling_sizes) if sibling_sizes else None,
             },
         }, 0, 25)
 
