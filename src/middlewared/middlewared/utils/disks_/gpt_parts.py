@@ -83,7 +83,13 @@ def __get_gpt_parts_impl(device: str) -> tuple[GptPartEntry]:
             partition_unique_guid = str(UUID(bytes_le=entry[16:32]))
             first_lba = unpack("<Q", entry[32:40])[0]
             last_lba = unpack("<Q", entry[40:48])[0]
-            name = entry[56:128].decode("utf-16").rstrip("\x00") or None
+
+            try:
+                name = entry[56:128].decode("utf-16").rstrip("\x00") or None
+            except Exception:
+                # very rare, but maybe scrambled data so we'll play it safe
+                name = None
+
             if first_lba != 0:
                 parts.append(
                     GptPartEntry(
