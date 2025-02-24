@@ -14,7 +14,6 @@ RE_DNSMASQ_PID = re.compile(r'^pid: (\d+)', flags=re.M)
 class IncusService(SimpleService):
     name = "incus"
 
-    etc = ["subids"]
     systemd_unit = "incus"
 
     async def start(self):
