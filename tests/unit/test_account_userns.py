@@ -52,10 +52,10 @@ def group():
 def privileged_group(group):
     with Client() as c:
         priv = c.call('privilege.create', {
-           'name': 'PRIV',
-           'local_groups': [group['gid']],
-           'roles': ['READONLY_ADMIN'],
-           'web_shell': False
+            'name': 'PRIV',
+            'local_groups': [group['gid']],
+            'roles': ['READONLY_ADMIN'],
+            'web_shell': False
         })
         try:
             yield (priv, group)
