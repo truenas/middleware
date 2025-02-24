@@ -64,10 +64,18 @@ def __get_part_type(guid: str) -> Literal["ZFS", "UNKNOWN"]:
 def __get_gpt_parts_impl(device: str) -> tuple[GptPartEntry]:
     parts = list()
     with open(device, "rb") as f:
+        # it's _incredibly_ important to open this device
+        # as read-only. Otherwise, udevd will trigger
+        # events which will, ultimately, tear-down
+        # by-partuuid symlinks (if the disk has relevant
+        # partition information on it). Simply closing the
+        # device after being opened in write mode causes
+        # this behavior EVEN if the underlying device had
+        # no changes to it. A miserable, undeterministic design.
         ssi: SectorSizeInfo = __get_log_and_phys_blksz(f)
-        f.seek(0)
-        f.seek(ssi.logical_sector_size)
-        gpt_header = f.read(ssi.logical_sector_size)
+
+        # GPT Header starts at LBA 1
+        gpt_header = f.read(1024)[512:]
         if gpt_header[0:8] != b"EFI PART":
             # invalid gpt header so no reason to continue
             return tuple()
