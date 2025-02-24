@@ -3,10 +3,11 @@ from datetime import datetime
 import sphinxbootstrap4theme
 
 project = "TrueNAS API $VERSION"
-copyright = f" {datetime.now().year}, iXsystems, Inc"  # If there is no leading whitespace, it will be
-                                                        # `Copyright 2024, iXsystems, Inc.` for some reason
-author = "iXsystems, Inc."
+author = "iXsystems, Inc. dba TrueNAS"
 
+# If there is no leading whitespace, it will be
+# `Copyright 2024, {author}` for some reason
+copyright = f" {datetime.now().year}, {author}"
 extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.doctest",
@@ -31,7 +32,7 @@ html_theme_path = [sphinxbootstrap4theme.get_path()]
 
 html_theme_options = {
     "navbar_style": "full",
-    "navbar_show_pages" : False,
+    "navbar_show_pages": False,
     "sidebar_fixed": False,
 }
 
