@@ -75,6 +75,23 @@ def privileged_user(user, privileged_group):
         yield c.call('user.update', user['id'], {'groups': user['groups'] + [privileged_group[1]['id']]})
 
 
+def check_subid_file(filename, from_id, to_id):
+    entries = []
+    with open(filename, 'r') as f:
+        for line in f:
+            if not line.startswith(f'0:{from_id}:'):
+                entries.append(line)
+                continue
+
+            assert to_id is not None  # There shouldn't be an entry
+            procid, xid_from, xid_to = line.split(':')
+            target = from_id if to_id == 'DIRECT' else to_id
+            assert int(xid_to) == target
+            return
+
+    assert not to_id, f'{from_id}: entry is missing from {filename}: {entries}'
+
+
 @pytest.mark.parametrize('param', ['DIRECT', 1000, None])
 def test__user_idmap_namespace_create(param):
     with create_user('test_user', userns_idmap=param) as res:
@@ -92,6 +109,8 @@ def test__user_idmap_namespace_create(param):
         else:
             assert res['userns_idmap'] is None
             assert not entry
+
+        check_subid_file('/etc/subuid', res['uid'], param)
 
 
 @pytest.mark.parametrize('param', ['DIRECT', 1000, None])
@@ -112,6 +131,8 @@ def test__user_idmap_namespace_update(user, param):
             assert res['userns_idmap'] is None
             assert not entry
 
+        check_subid_file('/etc/subuid', res['uid'], param)
+
 
 @pytest.mark.parametrize('param', ['DIRECT', 1000, None])
 def test__group_idmap_namespace_create(param):
@@ -130,6 +151,8 @@ def test__group_idmap_namespace_create(param):
         else:
             assert res['userns_idmap'] is None
             assert not entry
+
+        check_subid_file('/etc/subgid', res['gid'], param)
 
 
 @pytest.mark.parametrize('param', ['DIRECT', 1000, None])
@@ -151,6 +174,8 @@ def test__group_idmap_namespace_update(param):
         else:
             assert idmap is None
             assert not entry
+
+        check_subid_file('/etc/subgid', res['gid'], param)
 
 
 def test__privileged_user_idmap_namespace_deny(privileged_user):
