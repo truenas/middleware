@@ -3,7 +3,7 @@
 	motd = middleware.call_sync('system.advanced.config')['motd']
 %>\
 
-	TrueNAS (c) 2009-${buildtime.year}, iXsystems, Inc.
+	TrueNAS (c) 2009-${buildtime.year}, iXsystems, Inc. dba TrueNAS
 	All rights reserved.
 	TrueNAS code is released under the LGPLv3 and GPLv3 licenses with some
 	source files copyrighted by (c) iXsystems, Inc. All other components
