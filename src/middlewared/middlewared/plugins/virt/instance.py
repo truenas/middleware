@@ -619,8 +619,6 @@ class VirtInstanceService(CRUDService):
     @private
     async def set_account_idmaps(self, instance_id):
         idmaps = await self.get_account_idmaps()
-        if not idmaps:
-            return
 
         raw_idmaps_value = '\n'.join([f'{i["type"]} {i["from"]} {i["to"]}' for i in idmaps])
         instance = await self.middleware.call('virt.instance.get_instance', instance_id, {'extra': {'raw': True}})
