@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from threading import Event
+from time import sleep
 
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.filesystem import mkfile
@@ -62,6 +63,10 @@ def temporary_instance():
     try:
         yield instance
     finally:
+        # TODO: currently virt.instance.delete doesn't properly check
+        # for the instance actually stopping before deletion. Once this
+        # is fixed, remove the sleep.
+        sleep(5)
         call('virt.instance.delete', 'tmp-instance', job=True)
 
 
