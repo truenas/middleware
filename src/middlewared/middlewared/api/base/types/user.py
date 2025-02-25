@@ -7,9 +7,9 @@ from pydantic.functional_validators import AfterValidator
 
 from middlewared.utils.sid import sid_is_valid
 
-__all__ = ["LocalUsername", "RemoteUsername", "LocalUID", "LocalGID", "SID"]
+__all__ = ["LocalUsername", "RemoteUsername", "LocalUID", "LocalGID", "SID", "ContainerXID"]
 
-
+XID_MAX = 2 ** 32 - 2  # uid_t -1 can have special meaning depending on context
 # TRUENAS_IDMAP_MAX + 1
 INCUS_IDMAP_MIN = 2147000001
 # Each unpriviliged container with isolated idmap will require at least 65536.
@@ -69,5 +69,7 @@ RemoteUsername = Annotated[str, Field(min_length=1)]
 LocalUID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
 LocalGID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
+
+ContainerXID = Annotated[int, Ge(1), Le(XID_MAX)]
 
 SID = Annotated[str, AfterValidator(validate_sid)]
