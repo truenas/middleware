@@ -60,7 +60,8 @@ from middlewared.utils.privilege import credential_has_full_admin, privileges_gr
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.plugins.account_.constants import (
-    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS
+    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
+    USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -196,6 +197,7 @@ class UserModel(sa.Model):
     bsdusr_full_name = sa.Column(sa.String(120))
     bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
     bsdusr_smb = sa.Column(sa.Boolean(), default=True)
+    bsdusr_userns_idmap = sa.Column(sa.Integer(), default=USERNS_IDMAP_NONE)
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_ssh_password_enabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean(), default=False)
@@ -266,6 +268,11 @@ class UserService(CRUDService):
         user['immutable'] = user['builtin'] or (user['uid'] == ADMIN_UID)
         user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
 
+        if user['userns_idmap'] == USERNS_IDMAP_DIRECT:
+            user['userns_idmap'] = 'DIRECT'
+        elif user['userns_idmap'] == USERNS_IDMAP_NONE:
+            user['userns_idmap'] = None
+
         user_roles = set()
         for g in user['groups'] + [user['group']['id']]:
             if not (entry := ctx['roles_mapping'].get(g)):
@@ -308,6 +315,14 @@ class UserService(CRUDService):
             'random_password',
             'twofactor_auth_configured',
         ]
+
+        match user['userns_idmap']:
+            case 'DIRECT':
+                user['userns_idmap'] = USERNS_IDMAP_DIRECT
+            case None:
+                user['userns_idmap'] = USERNS_IDMAP_NONE
+            case _:
+                pass
 
         for i in to_remove:
             user.pop(i, None)
@@ -753,7 +768,7 @@ class UserService(CRUDService):
             if 'home_mode' in data:
                 verrors.add('user_update.home_mode', 'This attribute cannot be changed')
 
-            for i in ('group', 'home', 'username', 'smb'):
+            for i in ('group', 'home', 'username', 'smb', 'userns_idmap'):
                 if i in data and data[i] != user[i]:
                     verrors.add(f'user_update.{i}', 'This attribute cannot be changed')
 
@@ -1273,6 +1288,17 @@ class UserService(CRUDService):
             {'prefix': 'bsdusr_'}
         )
 
+        if data.get('userns_idmap'):
+            if await self.middleware.call('group.query', [
+                ['local', '=', True],
+                ['roles', '!=', []],
+                ['id', 'in', group_ids],
+            ]):
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    'User namespace idmaps may not be configured for privileged accounts.'
+                )
+
         if data.get('random_password') and data.get('password'):
             verrors.add(
                 f'{schema}.random_password',
@@ -1639,6 +1665,7 @@ class GroupModel(sa.Model):
     bsdgrp_sudo_commands = sa.Column(sa.JSON(list))
     bsdgrp_sudo_commands_nopasswd = sa.Column(sa.JSON(list))
     bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
+    bsdgrp_userns_idmap = sa.Column(sa.Integer(), default=USERNS_IDMAP_NONE)
     bsdgrp_users = relationship('UserModel', secondary=lambda: GroupMembershipModel.__table__, overlaps='bsdusr_groups')
 
 
@@ -1677,6 +1704,11 @@ class GroupService(CRUDService):
 
         privilege_mappings = privileges_group_mapping(ctx['privileges'], [group['gid']], 'local_groups')
 
+        if group['userns_idmap'] == USERNS_IDMAP_DIRECT:
+            group['userns_idmap'] = 'DIRECT'
+        elif group['userns_idmap'] == USERNS_IDMAP_NONE:
+            group['userns_idmap'] = None
+
         match group['group']:
             case 'builtin_administrators':
                 sid = f'{ctx["server_sid"]}-{DomainRid.ADMINS}'
@@ -1705,6 +1737,14 @@ class GroupService(CRUDService):
             'sid',
             'roles'
         ]
+
+        match group.get('userns_idmap'):
+            case 'DIRECT':
+                group['userns_idmap'] = USERNS_IDMAP_DIRECT
+            case None:
+                group['userns_idmap'] = USERNS_IDMAP_NONE
+            case _:
+                pass
 
         for i in to_remove:
             group.pop(i, None)
@@ -2027,6 +2067,20 @@ class GroupService(CRUDService):
             verrors.add(
                 f'{schema}.smb', 'SMB groups may not be configured while SMB service backend is unitialized.'
             )
+
+        if data.get('userns_idmap') and pk:
+            entry = await self.query([['local', '=', True], ['id', '=', pk]], {'get': True})
+            if entry['roles']:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    'User namespace idmaps may not be configured for privileged accounts.'
+                )
+
+            if entry['builtin']:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    'User namespace idmaps may not be configured for builtin accounts.'
+                )
 
         if 'name' in data:
             if data.get('smb'):

@@ -5,6 +5,7 @@ from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
+    ContainerXID,
     Excluded,
     excluded_field,
     ForUpdateMetaclass,
@@ -47,6 +48,15 @@ class UserEntry(BaseModel):
     full_name: str
     builtin: bool
     smb: bool = True
+    userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
+    """
+    Specifies the subuid mapping for this user. If DIRECT then the UID will be
+    directly mapped to all containers. Alternatively, the target UID may be
+    explicitly specified. If None, then the UID will not be mapped.
+
+    NOTE: this field will be ignored for users that have been assigned
+    TrueNAS roles.
+    """
     group: dict
     groups: list[int] = Field(default_factory=list)
     """Specifies whether the user should be allowed access to SMB shares. User will also automatically be added to

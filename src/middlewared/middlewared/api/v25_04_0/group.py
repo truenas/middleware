@@ -2,8 +2,8 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUID, NonEmptyString,
-                                  single_argument_args, single_argument_result)
+from middlewared.api.base import (BaseModel, ContainerXID, Excluded, excluded_field, ForUpdateMetaclass, LocalUID,
+                                  NonEmptyString, single_argument_args, single_argument_result)
 
 __all__ = ["GroupEntry",
            "GroupCreateArgs", "GroupCreateResult",
@@ -23,6 +23,15 @@ class GroupEntry(BaseModel):
     sudo_commands_nopasswd: list[NonEmptyString] = []
     smb: bool = True
     "Specifies whether the group should be mapped into an NT group."
+    userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
+    """
+    Specifies the subgid mapping for this group. If DIRECT then the GID will be
+    directly mapped to all containers. Alternatively, the target GID may be
+    explicitly specified. If None, then the GID will not be mapped.
+
+    NOTE: this field will be ignored for groups that have been assigned
+    TrueNAS roles.
+    """
     group: NonEmptyString
     id_type_both: bool
     local: bool
