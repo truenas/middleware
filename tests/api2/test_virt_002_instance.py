@@ -326,12 +326,14 @@ def test_virt_instance_idmap():
 
 
 def test_virt_instance_idmap_read_nfs4_acl():
-    with dataset('virtshare', share_type='SMB') as ds:
+    with dataset('virtshare', {'share_type': 'SMB'}) as ds:
         with userns_group('testgrp') as g:
             with userns_user('testusr') as u:
                 with temporary_instance('acltest') as instance:
                     # Append entries so that we have something useful to read
-                    acl = call('filesystem.getacl', f'/mnt/{ds}')['acl']
+                    acl_info = call('filesystem.getacl', f'/mnt/{ds}')
+                    assert acl_info['acltype'] == 'NFS4'
+                    acl = acl_info['acl']
                     acl.extend([
                         {
                             'tag': 'everyone@',
