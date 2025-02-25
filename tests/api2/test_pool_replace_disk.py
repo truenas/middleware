@@ -2,7 +2,9 @@ from time import sleep
 
 import pytest
 
-from middlewared.test.integration.assets.pool import _2_disk_mirror_topology, _4_disk_raidz2_topology, another_pool
+from middlewared.test.integration.assets.pool import (
+    _2_disk_mirror_topology, _4_disk_raidz2_topology, another_pool, oversize_pool,
+)
 from middlewared.test.integration.utils import call
 
 
@@ -66,3 +68,15 @@ def test_pool_replace_disk(topology):
                 sleep(1)
         else:
             assert False, f"{' '.join(cmd)} failed to update with pool information"
+
+
+def test_replace_with_slightly_smaller_disk():
+    with oversize_pool() as pool:
+        vdevs = [vdev for vdev in call("pool.flatten_topology", pool["topology"]) if vdev["type"] == "DISK"]
+
+        new_disk = call("disk.get_unused")[0]
+        call("pool.replace", pool["id"], {
+            "label": vdevs[0]["guid"],
+            "disk": new_disk["identifier"],
+            "force": True,
+        }, job=True)
