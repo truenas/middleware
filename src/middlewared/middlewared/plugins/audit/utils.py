@@ -204,10 +204,6 @@ async def setup_truenas_verify(middleware, sysver: str) -> tuple:
     Called by audit setup to generate the initial truenas_verify
     file for an updated or initial TrueNAS version.
     """
-    verify_res = await middleware.run_in_thread(mtree_verify.do_verify, ['init', sysver])
+    verify_rc = await middleware.run_in_thread(mtree_verify.do_verify, ['init', sysver])
 
-    err = ""
-    if verify_res.stderr:
-        err = verify_res.stderr.decode()
-
-    return (verify_res.returncode, err)
+    return verify_rc
