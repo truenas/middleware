@@ -263,14 +263,14 @@ def test_virt_instance_idmap():
         with userns_user('bob') as u:
             # check user DIRECT map
             assert u['userns_idmap'] == 'DIRECT'
-            call('virt.instance.restart', job=True)
+            call('virt.instance.restart', instance['name'], job=True)
             check_idmap_entry(instance['name'], f'uid {u["uid"]} {u["uid"]}')
 
             # check custom user map
             call('user.update', u['id'], {'userns_idmap': 8675309})
 
             # restart to update idmap
-            call('virt.instance.restart', job=True)
+            call('virt.instance.restart', instance['name'], job=True)
             check_idmap_entry(instance['name'], f'uid {u["uid"]} 8675309')
 
         call('virt.instance.restart', job=True)
@@ -279,7 +279,7 @@ def test_virt_instance_idmap():
 
         with userns_group('bob_group') as g:
             assert g['userns_idmap'] == 'DIRECT'
-            call('virt.instance.restart', job=True)
+            call('virt.instance.restart', instance['name'], job=True)
 
             check_idmap_entry(instance['name'], f'gid {g["gid"]} {g["gid"]}')
             # check custom user map
@@ -289,7 +289,7 @@ def test_virt_instance_idmap():
             call('virt.instance.restart', job=True)
             check_idmap_entry(instance['name'], f'gid {g["gid"]} 8675309')
 
-        call('virt.instance.restart', job=True)
+        call('virt.instance.restart', instance['name'], job=True)
         raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
         assert 'raw.idmap' not in raw['config']
 
