@@ -601,11 +601,11 @@ class AuditService(ConfigService):
         # Generate the initial truenas_verify file
         try:
             current_version = await self.middleware.call('system.version')
-            rc, err = await setup_truenas_verify(self.middleware, current_version)
+            rc = await setup_truenas_verify(self.middleware, current_version)
             if rc:
                 self.logger.error(
-                    'Unexpected result from truenas_verify initial setup. '
-                    'rc=%d, error=%s', rc, err
+                    'Did not get clean result from truenas_verify initial setup. '
+                    'See /var/log/truenas_verify.%s.log', current_version
                 )
         except Exception:
             self.logger.error('Error detected in truenas_verify setup.', exc_info=True)
