@@ -14,7 +14,7 @@ def test_pre_script_failure():
 
         assert ve.value.error == "[EFAULT] Pre-script failed with exit code 123"
 
-        job = call("core.get_jobs", [["method", "=", "cloudsync.sync"]], {"order_by": ["-id"], "get": True})
+        job = call("core.get_jobs", [["method", "=", "cloudsync.sync"]], {"order_by": ["-time_started"], "get": True})
         assert job["logs_excerpt"] == "[Pre-script] Custom error\n"
 
 
@@ -59,5 +59,5 @@ def test_script_shebang():
     }) as task:
         run_task(task)
 
-        job = call("core.get_jobs", [["method", "=", "cloudsync.sync"]], {"order_by": ["-id"], "get": True})
+        job = call("core.get_jobs", [["method", "=", "cloudsync.sync"]], {"order_by": ["-time_started"], "get": True})
         assert job["logs_excerpt"].endswith("[Post-script] TestTest\n")

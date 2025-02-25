@@ -13,6 +13,7 @@ from middlewared.restful import (
 )
 from middlewared.service_exception import CallError
 from truenas_api_client import json
+from uuid import UUID
 
 __all__ = ("FileApplication",)
 
@@ -47,12 +48,16 @@ class FileApplication:
 
     async def download(self, request):
         path = request.path.split("/")
-        if not request.path[-1].isdigit():
+        try:
+            UUID(path[-1])
+        except ValueError:
+            self.middleware.logger.error('XXX: failed to parse %s', request.path, exc_info=True)
+            # The job id should be a valid UUID
             resp = web.Response()
             resp.set_status(404)
             return resp
 
-        job_id = int(path[-1])
+        job_id = path[-1]
 
         qs = parse_qs(request.query_string)
         denied = False
