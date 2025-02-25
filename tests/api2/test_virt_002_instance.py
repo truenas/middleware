@@ -1,3 +1,5 @@
+import json
+
 from contextlib import contextmanager
 from threading import Event
 from time import sleep
@@ -52,14 +54,14 @@ def userns_group(groupname, userns_idmap='DIRECT'):
 
 
 @contextmanager
-def temporary_instance():
+def temporary_instance(instance_name='tmp-instance'):
     # Create first so there is time for the agent to start
     call('virt.instance.create', {
-        'name': 'tmp-instance',
+        'name': instance_name,
         'image': INS1_IMAGE,
     }, job=True)
 
-    instance = call('virt.instance.get_instance', 'tmp-instance', {'extra': {'raw': True}})
+    instance = call('virt.instance.get_instance', instance_name, {'extra': {'raw': True}})
     try:
         yield instance
     finally:
@@ -67,7 +69,7 @@ def temporary_instance():
         # for the instance actually stopping before deletion. Once this
         # is fixed, remove the sleep.
         sleep(5)
-        call('virt.instance.delete', 'tmp-instance', job=True)
+        call('virt.instance.delete', instance_name, job=True)
 
 
 def check_idmap_entry(instance_name, entry):
@@ -75,6 +77,30 @@ def check_idmap_entry(instance_name, entry):
 
     assert 'raw.idmap' in raw['config']
     assert entry in raw['config']['raw.idmap']
+
+
+def check_nfs4_acl_entry(acl, who_id, acl_type, acl_tag, permset, flagset):
+    found = None
+
+    for entry in acl:
+        if acl_tag != entry['tag']:
+            continue
+
+        if who_id != entry['id']:
+            continue
+
+        if acl_type != entry['type']:
+            continue
+
+        if permset != entry['perms']:
+            continue
+
+        if flagset != entry['flags']:
+            continue
+
+        found = entry
+
+    assert found, str(acl)
 
 
 def test_virt_instance_create():
@@ -297,6 +323,80 @@ def test_virt_instance_idmap():
         call('virt.instance.restart', instance['name'], job=True)
         raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
         assert 'raw.idmap' not in raw['config']
+
+
+def test_virt_instance_idmap_read_nfs4_acl():
+    with dataset('virtshare', share_type='SMB') as ds:
+        with userns_group('testgrp') as g:
+            with userns_user('testusr') as u:
+                with temporary_instance('acltest') as instance:
+                    # Append entries so that we have something useful to read
+                    acl = call('filesystem.getacl', f'/mnt/{ds}')['acl']
+                    acl.append([
+                        {
+                            'tag': 'everyone@',
+                            'type': 'ALLOW',
+                            'perms': {'BASIC': 'READ'},
+                            'flags': {'BASIC': 'INHERIT'},
+                            'id': -1
+                        },
+                        {
+                            'tag': 'GROUP',
+                            'type': 'ALLOW',
+                            'perms': {'BASIC': 'READ'},
+                            'flags': {'BASIC': 'INHERIT'},
+                            'id': g['gid']
+                        },
+                        {
+                            'tag': 'USER',
+                            'type': 'ALLOW',
+                            'perms': {'BASIC': 'READ'},
+                            'flags': {'BASIC': 'INHERIT'},
+                            'id': u['uid']
+                        }
+                    ])
+
+                    # set the ACL
+                    call('filesystem.setacl', {
+                        'path': f'/mnt/{ds}',
+                        'dacl': acl
+                    }, job=True)
+
+                    # put it in the container instance
+                    call('virt.instance.device_add', instance['name'], {
+                        'name': 'disk1',
+                        'dev_type': 'DISK',
+                        'source': f'/mnt/{ds}',
+                        'destination': '/host',
+                    })
+
+                    # copy our getfacl tool to virt instance
+                    ssh(f'cp /bin/nfs4xdr_getfacl /mnt/{ds}/nfs4xdr_getfacl')
+
+                    cmd = [
+                        'incus', 'exec', instance['name'],
+                        '/host/nfs4xdr_getfacl', '-j', '/host'
+                    ]
+                    instance_acl = json.loads(ssh(' '.join(cmd)))
+
+                    # Check that the ids in the ACL have been mapped
+                    check_nfs4_acl_entry(
+                        instance_acl['acl'],
+                        g['gid'],
+                        'ALLOW',
+                        'GROUP',
+                        {'BASIC': 'READ'},
+                        {'BASIC': 'INHERIT'}
+                    )
+
+                    check_nfs4_acl_entry(
+                        instance_acl['acl'],
+                        u['uid'],
+                        'ALLOW',
+                        'USER',
+                        {'BASIC': 'READ'},
+                        {'BASIC': 'INHERIT'}
+                    )
 
 
 def test_virt_instance_device_delete():
