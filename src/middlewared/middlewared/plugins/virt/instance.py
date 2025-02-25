@@ -508,6 +508,9 @@ class VirtInstanceService(CRUDService):
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
 
+        # Apply any idmap changes
+        await self.set_account_idmaps(id)
+
         try:
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'start',
@@ -558,6 +561,10 @@ class VirtInstanceService(CRUDService):
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
+
+        # Apply any idmap changes
+        await self.set_account_idmaps(id)
+
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'stop',
@@ -607,6 +614,21 @@ class VirtInstanceService(CRUDService):
                 ports[instance['id']].append(device['source_port'])
 
         return ports
+
+    @private
+    async def set_account_idmaps(self, instance_id):
+        idmaps = await self.get_account_idmaps()
+
+        raw_idmaps_value = '\n'.join([f'{i["type"]} {i["from"]} {i["to"]}' for i in idmaps])
+        instance = await self.middleware.call('virt.instance.get_instance', instance_id, {'extra': {'raw': True}})
+        if raw_idmaps_value:
+            instance['raw']['config']['raw.idmap'] = raw_idmaps_value
+        else:
+            # Remove any stale raw idmaps. This is required because entries that don't correlate
+            # to subuid / subgid entries will cause validation failure in incus
+            instance['raw']['config'].pop('raw.idmap', None)
+
+        await incus_call_and_wait(f'1.0/instances/{instance_id}', 'put', {'json': instance['raw']})
 
     @private
     async def get_account_idmaps(self, filters=None, options=None):
