@@ -104,6 +104,8 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'local/sudoers', 'mode': 0o440},
                 {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'},
                 {'type': 'py', 'path': 'web_ui_root_login_alert'},
+                {'type': 'mako', 'path': 'subuid'},
+                {'type': 'mako', 'path': 'subgid'},
             ]
         },
         'netdata': [
