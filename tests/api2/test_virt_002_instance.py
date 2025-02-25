@@ -273,7 +273,7 @@ def test_virt_instance_idmap():
             call('virt.instance.restart', instance['name'], job=True)
             check_idmap_entry(instance['name'], f'uid {u["uid"]} 8675309')
 
-        call('virt.instance.restart', job=True)
+        call('virt.instance.restart', instance['name'], job=True)
         raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
         assert 'raw.idmap' not in raw['config']
 
@@ -286,7 +286,7 @@ def test_virt_instance_idmap():
             call('group.update', g['id'], {'userns_idmap': 8675309})
 
             # restart to update idmap
-            call('virt.instance.restart', job=True)
+            call('virt.instance.restart', instance['name'], job=True)
             check_idmap_entry(instance['name'], f'gid {g["gid"]} 8675309')
 
         call('virt.instance.restart', instance['name'], job=True)
