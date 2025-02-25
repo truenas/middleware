@@ -480,6 +480,7 @@ class IPAJoinMixin:
                     ipa_constants.IpaConfigName.IPA_CACERT.value
                 )
         else:
+            # TODO: Update usage to point to certificate table
             self.middleware.call_sync('certificateauthority.create', {
                 'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
                 'certificate': resp['cacert'],
