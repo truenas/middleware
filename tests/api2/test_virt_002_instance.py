@@ -260,7 +260,7 @@ def test_virt_instance_idmap():
     with temporary_instance() as instance:
         # We don't have any users so we shouldn't have any raw idmap entries
         assert 'raw.idmap' not in instance['raw']['config']
-        with userns_user() as u:
+        with userns_user('bob') as u:
             # check user DIRECT map
             assert u['userns_idmap'] == 'DIRECT'
             call('virt.instance.restart', job=True)
@@ -277,7 +277,7 @@ def test_virt_instance_idmap():
         raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
         assert 'raw.idmap' not in raw['config']
 
-        with userns_group() as g:
+        with userns_group('bob_group') as g:
             assert g['userns_idmap'] == 'DIRECT'
             call('virt.instance.restart', job=True)
 
