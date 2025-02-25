@@ -25,7 +25,7 @@ class GroupEntry(BaseModel):
     "Specifies whether the group should be mapped into an NT group."
     userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
     """
-    Species the subgid mapping for this group. If DIRECT then the GID will be
+    Specifies the subgid mapping for this group. If DIRECT then the GID will be
     directly mapped to all containers. Alternatively, the target GID may be
     explicitly specified. If None, then the GID will not be mapped.
 

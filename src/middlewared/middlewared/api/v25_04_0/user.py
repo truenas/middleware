@@ -50,7 +50,7 @@ class UserEntry(BaseModel):
     smb: bool = True
     userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
     """
-    Species the subuid mapping for this user. If DIRECT then the UID will be
+    Specifies the subuid mapping for this user. If DIRECT then the UID will be
     directly mapped to all containers. Alternatively, the target UID may be
     explicitly specified. If None, then the UID will not be mapped.
 
