@@ -515,10 +515,9 @@ class VirtInstanceService(CRUDService):
         except CallError as e:
             log = 'lxc.log' if instance['type'] == 'CONTAINER' else 'qemu.log'
             content = await incus_call(f'1.0/instances/{id}/logs/{log}', 'get', json=False)
-            output = []
+            output = collections.deque(maxlen=10)  # only keep last 10 lines
             while line := await content.readline():
                 output.append(line)
-                output = output[-10:]
             output = b''.join(output).strip()
             errmsg = f'Failed to start instance: {e.errmsg}.'
             try:
