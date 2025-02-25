@@ -13,6 +13,7 @@ SENSITIVE_PCI_DEVICE_TYPES = {
     '0x0601': 'ISA Bridge',
     '0x0500': 'RAM memory',
     '0x0c05': 'SMBus',
+    '0x0600': 'Host bridge',
 }
 
 
