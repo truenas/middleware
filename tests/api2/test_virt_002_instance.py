@@ -332,7 +332,7 @@ def test_virt_instance_idmap_read_nfs4_acl():
                 with temporary_instance('acltest') as instance:
                     # Append entries so that we have something useful to read
                     acl = call('filesystem.getacl', f'/mnt/{ds}')['acl']
-                    acl.append([
+                    acl.extend([
                         {
                             'tag': 'everyone@',
                             'type': 'ALLOW',
