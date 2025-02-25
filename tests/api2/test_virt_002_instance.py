@@ -54,15 +54,15 @@ def userns_group(groupname, userns_idmap='DIRECT'):
 def temporary_instance():
     # Create first so there is time for the agent to start
     call('virt.instance.create', {
-        'name': 'tmp_instance',
+        'name': 'tmp-instance',
         'image': INS1_IMAGE,
     }, job=True)
 
-    instance = call('virt.instance.get_instance', 'tmp_instance', {'extra': {'raw': True}})
+    instance = call('virt.instance.get_instance', 'tmp-instance', {'extra': {'raw': True}})
     try:
         yield instance
     finally:
-        call('virt.instance.delete', 'tmp_instance', job=True)
+        call('virt.instance.delete', 'tmp-instance', job=True)
 
 
 def check_idmap_entry(instance_name, entry):
