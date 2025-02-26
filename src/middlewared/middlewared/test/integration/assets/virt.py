@@ -3,6 +3,7 @@ import os.path
 import uuid
 
 from middlewared.test.integration.utils import call, ssh, pool
+from time import sleep
 
 
 @contextlib.contextmanager
@@ -46,7 +47,7 @@ def virt_device(instance_name: str, device_name: str, payload: dict):
         call('virt.instance.device_delete', instance_name, device_name)
 
 
-@contextmanager
+@contextlib.contextmanager
 def virt_instance(
     instance_name: str = 'tmp-instance',
     image: str = 'debian/trixie',

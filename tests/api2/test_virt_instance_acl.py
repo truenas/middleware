@@ -59,7 +59,7 @@ def nfs4acl_dataset(instance):
                 with virt_device(instance['name'], 'disknfs', 'DISK', {
                     'source': f'/mnt/{ds}',
                     'destination': '/nfs4acl',
-                }) as dev:
+                }):
                     yield {
                         'user': u,
                         'group': g,
@@ -98,22 +98,22 @@ def test_virt_instance_nfs4acl_functional(instance, nfs4acl_dataset):
             'type': 'ALLOW',
             'perms': {'BASIC': 'READ'},
             'flags': {'BASIC': 'INHERIT'},
-            'id': nfs4_dataset['group']['gid']
+            'id': nfs4acl_dataset['group']['gid']
         },
         {
             'tag': 'USER',
             'type': 'ALLOW',
             'perms': {'BASIC': 'READ'},
             'flags': {'BASIC': 'INHERIT'},
-            'id': u['uid']
+            'id': nfs4acl_dataset['user']['uid']
         }
     ])
 
     # set the ACL
     call('filesystem.setacl', {'path': path, 'dacl': acl}, job=True)
 
-    ssh(f'cp /bin/nfs4xdr_getfacl {host_path}/nfs4xdr_getfacl')
-    ssh(f'cp /bin/nfs4xdr_setfacl {host_path}/nfs4xdr_setfacl')
+    ssh(f'cp /bin/nfs4xdr_getfacl {path}/nfs4xdr_getfacl')
+    ssh(f'cp /bin/nfs4xdr_setfacl {path}/nfs4xdr_setfacl')
 
     # TODO: fix tools for getting / setting ACL to work with idmaps
     """
@@ -166,14 +166,14 @@ def test_virt_instance_nfs4acl_functional(instance, nfs4acl_dataset):
             'type': 'ALLOW',
             'perms': {'BASIC': 'MODIFY'},
             'flags': {'BASIC': 'INHERIT'},
-            'id': nfs4_dataset['group']['gid']
+            'id': nfs4acl_dataset['group']['gid']
         },
         {
             'tag': 'USER',
             'type': 'ALLOW',
             'perms': {'BASIC': 'MODIFY'},
             'flags': {'BASIC': 'INHERIT'},
-            'id': u['uid']
+            'id': nfs4acl_dataset['user']['uid']
         }
     ])
 
