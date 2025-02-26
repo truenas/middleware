@@ -66,7 +66,7 @@ class PoolEntry(BaseModel):
         'percentage': 85.35564853556485,
     }
     """
-    is_upgraded: bool = NotRequired
+    is_upgraded: bool = False
     healthy: bool
     warning: bool
     status_code: str | None
