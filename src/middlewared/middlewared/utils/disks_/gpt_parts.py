@@ -13,6 +13,7 @@ BLKSSZGET = 0x1268
 PART_TYPES = MappingProxyType(
     {
         "21686148-6449-6e6f-744e-656564454649": "BIOS Boot Partition",  # boot drives
+        "c12a7328-f81f-11d2-ba4b-00a0c93ec93b": "EFI System Parition",  # boot drives
         "6a898cc3-1dd2-11b2-99a6-080020736631": "ZFS",  # linux
         "516e7cba-6ecf-11d6-8ff8-00022d09712b": "ZFS",  # freebsd
     }
@@ -28,7 +29,7 @@ class SectorSizeInfo:
 @dataclass(slots=True, frozen=True, kw_only=True)
 class GptPartEntry:
     partition_number: int
-    partition_type: Literal["ZFS", "BIOS Boot Partition", "UNKONWN"]
+    partition_type: str
     partition_type_guid: str
     unique_partition_guid: str
     partition_name: str | None
@@ -55,7 +56,7 @@ def __get_log_and_phys_blksz(f: TextIOWrapper) -> SectorSizeInfo:
         )
 
 
-def __get_part_type(guid: str) -> Literal["ZFS", "BIOS Boot Partition", "UNKNOWN"]:
+def __get_part_type(guid: str) -> str:
     try:
         return PART_TYPES[guid]
     except KeyError:
