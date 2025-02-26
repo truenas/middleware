@@ -1246,6 +1246,7 @@ class IdmapDomainService(CRUDService):
             'api_keys': [],
             'immutable': True,
             'smb': True,
+            'userns_idmap': None,
             'sid': sid
         }
 
@@ -1273,5 +1274,6 @@ class IdmapDomainService(CRUDService):
             'id_type_both': id_type_both,
             'roles': [],
             'smb': True,
+            'userns_idmap': None,
             'sid': sid
         }

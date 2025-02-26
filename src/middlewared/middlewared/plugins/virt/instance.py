@@ -88,11 +88,15 @@ class VirtInstanceService(CRUDService):
                 'raw': None,  # Default required by pydantic
                 'secure_boot': None,
                 'root_disk_size': None,
+                'root_disk_io_bus': None,
             }
             if entry['type'] == 'VM':
                 entry['secure_boot'] = True if i['config'].get('security.secureboot') == 'true' else False
-                size = i['devices'].get('root', {}).get('size')
+                root_device = i['devices'].get('root', {})
+                size = root_device.get('size')
                 entry['root_disk_size'] = int(size) if size else None
+                # If one isn't set, it defaults to virtio-scsi
+                entry['root_disk_io_bus'] = (root_device.get('io.bus') or 'virtio-scsi').upper()
 
             idmap = None
             if idmap_current := i['config'].get('volatile.idmap.current'):
@@ -351,6 +355,7 @@ class VirtInstanceService(CRUDService):
                 'destination': None,
                 'readonly': False,
                 'boot_priority': 1,
+                'io_bus': data['root_disk_io_bus'],
             }
         elif data['source_type'] == 'ISO':
             root_device_to_add = {
@@ -361,6 +366,7 @@ class VirtInstanceService(CRUDService):
                 'destination': None,
                 'readonly': False,
                 'boot_priority': 1,
+                'io_bus': data['root_disk_io_bus'],
             }
 
         if root_device_to_add:
@@ -368,7 +374,7 @@ class VirtInstanceService(CRUDService):
             data_devices.append(root_device_to_add)
 
         devices = {
-            'root': get_root_device_dict(data['root_disk_size']),
+            'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus']),
         } if data['instance_type'] == 'VM' else {}
         for i in data_devices:
             await self.middleware.call(
@@ -441,25 +447,34 @@ class VirtInstanceService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_update', verrors, old=instance)
         if instance['type'] == 'CONTAINER':
-            if data.get('enable_vnc'):
-                verrors.add('virt_instance_update.enable_vnc', 'VNC is not supported for containers')
-            if data.get('root_disk_size'):
-                verrors.add(
-                    'virt_instance_update.root_disk_size', 'Updating root_disk_size is not supported for containers'
-                )
+            for k in ('root_disk_size', 'root_disk_io_bus', 'enable_vnc'):
+                if data.get(k):
+                    verrors.add(
+                        f'virt_instance_update.{k}', 'This attribute is not supported for containers'
+                    )
 
-        if instance['type'] == 'VM' and data.get('root_disk_size'):
-            if ((instance['root_disk_size'] or 0) / (1024 ** 3)) >= data['root_disk_size']:
+        if instance['type'] == 'VM':
+            if data.get('root_disk_size'):
+                if ((instance['root_disk_size'] or 0) / (1024 ** 3)) >= data['root_disk_size']:
+                    verrors.add(
+                        'virt_instance_update.root_disk_size',
+                        'Specified size if set should be greater than the current root disk size.'
+                    )
+
+            root_key = next((k for k in ('root_disk_size', 'root_disk_io_bus') if data.get(k)), None)
+            if root_key and instance['status'] != 'STOPPED':
                 verrors.add(
-                    'virt_instance_update.root_disk_size',
-                    'Specified size if set should be greater than the current root disk size.'
+                    f'virt_instance_update.{root_key}',
+                    'VM should be stopped before updating the root disk config'
                 )
 
         verrors.check()
 
         instance['raw']['config'].update(self.__data_to_config(data, instance['raw']['config'], instance['type']))
-        if data.get('root_disk_size'):
-            instance['raw']['devices']['root'] = get_root_device_dict(data['root_disk_size'])
+        if data.get('root_disk_size') or data.get('root_disk_io_bus'):
+            root_disk_size = data.get('root_disk_size') or int(instance['root_disk_size'] / (1024 ** 3))
+            io_bus = data.get('root_disk_io_bus') or instance['root_disk_io_bus']
+            instance['raw']['devices']['root'] = get_root_device_dict(root_disk_size, io_bus)
 
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
 
@@ -493,6 +508,9 @@ class VirtInstanceService(CRUDService):
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
 
+        # Apply any idmap changes
+        await self.set_account_idmaps(id)
+
         try:
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'start',
@@ -500,10 +518,9 @@ class VirtInstanceService(CRUDService):
         except CallError as e:
             log = 'lxc.log' if instance['type'] == 'CONTAINER' else 'qemu.log'
             content = await incus_call(f'1.0/instances/{id}/logs/{log}', 'get', json=False)
-            output = []
+            output = collections.deque(maxlen=10)  # only keep last 10 lines
             while line := await content.readline():
                 output.append(line)
-                output = output[-10:]
             output = b''.join(output).strip()
             errmsg = f'Failed to start instance: {e.errmsg}.'
             try:
@@ -544,6 +561,10 @@ class VirtInstanceService(CRUDService):
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
+
+        # Apply any idmap changes
+        await self.set_account_idmaps(id)
+
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'stop',
@@ -593,3 +614,50 @@ class VirtInstanceService(CRUDService):
                 ports[instance['id']].append(device['source_port'])
 
         return ports
+
+    @private
+    async def set_account_idmaps(self, instance_id):
+        idmaps = await self.get_account_idmaps()
+
+        raw_idmaps_value = '\n'.join([f'{i["type"]} {i["from"]} {i["to"]}' for i in idmaps])
+        instance = await self.middleware.call('virt.instance.get_instance', instance_id, {'extra': {'raw': True}})
+        if raw_idmaps_value:
+            instance['raw']['config']['raw.idmap'] = raw_idmaps_value
+        else:
+            # Remove any stale raw idmaps. This is required because entries that don't correlate
+            # to subuid / subgid entries will cause validation failure in incus
+            instance['raw']['config'].pop('raw.idmap', None)
+
+        await incus_call_and_wait(f'1.0/instances/{instance_id}', 'put', {'json': instance['raw']})
+
+    @private
+    async def get_account_idmaps(self, filters=None, options=None):
+        """
+        Return the list of idmaps that are configured in our user / group plugins
+        """
+
+        out = []
+
+        idmap_filters = [
+            ['local', '=', True],
+            ['userns_idmap', 'nin', [0, None]],  # Prevent UID / GID 0 from ever being used
+            ['roles', '=', []]  # prevent using users / groups with roles
+        ]
+
+        user_idmaps = await self.middleware.call('user.query', idmap_filters)
+        group_idmaps = await self.middleware.call('group.query', idmap_filters)
+        for user in user_idmaps:
+            out.append({
+                'type': 'uid',
+                'from': user['uid'],
+                'to': user['uid'] if user['userns_idmap'] == 'DIRECT' else user['userns_idmap']
+            })
+
+        for group in group_idmaps:
+            out.append({
+                'type': 'gid',
+                'from': group['gid'],
+                'to': group['gid'] if group['userns_idmap'] == 'DIRECT' else group['userns_idmap']
+            })
+
+        return filter_list(out, filters or [], options or {})

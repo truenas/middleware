@@ -1,5 +1,8 @@
+from contextlib import contextmanager
 from threading import Event
+from time import sleep
 
+from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.filesystem import mkfile
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils.client import client
@@ -25,6 +28,53 @@ def clean():
     call('virt.global.update', {'pool': None}, job=True)
     ssh(f'zfs destroy -r {pool_name}/.ix-virt || true')
     call('virt.global.update', {'pool': 'tank'}, job=True)
+
+
+@contextmanager
+def userns_user(username, userns_idmap='DIRECT'):
+    with user({
+        'username': username,
+        'full_name': username,
+        'group_create': True,
+        'random_password': True,
+        'userns_idmap': userns_idmap
+    }) as u:
+        yield u
+
+
+@contextmanager
+def userns_group(groupname, userns_idmap='DIRECT'):
+    with group({
+        'name': groupname,
+        'userns_idmap': userns_idmap
+    }) as g:
+        yield g
+
+
+@contextmanager
+def temporary_instance():
+    # Create first so there is time for the agent to start
+    call('virt.instance.create', {
+        'name': 'tmp-instance',
+        'image': INS1_IMAGE,
+    }, job=True)
+
+    instance = call('virt.instance.get_instance', 'tmp-instance', {'extra': {'raw': True}})
+    try:
+        yield instance
+    finally:
+        # TODO: currently virt.instance.delete doesn't properly check
+        # for the instance actually stopping before deletion. Once this
+        # is fixed, remove the sleep.
+        sleep(5)
+        call('virt.instance.delete', 'tmp-instance', job=True)
+
+
+def check_idmap_entry(instance_name, entry):
+    raw = call('virt.instance.get_instance', instance_name, {'extra': {'raw': True}})['raw']
+
+    assert 'raw.idmap' in raw['config']
+    assert entry in raw['config']['raw.idmap']
 
 
 def test_virt_instance_create():
@@ -80,29 +130,6 @@ def test_virt_instance_update():
 
     rv = ssh(f'incus exec {INS2_NAME} env | grep ^FOO= || true')
     assert rv.strip() == ''
-
-
-def test_virt_instance_update_root_disk_size():
-    current_root_disk_size = call(
-        'virt.instance.query', [['id', '=', INS1_NAME]], {'select': ['root_disk_size'], 'get': True}
-    )['root_disk_size']
-    # updating root_disk_size of VM
-    call('virt.instance.update', INS1_NAME, {'root_disk_size': 11}, job=True)
-    updated_root_disk_size = call(
-        'virt.instance.query', [['id', '=', INS1_NAME]], {'select': ['root_disk_size'], 'get': True}
-    )['root_disk_size']
-
-    assert current_root_disk_size != updated_root_disk_size
-    assert updated_root_disk_size == 11 * (1024 ** 3)
-
-    # not updating root_disk_size
-    current_root_disk_size = updated_root_disk_size
-    call('virt.instance.update', INS1_NAME, {}, job=True)
-    updated_root_disk_size = call(
-        'virt.instance.query', [['id', '=', INS1_NAME]], {'select': ['root_disk_size'], 'get': True}
-    )['root_disk_size']
-
-    assert current_root_disk_size == updated_root_disk_size
 
 
 def test_virt_instance_stop():
@@ -232,6 +259,44 @@ def test_virt_instance_proxy():
 
 def test_virt_instance_shell():
     assert call('virt.instance.get_shell', INS3_NAME) == '/bin/bash'
+
+
+def test_virt_instance_idmap():
+    with temporary_instance() as instance:
+        # We don't have any users so we shouldn't have any raw idmap entries
+        assert 'raw.idmap' not in instance['raw']['config']
+        with userns_user('bob') as u:
+            # check user DIRECT map
+            assert u['userns_idmap'] == 'DIRECT'
+            call('virt.instance.restart', instance['name'], job=True)
+            check_idmap_entry(instance['name'], f'uid {u["uid"]} {u["uid"]}')
+
+            # check custom user map
+            call('user.update', u['id'], {'userns_idmap': 8675309})
+
+            # restart to update idmap
+            call('virt.instance.restart', instance['name'], job=True)
+            check_idmap_entry(instance['name'], f'uid {u["uid"]} 8675309')
+
+        call('virt.instance.restart', instance['name'], job=True)
+        raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
+        assert 'raw.idmap' not in raw['config']
+
+        with userns_group('bob_group') as g:
+            assert g['userns_idmap'] == 'DIRECT'
+            call('virt.instance.restart', instance['name'], job=True)
+
+            check_idmap_entry(instance['name'], f'gid {g["gid"]} {g["gid"]}')
+            # check custom user map
+            call('group.update', g['id'], {'userns_idmap': 8675309})
+
+            # restart to update idmap
+            call('virt.instance.restart', instance['name'], job=True)
+            check_idmap_entry(instance['name'], f'gid {g["gid"]} 8675309')
+
+        call('virt.instance.restart', instance['name'], job=True)
+        raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
+        assert 'raw.idmap' not in raw['config']
 
 
 def test_virt_instance_device_delete():

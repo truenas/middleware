@@ -1636,6 +1636,14 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service = 'cifs'
     service_class = SharingSMBService
 
+    async def delete(self, attachments):
+        for attachment in attachments:
+            await self.middleware.call('sharing.smb.delete', attachment['id'])
+            await self.remove_alert(attachment)
+
+        if attachments:
+            await self.restart_reload_services(attachments)
+
     async def restart_reload_services(self, attachments):
         """
         mDNS may need to be reloaded if a time machine share is located on

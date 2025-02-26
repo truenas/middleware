@@ -1,13 +1,15 @@
 import asyncio
+from dataclasses import dataclass
+
 import aiohttp
 import enum
 import httpx
 import json
 from collections.abc import Callable
 
-from .websocket import IncusWS
-
 from middlewared.service import CallError
+
+from .websocket import IncusWS
 
 
 SOCKET = '/var/lib/incus/unix.socket'
@@ -105,10 +107,25 @@ def get_vnc_info_from_config(config: dict):
     return json.loads(vnc_raw_config)
 
 
-def get_root_device_dict(size: int) -> dict:
+def get_root_device_dict(size: int, io_bus: str) -> dict:
     return {
         'path': '/',
         'pool': 'default',
         'type': 'disk',
         'size': f'{size * (1024**3)}',
+        'io.bus': io_bus.lower(),
     }
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class PciEntry:
+    pci_addr: str
+    capability: dict
+    controller_type: str | None
+    critical: bool
+    iommu_group: dict | None
+    drivers: list
+    device_path: str | None
+    reset_mechanism_defined: bool
+    description: str
+    error: str | None
