@@ -2,7 +2,11 @@ import asyncio
 import errno
 import itertools
 
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDetachArgs, PoolDetachResult, PoolOfflineArgs, PoolOfflineResult,
+    PoolOnlineArgs, PoolOnlineResult, PoolRemoveArgs, PoolRemoveResult
+)
 from middlewared.service import CallError, item_method, job, Service, ValidationErrors
 
 
@@ -13,23 +17,10 @@ class PoolService(Service):
         event_send = False
 
     @item_method
-    @accepts(
-        Int('id'),
-        Dict(
-            'options',
-            Str('label', required=True),
-            Bool('wipe', required=False, default=False)
-        ),
-        audit='Disk Detach',
-        audit_callback=True,
-        roles=['POOL_WRITE']
-    )
-    @returns(Bool('detached'))
+    @api_method(PoolDetachArgs, PoolDetachResult, audit='Disk Detach', audit_callback=True, roles=['POOL_WRITE'])
     async def detach(self, audit_callback, oid, options):
         """
         Detach a disk from pool of id `id`.
-
-        `label` is the vdev guid or device name.
 
         .. examples(websocket)::
 
@@ -68,16 +59,10 @@ class PoolService(Service):
         return True
 
     @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('label', required=True),
-    ), audit='Disk Offline', audit_callback=True, roles=['POOL_WRITE'])
-    @returns(Bool('offline_successful'))
+    @api_method(PoolOfflineArgs, PoolOfflineResult, audit='Disk Offline', audit_callback=True, roles=['POOL_WRITE'])
     async def offline(self, audit_callback, oid, options):
         """
         Offline a disk from pool of id `id`.
-
-        `label` is the vdev guid or device name.
 
         .. examples(websocket)::
 
@@ -112,16 +97,10 @@ class PoolService(Service):
         return True
 
     @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('label', required=True),
-    ), roles=['POOL_WRITE'])
-    @returns(Bool('online_successful'))
+    @api_method(PoolOnlineArgs, PoolOnlineResult, roles=['POOL_WRITE'])
     async def online(self, oid, options):
         """
         Online a disk from pool of id `id`.
-
-        `label` is the vdev guid or device name.
 
         .. examples(websocket)::
 
@@ -151,11 +130,7 @@ class PoolService(Service):
         return True
 
     @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('label', required=True),
-    ), roles=['POOL_WRITE'])
-    @returns()
+    @api_method(PoolRemoveArgs, PoolRemoveResult, roles=['POOL_WRITE'])
     @job(lock=lambda args: f'{args[0]}_remove')
     async def remove(self, job, oid, options):
         """

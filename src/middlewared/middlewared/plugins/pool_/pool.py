@@ -5,9 +5,14 @@ import middlewared.sqlalchemy as sa
 
 from fenced.fence import ExitCode as FencedExitCodes
 
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, Excluded, excluded_field
+from middlewared.api.current import (
+    PoolEntry, PoolUpdateArgs, PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
+)
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
-from middlewared.schema import Bool, Dict, Int, List, Patch, Str
-from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, List, Str
+from middlewared.service import accepts, CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
@@ -15,6 +20,19 @@ from middlewared.validators import Range
 from .utils import (
     ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
 )
+
+
+class PoolPoolNormalizeInfo(PoolEntry):
+    id: Excluded = excluded_field()
+    guid: Excluded = excluded_field()
+
+
+class PoolPoolNormalizeInfoArgs(BaseModel):
+    pool_name: str
+
+
+class PoolPoolNormalizeInfoResult(BaseModel):
+    result: PoolPoolNormalizeInfo
 
 
 class PoolModel(sa.Model):
@@ -27,89 +45,6 @@ class PoolModel(sa.Model):
 
 class PoolService(CRUDService):
 
-    ENTRY = Dict(
-        'pool_entry',
-        Int('id', required=True),
-        Str('name', required=True),
-        Str('guid', required=True),
-        Str('status', required=True),
-        Str('path', required=True),
-        Dict(
-            'scan',
-            additional_attrs=True,
-            required=True,
-            null=True,
-            example={
-                'function': None,
-                'state': None,
-                'start_time': None,
-                'end_time': None,
-                'percentage': None,
-                'bytes_to_process': None,
-                'bytes_processed': None,
-                'bytes_issued': None,
-                'pause': None,
-                'errors': None,
-                'total_secs_left': None,
-            }
-        ),
-        Dict(
-            'expand',
-            additional_attrs=True,
-            required=True,
-            null=True,
-            example={
-                'state': 'FINISHED',
-                'expanding_vdev': 0,
-                'start_time': None,
-                'end_time': None,
-                'bytes_to_reflow': 835584,
-                'bytes_reflowed': 978944,
-                'waiting_for_resilver': 0,
-                'total_secs_left': None,
-                'percentage': 85.35564853556485,
-            },
-        ),
-        Bool('is_upgraded'),
-        Bool('healthy', required=True),
-        Bool('warning', required=True),
-        Str('status_code', required=True, null=True),
-        Str('status_detail', required=True, null=True),
-        Int('size', required=True, null=True),
-        Int('allocated', required=True, null=True),
-        Int('free', required=True, null=True),
-        Int('freeing', required=True, null=True),
-        Int('dedup_table_size', required=True, null=True),
-        Str('dedup_table_quota', required=True, null=True),
-        Str('fragmentation', required=True, null=True),
-        Str('size_str', required=True, null=True),
-        Str('allocated_str', required=True, null=True),
-        Str('free_str', required=True, null=True),
-        Str('freeing_str', required=True, null=True),
-        Dict(
-            'autotrim',
-            required=True,
-            additional_attrs=True,
-            example={
-                'parsed': 'off',
-                'rawvalue': 'off',
-                'source': 'DEFAULT',
-                'value': 'off',
-            }
-        ),
-        Dict(
-            'topology',
-            List('data', required=True),
-            List('log', required=True),
-            List('cache', required=True),
-            List('spare', required=True),
-            List('special', required=True),
-            List('dedup', required=True),
-            required=True,
-            null=True,
-        )
-    )
-
     class Config:
         datastore = 'storage.volume'
         datastore_extend = 'pool.pool_extend'
@@ -118,10 +53,9 @@ class PoolService(CRUDService):
         event_send = False
         cli_namespace = 'storage.pool'
         role_prefix = 'POOL'
+        entry = PoolEntry
 
-    @private
-    @accepts(Str('pool_name'))
-    @returns(Patch('pool_entry', 'pool_normalize', ('rm', {'name': 'id'}), ('rm', {'name': 'guid'})))
+    @api_method(PoolPoolNormalizeInfoArgs, PoolPoolNormalizeInfoResult, private=True)
     async def pool_normalize_info(self, pool_name):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
@@ -707,16 +641,7 @@ class PoolService(CRUDService):
         else:
             return dedup_table_quota.lower()
 
-    @accepts(Int('id'), Patch(
-        'pool_create', 'pool_update',
-        ('add', {'name': 'autotrim', 'type': 'str', 'enum': ['ON', 'OFF']}),
-        ('rm', {'name': 'name'}),
-        ('rm', {'name': 'encryption'}),
-        ('rm', {'name': 'encryption_options'}),
-        ('rm', {'name': 'deduplication'}),
-        ('rm', {'name': 'checksum'}),
-        ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
-    ), audit='Pool update', audit_callback=True)
+    @api_method(PoolUpdateArgs, PoolUpdateResult, audit='Pool update', audit_callback=True)
     @job(lock='pool_createupdate')
     async def do_update(self, job, audit_callback, id_, data):
         """
@@ -783,8 +708,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
-    @accepts(Str('pool_name'), roles=['POOL_READ'])
-    @returns()
+    @api_method(PoolValidateNameArgs, PoolValidateNameResult, roles=['POOL_READ'])
     def validate_name(self, pool_name):
         """
         Validates `pool_name` is a valid name for a pool.
