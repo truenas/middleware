@@ -377,7 +377,7 @@ def test_virt_instance_idmap_read_nfs4_acl():
 
                     cmd = [
                         'incus', 'exec', instance['name'],
-                        '/host/nfs4xdr_getfacl', '-j', '/host'
+                        '\"/host/nfs4xdr_getfacl -j /host\"'
                     ]
                     instance_acl = json.loads(ssh(' '.join(cmd)))
 
