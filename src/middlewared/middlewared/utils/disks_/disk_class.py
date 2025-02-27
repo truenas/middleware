@@ -14,7 +14,7 @@ __all__ = ("DiskEntry", "__iterate_disks")
 VALID_WHOLE_DISK = rcompile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class DiskEntry:
     name: str | None = None
     """The disk's name (i.e. 'sda')"""
@@ -23,7 +23,7 @@ class DiskEntry:
 
     def __opener(self, relative_path: str) -> str | None:
         try:
-            with open(f"/sys/block/{self.devpath}/{relative_path}") as f:
+            with open(f"/sys/block/{self.name}/{relative_path}") as f:
                 return f.read().strip()
         except Exception:
             pass
