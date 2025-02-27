@@ -3,7 +3,8 @@ from typing import Annotated, Literal
 from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args, NotRequired, LongString
+    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args,
+    NotRequired, LongString, ForUpdateMetaclass
 )
 
 
@@ -157,11 +158,11 @@ class PoolCreateTopologyLogVdev(BaseModel):
 
 class PoolCreateTopology(BaseModel):
     data: Annotated[list[PoolCreateTopologyDataVdev], Field(min_length=1)]
-    special: list[PoolCreateTopologySpecialVdev] = NotRequired
-    dedup: list[PoolCreateTopologyDedupVdev] = NotRequired
-    cache: list[PoolCreateTopologyCacheVdev] = NotRequired
-    log: list[PoolCreateTopologyLogVdev] = NotRequired
-    spares: list[str] = NotRequired
+    special: list[PoolCreateTopologySpecialVdev] = []
+    dedup: list[PoolCreateTopologyDedupVdev] = []
+    cache: list[PoolCreateTopologyCacheVdev] = []
+    log: list[PoolCreateTopologyLogVdev] = []
+    spares: list[str] = []
 
 
 class PoolCreate(BaseModel):
@@ -219,8 +220,8 @@ class PoolReplace(BaseModel):
     preserve_description: bool = True
 
 
-class PoolUpdateTopology(PoolCreateTopology):
-    data: Annotated[list[PoolCreateTopologyDataVdev], Field(min_length=1)] = NotRequired
+class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
+    pass
 
 
 class PoolUpdate(PoolCreate):
@@ -230,7 +231,7 @@ class PoolUpdate(PoolCreate):
     encryption_options: Excluded = excluded_field()
     deduplication: Excluded = excluded_field()
     checksum: Excluded = excluded_field()
-    topology: PoolUpdateTopology = {}
+    topology: PoolUpdateTopology = Field(default_factory=PoolUpdateTopology)
 
 
 ######################   Args and Results   ######################

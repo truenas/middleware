@@ -311,7 +311,7 @@ class PoolService(CRUDService):
                     )
                 lastdatatype = vdev['type']
 
-        for i in ('cache', 'log', 'spare'):
+        for i in ('cache', 'log', 'spares'):
             value = data['topology'].get(i)
             if value and len(value) > 1:
                 verrors.add(
