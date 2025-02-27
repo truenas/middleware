@@ -1,4 +1,6 @@
 <%
+    import pathlib
+    import shutil
     from middlewared.plugins.nfs import NFSServicePathInfo
     state_path = NFSServicePathInfo.STATEDIR.path()
     cld_storedir = NFSServicePathInfo.CLDDIR.path()
@@ -17,7 +19,18 @@
     # RDMA Notes: 
     #    * The INET default NFS RDMA (nfsrdma) port is 20049
     #    * Including 'insecure' appears to not be requried on the share settings
+
+    # Start clean
+    pathlib.Path("/usr/etc/nfs.conf").unlink(missing_ok=True)
+    for rmdir in ["/usr/etc/nfs.conf.d", "/etc/nfs.conf.d"]:
+        shutil.rmtree(rmdir, ignore_errors=True)
 %>
+#
+# TrueNAS configuration file for NFS
+#
+[general]
+pipefs-directory=/run/rpc_pipefs
+
 [nfsd]
 syslog = 1
 vers2 = n
