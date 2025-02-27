@@ -95,7 +95,9 @@ class CoreService(Service):
             return self.__job_by_credential_and_id(app.authenticated_credentials, job_id, access)
 
     def __job_by_credential_and_id(self, credential, job_id, access):
-        job = self.middleware.jobs[job_id]
+        job = self.middleware.jobs.get(job_id)
+        if job is None:
+            raise CallError(f"Job with id {job_id} does not exist")
 
         if (error := job.credential_access_error(credential, access)) is not None:
             raise CallError(error, errno.EPERM)
