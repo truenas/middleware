@@ -2,6 +2,7 @@ import contextlib
 import os.path
 import uuid
 
+from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.utils import call, ssh, pool
 from time import sleep
 
@@ -69,3 +70,24 @@ def virt_instance(
         # is fixed, remove the sleep.
         sleep(5)
         call('virt.instance.delete', instance_name, job=True)
+
+
+@contextlib.contextmanager
+def userns_user(username, userns_idmap='DIRECT'):
+    with user({
+        'username': username,
+        'full_name': username,
+        'group_create': True,
+        'random_password': True,
+        'userns_idmap': userns_idmap
+    }) as u:
+        yield u
+
+
+@contextlib.contextmanager
+def userns_group(groupname, userns_idmap='DIRECT'):
+    with group({
+        'name': groupname,
+        'userns_idmap': userns_idmap
+    }) as g:
+        yield g
