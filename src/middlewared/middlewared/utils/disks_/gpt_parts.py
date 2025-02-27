@@ -4,12 +4,11 @@ from io import TextIOWrapper
 from os import stat
 from struct import unpack
 from types import MappingProxyType
-from typing import Literal
 from uuid import UUID
 
 # ioctl cmd for getting logical block size
 BLKSSZGET = 0x1268
-# there are a TON more but we only care about ZFS
+# there are a TON more but we only care about a few
 PART_TYPES = MappingProxyType(
     {
         "21686148-6449-6e6f-744e-656564454649": "BIOS Boot Partition",  # boot drives
