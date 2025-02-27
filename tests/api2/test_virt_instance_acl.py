@@ -1,39 +1,17 @@
 import pytest
 
-from contextlib import contextmanager
 from copy import deepcopy
 
-from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.virt import (
+    userns_user,
+    userns_group,
     virt,
     virt_device,
     virt_instance,
 )
-from middlewared.test.integration.utils.call import call
-from middlewared.test.integration.utils.ssh import ssh
+from middlewared.test.integration.utils import call, ssh
 from time import sleep
-
-
-@contextmanager
-def userns_user(username, userns_idmap='DIRECT'):
-    with user({
-        'username': username,
-        'full_name': username,
-        'group_create': True,
-        'random_password': True,
-        'userns_idmap': userns_idmap
-    }) as u:
-        yield u
-
-
-@contextmanager
-def userns_group(groupname, userns_idmap='DIRECT'):
-    with group({
-        'name': groupname,
-        'userns_idmap': userns_idmap
-    }) as g:
-        yield g
 
 
 @pytest.fixture(scope='module')
@@ -163,7 +141,7 @@ def test_virt_instance_nfs4acl_functional(instance, nfs4acl_dataset):
     ssh(f'cp /bin/nfs4xdr_getfacl {path}/nfs4xdr_getfacl')
     ssh(f'cp /bin/nfs4xdr_setfacl {path}/nfs4xdr_setfacl')
 
-    # FIXME - NAS-134466 
+    # FIXME - NAS-134466
     """
     ssh(f'cp /bin/nfs4xdr_getfacl /mnt/{ds}/nfs4xdr_getfacl')
 
