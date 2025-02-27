@@ -165,7 +165,7 @@ class DiskEntry:
         return tuple(parts)
 
 
-def __iterate_disks() -> Generator[tuple[str, str]]:
+def __iterate_disks() -> Generator[DiskEntry]:
     """Iterate over /dev and yield valid devices."""
     with scandir("/dev") as sdir:
         for i in filter(lambda x: VALID_WHOLE_DISK.match(x.name), sdir):
