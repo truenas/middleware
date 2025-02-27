@@ -116,11 +116,23 @@ class PoolCreateEncryptionOptions(BaseModel):
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
 
 
-class PoolCreateTopologyDataVdev(BaseModel):
-    type: Literal["DRAID1", "DRAID2", "DRAID3", "RAIDZ1", "RAIDZ2", "RAIDZ3", "MIRROR", "STRIPE"]
+class PoolCreateTopologyDataVdevDRAID(BaseModel):
+    type: Literal["DRAID1", "DRAID2", "DRAID3"]
     disks: list[str]
-    draid_data_disks: int = NotRequired
-    draid_spare_disks: int = NotRequired
+    draid_data_disks: int | None = None
+    """Defaults to `zfs.VDEV_DRAID_MAX_CHILDREN`."""
+    draid_spare_disks: int = 0
+
+
+class PoolCreateTopologyDataVdevNonDRAID(BaseModel):
+    type: Literal["RAIDZ1", "RAIDZ2", "RAIDZ3", "MIRROR", "STRIPE"]
+    disks: list[str]
+
+
+PoolCreateTopologyDataVdev = Annotated[
+    PoolCreateTopologyDataVdevDRAID | PoolCreateTopologyDataVdevNonDRAID,
+    Field(discriminator="type")
+]
 
 
 class PoolCreateTopologySpecialVdev(BaseModel):

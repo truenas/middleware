@@ -292,10 +292,6 @@ class PoolService(CRUDService):
                     )
 
                 if vdev['type'].startswith('DRAID'):
-                    vdev.update({
-                        'draid_data_disks': vdev.get('draid_data_disks'),
-                        'draid_spare_disks': vdev.get('draid_spare_disks', 0),
-                    })
                     nparity = int(vdev['type'][-1:])
                     verrors.extend(await self.middleware.call(
                         'zfs.pool.validate_draid_configuration', f'{topology_type}.{i}', numdisks, nparity, vdev
@@ -306,13 +302,6 @@ class PoolService(CRUDService):
                             'topology.spare',
                             'Dedicated spare disks should not be used with dRAID.'
                         )
-                else:
-                    for k in ('draid_data_disks', 'draid_spare_disks'):
-                        if k in vdev:
-                            verrors.add(
-                                f'topology.{topology_type}.{i}.{k}',
-                                'This property is only valid with dRAID vdevs.',
-                            )
 
                 if lastdatatype and lastdatatype != vdev['type']:
                     verrors.add(
