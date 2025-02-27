@@ -34,7 +34,7 @@ pp = pytest.param
 # Supported configuration files
 conf_file = {
     "nfs": {
-        "pname": "/etc/nfs.conf.d/local.conf",
+        "pname": "/etc/nfs.conf",
         "sections": {
             'nfsd': {},
             'exportd': {},
@@ -121,7 +121,7 @@ def parse_server_config(conf_type="nfs"):
     Parse known 'ini' style conf files.  See definition of conf_file above.
 
     Debian will read to /etc/default/nfs-common and then /etc/nfs.conf
-    All TrueNAS NFS settings are in /etc/nfs.conf.d/local.conf as overrides
+    All TrueNAS NFS settings are in /etc/nfs.conf
     '''
     assert conf_type in conf_file.keys(), f"{conf_type} is not a supported conf type"
     pathname = conf_file[conf_type]['pname']
@@ -1376,7 +1376,7 @@ class TestNFSops:
                 with pytest.raises(ValidationErrors, match=port[err]):
                     nfs_conf = call("nfs.update", {port_name: port[value]})
 
-        # Compare DB with setting in /etc/nfs.conf.d/local.conf
+        # Compare DB with setting in /etc/nfs.conf
         with nfs_config() as config_db:
             s = parse_server_config()
             assert int(s['mountd']['port']) == config_db["mountd_port"], str(s)
@@ -1821,7 +1821,7 @@ class TestNFSops:
         NAS-126067:  Debian changed the 'default' setting to manage_gids in /etc/nfs.conf
         from undefined to "manage_gids = y".
 
-        TEST:   Confirm manage_gids is set in /etc/nfs.conf.d/local/conf for
+        TEST:   Confirm manage_gids is set in /etc/nfs.conf for
                 both the enable and disable states
 
         TODO: Add client-side and server-side test from client when available
@@ -1864,6 +1864,49 @@ class TestNFSops:
                 assert s['nfsd']['rdma'] == 'y', str(s)
                 # 20049 is the default port for NFS over RDMA.
                 assert s['nfsd']['rdma-port'] == '20049', str(s)
+
+    def test_prevent_shell_changes(self, start_nfs):
+        '''
+        Confirm nfs config is managed
+        '''
+        assert start_nfs is True
+
+        def monkey_with_nfsconf():
+            # Add NFS setting via shell
+            ssh(r"sed -i '/^\[nfsd\]/a rdma = y' /etc/nfs.conf")
+            ssh("systemctl reload nfs-server")
+            res = ssh("grep rdma /etc/nfs.conf")
+            assert 'rdma' in res
+            # Add a rogue config file
+            ssh("mkdir -p /etc/nfs.conf.d")
+            ssh(r"echo '[nfsd]\nrdma = y\nrdma-port = 20049' > /etc/nfs.conf.d/rogue.conf")
+            res = ssh("grep rdma /etc/nfs.conf.d/rogue.conf")
+            assert 'rdma' in res
+
+        def confirm_clean():
+            res = ssh("grep rdma /etc/nfs.conf", check=False)
+            assert 'rdma' not in res
+            res = ssh("ls /etc/nfs.conf.d/rogue.conf", check=False, complete_response=True)
+            assert "No such file or directory" in res['stderr']
+
+        with nfs_config():
+            # Confirm restore with NFS server changes
+            monkey_with_nfsconf()
+            call("nfs.update", {"mountd_log": True})
+            confirm_clean()
+
+            # Confirm restore with NFS share changes
+            monkey_with_nfsconf()
+            with nfs_dataset("deleteme") as ds:
+                with nfs_share(f"/mnt/{ds}"):
+                    confirm_clean()
+                    monkey_with_nfsconf()
+
+            confirm_clean()
+            monkey_with_nfsconf()
+
+        # Final check
+        confirm_clean()
 
 
 def test_pool_delete_with_attached_share():
