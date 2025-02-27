@@ -2,13 +2,16 @@ import contextlib
 import os.path
 import uuid
 
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ssh, pool
+from time import sleep
 
 
 @contextlib.contextmanager
-def virt(pool: dict):
-    virt_config = call('virt.global.update', {'pool': pool['name']}, job=True)
-    assert virt_config['pool'] == pool['name'], virt_config
+def virt(pool_data: dict | None = None):
+    pool_name = pool_data['name'] if pool_data else pool
+
+    virt_config = call('virt.global.update', {'pool': pool_name}, job=True)
+    assert virt_config['pool'] == pool_name, virt_config
     try:
         yield virt_config
     finally:
@@ -42,3 +45,27 @@ def virt_device(instance_name: str, device_name: str, payload: dict):
         yield call('virt.instance.device_add', instance_name, {'name': device_name, **payload})
     finally:
         call('virt.instance.device_delete', instance_name, device_name)
+
+
+@contextlib.contextmanager
+def virt_instance(
+    instance_name: str = 'tmp-instance',
+    image: str = 'debian/trixie',
+    **kwargs
+) -> dict:
+    # Create a virt instance and return dict containing full config and raw info
+    call('virt.instance.create', {
+        'name': instance_name,
+        'image': image,
+        **kwargs
+    }, job=True)
+
+    instance = call('virt.instance.get_instance', instance_name, {'extra': {'raw': True}})
+    try:
+        yield instance
+    finally:
+        # NAS-134443: currently virt.instance.delete doesn't properly check
+        # for the instance actually stopping before deletion. Once this
+        # is fixed, remove the sleep.
+        sleep(5)
+        call('virt.instance.delete', instance_name, job=True)

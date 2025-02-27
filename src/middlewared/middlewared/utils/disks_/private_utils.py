@@ -5,6 +5,8 @@ from re import compile as rcompile
 
 from pyudev import Context, Devices, DeviceNotFoundByNameError
 
+from .gpt_parts import GptPartEntry
+
 # sda, pmem0, vda, nvme0n1 but not sda1/vda1/nvme0n1p1
 VALID_WHOLE_DISK = rcompile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
 
@@ -24,6 +26,9 @@ class DiskEntry:
         we're using the 'ID_WWN' property of the disk
         but it is the same principle and it allows us
         to use common terms that most recognize."""
+    parts: tuple[GptPartEntry] | None = None
+    """A tuple of `GptPartEntry` information representing
+        any GPT partitions on the disk."""
 
     @property
     def identifier(self) -> str:
