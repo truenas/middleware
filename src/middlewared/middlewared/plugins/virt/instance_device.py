@@ -326,14 +326,14 @@ class VirtInstanceDeviceService(Service):
 
                             # Verify that path resolves to an expected data pool
                             await check_path_resides_within_volume(
-                                verrors, self.middleware, schema, device['destination'], True
+                                verrors, self.middleware, schema, device['source'], True
                             )
 
                             # Limit paths to mountpoints because they're much harder for arbitrary
                             # processes to maliciously replace
-                            st = await self.middleware.call('filesystem.stat', device['destination'])
+                            st = await self.middleware.call('filesystem.stat', device['source'])
                             if not st['is_mountpoint']:
-                                verrors.add(schema, 'Destination must be a dataset mountpoint.')
+                                verrors.add(schema, 'Source must be a dataset mountpoint.')
 
                     else:
                         if source.startswith('/dev/zvol/') is False:
