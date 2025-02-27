@@ -64,7 +64,7 @@ def virt_instance(
     try:
         yield instance
     finally:
-        # TODO: currently virt.instance.delete doesn't properly check
+        # NAS-134443: currently virt.instance.delete doesn't properly check
         # for the instance actually stopping before deletion. Once this
         # is fixed, remove the sleep.
         sleep(5)
