@@ -7,7 +7,7 @@ from middlewared.utils.disks_.get_disks import get_disks
 
 def test__get_disks():
     at_least_one = False
-    for disk in get_disks(get_partitions=True):
+    for disk in get_disks():
         if not disk.parts:
             continue
 
