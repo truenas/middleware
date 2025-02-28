@@ -21,6 +21,7 @@ from middlewared.api.current import (
     VirtInstanceRestartArgs, VirtInstanceRestartResult,
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
+from truenas_api_client import ValidationErrors
 from .utils import (
     get_vnc_info_from_config, get_root_device_dict, Status, incus_call, incus_call_and_wait, VNC_BASE_PORT
 )
