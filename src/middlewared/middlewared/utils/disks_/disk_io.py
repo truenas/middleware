@@ -1,17 +1,36 @@
+from os import lseek, write, SEEK_END, SEEK_SET
 from struct import unpack
 from uuid import UUID
 
 from .gpt_parts import GptPartEntry, PART_TYPES
 
-__all__ = ("wipe_disk_quick",)
+__all__ = ("read_gpt", "wipe_disk_quick")
+
+_1MiB = 1048576
 
 
-def wipe_disk_quick(dev_fd: int) -> None: ...
+def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
+    # Write first and last 32MiB of disk with zeros.
+    if disk_size is None:
+        disk_size = lseek(dev_fd, 0, SEEK_END)
+        # seek back to the beginning of the disk
+        lseek(dev_fd, 0, SEEK_SET)
+
+    to_write = b"0" * _1MiB
+    for i in range(32):
+        # wipe first 32MB
+        write(dev_fd, to_write)
+
+    # seek to 32MiB before end of drive
+    lseek(dev_fd, (disk_size - (_1MiB * 32)), SEEK_SET)
+    for i in range(32):
+        # wipe last 32MiB
+        write(dev_fd, to_write)
 
 
-def read_gpt(dev_fd: int) -> tuple[GptPartEntry]:
+def read_gpt(devobj: int | str) -> tuple[GptPartEntry]:
     parts = list()
-    with open(dev_fd, "rb") as f:
+    with open(devobj, "rb") as f:
         # it's _incredibly_ important to open this device
         # as read-only. Otherwise, udevd will trigger
         # events which will, ultimately, tear-down

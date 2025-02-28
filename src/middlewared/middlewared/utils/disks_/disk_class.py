@@ -1,10 +1,10 @@
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
-from os import scandir
+from os import scandir, O_RDWR, O_EXCL, open as os_open
 from re import compile as rcompile
 
-from .disk_io import read_gpt
+from .disk_io import read_gpt, wipe_disk_quick
 from .gpt_parts import GptPartEntry
 
 __all__ = ("DiskEntry", "__iterate_disks")
@@ -114,7 +114,17 @@ class DiskEntry:
     def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry] | None:
         """Return a tuple of `GptPartEntry` objects for any
         GPT partitions written to the disk."""
-        return read_gpt(dev_fd)
+        return read_gpt(dev_fd or self.devpath)
+
+    def wipe_quick(self, dev_fd: int | None = None) -> None:
+        """Write 0's to the first and last 32MiB of the disk.
+        This should remove all filesystem metadata and partition
+        info."""
+        if dev_fd is None:
+            with open(os_open(self.devpath, O_RDWR | O_EXCL), "r+b") as f:
+                wipe_disk_quick(f.fileno(), self.size_bytes)
+        else:
+            wipe_disk_quick(dev_fd, self.size_bytes)
 
 
 def __iterate_disks() -> Generator[DiskEntry]:
