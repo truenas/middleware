@@ -8,9 +8,8 @@ from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     BootGetDisksArgs, BootGetDisksResult, BootAttachArgs, BootAttachResult, BootDetachArgs,
     BootDetachResult, BootReplaceArgs, BootReplaceResult, BootScrubArgs, BootScrubResult,
-    BootSetScrubIntervalArgs, BootSetScrubIntervalResult
+    BootSetScrubIntervalArgs, BootSetScrubIntervalResult, BootGetStateArgs, BootGetStateResult
 )
-from middlewared.schema import accepts, returns, Patch
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 from middlewared.utils.disks import valid_zfs_partition_uuids
@@ -42,12 +41,7 @@ class BootService(Service):
     async def pool_name(self):
         return BOOT_POOL_NAME
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Patch(
-        'pool_entry', 'get_state',
-        ('rm', {'name': 'id'}),
-        ('rm', {'name': 'guid'}),
-    ))
+    @api_method(BootGetStateArgs, BootGetStateResult, roles=['READONLY_ADMIN'])
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.

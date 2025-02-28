@@ -3,6 +3,8 @@ import errno
 import os
 import subprocess
 
+from middlewared.api import api_method
+from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
@@ -16,18 +18,7 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
-    @accepts(roles=['POOL_READ'])
-    @returns(List(
-        'pools_available_for_import',
-        title='Pools Available For Import',
-        items=[Dict(
-            'pool_info',
-            Str('name', required=True),
-            Str('guid', required=True),
-            Str('status', required=True),
-            Str('hostname', required=True),
-        )]
-    ))
+    @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
     @job()
     async def import_find(self, job):
         """
@@ -62,22 +53,11 @@ class PoolService(Service):
             }
         })
 
-    @accepts(Dict(
-        'pool_import',
-        Str('guid', required=True),
-        Str('name'),
-        Bool('enable_attachments'),
-    ), roles=['POOL_WRITE'])
-    @returns(Bool('successful_import'))
+    @api_method(PoolImportPoolArgs, PoolImportPoolResult, roles=['POOL_WRITE'])
     @job(lock='import_pool')
     async def import_pool(self, job, data):
         """
         Import a pool found with `pool.import_find`.
-
-        If a `name` is specified the pool will be imported using that new name.
-
-        If `enable_attachments` is set to true, attachments that were disabled during pool export will be
-        re-enabled.
 
         Errors:
             ENOENT - Pool not found

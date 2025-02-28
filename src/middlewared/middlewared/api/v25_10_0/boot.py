@@ -1,12 +1,13 @@
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Excluded, excluded_field
+from .pool import PoolEntry
 
 
 __all__ = [
     "BootGetDisksArgs", "BootGetDisksResult", "BootAttachArgs", "BootAttachResult", "BootDetachArgs",
     "BootDetachResult", "BootReplaceArgs", "BootReplaceResult", "BootScrubArgs", "BootScrubResult",
-    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult",
+    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult", "BootGetStateArgs", "BootGetStateResult",
 ]
 
 
@@ -14,12 +15,9 @@ class BootAttachOptions(BaseModel):
     expand: bool = False
 
 
-class BootGetDisksArgs(BaseModel):
-    pass
-
-
-class BootGetDisksResult(BaseModel):
-    result: list[str]
+class BootGetState(PoolEntry):
+    id: Excluded = excluded_field()
+    guid: Excluded = excluded_field()
 
 
 class BootAttachArgs(BaseModel):
@@ -37,6 +35,22 @@ class BootDetachArgs(BaseModel):
 
 class BootDetachResult(BaseModel):
     result: None
+
+
+class BootGetDisksArgs(BaseModel):
+    pass
+
+
+class BootGetDisksResult(BaseModel):
+    result: list[str]
+
+
+class BootGetStateArgs(BaseModel):
+    pass
+
+
+class BootGetStateResult(BaseModel):
+    result: BootGetState
 
 
 class BootReplaceArgs(BaseModel):
