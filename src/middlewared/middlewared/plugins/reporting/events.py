@@ -38,6 +38,10 @@ class ReportingRealtimeService(Service):
             if len(disks) != len(disk_mapping):
                 disk_mapping = get_disks_with_identifiers()
 
+            root_datasets = self.middleware.call_sync('zfs.dataset.query', [], {'extra': {
+                'retrieve_children': False,
+                'properties': ['used', 'available'],
+            }})
             data = {
                 'zfs': get_arc_stats(netdata_metrics),  # ZFS ARC Size
                 'memory': get_memory_info(netdata_metrics),
@@ -51,6 +55,13 @@ class ReportingRealtimeService(Service):
                     ]
                 ),
                 'failed_to_connect': False,
+                'pools': {
+                    ds['id']: {
+                        'used': ds['properties']['used']['parsed'],
+                        'available': ds['properties']['available']['parsed'],
+                    }
+                    for ds in root_datasets
+                },
             }
 
         return data
