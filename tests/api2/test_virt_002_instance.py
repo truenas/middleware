@@ -289,12 +289,12 @@ def test_virt_instance_delete(virt_setup):
 
 def test_virt_instance_device_validation(virt_setup):
     with dataset('tmpdataset') as ds:
-        with virt_instance('tmpinstance'):
+        with virt_instance('tmpinstance') as i:
             ssh(f'mkdir /mnt/{ds}/testdir')
 
             # check path is dataset mountpoint
             with pytest.raises(ValidationErrors, match='Source must be a dataset mountpoint.'):
-                with virt_device('tmpinstnace', 'testdisk', {
+                with virt_device(i['name'], 'testdisk', {
                     'dev_type': 'DISK',
                     'source': f'/mnt/{ds}/testdir',
                     'destination': '/nfs4acl',
@@ -305,7 +305,7 @@ def test_virt_instance_device_validation(virt_setup):
 
             # check path outside known pools
             with pytest.raises(ValidationErrors, match='The path must reside within a pool mount point.'):
-                with virt_device('tmpinstance', 'testdisk', {
+                with virt_device(i['name'], 'testdisk', {
                     'dev_type': 'DISK',
                     'source': f'/mnt/testdir',
                     'destination': '/nfs4acl',
