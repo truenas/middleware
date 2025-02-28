@@ -16,7 +16,8 @@ def get_disks(*, name_filters: list[str] | None = None) -> Generator[DiskEntry]:
             of 'sda' or '/dev/sda'.
     """
     if name_filters is None:
-        return __iterate_disks()
+        for disk in __iterate_disks():
+            yield disk
     else:
         for disk in __iterate_disks():
             if disk.name in name_filters or disk.devpath in name_filters:
