@@ -29,7 +29,7 @@ def test__get_disks_filters(name, should_find):
 def test__read_partitions():
     at_least_one = False
     for disk in get_disks():
-        if not disk.parts:
+        if not disk.partitions:
             continue
 
         at_least_one = True
