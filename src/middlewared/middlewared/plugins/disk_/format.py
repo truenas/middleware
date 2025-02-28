@@ -1,6 +1,5 @@
 import pathlib
-
-import parted
+import subprocess
 
 from middlewared.service import CallError, private, Service
 
@@ -8,8 +7,19 @@ from middlewared.service import CallError, private, Service
 class DiskService(Service):
 
     @private
-    def format(self, disk):
-        """Format a data drive with a maximized data partition"""
+    def get_data_partition_size(self, disk):
+        size = self.middleware.call_sync('disk.get_dev_size', disk)
+        # Reserve 2 GiB or disk space (but no more than 1%) to allow this disk to be replaced with a slightly
+        # smaller one in the future.
+        size = size - int(min(2 * 1024 ** 3, size * 0.01))
+        # Align the partition size to the even number of MiB
+        align = 1024 ** 2
+        size = size // align * align
+        return size
+
+    @private
+    def format(self, disk, size=None):
+        """Format a data drive"""
         sysfs = pathlib.Path(f'/sys/class/block/{disk}')
         if not sysfs.exists():
             raise CallError(f'Unable to retrieve disk details for {disk!r}')
@@ -22,17 +32,17 @@ class DiskService(Service):
         # wipe the disk (quickly) of any existing filesystems
         self.middleware.call_sync('disk.wipe', disk, 'QUICK', False).wait_sync(raise_error=True)
 
-        dev = parted.getDevice(f'/dev/{disk}')
-        parted_disk = parted.freshDisk(dev, 'gpt')
-        regions = sorted(parted_disk.getFreeSpaceRegions(), key=lambda x: x.length)[-1]
-        geom = parted.Geometry(start=regions.start, end=regions.end, device=dev)
-        fs = parted.FileSystem(type='zfs', geometry=geom)
-        part = parted.Partition(disk=parted_disk, type=parted.PARTITION_NORMAL, fs=fs, geometry=geom)
-        part.name = 'data'  # give a human readable name to the label
-        parted_disk.addPartition(part, constraint=dev.optimalAlignedConstraint)
-        parted_disk.commit()
+        if size is None:
+            size = self.get_data_partition_size(disk)
 
-        if len(self.middleware.call_sync('disk.get_partitions_quick', disk, 10)) != len(parted_disk.partitions):
+        try:
+            subprocess.run(["sgdisk", "-n", f"1:0:+{int(size / 1024)}k", "-t", "1:BF01", f"/dev/{disk}"],
+                           capture_output=True,
+                           check=True)
+        except subprocess.CalledProcessError as e:
+            raise CallError(f"Failed formatting disk {disk!r}: " + e.stderr.decode("utf-8", "ignore").strip())
+
+        if len(self.middleware.call_sync('disk.get_partitions_quick', disk, 10)) != 1:
             # In some rare cases udev does not re-read the partition table correctly; force it
             self.middleware.call_sync('device.trigger_udev_events', f'/dev/{disk}')
             self.middleware.call_sync('device.settle_udev_events')
