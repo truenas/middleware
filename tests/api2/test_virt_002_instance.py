@@ -1,8 +1,8 @@
 import pytest
 
 from threading import Event
-from truenas_api_client import ValidationErrors
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.filesystem import mkfile
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.virt import (
