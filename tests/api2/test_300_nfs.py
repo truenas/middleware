@@ -148,6 +148,17 @@ def parse_server_config(conf_type="nfs"):
     return rv
 
 
+def parse_db():
+    '''
+    Convert the NFS config DB to a dictionary
+    '''
+    raw_db = ssh("sqlite3 /data/freenas-v1.db '.mode line' 'SELECT * FROM services_nfs'")
+    cols = [col.strip().replace(" ", "") for col in raw_db.splitlines()]
+    dict_db = {item.split('=')[0]: item.split('=')[1] for item in cols}
+
+    return dict_db
+
+
 def parse_rpcbind_config():
     '''
     In Debian 12 (Bookwork) rpcbind uses /etc/default/rpcbind.
@@ -404,6 +415,20 @@ def nfs_dataset(name, options=None, acl=None, mode=None, pool=None):
             except Exception:
                 # Cannot yet delete
                 sleep(10)
+
+
+@contextlib.contextmanager
+def nfs_db():
+    ''' Use this to monkey with the db '''
+    try:
+        restore_db = parse_db()
+        yield restore_db
+    finally:
+        # Restore any changed settings
+        cur_db = parse_db()
+        for key in restore_db:
+            if cur_db[key] != restore_db[key]:
+                ssh(f"sqlite3 /data/freenas-v1.db 'UPDATE services_nfs set {key}={restore_db[key]}'")
 
 
 @contextlib.contextmanager
@@ -1874,14 +1899,17 @@ class TestNFSops:
         assert start_nfs is True
 
         def monkey_with_db():
-            ssh("sqlite3 /data/freenas-v1.db 'UPDATE services_nfs set nfs_srv_rdma=1;'")
+            # Add NFS setting via direct DB
+            ssh("sqlite3 /data/freenas-v1.db 'UPDATE services_nfs set nfs_srv_rdma=1'")
 
-        def monkey_with_nfsconf():
+        def modnfsconf():
             # Add NFS setting via shell
             ssh(r"sed -i '/^\[nfsd\]/a rdma = y' /etc/nfs.conf")
             ssh("systemctl reload nfs-server")
             res = ssh("grep rdma /etc/nfs.conf")
             assert 'rdma' in res
+
+        def rogueconf():
             # Add a rogue config file
             ssh("mkdir -p /etc/nfs.conf.d")
             ssh(r"echo '[nfsd]\nrdma = y\nrdma-port = 20049' > /etc/nfs.conf.d/rogue.conf")
@@ -1896,29 +1924,27 @@ class TestNFSops:
 
         with mock("system.is_enterprise", return_value=False):
             with nfs_config():
-                # Confirm restore with NFS -server- config changes
-                monkey_with_nfsconf()
-                call("nfs.update", {"mountd_log": True})
-                confirm_clean()
-
-                # Confirm restore with NFS -share- config changes
-                monkey_with_nfsconf()
                 with nfs_dataset("deleteme") as ds:
-                    with nfs_share(f"/mnt/{ds}"):
+                    for monkey_business in [modnfsconf, rogueconf]:
+                        # Confirm restore with NFS -server- config changes
+                        monkey_business()
+                        call("nfs.update", {"mountd_log": True})
                         confirm_clean()
-                        monkey_with_nfsconf()
 
-                confirm_clean()
-                monkey_with_nfsconf()
+                        # Confirm restore with NFS -share- config changes
+                        monkey_business()
+                        with nfs_share(f"/mnt/{ds}"):
+                            confirm_clean()
+                            monkey_business()
 
-            # Final monkey check with restored config
-            confirm_clean()
+                        confirm_clean()
 
             # Confirm restore with DB manipulations
-            monkey_with_db()
-            ssh("rm -f /etc/nfs.conf")
-            call('service.restart', 'nfs')
-            confirm_clean()
+            with nfs_db():
+                monkey_with_db()
+                ssh("rm -f /etc/nfs.conf")
+                call('service.restart', 'nfs')
+                confirm_clean()
 
 
 def test_pool_delete_with_attached_share():
