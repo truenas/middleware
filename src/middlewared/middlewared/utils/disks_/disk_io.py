@@ -28,7 +28,7 @@ def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
         write(dev_fd, to_write)
 
 
-def read_gpt(devobj: int | str) -> tuple[GptPartEntry]:
+def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
     parts = list()
     with open(devobj, "rb") as f:
         # it's _incredibly_ important to open this device
@@ -49,7 +49,7 @@ def read_gpt(devobj: int | str) -> tuple[GptPartEntry]:
         partition_entry_lba = unpack("<Q", gpt_header[72:80])[0]
         num_partitions = unpack("<I", gpt_header[80:84])[0]
         partition_entry_size = unpack("<I", gpt_header[84:88])[0]
-        f.seek(partition_entry_lba * 512)
+        f.seek(partition_entry_lba * lbs)
         for i in range(min(num_partitions, 128)):  # 128 is max gpt partitions
             entry = f.read(partition_entry_size)
             partition_type_guid = str(UUID(bytes_le=entry[0:16]))

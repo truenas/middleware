@@ -122,9 +122,9 @@ class DiskEntry:
         info."""
         if dev_fd is None:
             with open(os_open(self.devpath, O_RDWR | O_EXCL), "r+b") as f:
-                wipe_disk_quick(f.fileno(), self.size_bytes)
+                wipe_disk_quick(f.fileno(), self.size_bytes, self.lbs)
         else:
-            wipe_disk_quick(dev_fd, self.size_bytes)
+            wipe_disk_quick(dev_fd, self.size_bytes, self.lbs)
 
 
 def __iterate_disks() -> Generator[DiskEntry]:
