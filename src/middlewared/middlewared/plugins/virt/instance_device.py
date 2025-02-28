@@ -356,8 +356,11 @@ class VirtInstanceDeviceService(Service):
                     verrors.add(schema, 'Destination cannot be /')
                 if destination and instance_type == 'VM':
                     verrors.add(schema, 'Destination is not valid for VM')
-                if device.get('io_bus') and instance_type != 'VM':
-                    verrors.add(f'{schema}.io_bus', 'IO bus is only available for VMs')
+                if device.get('io_bus'):
+                    if instance_type != 'VM':
+                        verrors.add(f'{schema}.io_bus', 'IO bus is only available for VMs')
+                    elif instance_config and instance_config['status'] != 'STOPPED':
+                        verrors.add(f'{schema}.io_bus', 'VM should be stopped before updating IO bus')
 
             case 'NIC':
                 if await self.middleware.call('interface.has_pending_changes'):
