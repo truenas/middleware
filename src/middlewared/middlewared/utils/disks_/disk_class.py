@@ -114,7 +114,7 @@ class DiskEntry:
     def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry] | None:
         """Return a tuple of `GptPartEntry` objects for any
         GPT partitions written to the disk."""
-        return read_gpt(dev_fd or self.devpath)
+        return read_gpt(dev_fd or self.devpath, self.lbs)
 
     def wipe_quick(self, dev_fd: int | None = None) -> None:
         """Write 0's to the first and last 32MiB of the disk.
