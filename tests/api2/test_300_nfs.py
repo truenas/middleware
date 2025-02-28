@@ -36,6 +36,7 @@ conf_file = {
     "nfs": {
         "pname": "/etc/nfs.conf",
         "sections": {
+            'general': {},
             'nfsd': {},
             'exportd': {},
             'nfsdcld': {},
@@ -1857,19 +1858,23 @@ class TestNFSops:
             )
         ]
 
-        with mock("rdma.capable_protocols", return_value=['NFS']):
-            with nfs_config():
-                call("nfs.update", {"rdma": True})
-                s = parse_server_config()
-                assert s['nfsd']['rdma'] == 'y', str(s)
-                # 20049 is the default port for NFS over RDMA.
-                assert s['nfsd']['rdma-port'] == '20049', str(s)
+        with mock("system.is_enterprise", return_value=True):
+            with mock("rdma.capable_protocols", return_value=['NFS']):
+                with nfs_config():
+                    call("nfs.update", {"rdma": True})
+                    s = parse_server_config()
+                    assert s['nfsd']['rdma'] == 'y', str(s)
+                    # 20049 is the default port for NFS over RDMA.
+                    assert s['nfsd']['rdma-port'] == '20049', str(s)
 
     def test_prevent_shell_changes(self, start_nfs):
         '''
         Confirm nfs config is managed
         '''
         assert start_nfs is True
+
+        def monkey_with_db():
+            ssh("sqlite3 /data/freenas-v1.db 'UPDATE services_nfs set nfs_srv_rdma=1;'")
 
         def monkey_with_nfsconf():
             # Add NFS setting via shell
@@ -1889,24 +1894,31 @@ class TestNFSops:
             res = ssh("ls /etc/nfs.conf.d/rogue.conf", check=False, complete_response=True)
             assert "No such file or directory" in res['stderr']
 
-        with nfs_config():
-            # Confirm restore with NFS server changes
-            monkey_with_nfsconf()
-            call("nfs.update", {"mountd_log": True})
+        with mock("system.is_enterprise", return_value=False):
+            with nfs_config():
+                # Confirm restore with NFS -server- config changes
+                monkey_with_nfsconf()
+                call("nfs.update", {"mountd_log": True})
+                confirm_clean()
+
+                # Confirm restore with NFS -share- config changes
+                monkey_with_nfsconf()
+                with nfs_dataset("deleteme") as ds:
+                    with nfs_share(f"/mnt/{ds}"):
+                        confirm_clean()
+                        monkey_with_nfsconf()
+
+                confirm_clean()
+                monkey_with_nfsconf()
+
+            # Final monkey check with restored config
             confirm_clean()
 
-            # Confirm restore with NFS share changes
-            monkey_with_nfsconf()
-            with nfs_dataset("deleteme") as ds:
-                with nfs_share(f"/mnt/{ds}"):
-                    confirm_clean()
-                    monkey_with_nfsconf()
-
+            # Confirm restore with DB manipulations
+            monkey_with_db()
+            ssh("rm -f /etc/nfs.conf")
+            call('service.restart', 'nfs')
             confirm_clean()
-            monkey_with_nfsconf()
-
-        # Final check
-        confirm_clean()
 
 
 def test_pool_delete_with_attached_share():

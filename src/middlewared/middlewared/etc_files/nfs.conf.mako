@@ -29,7 +29,7 @@
 # TrueNAS configuration file for NFS
 #
 [general]
-pipefs-directory=/run/rpc_pipefs
+pipefs-directory = /run/rpc_pipefs
 
 [nfsd]
 syslog = 1
