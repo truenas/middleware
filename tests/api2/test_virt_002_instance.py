@@ -2,12 +2,14 @@ import pytest
 
 from threading import Event
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.filesystem import mkfile
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.virt import (
     userns_user,
     userns_group,
     virt,
+    virt_device,
     virt_instance,
 )
 from middlewared.test.integration.utils import call, client, ssh, pool
@@ -274,7 +276,7 @@ def test_virt_instance_device_delete(virt_instances):
     assert not any(i for i in devices if i['name'] == 'tpm'), devices
 
 
-def test_virt_instance_delete(virt_instances):
+def test_virt_instance_delete(virt_setup):
     with virt_instance('tmpinstance'):
         ssh('incus config show tmpinstance')
         assert call('virt.instance.query', [['name', '=', 'tmpinstance']], {'count': True}) == 1
@@ -283,3 +285,29 @@ def test_virt_instance_delete(virt_instances):
         ssh('incus config show tmpinstance')
 
     assert call('virt.instance.query', [['name', '=', 'tmpinstance']], {'count': True}) == 0
+
+
+def test_virt_instance_device_validation(virt_setup):
+    with dataset('tmpdataset') as ds:
+        with virt_instance('tmpinstance') as i:
+            ssh(f'mkdir /mnt/{ds}/testdir')
+
+            # check path is dataset mountpoint
+            with pytest.raises(ValidationErrors, match='Source must be a dataset mountpoint.'):
+                with virt_device(i['name'], 'testdisk', {
+                    'dev_type': 'DISK',
+                    'source': f'/mnt/{ds}/testdir',
+                    'destination': '/nfs4acl',
+                }):
+                    pass
+
+            ssh(f'mkdir /mnt/testdir')
+
+            # check path outside known pools
+            with pytest.raises(ValidationErrors, match='The path must reside within a pool mount point'):
+                with virt_device(i['name'], 'testdisk', {
+                    'dev_type': 'DISK',
+                    'source': f'/mnt/testdir',
+                    'destination': '/nfs4acl',
+                }):
+                    pass
