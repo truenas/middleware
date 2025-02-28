@@ -304,7 +304,7 @@ def test_virt_instance_device_validation(virt_setup):
             ssh(f'mkdir /mnt/testdir')
 
             # check path outside known pools
-            with pytest.raises(ValidationErrors, match='The path must reside within a pool mount point.'):
+            with pytest.raises(ValidationErrors, match='The path must reside within a pool mount point'):
                 with virt_device(i['name'], 'testdisk', {
                     'dev_type': 'DISK',
                     'source': f'/mnt/testdir',
