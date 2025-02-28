@@ -42,8 +42,9 @@ def volume(volume_name: str, size: int):
 
 @contextlib.contextmanager
 def virt_device(instance_name: str, device_name: str, payload: dict):
+    resp = call('virt.instance.device_add', instance_name, {'name': device_name, **payload})
     try:
-        yield call('virt.instance.device_add', instance_name, {'name': device_name, **payload})
+        yield resp
     finally:
         call('virt.instance.device_delete', instance_name, device_name)
 
