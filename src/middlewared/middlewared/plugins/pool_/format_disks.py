@@ -19,7 +19,7 @@ class PoolService(Service):
         async def format_disk(arg):
             nonlocal formatted, current_percentage
             disk, config = arg
-            await self.middleware.call('disk.format', disk)
+            await self.middleware.call('disk.format', disk, config.get('size'))
             formatted += 1
             current_percentage += single_disk_percentage
             job.set_progress(current_percentage, f'Formatting disks ({formatted}/{len_disks})')
