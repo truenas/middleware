@@ -202,6 +202,9 @@ class NFSService(SystemServiceService):
         else:
             nfs['managed_nfsd'] = False
 
+        # Repair inconsistencies
+        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
+
         return nfs
 
     @private
@@ -210,6 +213,9 @@ class NFSService(SystemServiceService):
         nfs.pop("v4_krb_enabled")
         nfs.pop("keytab_has_nfs_spn")
         nfs["16"] = nfs.pop("userd_manage_gids")
+
+        # Repair inconsistencies
+        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
 
         return nfs
 
