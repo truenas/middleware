@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
-from os import scandir, O_RDWR, O_EXCL, open as os_open
+from os import close, scandir, O_RDWR, O_EXCL, open as os_open
 from re import compile as rcompile
 from uuid import UUID
 
@@ -147,9 +147,11 @@ class DiskEntry:
         end of disk to allow users the ability to replace disks
         in a zpool with a disk of nominal size."""
         dev_fd = os_open(self.devpath, O_RDWR | O_EXCL)
-        self.wipe_quick(dev_fd=dev_fd)
-        return write_gpt(dev_fd, self.lbs, self.size_sectors)
-
+        try:
+            self.wipe_quick(dev_fd=dev_fd)
+            return write_gpt(dev_fd, self.lbs, self.size_sectors)
+        finally:
+            close(dev_fd)
 
 def __iterate_disks() -> Generator[DiskEntry]:
     """Iterate over /dev and yield valid devices."""
