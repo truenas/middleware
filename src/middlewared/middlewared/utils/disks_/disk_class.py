@@ -148,7 +148,7 @@ class DiskEntry:
         in a zpool with a disk of nominal size."""
         dev_fd = os_open(self.devpath, O_RDWR | O_EXCL)
         self.wipe_quick(dev_fd=dev_fd)
-        return write_gpt(dev_fd, self.lbs, self.total_sectors)
+        return write_gpt(dev_fd, self.lbs, self.size_sectors)
 
 
 def __iterate_disks() -> Generator[DiskEntry]:
