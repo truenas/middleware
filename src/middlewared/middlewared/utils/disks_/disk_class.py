@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from functools import cached_property
 from os import scandir, O_RDWR, O_EXCL, open as os_open
 from re import compile as rcompile
+from uuid import UUID
 
-from .disk_io import read_gpt, wipe_disk_quick
+from .disk_io import read_gpt, wipe_disk_quick, write_gpt
 from .gpt_parts import GptPartEntry
 
 __all__ = ("DiskEntry", "__iterate_disks")
@@ -139,6 +140,15 @@ class DiskEntry:
                 wipe_disk_quick(f.fileno(), disk_size=self.size_bytes)
         else:
             wipe_disk_quick(dev_fd, disk_size=self.size_bytes)
+
+    def format(self) -> UUID:
+        """Format the disk with a ZoL GPT partition. By default,
+        leaves a 2GiB or 1% (whichever is smaller) buffer at the
+        end of disk to allow users the ability to replace disks
+        in a zpool with a disk of nominal size."""
+        dev_fd = os_open(self.devpath, O_RDWR | O_EXCL)
+        self.wipe_quick(dev_fd=dev_fd)
+        return write_gpt(dev_fd, self.lbs, self.total_sectors)
 
 
 def __iterate_disks() -> Generator[DiskEntry]:
