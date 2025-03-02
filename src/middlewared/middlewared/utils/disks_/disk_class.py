@@ -20,9 +20,9 @@ class DiskEntry:
     devpath: str | None = None
     """The disk's /dev path (i.e. '/dev/sda')"""
 
-    def __opener(self, relative_path: str) -> str | None:
+    def __opener(self, relative_path: str, mode: str = "r") -> str | None:
         try:
-            with open(f"/sys/block/{self.name}/{relative_path}") as f:
+            with open(f"/sys/block/{self.name}/{relative_path}", mode) as f:
                 return f.read().strip()
         except Exception:
             pass
@@ -62,7 +62,17 @@ class DiskEntry:
     @cached_property
     def serial(self) -> str | None:
         """The disk's serial number as reported by sysfs"""
-        return self.__opener("device/serial")
+        if not (serial := self.__opener("device/serial")):
+            if serial := self.__opener("device/vpd_pg80", mode="rb"):
+                serial = "".join(
+                    chr(b) if 32 <= b <= 126 else "\uFFFD" for b in serial
+                ).replace("\uFFFD", "")
+
+        if not serial:
+            # pmem devices have a uuid attribute that we use as serial
+            serial = self.__opener("uuid")
+
+        return serial
 
     @cached_property
     def lunid(self) -> str | None:
@@ -77,7 +87,7 @@ class DiskEntry:
             wwid = self.__opener("wwid")
 
         if wwid is not None:
-            wwid = wwid.removeprefix("0x").removeprefix("eui.")
+            wwid = wwid.removeprefix("naa.").removeprefix("0x").removeprefix("eui.")
 
         return wwid
 
