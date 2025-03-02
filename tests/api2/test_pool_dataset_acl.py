@@ -109,4 +109,4 @@ def test_nested_dataset_acltype_validation():
     with dataset('D1') as ds:
         with dataset('D1/D2') as ds2:
             with smb_share(os.path.join('/mnt', ds2), 'TEST_SHARE'):
-                call('pool.dataset.update', ds, {'readonly': 'ON'})
+                call('pool.dataset.update', ds, {'readonly': 'ON', 'acltype': 'INHERIT'})
