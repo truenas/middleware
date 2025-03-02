@@ -75,6 +75,10 @@ class DiskEntry:
         wwid = self.__opener("device/wwid")
         if wwid is None:
             wwid = self.__opener("wwid")
+
+        if wwid is not None:
+            wwid = wwid.removeprefix("0x").removeprefix("eui.")
+
         return wwid
 
     @cached_property
