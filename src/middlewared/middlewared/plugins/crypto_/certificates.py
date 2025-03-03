@@ -436,11 +436,6 @@ class CertificateService(CRUDService):
 
             data['privatekey'] = csr_obj['privatekey']
             data.pop('passphrase', None)
-        elif not data.get('privatekey'):
-            verrors.add(
-                'certificate_create.privatekey',
-                'Private key is required when importing a certificate'
-            )
 
         verrors.check()
 
