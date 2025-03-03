@@ -21,7 +21,13 @@
     #    * Including 'insecure' appears to not be requried on the share settings
 
     # Start clean
-    pathlib.Path("/usr/etc/nfs.conf").unlink(missing_ok=True)
+    try:
+        pathlib.Path("/usr/etc/nfs.conf").unlink(missing_ok=True)
+    except OSError as e:
+        if "Read-only" not in str(e):
+            middleware.logger.warning(
+                "Unexpected error on /etc/etc/nfs.conf delete: %s", e
+            )
     for rmdir in ["/usr/etc/nfs.conf.d", "/etc/nfs.conf.d"]:
         shutil.rmtree(rmdir, ignore_errors=True)
 %>
