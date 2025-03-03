@@ -24,8 +24,9 @@ depends_on = None
 '''
 Okay so what we would like to do here is essentially are the following steps:
 
-1. Remove signedby attribute from CA/certs table
-2. Make sure cert chain is valid after removal of signedby
+1. Update certificate attr for both certs/cas to include complete chain
+2. Copy over CAs to certs table
+3. Adjust cert types so that we only have cert type existing / csr now
 '''
 
 CA_TYPE_EXISTING = 0x01
@@ -35,6 +36,16 @@ CERT_TYPE_EXISTING = 0x08
 CERT_TYPE_INTERNAL = 0x10
 CERT_TYPE_CSR = 0x20
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
+UPGRADE_CA_PREFIX = 'MIGRATED_CA_'
+
+
+def get_cert_name(ca_name: str, certs: dict) -> str:
+    ca_name = f'{UPGRADE_CA_PREFIX}{ca_name}'
+    suffix = 2
+    while ca_name in certs:
+        ca_name = f'{UPGRADE_CA_PREFIX}{ca_name}_{suffix}'
+
+    return ca_name
 
 
 def cert_issuer(cert: dict, cas: dict[str, dict]) -> str | dict | None:
@@ -113,7 +124,7 @@ def upgrade():
             {'cert': public_key, 'id': cert['id']}
         )
 
-    for ca in cas:
+    for ca in cas.values():
         chain = get_chain_list(ca, cas)
         if not chain:
             continue
@@ -123,6 +134,24 @@ def upgrade():
             sa.text("UPDATE system_certificateauthority SET cert_certificate = :cert WHERE id = :id"),
             {'cert': public_key, 'id': ca['id']}
         )
+
+    # We are going to migrate CAs to cert table now
+    certs = {cert['cert_name']: cert for cert in map(dict, conn.execute("SELECT * FROM system_certificate").fetchall())}
+    cas = {ca['id']: ca for ca in map(dict, conn.execute("SELECT * FROM system_certificateauthority").fetchall())}
+    for ca in cas.values():
+        conn.execute(sa.text("""
+                INSERT INTO system_certificate (
+                    cert_type, cert_name, cert_certificate, cert_privatekey, cert_add_to_trusted_store
+                ) VALUES (
+                    :cert_type, :cert_name, :cert_certificate, :cert_privatekey, :cert_add_to_trusted_store
+                )
+            """), {
+            'cert_type': CERT_TYPE_EXISTING,
+            'cert_name': get_cert_name(ca['cert_name'], certs),
+            'cert_certificate': ca['cert_certificate'],
+            'cert_privatekey': ca['cert_privatekey'],
+            'cert_add_to_trusted_store': ca['cert_add_to_trusted_store'],
+        })
 
     with op.batch_alter_table('system_certificate', schema=None) as batch_op:
         batch_op.drop_index('ix_system_certificate_cert_signedby_id')
