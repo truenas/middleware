@@ -82,6 +82,14 @@ class CRUDServiceMetabase(ServiceBase):
                 klass.query = api_method(QueryArgs, query_result_model)(
                     klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
                 )
+            else:
+                if getattr(klass.query, '_legacy_filterable', False):
+                    raise RuntimeError(
+                        'Legacy-style @filterable can\'t be used on classes with new-style `entry` defined. Please, '
+                        'either use @filterable_api_method or don\'t use any decorator at all (it will be applied '
+                        f'automatically). Offending class: {klass!r}.'
+                    )
+
             # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
             get_instance_args_model = get_instance_args(klass._config.entry)
             get_instance_result_model = get_instance_result(klass._config.entry)
