@@ -25,7 +25,7 @@ class DiskService(Service):
                 self.smartctl_args_for_disk = dict(zip(
                     [disk["name"] for disk in disks],
                     await asyncio_map(
-                        lambda disk: get_smartctl_args(context, disk["name"], disk["smartoptions"]), disks, 8
+                        lambda disk: get_smartctl_args(context, disk["name"]), disks, 8
                     )
                 ))
             except Exception:
@@ -58,13 +58,7 @@ class DiskService(Service):
                 devices = await self.middleware.call('device.get_disks')
                 hardware = await self.middleware.call('truenas.is_ix_hardware')
                 context = SMARTCTX(devices=devices, enterprise_hardware=hardware, middleware=self.middleware)
-                if disks := await self.middleware.call('disk.query', [['name', '=', disk]]):
-                    smartoptions = disks[0]['smartoptions']
-                else:
-                    self.middleware.logger.warning("No database row found for disk %r", disk)
-                    smartoptions = ''
-
-                smartctl_args = await get_smartctl_args(context, disk, smartoptions)
+                smartctl_args = await get_smartctl_args(context, disk)
 
             if smartctl_args is None:
                 raise CallError(f'S.M.A.R.T. is unavailable for disk {disk}')

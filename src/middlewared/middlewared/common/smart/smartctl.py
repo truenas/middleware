@@ -1,7 +1,6 @@
 from collections import namedtuple
 import logging
 import os
-import shlex
 
 from middlewared.utils import run
 
@@ -12,26 +11,21 @@ SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
 SMARTCTX = namedtuple('smartctl_args', ['devices', 'enterprise_hardware', 'middleware'])
 
 
-async def get_smartctl_args(context, disk, smartoptions):
+async def get_smartctl_args(context, disk):
     devices = context.devices
     enterprise_hardware = context.enterprise_hardware
-    try:
-        smartoptions = shlex.split(smartoptions)
-    except Exception as e:
-        logger.warning("Error parsing S.M.A.R.T. options %r for disk %r: %r", smartoptions, disk, e)
-        smartoptions = []
 
     if disk.startswith("nvme"):
-        return [f"/dev/{disk}", "-d", "nvme"] + smartoptions
+        return [f"/dev/{disk}", "-d", "nvme"]
 
     device = devices.get(disk)
     if device is None:
         return
 
     if device["vendor"] and device["vendor"].lower().strip() == "nvme":
-        return [f"/dev/{disk}", "-d", "nvme"] + smartoptions
+        return [f"/dev/{disk}", "-d", "nvme"]
 
-    args = [f"/dev/{disk}"] + smartoptions
+    args = [f"/dev/{disk}"]
 
     sat = False
     if enterprise_hardware:

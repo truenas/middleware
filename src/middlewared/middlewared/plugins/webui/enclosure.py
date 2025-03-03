@@ -109,7 +109,6 @@ class WebUIEnclosureService(Service):
                         "serial": "XXXXX",
                         "advpowermgmt": "DISABLED",
                         "togglesmart": true,
-                        "smartoptions": "",
                         "transfermode": "Auto",
                         "hddstandby": "ALWAYS ON",
                         "description": "",

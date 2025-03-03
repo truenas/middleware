@@ -22,7 +22,6 @@ class DiskModel(sa.Model):
     disk_hddstandby = sa.Column(sa.String(120), default="Always On")
     disk_advpowermgmt = sa.Column(sa.String(120), default="Disabled")
     disk_togglesmart = sa.Column(sa.Boolean(), default=True)
-    disk_smartoptions = sa.Column(sa.String(120))
     disk_expiretime = sa.Column(sa.DateTime(), nullable=True)
     disk_enclosure_slot = sa.Column(sa.Integer(), nullable=True)
     disk_passwd = sa.Column(sa.EncryptedText(), default='')
@@ -69,7 +68,6 @@ class DiskService(CRUDService):
         ),
         Bool('togglesmart', required=True),
         Str('advpowermgmt', required=True, enum=['DISABLED', '1', '64', '127', '128', '192', '254']),
-        Str('smartoptions', required=True),
         Datetime('expiretime', required=True, null=True),
         Int('critical', required=True, null=True),
         Int('difference', required=True, null=True),
@@ -230,9 +228,6 @@ class DiskService(CRUDService):
         """
         Update disk of `id`.
 
-        If extra options need to be passed to SMART which we don't already support, they can be passed by
-        `smartoptions`.
-
         `critical`, `informational` and `difference` are integer values on which alerts for SMART are configured
         if the disk temperature crosses the assigned threshold for each respective attribute.
         If they are set to null, then SMARTD config values are used as defaults.
@@ -253,13 +248,6 @@ class DiskService(CRUDService):
         self._expand_enclosure(old)
         new = old.copy()
         new.update(data)
-
-        # prevent breaking the ability to start the smartd service if user
-        # provides very obvious params that conflict with our own
-        invalid_smart_flags = ['-a', '-d', '-n', '-W', '-m', '-M', 'exec']
-        for invalid in invalid_smart_flags:
-            if invalid in new['smartoptions']:
-                raise ValidationError('disk.smartoptions', f'"{invalid}" is an invalid extra smart option')
 
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
@@ -285,7 +273,7 @@ class DiskService(CRUDService):
 
         if any(
             new[key] != old[key]
-            for key in ['togglesmart', 'smartoptions', 'hddstandby', 'critical', 'difference', 'informational']
+            for key in ['togglesmart', 'hddstandby', 'critical', 'difference', 'informational']
         ):
             if new['togglesmart']:
                 await self.middleware.call('disk.toggle_smart_on', new['name'])
@@ -306,7 +294,7 @@ class DiskService(CRUDService):
         keys = []
         if copy_settings:
             keys += [
-                'togglesmart', 'advpowermgmt', 'hddstandby', 'smartoptions', 'critical', 'difference', 'informational',
+                'togglesmart', 'advpowermgmt', 'hddstandby', 'critical', 'difference', 'informational',
             ]
         if copy_description:
             keys += ['description']
