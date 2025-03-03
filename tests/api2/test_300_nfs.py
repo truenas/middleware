@@ -142,7 +142,11 @@ def parse_server_config(conf_type="nfs"):
             assert section in expected_sections, f"Unexpected section found: {section}"
             continue
 
-        k, v = line.split(" = ", 1)
+        try:
+            k, v = line.split(" = ", 1)
+        except ValueError as ve:
+            raise ValueError(f"Error detected in: {line}") from ve
+
         rv[section].update({k: v})
 
     return rv
