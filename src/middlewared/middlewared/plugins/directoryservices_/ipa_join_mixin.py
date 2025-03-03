@@ -65,10 +65,11 @@ class IPAJoinMixin:
 
         if job:
             job.set_progress(90, 'Removing IPA certificate.')
-        if (ipa_cert := self.middleware.call_sync('certificateauthority.query', [
+        if (ipa_cert := self.middleware.call_sync('certificate.query', [
             ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
         ])):
-            self.middleware.call_sync('certificateauthority.delete', ipa_cert[0]['id'])
+            delete_job = self.middleware.call_sync('certificate.delete', ipa_cert[0]['id'])
+            delete_job.wait_sync(raise_on_error=True)
 
     def _ipa_leave(self, job: Job, ds_type: DSType, domain: str):
         """
@@ -459,7 +460,7 @@ class IPAJoinMixin:
             krb_principal = ktutil_list_impl(f.name)[0]['principal']
 
         # update our cacerts with IPA domain one:
-        existing_cacert = self.middleware.call_sync('certificateauthority.query', [
+        existing_cacert = self.middleware.call_sync('certificate.query', [
             ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
         ])
         if existing_cacert:
@@ -480,8 +481,8 @@ class IPAJoinMixin:
                     ipa_constants.IpaConfigName.IPA_CACERT.value
                 )
         else:
-            # TODO: Update usage to point to certificate table
-            self.middleware.call_sync('certificateauthority.create', {
+            # TODO: FIX Params here as cert currently requires private key as well
+            self.middleware.call_sync('certificate.create', {
                 'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
                 'certificate': resp['cacert'],
                 'add_to_trusted_store': True,
