@@ -8,11 +8,12 @@ from fenced.fence import ExitCode as FencedExitCodes
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
-    PoolEntry, PoolUpdateArgs, PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
+    PoolEntry, PoolCreateArgs, PoolCreateResult, PoolUpdateArgs,
+    PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
 )
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.schema import Bool, Dict, Int, List, Str
-from middlewared.service import accepts, CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.disks_.get_disks import get_disks
 from middlewared.utils.size import format_size
@@ -325,7 +326,7 @@ class PoolService(CRUDService):
 
         return verrors
 
-    @accepts(Dict(
+    Dict(
         'pool_create',
         Str('name', max_length=50, required=True),
         Bool('encryption', default=False),
@@ -388,7 +389,9 @@ class PoolService(CRUDService):
         ),
         Bool('allow_duplicate_serials', default=False),
         register=True,
-    ), audit='Pool create', audit_extended=lambda data: data['name'])
+    )
+
+    @api_method(PoolCreateArgs, PoolCreateResult, audit='Pool create', audit_extended=lambda data: data['name'])
     @job(lock='pool_createupdate')
     async def do_create(self, job, data):
         """
