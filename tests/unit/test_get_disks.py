@@ -48,7 +48,7 @@ def test__read_partitions():
             assert uuid.UUID(a.unique_partition_guid) == uuid.UUID(b["uuid"])
             assert a.first_lba == b["start"]
             assert a.last_lba == (b["start"] + b["size"]) - 1
-            assert a.size_bytes == b["size"] * disk.lbs
+            assert disk.size_bytes == b["size"] * disk.lbs
 
     assert at_least_one, "No disks with partitions! (or get_disks() failed)"
 
@@ -74,13 +74,13 @@ def test__wipe_quick():
         f.write(base64.b64decode(VMFS_MAGIC_STRING_B64))
 
     fs = json.loads(
-        subprocess.run(["wipefs", "-J", f"/dev/{disk}"], capture_output=True).stdout
+        subprocess.run(["wipefs", "-J", disk.devpath], capture_output=True).stdout
     )["signatures"][0]
     assert fs["type"] == VMFS_MAGIC_STRING_WFS
 
     # Clean the drive
     disk.wipe_quick()
     fs = json.loads(
-        subprocess.run(["wipefs", "-J", f"/dev/{disk}"], capture_output=True).stdout
+        subprocess.run(["wipefs", "-J", disk.devpath], capture_output=True).stdout
     )["signatures"]
     assert not fs
