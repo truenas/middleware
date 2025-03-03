@@ -614,11 +614,6 @@ class CertificateService(CRUDService):
                     'certificate_update.add_to_trusted_store',
                     'A CSR cannot be added to the system\'s trusted store'
                 )
-            if new['revoked'] and not old['revoked'] and not new['can_be_revoked']:
-                verrors.add(
-                    'certificate_update.revoked',
-                    'Only certificate(s) can be revoked which have a CA present on the system'
-                )
             elif old['revoked'] and not new['revoked']:
                 verrors.add(
                     'certificate_update.revoked',
