@@ -84,7 +84,7 @@ class KMIPService(ConfigService):
 
         verrors.extend(await validate_port(self.middleware, 'kmip_update.port', new['port'], 'kmip'))
 
-        ca = await self.middleware.call('certificateauthority.query', [['id', '=', new['certificate_authority']]])
+        ca = await self.middleware.call('certificate.query', [['id', '=', new['certificate_authority']]])
         if ca and not verrors:
             ca = ca[0]
             if not await self.middleware.call(
