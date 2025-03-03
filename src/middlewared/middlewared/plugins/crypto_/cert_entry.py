@@ -14,7 +14,6 @@ CERT_ENTRY = Dict(
     Str('acme_uri', null=True),
     Dict('domains_authenticators', additional_attrs=True, null=True),
     Int('renew_days'),
-    Datetime('revoked_date', null=True),
     Str('root_path'),
     Dict('acme', additional_attrs=True, null=True),
     Str('certificate_path', null=True),
