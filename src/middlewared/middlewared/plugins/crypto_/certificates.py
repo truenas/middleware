@@ -4,7 +4,6 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, job, private, skip_arg, ValidationErrors
-from middlewared.utils.time_utils import utc_now
 from middlewared.validators import Email, Range
 
 from .common_validation import _validate_common_attributes, validate_cert_name
@@ -14,8 +13,7 @@ from .key_utils import export_private_key
 from .load_utils import load_certificate
 from .query_utils import normalize_cert_attrs
 from .utils import (
-    CERT_TYPE_EXISTING, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT,
-    get_cert_info_from_data, _set_required,
+    CERT_TYPE_EXISTING, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT, get_cert_info_from_data, _set_required,
 )
 
 
@@ -32,7 +30,6 @@ class CertificateModel(sa.Model):
     cert_domains_authenticators = sa.Column(sa.JSON(encrypted=True), nullable=True)
     cert_renew_days = sa.Column(sa.Integer(), nullable=True, default=10)
     cert_acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True, nullable=True)
-    cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)
     cert_add_to_trusted_store = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
