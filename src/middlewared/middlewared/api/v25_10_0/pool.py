@@ -3,8 +3,7 @@ from typing import Annotated, Literal
 from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args,
-    NotRequired, LongString, ForUpdateMetaclass
+    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args, LongString, ForUpdateMetaclass
 )
 
 
