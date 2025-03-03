@@ -53,25 +53,6 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
     if private_key:
         await middleware.call('cryptokey.validate_private_key', private_key, verrors, schema_name, passphrase)
 
-    signedby = data.get('signedby')
-    if signedby:
-        valid_signing_ca = await middleware.call(
-            'certificateauthority.query',
-            [
-                ('certificate', '!=', None),
-                ('privatekey', '!=', None),
-                ('certificate', '!=', ''),
-                ('privatekey', '!=', ''),
-                ('id', '=', signedby)
-            ],
-        )
-
-        if not valid_signing_ca:
-            verrors.add(
-                f'{schema_name}.signedby',
-                'Please provide a valid signing authority'
-            )
-
     csr = data.get('CSR')
     if csr:
         if not await middleware.call('cryptokey.load_certificate_request', csr):

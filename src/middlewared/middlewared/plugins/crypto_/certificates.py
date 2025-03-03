@@ -42,7 +42,6 @@ class CertificateService(CRUDService):
     class Config:
         datastore = 'system.certificate'
         datastore_extend = 'certificate.cert_extend'
-        datastore_extend_context = 'certificate.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
         role_prefix = 'CERTIFICATE'
@@ -60,17 +59,7 @@ class CertificateService(CRUDService):
         }
 
     @private
-    def cert_extend_context(self, rows, extra):
-        context = {
-            'cas': {c['id']: c for c in self.middleware.call_sync('certificateauthority.query')},
-        }
-        return context
-
-    @private
-    def cert_extend(self, cert, context):
-        if cert['signedby']:
-            cert['signedby'] = context['cas'][cert['signedby']['id']]
-
+    def cert_extend(self, cert):
         normalize_cert_attrs(cert)
         return cert
 
@@ -169,7 +158,6 @@ class CertificateService(CRUDService):
             Bool('tos'),
             Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
-            Int('signedby'),
             Int('key_length', enum=[2048, 4096]),
             Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Int('type'),
@@ -282,7 +270,6 @@ class CertificateService(CRUDService):
                     "organization": "iXsystems",
                     "state": "Tennessee",
                     "digest_algorithm": "SHA256",
-                    "signedby": 4,
                     "create_type": "CERTIFICATE_CREATE_INTERNAL"
                 }]
             }
@@ -328,7 +315,7 @@ class CertificateService(CRUDService):
                 await self.middleware.call(f'certificate.{self.map_functions[create_type]}', job, data)
             ).items()
             if k in [
-                'name', 'certificate', 'CSR', 'privatekey', 'type', 'signedby', 'acme', 'acme_uri',
+                'name', 'certificate', 'CSR', 'privatekey', 'type', 'acme', 'acme_uri',
                 'domains_authenticators', 'renew_days', 'add_to_trusted_store',
             ]
         }
@@ -400,14 +387,13 @@ class CertificateService(CRUDService):
     @accepts(
         Patch(
             'certificate_create_internal', 'certificate_create_csr',
-            ('rm', {'name': 'signedby'}),
-            ('rm', {'name': 'lifetime'})
+            ('rm', {'name': 'lifetime'}),
         )
     )
     @private
     @skip_arg(count=1)
     def create_csr(self, job, data):
-        # no signedby, lifetime attributes required
+        # no lifetime attribute required
         verrors = ValidationErrors()
         cert_info = get_cert_info_from_data(data)
         cert_info['cert_extensions'] = data['cert_extensions']
@@ -509,7 +495,6 @@ class CertificateService(CRUDService):
             ('edit', _set_required('organization')),
             ('edit', _set_required('email')),
             ('edit', _set_required('san')),
-            ('edit', _set_required('signedby')),
             ('rm', {'name': 'create_type'}),
             register=True
         )
@@ -517,7 +502,7 @@ class CertificateService(CRUDService):
     @private
     @skip_arg(count=1)
     async def create_internal(self, job, data):
-
+        # FIXME: REmove me please
         cert_info = get_cert_info_from_data(data)
         data['type'] = CERT_TYPE_INTERNAL
 
@@ -589,8 +574,6 @@ class CertificateService(CRUDService):
             }
         """
         old = await self.get_instance(id_)
-        # signedby is changed back to integer from a dict
-        old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
         if old.get('acme'):
             old['acme'] = old['acme']['id']
 
