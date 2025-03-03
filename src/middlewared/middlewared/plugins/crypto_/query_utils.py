@@ -43,7 +43,6 @@ def normalize_cert_attrs(cert: dict) -> None:
         'privatekey_path': os.path.join(root_path, f'{cert["name"]}.key'),
         'csr_path': os.path.join(root_path, f'{cert["name"]}.csr'),
         'cert_type': 'CA' if is_ca else 'CERTIFICATE',
-        'revoked': bool(cert['revoked_date']),  # FIXME: Remove issuer/can_be_revoked usages
         'internal': 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES',
         'CA_type_existing': bool(cert['type'] & CA_TYPE_EXISTING),
         'CA_type_internal': bool(cert['type'] & CA_TYPE_INTERNAL),

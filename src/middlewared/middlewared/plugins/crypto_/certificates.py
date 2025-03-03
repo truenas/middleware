@@ -14,7 +14,7 @@ from .key_utils import export_private_key
 from .load_utils import load_certificate
 from .query_utils import normalize_cert_attrs
 from .utils import (
-    CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT,
+    CERT_TYPE_EXISTING, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT,
     get_cert_info_from_data, _set_required,
 )
 
@@ -123,12 +123,6 @@ class CertificateService(CRUDService):
             verrors.add(
                 schema_name,
                 'Please use a certificate whose digest algorithm has at least 112 security bits'
-            )
-
-        if cert['revoked']:
-            verrors.add(
-                schema_name,
-                'This certificate is revoked'
             )
 
     @private
@@ -466,7 +460,6 @@ class CertificateService(CRUDService):
         Int('id', required=True),
         Dict(
             'certificate_update',
-            Bool('revoked'),
             Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Bool('add_to_trusted_store'),
             Str('name'),
@@ -477,10 +470,7 @@ class CertificateService(CRUDService):
         """
         Update certificate of `id`
 
-        Only name and revoked attribute can be updated.
-
-        When `revoked` is enabled, the specified cert `id` is revoked and if it belongs to a CA chain which
-        exists on this system, its serial number is added to the CA's certificate revocation list.
+        Only name attribute can be updated.
 
         .. examples(websocket)::
 
@@ -507,7 +497,7 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if any(new.get(k) != old.get(k) for k in ('name', 'revoked', 'renew_days', 'add_to_trusted_store')):
+        if any(new.get(k) != old.get(k) for k in ('name', 'renew_days', 'add_to_trusted_store')):
 
             verrors = ValidationErrors()
             tnc_config = await self.middleware.call('tn_connect.config')
@@ -530,33 +520,15 @@ class CertificateService(CRUDService):
                     'Certificate renewal days is only supported for ACME certificates'
                 )
 
-            if new['revoked'] and new['cert_type_CSR']:
-                verrors.add(
-                    'certificate_update.revoked',
-                    'A CSR cannot be marked as revoked.'
-                )
             if new['add_to_trusted_store'] and new['cert_type_CSR']:
                 verrors.add(
                     'certificate_update.add_to_trusted_store',
                     'A CSR cannot be added to the system\'s trusted store'
                 )
-            elif old['revoked'] and not new['revoked']:
-                verrors.add(
-                    'certificate_update.revoked',
-                    'Certificate has already been revoked and this cannot be reversed'
-                )
-
-            if not verrors and new['revoked'] and new['add_to_trusted_store']:
-                verrors.add(
-                    'certificate_update.add_to_trusted_store',
-                    'Revoked certificates cannot be added to system\'s trusted store'
-                )
 
             verrors.check()
 
             to_update = {'renew_days': new['renew_days']} if data.get('renew_days') else {}
-            if old['revoked'] != new['revoked'] and new['revoked']:
-                to_update['revoked_date'] = utc_now()
 
             await self.middleware.call(
                 'datastore.update',
