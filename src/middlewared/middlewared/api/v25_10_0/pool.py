@@ -107,13 +107,18 @@ class PoolAttachment(BaseModel):
 
 
 class PoolCreateEncryptionOptions(BaseModel):
+    """Keys are stored by the system for automatic locking/unlocking on import/export of encrypted datasets. If that is
+    not desired, dataset should be created with a passphrase as a key."""
     generate_key: bool = False
+    """Automatically generate the key to be used for dataset encryption."""
     pbkdf2iters: Annotated[int, Field(ge=100000)] = 350000
     algorithm: Literal[
         "AES-128-CCM", "AES-192-CCM", "AES-256-CCM", "AES-128-GCM", "AES-192-GCM", "AES-256-GCM"
     ] = "AES-256-GCM"
     passphrase: Secret[Annotated[str, Field(min_length=8)] | None] = None
+    """Must be specified if encryption for root dataset is desired with a passphrase as a key."""
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
+    """A hex-encoded key specified as an alternative to using `passphrase`."""
 
 
 class PoolCreateTopologyDataVdevDRAID(BaseModel):
@@ -157,6 +162,7 @@ class PoolCreateTopologyLogVdev(BaseModel):
 
 class PoolCreateTopology(BaseModel):
     data: Annotated[list[PoolCreateTopologyDataVdev], Field(min_length=1)]
+    """All vdevs must be of the same `type`."""
     special: list[PoolCreateTopologySpecialVdev] = []
     dedup: list[PoolCreateTopologyDedupVdev] = []
     cache: list[PoolCreateTopologyCacheVdev] = []
@@ -167,14 +173,33 @@ class PoolCreateTopology(BaseModel):
 class PoolCreate(BaseModel):
     name: Annotated[str, Field(max_length=50)]
     encryption: bool = False
+    """If set, create a ZFS encrypted root dataset for this pool."""
     dedup_table_quota: Literal["AUTO", "CUSTOM", None] = "AUTO"
     dedup_table_quota_value: PositiveInt | None = None
     deduplication: Literal["ON", "VERIFY", "OFF", None] = None
+    """Make sure no block of data is duplicated in the pool. If set to `VERIFY` and two blocks have similar signatures,
+    byte-to-byte comparison is performed to ensure that the blcoks are identical. This should be used in special
+    circumstances as it carries a significant overhead."""
     checksum: Literal[
         "ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3", None
     ] = None
     encryption_options: PoolCreateEncryptionOptions = Field(default_factory=PoolCreateEncryptionOptions)
+    """Specify configuration for encryption of root dataset."""
     topology: PoolCreateTopology
+    """```
+    {
+        "data": [
+            {"type": "RAIDZ1", "disks": ["da1", "da2", "da3"]}
+        ],
+        "cache": [
+            {"type": "STRIPE", "disks": ["da4"]}
+        ],
+        "log": [
+            {"type": "STRIPE", "disks": ["da5"]}
+        ],
+        "spares": ["da6"]
+    }
+    ```"""
     allow_duplicate_serials: bool = False
 
 
@@ -220,6 +245,7 @@ class PoolReplace(BaseModel):
 
 
 class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
+    """Cannot change type of existing vdevs."""
     pass
 
 

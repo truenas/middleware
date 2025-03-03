@@ -397,42 +397,6 @@ class PoolService(CRUDService):
         """
         Create a new ZFS Pool.
 
-        `topology` is a object which requires at least one `data` entry.
-        All of `data` entries (vdevs) require to be of the same type.
-
-        `deduplication` when set to ON or VERIFY makes sure that no block of data is duplicated in the pool. When
-        VERIFY is specified, if two blocks have similar signatures, byte to byte comparison is performed to ensure that
-        the blocks are identical. This should be used in special circumstances as it carries a significant overhead.
-
-        `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
-
-        `encryption_options` specifies configuration for encryption of root dataset for `name` pool.
-        `encryption_options.passphrase` must be specified if encryption for root dataset is desired with a passphrase
-        as a key.
-        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
-        `encryption_options.generate_key` when enabled automatically generates the key to be used
-        for dataset encryption.
-
-        It should be noted that keys are stored by the system for automatic locking/unlocking
-        on import/export of encrypted datasets. If that is not desired, dataset should be created
-        with a passphrase as a key.
-
-        Example of `topology`:
-
-            {
-                "data": [
-                    {"type": "RAIDZ1", "disks": ["da1", "da2", "da3"]}
-                ],
-                "cache": [
-                    {"type": "STRIPE", "disks": ["da4"]}
-                ],
-                "log": [
-                    {"type": "STRIPE", "disks": ["da5"]}
-                ],
-                "spares": ["da6"]
-            }
-
-
         .. examples(websocket)::
 
           Create a pool named "tank", raidz1 with 3 disks, 1 cache disk, 1 ZIL/log disk
@@ -642,8 +606,6 @@ class PoolService(CRUDService):
     async def do_update(self, job, audit_callback, id_, data):
         """
         Update pool of `id`, adding the new topology.
-
-        The `type` of `data` must be the same of existing vdevs.
 
         .. examples(websocket)::
 
