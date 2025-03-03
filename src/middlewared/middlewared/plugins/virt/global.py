@@ -364,6 +364,7 @@ class VirtGlobalService(ConfigService):
             # 1. Setting up incus for this first time on the server
             # 2. After change to the storage pool path
             # 3. After an HA failover event
+            # 4. After TrueNAS upgrades
             #
             # NOTE: this will potentially cause user-initiated changes from incus commands to be lost.
             payload = {
