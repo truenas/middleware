@@ -78,11 +78,10 @@ class CertificateChecksAlertSource(AlertSource):
     async def check(self):
         alerts = []
 
-        # system certs/cas
+        # system certs
         certs = await self.middleware.call('certificate.query', [['certificate', '!=', None]])
-        certs.extend(await self.middleware.call('certificateauthority.query'))
 
-        # service certs/cas
+        # service certs
         check_for_revocation = await self._get_service_certs()
 
         parsed = {}
@@ -95,6 +94,7 @@ class CertificateChecksAlertSource(AlertSource):
                 ))
             else:
                 # check the parsed certificate(s) for expiration
+                # TODO: Make sure it works well with CAs
                 if cert['cert_type'].capitalize() == 'CERTIFICATE':
                     diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()).days
                     if diff < 10:
