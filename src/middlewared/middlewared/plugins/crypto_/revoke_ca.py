@@ -1,8 +1,6 @@
 from middlewared.service import periodic, private, Service
 from middlewared.utils.time_utils import utc_now
 
-from .query_utils import get_ca_chain
-
 
 class CertificateAuthorityService(Service):
 
@@ -32,4 +30,4 @@ class CertificateAuthorityService(Service):
     async def get_ca_chain(self, ca_id):
         certs = await self.middleware.call('datastore.query', 'system.certificate', [], {'prefix': 'cert_'})
         cas = await self.middleware.call('datastore.query', 'system.certificateauthority', [], {'prefix': 'cert_'})
-        return get_ca_chain(ca_id, certs, cas)
+        return []
