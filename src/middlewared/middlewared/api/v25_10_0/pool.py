@@ -208,8 +208,8 @@ class PoolLabel(BaseModel):
 class PoolProcess(BaseModel):
     pid: int
     name: str
-    service: str = NotRequired
-    cmdline: LongString = NotRequired
+    service: str | None
+    cmdline: LongString | None
 
 
 class PoolReplace(BaseModel):
