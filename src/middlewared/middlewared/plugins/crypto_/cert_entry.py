@@ -23,11 +23,6 @@ CERT_ENTRY = Dict(
     Str('cert_type'),
     Bool('revoked'),
     Bool('expired', null=True),
-    OROperator(
-        Str('issuer', null=True, private=True),
-        Dict('issuer', additional_attrs=True, null=True, private=True),
-        name='issuer'
-    ),
     List('chain_list', items=[Str('certificate', max_length=None)]),
     Str('country', null=True),
     Str('state', null=True),
@@ -57,7 +52,6 @@ CERT_ENTRY = Dict(
     Bool('cert_type_internal'),
     Bool('cert_type_CSR'),
     Bool('parsed'),
-    Bool('can_be_revoked'),
     Dict('extensions', additional_attrs=True),
     List('revoked_certs'),
     Str('crl_path'),
