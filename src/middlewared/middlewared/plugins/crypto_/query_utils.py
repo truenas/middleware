@@ -59,7 +59,7 @@ def normalize_cert_attrs(cert: dict) -> None:
         cert['crl_path'] = os.path.join(root_path, f'{cert["name"]}.crl')
 
     certs = []
-    if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) > 1:
+    if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) >= 1:
         certs = RE_CERTIFICATE.findall(cert['certificate'])
 
     failed_parsing = False
