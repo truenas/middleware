@@ -7,7 +7,7 @@ import socket
 import requests
 
 from middlewared.service_exception import CallError
-from truenas_api_client import Client
+from truenas_api_client import Client as TNClient
 from truenas_api_client.utils import undefined
 
 from .pytest import fail
@@ -21,6 +21,11 @@ truenas_server object is used by both websocket client and REST client for deter
 server to access for API calls. For HA, the `ip` attribute should be set to the virtual IP
 of the truenas server.
 """
+
+class Client(TNClient):
+    def uri_check(self, *args, **kwargs):
+        # override safety checks in client
+        return
 
 
 class TrueNAS_Server:
