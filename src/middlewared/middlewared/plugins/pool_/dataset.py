@@ -303,21 +303,22 @@ class PoolDatasetService(CRUDService):
                 # Prevent users from changing acltype settings underneath an active SMB share
                 # If this dataset hosts an SMB share, then prompt the user to first delete the share,
                 # make the dataset change, the recreate the share.
-                keys = ('acltype',)
-                if any([data.get(key) for key in keys]):
+                acltype = data.get('acltype')
+                if acltype == 'INHERIT':
+                    acltype = parent['acltype']['value']
+
+                if acltype and acltype != cur_dataset['acltype']['value']:
                     ds_attachments = await self.middleware.call('pool.dataset.attachments', data['name'])
                     if smb_attachments := [share for share in ds_attachments if share['type'] == "SMB Share"]:
                         share_names = [smb_share['attachments'] for smb_share in smb_attachments]
-                        for key in (k for k in keys if data.get(k)):
-                            if cur_dataset and (cur_dataset[key]['value'] == data.get(key)):
-                                continue
-                            verrors.add(
-                                f'{schema}.{key}',
-                                'This dataset is hosting SMB shares. '
-                                f'Before {key} can be updated the following shares must be disabled: '
-                                f'{share_names[0]}. '
-                                'The shares may be re-enabled after the change.'
-                            )
+
+                        verrors.add(
+                            f'{schema}.acltype',
+                            'This dataset is hosting SMB shares. '
+                            f'Before acltype can be updated the following shares must be disabled: '
+                            f'{share_names[0]}. '
+                            'The shares may be re-enabled after the change.'
+                        )
 
             # Prevent users from setting incorrect combinations of aclmode and acltype parameters
             # The final value to be set may have one of several different possible origins
