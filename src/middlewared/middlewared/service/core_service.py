@@ -32,7 +32,7 @@ from middlewared.common.environ import environ_update
 from middlewared.job import Job, JobAccess
 from middlewared.pipe import Pipes
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Str
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors, InstanceNotFound
 from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_STARTED_SENTINEL_PATH
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.validators import IpAddress, Range
@@ -90,12 +90,14 @@ class CoreService(Service):
             try:
                 return self.middleware.jobs[job_id]
             except KeyError:
-                raise CallError('Job does not exist', errno.ENOENT)
+                raise InstanceNotFound(f"Job with id {job_id} does not exist")
         else:
             return self.__job_by_credential_and_id(app.authenticated_credentials, job_id, access)
 
     def __job_by_credential_and_id(self, credential, job_id, access):
-        job = self.middleware.jobs[job_id]
+        job = self.middleware.jobs.get(job_id)
+        if job is None:
+            raise InstanceNotFound(f"Job with id {job_id} does not exist")
 
         if (error := job.credential_access_error(credential, access)) is not None:
             raise CallError(error, errno.EPERM)

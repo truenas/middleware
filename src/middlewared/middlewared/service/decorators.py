@@ -25,6 +25,7 @@ def cli_private(fn):
 def filterable(fn=None, /, *, roles=None):
     def filterable_internal(fn):
         fn._filterable = True
+        fn._legacy_filterable = True
         if hasattr(fn, 'wraps'):
             fn.wraps._filterable = True
         return accepts(Ref('query-filters'), Ref('query-options'), roles=roles)(fn)

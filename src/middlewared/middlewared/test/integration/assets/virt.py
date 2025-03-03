@@ -2,6 +2,7 @@ import contextlib
 import os.path
 import uuid
 
+from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.utils import call, ssh, pool
 from time import sleep
 
@@ -41,8 +42,9 @@ def volume(volume_name: str, size: int):
 
 @contextlib.contextmanager
 def virt_device(instance_name: str, device_name: str, payload: dict):
+    resp = call('virt.instance.device_add', instance_name, {'name': device_name, **payload})
     try:
-        yield call('virt.instance.device_add', instance_name, {'name': device_name, **payload})
+        yield resp
     finally:
         call('virt.instance.device_delete', instance_name, device_name)
 
@@ -69,3 +71,24 @@ def virt_instance(
         # is fixed, remove the sleep.
         sleep(5)
         call('virt.instance.delete', instance_name, job=True)
+
+
+@contextlib.contextmanager
+def userns_user(username, userns_idmap='DIRECT'):
+    with user({
+        'username': username,
+        'full_name': username,
+        'group_create': True,
+        'random_password': True,
+        'userns_idmap': userns_idmap
+    }) as u:
+        yield u
+
+
+@contextlib.contextmanager
+def userns_group(groupname, userns_idmap='DIRECT'):
+    with group({
+        'name': groupname,
+        'userns_idmap': userns_idmap
+    }) as g:
+        yield g

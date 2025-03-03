@@ -1,6 +1,6 @@
 from middlewared.api.current import DockerNetworkEntry
 from middlewared.plugins.apps.ix_apps.docker.networks import list_networks
-from middlewared.service import CRUDService, filterable, private
+from middlewared.service import CRUDService, private
 from middlewared.utils import filter_list
 
 
@@ -13,7 +13,6 @@ class DockerNetworkService(CRUDService):
         role_prefix = 'DOCKER'
         entry = DockerNetworkEntry
 
-    @filterable
     def query(self, filters, options):
         """
         Query all docker networks

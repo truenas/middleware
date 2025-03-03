@@ -46,7 +46,6 @@ class PWEncService(Service):
         )
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_rsync WHERE rsync_ssh_credentials_id IS NOT NULL')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM system_keychaincredential')
-        self.middleware.call_sync('datastore.sql', 'DELETE FROM vm_device')
 
     @staticmethod
     def _secret_opener(path, flags):

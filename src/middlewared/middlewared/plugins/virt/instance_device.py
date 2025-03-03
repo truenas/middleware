@@ -13,6 +13,7 @@ from middlewared.api.current import (
     VirtInstanceDeviceDeleteArgs, VirtInstanceDeviceDeleteResult,
     VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult,
 )
+from middlewared.async_validators import check_path_resides_within_volume
 from .utils import incus_call_and_wait
 
 
@@ -322,6 +323,19 @@ class VirtInstanceDeviceService(Service):
                         else:
                             if device['destination'].startswith('/') is False:
                                 verrors.add(schema, 'Destination must be an absolute path.')
+
+                            if not source.startswith('/dev/zvol'):
+                                # Verify that path resolves to an expected data pool
+                                await check_path_resides_within_volume(
+                                    verrors, self.middleware, schema, source, True
+                                )
+
+                                # Limit paths to mountpoints because they're much harder for arbitrary
+                                # processes to maliciously replace
+                                st = await self.middleware.call('filesystem.stat', source)
+                                if not st['is_mountpoint']:
+                                    verrors.add(schema, 'Source must be a dataset mountpoint.')
+
                     else:
                         if source.startswith('/dev/zvol/') is False:
                             verrors.add(

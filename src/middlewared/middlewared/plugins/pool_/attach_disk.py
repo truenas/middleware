@@ -47,8 +47,24 @@ class PoolService(Service):
 
         job.set_progress(3, 'Completed validation')
 
-        guid = vdev['guid'] if vdev['type'] in ['DISK', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3'] else vdev['children'][0]['guid']
-        disks = {options['new_disk']: {'vdev': []}}
+        if vdev['type'] in ['DISK', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3']:
+            guid = vdev['guid']
+        else:
+            guid = vdev['children'][0]['guid']
+
+        if vdev['type'] == 'DISK':
+            devices_for_size = [vdev.get('device')]
+        else:
+            devices_for_size = [child.get('device') for child in vdev['children']]
+
+        sizes = []
+        for device in devices_for_size:
+            if device is not None:
+                size = await self.middleware.call('disk.get_dev_size', device)
+                if size is not None:
+                    sizes.append(size)
+
+        disks = {options['new_disk']: {'vdev': [], 'size': min(sizes) if sizes else None}}
         job.set_progress(5, 'Formatting disks')
         await self.middleware.call('pool.format_disks', job, disks, 5, 20)
         job.set_progress(22, 'Extending pool')

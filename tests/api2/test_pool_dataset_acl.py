@@ -1,9 +1,10 @@
 import dataclasses
-import errno
 
+import os
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, ssh
 from truenas_api_client import ClientException
 
@@ -102,3 +103,10 @@ def test_simplified_apps_api_nfs4_acl(request):
         assert check_for_entry(acl, 'USER', AclIds.user_to_add, {'BASIC': 'MODIFY'}), acl
         assert check_for_entry(acl, 'GROUP', AclIds.group_to_add, {'BASIC': 'READ'}), acl
         assert check_for_entry(acl, 'USER', AclIds.user2_to_add, {'BASIC': 'FULL_CONTROL'}), acl
+
+
+def test_nested_dataset_acltype_validation():
+    with dataset('D1') as ds:
+        with dataset('D1/D2') as ds2:
+            with smb_share(os.path.join('/mnt', ds2), 'TEST_SHARE'):
+                call('pool.dataset.update', ds, {'readonly': 'ON', 'acltype': 'INHERIT'})
