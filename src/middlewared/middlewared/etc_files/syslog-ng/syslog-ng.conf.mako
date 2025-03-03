@@ -52,15 +52,13 @@ def generate_syslog_remote_destination(advanced_config):
         certificate = middleware.call_sync(
             "certificate.query", [("id", "=", advanced_config["syslog_tls_certificate"])]
         )
-        if certificate and not certificate[0]["revoked"]:
+        if certificate:
             result += f"key-file(\"{certificate[0]['privatekey_path']}\") " \
                       f"cert-file(\"{certificate[0]['certificate_path']}\")"
         else:
             msg = 'Skipping setting key-file/cert-file for remote syslog as '
             if not certificate:
                 msg += 'no certificate configured'
-            else:
-                msg += 'specified certificate has been revoked'
             logger.debug(msg)
 
         result += "));"
