@@ -24,7 +24,6 @@ class CertificateAuthorityModel(sa.Model):
     cert_privatekey = sa.Column(sa.EncryptedText(), nullable=True)
     cert_CSR = sa.Column(sa.Text(), nullable=True)
     cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)
-    cert_signedby_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
     cert_add_to_trusted_store = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
