@@ -354,6 +354,19 @@ class VirtGlobalService(ConfigService):
             }
 
         if import_storage:
+            # Call into incus's private API to initiate a recovery action.
+            # This is roughly equivalent to running the command "incus admin recover", and is performed
+            # to make it so that incus on TrueNAS does not rely on the contents of /var/lib/incus.
+            #
+            # https://linuxcontainers.org/incus/docs/main/reference/manpages/incus/admin/recover/#incus-admin-recover-md
+            #
+            # The current design is to do this in the following scenarios:
+            # 1. Setting up incus for this first time on the server
+            # 2. After change to the storage pool path
+            # 3. After an HA failover event
+            # 4. After TrueNAS upgrades
+            #
+            # NOTE: this will potentially cause user-initiated changes from incus commands to be lost.
             payload = {
                 'pools': [{
                     'config': {'source': config['dataset']},
