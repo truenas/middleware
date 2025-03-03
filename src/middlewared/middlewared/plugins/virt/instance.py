@@ -6,7 +6,7 @@ import platform
 import aiohttp
 
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, filterable, job, private
+    CallError, CRUDService, ValidationErrors, job, private
 )
 from middlewared.utils import filter_list
 
@@ -39,7 +39,6 @@ class VirtInstanceService(CRUDService):
         role_prefix = 'VIRT_INSTANCE'
         event_register = True
 
-    @filterable
     async def query(self, filters, options):
         """
         Query all instances with `query-filters` and `query-options`.
