@@ -29,6 +29,7 @@ Okay so what we would like to do here is essentially are the following steps:
 3. Copy over CAs to certs table
 4. Drop cert_signedby_id from both tables
 5. Update usages of CA foreign key to certs table
+6. Drop cert_revoked_date from certs table
 '''
 
 # TODO: We probably want to maintain IPA CA name as is in cert table
@@ -227,6 +228,11 @@ def upgrade():
                 ]['id']
             }
         )
+
+    # Going to drop cert_revoked_date column from certs table
+    with op.batch_alter_table('system_certificate', schema=None) as batch_op:
+        batch_op.drop_column('cert_revoked_date')
+
 
 def downgrade():
     pass
