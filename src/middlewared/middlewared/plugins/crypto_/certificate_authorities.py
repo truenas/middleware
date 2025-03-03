@@ -8,7 +8,7 @@ from .cert_entry import get_ca_result_entry
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .key_utils import export_private_key
 from .load_utils import get_serial_from_certificate_safe, load_certificate
-from .query_utils import get_ca_chain, normalize_cert_attrs
+from .query_utils import normalize_cert_attrs
 from .utils import (
     get_cert_info_from_data, _set_required, CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
 )
@@ -33,7 +33,6 @@ class CertificateAuthorityService(CRUDService):
     class Config:
         datastore = 'system.certificateauthority'
         datastore_extend = 'certificateauthority.cert_extend'
-        datastore_extend_context = 'certificateauthority.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate.authority'
         role_prefix = 'CERTIFICATE_AUTHORITY'
@@ -49,41 +48,9 @@ class CertificateAuthorityService(CRUDService):
         }
 
     @private
-    def cert_extend_context(self, rows, extra):
-        context = {
-            'cas': {c['id']: c for c in self.middleware.call_sync(
-                'datastore.query', 'system.certificateauthority', [], {'prefix': 'cert_'}
-            )},
-            'certs': {
-                c['id']: c for c in self.middleware.call_sync(
-                    'datastore.query', 'system.certificate', [], {'prefix': 'cert_'}
-                )
-            },
-        }
-
-        signed_mapping = {}
-        for ca in context['cas'].values():
-            signed_mapping[ca['id']] = 0
-            for cert in context['certs'].values():
-                if cert['signedby'] and cert['signedby']['id'] == ca['id']:
-                    signed_mapping[ca['id']] += 1
-
-        context['signed_mapping'] = signed_mapping
-        return context
-
-    @private
-    def cert_extend(self, cert, context):
-        if cert['signedby']:
-            cert['signedby'] = self.cert_extend(context['cas'][cert['signedby']['id']], context)
-
+    def cert_extend(self, cert):
         normalize_cert_attrs(cert)
-        cert['signed_certificates'] = context['signed_mapping'][cert['id']]
-        cert.update({
-            'revoked_certs': list(filter(
-                lambda c: c['revoked_date'],
-                get_ca_chain(cert['id'], context['certs'].values(), context['cas'].values())
-            )),
-        })
+        cert['signed_certificates'] = 0
         return cert
 
     @private
