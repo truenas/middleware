@@ -50,7 +50,6 @@ class CertificateService(CRUDService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_functions = {
-            'CERTIFICATE_CREATE_INTERNAL': 'create_internal',
             'CERTIFICATE_CREATE_IMPORTED': 'create_imported_certificate',
             'CERTIFICATE_CREATE_IMPORTED_CSR': 'create_imported_csr',
             'CERTIFICATE_CREATE_CSR': 'create_csr',
@@ -145,7 +144,6 @@ class CertificateService(CRUDService):
     # APPROPRIATE METHOD IS CALLED
     # FOLLOWING TYPES ARE SUPPORTED
     # CREATE_TYPE ( STRING )          - METHOD CALLED
-    # CERTIFICATE_CREATE_INTERNAL     - create_internal
     # CERTIFICATE_CREATE_IMPORTED     - create_imported_certificate
     # CERTIFICATE_CREATE_IMPORTED_CSR - create_imported_csr
     # CERTIFICATE_CREATE_CSR          - create_csr
@@ -160,8 +158,6 @@ class CertificateService(CRUDService):
             Int('key_length', enum=[2048, 4096]),
             Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Int('type'),
-            Int('lifetime'),
-            Int('serial', validators=[Range(min_=1)]),
             Str('acme_directory_uri'),
             Str('certificate', max_length=None),
             Str('city'),
@@ -178,7 +174,7 @@ class CertificateService(CRUDService):
             Str('privatekey', max_length=None),
             Str('state'),
             Str('create_type', enum=[
-                'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
+                'CERTIFICATE_CREATE_IMPORTED',
                 'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
                 'CERTIFICATE_CREATE_ACME'], required=True),
             Str('digest_algorithm', enum=['SHA224', 'SHA256', 'SHA384', 'SHA512']),
@@ -196,17 +192,15 @@ class CertificateService(CRUDService):
         Certificates are classified under following types and the necessary keywords to be passed
         for `create_type` attribute to create the respective type of certificate
 
-        1) Internal Certificate                 -  CERTIFICATE_CREATE_INTERNAL
+        1) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
 
-        2) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
+        2) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
 
-        3) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
+        3) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
 
-        4) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
+        4) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
 
-        5) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
-
-        By default, created certs use RSA keys. If an Elliptic Curve Key is desired, it can be specified with the
+        By default, created CSRs use RSA keys. If an Elliptic Curve Key is desired, it can be specified with the
         `key_type` attribute. If the `ec_curve` attribute is not specified for the Elliptic Curve Key, then default to
         using "SECP384R1" curve.
 
@@ -248,28 +242,6 @@ class CertificateService(CRUDService):
                     "CSR": "CSR string",
                     "privatekey": "Private key string",
                     "create_type": "CERTIFICATE_CREATE_IMPORTED_CSR"
-                }]
-            }
-
-          Create an Internal Certificate
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "certificate.create",
-                "params": [{
-                    "name": "internal_cert",
-                    "key_length": 2048,
-                    "lifetime": 3600,
-                    "city": "Nashville",
-                    "common": "domain1.com",
-                    "country": "US",
-                    "email": "dev@ixsystems.com",
-                    "organization": "iXsystems",
-                    "state": "Tennessee",
-                    "digest_algorithm": "SHA256",
-                    "create_type": "CERTIFICATE_CREATE_INTERNAL"
                 }]
             }
         """
@@ -385,14 +357,20 @@ class CertificateService(CRUDService):
 
     @accepts(
         Patch(
-            'certificate_create_internal', 'certificate_create_csr',
-            ('rm', {'name': 'lifetime'}),
+            'certificate_create', 'certificate_create_csr',
+            ('edit', _set_required('country')),
+            ('edit', _set_required('state')),
+            ('edit', _set_required('city')),
+            ('edit', _set_required('organization')),
+            ('edit', _set_required('email')),
+            ('edit', _set_required('san')),
+            ('rm', {'name': 'create_type'}),
+            register=True
         )
     )
     @private
     @skip_arg(count=1)
     def create_csr(self, job, data):
-        # no lifetime attribute required
         verrors = ValidationErrors()
         cert_info = get_cert_info_from_data(data)
         cert_info['cert_extensions'] = data['cert_extensions']
@@ -481,57 +459,6 @@ class CertificateService(CRUDService):
 
         if 'passphrase' in data:
             data['privatekey'] = export_private_key(data['privatekey'], data['passphrase'])
-
-        return data
-
-    @accepts(
-        Patch(
-            'certificate_create', 'certificate_create_internal',
-            ('edit', _set_required('lifetime')),
-            ('edit', _set_required('country')),
-            ('edit', _set_required('state')),
-            ('edit', _set_required('city')),
-            ('edit', _set_required('organization')),
-            ('edit', _set_required('email')),
-            ('edit', _set_required('san')),
-            ('rm', {'name': 'create_type'}),
-            register=True
-        )
-    )
-    @private
-    @skip_arg(count=1)
-    async def create_internal(self, job, data):
-        # FIXME: REmove me please
-        cert_info = get_cert_info_from_data(data)
-        data['type'] = CERT_TYPE_INTERNAL
-
-        signing_cert = await self.middleware.call(
-            'certificateauthority.query',
-            [('id', '=', data['signedby'])],
-            {'get': True}
-        )
-
-        cert_serial = await self.middleware.call(
-            'certificateauthority.get_serial_for_certificate',
-            data['signedby']
-        )
-
-        cert_info.update({
-            'ca_privatekey': signing_cert['privatekey'],
-            'ca_certificate': signing_cert['certificate'],
-            'serial': cert_serial,
-            'cert_extensions': data['cert_extensions']
-        })
-
-        cert, key = await self.middleware.call(
-            'cryptokey.generate_certificate',
-            cert_info
-        )
-
-        data['certificate'] = cert
-        data['privatekey'] = key
-
-        job.set_progress(90, 'Finalizing changes')
 
         return data
 
