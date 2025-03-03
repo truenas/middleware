@@ -21,7 +21,6 @@ CERT_ENTRY = Dict(
     Str('privatekey_path', null=True),
     Str('csr_path', null=True),
     Str('cert_type'),
-    Bool('revoked'),
     Bool('expired', null=True),
     List('chain_list', items=[Str('certificate', max_length=None)]),
     Str('country', null=True),
