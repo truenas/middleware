@@ -3,7 +3,7 @@ from middlewared.api.current import (
     AppImageEntry, AppImagePullArgs, AppImagePullResult, AppImageDeleteArgs, AppImageDeleteResult,
 )
 from middlewared.plugins.apps.ix_apps.docker.images import delete_image, list_images, pull_image
-from middlewared.service import CRUDService, filterable, job
+from middlewared.service import CRUDService, job
 from middlewared.utils import filter_list
 
 from .utils import get_normalized_auth_config, parse_tags
@@ -17,7 +17,6 @@ class AppImageService(CRUDService):
         role_prefix = 'APPS'
         entry = AppImageEntry
 
-    @filterable
     def query(self, filters, options):
         """
         Query all docker images with `query-filters` and `query-options`.
