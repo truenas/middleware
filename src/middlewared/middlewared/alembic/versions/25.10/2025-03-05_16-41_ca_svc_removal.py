@@ -31,6 +31,8 @@ Okay so what we would like to do here is essentially are the following steps:
 5. Update usages of CA foreign key to certs table
 '''
 
+# TODO: We probably want to maintain IPA CA name as is in cert table
+
 CA_TYPE_EXISTING = 0x01
 CA_TYPE_INTERNAL = 0x02
 CA_TYPE_INTERMEDIATE = 0x04
