@@ -25,8 +25,9 @@ depends_on = None
 Okay so what we would like to do here is essentially are the following steps:
 
 1. Update certificate attr for both certs/cas to include complete chain
-2. Copy over CAs to certs table
-3. Adjust cert types so that we only have cert type existing / csr now
+2. While doing (1), make sure we adjust cert types of certs too to existing certs only
+3. Copy over CAs to certs table
+4. Drop cert_signedby_id from both tables
 '''
 
 CA_TYPE_EXISTING = 0x01
@@ -119,9 +120,13 @@ def upgrade():
             continue
 
         public_key = '\n'.join(chain)
+        cert_type = cert['cert_type']
+        if cert_type != CERT_TYPE_CSR:
+            cert_type = CERT_TYPE_EXISTING
+
         conn.execute(
-            sa.text("UPDATE system_certificate SET cert_certificate = :cert WHERE id = :id"),
-            {'cert': public_key, 'id': cert['id']}
+            sa.text("UPDATE system_certificate SET cert_certificate = :cert, cert_type = :cert_type WHERE id = :id"),
+            {'cert': public_key, 'id': cert['id'], 'cert_type': cert_type}
         )
 
     for ca in cas.values():
