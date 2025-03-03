@@ -28,6 +28,7 @@ Okay so what we would like to do here is essentially are the following steps:
 2. While doing (1), make sure we adjust cert types of certs too to existing certs only
 3. Copy over CAs to certs table
 4. Drop cert_signedby_id from both tables
+5. Update usages of CA foreign key to certs table
 '''
 
 CA_TYPE_EXISTING = 0x01
@@ -143,7 +144,9 @@ def upgrade():
     # We are going to migrate CAs to cert table now
     certs = {cert['cert_name']: cert for cert in map(dict, conn.execute("SELECT * FROM system_certificate").fetchall())}
     cas = {ca['id']: ca for ca in map(dict, conn.execute("SELECT * FROM system_certificateauthority").fetchall())}
+    cas_id_to_name_mapping = {}
     for ca in cas.values():
+        cas_id_to_name_mapping[ca['id']] = get_cert_name(ca['cert_name'], certs)
         conn.execute(sa.text("""
                 INSERT INTO system_certificate (
                     cert_type, cert_name, cert_certificate, cert_privatekey, cert_add_to_trusted_store
@@ -152,7 +155,7 @@ def upgrade():
                 )
             """), {
             'cert_type': CERT_TYPE_EXISTING,
-            'cert_name': get_cert_name(ca['cert_name'], certs),
+            'cert_name': cas_id_to_name_mapping[ca['id']],
             'cert_certificate': ca['cert_certificate'],
             'cert_privatekey': ca['cert_privatekey'],
             'cert_add_to_trusted_store': ca['cert_add_to_trusted_store'],
@@ -166,6 +169,62 @@ def upgrade():
         batch_op.drop_index('ix_system_certificateauthority_cert_signedby_id')
         batch_op.drop_column('cert_signedby_id')
 
+    certs = {cert['cert_name']: cert for cert in map(dict, conn.execute("SELECT * FROM system_certificate").fetchall())}
+    kmip_config = next(
+        map(dict, conn.execute("SELECT * FROM system_kmip").fetchall()), {'certificate_authority_id': None}
+    )
+    system_advanced_config = next(
+        map(dict, conn.execute("SELECT * FROM system_advanced").fetchall()), {
+            'adv_syslog_tls_certificate_authority_id': None,
+        }
+    )
+    # We need to set existing usages to NULL
+    conn.execute('UPDATE system_advanced SET adv_syslog_tls_certificate_authority_id = NULL')
+    conn.execute('UPDATE system_kmip SET certificate_authority_id = NULL')
+
+    with op.batch_alter_table('system_advanced') as batch_op:
+        # Drop old foreign key constraint
+        batch_op.drop_constraint(
+            'fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority',
+            type_='foreignkey'
+        )
+
+        # Add new foreign key constraint
+        batch_op.create_foreign_key(
+            batch_op.f('fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificate'),
+            'system_certificate',  # New referenced table
+            ['adv_syslog_tls_certificate_authority_id'],
+            ['id'],
+            ondelete='CASCADE'
+        )
+
+    with op.batch_alter_table('system_kmip', schema=None) as batch_op:
+        batch_op.drop_constraint(
+            'fk_system_kmip_certificate_authority_id_system_certificateauthority',
+            type_='foreignkey'
+        )
+        batch_op.create_foreign_key(
+            batch_op.f('fk_system_kmip_certificate_authority_id_system_certificate'),
+            'system_certificate',
+            ['certificate_authority_id'],
+            ['id']
+        )
+
+    if kmip_config['certificate_authority_id'] is not None:
+        conn.execute(
+            sa.text("UPDATE system_kmip SET certificate_authority_id = :id WHERE certificate_authority_id IS NULL"),
+            {'id': certs[cas_id_to_name_mapping[kmip_config['certificate_authority_id']]]['id']}
+        )
+
+    if system_advanced_config['adv_syslog_tls_certificate_authority_id'] is not None:
+        conn.execute(
+            sa.text("UPDATE system_advanced SET adv_syslog_tls_certificate_authority_id = :id "
+                    "WHERE adv_syslog_tls_certificate_authority_id IS NULL"), {
+                'id': certs[
+                    cas_id_to_name_mapping[system_advanced_config['adv_syslog_tls_certificate_authority_id']]
+                ]['id']
+            }
+        )
 
 def downgrade():
     pass
