@@ -12,8 +12,8 @@ from middlewared.utils.asyncio_ import asyncio_map
 logger = logging.getLogger(__name__)
 
 
-async def annotate_disk_for_smart(context, disk, smartoptions):
-    if args := await get_smartctl_args(context, disk, smartoptions):
+async def annotate_disk_for_smart(context, disk):
+    if args := await get_smartctl_args(context, disk):
         if context.enterprise_hardware or await ensure_smart_enabled(args):
             args.extend(["-a"])
             args.extend(["-d", "removable"])
@@ -95,7 +95,7 @@ async def render(service, middleware):
     hardware = await middleware.call("truenas.is_ix_hardware")
     context = SMARTCTX(devices=devices, enterprise_hardware=hardware, middleware=middleware)
     annotated = dict(filter(None, await asyncio_map(
-        lambda disk: annotate_disk_for_smart(context, disk["disk_name"], disk["disk_smartoptions"]),
+        lambda disk: annotate_disk_for_smart(context, disk["disk_name"]),
         [disk for disk in disks if disk["disk_name"] is not None],
         16
     )))

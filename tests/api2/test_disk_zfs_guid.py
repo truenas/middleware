@@ -15,7 +15,6 @@ DISK_TEMPLATE = {
     "disk_hddstandby": "Always On",
     "disk_advpowermgmt": "Disabled",
     "disk_togglesmart": True,
-    "disk_smartoptions": "",
     "disk_expiretime": None,
     "disk_enclosure_slot": None,
     "disk_passwd": "",
