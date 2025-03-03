@@ -197,7 +197,7 @@ class PoolService(CRUDService):
         verrors.add_child(
             schema_name,
             await self.middleware.call('disk.check_disks_availability', list(disks),
-                                       data['allow_duplicate_serials']),
+                                       data.get('allow_duplicate_serials', False)),
         )
         verrors.check()
 
