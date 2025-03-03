@@ -120,12 +120,3 @@ def normalize_cert_attrs(cert: dict) -> None:
         })
 
     cert['parsed'] = not failed_parsing
-
-
-def get_ca_chain_impl(ca_id: int, cas: dict, certs_mapping: dict, cas_mapping: dict) -> list:
-    certs = copy.deepcopy(certs_mapping[ca_id])
-    for ca in cas_mapping[ca_id]:
-        certs.extend(get_ca_chain_impl(ca['id'], cas, certs_mapping, cas_mapping))
-
-    certs.append({**cas[ca_id], 'cert_type': 'CA'})
-    return certs
