@@ -3,7 +3,7 @@ from typing import Annotated, Any, Literal
 from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result
-from .pool import PoolAttachment, PoolCreateEncryptionOptions
+from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 
 
 __all__ = [
@@ -15,7 +15,11 @@ __all__ = [
     "PoolDatasetLockArgs", "PoolDatasetLockResult", "PoolDatasetUnlockArgs", "PoolDatasetUnlockResult",
     "PoolDatasetInsertOrUpdateEncryptedRecordArgs", "PoolDatasetInsertOrUpdateEncryptedRecordResult",
     "PoolDatasetChangeKeyArgs", "PoolDatasetChangeKeyResult", "PoolDatasetInheritParentEncryptionPropertiesArgs",
-    "PoolDatasetInheritParentEncryptionPropertiesResult",
+    "PoolDatasetInheritParentEncryptionPropertiesResult", "PoolDatasetChecksumChoicesArgs",
+    "PoolDatasetChecksumChoicesResult", "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
+    "PoolDatasetEncryptionAlgorithmChoicesArgs", "PoolDatasetEncryptionAlgorithmChoicesResult",
+    "PoolDatasetRecommendedZVolBlockSizeArgs", "PoolDatasetRecommendedZVolBlockSizeResult", "PoolDatasetProcessesArgs",
+    "PoolDatasetProcessesResult",
 ]
 
 
@@ -230,6 +234,14 @@ class PoolDatasetChecksumChoicesResult(BaseModel):
     BLAKE3: Literal["BLAKE3"]
 
 
+class PoolDatasetCompressionChoicesArgs(BaseModel):
+    pass
+
+
+class PoolDatasetCompressionChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
 class PoolDatasetCreateArgs(BaseModel):
     data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume
 
@@ -244,6 +256,20 @@ class PoolDatasetDetailsArgs(BaseModel):
 
 class PoolDatasetDetailsResults(BaseModel):
     result: list[dict]
+
+
+class PoolDatasetEncryptionAlgorithmChoicesArgs(BaseModel):
+    pass
+
+
+@single_argument_result
+class PoolDatasetEncryptionAlgorithmChoicesResult(BaseModel):
+    AES_128_CCM: Literal["AES-128-CCM"] = Field(alias="AES-128-CCM")
+    AES_192_CCM: Literal["AES-192-CCM"] = Field(alias="AES-192-CCM")
+    AES_256_CCM: Literal["AES-256-CCM"] = Field(alias="AES-256-CCM")
+    AES_128_GCM: Literal["AES-128-GCM"] = Field(alias="AES-128-GCM")
+    AES_192_GCM: Literal["AES-192-GCM"] = Field(alias="AES-192-GCM")
+    AES_256_GCM: Literal["AES-256-GCM"] = Field(alias="AES-256-GCM")
 
 
 class PoolDatasetEncryptionSummaryArgs(BaseModel):
@@ -308,6 +334,22 @@ class PoolDatasetLockArgs(BaseModel):
 class PoolDatasetLockResult(BaseModel):
     result: Literal[True]
     """Dataset is locked."""
+
+
+class PoolDatasetProcessesArgs(BaseModel):
+    id: str
+
+
+class PoolDatasetProcessesResult(BaseModel):
+    result: list[PoolProcess]
+
+
+class PoolDatasetRecommendedZVolBlockSizeArgs(BaseModel):
+    pool: str
+
+
+class PoolDatasetRecommendedZVolBlockSizeResult(BaseModel):
+    result: str
 
 
 class PoolDatasetUnlockArgs(BaseModel):
