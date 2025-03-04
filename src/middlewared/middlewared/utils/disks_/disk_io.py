@@ -13,7 +13,7 @@ _2GiB = 2147483648
 
 
 def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
-    # Write first and last 32MiB of disk with zer
+    # Write first and last 32MiB of disk with zeros
     if disk_size is None:
         disk_size = lseek(dev_fd, 0, SEEK_END)
         # seek back to the beginning of the disk
