@@ -7,7 +7,7 @@ from re import compile as rcompile
 from .disk_io import read_gpt, wipe_disk_quick
 from .gpt_parts import GptPartEntry
 
-__all__ = ("DiskEntry", "__iterate_disks")
+__all__ = ("DiskEntry", "iterate_disks")
 
 # sda, pmem0, vda, nvme0n1 but not sda1/vda1/nvme0n1p1
 VALID_WHOLE_DISK = rcompile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
@@ -141,7 +141,7 @@ class DiskEntry:
             wipe_disk_quick(dev_fd, disk_size=self.size_bytes)
 
 
-def __iterate_disks() -> Generator[DiskEntry]:
+def iterate_disks() -> Generator[DiskEntry]:
     """Iterate over /dev and yield valid devices."""
     with scandir("/dev") as sdir:
         for i in filter(lambda x: VALID_WHOLE_DISK.match(x.name), sdir):
