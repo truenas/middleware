@@ -20,7 +20,6 @@ from .common import *  # noqa
 from .config import *  # noqa
 from .core import *  # noqa
 from .cronjob import *  # noqa
-from .crypto_ca_profiles import *  # noqa
 from .crypto_cert_info import *  # noqa
 from .crypto_cert_profiles import *  # noqa
 from .device import *  # noqa
