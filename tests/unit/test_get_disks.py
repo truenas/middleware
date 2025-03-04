@@ -84,3 +84,39 @@ def test__wipe_quick():
         subprocess.run(["wipefs", "-J", f"/dev/{disk}"], capture_output=True).stdout
     )["signatures"]
     assert not fs
+
+
+def test__format():
+    with Client() as c:
+        for disk_class in get_disks(
+            name_filters=[c.call("disk.get_unused")[0]["name"]]
+        ):
+            disk = disk_class
+            break
+        else:
+            assert False, "Failed to find an unused disk"
+
+    part_guid = disk.format()
+    parts = disk.partitions
+    assert len(parts) == 1
+    assert parts[0].partition_number == 1
+    assert parts[0].partition_type == "ZFS"
+    assert parts[0].partition_type_guid == "6a898cc3-1dd2-11b2-99a6-080020736631"
+    assert uuid.UUID(parts[0].unique_partition_guid) == part_guid
+    assert parts[0].partition_name == "data"
+    assert parts[0].first_lba * disk.lbs == 1048576  # always start at 1MiB
+
+    part_size_in_bytes = (disk.lbs * parts[0].first_lba) + (
+        disk.lbs * parts[0].last_lba
+    )
+    buffer_at_end = disk.size_bytes - part_size_in_bytes
+    one_percent_of_disk = 0.01 * disk.size_bytes
+    twoish_gibibytes = 2254857830.4  # give some wiggle room ~2.1GiB
+    # we should _ALWAYS_ have ~2GiB or ~1% (whicever is smaller)
+    # buffer left at end of disk so users may replace disks of
+    # equivalent model but nominal in size (because users buy
+    # suspect hardware from suspect sellers)
+    if one_percent_of_disk < twoish_gibibytes:
+        assert buffer_at_end <= one_percent_of_disk
+    else:
+        assert buffer_at_end <= twoish_gibibytes
