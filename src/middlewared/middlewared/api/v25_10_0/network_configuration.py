@@ -1,3 +1,4 @@
+import re
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, IPvAnyAddress
@@ -11,8 +12,8 @@ __all__ = [
 ]
 
 
-Hostname = Annotated[str, AfterValidator(match_validator(r'^[a-zA-Z\.\-0-9]*[a-zA-Z0-9]$'))]
-Domain = Annotated[str, AfterValidator(match_validator(r'^[a-zA-Z\.\-0-9]*$'))]
+Hostname = Annotated[str, AfterValidator(match_validator(re.compile(r'^[a-z\.\-0-9]*[a-z0-9]$', re.IGNORECASE)))]
+Domain = Annotated[str, AfterValidator(match_validator(re.compile(r'^[a-z\.\-0-9]*$', re.IGNORECASE)))]
 
 
 class ServiceAnnouncement(BaseModel):
