@@ -7,11 +7,15 @@ import shutil
 
 from io import BytesIO
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDatasetEncryptionSummaryArgs, PoolDatasetEncryptionSummaryResult, PoolDatasetExportKeysArgs,
+    PoolDatasetExportKeysResult, PoolDatasetExportKeysForReplicationArgs, PoolDatasetExportKeysForReplicationResult,
+    PoolDatasetExportKeyArgs, PoolDatasetExportKeyResult
+)
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.path import is_child_realpath
-from middlewared.validators import Range
 
 from .utils import DATASET_DATABASE_MODEL_NAME, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
@@ -32,36 +36,7 @@ class PoolDatasetService(Service):
                 await self.middleware.call('cache.put', 'zfs_locked_datasets', locked_datasets, 20)
             return locked_datasets
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'encryption_root_summary_options',
-            Bool('key_file', default=False),
-            Bool('force', default=False),
-            List(
-                'datasets', items=[
-                    Dict(
-                        'dataset',
-                        Bool('force', required=True, default=False),
-                        Str('name', required=True, empty=False),
-                        Str('key', validators=[Range(min_=64, max_=64)], private=True),
-                        Str('passphrase', empty=False, private=True),
-                    )
-                ],
-            ),
-        ),
-        roles=['DATASET_READ']
-    )
-    @returns(List(items=[Dict(
-        'dataset_encryption_summary',
-        Str('name', required=True),
-        Str('key_format', required=True),
-        Bool('key_present_in_database', required=True),
-        Bool('valid_key', required=True),
-        Bool('locked', required=True),
-        Str('unlock_error', required=True, null=True),
-        Bool('unlock_successful', required=True),
-    )]))
+    @api_method(PoolDatasetEncryptionSummaryArgs, PoolDatasetEncryptionSummaryResult, roles=['DATASET_READ'])
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
     def encryption_summary(self, job, id_, options):
         """
@@ -260,7 +235,6 @@ class PoolDatasetService(Service):
         return any(is_child_realpath(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
 
     @private
-    @accepts(Ref('query-filters'))
     def query_encrypted_roots_keys(self, filters):
         # We query database first - if we are able to find an encryption key, we assume it's the correct one.
         # If we are unable to find the key in database, we see if we have it in memory with the KMIP server, if not,
@@ -303,8 +277,11 @@ class PoolDatasetService(Service):
             )
         ))
 
-    @accepts(Str('id'), roles=['DATASET_WRITE', 'REPLICATION_TASK_WRITE'])
-    @returns()
+    @api_method(
+        PoolDatasetExportKeysArgs,
+        PoolDatasetExportKeysResult,
+        roles=['DATASET_WRITE', 'REPLICATION_TASK_WRITE']
+    )
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id_):
         """
@@ -321,8 +298,11 @@ class PoolDatasetService(Service):
         with BytesIO(json.dumps(datasets).encode()) as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @accepts(Int('id'), roles=['DATASET_WRITE', 'REPLICATION_TASK_WRITE'])
-    @returns()
+    @api_method(
+        PoolDatasetExportKeysForReplicationArgs,
+        PoolDatasetExportKeysForReplicationResult,
+        roles=['DATASET_WRITE', 'REPLICATION_TASK_WRITE']
+    )
     @job(pipes=['output'])
     def export_keys_for_replication(self, job, task_id):
         """
@@ -408,12 +388,7 @@ class PoolDatasetService(Service):
 
         return dataset_encryption_root_mapping
 
-    @accepts(
-        Str('id'),
-        Bool('download', default=False),
-        roles=['DATASET_WRITE']
-    )
-    @returns(Str('key', null=True, private=True))
+    @api_method(PoolDatasetExportKeyArgs, PoolDatasetExportKeyResult, roles=['DATASET_WRITE'])
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
     def export_key(self, job, id_, download):
         """

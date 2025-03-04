@@ -1,14 +1,21 @@
 from typing import Annotated, Any, Literal
 
-from pydantic import Field
+from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NonEmptyString
-from .pool import PoolCreateEncryptionOptions
+from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result
+from .pool import PoolAttachment, PoolCreateEncryptionOptions
 
 
 __all__ = [
-    "PoolDatasetEntry", "PoolDatasetCreateArgs", "PoolDatasetCreateResult", "PoolDatasetDetailsArgs",
-    "PoolDatasetDetailsResults"
+    "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",
+    "PoolDatasetCreateResult", "PoolDatasetDetailsArgs", "PoolDatasetDetailsResults",
+    "PoolDatasetEncryptionSummaryArgs", "PoolDatasetEncryptionSummaryResult", "PoolDatasetExportKeysArgs",
+    "PoolDatasetExportKeysResult", "PoolDatasetExportKeysForReplicationArgs",
+    "PoolDatasetExportKeysForReplicationResult", "PoolDatasetExportKeyArgs", "PoolDatasetExportKeyResult",
+    "PoolDatasetLockArgs", "PoolDatasetLockResult", "PoolDatasetUnlockArgs", "PoolDatasetUnlockResult",
+    "PoolDatasetInsertOrUpdateEncryptedRecordArgs", "PoolDatasetInsertOrUpdateEncryptedRecordResult",
+    "PoolDatasetChangeKeyArgs", "PoolDatasetChangeKeyResult", "PoolDatasetInheritParentEncryptionPropertiesArgs",
+    "PoolDatasetInheritParentEncryptionPropertiesResult",
 ]
 
 
@@ -75,6 +82,14 @@ class PoolDatasetEntry(BaseModel):
     mountpoint: str | None
 
 
+class PoolDatasetChangeKeyOptions(BaseModel):
+    generate_key: bool = False
+    key_file: bool = False
+    pbkdf2iters: int = Field(default=350000, ge=100000)
+    passphrase: Secret[NonEmptyString | None] = None
+    key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
+
+
 class PoolDatasetCreateUserProperty(BaseModel):
     key: Annotated[str, Field(pattern=r".*:.*")]
     value: str
@@ -135,6 +150,86 @@ class PoolDatasetCreateVolume(PoolDatasetCreate):
     volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K", None] = None
 
 
+class PoolDatasetEncryptionSummaryOptionsDataset(BaseModel):
+    force: bool = False
+    name: NonEmptyString
+    key: Secret[Annotated[str, Field(min_length=64, max_length=64)]] = NotRequired
+    passphrase: Secret[NonEmptyString] = NotRequired
+
+
+class PoolDatasetEncryptionSummaryOptions(BaseModel):
+    key_file: bool = False
+    force: bool = False
+    datasets: list[PoolDatasetEncryptionSummaryOptionsDataset] = []
+
+
+class PoolDatasetEncryptionSummary(BaseModel):
+    name: str
+    key_format: str
+    key_present_in_database: bool
+    valid_key: bool
+    locked: bool
+    unlock_error: str | None
+    unlock_successful: bool
+
+
+class PoolDatasetLockOptions(BaseModel):
+    force_umount: bool = False
+
+
+class PoolDatasetUnlockOptionsDataset(PoolDatasetEncryptionSummaryOptionsDataset):
+    recursive: bool = False
+
+
+class PoolDatasetUnlockOptions(BaseModel):
+    force: bool = False
+    key_file: bool = False
+    recursive: bool = False
+    toggle_attachments: bool = True
+    datasets: list[PoolDatasetUnlockOptionsDataset] = []
+
+
+class PoolDatasetUnlock(BaseModel):
+    unlocked: list[str]
+    failed: dict
+
+
+##############################   Args and Results   #############################################
+
+
+class PoolDatasetAttachmentsArgs(BaseModel):
+    id: str
+
+
+class PoolDatasetAttachmentsResult(BaseModel):
+    result: list[PoolAttachment]
+
+
+class PoolDatasetChangeKeyArgs(BaseModel):
+    id: str
+    options: PoolDatasetChangeKeyOptions = Field(default_factory=PoolDatasetChangeKeyOptions)
+
+
+class PoolDatasetChangeKeyResult(BaseModel):
+    result: None
+
+
+class PoolDatasetChecksumChoicesArgs(BaseModel):
+    pass
+
+
+@single_argument_result
+class PoolDatasetChecksumChoicesResult(BaseModel):
+    ON: Literal["ON"]
+    FLETCHER2: Literal["FLETCHER2"]
+    FLETCHER4: Literal["FLETCHER4"]
+    SHA256: Literal["SHA256"]
+    SHA512: Literal["SHA512"]
+    SKEIN: Literal["SKEIN"]
+    EDONR: Literal["EDONR"]
+    BLAKE3: Literal["BLAKE3"]
+
+
 class PoolDatasetCreateArgs(BaseModel):
     data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume
 
@@ -149,3 +244,76 @@ class PoolDatasetDetailsArgs(BaseModel):
 
 class PoolDatasetDetailsResults(BaseModel):
     result: list[dict]
+
+
+class PoolDatasetEncryptionSummaryArgs(BaseModel):
+    id: str
+    options: PoolDatasetEncryptionSummaryOptions = Field(default_factory=PoolDatasetEncryptionSummaryOptions)
+
+
+class PoolDatasetEncryptionSummaryResult(BaseModel):
+    result: list[PoolDatasetEncryptionSummary]
+
+
+class PoolDatasetExportKeyArgs(BaseModel):
+    id: str
+    download: bool = False
+
+
+class PoolDatasetExportKeyResult(BaseModel):
+    result: Secret[str | None]
+
+
+class PoolDatasetExportKeysArgs(BaseModel):
+    id: str
+
+
+class PoolDatasetExportKeysResult(BaseModel):
+    result: None
+
+
+class PoolDatasetExportKeysForReplicationArgs(BaseModel):
+    id: int
+
+
+class PoolDatasetExportKeysForReplicationResult(BaseModel):
+    result: None
+
+
+class PoolDatasetInheritParentEncryptionPropertiesArgs(BaseModel):
+    id: str
+
+
+class PoolDatasetInheritParentEncryptionPropertiesResult(BaseModel):
+    result: None
+
+
+@single_argument_args("data")
+class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
+    encryption_key: Any = None
+    id: int | None = None
+    name: NonEmptyString
+    key_format: str | None
+
+
+class PoolDatasetInsertOrUpdateEncryptedRecordResult(BaseModel):
+    result: str | None
+
+
+class PoolDatasetLockArgs(BaseModel):
+    id: str
+    options: PoolDatasetLockOptions = Field(default_factory=PoolDatasetLockOptions)
+
+
+class PoolDatasetLockResult(BaseModel):
+    result: Literal[True]
+    """Dataset is locked."""
+
+
+class PoolDatasetUnlockArgs(BaseModel):
+    id: str
+    options: PoolDatasetUnlockOptions = Field(default_factory=PoolDatasetUnlockOptions)
+
+
+class PoolDatasetUnlockResult(BaseModel):
+    result: PoolDatasetUnlock
