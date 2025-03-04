@@ -72,6 +72,9 @@ class NetdataService(Service):
             len(self.middleware.call_sync('device.get_disks', False, True)),
             cpu_info()['core_count'],
             self.middleware.call_sync('interface.query', [], {'count': True}),
+            self.middleware.call_sync('pool.dataset.query', [], {'count': True, 'extra': {
+                'properties': [], 'retrieve_children': False,
+            }}),
             len(self.middleware.call_sync('virt.instance.query', [['type', '=', 'VM']])),
             len(glob.glob('/sys/fs/cgroup/**/*.service')),
         )
