@@ -58,7 +58,11 @@ class DiskEntry:
     @cached_property
     def size_bytes(self) -> int:
         """The disk's total size in bytes"""
-        return self.lbs * self.size_sectors
+        # Cf. include/linux/types.h
+        # linux _always_ reports total size in sectors
+        # as a multiple of 512 bytes regardless of disks
+        # reported block size...
+        return 512 * self.size_sectors
 
     @cached_property
     def serial(self) -> str | None:
@@ -129,7 +133,7 @@ class DiskEntry:
     def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry] | None:
         """Return a tuple of `GptPartEntry` objects for any
         GPT partitions written to the disk."""
-        return read_gpt(dev_fd or self.devpath, self.lbs)
+        return read_gpt(dev_fd or self.devpath)
 
     def wipe_quick(self, dev_fd: int | None = None) -> None:
         """Write 0's to the first and last 32MiB of the disk.
@@ -149,9 +153,10 @@ class DiskEntry:
         dev_fd = os_open(self.devpath, O_RDWR | O_EXCL)
         try:
             self.wipe_quick(dev_fd=dev_fd)
-            return write_gpt(dev_fd, self.lbs, self.size_sectors)
+            return write_gpt(dev_fd, self.size_sectors)
         finally:
             close(dev_fd)
+
 
 def __iterate_disks() -> Generator[DiskEntry]:
     """Iterate over /dev and yield valid devices."""

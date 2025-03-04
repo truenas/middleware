@@ -31,7 +31,7 @@ def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
         write(dev_fd, to_write)
 
 
-def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
+def read_gpt(devobj: int | str) -> tuple[GptPartEntry]:
     parts = list()
     with open(devobj, "rb") as f:
         # it's _incredibly_ important to open this device
@@ -52,7 +52,7 @@ def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
         partition_entry_lba = unpack("<Q", gpt_header[72:80])[0]
         num_partitions = unpack("<I", gpt_header[80:84])[0]
         partition_entry_size = unpack("<I", gpt_header[84:88])[0]
-        f.seek(partition_entry_lba * lbs)
+        f.seek(partition_entry_lba * 512)
         for i in range(min(num_partitions, 128)):  # 128 is max gpt partitions
             entry = f.read(partition_entry_size)
             partition_type_guid = str(UUID(bytes_le=entry[0:16]))
@@ -82,16 +82,20 @@ def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
     return tuple(parts)
 
 
-######### write gpt functions #########
-def write_gpt(dev_fd: int, lbs: int, ts: int) -> UUID:
+def write_gpt(dev_fd: int, ts: int) -> UUID:
     """
     Args:
         dev_fd: open file descriptor of the disk
-        lbs: logcal block size
         ts: total sectors of disk
     """
+    # Cf. include/linux/types.h
+    # linux _always_ reports total size in sectors
+    # as a multiple of 512 bytes regardless of disks
+    # reported block size...
+    _512B = 512
+
     # Alignment size in sectors (1 MiB alignment)
-    alignment_in_sectors = _1MiB // lbs
+    alignment_in_sectors = _1MiB // _512B
     # Minimum starting LBA (must be at least 34 to allow space for GPT structures)
     min_start_lba = 34
     # First usable LBA aligned to 1 MiB boundary
@@ -106,9 +110,9 @@ def write_gpt(dev_fd: int, lbs: int, ts: int) -> UUID:
     # Maximum ending LBA. We ensure at least 2 GiB space at the end of disk OR
     # a maximum of 1% of the total size of the disk. This is to allow someone
     # to replace an existing disk with one that is nominal in size
-    one_percent_of_disk = int((lbs * ts) * 0.01)
+    one_percent_of_disk = int((_512B * ts) * 0.01)
     end_buffer_in_bytes = min(_2GiB, one_percent_of_disk)
-    end_buffer_in_sectors = end_buffer_in_bytes // lbs
+    end_buffer_in_sectors = end_buffer_in_bytes // _512B
     max_end_lba = ts - end_buffer_in_sectors - 1
     # Last usable LBA aligned to 1 MiB boundary
     last_usable = align_sector(max_end_lba, alignment_in_sectors, "down")
@@ -132,7 +136,7 @@ def write_gpt(dev_fd: int, lbs: int, ts: int) -> UUID:
         part_entries_crc32,
         first_usable,
         last_usable,
-        lbs,
+        _512B,
     )
     secondary_gpt_header = create_gpt_header(
         False,
@@ -141,22 +145,22 @@ def write_gpt(dev_fd: int, lbs: int, ts: int) -> UUID:
         part_entries_crc32,
         first_usable,
         last_usable,
-        lbs,
+        _512B,
     )
     # PMBR
     lseek(dev_fd, 0, SEEK_SET)
     write(dev_fd, pmbr)
     # Write primary GPT header at LBA 1
-    lseek(dev_fd, lbs, SEEK_SET)
+    lseek(dev_fd, _512B, SEEK_SET)
     write(dev_fd, primary_gpt_header)
     # Write partition entries starting at LBA 2
-    lseek(dev_fd, 2 * lbs, SEEK_SET)
+    lseek(dev_fd, 2 * _512B, SEEK_SET)
     write(dev_fd, part_entries)
     # Write secondary partition entries at LBA total sectors - 33
-    lseek(dev_fd, (ts - 33) * lbs, SEEK_SET)
+    lseek(dev_fd, (ts - 33) * _512B, SEEK_SET)
     write(dev_fd, part_entries)
     # Write secondary GPT header at last LBA
-    lseek(dev_fd, (ts - 1) * lbs, SEEK_SET)
+    lseek(dev_fd, (ts - 1) * _512B, SEEK_SET)
     write(dev_fd, secondary_gpt_header)
     return partition_guid
 
