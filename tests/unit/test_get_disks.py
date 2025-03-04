@@ -88,7 +88,7 @@ def test__wipe_quick():
 
 def test__format():
     with Client() as c:
-        for disk_class in get_disks(
+        for disk_class in DiskService(None).get_disks(
             name_filters=[c.call("disk.get_unused")[0]["name"]]
         ):
             disk = disk_class
@@ -105,7 +105,6 @@ def test__format():
     assert uuid.UUID(parts[0].unique_partition_guid) == part_guid
     assert parts[0].partition_name == "data"
     assert parts[0].first_lba * 512 == 1048576  # always start at 1MiB
-
     part_size_in_bytes = (512 * parts[0].first_lba) + (512 * parts[0].last_lba)
     buffer_at_end = disk.size_bytes - part_size_in_bytes
     one_percent_of_disk = 0.01 * disk.size_bytes
