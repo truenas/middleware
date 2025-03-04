@@ -332,7 +332,7 @@ class VirtInstanceService(CRUDService):
         return choices
 
     @api_method(VirtInstanceCreateArgs, VirtInstanceCreateResult)
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0].get("name")}')
     async def do_create(self, job, data):
         """
         Create a new virtualized instance.
@@ -435,7 +435,7 @@ class VirtInstanceService(CRUDService):
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 
     @api_method(VirtInstanceUpdateArgs, VirtInstanceUpdateResult)
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def do_update(self, job, id, data):
         """
         Update instance.
@@ -480,7 +480,7 @@ class VirtInstanceService(CRUDService):
         return await self.middleware.call('virt.instance.get_instance', id)
 
     @api_method(VirtInstanceDeleteArgs, VirtInstanceDeleteResult)
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def do_delete(self, job, id):
         """
         Delete an instance.
@@ -499,7 +499,7 @@ class VirtInstanceService(CRUDService):
         return True
 
     @api_method(VirtInstanceStartArgs, VirtInstanceStartResult, roles=['VIRT_INSTANCE_WRITE'])
-    @job(logs=True)
+    @job(lock=lambda args: f'instance_action_{args[0]}', logs=True)
     async def start(self, job, id):
         """
         Start an instance.
@@ -533,7 +533,7 @@ class VirtInstanceService(CRUDService):
         return True
 
     @api_method(VirtInstanceStopArgs, VirtInstanceStopResult, roles=['VIRT_INSTANCE_WRITE'])
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def stop(self, job, id, data):
         """
         Stop an instance.
@@ -551,7 +551,7 @@ class VirtInstanceService(CRUDService):
         return True
 
     @api_method(VirtInstanceRestartArgs, VirtInstanceRestartResult, roles=['VIRT_INSTANCE_WRITE'])
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def restart(self, job, id, data):
         """
         Restart an instance.
