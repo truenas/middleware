@@ -1,6 +1,4 @@
-import copy
-
-from middlewared.schema import Bool, Datetime, Dict, Int, List, OROperator, Str
+from middlewared.schema import Bool, Dict, Int, List, Str
 
 
 CERT_ENTRY = Dict(
@@ -43,21 +41,8 @@ CERT_ENTRY = Dict(
     Int('key_length', null=True),
     Bool('add_to_trusted_store', default=False),
     Bool('chain', null=True),
-    Bool('CA_type_existing'),
-    Bool('CA_type_internal'),
-    Bool('CA_type_intermediate'),
     Bool('cert_type_existing'),
-    Bool('cert_type_internal'),
     Bool('cert_type_CSR'),
     Bool('parsed'),
     Dict('extensions', additional_attrs=True),
-    List('revoked_certs'),
-    Str('crl_path'),
-    Int('signed_certificates'),
 )
-
-
-def get_ca_result_entry():
-    entry = copy.deepcopy(CERT_ENTRY)
-    entry.name = 'certificateauthority_entry'
-    return entry

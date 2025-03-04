@@ -1,17 +1,11 @@
-import copy
 import logging
 import os
 
-from collections import defaultdict
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from typing import Union
 
 from .load_utils import load_certificate, load_certificate_request, load_private_key
-from .utils import (
-    CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL,
-    CERT_TYPE_CSR, CERT_ROOT_PATH, CERT_CA_ROOT_PATH, RE_CERTIFICATE
-)
+from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, CERT_ROOT_PATH, RE_CERTIFICATE
 
 
 logger = logging.getLogger(__name__)
@@ -30,32 +24,19 @@ def normalize_cert_attrs(cert: dict) -> None:
         for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
             cert.pop(key, None)
 
-    if cert['type'] in (CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE):
-        root_path = CERT_CA_ROOT_PATH
-        is_ca = True
-    else:
-        root_path = CERT_ROOT_PATH
-        is_ca = False
-
+    root_path = CERT_ROOT_PATH
     cert.update({
         'root_path': root_path,
         'certificate_path': os.path.join(root_path, f'{cert["name"]}.crt'),
         'privatekey_path': os.path.join(root_path, f'{cert["name"]}.key'),
         'csr_path': os.path.join(root_path, f'{cert["name"]}.csr'),
-        'cert_type': 'CA' if is_ca else 'CERTIFICATE',
-        'internal': 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES',
-        'CA_type_existing': bool(cert['type'] & CA_TYPE_EXISTING),
-        'CA_type_internal': bool(cert['type'] & CA_TYPE_INTERNAL),
-        'CA_type_intermediate': bool(cert['type'] & CA_TYPE_INTERMEDIATE),
+        'cert_type': 'CERTIFICATE',
         'cert_type_existing': bool(cert['type'] & CERT_TYPE_EXISTING),
-        'cert_type_internal': bool(cert['type'] & CERT_TYPE_INTERNAL),
         'cert_type_CSR': bool(cert['type'] & CERT_TYPE_CSR),
         'chain_list': [],
         'key_length': None,
         'key_type': None,
     })
-    if is_ca:
-        cert['crl_path'] = os.path.join(root_path, f'{cert["name"]}.crl')
 
     certs = []
     if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) >= 1:
