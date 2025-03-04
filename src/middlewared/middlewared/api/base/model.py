@@ -206,6 +206,10 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
 class _ForUpdateSerializerMixin(PydanticBaseModel):
     @model_serializer(mode="wrap")
     def serialize_model(self, serializer):
+        if self is undefined:
+            # Can happen if ForUpdateMetaclass models are nestsed. Defer serialization to the outer model.
+            return self
+
         aliases = {field.alias or name: name for name, field in self.model_fields.items()}
 
         return {

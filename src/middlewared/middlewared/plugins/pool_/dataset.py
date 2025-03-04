@@ -17,7 +17,7 @@ from middlewared.validators import Exact, Match, Or, Range
 from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize,
     ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
-    ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
+    ZFS_VOLUME_BLOCK_SIZE_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, TNUserProp
 )
 
 
@@ -479,7 +479,14 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
         Inheritable(Str('acltype', enum=['OFF', 'NFSV4', 'POSIX']), has_default=False),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'MULTIPROTOCOL', 'NFS', 'SMB', 'APPS']),
-        Ref('encryption_options'),
+        Dict(
+            'encryption_options',
+            Bool('generate_key', default=False),
+            Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
+            Str('algorithm', default='AES-256-GCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
+            Str('passphrase', default=None, null=True, validators=[Range(min_=8)], empty=False, private=True),
+            Str('key', default=None, null=True, validators=[Range(min_=64, max_=64)], private=True),
+        ),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
         List(
