@@ -5,17 +5,32 @@ import middlewared.sqlalchemy as sa
 
 from fenced.fence import ExitCode as FencedExitCodes
 
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, Excluded, excluded_field
+from middlewared.api.current import (
+    PoolEntry, PoolCreateArgs, PoolCreateResult, PoolUpdateArgs,
+    PoolUpdateResult, PoolValidateNameArgs, PoolValidateNameResult
+)
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
-from middlewared.schema import Bool, Dict, Int, List, Patch, Str
-from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.disks_.get_disks import get_disks
 from middlewared.utils.size import format_size
-from middlewared.validators import Range
 
-from .utils import (
-    ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
-)
+from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
+
+
+class PoolPoolNormalizeInfo(PoolEntry):
+    id: Excluded = excluded_field()
+    guid: Excluded = excluded_field()
+
+
+class PoolPoolNormalizeInfoArgs(BaseModel):
+    pool_name: str
+
+
+class PoolPoolNormalizeInfoResult(BaseModel):
+    result: PoolPoolNormalizeInfo
 
 
 class PoolModel(sa.Model):
@@ -28,89 +43,6 @@ class PoolModel(sa.Model):
 
 class PoolService(CRUDService):
 
-    ENTRY = Dict(
-        'pool_entry',
-        Int('id', required=True),
-        Str('name', required=True),
-        Str('guid', required=True),
-        Str('status', required=True),
-        Str('path', required=True),
-        Dict(
-            'scan',
-            additional_attrs=True,
-            required=True,
-            null=True,
-            example={
-                'function': None,
-                'state': None,
-                'start_time': None,
-                'end_time': None,
-                'percentage': None,
-                'bytes_to_process': None,
-                'bytes_processed': None,
-                'bytes_issued': None,
-                'pause': None,
-                'errors': None,
-                'total_secs_left': None,
-            }
-        ),
-        Dict(
-            'expand',
-            additional_attrs=True,
-            required=True,
-            null=True,
-            example={
-                'state': 'FINISHED',
-                'expanding_vdev': 0,
-                'start_time': None,
-                'end_time': None,
-                'bytes_to_reflow': 835584,
-                'bytes_reflowed': 978944,
-                'waiting_for_resilver': 0,
-                'total_secs_left': None,
-                'percentage': 85.35564853556485,
-            },
-        ),
-        Bool('is_upgraded'),
-        Bool('healthy', required=True),
-        Bool('warning', required=True),
-        Str('status_code', required=True, null=True),
-        Str('status_detail', required=True, null=True),
-        Int('size', required=True, null=True),
-        Int('allocated', required=True, null=True),
-        Int('free', required=True, null=True),
-        Int('freeing', required=True, null=True),
-        Int('dedup_table_size', required=True, null=True),
-        Str('dedup_table_quota', required=True, null=True),
-        Str('fragmentation', required=True, null=True),
-        Str('size_str', required=True, null=True),
-        Str('allocated_str', required=True, null=True),
-        Str('free_str', required=True, null=True),
-        Str('freeing_str', required=True, null=True),
-        Dict(
-            'autotrim',
-            required=True,
-            additional_attrs=True,
-            example={
-                'parsed': 'off',
-                'rawvalue': 'off',
-                'source': 'DEFAULT',
-                'value': 'off',
-            }
-        ),
-        Dict(
-            'topology',
-            List('data', required=True),
-            List('log', required=True),
-            List('cache', required=True),
-            List('spare', required=True),
-            List('special', required=True),
-            List('dedup', required=True),
-            required=True,
-            null=True,
-        )
-    )
-
     class Config:
         datastore = 'storage.volume'
         datastore_extend = 'pool.pool_extend'
@@ -119,10 +51,9 @@ class PoolService(CRUDService):
         event_send = False
         cli_namespace = 'storage.pool'
         role_prefix = 'POOL'
+        entry = PoolEntry
 
-    @private
-    @accepts(Str('pool_name'))
-    @returns(Patch('pool_entry', 'pool_normalize', ('rm', {'name': 'id'}), ('rm', {'name': 'guid'})))
+    @api_method(PoolPoolNormalizeInfoArgs, PoolPoolNormalizeInfoResult, private=True)
     async def pool_normalize_info(self, pool_name):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
@@ -264,7 +195,7 @@ class PoolService(CRUDService):
         verrors.add_child(
             schema_name,
             await self.middleware.call('disk.check_disks_availability', list(disks),
-                                       data['allow_duplicate_serials']),
+                                       data.get('allow_duplicate_serials', False)),
         )
         verrors.check()
 
@@ -362,10 +293,6 @@ class PoolService(CRUDService):
                     )
 
                 if vdev['type'].startswith('DRAID'):
-                    vdev.update({
-                        'draid_data_disks': vdev.get('draid_data_disks'),
-                        'draid_spare_disks': vdev.get('draid_spare_disks', 0),
-                    })
                     nparity = int(vdev['type'][-1:])
                     verrors.extend(await self.middleware.call(
                         'zfs.pool.validate_draid_configuration', f'{topology_type}.{i}', numdisks, nparity, vdev
@@ -376,13 +303,6 @@ class PoolService(CRUDService):
                             'topology.spare',
                             'Dedicated spare disks should not be used with dRAID.'
                         )
-                else:
-                    for k in ('draid_data_disks', 'draid_spare_disks'):
-                        if k in vdev:
-                            verrors.add(
-                                f'topology.{topology_type}.{i}.{k}',
-                                'This property is only valid with dRAID vdevs.',
-                            )
 
                 if lastdatatype and lastdatatype != vdev['type']:
                     verrors.add(
@@ -392,7 +312,7 @@ class PoolService(CRUDService):
                     )
                 lastdatatype = vdev['type']
 
-        for i in ('cache', 'log', 'spare'):
+        for i in ('cache', 'log', 'spares'):
             value = data['topology'].get(i)
             if value and len(value) > 1:
                 verrors.add(
@@ -402,110 +322,11 @@ class PoolService(CRUDService):
 
         return verrors
 
-    @accepts(Dict(
-        'pool_create',
-        Str('name', max_length=50, required=True),
-        Bool('encryption', default=False),
-        Str('dedup_table_quota', default='AUTO', enum=['AUTO', None, 'CUSTOM'], null=True),
-        Int('dedup_table_quota_value', null=True, default=None, validators=[Range(min_=1)]),
-        Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
-        Str('checksum', enum=[None] + ZFS_CHECKSUM_CHOICES, default=None, null=True),
-        Dict(
-            'encryption_options',
-            Bool('generate_key', default=False),
-            Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
-            Str('algorithm', default='AES-256-GCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
-            Str('passphrase', default=None, null=True, validators=[Range(min_=8)], empty=False, private=True),
-            Str('key', default=None, null=True, validators=[Range(min_=64, max_=64)], private=True),
-            register=True
-        ),
-        Dict(
-            'topology',
-            List('data', items=[
-                Dict(
-                    'datavdevs',
-                    Str('type', enum=[
-                        'DRAID1', 'DRAID2', 'DRAID3', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'
-                    ], required=True),
-                    List('disks', items=[Str('disk')], required=True),
-                    Int('draid_data_disks'),
-                    Int('draid_spare_disks'),
-                ),
-            ], required=True),
-            List('special', items=[
-                Dict(
-                    'specialvdevs',
-                    Str('type', enum=['MIRROR', 'STRIPE'], required=True),
-                    List('disks', items=[Str('disk')], required=True),
-                ),
-            ]),
-            List('dedup', items=[
-                Dict(
-                    'dedupvdevs',
-                    Str('type', enum=['MIRROR', 'STRIPE'], required=True),
-                    List('disks', items=[Str('disk')], required=True),
-                ),
-            ]),
-            List('cache', items=[
-                Dict(
-                    'cachevdevs',
-                    Str('type', enum=['STRIPE'], required=True),
-                    List('disks', items=[Str('disk')], required=True),
-                ),
-            ]),
-            List('log', items=[
-                Dict(
-                    'logvdevs',
-                    Str('type', enum=['STRIPE', 'MIRROR'], required=True),
-                    List('disks', items=[Str('disk')], required=True),
-                ),
-            ]),
-            List('spares', items=[Str('disk')]),
-            required=True,
-        ),
-        Bool('allow_duplicate_serials', default=False),
-        register=True,
-    ), audit='Pool create', audit_extended=lambda data: data['name'])
+    @api_method(PoolCreateArgs, PoolCreateResult, audit='Pool create', audit_extended=lambda data: data['name'])
     @job(lock='pool_createupdate')
     async def do_create(self, job, data):
         """
         Create a new ZFS Pool.
-
-        `topology` is a object which requires at least one `data` entry.
-        All of `data` entries (vdevs) require to be of the same type.
-
-        `deduplication` when set to ON or VERIFY makes sure that no block of data is duplicated in the pool. When
-        VERIFY is specified, if two blocks have similar signatures, byte to byte comparison is performed to ensure that
-        the blocks are identical. This should be used in special circumstances as it carries a significant overhead.
-
-        `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
-
-        `encryption_options` specifies configuration for encryption of root dataset for `name` pool.
-        `encryption_options.passphrase` must be specified if encryption for root dataset is desired with a passphrase
-        as a key.
-        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
-        `encryption_options.generate_key` when enabled automatically generates the key to be used
-        for dataset encryption.
-
-        It should be noted that keys are stored by the system for automatic locking/unlocking
-        on import/export of encrypted datasets. If that is not desired, dataset should be created
-        with a passphrase as a key.
-
-        Example of `topology`:
-
-            {
-                "data": [
-                    {"type": "RAIDZ1", "disks": ["da1", "da2", "da3"]}
-                ],
-                "cache": [
-                    {"type": "STRIPE", "disks": ["da4"]}
-                ],
-                "log": [
-                    {"type": "STRIPE", "disks": ["da5"]}
-                ],
-                "spares": ["da6"]
-            }
-
 
         .. examples(websocket)::
 
@@ -711,22 +532,11 @@ class PoolService(CRUDService):
         else:
             return dedup_table_quota.lower()
 
-    @accepts(Int('id'), Patch(
-        'pool_create', 'pool_update',
-        ('add', {'name': 'autotrim', 'type': 'str', 'enum': ['ON', 'OFF']}),
-        ('rm', {'name': 'name'}),
-        ('rm', {'name': 'encryption'}),
-        ('rm', {'name': 'encryption_options'}),
-        ('rm', {'name': 'deduplication'}),
-        ('rm', {'name': 'checksum'}),
-        ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
-    ), audit='Pool update', audit_callback=True)
+    @api_method(PoolUpdateArgs, PoolUpdateResult, audit='Pool update', audit_callback=True)
     @job(lock='pool_createupdate')
     async def do_update(self, job, audit_callback, id_, data):
         """
         Update pool of `id`, adding the new topology.
-
-        The `type` of `data` must be the same of existing vdevs.
 
         .. examples(websocket)::
 
@@ -787,8 +597,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
-    @accepts(Str('pool_name'), roles=['POOL_READ'])
-    @returns()
+    @api_method(PoolValidateNameArgs, PoolValidateNameResult, roles=['POOL_READ'])
     def validate_name(self, pool_name):
         """
         Validates `pool_name` is a valid name for a pool.

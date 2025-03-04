@@ -57,7 +57,7 @@ from .k8s_to_docker import *  # noqa
 from .mail import *  # noqa
 from .nfs import *  # noqa
 from .pool import *  # noqa
-from .pool_dataset_details import *  # noqa
+from .pool_dataset import *  # noqa
 from .pool_resilver import *  # noqa
 from .pool_scrub import *  # noqa
 from .pool_snapshot_count import *  # noqa

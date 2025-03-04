@@ -1,8 +1,9 @@
 import logging
 import os
 
+from middlewared.api import api_method
+from middlewared.api.current import PoolExpandArgs, PoolExpandResult
 from middlewared.service import item_method, job, private, Service
-from middlewared.schema import accepts, Int, returns
 from middlewared.utils import run
 
 
@@ -12,11 +13,7 @@ logger = logging.getLogger(__name__)
 class PoolService(Service):
 
     @item_method
-    @accepts(
-        Int('id'),
-        roles=['POOL_WRITE']
-    )
-    @returns()
+    @api_method(PoolExpandArgs, PoolExpandResult, roles=['POOL_WRITE'])
     @job(lock='pool_expand')
     async def expand(self, job, id_):
         """

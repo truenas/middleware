@@ -117,10 +117,14 @@ def test_not_required():
 def test_update_metaclass():
     class NestedModel(BaseModel):
         a: int
+    
+    class NestedUpdateModel(BaseModel, metaclass=ForUpdateMetaclass):
+        y: str
 
     class UpdateModel(BaseModel, metaclass=ForUpdateMetaclass):
         b: int
         c: NestedModel
+        d: NestedUpdateModel
 
     test_cases = (
         (
@@ -131,6 +135,12 @@ def test_update_metaclass():
         ),
         (
             {"c": {"a": 1}}, {"c": {"a": 1}}
+        ),
+        (
+            {"d": {}}, {"d": {}}
+        ),
+        (
+            {"d": {"y": ""}}, {"d": {"y": ""}}
         ),
     )
     check_serialization(UpdateModel, test_cases)

@@ -1,7 +1,12 @@
 import errno
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
-from middlewared.service import CallError, item_method, no_authz_required, private, Service, ValidationError
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs,
+    PoolFilesystemChoicesResult, PoolIsUpgradedArgs, PoolIsUpgradedResult
+)
+from middlewared.schema import accepts, Dict, Int, List, returns, Str
+from middlewared.service import CallError, item_method, private, Service, ValidationError
 
 
 class PoolService(Service):
@@ -81,8 +86,7 @@ class PoolService(Service):
         return processes
 
     @item_method
-    @accepts(Int('id', required=False, default=None, null=True), roles=['POOL_READ'])
-    @returns(List('pool_disks', items=[Str('disk')]))
+    @api_method(PoolGetDisksArgs, PoolGetDisksResult, roles=['POOL_READ'])
     async def get_disks(self, oid):
         """
         Get all disks in use by pools.
@@ -94,11 +98,7 @@ class PoolService(Service):
                 disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
         return disks
 
-    @accepts(
-        List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']),
-        roles=['DATASET_READ']
-    )
-    @returns(List(items=[Str('filesystem_name')]))
+    @api_method(PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, roles=['DATASET_READ'])
     async def filesystem_choices(self, types):
         """
         Returns all available datasets, except the following:
@@ -139,8 +139,7 @@ class PoolService(Service):
             )
         ]
 
-    @accepts(Int('id', required=True), roles=['POOL_READ'])
-    @returns(Bool('pool_is_upgraded'))
+    @api_method(PoolIsUpgradedArgs, PoolIsUpgradedResult, roles=['POOL_READ'])
     @item_method
     async def is_upgraded(self, oid):
         """
