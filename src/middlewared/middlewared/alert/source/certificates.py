@@ -77,7 +77,6 @@ class CertificateChecksAlertSource(AlertSource):
         # service certs
         check_for_revocation = await self._get_service_certs()
 
-        parsed = {}
         for cert in certs:
             # make the sure certs have been parsed correctly
             if not cert['parsed']:
@@ -101,7 +100,5 @@ class CertificateChecksAlertSource(AlertSource):
                                 CertificateExpiredAlertClass,
                                 {'name': cert['name']}, key=[cert['name']]
                             ))
-
-                parsed[cert['id']] = cert['revoked']
 
         return alerts
