@@ -2,7 +2,7 @@ from unittest.mock import patch, mock_open
 
 from middlewared.plugins.reporting.netdata.utils import NETDATA_UPDATE_EVERY
 from middlewared.plugins.reporting.realtime_reporting import (
-    get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info,
+    get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats
 )
 from middlewared.plugins.reporting.realtime_reporting.utils import normalize_value, safely_retrieve_dimension
 
@@ -653,8 +653,49 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
+    'truenas_pool.usage': {
+        'name': 'truenas_pool.usage',
+        'family': 'pool.usage',
+        'context': 'pool.usage',
+        'units': 'bytes',
+        'last_updated': 1741023952,
+        'dimensions': {
+            'boot-pool.available': {
+                'name': 'available',
+                'value': 16053874688
+            },
+            'boot-pool.used': {
+                'name': 'used',
+                'value': 3730903040
+            },
+            'tank.available': {
+                'name': 'available',
+                'value': 7181352960
+            },
+            'tank.used': {
+                'name': 'used',
+                'value': 13102555136
+            }
+        }
+    },
 
 }
+
+
+def test_get_pool_stats():
+    pool_stats = get_pool_stats(NETDATA_ALL_METRICS)
+    assert pool_stats['tank']['available'] == safely_retrieve_dimension(
+        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'tank.available'
+    )
+    assert pool_stats['tank']['used'] == safely_retrieve_dimension(
+        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'tank.used'
+    )
+    assert pool_stats['boot-pool']['available'] == safely_retrieve_dimension(
+        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'boot-pool.available'
+    )
+    assert pool_stats['boot-pool']['used'] == safely_retrieve_dimension(
+        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'boot-pool.used'
+    )
 
 
 def test_arc_stats():
