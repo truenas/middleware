@@ -58,11 +58,16 @@ class SystemSecurityService(ConfigService):
 
     @private
     async def configure_stig(self, data=None):
+        is_ha = await self.middleware.call('failover.licensed')
         if data is None:
             data = await self.config()
 
         if not data['enable_gpos_stig']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
+            if await self.middleware.call('failover.licensed'):
+                await self.middleware.call(
+                    'failover.call_remote', 'auth.set_authenticator_assurance_level', ['LEVEL_1']
+                )
             return
 
         # Per security team STIG compatibility requires that authentication methods
