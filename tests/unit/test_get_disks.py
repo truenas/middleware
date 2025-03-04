@@ -48,7 +48,7 @@ def test__read_partitions():
             assert uuid.UUID(a.unique_partition_guid) == uuid.UUID(b["uuid"])
             assert a.first_lba == b["start"]
             assert a.last_lba == (b["start"] + b["size"]) - 1
-            assert a.size_bytes == b["size"] * disk.lbs
+            assert disk.size_bytes == b["size"] * 512
 
     assert at_least_one, "No disks with partitions! (or get_disks() failed)"
 
@@ -104,11 +104,9 @@ def test__format():
     assert parts[0].partition_type_guid == "6a898cc3-1dd2-11b2-99a6-080020736631"
     assert uuid.UUID(parts[0].unique_partition_guid) == part_guid
     assert parts[0].partition_name == "data"
-    assert parts[0].first_lba * disk.lbs == 1048576  # always start at 1MiB
+    assert parts[0].first_lba * 512 == 1048576  # always start at 1MiB
 
-    part_size_in_bytes = (disk.lbs * parts[0].first_lba) + (
-        disk.lbs * parts[0].last_lba
-    )
+    part_size_in_bytes = (512 * parts[0].first_lba) + (512 * parts[0].last_lba)
     buffer_at_end = disk.size_bytes - part_size_in_bytes
     one_percent_of_disk = 0.01 * disk.size_bytes
     twoish_gibibytes = 2254857830.4  # give some wiggle room ~2.1GiB
