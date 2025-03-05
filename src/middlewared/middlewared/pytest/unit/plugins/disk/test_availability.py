@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -26,16 +26,15 @@ class FauxDisk:
 @pytest.mark.asyncio
 async def test__disk_service__check_disks_availability(disks, allow_duplicate_serials, errors):
     m = Middleware()
-    with patch("middlewared.plugins.disk_.availability.get_disks") as mocked:
-        mocked.return_value = [
-            FauxDisk(**{"name": "sda", "serial": "1", "lunid": None}),
-            FauxDisk(**{"name": "sdb", "serial": "2", "lunid": "0"}),
-            FauxDisk(**{"name": "sdc", "serial": "2", "lunid": "1"}),
-            FauxDisk(**{"name": "sdd", "serial": " BAD USB DRIVE ", "lunid": None}),
-            FauxDisk(**{"name": "sde", "serial": " BAD USB DRIVE ", "lunid": None}),
-            FauxDisk(**{"name": "sdf", "serial": " EVEN WORSE USB DRIVE ", "lunid": None}),
-            FauxDisk(**{"name": "sdg", "serial": " EVEN WORSE USB DRIVE ", "lunid": None}),
-        ]
-        m["disk.get_reserved"] = AsyncMock(return_value=["sdb", "sde"])
-        verrors = await DiskService(m).check_disks_availability(disks, allow_duplicate_serials)
-        assert [e.errmsg for e in verrors.errors] == errors
+    m["disk.get_disks"] = AsyncMock(return_value=[
+        FauxDisk(**{"name": "sda", "serial": "1", "lunid": None}),
+        FauxDisk(**{"name": "sdb", "serial": "2", "lunid": "0"}),
+        FauxDisk(**{"name": "sdc", "serial": "2", "lunid": "1"}),
+        FauxDisk(**{"name": "sdd", "serial": " BAD USB DRIVE ", "lunid": None}),
+        FauxDisk(**{"name": "sde", "serial": " BAD USB DRIVE ", "lunid": None}),
+        FauxDisk(**{"name": "sdf", "serial": " EVEN WORSE USB DRIVE ", "lunid": None}),
+        FauxDisk(**{"name": "sdg", "serial": " EVEN WORSE USB DRIVE ", "lunid": None}),
+    ])
+    m["disk.get_reserved"] = AsyncMock(return_value=["sdb", "sde"])
+    verrors = await DiskService(m).check_disks_availability(disks, allow_duplicate_serials)
+    assert [e.errmsg for e in verrors.errors] == errors
