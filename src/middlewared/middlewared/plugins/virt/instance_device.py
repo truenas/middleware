@@ -315,6 +315,8 @@ class VirtInstanceDeviceService(Service):
                     if instance_type == 'CONTAINER':
                         if device['boot_priority'] is not None:
                             verrors.add(schema, 'Boot priority is not valid for filesystem paths.')
+                        if source.startswith('/dev/zvol/'):
+                            verrors.add(schema, 'ZVOL are not allowed for containers')
 
                         if await self.middleware.run_in_thread(os.path.exists, source) is False:
                             verrors.add(schema, 'Source path does not exist.')
