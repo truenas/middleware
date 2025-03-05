@@ -7,7 +7,7 @@ def get_pool_dataset_stats() -> dict[str, dict]:
     pool_stats = {}
     kwargs = {
         'props': ['used', 'available'],
-        'user_props': True,
+        'user_props': False,
         'snapshots': None,
         'retrieve_children': False,
         'snapshots_recursive': None,

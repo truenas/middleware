@@ -6,7 +6,6 @@ from middlewared.utils.metrics.pool_stats import get_pool_dataset_stats
 class Service(SimpleService):
     def __init__(self, configuration=None, name=None):
         SimpleService.__init__(self, configuration=configuration, name=name)
-        self.old_stats = {}
 
     def check(self):
         self.add_pool_stats_to_charts()
@@ -20,8 +19,7 @@ class Service(SimpleService):
         return data
 
     def add_pool_stats_to_charts(self):
-        data = get_pool_
-        dataset_stats()
+        data = get_pool_dataset_stats()
         self.charts.add_chart([
             'usage', 'usage', 'usage', 'bytes',
             'pool.usage',
