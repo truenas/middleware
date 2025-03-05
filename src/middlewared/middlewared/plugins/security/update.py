@@ -36,6 +36,7 @@ class SystemSecurityService(ConfigService):
         # FIPS configuration has been synced up before reboot
         await self.middleware.call('failover.datastore.send')
         await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
+        await self.middleware.call('failover.call_remote', 'system.security.configure_stig')
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
         if reason.name in remote_reboot_reasons:
@@ -58,16 +59,11 @@ class SystemSecurityService(ConfigService):
 
     @private
     async def configure_stig(self, data=None):
-        is_ha = await self.middleware.call('failover.licensed')
         if data is None:
             data = await self.config()
 
         if not data['enable_gpos_stig']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
-            if await self.middleware.call('failover.licensed'):
-                await self.middleware.call(
-                    'failover.call_remote', 'auth.set_authenticator_assurance_level', ['LEVEL_1']
-                )
             return
 
         # Per security team STIG compatibility requires that authentication methods
