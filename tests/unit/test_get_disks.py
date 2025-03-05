@@ -74,14 +74,14 @@ def test__wipe_quick():
         f.write(base64.b64decode(VMFS_MAGIC_STRING_B64))
 
     fs = json.loads(
-        subprocess.run(["wipefs", "-J", f"/dev/{disk}"], capture_output=True).stdout
+        subprocess.run(["wipefs", "-J", disk.devpath], capture_output=True).stdout
     )["signatures"][0]
     assert fs["type"] == VMFS_MAGIC_STRING_WFS
 
     # Clean the drive
     disk.wipe_quick()
     fs = json.loads(
-        subprocess.run(["wipefs", "-J", f"/dev/{disk}"], capture_output=True).stdout
+        subprocess.run(["wipefs", "-J", disk.devpath], capture_output=True).stdout
     )["signatures"]
     assert not fs
 
