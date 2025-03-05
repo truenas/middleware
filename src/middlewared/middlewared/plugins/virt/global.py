@@ -70,7 +70,7 @@ class VirtGlobalService(ConfigService):
         else:
             data['storage_pools'] = []
 
-        if data['pool'] not in data['storage_pools']:
+        if data['pool'] and data['pool'] not in data['storage_pools']:
             data['storage_pools'].append(data['pool'])
 
         try:
@@ -117,14 +117,26 @@ class VirtGlobalService(ConfigService):
 
         new = old.copy()
         new.update(data)
+        new_storage_pools = set(new['storage_pools']) - set(old['storage_pools'])
 
         verrors = ValidationErrors()
         await self.validate(new, 'virt_global_update', verrors)
+        if new_storage_pools:
+            pool_choices = await self.pool_choices()
+            for idx, pool in enumerate(new['storage_pools']):
+                if pool not in new_storage_pools or pool in pool_choices:
+                    continue
+
+                verrors.add(
+                    f'virt_global_update.storage_pools.{idx}',
+                    f'{pool}: pool is not available for incus storage'
+                )
         verrors.check()
 
         # Not part of the database
         new.pop('state')
         new.pop('dataset')
+        new['storage_pools'] = ' '.join(new['storage_pools'])
 
         await self.middleware.call(
             'datastore.update', self._config.datastore,
@@ -272,7 +284,7 @@ class VirtGlobalService(ConfigService):
         storage = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
         if storage['type'] != 'error':
             if storage['metadata']['config']['source'] == ds_name:
-                self.logger.debug('Storage pool for virt already configured.')
+                self.logger.debug('Virt storage pool for %s already configured.', ds_name)
                 import_storage = False
             else:
                 job = await self.middleware.call('virt.global.reset', True, None)
@@ -406,15 +418,34 @@ class VirtGlobalService(ConfigService):
             else:
                 raise CallError('Invalid storage')
 
+        for pool in config['storage_pools']:
+            # set up per-pool profiles
+            profile_name = f'storage-{pool}'
+            resp = await incus_call(f'1.0/profiles/{profile_name}', 'get')
+            if resp['type'] != 'error':
+                # profile already exists
+                continue
+
+            result = await incus_call(f'1.0/profiles', 'post', {'json': {
+                'name': profile_name,
+                'config': {},
+                'description': f'Profile for pool {pool}',
+                'devices': {
+                    'root': {
+                        'path': '/',
+                        'pool': pool,
+                        'type': 'disk',
+                    },
+		    'eth0': nic,
+                },
+            }})
+            if result.get('status') != 'Success':
+                raise CallError(result.get('error'))
+
         result = await incus_call('1.0/profiles/default', 'put', {'json': {
             'config': {},
             'description': 'Default TrueNAS profile',
             'devices': {
-                'root': {
-                    'path': '/',
-                    'pool': config['pool'],
-                    'type': 'disk',
-                },
                 'eth0': nic,
             },
         }})

@@ -158,6 +158,11 @@ class VirtInstanceService(CRUDService):
                 f'{schema_name}.instance_type', f'System is not licensed to manage {instance_type!r} instances'
             )
 
+        if new.get('storage_pool'):
+            valid_pools = await self.middleware.call('virt.global.pool_choices')
+            if new['storage_pool'] not in valid_pools:
+                verrors.add(f'{schema_name}.storage_pool', 'Not a valid ZFS pool')
+
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
 
@@ -341,6 +346,12 @@ class VirtInstanceService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
+        if data.get('storage_pool'):
+            storage_profile = f'storage-{data["storage_pool"]}'
+        else:
+            pool = (await self.middleware.call('virt.global.config'))['pool']
+            storage_profile = f'storage-{pool}'
+
         data_devices = data['devices'] or []
         iso_volume = data.pop('iso_volume', None)
         root_device_to_add = None
@@ -360,7 +371,7 @@ class VirtInstanceService(CRUDService):
             root_device_to_add = {
                 'name': iso_volume,
                 'dev_type': 'DISK',
-                'pool': 'default',
+                'pool': storage_profile,
                 'source': iso_volume,
                 'destination': None,
                 'readonly': False,
@@ -423,6 +434,7 @@ class VirtInstanceService(CRUDService):
                 'config': self.__data_to_config(data, instance_type=data['instance_type']),
                 'devices': devices,
                 'source': source,
+                'profiles': ['default', storage_profile],
                 'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
                 'start': data['autostart'],
             }}, running_cb, timeout=15 * 60)
