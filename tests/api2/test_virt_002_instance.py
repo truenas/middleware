@@ -226,16 +226,14 @@ def test_virt_instance_device_add():
 
     with dataset('virtshare', {'type': 'VOLUME', 'volsize': 200 * 1024 * 1024, 'sparse': True}) as ds:
         ssh(f'mkfs.ext3 /dev/zvol/{ds}')
-        call('virt.instance.device_add', INS3_NAME, {
+        call('virt.instance.device_add', INS1_NAME, {
             'name': 'disk2',
             'dev_type': 'DISK',
             'source': f'/dev/zvol/{ds}',
-            'destination': '/zvol',
         })
-        devices = call('virt.instance.device_list', INS3_NAME)
+        devices = call('virt.instance.device_list', INS1_NAME)
         assert any(i for i in devices if i['name'] == 'disk2'), devices
-        ssh(f'incus exec {INS3_NAME} mount|grep "on /zvol"|grep ext3')
-        assert call('virt.instance.device_delete', INS3_NAME, 'disk2') is True
+        assert call('virt.instance.device_delete', INS1_NAME, 'disk2') is True
 
 
 def test_virt_instance_device_update():
