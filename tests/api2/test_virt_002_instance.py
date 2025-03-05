@@ -41,7 +41,7 @@ def check_idmap_entry(instance_name, entry):
     raw = call('virt.instance.get_instance', instance_name, {'extra': {'raw': True}})['raw']
 
     assert 'raw.idmap' in raw['config']
-    assert entry in raw['config']['raw.idmap']
+    return entry in raw['config']['raw.idmap']
 
 
 @pytest.fixture(scope='module')
@@ -231,40 +231,47 @@ def test_virt_instance_shell(virt_instances):
 
 def test_virt_instance_idmap(virt_instances):
     with virt_instance('tmpinstance') as instance:
-        # We don't have any users so we shouldn't have any raw idmap entries
-        assert 'raw.idmap' not in instance['raw']['config']
+        uid = None
+        gid = None
+        assert 'raw.idmap' in instance['raw']['config']
+        # check that apps user / group are present
+        assert check_idmap_entry(instance['name'], f'uid 568 568')
+        assert check_idmap_entry(instance['name'], f'gid 568 568')
+
         with userns_user('bob') as u:
             # check user DIRECT map
+            uid = u['uid']
             assert u['userns_idmap'] == 'DIRECT'
             call('virt.instance.restart', instance['name'], job=True)
-            check_idmap_entry(instance['name'], f'uid {u["uid"]} {u["uid"]}')
+            assert check_idmap_entry(instance['name'], f'uid {uid} {uid}')
 
             # check custom user map
             call('user.update', u['id'], {'userns_idmap': 8675309})
 
             # restart to update idmap
             call('virt.instance.restart', instance['name'], job=True)
-            check_idmap_entry(instance['name'], f'uid {u["uid"]} 8675309')
+            assert check_idmap_entry(instance['name'], f'uid {uid} 8675309')
+            assert not check_idmap_entry(instance['name'], f'uid {uid} {uid}')
 
         call('virt.instance.restart', instance['name'], job=True)
-        raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
-        assert 'raw.idmap' not in raw['config']
+        assert not check_idmap_entry(instance['name'], f'uid {uid} 8675309')
 
         with userns_group('bob_group') as g:
+            gid = g['gid']
             assert g['userns_idmap'] == 'DIRECT'
             call('virt.instance.restart', instance['name'], job=True)
 
-            check_idmap_entry(instance['name'], f'gid {g["gid"]} {g["gid"]}')
+            assert check_idmap_entry(instance['name'], f'gid {gid} {gid}')
             # check custom user map
             call('group.update', g['id'], {'userns_idmap': 8675309})
 
             # restart to update idmap
             call('virt.instance.restart', instance['name'], job=True)
-            check_idmap_entry(instance['name'], f'gid {g["gid"]} 8675309')
+            assert not check_idmap_entry(instance['name'], f'gid {gid} {gid}')
+            assert check_idmap_entry(instance['name'], f'gid {gid} 8675309')
 
         call('virt.instance.restart', instance['name'], job=True)
-        raw = call('virt.instance.get_instance', instance['name'], {'extra': {'raw': True}})['raw']
-        assert 'raw.idmap' not in raw['config']
+        assert not check_idmap_entry(instance['name'], f'gid {gid} 8675309')
 
 
 def test_virt_instance_device_delete(virt_instances):
