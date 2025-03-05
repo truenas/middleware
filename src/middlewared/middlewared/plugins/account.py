@@ -61,7 +61,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
-    USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE
+    USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -1409,7 +1409,7 @@ class UserService(CRUDService):
                     'A user cannot belong to more than 64 auxiliary groups.'
                 )
 
-            existing_groups = {g['id'] for g in await self.middleware.call('datastore.query', 'account_bsdgroups')}
+            existing_groups = {g['id']: g for g in await self.middleware.call('datastore.query', 'account_bsdgroups')}
 
             for idx, dbid in enumerate(data.get('groups') or []):
                 if dbid not in existing_groups:
@@ -1422,6 +1422,13 @@ class UserService(CRUDService):
                     verrors.add(
                         f'{schema}.groups.{idx}',
                         'Local users may not be members of directory services groups.'
+                    )
+
+                entry = existing_groups['dbid']
+                if entry['builtin'] and entry['gid'] not in ALLOWED_BUILTIN_GIDS:
+                    verrors.add(
+                        f'{schema}.groups.{idx}',
+                        f'{entry["group"]}: membership of this builtin group may not be altered.'
                     )
 
         if 'full_name' in data and ':' in data['full_name']:
@@ -1843,6 +1850,22 @@ class GroupService(CRUDService):
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
+        if group['builtin']:
+            # Generally many features of builtin groups should be immutable
+            for key in ('sudo_commands', 'sudo_commands_nopasswd', 'smb', 'name'):
+                if data.get(key, None) is not None and data[key] != group[key]:
+                    verrors.add(
+                        f'group_update.{key}',
+                        'This configuration parameter may not be changed for builtin groups.'
+                    )
+
+            if data.get('users', None) is not None and data['users'] != group['users']:
+                if group['gid'] not in ALLOWED_BUILTIN_GIDS:
+                    verrors.add(
+                        'group_update.users',
+                        'Group membership for this builtin group may not be changed.'
+                    )
+
         verrors.check()
         old_smb = group['smb']
 
