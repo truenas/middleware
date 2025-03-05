@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 
-class PoolDatasetEntryProperty(BaseModel):
+class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
     parsed: Any
     rawvalue: str | None
     value: str | None
@@ -38,7 +38,7 @@ class PoolDatasetEntryProperty(BaseModel):
     source_info: Any
 
 
-class PoolDatasetEntry(BaseModel):
+class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     id: str
     type: str
     name: str
