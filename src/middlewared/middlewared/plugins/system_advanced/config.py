@@ -40,6 +40,7 @@ class SystemAdvancedModel(sa.Model):
     adv_sysloglevel = sa.Column(sa.String(120), default='f_info')
     adv_syslogserver = sa.Column(sa.String(120), default='')
     adv_syslog_transport = sa.Column(sa.String(12), default='UDP')
+    # tls IDs are placeholders for mutual authentication TLS
     adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     adv_syslog_tls_certificate_authority_id = sa.Column(
         sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True
@@ -88,8 +89,8 @@ class SystemAdvancedService(ConfigService):
         ], required=True),
         Str('syslogserver'),
         Str('syslog_transport', enum=['UDP', 'TCP', 'TLS'], required=True),
-        Int('syslog_tls_certificate', null=True, required=True),
-        Int('syslog_tls_certificate_authority', null=True, required=True),
+        Int('syslog_tls_certificate', null=True),               # Unused placeholder for mutual TLS
+        Int('syslog_tls_certificate_authority', null=True),     # Unused placeholder for mutual TLS
         Bool('syslog_audit'),
         List('isolated_gpu_pci_ids', items=[Str('pci_id')], required=True),
         Str('kernel_extra_options', required=True),
@@ -103,8 +104,9 @@ class SystemAdvancedService(ConfigService):
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
 
-        for k in filter(lambda k: data[k], ['syslog_tls_certificate_authority', 'syslog_tls_certificate']):
-            data[k] = data[k]['id']
+        # Currently unused. Force tls IDs to None.
+        data['syslog_tls_certificate'] = None
+        data['syslog_tls_certificate_authority'] = None
 
         data.pop('sed_passwd')
         data.pop('kmip_uid')
@@ -142,7 +144,7 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.syslogserver',
                     'Invalid syslog server format'
                 )
-            elif ']:' in syslog_server or (':' in syslog_server and not ']' in syslog_server):
+            elif ']:' in syslog_server or (':' in syslog_server and ']' not in syslog_server):
                 port = int(syslog_server.split(':')[-1])
                 if port < 0 or port > 65535:
                     verrors.add(
@@ -150,25 +152,13 @@ class SystemAdvancedService(ConfigService):
                         'Port must be in the range of 0 to 65535.'
                     )
 
-        if data['syslog_transport'] == 'TLS':
-            if not data['syslog_tls_certificate_authority']:
-                verrors.add(
-                    f'{schema}.syslog_tls_certificate_authority', 'This is required when using TLS as syslog transport'
-                )
-            ca_cert = await self.middleware.call(
-                'certificateauthority.query', [['id', '=', data['syslog_tls_certificate_authority']]]
+        # syslog with TLS (transport) does not manage any cert IDs
+        if data['syslog_tls_certificate_authority'] or data['syslog_tls_certificate']:
+            verrors.add(
+                f'{schema}.syslogserver',
+                'Please import the syslog certificate via the certificate authority UI widget.  '
+                'No selection is necessary.'
             )
-            if not ca_cert:
-                verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Unable to locate specified CA')
-            elif ca_cert[0]['revoked']:
-                verrors.add(f'{schema}.syslog_tls_certificate_authority', 'Specified CA has been revoked')
-
-            if data['syslog_tls_certificate']:
-                verrors.extend(await self.middleware.call(
-                    'certificate.cert_services_validation', data['syslog_tls_certificate'],
-                    f'{schema}.syslog_tls_certificate', False
-                ))
-        elif data['syslog_tls_certificate_authority'] or data['syslog_tls_certificate']:
             data['syslog_tls_certificate_authority'] = data['syslog_tls_certificate'] = None
 
         for invalid_char in ('\n', '"'):
@@ -277,9 +267,8 @@ class SystemAdvancedService(ConfigService):
                 original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
                 original_data['syslogserver'] != config_data['syslogserver'] or
                 original_data['syslog_transport'] != config_data['syslog_transport'] or
-                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate'] or
-                original_data['syslog_audit'] != config_data['syslog_audit'] or
-                original_data['syslog_tls_certificate_authority'] != config_data['syslog_tls_certificate_authority']
+                original_data['syslog_audit'] != config_data['syslog_audit']
+                # NOTE: add cert change check if required by mutual TLS (when implemented)
             ):
                 await self.middleware.call('service.restart', 'syslogd')
 

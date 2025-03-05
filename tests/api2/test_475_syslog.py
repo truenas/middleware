@@ -6,7 +6,6 @@ from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 
-
 def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_INFO'):
     """
     This generates a syslog message on the TrueNAS server we're currently testing.
@@ -84,7 +83,7 @@ def test_filter_leak(request, log_path):
     assert results['result'] is False, str(results['result'])
 
 
-def test_07_check_can_set_remote_syslog(request):
+def test_set_remote_syslog(request):
     """
     Basic test to validate that setting a remote syslog target
     doesn't break syslog-ng config
@@ -95,3 +94,27 @@ def test_07_check_can_set_remote_syslog(request):
         call('service.restart', 'syslogd', {'silent': False})
     finally:
         call('system.advanced.update', {'syslogserver': ''})
+
+
+def test_set_remote_syslog_with_TLS_transport():
+    """
+    Confirm expected settings in syslog-ng.conf when selecting TLS transport.
+    NOTE: This test does NOT confirm end-to-end functionality.
+    TODO: Add remote syslog server to enable end-to-end testing
+    """
+    restore_cmd = {"syslogserver": "", "syslog_transport": "UDP"}
+    remote = "127.0.0.1"
+    port = "5140"
+    transport = "TLS"
+    tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}"}
+    try:
+        data = call('system.advanced.update', tls_cmd)
+        assert data['syslog_transport'] == 'TLS'
+        conf = ssh('grep "tls" /etc/syslog-ng/syslog-ng.conf')
+        assert f"{remote}:{port}" in conf
+        assert 'transport("tls")' in conf
+        assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf
+
+        print(f"MCG DEBUG: conf = '{conf}'")
+    finally:
+        call('system.advanced.update', restore_cmd)

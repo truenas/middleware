@@ -21,49 +21,10 @@ def generate_syslog_remote_destination(advanced_config):
     result += 'destination loghost { '
 
     if advanced_config["syslog_transport"] == "TLS":
-        try:
-            certificate_authority = middleware.call_sync(
-                "certificateauthority.query", [
-                    ("id", "=", advanced_config["syslog_tls_certificate_authority"]), ("revoked", "=", False),
-                ],
-                {"get": True}
-            )
-        except IndexError:
-            logger.warning("Syslog TLS certificate not available, skipping remote syslog destination")
-            return ""
-
-        result += f"syslog(\"{host}\" port({port}) transport(\"tls\") ip-protocol(6) "
-        try:
-            ca_dir = "/etc/certificates/CA"
-            for filename in os.listdir(ca_dir):
-                if filename.endswith(".0") and os.path.islink(os.path.join(ca_dir, filename)):
-                    os.unlink(os.path.join(ca_dir, filename))
-            os.symlink(
-                certificate_authority["certificate_path"], os.path.join(
-                    ca_dir, "%x.0" % certificate_authority["subject_name_hash"]
-                )
-            )
-        except Exception:
-            logger.error("Error symlinking syslog CA, skipping remote syslog destination", exc_info=True)
-            return ""
-        else:
-            result += f"tls(ca-dir(\"{ca_dir}\") "
-
-        certificate = middleware.call_sync(
-            "certificate.query", [("id", "=", advanced_config["syslog_tls_certificate"])]
-        )
-        if certificate and not certificate[0]["revoked"]:
-            result += f"key-file(\"{certificate[0]['privatekey_path']}\") " \
-                      f"cert-file(\"{certificate[0]['certificate_path']}\")"
-        else:
-            msg = 'Skipping setting key-file/cert-file for remote syslog as '
-            if not certificate:
-                msg += 'no certificate configured'
-            else:
-                msg += 'specified certificate has been revoked'
-            logger.debug(msg)
-
-        result += "));"
+        # The TLS (transport) cert should be added via certificate authority
+        tls_encrypt_stanza += f'syslog("{host}" port({port}) transport("tls") ip-protocol(6) '
+        tls_encrypt_stanza += 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))'
+        result += f"{tls_encrypt_stanza});"
     else:
         transport = advanced_config["syslog_transport"].lower()
         result += f"syslog(\"{host}\" port({port}) localport(514) transport(\"{transport}\") ip-protocol(6));"
