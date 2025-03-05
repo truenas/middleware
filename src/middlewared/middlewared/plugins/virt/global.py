@@ -269,10 +269,7 @@ class VirtGlobalService(ConfigService):
                 job = await self.middleware.call('virt.global.reset', True, None)
                 await job.wait(raise_error=True)
 
-        return ds_name if import_storage else None
-
-    @private
-    async def import_storage_pool(self, pool_name):
+        return import_storage 
 
     async def _setup_impl(self):
         config = await self.config()
