@@ -110,7 +110,7 @@ def test_set_remote_syslog_with_TLS_transport():
     try:
         data = call('system.advanced.update', tls_cmd)
         assert data['syslog_transport'] == 'TLS'
-        conf = ssh('grep "tls" /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
+        conf = ssh('cat /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
         print(f"MCG DEBUG: conf = {conf}")
         assert f"{remote}:{port}" in conf, f"conf={conf}"
         assert 'transport("tls")' in conf, f"conf={conf}"
