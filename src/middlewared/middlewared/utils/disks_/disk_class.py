@@ -7,7 +7,7 @@ from re import compile as rcompile
 from .disk_io import read_gpt, wipe_disk_quick
 from .gpt_parts import GptPartEntry
 
-__all__ = ("DiskEntry", "__iterate_disks")
+__all__ = ("DiskEntry", "iterate_disks")
 
 # sda, pmem0, vda, nvme0n1 but not sda1/vda1/nvme0n1p1
 VALID_WHOLE_DISK = rcompile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
@@ -48,6 +48,11 @@ class DiskEntry:
     @cached_property
     def size_sectors(self) -> int:
         """The disk's total size in sectors"""
+        # Cf. include/linux/types.h
+        # The kernel represents the disk
+        # size in units of 512 bytes always
+        # regardless of the disk's reported
+        # block size.
         try:
             return int(self.__opener("size"))
         except Exception:
@@ -57,7 +62,12 @@ class DiskEntry:
     @cached_property
     def size_bytes(self) -> int:
         """The disk's total size in bytes"""
-        return self.lbs * self.size_sectors
+        # Cf. include/linux/types.h
+        # The kernel represents the disk
+        # size in units of 512 bytes always
+        # regardless of the disk's reported
+        # block size.
+        return 512 * self.size_sectors
 
     @cached_property
     def serial(self) -> str | None:
@@ -141,7 +151,7 @@ class DiskEntry:
             wipe_disk_quick(dev_fd, disk_size=self.size_bytes)
 
 
-def __iterate_disks() -> Generator[DiskEntry]:
+def iterate_disks() -> Generator[DiskEntry]:
     """Iterate over /dev and yield valid devices."""
     with scandir("/dev") as sdir:
         for i in filter(lambda x: VALID_WHOLE_DISK.match(x.name), sdir):

@@ -16,3 +16,15 @@ MIDDLEWARE_PAM_API_KEY_SERVICE = '/etc/pam.d/middleware-api-key'
 
 USERNS_IDMAP_DIRECT = -1
 USERNS_IDMAP_NONE = 0
+
+# Apart from a few exceptions we don't want admins making random
+# interactive users members of builtin groups. These groups usually
+# have enhanced privileges to the server and group membership can expose
+# unexpected security issues.
+ALLOWED_BUILTIN_GIDS = {
+    544,  # builtin_administrators
+    545,  # builtin_users
+    568,  # apps
+    951,  # truenas_readonly_administrators
+    952,  # truenas_sharing_administrators
+}

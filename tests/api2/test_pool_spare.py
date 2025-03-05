@@ -9,7 +9,7 @@ from middlewared.test.integration.utils import call
 def test_pool_create_too_small_spare():
     disk = call("disk.get_unused")[0]["name"]
 
-    with fake_disks({"sdz": {"size": 1024 * 1024 * 1024}}):
+    with fake_disks({"sdz": {"size_bytes": 1024 * 1024 * 1024}}):
         with pytest.raises(ValidationErrors) as ve:
             pool = call("pool.create", {
                 "name": "test",
@@ -29,7 +29,7 @@ def test_pool_create_too_small_spare():
 
 def test_pool_update_too_small_spare():
     with another_pool() as pool:
-        with fake_disks({"sdz": {"size": 1024 * 1024 * 1024}}):
+        with fake_disks({"sdz": {"size_bytes": 1024 * 1024 * 1024}}):
             with pytest.raises(ValidationErrors) as ve:
                 call("pool.update", pool["id"], {
                     "topology": {

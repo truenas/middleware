@@ -26,7 +26,7 @@ def mock(method, declaration="", **kwargs):
         replaced accepts. No `@accepts`, `@job` or other decorators are required, but if a method being replaced is a
         job, then mock signature must also accept `job` argument.
 
-    :param remote: Optional boolean to allow the mock to be sent to other node in HA-pair.
+    :param remote: Mock this method on another node of the HA setup instead.
     """
     args = kwargs.pop("args", None)
     remote = kwargs.pop("remote", False)

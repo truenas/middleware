@@ -152,7 +152,7 @@ def test_zfs_lifecycle():
 
 
 def test_arc_max_set():
-    tunable = call("tunable.create", {"type": "ZFS", "var": "zfs_arc_max", "value": 8675309}, job=True)
+    tunable = call("tunable.create", {"type": "ZFS", "var": "zfs_arc_max", "value": "8675309"}, job=True)
     try:
         val = ssh("cat /sys/module/zfs/parameters/zfs_arc_max")
     finally:

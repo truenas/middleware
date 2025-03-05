@@ -91,6 +91,13 @@ class TwoFactorAuthService(ConfigService):
             config
         )
 
+        # It's possible we have stale authenticator assurance level. An example is
+        # we were standby controller and for some reason a reboot failed after disabling
+        # STIG, then the admin chooses to fail over manually to server in unclean state
+        # We know that AAL has to be level 1 when 2FA is disabled
+        if not config['enabled']:
+            await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
+
         await self.middleware.call('service.reload', 'ssh')
 
         return await self.config()
