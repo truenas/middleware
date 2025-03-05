@@ -201,6 +201,9 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
                 for k, v in cls.model_fields.items()
             },
         )
+    
+    def mro(mcls):
+        return [cls for cls in super().mro() if cls is not _NotRequiredMixin]
 
 
 class _ForUpdateSerializerMixin(PydanticBaseModel):
