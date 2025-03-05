@@ -14,27 +14,39 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
     title = 'Virtualization'
 
     async def query(self, path, enabled, options=None):
-        config = await self.middleware.call('virt.global.config')
         instances = []
+        pool = path.split('/')[2] if path.count("/") == 2 else None  # only set if path is pool mp
+
         for i in await self.middleware.call('virt.instance.query'):
             append = False
-            if path != f'/mnt/{config["pool"]}':
-                for device in await self.middleware.call('virt.instance.device_list', i['id']):
-                    if device['dev_type'] != 'DISK':
-                        continue
-                    if device['source'] is None:
-                        continue
-                    if await self.middleware.call('filesystem.is_child', device['source'], path):
-                        append = True
-                        break
+            if pool and i['storage_pool'] == pool:
+                instances.append({
+                    'id': i['id'],
+                    'name': i['name'],
+                })
+                continue
 
-            else:
-                append = True
+            for device in await self.middleware.call('virt.instance.device_list', i['id']):
+                if device['dev_type'] != 'DISK':
+                    continue
+
+                if pool and device['storage_pool'] == pool:
+                    append = True
+                    break
+
+                if device['source'] is None:
+                    continue
+
+                if await self.middleware.call('filesystem.is_child', device['source'], path):
+                    append = True
+                    break
+
             if append:
                 instances.append({
                     'id': i['id'],
                     'name': i['name'],
                 })
+
         return instances
 
     async def delete(self, attachments):

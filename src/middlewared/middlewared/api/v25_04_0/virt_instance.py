@@ -69,6 +69,8 @@ class VirtInstanceEntry(BaseModel):
     secure_boot: bool | None
     root_disk_size: int | None
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None]
+    storage_pool: NonEmptyString
+    "Storage pool in which the root of the instance is located."
 
 
 # Lets require at least 32MiB of reserved memory
@@ -83,6 +85,12 @@ class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     iso_volume: NonEmptyString | None = None
     source_type: Literal[None, 'IMAGE', 'ZVOL', 'ISO'] = 'IMAGE'
+    storage_pool: NonEmptyString | None = None
+    '''
+    Storage pool under which to allocate root filesystem. Must be one of the pools
+    listed in virt.global.config output under "storage_pools". If None (default) then the pool
+    specified in the global configuration will be used.
+    '''
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
     root_disk_size: int = Field(ge=5, default=10)  # In GBs
     '''

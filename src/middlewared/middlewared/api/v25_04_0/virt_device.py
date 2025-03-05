@@ -33,6 +33,13 @@ class Disk(Device):
     destination: str | None = None
     boot_priority: int | None = Field(default=None, ge=0)
     io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None] = None
+    storage_pool: NonEmptyString | None = None
+    '''
+    Storage pool in which the device is located. This must be one
+    of the storage pools listed in virt.global.config output.
+    If this is set to None during device creation, then the default storage
+    pool defined in virt.global.config will be used.
+    '''
 
     @field_validator('source')
     @classmethod

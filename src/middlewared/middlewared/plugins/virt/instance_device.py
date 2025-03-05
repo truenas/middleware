@@ -14,7 +14,7 @@ from middlewared.api.current import (
     VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from .utils import incus_call_and_wait
+from .utils import incus_call_and_wait, storage_pool_to_incus_pool, incus_pool_to_storage_pool
 
 
 class VirtInstanceDeviceService(Service):
@@ -29,14 +29,17 @@ class VirtInstanceDeviceService(Service):
         List all devices associated to an instance.
         """
         instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance_profiles = instance['raw']['profiles']
+        raw_devices = {}
 
-        # Grab devices from default profile (e.g. nic and disk)
-        profile = await self.middleware.call('virt.global.get_default_profile')
+        # An incus instance may have more than one profile applied to it.
+        for profile in instance_profiles:
+            profile_devs = (await self.middleware.call('virt.global.get_profile', profile))['devices']
+            # Flag devices from the profile as readonly, cannot be modified only overridden
+            for v in profile_devs.values():
+                v['readonly'] = True
 
-        # Flag devices from the profile as readonly, cannot be modified only overridden
-        raw_devices = profile['devices']
-        for v in raw_devices.values():
-            v['readonly'] = True
+            raw_devices |= profile_devs
 
         raw_devices.update(instance['raw']['devices'])
 
@@ -66,8 +69,9 @@ class VirtInstanceDeviceService(Service):
                 device.update({
                     'dev_type': 'DISK',
                     'source': incus.get('source'),
+                    'storage_pool': incus_pool_to_storage_pool(incus.get('pool')),
                     'destination': incus.get('path'),
-                    'description': f'{incus.get("source")} -> {incus.get("destination")}',
+                    'description': f'{incus.get("source")} -> {incus.get("path")}',
                     'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
                     'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
                 })
@@ -179,9 +183,10 @@ class VirtInstanceDeviceService(Service):
                 if device['boot_priority'] is not None:
                     new['boot.priority'] = str(device['boot_priority'])
                 if '/' not in new['source']:
-                    # When incus volumes are used, we need to specify that incus needs to look in the default
-                    # already configured pool
-                    new['pool'] = 'default'
+                    if zpool := device.get('storage_pool'):
+                        new['pool'] = storage_pool_to_incus_pool(device.get('storage_pool'))
+                    else:
+                        new['pool'] = None
                 if device.get('io_bus'):
                     new['io.bus'] = device['io_bus'].lower()
 
@@ -352,6 +357,10 @@ class VirtInstanceDeviceService(Service):
                             verrors.add(schema, f'No {source!r} incus volume found which can be used for source')
                         elif available_volumes[source]['content_type'] == 'ISO' and device['boot_priority'] is None:
                             verrors.add(schema, 'Boot priority is required for ISO volumes.')
+                        else:
+                            # We need to specify the storage pool for device adding to VM
+                            # copy in what is known for the virt volume
+                            device['storage_pool'] = available_volumes[source]['storage_pool']
 
                 destination = device.get('destination')
                 if destination == '/':
