@@ -2,22 +2,23 @@ import copy
 import errno
 import os
 
-import middlewared.sqlalchemy as sa
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDatasetEntry, PoolDatasetCreateArgs, PoolDatasetCreateResult, PoolDatasetUpdateArgs, PoolDatasetUpdateResult,
+    PoolDatasetDeleteArgs, PoolDatasetDeleteResult, PoolDatasetPromoteArgs, PoolDatasetPromoteResult
+)
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
-from middlewared.schema import (
-    accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Patch, Ref, returns, Str
-)
+from middlewared.schema import Attribute, EnumMixin, NOT_PROVIDED
 from middlewared.service import (
-    CallError, CRUDService, filterable, InstanceNotFound, item_method, private, ValidationErrors
+    CallError, CRUDService, InstanceNotFound, item_method, private, ValidationErrors, filterable_api_method
 )
+import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
-from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
-    dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize,
-    ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
-    ZFS_VOLUME_BLOCK_SIZE_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, TNUserProp
+    dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize, ZFSKeyFormat,
+    ZFS_MAX_DATASET_NAME_LEN, ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
 )
 
 
@@ -65,29 +66,6 @@ class PoolDatasetEncryptionModel(sa.Model):
 
 class PoolDatasetService(CRUDService):
 
-    ENTRY = Dict(
-        'pool_dataset_entry',
-        Str('id', required=True),
-        Str('type', required=True),
-        Str('name', required=True),
-        Str('pool', required=True),
-        Bool('encrypted'),
-        Str('encryption_root', null=True),
-        Bool('key_loaded', null=True),
-        List('children', required=True),
-        Dict('user_properties', additional_attrs=True, required=True),
-        Bool('locked'),
-        *[Dict(
-            p[1] or p[0],
-            Any('parsed', null=True),
-            Str('rawvalue', null=True),
-            Str('value', null=True),
-            Str('source', null=True),
-            Any('source_info', null=True),
-        ) for p in get_props_of_interest_mapping() if (p[1] or p[0]) != 'mountpoint'],
-        Str('mountpoint', null=True),
-    )
-
     class Config:
         cli_namespace = 'storage.dataset'
         datastore_primary_key_type = 'string'
@@ -95,6 +73,7 @@ class PoolDatasetService(CRUDService):
         namespace = 'pool.dataset'
         role_prefix = 'DATASET'
         role_separate_delete = True
+        entry = PoolDatasetEntry
 
     @private
     async def get_instance_quick(self, name, options=None):
@@ -175,7 +154,7 @@ class PoolDatasetService(CRUDService):
         pool = dataset.split('/')[0]
         return not bool(filter_list([{'id': dataset, 'pool': pool}], await self.internal_datasets_filters()))
 
-    @filterable
+    @filterable_api_method(item=PoolDatasetEntry)
     def query(self, filters, options):
         """
         Query Pool Datasets with `query-filters` and `query-options`.
@@ -445,61 +424,12 @@ class PoolDatasetService(CRUDService):
                         'remove': True,
                     })
 
-    @accepts(Dict(
-        'pool_dataset_create',
-        Str('name', required=True),
-        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
-        Int('volsize'),  # IN BYTES
-        Str('volblocksize', enum=list(ZFS_VOLUME_BLOCK_SIZE_CHOICES)),
-        Bool('sparse'),
-        Bool('force_size'),
-        Inheritable(Str('comments')),
-        Inheritable(Str('sync', enum=['STANDARD', 'ALWAYS', 'DISABLED'])),
-        Inheritable(Str('snapdev', enum=['HIDDEN', 'VISIBLE']), has_default=False),
-        Inheritable(Str('compression', enum=ZFS_COMPRESSION_ALGORITHM_CHOICES)),
-        Inheritable(Str('atime', enum=['ON', 'OFF']), has_default=False),
-        Inheritable(Str('exec', enum=['ON', 'OFF'])),
-        Inheritable(Str('managedby', empty=False)),
-        Int('quota', null=True, validators=[Or(Range(min_=1024 ** 3), Exact(0))]),
-        Inheritable(Int('quota_warning', validators=[Range(0, 100)])),
-        Inheritable(Int('quota_critical', validators=[Range(0, 100)])),
-        Int('refquota', null=True, validators=[Or(Range(min_=1024 ** 3), Exact(0))]),
-        Inheritable(Int('refquota_warning', validators=[Range(0, 100)])),
-        Inheritable(Int('refquota_critical', validators=[Range(0, 100)])),
-        Int('reservation'),
-        Int('refreservation'),
-        Inheritable(Int('special_small_block_size'), has_default=False),
-        Inheritable(Int('copies')),
-        Inheritable(Str('snapdir', enum=['DISABLED', 'VISIBLE', 'HIDDEN'])),
-        Inheritable(Str('deduplication', enum=['ON', 'VERIFY', 'OFF'])),
-        Inheritable(Str('checksum', enum=ZFS_CHECKSUM_CHOICES)),
-        Inheritable(Str('readonly', enum=['ON', 'OFF'])),
-        Inheritable(Str('recordsize'), has_default=False),
-        Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE']), has_default=False),
-        Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
-        Inheritable(Str('acltype', enum=['OFF', 'NFSV4', 'POSIX']), has_default=False),
-        Str('share_type', default='GENERIC', enum=['GENERIC', 'MULTIPROTOCOL', 'NFS', 'SMB', 'APPS']),
-        Dict(
-            'encryption_options',
-            Bool('generate_key', default=False),
-            Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
-            Str('algorithm', default='AES-256-GCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
-            Str('passphrase', default=None, null=True, validators=[Range(min_=8)], empty=False, private=True),
-            Str('key', default=None, null=True, validators=[Range(min_=64, max_=64)], private=True),
-        ),
-        Bool('encryption', default=False),
-        Bool('inherit_encryption', default=True),
-        List(
-            'user_properties',
-            items=[Dict(
-                'user_property',
-                Str('key', required=True, validators=[Match(r'.*:.*')]),
-                Str('value', required=True),
-            )],
-        ),
-        Bool('create_ancestors', default=False),
-        register=True,
-    ), audit='Pool dataset create', audit_extended=lambda data: data['name'])
+    @api_method(
+        PoolDatasetCreateArgs,
+        PoolDatasetCreateResult,
+        audit='Pool dataset create',
+        audit_extended=lambda data: data['name']
+    )
     async def do_create(self, data):
         """
         Creates a dataset/zvol.
@@ -800,28 +730,7 @@ class PoolDatasetService(CRUDService):
         self.middleware.send_event('pool.dataset.query', 'ADDED', id=data['id'], fields=created_ds)
         return created_ds
 
-    @accepts(Str('id', required=True), Patch(
-        'pool_dataset_create', 'pool_dataset_update',
-        ('rm', {'name': 'name'}),
-        ('rm', {'name': 'type'}),
-        ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
-        ('rm', {'name': 'share_type'}),  # This is something we should only do at create time
-        ('rm', {'name': 'sparse'}),  # Create time only attribute
-        ('rm', {'name': 'volblocksize'}),  # Create time only attribute
-        ('rm', {'name': 'encryption'}),  # Create time only attribute
-        ('rm', {'name': 'encryption_options'}),  # Create time only attribute
-        ('rm', {'name': 'inherit_encryption'}),  # Create time only attribute
-        ('add', List(
-            'user_properties_update',
-            items=[Dict(
-                'user_property',
-                Str('key', required=True, validators=[Match(r'.*:.*')]),
-                Str('value'),
-                Bool('remove'),
-            )],
-        )),
-        ('attr', {'update': True}),
-    ), audit='Pool dataset update', audit_callback=True)
+    @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
         Updates a dataset/zvol `id`.
@@ -957,20 +866,10 @@ class PoolDatasetService(CRUDService):
         self.middleware.send_event('pool.dataset.query', 'CHANGED', id=id_, fields=updated_ds)
         return updated_ds
 
-    @accepts(Str('id'), Dict(
-        'dataset_delete',
-        Bool('recursive', default=False),
-        Bool('force', default=False),
-    ), audit='Pool dataset delete', audit_callback=True)
+    @api_method(PoolDatasetDeleteArgs, PoolDatasetDeleteResult, audit='Pool dataset delete', audit_callback=True)
     async def do_delete(self, audit_callback, id_, options):
         """
         Delete dataset/zvol `id`.
-
-        `recursive` will also delete/destroy all children datasets.
-        `force` will force delete busy datasets.
-
-        When root dataset is specified as `id` with `recursive`, it will destroy all the children of the
-        root dataset present leaving root dataset intact.
 
         .. examples(websocket)::
 
@@ -1020,8 +919,7 @@ class PoolDatasetService(CRUDService):
         return verrors
 
     @item_method
-    @accepts(Str('id'), roles=['DATASET_WRITE'])
-    @returns()
+    @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
         """
         Promote the cloned dataset `id`.

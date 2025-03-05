@@ -2,7 +2,11 @@ from typing import Annotated, Any, Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result
+from middlewared.api.base import (
+    BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result, ForUpdateMetaclass, Excluded,
+    excluded_field
+)
+from .common import QueryFilters, QueryOptions
 from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 
 
@@ -19,7 +23,10 @@ __all__ = [
     "PoolDatasetChecksumChoicesResult", "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
     "PoolDatasetEncryptionAlgorithmChoicesArgs", "PoolDatasetEncryptionAlgorithmChoicesResult",
     "PoolDatasetRecommendedZVolBlockSizeArgs", "PoolDatasetRecommendedZVolBlockSizeResult", "PoolDatasetProcessesArgs",
-    "PoolDatasetProcessesResult",
+    "PoolDatasetProcessesResult", "PoolDatasetGetQuotaArgs", "PoolDatasetGetQuotaResult", "PoolDatasetSetQuotaArgs",
+    "PoolDatasetSetQuotaResult", "PoolDatasetRecordSizeChoicesArgs", "PoolDatasetRecordSizeChoicesResult",
+    "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
+    "PoolDatasetPromoteArgs", "PoolDatasetPromoteResult",
 ]
 
 
@@ -154,6 +161,14 @@ class PoolDatasetCreateVolume(PoolDatasetCreate):
     volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K", None] = None
 
 
+class PoolDatasetDeleteOptions(BaseModel):
+    recursive: bool = False
+    """Also delete/destroy all children datasets. When root dataset is specified as `id` with `recursive`, it will
+    destroy all the children of the root dataset present leaving root dataset intact."""
+    force: bool = False
+    """Force delete busy datasets."""
+
+
 class PoolDatasetEncryptionSummaryOptionsDataset(BaseModel):
     force: bool = False
     name: NonEmptyString
@@ -181,6 +196,64 @@ class PoolDatasetLockOptions(BaseModel):
     force_umount: bool = False
 
 
+class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
+    used_bytes: int
+    """The number of bytes the user has written to the dataset. A value of zero means unlimited. May not instantly
+    update as space is used."""
+    quota: int
+    """The quota size in bytes. Absent if no quota is set."""
+
+
+class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
+    quota_type: Literal['USER', 'GROUP']
+    id: str
+    """The UID or GID to which the quota applies."""
+    name: str | None
+    """The user or group name to which the quota applies. Value is null if the id in the quota cannot be resolved to a
+    user or group. This indicates that the user or group does not exist on the server."""
+    obj_used: int
+    """The number of objects currently owned by `id`."""
+    obj_quota: int
+    """The number of objects that may be owned by `id`. A value of zero means unlimited. Absent if no objquota is
+    set."""
+
+
+class PoolDatasetDatasetQuota(_PoolDatasetQuota):
+    quota_type: Literal['DATASET']
+    id: str
+    """Name of the dataset."""
+    name: str
+    """Name of the dataset."""
+    refquota: int
+
+
+class PoolDatasetProjectQuota(_PoolDatasetQuota):
+    quota_type: Literal['PROJECT']
+    id: int
+    obj_used: int
+    """The number of objects currently owned by `id`."""
+    obj_quota: int
+    """The number of objects that may be owned by `id`. A value of zero means unlimited. Absent if no objquota is
+    set."""
+
+
+PoolDatasetQuota = Annotated[
+    PoolDatasetUserGroupQuota | PoolDatasetDatasetQuota | PoolDatasetProjectQuota,
+    Field(discriminator='quota_type')
+]
+
+
+class PoolDatasetSetQuota(BaseModel):
+    quota_type: Literal['DATASET', 'USER', 'USEROBJ', 'GROUP', 'GROUPOBJ']
+    """The type of quota to apply to the dataset. `USEROBJ` and `GROUPOBJ` quotas limit the number of objects consumed
+    by the specified user or group."""
+    id: str
+    """The UID, GID, or name to which the quota applies. If `quota_type` is 'DATASET', then `id` must be either `QUOTA`
+    or `REFQUOTA`."""
+    quota_value: int | None
+    """The quota size in bytes. Setting a value of `0` removes the user or group quota."""
+
+
 class PoolDatasetUnlockOptionsDataset(PoolDatasetEncryptionSummaryOptionsDataset):
     recursive: bool = False
 
@@ -196,6 +269,24 @@ class PoolDatasetUnlockOptions(BaseModel):
 class PoolDatasetUnlock(BaseModel):
     unlocked: list[str]
     failed: dict
+
+
+class PoolDatasetUpdateUserProperty(PoolDatasetCreateUserProperty):
+    value: str = NotRequired
+    remove: bool = NotRequired
+
+
+class PoolDatasetUpdate(PoolDatasetCreate, metaclass=ForUpdateMetaclass):
+    name: Excluded = excluded_field()
+    type: Excluded = excluded_field()
+    casesensitivity: Excluded = excluded_field()
+    share_type: Excluded = excluded_field()
+    sparse: Excluded = excluded_field()
+    volblocksize: Excluded = excluded_field()
+    encryption: Excluded = excluded_field()
+    encryption_options: Excluded = excluded_field()
+    inherit_encryption: Excluded = excluded_field()
+    user_properties_update: list[PoolDatasetUpdateUserProperty]
 
 
 ##############################   Args and Results   #############################################
@@ -248,6 +339,16 @@ class PoolDatasetCreateArgs(BaseModel):
 
 class PoolDatasetCreateResult(BaseModel):
     result: PoolDatasetEntry
+
+
+class PoolDatasetDeleteArgs(BaseModel):
+    id: str
+    options: PoolDatasetDeleteOptions = Field(default_factory=PoolDatasetDeleteOptions)
+
+
+class PoolDatasetDeleteResult(BaseModel):
+    result: Literal[None, True]
+    """Return true on successful deletion or null if the `zfs destroy` command fails with "dataset does not exist"."""
 
 
 class PoolDatasetDetailsArgs(BaseModel):
@@ -306,6 +407,17 @@ class PoolDatasetExportKeysForReplicationResult(BaseModel):
     result: None
 
 
+class PoolDatasetGetQuotaArgs(BaseModel):
+    dataset: str
+    quota_type: Literal['USER', 'GROUP', 'DATASET', 'PROJECT']
+    filters: QueryFilters = []
+    options: QueryOptions = Field(default_factory=QueryOptions)
+
+
+class PoolDatasetGetQuotaResult(BaseModel):
+    result: list[PoolDatasetQuota]
+
+
 class PoolDatasetInheritParentEncryptionPropertiesArgs(BaseModel):
     id: str
 
@@ -344,12 +456,39 @@ class PoolDatasetProcessesResult(BaseModel):
     result: list[PoolProcess]
 
 
+class PoolDatasetPromoteArgs(BaseModel):
+    id: str
+
+
+class PoolDatasetPromoteResult(BaseModel):
+    result: None
+
+
 class PoolDatasetRecommendedZVolBlockSizeArgs(BaseModel):
     pool: str
 
 
 class PoolDatasetRecommendedZVolBlockSizeResult(BaseModel):
     result: str
+
+
+class PoolDatasetRecordSizeChoicesArgs(BaseModel):
+    pool_name: str | None = None
+
+
+class PoolDatasetRecordSizeChoicesResult(BaseModel):
+    result: list[str]
+
+
+class PoolDatasetSetQuotaArgs(BaseModel):
+    dataset: str
+    """The name of the target ZFS dataset."""
+    quotas: list[PoolDatasetSetQuota] = [PoolDatasetSetQuota(quota_type='USER', id='0', quota_value=0)]
+    """Specify an array of quota entries to apply to dataset."""
+
+
+class PoolDatasetSetQuotaResult(BaseModel):
+    result: None
 
 
 class PoolDatasetUnlockArgs(BaseModel):
@@ -359,3 +498,12 @@ class PoolDatasetUnlockArgs(BaseModel):
 
 class PoolDatasetUnlockResult(BaseModel):
     result: PoolDatasetUnlock
+
+
+class PoolDatasetUpdateArgs(BaseModel):
+    id: str
+    data: PoolDatasetUpdate
+
+
+class PoolDatasetUpdateResult(BaseModel):
+    result: PoolDatasetEntry
