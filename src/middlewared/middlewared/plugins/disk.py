@@ -2,9 +2,8 @@ from sqlalchemy.exc import IntegrityError
 
 from middlewared.utils import ProductType
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
-from middlewared.service import filterable, private, CallError, CRUDService, ValidationError
+from middlewared.service import filterable, private, CallError, CRUDService
 import middlewared.sqlalchemy as sa
-from middlewared.utils.disks_.get_disks import get_disks
 
 
 class DiskModel(sa.Model):
@@ -168,7 +167,7 @@ class DiskService(CRUDService):
         if context['real_names']:
             context['identifier_to_name'] = {
                 disk.identifier: disk.name
-                for disk in await self.middleware.run_in_thread(lambda: list(get_disks()))
+                for disk in await self.middleware.call('disk.get_disks')
             }
 
         if context['supports_smart']:

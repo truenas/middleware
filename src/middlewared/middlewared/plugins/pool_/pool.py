@@ -14,7 +14,6 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.disks_.get_disks import get_disks
 from middlewared.utils.size import format_size
 
 from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
@@ -200,7 +199,7 @@ class PoolService(CRUDService):
         verrors.check()
 
         disks_cache = dict()
-        for i in await self.middleware.run_in_thread(get_disks):
+        for i in await self.middleware.call('disk.get_disks'):
             disks_cache[i.name] = {'size': i.size_bytes}
 
         min_data_size = min([

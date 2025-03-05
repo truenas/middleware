@@ -3,7 +3,7 @@ import json
 import subprocess
 import uuid
 
-from middlewared.utils.disks_.get_disks import get_disks
+from middlewared.plugins.disk_.disk_info import DiskService
 from truenas_api_client import Client
 
 import pytest
@@ -17,7 +17,7 @@ VMFS_MAGIC_STRING_WFS = "VMFS_volume_member"
 )
 def test__get_disks_filters(name, should_find):
     found = False
-    for i in get_disks(name_filters=name):
+    for i in DiskService(None).get_disks(name_filters=name):
         found = i
 
     if should_find:
@@ -28,7 +28,7 @@ def test__get_disks_filters(name, should_find):
 
 def test__read_partitions():
     at_least_one = False
-    for disk in get_disks():
+    for disk in DiskService(None).get_disks():
         if not disk.partitions:
             continue
 
@@ -55,7 +55,7 @@ def test__read_partitions():
 
 def test__wipe_quick():
     with Client() as c:
-        for disk_class in get_disks(
+        for disk_class in DiskService(None).get_disks(
             name_filters=[c.call("disk.get_unused")[0]["name"]]
         ):
             disk = disk_class
