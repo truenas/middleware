@@ -48,6 +48,11 @@ class DiskEntry:
     @cached_property
     def size_sectors(self) -> int:
         """The disk's total size in sectors"""
+        # Cf. include/linux/types.h
+        # The kernel represents the disk
+        # size in units of 512 bytes always
+        # regardless of the disk's reported
+        # block size.
         try:
             return int(self.__opener("size"))
         except Exception:
@@ -57,7 +62,12 @@ class DiskEntry:
     @cached_property
     def size_bytes(self) -> int:
         """The disk's total size in bytes"""
-        return self.lbs * self.size_sectors
+        # Cf. include/linux/types.h
+        # The kernel represents the disk
+        # size in units of 512 bytes always
+        # regardless of the disk's reported
+        # block size.
+        return 512 * self.size_sectors
 
     @cached_property
     def serial(self) -> str | None:

@@ -16,7 +16,7 @@ def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
         # seek back to the beginning of the disk
         lseek(dev_fd, 0, SEEK_SET)
 
-    to_write = b"0" * _1MiB
+    to_write = b"\x00" * _1MiB
     for i in range(32):
         # wipe first 32MB
         write(dev_fd, to_write)
