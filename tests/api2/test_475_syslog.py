@@ -111,8 +111,8 @@ def test_set_remote_syslog_with_TLS_transport():
         data = call('system.advanced.update', tls_cmd)
         assert data['syslog_transport'] == 'TLS'
         conf = ssh('grep "destination loghost" /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
-        assert f"port({port})" in conf, f"conf={conf}"
-        assert 'transport("tls")' in conf, f"conf={conf}"
-        assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf, f"conf={conf}"
+        assert f"port({port})" in conf['stdout'], f"conf={conf}"
+        assert 'transport("tls")' in conf['stdout'], f"conf={conf}"
+        assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf['stdout'], f"conf={conf}"
     finally:
         call('system.advanced.update', restore_cmd)
