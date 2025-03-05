@@ -22,7 +22,7 @@ def generate_syslog_remote_destination(advanced_config):
 
     if advanced_config["syslog_transport"] == "TLS":
         # The TLS (transport) cert should be added via certificate authority
-        tls_encrypt_stanza += f'syslog("{host}" port({port}) transport("tls") ip-protocol(6) '
+        tls_encrypt_stanza = f'syslog("{host}" port({port}) transport("tls") ip-protocol(6) '
         tls_encrypt_stanza += 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))'
         result += f"{tls_encrypt_stanza});"
     else:
