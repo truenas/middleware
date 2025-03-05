@@ -16,6 +16,9 @@ class VirtGlobalEntry(BaseModel):
     id: int
     pool: str | None = None
     dataset: str | None = None
+    "Default storage pool for incus"
+    storage_pools: list[str] | None = None
+    "Configured storage pools"
     bridge: str | None = None
     v4_network: str | None = None
     v6_network: str | None = None
@@ -29,6 +32,7 @@ class VirtGlobalUpdateResult(BaseModel):
 @single_argument_args('virt_global_update')
 class VirtGlobalUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     pool: NonEmptyString | None = None
+    storage_pools: list[str] | None = None
     bridge: NonEmptyString | None = None
     v4_network: str | None = None
     v6_network: str | None = None
