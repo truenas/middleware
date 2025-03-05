@@ -331,7 +331,12 @@ class VirtInstanceService(CRUDService):
                         choices[alias]['archs'].append(v['arch'])
         return choices
 
-    @api_method(VirtInstanceCreateArgs, VirtInstanceCreateResult)
+    @api_method(
+        VirtInstanceCreateArgs,
+        VirtInstanceCreateResult,
+        audit='Virt: Creating',
+        audit_extended=lambda data: f'{data["name"]!r} instance'
+    )
     @job()
     async def do_create(self, job, data):
         """
@@ -434,7 +439,12 @@ class VirtInstanceService(CRUDService):
 
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 
-    @api_method(VirtInstanceUpdateArgs, VirtInstanceUpdateResult)
+    @api_method(
+        VirtInstanceUpdateArgs,
+        VirtInstanceUpdateResult,
+        audit='Virt: Updating',
+        audit_extended=lambda id, data=None: f'{id!r} instance'
+    )
     @job()
     async def do_update(self, job, id, data):
         """
@@ -479,7 +489,12 @@ class VirtInstanceService(CRUDService):
 
         return await self.middleware.call('virt.instance.get_instance', id)
 
-    @api_method(VirtInstanceDeleteArgs, VirtInstanceDeleteResult)
+    @api_method(
+        VirtInstanceDeleteArgs,
+        VirtInstanceDeleteResult,
+        audit='Virt: Deleting',
+        audit_extended=lambda id: f'{id!r} instance'
+    )
     @job()
     async def do_delete(self, job, id):
         """
@@ -498,7 +513,13 @@ class VirtInstanceService(CRUDService):
 
         return True
 
-    @api_method(VirtInstanceStartArgs, VirtInstanceStartResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(
+        VirtInstanceStartArgs,
+        VirtInstanceStartResult,
+        audit='Virt: Starting',
+        audit_extended=lambda id: f'{id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
     @job(logs=True)
     async def start(self, job, id):
         """
@@ -532,7 +553,13 @@ class VirtInstanceService(CRUDService):
 
         return True
 
-    @api_method(VirtInstanceStopArgs, VirtInstanceStopResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(
+        VirtInstanceStopArgs,
+        VirtInstanceStopResult,
+        audit='Virt: Stopping',
+        audit_extended=lambda id, data=None: f'{id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
     @job()
     async def stop(self, job, id, data):
         """
@@ -550,7 +577,13 @@ class VirtInstanceService(CRUDService):
 
         return True
 
-    @api_method(VirtInstanceRestartArgs, VirtInstanceRestartResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(
+        VirtInstanceRestartArgs,
+        VirtInstanceRestartResult,
+        audit='Virt: Restarting',
+        audit_extended=lambda id, data=None: f'{id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
     @job()
     async def restart(self, job, id, data):
         """

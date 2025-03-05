@@ -44,7 +44,12 @@ class VirtVolumeService(CRUDService):
                 entries[-1]['config']['size'] = int(storage_device['config']['size']) // (1024 * 1024)
         return filter_list(entries, filters, options)
 
-    @api_method(VirtVolumeCreateArgs, VirtVolumeCreateResult)
+    @api_method(
+        VirtVolumeCreateArgs,
+        VirtVolumeCreateResult,
+        audit='Virt: Creating',
+        audit_extended=lambda data: f'{data["name"]!r} volume'
+    )
     async def do_create(self, data):
         await self.middleware.call('virt.global.check_initialized')
 
@@ -67,7 +72,12 @@ class VirtVolumeService(CRUDService):
 
         return await self.get_instance(data['name'])
 
-    @api_method(VirtVolumeUpdateArgs, VirtVolumeUpdateResult)
+    @api_method(
+        VirtVolumeUpdateArgs,
+        VirtVolumeUpdateResult,
+        audit='Virt: Updating',
+        audit_extended=lambda name, data=None: f'{name!r} volume'
+    )
     async def do_update(self, name, data):
         volume = await self.get_instance(name)
         if data.get('size') is None:
@@ -85,7 +95,12 @@ class VirtVolumeService(CRUDService):
 
         return await self.get_instance(name)
 
-    @api_method(VirtVolumeDeleteArgs, VirtVolumeDeleteResult)
+    @api_method(
+        VirtVolumeDeleteArgs,
+        VirtVolumeDeleteResult,
+        audit='Virt: Deleting',
+        audit_extended=lambda name: f'{name!r} volume'
+    )
     async def do_delete(self, name):
         volume = await self.get_instance(name)
         if volume['used_by']:
@@ -97,7 +112,13 @@ class VirtVolumeService(CRUDService):
 
         return True
 
-    @api_method(VirtVolumeImportISOArgs, VirtVolumeImportISOResult, roles=['VIRT_IMAGE_WRITE'])
+    @api_method(
+        VirtVolumeImportISOArgs,
+        VirtVolumeImportISOResult,
+        audit='Virt: Importing',
+        audit_extended=lambda data: f'{data["name"]!r} ISO',
+        roles=['VIRT_IMAGE_WRITE']
+    )
     @job(lock=lambda args: f'virt_volume_import_iso_{args[0]}', pipes=['input'], check_pipes=False)
     async def import_iso(self, job, data):
         await self.middleware.call('virt.global.check_initialized')
@@ -144,4 +165,3 @@ class VirtVolumeService(CRUDService):
 
         job.set_progress(95, 'ISO successfully imported as incus volume')
         return await self.get_instance(data['name'])
-
