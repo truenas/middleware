@@ -1,9 +1,8 @@
-import re
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, IPvAnyAddress
+from pydantic import IPvAnyAddress as IPvAnyAddress_, Field
 
-from middlewared.api.base import BaseModel, match_validator, ForUpdateMetaclass, Excluded, excluded_field
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, Excluded, excluded_field
 
 
 __all__ = [
@@ -12,8 +11,9 @@ __all__ = [
 ]
 
 
-Hostname = Annotated[str, AfterValidator(match_validator(re.compile(r'^[a-z\.\-0-9]*[a-z0-9]$', re.IGNORECASE)))]
-Domain = Annotated[str, AfterValidator(match_validator(re.compile(r'^[a-z\.\-0-9]*$', re.IGNORECASE)))]
+Hostname = Annotated[str, Field(pattern=r'^[a-zA-Z\.\-0-9]*[a-zA-Z0-9]$')]
+Domain = Annotated[str, Field(pattern=r'^[a-zA-Z\.\-0-9]*$')]
+IPvAnyAddress =  Literal[''] | IPvAnyAddress_
 
 
 class ServiceAnnouncement(BaseModel):
