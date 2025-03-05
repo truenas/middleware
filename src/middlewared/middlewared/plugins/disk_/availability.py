@@ -4,7 +4,6 @@ from middlewared.service import accepts, private, Service
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import Bool, Dict, Str
 from middlewared.utils.disks import dev_to_ident
-from middlewared.utils.disks_.get_disks import get_disks
 
 
 class DiskService(Service):
@@ -164,7 +163,7 @@ class DiskService(Service):
         """
         verrors = ValidationErrors()
         disks_cache = dict()
-        for i in await self.middleware.run_in_thread(get_disks):
+        for i in await self.middleware.call('disk.get_disks'):
             disks_cache[i.name] = {'serial': i.serial, 'lunid': i.lunid}
 
         disks_set = set(disks)

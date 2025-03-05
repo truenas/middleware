@@ -1,4 +1,5 @@
 import collections
+from collections.abc import Generator
 import contextlib
 import glob
 import os
@@ -8,6 +9,8 @@ import time
 import pyudev
 
 from middlewared.service import CallError, private, Service
+from middlewared.utils.disks_.disk_class import DiskEntry, iterate_disks
+
 from .gpt_utils import read_gpt_partitions
 
 # The basic unit of a block I/O is a sector. A sector is
@@ -50,7 +53,7 @@ def get_partition_size_info(disk_name, s_offset, s_size):
 
     if not lbs:
         # this should never happen
-        return PART_INFO()
+        raise RuntimeError(f"Logical block size did not exist for disk {disk_name}")
 
     # important when dealing with 4kn drives
     divisor = lbs // BYTES_512
@@ -70,6 +73,26 @@ def get_partition_size_info(disk_name, s_offset, s_size):
 
 
 class DiskService(Service):
+
+    @private
+    def get_disks(self, name_filters: list[str] | None = None) -> Generator[DiskEntry]:
+        """
+        Iterate over /dev and yield a `DiskEntry` object for
+        each disk detected on the system.
+
+        Args:
+            name_filters: list of strings, represent a list
+                of disk names that will be filtered upon.
+                The name of the disk may take the form
+                of 'sda' or '/dev/sda'.
+        """
+        if name_filters is None:
+            for disk in iterate_disks():
+                yield disk
+        else:
+            for disk in iterate_disks():
+                if disk.name in name_filters or disk.devpath in name_filters:
+                    yield disk
 
     @private
     def get_dev_size(self, device):
