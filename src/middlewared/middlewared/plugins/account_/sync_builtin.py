@@ -3,6 +3,14 @@ import itertools
 
 from middlewared.service import private, Service
 
+# accounts that should have their userns_idmap field set to DIRECT.
+#
+# When a new account is added that needs this mapping, its uid / gid
+# should be added here to ensure that the field is set appropriately
+# on datastore insertion
+BUILTIN_USERNS_IDMAP_USER = {568}
+BUILTIN_USERNS_IDMAP_GROUP = {568}
+
 
 def read_file(path):
     with open(path) as f:
@@ -107,6 +115,7 @@ class UserService(Service):
                     "smb": True if name in smb_builtins else False,
                     "sudo_commands": [],
                     "sudo_commands_nopasswd": [],
+                    "userns_idmap": "DIRECT" if gid in BUILTIN_USERNS_IDMAP_GROUP else 0,
                 }
                 existing_group["id"] = self.middleware.call_sync(
                     "datastore.insert",
@@ -247,6 +256,7 @@ class UserService(Service):
                     "smb": False,
                     "sudo_commands": [],
                     "sudo_commands_nopasswd": [],
+                    "userns_idmap": "DIRECT" if uid in BUILTIN_USERNS_IDMAP_USER else 0,
                 }
                 existing_user["id"] = self.middleware.call_sync(
                     "datastore.insert",

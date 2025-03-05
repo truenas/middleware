@@ -58,7 +58,7 @@ from .mail import *  # noqa
 from .network_configuration import *  # noqa
 from .nfs import *  # noqa
 from .pool import *  # noqa
-from .pool_dataset_details import *  # noqa
+from .pool_dataset import *  # noqa
 from .pool_resilver import *  # noqa
 from .pool_scrub import *  # noqa
 from .pool_snapshot_count import *  # noqa
@@ -83,6 +83,7 @@ from .system_security import *  # noqa
 from .tn_connect import *  # noqa
 from .truecommand import *  # noqa
 from .truenas import *  # noqa
+from .tunable import *  # noqa
 from .ups import *  # noqa
 from .user import *  # noqa
 from .virt_device import *  # noqa

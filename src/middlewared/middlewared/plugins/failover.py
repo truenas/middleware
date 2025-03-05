@@ -97,7 +97,7 @@ class FailoverService(ConfigService):
         old = await self.middleware.call('datastore.config', 'system.failover')
         new = old.copy()
         new.update(data)
-        if master is not NOT_PROVIDED:
+        if master is NOT_PROVIDED:
             # The node making the call is the one we want to make MASTER by default
             new['master_node'] = await self.middleware.call('failover.node')
         else:
