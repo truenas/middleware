@@ -238,7 +238,6 @@ def test_virt_instance_idmap(virt_instances):
         assert check_idmap_entry(instance['name'], f'uid 568 568')
         assert check_idmap_entry(instance['name'], f'gid 568 568')
 
-        check_idmap
         with userns_user('bob') as u:
             # check user DIRECT map
             uid = u['uid']
