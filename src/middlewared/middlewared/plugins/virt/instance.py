@@ -424,13 +424,32 @@ class VirtInstanceService(CRUDService):
                 'devices': devices,
                 'source': source,
                 'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
-                'start': data['autostart'],
+                'start': False if data['instance_type'] == 'CONTAINER' else data['autostart'],
             }}, running_cb, timeout=15 * 60)
             # We will give 15 minutes to incus to download relevant image and then timeout
         except CallError as e:
             if await self.middleware.call('virt.instance.query', [['name', '=', data['name']]]):
                 await (await self.middleware.call('virt.instance.delete', data['name'])).wait()
             raise e
+
+        if data['instance_type'] == 'CONTAINER':
+            # apply idmap settings then apply autostart settings
+            await self.set_account_idmaps(data['name'])
+
+            if data['autostart']:
+                raw = (await self.middleware.call(
+                    'virt.instance.get_instance', data['name'], {'extra': {'raw': True}}
+                ))['raw']
+                raw['config']['boot.autostart'] = 'true'
+                try:
+                    await incus_call_and_wait(f'1.0/instances/{data["name"]}', 'put', {'json': raw})
+                except CallError as e:
+                    await (await self.middleware.call('virt.instance.delete', data['name'])).wait()
+                    raise e
+
+                await incus_call_and_wait(f'1.0/instances/{data["name"]}/state', 'put', {'json': {
+                    'action': 'start',
+                }})
 
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 
