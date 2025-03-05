@@ -108,9 +108,9 @@ class PoolDatasetCreateUserProperty(BaseModel):
 
 class PoolDatasetCreate(BaseModel):
     name: Annotated[str, Field(max_length=200)]
-    comments: str
-    sync: Literal["STANDARD", "ALWAYS", "DISABLED"]
-    snapdev: Literal["HIDDEN", "VISIBLE"]
+    comments: str = "INHERIT"
+    sync: Literal["STANDARD", "ALWAYS", "DISABLED"] = "INHERIT"
+    snapdev: Literal["HIDDEN", "VISIBLE"] = NotRequired
     compression: Literal[
         "ON", "OFF", "LZ4", "GZIP", "GZIP-1", "GZIP-9", "ZSTD", "ZSTD-FAST", "ZLE", "LZJB", "ZSTD-1", "ZSTD-2",
         "ZSTD-3", "ZSTD-4", "ZSTD-5", "ZSTD-6", "ZSTD-7", "ZSTD-8", "ZSTD-9", "ZSTD-10", "ZSTD-11", "ZSTD-12",
@@ -118,47 +118,47 @@ class PoolDatasetCreate(BaseModel):
         "ZSTD-FAST-3", "ZSTD-FAST-4", "ZSTD-FAST-5", "ZSTD-FAST-6", "ZSTD-FAST-7", "ZSTD-FAST-8", "ZSTD-FAST-9",
         "ZSTD-FAST-10", "ZSTD-FAST-20", "ZSTD-FAST-30", "ZSTD-FAST-40", "ZSTD-FAST-50", "ZSTD-FAST-60", "ZSTD-FAST-70",
         "ZSTD-FAST-80", "ZSTD-FAST-90", "ZSTD-FAST-100", "ZSTD-FAST-500", "ZSTD-FAST-1000"
-    ]
-    exec: Literal["ON", "OFF"]
-    managedby: NonEmptyString
-    quota_warning: Annotated[int, Field(ge=0, le=100)]
-    quota_critical: Annotated[int, Field(ge=0, le=100)]
-    refquota_warning: Annotated[int, Field(ge=0, le=100)]
-    refquota_critical: Annotated[int, Field(ge=0, le=100)]
-    reservation: int
-    refreservation: int
-    special_small_block_size: int | None = None
-    copies: int
-    snapdir: Literal["DISABLED", "VISIBLE", "HIDDEN"]
-    deduplication: Literal["ON", "VERIFY", "OFF"]
-    checksum: Literal["ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3"]
-    readonly: Literal["ON", "OFF"]
+    ] = "INHERIT"
+    exec: Literal["ON", "OFF"] = "INHERIT"
+    managedby: NonEmptyString = "INHERIT"
+    quota_warning: Annotated[int, Field(ge=0, le=100)] = "INHERIT"
+    quota_critical: Annotated[int, Field(ge=0, le=100)] = "INHERIT"
+    refquota_warning: Annotated[int, Field(ge=0, le=100)] = "INHERIT"
+    refquota_critical: Annotated[int, Field(ge=0, le=100)] = "INHERIT"
+    reservation: int = NotRequired
+    refreservation: int = NotRequired
+    special_small_block_size: int = NotRequired
+    copies: int = "INHERIT"
+    snapdir: Literal["DISABLED", "VISIBLE", "HIDDEN"] = "INHERIT"
+    deduplication: Literal["ON", "VERIFY", "OFF"] = "INHERIT"
+    checksum: Literal["ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3"] = "INHERIT"
+    readonly: Literal["ON", "OFF"] = "INHERIT"
     share_type: Literal["GENERIC", "MULTIPROTOCOL", "NFS", "SMB", "APPS"] = "GENERIC"
     encryption_options: PoolCreateEncryptionOptions = Field(default_factory=PoolCreateEncryptionOptions)
     encryption: bool = False
     inherit_encryption: bool = True
-    user_properties: list[PoolDatasetCreateUserProperty]
+    user_properties: list[PoolDatasetCreateUserProperty] = []
     create_ancestors: bool = False
 
 
 class PoolDatasetCreateFilesystem(PoolDatasetCreate):
     type: Literal["FILESYSTEM"] = "FILESYSTEM"
-    aclmode: Literal["PASSTHROUGH", "RESTRICTED", "DISCARD", None] = None
-    acltype: Literal["OFF", "NFSV4", "POSIX", None] = None
-    atime: Literal["ON", "OFF"]
-    casesensitivity: Literal["SENSITIVE", "INSENSITIVE"]
-    quota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None]
-    refquota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None]
-    recordsize: str | None = None
+    aclmode: Literal["PASSTHROUGH", "RESTRICTED", "DISCARD"] = NotRequired
+    acltype: Literal["OFF", "NFSV4", "POSIX"] = NotRequired
+    atime: Literal["ON", "OFF"] = NotRequired
+    casesensitivity: Literal["SENSITIVE", "INSENSITIVE"] = NotRequired
+    quota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None] = NotRequired
+    refquota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None] = NotRequired
+    recordsize: str = NotRequired
 
 
 class PoolDatasetCreateVolume(PoolDatasetCreate):
-    type: Literal["VOLUME"] = "VOLUME"
-    force_size: bool = False
-    sparse: bool = False
-    volsize: int
+    type: Literal["VOLUME"]
+    force_size: bool = NotRequired
+    sparse: bool = NotRequired
+    volsize: int = NotRequired
     """The volume size in bytes"""
-    volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K", None] = None
+    volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"] = NotRequired
 
 
 class PoolDatasetDeleteOptions(BaseModel):

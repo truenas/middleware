@@ -9,7 +9,6 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
-from middlewared.schema import Attribute, EnumMixin, NOT_PROVIDED
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, private, ValidationErrors, filterable_api_method
 )
@@ -20,39 +19,6 @@ from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize, ZFSKeyFormat,
     ZFS_MAX_DATASET_NAME_LEN, ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
 )
-
-
-class Inheritable(EnumMixin, Attribute):
-    def __init__(self, schema, **kwargs):
-        self.schema = schema
-        if not self.schema.has_default and 'default' not in kwargs and kwargs.pop('has_default', True):
-            kwargs['default'] = 'INHERIT'
-        super(Inheritable, self).__init__(self.schema.name, **kwargs)
-
-    def clean(self, value):
-        if value == 'INHERIT':
-            return value
-        elif value is NOT_PROVIDED and self.has_default:
-            return copy.deepcopy(self.default)
-
-        return self.schema.clean(value)
-
-    def validate(self, value):
-        if value == 'INHERIT':
-            return
-
-        return self.schema.validate(value)
-
-    def to_json_schema(self, parent=None):
-        schema = self.schema.to_json_schema(parent)
-        type_schema = schema.pop('type')
-        schema['nullable'] = 'null' in type_schema
-        if schema['nullable']:
-            type_schema.remove('null')
-            if len(type_schema) == 1:
-                type_schema = type_schema[0]
-        schema['anyOf'] = [{'type': type_schema}, {'type': 'string', 'enum': ['INHERIT']}]
-        return schema
 
 
 class PoolDatasetEncryptionModel(sa.Model):
