@@ -110,6 +110,25 @@ def get_vnc_info_from_config(config: dict):
     return json.loads(vnc_raw_config)
 
 
+def root_device_pool_from_raw(raw: dict) -> str:
+    # First check if we have a root device defined
+    if 'expanded_devices' in raw:
+        dev = raw['expanded_devices']
+        if 'root' in dev:
+            return dev['root']['pool']
+
+    # The configured profiles for an instance contain
+    # a hint for the root device's storage pool based
+    # on profile name.
+    for profile in raw['profiles']:
+        if profile.startswith('storage-'):
+            return profile[len('storage-'):]
+
+    # No profile default? Let caller handle the error
+    # maybe they want to use virt.global.config -> pool
+    return None
+
+
 def get_vnc_password_file_path(instance_id: str) -> str:
     return os.path.join(VNC_PASSWORD_DIR, instance_id)
 
@@ -121,14 +140,13 @@ def create_vnc_password_file(instance_id: str, password: str) -> str:
         os.fchmod(w.fileno(), 0o600)
         w.write(password)
 
-
     return pass_file_path
 
 
-def get_root_device_dict(size: int, io_bus: str) -> dict:
+def get_root_device_dict(size: int, io_bus: str, pool_name: str) -> dict:
     return {
         'path': '/',
-        'pool': 'default',
+        'pool': pool_name,
         'type': 'disk',
         'size': f'{size * (1024**3)}',
         'io.bus': io_bus.lower(),

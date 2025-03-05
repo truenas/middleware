@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+import errno
 import shutil
 import subprocess
 import middlewared.sqlalchemy as sa
@@ -43,6 +44,7 @@ class VirtGlobalModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(120), nullable=True)
+    storage_pools = sa.Column(sa.Text(), nullable=True)
     bridge = sa.Column(sa.String(120), nullable=True)
     v4_network = sa.Column(sa.String(120), nullable=True)
     v6_network = sa.Column(sa.String(120), nullable=True)
@@ -64,6 +66,15 @@ class VirtGlobalService(ConfigService):
             data['dataset'] = f'{data["pool"]}/.ix-virt'
         else:
             data['dataset'] = None
+
+        if data['storage_pools']:
+            data['storage_pools'] = data['storage_pools'].split()
+        else:
+            data['storage_pools'] = []
+
+        if data['pool'] and data['pool'] not in data['storage_pools']:
+            data['storage_pools'].append(data['pool'])
+
         try:
             data['state'] = await self.middleware.call('cache.get', 'VIRT_STATE')
         except KeyError:
@@ -108,14 +119,44 @@ class VirtGlobalService(ConfigService):
 
         new = old.copy()
         new.update(data)
+        new_storage_pools = set(new['storage_pools']) - set(old['storage_pools'])
+        removed_storage_pools = set(old['storage_pools']) - set(new['storage_pools'])
 
         verrors = ValidationErrors()
         await self.validate(new, 'virt_global_update', verrors)
+        if new_storage_pools:
+            pool_choices = await self.pool_choices()
+            for idx, pool in enumerate(new['storage_pools']):
+                if pool not in new_storage_pools or pool in pool_choices:
+                    continue
+
+                verrors.add(
+                    f'virt_global_update.storage_pools.{idx}',
+                    f'{pool}: pool is not available for incus storage'
+                )
+
+        for pool in removed_storage_pools:
+            if usage := (await self.storage_pool_usage(pool)):
+                verrors.add(
+                    'virt_global_update.storage_pools',
+                    f'{pool}: pool to be removed is used by the following assets: {usage}'
+                )
+
+        if new['pool'] in removed_storage_pools:
+            verrors.add(
+                'virt_global_update.storage_pools',
+                'Default incus pool may not be removed from list of storage pools.'
+            )
+
         verrors.check()
+
+        for pool in removed_storage_pools:
+            await self.remove_storage_pool(pool)
 
         # Not part of the database
         new.pop('state')
         new.pop('dataset')
+        new['storage_pools'] = ' '.join(new['storage_pools'])
 
         await self.middleware.call(
             'datastore.update', self._config.datastore,
@@ -181,8 +222,8 @@ class VirtGlobalService(ConfigService):
             raise CallError('Virtualization service not started.')
 
     @private
-    async def get_default_profile(self):
-        result = await incus_call('1.0/profiles/default', 'get')
+    async def get_profile(self, profile_name):
+        result = await incus_call(f'1.0/profiles/{profile_name}', 'get')
         if result.get('status_code') != 200:
             raise CallError(result.get('error'))
         return result['metadata']
@@ -229,22 +270,12 @@ class VirtGlobalService(ConfigService):
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
             await self.auto_start_instances()
 
-    async def _setup_impl(self):
-        config = await self.config()
-
-        if not config['pool']:
-            if await self.middleware.call('service.started', 'incus'):
-                job = await self.middleware.call('virt.global.reset', False, config)
-                await job.wait(raise_error=True)
-
-            self.logger.debug('No pool set for virtualization, skipping.')
-            raise NoPoolConfigured()
-        else:
-            await self.middleware.call('service.start', 'incus')
-
+    @private
+    async def setup_storage_pool(self, pool_name):
+        ds_name = f'{pool_name}/.ix-virt'
         try:
             ds = await self.middleware.call(
-                'zfs.dataset.get_instance', config['dataset'], {
+                'zfs.dataset.get_instance', ds_name, {
                     'extra': {
                         'retrieve_children': False,
                         'user_properties': False,
@@ -256,7 +287,7 @@ class VirtGlobalService(ConfigService):
             ds = None
         if not ds:
             await self.middleware.call('zfs.dataset.create', {
-                'name': config['dataset'],
+                'name': ds_name,
                 'properties': {
                     'aclmode': 'discard',
                     'acltype': 'posix',
@@ -271,14 +302,105 @@ class VirtGlobalService(ConfigService):
                 raise LockedDataset()
 
         import_storage = True
-        storage = await incus_call('1.0/storage-pools/default', 'get')
+        storage = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
         if storage['type'] != 'error':
-            if storage['metadata']['config']['source'] == config['dataset']:
-                self.logger.debug('Storage pool for virt already configured.')
+            if storage['metadata']['config']['source'] == ds_name:
+                self.logger.debug('Virt storage pool for %s already configured.', ds_name)
                 import_storage = False
             else:
-                job = await self.middleware.call('virt.global.reset', True, config)
+                job = await self.middleware.call('virt.global.reset', True, None)
                 await job.wait(raise_error=True)
+
+        return import_storage
+
+    @private
+    async def storage_pool_usage(self, pool_name):
+        """
+        Create a list of various user-managed incus assets that are
+        dependent on the specified pool. This can be used for validation prior
+        to deletion of an incus storage pool.
+        """
+        resp = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
+        if resp['type'] == 'error':
+            if resp['error_code'] == 404:
+                # storage doesn't exist. Nothing to do.
+                return []
+
+            raise CallError(resp['error'])
+
+        out = []
+
+        for dependent in resp['metadata']['used_by']:
+            if dependent.startswith(('/1.0/profiles/', '/1.0/images/')):
+                continue
+
+            path = dependent.split('/')
+            if 'storage-pools' in path:
+                # sample:
+                # /1.0/storage-pools/dozer/volumes/custom/foo
+                incus_type = path[4]
+            else:
+                incus_type = path[2]
+
+            out.append({'type': incus_type, 'name': path[-1]})
+
+        return out
+
+    @private
+    async def remove_storage_pool(self, pool_name):
+        resp = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
+        if resp['type'] == 'error':
+            if resp['error_code'] == 404:
+                # storage doesn't exist. Nothing to do.
+                return
+
+            raise CallError(resp['error'])
+
+        to_delete = []
+
+        for dependent in resp['metadata']['used_by']:
+            # Middleware internally manages the images and profiles for
+            # storage pools
+            if dependent.startswith('/1.0/profiles/'):
+                to_delete.append(dependent)
+
+            if dependent.startswith('/1.0/images/'):
+                to_delete.append(dependent)
+
+        if remainder := (set(resp['metadata']['used_by']) - set(to_delete)):
+            raise CallError(
+                f'Storage volume currently used by the following incus resource {", ".join(remainder)}', errno.EBUSY
+            )
+
+        for entry in to_delete:
+            path = entry[1:]  # remove leading slash
+            resp = await incus_call(path, 'delete')
+            if resp['type'] == 'error' and resp['error_code'] != 404:
+                raise CallError(resp['error'])
+
+        # Finally remove the pool itself
+        resp = await incus_call(f'1.0/storage-pools/{pool_name}', 'delete')
+        if resp['type'] == 'error':
+            raise CallError(resp['error'])
+
+    async def _setup_impl(self):
+        config = await self.config()
+        to_import = []
+
+        if not config['pool']:
+            if await self.middleware.call('service.started', 'incus'):
+                job = await self.middleware.call('virt.global.reset', False, config)
+                await job.wait(raise_error=True)
+
+            self.logger.debug('No pool set for virtualization, skipping.')
+            raise NoPoolConfigured()
+        else:
+            await self.middleware.call('service.start', 'incus')
+
+        # Set up the default storage pool
+        for pool in config['storage_pools']:
+            if await self.setup_storage_pool(pool):
+                to_import.append(pool)
 
         # If no bridge interface has been set, use incus managed
         if not config['bridge']:
@@ -355,7 +477,7 @@ class VirtGlobalService(ConfigService):
                 'parent': config['bridge'],
             }
 
-        if import_storage:
+        for pool in to_import:
             # Call into incus's private API to initiate a recovery action.
             # This is roughly equivalent to running the command "incus admin recover", and is performed
             # to make it so that incus on TrueNAS does not rely on the contents of /var/lib/incus.
@@ -371,9 +493,9 @@ class VirtGlobalService(ConfigService):
             # NOTE: this will potentially cause user-initiated changes from incus commands to be lost.
             payload = {
                 'pools': [{
-                    'config': {'source': config['dataset']},
+                    'config': {'source': f'{pool}/.ix-virt'},
                     'description': '',
-                    'name': 'default',
+                    'name': pool,
                     'driver': 'zfs',
                 }],
             }
@@ -387,15 +509,33 @@ class VirtGlobalService(ConfigService):
             else:
                 raise CallError('Invalid storage')
 
+        for pool in config['storage_pools']:
+            # set up per-pool profiles
+            profile_name = f'storage-{pool}'
+            resp = await incus_call(f'1.0/profiles/{profile_name}', 'get')
+            if resp['type'] != 'error':
+                # profile already exists
+                continue
+
+            result = await incus_call('1.0/profiles', 'post', {'json': {
+                'name': profile_name,
+                'config': {},
+                'description': f'Profile for pool {pool}',
+                'devices': {
+                    'root': {
+                        'path': '/',
+                        'pool': pool,
+                        'type': 'disk',
+                    },
+                },
+            }})
+            if result.get('status') != 'Success':
+                raise CallError(result.get('error'))
+
         result = await incus_call('1.0/profiles/default', 'put', {'json': {
             'config': {},
             'description': 'Default TrueNAS profile',
             'devices': {
-                'root': {
-                    'path': '/',
-                    'pool': 'default',
-                    'type': 'disk',
-                },
                 'eth0': nic,
             },
         }})
@@ -404,7 +544,7 @@ class VirtGlobalService(ConfigService):
 
         # If storage was imported we need to restart incus service so instances
         # with autostart can be started
-        if import_storage:
+        if to_import:
             await self.middleware.call('service.restart', 'incus')
 
     @private

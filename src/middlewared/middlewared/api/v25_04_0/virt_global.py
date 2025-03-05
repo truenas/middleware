@@ -16,6 +16,9 @@ class VirtGlobalEntry(BaseModel):
     id: int
     pool: str | None = None
     dataset: str | None = None
+    "Default storage pool for truenas incus profile"
+    storage_pools: list[str] | None = None
+    "Configured storage pools"
     bridge: str | None = None
     v4_network: str | None = None
     v6_network: str | None = None
@@ -30,6 +33,7 @@ class VirtGlobalUpdateResult(BaseModel):
 class VirtGlobalUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     pool: NonEmptyString | None = None
     bridge: NonEmptyString | None = None
+    storage_pools: list[str] | None = None
     v4_network: str | None = None
     v6_network: str | None = None
 
