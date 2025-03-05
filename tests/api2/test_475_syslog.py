@@ -115,6 +115,5 @@ def test_set_remote_syslog_with_TLS_transport():
         assert 'transport("tls")' in conf['stdout'], f"conf={conf}"
         assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf['stdout'], f"conf={conf}"
 
-        print(f"MCG DEBUG: conf = '{conf}'")
     finally:
         call('system.advanced.update', restore_cmd)
