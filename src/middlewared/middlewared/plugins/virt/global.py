@@ -42,6 +42,7 @@ class VirtGlobalModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(120), nullable=True)
+    storage_pools = sa.Column(sa.Text(), nullable=True)
     bridge = sa.Column(sa.String(120), nullable=True)
     v4_network = sa.Column(sa.String(120), nullable=True)
     v6_network = sa.Column(sa.String(120), nullable=True)
@@ -63,6 +64,15 @@ class VirtGlobalService(ConfigService):
             data['dataset'] = f'{data["pool"]}/.ix-virt'
         else:
             data['dataset'] = None
+
+        if data['storage_pools']:
+            data['storage_pools'] = data['storage_pools'].split()
+        else:
+            data['storage_pools'] = []
+
+        if data['pool'] not in data['storage_pools']:
+            data['storage_pools'].append(data['pool'])
+
         try:
             data['state'] = await self.middleware.call('cache.get', 'VIRT_STATE')
         except KeyError:
@@ -227,22 +237,12 @@ class VirtGlobalService(ConfigService):
         finally:
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
 
-    async def _setup_impl(self):
-        config = await self.config()
-
-        if not config['pool']:
-            if await self.middleware.call('service.started', 'incus'):
-                job = await self.middleware.call('virt.global.reset', False, config)
-                await job.wait(raise_error=True)
-
-            self.logger.debug('No pool set for virtualization, skipping.')
-            raise NoPoolConfigured()
-        else:
-            await self.middleware.call('service.start', 'incus')
-
+    @private
+    async def setup_storage_pool(self, pool_name):
+        ds_name = f'{pool_name}/.ix-virt'
         try:
             ds = await self.middleware.call(
-                'zfs.dataset.get_instance', config['dataset'], {
+                'zfs.dataset.get_instance', ds_name, {
                     'extra': {
                         'retrieve_children': False,
                         'user_properties': False,
@@ -254,7 +254,7 @@ class VirtGlobalService(ConfigService):
             ds = None
         if not ds:
             await self.middleware.call('zfs.dataset.create', {
-                'name': config['dataset'],
+                'name': ds_name,
                 'properties': {
                     'aclmode': 'discard',
                     'acltype': 'posix',
@@ -269,14 +269,35 @@ class VirtGlobalService(ConfigService):
                 raise LockedDataset()
 
         import_storage = True
-        storage = await incus_call('1.0/storage-pools/default', 'get')
+        storage = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
         if storage['type'] != 'error':
-            if storage['metadata']['config']['source'] == config['dataset']:
+            if storage['metadata']['config']['source'] == ds_name:
                 self.logger.debug('Storage pool for virt already configured.')
                 import_storage = False
             else:
-                job = await self.middleware.call('virt.global.reset', True, config)
+                job = await self.middleware.call('virt.global.reset', True, None)
                 await job.wait(raise_error=True)
+
+        return import_storage 
+
+    async def _setup_impl(self):
+        config = await self.config()
+        to_import = []
+
+        if not config['pool']:
+            if await self.middleware.call('service.started', 'incus'):
+                job = await self.middleware.call('virt.global.reset', False, config)
+                await job.wait(raise_error=True)
+
+            self.logger.debug('No pool set for virtualization, skipping.')
+            raise NoPoolConfigured()
+        else:
+            await self.middleware.call('service.start', 'incus')
+
+        # Set up the default storage pool
+        for pool in config['storage_pools']:
+            if await self.setup_storage_pool(pool):
+                to_import.append(pool)
 
         # If no bridge interface has been set, use incus managed
         if not config['bridge']:
@@ -353,7 +374,7 @@ class VirtGlobalService(ConfigService):
                 'parent': config['bridge'],
             }
 
-        if import_storage:
+        for pool in to_import:
             # Call into incus's private API to initiate a recovery action.
             # This is roughly equivalent to running the command "incus admin recover", and is performed
             # to make it so that incus on TrueNAS does not rely on the contents of /var/lib/incus.
@@ -369,9 +390,9 @@ class VirtGlobalService(ConfigService):
             # NOTE: this will potentially cause user-initiated changes from incus commands to be lost.
             payload = {
                 'pools': [{
-                    'config': {'source': config['dataset']},
+                    'config': {'source': f'{pool}/.ix-virt'},
                     'description': '',
-                    'name': 'default',
+                    'name': pool,
                     'driver': 'zfs',
                 }],
             }
@@ -391,7 +412,7 @@ class VirtGlobalService(ConfigService):
             'devices': {
                 'root': {
                     'path': '/',
-                    'pool': 'default',
+                    'pool': config['pool'],
                     'type': 'disk',
                 },
                 'eth0': nic,
@@ -402,7 +423,7 @@ class VirtGlobalService(ConfigService):
 
         # If storage was imported we need to restart incus service so instances
         # with autostart can be started
-        if import_storage:
+        if to_import:
             await self.middleware.call('service.restart', 'incus')
 
     @private
