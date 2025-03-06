@@ -20,7 +20,7 @@ class PoolService(Service):
             Str('label', required=True),
             Bool('wipe', required=False, default=False)
         ),
-        audit='Disk Detach',
+        audit='Disk detach',
         audit_callback=True,
         roles=['POOL_WRITE']
     )
@@ -56,7 +56,13 @@ class PoolService(Service):
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
-        audit_callback(disk)
+
+        if found[1]['type'] != 'DISK':
+            disk_paths = [d['path'] for d in found[1]['children']]
+        else:
+            disk_paths = [found[1]['path']]
+        audit_callback(f'{", ".join(disk_paths)} from {pool["name"]!r} pool')
+
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
         if disk and options['wipe']:
@@ -68,10 +74,16 @@ class PoolService(Service):
         return True
 
     @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('label', required=True),
-    ), audit='Disk Offline', audit_callback=True, roles=['POOL_WRITE'])
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Str('label', required=True),
+        ),
+        audit='Disk offline',
+        audit_callback=True,
+        roles=['POOL_WRITE']
+    )
     @returns(Bool('offline_successful'))
     async def offline(self, audit_callback, oid, options):
         """
@@ -105,19 +117,25 @@ class PoolService(Service):
             disk_paths = [d['path'] for d in found[1]['children']]
         else:
             disk_paths = [found[1]['path']]
-        audit_callback(', '.join(disk_paths))
+        audit_callback(f'{", ".join(disk_paths)} in {pool["name"]!r} pool')
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
         return True
 
     @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('label', required=True),
-    ), roles=['POOL_WRITE'])
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Str('label', required=True),
+        ),
+        audit='Disk online',
+        audit_callback=True,
+        roles=['POOL_WRITE']
+    )
     @returns(Bool('online_successful'))
-    async def online(self, oid, options):
+    async def online(self, audit_callback, oid, options):
         """
         Online a disk from pool of id `id`.
 
@@ -146,18 +164,30 @@ class PoolService(Service):
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
         verrors.check()
 
+        if found[1]['type'] != 'DISK':
+            disk_paths = [d['path'] for d in found[1]['children']]
+        else:
+            disk_paths = [found[1]['path']]
+        audit_callback(f'{", ".join(disk_paths)} in {pool["name"]!r} pool')
+
         await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
 
         return True
 
     @item_method
-    @accepts(Int('id'), Dict(
-        'options',
-        Str('label', required=True),
-    ), roles=['POOL_WRITE'])
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Str('label', required=True),
+        ),
+        audit='Disk remove',
+        audit_callback=True,
+        roles=['POOL_WRITE']
+    )
     @returns()
     @job(lock=lambda args: f'{args[0]}_remove')
-    async def remove(self, job, oid, options):
+    async def remove(self, job, audit_callback, oid, options):
         """
         Remove a disk from pool of id `id`.
 
@@ -207,6 +237,7 @@ class PoolService(Service):
             disk_paths = [d['path'] for d in found[1]['children']]
         else:
             disk_paths = [found[1]['path']]
+        audit_callback(f'{", ".join(disk_paths)} from {pool["name"]!r} pool')
 
         job.set_progress(70, 'Wiping disks')
         disks_to_wipe = set()
