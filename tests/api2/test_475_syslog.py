@@ -2,7 +2,7 @@ from time import sleep
 
 import pytest
 from auto_config import password, user
-from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 
@@ -106,15 +106,14 @@ def test_set_remote_syslog_with_TLS_transport():
     remote = "127.0.0.1"
     port = "5140"
     transport = "TLS"
-    tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}", "syslog_tls_certificate": 1}
+    tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}"}
     try:
-        with mock("system.advanced.syslog_certificate_choices", return_value={"1": "syslog-cert"}):
-            data = call('system.advanced.update', tls_cmd)
-            assert data['syslog_transport'] == 'TLS'
-            conf = ssh('grep "destination loghost" /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
-            assert f"port({port})" in conf['stdout'], f"conf={conf}"
-            assert 'transport("tls")' in conf['stdout'], f"conf={conf}"
-            assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf['stdout'], f"conf={conf}"
+        data = call('system.advanced.update', tls_cmd)
+        assert data['syslog_transport'] == 'TLS'
+        conf = ssh('grep "destination loghost" /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
+        assert f"port({port})" in conf['stdout'], f"conf={conf}"
+        assert 'transport("tls")' in conf['stdout'], f"conf={conf}"
+        assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf['stdout'], f"conf={conf}"
 
     finally:
         call('system.advanced.update', restore_cmd)
