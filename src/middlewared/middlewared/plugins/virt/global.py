@@ -90,7 +90,11 @@ class VirtGlobalService(ConfigService):
         if pool and not await self.middleware.call('virt.global.license_active'):
             verrors.add(f'{schema_name}.pool', 'System is not licensed to run virtualization')
 
-    @api_method(VirtGlobalUpdateArgs, VirtGlobalUpdateResult)
+    @api_method(
+        VirtGlobalUpdateArgs,
+        VirtGlobalUpdateResult,
+        audit='Virt: Update configuration'
+    )
     @job()
     async def do_update(self, job, data):
         """
