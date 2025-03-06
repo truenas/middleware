@@ -135,7 +135,13 @@ class PoolDatasetCreate(BaseModel):
     readonly: Literal["ON", "OFF"] = "INHERIT"
     share_type: Literal["GENERIC", "MULTIPROTOCOL", "NFS", "SMB", "APPS"] = "GENERIC"
     encryption_options: PoolCreateEncryptionOptions = Field(default_factory=PoolCreateEncryptionOptions)
+    """Configuration for encryption of dataset for `name` pool."""
     encryption: bool = False
+    """Create a ZFS encrypted root dataset for `name` pool.
+    There is 1 case where ZFS encryption is not allowed for a dataset:
+    1) If the parent dataset is encrypted with a passphrase and `name` is being created with a key for encrypting the
+       dataset.
+    """
     inherit_encryption: bool = True
     user_properties: list[PoolDatasetCreateUserProperty] = []
     create_ancestors: bool = False
@@ -153,11 +159,11 @@ class PoolDatasetCreateFilesystem(PoolDatasetCreate):
 
 
 class PoolDatasetCreateVolume(PoolDatasetCreate):
-    type: Literal["VOLUME"]
+    type: Literal["VOLUME"] = "VOLUME"
     force_size: bool = NotRequired
     sparse: bool = NotRequired
     volsize: int = NotRequired
-    """The volume size in bytes"""
+    """The volume size in bytes; supposed to be a multiple of the block size."""
     volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"] = NotRequired
 
 
@@ -183,6 +189,24 @@ class PoolDatasetEncryptionSummaryOptions(BaseModel):
 
 
 class PoolDatasetEncryptionSummary(BaseModel):
+    """
+    There are 2 keys which show if a recursive unlock operation is done for `id`, which dataset will be unlocked and if
+    not why it won't be unlocked. The keys namely are `unlock_successful` and `unlock_error`. The former is a boolean
+    value showing if unlock would succeed/fail. The latter is description why it failed if it failed.
+
+    In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is supposed to
+    be mounted after being unlocked already exists and is not empty. In this case, unlock operation would fail and
+    `unlock_error` will reflect this error appropriately. This can be overridden by setting `options.datasets.X.force`
+    boolean flag or by setting `options.force` flag. In practice, when the dataset is going to be unlocked and these
+    flags have been provided to `pool.dataset.unlock`, system will rename the directory/file path where the dataset
+    should be mounted resulting in successful unlock of the dataset.
+
+    If a dataset is already unlocked, it will show up as true for "unlock_successful" regardless of what key user
+    provided as the unlock keys in the output are to reflect what a real unlock operation would behave. If user is
+    interested in seeing if a provided key is valid or not, then the key to look out for in the output is "valid_key"
+    which based on what system has in database or if a user provided one, validates the key and sets a boolean value
+    for the dataset.
+    """
     name: str
     key_format: str
     key_present_in_database: bool
@@ -245,8 +269,17 @@ PoolDatasetQuota = Annotated[
 
 class PoolDatasetSetQuota(BaseModel):
     quota_type: Literal['DATASET', 'USER', 'USEROBJ', 'GROUP', 'GROUPOBJ']
-    """The type of quota to apply to the dataset. `USEROBJ` and `GROUPOBJ` quotas limit the number of objects consumed
-    by the specified user or group."""
+    """The type of quota to apply to the dataset. There are three over-arching types of quotas for ZFS datasets:
+
+    1) Dataset quotas and refquotas. If a `DATASET` quota type is specified in this API call, then the API acts as a
+    wrapper for `pool.dataset.update`.
+
+    2) User and group quotas. These limit the amount of disk space consumed by files that are owned by the specified
+    users or groups. If the respective "object quota" type is specfied, then the quota limits the number of objects
+    that may be owned by the specified user or group.
+
+    3) Project quotas. These limit the amount of disk space consumed by files that are owned by the specified project.
+    Project quotas are not yet implemented."""
     id: str
     """The UID, GID, or name to which the quota applies. If `quota_type` is 'DATASET', then `id` must be either `QUOTA`
     or `REFQUOTA`."""
@@ -256,13 +289,24 @@ class PoolDatasetSetQuota(BaseModel):
 
 class PoolDatasetUnlockOptionsDataset(PoolDatasetEncryptionSummaryOptionsDataset):
     recursive: bool = False
+    """Apply the key or passphrase to all encrypted children."""
 
 
 class PoolDatasetUnlockOptions(BaseModel):
     force: bool = False
+    """In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is supposed
+    to be mounted after being unlocked already exists and is not empty. In this case, unlock operation would fail. This
+    can be overridden by setting `datasets.X.force` boolean flag or by setting `force` flag. When any of these flags
+    are set, system will rename the existing directory/file path where the dataset should be mounted resulting in
+    successful unlock of the dataset."""
     key_file: bool = False
     recursive: bool = False
     toggle_attachments: bool = True
+    """Whether attachments should be put in action after unlocking the dataset(s). Toggling attachments can
+    theoretically lead to service interruption when daemons configurations are reloaded (this should not happen, and if
+    this happens it should be considered a bug). As TrueNAS does not have a state for resources that should be unlocked
+    but are still locked, disabling this option will put the system into an inconsistent state so it should really
+    never be disabled."""
     datasets: list[PoolDatasetUnlockOptionsDataset] = []
 
 
@@ -483,8 +527,11 @@ class PoolDatasetRecordSizeChoicesResult(BaseModel):
 class PoolDatasetSetQuotaArgs(BaseModel):
     dataset: str
     """The name of the target ZFS dataset."""
-    quotas: list[PoolDatasetSetQuota] = [PoolDatasetSetQuota(quota_type='USER', id='0', quota_value=0)]
-    """Specify an array of quota entries to apply to dataset."""
+    quotas: list[PoolDatasetSetQuota] = Field(
+        max_length=100,
+        default=[PoolDatasetSetQuota(quota_type='USER', id='0', quota_value=0)]
+    )
+    """Specify an array of quota entries to apply to dataset. The array may contain all supported quota types."""
 
 
 class PoolDatasetSetQuotaResult(BaseModel):

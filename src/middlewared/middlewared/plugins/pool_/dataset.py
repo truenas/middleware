@@ -400,25 +400,6 @@ class PoolDatasetService(CRUDService):
         """
         Creates a dataset/zvol.
 
-        `volsize` is required for type=VOLUME and is supposed to be a multiple of the block size.
-        `sparse` and `volblocksize` are only used for type=VOLUME.
-
-        `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
-        There is 1 case where ZFS encryption is not allowed for a dataset:
-        1) If the parent dataset is encrypted with a passphrase and `name` is being created
-           with a key for encrypting the dataset.
-
-        `encryption_options` specifies configuration for encryption of dataset for `name` pool.
-        `encryption_options.passphrase` must be specified if encryption for dataset is desired with a passphrase
-        as a key.
-        Otherwise a hex encoded key can be specified by providing `encryption_options.key`.
-        `encryption_options.generate_key` when enabled automatically generates the key to be used
-        for dataset encryption.
-
-        It should be noted that keys are stored by the system for automatic locking/unlocking
-        on import/export of encrypted datasets. If that is not desired, dataset should be created
-        with a passphrase as a key.
-
         .. examples(websocket)::
 
           Create a dataset within tank pool.

@@ -44,25 +44,6 @@ class PoolDatasetService(Service):
 
         Keys/passphrase can be supplied to check if the keys are valid.
 
-        It should be noted that there are 2 keys which show if a recursive unlock operation is
-        done for `id`, which dataset will be unlocked and if not why it won't be unlocked. The keys
-        namely are "unlock_successful" and "unlock_error". The former is a boolean value showing if unlock
-        would succeed/fail. The latter is description why it failed if it failed.
-
-        In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is
-        supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
-        would fail and `unlock_error` will reflect this error appropriately. This can be overridden by setting
-        `encryption_root_summary_options.datasets.X.force` boolean flag or by setting
-        `encryption_root_summary_options.force` flag. In practice, when the dataset is going to be unlocked
-        and these flags have been provided to `pool.dataset.unlock`, system will rename the directory/file path
-        where the dataset should be mounted resulting in successful unlock of the dataset.
-
-        If a dataset is already unlocked, it will show up as true for "unlock_successful" regardless of what
-        key user provided as the unlock keys in the output are to reflect what a real unlock operation would
-        behave. If user is interested in seeing if a provided key is valid or not, then the key to look out for
-        in the output is "valid_key" which based on what system has in database or if a user provided one, validates
-        the key and sets a boolean value for the dataset.
-
         Example output:
         [
             {

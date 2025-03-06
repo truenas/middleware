@@ -96,21 +96,6 @@ class PoolDatasetService(Service):
         (`pool.export_keys`).
 
         2. Specify a key or a passphrase for each unlocked dataset using `unlock_options.datasets`.
-
-        If `unlock_options.datasets.{i}.recursive` is `true`, a key or a passphrase is applied to all the encrypted
-        children of a dataset.
-
-        `unlock_options.toggle_attachments` controls whether attachments  should be put in action after unlocking
-        dataset(s). Toggling attachments can theoretically lead to service interruption when daemons configurations are
-        reloaded (this should not happen,  and if this happens it should be considered a bug). As TrueNAS does not have
-        a state for resources that should be unlocked but are still locked, disabling this option will put the system
-        into an inconsistent state so it should really never be disabled.
-
-        In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is
-        supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
-        would fail. This can be overridden by setting `unlock_options.datasets.X.force` boolean flag or by setting
-        `unlock_options.force` flag. When any of these flags are set, system will rename the existing
-        directory/file path where the dataset should be mounted resulting in successful unlock of the dataset.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset.get_instance', id_)

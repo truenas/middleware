@@ -32,31 +32,9 @@ class PoolDatasetService(Service):
     @item_method
     async def set_quota(self, ds, data):
         """
-        There are three over-arching types of quotas for ZFS datasets:
-
-        1) Dataset quotas and refquotas. If a `DATASET` quota type is specified in
-        this API call, then the API acts as a wrapper for `pool.dataset.update`.
-
-        2) User and group quotas. These limit the amount of disk space consumed
-        by files that are owned by the specified users or groups. If the respective
-        "object quota" type is specfied, then the quota limits the number of objects
-        that may be owned by the specified user or group.
-
-        3) Project quotas. These limit the amount of disk space consumed by files
-        that are owned by the specified project. Project quotas are not yet implemented.
-
-        This API allows users to set multiple quotas simultaneously by submitting a
-        list of quotas. The list may contain all supported quota types.
+        Allow users to set multiple quotas simultaneously by submitting a list of quotas.
         """
-        MAX_QUOTAS = 100
         verrors = ValidationErrors()
-        if len(data) > MAX_QUOTAS:
-            # no reason to continue
-            raise ValidationErrors(
-                'quotas',
-                f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
-            )
-
         quotas = []
         ignore = ('PROJECT', 'PROJECTOBJ')  # TODO: not implemented
         for i, q in filter(lambda x: x[1]['quota_type'] not in ignore, enumerate(data)):
