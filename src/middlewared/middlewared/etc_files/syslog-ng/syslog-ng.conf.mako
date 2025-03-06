@@ -9,7 +9,6 @@ syslog_template = 'template("${MESSAGE}\\n")'
 
 
 def generate_syslog_remote_destination(advanced_config):
-    result = ""
     syslog_server = advanced_config["syslogserver"]
     if "]:" in syslog_server or (":" in syslog_server and not "]" in syslog_server): 
         host, port = syslog_server.rsplit(":", 1)
@@ -17,25 +16,31 @@ def generate_syslog_remote_destination(advanced_config):
         host, port = syslog_server, "514"
 
     host = host.replace("[", "").replace("]", "")
+    transport = advanced_config["syslog_transport"].lower()
 
-    result += 'destination loghost { '
+    remotelog_stanza = 'destination loghost { '
+    remotelog_stanza += f'syslog("{host}" port({port}) ip-protocol(6) transport("{transport}")'
 
     if advanced_config["syslog_transport"] == "TLS":
-        # The TLS (transport) cert should be added via certificate authority
-        tls_encrypt_stanza = f'syslog("{host}" port({port}) transport("tls") ip-protocol(6) '
-        tls_encrypt_stanza += 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))'
-        result += f"{tls_encrypt_stanza});"
-    else:
-        transport = advanced_config["syslog_transport"].lower()
-        result += f"syslog(\"{host}\" port({port}) localport(514) transport(\"{transport}\") ip-protocol(6));"
+        certificate = middleware.call_sync(
+            "certificate.query", [("id", "=", advanced_config["syslog_tls_certificate"])]
+        )
+        if certificate and not certificate[0]["revoked"]:
+            remotelog_stanza += ' tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))'
+        else:
+            msg = 'Skipping setting cert-file for remote syslog as '
+            if not certificate:
+                msg += 'no certificate configured'
+            else:
+                msg += 'specified certificate has been revoked'
+            logger.debug(msg)
 
+    remotelog_stanza += '); };\n'
+    remotelog_stanza += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
+    remotelog_stanza += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
+    remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
 
-    result += ' };\n'
-    result += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
-    result += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
-    result += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
-
-    return result
+    return remotelog_stanza
 %>\
 @version: 3.38
 @include "scl.conf"

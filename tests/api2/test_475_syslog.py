@@ -2,7 +2,7 @@ from time import sleep
 
 import pytest
 from auto_config import password, user
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 
@@ -102,18 +102,19 @@ def test_set_remote_syslog_with_TLS_transport():
     NOTE: This test does NOT confirm end-to-end functionality.
     TODO: Add remote syslog server to enable end-to-end testing
     """
-    restore_cmd = {"syslogserver": "", "syslog_transport": "UDP"}
+    restore_cmd = {"syslogserver": "", "syslog_transport": "UDP", "syslog_tls_certificate": None}
     remote = "127.0.0.1"
     port = "5140"
     transport = "TLS"
-    tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}"}
+    tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}", "syslog_tls_certificate": 1}
     try:
-        data = call('system.advanced.update', tls_cmd)
-        assert data['syslog_transport'] == 'TLS'
-        conf = ssh('grep "destination loghost" /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
-        assert f"port({port})" in conf['stdout'], f"conf={conf}"
-        assert 'transport("tls")' in conf['stdout'], f"conf={conf}"
-        assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf['stdout'], f"conf={conf}"
+        with mock("system.advanced.syslog_certificate_choices", return_value={"1": "syslog-cert"}):
+            data = call('system.advanced.update', tls_cmd)
+            assert data['syslog_transport'] == 'TLS'
+            conf = ssh('grep "destination loghost" /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
+            assert f"port({port})" in conf['stdout'], f"conf={conf}"
+            assert 'transport("tls")' in conf['stdout'], f"conf={conf}"
+            assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf['stdout'], f"conf={conf}"
 
     finally:
         call('system.advanced.update', restore_cmd)
