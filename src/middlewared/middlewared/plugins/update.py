@@ -1,4 +1,11 @@
-from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    UpdateCheckAvailableArgs, UpdateCheckAvailableResult, UpdateDownloadArgs, UpdateDownloadResult, UpdateFileArgs,
+    UpdateFileResult, UpdateGetAutoDownloadArgs, UpdateGetAutoDownloadResult, UpdateGetPendingArgs,
+    UpdateGetPendingResult, UpdateGetTrainsArgs, UpdateGetTrainsResult, UpdateManualArgs, UpdateManualResult,
+    UpdateSetAutoDownloadArgs, UpdateSetAutoDownloadResult, UpdateSetTrainArgs, UpdateSetTrainResult, UpdateUpdateArgs,
+    UpdateUpdateResult
+)
 from middlewared.service import job, private, CallError, Service, pass_app
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
@@ -7,7 +14,6 @@ import enum
 import errno
 import os
 import shutil
-import subprocess
 import textwrap
 import pathlib
 
@@ -75,14 +81,14 @@ class UpdateService(Service):
     class Config:
         cli_namespace = 'system.update'
 
-    @accepts(roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateGetAutoDownloadArgs, UpdateGetAutoDownloadResult, roles=['SYSTEM_UPDATE_READ'])
     async def get_auto_download(self):
         """
         Returns if update auto-download is enabled.
         """
         return (await self.middleware.call('datastore.config', 'system.update'))['upd_autocheck']
 
-    @accepts(Bool('autocheck'), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateSetAutoDownloadArgs, UpdateSetAutoDownloadResult, roles=['SYSTEM_UPDATE_WRITE'])
     async def set_auto_download(self, autocheck):
         """
         Sets if update auto-download is enabled.
@@ -91,7 +97,7 @@ class UpdateService(Service):
         await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
         await self.middleware.call('service.restart', 'cron')
 
-    @accepts(roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateGetTrainsArgs, UpdateGetTrainsResult, roles=['SYSTEM_UPDATE_READ'])
     def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
@@ -135,7 +141,7 @@ class UpdateService(Service):
             'selected': selected,
         }
 
-    @accepts(Str('train', empty=False), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateSetTrainArgs, UpdateSetTrainResult, roles=['SYSTEM_UPDATE_WRITE'])
     def set_train(self, train):
         """
         Set an update train to be used by default in updates.
@@ -170,11 +176,7 @@ class UpdateService(Service):
 
         return True
 
-    @accepts(Dict(
-        'update-check-available',
-        Str('train', required=False),
-        required=False,
-    ), roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateCheckAvailableArgs, UpdateCheckAvailableResult, roles=['SYSTEM_UPDATE_READ'])
     def check_available(self, attrs):
         """
         Checks if there is an update available from update server.
@@ -232,7 +234,7 @@ class UpdateService(Service):
 
         return self.middleware.call_sync('update.check_train', train)
 
-    @accepts(Str('path', null=True, default=None), roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateGetPendingArgs, UpdateGetPendingResult, roles=['SYSTEM_UPDATE_READ'])
     async def get_pending(self, path):
         """
         Gets a list of packages already downloaded and ready to be applied.
@@ -248,13 +250,7 @@ class UpdateService(Service):
 
         return await self.middleware.call('update.get_pending_in_path', path)
 
-    @accepts(Dict(
-        'update',
-        Str('dataset_name', null=True, default=None),
-        Bool('resume', default=False),
-        Str('train', null=True, default=None),
-        Bool('reboot', default=False),
-    ), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateUpdateArgs, UpdateUpdateResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     @pass_app(rest=True)
     async def update(self, app, job, attrs):
@@ -293,7 +289,7 @@ class UpdateService(Service):
 
         return True
 
-    @accepts(roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateDownloadArgs, UpdateDownloadResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='updatedownload')
     def download(self, job):
         """
@@ -309,16 +305,7 @@ class UpdateService(Service):
         await self.middleware.call('network.general.will_perform_activity', 'update')
         return await self.middleware.call('update.download_impl', *args)
 
-    @accepts(
-        Str('path'),
-        Dict(
-            'options',
-            Str('dataset_name', null=True, default=None),
-            Bool('resume', default=False),
-            Bool('cleanup', default=True),
-        ),
-        roles=['SYSTEM_UPDATE_WRITE']
-    )
+    @api_method(UpdateManualArgs, UpdateManualResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     def manual(self, job, path, options):
         """
@@ -422,11 +409,7 @@ class UpdateService(Service):
         if dest == UPLOAD_LOCATION:
             self.middleware.call_sync('update.destroy_upload_location')
 
-    @accepts(Dict(
-        'updatefile',
-        Bool('resume', default=False),
-        Str('destination', null=True, default=None),
-    ), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateFileArgs, UpdateFileResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     async def file(self, job, options):
         """
