@@ -3,7 +3,12 @@ import errno
 import os
 import subprocess
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str, ValidationErrors
+from middlewared.api import api_method
+from middlewared.api.current import (
+    TunableEntry, TunableCreateArgs, TunableCreateResult, TunableUpdateArgs, TunableUpdateResult, TunableDeleteArgs,
+    TunableDeleteResult, TunableTunableTypeChoicesArgs, TunableTunableTypeChoicesResult
+)
+from middlewared.schema import ValidationErrors
 from middlewared.service import CRUDService, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -39,14 +44,9 @@ class TunableService(CRUDService):
         datastore_prefix = 'tun_'
         cli_namespace = 'system.tunable'
         role_prefix = 'SYSTEM_TUNABLE'
+        entry = TunableEntry
 
     SYSCTLS = set()
-
-    ENTRY = Patch(
-        'tunable_create', 'tunable_entry',
-        ('add', Int('id')),
-        ('add', Str('orig_value')),
-    )
 
     @private
     def get_sysctls(self):
@@ -89,40 +89,18 @@ class TunableService(CRUDService):
             await self.middleware.call('etc.generate', 'udev')
             await run(['udevadm', 'control', '-R'])
 
-    @accepts()
-    @returns(Dict('tunable_type_choices', *[Str(k, enum=[k]) for k in TUNABLE_TYPES]))
+    @api_method(TunableTunableTypeChoicesArgs, TunableTunableTypeChoicesResult, authorization_required=False)
     async def tunable_type_choices(self):
         """
         Retrieve the supported tunable types that can be changed.
         """
         return {k: k for k in TUNABLE_TYPES}
 
-    @accepts(Dict(
-        'tunable_create',
-        Str('type', enum=TUNABLE_TYPES, default='SYSCTL', required=True),
-        Str('var', required=True),
-        Str('value', required=True),
-        Str('comment', default=''),
-        Bool('enabled', default=True),
-        Bool('update_initramfs', default=True),
-        register=True
-    ), audit='Tunable create')
+    @api_method(TunableCreateArgs, TunableCreateResult, audit='Tunable create')
     @job(lock='tunable_crud')
     async def do_create(self, job, data):
         """
         Create a tunable.
-
-        If `type` is `SYSCTL` then `var` is a sysctl name (e.g. `kernel.watchdog`) and `value` is its corresponding
-        value (e.g. `0`).
-
-        If `type` is `UDEV` then `var` is an udev rules file name (e.g. `10-disable-usb`, `.rules` suffix will be
-        appended automatically) and `value` is its contents (e.g. `BUS=="usb", OPTIONS+="ignore_device"`).
-
-        If `type` is `ZFS` then `var` is a ZFS kernel module parameter name (e.g. `zfs_dirty_data_max_max`) and `value`
-        is its value (e.g. `783091712`).
-
-        If `update_initramfs` is `false` then initramfs will not be updated after creating a ZFS tunable and you will
-        need to run `system boot update_initramfs` manually.
         """
         update_initramfs = data.pop('update_initramfs')
 
@@ -180,17 +158,7 @@ class TunableService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'tunable_create',
-            'tunable_update',
-            ('rm', {'name': 'type'}),
-            ('rm', {'name': 'var'}),
-            ('attr', {'update': True}),
-        ),
-        audit='Tunable update'
-    )
+    @api_method(TunableUpdateArgs, TunableUpdateResult, audit='Tunable update')
     @job(lock='tunable_crud')
     async def do_update(self, job, id_, data):
         """
@@ -236,7 +204,7 @@ class TunableService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id', required=True), audit='Tunable delete')
+    @api_method(TunableDeleteArgs, TunableDeleteResult, audit='Tunable delete')
     @job(lock='tunable_crud')
     async def do_delete(self, job, id_):
         """

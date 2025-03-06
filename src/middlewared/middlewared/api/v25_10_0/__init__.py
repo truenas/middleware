@@ -82,6 +82,7 @@ from .system_security import *  # noqa
 from .tn_connect import *  # noqa
 from .truecommand import *  # noqa
 from .truenas import *  # noqa
+from .tunable import *  # noqa
 from .ups import *  # noqa
 from .user import *  # noqa
 from .virt_device import *  # noqa

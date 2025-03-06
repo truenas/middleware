@@ -57,7 +57,7 @@ class RpcWebSocketApp(App):
                 data.get("id"),
                 JSONRPCError.INTERNAL_ERROR.value,
                 "Failed to JSON serialize server message",
-                None,
+                errno.EFAULT,
                 str(e),
                 sys.exc_info()
             )

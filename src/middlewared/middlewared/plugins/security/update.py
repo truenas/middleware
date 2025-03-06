@@ -36,6 +36,7 @@ class SystemSecurityService(ConfigService):
         # FIPS configuration has been synced up before reboot
         await self.middleware.call('failover.datastore.send')
         await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
+        await self.middleware.call('failover.call_remote', 'system.security.configure_stig')
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
         if reason.name in remote_reboot_reasons:

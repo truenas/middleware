@@ -5,10 +5,13 @@ import uuid
 
 import pytest
 
+from time import sleep
 from truenas_api_client import ValidationErrors
 
-from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.assets.virt import virt, import_iso_as_volume, volume, virt_device
+from middlewared.test.integration.assets.pool import another_pool, dataset
+from middlewared.test.integration.assets.virt import (
+    virt, import_iso_as_volume, volume, virt_device, virt_instance
+)
 from middlewared.test.integration.utils import call
 from middlewared.service_exception import ValidationErrors as ClientValidationErrors
 
@@ -17,6 +20,7 @@ from functions import POST, wait_on_job
 
 ISO_VOLUME_NAME = 'testiso'
 VM_NAME = 'virt-vm'
+CONTAINER_NAME = 'virt-container'
 VNC_PORT = 6900
 
 
@@ -42,6 +46,21 @@ def vm(virt_pool):
         yield call('virt.instance.get_instance', VM_NAME)
     finally:
         call('virt.instance.delete', VM_NAME, job=True)
+
+
+@pytest.fixture(scope='module')
+def container(virt_pool):
+    call('virt.instance.create', {
+        'name': CONTAINER_NAME,
+        'source_type': 'IMAGE',
+        'image': 'ubuntu/oracular/default',
+        'instance_type': 'CONTAINER',
+    }, job=True)
+    call('virt.instance.stop', CONTAINER_NAME, {'force': True, 'timeout': 1}, job=True)
+    try:
+        yield call('virt.instance.get_instance', CONTAINER_NAME)
+    finally:
+        call('virt.instance.delete', CONTAINER_NAME, job=True)
 
 
 @pytest.fixture(scope='module')
@@ -303,6 +322,18 @@ def test_disk_device_attachment_validation(vm, iso_volume, source, boot_priority
     assert ve.value.errors[0].errmsg == error_msg
 
 
+def test_disk_device_attachment_validation_on_containers(container):
+    with dataset('virt-vol', {'type': 'VOLUME', 'volsize': 200 * 1024 * 1024, 'sparse': True}) as ds:
+        with pytest.raises(ClientValidationErrors) as ve:
+            call('virt.instance.device_add', CONTAINER_NAME, {
+                'dev_type': 'DISK',
+                'source': f'/dev/zvol/{ds}',
+                'destination': '/zvol',
+            })
+
+    assert ve.value.errors[0].errmsg == 'ZVOL are not allowed for containers'
+
+
 @pytest.mark.parametrize('enable_vnc,vnc_port,source_type,error_msg', [
     (True, None, None, 'Value error, Source type must be set to "IMAGE" when instance type is CONTAINER'),
     (True, 5902, 'IMAGE', 'Value error, VNC is not supported for containers and `enable_vnc` should be unset'),
@@ -457,3 +488,31 @@ def test_root_disk_size():
         assert current_root_disk_size == updated_root_disk_size
     finally:
         call('virt.instance.delete', instance_name, job=True)
+
+
+def test_volume_choices_ixvirt():
+    with virt_instance('test-vm-volume-choices', instance_type='VM') as instance:
+        instance_name = instance['name']
+
+        call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
+
+        with volume('vmtestzvol', 1024):
+            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
+
+                # Incus leaves zvols unmounted until VM is started
+                call('virt.instance.start', instance_name)
+                sleep(5)  # NAS-134443 incus can lie about when VM has completed starting
+
+                try:
+                    extents = call('iscsi.extent.disk_choices').keys()
+                    assert not any([x for x in extents if '.ix-virt' in x]), str(extents)
+
+                    disks = call('virt.device.disk_choices').keys()
+                    assert not any([x for x in disks if '.ix-virt' in x]), str(disks)
+
+                    zvols = call('zfs.dataset.unlocked_zvols_fast')
+                    assert not any([x for x in zvols if '.ix-virt' in x['name']]), str(zvols)
+
+                finally:
+                    call('virt.instance.stop', instance_name, {'force': True, 'timeout': 11}, job=True)
+                    sleep(5)  # NAS-134443 incus can lie about when VM has completed stopping
