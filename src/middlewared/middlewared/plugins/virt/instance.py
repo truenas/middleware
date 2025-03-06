@@ -582,15 +582,15 @@ class VirtInstanceService(CRUDService):
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
 
-        # Apply any idmap changes
-        await self.set_account_idmaps(id)
-
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'stop',
                 'timeout': data['timeout'],
                 'force': data['force'],
             }})
+
+        # Apply any idmap changes
+        await self.set_account_idmaps(id)
 
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
             'action': 'start',
