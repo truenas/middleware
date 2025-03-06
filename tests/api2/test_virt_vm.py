@@ -5,10 +5,13 @@ import uuid
 
 import pytest
 
+from time import sleep
 from truenas_api_client import ValidationErrors
 
 from middlewared.test.integration.assets.pool import another_pool, dataset
-from middlewared.test.integration.assets.virt import virt, import_iso_as_volume, volume, virt_device
+from middlewared.test.integration.assets.virt import (
+    virt, import_iso_as_volume, volume, virt_device, virt_instance
+)
 from middlewared.test.integration.utils import call
 from middlewared.service_exception import ValidationErrors as ClientValidationErrors
 
@@ -485,3 +488,31 @@ def test_root_disk_size():
         assert current_root_disk_size == updated_root_disk_size
     finally:
         call('virt.instance.delete', instance_name, job=True)
+
+
+def test_volume_choices_ixvirt():
+    with virt_instance('test-vm-volume-choices', instance_type='VM') as instance:
+        instance_name = instance['name']
+
+        call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
+
+        with volume('vmtestzvol', 1024):
+            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
+
+                # Incus leaves zvols unmounted until VM is started
+                call('virt.instance.start', instance_name)
+                sleep(5)  # NAS-134443 incus can lie about when VM has completed starting
+
+                try:
+                    extents = call('iscsi.extent.disk_choices').keys()
+                    assert not any([x for x in extents if '.ix-virt' in x]), str(extents)
+
+                    disks = call('virt.device.disk_choices').keys()
+                    assert not any([x for x in disks if '.ix-virt' in x]), str(disks)
+
+                    zvols = call('zfs.dataset.unlocked_zvols_fast')
+                    assert not any([x for x in zvols if '.ix-virt' in x['name']]), str(zvols)
+
+                finally:
+                    call('virt.instance.stop', instance_name, {'force': True, 'timeout': 11}, job=True)
+                    sleep(5)  # NAS-134443 incus can lie about when VM has completed stopping
