@@ -153,7 +153,7 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.syslog_tls_certificate', False
                 ))
         elif data['syslog_tls_certificate']:
-            data['syslog_tls_certificate_authority'] = None
+            data['syslog_tls_certificate'] = None
 
         for invalid_char in ('\n', '"'):
             if invalid_char in data['kernel_extra_options']:
