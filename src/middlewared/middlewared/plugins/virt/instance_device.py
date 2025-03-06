@@ -308,7 +308,7 @@ class VirtInstanceDeviceService(Service):
                     verrors.add(schema, 'Source is required.')
                 elif source.startswith('/'):
                     if source.startswith('/dev/zvol/') and source not in await self.middleware.call(
-                        'virt.device.disk_choices'
+                        'virt.device.disk_choices_internal', True
                     ):
                         verrors.add(schema, 'Invalid ZVOL choice.')
 
