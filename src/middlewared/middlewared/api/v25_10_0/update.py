@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, single_argument_result, NonEmptyString, NotRequired
+from middlewared.api.base import BaseModel, single_argument_result, NonEmptyString
 
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
 
 
 class UpdateCheckAvailable(BaseModel):
-    train: str = NotRequired
+    train: str | None = None
 
 
 class UpdateFile(BaseModel):
