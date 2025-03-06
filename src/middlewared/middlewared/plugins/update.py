@@ -103,7 +103,6 @@ class UpdateService(Service):
         Returns available trains dict and the currently configured train as well as the
         train of currently booted environment.
         """
-
         self.middleware.call_sync('network.general.will_perform_activity', 'update')
 
         data = self.middleware.call_sync('datastore.config', 'system.update')
@@ -181,12 +180,6 @@ class UpdateService(Service):
         """
         Checks if there is an update available from update server.
 
-        status:
-          - REBOOT_REQUIRED: an update has already been applied
-          - AVAILABLE: an update is available
-          - UNAVAILABLE: no update available
-          - HA_UNAVAILABLE: HA is non-functional
-
         .. examples(websocket)::
 
           Check available update using default train:
@@ -238,12 +231,6 @@ class UpdateService(Service):
     async def get_pending(self, path):
         """
         Gets a list of packages already downloaded and ready to be applied.
-        Each entry of the lists consists of type of operation and name of it, e.g.
-
-          {
-            "operation": "upgrade",
-            "name": "baseos-11.0 -> baseos-11.1"
-          }
         """
         if path is None:
             path = await self.middleware.call('update.get_update_location')
@@ -256,10 +243,6 @@ class UpdateService(Service):
     async def update(self, app, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.
-
-        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
-        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, update
-        process will be continued using an already downloaded file without performing any extra checks.
         """
         location = await self.middleware.call('update.get_update_location')
 
@@ -310,14 +293,6 @@ class UpdateService(Service):
     def manual(self, job, path, options):
         """
         Update the system using a manual update file.
-
-        `path` must be the absolute path to the update file.
-
-        `options.resume` should be set to `true` if a previous call to this method returned a `CallError` with
-        `errno=EAGAIN` meaning that an upgrade can be performed with a warning and that warning is accepted.
-
-        If `options.cleanup` is set to `false` then the manual update file won't be removed on update success and
-        newly created BE won't be removed on update failure (useful for debugging purposes).
         """
         if options.pop('resume'):
             options['raise_warnings'] = False
@@ -414,12 +389,6 @@ class UpdateService(Service):
     async def file(self, job, options):
         """
         Updates the system using the uploaded .tar file.
-
-        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
-        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, re-uploading
-        the file is not necessary.
-
-        Use null `destination` to create a temporary location.
         """
         await self.middleware.run_in_thread(self.file_impl, job, options)
         await self.middleware.call_hook('update.post_update')
