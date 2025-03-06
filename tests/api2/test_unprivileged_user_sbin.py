@@ -18,5 +18,4 @@ def unprivileged_user():
 
 @pytest.mark.parametrize('shell', ['/usr/bin/bash', '/usr/bin/zsh'])
 def test_unprivileged_user_has_access_to_sbin_zfs(unprivileged_user, shell):
-    call('user.update', unprivileged_user['id'], {'shell': shell})
-    ssh('zpool status', user='unprivileged', password='password')
+    ssh(f'{shell} -c "zpool status"', user='unprivileged', password='password')
