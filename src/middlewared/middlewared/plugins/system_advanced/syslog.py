@@ -19,7 +19,10 @@ class SystemAdvancedService(Service):
         """
         return {
             i['id']: i['name']
-            for i in await self.middleware.call('certificate.query', [('cert_type_CSR', '=', False)])
+            for i in await self.middleware.call(
+                # NOTE: Temporarily using certificate authority
+                'certificateauthority.query', [['revoked', '=', False], ['cert_type_CSR', '=', False]]
+            )
         }
 
     @accepts()
@@ -30,8 +33,10 @@ class SystemAdvancedService(Service):
     async def syslog_certificate_authority_choices(self):
         """
         Return choices of certificate authorities which can be used for `syslog_tls_certificate_authority`.
+        ---- NO LONGER USED: TO BE REMOVED AFTER UI UPDATE ----
         """
-        return {
-            i['id']: i['name']
-            for i in await self.middleware.call('certificateauthority.query', [['revoked', '=', False]])
-        }
+        # return {
+        #     i['id']: i['name']
+        #     for i in await self.middleware.call('certificateauthority.query', [['revoked', '=', False]])
+        # }
+        return {}
