@@ -2,8 +2,8 @@
 Remove CA plugin
 
 Revision ID: 9a5b103ec2e4
-Revises: 5fda0931889d
-Create Date: 2025-03-05 16:41:53.749089+00:00
+Revises: a156968d5cbb
+Create Date: 2025-03-10 16:41:53.749089+00:00
 
 """
 import datetime
@@ -17,7 +17,7 @@ import sqlalchemy as sa
 
 
 revision = '9a5b103ec2e4'
-down_revision = '5fda0931889d'
+down_revision = 'a156968d5cbb'
 branch_labels = None
 depends_on = None
 
