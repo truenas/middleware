@@ -22,7 +22,8 @@ from middlewared.api.current import (
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
 from .utils import (
-    get_vnc_info_from_config, get_root_device_dict, Status, incus_call, incus_call_and_wait, VNC_BASE_PORT
+    create_vnc_password_file, get_vnc_info_from_config, get_root_device_dict, get_vnc_password_file_path,
+    Status, incus_call, incus_call_and_wait, VNC_BASE_PORT,
 )
 
 
@@ -59,6 +60,8 @@ class VirtInstanceService(CRUDService):
                 status = 'UNKNOWN'
             else:
                 status = i['state']['status'].upper()
+
+            autostart = i['config'].get('boot.autostart')
             secureboot = None
             if i['config'].get('image.requirements.secureboot') == 'true':
                 secureboot = True
@@ -70,7 +73,7 @@ class VirtInstanceService(CRUDService):
                 'type': 'CONTAINER' if i['type'] == 'container' else 'VM',
                 'status': status,
                 'cpu': i['config'].get('limits.cpu'),
-                'autostart': True if i['config'].get('boot.autostart') == 'true' else False,
+                'autostart': True if i['config'].get('user.autostart', autostart) == 'true' else False,
                 'environment': {},
                 'aliases': [],
                 'image': {
@@ -236,7 +239,7 @@ class VirtInstanceService(CRUDService):
                     if any(new['vnc_port'] in v for v in port_mapping.values()):
                         verrors.add(f'{schema_name}.vnc_port', 'VNC port is already in use by another virt instance')
 
-    def __data_to_config(self, data: dict, raw: dict = None, instance_type=None):
+    def __data_to_config(self, instance_name: str, data: dict, raw: dict = None, instance_type=None):
         config = {}
         if 'environment' in data:
             # If we are updating environment we need to remove current values
@@ -256,8 +259,9 @@ class VirtInstanceService(CRUDService):
             else:
                 config['limits.memory'] = None
 
+        config['boot.autostart'] = 'false'
         if data.get('autostart') is not None:
-            config['boot.autostart'] = str(data['autostart']).lower()
+            config['user.autostart'] = str(data['autostart']).lower()
 
         if instance_type == 'VM':
             config.update({
@@ -273,7 +277,8 @@ class VirtInstanceService(CRUDService):
             if data.get('enable_vnc') and data.get('vnc_port'):
                 vnc_config = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
                 if data.get('vnc_password'):
-                    vnc_config = f'-object secret,id=vnc0,data={data["vnc_password"]} {vnc_config},password-secret=vnc0'
+                    vnc_config = (f'-object secret,id=vnc0,file={get_vnc_password_file_path(instance_name)} '
+                                  f'{vnc_config},password-secret=vnc0')
 
                 config['raw.qemu'] = vnc_config
             if data.get('enable_vnc') is False:
@@ -420,11 +425,11 @@ class VirtInstanceService(CRUDService):
             await incus_call_and_wait('1.0/instances', 'post', {'json': {
                 'name': data['name'],
                 'ephemeral': False,
-                'config': self.__data_to_config(data, instance_type=data['instance_type']),
+                'config': self.__data_to_config(data['name'], data, instance_type=data['instance_type']),
                 'devices': devices,
                 'source': source,
                 'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
-                'start': False if data['instance_type'] == 'CONTAINER' else data['autostart'],
+                'start': False,
             }}, running_cb, timeout=15 * 60)
             # We will give 15 minutes to incus to download relevant image and then timeout
         except CallError as e:
@@ -432,24 +437,8 @@ class VirtInstanceService(CRUDService):
                 await (await self.middleware.call('virt.instance.delete', data['name'])).wait()
             raise e
 
-        if data['instance_type'] == 'CONTAINER':
-            # apply idmap settings then apply autostart settings
-            await self.set_account_idmaps(data['name'])
-
-            if data['autostart']:
-                raw = (await self.middleware.call(
-                    'virt.instance.get_instance', data['name'], {'extra': {'raw': True}}
-                ))['raw']
-                raw['config']['boot.autostart'] = 'true'
-                try:
-                    await incus_call_and_wait(f'1.0/instances/{data["name"]}', 'put', {'json': raw})
-                except CallError as e:
-                    await (await self.middleware.call('virt.instance.delete', data['name'])).wait()
-                    raise e
-
-                await incus_call_and_wait(f'1.0/instances/{data["name"]}/state', 'put', {'json': {
-                    'action': 'start',
-                }})
+        if data['autostart']:
+            await self.start_impl(job, data['name'])
 
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 
@@ -488,7 +477,7 @@ class VirtInstanceService(CRUDService):
 
         verrors.check()
 
-        instance['raw']['config'].update(self.__data_to_config(data, instance['raw']['config'], instance['type']))
+        instance['raw']['config'].update(self.__data_to_config(id, data, instance['raw']['config'], instance['type']))
         if data.get('root_disk_size') or data.get('root_disk_io_bus'):
             root_disk_size = data.get('root_disk_size') or int(instance['root_disk_size'] / (1024 ** 3))
             io_bus = data.get('root_disk_io_bus') or instance['root_disk_io_bus']
@@ -524,10 +513,18 @@ class VirtInstanceService(CRUDService):
         Start an instance.
         """
         await self.middleware.call('virt.global.check_initialized')
+        return await self.start_impl(job, id)
+
+    @private
+    async def start_impl(self, job, id):
         instance = await self.middleware.call('virt.instance.get_instance', id)
 
         # Apply any idmap changes
-        await self.set_account_idmaps(id)
+        if instance['status'] != 'RUNNING':
+            await self.set_account_idmaps(id)
+
+        if instance['vnc_password']:
+            await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
 
         try:
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
@@ -589,6 +586,9 @@ class VirtInstanceService(CRUDService):
 
         # Apply any idmap changes
         await self.set_account_idmaps(id)
+
+        if instance['vnc_password']:
+            await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
 
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
             'action': 'start',
