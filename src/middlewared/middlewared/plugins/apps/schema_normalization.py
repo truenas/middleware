@@ -10,7 +10,6 @@ from .schema_utils import get_list_item_from_value, RESERVED_NAMES
 
 REF_MAPPING = {
     'definitions/certificate': 'certificate',
-    'definitions/certificate_authority': 'certificate',  # TODO: This will probably be removed
     'definitions/gpu_configuration': 'gpu_configuration',
     'normalize/acl': 'acl',
     'normalize/ix_volume': 'ix_volume',
