@@ -1,4 +1,3 @@
-import itertools
 import os
 import shutil
 import subprocess
@@ -45,7 +44,6 @@ def write_certificates(certs: list) -> set:
 
 def render(service: Service, middleware: Middleware) -> None:
     os.makedirs('/etc/certificates', 0o755, exist_ok=True)
-    # TODO: Verify /etc/certificates/CA is not required by OS
 
     expected_files = set()
     certs = middleware.call_sync('certificate.query')
@@ -53,9 +51,7 @@ def render(service: Service, middleware: Middleware) -> None:
     expected_files |= write_certificates(certs)
 
     # We would like to remove certificates which have been deleted
-    found_files = set(itertools.chain(
-        map(lambda f: '/etc/certificates/' + f, os.listdir('/etc/certificates')),
-    ))
+    found_files = {'/etc/certificates/' + f for f in os.listdir('/etc/certificates')}
     for to_remove in found_files - expected_files:
         if os.path.isdir(to_remove):
             shutil.rmtree(to_remove)
