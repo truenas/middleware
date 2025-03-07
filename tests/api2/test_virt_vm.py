@@ -497,7 +497,10 @@ def test_volume_choices_ixvirt():
         call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
 
         with volume('vmtestzvol', 1024):
+            assert 'vmtestzvol' in call('virt.device.disk_choices')
             with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
+
+                assert 'vmtestzvol' not in call('virt.device.disk_choices')
 
                 # Incus leaves zvols unmounted until VM is started
                 call('virt.instance.start', instance_name)
