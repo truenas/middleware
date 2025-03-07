@@ -30,6 +30,7 @@ Okay so what we would like to do here is essentially are the following steps:
 4. Drop cert_signedby_id from both tables
 5. Update usages of CA foreign key to certs table
 6. Drop cert_revoked_date from certs table
+7. Drop CA table
 '''
 
 CA_TYPE_EXISTING = 0x01
@@ -209,6 +210,9 @@ def upgrade():
     # Going to drop cert_revoked_date column from certs table
     with op.batch_alter_table('system_certificate', schema=None) as batch_op:
         batch_op.drop_column('cert_revoked_date')
+
+    # Finally dropping CA table
+    op.drop_table('system_certificateauthority')
 
 
 def downgrade():
