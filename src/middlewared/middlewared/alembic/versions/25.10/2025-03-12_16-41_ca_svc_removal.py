@@ -32,14 +32,13 @@ Okay so what we would like to do here is essentially are the following steps:
 6. Drop cert_revoked_date from certs table
 '''
 
-# TODO: We probably want to maintain IPA CA name as is in cert table
-
 CA_TYPE_EXISTING = 0x01
 CA_TYPE_INTERNAL = 0x02
 CA_TYPE_INTERMEDIATE = 0x04
 CERT_TYPE_EXISTING = 0x08
 CERT_TYPE_INTERNAL = 0x10
 CERT_TYPE_CSR = 0x20
+IPA_CA_CERT_NAME = 'IPA_DOMAIN_CACERT'
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 UPGRADE_CA_PREFIX = 'MIGRATED_CA_'
 
@@ -149,7 +148,17 @@ def upgrade():
     cas = {ca['id']: ca for ca in map(dict, conn.execute("SELECT * FROM system_certificateauthority").fetchall())}
     cas_id_to_name_mapping = {}
     for ca in cas.values():
-        cas_id_to_name_mapping[ca['id']] = get_cert_name(ca['cert_name'], certs)
+        if ca['cert_name'] == IPA_CA_CERT_NAME:
+            if IPA_CA_CERT_NAME in certs:
+                # This should not happen but covering edge case just to be sure
+                continue
+            else:
+                # We treat this specially because that is how it is being consumed in ipa join mixin
+                new_cert_name = IPA_CA_CERT_NAME
+        else:
+            new_cert_name = get_cert_name(ca['cert_name'], certs)
+
+        cas_id_to_name_mapping[ca['id']] = new_cert_name
         conn.execute(sa.text("""
                 INSERT INTO system_certificate (
                     cert_type, cert_name, cert_certificate, cert_privatekey, cert_add_to_trusted_store
