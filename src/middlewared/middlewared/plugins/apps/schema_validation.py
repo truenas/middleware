@@ -9,7 +9,6 @@ from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVID
 
 VALIDATION_REF_MAPPING = {
     'definitions/certificate': 'certificate',
-    'definitions/certificateAuthority': 'certificate',  # TODO: See if we can safely remove this ref
     'definitions/port': 'port_available_on_node',
     'normalize/acl': 'acl_entries',
 }
