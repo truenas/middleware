@@ -176,30 +176,8 @@ def upgrade():
     kmip_config = next(
         map(dict, conn.execute("SELECT * FROM system_kmip").fetchall()), {'certificate_authority_id': None}
     )
-    system_advanced_config = next(
-        map(dict, conn.execute("SELECT * FROM system_advanced").fetchall()), {
-            'adv_syslog_tls_certificate_authority_id': None,
-        }
-    )
     # We need to set existing usages to NULL
-    conn.execute('UPDATE system_advanced SET adv_syslog_tls_certificate_authority_id = NULL')
     conn.execute('UPDATE system_kmip SET certificate_authority_id = NULL')
-
-    with op.batch_alter_table('system_advanced') as batch_op:
-        # Drop old foreign key constraint
-        batch_op.drop_constraint(
-            'fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority',
-            type_='foreignkey'
-        )
-
-        # Add new foreign key constraint
-        batch_op.create_foreign_key(
-            batch_op.f('fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificate'),
-            'system_certificate',  # New referenced table
-            ['adv_syslog_tls_certificate_authority_id'],
-            ['id'],
-            ondelete='CASCADE'
-        )
 
     with op.batch_alter_table('system_kmip', schema=None) as batch_op:
         batch_op.drop_constraint(
@@ -217,16 +195,6 @@ def upgrade():
         conn.execute(
             sa.text("UPDATE system_kmip SET certificate_authority_id = :id WHERE certificate_authority_id IS NULL"),
             {'id': certs[cas_id_to_name_mapping[kmip_config['certificate_authority_id']]]['id']}
-        )
-
-    if system_advanced_config['adv_syslog_tls_certificate_authority_id'] is not None:
-        conn.execute(
-            sa.text("UPDATE system_advanced SET adv_syslog_tls_certificate_authority_id = :id "
-                    "WHERE adv_syslog_tls_certificate_authority_id IS NULL"), {
-                'id': certs[
-                    cas_id_to_name_mapping[system_advanced_config['adv_syslog_tls_certificate_authority_id']]
-                ]['id']
-            }
         )
 
     # Going to drop cert_revoked_date column from certs table
