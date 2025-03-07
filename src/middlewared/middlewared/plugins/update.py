@@ -1,4 +1,11 @@
-from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    UpdateCheckAvailableArgs, UpdateCheckAvailableResult, UpdateDownloadArgs, UpdateDownloadResult, UpdateFileArgs,
+    UpdateFileResult, UpdateGetAutoDownloadArgs, UpdateGetAutoDownloadResult, UpdateGetPendingArgs,
+    UpdateGetPendingResult, UpdateGetTrainsArgs, UpdateGetTrainsResult, UpdateManualArgs, UpdateManualResult,
+    UpdateSetAutoDownloadArgs, UpdateSetAutoDownloadResult, UpdateSetTrainArgs, UpdateSetTrainResult, UpdateUpdateArgs,
+    UpdateUpdateResult
+)
 from middlewared.service import job, private, CallError, Service, pass_app
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
@@ -7,7 +14,6 @@ import enum
 import errno
 import os
 import shutil
-import subprocess
 import textwrap
 import pathlib
 
@@ -75,14 +81,14 @@ class UpdateService(Service):
     class Config:
         cli_namespace = 'system.update'
 
-    @accepts(roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateGetAutoDownloadArgs, UpdateGetAutoDownloadResult, roles=['SYSTEM_UPDATE_READ'])
     async def get_auto_download(self):
         """
         Returns if update auto-download is enabled.
         """
         return (await self.middleware.call('datastore.config', 'system.update'))['upd_autocheck']
 
-    @accepts(Bool('autocheck'), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateSetAutoDownloadArgs, UpdateSetAutoDownloadResult, roles=['SYSTEM_UPDATE_WRITE'])
     async def set_auto_download(self, autocheck):
         """
         Sets if update auto-download is enabled.
@@ -91,13 +97,12 @@ class UpdateService(Service):
         await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
         await self.middleware.call('service.restart', 'cron')
 
-    @accepts(roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateGetTrainsArgs, UpdateGetTrainsResult, roles=['SYSTEM_UPDATE_READ'])
     def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
         train of currently booted environment.
         """
-
         self.middleware.call_sync('network.general.will_perform_activity', 'update')
 
         data = self.middleware.call_sync('datastore.config', 'system.update')
@@ -135,7 +140,7 @@ class UpdateService(Service):
             'selected': selected,
         }
 
-    @accepts(Str('train', empty=False), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateSetTrainArgs, UpdateSetTrainResult, roles=['SYSTEM_UPDATE_WRITE'])
     def set_train(self, train):
         """
         Set an update train to be used by default in updates.
@@ -170,20 +175,10 @@ class UpdateService(Service):
 
         return True
 
-    @accepts(Dict(
-        'update-check-available',
-        Str('train', required=False),
-        required=False,
-    ), roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateCheckAvailableArgs, UpdateCheckAvailableResult, roles=['SYSTEM_UPDATE_READ'])
     def check_available(self, attrs):
         """
         Checks if there is an update available from update server.
-
-        status:
-          - REBOOT_REQUIRED: an update has already been applied
-          - AVAILABLE: an update is available
-          - UNAVAILABLE: no update available
-          - HA_UNAVAILABLE: HA is non-functional
 
         .. examples(websocket)::
 
@@ -232,38 +227,22 @@ class UpdateService(Service):
 
         return self.middleware.call_sync('update.check_train', train)
 
-    @accepts(Str('path', null=True, default=None), roles=['SYSTEM_UPDATE_READ'])
+    @api_method(UpdateGetPendingArgs, UpdateGetPendingResult, roles=['SYSTEM_UPDATE_READ'])
     async def get_pending(self, path):
         """
         Gets a list of packages already downloaded and ready to be applied.
-        Each entry of the lists consists of type of operation and name of it, e.g.
-
-          {
-            "operation": "upgrade",
-            "name": "baseos-11.0 -> baseos-11.1"
-          }
         """
         if path is None:
             path = await self.middleware.call('update.get_update_location')
 
         return await self.middleware.call('update.get_pending_in_path', path)
 
-    @accepts(Dict(
-        'update',
-        Str('dataset_name', null=True, default=None),
-        Bool('resume', default=False),
-        Str('train', null=True, default=None),
-        Bool('reboot', default=False),
-    ), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateUpdateArgs, UpdateUpdateResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     @pass_app(rest=True)
     async def update(self, app, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.
-
-        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
-        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, update
-        process will be continued using an already downloaded file without performing any extra checks.
         """
         location = await self.middleware.call('update.get_update_location')
 
@@ -293,7 +272,7 @@ class UpdateService(Service):
 
         return True
 
-    @accepts(roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateDownloadArgs, UpdateDownloadResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='updatedownload')
     def download(self, job):
         """
@@ -309,28 +288,11 @@ class UpdateService(Service):
         await self.middleware.call('network.general.will_perform_activity', 'update')
         return await self.middleware.call('update.download_impl', *args)
 
-    @accepts(
-        Str('path'),
-        Dict(
-            'options',
-            Str('dataset_name', null=True, default=None),
-            Bool('resume', default=False),
-            Bool('cleanup', default=True),
-        ),
-        roles=['SYSTEM_UPDATE_WRITE']
-    )
+    @api_method(UpdateManualArgs, UpdateManualResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     def manual(self, job, path, options):
         """
         Update the system using a manual update file.
-
-        `path` must be the absolute path to the update file.
-
-        `options.resume` should be set to `true` if a previous call to this method returned a `CallError` with
-        `errno=EAGAIN` meaning that an upgrade can be performed with a warning and that warning is accepted.
-
-        If `options.cleanup` is set to `false` then the manual update file won't be removed on update success and
-        newly created BE won't be removed on update failure (useful for debugging purposes).
         """
         if options.pop('resume'):
             options['raise_warnings'] = False
@@ -422,21 +384,11 @@ class UpdateService(Service):
         if dest == UPLOAD_LOCATION:
             self.middleware.call_sync('update.destroy_upload_location')
 
-    @accepts(Dict(
-        'updatefile',
-        Bool('resume', default=False),
-        Str('destination', null=True, default=None),
-    ), roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateFileArgs, UpdateFileResult, roles=['SYSTEM_UPDATE_WRITE'])
     @job(lock='update')
     async def file(self, job, options):
         """
         Updates the system using the uploaded .tar file.
-
-        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
-        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, re-uploading
-        the file is not necessary.
-
-        Use null `destination` to create a temporary location.
         """
         await self.middleware.run_in_thread(self.file_impl, job, options)
         await self.middleware.call_hook('update.post_update')

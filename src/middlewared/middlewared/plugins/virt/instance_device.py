@@ -308,7 +308,7 @@ class VirtInstanceDeviceService(Service):
                     verrors.add(schema, 'Source is required.')
                 elif source.startswith('/'):
                     if source.startswith('/dev/zvol/') and source not in await self.middleware.call(
-                        'virt.device.disk_choices'
+                        'virt.device.disk_choices_internal', True
                     ):
                         verrors.add(schema, 'Invalid ZVOL choice.')
 
@@ -382,7 +382,13 @@ class VirtInstanceDeviceService(Service):
                 if instance_type != 'VM':
                     verrors.add(schema, 'PCI passthrough is only supported for vms')
 
-    @api_method(VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(
+        VirtInstanceDeviceAddArgs,
+        VirtInstanceDeviceAddResult,
+        audit='Virt: Adding device',
+        audit_extended=lambda id, device: f'{device["dev_type"]!r} to {id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
     async def device_add(self, id, device):
         """
         Add a device to an instance.
@@ -400,7 +406,13 @@ class VirtInstanceDeviceService(Service):
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
         return True
 
-    @api_method(VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(
+        VirtInstanceDeviceUpdateArgs,
+        VirtInstanceDeviceUpdateResult,
+        audit='Virt: Updating device',
+        audit_extended=lambda id, device: f'{device["name"]!r} of {id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
     async def device_update(self, id, device):
         """
         Update a device in an instance.
@@ -422,7 +434,13 @@ class VirtInstanceDeviceService(Service):
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
         return True
 
-    @api_method(VirtInstanceDeviceDeleteArgs, VirtInstanceDeviceDeleteResult, roles=['VIRT_INSTANCE_DELETE'])
+    @api_method(
+        VirtInstanceDeviceDeleteArgs,
+        VirtInstanceDeviceDeleteResult,
+        audit='Virt: Deleting device',
+        audit_extended=lambda id, device: f'{device!r} from {id!r} instance',
+        roles=['VIRT_INSTANCE_DELETE']
+    )
     async def device_delete(self, id, device):
         """
         Delete a device from an instance.
