@@ -1,9 +1,10 @@
 import os
+import re
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, model_validator, Secret, StringConstraints
+from pydantic import AfterValidator, Field, model_validator, Secret, StringConstraints
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, match_validator, NonEmptyString, single_argument_args
 
 from .virt_device import DeviceType, InstanceType
 
@@ -20,6 +21,25 @@ __all__ = [
 
 
 REMOTE_CHOICES: TypeAlias = Literal['LINUX_CONTAINERS']
+ENV_KEY: TypeAlias = Annotated[
+    str,
+    AfterValidator(
+        match_validator(
+            re.compile(r'^\w[\w/]*$'),
+            'ENV_KEY must not be empty, should start with alphanumeric characters'
+            ', should not contain whitespaces, and can have _ and /'
+        )
+    )
+]
+ENV_VALUE: TypeAlias = Annotated[
+    str,
+    AfterValidator(
+        match_validator(
+            re.compile(r'^(?!\s*$).+'),
+            'ENV_VALUE must have at least one non-whitespace character to be considered valid'
+        )
+    )
+]
 
 
 class VirtInstanceAlias(BaseModel):
@@ -92,7 +112,7 @@ class VirtInstanceCreateArgs(BaseModel):
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI'] = 'NVME'
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
-    environment: dict[str, str] | None = None
+    environment: dict[ENV_KEY, ENV_VALUE] | None = None
     autostart: bool | None = True
     cpu: str | None = None
     devices: list[DeviceType] | None = None
@@ -148,7 +168,7 @@ class VirtInstanceCreateResult(BaseModel):
 
 
 class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
-    environment: dict[str, str] | None = None
+    environment: dict[ENV_KEY, ENV_VALUE] | None = None
     autostart: bool | None = None
     cpu: str | None = None
     memory: MemoryType | None = None
