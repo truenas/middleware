@@ -17,7 +17,7 @@ from functions import SSH_TEST, wait_on_job
 from auto_config import pool_name, password, user
 SHELL = '/usr/bin/bash'
 VAR_EMPTY = '/var/empty'
-ROOT_GROUP = 'root'
+BUILTIN_ADMINS_GROUP = 'builtin_administrators'
 DEFAULT_HOMEDIR_OCTAL = 0o40700
 SMB_CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 
@@ -225,22 +225,22 @@ def test_003_get_next_uid_again(request):
 
 
 def test_004_update_and_verify_user_groups(request):
-    """Add the user to the root users group"""
+    """Add the user to the builtin_admins group"""
     depends(request, [UserAssets.TestUser01['depends_name']])
-    root_group_info = call(
-        'group.query', [['group', '=', ROOT_GROUP]], {'get': True}
+    ba_group_info = call(
+        'group.query', [['group', '=', BUILTIN_ADMINS_GROUP]], {'get': True}
     )
     call(
         'user.update',
         UserAssets.TestUser01['query_response']['id'],
-        {'groups': [root_group_info['id']]}
+        {'groups': [ba_group_info['id']]}
     )
 
     grouplist = call(
         'user.get_user_obj',
         {'username': UserAssets.TestUser01['create_payload']['username'], 'get_groups': True}
     )['grouplist']
-    assert root_group_info['gid'] in grouplist
+    assert ba_group_info['gid'] in grouplist
 
 
 @pytest.mark.dependency(name='SMB_CONVERT')
@@ -351,7 +351,7 @@ def test_009_delete_user(username, request):
 def test_020_create_and_verify_shareuser():
     UserAssets.ShareUser01['create_payload']['uid'] = call('user.get_next_uid')
     UserAssets.ShareUser01['create_payload']['groups'].append(
-        call('group.query', [['group', '=', ROOT_GROUP]], {'get': True})['id']
+        call('group.query', [['group', '=', BUILTIN_ADMINS_GROUP]], {'get': True})['id']
     )
 
     call('user.create', UserAssets.ShareUser01['create_payload'])
