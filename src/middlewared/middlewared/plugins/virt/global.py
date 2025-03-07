@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+import shutil
 import subprocess
 import middlewared.sqlalchemy as sa
 
@@ -16,7 +17,7 @@ from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 
-from .utils import Status, incus_call
+from .utils import Status, incus_call, VNC_PASSWORD_DIR
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
@@ -225,6 +226,7 @@ class VirtGlobalService(ConfigService):
             await self.middleware.call('cache.put', 'VIRT_STATE', Status.INITIALIZED.value)
         finally:
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
+            await self.auto_start_instances()
 
     async def _setup_impl(self):
         config = await self.config()
@@ -445,6 +447,22 @@ class VirtGlobalService(ConfigService):
 
         if start and not await self.middleware.call('service.start', 'incus'):
             raise CallError('Failed to start virtualization service')
+
+        if not start:
+            await self.middleware.run_in_thread(shutil.rmtree, VNC_PASSWORD_DIR, True)
+
+    @private
+    async def auto_start_instances(self):
+        await self.middleware.call(
+            'core.bulk', 'virt.instance.start', [
+                [instance['name']] for instance in await self.middleware.call(
+                    'virt.instance.query', [['autostart', '=', True], ['status', '=', 'STOPPED']]
+                )
+                # We have an explicit filter for STOPPED because old virt instances would still have
+                # incus autostart enabled and we don't want to attempt to start them again.
+                # We can remove this in FT release perhaps.
+            ]
+        )
 
 
 async def _event_system_ready(middleware: 'Middleware', event_type, args):
