@@ -342,7 +342,7 @@ class VirtInstanceService(CRUDService):
         audit='Virt: Creating',
         audit_extended=lambda data: f'{data["name"]!r} instance'
     )
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0].get("name")}')
     async def do_create(self, job, data):
         """
         Create a new virtualized instance.
@@ -453,7 +453,7 @@ class VirtInstanceService(CRUDService):
         audit='Virt: Updating',
         audit_extended=lambda id, data=None: f'{id!r} instance'
     )
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def do_update(self, job, id, data):
         """
         Update instance.
@@ -503,7 +503,7 @@ class VirtInstanceService(CRUDService):
         audit='Virt: Deleting',
         audit_extended=lambda id: f'{id!r} instance'
     )
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def do_delete(self, job, id):
         """
         Delete an instance.
@@ -528,7 +528,7 @@ class VirtInstanceService(CRUDService):
         audit_extended=lambda id: f'{id!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
-    @job(logs=True)
+    @job(lock=lambda args: f'instance_action_{args[0]}', logs=True)
     async def start(self, job, id):
         """
         Start an instance.
@@ -576,7 +576,7 @@ class VirtInstanceService(CRUDService):
         audit_extended=lambda id, data=None: f'{id!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def stop(self, job, id, data):
         """
         Stop an instance.
@@ -600,7 +600,7 @@ class VirtInstanceService(CRUDService):
         audit_extended=lambda id, data=None: f'{id!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
-    @job()
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def restart(self, job, id, data):
         """
         Restart an instance.

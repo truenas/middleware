@@ -96,7 +96,7 @@ class VirtGlobalService(ConfigService):
         VirtGlobalUpdateResult,
         audit='Virt: Update configuration'
     )
-    @job()
+    @job(lock='virt_global_configuration')
     async def do_update(self, job, data):
         """
         Update global virtualization settings.
@@ -210,7 +210,7 @@ class VirtGlobalService(ConfigService):
         }
 
     @private
-    @job()
+    @job(lock='virt_global_setup')
     async def setup(self, job):
         """
         Sets up incus through their API.
@@ -411,7 +411,7 @@ class VirtGlobalService(ConfigService):
             await self.middleware.call('service.restart', 'incus')
 
     @private
-    @job()
+    @job(lock='virt_global_reset')
     async def reset(self, job, start: bool = False, config: dict | None = None):
         if config is None:
             config = await self.config()
