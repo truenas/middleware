@@ -30,6 +30,9 @@ __all__ = [
 ]
 
 
+ZFS_MAX_DATASET_NAME_LEN = 200  # It's really 256, but we should leave some space for snapshot names
+
+
 class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
     parsed: Any
     rawvalue: str | None
@@ -107,7 +110,7 @@ class PoolDatasetCreateUserProperty(BaseModel):
 
 
 class PoolDatasetCreate(BaseModel):
-    name: Annotated[str, Field(max_length=200)]
+    name: Annotated[str, Field(max_length=ZFS_MAX_DATASET_NAME_LEN)]
     comments: str = "INHERIT"
     sync: Literal["STANDARD", "ALWAYS", "DISABLED"] = "INHERIT"
     snapdev: Literal["HIDDEN", "VISIBLE"] = NotRequired
@@ -162,9 +165,10 @@ class PoolDatasetCreateVolume(PoolDatasetCreate):
     type: Literal["VOLUME"] = "VOLUME"
     force_size: bool = NotRequired
     sparse: bool = NotRequired
-    volsize: int = NotRequired
+    volsize: int
     """The volume size in bytes; supposed to be a multiple of the block size."""
     volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"] = NotRequired
+    """Defaults to `128K` if the parent pool is a DRAID pool or `16K` otherwise."""
 
 
 class PoolDatasetDeleteOptions(BaseModel):
@@ -172,7 +176,7 @@ class PoolDatasetDeleteOptions(BaseModel):
     """Also delete/destroy all children datasets. When root dataset is specified as `id` with `recursive`, it will
     destroy all the children of the root dataset present leaving root dataset intact."""
     force: bool = False
-    """Force delete busy datasets."""
+    """Delete datasets even if they are busy."""
 
 
 class PoolDatasetEncryptionSummaryOptionsDataset(BaseModel):
@@ -320,7 +324,7 @@ class PoolDatasetUpdateUserProperty(PoolDatasetCreateUserProperty):
     remove: bool = NotRequired
 
 
-class PoolDatasetUpdate(PoolDatasetCreate, metaclass=ForUpdateMetaclass):
+class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, metaclass=ForUpdateMetaclass):
     name: Excluded = excluded_field()
     type: Excluded = excluded_field()
     casesensitivity: Excluded = excluded_field()

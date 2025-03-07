@@ -17,7 +17,7 @@ from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 
 from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize, ZFSKeyFormat,
-    ZFS_MAX_DATASET_NAME_LEN, ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
+    ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
 )
 
 
@@ -315,15 +315,9 @@ class PoolDatasetService(CRUDService):
                 data['recordsize'] = '1M'
 
         elif data['type'] == 'VOLUME':
-            if mode == 'CREATE':
-                if 'volsize' not in data:
-                    verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
-                if 'volblocksize' not in data:
-                    if dataset_pool_is_draid:
-                        data['volblocksize'] = '128K'
-                    else:
-                        # with openzfs 2.2, zfs sets 16k as default https://github.com/openzfs/zfs/pull/12406
-                        data['volblocksize'] = '16K'
+            if mode == 'CREATE' and 'volblocksize' not in data:
+                # with openzfs 2.2, zfs sets 16k as default https://github.com/openzfs/zfs/pull/12406
+                data['volblocksize'] = '128K' if dataset_pool_is_draid else '16K'
 
             if dataset_pool_is_draid and 'volblocksize' in data:
                 if ZFS_VOLUME_BLOCK_SIZE_CHOICES[data['volblocksize']] < 32 * 1024:
@@ -422,11 +416,6 @@ class PoolDatasetService(CRUDService):
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         elif not validate_dataset_name(data['name']):
             verrors.add('pool_dataset_create.name', 'Invalid dataset name')
-        elif len(data['name']) > ZFS_MAX_DATASET_NAME_LEN:
-            verrors.add(
-                'pool_dataset_create.name',
-                f'Dataset name length should be less than or equal to {ZFS_MAX_DATASET_NAME_LEN}',
-            )
         elif data['name'][-1] == ' ':
             verrors.add(
                 'pool_dataset_create.name',
@@ -463,8 +452,6 @@ class PoolDatasetService(CRUDService):
                     data['atime'] = 'OFF'
                     data['acltype'] = 'NFSV4'
                     data['aclmode'] = 'PASSTHROUGH'
-                case _:
-                    pass
 
             await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
 
@@ -701,9 +688,7 @@ class PoolDatasetService(CRUDService):
         dataset = await self.middleware.call(
             'pool.dataset.query', [('id', '=', id_)], {'extra': {'retrieve_children': False}}
         )
-        if not dataset:
-            verrors.add('id', f'{id_} does not exist', errno.ENOENT)
-        else:
+        if dataset:
             data['type'] = dataset[0]['type']
             data['name'] = dataset[0]['name']
             audit_callback(data['name'])
@@ -728,6 +713,8 @@ class PoolDatasetService(CRUDService):
                             f'{id_!r} has snapshots which have attachments being used. Before marking it '
                             'as HIDDEN, remove attachment usages.'
                         )
+        else:
+            verrors.add('id', f'{id_} does not exist', errno.ENOENT)
 
         verrors.check()
 
