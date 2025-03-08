@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-from collections import OrderedDict
 import copy
 import enum
 import errno
@@ -17,6 +16,7 @@ from middlewared.service_exception import CallError, ValidationError, Validation
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs, credential_has_full_admin
 from middlewared.utils.time_utils import utc_now
+from uuid import uuid4
 
 
 logger = logging.getLogger(__name__)
@@ -225,8 +225,7 @@ class JobsDeque:
 
     def __init__(self, maxlen=1000):
         self.maxlen = maxlen
-        self.count = 0
-        self.__dict = OrderedDict()
+        self.__dict = {}
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(LOGS_DIR)
 
@@ -244,7 +243,6 @@ class JobsDeque:
         return self.count
 
     def add(self, job):
-        job.set_id(self._get_next_id())
         if len(self.__dict) > self.maxlen:
             for old_job_id, old_job in self.__dict.items():
                 if old_job.state in (State.SUCCESS, State.FAILED, State.ABORTED):
@@ -291,7 +289,7 @@ class Job:
         self.app = app
         self.audit_callback = audit_callback
 
-        self.id = None
+        self.id = str(uuid4())
         self.lock = None
         self.result = None
         self.error = None
@@ -376,9 +374,6 @@ class Job:
                 raise CallError("Error handling job lock. This is most likely caused by invalid call arguments.",
                                 errno.EINVAL)
         return lock_name
-
-    def set_id(self, id_):
-        self.id = id_
 
     def set_result(self, result):
         self.result = result

@@ -23,7 +23,7 @@ def do_ad_connection(request):
         cache_fill_job = call(
             'core.get_jobs',
             [['method', '=', 'directoryservices.cache.refresh_impl']],
-            {'order_by': ['-id'], 'get': True}
+            {'order_by': ['-time_started'], 'get': True}
         )
         if cache_fill_job['state'] == 'RUNNING':
             call('core.job_wait', cache_fill_job['id'], job=True)
