@@ -62,7 +62,7 @@ def test_no_admin_privilege(ipa_config):
 
 
 def test_no_certificate(ipa_config):
-    certs = call('certificateauthority.query', [['name', '=', 'IPA_DOMAIN_CACERT']])
+    certs = call('certificate.query', [['name', '=', 'IPA_DOMAIN_CACERT']])
     assert len(certs) == 0, str(certs)
 
 
