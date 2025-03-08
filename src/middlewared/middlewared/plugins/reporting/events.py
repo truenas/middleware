@@ -6,8 +6,9 @@ from middlewared.service import Service
 from middlewared.utils.disks import get_disk_names, get_disks_with_identifiers
 from middlewared.validators import Range
 
-from .realtime_reporting import get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info
-
+from .realtime_reporting import (
+    get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats,
+)
 
 class ReportingRealtimeService(Service):
 
@@ -50,6 +51,7 @@ class ReportingRealtimeService(Service):
                         )
                     ]
                 ),
+                'pools': get_pool_stats(netdata_metrics),
                 'failed_to_connect': False,
             }
 
@@ -108,7 +110,8 @@ class RealtimeEventSource(EventSource):
             Int('l2arc_miss_percentage'),
             Int('bytes_read_per_second_from_the_l2arc'),
             Int('bytes_written_per_second_to_the_l2arc'),
-        )
+        ),
+        Dict('pools', additional_attrs=True),
     )
 
     def run_sync(self):
