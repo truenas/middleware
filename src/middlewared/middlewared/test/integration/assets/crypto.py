@@ -21,20 +21,6 @@ def get_cert_params():
 
 
 @contextlib.contextmanager
-def root_certificate_authority(name):
-    ca = call('certificateauthority.create', {
-        **get_cert_params(),
-        'name': name,
-        'create_type': 'CA_CREATE_INTERNAL',
-    })
-
-    try:
-        yield ca
-    finally:
-        call('certificateauthority.delete', ca['id'])
-
-
-@contextlib.contextmanager
 def certificate_signing_request(csr_name):
     cert_params = get_cert_params()
     csr = call('certificate.create', {
