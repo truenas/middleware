@@ -16,8 +16,6 @@ def get_cert_params():
         'organizational_unit': 'dev',
         'email': 'dev@ix.com',
         'digest_algorithm': 'SHA256',
-        'lifetime': 397,
-        'serial': 12931,
         'cert_extensions': {},
     }
 
@@ -55,7 +53,6 @@ def intermediate_certificate_authority(root_ca_name, intermediate_ca_name):
 @contextlib.contextmanager
 def certificate_signing_request(csr_name):
     cert_params = get_cert_params()
-    cert_params.pop('lifetime')
     csr = call('certificate.create', {
         'name': csr_name,
         'create_type': 'CERTIFICATE_CREATE_CSR',
