@@ -35,22 +35,6 @@ def root_certificate_authority(name):
 
 
 @contextlib.contextmanager
-def intermediate_certificate_authority(root_ca_name, intermediate_ca_name):
-    with root_certificate_authority(root_ca_name) as root_ca:
-        intermediate_ca = call('certificateauthority.create', {
-            **get_cert_params(),
-            'signedby': root_ca['id'],
-            'name': intermediate_ca_name,
-            'create_type': 'CA_CREATE_INTERMEDIATE',
-        })
-
-        try:
-            yield root_ca, intermediate_ca
-        finally:
-            call('certificateauthority.delete', intermediate_ca['id'])
-
-
-@contextlib.contextmanager
 def certificate_signing_request(csr_name):
     cert_params = get_cert_params()
     csr = call('certificate.create', {
