@@ -6,7 +6,6 @@ from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.assets.cloud_backup import task as cloud_backup_task
 from middlewared.test.integration.assets.cloud_sync import local_ftp_credential, local_ftp_task
-from middlewared.test.integration.assets.crypto import root_certificate_authority
 from middlewared.test.integration.assets.datastore import row
 from middlewared.test.integration.assets.keychain import ssh_keypair
 from middlewared.test.integration.assets.pool import dataset
@@ -24,12 +23,6 @@ def readonly_client():
 @contextlib.contextmanager
 def wrap(id):
     yield id
-
-
-@contextlib.contextmanager
-def certificateauthority():
-    with root_certificate_authority("ca_test") as ca:
-        yield ca["id"]
 
 
 @contextlib.contextmanager
@@ -140,8 +133,7 @@ def vmware():
 @pytest.mark.parametrize("how", ["multiple", "single", "get_instance"])
 @pytest.mark.parametrize("service,id,options,redacted_fields", (
     ("acme.dns.authenticator", dns_authenticator, {}, ["attributes"]),
-    ("certificate", 1, {}, ["privatekey", "issuer"]),
-    ("certificateauthority", certificateauthority, {}, ["privatekey", "issuer"]),
+    ("certificate", 1, {}, ["privatekey"]),
     ("cloud_backup", cloudbackup, {}, ["credentials.provider.pass", "password"]),
     ("cloudsync.credentials", cloudsync_credential, {}, ["provider.pass"]),
     ("cloudsync", cloudsync, {}, ["credentials.provider.pass", "encryption_password"]),
