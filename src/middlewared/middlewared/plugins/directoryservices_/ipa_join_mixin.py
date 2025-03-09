@@ -481,13 +481,13 @@ class IPAJoinMixin:
                     ipa_constants.IpaConfigName.IPA_CACERT.value
                 )
         else:
-            # TODO: FIX Params here as cert currently requires private key as well
-            self.middleware.call_sync('certificate.create', {
+            cert_job = self.middleware.call_sync('certificate.create', {
                 'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
                 'certificate': resp['cacert'],
                 'add_to_trusted_store': True,
-                'create_type': 'CA_CREATE_IMPORTED'
+                'create_type': 'CERTIFICATE_CREATE_IMPORTED',
             })
+            cert_job.wait_sync(raise_error=True)
 
         # make sure ldap service is updated to use realm and principal and
         # clear out the bind account password since it is no longer needed. We
