@@ -37,11 +37,29 @@ def _not_required_serializer(self, serializer):
     }
 
 
-def _apply_model_serializer(cls: type["BaseModel"], model_serializer: PydanticDescriptorProxy):
-    """Update a model's custom model_serializer.
+@model_serializer(mode="wrap")
+def _for_update_serializer(self, serializer):
+    if self is undefined:
+        # Can happen if `ForUpdateMetaclass` models are nestsed. Defer serialization to the outer model.
+        return self
 
-    As per pydantic's current implementation, it is only possible for a model to have one functional model serializer.
-    If `cls` already has a functional model serializer, it will be replaced with the new one.
+    aliases = {field.alias or name: name for name, field in self.model_fields.items()}
+
+    return {
+        k: v
+        for k, v in serializer(self).items()
+        if (
+            (getattr(self, aliases[k]) != undefined) if k in aliases and hasattr(self, aliases[k])
+            else v != undefined
+        )
+    }
+
+
+def _apply_model_serializer(cls: type["BaseModel"], model_serializer: PydanticDescriptorProxy):
+    """Update a model's custom model serializer.
+
+    As per pydantic's current implementation, it is not possible for a model to have more than one functional model
+    serializer. If `cls` already has a functional model serializer, it will be replaced with the new one.
 
     """
     setattr(cls, _SERIALIZER_NAME, model_serializer.wrapped)
@@ -71,6 +89,26 @@ class _BaseModelMetaclass(ModelMetaclass):
                 _apply_model_serializer(cls, _not_required_serializer)
                 break
 
+        return cls
+
+
+class ForUpdateMetaclass(_BaseModelMetaclass):
+    """
+    Using this metaclass on a model will change all of its fields default values to `undefined`.
+    Such a model might be instantiated with any subset of its fields, which can be useful to validate request bodies
+    for requests with PATCH semantics.
+    """
+
+    def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
+        cls = ModelMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
+
+        for field in cls.model_fields.values():
+            # Set defaults of all fields to `undefined`.
+            # New defaults do not apply until model is rebuilt in `_apply_model_serializer`.
+            field.default = undefined
+            field.default_factory = None
+
+        _apply_model_serializer(cls, _for_update_serializer)
         return cls
 
 
@@ -167,44 +205,6 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         :return: value of the same model in the preceding API version.
         """
         return value
-
-
-@model_serializer(mode="wrap")
-def _for_update_serializer(self, serializer):
-    if self is undefined:
-        # Can happen if `ForUpdateMetaclass` models are nestsed. Defer serialization to the outer model.
-        return self
-
-    aliases = {field.alias or name: name for name, field in self.model_fields.items()}
-
-    return {
-        k: v
-        for k, v in serializer(self).items()
-        if (
-            (getattr(self, aliases[k]) != undefined) if k in aliases and hasattr(self, aliases[k])
-            else v != undefined
-        )
-    }
-
-
-class ForUpdateMetaclass(_BaseModelMetaclass):
-    """
-    Using this metaclass on a model will change all of its fields default values to `undefined`.
-    Such a model might be instantiated with any subset of its fields, which can be useful to validate request bodies
-    for requests with PATCH semantics.
-    """
-
-    def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
-        cls = ModelMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
-
-        for field in cls.model_fields.values():
-            # Set defaults of all fields to `undefined`.
-            # New defaults do not apply until model is rebuilt in `_apply_model_serializer`.
-            field.default = undefined
-            field.default_factory = None
-
-        _apply_model_serializer(cls, _for_update_serializer)
-        return cls
 
 
 def single_argument_args(name: str):
