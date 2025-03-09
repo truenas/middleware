@@ -1,10 +1,10 @@
-import copy
 import functools
 import inspect
 from types import NoneType
-import typing
+from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
+from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.json_schema import SkipJsonSchema
 from pydantic.main import IncEx
@@ -21,62 +21,55 @@ __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item
 class _NotRequired:...
 
 
-"""Use as the default value for fields that may be excluded from the model."""
 NotRequired = _NotRequired()
+"""Use as the default value for fields that may be excluded from the model."""
+_SERIALIZER_NAME = "serializer"
+"""Reserved name for model serializers `_not_required_serializer` and `_for_update_serializer`."""
 
 
-class _NotRequiredMixin(PydanticBaseModel):
-    @model_serializer(mode="wrap")
-    def serialize_basemodel(self, serializer):
-        return {
-            k: v
-            for k, v in serializer(self).items()
-            if v is not NotRequired
-        }
+@model_serializer(mode="wrap")
+def _not_required_serializer(self, serializer):
+    """Exclude all fields that are set to `NotRequired`."""
+    return {
+        k: v
+        for k, v in serializer(self).items()
+        if v is not NotRequired
+    }
 
 
-def _not_required_field(field):
-    annotation_ = field.annotation
+def _apply_model_serializer(cls: type["BaseModel"], model_serializer: PydanticDescriptorProxy):
+    """Update a model's custom model_serializer.
 
-    if typing.get_origin(annotation_) is Secret:
-        annotation_ = Secret[typing.get_args(annotation_)[0] | _NotRequired]
-    else:
-        annotation_ |= _NotRequired
+    As per pydantic's current implementation, it is only possible for a model to have one functional model serializer.
+    If `cls` already has a functional model serializer, it will be replaced with the new one.
 
-    return (annotation_, field)
+    """
+    setattr(cls, _SERIALIZER_NAME, model_serializer.wrapped)
+    cls.__pydantic_decorators__.model_serializers = {
+        _SERIALIZER_NAME: Decorator.build(
+            cls,
+            cls_var_name=_SERIALIZER_NAME,
+            shim=model_serializer.shim,
+            info=model_serializer.decorator_info
+        )
+    }
+    cls.model_rebuild(force=True)
 
 
 class _BaseModelMetaclass(ModelMetaclass):
-    """Any BaseModel subclass that uses the NotRequired default value on any of its fields receives the appropriate
+    """Any `BaseModel` subclass that uses the `NotRequired` default value on any of its fields receives the appropriate
     model serializer."""
-    # FIXME: In the future we want to set defaults on all fields that are not required. Remove this metaclass,
-    # `_NotRequiredMixin`, and `NotRequired` at that time.
+    # FIXME: In the future we want to set defaults on all fields
+    # that are not required. Remove this metaclass at that time.
 
-    def __new__(mcls, name, bases, namespaces, **kwargs):
-        skip_patching = kwargs.pop("__BaseModelMetaclass_skip_patching", False)
+    def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
+        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
-        cls = super().__new__(mcls, name, bases, namespaces, **kwargs)
-
-        if skip_patching or name == "BaseModel":
-            return cls
-
-        has_not_required = False
-        updated_fields = {}
-        for name, field in cls.model_fields.items():
-            if getattr(field, "default", None) is NotRequired:
-                has_not_required = True
-                updated_fields[name] = _not_required_field(field)
-            else:
-                updated_fields[name] = (field.annotation, field)
-
-        if has_not_required:
-            return create_model(
-                cls.__name__,
-                __base__=(cls, _NotRequiredMixin),
-                __module__=cls.__module__,
-                __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
-                **updated_fields
-            )
+        for field in cls.model_fields.values():
+            if field.default is NotRequired:
+                # If any field has a default of `NotRequired`, apply the serializer to the model.
+                _apply_model_serializer(cls, _not_required_serializer)
+                break
 
         return cls
 
@@ -91,11 +84,11 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
     )
 
     @classmethod
-    def __pydantic_init_subclass__(cls, **kwargs: typing.Any) -> None:
+    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
         for k, v in cls.model_fields.items():
-            if typing.get_origin(v.annotation) is typing.Union:
-                for option in typing.get_args(v.annotation):
-                    if typing.get_origin(option) is Secret:
+            if get_origin(v.annotation) is Union:
+                for option in get_args(v.annotation):
+                    if get_origin(option) is Secret:
                         def dump(t):
                             return str(t).replace("typing.", "").replace("middlewared.api.base.types.base.", "")
 
@@ -107,18 +100,18 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
     def model_dump(
         self,
         *,
-        mode: typing.Literal['json', 'python'] | str = 'python',
+        mode: Literal['json', 'python'] | str = 'python',
         include: IncEx = None,
         exclude: IncEx = None,
-        context: dict[str, typing.Any] | None = None,
+        context: dict[str, Any] | None = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
         round_trip: bool = False,
-        warnings: bool | typing.Literal['none', 'warn', 'error'] = True,
+        warnings: bool | Literal['none', 'warn', 'error'] = True,
         serialize_as_any: bool = False
-    ) -> dict[str, typing.Any]:
+    ) -> dict[str, Any]:
         return self.__pydantic_serializer__.to_python(
             self,
             mode=mode,
@@ -176,6 +169,24 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         return value
 
 
+@model_serializer(mode="wrap")
+def _for_update_serializer(self, serializer):
+    if self is undefined:
+        # Can happen if `ForUpdateMetaclass` models are nestsed. Defer serialization to the outer model.
+        return self
+
+    aliases = {field.alias or name: name for name, field in self.model_fields.items()}
+
+    return {
+        k: v
+        for k, v in serializer(self).items()
+        if (
+            (getattr(self, aliases[k]) != undefined) if k in aliases and hasattr(self, aliases[k])
+            else v != undefined
+        )
+    }
+
+
 class ForUpdateMetaclass(_BaseModelMetaclass):
     """
     Using this metaclass on a model will change all of its fields default values to `undefined`.
@@ -183,50 +194,17 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
     for requests with PATCH semantics.
     """
 
-    def __new__(mcls, name, bases, namespaces, **kwargs):
-        skip_patching = kwargs.pop("__ForUpdateMetaclass_skip_patching", False)
+    def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
+        cls = ModelMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
 
-        cls = ModelMetaclass.__new__(mcls, name, bases, namespaces, **kwargs)
+        for field in cls.model_fields.values():
+            # Set defaults of all fields to `undefined`.
+            # New defaults do not apply until model is rebuilt in `_apply_model_serializer`.
+            field.default = undefined
+            field.default_factory = None
 
-        if skip_patching:
-            return cls
-
-        return create_model(
-            cls.__name__,
-            __base__=(cls, _ForUpdateSerializerMixin),
-            __module__=cls.__module__,
-            __cls_kwargs__={"__ForUpdateMetaclass_skip_patching": True},
-            **{
-                k: _field_for_update(v)
-                for k, v in cls.model_fields.items()
-            },
-        )
-
-
-class _ForUpdateSerializerMixin(PydanticBaseModel):
-    @model_serializer(mode="wrap")
-    def serialize_model(self, serializer):
-        if self is undefined:
-            # Can happen if ForUpdateMetaclass models are nestsed. Defer serialization to the outer model.
-            return self
-
-        aliases = {field.alias or name: name for name, field in self.model_fields.items()}
-
-        return {
-            k: v
-            for k, v in serializer(self).items()
-            if (
-                (getattr(self, aliases[k]) != undefined) if k in aliases and hasattr(self, aliases[k])
-                else v != undefined
-            )
-        }
-
-
-def _field_for_update(field):
-    new = copy.deepcopy(field)
-    new.default = undefined
-    new.default_factory = None
-    return new.annotation, new
+        _apply_model_serializer(cls, _for_update_serializer)
+        return cls
 
 
 def single_argument_args(name: str):
@@ -242,7 +220,7 @@ def single_argument_args(name: str):
             klass.__name__,
             __base__=(BaseModel,),
             __module__=klass.__module__,
-            **{name: typing.Annotated[klass, Field()]},
+            **{name: Annotated[klass, Field()]},
         )
         model.from_previous = klass.from_previous
         model.to_previous = klass.to_previous
@@ -283,7 +261,7 @@ def single_argument_result(klass, klass_name=None):
         klass_name,
         __base__=(BaseModel,),
         __module__=module_name,
-        result=typing.Annotated[klass, Field()],
+        result=Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):
         model.from_previous = klass.from_previous
@@ -297,7 +275,7 @@ def query_result(item):
         item.__name__.removesuffix("Entry") + "QueryResult",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=typing.Annotated[list[result_item] | result_item | int, Field()],
+        result=Annotated[list[result_item] | result_item | int, Field()],
     )
 
 
@@ -316,8 +294,8 @@ def added_event_model(item):
         item.__name__.removesuffix("Entry") + "AddedEvent",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        id=typing.Annotated[item.model_fields["id"].annotation, Field()],
-        fields=typing.Annotated[item, Field()],
+        id=Annotated[item.model_fields["id"].annotation, Field()],
+        fields=Annotated[item, Field()],
     )
 
 
@@ -326,8 +304,8 @@ def changed_event_model(item):
         item.__name__.removesuffix("Entry") + "ChangedEvent",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        id=typing.Annotated[item.model_fields["id"].annotation, Field()],
-        fields=typing.Annotated[item, Field()],
+        id=Annotated[item.model_fields["id"].annotation, Field()],
+        fields=Annotated[item, Field()],
     )
 
 
@@ -336,5 +314,5 @@ def removed_event_model(item):
         item.__name__.removesuffix("Entry") + "RemovedEvent",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        id=typing.Annotated[item.model_fields["id"].annotation, Field()],
+        id=Annotated[item.model_fields["id"].annotation, Field()],
     )
