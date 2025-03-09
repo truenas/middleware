@@ -236,7 +236,7 @@ class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
 
 class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
     quota_type: Literal['USER', 'GROUP']
-    id: str
+    id: int
     """The UID or GID to which the quota applies."""
     name: str | None
     """The user or group name to which the quota applies. Value is null if the id in the quota cannot be resolved to a
