@@ -5,11 +5,14 @@ import uuid
 
 import pytest
 
+from time import sleep
 from truenas_api_client import ValidationErrors
 
 from middlewared.test.integration.assets.pool import another_pool, dataset
-from middlewared.test.integration.assets.virt import virt, import_iso_as_volume, volume, virt_device
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.virt import (
+    virt, import_iso_as_volume, volume, virt_device, virt_instance
+)
+from middlewared.test.integration.utils import call, ssh
 from middlewared.service_exception import ValidationErrors as ClientValidationErrors
 
 from functions import POST, wait_on_job
@@ -166,8 +169,9 @@ def test_vm_props(vm):
     # Going to unset VNC
     call('virt.instance.update', VM_NAME, {'enable_vnc': False}, job=True)
     instance = call('virt.instance.get_instance', VM_NAME, {'extra': {'raw': True}})
-    assert instance['raw']['config']['user.ix_old_raw_qemu_config'] == f'-object secret,id=vnc0,data=test123 ' \
-                                                                       f'-vnc :{VNC_PORT - 5900},password-secret=vnc0'
+    assert instance['raw']['config']['user.ix_old_raw_qemu_config'] == (f'-object secret,id=vnc0,file=/var/run/'
+                                                                        f'middleware/incus/passwords/{VM_NAME} '
+                                                                        f'-vnc :{VNC_PORT - 5900},password-secret=vnc0')
     assert instance['vnc_enabled'] is False, instance
     assert instance['vnc_port'] is None, instance
 
@@ -182,14 +186,18 @@ def test_vm_props(vm):
     call('virt.instance.update', VM_NAME, {'vnc_password': 'update_test123', 'enable_vnc': True}, job=True)
     instance = call('virt.instance.get_instance', VM_NAME, {'extra': {'raw': True}})
     assert instance['raw']['config'].get('user.ix_old_raw_qemu_config') == f'-vnc :{1001}'
-    assert instance['raw']['config']['raw.qemu'] == f'-object secret,id=vnc0,data=update_test123' \
-                                                    f' -vnc :{1001},password-secret=vnc0'
+    assert instance['raw']['config']['raw.qemu'] == ('-object secret,id=vnc0,file=/var/run/middleware/incus/'
+                                                     f'passwords/{VM_NAME} -vnc :{1001},password-secret=vnc0')
     assert instance['vnc_port'] == 6901, instance
 
     # Changing nothing
     instance = call('virt.instance.update', VM_NAME, {}, job=True)
     assert instance['vnc_port'] == 6901, instance
     assert instance['vnc_password'] == 'update_test123', instance
+
+    call('virt.instance.start', VM_NAME, job=True)
+    assert ssh(f'cat /var/run/middleware/incus/passwords/{VM_NAME}') == 'update_test123'
+    call('virt.instance.stop', VM_NAME, {'force': True, 'timeout': -1}, job=True)
 
 
 def test_vm_iso_volume(vm, iso_volume):
@@ -485,3 +493,34 @@ def test_root_disk_size():
         assert current_root_disk_size == updated_root_disk_size
     finally:
         call('virt.instance.delete', instance_name, job=True)
+
+
+def test_volume_choices_ixvirt():
+    with virt_instance('test-vm-volume-choices', instance_type='VM') as instance:
+        instance_name = instance['name']
+
+        call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
+
+        with volume('vmtestzvol', 1024):
+            assert 'vmtestzvol' in call('virt.device.disk_choices')
+            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
+
+                assert 'vmtestzvol' not in call('virt.device.disk_choices')
+
+                # Incus leaves zvols unmounted until VM is started
+                call('virt.instance.start', instance_name)
+                sleep(5)  # NAS-134443 incus can lie about when VM has completed starting
+
+                try:
+                    extents = call('iscsi.extent.disk_choices').keys()
+                    assert not any([x for x in extents if '.ix-virt' in x]), str(extents)
+
+                    disks = call('virt.device.disk_choices').keys()
+                    assert not any([x for x in disks if '.ix-virt' in x]), str(disks)
+
+                    zvols = call('zfs.dataset.unlocked_zvols_fast')
+                    assert not any([x for x in zvols if '.ix-virt' in x['name']]), str(zvols)
+
+                finally:
+                    call('virt.instance.stop', instance_name, {'force': True, 'timeout': 11}, job=True)
+                    sleep(5)  # NAS-134443 incus can lie about when VM has completed stopping

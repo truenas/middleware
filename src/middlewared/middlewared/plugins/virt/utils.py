@@ -1,4 +1,5 @@
 import asyncio
+import os
 from dataclasses import dataclass
 
 import aiohttp
@@ -8,6 +9,7 @@ import json
 from collections.abc import Callable
 
 from middlewared.service import CallError
+from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 from .websocket import IncusWS
 
@@ -15,6 +17,7 @@ from .websocket import IncusWS
 SOCKET = '/var/lib/incus/unix.socket'
 HTTP_URI = 'http://unix.socket'
 VNC_BASE_PORT = 5900
+VNC_PASSWORD_DIR = os.path.join(MIDDLEWARE_RUN_DIR, 'incus/passwords')
 
 
 class Status(enum.Enum):
@@ -105,6 +108,21 @@ def get_vnc_info_from_config(config: dict):
         return vnc_config
 
     return json.loads(vnc_raw_config)
+
+
+def get_vnc_password_file_path(instance_id: str) -> str:
+    return os.path.join(VNC_PASSWORD_DIR, instance_id)
+
+
+def create_vnc_password_file(instance_id: str, password: str) -> str:
+    os.makedirs(VNC_PASSWORD_DIR, exist_ok=True)
+    pass_file_path = get_vnc_password_file_path(instance_id)
+    with open(pass_file_path, 'w') as w:
+        os.fchmod(w.fileno(), 0o600)
+        w.write(password)
+
+
+    return pass_file_path
 
 
 def get_root_device_dict(size: int, io_bus: str) -> dict:

@@ -2,7 +2,6 @@ import asyncio
 import subprocess
 
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
-from middlewared.schema import accepts, Bool, Dict, List, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -40,17 +39,21 @@ class DiskService(Service):
         async with self.smartctl_args_for_device_lock:
             return self.smartctl_args_for_disk.get(disk)
 
-    @accepts(
-        Str('disk'),
-        List('args', items=[Str('arg')]),
-        Dict(
-            'options',
-            Bool('cache', default=True),
-            Bool('silent', default=False),
-        ),
-    )
     @private
-    async def smartctl(self, disk, args, options):
+    async def smartctl(
+        self,
+        disk: str,
+        args: list[str] | None = None,
+        options: dict[str, bool] | None = None
+    ):
+        if args is None:
+            args = list()
+
+        if options is None:
+            options = dict()
+
+        options.setdefault('cache', True)
+        options.setdefault('silent', False)
         try:
             if options['cache']:
                 smartctl_args = await self.middleware.call('disk.smartctl_args', disk)

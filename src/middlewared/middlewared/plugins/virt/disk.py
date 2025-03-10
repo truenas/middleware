@@ -23,7 +23,13 @@ class VirtDeviceService(Service):
         namespace = 'virt.device'
         cli_namespace = 'virt.device'
 
-    @api_method(VirtDeviceImportDiskImageArgs, VirtDeviceImportDiskImageResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(
+        VirtDeviceImportDiskImageArgs,
+        VirtDeviceImportDiskImageResult,
+        audit='Virt: Importing',
+        audit_extended=lambda data: f'{data["diskimg"]!r} disk image',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
     @job(lock_queue_size=1, lock=lambda args: f"virt_zvol_disk_image_{args[-1]['zvol']}")
     def import_disk_image(self, job, data):
         """
@@ -90,7 +96,13 @@ class VirtDeviceService(Service):
 
         return True
 
-    @api_method(VirtDeviceExportDiskImageArgs, VirtDeviceExportDiskImageResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(
+        VirtDeviceExportDiskImageArgs,
+        VirtDeviceExportDiskImageResult,
+        audit='Virt: Exporting',
+        audit_extended=lambda data: f'{data["zvol"]!r} disk image',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
     @job(lock_queue_size=1, lock=lambda args: f"virt_zvol_disk_image_{args[-1]['zvol']}")
     def export_disk_image(self, job, data):
         """
