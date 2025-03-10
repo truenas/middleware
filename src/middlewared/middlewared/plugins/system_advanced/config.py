@@ -127,7 +127,7 @@ class SystemAdvancedService(ConfigService):
             if f'/dev/{serialport}' == ups_port:
                 verrors.add(
                     'serialport',
-                    'Serial port must be different then the port specified for UPS Service'
+                    'Serial port must be different than the port specified for UPS Service'
                 )
 
     @settings.fields_validator('syslogserver')
@@ -212,9 +212,8 @@ class SystemAdvancedService(ConfigService):
             consolemsg = data.pop('consolemsg')
             warnings.warn("`consolemsg` has been deprecated and moved to `system.general`", DeprecationWarning)
 
-        if 'syslog_transport' in data:
-            if data['syslog_transport'] != 'TLS':
-                data['syslog_tls_certificate'] = None
+        if data.get('syslog_transport', 'TLS') != 'TLS':
+            data['syslog_tls_certificate'] = None
 
         config_data = await self.config()
         config_data['sed_passwd'] = await self.sed_global_password()
