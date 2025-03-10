@@ -182,6 +182,8 @@ class PrivilegeService(CRUDService):
                     "This error may be addressed by either re-creating the missing group "
                     "with the specified group id or removing this entry from the privilege."
                 )
+                # If the group does not exist then cannot check the userns_idmap
+                continue
 
             # Currently only local groups may have privileges
             if groups['by_gid'][local_group_id]['userns_idmap']:
