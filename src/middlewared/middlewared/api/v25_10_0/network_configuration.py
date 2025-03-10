@@ -17,9 +17,30 @@ def validate_ipaddr(address: str):
     return address
 
 
+def validate_nameserver(address: str):
+    nameserver = IPvAnyAddress_(address)
+    error = None
+
+    if nameserver.is_loopback:
+        error = 'Loopback is not a valid nameserver'
+    elif nameserver.is_unspecified:
+        error = 'Unspecified addresses are not valid as nameservers'
+    elif nameserver.version == 4:
+        if address == '255.255.255.255':
+            error = 'This is not a valid nameserver address'
+        elif address.startswith('169.254'):
+            error = '169.254/16 subnet is not valid for nameserver'
+
+    if error:
+        raise ValueError(error)
+
+    return address
+
+
 Hostname = Annotated[str, Field(pattern=r'^[a-zA-Z\.\-0-9]*[a-zA-Z0-9]$')]
 Domain = Annotated[str, Field(pattern=r'^[a-zA-Z\.\-0-9]*$')]
 IPvAnyAddress =  Literal[''] | Annotated[str, AfterValidator(validate_ipaddr)]
+NameserverAddress = Literal[''] | Annotated[str, AfterValidator(validate_nameserver)]
 
 
 class ServiceAnnouncement(BaseModel):
@@ -40,9 +61,7 @@ class NetworkConfigurationActivity(BaseModel):
 class NetWorkConfigurationState(BaseModel):
     ipv4gateway: IPvAnyAddress
     ipv6gateway: IPvAnyAddress
-    nameserver1: IPvAnyAddress
-    nameserver2: IPvAnyAddress
-    nameserver3: IPvAnyAddress
+    nameservers: tuple[NameserverAddress, NameserverAddress, NameserverAddress]
     hosts: list[str]
 
 
@@ -53,16 +72,12 @@ class NetworkConfigurationEntry(BaseModel):
     ipv4gateway: IPvAnyAddress
     """Used instead of the default gateway provided by DHCP."""
     ipv6gateway: IPvAnyAddress
-    nameserver1: IPvAnyAddress
-    """Primary DNS server."""
-    nameserver2: IPvAnyAddress
-    """Secondary DNS server."""
-    nameserver3: IPvAnyAddress
-    """Tertiary DNS server."""
+    nameservers: tuple[NameserverAddress, NameserverAddress, NameserverAddress]
+    """Primary, secondary, and tertiary DNS servers."""
     httpproxy: str
     """Must be provided if a proxy is to be used for network operations."""
     hosts: list[str]
-    domains: list[str]
+    domains: list[str] = Field(max_length=5)
     service_announcement: ServiceAnnouncement
     """Determines the broadcast protocols that will be used to advertise the server."""
     activity: NetworkConfigurationActivity

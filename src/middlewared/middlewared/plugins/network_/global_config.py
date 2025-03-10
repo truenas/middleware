@@ -8,7 +8,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
 from middlewared.schema import ValidationErrors
 from middlewared.utils.directoryservices.constants import DSType
-from middlewared.utils import are_indices_in_consecutive_order
 
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
@@ -23,9 +22,7 @@ class NetworkConfigurationModel(sa.Model):
     gc_domain = sa.Column(sa.String(120), default='local')
     gc_ipv4gateway = sa.Column(sa.String(42), default='')
     gc_ipv6gateway = sa.Column(sa.String(45), default='')
-    gc_nameserver1 = sa.Column(sa.String(45), default='')
-    gc_nameserver2 = sa.Column(sa.String(45), default='')
-    gc_nameserver3 = sa.Column(sa.String(45), default='')
+    gc_nameservers = sa.Column(sa.JSON(list), default=['', '', ''])
     gc_httpproxy = sa.Column(sa.String(255))
     gc_hosts = sa.Column(sa.Text(), default='')
     gc_domains = sa.Column(sa.Text(), default='')
@@ -93,9 +90,7 @@ class NetworkConfigurationService(ConfigService):
         data['state'] = {
             'ipv4gateway': '',
             'ipv6gateway': '',
-            'nameserver1': '',
-            'nameserver2': '',
-            'nameserver3': '',
+            'nameservers': ['', '', ''],
             'hosts': self.read_etc_hosts_file(),
         }
         summary = self.middleware.call_sync('network.general.summary')
@@ -108,44 +103,13 @@ class NetworkConfigurationService(ConfigService):
             else:
                 if not data['state']['ipv4gateway']:
                     data['state']['ipv4gateway'] = default_route
-        for i, nameserver in enumerate(summary['nameservers'][:3]):
-            data['state'][f'nameserver{i + 1}'] = nameserver
+        data['state']['nameservers'] = summary['nameservers'][:3]
 
         return data
 
     @private
-    async def validate_nameservers(self, verrors, data, schema):
-        ns_ints = []
-        for ns, ns_value in filter(lambda x: x[0].startswith('nameserver') and x[1], data.items()):
-            _schema = f'{schema}.{ns}'
-            ns_ints.append(int(ns[-1]))
-            try:
-                nameserver_ip = ipaddress.ip_address(ns_value)
-            except ValueError as e:
-                verrors.add(_schema, str(e))
-            else:
-                if nameserver_ip.is_loopback:
-                    verrors.add(_schema, 'Loopback is not a valid nameserver')
-                elif nameserver_ip.is_unspecified:
-                    verrors.add(_schema, 'Unspecified addresses are not valid as nameservers')
-                elif nameserver_ip.version == 4:
-                    if ns_value == '255.255.255.255':
-                        verrors.add(_schema, 'This is not a valid nameserver address')
-                    elif ns_value.startswith('169.254'):
-                        verrors.add(_schema, '169.254/16 subnet is not valid for nameserver')
-
-        if not are_indices_in_consecutive_order(ns_ints):
-            verrors.add(
-                f'{schema}.nameserver',
-                'When providing nameservers, they must be provided in consecutive order '
-                '(i.e. nameserver1, nameserver2, nameserver3)'
-            )
-
-    @private
     async def validate_general_settings(self, data, schema):
         verrors = ValidationErrors()
-
-        await self.validate_nameservers(verrors, data, schema)
 
         if (ipv4_gateway_value := data.get('ipv4gateway')):
             if not await self.middleware.call(
@@ -153,9 +117,6 @@ class NetworkConfigurationService(ConfigService):
                 ipaddress.ip_address(ipv4_gateway_value).exploded
             ):
                 verrors.add(f'{schema}.ipv4gateway', f'Gateway {ipv4_gateway_value} is unreachable')
-
-        if (domains := data.get('domains', [])) and len(domains) > 5:
-            verrors.add(f'{schema}.domains', 'No more than 5 additional domains are allowed')
 
         return verrors
 
@@ -266,10 +227,7 @@ class NetworkConfigurationService(ConfigService):
 
         # anything related to resolv.conf changed
         dnssearch_changed = new_config['domains'] != config['domains']
-        dns1_changed = new_config['nameserver1'] != config['nameserver1']
-        dns2_changed = new_config['nameserver2'] != config['nameserver2']
-        dns3_changed = new_config['nameserver3'] != config['nameserver3']
-        dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
+        dnsservers_changed = new_config['nameservers'] != config['nameservers']
         if dnssearch_changed or dnsservers_changed:
             await self.middleware.call('dns.sync')
             service_actions.add(('nscd', 'reload'))
