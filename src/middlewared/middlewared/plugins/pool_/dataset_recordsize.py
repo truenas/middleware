@@ -1,4 +1,5 @@
-from middlewared.schema import accepts, returns, List, Str
+from middlewared.api import api_method
+from middlewared.api.current import PoolDatasetRecordSizeChoicesArgs, PoolDatasetRecordSizeChoicesResult
 from middlewared.service import Service
 
 
@@ -29,8 +30,7 @@ class PoolDatasetService(Service):
         (1 << 24, '16M'),
     ]
 
-    @accepts(Str('pool_name', default=None, null=True), roles=['DATASET_READ'])
-    @returns(List(items=[Str('recordsize_value')]))
+    @api_method(PoolDatasetRecordSizeChoicesArgs, PoolDatasetRecordSizeChoicesResult, roles=['DATASET_READ'])
     def recordsize_choices(self, pool_name):
         """
         Retrieve recordsize choices for datasets.
