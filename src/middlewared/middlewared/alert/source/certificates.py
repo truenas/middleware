@@ -86,7 +86,6 @@ class CertificateChecksAlertSource(AlertSource):
                 ))
             else:
                 # check the parsed certificate(s) for expiration
-                # TODO: Make sure it works well with CAs
                 if cert['cert_type'].capitalize() == 'CERTIFICATE':
                     diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()).days
                     if diff < 10:
