@@ -24,4 +24,4 @@ def test_invalid_nameserver():
         with pytest.raises(
             ValidationErrors, match="Loopback is not a valid nameserver"
         ):
-            call("network.configuration.update", {"nameserver1": "127.0.0.1"})
+            call("network.configuration.update", {"nameservers": ["127.0.0.1", "", ""]})

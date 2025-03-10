@@ -69,19 +69,19 @@ def test_05_check_hactl_disable(request):
 
 if ha:
     def test_07_failover_replicate():
-        old_ns = call('network.configuration.config')['nameserver3']
+        old_ns = call('network.configuration.config')['nameservers']
         new_ns = '1.1.1.1'
         try:
-            call('network.configuration.update', {'nameserver3': new_ns})
+            call('network.configuration.update', {'nameservers': [*old_ns[:2], new_ns]})
 
             remote = call('failover.call_remote', 'network.configuration.config')
-            assert remote['nameserver3'] == new_ns
-            assert remote['state']['nameserver3'] == new_ns
+            assert remote['nameservers'][2] == new_ns
+            assert remote['state']['nameservers'][2] == new_ns
         finally:
-            call('network.configuration.update', {'nameserver3': old_ns})
+            call('network.configuration.update', {'nameservers': old_ns})
             remote = call('failover.call_remote', 'network.configuration.config')
-            assert remote['nameserver3'] == old_ns
-            assert remote['state']['nameserver3'] == old_ns
+            assert remote['nameservers'] == old_ns
+            assert remote['state']['nameservers'] == old_ns
 
     def test_08_readonly_ops(request, readonly_admin):
         with client(auth=(readonly_admin.username, readonly_admin.password)) as c:

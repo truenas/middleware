@@ -27,8 +27,7 @@ def netinfo(ws_client):
             'hostname': os.environ['hostname'],
             'hostname_b': os.environ['hostname_b'],
             'hostname_virtual': os.environ['hostname_virtual'],
-            'nameserver1': os.environ['primary_dns'],
-            'nameserver2': os.environ.get('secondary_dns', ''),
+            'nameservers': [os.environ['primary_dns'], os.environ.get('secondary_dns', ''), ''],
             'hosts': hosts,
         }
     else:
@@ -61,8 +60,7 @@ def test_002_verify_network_global_settings_state(request, ws_client, netinfo):
     state = ws_client.call('network.configuration.config')['state']
     assert set(state['hosts']) == set(netinfo['hosts'])
     assert state['ipv4gateway'] == netinfo['ipv4gateway']
-    for key in filter(lambda x: x.startswith('nameserver'), netinfo):
-        assert state[key] == netinfo[key]
+    assert state['nameservers'] == netinfo['nameservers']
 
     """
     HA isn't fully operational by the time this test runs so testing

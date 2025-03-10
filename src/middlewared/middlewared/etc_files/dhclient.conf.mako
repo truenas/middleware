@@ -6,7 +6,7 @@
         use_fqdn = True
         hostname = f"{gc['hostname']}.{gc['domain']}"
 
-    nameservers = ', '.join([gc[f'nameserver{i}'] for i in range(1, 4) if gc[f'nameserver{i}']]) or None
+    nameservers = ', '.join(filter(None, gc['nameservers'])) or None
     use_ns = nameservers is not None
 %>
 option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
