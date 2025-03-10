@@ -57,8 +57,11 @@ class UpdateStatusAvailable(BaseModel):
     release_notes_url: str | None
     changelog: str
     version: str
+    """Version string of the available update version."""
     filename: str
-    filesize: str
+    """Name of the update file available for download."""
+    filesize: int
+    """Size of the update file in bytes."""
     checksum: str
 
 
