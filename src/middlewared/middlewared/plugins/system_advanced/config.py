@@ -1,4 +1,3 @@
-import os
 import re
 import tempfile
 import textwrap
@@ -9,9 +8,12 @@ from copy import deepcopy
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, returns, Str
-from middlewared.service import ConfigService, private, no_auth_required, ValidationErrors
+from middlewared.service import ConfigService, private, no_auth_required
 from middlewared.validators import Range
 from middlewared.utils import run
+from middlewared.utils.service.settings import SettingsHelper
+
+settings = SettingsHelper()
 
 
 class SystemAdvancedModel(sa.Model):
@@ -107,62 +109,63 @@ class SystemAdvancedService(ConfigService):
 
         return data
 
-    async def __validate_fields(self, schema, data):
-        verrors = ValidationErrors()
-
-        serial_choice = data.get('serialport')
-        if data.get('serialconsole'):
-            if not serial_choice:
+    @settings.fields_validator('serialport', 'serialconsole')
+    async def _validate_serial(self, verrors, serialport, serialconsole):
+        if serialconsole:
+            if not serialport:
                 verrors.add(
-                    f'{schema}.serialport',
+                    'serialport',
                     'Please specify a serial port when serial console option is checked'
                 )
-            elif serial_choice not in await self.middleware.call('system.advanced.serial_port_choices'):
+            elif serialport not in await self.middleware.call('system.advanced.serial_port_choices'):
                 verrors.add(
-                    f'{schema}.serialport',
+                    'serialport',
                     'Serial port specified has not been identified by the system'
                 )
 
-        ups_port = (await self.middleware.call('ups.config'))['port']
-        if not verrors and os.path.join('/dev', serial_choice or '') == ups_port:
-            verrors.add(
-                f'{schema}.serialport',
-                'Serial port must be different then the port specified for UPS Service'
-            )
+            ups_port = (await self.middleware.call('ups.config'))['port']
+            if f'/dev/{serialport}' == ups_port:
+                verrors.add(
+                    'serialport',
+                    'Serial port must be different than the port specified for UPS Service'
+                )
 
-        syslog_server = data.get('syslogserver')
-        if syslog_server:
-            match = re.match(r"^\[?[\w\.\-\:\%]+\]?(\:\d+)?$", syslog_server)
+    @settings.fields_validator('syslogserver')
+    async def _validate_syslogserver(self, verrors, syslogserver):
+        if syslogserver:
+            match = re.match(r"^\[?[\w.\-:%]+]?(:\d+)?$", syslogserver)
             if not match:
                 verrors.add(
-                    f'{schema}.syslogserver',
+                    'syslogserver',
                     'Invalid syslog server format'
                 )
-            elif ']:' in syslog_server or (':' in syslog_server and ']' not in syslog_server):
-                port = int(syslog_server.split(':')[-1])
+            elif ']:' in syslogserver or (':' in syslogserver and ']' not in syslogserver):
+                port = int(syslogserver.split(':')[-1])
                 if port < 0 or port > 65535:
                     verrors.add(
-                        f'{schema}.syslogserver',
+                        'syslogserver',
                         'Port must be in the range of 0 to 65535.'
                     )
 
-        if data['syslog_transport'] == 'TLS':
-            if data['syslog_tls_certificate']:
+    @settings.fields_validator('syslog_transport', 'syslog_tls_certificate')
+    async def _validate_syslog(self, verrors, syslog_transport, syslog_tls_certificate):
+        if syslog_transport == 'TLS':
+            if syslog_tls_certificate:
                 verrors.extend(await self.middleware.call(
-                    'certificate.cert_services_validation', data['syslog_tls_certificate'],
-                    f'{schema}.syslog_tls_certificate', False
+                    'certificate.cert_services_validation', syslog_tls_certificate,
+                    'syslog_tls_certificate', False
                 ))
-        elif data['syslog_tls_certificate']:
-            data['syslog_tls_certificate'] = None
 
+    @settings.fields_validator('kernel_extra_options')
+    async def _validate_kernel_extra_options(self, verrors, kernel_extra_options):
         for invalid_char in ('\n', '"'):
-            if invalid_char in data['kernel_extra_options']:
+            if invalid_char in kernel_extra_options:
                 verrors.add('kernel_extra_options', f'{invalid_char!r} is an invalid character and not allowed')
 
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as f:
             f.write(textwrap.dedent(f"""\
                 menuentry 'TrueNAS' {{
-                    linux /boot/vmlinuz {data['kernel_extra_options']}
+                    linux /boot/vmlinuz {kernel_extra_options}
                 }}
             """))
             f.flush()
@@ -172,12 +175,10 @@ class SystemAdvancedService(ConfigService):
                 verrors.add('kernel_extra_options', 'Invalid syntax')
 
         invalid_param = 'systemd.unified_cgroup_hierarchy'
-        if invalid_param in data['kernel_extra_options']:
-            # TODO: we don't normalize values being passed into us which
-            # allows a comical amount of potential foot-shooting
+        if invalid_param in kernel_extra_options:
+            # TODO: we don't normalize values being passed into us which allows a comical amount of potential
+            #  foot-shooting
             verrors.add('kernel_extra_options', f'Modifying {invalid_param!r} is not allowed')
-
-        return verrors, data
 
     @accepts(
         Patch(
@@ -211,14 +212,16 @@ class SystemAdvancedService(ConfigService):
             consolemsg = data.pop('consolemsg')
             warnings.warn("`consolemsg` has been deprecated and moved to `system.general`", DeprecationWarning)
 
+        if data.get('syslog_transport', 'TLS') != 'TLS':
+            data['syslog_tls_certificate'] = None
+
         config_data = await self.config()
         config_data['sed_passwd'] = await self.sed_global_password()
         config_data.pop('consolemsg')
         original_data = deepcopy(config_data)
         config_data.update(data)
 
-        verrors, config_data = await self.__validate_fields('advanced_settings_update', config_data)
-        verrors.check()
+        await settings.validate(self, 'system_advanced_update', original_data, config_data)
 
         if config_data != original_data:
             if original_data.get('sed_user'):
