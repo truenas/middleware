@@ -74,6 +74,15 @@ def _apply_model_serializer(cls: type["BaseModel"], model_serializer: PydanticDe
     cls.model_rebuild(force=True)
 
 
+def _annotate_not_required(annotation: type[Any] | None):
+    if get_origin(annotation) is Secret:
+        new_annotation = Secret[get_args(annotation)[0] | _NotRequired]
+    else:
+        new_annotation = annotation | _NotRequired
+
+    return new_annotation
+
+
 class _BaseModelMetaclass(ModelMetaclass):
     """Any `BaseModel` subclass that uses the `NotRequired` default value on any of its fields receives the appropriate
     model serializer."""
@@ -83,11 +92,17 @@ class _BaseModelMetaclass(ModelMetaclass):
     def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
+        has_not_required = False
         for field in cls.model_fields.values():
             if field.default is NotRequired:
-                # If any field has a default of `NotRequired`, apply the serializer to the model.
-                _apply_model_serializer(cls, _not_required_serializer)
-                break
+                # Update annotation of any field with a default of `NotRequired` since fields
+                # are serialized according to their annotation, not their value.
+                field.annotation = _annotate_not_required(field.annotation)
+                has_not_required = True
+
+        if has_not_required:
+            # If any field has a default of `NotRequired`, apply the serializer to the model.
+            _apply_model_serializer(cls, _not_required_serializer)
 
         return cls
 
