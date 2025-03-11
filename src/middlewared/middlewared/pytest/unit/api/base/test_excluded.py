@@ -1,7 +1,7 @@
 from pydantic import Field, Secret
 import pytest
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NotRequired
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NotRequired, query_result
 from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.service_exception import ValidationErrors
 
@@ -19,7 +19,13 @@ class CreateArgs(BaseModel):
     data: CreateObject
 
 
-def check_serialization(test_model, test_cases):
+def check_serialization(test_model: type[BaseModel], test_cases: list[tuple[dict, dict]]):
+    """
+    Args:
+        test_model: The model to serialize.
+        test_cases: The first dictionary of each test case is the arguments to pass to
+            the model; the second dictionary is the expected result of serialization.
+    """
     for args, dump in test_cases:
         result = validate_model(test_model, args)
         assert result == dump, (args, dump, result)
@@ -144,3 +150,15 @@ def test_update_metaclass():
         ),
     )
     check_serialization(UpdateModel, test_cases)
+
+
+def test_not_required_entry_field():
+    class MyEntry(BaseModel):
+        x: int = NotRequired
+
+    MyQueryResult = query_result(MyEntry)
+    check_serialization(MyQueryResult, [
+        ({"result": []}, {"result": []}),
+        ({"result": {}}, {"result": {}}),
+        ({"result": {"x": 4}}, {"result": {"x": 4}}),
+    ])
