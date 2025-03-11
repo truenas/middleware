@@ -6,32 +6,31 @@ from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.service_exception import ValidationErrors
 
 
-class Object(BaseModel):
-    id: int
-    name: str
-
-
-class CreateObject(Object):
-    id: Excluded = excluded_field()
-
-
-class CreateArgs(BaseModel):
-    data: CreateObject
-
-
-def check_serialization(test_model: type[BaseModel], test_cases: list[tuple[dict, dict]]):
+def check_serialization(test_model: type[BaseModel], test_cases: list[tuple[dict, dict]] | list[dict]):
     """
     Args:
         test_model: The model to serialize.
-        test_cases: The first dictionary of each test case is the arguments to pass to
-            the model; the second dictionary is the expected result of serialization.
+        test_cases: The first dictionary of each test case is the arguments to pass to the model; the second dictionary
+            is the expected result of serialization. A test case represented by a single dictionary will expect the
+            result of serialization to equal the args.
     """
-    for args, dump in test_cases:
+    for test_case in test_cases:
+        args, dump = (test_case, test_case) if isinstance(test_case, dict) else test_case
         result = validate_model(test_model, args)
         assert result == dump, (args, dump, result)
 
 
 def test_excluded_field():
+    class Object(BaseModel):
+        id: int
+        name: str
+
+    class CreateObject(Object):
+        id: Excluded = excluded_field()
+
+    class CreateArgs(BaseModel):
+        data: CreateObject
+
     with pytest.raises(ValidationErrors) as ve:
         accept_params(CreateArgs, [{"id": 1, "name": "Ivan"}])
 
@@ -133,21 +132,11 @@ def test_update_metaclass():
         d: NestedUpdateModel
 
     test_cases = (
-        (
-            {}, {}
-        ),
-        (
-            {"b": 2}, {"b": 2}
-        ),
-        (
-            {"c": {"a": 1}}, {"c": {"a": 1}}
-        ),
-        (
-            {"d": {}}, {"d": {}}
-        ),
-        (
-            {"d": {"y": ""}}, {"d": {"y": ""}}
-        ),
+        {},
+        {"b": 2},
+        {"c": {"a": 1}},
+        {"d": {}},
+        {"d": {"y": ""}},
     )
     check_serialization(UpdateModel, test_cases)
 
@@ -158,7 +147,42 @@ def test_not_required_entry_field():
 
     MyQueryResult = query_result(MyEntry)
     check_serialization(MyQueryResult, [
-        ({"result": []}, {"result": []}),
-        ({"result": {}}, {"result": {}}),
-        ({"result": {"x": 4}}, {"result": {"x": 4}}),
+        {"result": []},
+        {"result": {}},
+        {"result": {"x": 4}},
+    ])
+
+
+def test_serializers():
+    class A(BaseModel):
+        a1: int
+        a2: int = NotRequired
+
+    class B(A, metaclass=ForUpdateMetaclass):
+        b1: A
+        b2: str
+
+    class C(B):
+        c1: A
+        c2: B
+
+    assert A.__class__.__name__ == "_BaseModelMetaclass"
+    assert B.__class__ is C.__class__ is ForUpdateMetaclass
+
+    SERIALIZER_NAME = "serializer"  # defined in model.py
+    assert getattr(A, SERIALIZER_NAME).__name__ == "_not_required_serializer"
+    assert getattr(B, SERIALIZER_NAME).__name__ == getattr(C, SERIALIZER_NAME).__name__ == "_for_update_serializer"
+
+    assert all(len(model.__pydantic_decorators__.model_serializers) == 1 for model in (A, B, C))
+
+    check_serialization(C, [
+        {},
+        {"c1": {"a1": 1}},
+        {"c1": {"a1": 1, "a2": 2}},
+        {"c2": {}},
+        {"c2": {"b1": {"a1": 1}}},
+        {"c2": {"b1": {"a1": 1, "a2": 2}}},
+        {"c2": {"b2": "b"}},
+        {"c2": {"b1": {"a1": 1}, "b2": "b"}},
+        {"c1": {"a1": 1}, "c2": {}},
     ])
