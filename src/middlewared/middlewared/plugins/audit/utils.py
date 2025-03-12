@@ -199,11 +199,15 @@ def requires_python_filtering(
 AUDIT_TABLES = {svc[0]: generate_audit_table(*svc) for svc in AUDITED_SERVICES}
 
 
-async def setup_truenas_verify(middleware, sysver: str) -> tuple:
+async def setup_truenas_verify(middleware, sysver: str) -> int:
     """
     Called by audit setup to generate the initial truenas_verify
     file for an updated or initial TrueNAS version.
     """
+    if os.path.exists('/data/skip-truenas-verity'):
+        # Takes too much time on developer middleware restart
+        return 0
+
     verify_rc = await middleware.run_in_thread(mtree_verify.do_verify, ['init', sysver])
 
     return verify_rc
