@@ -31,7 +31,7 @@ def test_(key, value, grep_file, sshd_config_cmd, validation_error):
     else:
         with pytest.raises(ValidationErrors) as ve:
             call('system.advanced.update', {key: value})
-        assert ve.value.errors == [ValidationError(key, validation_error)]
+        assert ve.value.errors == [ValidationError(f"system_advanced_update.{key}", validation_error)]
 
 
 def test_debugkernel_initrd():

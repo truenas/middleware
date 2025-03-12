@@ -9,7 +9,6 @@ syslog_template = 'template("${MESSAGE}\\n")'
 
 
 def generate_syslog_remote_destination(advanced_config):
-    result = ""
     syslog_server = advanced_config["syslogserver"]
     if "]:" in syslog_server or (":" in syslog_server and not "]" in syslog_server): 
         host, port = syslog_server.rsplit(":", 1)
@@ -17,64 +16,31 @@ def generate_syslog_remote_destination(advanced_config):
         host, port = syslog_server, "514"
 
     host = host.replace("[", "").replace("]", "")
+    transport = advanced_config["syslog_transport"].lower()
 
-    result += 'destination loghost { '
+    remotelog_stanza = 'destination loghost { '
+    remotelog_stanza += f'syslog("{host}" port({port}) ip-protocol(6) transport("{transport}")'
 
     if advanced_config["syslog_transport"] == "TLS":
-        try:
-            certificate_authority = middleware.call_sync(
-                "certificateauthority.query", [
-                    ("id", "=", advanced_config["syslog_tls_certificate_authority"]), ("revoked", "=", False),
-                ],
-                {"get": True}
-            )
-        except IndexError:
-            logger.warning("Syslog TLS certificate not available, skipping remote syslog destination")
-            return ""
-
-        result += f"syslog(\"{host}\" port({port}) transport(\"tls\") ip-protocol(6) "
-        try:
-            ca_dir = "/etc/certificates/CA"
-            for filename in os.listdir(ca_dir):
-                if filename.endswith(".0") and os.path.islink(os.path.join(ca_dir, filename)):
-                    os.unlink(os.path.join(ca_dir, filename))
-            os.symlink(
-                certificate_authority["certificate_path"], os.path.join(
-                    ca_dir, "%x.0" % certificate_authority["subject_name_hash"]
-                )
-            )
-        except Exception:
-            logger.error("Error symlinking syslog CA, skipping remote syslog destination", exc_info=True)
-            return ""
-        else:
-            result += f"tls(ca-dir(\"{ca_dir}\") "
+        # Both mutual and one-way TLS require this
+        remotelog_stanza += ' tls(ca-file("/etc/ssl/certs/ca-certificates.crt")'
 
         certificate = middleware.call_sync(
             "certificate.query", [("id", "=", advanced_config["syslog_tls_certificate"])]
         )
         if certificate and not certificate[0]["revoked"]:
-            result += f"key-file(\"{certificate[0]['privatekey_path']}\") " \
-                      f"cert-file(\"{certificate[0]['certificate_path']}\")"
-        else:
-            msg = 'Skipping setting key-file/cert-file for remote syslog as '
-            if not certificate:
-                msg += 'no certificate configured'
-            else:
-                msg += 'specified certificate has been revoked'
-            logger.debug(msg)
+            # Mutual TLS
+            remotelog_stanza += f' key-file(\"{certificate[0]["privatekey_path"]}\")'
+            remotelog_stanza += f' cert-file(\"{certificate[0]["certificate_path"]}\")'
 
-        result += "));"
-    else:
-        transport = advanced_config["syslog_transport"].lower()
-        result += f"syslog(\"{host}\" port({port}) localport(514) transport(\"{transport}\") ip-protocol(6));"
+        remotelog_stanza += ')'
 
+    remotelog_stanza += '); };\n'
+    remotelog_stanza += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
+    remotelog_stanza += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
+    remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
 
-    result += ' };\n'
-    result += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
-    result += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
-    result += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
-
-    return result
+    return remotelog_stanza
 %>\
 @version: 3.38
 @include "scl.conf"

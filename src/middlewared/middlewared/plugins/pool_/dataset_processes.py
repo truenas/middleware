@@ -3,8 +3,9 @@ import errno
 import os
 import re
 
+from middlewared.api import api_method
+from middlewared.api.current import PoolDatasetProcessesArgs, PoolDatasetProcessesResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.schema import accepts, Ref, returns, Str
 from middlewared.service import CallError, item_method, private, Service
 
 from .utils import dataset_mountpoint
@@ -18,8 +19,7 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @item_method
-    @accepts(Str('id', required=True), roles=['DATASET_READ'])
-    @returns(Ref('processes'))
+    @api_method(PoolDatasetProcessesArgs, PoolDatasetProcessesResult, roles=['DATASET_READ'])
     async def processes(self, oid):
         """
         Return a list of processes using this dataset.

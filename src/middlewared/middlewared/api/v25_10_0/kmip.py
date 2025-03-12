@@ -16,7 +16,7 @@ __all__ = [
 class KmipEntry(BaseModel):
     id: int
     enabled: bool
-    manage_sed_disk: bool
+    manage_sed_disks: bool
     manage_zfs_keys: bool
     certificate: int | None
     certificate_authority: int | None

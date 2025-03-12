@@ -66,11 +66,7 @@ class PoolDatasetService(Service):
         #        valid_pools.append(i['name'])
         return [], options
 
-    @api_method(
-        PoolDatasetDetailsArgs,
-        PoolDatasetDetailsResults,
-        roles=['DATASET_READ']
-    )
+    @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResults, roles=['DATASET_READ'])
     def details(self):
         """
         Retrieve all dataset(s) details outlining any
