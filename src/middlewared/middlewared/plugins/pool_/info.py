@@ -2,10 +2,9 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs,
-    PoolFilesystemChoicesResult, PoolIsUpgradedArgs, PoolIsUpgradedResult
+    PoolGetDisksArgs, PoolGetDisksResult, PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, PoolIsUpgradedArgs,
+    PoolIsUpgradedResult, PoolAttachmentsArgs, PoolAttachmentsResult, PoolProcessesArgs, PoolProcessesResult
 )
-from middlewared.schema import accepts, Dict, Int, List, returns, Str
 from middlewared.service import CallError, item_method, private, Service, ValidationError
 
 
@@ -42,13 +41,7 @@ class PoolService(Service):
         return found
 
     @item_method
-    @accepts(Int('id'), roles=['POOL_READ'])
-    @returns(List(items=[Dict(
-        'attachment',
-        Str('type', required=True),
-        Str('service', required=True, null=True),
-        List('attachments', items=[Str('attachment_name')]),
-    )], register=True))
+    @api_method(PoolAttachmentsArgs, PoolAttachmentsResult, roles=['POOL_READ'])
     async def attachments(self, oid):
         """
         Return a list of services dependent of this pool.
@@ -60,14 +53,7 @@ class PoolService(Service):
         return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
 
     @item_method
-    @accepts(Int('id'), roles=['POOL_READ'])
-    @returns(List(items=[Dict(
-        'process',
-        Int('pid', required=True),
-        Str('name', required=True),
-        Str('service'),
-        Str('cmdline', max_length=None),
-    )], register=True))
+    @api_method(PoolProcessesArgs, PoolProcessesResult, roles=['POOL_READ'])
     async def processes(self, oid):
         """
         Returns a list of running processes using this pool.
