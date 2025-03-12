@@ -12,6 +12,7 @@ from middlewared.api.current import (
     VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult,
     VirtInstanceDeviceDeleteArgs, VirtInstanceDeviceDeleteResult,
     VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult,
+    VirtInstanceBootableDiskArgs, VirtInstanceBootableDiskResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
 from .utils import incus_call_and_wait, storage_pool_to_incus_pool, incus_pool_to_storage_pool
@@ -173,14 +174,14 @@ class VirtInstanceDeviceService(Service):
 
         match device['dev_type']:
             case 'DISK':
-                new.update({
+                new |= {
                     'type': 'disk',
                     'source': device['source'],
-                    'path': device['destination'],
-                })
+                    'path': '/' if device['name'] == 'root' else device['destination'],
+                } | ({'pool': storage_pool_to_incus_pool(device['storage_pool'])} if device['name'] == 'root' else {})
                 if device['boot_priority'] is not None:
                     new['boot.priority'] = str(device['boot_priority'])
-                if '/' not in new['source']:
+                if new['source'] and '/' not in new['source']:
                     if zpool := device.get('storage_pool'):
                         new['pool'] = storage_pool_to_incus_pool(device.get('storage_pool'))
                     else:
@@ -314,7 +315,7 @@ class VirtInstanceDeviceService(Service):
                         break
             case 'DISK':
                 source = device['source'] or ''
-                if source == '':
+                if source == '' and device['name'] != 'root':
                     verrors.add(schema, 'Source is required.')
                 elif source.startswith('/'):
                     if source.startswith('/dev/zvol/') and source not in await self.middleware.call(
@@ -353,6 +354,11 @@ class VirtInstanceDeviceService(Service):
                             verrors.add(
                                 schema, 'Source must be a path starting with /dev/zvol/ for VM or a virt volume name.'
                             )
+                elif device['name'] == 'root':
+                    if source != '':
+                        verrors.add(schema, 'Root disk source must be unset.')
+
+                    device['storage_pool'] = old['storage_pool']
                 else:
                     if instance_type == 'CONTAINER':
                         verrors.add(schema, 'Source must be a filesystem path for CONTAINER')
@@ -513,3 +519,49 @@ class VirtInstanceDeviceService(Service):
         data['devices'].pop(device)
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
         return True
+
+    @api_method(
+        VirtInstanceBootableDiskArgs,
+        VirtInstanceBootableDiskResult,
+        audit='Virt: Choosing',
+        audit_extended=lambda id, disk: f'{disk!r} as bootable disk for {id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
+    async def set_bootable_disk(self, id, disk):
+        """
+        Specify `disk` to boot `id` virt instance OS from.
+        """
+        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        if instance['type'] != 'VM':
+            raise CallError('Setting disk to boot from is only valid for VM instances.')
+        if disk == 'root' and instance['status'] != 'STOPPED':
+            raise CallError('Instance must be stopped before updating it\'s root disk configuration.')
+
+        device_list = await self.device_list(id)
+        desired_disk = None
+        max_boot_priority_device = None
+
+        for device_entry in device_list:
+            if (max_boot_priority_device is None and device_entry.get('boot_priority') is not None) or (
+                (device_entry.get('boot_priority') or 0) > ((max_boot_priority_device or {}).get('boot_priority') or 0)
+            ):
+                max_boot_priority_device = device_entry
+
+            if device_entry['name'] == disk:
+                desired_disk = device_entry
+
+        if desired_disk is None:
+            raise CallError(f'{disk!r} device does not exist.', errno.ENOENT)
+
+        if desired_disk['dev_type'] != 'DISK':
+            raise CallError(f'{disk!r} device type is not DISK.')
+
+        if max_boot_priority_device and max_boot_priority_device['name'] == disk:
+            return True
+
+        return await self.device_update(id, {
+            'dev_type': 'DISK',
+            'name': disk,
+            'source': desired_disk.get('source'),
+            'boot_priority': max_boot_priority_device['boot_priority'] + 1 if max_boot_priority_device else 1,
+        } | ({'destination': desired_disk['destination']} if disk != 'root' else {}))
