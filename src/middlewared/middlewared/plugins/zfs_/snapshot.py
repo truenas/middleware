@@ -2,11 +2,9 @@ import copy
 import errno
 import libzfs
 
-from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import CallError, CRUDService, filterable, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils import filter_list, filter_getattrs
-from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 from .utils import get_snapshot_count_cached
 from .validation_utils import validate_snapshot_name
@@ -21,8 +19,8 @@ class ZFSSnapshot(CRUDService):
         cli_namespace = 'storage.snapshot'
         role_prefix = 'SNAPSHOT'
         role_separate_delete = True
+        private = True
 
-    @private
     def count(self, dataset_names='*', recursive=False):
         kwargs = {
             'user_props': False,
@@ -43,7 +41,6 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
-    @filterable
     def query(self, filters, options):
         """
         Query all ZFS Snapshots with `query-filters` and `query-options`.
@@ -131,16 +128,16 @@ class ZFSSnapshot(CRUDService):
 
         return result
 
-    @accepts(Dict(
-        'snapshot_create',
-        Str('dataset', required=True, empty=False),
-        Str('name', empty=False),
-        Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
-        Bool('recursive', default=False),
-        List('exclude', items=[Str('dataset')]),
-        Bool('vmware_sync', default=False),
-        Dict('properties', additional_attrs=True),
-    ))
+    # @accepts(Dict(
+    #     'snapshot_create',
+    #     Str('dataset', required=True, empty=False),
+    #     Str('name', empty=False),
+    #     Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
+    #     Bool('recursive', default=False),
+    #     List('exclude', items=[Str('dataset')]),
+    #     Bool('vmware_sync', default=False),
+    #     Dict('properties', additional_attrs=True),
+    # ))
     def do_create(self, data):
         """
         Take a snapshot from a given dataset.
@@ -207,20 +204,20 @@ class ZFSSnapshot(CRUDService):
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 
-    @accepts(
-        Str('id'), Dict(
-            'snapshot_update',
-            List(
-                'user_properties_update',
-                items=[Dict(
-                    'user_property',
-                    Str('key', required=True, validators=[Match(r'.*:.*')]),
-                    Str('value'),
-                    Bool('remove'),
-                )],
-            ),
-        )
-    )
+    # @accepts(
+    #     Str('id'), Dict(
+    #         'snapshot_update',
+    #         List(
+    #             'user_properties_update',
+    #             items=[Dict(
+    #                 'user_property',
+    #                 Str('key', required=True, validators=[Match(r'.*:.*')]),
+    #                 Str('value'),
+    #                 Bool('remove'),
+    #             )],
+    #         ),
+    #     )
+    # )
     def do_update(self, snap_id, data):
         verrors = ValidationErrors()
         props = data['user_properties_update']
@@ -242,14 +239,14 @@ class ZFSSnapshot(CRUDService):
         else:
             return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('defer', default=False),
-            Bool('recursive', default=False),
-        ),
-    )
+    # @accepts(
+    #     Str('id'),
+    #     Dict(
+    #         'options',
+    #         Bool('defer', default=False),
+    #         Bool('recursive', default=False),
+    #     ),
+    # )
     def do_delete(self, id_, options):
         """
         Delete snapshot of name `id`.

@@ -1,8 +1,7 @@
 import libzfs
 import subprocess
 
-from middlewared.schema import accepts, Bool, Dict, returns, Str
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service
 
 
 class ZFSSnapshot(Service):
@@ -10,16 +9,17 @@ class ZFSSnapshot(Service):
     class Config:
         namespace = 'zfs.snapshot'
         process_pool = True
+        private = True
 
-    @accepts(Dict(
-        'snapshot_clone',
-        Str('snapshot', required=True, empty=False),
-        Str('dataset_dst', required=True, empty=False),
-        Dict(
-            'dataset_properties',
-            additional_attrs=True,
-        )
-    ))
+    # @accepts(Dict(
+    #     'snapshot_clone',
+    #     Str('snapshot', required=True, empty=False),
+    #     Str('dataset_dst', required=True, empty=False),
+    #     Dict(
+    #         'dataset_properties',
+    #         additional_attrs=True,
+    #     )
+    # ))
     def clone(self, data):
         """
         Clone a given snapshot to a new dataset.
@@ -45,16 +45,16 @@ class ZFSSnapshot(Service):
             self.logger.error("{0}".format(err))
             raise CallError(f'Failed to clone snapshot: {err}')
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('recursive', default=False),
-            Bool('recursive_clones', default=False),
-            Bool('force', default=False),
-            Bool('recursive_rollback', default=False),
-        ),
-    )
+    # @accepts(
+    #     Str('id'),
+    #     Dict(
+    #         'options',
+    #         Bool('recursive', default=False),
+    #         Bool('recursive_clones', default=False),
+    #         Bool('force', default=False),
+    #         Bool('recursive_rollback', default=False),
+    #     ),
+    # )
     def rollback(self, id_, options):
         """
         Rollback to a given snapshot `id`.
@@ -91,7 +91,6 @@ class ZFSSnapshot(Service):
         else:
             self.rollback_impl(args, id_)
 
-    @private
     def rollback_impl(self, args, id_):
         try:
             subprocess.run(
@@ -100,14 +99,14 @@ class ZFSSnapshot(Service):
         except subprocess.CalledProcessError as e:
             raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('recursive', default=False),
-        ),
-    )
-    @returns()
+    # @accepts(
+    #     Str('id'),
+    #     Dict(
+    #         'options',
+    #         Bool('recursive', default=False),
+    #     ),
+    # )
+    # @returns()
     def hold(self, id_, options):
         """
         Holds snapshot `id`.
@@ -123,14 +122,14 @@ class ZFSSnapshot(Service):
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to hold snapshot: {err}')
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('recursive', default=False),
-        ),
-    )
-    @returns()
+    # @accepts(
+    #     Str('id'),
+    #     Dict(
+    #         'options',
+    #         Bool('recursive', default=False),
+    #     ),
+    # )
+    # @returns()
     def release(self, id_, options):
         """
         Release held snapshot `id`.
