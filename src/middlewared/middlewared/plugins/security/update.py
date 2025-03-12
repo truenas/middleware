@@ -87,6 +87,13 @@ class SystemSecurityService(ConfigService):
                 'enabling General Purpose OS STIG compatibility mode.'
             )
 
+        tc_config = await self.middleware.call('truecommand.config')
+        if tc_config['enabled']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'TrueCommand is not supported under General Purpose OS STIG compatibility mode.'
+            )
+
         # We want to make sure that at least one local user account is usable
         # and has 2fa auth configured.
         two_factor_users = await self.middleware.call('user.query', [
@@ -99,7 +106,7 @@ class SystemSecurityService(ConfigService):
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
                 'Two factor authentication tokens must be configured for users '
-                'prior to enabling General Purpose OS STIG compatibiltiy mode.'
+                'prior to enabling General Purpose OS STIG compatibility mode.'
             )
 
         if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles']]):
