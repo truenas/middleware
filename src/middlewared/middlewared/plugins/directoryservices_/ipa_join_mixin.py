@@ -69,7 +69,7 @@ class IPAJoinMixin:
             ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
         ])):
             delete_job = self.middleware.call_sync('certificate.delete', ipa_cert[0]['id'])
-            delete_job.wait_sync(raise_on_error=True)
+            delete_job.wait_sync(raise_error=True)
 
     def _ipa_leave(self, job: Job, ds_type: DSType, domain: str):
         """
