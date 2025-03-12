@@ -836,7 +836,11 @@ class AuthService(Service):
                     if not app.origin.secure_transport:
                         # Per NEP if plain API key auth occurs over insecure transport
                         # the key should be automatically revoked.
-                        await self.middleware.call('api_key.revoke', key_id)
+                        await self.middleware.call(
+                            'api_key.revoke',
+                            key_id,
+                            'Attempt to use over an insecure transport',
+                        )
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': 'API_KEY',
