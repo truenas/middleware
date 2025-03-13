@@ -120,6 +120,7 @@ class PoolSnapshotCreateResult(BaseModel):
 
 class PoolSnapshotDeleteArgs(BaseModel):
     id: str
+    """ID of the snapshot to delete."""
     options: PoolSnapshotDeleteOptions = Field(default_factory=PoolSnapshotDeleteOptions)
 
 
@@ -129,6 +130,7 @@ class PoolSnapshotDeleteResult(BaseModel):
 
 class PoolSnapshotHoldArgs(BaseModel):
     id: str
+    """ID of the snapshot to hold."""
     options: PoolSnapshotHoldOptions = Field(default_factory=PoolSnapshotHoldOptions)
 
 
@@ -138,6 +140,7 @@ class PoolSnapshotHoldResult(BaseModel):
 
 class PoolSnapshotReleaseArgs(BaseModel):
     id: str
+    """ID of the held snapshot to release."""
     options: PoolSnapshotReleaseOptions = Field(default_factory=PoolSnapshotReleaseOptions)
 
 

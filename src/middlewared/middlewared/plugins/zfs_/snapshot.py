@@ -10,7 +10,7 @@ from .utils import get_snapshot_count_cached
 from .validation_utils import validate_snapshot_name
 
 
-class ZFSSnapshot(CRUDService):
+class ZFSSnapshotService(CRUDService):
 
     class Config:
         datastore_primary_key_type = 'string'

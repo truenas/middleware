@@ -4,7 +4,7 @@ import subprocess
 from middlewared.service import CallError, Service
 
 
-class ZFSSnapshot(Service):
+class ZFSSnapshotService(Service):
 
     class Config:
         namespace = 'zfs.snapshot'
