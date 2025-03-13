@@ -127,7 +127,7 @@ class ZFSSnapshotService(CRUDService):
 
         return result
 
-    def do_create(self, data):
+    def create(self, data):
         """
         Take a snapshot from a given dataset.
         """
@@ -193,7 +193,7 @@ class ZFSSnapshotService(CRUDService):
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 
-    def do_update(self, snap_id, data):
+    def update(self, snap_id, data):
         verrors = ValidationErrors()
         props = data['user_properties_update']
         for index, prop in enumerate(props):
@@ -214,7 +214,7 @@ class ZFSSnapshotService(CRUDService):
         else:
             return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
 
-    def do_delete(self, id_, options):
+    def delete(self, id_, options):
         """
         Delete snapshot of name `id`.
 
