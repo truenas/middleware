@@ -11,21 +11,12 @@ class ZFSSnapshot(Service):
         process_pool = True
         private = True
 
-    # @accepts(Dict(
-    #     'snapshot_clone',
-    #     Str('snapshot', required=True, empty=False),
-    #     Str('dataset_dst', required=True, empty=False),
-    #     Dict(
-    #         'dataset_properties',
-    #         additional_attrs=True,
-    #     )
-    # ))
     def clone(self, data):
         """
         Clone a given snapshot to a new dataset.
 
         Returns:
-            bool: True if succeed otherwise False.
+            bool: True if succeed.
         """
 
         snapshot = data.get('snapshot', '')
@@ -45,16 +36,6 @@ class ZFSSnapshot(Service):
             self.logger.error("{0}".format(err))
             raise CallError(f'Failed to clone snapshot: {err}')
 
-    # @accepts(
-    #     Str('id'),
-    #     Dict(
-    #         'options',
-    #         Bool('recursive', default=False),
-    #         Bool('recursive_clones', default=False),
-    #         Bool('force', default=False),
-    #         Bool('recursive_rollback', default=False),
-    #     ),
-    # )
     def rollback(self, id_, options):
         """
         Rollback to a given snapshot `id`.
@@ -99,14 +80,6 @@ class ZFSSnapshot(Service):
         except subprocess.CalledProcessError as e:
             raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
 
-    # @accepts(
-    #     Str('id'),
-    #     Dict(
-    #         'options',
-    #         Bool('recursive', default=False),
-    #     ),
-    # )
-    # @returns()
     def hold(self, id_, options):
         """
         Holds snapshot `id`.
@@ -122,14 +95,6 @@ class ZFSSnapshot(Service):
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to hold snapshot: {err}')
 
-    # @accepts(
-    #     Str('id'),
-    #     Dict(
-    #         'options',
-    #         Bool('recursive', default=False),
-    #     ),
-    # )
-    # @returns()
     def release(self, id_, options):
         """
         Release held snapshot `id`.
