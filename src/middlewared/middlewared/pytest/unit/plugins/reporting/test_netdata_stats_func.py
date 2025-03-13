@@ -658,44 +658,68 @@ NETDATA_ALL_METRICS = {
         'family': 'pool.usage',
         'context': 'pool.usage',
         'units': 'bytes',
-        'last_updated': 1741023952,
+        'last_updated': 1741816789,
         'dimensions': {
-            'boot-pool.available': {
+            '11653691484309152344.available': {
                 'name': 'available',
-                'value': 16053874688
+                'value': 15574065152
             },
-            'boot-pool.used': {
+            '11653691484309152344.used': {
                 'name': 'used',
-                'value': 3730903040
+                'value': 4210708480
             },
-            'tank.available': {
+            '11653691484309152344.total': {
+                'name': 'total',
+                'value': 19784773632
+            },
+            '14935745712721614601.available': {
                 'name': 'available',
-                'value': 7181352960
+                'value': 6004465664
             },
-            'tank.used': {
+            '14935745712721614601.used': {
                 'name': 'used',
-                'value': 13102555136
+                'value': 14279315456
+            },
+            '14935745712721614601.total': {
+                'name': 'total',
+                'value': 20283781120
             }
         }
     },
-
 }
 
 
 def test_get_pool_stats():
-    pool_stats = get_pool_stats(NETDATA_ALL_METRICS)
-    assert pool_stats['tank']['available'] == safely_retrieve_dimension(
-        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'tank.available'
-    )
-    assert pool_stats['tank']['used'] == safely_retrieve_dimension(
-        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'tank.used'
-    )
-    assert pool_stats['boot-pool']['available'] == safely_retrieve_dimension(
-        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'boot-pool.available'
-    )
-    assert pool_stats['boot-pool']['used'] == safely_retrieve_dimension(
-        NETDATA_ALL_METRICS, 'truenas_pool.usage', 'boot-pool.used'
-    )
+    with patch('middlewared.plugins.reporting.realtime_reporting.pool.query_imported_fast_impl') as pool_imp:
+        pool_imp.return_value = {
+            '14935745712721614601': {
+                'name': 'tank', 'state': 'ONLINE'
+            },
+            '11653691484309152344': {
+                'name': 'boot-pool', 'state': 'ONLINE'
+            }
+        }
+
+        pool_stats = get_pool_stats(NETDATA_ALL_METRICS)
+        assert pool_stats['tank']['available'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '14935745712721614601.available'
+        )
+        assert pool_stats['tank']['used'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '14935745712721614601.used'
+        )
+        assert pool_stats['tank']['total'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '14935745712721614601.total'
+        )
+        assert pool_stats['boot-pool']['available'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '11653691484309152344.available'
+        )
+        assert pool_stats['boot-pool']['used'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '11653691484309152344.used'
+        )
+        assert pool_stats['boot-pool']['total'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '11653691484309152344.total'
+        )
+
 
 
 def test_arc_stats():
