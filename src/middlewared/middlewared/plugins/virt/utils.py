@@ -18,14 +18,55 @@ SOCKET = '/var/lib/incus/unix.socket'
 HTTP_URI = 'http://unix.socket'
 VNC_BASE_PORT = 5900
 VNC_PASSWORD_DIR = os.path.join(MIDDLEWARE_RUN_DIR, 'incus/passwords')
+TRUENAS_STORAGE_PROP_STR = 'truenas:incus_storage_pool'
 
 
-class Status(enum.Enum):
+class Status(enum.StrEnum):
     INITIALIZING = 'INITIALIZING'
     INITIALIZED = 'INITIALIZED'
     NO_POOL = 'NO_POOL'
     LOCKED = 'LOCKED'
     ERROR = 'ERROR'
+
+
+class IncusStorage:
+    """
+    This class contains state information for incus storage backend
+
+    Currently we store:
+    state: The current status of the storage backend.
+
+    default_storage_pool: hopefully will be None in almost all
+    circumstances. In BETA / RC of 25.04 we wrote on-disk configuration
+    for incus hard-coding a pool name of "default".
+
+    The INCUS_STORAGE instance below is set during virt.global.setup.
+    """
+    __status = Status.INITIALIZING
+    default_storage_pool = None  # Compatibility with 25.04 BETA / RC
+
+    def zfs_pool_to_storage_pool(self, zfs_pool: str) -> str:
+        if not isinstance(zfs_pool, str):
+            raise TypeError(f'{zfs_pool}: not a string')
+
+        if zfs_pool == self.default_storage_pool:
+            return 'default'
+
+        return zfs_pool
+
+    @property
+    def state(self) -> Status:
+        return self.__status
+
+    @state.setter
+    def state(self, status_in) -> None:
+        if not isinstance(status_in, Status):
+            raise TypeError(f'{status_in}: not valid Incus status')
+
+        self.__status = status_in
+
+
+INCUS_STORAGE = IncusStorage()
 
 
 def incus_call_sync(path: str, method: str, request_kwargs: dict = None, json: bool = True):
@@ -110,6 +151,18 @@ def get_vnc_info_from_config(config: dict):
     return json.loads(vnc_raw_config)
 
 
+def root_device_pool_from_raw(raw: dict) -> str:
+    # First check if we have a root device defined
+    if 'expanded_devices' in raw:
+        dev = raw['expanded_devices']
+        if 'root' in dev:
+            return dev['root']['pool']
+
+    # No profile default? Let caller handle the error
+    # maybe they want to use virt.global.config -> pool
+    return None
+
+
 def get_vnc_password_file_path(instance_id: str) -> str:
     return os.path.join(VNC_PASSWORD_DIR, instance_id)
 
@@ -121,18 +174,31 @@ def create_vnc_password_file(instance_id: str, password: str) -> str:
         os.fchmod(w.fileno(), 0o600)
         w.write(password)
 
-
     return pass_file_path
 
 
-def get_root_device_dict(size: int, io_bus: str) -> dict:
+def get_root_device_dict(size: int, io_bus: str, pool_name: str) -> dict:
     return {
         'path': '/',
-        'pool': 'default',
+        'pool': pool_name,
         'type': 'disk',
         'size': f'{size * (1024**3)}',
         'io.bus': io_bus.lower(),
     }
+
+
+def storage_pool_to_incus_pool(storage_pool_name: str) -> str:
+    """ convert to string "default" if required """
+    return INCUS_STORAGE.zfs_pool_to_storage_pool(storage_pool_name)
+
+
+def incus_pool_to_storage_pool(incus_pool_name: str) -> str:
+    if incus_pool_name == 'default':
+        # Look up the ZFS pool name from info we populated
+        # on virt.global.setup
+        return INCUS_STORAGE.default_storage_pool
+
+    return incus_pool_name
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
