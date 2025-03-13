@@ -215,14 +215,19 @@ class VirtInstanceStopArgs(BaseModel):
     id: str
     stop_args: StopArgs = StopArgs()
 
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.stop_args.force is False and self.stop_args.timeout == -1:
+            raise ValueError('Timeout should be set if force is disabled')
+        return self
+
 
 class VirtInstanceStopResult(BaseModel):
     result: bool
 
 
-class VirtInstanceRestartArgs(BaseModel):
-    id: str
-    stop_args: StopArgs = StopArgs()
+class VirtInstanceRestartArgs(VirtInstanceStopArgs):
+    pass
 
 
 class VirtInstanceRestartResult(BaseModel):
