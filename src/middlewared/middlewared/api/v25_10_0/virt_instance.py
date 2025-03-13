@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Annotated, Literal, TypeAlias
 
@@ -152,8 +151,6 @@ class VirtInstanceCreateArgs(BaseModel):
                     raise ValueError('Zvol path must be set when source type is "ZVOL"')
                 if self.zvol_path.startswith('/dev/zvol/') is False:
                     raise ValueError('Zvol path must be a valid zvol path')
-                elif not os.path.exists(self.zvol_path):
-                    raise ValueError(f'Zvol path {self.zvol_path} does not exist')
 
         if self.source_type == 'IMAGE' and self.image is None:
             raise ValueError('Image must be set when source type is "IMAGE"')

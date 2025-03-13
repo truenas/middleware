@@ -311,6 +311,8 @@ class VirtInstanceDeviceService(Service):
                         'virt.device.disk_choices_internal', True
                     ):
                         verrors.add(schema, 'Invalid ZVOL choice.')
+                    elif not await self.middleware.run_in_thread(os.path.exists, source):
+                        verrors.add(schema, f'{source!r} does not exist.')
 
                     if instance_type == 'CONTAINER':
                         if device['boot_priority'] is not None:
