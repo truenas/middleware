@@ -27,7 +27,7 @@ UserPropertyKey = Annotated[str, Field(pattern=r'.*:.*')]
 class PoolSnapshotEntryPropertyFields(BaseModel):
     value: str
     rawvalue: str
-    source: Literal["INHERITED", "NONE", "DEFAULT"]
+    source: Literal["INHERITED", "NONE", "DEFAULT", "LOCAL"]
     parsed: Any
 
 
