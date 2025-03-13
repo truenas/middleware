@@ -4,7 +4,7 @@ from typing import Annotated, Any, Literal
 from pydantic import Field, AfterValidator
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
-from middlewared.api.base import BaseModel, single_argument_args, NonEmptyString
+from middlewared.api.base import BaseModel, single_argument_args, NonEmptyString, NotRequired, Excluded, excluded_field
 
 
 __all__ = [
@@ -40,6 +40,12 @@ class PoolSnapshotEntry(BaseModel):
     dataset: str
     id: str
     createtxg: str
+    holds: dict = NotRequired
+    """Returned when options.extra.holds is set."""
+
+
+class PoolSnapshotCreateUpdateEntry(PoolSnapshotEntry):
+    holds: Excluded = excluded_field()
 
 
 class PoolSnapshotCreateTemplate(BaseModel, ABC):
@@ -115,7 +121,7 @@ class PoolSnapshotCreateArgs(BaseModel):
 
 
 class PoolSnapshotCreateResult(BaseModel):
-    result: PoolSnapshotEntry
+    result: PoolSnapshotCreateUpdateEntry
 
 
 class PoolSnapshotDeleteArgs(BaseModel):
@@ -164,4 +170,4 @@ class PoolSnapshotUpdateArgs(BaseModel):
 
 
 class PoolSnapshotUpdateResult(BaseModel):
-    result: PoolSnapshotEntry
+    result: PoolSnapshotCreateUpdateEntry
