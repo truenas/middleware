@@ -2,7 +2,6 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service
 from middlewared.validators import Email
 
-from .generate_ca import generate_certificate_authority
 from .generate_certs import generate_certificate
 from .generate_self_signed import generate_self_signed_certificate
 from .generate_utils import normalize_san, sign_csr_with_ca
@@ -81,14 +80,6 @@ class CryptoKeyService(Service):
     )
     def generate_certificate(self, data):
         return generate_certificate(data)
-
-    @accepts(Ref('certificate_cert_info'))
-    def generate_self_signed_ca(self, data):
-        return self.generate_certificate_authority(data)
-
-    @accepts(Ref('certificate_cert_info'))
-    def generate_certificate_authority(self, data):
-        return generate_certificate_authority(data)
 
     @accepts(
         Dict(
