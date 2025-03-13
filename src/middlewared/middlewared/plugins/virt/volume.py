@@ -6,7 +6,8 @@ from middlewared.api.current import (
     VirtVolumeUpdateResult, VirtVolumeDeleteArgs, VirtVolumeDeleteResult, VirtVolumeImportISOArgs,
     VirtVolumeImportISOResult,
 )
-from middlewared.service import CallError, CRUDService, job, ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service import CallError, CRUDService, job
 from middlewared.utils import filter_list
 
 from .utils import incus_call, incus_call_sync, Status, incus_wait
@@ -126,10 +127,17 @@ class VirtVolumeService(CRUDService):
         if data['upload_iso']:
             job.check_pipe('input')
         elif data['iso_location'] is None:
-            raise CallError('Either upload iso or provide iso_location')
+            raise ValidationError(
+                'virt_volume_import_iso.iso_location',
+                'Either upload iso or provide iso_location'
+            )
 
         if await self.middleware.call('virt.volume.query', [['id', '=', data['name']]]):
-            raise CallError('Volume with this name already exists', errno=errno.EEXIST)
+            raise ValidationError(
+                'virt_volume_import_iso.name',
+                'Volume with this name already exists',
+                errno=errno.EEXIST
+            )
 
         request_kwargs = {
             'headers': {
@@ -152,11 +160,17 @@ class VirtVolumeService(CRUDService):
                     request_kwargs=request_kwargs | {'data': read_input_stream()},
                 )
             else:
-                with open(data['iso_location'], 'rb') as f:
-                    return incus_call_sync(
-                        '1.0/storage-pools/default/volumes/custom',
-                        'post',
-                        request_kwargs=request_kwargs | {'data': f},
+                try:
+                    with open(data['iso_location'], 'rb') as f:
+                        return incus_call_sync(
+                            '1.0/storage-pools/default/volumes/custom',
+                            'post',
+                            request_kwargs=request_kwargs | {'data': f},
+                        )
+                except FileNotFoundError:
+                    raise ValidationError(
+                        'virt_volume_import_iso.iso_location',
+                        f'{data["iso_location"]!r} does not exist'
                     )
 
         response = await self.middleware.run_in_thread(upload_file)

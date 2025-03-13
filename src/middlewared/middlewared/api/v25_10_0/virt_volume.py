@@ -1,8 +1,7 @@
-import os
 import re
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import AfterValidator, Field, field_validator, StringConstraints
+from pydantic import AfterValidator, Field, StringConstraints
 
 from middlewared.api.base import (
     BaseModel, ForUpdateMetaclass, match_validator, NonEmptyString, single_argument_args,
@@ -78,13 +77,6 @@ class VirtVolumeImportISOArgs(BaseModel):
     '''Specify name of the newly created volume from the ISO specified'''
     iso_location: NonEmptyString | None = None
     upload_iso: bool = False
-
-    @field_validator('iso_location')
-    @classmethod
-    def validate_iso_location(cls, v):
-        if v and not os.path.exists(v):
-            raise ValueError('Specified ISO location does not exist')
-        return v
 
 
 class VirtVolumeImportISOResult(BaseModel):
