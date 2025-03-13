@@ -102,7 +102,10 @@ class VirtInstanceDeviceService(Service):
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
 
-                device['description'] = f'{device["source_proto"]}/{device["source_port"]} -> {device["dest_proto"]}/{device["dest_port"]}'
+                device['description'] = ' -> '.join([
+                    f'{device["source_proto"]}/{device["source_port"]}',
+                    f'{device["dest_proto"]}/{device["dest_port"]}',
+                ])
             case 'tpm':
                 device['dev_type'] = 'TPM'
                 device['path'] = incus.get('path')
