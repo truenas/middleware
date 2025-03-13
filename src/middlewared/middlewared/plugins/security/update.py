@@ -139,6 +139,13 @@ class SystemSecurityService(ConfigService):
                 'Please disable VMs as VMs are not supported under General Purpose OS STIG compatibility mode.'
             )
 
+        if (await self.middleware.call('tn_connect.config'))['enabled']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Please disable TrueNAS Connect as it is not supported under '
+                'General Purpose OS STIG compatibility mode.'
+            )
+
     @private
     async def validate(self, is_ha, ha_disabled_reasons):
         schema = 'system_security_update.enable_fips'
