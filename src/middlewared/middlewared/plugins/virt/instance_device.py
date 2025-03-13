@@ -49,11 +49,6 @@ class VirtInstanceDeviceService(Service):
         return devices
 
     @private
-    def unsupported(self):
-        self.logger.trace('Proxy device not supported by API, skipping.')
-        return None
-
-    @private
     async def incus_to_device(self, name: str, incus: dict[str, Any], context: dict):
         device = {
             'name': name,
@@ -86,18 +81,19 @@ class VirtInstanceDeviceService(Service):
                 # For now follow docker lead for simplification
                 # only allowing to bind on host (host -> container)
                 if incus.get('bind') == 'instance':
-                    return self.unsupported()
+                    # bind on instance is not supported in proxy device
+                    return None
 
                 proto, addr, ports = incus['listen'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return self.unsupported()
+                    return None
 
                 device['source_proto'] = proto.upper()
                 device['source_port'] = int(ports)
 
                 proto, addr, ports = incus['connect'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return self.unsupported()
+                    return None
 
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
@@ -150,7 +146,8 @@ class VirtInstanceDeviceService(Service):
                         else:
                             device['description'] = 'Unknown'
                     case 'mdev' | 'mig' | 'srviov':
-                        return self.unsupported()
+                        # We do not support these GPU types
+                        return None
             case 'pci':
                 if 'pci_choices' not in context:
                     context['pci_choices'] = await self.middleware.call('virt.device.pci_choices')
@@ -161,7 +158,8 @@ class VirtInstanceDeviceService(Service):
                     'description': context['pci_choices'].get(incus['address'], {}).get('description', 'Unknown')
                 })
             case _:
-                return self.unsupported()
+                # Unsupported incus device type
+                return None
 
         return device
 
