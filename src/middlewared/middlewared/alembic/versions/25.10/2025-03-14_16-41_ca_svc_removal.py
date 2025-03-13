@@ -27,10 +27,9 @@ Okay so what we would like to do here is essentially are the following steps:
 1. Update certificate attr for both certs/cas to include complete chain
 2. While doing (1), make sure we adjust cert types of certs too to existing certs only
 3. Copy over CAs to certs table
-4. Drop cert_signedby_id from both tables
+4. Drop cert_signedby_id from both tables and revoked date column from cert table
 5. Update usages of CA foreign key to certs table
-6. Drop cert_revoked_date from certs table
-7. Drop CA table
+6. Drop CA table
 '''
 
 CA_TYPE_EXISTING = 0x01
@@ -177,6 +176,7 @@ def upgrade():
     with op.batch_alter_table('system_certificate', schema=None) as batch_op:
         batch_op.drop_index('ix_system_certificate_cert_signedby_id')
         batch_op.drop_column('cert_signedby_id')
+        batch_op.drop_column('cert_revoked_date')
 
     with op.batch_alter_table('system_certificateauthority', schema=None) as batch_op:
         batch_op.drop_index('ix_system_certificateauthority_cert_signedby_id')
@@ -206,10 +206,6 @@ def upgrade():
             sa.text("UPDATE system_kmip SET certificate_authority_id = :id WHERE certificate_authority_id IS NULL"),
             {'id': certs[cas_id_to_name_mapping[kmip_config['certificate_authority_id']]]['id']}
         )
-
-    # Going to drop cert_revoked_date column from certs table
-    with op.batch_alter_table('system_certificate', schema=None) as batch_op:
-        batch_op.drop_column('cert_revoked_date')
 
     # Finally dropping CA table
     op.drop_table('system_certificateauthority')
