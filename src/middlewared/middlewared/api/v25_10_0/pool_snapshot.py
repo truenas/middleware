@@ -31,6 +31,10 @@ class PoolSnapshotEntryPropertyFields(BaseModel):
     parsed: Any
 
 
+class PoolSnapshotHoldTag(BaseModel):
+    truenas: int = NotRequired
+
+
 class PoolSnapshotEntry(BaseModel):
     properties: dict[str, PoolSnapshotEntryPropertyFields]
     pool: str
@@ -40,7 +44,7 @@ class PoolSnapshotEntry(BaseModel):
     dataset: str
     id: str
     createtxg: str
-    holds: dict = NotRequired
+    holds: PoolSnapshotHoldTag = NotRequired
     """Returned when options.extra.holds is set."""
 
 
