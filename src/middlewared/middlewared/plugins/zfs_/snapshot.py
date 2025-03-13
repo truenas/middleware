@@ -16,7 +16,6 @@ class ZFSSnapshotService(CRUDService):
         datastore_primary_key_type = 'string'
         namespace = 'zfs.snapshot'
         process_pool = True
-        cli_namespace = 'storage.snapshot'
         role_separate_delete = True
         private = True
 

@@ -12,6 +12,7 @@ class PoolSnapshotService(CRUDService):
 
     class Config:
         namespace = 'pool.snapshot'
+        cli_namespace = 'storage.snapshot'
         role_prefix = 'SNAPSHOT'
         entry = PoolSnapshotEntry
 
