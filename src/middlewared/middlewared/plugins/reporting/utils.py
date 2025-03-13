@@ -121,7 +121,7 @@ def get_metrics_approximation(
             'cpu.usage': core_count + 1,
 
             # pool usage
-            'truenas_pool.usage': pool_count * 2,
+            'truenas_pool.usage': pool_count * 3,
 
             # cputemp
             'cputemp.temperatures': core_count + 1,
