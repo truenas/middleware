@@ -82,7 +82,7 @@ class VirtInstanceEntry(BaseModel):
     aliases: list[VirtInstanceAlias]
     image: Image
     userns_idmap: UserNsIdmap | None
-    raw: dict | None
+    raw: Secret[dict | None]
     vnc_enabled: bool
     vnc_port: int | None
     vnc_password: Secret[NonEmptyString | None]
