@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-RE_VOLUME_NAME = re.compile(r'^[A-Za-z][A-Za-z0-9-_.]*[A-Za-z0-9]$', re.IGNORECASE)
+RE_VOLUME_NAME = re.compile(r'^[A-Za-z][A-Za-z0-9-._]*[A-Za-z0-9]$', re.IGNORECASE)
 VOLUME_NAME: TypeAlias = Annotated[
     NonEmptyString,
     AfterValidator(
