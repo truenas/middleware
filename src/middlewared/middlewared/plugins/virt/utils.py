@@ -8,6 +8,7 @@ import httpx
 import json
 from collections.abc import Callable
 
+from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service import CallError
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
@@ -18,7 +19,7 @@ SOCKET = '/var/lib/incus/unix.socket'
 HTTP_URI = 'http://unix.socket'
 VNC_BASE_PORT = 5900
 VNC_PASSWORD_DIR = os.path.join(MIDDLEWARE_RUN_DIR, 'incus/passwords')
-TRUENAS_STORAGE_PROP_STR = 'truenas:incus_storage_pool'
+TRUENAS_STORAGE_PROP_STR = TNUserProp.INCUS_POOL.value
 
 
 class Status(enum.StrEnum):
