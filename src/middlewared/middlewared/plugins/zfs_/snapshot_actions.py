@@ -17,11 +17,11 @@ class ZFSSnapshotService(Service):
 
         Returns:
             bool: True if succeed.
-        """
 
+        """
         snapshot = data.get('snapshot', '')
         dataset_dst = data.get('dataset_dst', '')
-        props = data['dataset_properties']
+        props = data.get('dataset_properties', {})
 
         try:
             with libzfs.ZFS() as zfs:
@@ -36,29 +36,30 @@ class ZFSSnapshotService(Service):
             self.logger.error("{0}".format(err))
             raise CallError(f'Failed to clone snapshot: {err}')
 
-    def rollback(self, id_, options):
+    def rollback(self, id_, options={}):
         """
         Rollback to a given snapshot `id`.
 
-        `options.recursive` will destroy any snapshots and bookmarks more recent than the one
-        specified.
+        `options.recursive` (bool) will destroy any snapshots and bookmarks more recent than the one
+            specified.
 
-        `options.recursive_clones` is just like `recursive` but will also destroy any clones.
+        `options.recursive_clones` (bool) is just like `recursive` but will also destroy any clones.
 
-        `options.force` will force unmount of any clones.
+        `options.force` (bool) will force unmount of any clones.
 
-        `options.recursive_rollback` will do a complete recursive rollback of each child snapshots for `id`. If
-        any child does not have specified snapshot, this operation will fail.
+        `options.recursive_rollback` (bool) will do a complete recursive rollback of each child snapshots for `id`. If
+            any child does not have specified snapshot, this operation will fail.
+
         """
         args = []
-        if options['force']:
+        if options.get('force'):
             args += ['-f']
-        if options['recursive']:
+        if options.get('recursive'):
             args += ['-r']
-        if options['recursive_clones']:
+        if options.get('recursive_clones'):
             args += ['-R']
 
-        if options['recursive_rollback']:
+        if options.get('recursive_rollback'):
             dataset, snap_name = id_.rsplit('@', 1)
             datasets = set({
                 f'{ds["id"]}@{snap_name}' for ds in self.middleware.call_sync(
@@ -80,34 +81,36 @@ class ZFSSnapshotService(Service):
         except subprocess.CalledProcessError as e:
             raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
 
-    def hold(self, id_, options):
+    def hold(self, id_, options={}):
         """
         Holds snapshot `id`.
 
         `truenas` tag will be added to the snapshot's tag namespace.
 
-        `options.recursive` will hold snapshots recursively.
+        `options.recursive` (bool) will hold snapshots recursively.
+
         """
         try:
             with libzfs.ZFS() as zfs:
                 snapshot = zfs.get_snapshot(id_)
-                snapshot.hold('truenas', options['recursive'])
+                snapshot.hold('truenas', options.get('recursive', False))
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to hold snapshot: {err}')
 
-    def release(self, id_, options):
+    def release(self, id_, options={}):
         """
         Release held snapshot `id`.
 
         Will remove all hold tags from the specified snapshot.
 
-        `options.recursive` will release snapshots recursively. Please note that only the tags that are present on the
-        parent snapshot will be removed.
+        `options.recursive` (bool) will release snapshots recursively. Only the tags that are present on the
+            parent snapshot will be removed.
+
         """
         try:
             with libzfs.ZFS() as zfs:
                 snapshot = zfs.get_snapshot(id_)
                 for tag in snapshot.holds:
-                    snapshot.release(tag, options['recursive'])
+                    snapshot.release(tag, options.get('recursive', False))
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to release snapshot: {err}')
