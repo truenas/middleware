@@ -604,6 +604,8 @@ class VirtGlobalService(ConfigService):
         # Have incus start fresh
         # Use subprocess because shutil.rmtree will traverse filesystems
         # and we do have instances datasets that might be mounted beneath
+        assert INCUS_PATH.startswith('/var/lib/')
+
         await run(f'rm -rf --one-file-system {INCUS_PATH}/*', shell=True, check=True)
 
         if start and not await self.middleware.call('service.start', 'incus', {'ha_propagate': False}):
