@@ -3,6 +3,30 @@ from middlewared.api.base import BaseModel
 from pydantic import Field
 
 
+class SystemGeneralUIAddressChoicesArgs(BaseModel):
+    pass
+
+
+class SystemGeneralUIAddressChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
+class SystemGeneralUICertificateChoicesArgs(BaseModel):
+    pass
+
+
+class SystemGeneralUICertificateChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
+class SystemGeneralUIHTTPSProtocolChoicesArgs(BaseModel):
+    pass
+
+
+class SystemGeneralUIHTTPSProtocolChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
 class SystemGeneralUILocalURLArgs(BaseModel):
     pass
 
@@ -20,33 +44,9 @@ class SystemGeneralUIRestartResult(BaseModel):
     result: None
 
 
-class SystemGeneralUIAddressChoicesArgs(BaseModel):
-    pass
-
-
-class SystemGeneralUIAddressChoicesResult(BaseModel):
-    result: dict[str, str]
-
-
-class SystemGeneralUICertificateChoicesArgs(BaseModel):
-    pass
-
-
-class SystemGeneralUICertificateChoicesResult(BaseModel):
-    result: dict[str, str]
-
-
 class SystemGeneralUIV6AddressChoicesArgs(BaseModel):
     pass
 
 
 class SystemGeneralUIV6AddressChoicesResult(BaseModel):
-    result: dict[str, str]
-
-
-class SystemGeneralUIHTTPSProtocolChoicesArgs(BaseModel):
-    pass
-
-
-class SystemGeneralUIHTTPSProtocolChoicesResult(BaseModel):
     result: dict[str, str]
