@@ -1,17 +1,14 @@
 import re
 
-from middlewared.schema import accepts, Dict, Str
 from middlewared.service import Service, private
 from middlewared.utils.disks import get_disks_with_identifiers
 
 
 class DiskService(Service):
-
     RE_IDENTIFIER = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
     @private
-    @accepts(Str('name'), Dict('disks', additional_attrs=True))
-    def device_to_identifier(self, name, disks):
+    def device_to_identifier(self, name: str, disks: dict):
         """
         Given a device `name` (e.g. sda) returns an unique identifier string
         for this device.
