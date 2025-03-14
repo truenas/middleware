@@ -2,8 +2,16 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString,
-                                  single_argument_args, TimeString)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    excluded_field,
+    ForUpdateMetaclass,
+    LongNonEmptyString,
+    NonEmptyString,
+    single_argument_args,
+    TimeString
+)
 from .cloud import BaseCloudEntry
 
 __all__ = ["CloudSyncEntry",
@@ -54,6 +62,21 @@ class CloudSyncCreateArgs(BaseModel):
 
 
 class CloudSyncCreateResult(BaseModel):
+    result: CloudSyncEntry
+
+
+class RestoreOpts(BaseModel):
+    description: str = ""
+    transfer_mode: Literal["SYNC", "COPY"]
+    path: NonEmptyString
+
+
+class CloudSyncCrudRestoreArgs(BaseModel):
+    id: int
+    opts: RestoreOpts
+
+
+class CloudSyncCrudRestoreResult(BaseModel):
     result: CloudSyncEntry
 
 
