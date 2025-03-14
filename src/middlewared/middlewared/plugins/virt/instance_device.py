@@ -14,7 +14,7 @@ from middlewared.api.current import (
     VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from .utils import incus_call_and_wait
+from .utils import incus_call_and_wait, storage_pool_to_incus_pool, incus_pool_to_storage_pool
 
 
 class VirtInstanceDeviceService(Service):
@@ -29,14 +29,17 @@ class VirtInstanceDeviceService(Service):
         List all devices associated to an instance.
         """
         instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance_profiles = instance['raw']['profiles']
+        raw_devices = {}
 
-        # Grab devices from default profile (e.g. nic and disk)
-        profile = await self.middleware.call('virt.global.get_default_profile')
+        # An incus instance may have more than one profile applied to it.
+        for profile in instance_profiles:
+            profile_devs = (await self.middleware.call('virt.global.get_profile', profile))['devices']
+            # Flag devices from the profile as readonly, cannot be modified only overridden
+            for v in profile_devs.values():
+                v['readonly'] = True
 
-        # Flag devices from the profile as readonly, cannot be modified only overridden
-        raw_devices = profile['devices']
-        for v in raw_devices.values():
-            v['readonly'] = True
+            raw_devices |= profile_devs
 
         raw_devices.update(instance['raw']['devices'])
 
@@ -47,11 +50,6 @@ class VirtInstanceDeviceService(Service):
                 devices.append(device)
 
         return devices
-
-    @private
-    def unsupported(self):
-        self.logger.trace('Proxy device not supported by API, skipping.')
-        return None
 
     @private
     async def incus_to_device(self, name: str, incus: dict[str, Any], context: dict):
@@ -66,8 +64,9 @@ class VirtInstanceDeviceService(Service):
                 device.update({
                     'dev_type': 'DISK',
                     'source': incus.get('source'),
+                    'storage_pool': incus_pool_to_storage_pool(incus.get('pool')),
                     'destination': incus.get('path'),
-                    'description': f'{incus.get("source")} -> {incus.get("destination")}',
+                    'description': f'{incus.get("source")} -> {incus.get("path")}',
                     'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
                     'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
                 })
@@ -86,18 +85,19 @@ class VirtInstanceDeviceService(Service):
                 # For now follow docker lead for simplification
                 # only allowing to bind on host (host -> container)
                 if incus.get('bind') == 'instance':
-                    return self.unsupported()
+                    # bind on instance is not supported in proxy device
+                    return None
 
                 proto, addr, ports = incus['listen'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return self.unsupported()
+                    return None
 
                 device['source_proto'] = proto.upper()
                 device['source_port'] = int(ports)
 
                 proto, addr, ports = incus['connect'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return self.unsupported()
+                    return None
 
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
@@ -150,7 +150,8 @@ class VirtInstanceDeviceService(Service):
                         else:
                             device['description'] = 'Unknown'
                     case 'mdev' | 'mig' | 'srviov':
-                        return self.unsupported()
+                        # We do not support these GPU types
+                        return None
             case 'pci':
                 if 'pci_choices' not in context:
                     context['pci_choices'] = await self.middleware.call('virt.device.pci_choices')
@@ -161,7 +162,8 @@ class VirtInstanceDeviceService(Service):
                     'description': context['pci_choices'].get(incus['address'], {}).get('description', 'Unknown')
                 })
             case _:
-                return self.unsupported()
+                # Unsupported incus device type
+                return None
 
         return device
 
@@ -179,9 +181,10 @@ class VirtInstanceDeviceService(Service):
                 if device['boot_priority'] is not None:
                     new['boot.priority'] = str(device['boot_priority'])
                 if '/' not in new['source']:
-                    # When incus volumes are used, we need to specify that incus needs to look in the default
-                    # already configured pool
-                    new['pool'] = 'default'
+                    if zpool := device.get('storage_pool'):
+                        new['pool'] = storage_pool_to_incus_pool(device.get('storage_pool'))
+                    else:
+                        new['pool'] = None
                 if device.get('io_bus'):
                     new['io.bus'] = device['io_bus'].lower()
 
@@ -352,6 +355,10 @@ class VirtInstanceDeviceService(Service):
                             verrors.add(schema, f'No {source!r} incus volume found which can be used for source')
                         elif available_volumes[source]['content_type'] == 'ISO' and device['boot_priority'] is None:
                             verrors.add(schema, 'Boot priority is required for ISO volumes.')
+                        else:
+                            # We need to specify the storage pool for device adding to VM
+                            # copy in what is known for the virt volume
+                            device['storage_pool'] = available_volumes[source]['storage_pool']
 
                 destination = device.get('destination')
                 if destination == '/':

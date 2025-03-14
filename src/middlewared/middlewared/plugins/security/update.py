@@ -127,18 +127,23 @@ class SystemSecurityService(ConfigService):
                 'authentication for the currently-authenticated session.'
             )
 
-        if await self.middleware.call('app.query', [], {'count': True}):
+        if (await self.middleware.call('docker.config'))['pool']:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
-                'Apps are not supported under General Purpose OS STIG compatibility '
-                'mode.'
+                'Please disable Apps as Apps are not supported under General Purpose OS STIG compatibility mode.'
             )
 
-        if await self.middleware.call('virt.instance.query', [], {'count': True}):
+        if (await self.middleware.call('virt.global.config'))['pool']:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
-                'VMs are not supported under General Purpose OS STIG compatibility '
-                'mode.'
+                'Please disable VMs as VMs are not supported under General Purpose OS STIG compatibility mode.'
+            )
+
+        if (await self.middleware.call('tn_connect.config'))['enabled']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Please disable TrueNAS Connect as it is not supported under '
+                'General Purpose OS STIG compatibility mode.'
             )
 
     @private

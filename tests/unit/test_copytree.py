@@ -227,7 +227,7 @@ def validate_data(
             return
 
         case stat.S_IFDIR:
-            assert os.listdir(src) == os.listdir(dst)
+            assert set(os.listdir(src)) == set(os.listdir(dst))
             return
 
         case stat.S_IFREG:
