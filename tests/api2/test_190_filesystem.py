@@ -122,7 +122,7 @@ def test_filesystem_stat_filetype():
 
         snap_name = f"{ds_name}_snap1"
         call(
-            "zfs.snapshot.create",
+            "pool.snapshot.create",
             {
                 "dataset": ds,
                 "name": snap_name,

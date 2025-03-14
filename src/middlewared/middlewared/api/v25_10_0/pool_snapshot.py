@@ -27,12 +27,13 @@ UserPropertyKey = Annotated[str, Field(pattern=r'.*:.*')]
 class PoolSnapshotEntryPropertyFields(BaseModel):
     value: str
     rawvalue: str
-    source: Literal["INHERITED", "NONE", "DEFAULT", "LOCAL"]
+    source: Literal["NONE", "DEFAULT", "LOCAL", "TEMPORARY", "INHERITED", "RECEIVED"]
     parsed: Any
 
 
 class PoolSnapshotHoldTag(BaseModel):
     truenas: int = NotRequired
+    """Present if a hold has been placed on the snapshot."""
 
 
 class PoolSnapshotEntry(BaseModel):

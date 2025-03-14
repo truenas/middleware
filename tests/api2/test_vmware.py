@@ -181,7 +181,7 @@ def test_vmware():
 
                         for i in range(60):
                             time.sleep(1)
-                            snapshots = call("zfs.snapshot.query", [["dataset", "=", ds.dataset]])
+                            snapshots = call("pool.snapshot.query", [["dataset", "=", ds.dataset]])
                             if snapshots:
                                 break
                         else:

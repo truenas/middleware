@@ -35,7 +35,7 @@ def test_replication_sudo(task):
             try:
                 with dataset("src") as src:
                     ssh(f"touch /mnt/{src}/test")
-                    call("zfs.snapshot.create", {"dataset": src, "name": "auto-2023-01-18-16-00"})
+                    call("pool.snapshot.create", {"dataset": src, "name": "auto-2023-01-18-16-00"})
                     with dataset("dst") as dst:
                         call("replication.run_onetime", {
                             **task,
