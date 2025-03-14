@@ -3,8 +3,7 @@ import asyncio
 import subprocess
 
 from middlewared.utils import run, UnexpectedFailure
-from middlewared.service import Service, CallError, private, accepts, returns, job, ValidationErrors
-from middlewared.schema import Dict, Str, Int, List, Bool
+from middlewared.service import Service, CallError, private, job, ValidationErrors
 
 
 class DiskService(Service):
@@ -27,19 +26,9 @@ class DiskService(Service):
                 err += f' ERROR: {cp.stdout}'
                 raise OSError(cp.returncode, os.strerror(cp.returncode), err)
 
-    @accepts(
-        List('disks', required=True, items=[
-            Dict(
-                Str('name', required=True),
-                Int('size', required=False, default=None),
-            )
-        ]),
-        Bool('sync', default=True),
-        Bool('raise_error', default=False)
-    )
-    @returns()
+    @private
     @job(lock='disk_resize')
-    async def resize(self, job, data, sync, raise_error):
+    async def resize(self, job, data: list[dict], sync: bool = True, raise_error: bool = False):
         """
         Takes a list of disks. Each list entry is a dict that requires a key, value pair.
         `name`: string (the name of the disk (i.e. sda))
@@ -62,7 +51,11 @@ class DiskService(Service):
             if disk['name'] in disks:
                 verrors.add('disk.resize', f'Disk {disk["name"]!r} specified more than once.')
             else:
+                disk.setdefault('size', None)
                 disks.append(disk['name'])
+
+        if not disks:
+            verrors.add('disk.resize', 'At least 1 disk must be provided')
 
         verrors.check()
 
