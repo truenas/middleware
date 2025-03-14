@@ -6,6 +6,7 @@ import subprocess
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
+from middlewared.validators import Match
 
 from .utils import ZPOOL_CACHE_FILE
 
@@ -65,7 +66,7 @@ class PoolService(Service):
     @accepts(Dict(
         'pool_import',
         Str('guid', required=True),
-        Str('name'),
+        Str('name', validators=[Match(r'^\S+$')]),
         Bool('enable_attachments'),
     ), roles=['POOL_WRITE'])
     @returns(Bool('successful_import'))
