@@ -12,6 +12,7 @@ __all__ = [
     'VirtVolumeEntry', 'VirtVolumeCreateArgs', 'VirtVolumeCreateResult',
     'VirtVolumeUpdateArgs', 'VirtVolumeUpdateResult', 'VirtVolumeDeleteArgs',
     'VirtVolumeDeleteResult', 'VirtVolumeImportISOArgs', 'VirtVolumeImportISOResult',
+    'VirtVolumeImportZvolArgs', 'VirtVolumeImportZvolResult'
 ]
 
 
@@ -101,4 +102,31 @@ class VirtVolumeImportISOArgs(BaseModel):
 
 
 class VirtVolumeImportISOResult(BaseModel):
+    result: VirtVolumeEntry
+
+
+class ZvolImportEntry(BaseModel):
+    virt_volume_name: VOLUME_NAME
+    '''Specify name of the newly created volume from the ISO specified'''
+    zvol_path: NonEmptyString
+    '''Specify path of zvol in /dev/zvol'''
+
+    @field_validator('zvol_path')
+    @classmethod
+    def validate_source(cls, zvol_path):
+        if not zvol_path.startswith('/dev/zvol/'):
+            raise ValueError('Not a valid /dev/zvol path')
+
+        return zvol_path
+
+
+@single_argument_args('virt_volume_import_iso')
+class VirtVolumeImportZvolArgs(BaseModel):
+    to_import: list[ZvolImportEntry]
+    '''List of zvols to import as volumes'''
+    clone: bool = False
+    '''Optionally clone and promote zvol'''
+
+
+class VirtVolumeImportZvolResult(BaseModel):
     result: VirtVolumeEntry
