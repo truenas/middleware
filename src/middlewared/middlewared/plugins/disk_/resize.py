@@ -31,8 +31,8 @@ class DiskService(Service):
     async def resize(self, job, data: list[dict], sync: bool = True, raise_error: bool = False):
         """
         Takes a list of disks. Each list entry is a dict that requires a key, value pair.
-        `name`: string (the name of the disk (i.e. sda))
-        `size`: integer (given in gigabytes)
+        `data.name`: string (the name of the disk (i.e. sda))
+        `data.size`: integer (given in gigabytes)
         `sync`: boolean, when true (default) will synchronize the new size of the disk(s)
             with the database cache.
         `raise_error`: boolean
@@ -40,9 +40,9 @@ class DiskService(Service):
             when false, will will log the errors if any failures occur
 
         NOTE:
-            if `size` is given, the disk with `name` will be resized
+            if `data.size` is given, the disk with `name` will be resized
                 to `size` (overprovision).
-            if `size` is not given, the disk with `name` will be resized
+            if `data.size` is not given, the disk with `name` will be resized
                 to it's original size (unoverprovision).
         """
         verrors = ValidationErrors()
