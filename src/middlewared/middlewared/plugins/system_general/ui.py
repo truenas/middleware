@@ -34,8 +34,8 @@ class SystemGeneralService(Service):
     )
     async def ui_address_choices(self):
         """Returns network interfaces that have statically configured
-        IPv4 address(es). These addresses may be used for binding the
-        webUI server to."""
+        IPv4 address(es). These addresses can be used to bind the UI
+        server."""
         return {
             d["address"]: d["address"]
             for d in await self.middleware.call(
@@ -51,8 +51,8 @@ class SystemGeneralService(Service):
     )
     async def ui_v6address_choices(self):
         """Returns network interfaces that have statically configured
-        IPv6 address(es). These addresses may be used for binding the
-        webUI server to."""
+        IPv6 address(es). These addresses can be used to bind the UI
+        server."""
         return {
             d["address"]: d["address"]
             for d in await self.middleware.call(
