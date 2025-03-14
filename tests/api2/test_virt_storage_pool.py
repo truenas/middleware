@@ -1,6 +1,7 @@
 import pytest
 
-from middlewared.test.integration.assets.pool import another_pool
+from middlewared.service_exception import InstanceNotFound
+from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.assets.virt import (
     virt,
     virt_device,
@@ -189,3 +190,73 @@ def test_virt_span_two_pools(virt_two_pools):
 
     # instance should be removed now
     assert call('pool.dataset.attachments', pool['name']) == []
+
+
+def check_volumes(volumes):
+    for spec in volumes:
+        vol = call('virt.volume.get_instance', spec['name'])
+        assert vol['storage_pool'] == spec['pool'], str(vol)
+        assert vol['type'] == 'custom', str(vol)
+        assert vol['content_type'] == 'BLOCK', str(vol)
+        assert vol['config']['size'] == int(spec['volsize'] / 1024 / 1024), str(vol)
+
+
+def test_virt_import_zvol_two_pools_rename(virt_two_pools):
+    pool, config = virt_two_pools
+    with dataset("teszv1", {"type": "VOLUME", "volsize": 1048576}, pool=config['pool']) as zv1:
+        with dataset("teszv2", {"type": "VOLUME", "volsize": 1048576}, pool=pool['name']) as zv2:
+            call('virt.volume.import_zvol', {
+                'to_import': [
+                    {'virt_volume_name': 'vol1', 'zvol_path': f'/dev/zvol/{zv1}'},
+                    {'virt_volume_name': 'vol2', 'zvol_path': f'/dev/zvol/{zv2}'}
+                ]
+            }, job=True)
+
+            try:
+                check_volumes([
+                    {'name': 'vol1', 'pool': config['pool'], 'volsize': 1048576},
+                    {'name': 'vol2', 'pool': pool['name'], 'volsize': 1048576},
+                ])
+            finally:
+                try:
+                    call('virt.volume.delete', 'vol1')
+                except InstanceNotFound:
+                    pass
+
+                try:
+                    call('virt.volume.delete', 'vol2')
+                except InstanceNotFound:
+                    pass
+
+
+def test_virt_import_zvol_two_pools_clone(virt_two_pools):
+    pool, config = virt_two_pools
+    with dataset("teszv1", {"type": "VOLUME", "volsize": 1048576}, pool=config['pool']) as zv1:
+        with dataset("teszv2", {"type": "VOLUME", "volsize": 1048576}, pool=pool['name']) as zv2:
+            call('virt.volume.import_zvol', {
+                'to_import': [
+                    {'virt_volume_name': 'vol1', 'zvol_path': f'/dev/zvol/{zv1}'},
+                    {'virt_volume_name': 'vol2', 'zvol_path': f'/dev/zvol/{zv2}'}
+                ],
+                'clone': True
+            }, job=True)
+
+            # This should succeed since we did clone/promote
+            call('pool.dataset.delete', zv2)
+            call('pool.dataset.delete', zv1)
+
+            try:
+                check_volumes([
+                    {'name': 'vol1', 'pool': config['pool'], 'volsize': 1048576},
+                    {'name': 'vol2', 'pool': pool['name'], 'volsize': 1048576},
+                ])
+            finally:
+                try:
+                    call('virt.volume.delete', 'vol1')
+                except InstanceNotFound:
+                    pass
+
+                try:
+                    call('virt.volume.delete', 'vol2')
+                except InstanceNotFound:
+                    pass
