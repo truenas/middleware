@@ -10,7 +10,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.schema import Bool, Dict, Int, List, Patch, Str
 from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
 from middlewared.utils.size import format_size
-from middlewared.validators import Range
+from middlewared.validators import Match, Range
 
 from .utils import (
     ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
@@ -400,7 +400,7 @@ class PoolService(CRUDService):
 
     @accepts(Dict(
         'pool_create',
-        Str('name', max_length=50, required=True),
+        Str('name', max_length=50, validators=[Match(r'^\S+$')], required=True),
         Bool('encryption', default=False),
         Str('dedup_table_quota', default='AUTO', enum=['AUTO', None, 'CUSTOM'], null=True),
         Int('dedup_table_quota_value', null=True, default=None, validators=[Range(min_=1)]),
