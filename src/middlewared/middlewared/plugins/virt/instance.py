@@ -535,12 +535,17 @@ class VirtInstanceService(CRUDService):
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
-        if instance['status'] == 'RUNNING':
-            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
-                'action': 'stop',
-                'timeout': -1,
-                'force': True,
-            }})
+        if instance['status'] != 'STOPPED':
+            try:
+                await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+                    'action': 'stop',
+                    'timeout': -1,
+                    'force': True,
+                }})
+            except CallError:
+                self.logger.error(
+                    'Failed to stop %r instance having %r status before deletion', id, instance['status'], exc_info=True
+                )
 
         await incus_call_and_wait(f'1.0/instances/{id}', 'delete')
 
