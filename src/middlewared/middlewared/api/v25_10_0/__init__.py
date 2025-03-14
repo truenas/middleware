@@ -76,6 +76,7 @@ from .smb import *  # noqa
 from .snmp import *  # noqa
 from .static_route import *  # noqa
 from .system_general_keymap import *  # noqa
+from .system_general_ui import *  # noqa
 from .system_lifecycle import *  # noqa
 from .system_ntpserver import *  # noqa
 from .system_reboot import *  # noqa
