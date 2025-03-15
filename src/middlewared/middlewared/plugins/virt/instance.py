@@ -21,6 +21,8 @@ from middlewared.api.current import (
     VirtInstanceRestartArgs, VirtInstanceRestartResult,
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
+from middlewared.utils.size import normalize_size
+
 from .utils import (
     create_vnc_password_file, get_vnc_info_from_config, get_root_device_dict, get_vnc_password_file_path,
     Status, incus_call, incus_call_and_wait, VNC_BASE_PORT, root_device_pool_from_raw,
@@ -97,8 +99,7 @@ class VirtInstanceService(CRUDService):
             if entry['type'] == 'VM':
                 entry['secure_boot'] = True if i['config'].get('security.secureboot') == 'true' else False
                 root_device = i['devices'].get('root', {})
-                size = root_device.get('size')
-                entry['root_disk_size'] = int(size) if size else None
+                entry['root_disk_size'] = normalize_size(root_device.get('size'), False)
                 # If one isn't set, it defaults to virtio-scsi
                 entry['root_disk_io_bus'] = (root_device.get('io.bus') or 'virtio-scsi').upper()
 
@@ -128,13 +129,8 @@ class VirtInstanceService(CRUDService):
             if options['extra'].get('raw'):
                 entry['raw'] = i
 
-            if memory := i['config'].get('limits.memory'):
-                # Handle all units? e.g. changes done through CLI
-                if memory.endswith('MiB'):
-                    memory = int(memory[:-3]) * 1024 * 1024
-                else:
-                    memory = None
-            entry['memory'] = memory
+            entry['memory'] = normalize_size(i['config'].get('limits.memory'), False)
+
 
             for k, v in i['config'].items():
                 if not k.startswith('environment.'):
