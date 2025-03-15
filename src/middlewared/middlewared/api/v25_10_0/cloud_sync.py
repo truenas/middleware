@@ -10,22 +10,37 @@ from middlewared.api.base import (
     LongNonEmptyString,
     NonEmptyString,
     single_argument_args,
-    TimeString
+    TimeString,
 )
 from .cloud import BaseCloudEntry
 
-__all__ = ["CloudSyncEntry",
-           "CloudSyncCreateArgs", "CloudSyncCreateResult",
-           "CloudSyncUpdateArgs", "CloudSyncUpdateResult",
-           "CloudSyncDeleteArgs", "CloudSyncDeleteResult",
-           "CloudSyncCreateBucketArgs", "CloudSyncCreateBucketResult",
-           "CloudSyncListBucketsArgs", "CloudSyncListBucketsResult",
-           "CloudSyncListDirectoryArgs", "CloudSyncListDirectoryResult",
-           "CloudSyncSyncArgs", "CloudSyncSyncResult",
-           "CloudSyncSyncOneTimeArgs", "CloudSyncSyncOneTimeResult",
-           "CloudSyncAbortArgs", "CloudSyncAbortResult",
-           "CloudSyncProvidersArgs", "CloudSyncProvidersResult",
-           "CloudSyncOneDriveListDrivesArgs", "CloudSyncOneDriveListDrivesResult"]
+__all__ = [
+    "CloudSyncEntry",
+    "CloudSyncCreateArgs",
+    "CloudSyncCreateResult",
+    "CloudSyncCrudRestoreArgs",
+    "CloudSyncCrudRestoreResult",
+    "CloudSyncUpdateArgs",
+    "CloudSyncUpdateResult",
+    "CloudSyncDeleteArgs",
+    "CloudSyncDeleteResult",
+    "CloudSyncCreateBucketArgs",
+    "CloudSyncCreateBucketResult",
+    "CloudSyncListBucketsArgs",
+    "CloudSyncListBucketsResult",
+    "CloudSyncListDirectoryArgs",
+    "CloudSyncListDirectoryResult",
+    "CloudSyncSyncArgs",
+    "CloudSyncSyncResult",
+    "CloudSyncSyncOneTimeArgs",
+    "CloudSyncSyncOneTimeResult",
+    "CloudSyncAbortArgs",
+    "CloudSyncAbortResult",
+    "CloudSyncProvidersArgs",
+    "CloudSyncProvidersResult",
+    "CloudSyncOneDriveListDrivesArgs",
+    "CloudSyncOneDriveListDrivesResult",
+]
 
 
 class CloudSyncBwlimit(BaseModel):
@@ -139,7 +154,9 @@ class CloudSyncSyncOptions(BaseModel):
 
 class CloudSyncSyncArgs(BaseModel):
     id: int
-    cloud_sync_sync_options: CloudSyncSyncOptions = Field(default_factory=CloudSyncSyncOptions)
+    cloud_sync_sync_options: CloudSyncSyncOptions = Field(
+        default_factory=CloudSyncSyncOptions
+    )
 
 
 class CloudSyncSyncResult(BaseModel):
@@ -148,7 +165,9 @@ class CloudSyncSyncResult(BaseModel):
 
 class CloudSyncSyncOneTimeArgs(BaseModel):
     cloud_sync_sync_onetime: CloudSyncCreate
-    cloud_sync_sync_onetime_options: CloudSyncSyncOptions = Field(default_factory=CloudSyncSyncOptions)
+    cloud_sync_sync_onetime_options: CloudSyncSyncOptions = Field(
+        default_factory=CloudSyncSyncOptions
+    )
 
 
 class CloudSyncSyncOneTimeResult(BaseModel):
