@@ -1,4 +1,5 @@
 import errno
+import os.path
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -69,6 +70,14 @@ class VirtVolumeService(CRUDService):
                 'virt_volume_create.storage_pool',
                 f'Not a valid storage pool. Choices are: {", ".join(global_config["storage_pools"])}'
             )
+
+        ds_name = os.path.join(target_pool, f'.ix-virt/custom/default_{data["name"]}')
+        if await self.middleware.call(
+            'zfs.dataset.query', [['id', '=', ds_name]], {
+                'extra': {'retrieve_children': False, 'retrieve_properties': False}
+            }
+        ):
+            verrors.add('virt_volume_create.name', 'ZFS dataset against this volume name already exists')
 
         verrors.check()
 
