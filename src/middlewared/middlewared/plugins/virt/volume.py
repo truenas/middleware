@@ -1,6 +1,6 @@
-import datetime
 import errno
 import os.path
+from time import time
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -11,7 +11,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDService, job, ValidationErrors
 from middlewared.utils import filter_list
-from time import time
+from middlewared.utils.size import normalize_size
 
 from .utils import incus_call, incus_call_sync, Status, incus_wait, storage_pool_to_incus_pool
 
@@ -49,7 +49,8 @@ class VirtVolumeService(CRUDService):
                     'used_by': [instance.replace('/1.0/instances/', '') for instance in storage_device['used_by']]
                 })
                 if storage_device['config'].get('size'):
-                    entries[-1]['config']['size'] = int(storage_device['config']['size']) // (1024 * 1024)
+                    normalized_size = normalize_size(storage_device['config']['size'], False)
+                    entries[-1]['config']['size'] = normalized_size // (1024 * 1024) if normalized_size else 0
 
         return filter_list(entries, filters, options)
 
