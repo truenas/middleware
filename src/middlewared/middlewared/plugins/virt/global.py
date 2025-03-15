@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-INCUS_PATH = '/var/lib/incus'
 INCUS_BRIDGE = 'incusbr0'
 
 BRIDGE_AUTO = '[AUTO]'
@@ -604,7 +603,7 @@ class VirtGlobalService(ConfigService):
         # Have incus start fresh
         # Use subprocess because shutil.rmtree will traverse filesystems
         # and we do have instances datasets that might be mounted beneath
-        await run(f'rm -rf --one-file-system {INCUS_PATH}/*', shell=True, check=True)
+        await run(f'rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
 
         if start and not await self.middleware.call('service.start', 'incus', {'ha_propagate': False}):
             raise CallError('Failed to start virtualization service')
