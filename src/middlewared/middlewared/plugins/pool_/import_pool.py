@@ -66,7 +66,10 @@ class PoolService(Service):
     @accepts(Dict(
         'pool_import',
         Str('guid', required=True),
-        Str('name', validators=[Match(r'^\S+$')]),
+        Str(
+            'name',
+            validators=[Match(r'^\S+$', explanation='Pool name must not contain whitespace')]
+        ),
         Bool('enable_attachments'),
     ), roles=['POOL_WRITE'])
     @returns(Bool('successful_import'))
