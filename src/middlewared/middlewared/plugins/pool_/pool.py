@@ -400,7 +400,12 @@ class PoolService(CRUDService):
 
     @accepts(Dict(
         'pool_create',
-        Str('name', max_length=50, validators=[Match(r'^\S+$')], required=True),
+        Str(
+            'name',
+            max_length=50,
+            validators=[Match(r'^\S+$', explanation='Pool name must not contain whitespace')],
+            required=True
+        ),
         Bool('encryption', default=False),
         Str('dedup_table_quota', default='AUTO', enum=['AUTO', None, 'CUSTOM'], null=True),
         Int('dedup_table_quota_value', null=True, default=None, validators=[Range(min_=1)]),
