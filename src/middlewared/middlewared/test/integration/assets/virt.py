@@ -57,7 +57,7 @@ def virt_device(instance_name: str, device_name: str, payload: dict):
 @contextlib.contextmanager
 def virt_instance(
     instance_name: str = 'tmp-instance',
-    image: str = 'debian/trixie',
+    image: str | None = 'debian/trixie',  # Can be null when source is null
     **kwargs
 ) -> dict:
     # Create a virt instance and return dict containing full config and raw info
