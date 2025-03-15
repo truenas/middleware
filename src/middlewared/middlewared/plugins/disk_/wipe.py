@@ -120,7 +120,11 @@ class DiskService(Service):
                         return
                     job.set_progress(round(((i / iterations) * 100), 2))
 
-    @api_method(DiskWipeArgs, DiskWipeResult)
+    @api_method(
+        DiskWipeArgs,
+        DiskWipeResult,
+        roles=["FULL_ADMIN"],
+    )
     @job(
         lock=lambda args: args[0],
         description=lambda dev, mode, *args: f'{mode.replace("_", " ").title()} wipe of disk {dev}',
