@@ -4,7 +4,8 @@ import pathlib
 import threading
 import time
 
-from middlewared.schema import accepts, Bool, Str, returns
+from middlewared.api import api_method
+from middlewared.api.current import DiskWipeArgs, DiskWipeResult
 from middlewared.service import job, Service, private
 
 
@@ -58,7 +59,7 @@ class DiskService(Service):
         return startsect
 
     def _wipe_impl(self, job, dev, mode, event):
-        disk_path = f'/dev/{dev}'
+        disk_path = f'/dev/{dev.removeprefix("/dev/")}'
         with open(os.open(disk_path, os.O_WRONLY | os.O_EXCL), 'wb') as f:
             size = os.lseek(f.fileno(), 0, os.SEEK_END)
             if size == 0:
@@ -119,25 +120,14 @@ class DiskService(Service):
                         return
                     job.set_progress(round(((i / iterations) * 100), 2))
 
-    @accepts(
-        Str('dev'),
-        Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM'], required=True),
-        Bool('synccache', default=True),
-    )
-    @returns()
+    @api_method(DiskWipeArgs, DiskWipeResult)
     @job(
         lock=lambda args: args[0],
         description=lambda dev, mode, *args: f'{mode.replace("_", " ").title()} wipe of disk {dev}',
         abortable=True,
     )
     async def wipe(self, job, dev, mode, sync):
-        """
-        Performs a wipe of a disk `dev`.
-        It can be of the following modes:
-          - QUICK: clean the first and last 32 megabytes on `dev`
-          - FULL: write whole disk with zero's
-          - FULL_RANDOM: write whole disk with random bytes
-        """
+        """Performs a wipe of a disk `dev`."""
         event = threading.Event()
         try:
             await self.middleware.run_in_thread(self._wipe_impl, job, dev, mode, event)
