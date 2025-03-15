@@ -1,11 +1,15 @@
 import ipaddress
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    NetworkConfigurationEntry, NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
+)
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
-from middlewared.schema import accepts, Patch, List, Dict, Int, Str, Bool, IPAddr, Ref, URI, ValidationErrors
+from middlewared.schema import ValidationErrors
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils import are_indices_in_consecutive_order
-from middlewared.validators import Match, Hostname
+
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
 
@@ -38,45 +42,7 @@ class NetworkConfigurationService(ConfigService):
         datastore_extend = 'network.configuration.network_config_extend'
         cli_namespace = 'network.configuration'
         role_prefix = 'NETWORK_GENERAL'
-
-    ENTRY = Dict(
-        'network_configuration_entry',
-        Int('id', required=True),
-        Str('hostname', required=True, validators=[Hostname()]),
-        Str('domain', validators=[Match(r'^[a-zA-Z\.\-\0-9]*$')],),
-        IPAddr('ipv4gateway', required=True),
-        IPAddr('ipv6gateway', required=True, allow_zone_index=True),
-        IPAddr('nameserver1', required=True),
-        IPAddr('nameserver2', required=True),
-        IPAddr('nameserver3', required=True),
-        URI('httpproxy', required=True),
-        List('hosts', required=True, items=[Str('host')]),
-        List('domains', required=True, items=[Str('domain')]),
-        Dict(
-            'service_announcement',
-            Bool('netbios'),
-            Bool('mdns'),
-            Bool('wsd'),
-            register=True,
-        ),
-        Dict(
-            'activity',
-            Str('type', enum=['ALLOW', 'DENY'], required=True),
-            List('activities', items=[Str('activity')]),
-            strict=True
-        ),
-        Str('hostname_local', required=True, validators=[Hostname()]),
-        Str('hostname_b', validators=[Hostname()], null=True),
-        Str('hostname_virtual', validators=[Hostname()], null=True),
-        Dict(
-            'state',
-            IPAddr('ipv4gateway', required=True),
-            IPAddr('ipv6gateway', required=True, allow_zone_index=True),
-            IPAddr('nameserver1', required=True),
-            IPAddr('nameserver2', required=True),
-            IPAddr('nameserver3', required=True),
-        ),
-    )
+        entry = NetworkConfigurationEntry
 
     @private
     def read_etc_hosts_file(self):
@@ -193,7 +159,6 @@ class NetworkConfigurationService(ConfigService):
 
         return verrors
 
-    @accepts(Ref('service_announcement'))
     @private
     async def toggle_announcement(self, data):
         announce_srv = {'mdns': 'mdns', 'netbios': 'nmbd', 'wsd': 'wsdd'}
@@ -212,34 +177,10 @@ class NetworkConfigurationService(ConfigService):
 
             await self.middleware.call(f'service.{verb}', service_name)
 
-    @accepts(
-        Patch(
-            'network_configuration_entry', 'global_configuration_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'hostname_local'}),
-            ('rm', {'name': 'state'}),
-            ('attr', {'update': True}),
-        ),
-    )
+    @api_method(NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult)
     async def do_update(self, data):
         """
         Update Network Configuration Service configuration.
-
-        `ipv4gateway` if set is used instead of the default gateway provided by DHCP.
-
-        `nameserver1` is primary DNS server.
-
-        `nameserver2` is secondary DNS server.
-
-        `nameserver3` is tertiary DNS server.
-
-        `httpproxy` attribute must be provided if a proxy is to be used for network operations.
-
-        `service_announcement` determines the broadcast protocols that will be used to advertise the server.
-        `netbios` enables the NetBIOS name server (NBNS), which starts concurrently with the SMB service. SMB clients
-        will only perform NBNS lookups if SMB1 is enabled. NBNS may be required for legacy SMB clients.
-        `mdns` enables multicast DNS service announcements for enabled services. `wsd` enables Web Service
-        Discovery support.
         """
         config = await self.config()
         config.pop('state')
