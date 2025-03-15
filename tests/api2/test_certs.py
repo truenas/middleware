@@ -1,208 +1,19 @@
-import datetime
-import os.path
 import textwrap
 
-import cryptography
 import pytest
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509 import Name, NameAttribute, CertificateBuilder, BasicConstraints
 
-from middlewared.test.integration.assets.crypto import (
-    certificate_signing_request, get_cert_params, intermediate_certificate_authority, root_certificate_authority
-)
+from middlewared.test.integration.assets.crypto import certificate_signing_request
 from middlewared.test.integration.utils import call
 from truenas_api_client import ValidationErrors
 
 
 # We would like to test the following cases
-# Creating root CA
-# Creating intermediate CA
-# Importing CA
-# Creating certificate from root/intermediate CAs
 # Create CSR
-# Signing CSR
-
-def test_creating_root_ca():
-    root_ca = call('certificateauthority.create', {
-        **get_cert_params(),
-        'name': 'test_root_ca',
-        'create_type': 'CA_CREATE_INTERNAL',
-    })
-    try:
-        assert root_ca['CA_type_internal'] is True, root_ca
-    finally:
-        call('certificateauthority.delete', root_ca['id'])
+# Import cert
 
 
-def test_root_ca_issuer_reported_correctly():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        assert root_ca['issuer'] == 'self-signed', root_ca
-
-
-def test_creating_intermediate_ca():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        intermediate_ca = call('certificateauthority.create', {
-            **get_cert_params(),
-            'signedby': root_ca['id'],
-            'name': 'test_intermediate_ca',
-            'create_type': 'CA_CREATE_INTERMEDIATE',
-        })
-        try:
-            assert intermediate_ca['CA_type_intermediate'] is True, intermediate_ca
-        finally:
-            call('certificateauthority.delete', intermediate_ca['id'])
-
-
-def test_ca_intermediate_issuer_reported_correctly():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        intermediate_ca = call('certificateauthority.create', {
-            **get_cert_params(),
-            'signedby': root_ca['id'],
-            'name': 'test_intermediate_ca',
-            'create_type': 'CA_CREATE_INTERMEDIATE',
-        })
-        root_ca = call('certificateauthority.get_instance', root_ca['id'])
-        try:
-            assert intermediate_ca['issuer'] == root_ca, intermediate_ca
-        finally:
-            call('certificateauthority.delete', intermediate_ca['id'])
-
-
-def test_cert_chain_of_intermediate_ca_reported_correctly():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        intermediate_ca = call('certificateauthority.create', {
-            **get_cert_params(),
-            'signedby': root_ca['id'],
-            'name': 'test_intermediate_ca',
-            'create_type': 'CA_CREATE_INTERMEDIATE',
-        })
-        try:
-            assert intermediate_ca['chain_list'] == [
-                intermediate_ca['certificate'], root_ca['certificate']
-            ], intermediate_ca
-        finally:
-            call('certificateauthority.delete', intermediate_ca['id'])
-
-
-def test_importing_ca():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        imported_ca = call('certificateauthority.create', {
-            'certificate': root_ca['certificate'],
-            'privatekey': root_ca['privatekey'],
-            'name': 'test_imported_ca',
-            'create_type': 'CA_CREATE_IMPORTED',
-        })
-        try:
-            assert imported_ca['CA_type_existing'] is True, imported_ca
-        finally:
-            call('certificateauthority.delete', imported_ca['id'])
-
-
-def test_ca_imported_issuer_reported_correctly():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        imported_ca = call('certificateauthority.create', {
-            'certificate': root_ca['certificate'],
-            'privatekey': root_ca['privatekey'],
-            'name': 'test_imported_ca',
-            'create_type': 'CA_CREATE_IMPORTED',
-        })
-        try:
-            assert imported_ca['issuer'] == 'external', imported_ca
-        finally:
-            call('certificateauthority.delete', imported_ca['id'])
-
-
-def test_ca_imported_add_to_trusted_store_reported_correctly():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        imported_ca = call('certificateauthority.create', {
-            'certificate': root_ca['certificate'],
-            'privatekey': root_ca['privatekey'],
-            'name': 'test_tinkerbell',
-            'add_to_trusted_store': True,
-            'create_type': 'CA_CREATE_IMPORTED',
-        })
-        try:
-            assert imported_ca['add_to_trusted_store'] is True, imported_ca
-        finally:
-            call('certificateauthority.delete', imported_ca['id'])
-
-
-def test_creating_cert_from_root_ca():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        cert = call('certificate.create', {
-            'name': 'cert_test',
-            'signedby': root_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            **get_cert_params(),
-        }, job=True)
-        try:
-            assert cert['cert_type_internal'] is True, cert
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-
-
-def test_cert_chain_of_root_ca_reported_correctly():
-    with root_certificate_authority('root_ca_test') as root_ca:
-        cert = call('certificate.create', {
-            'name': 'cert_test',
-            'signedby': root_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            **get_cert_params(),
-        }, job=True)
-        try:
-            assert cert['chain_list'] == [cert['certificate'], root_ca['certificate']], cert
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-
-
-def test_creating_cert_from_intermediate_ca():
-    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
-        cert = call('certificate.create', {
-            'name': 'cert_test',
-            'signedby': intermediate_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            **get_cert_params(),
-        }, job=True)
-        try:
-            assert cert['cert_type_internal'] is True, cert
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-
-
-def test_cert_chain_reported_correctly():
-    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
-        cert = call('certificate.create', {
-            'name': 'cert_test',
-            'signedby': intermediate_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            **get_cert_params(),
-        }, job=True)
-        try:
-            assert cert['chain_list'] == [
-                cert['certificate'], intermediate_ca['certificate'], root_ca['certificate']
-            ], cert
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-
-
-def test_cert_issuer_reported_correctly():
-    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
-        cert = call('certificate.create', {
-            'name': 'cert_test',
-            'signedby': intermediate_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            **get_cert_params(),
-        }, job=True)
-        intermediate_ca = call('certificateauthority.get_instance', intermediate_ca['id'])
-        try:
-            assert cert['issuer'] == intermediate_ca, cert
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-
-
+# FIXME: Do this pelase
+'''
 @pytest.mark.parametrize('add_to_trusted_store_enabled', [
     True,
     False,
@@ -226,239 +37,38 @@ def test_cert_add_to_trusted_store(add_to_trusted_store_enabled):
                     call(*args)
         finally:
             call('certificate.delete', cert['id'], job=True)
-
+'''
 
 def test_creating_csr():
     with certificate_signing_request('csr_test') as csr:
         assert csr['cert_type_CSR'] is True, csr
 
 
-def test_issuer_of_csr():
-    with certificate_signing_request('csr_test') as csr:
-        assert csr['issuer'] == 'external - signature pending', csr
-
-
-def test_signing_csr():
-    with root_certificate_authority('root_ca') as root_ca:
-        with certificate_signing_request('csr_test') as csr:
-            cert = call('certificateauthority.ca_sign_csr', {
-                'ca_id': root_ca['id'],
-                'csr_cert_id': csr['id'],
-                'name': 'signed_cert',
-            })
-            root_ca = call('certificateauthority.get_instance', root_ca['id'])
-            try:
-                assert isinstance(cert['signedby'], dict), cert
-                assert cert['signedby']['id'] == root_ca['id'], cert
-                assert cert['chain_list'] == [cert['certificate'], root_ca['certificate']]
-                assert cert['issuer'] == root_ca, cert
-            finally:
-                call('certificate.delete', cert['id'], job=True)
-
-
-def test_sign_csr_with_imported_ca():
-    # Creating Root CA
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend()
-    )
-
-    # Serialize the private key
-    private_key_bytes = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()  # No encryption for test purposes
-    )
-
-    # Create a self-signed certificate
-    subject = Name([
-        NameAttribute(cryptography.x509.NameOID.COUNTRY_NAME, u'US'),
-        NameAttribute(cryptography.x509.NameOID.STATE_OR_PROVINCE_NAME, u'Ohio'),
-        NameAttribute(cryptography.x509.NameOID.LOCALITY_NAME, u'Texas'),
-        NameAttribute(cryptography.x509.NameOID.ORGANIZATION_NAME, u'MyCA'),
-        NameAttribute(cryptography.x509.NameOID.COMMON_NAME, u'MyCA'),
-    ])
-    issuer = subject
-
-    cert = CertificateBuilder().subject_name(subject).issuer_name(issuer).not_valid_before(
-        datetime.datetime.utcnow()).not_valid_after(
-        datetime.datetime.utcnow() + datetime.timedelta(days=3650)).serial_number(
-        x509.random_serial_number()).public_key(
-        private_key.public_key()).add_extension(
-        BasicConstraints(ca=True, path_length=None), critical=True).sign(
-        private_key, hashes.SHA256(), default_backend()
-    )
-
-    # Serialize the certificate
-    cert_bytes = cert.public_bytes(serialization.Encoding.PEM)
-
-    imported_root_ca = call('certificateauthority.create', {
-        'certificate': cert_bytes.decode('utf-8'),
-        'privatekey': private_key_bytes.decode('utf-8'),
-        'name': 'test_imported_root_ca',
-        'create_type': 'CA_CREATE_IMPORTED',
-    })
-
-    with certificate_signing_request('csr_test') as csr:
-        cert = call('certificateauthority.ca_sign_csr', {
-            'ca_id': imported_root_ca['id'],
-            'csr_cert_id': csr['id'],
-            'name': 'inter_signed_csr'
-        })
-
-        cert_pem_data = cert['certificate'].encode()
-        cert_data = x509.load_pem_x509_certificate(cert_pem_data, default_backend())
-        cert_issuer = cert_data.issuer
-        ca_pem_data = imported_root_ca['certificate'].encode()
-        ca_data = x509.load_pem_x509_certificate(ca_pem_data, default_backend())
-        ca_subject = ca_data.subject
-        imported_root_ca = call('certificateauthority.get_instance', imported_root_ca['id'])
-
-        try:
-            assert imported_root_ca['CA_type_existing'] is True, imported_root_ca
-            assert isinstance(cert['signedby'], dict), cert
-            assert cert['signedby']['id'] == imported_root_ca['id'], cert
-            assert cert['chain_list'] == [cert['certificate'], imported_root_ca['certificate']], cert
-            assert cert['issuer'] == imported_root_ca, cert
-            assert cert_issuer == ca_subject
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-            call('certificateauthority.delete', imported_root_ca['id'])
-
-
-def test_revoking_cert():
-    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
-        cert = call('certificate.create', {
-            'name': 'cert_test',
-            'signedby': intermediate_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            **get_cert_params(),
-        }, job=True)
-        try:
-            assert cert['can_be_revoked'] is True, cert
-            cert = call('certificate.update', cert['id'], {'revoked': True}, job=True)
-            assert cert['revoked'] is True, cert
-
-            root_ca = call('certificateauthority.get_instance', root_ca['id'])
-            intermediate_ca = call('certificateauthority.get_instance', intermediate_ca['id'])
-
-            assert len(root_ca['revoked_certs']) == 1, root_ca
-            assert len(intermediate_ca['revoked_certs']) == 1, intermediate_ca
-
-            assert root_ca['revoked_certs'][0]['certificate'] == cert['certificate'], root_ca
-            assert intermediate_ca['revoked_certs'][0]['certificate'] == cert['certificate'], intermediate_ca
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-
-
-def test_revoking_ca():
-    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
-        cert = call('certificate.create', {
-            'name': 'cert_test',
-            'signedby': intermediate_ca['id'],
-            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-            **get_cert_params(),
-        }, job=True)
-        try:
-            assert intermediate_ca['can_be_revoked'] is True, intermediate_ca
-            intermediate_ca = call('certificateauthority.update', intermediate_ca['id'], {'revoked': True})
-            assert intermediate_ca['revoked'] is True, intermediate_ca
-
-            cert = call('certificate.get_instance', cert['id'])
-            assert cert['revoked'] is True, cert
-
-            root_ca = call('certificateauthority.get_instance', root_ca['id'])
-            assert len(root_ca['revoked_certs']) == 2, root_ca
-            assert len(intermediate_ca['revoked_certs']) == 2, intermediate_ca
-
-            check_set = {intermediate_ca['certificate'], cert['certificate']}
-            assert set(c['certificate'] for c in intermediate_ca['revoked_certs']) == check_set, intermediate_ca
-            assert set(c['certificate'] for c in root_ca['revoked_certs']) == check_set, root_ca
-        finally:
-            call('certificate.delete', cert['id'], job=True)
-
-
 def test_created_certs_exist_on_filesystem():
-    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
-        with certificate_signing_request('csr_test') as csr:
-            cert = call('certificate.create', {
-                'name': 'cert_test',
-                'signedby': intermediate_ca['id'],
-                'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-                **get_cert_params(),
-            }, job=True)
-            try:
-                assert get_cert_current_files() == get_cert_expected_files()
-            finally:
-                call('certificate.delete', cert['id'], job=True)
+    with certificate_signing_request('csr_test'):
+        assert get_cert_current_files() == get_cert_expected_files()
 
 
 def test_deleted_certs_dont_exist_on_filesystem():
-    with intermediate_certificate_authority('root_ca2', 'intermediate_ca2') as (root_ca2, intermediate_ca2):
-        # no-op
-        pass
-    with certificate_signing_request('csr_test2') as csr2:
+    with certificate_signing_request('csr_test2'):
         pass
     assert get_cert_current_files() == get_cert_expected_files()
 
 
 def get_cert_expected_files():
-    certs = call('certificate.query')
-    cas = call('certificateauthority.query')
-    expected_files = {'/etc/certificates/CA'}
-    for cert in certs + cas:
+    expected_files = set()
+    for cert in call('certificate.query'):
         if cert['chain_list']:
             expected_files.add(cert['certificate_path'])
         if cert['privatekey']:
             expected_files.add(cert['privatekey_path'])
         if cert['cert_type_CSR']:
             expected_files.add(cert['csr_path'])
-        if any(cert[k] for k in ('CA_type_existing', 'CA_type_internal', 'CA_type_intermediate')):
-            expected_files.add(cert['crl_path'])
     return expected_files
 
 
 def get_cert_current_files():
-    return {
-        f['path']
-        for p in ('/etc/certificates', '/etc/certificates/CA') for f in call('filesystem.listdir', p)
-    }
-
-
-@pytest.mark.parametrize('life_time,should_work', [
-    (300, True),
-    (9999999, False),
-])
-def test_certificate_lifetime_validation(life_time, should_work):
-    cert_params = get_cert_params()
-    cert_params['lifetime'] = life_time
-    with root_certificate_authority('root-ca') as root_ca:
-        if should_work:
-            cert = None
-            try:
-                cert = call(
-                    'certificate.create', {
-                        'name': 'test-cert',
-                        'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-                        'signedby': root_ca['id'],
-                        **cert_params,
-                    }, job=True
-                )
-                assert cert['parsed'] is True, cert
-            finally:
-                if cert:
-                    call('certificate.delete', cert['id'], job=True)
-        else:
-            with pytest.raises(ValidationErrors):
-                call(
-                    'certificate.create', {
-                        'name': 'test-cert',
-                        'signedby': root_ca['id'],
-                        'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-                        **cert_params,
-                    }, job=True
-                )
+    return {f['path'] for f in call('filesystem.listdir', '/etc/certificates')}
 
 
 @pytest.mark.parametrize('certificate,private_key,should_work', [

@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppContainerIDArgs, AppContainerIDResult, AppContainerConsoleChoiceArgs, AppContainerConsoleChoiceResult,
-    AppCertificateChoicesArgs, AppCertificateChoicesResult, AppCertificateAuthorityArgs, AppCertificateAuthorityResult,
+    AppCertificateChoicesArgs, AppCertificateChoicesResult,
     AppUsedPortsArgs, AppUsedPortsResult, AppIPChoicesArgs, AppIPChoicesResult, AppAvailableSpaceArgs,
     AppAvailableSpaceResult, AppGpuChoicesArgs, AppGpuChoicesResult,
 )
@@ -51,17 +51,8 @@ class AppService(Service):
         Returns certificates which can be used by applications.
         """
         return await self.middleware.call(
-            'certificate.query', [['revoked', '=', False], ['cert_type_CSR', '=', False], ['parsed', '=', True]],
+            'certificate.query', [['cert_type_CSR', '=', False], ['parsed', '=', True]],
             {'select': ['name', 'id']}
-        )
-
-    @api_method(AppCertificateAuthorityArgs, AppCertificateAuthorityResult, roles=['APPS_READ'])
-    async def certificate_authority_choices(self):
-        """
-        Returns certificate authorities which can be used by applications.
-        """
-        return await self.middleware.call(
-            'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]], {'select': ['name', 'id']}
         )
 
     @api_method(AppUsedPortsArgs, AppUsedPortsResult, roles=['APPS_READ'])

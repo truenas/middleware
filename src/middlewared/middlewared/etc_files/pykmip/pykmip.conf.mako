@@ -1,7 +1,7 @@
 <%
 	kmip_config = middleware.call_sync('kmip.config')
 	cert = middleware.call_sync('certificate.query', [['id', '=', kmip_config['certificate']]])
-	ca = middleware.call_sync('certificateauthority.query', [['id', '=', kmip_config['certificate_authority']]])
+	ca = middleware.call_sync('certificate.query', [['id', '=', kmip_config['certificate_authority']]])
 %>\
 [client]
 host=${kmip_config['server']}

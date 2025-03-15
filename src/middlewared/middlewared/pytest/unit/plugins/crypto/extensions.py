@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.crypto_.generate_ca import generate_certificate_authority
+from middlewared.plugins.crypto_.generate_certs import generate_certificate
 from middlewared.plugins.crypto_.load_utils import load_certificate
 from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
 
@@ -151,7 +151,7 @@ from middlewared.plugins.crypto_.utils import DEFAULT_LIFETIME_DAYS
     ),
 ])
 def test__generating_ca(generate_params, extension_info):
-    extensions = load_certificate(generate_certificate_authority(generate_params)[0], True)['extensions']
+    extensions = load_certificate(generate_certificate(generate_params)[0], True)['extensions']
     for k in extension_info:
         assert k in extensions, extensions
         assert extensions[k] == extension_info[k]
