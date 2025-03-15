@@ -394,6 +394,7 @@ class VirtGlobalService(ConfigService):
         2. After change to the storage pool path
         3. After an HA failover event
         4. After TrueNAS upgrades
+        5. After we see user trying to add a volume whose dataset already exists
 
         NOTE: this will potentially cause user-initiated changes from incus commands to be lost.
         """
