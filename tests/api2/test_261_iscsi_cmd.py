@@ -105,7 +105,7 @@ zvol = f'{pool_name}/{zvol_name}'
 
 
 def snapshot_rollback(snapshot_id):
-    call('zfs.snapshot.rollback', snapshot_id)
+    call('pool.snapshot.rollback', snapshot_id)
 
 
 def other_node(node):

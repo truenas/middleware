@@ -81,7 +81,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                     }
                 }
             }
-            snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+            snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
             # Check that we have one snap returned and that it has the expected
             # data
             assert len(snaps) == 1
@@ -94,7 +94,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
             # Now create another snapshot and re-issue the query to check the
             # new results.
             with snapshot(dataset_id, "snap02", get=True) as snap02_config:
-                snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                 # Check that we have two snaps returned and that they have the expected
                 # data.
                 assert len(snaps) == 2
@@ -119,7 +119,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                     with snapshot(dataset2, "snap03", get=True) as snap03_config:
                         # First issue the original query again & ensure we still have
                         # the expected snapshots
-                        snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                        snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                         assert len(snaps) == 2
                         for snap in snaps:
                             assert snap['createtxg'] in existing_snaps, f"Got unexpected snap: {snap}"
@@ -128,7 +128,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                         payload.update({
                             'query-filters': [["dataset", "=", dataset2]]
                             })
-                        snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                        snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                         assert len(snaps) == 1
                         snap = snaps[0]
                         assert snap['createtxg'] not in existing_snaps, f"Got unexpected snap: {snap}"
@@ -142,7 +142,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                         payload.update({
                             'query-filters': [["dataset", "=", f"{dataset_name}-BOGUS"]]
                             })
-                        snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                        snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                         assert len(snaps) == 0
 
                         # Next issue the query WITHOUT a filter.  It's possible
@@ -152,7 +152,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                         payload.update({
                             'query-filters': []
                             })
-                        snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                        snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                         assert len(snaps) >= 3
                         all_snaps = set([s['createtxg'] for s in snaps])
                         assert existing_snaps.issubset(all_snaps), "Existing snaps not returned in filterless query"
@@ -160,7 +160,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
 
                     # Let the snap03 get cleaned up, and then ensure even with a filterless query
                     # that it is no longer returned.
-                    snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                    snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                     assert len(snaps) >= 2
                     all_snaps = set([s['createtxg'] for s in snaps])
                     assert existing_snaps.issubset(all_snaps), "Existing snaps not returned in filterless query"
@@ -256,7 +256,7 @@ def _test_xxx_snapshot_query_filter_snapshot(dataset_name, properties_list, expe
                         }
                     }
                 }
-                snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                 # Check that we have one snap returned and that it has the expected
                 # data
                 assert len(snaps) == 1
@@ -275,7 +275,7 @@ def _test_xxx_snapshot_query_filter_snapshot(dataset_name, properties_list, expe
                         }
                     }
                 }
-                snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
                 # Check that we have one snap returned and that it has the expected
                 # data
                 assert len(snaps) == 1
@@ -286,7 +286,7 @@ def _test_xxx_snapshot_query_filter_snapshot(dataset_name, properties_list, expe
                     _verify_snapshot_properties(snap, properties_list)
 
             # Allow snap02 to be destroyed, then query again to make sure we don't get it
-            snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+            snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
             assert len(snaps) == 0
 
 
@@ -377,13 +377,13 @@ def _test_xxx_snapshot_query_filter_pool(dataset_name, properties_list, expected
                 }
             }
         }
-        snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+        snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
         original_snap_count = len(snaps)
 
         with snapshot(dataset_id, "snap01", get=True) as snap01_config:
             with snapshot(dataset_id, "snap02", get=True) as snap02_config:
                 # Query again
-                snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+                snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
 
                 # Check that we have two additional snap returned and that
                 # they have the expected data
@@ -400,7 +400,7 @@ def _test_xxx_snapshot_query_filter_pool(dataset_name, properties_list, expected
                     _verify_snapshot_properties(snap02, properties_list)
 
             # Allow snap02 to be destroyed & query again.
-            snaps = call("zfs.snapshot.query", payload["query-filters"], payload["query-options"])
+            snaps = call("pool.snapshot.query", payload["query-filters"], payload["query-options"])
 
             assert len(snaps) == original_snap_count+1
             ssnaps = sorted(snaps, key=lambda d: int(d['createtxg']))

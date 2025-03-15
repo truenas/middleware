@@ -105,7 +105,7 @@ def check_previous_version_contents(path, contents, offset):
 @pytest.mark.dependency(name="VSS_DATASET_CREATED")
 def test_001_creating_smb_dataset(request, ds):
     assert call("pool.dataset.create", {"name": ds, "share_type": "SMB"})
-    assert call("zfs.snapshot.create", {"dataset": ds, "name": "init"})
+    assert call("pool.snapshot.create", {"dataset": ds, "name": "init"})
 
 
 @pytest.mark.dependency(name="VSS_USER_CREATED")
@@ -203,7 +203,7 @@ def test_008_set_up_testfiles(request, payload):
         c.close(fd)
 
     sleep(5)
-    assert call("zfs.snapshot.create", {
+    assert call("pool.snapshot.create", {
         "dataset": dataset,
         "name": payload,
         "recursive": True,

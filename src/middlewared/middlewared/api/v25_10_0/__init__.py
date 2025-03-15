@@ -60,6 +60,7 @@ from .pool import *  # noqa
 from .pool_dataset import *  # noqa
 from .pool_resilver import *  # noqa
 from .pool_scrub import *  # noqa
+from .pool_snapshot import *  # noqa
 from .pool_snapshot_count import *  # noqa
 from .pool_snapshottask import *  # noqa
 from .privilege import *  # noqa

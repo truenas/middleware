@@ -25,12 +25,12 @@ def test_change_retention():
                 "minute": "*",
             },
         }) as task:
-            call("zfs.snapshot.create", {
+            call("pool.snapshot.create", {
                 "dataset": ds,
                 "name": "auto-2021-04-12-06-30-1y",
             })
 
-            result = call("zfs.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
+            result = call("pool.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
                           {"get": True, "extra": {"retention": True}})
             assert result["retention"] == {
                 "datetime": ANY,
@@ -54,7 +54,7 @@ def test_change_retention():
 
             call("core.job_wait", job.id, job=True)
 
-            result = call("zfs.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
+            result = call("pool.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
                           {"get": True, "extra": {"retention": True}})
             properties = [v for k, v in result["properties"].items() if k.startswith("org.truenas:destroy_at_")]
             assert properties, result["properties"]
@@ -83,7 +83,7 @@ def test_delete_retention():
                 "minute": "*",
             },
         }) as task:
-            call("zfs.snapshot.create", {
+            call("pool.snapshot.create", {
                 "dataset": ds,
                 "name": "auto-2021-04-12-06-30-1y",
             })
@@ -100,7 +100,7 @@ def test_delete_retention():
 
             call("core.job_wait", job.id, job=True)
 
-            result = call("zfs.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
+            result = call("pool.snapshot.query", [["id", "=", f"{ds}@auto-2021-04-12-06-30-1y"]],
                           {"get": True, "extra": {"retention": True}})
             properties = [v for k, v in result["properties"].items() if k.startswith("org.truenas:destroy_at_")]
             assert properties, result["properties"]

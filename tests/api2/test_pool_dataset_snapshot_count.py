@@ -13,9 +13,9 @@ sys.path.append(os.getcwd())
 def test_empty_for_locked_root_dataset():
     with dataset("test_pool_dataset_snapshot_count") as ds:
         for i in range(7):
-            call("zfs.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
+            call("pool.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
 
-        with mock("zfs.snapshot.query", textwrap.dedent("""\
+        with mock("pool.snapshot.query", textwrap.dedent("""\
             def mock(self, *args):
                 raise Exception("Should not be called")
         """)):
