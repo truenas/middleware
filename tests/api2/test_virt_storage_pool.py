@@ -195,10 +195,10 @@ def test_virt_span_two_pools(virt_two_pools):
 def check_volumes(volumes):
     for spec in volumes:
         vol = call('virt.volume.get_instance', spec['name'])
-        assert vol['storage_pool'] == spec['pool']
-        assert vol['type'] == 'custom'
-        assert vol['content_type'] == 'BLOCK'
-        assert vol['config']['size'] == spec['volsize']
+        assert vol['storage_pool'] == spec['pool'], , str(vol)
+        assert vol['type'] == 'custom', str(vol)
+        assert vol['content_type'] == 'BLOCK', str(vol)
+        assert vol['config']['size'] == spec['volsize'], str(vol)
 
 
 def test_virt_import_zvol_two_pools_rename(virt_two_pools):
