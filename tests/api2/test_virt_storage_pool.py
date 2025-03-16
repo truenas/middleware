@@ -210,7 +210,7 @@ def test_virt_import_zvol_two_pools_rename(virt_two_pools):
                     {'virt_volume_name': 'vol1', 'zvol_path': f'/dev/zvol/{zv1}'},
                     {'virt_volume_name': 'vol2', 'zvol_path': f'/dev/zvol/{zv2}'}
                 ]
-            })
+            }, job=True)
 
             try:
                 check_volumes([
@@ -239,7 +239,7 @@ def test_virt_import_zvol_two_pools_clone(virt_two_pools):
                     {'virt_volume_name': 'vol2', 'zvol_path': f'/dev/zvol/{zv2}'}
                 ],
                 'clone': True
-            })
+            }, job=True)
 
             # This should succeed since we did clone/promote
             call('pool.dataset.delete', zv2)
