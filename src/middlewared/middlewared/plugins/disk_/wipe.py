@@ -123,7 +123,8 @@ class DiskService(Service):
     @api_method(
         DiskWipeArgs,
         DiskWipeResult,
-        roles=["FULL_ADMIN"],
+        audit="Disk Wipe",
+        roles=["DISK_WRITE"],
     )
     @job(
         lock=lambda args: args[0],
