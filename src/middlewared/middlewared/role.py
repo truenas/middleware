@@ -118,8 +118,6 @@ ROLES = {
     # Crypto roles
     'CERTIFICATE_READ': Role(),
     'CERTIFICATE_WRITE': Role(includes=['CERTIFICATE_READ']),
-    'CERTIFICATE_AUTHORITY_READ': Role(),
-    'CERTIFICATE_AUTHORITY_WRITE': Role(includes=['CERTIFICATE_AUTHORITY_READ']),
 
     # Apps roles
     'CATALOG_READ': Role(),

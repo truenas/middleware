@@ -18,7 +18,6 @@ class CertificateService(Service):
                 system_cert[k] == v for k, v in (
                     ('organization', 'iXsystems'),
                     ('san', ['DNS:localhost']),
-                    ('signedby', None),
                     ('cert_type_existing', True),
                 )
             ) or tnc_config['certificate'] == system_cert['id']

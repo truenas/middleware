@@ -19,7 +19,7 @@ class KMIPModel(sa.Model):
     ssl_version = sa.Column(sa.String(128), default='PROTOCOL_TLSv1_2')
     port = sa.Column(sa.SmallInteger(), default=5696)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    certificate_authority_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
+    certificate_authority_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     manage_sed_disks = sa.Column(sa.Boolean(), default=False)
     manage_zfs_keys = sa.Column(sa.Boolean(), default=False)
     enabled = sa.Column(sa.Boolean(), default=False)
@@ -84,7 +84,7 @@ class KMIPService(ConfigService):
 
         verrors.extend(await validate_port(self.middleware, 'kmip_update.port', new['port'], 'kmip'))
 
-        ca = await self.middleware.call('certificateauthority.query', [['id', '=', new['certificate_authority']]])
+        ca = await self.middleware.call('certificate.query', [['id', '=', new['certificate_authority']]])
         if ca and not verrors:
             ca = ca[0]
             if not await self.middleware.call(

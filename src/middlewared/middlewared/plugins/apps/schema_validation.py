@@ -9,7 +9,6 @@ from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVID
 
 VALIDATION_REF_MAPPING = {
     'definitions/certificate': 'certificate',
-    'definitions/certificateAuthority': 'certificate_authority',
     'definitions/port': 'port_available_on_node',
     'normalize/acl': 'acl_entries',
 }
@@ -111,15 +110,6 @@ class AppSchemaService(Service):
 
         if not filter_list(await self.middleware.call('app.certificate_choices'), [['id', '=', value]]):
             verrors.add(schema_name, 'Unable to locate certificate.')
-
-    async def validate_certificate_authority(self, verrors, value, question, schema_name, app_data):
-        if not value:
-            return
-
-        if not filter_list(
-            await self.middleware.call('app.certificate_authority_choices'), [['id', '=', value]]
-        ):
-            verrors.add(schema_name, 'Unable to locate certificate authority.')
 
     def validate_acl_entries(self, verrors, value, question, schema_name, app_data):
         try:
