@@ -198,7 +198,7 @@ def check_volumes(volumes):
         assert vol['storage_pool'] == spec['pool'], str(vol)
         assert vol['type'] == 'custom', str(vol)
         assert vol['content_type'] == 'BLOCK', str(vol)
-        assert vol['config']['size'] == spec['volsize'], str(vol)
+        assert vol['config']['size'] == int(spec['volsize'] / 1024 / 1024), str(vol)
 
 
 def test_virt_import_zvol_two_pools_rename(virt_two_pools):

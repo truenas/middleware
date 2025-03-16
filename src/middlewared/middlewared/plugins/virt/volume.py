@@ -312,7 +312,7 @@ class VirtVolumeService(CRUDService):
         job.set_progress(50, 'Updating volume metadata')
 
         for entry in data['to_import']:
-            pool = entry['zpool']
+            pool = storage_pool_to_incus_pool(entry['zpool'])
             name = entry['virt_volume_name']
 
             result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{name}', 'patch', {
