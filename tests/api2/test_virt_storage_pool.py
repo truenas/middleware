@@ -195,7 +195,7 @@ def test_virt_span_two_pools(virt_two_pools):
 def check_volumes(volumes):
     for spec in volumes:
         vol = call('virt.volume.get_instance', spec['name'])
-        assert vol['storage_pool'] == spec['pooll']
+        assert vol['storage_pool'] == spec['pool']
         assert vol['type'] == 'custom'
         assert vol['content_type'] == 'BLOCK'
         assert vol['config']['size'] == spec['volsize']
