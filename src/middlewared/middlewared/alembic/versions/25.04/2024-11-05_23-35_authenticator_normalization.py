@@ -30,7 +30,7 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
         cert = dict(cert)
 
         try:
-            authenticators = json.loads(cert['cert_domains_authenticators'] or '{}')
+            authenticators = json.loads(decrypt(cert['cert_domains_authenticators']) or '{}')
         except json.decoder.JSONDecodeError:
             # Shouldn't happen, but just being safe
             continue
@@ -44,7 +44,7 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
         if updated_authenticators != authenticators:
             conn.execute(
                 "UPDATE system_certificate SET cert_domains_authenticators = :auths WHERE id = :id",
-                {'auths': json.dumps(updated_authenticators), 'id': cert['id']}
+                {'auths': encrypt(json.dumps(updated_authenticators)), 'id': cert['id']}
             )
 
 
@@ -54,12 +54,17 @@ def upgrade():
         dict(config) for config in conn.execute("SELECT * FROM system_acmednsauthenticator").fetchall()
     ]
     authenticator_mapping = defaultdict(list)
+    encrypted_domains_certs = []
     for cert in conn.execute("SELECT * FROM system_certificate").fetchall():
         cert = dict(cert)
         try:
-            authenticators = json.loads(cert['cert_domains_authenticators'] or '{}')
+            value = decrypt(cert['cert_domains_authenticators']) if cert['cert_domains_authenticators'] else '{}'
+            if value is None:
+                encrypted_domains_certs.append(cert['id'])
+                continue
+
+            authenticators = json.loads(value)
         except json.JSONDecodeError:
-            # Shouldn't happen but just being safe
             continue
 
         for value in authenticators.values():
@@ -80,6 +85,14 @@ def upgrade():
                 "UPDATE system_acmednsauthenticator SET attributes = ? WHERE id = ?",
                 (encrypt(json.dumps(attributes)), authenticator_config['id'])
             )
+
+    # For certs where we were not able to read domains mappings, we will now unset those as they are not usable
+    # anymore
+    if encrypted_domains_certs:
+        placeholders = ', '.join(map(str, encrypted_domains_certs))
+        conn.execute(
+            f"UPDATE system_certificate SET cert_domains_authenticators = NULL WHERE id IN ({placeholders})"
+        )
 
     with op.batch_alter_table('system_acmednsauthenticator', schema=None) as batch_op:
         batch_op.drop_column('authenticator')
