@@ -224,7 +224,7 @@ def test_virt_import_zvol_two_pools_rename(virt_two_pools):
                     pass
 
                 try:
-                    call('virt.volume.delete', 'vol1')
+                    call('virt.volume.delete', 'vol2')
                 except InstanceNotFound:
                     pass
 
@@ -257,6 +257,6 @@ def test_virt_import_zvol_two_pools_clone(virt_two_pools):
                     pass
 
                 try:
-                    call('virt.volume.delete', 'vol1')
+                    call('virt.volume.delete', 'vol2')
                 except InstanceNotFound:
                     pass
