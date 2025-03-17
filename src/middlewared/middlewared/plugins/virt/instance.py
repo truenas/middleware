@@ -407,7 +407,7 @@ class VirtInstanceService(CRUDService):
         }
         for i in data_devices:
             await self.middleware.call(
-                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
+                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['name'], data['instance_type']
             )
             if i['name'] is None:
                 i['name'] = await self.middleware.call(

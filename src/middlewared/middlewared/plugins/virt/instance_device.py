@@ -268,6 +268,7 @@ class VirtInstanceDeviceService(Service):
     async def validate_devices(self, devices, schema, verrors: ValidationErrors):
         unique_src_proxies = []
         unique_dst_proxies = []
+        disk_sources = set()
 
         for device in devices:
             match device['dev_type']:
@@ -282,10 +283,16 @@ class VirtInstanceDeviceService(Service):
                         verrors.add(f'{schema}.dest_port', 'Destination proto/port already in use.')
                     else:
                         unique_dst_proxies.append(dst)
+                case 'DISK':
+                    source = device['source']
+                    if source in disk_sources:
+                        verrors.add(f'{schema}.source', 'Source already in use by another device.')
+                    else:
+                        disk_sources.add(source)
 
     @private
     async def validate_device(
-        self, device, schema, verrors: ValidationErrors, instance_type: str, old: dict = None,
+        self, device, schema, verrors: ValidationErrors, instance_name: str, instance_type: str, old: dict = None,
         instance_config: dict = None,
     ):
         match device['dev_type']:
@@ -370,7 +377,8 @@ class VirtInstanceDeviceService(Service):
                         verrors.add(f'{schema}.io_bus', 'IO bus is only available for VMs')
                     elif instance_config and instance_config['status'] != 'STOPPED':
                         verrors.add(f'{schema}.io_bus', 'VM should be stopped before updating IO bus')
-
+                if source:
+                    await self.validate_disk_device_source(instance_name, schema, source, verrors, device['name'])
             case 'NIC':
                 if await self.middleware.call('interface.has_pending_changes'):
                     raise CallError('There are pending network changes, please resolve before proceeding.')
@@ -389,6 +397,52 @@ class VirtInstanceDeviceService(Service):
                 if instance_type != 'VM':
                     verrors.add(schema, 'PCI passthrough is only supported for vms')
 
+    @private
+    async def validate_disk_device_source(self, instance_name, schema, source, verrors, device_name):
+        sources_in_use = await self.get_all_disk_sources(instance_name)
+        if source in sources_in_use:
+            verrors.add(
+                f'{schema}.source',
+                f'Source {source} is currently in use by {sources_in_use[source]!r} instance'
+            )
+            # No point in continuing further
+            return
+
+        curr_instance_device = (await self.get_all_disk_sources_of_instance(instance_name)).get(source)
+        if curr_instance_device and curr_instance_device != device_name:
+            verrors.add(
+                f'{schema}.source',
+                f'{source} source is already in use by {curr_instance_device!r} device of {instance_name!r} instance'
+            )
+
+    @private
+    async def get_all_disk_sources(self, ignore_instance=None):
+        instances = await self.middleware.call(
+            'virt.instance.query', [['name', '!=', ignore_instance]], {'extra': {'raw': True}}
+        )
+        sources_in_use = {}
+        for instance in instances:
+            for disk in filter(lambda d: d['type'] == 'disk' and d.get('source'), instance['raw']['devices'].values()):
+                sources_in_use[disk['source']] = instance['name']
+
+        return sources_in_use
+
+    @private
+    async def get_all_disk_sources_of_instance(self, instance_name):
+        instance = await self.middleware.call(
+            'virt.instance.query', [['name', '=', instance_name]], {'extra': {'raw': True}}
+        )
+        if not instance:
+            return {}
+
+        return {
+            disk['source']: disk_name
+            for disk_name, disk in filter(
+                lambda d: d[1]['type'] == 'disk' and d[1].get('source'),
+                instance[0]['raw']['devices'].items()
+            )
+        }
+
     @api_method(
         VirtInstanceDeviceAddArgs,
         VirtInstanceDeviceAddResult,
@@ -406,7 +460,7 @@ class VirtInstanceDeviceService(Service):
             device['name'] = await self.generate_device_name(data['devices'].keys(), device['dev_type'])
 
         verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_add', verrors, instance['type'], instance_config=instance)
+        await self.validate_device(device, 'virt_device_add', verrors, id, instance['type'], instance_config=instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
@@ -434,7 +488,7 @@ class VirtInstanceDeviceService(Service):
             raise CallError('Device does not exist.', errno.ENOENT)
 
         verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_update', verrors, instance['type'], old, instance)
+        await self.validate_device(device, 'virt_device_update', verrors, id, instance['type'], old, instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
