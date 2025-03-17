@@ -524,3 +524,27 @@ def test_volume_choices_ixvirt():
                 finally:
                     call('virt.instance.stop', instance_name, {'force': True, 'timeout': 11}, job=True)
                     sleep(5)  # NAS-134443 incus can lie about when VM has completed stopping
+
+
+def test_disk_source_uniqueness(virt_pool):
+    # We will try to add same disk source to the same instance and another instance to make sure
+    # we have proper validation in place to prevent this from happening
+    with dataset('virt-vol', {'type': 'VOLUME', 'volsize': 200 * 1024 * 1024, 'sparse': True}) as ds:
+        with virt_instance('test-disk-error', instance_type='VM', image=None, source_type=None) as instance:
+            instance_name = instance['name']
+            call('virt.instance.device_add', instance_name, {
+                'dev_type': 'DISK',
+                'source': f'/dev/zvol/{ds}',
+            })
+            with pytest.raises(ClientValidationErrors):
+                call('virt.instance.device_add', instance_name, {
+                    'dev_type': 'DISK',
+                    'source': f'/dev/zvol/{ds}',
+                })
+            with virt_instance('test-disk-error2', instance_type='VM', image=None, source_type=None) as instance2:
+                instance_name2 = instance2['name']
+                with pytest.raises(ClientValidationErrors):
+                    call('virt.instance.device_add', instance_name2, {
+                        'dev_type': 'DISK',
+                        'source': f'/dev/zvol/{ds}',
+                    })
