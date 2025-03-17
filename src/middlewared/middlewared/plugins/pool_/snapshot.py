@@ -48,11 +48,16 @@ class PoolSnapshotService(CRUDService):
     def query(self, filters, options):
         """Query all ZFS Snapshots with `query-filters` and `query-options`.
 
-        `query-options.extra.holds` specifies whether hold tags for snapshots should be retrieved (false by default)
-
-        `query-options.extra.min_txg` can be specified to limit snapshot retrieval based on minimum transaction group.
-
-        `query-options.extra.max_txg` can be specified to limit snapshot retrieval based on maximum transaction group.
+        `query-options.extra.holds` *(bool)*
+            Include hold tags for snapshots in the query result (false by default).
+        `query-options.extra.min_txg` *(int)*
+            Limit snapshot retrieval based on minimum transaction group.
+        `query-options.extra.max_txg` *(int)*
+            Limit snapshot retrieval based on maximum transaction group.
+        `query-options.extra.retention` *(bool)*
+            Include retention information in the query result (false by default).
+        `query-options.extra.properties` *(dict)*
+            Passed to `zfs.snapshots_serialized.props`.
 
         """
         return self.middleware.call_sync('zfs.snapshot.query', filters, options)

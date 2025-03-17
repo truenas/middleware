@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from pydantic import Field, AfterValidator
@@ -36,17 +37,33 @@ class PoolSnapshotHoldTag(BaseModel):
     """Present if a hold has been placed on the snapshot."""
 
 
+class PoolSnapshotRetentionPST(BaseModel):
+    datetime_: datetime = Field(alias="datetime")
+    source: Literal["periodic_snapshot_task"]
+    periodic_snapshot_task_id: int
+
+
+class PoolSnapshotRetentionProperty(BaseModel):
+    datetime_: datetime = Field(alias="datetime")
+    source: Literal["property"]
+
+
 class PoolSnapshotEntry(BaseModel):
+    id: str
     properties: dict[str, PoolSnapshotEntryPropertyFields]
     pool: str
     name: str
     type: Literal["SNAPSHOT"]
     snapshot_name: str
     dataset: str
-    id: str
     createtxg: str
     holds: PoolSnapshotHoldTag = NotRequired
     """Returned when options.extra.holds is set."""
+    retention: Annotated[
+        PoolSnapshotRetentionPST | PoolSnapshotRetentionProperty,
+        Field(discriminator="source")
+    ] | None = NotRequired
+    """Returned when options.extra.retention is set."""
 
 
 class PoolSnapshotCreateUpdateEntry(PoolSnapshotEntry):

@@ -105,7 +105,7 @@ class ZettareplService(Service):
                     else:
                         self.removal_dates[k1][k2] = destroy_at
 
-    def annotate_snapshots(self, snapshots):
+    def annotate_snapshots(self, snapshots: list[dict]):
         property_name = self.middleware.call_sync("pool.snapshottask.removal_date_property")
         zettarepl_tasks = [
             PeriodicSnapshotTask.from_data(task["id"], self.middleware.call_sync(

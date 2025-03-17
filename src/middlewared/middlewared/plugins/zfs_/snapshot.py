@@ -50,7 +50,11 @@ class ZFSSnapshotService(CRUDService):
 
         `query-options.extra.max_txg` (int) can be specified to limit snapshot retrieval based on maximum transaction
             group.
-    
+
+        `query-options.extra.retention` (bool) call `zettarepl.annotate_snapshots` on the query result
+
+        `query-options.extra.properties` (dict) passed to `zfs.snapshots_serialized.props`
+
         """
         # Special case for faster listing of snapshot names (#53149)
         filters_attrs = filter_getattrs(filters)
