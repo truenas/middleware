@@ -93,11 +93,17 @@ class VirtInstanceEntry(BaseModel):
     "Storage pool in which the root of the instance is located."
 
 
+def validate_memory(value: int) -> int:
+    if value < 33554432:
+        raise ValueError('Value must be 32MiB or larger')
+    return value
+
+
 # Lets require at least 32MiB of reserved memory
 # This value is somewhat arbitrary but hard to think lower value would have to be used
 # (would most likely be a typo).
 # Running container with very low memory will probably cause it to be killed by the cgroup OOM
-MemoryType: TypeAlias = Annotated[int, Field(strict=True, ge=33554432)]
+MemoryType: TypeAlias = Annotated[int, AfterValidator(validate_memory)]
 
 
 @single_argument_args('virt_instance_create')
