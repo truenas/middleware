@@ -36,7 +36,7 @@ class PWEncService(Service):
             ('system_email', 'em_pass', ''),
             ('system_certificate', 'cert_domains_authenticators', 'NULL'),
         ):
-            value = value or '\'\''
+            value = value or "''"
             self.middleware.call_sync('datastore.sql', f'UPDATE {table} SET {field} = {value}')
 
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_cloud_backup')
