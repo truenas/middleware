@@ -72,7 +72,7 @@ def combine_enclosures(enclosures):
                     head_unit_idx = r40_sas_ids[0][1]
                     _update_idx = r40_sas_ids[1][1]
                 else:
-                    head_unit_idx = r40_sas_ids[1][0]
+                    head_unit_idx = r40_sas_ids[1][1]
                     _update_idx = r40_sas_ids[0][1]
 
                 # we know which enclosure has the larger sas address so we'll update
