@@ -362,7 +362,7 @@ def test__tmprotect_preset(nfsacl_dataset):
     ]
 
     assert conf['zfs_core:zfs_auto_create'] == 'true'
-    assert conf['fruit:timemachine'] is True
+    assert conf['fruit:time machine'] is True
 
 
 def test__worm_preset(nfsacl_dataset):
@@ -428,10 +428,10 @@ def test__timemachine(nfsacl_dataset, enabled):
     }, BASE_SMB_CONFIG)
 
     if enabled:
-        assert conf['fruit:timemachine'] is True
+        assert conf['fruit:time machine'] is True
 
     else:
-        assert 'fruit:timemachine' not in conf
+        assert 'fruit:time machine' not in conf
 
 
 @pytest.mark.parametrize('hostsconfig', [
@@ -479,7 +479,7 @@ def test__timemachine_preset(nfsacl_dataset):
         'purpose': 'TIMEMACHINE',
     }, BASE_SMB_CONFIG)
 
-    assert conf['fruit:timemachine'] is True
+    assert conf['fruit:time machine'] is True
 
 
 @pytest.mark.parametrize('audit_config', [

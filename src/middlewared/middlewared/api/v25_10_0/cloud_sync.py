@@ -2,22 +2,45 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString,
-                                  single_argument_args, TimeString)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    excluded_field,
+    ForUpdateMetaclass,
+    LongNonEmptyString,
+    NonEmptyString,
+    single_argument_args,
+    TimeString,
+)
 from .cloud import BaseCloudEntry
 
-__all__ = ["CloudSyncEntry",
-           "CloudSyncCreateArgs", "CloudSyncCreateResult",
-           "CloudSyncUpdateArgs", "CloudSyncUpdateResult",
-           "CloudSyncDeleteArgs", "CloudSyncDeleteResult",
-           "CloudSyncCreateBucketArgs", "CloudSyncCreateBucketResult",
-           "CloudSyncListBucketsArgs", "CloudSyncListBucketsResult",
-           "CloudSyncListDirectoryArgs", "CloudSyncListDirectoryResult",
-           "CloudSyncSyncArgs", "CloudSyncSyncResult",
-           "CloudSyncSyncOneTimeArgs", "CloudSyncSyncOneTimeResult",
-           "CloudSyncAbortArgs", "CloudSyncAbortResult",
-           "CloudSyncProvidersArgs", "CloudSyncProvidersResult",
-           "CloudSyncOneDriveListDrivesArgs", "CloudSyncOneDriveListDrivesResult"]
+__all__ = [
+    "CloudSyncEntry",
+    "CloudSyncCreateArgs",
+    "CloudSyncCreateResult",
+    "CloudSyncCrudRestoreArgs",
+    "CloudSyncCrudRestoreResult",
+    "CloudSyncUpdateArgs",
+    "CloudSyncUpdateResult",
+    "CloudSyncDeleteArgs",
+    "CloudSyncDeleteResult",
+    "CloudSyncCreateBucketArgs",
+    "CloudSyncCreateBucketResult",
+    "CloudSyncListBucketsArgs",
+    "CloudSyncListBucketsResult",
+    "CloudSyncListDirectoryArgs",
+    "CloudSyncListDirectoryResult",
+    "CloudSyncSyncArgs",
+    "CloudSyncSyncResult",
+    "CloudSyncSyncOneTimeArgs",
+    "CloudSyncSyncOneTimeResult",
+    "CloudSyncAbortArgs",
+    "CloudSyncAbortResult",
+    "CloudSyncProvidersArgs",
+    "CloudSyncProvidersResult",
+    "CloudSyncOneDriveListDrivesArgs",
+    "CloudSyncOneDriveListDrivesResult",
+]
 
 
 class CloudSyncBwlimit(BaseModel):
@@ -54,6 +77,21 @@ class CloudSyncCreateArgs(BaseModel):
 
 
 class CloudSyncCreateResult(BaseModel):
+    result: CloudSyncEntry
+
+
+class RestoreOpts(BaseModel):
+    description: str = ""
+    transfer_mode: Literal["SYNC", "COPY"]
+    path: NonEmptyString
+
+
+class CloudSyncCrudRestoreArgs(BaseModel):
+    id: int
+    opts: RestoreOpts
+
+
+class CloudSyncCrudRestoreResult(BaseModel):
     result: CloudSyncEntry
 
 
@@ -116,7 +154,9 @@ class CloudSyncSyncOptions(BaseModel):
 
 class CloudSyncSyncArgs(BaseModel):
     id: int
-    cloud_sync_sync_options: CloudSyncSyncOptions = Field(default_factory=CloudSyncSyncOptions)
+    cloud_sync_sync_options: CloudSyncSyncOptions = Field(
+        default_factory=CloudSyncSyncOptions
+    )
 
 
 class CloudSyncSyncResult(BaseModel):
@@ -125,7 +165,9 @@ class CloudSyncSyncResult(BaseModel):
 
 class CloudSyncSyncOneTimeArgs(BaseModel):
     cloud_sync_sync_onetime: CloudSyncCreate
-    cloud_sync_sync_onetime_options: CloudSyncSyncOptions = Field(default_factory=CloudSyncSyncOptions)
+    cloud_sync_sync_onetime_options: CloudSyncSyncOptions = Field(
+        default_factory=CloudSyncSyncOptions
+    )
 
 
 class CloudSyncSyncOneTimeResult(BaseModel):

@@ -17,13 +17,23 @@ class AllowListItem(BaseModel):
 class ApiKeyEntry(BaseModel):
     id: int
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
-    username: LocalUsername | RemoteUsername
+    username: LocalUsername | RemoteUsername | None
     user_identifier: int | str
     keyhash: Secret[str]
     created_at: datetime
     expires_at: datetime | None = None
     local: bool
     revoked: bool
+    revoked_reason: str | None
+
+    @classmethod
+    def to_previous(cls, value):
+        if value["username"] is None:
+            value["username"] = ""
+
+        value.pop("revoked_reason")
+
+        return value
 
 
 class ApiKeyEntryWithKey(ApiKeyEntry):
@@ -32,11 +42,13 @@ class ApiKeyEntryWithKey(ApiKeyEntry):
 
 class ApiKeyCreate(ApiKeyEntry):
     id: Excluded = excluded_field()
+    username: LocalUsername | RemoteUsername
     user_identifier: Excluded = excluded_field()
     keyhash: Excluded = excluded_field()
     created_at: Excluded = excluded_field()
     local: Excluded = excluded_field()
     revoked: Excluded = excluded_field()
+    revoked_reason: Excluded = excluded_field()
 
 
 class ApiKeyCreateArgs(BaseModel):

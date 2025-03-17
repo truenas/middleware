@@ -5,17 +5,20 @@ from middlewared.utils.audit import UNAUTHENTICATED
 from time import time
 
 
+URL = "https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/"
+
+
 class AdminSessionAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Administrator account activity"
     text = (
         "The root or default system administrator account was used to authenticate "
-        "to the UI / API %(count)d times in the last 24 hours:\n%(sessions)s.\n"
+        "to the UI / API %(count)d times in the last 24 hours:</br>%(sessions)s.</br>"
         "To improve security, create one or more administrator accounts (see "
-        "[documentation](https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/)) "
+        f"<a href=\"{URL}\" target=\"_blank\">documentation</a>) "
         "with unique usernames and passwords and disable password access for default "
-        "administrator accounts (**root**, **admin**, or **truenas_admin**)."
+        "administrator accounts (<b>root</b>, <b>admin</b>, or <b>truenas_admin</b>)."
     )
 
 

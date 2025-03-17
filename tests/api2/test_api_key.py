@@ -5,6 +5,7 @@ from datetime import datetime, UTC
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils.alert import process_alerts
 from time import sleep
 
 LEGACY_ENTRY_KEY = 'rtpz6u16l42XJJGy5KMJOVfkiQH7CyitaoplXy7TqFTmY7zHqaPXuA1ob07B9bcB'
@@ -24,8 +25,7 @@ def sharing_admin_user(unprivileged_user_fixture):
 
 
 def check_revoked_alert():
-    # reset any revoked alert
-    call('api_key.check_status')
+    process_alerts()
 
     for a in call('alert.list'):
         if a['klass'] == 'ApiKeyRevoked':
@@ -270,4 +270,9 @@ def test_api_key_revoke_insecure_transport(sharing_admin_user):
 
         # When the key is revoked due to use over insecure transport, it should
         # automatically generate an alert that the key has been revoked.
-        assert check_revoked_alert()
+        alert = check_revoked_alert()
+        assert alert
+        assert alert['formatted'].startswith(
+            'Test API Key: API key has been revoked and must either be renewed or deleted. '
+            'Revoke reason: Attempt to use over an insecure transport.'
+        )

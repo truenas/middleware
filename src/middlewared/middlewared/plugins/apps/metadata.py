@@ -32,6 +32,7 @@ class AppMetadataService(Service):
             f.write(yaml.safe_dump(metadata))
 
         with open(get_collective_config_path(), 'w') as f:
+            os.fchmod(f.fileno(), 0o600)
             f.write(yaml.safe_dump(config))
 
         job.set_progress(100, 'Updated metadata configuration for apps')

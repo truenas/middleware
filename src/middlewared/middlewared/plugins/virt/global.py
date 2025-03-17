@@ -1,4 +1,7 @@
 from typing import TYPE_CHECKING
+import asyncio
+import errno
+import shutil
 import subprocess
 import middlewared.sqlalchemy as sa
 
@@ -16,12 +19,14 @@ from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 
-from .utils import Status, incus_call
+from .utils import (
+    Status, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_STORAGE
+)
+
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-INCUS_PATH = '/var/lib/incus'
 INCUS_BRIDGE = 'incusbr0'
 
 BRIDGE_AUTO = '[AUTO]'
@@ -41,6 +46,7 @@ class VirtGlobalModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(120), nullable=True)
+    storage_pools = sa.Column(sa.Text(), nullable=True)
     bridge = sa.Column(sa.String(120), nullable=True)
     v4_network = sa.Column(sa.String(120), nullable=True)
     v6_network = sa.Column(sa.String(120), nullable=True)
@@ -62,10 +68,16 @@ class VirtGlobalService(ConfigService):
             data['dataset'] = f'{data["pool"]}/.ix-virt'
         else:
             data['dataset'] = None
-        try:
-            data['state'] = await self.middleware.call('cache.get', 'VIRT_STATE')
-        except KeyError:
-            data['state'] = Status.INITIALIZING.value
+
+        if data['storage_pools']:
+            data['storage_pools'] = data['storage_pools'].split()
+        else:
+            data['storage_pools'] = []
+
+        if data['pool'] and data['pool'] not in data['storage_pools']:
+            data['storage_pools'].append(data['pool'])
+
+        data['state'] = INCUS_STORAGE.state.value
         return data
 
     @private
@@ -90,8 +102,12 @@ class VirtGlobalService(ConfigService):
         if pool and not await self.middleware.call('virt.global.license_active'):
             verrors.add(f'{schema_name}.pool', 'System is not licensed to run virtualization')
 
-    @api_method(VirtGlobalUpdateArgs, VirtGlobalUpdateResult)
-    @job()
+    @api_method(
+        VirtGlobalUpdateArgs,
+        VirtGlobalUpdateResult,
+        audit='Virt: Update configuration'
+    )
+    @job(lock='virt_global_configuration')
     async def do_update(self, job, data):
         """
         Update global virtualization settings.
@@ -106,14 +122,50 @@ class VirtGlobalService(ConfigService):
 
         new = old.copy()
         new.update(data)
+        new_storage_pools = set(new['storage_pools']) - set(old['storage_pools'])
+        removed_storage_pools = set(old['storage_pools']) - set(new['storage_pools'])
 
         verrors = ValidationErrors()
         await self.validate(new, 'virt_global_update', verrors)
+
+        pool_choices = await self.pool_choices()
+        for idx, pool in enumerate(new['storage_pools']):
+            if pool in pool_choices:
+                continue
+
+            verrors.add(
+                f'virt_global_update.storage_pools.{idx}',
+                f'{pool}: pool is not available for incus storage'
+            )
+
+        if new['pool'] and old['pool']:
+            # If we're stopping or starting the virt plugin then we don't need to worry
+            # about how storage changes will impact the overall running configuration.
+            for pool in removed_storage_pools:
+                if usage := (await self.storage_pool_usage(pool)):
+                    verrors.add(
+                        'virt_global_update.storage_pools',
+                        f'{pool}: pool to be removed is used by the following assets: {usage}'
+                    )
+
+        if new['pool'] in removed_storage_pools:
+            verrors.add(
+                'virt_global_update.storage_pools',
+                'Default incus pool may not be removed from list of storage pools.'
+            )
+
         verrors.check()
+
+        if new['pool'] and old['pool']:
+            # If we're stopping or starting the virt plugin then we don't need to worry
+            # about how storage changes will impact the overall running configuration.
+            for pool in removed_storage_pools:
+                await self.remove_storage_pool(pool)
 
         # Not part of the database
         new.pop('state')
         new.pop('dataset')
+        new['storage_pools'] = ' '.join(new['storage_pools'])
 
         await self.middleware.call(
             'datastore.update', self._config.datastore,
@@ -179,8 +231,8 @@ class VirtGlobalService(ConfigService):
             raise CallError('Virtualization service not started.')
 
     @private
-    async def get_default_profile(self):
-        result = await incus_call('1.0/profiles/default', 'get')
+    async def get_profile(self, profile_name):
+        result = await incus_call(f'1.0/profiles/{profile_name}', 'get')
         if result.get('status_code') != 200:
             raise CallError(result.get('error'))
         return result['metadata']
@@ -205,29 +257,206 @@ class VirtGlobalService(ConfigService):
         }
 
     @private
-    @job()
+    @job(lock='virt_global_setup')
     async def setup(self, job):
         """
         Sets up incus through their API.
         Will create necessary storage datasets if required.
         """
         try:
-            await self.middleware.call('cache.put', 'VIRT_STATE', Status.INITIALIZING.value)
+            INCUS_STORAGE.state = Status.INITIALIZING
             await self._setup_impl()
         except NoPoolConfigured:
-            await self.middleware.call('cache.put', 'VIRT_STATE', Status.NO_POOL.value)
+            INCUS_STORAGE.state = Status.NO_POOL
         except LockedDataset:
-            await self.middleware.call('cache.put', 'VIRT_STATE', Status.LOCKED.value)
+            INCUS_STORAGE.state = Status.LOCKED
         except Exception:
-            await self.middleware.call('cache.put', 'VIRT_STATE', Status.ERROR.value)
+            INCUS_STORAGE.state = Status.ERROR
             raise
         else:
-            await self.middleware.call('cache.put', 'VIRT_STATE', Status.INITIALIZED.value)
+            INCUS_STORAGE.state = Status.INITIALIZED
         finally:
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
+            await self.auto_start_instances()
+
+    @private
+    async def setup_storage_pool(self, pool_name):
+        ds_name = f'{pool_name}/.ix-virt'
+        try:
+            ds = await self.middleware.call(
+                'zfs.dataset.get_instance', ds_name, {
+                    'extra': {
+                        'retrieve_children': False,
+                        'user_properties': True,
+                        'properties': ['encryption', 'keystatus'],
+                    }
+                },
+            )
+        except Exception:
+            ds = None
+        if not ds:
+            await self.middleware.call('zfs.dataset.create', {
+                'name': ds_name,
+                'properties': {
+                    'aclmode': 'discard',
+                    'acltype': 'posix',
+                    'exec': 'on',
+                    'casesensitivity': 'sensitive',
+                    'atime': 'off',
+                    TRUENAS_STORAGE_PROP_STR: pool_name,
+                },
+            })
+        else:
+            if ds['encrypted'] and not ds['key_loaded']:
+                self.logger.info('Dataset %r not unlocked, skipping virt setup.', ds['name'])
+                raise LockedDataset()
+            if TRUENAS_STORAGE_PROP_STR not in ds['properties']:
+                if INCUS_STORAGE.default_storage_pool is not None:
+                    if INCUS_STORAGE.default_storage_pool != pool_name:
+                        raise CallError(
+                            f'ZFS pools {pool_name} and {INCUS_STORAGE.default_storage_pool} are both '
+                            'configured as the default incus storage pool and may therefore not be '
+                            'used simultaneously for virt storage pools.'
+                        )
+                else:
+                    INCUS_STORAGE.default_storage_pool = pool_name
+
+                pool_name = 'default'
+
+            else:
+                expected_pool_name = ds['properties'][TRUENAS_STORAGE_PROP_STR]['value']
+                if pool_name != expected_pool_name:
+                    raise CallError(
+                        f'The configured incus storage pool for the ZFS pool {pool_name} '
+                        f'is {expected_pool_name}, which should match the ZFS pool name. '
+                        'This mismatch may indicate that the TrueNAS ix-virt dataset was '
+                        'not initially created on this ZFS pool.'
+                    )
+
+        storage = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
+        if storage['type'] != 'error':
+            if storage['metadata']['config']['source'] == ds_name:
+                self.logger.debug('Virt storage pool for %s already configured.', ds_name)
+                pool_name = None  # skip recovery
+            else:
+                job = await self.middleware.call('virt.global.reset', True, None)
+                await job.wait(raise_error=True)
+
+        return pool_name
+
+    @private
+    async def storage_pool_usage(self, pool_name):
+        """
+        Create a list of various user-managed incus assets that are
+        dependent on the specified pool. This can be used for validation prior
+        to deletion of an incus storage pool.
+        """
+        resp = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
+        if resp['type'] == 'error':
+            if resp['error_code'] == 404:
+                # storage doesn't exist. Nothing to do.
+                return []
+
+            raise CallError(resp['error'])
+
+        out = []
+
+        for dependent in resp['metadata']['used_by']:
+            if dependent.startswith(('/1.0/images/')):
+                continue
+
+            path = dependent.split('/')
+            if 'storage-pools' in path:
+                # sample:
+                # /1.0/storage-pools/dozer/volumes/custom/foo
+                incus_type = path[4]
+            else:
+                # sample:
+                # /1.0/instances/myinstance
+                incus_type = path[2]
+
+            out.append({'type': incus_type, 'name': path[-1]})
+
+        return out
+
+    @private
+    async def recover(self, to_import):
+        """
+        Call into incus's private API to initiate a recovery action.
+        This is roughly equivalent to running the command "incus admin recover", and is performed
+        to make it so that incus on TrueNAS does not rely on the contents of /var/lib/incus.
+
+        https://linuxcontainers.org/incus/docs/main/reference/manpages/incus/admin/recover/#incus-admin-recover-md
+
+        The current design is to do this in the following scenarios:
+        1. Setting up incus for this first time on the server
+        2. After change to the storage pool path
+        3. After an HA failover event
+        4. After TrueNAS upgrades
+        5. After we see user trying to add a volume whose dataset already exists
+
+        NOTE: this will potentially cause user-initiated changes from incus commands to be lost.
+        """
+        payload = {
+            'pools': to_import,
+            'project': 'default',
+        }
+
+        result = await incus_call('internal/recover/validate', 'post', {'json': payload})
+        if result['type'] == 'error':
+            raise CallError(f'Internal storage validation failed: {result["error"]}')
+
+        elif result.get('status') == 'Success':
+            if result['metadata']['DependencyErrors']:
+                raise CallError('Missing depedencies: ' + ', '.join(result['metadata']['DependencyErrors']))
+
+            result = await incus_call('internal/recover/import', 'post', {'json': payload})
+            if result.get('status') != 'Success':
+                raise CallError(result.get('error'))
+        else:
+            raise CallError('Internal storage validation failed')
+
+    @private
+    async def remove_storage_pool(self, pool_name):
+        resp = await incus_call(f'1.0/storage-pools/{pool_name}', 'get')
+        if resp['type'] == 'error':
+            if resp['error_code'] == 404:
+                # storage doesn't exist. Nothing to do.
+                return
+
+            raise CallError(resp['error'])
+
+        to_delete = []
+
+        for dependent in resp['metadata']['used_by']:
+            # Middleware internally manages the images and profiles for
+            # storage pools
+            if dependent.startswith('/1.0/images/'):
+                to_delete.append(dependent)
+
+        if remainder := (set(resp['metadata']['used_by']) - set(to_delete)):
+            raise CallError(
+                f'Storage volume currently used by the following incus resource {", ".join(remainder)}', errno.EBUSY
+            )
+
+        for entry in to_delete:
+            path = entry[1:]  # remove leading slash
+            resp = await incus_call(path, 'delete')
+            if resp['type'] == 'error' and resp['error_code'] != 404:
+                raise CallError(f"{resp['error_code']}: {resp['error']}")
+
+        # Finally remove the pool itself
+        # We get intermittent errors here from incus API (appears to be replaying last command)
+        # unless we have a sleep
+        await asyncio.sleep(1)
+
+        resp = await incus_call(f'1.0/storage-pools/{pool_name}', 'delete')
+        if resp['type'] == 'error':
+            raise CallError(resp['error'])
 
     async def _setup_impl(self):
         config = await self.config()
+        to_import = []
 
         if not config['pool']:
             if await self.middleware.call('service.started', 'incus'):
@@ -237,45 +466,17 @@ class VirtGlobalService(ConfigService):
             self.logger.debug('No pool set for virtualization, skipping.')
             raise NoPoolConfigured()
         else:
-            await self.middleware.call('service.start', 'incus')
+            await self.middleware.call('service.start', 'incus', {'ha_propagate': False})
 
-        try:
-            ds = await self.middleware.call(
-                'zfs.dataset.get_instance', config['dataset'], {
-                    'extra': {
-                        'retrieve_children': False,
-                        'user_properties': False,
-                        'properties': ['encryption', 'keystatus'],
-                    }
-                },
-            )
-        except Exception:
-            ds = None
-        if not ds:
-            await self.middleware.call('zfs.dataset.create', {
-                'name': config['dataset'],
-                'properties': {
-                    'aclmode': 'discard',
-                    'acltype': 'posix',
-                    'exec': 'on',
-                    'casesensitivity': 'sensitive',
-                    'atime': 'off',
-                },
-            })
-        else:
-            if ds['encrypted'] and not ds['key_loaded']:
-                self.logger.info('Dataset %r not unlocked, skipping virt setup.', ds['name'])
-                raise LockedDataset()
-
-        import_storage = True
-        storage = await incus_call('1.0/storage-pools/default', 'get')
-        if storage['type'] != 'error':
-            if storage['metadata']['config']['source'] == config['dataset']:
-                self.logger.debug('Storage pool for virt already configured.')
-                import_storage = False
-            else:
-                job = await self.middleware.call('virt.global.reset', True, config)
-                await job.wait(raise_error=True)
+        # Set up the default storage pool
+        for pool in config['storage_pools']:
+            if (pool_name := (await self.setup_storage_pool(pool))) is not None:
+                to_import.append({
+                    'config': {'source': f'{pool}/.ix-virt'},
+                    'description': '',
+                    'name': pool_name,
+                    'driver': 'zfs',
+                })
 
         # If no bridge interface has been set, use incus managed
         if not config['bridge']:
@@ -352,60 +553,22 @@ class VirtGlobalService(ConfigService):
                 'parent': config['bridge'],
             }
 
-        if import_storage:
-            # Call into incus's private API to initiate a recovery action.
-            # This is roughly equivalent to running the command "incus admin recover", and is performed
-            # to make it so that incus on TrueNAS does not rely on the contents of /var/lib/incus.
-            #
-            # https://linuxcontainers.org/incus/docs/main/reference/manpages/incus/admin/recover/#incus-admin-recover-md
-            #
-            # The current design is to do this in the following scenarios:
-            # 1. Setting up incus for this first time on the server
-            # 2. After change to the storage pool path
-            # 3. After an HA failover event
-            # 4. After TrueNAS upgrades
-            #
-            # NOTE: this will potentially cause user-initiated changes from incus commands to be lost.
-            payload = {
-                'pools': [{
-                    'config': {'source': config['dataset']},
-                    'description': '',
-                    'name': 'default',
-                    'driver': 'zfs',
-                }],
-            }
-            result = await incus_call('internal/recover/validate', 'post', {'json': payload})
-            if result.get('status') == 'Success':
-                if result['metadata']['DependencyErrors']:
-                    raise CallError('Missing depedencies: ' + ', '.join(result['metadata']['DependencyErrors']))
-                result = await incus_call('internal/recover/import', 'post', {'json': payload})
-                if result.get('status') != 'Success':
-                    raise CallError(result.get('error'))
-            else:
-                raise CallError('Invalid storage')
-
         result = await incus_call('1.0/profiles/default', 'put', {'json': {
             'config': {},
             'description': 'Default TrueNAS profile',
             'devices': {
-                'root': {
-                    'path': '/',
-                    'pool': 'default',
-                    'type': 'disk',
-                },
                 'eth0': nic,
             },
         }})
         if result.get('status') != 'Success':
             raise CallError(result.get('error'))
 
-        # If storage was imported we need to restart incus service so instances
-        # with autostart can be started
-        if import_storage:
-            await self.middleware.call('service.restart', 'incus')
+        if to_import:
+            await self.recover(to_import)
+            await self.middleware.call('service.restart', 'incus', {'ha_propagate': False})
 
     @private
-    @job()
+    @job(lock='virt_global_reset')
     async def reset(self, job, start: bool = False, config: dict | None = None):
         if config is None:
             config = await self.config()
@@ -425,7 +588,7 @@ class VirtGlobalService(ConfigService):
             if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
                 raise CallError('Failed to stop instances')
 
-        await self.middleware.call('service.stop', 'incus')
+        await self.middleware.call('service.stop', 'incus', {'ha_propagate': False})
         if await self.middleware.call('service.started', 'incus'):
             raise CallError('Failed to stop virtualization service')
 
@@ -441,10 +604,26 @@ class VirtGlobalService(ConfigService):
         # Have incus start fresh
         # Use subprocess because shutil.rmtree will traverse filesystems
         # and we do have instances datasets that might be mounted beneath
-        await run(f'rm -rf --one-file-system {INCUS_PATH}/*', shell=True, check=True)
+        await run(f'rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
 
-        if start and not await self.middleware.call('service.start', 'incus'):
+        if start and not await self.middleware.call('service.start', 'incus', {'ha_propagate': False}):
             raise CallError('Failed to start virtualization service')
+
+        if not start:
+            await self.middleware.run_in_thread(shutil.rmtree, VNC_PASSWORD_DIR, True)
+
+    @private
+    async def auto_start_instances(self):
+        await self.middleware.call(
+            'core.bulk', 'virt.instance.start', [
+                [instance['name']] for instance in await self.middleware.call(
+                    'virt.instance.query', [['autostart', '=', True], ['status', '=', 'STOPPED']]
+                )
+                # We have an explicit filter for STOPPED because old virt instances would still have
+                # incus autostart enabled and we don't want to attempt to start them again.
+                # We can remove this in FT release perhaps.
+            ]
+        )
 
 
 async def _event_system_ready(middleware: 'Middleware', event_type, args):

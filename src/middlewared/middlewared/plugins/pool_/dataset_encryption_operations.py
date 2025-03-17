@@ -1,8 +1,12 @@
 import secrets
 
-from middlewared.schema import accepts, Any, Bool, Dict, Int, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDatasetInsertOrUpdateEncryptedRecordArgs, PoolDatasetInsertOrUpdateEncryptedRecordResult,
+    PoolDatasetChangeKeyArgs, PoolDatasetChangeKeyResult, PoolDatasetInheritParentEncryptionPropertiesArgs,
+    PoolDatasetInheritParentEncryptionPropertiesResult
+)
 from middlewared.service import CallError, job, private, Service, ValidationErrors
-from middlewared.validators import Range
 
 from .utils import DATASET_DATABASE_MODEL_NAME, ZFSKeyFormat
 
@@ -13,14 +17,10 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @private
-    @accepts(
-        Dict(
-            'dataset_db_create',
-            Any('encryption_key', null=True, default=None),
-            Int('id', default=None, null=True),
-            Str('name', required=True, empty=False),
-            Str('key_format', required=True, null=True),
-        )
+    @api_method(
+        PoolDatasetInsertOrUpdateEncryptedRecordArgs,
+        PoolDatasetInsertOrUpdateEncryptedRecordResult,
+        roles=['DATASET_WRITE']
     )
     async def insert_or_update_encrypted_record(self, data):
         key_format = data.pop('key_format') or ZFSKeyFormat.PASSPHRASE.value
@@ -114,19 +114,7 @@ class PoolDatasetService(Service):
             }
         return opts
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'change_key_options',
-            Bool('generate_key', default=False),
-            Bool('key_file', default=False),
-            Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
-            Str('passphrase', empty=False, default=None, null=True, private=True),
-            Str('key', validators=[Range(min_=64, max_=64)], default=None, null=True, private=True),
-        ),
-        roles=['DATASET_WRITE']
-    )
-    @returns()
+    @api_method(PoolDatasetChangeKeyArgs, PoolDatasetChangeKeyResult, roles=['DATASET_WRITE'])
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
     async def change_key(self, job, id_, options):
         """
@@ -224,8 +212,11 @@ class PoolDatasetService(Service):
         data['old_key_format'] = ds['key_format']['value']
         await self.middleware.call_hook('dataset.change_key', data)
 
-    @accepts(Str('id'), roles=['DATASET_WRITE'])
-    @returns()
+    @api_method(
+        PoolDatasetInheritParentEncryptionPropertiesArgs,
+        PoolDatasetInheritParentEncryptionPropertiesResult,
+        roles=['DATASET_WRITE']
+    )
     async def inherit_parent_encryption_properties(self, id_):
         """
         Allows inheriting parent's encryption root discarding its current encryption settings. This

@@ -20,7 +20,6 @@ from .common import *  # noqa
 from .config import *  # noqa
 from .core import *  # noqa
 from .cronjob import *  # noqa
-from .crypto_ca_profiles import *  # noqa
 from .crypto_cert_info import *  # noqa
 from .crypto_cert_profiles import *  # noqa
 from .device import *  # noqa
@@ -76,14 +75,18 @@ from .smart_test import *  # noqa
 from .smb import *  # noqa
 from .snmp import *  # noqa
 from .static_route import *  # noqa
+from .system_general_keymap import *  # noqa
+from .system_general_ui import *  # noqa
 from .system_lifecycle import *  # noqa
 from .system_ntpserver import *  # noqa
 from .system_reboot import *  # noqa
 from .system_security import *  # noqa
+from .system_general_timezone import *  # noqa
 from .tn_connect import *  # noqa
 from .truecommand import *  # noqa
 from .truenas import *  # noqa
 from .tunable import *  # noqa
+from .update import *  # noqa
 from .ups import *  # noqa
 from .user import *  # noqa
 from .virt_device import *  # noqa

@@ -8,10 +8,12 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from middlewared.schema import accepts, Bool, Dict, List, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDatasetLockArgs, PoolDatasetLockResult, PoolDatasetUnlockArgs, PoolDatasetUnlockResult
+)
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.filesystem.directory import directory_is_empty
-from middlewared.validators import Range
 
 from .utils import dataset_mountpoint, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
@@ -21,15 +23,7 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'lock_options',
-            Bool('force_umount', default=False),
-        ),
-        roles=['DATASET_WRITE']
-    )
-    @returns(Bool('locked'))
+    @api_method(PoolDatasetLockArgs, PoolDatasetLockResult, roles=['DATASET_WRITE'])
     @job(lock=lambda args: 'dataset_lock')
     async def lock(self, job, id_, options):
         """
@@ -85,38 +79,7 @@ class PoolDatasetService(Service):
 
         return True
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'unlock_options',
-            Bool('force', default=False),
-            Bool('key_file', default=False),
-            Bool('recursive', default=False),
-            Bool('toggle_attachments', default=True),
-            List(
-                'datasets', items=[
-                    Dict(
-                        'dataset',
-                        Bool('force', required=True, default=False),
-                        Str('name', required=True, empty=False),
-                        Str('key', validators=[Range(min_=64, max_=64)], private=True),
-                        Str('passphrase', empty=False, private=True),
-                        Bool('recursive', default=False),
-                    )
-                ],
-            ),
-        ),
-        roles=['DATASET_WRITE']
-    )
-    @returns(Dict(
-        List('unlocked', items=[Str('dataset')], required=True),
-        Dict(
-            'failed',
-            required=True,
-            additional_attrs=True,
-            example={'vol1/enc': {'error': 'Invalid Key', 'skipped': []}},
-        ),
-    ))
+    @api_method(PoolDatasetUnlockArgs, PoolDatasetUnlockResult, roles=['DATASET_WRITE'])
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
     def unlock(self, job, id_, options):
         """
@@ -133,21 +96,6 @@ class PoolDatasetService(Service):
         (`pool.export_keys`).
 
         2. Specify a key or a passphrase for each unlocked dataset using `unlock_options.datasets`.
-
-        If `unlock_options.datasets.{i}.recursive` is `true`, a key or a passphrase is applied to all the encrypted
-        children of a dataset.
-
-        `unlock_options.toggle_attachments` controls whether attachments  should be put in action after unlocking
-        dataset(s). Toggling attachments can theoretically lead to service interruption when daemons configurations are
-        reloaded (this should not happen,  and if this happens it should be considered a bug). As TrueNAS does not have
-        a state for resources that should be unlocked but are still locked, disabling this option will put the system
-        into an inconsistent state so it should really never be disabled.
-
-        In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is
-        supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
-        would fail. This can be overridden by setting `unlock_options.datasets.X.force` boolean flag or by setting
-        `unlock_options.force` flag. When any of these flags are set, system will rename the existing
-        directory/file path where the dataset should be mounted resulting in successful unlock of the dataset.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset.get_instance', id_)

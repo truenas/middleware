@@ -1,6 +1,7 @@
-import json
+from datetime import timedelta
 
-from middlewared.alert.base import Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel
+from middlewared.alert.base import Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, AlertSource
+from middlewared.alert.schedule import IntervalSchedule
 
 
 class ApiKeyRevokedAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -8,20 +9,23 @@ class ApiKeyRevokedAlertClass(AlertClass, SimpleOneShotAlertClass):
     level = AlertLevel.WARNING
     title = "API Key Revoked"
     text = (
-        "%(key_name)s: API key has been revoked and must either be renewed or deleted. "
+        "%(name)s: API key has been revoked and must either be renewed or deleted. "
+        "Revoke reason: %(reason)s. "
         "Once the maintenance is complete, API client configuration must be updated to "
         "use the renewed API key."
     )
 
-    async def create(self, args):
-        return Alert(ApiKeyRevokedAlertClass, args, key=args['key_name'])
 
-    async def delete(self, alerts, key_name_set):
-        remaining = []
-        for alert in alerts:
-            if json.loads(alert.key) not in key_name_set:
-                continue
+class ApiKeyRevokedAlertSource(AlertSource):
+    schedule = IntervalSchedule(timedelta(hours=1))
 
-            remaining.append(alert)
+    async def check(self):
+        alerts = []
+        for key in await self.middleware.call("api_key.query"):
+            if key["revoked"]:
+                alerts.append(Alert(ApiKeyRevokedAlertClass, {
+                    "name": key["name"],
+                    "reason": key["revoked_reason"],
+                }))
 
-        return remaining
+        return alerts

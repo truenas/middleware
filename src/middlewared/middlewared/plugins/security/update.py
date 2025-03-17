@@ -36,6 +36,7 @@ class SystemSecurityService(ConfigService):
         # FIPS configuration has been synced up before reboot
         await self.middleware.call('failover.datastore.send')
         await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
+        await self.middleware.call('failover.call_remote', 'system.security.configure_stig')
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
         if reason.name in remote_reboot_reasons:
@@ -58,16 +59,11 @@ class SystemSecurityService(ConfigService):
 
     @private
     async def configure_stig(self, data=None):
-        is_ha = await self.middleware.call('failover.licensed')
         if data is None:
             data = await self.config()
 
         if not data['enable_gpos_stig']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
-            if await self.middleware.call('failover.licensed'):
-                await self.middleware.call(
-                    'failover.call_remote', 'auth.set_authenticator_assurance_level', ['LEVEL_1']
-                )
             return
 
         # Per security team STIG compatibility requires that authentication methods
@@ -91,6 +87,13 @@ class SystemSecurityService(ConfigService):
                 'enabling General Purpose OS STIG compatibility mode.'
             )
 
+        tc_config = await self.middleware.call('truecommand.config')
+        if tc_config['enabled']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'TrueCommand is not supported under General Purpose OS STIG compatibility mode.'
+            )
+
         # We want to make sure that at least one local user account is usable
         # and has 2fa auth configured.
         two_factor_users = await self.middleware.call('user.query', [
@@ -103,7 +106,7 @@ class SystemSecurityService(ConfigService):
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
                 'Two factor authentication tokens must be configured for users '
-                'prior to enabling General Purpose OS STIG compatibiltiy mode.'
+                'prior to enabling General Purpose OS STIG compatibility mode.'
             )
 
         if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles']]):
@@ -124,18 +127,23 @@ class SystemSecurityService(ConfigService):
                 'authentication for the currently-authenticated session.'
             )
 
-        if await self.middleware.call('app.query', [], {'count': True}):
+        if (await self.middleware.call('docker.config'))['pool']:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
-                'Apps are not supported under General Purpose OS STIG compatibility '
-                'mode.'
+                'Please disable Apps as Apps are not supported under General Purpose OS STIG compatibility mode.'
             )
 
-        if await self.middleware.call('virt.instance.query', [], {'count': True}):
+        if (await self.middleware.call('virt.global.config'))['pool']:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
-                'VMs are not supported under General Purpose OS STIG compatibility '
-                'mode.'
+                'Please disable VMs as VMs are not supported under General Purpose OS STIG compatibility mode.'
+            )
+
+        if (await self.middleware.call('tn_connect.config'))['enabled']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Please disable TrueNAS Connect as it is not supported under '
+                'General Purpose OS STIG compatibility mode.'
             )
 
     @private

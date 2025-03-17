@@ -1,4 +1,5 @@
-from middlewared.schema import accepts, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import PoolDatasetAttachmentsArgs, PoolDatasetAttachmentsResult
 from middlewared.service import item_method, private, Service
 
 from .utils import dataset_mountpoint
@@ -12,8 +13,7 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @item_method
-    @accepts(Str('id', required=True), roles=['DATASET_READ'])
-    @returns(Ref('attachments'))
+    @api_method(PoolDatasetAttachmentsArgs, PoolDatasetAttachmentsResult, roles=['DATASET_READ'])
     async def attachments(self, oid):
         """
         Return a list of services dependent of this dataset.

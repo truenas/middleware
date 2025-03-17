@@ -1,4 +1,10 @@
-from middlewared.schema import accepts, Dict, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDatasetChecksumChoicesArgs, PoolDatasetChecksumChoicesResult, PoolDatasetCompressionChoicesArgs,
+    PoolDatasetCompressionChoicesResult, PoolDatasetEncryptionAlgorithmChoicesArgs,
+    PoolDatasetEncryptionAlgorithmChoicesResult, PoolDatasetRecommendedZVolBlockSizeArgs,
+    PoolDatasetRecommendedZVolBlockSizeResult
+)
 from middlewared.service import Service
 
 from .utils import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES
@@ -9,38 +15,36 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @accepts(roles=['DATASET_READ'])
-    @returns(Dict(
-        *[Str(k, enum=[k]) for k in ZFS_CHECKSUM_CHOICES if k != 'OFF'],
-    ))
+    @api_method(PoolDatasetChecksumChoicesArgs, PoolDatasetChecksumChoicesResult, roles=['DATASET_READ'])
     async def checksum_choices(self):
         """
         Retrieve checksums supported for ZFS dataset.
         """
         return {v: v for v in ZFS_CHECKSUM_CHOICES if v != 'OFF'}
 
-    @accepts(roles=['DATASET_READ'])
-    @returns(Dict(
-        *[Str(k, enum=[k]) for k in ZFS_COMPRESSION_ALGORITHM_CHOICES],
-    ))
+    @api_method(PoolDatasetCompressionChoicesArgs, PoolDatasetCompressionChoicesResult, roles=['DATASET_READ'])
     async def compression_choices(self):
         """
         Retrieve compression algorithm supported by ZFS.
         """
         return {v: v for v in ZFS_COMPRESSION_ALGORITHM_CHOICES}
 
-    @accepts(roles=['DATASET_READ'])
-    @returns(Dict(
-        *[Str(k, enum=[k]) for k in ZFS_ENCRYPTION_ALGORITHM_CHOICES],
-    ))
+    @api_method(
+        PoolDatasetEncryptionAlgorithmChoicesArgs,
+        PoolDatasetEncryptionAlgorithmChoicesResult,
+        roles=['DATASET_READ']
+    )
     async def encryption_algorithm_choices(self):
         """
         Retrieve encryption algorithms supported for ZFS dataset encryption.
         """
         return {v: v for v in ZFS_ENCRYPTION_ALGORITHM_CHOICES}
 
-    @accepts(Str('pool'), roles=['DATASET_READ'])
-    @returns(Str())
+    @api_method(
+        PoolDatasetRecommendedZVolBlockSizeArgs,
+        PoolDatasetRecommendedZVolBlockSizeResult,
+        roles=['DATASET_READ']
+    )
     async def recommended_zvol_blocksize(self, pool):
         """
         Helper method to get recommended size for a new zvol (dataset of type VOLUME).

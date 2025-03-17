@@ -1,18 +1,16 @@
-from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.service import item_method, Service
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CloudSyncCrudRestoreArgs,
+    CloudSyncCrudRestoreResult,
+)
+from middlewared.service import Service
 
 
 class CloudSyncService(Service):
 
-    @item_method
-    @accepts(
-        Int("id"),
-        Dict(
-            "cloud_sync_restore",
-            Str("description"),
-            Str("transfer_mode", enum=["SYNC", "COPY"], required=True),
-            Str("path", required=True),
-        ),
+    @api_method(
+        CloudSyncCrudRestoreArgs,
+        CloudSyncCrudRestoreResult,
         roles=["CLOUD_SYNC_WRITE"],
     )
     async def restore(self, id_, data):

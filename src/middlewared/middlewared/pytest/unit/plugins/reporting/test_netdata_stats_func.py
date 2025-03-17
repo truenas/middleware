@@ -2,7 +2,7 @@ from unittest.mock import patch, mock_open
 
 from middlewared.plugins.reporting.netdata.utils import NETDATA_UPDATE_EVERY
 from middlewared.plugins.reporting.realtime_reporting import (
-    get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info,
+    get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats
 )
 from middlewared.plugins.reporting.realtime_reporting.utils import normalize_value, safely_retrieve_dimension
 
@@ -653,8 +653,73 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-
+    'truenas_pool.usage': {
+        'name': 'truenas_pool.usage',
+        'family': 'pool.usage',
+        'context': 'pool.usage',
+        'units': 'bytes',
+        'last_updated': 1741816789,
+        'dimensions': {
+            '11653691484309152344.available': {
+                'name': 'available',
+                'value': 15574065152
+            },
+            '11653691484309152344.used': {
+                'name': 'used',
+                'value': 4210708480
+            },
+            '11653691484309152344.total': {
+                'name': 'total',
+                'value': 19784773632
+            },
+            '14935745712721614601.available': {
+                'name': 'available',
+                'value': 6004465664
+            },
+            '14935745712721614601.used': {
+                'name': 'used',
+                'value': 14279315456
+            },
+            '14935745712721614601.total': {
+                'name': 'total',
+                'value': 20283781120
+            }
+        }
+    },
 }
+
+
+def test_get_pool_stats():
+    with patch('middlewared.plugins.reporting.realtime_reporting.pool.query_imported_fast_impl') as pool_imp:
+        pool_imp.return_value = {
+            '14935745712721614601': {
+                'name': 'tank', 'state': 'ONLINE'
+            },
+            '11653691484309152344': {
+                'name': 'boot-pool', 'state': 'ONLINE'
+            }
+        }
+
+        pool_stats = get_pool_stats(NETDATA_ALL_METRICS)
+        assert pool_stats['tank']['available'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '14935745712721614601.available'
+        )
+        assert pool_stats['tank']['used'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '14935745712721614601.used'
+        )
+        assert pool_stats['tank']['total'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '14935745712721614601.total'
+        )
+        assert pool_stats['boot-pool']['available'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '11653691484309152344.available'
+        )
+        assert pool_stats['boot-pool']['used'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '11653691484309152344.used'
+        )
+        assert pool_stats['boot-pool']['total'] == safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, 'truenas_pool.usage', '11653691484309152344.total'
+        )
+
 
 
 def test_arc_stats():

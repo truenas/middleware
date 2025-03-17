@@ -8,7 +8,7 @@ def render(service, middleware, render_ctx):
     if render_ctx['directoryservices.status']['type'] != DSType.IPA.value:
         raise FileShouldNotExist()
 
-    cert = middleware.call_sync('certificateauthority.query', [[
+    cert = middleware.call_sync('certificate.query', [[
         'name', '=', IpaConfigName.IPA_CACERT.value
     ]])
 

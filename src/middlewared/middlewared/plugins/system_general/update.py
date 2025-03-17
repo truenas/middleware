@@ -4,11 +4,14 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.async_validators import validate_port
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str
-from middlewared.service import ConfigService, private, ValidationErrors
+from middlewared.service import ConfigService, private
 from middlewared.utils import run
+from middlewared.utils.service.settings import SettingsHelper
 from middlewared.validators import Range
 
 from .utils import HTTPS_PROTOCOLS
+
+settings = SettingsHelper()
 
 
 class SystemGeneralModel(sa.Model):
@@ -24,7 +27,6 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsprotocols = sa.Column(sa.JSON(list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
     stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
     stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
-    stg_language = sa.Column(sa.String(120), default='en')
     stg_kbdmap = sa.Column(sa.String(120), default='us')
     stg_timezone = sa.Column(sa.String(120), default='America/Los_Angeles')
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
@@ -63,7 +65,6 @@ class SystemGeneralService(ConfigService):
         Bool('ui_consolemsg', required=True),
         Str('ui_x_frame_options', enum=['SAMEORIGIN', 'DENY', 'ALLOW_ALL'], required=True),
         Str('kbdmap', required=True),
-        Str('language', empty=False, required=True),
         Str('timezone', empty=False, required=True),
         Bool('usage_collection', null=True, required=True),
         Bool('wizardshown', required=True),
@@ -96,105 +97,96 @@ class SystemGeneralService(ConfigService):
 
         return data
 
-    @private
-    async def validate_general_settings(self, data, old_config, schema):
-        verrors = ValidationErrors()
+    @settings.fields_validator('ui_port', 'ui_address')
+    async def _validate_ui_port_address(self, verrors, ui_port, ui_address):
+        for ui_address in ui_address:
+            verrors.extend(await validate_port(self.middleware, 'ui_port', ui_port, 'system.general', ui_address))
 
-        if data['ui_port'] != old_config['ui_port']:
-            for ui_address in data['ui_address']:
-                verrors.extend(await validate_port(
-                    self.middleware, f'{schema}.ui_port', data['ui_port'], 'system.general', ui_address
-                ))
+    @settings.fields_validator('ui_httpsport', 'ui_address')
+    async def _validate_ui_httpsport_address(self, verrors, ui_httpsport, ui_address):
+        for ui_address in ui_address:
+            verrors.extend(await validate_port(self.middleware, 'ui_httpsport', ui_httpsport, 'system.general',
+                                               ui_address))
 
-        if data['ui_httpsport'] != old_config['ui_httpsport']:
-            for ui_address in data['ui_address']:
-                verrors.extend(await validate_port(
-                    self.middleware, f'{schema}.ui_httpsport', data['ui_httpsport'], 'system.general', ui_address
-                ))
+    @settings.fields_validator('ui_port', 'ui_httpsport')
+    async def _validate_ui_ports(self, verrors, ui_port, ui_httpsport):
+        if ui_port == ui_httpsport:
+            verrors.add('ui_port', 'Must be different from "ui_httpsport"')
 
-        if data['ui_port'] == data['ui_httpsport']:
-            verrors.add(f'{schema}.ui_port', 'Must be different from "ui_httpsport"')
-
-        if data['ds_auth'] and not await self.middleware.call('system.is_enterprise'):
+    @settings.fields_validator('ds_auth')
+    async def _validate_ds_auth(self, verrors, ds_auth):
+        if ds_auth and not await self.middleware.call('system.is_enterprise'):
             verrors.add(
-               f'{schema}.ds_auth',
-               'Directory services authentication for UI and API access requires an Enterprise license.'
+                'ds_auth',
+                'Directory services authentication for UI and API access requires an Enterprise license.'
             )
 
-        language = data.get('language')
-        system_languages = await self.middleware.call('system.general.language_choices')
-        if language not in system_languages.keys():
+    @settings.fields_validator('kbdmap')
+    async def _validate_kbdmap(self, verrors, kbdmap):
+        if kbdmap not in await self.middleware.call('system.general.kbdmap_choices'):
             verrors.add(
-                f'{schema}.language',
-                f'Specified "{language}" language unknown. Please select a valid language.'
-            )
-
-        if data['kbdmap'] not in await self.middleware.call('system.general.kbdmap_choices'):
-            verrors.add(
-                f'{schema}.kbdmap',
+                'kbdmap',
                 'Please enter a valid keyboard layout'
             )
 
-        timezone = data.get('timezone')
+    @settings.fields_validator('timezone')
+    async def _validate_timezone(self, verrors, timezone):
         timezones = await self.middleware.call('system.general.timezone_choices')
         if timezone not in timezones:
             verrors.add(
-                f'{schema}.timezone',
+                'timezone',
                 'Timezone not known. Please select a valid timezone.'
             )
 
+    @settings.fields_validator('ui_address', 'ui_v6address')
+    async def _validate_ui_address(self, verrors, ui_address, ui_v6address):
         ip4_addresses_list = await self.middleware.call('system.general.ui_address_choices')
         ip6_addresses_list = await self.middleware.call('system.general.ui_v6address_choices')
 
-        ip4_addresses = data.get('ui_address')
-        for ip4_address in ip4_addresses:
+        for ip4_address in ui_address:
             if ip4_address not in ip4_addresses_list:
                 verrors.add(
-                    f'{schema}.ui_address',
+                    'ui_address',
                     f'{ip4_address} ipv4 address is not associated with this machine'
                 )
 
-        ip6_addresses = data.get('ui_v6address')
-        for ip6_address in ip6_addresses:
+        for ip6_address in ui_v6address:
             if ip6_address not in ip6_addresses_list:
                 verrors.add(
-                    f'{schema}.ui_v6address',
+                    'ui_v6address',
                     f'{ip6_address} ipv6 address is not associated with this machine'
                 )
 
-        for key, wildcard, ips in [('ui_address', '0.0.0.0', ip4_addresses), ('ui_v6address', '::', ip6_addresses)]:
+        for key, wildcard, ips in [('ui_address', '0.0.0.0', ui_address), ('ui_v6address', '::', ui_v6address)]:
             if wildcard in ips and len(ips) > 1:
                 verrors.add(
-                    f'{schema}.{key}',
+                    key,
                     f'When "{wildcard}" has been selected, selection of other addresses is not allowed'
                 )
 
+    @settings.fields_validator('ui_certificate')
+    async def _validate_ui_certificate(self, verrors, ui_certificate):
         tnc_config = await self.middleware.call('tn_connect.config')
-        certificate_id = data.get('ui_certificate')
-        if certificate_id != old_config['ui_certificate']:
-            # Only validate cert if it has been changed
-            cert = await self.middleware.call(
-                'certificate.query',
-                [["id", "=", certificate_id]]
+        cert = await self.middleware.call(
+            'certificate.query',
+            [["id", "=", ui_certificate]]
+        )
+        if not cert:
+            verrors.add(
+                'ui_certificate',
+                'Please specify a valid certificate which exists in the system'
             )
-            if not cert:
-                verrors.add(
-                    f'{schema}.ui_certificate',
-                    'Please specify a valid certificate which exists in the system'
+        elif tnc_config['certificate'] and tnc_config['certificate'] != ui_certificate:
+            verrors.add(
+                'ui_certificate',
+                'Certificate cannot be changed when TrueNAS Connect has been configured'
+            )
+        else:
+            verrors.extend(
+                await self.middleware.call(
+                    'certificate.cert_services_validation', ui_certificate, 'ui_certificate', False
                 )
-            elif tnc_config['certificate'] and tnc_config['certificate'] != certificate_id:
-                verrors.add(
-                    f'{schema}.ui_certificate',
-                    'Certificate cannot be changed when TrueNAS Connect has been configured'
-                )
-            else:
-                verrors.extend(
-                    await self.middleware.call(
-                        'certificate.cert_services_validation', certificate_id, f'{schema}.ui_certificate', False
-                    )
-                )
-
-        return verrors
+            )
 
     @accepts(
         Patch(
@@ -254,8 +246,7 @@ class SystemGeneralService(ConfigService):
         new_config = config.copy()
         new_config.update(data)
 
-        verrors = await self.validate_general_settings(new_config, config, 'general_settings_update')
-        verrors.check()
+        await settings.validate(self, 'general_settings', config, new_config)
 
         db_config = new_config.copy()
         for key in list(new_config.keys()):

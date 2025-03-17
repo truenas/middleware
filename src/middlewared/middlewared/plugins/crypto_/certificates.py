@@ -4,7 +4,6 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, job, private, skip_arg, ValidationErrors
-from middlewared.utils.time_utils import utc_now
 from middlewared.validators import Email, Range
 
 from .common_validation import _validate_common_attributes, validate_cert_name
@@ -14,8 +13,7 @@ from .key_utils import export_private_key
 from .load_utils import load_certificate
 from .query_utils import normalize_cert_attrs
 from .utils import (
-    CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT,
-    get_cert_info_from_data, _set_required,
+    CERT_TYPE_EXISTING, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT, get_cert_info_from_data, _set_required,
 )
 
 
@@ -28,12 +26,10 @@ class CertificateModel(sa.Model):
     cert_certificate = sa.Column(sa.Text(), nullable=True)
     cert_privatekey = sa.Column(sa.EncryptedText(), nullable=True)
     cert_CSR = sa.Column(sa.Text(), nullable=True)
-    cert_signedby_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
     cert_acme_uri = sa.Column(sa.String(200), nullable=True)
     cert_domains_authenticators = sa.Column(sa.JSON(encrypted=True), nullable=True)
     cert_renew_days = sa.Column(sa.Integer(), nullable=True, default=10)
     cert_acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True, nullable=True)
-    cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)
     cert_add_to_trusted_store = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
@@ -42,7 +38,6 @@ class CertificateService(CRUDService):
     class Config:
         datastore = 'system.certificate'
         datastore_extend = 'certificate.cert_extend'
-        datastore_extend_context = 'certificate.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
         role_prefix = 'CERTIFICATE'
@@ -52,7 +47,6 @@ class CertificateService(CRUDService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_functions = {
-            'CERTIFICATE_CREATE_INTERNAL': 'create_internal',
             'CERTIFICATE_CREATE_IMPORTED': 'create_imported_certificate',
             'CERTIFICATE_CREATE_IMPORTED_CSR': 'create_imported_csr',
             'CERTIFICATE_CREATE_CSR': 'create_csr',
@@ -60,17 +54,7 @@ class CertificateService(CRUDService):
         }
 
     @private
-    def cert_extend_context(self, rows, extra):
-        context = {
-            'cas': {c['id']: c for c in self.middleware.call_sync('certificateauthority.query')},
-        }
-        return context
-
-    @private
-    def cert_extend(self, cert, context):
-        if cert['signedby']:
-            cert['signedby'] = context['cas'][cert['signedby']['id']]
-
+    def cert_extend(self, cert):
         normalize_cert_attrs(cert)
         return cert
 
@@ -138,12 +122,6 @@ class CertificateService(CRUDService):
                 'Please use a certificate whose digest algorithm has at least 112 security bits'
             )
 
-        if cert['revoked']:
-            verrors.add(
-                schema_name,
-                'This certificate is revoked'
-            )
-
     @private
     async def validate_common_attributes(self, data, schema_name):
         verrors = ValidationErrors()
@@ -157,7 +135,6 @@ class CertificateService(CRUDService):
     # APPROPRIATE METHOD IS CALLED
     # FOLLOWING TYPES ARE SUPPORTED
     # CREATE_TYPE ( STRING )          - METHOD CALLED
-    # CERTIFICATE_CREATE_INTERNAL     - create_internal
     # CERTIFICATE_CREATE_IMPORTED     - create_imported_certificate
     # CERTIFICATE_CREATE_IMPORTED_CSR - create_imported_csr
     # CERTIFICATE_CREATE_CSR          - create_csr
@@ -169,12 +146,9 @@ class CertificateService(CRUDService):
             Bool('tos'),
             Dict('dns_mapping', additional_attrs=True),
             Int('csr_id'),
-            Int('signedby'),
             Int('key_length', enum=[2048, 4096]),
             Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Int('type'),
-            Int('lifetime'),
-            Int('serial', validators=[Range(min_=1)]),
             Str('acme_directory_uri'),
             Str('certificate', max_length=None),
             Str('city'),
@@ -191,7 +165,7 @@ class CertificateService(CRUDService):
             Str('privatekey', max_length=None),
             Str('state'),
             Str('create_type', enum=[
-                'CERTIFICATE_CREATE_INTERNAL', 'CERTIFICATE_CREATE_IMPORTED',
+                'CERTIFICATE_CREATE_IMPORTED',
                 'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
                 'CERTIFICATE_CREATE_ACME'], required=True),
             Str('digest_algorithm', enum=['SHA224', 'SHA256', 'SHA384', 'SHA512']),
@@ -209,17 +183,15 @@ class CertificateService(CRUDService):
         Certificates are classified under following types and the necessary keywords to be passed
         for `create_type` attribute to create the respective type of certificate
 
-        1) Internal Certificate                 -  CERTIFICATE_CREATE_INTERNAL
+        1) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
 
-        2) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
+        2) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
 
-        3) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
+        3) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
 
-        4) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
+        4) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
 
-        5) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
-
-        By default, created certs use RSA keys. If an Elliptic Curve Key is desired, it can be specified with the
+        By default, created CSRs use RSA keys. If an Elliptic Curve Key is desired, it can be specified with the
         `key_type` attribute. If the `ec_curve` attribute is not specified for the Elliptic Curve Key, then default to
         using "SECP384R1" curve.
 
@@ -261,29 +233,6 @@ class CertificateService(CRUDService):
                     "CSR": "CSR string",
                     "privatekey": "Private key string",
                     "create_type": "CERTIFICATE_CREATE_IMPORTED_CSR"
-                }]
-            }
-
-          Create an Internal Certificate
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "certificate.create",
-                "params": [{
-                    "name": "internal_cert",
-                    "key_length": 2048,
-                    "lifetime": 3600,
-                    "city": "Nashville",
-                    "common": "domain1.com",
-                    "country": "US",
-                    "email": "dev@ixsystems.com",
-                    "organization": "iXsystems",
-                    "state": "Tennessee",
-                    "digest_algorithm": "SHA256",
-                    "signedby": 4,
-                    "create_type": "CERTIFICATE_CREATE_INTERNAL"
                 }]
             }
         """
@@ -328,7 +277,7 @@ class CertificateService(CRUDService):
                 await self.middleware.call(f'certificate.{self.map_functions[create_type]}', job, data)
             ).items()
             if k in [
-                'name', 'certificate', 'CSR', 'privatekey', 'type', 'signedby', 'acme', 'acme_uri',
+                'name', 'certificate', 'CSR', 'privatekey', 'type', 'acme', 'acme_uri',
                 'domains_authenticators', 'renew_days', 'add_to_trusted_store',
             ]
         }
@@ -399,15 +348,20 @@ class CertificateService(CRUDService):
 
     @accepts(
         Patch(
-            'certificate_create_internal', 'certificate_create_csr',
-            ('rm', {'name': 'signedby'}),
-            ('rm', {'name': 'lifetime'})
+            'certificate_create', 'certificate_create_csr',
+            ('edit', _set_required('country')),
+            ('edit', _set_required('state')),
+            ('edit', _set_required('city')),
+            ('edit', _set_required('organization')),
+            ('edit', _set_required('email')),
+            ('edit', _set_required('san')),
+            ('rm', {'name': 'create_type'}),
+            register=True
         )
     )
     @private
     @skip_arg(count=1)
     def create_csr(self, job, data):
-        # no signedby, lifetime attributes required
         verrors = ValidationErrors()
         cert_info = get_cert_info_from_data(data)
         cert_info['cert_extensions'] = data['cert_extensions']
@@ -482,11 +436,6 @@ class CertificateService(CRUDService):
 
             data['privatekey'] = csr_obj['privatekey']
             data.pop('passphrase', None)
-        elif not data.get('privatekey'):
-            verrors.add(
-                'certificate_create.privatekey',
-                'Private key is required when importing a certificate'
-            )
 
         verrors.check()
 
@@ -500,62 +449,9 @@ class CertificateService(CRUDService):
         return data
 
     @accepts(
-        Patch(
-            'certificate_create', 'certificate_create_internal',
-            ('edit', _set_required('lifetime')),
-            ('edit', _set_required('country')),
-            ('edit', _set_required('state')),
-            ('edit', _set_required('city')),
-            ('edit', _set_required('organization')),
-            ('edit', _set_required('email')),
-            ('edit', _set_required('san')),
-            ('edit', _set_required('signedby')),
-            ('rm', {'name': 'create_type'}),
-            register=True
-        )
-    )
-    @private
-    @skip_arg(count=1)
-    async def create_internal(self, job, data):
-
-        cert_info = get_cert_info_from_data(data)
-        data['type'] = CERT_TYPE_INTERNAL
-
-        signing_cert = await self.middleware.call(
-            'certificateauthority.query',
-            [('id', '=', data['signedby'])],
-            {'get': True}
-        )
-
-        cert_serial = await self.middleware.call(
-            'certificateauthority.get_serial_for_certificate',
-            data['signedby']
-        )
-
-        cert_info.update({
-            'ca_privatekey': signing_cert['privatekey'],
-            'ca_certificate': signing_cert['certificate'],
-            'serial': cert_serial,
-            'cert_extensions': data['cert_extensions']
-        })
-
-        cert, key = await self.middleware.call(
-            'cryptokey.generate_certificate',
-            cert_info
-        )
-
-        data['certificate'] = cert
-        data['privatekey'] = key
-
-        job.set_progress(90, 'Finalizing changes')
-
-        return data
-
-    @accepts(
         Int('id', required=True),
         Dict(
             'certificate_update',
-            Bool('revoked'),
             Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Bool('add_to_trusted_store'),
             Str('name'),
@@ -566,10 +462,7 @@ class CertificateService(CRUDService):
         """
         Update certificate of `id`
 
-        Only name and revoked attribute can be updated.
-
-        When `revoked` is enabled, the specified cert `id` is revoked and if it belongs to a CA chain which
-        exists on this system, its serial number is added to the CA's certificate revocation list.
+        Only name attribute can be updated.
 
         .. examples(websocket)::
 
@@ -589,8 +482,6 @@ class CertificateService(CRUDService):
             }
         """
         old = await self.get_instance(id_)
-        # signedby is changed back to integer from a dict
-        old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
         if old.get('acme'):
             old['acme'] = old['acme']['id']
 
@@ -598,7 +489,7 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if any(new.get(k) != old.get(k) for k in ('name', 'revoked', 'renew_days', 'add_to_trusted_store')):
+        if any(new.get(k) != old.get(k) for k in ('name', 'renew_days', 'add_to_trusted_store')):
 
             verrors = ValidationErrors()
             tnc_config = await self.middleware.call('tn_connect.config')
@@ -621,38 +512,15 @@ class CertificateService(CRUDService):
                     'Certificate renewal days is only supported for ACME certificates'
                 )
 
-            if new['revoked'] and new['cert_type_CSR']:
-                verrors.add(
-                    'certificate_update.revoked',
-                    'A CSR cannot be marked as revoked.'
-                )
             if new['add_to_trusted_store'] and new['cert_type_CSR']:
                 verrors.add(
                     'certificate_update.add_to_trusted_store',
                     'A CSR cannot be added to the system\'s trusted store'
                 )
-            if new['revoked'] and not old['revoked'] and not new['can_be_revoked']:
-                verrors.add(
-                    'certificate_update.revoked',
-                    'Only certificate(s) can be revoked which have a CA present on the system'
-                )
-            elif old['revoked'] and not new['revoked']:
-                verrors.add(
-                    'certificate_update.revoked',
-                    'Certificate has already been revoked and this cannot be reversed'
-                )
-
-            if not verrors and new['revoked'] and new['add_to_trusted_store']:
-                verrors.add(
-                    'certificate_update.add_to_trusted_store',
-                    'Revoked certificates cannot be added to system\'s trusted store'
-                )
 
             verrors.check()
 
             to_update = {'renew_days': new['renew_days']} if data.get('renew_days') else {}
-            if old['revoked'] != new['revoked'] and new['revoked']:
-                to_update['revoked_date'] = utc_now()
 
             await self.middleware.call(
                 'datastore.update',

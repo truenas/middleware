@@ -22,7 +22,9 @@ from middlewared.api.current import (
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
 from .utils import (
-    get_vnc_info_from_config, get_root_device_dict, Status, incus_call, incus_call_and_wait, VNC_BASE_PORT
+    create_vnc_password_file, get_vnc_info_from_config, get_root_device_dict, get_vnc_password_file_path,
+    Status, incus_call, incus_call_and_wait, VNC_BASE_PORT, root_device_pool_from_raw,
+    storage_pool_to_incus_pool, incus_pool_to_storage_pool,
 )
 
 
@@ -59,6 +61,8 @@ class VirtInstanceService(CRUDService):
                 status = 'UNKNOWN'
             else:
                 status = i['state']['status'].upper()
+
+            autostart = i['config'].get('boot.autostart')
             secureboot = None
             if i['config'].get('image.requirements.secureboot') == 'true':
                 secureboot = True
@@ -70,7 +74,7 @@ class VirtInstanceService(CRUDService):
                 'type': 'CONTAINER' if i['type'] == 'container' else 'VM',
                 'status': status,
                 'cpu': i['config'].get('limits.cpu'),
-                'autostart': True if i['config'].get('boot.autostart') == 'true' else False,
+                'autostart': True if i['config'].get('user.autostart', autostart) == 'true' else False,
                 'environment': {},
                 'aliases': [],
                 'image': {
@@ -88,6 +92,7 @@ class VirtInstanceService(CRUDService):
                 'secure_boot': None,
                 'root_disk_size': None,
                 'root_disk_io_bus': None,
+                'storage_pool': incus_pool_to_storage_pool(root_device_pool_from_raw(i)),
             }
             if entry['type'] == 'VM':
                 entry['secure_boot'] = True if i['config'].get('security.secureboot') == 'true' else False
@@ -157,6 +162,11 @@ class VirtInstanceService(CRUDService):
             verrors.add(
                 f'{schema_name}.instance_type', f'System is not licensed to manage {instance_type!r} instances'
             )
+
+        if new.get('storage_pool'):
+            valid_pools = await self.middleware.call('virt.global.pool_choices')
+            if new['storage_pool'] not in valid_pools:
+                verrors.add(f'{schema_name}.storage_pool', 'Not a valid ZFS pool')
 
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
@@ -236,7 +246,7 @@ class VirtInstanceService(CRUDService):
                     if any(new['vnc_port'] in v for v in port_mapping.values()):
                         verrors.add(f'{schema_name}.vnc_port', 'VNC port is already in use by another virt instance')
 
-    def __data_to_config(self, data: dict, raw: dict = None, instance_type=None):
+    def __data_to_config(self, instance_name: str, data: dict, raw: dict = None, instance_type=None):
         config = {}
         if 'environment' in data:
             # If we are updating environment we need to remove current values
@@ -256,8 +266,9 @@ class VirtInstanceService(CRUDService):
             else:
                 config['limits.memory'] = None
 
+        config['boot.autostart'] = 'false'
         if data.get('autostart') is not None:
-            config['boot.autostart'] = str(data['autostart']).lower()
+            config['user.autostart'] = str(data['autostart']).lower()
 
         if instance_type == 'VM':
             config.update({
@@ -273,7 +284,8 @@ class VirtInstanceService(CRUDService):
             if data.get('enable_vnc') and data.get('vnc_port'):
                 vnc_config = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
                 if data.get('vnc_password'):
-                    vnc_config = f'-object secret,id=vnc0,data={data["vnc_password"]} {vnc_config},password-secret=vnc0'
+                    vnc_config = (f'-object secret,id=vnc0,file={get_vnc_password_file_path(instance_name)} '
+                                  f'{vnc_config},password-secret=vnc0')
 
                 config['raw.qemu'] = vnc_config
             if data.get('enable_vnc') is False:
@@ -297,19 +309,20 @@ class VirtInstanceService(CRUDService):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 for v in (await resp.json())['products'].values():
-                    alias = v['aliases'].split(',', 1)[0]
-                    if v['requirements'].get('cdrom_agent'):
-                        # We are adding this check to ignore such images because these are cloud images
-                        # and require agent to be installed/configured which is obviously not going to
-                        # happen
+                    if v['variant'] == 'cloud':
+                        # cloud-init based images are unsupported for now
                         continue
 
+                    cdrom_agent_required = v['requirements'].get('cdrom_agent', False)
+                    alias = v['aliases'].split(',', 1)[0]
                     if alias not in choices:
                         instance_types = set()
                         for i in v['versions'].values():
                             if 'root.tar.xz' in i['items'] and 'desktop' not in v['aliases']:
                                 instance_types.add('CONTAINER')
-                            if 'disk.qcow2' in i['items']:
+                            if 'disk.qcow2' in i['items'] and not cdrom_agent_required:
+                                # VM images that have a cdrom_agent requirement are not
+                                # supported at the moment
                                 instance_types.add('VM')
                         if not instance_types:
                             continue
@@ -331,8 +344,13 @@ class VirtInstanceService(CRUDService):
                         choices[alias]['archs'].append(v['arch'])
         return choices
 
-    @api_method(VirtInstanceCreateArgs, VirtInstanceCreateResult)
-    @job()
+    @api_method(
+        VirtInstanceCreateArgs,
+        VirtInstanceCreateResult,
+        audit='Virt: Creating',
+        audit_extended=lambda data: f'{data["name"]!r} instance'
+    )
+    @job(lock=lambda args: f'instance_action_{args[0].get("name")}')
     async def do_create(self, job, data):
         """
         Create a new virtualized instance.
@@ -340,6 +358,12 @@ class VirtInstanceService(CRUDService):
         await self.middleware.call('virt.global.check_initialized')
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
+
+        if data.get('storage_pool'):
+            pool = storage_pool_to_incus_pool(data['storage_pool'])
+        else:
+            defpool = (await self.middleware.call('virt.global.config'))['pool']
+            pool = storage_pool_to_incus_pool(defpool)
 
         data_devices = data['devices'] or []
         iso_volume = data.pop('iso_volume', None)
@@ -360,7 +384,7 @@ class VirtInstanceService(CRUDService):
             root_device_to_add = {
                 'name': iso_volume,
                 'dev_type': 'DISK',
-                'pool': 'default',
+                'pool': pool,
                 'source': iso_volume,
                 'destination': None,
                 'readonly': False,
@@ -373,11 +397,17 @@ class VirtInstanceService(CRUDService):
             data_devices.append(root_device_to_add)
 
         devices = {
-            'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus']),
-        } if data['instance_type'] == 'VM' else {}
+            'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus'], pool),
+        } if data['instance_type'] == 'VM' else {
+            'root': {
+                'path': '/',
+                'pool': pool,
+                'type': 'disk'
+            }
+        }
         for i in data_devices:
             await self.middleware.call(
-                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
+                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['name'], data['instance_type']
             )
             if i['name'] is None:
                 i['name'] = await self.middleware.call(
@@ -416,15 +446,17 @@ class VirtInstanceService(CRUDService):
                 'mode': 'pull',
                 'alias': data['image'],
             })
+
         try:
             await incus_call_and_wait('1.0/instances', 'post', {'json': {
                 'name': data['name'],
                 'ephemeral': False,
-                'config': self.__data_to_config(data, instance_type=data['instance_type']),
+                'config': self.__data_to_config(data['name'], data, instance_type=data['instance_type']),
                 'devices': devices,
                 'source': source,
+                'profiles': ['default'],
                 'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
-                'start': data['autostart'],
+                'start': False,
             }}, running_cb, timeout=15 * 60)
             # We will give 15 minutes to incus to download relevant image and then timeout
         except CallError as e:
@@ -432,10 +464,18 @@ class VirtInstanceService(CRUDService):
                 await (await self.middleware.call('virt.instance.delete', data['name'])).wait()
             raise e
 
+        if data['autostart']:
+            await self.start_impl(job, data['name'])
+
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 
-    @api_method(VirtInstanceUpdateArgs, VirtInstanceUpdateResult)
-    @job()
+    @api_method(
+        VirtInstanceUpdateArgs,
+        VirtInstanceUpdateResult,
+        audit='Virt: Updating',
+        audit_extended=lambda id, data=None: f'{id!r} instance'
+    )
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def do_update(self, job, id, data):
         """
         Update instance.
@@ -469,46 +509,73 @@ class VirtInstanceService(CRUDService):
 
         verrors.check()
 
-        instance['raw']['config'].update(self.__data_to_config(data, instance['raw']['config'], instance['type']))
+        instance['raw']['config'].update(self.__data_to_config(id, data, instance['raw']['config'], instance['type']))
         if data.get('root_disk_size') or data.get('root_disk_io_bus'):
+            if (pool := root_device_pool_from_raw(instance['raw'])) is None:
+                raise CallError(f'{id}: instance does not have a configured pool')
+
             root_disk_size = data.get('root_disk_size') or int(instance['root_disk_size'] / (1024 ** 3))
             io_bus = data.get('root_disk_io_bus') or instance['root_disk_io_bus']
-            instance['raw']['devices']['root'] = get_root_device_dict(root_disk_size, io_bus)
+            instance['raw']['devices']['root'] = get_root_device_dict(root_disk_size, io_bus, pool)
 
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
 
         return await self.middleware.call('virt.instance.get_instance', id)
 
-    @api_method(VirtInstanceDeleteArgs, VirtInstanceDeleteResult)
-    @job()
+    @api_method(
+        VirtInstanceDeleteArgs,
+        VirtInstanceDeleteResult,
+        audit='Virt: Deleting',
+        audit_extended=lambda id: f'{id!r} instance'
+    )
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def do_delete(self, job, id):
         """
         Delete an instance.
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
-        if instance['status'] == 'RUNNING':
-            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
-                'action': 'stop',
-                'timeout': -1,
-                'force': True,
-            }})
+        if instance['status'] != 'STOPPED':
+            try:
+                await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+                    'action': 'stop',
+                    'timeout': -1,
+                    'force': True,
+                }})
+            except CallError:
+                self.logger.error(
+                    'Failed to stop %r instance having %r status before deletion', id, instance['status'], exc_info=True
+                )
 
         await incus_call_and_wait(f'1.0/instances/{id}', 'delete')
 
         return True
 
-    @api_method(VirtInstanceStartArgs, VirtInstanceStartResult, roles=['VIRT_INSTANCE_WRITE'])
-    @job(logs=True)
+    @api_method(
+        VirtInstanceStartArgs,
+        VirtInstanceStartResult,
+        audit='Virt: Starting',
+        audit_extended=lambda id: f'{id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
+    @job(lock=lambda args: f'instance_action_{args[0]}', logs=True)
     async def start(self, job, id):
         """
         Start an instance.
         """
         await self.middleware.call('virt.global.check_initialized')
+        return await self.start_impl(job, id)
+
+    @private
+    async def start_impl(self, job, id):
         instance = await self.middleware.call('virt.instance.get_instance', id)
 
         # Apply any idmap changes
-        await self.set_account_idmaps(id)
+        if instance['status'] != 'RUNNING':
+            await self.set_account_idmaps(id)
+
+        if instance['vnc_password']:
+            await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
 
         try:
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
@@ -532,8 +599,14 @@ class VirtInstanceService(CRUDService):
 
         return True
 
-    @api_method(VirtInstanceStopArgs, VirtInstanceStopResult, roles=['VIRT_INSTANCE_WRITE'])
-    @job()
+    @api_method(
+        VirtInstanceStopArgs,
+        VirtInstanceStopResult,
+        audit='Virt: Stopping',
+        audit_extended=lambda id, data=None: f'{id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def stop(self, job, id, data):
         """
         Stop an instance.
@@ -550,8 +623,14 @@ class VirtInstanceService(CRUDService):
 
         return True
 
-    @api_method(VirtInstanceRestartArgs, VirtInstanceRestartResult, roles=['VIRT_INSTANCE_WRITE'])
-    @job()
+    @api_method(
+        VirtInstanceRestartArgs,
+        VirtInstanceRestartResult,
+        audit='Virt: Restarting',
+        audit_extended=lambda id, data=None: f'{id!r} instance',
+        roles=['VIRT_INSTANCE_WRITE']
+    )
+    @job(lock=lambda args: f'instance_action_{args[0]}')
     async def restart(self, job, id, data):
         """
         Restart an instance.
@@ -561,15 +640,18 @@ class VirtInstanceService(CRUDService):
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
 
-        # Apply any idmap changes
-        await self.set_account_idmaps(id)
-
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'stop',
                 'timeout': data['timeout'],
                 'force': data['force'],
             }})
+
+        # Apply any idmap changes
+        await self.set_account_idmaps(id)
+
+        if instance['vnc_password']:
+            await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
 
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
             'action': 'start',

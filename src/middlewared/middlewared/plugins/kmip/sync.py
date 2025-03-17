@@ -19,7 +19,7 @@ class KMIPService(Service, KMIPServerMixin):
         config = self.middleware.call_sync('kmip.config')
         config.update(data or {})
         cert = self.middleware.call_sync('certificate.query', [['id', '=', config['certificate']]])
-        ca = self.middleware.call_sync('certificateauthority.query', [['id', '=', config['certificate_authority']]])
+        ca = self.middleware.call_sync('certificate.query', [['id', '=', config['certificate_authority']]])
         if not cert or not ca:
             raise CallError('Certificate/CA not setup correctly')
         return {

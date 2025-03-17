@@ -1424,11 +1424,11 @@ class UserService(CRUDService):
                         'Local users may not be members of directory services groups.'
                     )
 
-                entry = existing_groups['dbid']
-                if entry['builtin'] and entry['gid'] not in ALLOWED_BUILTIN_GIDS:
+                entry = existing_groups.get(dbid)
+                if entry and entry['bsdgrp_builtin'] and entry['bsdgrp_gid'] not in ALLOWED_BUILTIN_GIDS:
                     verrors.add(
                         f'{schema}.groups.{idx}',
-                        f'{entry["group"]}: membership of this builtin group may not be altered.'
+                        f'{entry["bsdgrp_group"]}: membership of this builtin group may not be altered.'
                     )
 
         if 'full_name' in data and ':' in data['full_name']:

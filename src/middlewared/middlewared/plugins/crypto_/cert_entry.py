@@ -1,6 +1,4 @@
-import copy
-
-from middlewared.schema import Bool, Datetime, Dict, Int, List, OROperator, Str
+from middlewared.schema import Bool, Dict, Int, List, Str
 
 
 CERT_ENTRY = Dict(
@@ -14,21 +12,13 @@ CERT_ENTRY = Dict(
     Str('acme_uri', null=True),
     Dict('domains_authenticators', additional_attrs=True, null=True),
     Int('renew_days'),
-    Datetime('revoked_date', null=True),
-    Dict('signedby', additional_attrs=True, null=True),
     Str('root_path'),
     Dict('acme', additional_attrs=True, null=True),
     Str('certificate_path', null=True),
     Str('privatekey_path', null=True),
     Str('csr_path', null=True),
     Str('cert_type'),
-    Bool('revoked'),
     Bool('expired', null=True),
-    OROperator(
-        Str('issuer', null=True, private=True),
-        Dict('issuer', additional_attrs=True, null=True, private=True),
-        name='issuer'
-    ),
     List('chain_list', items=[Str('certificate', max_length=None)]),
     Str('country', null=True),
     Str('state', null=True),
@@ -51,22 +41,8 @@ CERT_ENTRY = Dict(
     Int('key_length', null=True),
     Bool('add_to_trusted_store', default=False),
     Bool('chain', null=True),
-    Bool('CA_type_existing'),
-    Bool('CA_type_internal'),
-    Bool('CA_type_intermediate'),
     Bool('cert_type_existing'),
-    Bool('cert_type_internal'),
     Bool('cert_type_CSR'),
     Bool('parsed'),
-    Bool('can_be_revoked'),
     Dict('extensions', additional_attrs=True),
-    List('revoked_certs'),
-    Str('crl_path'),
-    Int('signed_certificates'),
 )
-
-
-def get_ca_result_entry():
-    entry = copy.deepcopy(CERT_ENTRY)
-    entry.name = 'certificateauthority_entry'
-    return entry

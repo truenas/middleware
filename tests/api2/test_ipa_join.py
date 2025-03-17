@@ -104,7 +104,7 @@ def test_check_kerberos_ticket(do_freeipa_connection):
 
 
 def test_certificate(do_freeipa_connection):
-    call('certificateauthority.query', [['name', '=', 'IPA_DOMAIN_CACERT']], {'get': True})
+    call('certificate.query', [['name', '=', 'IPA_DOMAIN_CACERT']], {'get': True})
 
 
 def test_system_keytab_has_nfs_principal(do_freeipa_connection):
