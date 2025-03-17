@@ -22,7 +22,7 @@ class PoolSnapshotService(CRUDService):
         """Clone a given snapshot to a new dataset."""
         return self.middleware.call_sync('zfs.snapshot.clone', data)
 
-    @api_method(PoolSnapshotRollbackArgs, PoolSnapshotRollbackResult, roles=['SNAPSHOT_READ', 'POOL_WRITE'])
+    @api_method(PoolSnapshotRollbackArgs, PoolSnapshotRollbackResult, roles=['SNAPSHOT_WRITE', 'POOL_WRITE'])
     def rollback(self, id_, options):
         return self.middleware.call_sync('zfs.snapshot.rollback', id_, options)
 
