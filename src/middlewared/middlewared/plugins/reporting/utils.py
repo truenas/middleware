@@ -54,7 +54,7 @@ def get_netdata_state_path() -> str:
 
 
 def get_metrics_approximation(
-    disk_count: int, core_count: int, interface_count: int, vms_count: int,
+    disk_count: int, core_count: int, interface_count: int, pool_count: int, vms_count: int,
     systemd_service_count: int, containers_count: typing.Optional[int] = 10,
 ) -> dict:
     data = {
@@ -119,6 +119,9 @@ def get_metrics_approximation(
 
             # cpu usage, it is core count + 1 with +1 saving aggregated stats
             'cpu.usage': core_count + 1,
+
+            # pool usage
+            'truenas_pool.usage': pool_count * 3,
 
             # cputemp
             'cputemp.temperatures': core_count + 1,
