@@ -14,7 +14,7 @@ from middlewared.api.current import (
     VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from .utils import incus_call_and_wait
+from .utils import incus_call_and_wait, storage_pool_to_incus_pool, incus_pool_to_storage_pool
 
 
 class VirtInstanceDeviceService(Service):
@@ -29,14 +29,17 @@ class VirtInstanceDeviceService(Service):
         List all devices associated to an instance.
         """
         instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance_profiles = instance['raw']['profiles']
+        raw_devices = {}
 
-        # Grab devices from default profile (e.g. nic and disk)
-        profile = await self.middleware.call('virt.global.get_default_profile')
+        # An incus instance may have more than one profile applied to it.
+        for profile in instance_profiles:
+            profile_devs = (await self.middleware.call('virt.global.get_profile', profile))['devices']
+            # Flag devices from the profile as readonly, cannot be modified only overridden
+            for v in profile_devs.values():
+                v['readonly'] = True
 
-        # Flag devices from the profile as readonly, cannot be modified only overridden
-        raw_devices = profile['devices']
-        for v in raw_devices.values():
-            v['readonly'] = True
+            raw_devices |= profile_devs
 
         raw_devices.update(instance['raw']['devices'])
 
@@ -47,11 +50,6 @@ class VirtInstanceDeviceService(Service):
                 devices.append(device)
 
         return devices
-
-    @private
-    def unsupported(self):
-        self.logger.trace('Proxy device not supported by API, skipping.')
-        return None
 
     @private
     async def incus_to_device(self, name: str, incus: dict[str, Any], context: dict):
@@ -66,8 +64,9 @@ class VirtInstanceDeviceService(Service):
                 device.update({
                     'dev_type': 'DISK',
                     'source': incus.get('source'),
+                    'storage_pool': incus_pool_to_storage_pool(incus.get('pool')),
                     'destination': incus.get('path'),
-                    'description': f'{incus.get("source")} -> {incus.get("destination")}',
+                    'description': f'{incus.get("source")} -> {incus.get("path")}',
                     'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
                     'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
                 })
@@ -86,18 +85,19 @@ class VirtInstanceDeviceService(Service):
                 # For now follow docker lead for simplification
                 # only allowing to bind on host (host -> container)
                 if incus.get('bind') == 'instance':
-                    return self.unsupported()
+                    # bind on instance is not supported in proxy device
+                    return None
 
                 proto, addr, ports = incus['listen'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return self.unsupported()
+                    return None
 
                 device['source_proto'] = proto.upper()
                 device['source_port'] = int(ports)
 
                 proto, addr, ports = incus['connect'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return self.unsupported()
+                    return None
 
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
@@ -150,7 +150,8 @@ class VirtInstanceDeviceService(Service):
                         else:
                             device['description'] = 'Unknown'
                     case 'mdev' | 'mig' | 'srviov':
-                        return self.unsupported()
+                        # We do not support these GPU types
+                        return None
             case 'pci':
                 if 'pci_choices' not in context:
                     context['pci_choices'] = await self.middleware.call('virt.device.pci_choices')
@@ -161,7 +162,8 @@ class VirtInstanceDeviceService(Service):
                     'description': context['pci_choices'].get(incus['address'], {}).get('description', 'Unknown')
                 })
             case _:
-                return self.unsupported()
+                # Unsupported incus device type
+                return None
 
         return device
 
@@ -179,9 +181,10 @@ class VirtInstanceDeviceService(Service):
                 if device['boot_priority'] is not None:
                     new['boot.priority'] = str(device['boot_priority'])
                 if '/' not in new['source']:
-                    # When incus volumes are used, we need to specify that incus needs to look in the default
-                    # already configured pool
-                    new['pool'] = 'default'
+                    if zpool := device.get('storage_pool'):
+                        new['pool'] = storage_pool_to_incus_pool(device.get('storage_pool'))
+                    else:
+                        new['pool'] = None
                 if device.get('io_bus'):
                     new['io.bus'] = device['io_bus'].lower()
 
@@ -265,6 +268,7 @@ class VirtInstanceDeviceService(Service):
     async def validate_devices(self, devices, schema, verrors: ValidationErrors):
         unique_src_proxies = []
         unique_dst_proxies = []
+        disk_sources = set()
 
         for device in devices:
             match device['dev_type']:
@@ -279,10 +283,16 @@ class VirtInstanceDeviceService(Service):
                         verrors.add(f'{schema}.dest_port', 'Destination proto/port already in use.')
                     else:
                         unique_dst_proxies.append(dst)
+                case 'DISK':
+                    source = device['source']
+                    if source in disk_sources:
+                        verrors.add(f'{schema}.source', 'Source already in use by another device.')
+                    else:
+                        disk_sources.add(source)
 
     @private
     async def validate_device(
-        self, device, schema, verrors: ValidationErrors, instance_type: str, old: dict = None,
+        self, device, schema, verrors: ValidationErrors, instance_name: str, instance_type: str, old: dict = None,
         instance_config: dict = None,
     ):
         match device['dev_type']:
@@ -352,6 +362,10 @@ class VirtInstanceDeviceService(Service):
                             verrors.add(schema, f'No {source!r} incus volume found which can be used for source')
                         elif available_volumes[source]['content_type'] == 'ISO' and device['boot_priority'] is None:
                             verrors.add(schema, 'Boot priority is required for ISO volumes.')
+                        else:
+                            # We need to specify the storage pool for device adding to VM
+                            # copy in what is known for the virt volume
+                            device['storage_pool'] = available_volumes[source]['storage_pool']
 
                 destination = device.get('destination')
                 if destination == '/':
@@ -363,7 +377,8 @@ class VirtInstanceDeviceService(Service):
                         verrors.add(f'{schema}.io_bus', 'IO bus is only available for VMs')
                     elif instance_config and instance_config['status'] != 'STOPPED':
                         verrors.add(f'{schema}.io_bus', 'VM should be stopped before updating IO bus')
-
+                if source:
+                    await self.validate_disk_device_source(instance_name, schema, source, verrors, device['name'])
             case 'NIC':
                 if await self.middleware.call('interface.has_pending_changes'):
                     raise CallError('There are pending network changes, please resolve before proceeding.')
@@ -382,6 +397,52 @@ class VirtInstanceDeviceService(Service):
                 if instance_type != 'VM':
                     verrors.add(schema, 'PCI passthrough is only supported for vms')
 
+    @private
+    async def validate_disk_device_source(self, instance_name, schema, source, verrors, device_name):
+        sources_in_use = await self.get_all_disk_sources(instance_name)
+        if source in sources_in_use:
+            verrors.add(
+                f'{schema}.source',
+                f'Source {source} is currently in use by {sources_in_use[source]!r} instance'
+            )
+            # No point in continuing further
+            return
+
+        curr_instance_device = (await self.get_all_disk_sources_of_instance(instance_name)).get(source)
+        if curr_instance_device and curr_instance_device != device_name:
+            verrors.add(
+                f'{schema}.source',
+                f'{source} source is already in use by {curr_instance_device!r} device of {instance_name!r} instance'
+            )
+
+    @private
+    async def get_all_disk_sources(self, ignore_instance=None):
+        instances = await self.middleware.call(
+            'virt.instance.query', [['name', '!=', ignore_instance]], {'extra': {'raw': True}}
+        )
+        sources_in_use = {}
+        for instance in instances:
+            for disk in filter(lambda d: d['type'] == 'disk' and d.get('source'), instance['raw']['devices'].values()):
+                sources_in_use[disk['source']] = instance['name']
+
+        return sources_in_use
+
+    @private
+    async def get_all_disk_sources_of_instance(self, instance_name):
+        instance = await self.middleware.call(
+            'virt.instance.query', [['name', '=', instance_name]], {'extra': {'raw': True}}
+        )
+        if not instance:
+            return {}
+
+        return {
+            disk['source']: disk_name
+            for disk_name, disk in filter(
+                lambda d: d[1]['type'] == 'disk' and d[1].get('source'),
+                instance[0]['raw']['devices'].items()
+            )
+        }
+
     @api_method(
         VirtInstanceDeviceAddArgs,
         VirtInstanceDeviceAddResult,
@@ -399,7 +460,7 @@ class VirtInstanceDeviceService(Service):
             device['name'] = await self.generate_device_name(data['devices'].keys(), device['dev_type'])
 
         verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_add', verrors, instance['type'], instance_config=instance)
+        await self.validate_device(device, 'virt_device_add', verrors, id, instance['type'], instance_config=instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
@@ -427,7 +488,7 @@ class VirtInstanceDeviceService(Service):
             raise CallError('Device does not exist.', errno.ENOENT)
 
         verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_update', verrors, instance['type'], old, instance)
+        await self.validate_device(device, 'virt_device_update', verrors, id, instance['type'], old, instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)

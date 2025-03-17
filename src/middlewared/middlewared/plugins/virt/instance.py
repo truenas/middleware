@@ -23,7 +23,8 @@ from middlewared.api.current import (
 )
 from .utils import (
     create_vnc_password_file, get_vnc_info_from_config, get_root_device_dict, get_vnc_password_file_path,
-    Status, incus_call, incus_call_and_wait, VNC_BASE_PORT,
+    Status, incus_call, incus_call_and_wait, VNC_BASE_PORT, root_device_pool_from_raw,
+    storage_pool_to_incus_pool, incus_pool_to_storage_pool,
 )
 
 
@@ -91,6 +92,7 @@ class VirtInstanceService(CRUDService):
                 'secure_boot': None,
                 'root_disk_size': None,
                 'root_disk_io_bus': None,
+                'storage_pool': incus_pool_to_storage_pool(root_device_pool_from_raw(i)),
             }
             if entry['type'] == 'VM':
                 entry['secure_boot'] = True if i['config'].get('security.secureboot') == 'true' else False
@@ -160,6 +162,11 @@ class VirtInstanceService(CRUDService):
             verrors.add(
                 f'{schema_name}.instance_type', f'System is not licensed to manage {instance_type!r} instances'
             )
+
+        if new.get('storage_pool'):
+            valid_pools = await self.middleware.call('virt.global.pool_choices')
+            if new['storage_pool'] not in valid_pools:
+                verrors.add(f'{schema_name}.storage_pool', 'Not a valid ZFS pool')
 
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
@@ -302,19 +309,20 @@ class VirtInstanceService(CRUDService):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 for v in (await resp.json())['products'].values():
-                    alias = v['aliases'].split(',', 1)[0]
-                    if v['requirements'].get('cdrom_agent'):
-                        # We are adding this check to ignore such images because these are cloud images
-                        # and require agent to be installed/configured which is obviously not going to
-                        # happen
+                    if v['variant'] == 'cloud':
+                        # cloud-init based images are unsupported for now
                         continue
 
+                    cdrom_agent_required = v['requirements'].get('cdrom_agent', False)
+                    alias = v['aliases'].split(',', 1)[0]
                     if alias not in choices:
                         instance_types = set()
                         for i in v['versions'].values():
                             if 'root.tar.xz' in i['items'] and 'desktop' not in v['aliases']:
                                 instance_types.add('CONTAINER')
-                            if 'disk.qcow2' in i['items']:
+                            if 'disk.qcow2' in i['items'] and not cdrom_agent_required:
+                                # VM images that have a cdrom_agent requirement are not
+                                # supported at the moment
                                 instance_types.add('VM')
                         if not instance_types:
                             continue
@@ -351,6 +359,12 @@ class VirtInstanceService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
+        if data.get('storage_pool'):
+            pool = storage_pool_to_incus_pool(data['storage_pool'])
+        else:
+            defpool = (await self.middleware.call('virt.global.config'))['pool']
+            pool = storage_pool_to_incus_pool(defpool)
+
         data_devices = data['devices'] or []
         iso_volume = data.pop('iso_volume', None)
         root_device_to_add = None
@@ -370,7 +384,7 @@ class VirtInstanceService(CRUDService):
             root_device_to_add = {
                 'name': iso_volume,
                 'dev_type': 'DISK',
-                'pool': 'default',
+                'pool': pool,
                 'source': iso_volume,
                 'destination': None,
                 'readonly': False,
@@ -383,11 +397,17 @@ class VirtInstanceService(CRUDService):
             data_devices.append(root_device_to_add)
 
         devices = {
-            'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus']),
-        } if data['instance_type'] == 'VM' else {}
+            'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus'], pool),
+        } if data['instance_type'] == 'VM' else {
+            'root': {
+                'path': '/',
+                'pool': pool,
+                'type': 'disk'
+            }
+        }
         for i in data_devices:
             await self.middleware.call(
-                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
+                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['name'], data['instance_type']
             )
             if i['name'] is None:
                 i['name'] = await self.middleware.call(
@@ -426,6 +446,7 @@ class VirtInstanceService(CRUDService):
                 'mode': 'pull',
                 'alias': data['image'],
             })
+
         try:
             await incus_call_and_wait('1.0/instances', 'post', {'json': {
                 'name': data['name'],
@@ -433,6 +454,7 @@ class VirtInstanceService(CRUDService):
                 'config': self.__data_to_config(data['name'], data, instance_type=data['instance_type']),
                 'devices': devices,
                 'source': source,
+                'profiles': ['default'],
                 'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
                 'start': False,
             }}, running_cb, timeout=15 * 60)
@@ -489,9 +511,12 @@ class VirtInstanceService(CRUDService):
 
         instance['raw']['config'].update(self.__data_to_config(id, data, instance['raw']['config'], instance['type']))
         if data.get('root_disk_size') or data.get('root_disk_io_bus'):
+            if (pool := root_device_pool_from_raw(instance['raw'])) is None:
+                raise CallError(f'{id}: instance does not have a configured pool')
+
             root_disk_size = data.get('root_disk_size') or int(instance['root_disk_size'] / (1024 ** 3))
             io_bus = data.get('root_disk_io_bus') or instance['root_disk_io_bus']
-            instance['raw']['devices']['root'] = get_root_device_dict(root_disk_size, io_bus)
+            instance['raw']['devices']['root'] = get_root_device_dict(root_disk_size, io_bus, pool)
 
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
 
@@ -510,12 +535,17 @@ class VirtInstanceService(CRUDService):
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
-        if instance['status'] == 'RUNNING':
-            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
-                'action': 'stop',
-                'timeout': -1,
-                'force': True,
-            }})
+        if instance['status'] != 'STOPPED':
+            try:
+                await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+                    'action': 'stop',
+                    'timeout': -1,
+                    'force': True,
+                }})
+            except CallError:
+                self.logger.error(
+                    'Failed to stop %r instance having %r status before deletion', id, instance['status'], exc_info=True
+                )
 
         await incus_call_and_wait(f'1.0/instances/{id}', 'delete')
 

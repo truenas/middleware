@@ -1,17 +1,11 @@
-import copy
 import logging
 import os
 
-from collections import defaultdict
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from typing import Union
 
 from .load_utils import load_certificate, load_certificate_request, load_private_key
-from .utils import (
-    CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE, CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL,
-    CERT_TYPE_CSR, CERT_ROOT_PATH, CERT_CA_ROOT_PATH, RE_CERTIFICATE
-)
+from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, CERT_ROOT_PATH, RE_CERTIFICATE
 
 
 logger = logging.getLogger(__name__)
@@ -24,69 +18,29 @@ def cert_extend_report_error(title: str, cert: dict) -> None:
         logger.debug('Failed to load %s of %s', title, cert['name'])
 
 
-def cert_issuer(cert: dict) -> Union[str, dict]:
-    issuer = None
-    if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
-        issuer = 'external'
-    elif cert['type'] == CA_TYPE_INTERNAL:
-        issuer = 'self-signed'
-    elif cert['type'] in (CERT_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE):
-        issuer = cert['signedby']
-    elif cert['type'] == CERT_TYPE_CSR:
-        issuer = 'external - signature pending'
-    return issuer
-
-
 def normalize_cert_attrs(cert: dict) -> None:
     # Remove ACME related keys if cert is not an ACME based cert
     if not cert.get('acme'):
         for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
             cert.pop(key, None)
 
-    if cert['type'] in (CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE):
-        root_path = CERT_CA_ROOT_PATH
-        is_ca = True
-    else:
-        root_path = CERT_ROOT_PATH
-        is_ca = False
-
+    root_path = CERT_ROOT_PATH
     cert.update({
         'root_path': root_path,
         'certificate_path': os.path.join(root_path, f'{cert["name"]}.crt'),
         'privatekey_path': os.path.join(root_path, f'{cert["name"]}.key'),
         'csr_path': os.path.join(root_path, f'{cert["name"]}.csr'),
-        'cert_type': 'CA' if is_ca else 'CERTIFICATE',
-        'revoked': bool(cert['revoked_date']),
-        'can_be_revoked': bool(cert['privatekey']) and not bool(cert['revoked_date']) if is_ca else (
-            bool(cert['signedby']) and not bool(cert['revoked_date'])
-        ),
-        'internal': 'NO' if cert['type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES',
-        'CA_type_existing': bool(cert['type'] & CA_TYPE_EXISTING),
-        'CA_type_internal': bool(cert['type'] & CA_TYPE_INTERNAL),
-        'CA_type_intermediate': bool(cert['type'] & CA_TYPE_INTERMEDIATE),
+        'cert_type': 'CERTIFICATE',
         'cert_type_existing': bool(cert['type'] & CERT_TYPE_EXISTING),
-        'cert_type_internal': bool(cert['type'] & CERT_TYPE_INTERNAL),
         'cert_type_CSR': bool(cert['type'] & CERT_TYPE_CSR),
-        'issuer': cert_issuer(cert),
         'chain_list': [],
         'key_length': None,
         'key_type': None,
     })
-    if is_ca:
-        cert['crl_path'] = os.path.join(root_path, f'{cert["name"]}.crl')
 
     certs = []
-    if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) > 1:
+    if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) >= 1:
         certs = RE_CERTIFICATE.findall(cert['certificate'])
-    elif cert['type'] != CERT_TYPE_CSR:
-        certs = [cert['certificate']]
-        signing_CA = cert['issuer']
-        # Recursively get all internal/intermediate certificates
-        # FIXME: NONE HAS BEEN ADDED IN THE FOLLOWING CHECK FOR CSR'S WHICH HAVE BEEN SIGNED BY A CA
-        while signing_CA not in ['external', 'self-signed', 'external - signature pending', None]:
-            certs.append(signing_CA['certificate'])
-            signing_CA['issuer'] = cert_issuer(signing_CA)
-            signing_CA = signing_CA['issuer']
 
     failed_parsing = False
     for c in certs:
@@ -146,27 +100,3 @@ def normalize_cert_attrs(cert: dict) -> None:
         })
 
     cert['parsed'] = not failed_parsing
-
-
-def get_ca_chain(ca_id: int, certs: list, cas: list) -> list:
-    cert_mapping = defaultdict(list)
-    cas_mapping = defaultdict(list)
-    cas_id_mapping = {}
-    for cert in filter(lambda c: c['signedby'], certs):
-        cert_mapping[cert['signedby']['id']].append({**cert, 'cert_type': 'CERTIFICATE'})
-
-    for ca in cas:
-        cas_id_mapping[ca['id']] = ca
-        if ca['signedby']:
-            cas_mapping[ca['signedby']['id']].append(ca)
-
-    return get_ca_chain_impl(ca_id, cas_id_mapping, cert_mapping, cas_mapping)
-
-
-def get_ca_chain_impl(ca_id: int, cas: dict, certs_mapping: dict, cas_mapping: dict) -> list:
-    certs = copy.deepcopy(certs_mapping[ca_id])
-    for ca in cas_mapping[ca_id]:
-        certs.extend(get_ca_chain_impl(ca['id'], cas, certs_mapping, cas_mapping))
-
-    certs.append({**cas[ca_id], 'cert_type': 'CA'})
-    return certs

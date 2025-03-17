@@ -27,7 +27,6 @@ class SystemGeneralModel(sa.Model):
     stg_guihttpsprotocols = sa.Column(sa.JSON(list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
     stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
     stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
-    stg_language = sa.Column(sa.String(120), default='en')
     stg_kbdmap = sa.Column(sa.String(120), default='us')
     stg_timezone = sa.Column(sa.String(120), default='America/Los_Angeles')
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
@@ -66,7 +65,6 @@ class SystemGeneralService(ConfigService):
         Bool('ui_consolemsg', required=True),
         Str('ui_x_frame_options', enum=['SAMEORIGIN', 'DENY', 'ALLOW_ALL'], required=True),
         Str('kbdmap', required=True),
-        Str('language', empty=False, required=True),
         Str('timezone', empty=False, required=True),
         Bool('usage_collection', null=True, required=True),
         Bool('wizardshown', required=True),
@@ -121,15 +119,6 @@ class SystemGeneralService(ConfigService):
             verrors.add(
                 'ds_auth',
                 'Directory services authentication for UI and API access requires an Enterprise license.'
-            )
-
-    @settings.fields_validator('language')
-    async def _validate_languate(self, verrors, language):
-        system_languages = await self.middleware.call('system.general.language_choices')
-        if language not in system_languages.keys():
-            verrors.add(
-                'language',
-                f'Specified "{language}" language unknown. Please select a valid language.'
             )
 
     @settings.fields_validator('kbdmap')

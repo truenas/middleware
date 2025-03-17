@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-RE_VOLUME_NAME = re.compile(r'^[A-Za-z][A-Za-z0-9-_.]*[A-Za-z0-9]$', re.IGNORECASE)
+RE_VOLUME_NAME = re.compile(r'^[A-Za-z][A-Za-z0-9-._]*[A-Za-z0-9]$', re.IGNORECASE)
 VOLUME_NAME: TypeAlias = Annotated[
     NonEmptyString,
     AfterValidator(
@@ -32,6 +32,7 @@ VOLUME_NAME: TypeAlias = Annotated[
 class VirtVolumeEntry(BaseModel):
     id: NonEmptyString
     name: NonEmptyString
+    storage_pool: NonEmptyString
     content_type: NonEmptyString
     created_at: str
     type: NonEmptyString
@@ -45,6 +46,12 @@ class VirtVolumeCreateArgs(BaseModel):
     content_type: Literal['BLOCK'] = 'BLOCK'
     size: int = Field(ge=512, default=1024)  # 1 gb default
     '''Size of volume in MB and it should at least be 512 MB'''
+    storage_pool: NonEmptyString | None = None
+    '''
+    Storage pool in which to create the volume. This must be one of pools listed
+    in virt.global.config output under `storage_pools`. If the value is None, then
+    the pool defined as `pool` in virt.global.config will be used.
+    '''
 
 
 class VirtVolumeCreateResult(BaseModel):
@@ -78,6 +85,12 @@ class VirtVolumeImportISOArgs(BaseModel):
     '''Specify name of the newly created volume from the ISO specified'''
     iso_location: NonEmptyString | None = None
     upload_iso: bool = False
+    storage_pool: NonEmptyString | None = None
+    '''
+    Storage pool in which to create the volume. This must be one of pools listed
+    in virt.global.config output under `storage_pools`. If the value is None, then
+    the pool defined as `pool` in virt.global.config will be used.
+    '''
 
     @field_validator('iso_location')
     @classmethod

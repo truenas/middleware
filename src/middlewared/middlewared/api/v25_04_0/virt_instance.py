@@ -82,13 +82,15 @@ class VirtInstanceEntry(BaseModel):
     aliases: list[VirtInstanceAlias]
     image: Image
     userns_idmap: UserNsIdmap | None
-    raw: dict | None
+    raw: Secret[dict | None]
     vnc_enabled: bool
     vnc_port: int | None
     vnc_password: Secret[NonEmptyString | None]
     secure_boot: bool | None
     root_disk_size: int | None
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None]
+    storage_pool: NonEmptyString
+    "Storage pool in which the root of the instance is located."
 
 
 # Lets require at least 32MiB of reserved memory
@@ -103,6 +105,12 @@ class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     iso_volume: NonEmptyString | None = None
     source_type: Literal[None, 'IMAGE', 'ZVOL', 'ISO'] = 'IMAGE'
+    storage_pool: NonEmptyString | None = None
+    '''
+    Storage pool under which to allocate root filesystem. Must be one of the pools
+    listed in virt.global.config output under "storage_pools". If None (default) then the pool
+    specified in the global configuration will be used.
+    '''
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
     root_disk_size: int = Field(ge=5, default=10)  # In GBs
     '''
@@ -178,7 +186,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     '''Setting vnc_password to null will unset VNC password'''
     secure_boot: bool = False
     root_disk_size: int | None = Field(ge=5, default=None)
-    root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI'] = None
+    root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None] = None
 
 
 class VirtInstanceUpdateArgs(BaseModel):
@@ -215,14 +223,19 @@ class VirtInstanceStopArgs(BaseModel):
     id: str
     stop_args: StopArgs = StopArgs()
 
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.stop_args.force is False and self.stop_args.timeout == -1:
+            raise ValueError('Timeout should be set if force is disabled')
+        return self
+
 
 class VirtInstanceStopResult(BaseModel):
     result: bool
 
 
-class VirtInstanceRestartArgs(BaseModel):
-    id: str
-    stop_args: StopArgs = StopArgs()
+class VirtInstanceRestartArgs(VirtInstanceStopArgs):
+    pass
 
 
 class VirtInstanceRestartResult(BaseModel):

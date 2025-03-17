@@ -14,9 +14,9 @@ __all__ = [
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
     'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
     'AppContainerIDArgs', 'AppContainerIDResult', 'AppContainerConsoleChoiceArgs', 'AppContainerConsoleChoiceResult',
-    'AppCertificateChoicesArgs', 'AppCertificateChoicesResult', 'AppCertificateAuthorityArgs',
-    'AppCertificateAuthorityResult', 'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppIPChoicesArgs', 'AppIPChoicesResult',
-    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
+    'AppCertificateChoicesArgs', 'AppCertificateChoicesResult', 'AppUsedPortsArgs', 'AppUsedPortsResult',
+    'AppIPChoicesArgs', 'AppIPChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
+    'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult',
 ]
@@ -245,14 +245,6 @@ class AppCertificate(BaseModel):
 
 
 class AppCertificateChoicesResult(BaseModel):
-    result: list[AppCertificate]
-
-
-class AppCertificateAuthorityArgs(BaseModel):
-    pass
-
-
-class AppCertificateAuthorityResult(BaseModel):
     result: list[AppCertificate]
 
 

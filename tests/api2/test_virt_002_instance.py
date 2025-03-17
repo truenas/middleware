@@ -242,35 +242,35 @@ def test_virt_instance_idmap(virt_instances):
             # check user DIRECT map
             uid = u['uid']
             assert u['userns_idmap'] == 'DIRECT'
-            call('virt.instance.restart', instance['name'], job=True)
+            call('virt.instance.restart', instance['name'], {'force': True}, job=True)
             assert check_idmap_entry(instance['name'], f'uid {uid} {uid}')
 
             # check custom user map
             call('user.update', u['id'], {'userns_idmap': 8675309})
 
             # restart to update idmap
-            call('virt.instance.restart', instance['name'], job=True)
+            call('virt.instance.restart', instance['name'], {'force': True}, job=True)
             assert check_idmap_entry(instance['name'], f'uid {uid} 8675309')
             assert not check_idmap_entry(instance['name'], f'uid {uid} {uid}')
 
-        call('virt.instance.restart', instance['name'], job=True)
+        call('virt.instance.restart', instance['name'], {'force': True}, job=True)
         assert not check_idmap_entry(instance['name'], f'uid {uid} 8675309')
 
         with userns_group('bob_group') as g:
             gid = g['gid']
             assert g['userns_idmap'] == 'DIRECT'
-            call('virt.instance.restart', instance['name'], job=True)
+            call('virt.instance.restart', instance['name'], {'force': True}, job=True)
 
             assert check_idmap_entry(instance['name'], f'gid {gid} {gid}')
             # check custom user map
             call('group.update', g['id'], {'userns_idmap': 8675309})
 
             # restart to update idmap
-            call('virt.instance.restart', instance['name'], job=True)
+            call('virt.instance.restart', instance['name'], {'force': True}, job=True)
             assert not check_idmap_entry(instance['name'], f'gid {gid} {gid}')
             assert check_idmap_entry(instance['name'], f'gid {gid} 8675309')
 
-        call('virt.instance.restart', instance['name'], job=True)
+        call('virt.instance.restart', instance['name'], {'force': True}, job=True)
         assert not check_idmap_entry(instance['name'], f'gid {gid} 8675309')
 
 

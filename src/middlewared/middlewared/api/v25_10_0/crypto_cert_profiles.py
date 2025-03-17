@@ -5,9 +5,6 @@ from middlewared.api.base import BaseModel
 from pydantic import Field
 
 __all__ = (
-    "CertProfilesArgs",
-    "CertProfilesModel",
-    "CertProfilesResult",
     "CSRProfilesArgs",
     "CSRProfilesModel",
     "CSRProfilesResult",
@@ -30,13 +27,6 @@ class BasicConstraintsModel(BaseModel):
     enabled: bool = True
     ca: bool = False
     extension_critical: bool = True
-
-
-@final
-class AuthorityKeyIdentifierModel(BaseModel):
-    enabled: bool = True
-    authority_cert_issuer: bool = True
-    extension_critical: bool = False
 
 
 @final
@@ -70,59 +60,6 @@ class ECCKeyUsageModel(BaseModel):
     enabled: bool = True
     extension_critical: bool = True
     digital_signature: bool = True
-
-
-@final
-class RSACertExtensionsModel(BaseModel):
-    BasicConstraints: BasicConstraintsModel = BasicConstraintsModel()
-    AuthorityKeyIdentifier: AuthorityKeyIdentifierModel = AuthorityKeyIdentifierModel()
-    ExtendedKeyUsage: ExtendedKeyUsageModel = ExtendedKeyUsageModel()
-    KeyUsage: RSAKeyUsageModel = RSAKeyUsageModel()
-
-
-@final
-class ECCCertExtensionsModel(BaseModel):
-    BasicConstraints: BasicConstraintsModel = BasicConstraintsModel()
-    AuthorityKeyIdentifier: AuthorityKeyIdentifierModel = AuthorityKeyIdentifierModel()
-    ExtendedKeyUsage: ExtendedKeyUsageModel = ExtendedKeyUsageModel()
-    KeyUsage: ECCKeyUsageModel = ECCKeyUsageModel()
-
-
-@final
-class RSACertExtensions(BaseModel):
-    cert_extensions: RSACertExtensionsModel = RSACertExtensionsModel()
-    key_length: int = KEY_LENGTH
-    key_type: str = RSA
-    lifetime: int = DEFAULT_LIFETIME_DAYS
-    digest_algorithm: str = SHA256
-
-
-@final
-class ECCCertExtensions(BaseModel):
-    cert_extensions: ECCCertExtensionsModel = ECCCertExtensionsModel()
-    ec_curve: str = EC_CURVE
-    key_type: str = EC
-    lifetime: int = DEFAULT_LIFETIME_DAYS
-    digest_algorithm: str = SHA256
-
-
-@final
-class CertProfilesModel(BaseModel):
-    https_rsa_certificate: RSACertExtensions = Field(
-        default_factory=RSACertExtensions, alias="HTTPS RSA Certificate"
-    )
-    https_ecc_certificate: ECCCertExtensions = Field(
-        default_factory=ECCCertExtensions, alias="HTTPS ECC Certificate"
-    )
-
-
-class CertProfilesArgs(BaseModel):
-    pass
-
-
-@final
-class CertProfilesResult(BaseModel):
-    result: CertProfilesModel = CertProfilesModel()
 
 
 @final

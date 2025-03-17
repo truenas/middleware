@@ -191,7 +191,6 @@ class CatalogService(Service):
             'timezones': await self.middleware.call('system.general.timezone_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
             'certificates': await self.middleware.call('app.certificate_choices'),
-            'certificate_authorities': await self.middleware.call('app.certificate_authority_choices'),
             'ip_choices': await self.middleware.call('app.ip_choices'),
             'gpu_choices': await self.middleware.call('app.gpu_choices_internal'),
         }

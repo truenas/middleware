@@ -113,6 +113,20 @@ def test_volume_name_validation(virt_pool, vol_name, should_work):
             call('virt.volume.create', {'name': vol_name})
 
 
+def test_volume_name_dataset_existing_validation_error(virt_pool):
+    pool_name = virt_pool['pool']
+    vol_name = 'test_ds_volume_exist'
+    ds_name = f'{pool_name}/.ix-virt/custom/default_{vol_name}'
+    ssh(f'zfs create -V 500MB -s {ds_name}')
+    try:
+        with pytest.raises(ClientValidationErrors):
+            call('virt.volume.create', {'name': vol_name})
+
+        assert call('zfs.dataset.query', [['id', '=', ds_name]], {'count': True}) == 1
+    finally:
+        ssh(f'zfs destroy {ds_name}')
+
+
 def test_upload_iso_file(virt_pool):
     vol_name = 'test_uploaded_iso'
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -524,3 +538,27 @@ def test_volume_choices_ixvirt():
                 finally:
                     call('virt.instance.stop', instance_name, {'force': True, 'timeout': 11}, job=True)
                     sleep(5)  # NAS-134443 incus can lie about when VM has completed stopping
+
+
+def test_disk_source_uniqueness(virt_pool):
+    # We will try to add same disk source to the same instance and another instance to make sure
+    # we have proper validation in place to prevent this from happening
+    with dataset('virt-vol', {'type': 'VOLUME', 'volsize': 200 * 1024 * 1024, 'sparse': True}) as ds:
+        with virt_instance('test-disk-error', instance_type='VM', image=None, source_type=None) as instance:
+            instance_name = instance['name']
+            call('virt.instance.device_add', instance_name, {
+                'dev_type': 'DISK',
+                'source': f'/dev/zvol/{ds}',
+            })
+            with pytest.raises(ClientValidationErrors):
+                call('virt.instance.device_add', instance_name, {
+                    'dev_type': 'DISK',
+                    'source': f'/dev/zvol/{ds}',
+                })
+            with virt_instance('test-disk-error2', instance_type='VM', image=None, source_type=None) as instance2:
+                instance_name2 = instance2['name']
+                with pytest.raises(ClientValidationErrors):
+                    call('virt.instance.device_add', instance_name2, {
+                        'dev_type': 'DISK',
+                        'source': f'/dev/zvol/{ds}',
+                    })
