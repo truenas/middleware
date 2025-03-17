@@ -1,25 +1,13 @@
-from typing import Annotated, Literal
-
-from pydantic import IPvAnyAddress as IPvAnyAddress_, Field, AfterValidator
+from typing import Literal
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, Excluded, excluded_field, NotRequired
+from middlewared.api.base.types.network import IPvAnyAddress, Hostname, Domain
 
 
 __all__ = [
     "NetworkConfigurationEntry", "NetWorkConfigurationUpdateArgs", "NetworkConfigurationUpdateResult",
     "NetworkConfigurationActivityChoicesArgs", "NetworkConfigurationActivityChoicesResult",
 ]
-
-
-def validate_ipaddr(address: str):
-    """Return the original string instead of an ipaddress object."""
-    IPvAnyAddress_(address)
-    return address
-
-
-Hostname = Annotated[str, Field(pattern=r'^[a-zA-Z\.\-0-9]*[a-zA-Z0-9]$')]
-Domain = Annotated[str, Field(pattern=r'^[a-zA-Z\.\-0-9]*$')]
-IPvAnyAddress =  Literal[''] | Annotated[str, AfterValidator(validate_ipaddr)]
 
 
 class ServiceAnnouncement(BaseModel):
