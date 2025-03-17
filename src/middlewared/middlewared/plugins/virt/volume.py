@@ -1,4 +1,5 @@
 import errno
+import os.path
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -61,8 +62,25 @@ class VirtVolumeService(CRUDService):
         target_pool = global_config['pool'] if not data['storage_pool'] else data['storage_pool']
 
         verrors = ValidationErrors()
+        ds_name = os.path.join(target_pool, f'.ix-virt/custom/default_{data["name"]}')
         if await self.middleware.call('virt.volume.query', [['id', '=', data['name']]]):
             verrors.add('virt_volume_create.name', 'Volume with this name already exists')
+        elif await self.middleware.call(
+            'zfs.dataset.query', [['id', '=', ds_name]], {
+                'extra': {'retrieve_children': False, 'retrieve_properties': False}
+            }
+        ):
+            # We will kick off recover here so that incus recognizes
+            # this dataset as a volume already
+            await self.middleware.call('virt.global.recover', [
+                {
+                    'config': {'source': f'{target_pool}/.ix-virt'},
+                    'description': '',
+                    'name': storage_pool_to_incus_pool(target_pool),
+                    'driver': 'zfs',
+                }
+            ])
+            verrors.add('virt_volume_create.name', 'ZFS dataset against this volume name already exists')
 
         if target_pool not in global_config['storage_pools']:
             verrors.add(

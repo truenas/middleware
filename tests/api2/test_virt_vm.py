@@ -113,6 +113,20 @@ def test_volume_name_validation(virt_pool, vol_name, should_work):
             call('virt.volume.create', {'name': vol_name})
 
 
+def test_volume_name_dataset_existing_validation_error(virt_pool):
+    pool_name = virt_pool['pool']
+    vol_name = 'test_ds_volume_exist'
+    ds_name = f'{pool_name}/.ix-virt/custom/default_{vol_name}'
+    ssh(f'zfs create -V 500MB -s {ds_name}')
+    try:
+        with pytest.raises(ClientValidationErrors):
+            call('virt.volume.create', {'name': vol_name})
+
+        assert call('zfs.dataset.query', [['id', '=', ds_name]], {'count': True}) == 1
+    finally:
+        ssh(f'zfs destroy {ds_name}')
+
+
 def test_upload_iso_file(virt_pool):
     vol_name = 'test_uploaded_iso'
     with tempfile.TemporaryDirectory() as tmpdir:
