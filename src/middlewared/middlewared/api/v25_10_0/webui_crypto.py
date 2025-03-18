@@ -1,6 +1,9 @@
 from middlewared.api.base import BaseModel
 
-__all__ = ()
+__all__ = (
+    "WebUICryptoGetCertificateDomainNamesArgs",
+    "WebUICryptoGetCertificateDomainNamesResult",
+)
 
 
 class WebUICryptoGetCertificateDomainNamesArgs(BaseModel):
