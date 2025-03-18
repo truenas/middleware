@@ -123,7 +123,7 @@ class IPMILanService(Service):
             if not stdout:
                 continue
 
-            data = {'channel': channel, 'id': channel}
+            data = {'channel': channel, 'id': channel, 'vlan_id_enable': False}
             for line in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), stdout):
                 try:
                     name, value = line.strip().split()
