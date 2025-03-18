@@ -1,48 +1,14 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, NonEmptyString
 from .alert import Alert
 
 __all__ = (
-    "DiskGetDetailsArgs",
-    "DiskGetDetailsResult",
-    "DiskGetUsedArgs",
-    "DiskGetUsedResult",
     "DiskTemperatureAlertsArgs",
     "DiskTemperatureAlertsResult",
     "DiskWipeArgs",
     "DiskWipeResult",
 )
-
-
-@single_argument_args("data")
-class DiskGetDetailsArgs(BaseModel):
-    join_partitions: bool = False
-    """When True will return all partitions currently
-    written to disk.
-
-    NOTE: this is an expensive operation."""
-    type: Literal["USED", "UNUSED", "BOTH"] = "BOTH"
-    """
-    If `USED`, only disks that are IN USE will be returned.
-    If `UNUSED`, only disks that are NOT IN USE are returned.
-    If `BOTH`, used and unused disks will be returned."""
-
-
-class DiskGetDetailsResult(BaseModel):
-    result: dict
-
-
-class DiskGetUsedArgs(BaseModel):
-    join_partitions: bool = False
-    """When True will return all partitions currently
-    written to disk.
-
-    NOTE: this is an expensive operation."""
-
-
-class DiskGetUsedResult(BaseModel):
-    result: dict
 
 
 class DiskTemperatureAlertsArgs(BaseModel):
