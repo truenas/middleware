@@ -1,46 +1,54 @@
 import asyncio
+from collections import defaultdict
 import errno
 import inspect
 import ipaddress
 import os
 import re
 import socket
+from subprocess import run
 import threading
 import time
 import traceback
 import uuid
 
-from collections import defaultdict
 from remote_pdb import RemotePdb
-from subprocess import run
 
 import middlewared.main
 
 from middlewared.api import api_method
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
-    CorePingArgs,
-    CorePingResult,
-    CoreSetOptionsArgs,
-    CoreSetOptionsResult,
-    CoreSubscribeArgs,
-    CoreSubscribeResult,
-    CoreUnsubscribeArgs,
-    CoreUnsubscribeResult,
+    CoreGetServicesArgs, CoreGetServicesResult,
+    CoreGetMethodsArgs, CoreGetMethodsResult,
+    CoreGetJobsArgs, CoreGetJobsResult,
+    CoreResizeShellArgs, CoreResizeShellResult,
+    CoreJobDownloadLogsArgs, CoreJobDownloadLogsResult,
+    CoreJobWaitArgs, CoreJobWaitResult,
+    CoreJobAbortArgs, CoreJobAbortResult,
+    CorePingArgs, CorePingResult,
+    CorePingRemoteArgs, CorePingRemoteResult,
+    CoreArpArgs, CoreArpResult,
+    CoreDownloadArgs, CoreDownloadResult,
+    CoreDebugArgs, CoreDebugResult,
+    CoreBulkArgs, CoreBulkResult,
+    CoreSetOptionsArgs, CoreSetOptionsResult,
+    CoreSubscribeArgs, CoreSubscribeResult,
+    CoreUnsubscribeArgs, CoreUnsubscribeResult,
+    QueryArgs,
 )
 from middlewared.common.environ import environ_update
 from middlewared.job import Job, JobAccess
 from middlewared.pipe import Pipes
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Str
 from middlewared.service_exception import CallError, ValidationErrors, InstanceNotFound
 from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_STARTED_SENTINEL_PATH
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
-from middlewared.validators import IpAddress, Range
+from middlewared.validators import IpAddress
 
 from .compound_service import CompoundService
 from .config_service import ConfigService
 from .crud_service import CRUDService
-from .decorators import filterable, filterable_returns, job, no_auth_required, no_authz_required, pass_app, private
+from .decorators import job, no_authz_required, private
 from .service import Service
 
 
@@ -56,7 +64,7 @@ class CoreService(Service):
     class Config:
         cli_private = True
 
-    @accepts(Str('id'), Int('cols'), Int('rows'))
+    @api_method(CoreResizeShellArgs, CoreResizeShellResult, authorization_required=False)
     async def resize_shell(self, id_, cols, rows):
         """
         Resize terminal session (/websocket/shell) to cols x rows
@@ -104,48 +112,7 @@ class CoreService(Service):
 
         return job
 
-    @no_authz_required
-    @filterable
-    @filterable_returns(Dict(
-        'job',
-        Int('id'),
-        Str('method'),
-        List('arguments'),
-        Bool('transient'),
-        Str('description', null=True),
-        Bool('abortable'),
-        Str('logs_path', null=True),
-        Str('logs_excerpt', null=True),
-        Dict(
-            'progress',
-            Int('percent', null=True),
-            Str('description', null=True),
-            Any('extra', null=True),
-        ),
-        Any('result', null=True),
-        Any('result_encoding_error', null=True),
-        Str('error', null=True),
-        Str('exception', null=True),
-        Dict(
-            'exc_info',
-            Str('repr', null=True),
-            Str('type', null=True),
-            Int('errno', null=True),
-            Any('extra', null=True),
-            null=True
-        ),
-        Str('state'),
-        Datetime('time_started', null=True),
-        Datetime('time_finished', null=True),
-        Dict(
-            'credentials',
-            Str('type'),
-            Dict('data', additional_attrs=True),
-            null=True,
-        ),
-        register=True,
-    ))
-    @pass_app(rest=True)
+    @api_method(CoreGetJobsArgs, CoreGetJobsResult, authorization_required=False, pass_app=True, pass_app_rest=True)
     def get_jobs(self, app, filters, options):
         """
         Get information about long-running jobs.
@@ -176,9 +143,8 @@ class CoreService(Service):
         ], filters, options)
         return jobs
 
-    @no_authz_required
-    @accepts(Int('id'), Str('filename'), Bool('buffered', default=False))
-    @pass_app(rest=True)
+    @api_method(CoreJobDownloadLogsArgs, CoreJobDownloadLogsResult, authorization_required=False,
+                pass_app=True, pass_app_rest=True)
     async def job_download_logs(self, app, id_, filename, buffered):
         """
         Download logs of the job `id`.
@@ -193,8 +159,7 @@ class CoreService(Service):
 
         return (await self._download(app, 'filesystem.get', [job.logs_path], filename, buffered))[1]
 
-    @no_authz_required
-    @accepts(Int('id'))
+    @api_method(CoreJobWaitArgs, CoreJobWaitResult, authorization_required=False)
     @job()
     async def job_wait(self, job, id_):
         target_job = self.__job_by_credential_and_id(job.credentials, id_, JobAccess.READ)
@@ -202,10 +167,6 @@ class CoreService(Service):
         return await job.wrap(target_job)
 
     @private
-    @accepts(Int('id'), Dict(
-        'job-update',
-        Dict('progress', additional_attrs=True),
-    ))
     def job_update(self, id_, data):
         job = self.middleware.jobs[id_]
         progress = data.get('progress')
@@ -235,12 +196,10 @@ class CoreService(Service):
         # Let's setup periodic tasks now
         self.middleware._setup_periodic_tasks()
 
-    @no_authz_required
-    @accepts(Int('id'))
-    @pass_app(rest=True)
+    @api_method(CoreJobAbortArgs, CoreJobAbortResult, authorization_required=False, pass_app=True, pass_app_rest=True)
     def job_abort(self, app, id_):
         job = self._job_by_app_and_id(app, id_, JobAccess.ABORT)
-        return job.abort()
+        job.abort()
 
     def _should_list_service(self, name, service, target):
         if service._config.private is True:
@@ -252,10 +211,7 @@ class CoreService(Service):
 
         return True
 
-    @no_auth_required
-    @accepts(Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
-    @private
-    @pass_app()
+    @api_method(CoreGetServicesArgs, CoreGetServicesResult, authorization_required=False, pass_app=True)
     def get_services(self, app, target):
         """Returns a list of all registered services."""
         services = {}
@@ -283,15 +239,10 @@ class CoreService(Service):
 
         return services
 
-    @no_auth_required
-    @accepts(Str('service', default=None, null=True), Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
-    @private
-    @pass_app()
+    @api_method(CoreGetMethodsArgs, CoreGetMethodsResult, authorization_required=False, pass_app=True)
     def get_methods(self, app, service, target):
         """
         Return methods metadata of every available service.
-
-        `service` parameter is optional and filters the result for a single service.
         """
         data = {}
         for name, svc in list(self.middleware.get_services().items()):
@@ -450,7 +401,7 @@ class CoreService(Service):
                     'no_auth_required': no_auth_required,
                     'filterable': hasattr(method, '_filterable') or (
                         getattr(method, 'new_style_accepts', None) is not None and
-                        method.new_style_accepts.__name__ == "QueryArgs"
+                        issubclass(method.new_style_accepts, QueryArgs)
                     ),
                     'filterable_schema': filterable_schema,
                     'pass_application': hasattr(method, '_pass_app'),
@@ -528,17 +479,7 @@ class CoreService(Service):
         command.append(host)
         return run(command).returncode == 0
 
-    @accepts(
-        Dict(
-            'options',
-            Str('type', enum=['ICMP', 'ICMPV4', 'ICMPV6'], default='ICMP'),
-            Str('hostname', required=True),
-            Int('timeout', validators=[Range(min_=1, max_=60)], default=4),
-            Int('count', default=None),
-            Str('interface', default=None),
-            Str('interval', default=None),
-        ),
-    )
+    @api_method(CorePingRemoteArgs, CorePingRemoteResult, roles=['FULL_ADMIN'])
     def ping_remote(self, options):
         """
         Method that will send an ICMP echo request to "hostname"
@@ -588,13 +529,7 @@ class CoreService(Service):
 
         return ping_host
 
-    @accepts(
-        Dict(
-            'options',
-            Str('ip', default=None),
-            Str('interface', default=None),
-        ),
-    )
+    @api_method(CoreArpArgs, CoreArpResult, roles=['FULL_ADMIN'])
     def arp(self, options):
         arp_command = ['arp', '-n']
         if interface := options.get('interface'):
@@ -617,23 +552,10 @@ class CoreService(Service):
                 result[line_ip] = sline[2]
         return result
 
-    @no_authz_required
-    @accepts(
-        Str('method'),
-        List('args'),
-        Str('filename'),
-        Bool('buffered', default=False),
-    )
-    @pass_app(rest=True)
+    @api_method(CoreDownloadArgs, CoreDownloadResult, authorization_required=False, pass_app=True, pass_app_rest=True)
     async def download(self, app, method, args, filename, buffered):
         """
         Core helper to call a job marked for download.
-
-        Non-`buffered` downloads will allow job to write to pipe as soon as download URL is requested, job will stay
-        blocked meanwhile. `buffered` downloads must wait for job to complete before requesting download URL, job's
-        pipe output will be buffered to ramfs.
-
-        Returns the job id and the URL for download.
         """
         if app is not None:
             if not app.authenticated_credentials.authorize('CALL', method):
@@ -660,12 +582,12 @@ class CoreService(Service):
 
     @private
     @no_authz_required
-    @accepts(Dict('core-job', Int('sleep')))
     @job()
-    def job_test(self, job, data):
+    def job_test(self, job, data=None):
         """
         Private no-op method to test a job, simply returning `true`.
         """
+        data = data or {}
         sleep = data.get('sleep')
         if sleep is not None:
             def sleep_fn():
@@ -681,12 +603,7 @@ class CoreService(Service):
             t.join()
         return True
 
-    @accepts(Dict(
-        'options',
-        Str('bind_address', default='0.0.0.0'),
-        Int('bind_port', default=3000),
-        Bool('threaded', default=False),
-    ))
+    @api_method(CoreDebugArgs, CoreDebugResult, roles=['FULL_ADMIN'])
     async def debug(self, data):
         """
         Setup middlewared for remote debugging.
@@ -731,10 +648,8 @@ class CoreService(Service):
             self.logger.error("Unexpected error looking up process %r.", pid, exc_info=True)
         return None
 
-    @no_authz_required
-    @accepts(Str("method"), List("params", items=[List("params")]), Str("description", null=True, default=None))
+    @api_method(CoreBulkArgs, CoreBulkResult, authorization_required=False, pass_app=True)
     @job(lock=lambda args: f"bulk:{args[0]}")
-    @pass_app()
     async def bulk(self, app, job, method, params, description):
         """
         Will sequentially call `method` with arguments from the `params` list. For example, running
@@ -755,8 +670,6 @@ class CoreService(Service):
 
         Important note: the execution status of `core.bulk` will always be a `SUCCESS` (unless an unlikely internal
         error occurs). Caller must check for individual call results to ensure the absence of any call errors.
-
-        `description` contains format string for job progress (e.g. "Deleting snapshot {0[dataset]}@{0[name]}")
         """
         serviceobj, methodobj = self.middleware.get_method(method)
 
@@ -798,15 +711,13 @@ class CoreService(Service):
                     b_job = msg
                     status["job_id"] = b_job.id
                     status["result"] = await msg.wait()
-
-                    if b_job.error:
-                        status["error"] = b_job.error
+                    status["error"] = b_job.error
                 else:
                     status["result"] = self.middleware.dump_result(serviceobj, methodobj, app, msg)
 
                 statuses.append(status)
             except Exception as e:
-                statuses.append({"result": None, "error": str(e)})
+                statuses.append({"job_id": None, "error": str(e), "result": None})
 
         return statuses
 
@@ -865,16 +776,15 @@ class CoreService(Service):
             for k, v in descriptions.items()
         }
 
-    @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False)
-    @pass_app()
+    @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False,
+                pass_app=True)
     async def set_options(self, app, options):
         if "private_methods" in options:
             app.private_methods = options["private_methods"]
         if "py_exceptions" in options:
             app.py_exceptions = options["py_exceptions"]
 
-    @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False)
-    @pass_app()
+    @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False, pass_app=True)
     async def subscribe(self, app, event):
         if not self.middleware.can_subscribe(app, event):
             raise CallError('Not authorized', errno.EACCES)
@@ -883,7 +793,6 @@ class CoreService(Service):
         await app.subscribe(ident, event)
         return ident
 
-    @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult, authorization_required=False)
-    @pass_app()
+    @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult, authorization_required=False, pass_app=True)
     async def unsubscribe(self, app, ident):
         await app.unsubscribe(ident)
