@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import logging
+import os
 
 from .constants import HEAD_UNIT_DISK_SLOT_START_NUMBER
 from .enums import ControllerModels, JbofModels
@@ -55,25 +56,40 @@ def combine_enclosures(enclosures):
         if to_ignore(enclosure):
             continue
         elif enclosure['model'] == ControllerModels.R40.value:
-            r40_sas_ids.append((int(f'0x{enclosure["id"]}', 16), idx))
+            r40_sas_ids.append((int(f'0x{enclosure["id"]}', 16), idx, enclosure['pci']))
             if len(r40_sas_ids) == 2:
-                # we've got no choice but to do this hack. The R40 has 2x HBAs
-                # in the head. One of those HBAs is disks 1-24, the other for 25-48.
-                # Unfortunately, however, this platform was shipped with both of
-                # those expanders flashed with the same firmware so there is no way
-                # to uniquely identify which expander gets mapped to 1-24 and the
-                # other to get mapped for 25-48. (Like we do with the R50)
-                #
-                # Instead, we take the sas address of the ses devices and check which
-                # enclosure device has the smaller value. The one with the smaller
-                # gets mapped as the "head-unit" (1-24) while the larger one gets
-                # mapped to drive slots 25-48.
-                if r40_sas_ids[0][0] < r40_sas_ids[1][0]:
-                    head_unit_idx = r40_sas_ids[0][1]
-                    _update_idx = r40_sas_ids[1][1]
-                else:
-                    head_unit_idx = r40_sas_ids[1][1]
-                    _update_idx = r40_sas_ids[0][1]
+                # We need to check if the R40 is wired using the "legacy" method.
+                # (i.e. 2x expanders 1x HBA) or the current MPI method
+                # (i.e. 2x expanders 2x HBAs).
+                bus_addr1 = os.path.realpath(f'/sys/class/enclosure/{r40_sas_ids[0][2]}').split('/')[5].strip()
+                bus_addr2 = os.path.realpath(f'/sys/class/enclosure/{r40_sas_ids[1][2]}').split('/')[5].strip()
+                if bus_addr1 != bus_addr2:  # current MPI wiring
+                    if bus_addr1 == '0000:19:00.0' and bus_addr2 == '0000:68:00.0':
+                        # platform team confirms that the expander whose bus address of 0000:19:00.0
+                        # is mapped to drives 1-24, and bus address of 0000:68:00.0 is 25-48
+                        head_unit_idx = r40_sas_ids[0][1]
+                        _update_idx = r40_sas_ids[1][1]
+                    elif bus_addr2 == '0000:19:00.0' and bus_addr1 == '0000:68:00.0':
+                        head_unit_idx = r40_sas_ids[1][1]
+                        _update_idx = r40_sas_ids[0][1]
+                else:  # legacy wiring
+                    # we've got no choice but to do this hack. The R40 has 2x HBAs
+                    # in the head. One of those HBAs is disks 1-24, the other for 25-48.
+                    # Unfortunately, however, this platform was shipped with both of
+                    # those expanders flashed with the same firmware so there is no way
+                    # to uniquely identify which expander gets mapped to 1-24 and the
+                    # other to get mapped for 25-48. (Like we do with the R50)
+                    #
+                    # Instead, we take the sas address of the ses devices and check which
+                    # enclosure device has the smaller value. The one with the smaller
+                    # gets mapped as the "head-unit" (1-24) while the larger one gets
+                    # mapped to drive slots 25-48.
+                    if r40_sas_ids[0][0] < r40_sas_ids[1][0]:
+                        head_unit_idx = r40_sas_ids[0][1]
+                        _update_idx = r40_sas_ids[1][1]
+                    else:
+                        head_unit_idx = r40_sas_ids[1][1]
+                        _update_idx = r40_sas_ids[0][1]
 
                 # we know which enclosure has the larger sas address so we'll update
                 # the array device slots so that they're 25-48.
