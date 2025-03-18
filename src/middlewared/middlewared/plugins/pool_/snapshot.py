@@ -15,6 +15,7 @@ class PoolSnapshotService(CRUDService):
         cli_namespace = 'storage.snapshot'
         role_prefix = 'SNAPSHOT'
         role_separate_delete = True
+        event_send = False  # Don't send events implicitly.
         entry = PoolSnapshotEntry
 
     @api_method(PoolSnapshotCloneArgs, PoolSnapshotCloneResult, roles=['SNAPSHOT_WRITE', 'DATASET_WRITE'])
