@@ -1,11 +1,11 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import Service
 from middlewared.validators import Email
 
 from crypto_utils.generate_certs import generate_certificate
 from crypto_utils.generate_self_signed import generate_self_signed_certificate
 
-from .generate_utils import normalize_san, sign_csr_with_ca
+from .generate_utils import normalize_san
 from .utils import EKU_OIDS
 
 
@@ -81,18 +81,3 @@ class CryptoKeyService(Service):
     )
     def generate_certificate(self, data):
         return generate_certificate(data)
-
-    @accepts(
-        Dict(
-            'sign_csr',
-            Str('ca_certificate', required=True, max_length=None),
-            Str('ca_privatekey', required=True, max_length=None),
-            Str('csr', required=True, max_length=None),
-            Str('csr_privatekey', required=True, max_length=None),
-            Int('serial', required=True),
-            Str('digest_algorithm', default='SHA256'),
-            Ref('cert_extensions')
-        )
-    )
-    def sign_csr_with_ca(self, data):
-        return sign_csr_with_ca(data)
