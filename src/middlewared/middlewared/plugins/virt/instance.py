@@ -385,7 +385,7 @@ class VirtInstanceService(CRUDService):
                 'destination': None,
                 'readonly': False,
                 'boot_priority': 1,
-                'io_bus': data['root_disk_io_bus'],
+                'io_bus': 'VIRTIO-SCSI',
             }
 
         if root_device_to_add:
