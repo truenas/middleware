@@ -68,6 +68,7 @@ class PoolSnapshotEntry(BaseModel):
 
 class PoolSnapshotCreateUpdateEntry(PoolSnapshotEntry):
     holds: Excluded = excluded_field()
+    retention: Excluded = excluded_field()
 
 
 class PoolSnapshotCreateTemplate(BaseModel, ABC):
