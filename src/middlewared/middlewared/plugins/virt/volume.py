@@ -1,3 +1,4 @@
+import datetime
 import errno
 import os.path
 
@@ -5,10 +6,12 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     VirtVolumeEntry, VirtVolumeCreateArgs, VirtVolumeCreateResult, VirtVolumeUpdateArgs,
     VirtVolumeUpdateResult, VirtVolumeDeleteArgs, VirtVolumeDeleteResult, VirtVolumeImportISOArgs,
-    VirtVolumeImportISOResult,
+    VirtVolumeImportISOResult, VirtVolumeImportZvolArgs, VirtVolumeImportZvolResult
 )
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDService, job, ValidationErrors
 from middlewared.utils import filter_list
+from time import time
 
 from .utils import incus_call, incus_call_sync, Status, incus_wait, storage_pool_to_incus_pool
 
@@ -154,7 +157,7 @@ class VirtVolumeService(CRUDService):
         audit_extended=lambda data: f'{data["name"]!r} ISO',
         roles=['VIRT_IMAGE_WRITE']
     )
-    @job(lock=lambda args: f'virt_volume_import_iso_{args[0]}', pipes=['input'], check_pipes=False)
+    @job(lock='virt_volume_import', pipes=['input'], check_pipes=False)
     async def import_iso(self, job, data):
         await self.middleware.call('virt.global.check_initialized')
         global_config = await self.middleware.call('virt.global.config')
@@ -206,3 +209,137 @@ class VirtVolumeService(CRUDService):
 
         job.set_progress(95, 'ISO successfully imported as incus volume')
         return await self.get_instance(data['name'])
+
+    @api_method(
+        VirtVolumeImportZvolArgs,
+        VirtVolumeImportZvolResult,
+        audit='Virt: Importing',
+        audit_extended=lambda data: f'{data["name"]!r} zvol',
+        roles=['VIRT_IMAGE_WRITE']
+    )
+    @job(lock='virt_volume_import')
+    async def import_zvol(self, job, data):
+        await self.middleware.call('virt.global.check_initialized')
+        global_config = await self.middleware.call('virt.global.config')
+        zvol_choices = set([
+            x for x in (await self.middleware.call('virt.device.disk_choices')).keys() if x.startswith('/dev')
+        ])
+        pools = set()
+
+        verrors = ValidationErrors()
+        if len(data['to_import']) == 0:
+            verrors.add('virt_volume_import_zvol.import', 'At least one entry is required.')
+
+        for idx, entry in enumerate(data['to_import']):
+            entry['zvol_name'] = zvol_path_to_name(entry['zvol_path'])
+            entry['zpool'] = entry['zvol_name'].split('/')[0]
+            entry['new_name'] = f'{entry["zpool"]}/.ix-virt/custom/default_{entry["virt_volume_name"]}'
+            if entry['zpool'] not in global_config['storage_pools']:
+                verrors.add(
+                    f'virt_volume_import_zvol.import.{idx}.entry.zvol_path',
+                    f'{entry["zpool"]}: zvol is not located in pool configured '
+                    'as a virt storage pool.'
+                )
+            elif entry['zvol_path'] not in zvol_choices:
+                verrors.add(
+                    f'virt_volume_import_zvol.import.{idx}.entry.zvol_path',
+                    f'{entry["zvol_path"]}: not an available zvol choice.'
+                )
+
+            else:
+                pools.add(entry['zpool'])
+
+                # The ZFS rename will break snapshot task attachments
+                # and so user will need to remove any snapshot tasks
+                attachments = await self.middleware.call('pool.dataset.attachments', entry['zvol_name'])
+                if attachments:
+                    attachment_types = [x['type'] for x in attachments]
+                    verrors.add(
+                        f'virt_volume_import_zvol.import.{idx}.entry.zvol_name',
+                        f'{entry["zvol_name"]}: specified zvol is currently in use: {", ".join(attachment_types)}'
+                    )
+
+        verrors.check()
+
+        job.set_progress(5, 'Preparing to rename zvols')
+
+        # Revert dataset operations on failure
+        # each entry will be tuple of method name and args for API call to revert the previous action
+        revert = []
+        for entry in data['to_import']:
+            orig_name = entry['zvol_name']
+            new_name = entry['new_name']
+            now = int(time())  # use unix timestamp to reduce character count
+            snap_name = f'incus_{now}'
+            full_snap = f'{orig_name}@{snap_name}'
+
+            try:
+                if data['clone']:
+                    job.set_progress(description=f'Cloning {orig_name} to {new_name}')
+                    await self.middleware.call('zfs.snapshot.create', {'dataset': orig_name, 'name': snap_name})
+                    revert.append(('zfs.snapshot.delete', [full_snap]))
+
+                    await self.middleware.call('zfs.snapshot.clone', {'snapshot': full_snap, 'dataset_dst': new_name})
+                    revert.append(('zfs.dataset.delete', [new_name]))
+
+                    await self.middleware.call('zfs.dataset.promote', new_name)
+                    revert.append(('zfs.dataset.promote', [orig_name]))
+                else:
+                    job.set_progress(description=f'Renaming {orig_name} to {new_name}')
+                    await self.middleware.call('zfs.dataset.rename', orig_name, {'new_name': new_name})
+                    revert.append(('zfs.dataset.rename', [new_name, {'new_name': orig_name}]))
+
+                await self.middleware.call('zfs.dataset.update', new_name, {"properties": {
+                    'incus:content_type': {'value': 'block'},
+                }})
+                ds = await self.middleware.call('zfs.dataset.query', [['name', '=', new_name]], {'get': True})
+                entry['volsize'] = ds['properties']['volsize']['parsed']
+                entry['creation'] = ds['properties']['creation']['parsed']
+            except Exception:
+                self.logger.error('%s: failed to import zvol', orig_name, exc_info=True)
+
+                job.set_progress(description='Reverting changes')
+                for action in reversed(revert):
+                    method, args = action
+                    await self.middleware.call(method, *args)
+
+                raise
+
+        recover_payload = []
+
+        # We need to trigger a recovery action from incus to get the volumes
+        # inserted into the incus database and recovery files
+        for pool in pools:
+            incus_pool = storage_pool_to_incus_pool(pool)
+            recover_payload.append({
+                'config': {'source': f'{pool}/.ix-virt'},
+                'description': '',
+                'name': incus_pool,
+                'driver': 'zfs',
+            })
+
+        # If this fails, our state cannot be cleanly rolled back.
+        # admin will need to toggle virt.global enabled state
+        job.set_progress(50, 'Updating backend database')
+        await self.middleware.call('virt.global.recover', recover_payload)
+
+        # At this point the zvols have been renamed and incus DB updated
+        # but we still need to fix some volume-related metadata. The size
+        # of the volume and the create time of the volume are not properly
+        # set by the incus ZFS driver
+        job.set_progress(50, 'Updating volume metadata')
+
+        for entry in data['to_import']:
+            pool = storage_pool_to_incus_pool(entry['zpool'])
+            name = entry['virt_volume_name']
+
+            result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{name}', 'patch', {
+                'json': {
+                    'config': {
+                        'size': str(entry['volsize']),
+                    },
+                    'created_at': entry['creation'].isoformat()
+                },
+            })
+            if result.get('error') != '':
+                raise CallError(f'Failed to update volume: {result["error"]}')
