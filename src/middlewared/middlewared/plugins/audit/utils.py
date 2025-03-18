@@ -204,7 +204,7 @@ async def setup_truenas_verify(middleware, sysver: str) -> int:
     Called by audit setup to generate the initial truenas_verify
     file for an updated or initial TrueNAS version.
     """
-    if os.path.exists('/data/skip-truenas-verity'):
+    if os.path.exists('/data/skip-truenas-verify'):
         # Takes too much time on developer middleware restart
         return 0
 
