@@ -61,8 +61,17 @@ def combine_enclosures(enclosures):
                 # We need to check if the R40 is wired using the "legacy" method.
                 # (i.e. 2x expanders 1x HBA) or the current MPI method
                 # (i.e. 2x expanders 2x HBAs).
-                bus_addr1 = os.path.realpath(f'/sys/class/enclosure/{r40_sas_ids[0][2]}').split('/')[5].strip()
-                bus_addr2 = os.path.realpath(f'/sys/class/enclosure/{r40_sas_ids[1][2]}').split('/')[5].strip()
+                try:
+                    bus_addr1 = os.path.realpath(
+                        f'/sys/class/enclosure/{r40_sas_ids[0][2]}'
+                    ).split('/')[5].strip()
+                    bus_addr2 = os.path.realpath(
+                        f'/sys/class/enclosure/{r40_sas_ids[1][2]}'
+                    ).split('/')[5].strip()
+                except Exception:
+                    # dont crash, just fall back to legacy
+                    bus_addr1 = bus_addr2 = 1
+
                 if bus_addr1 != bus_addr2:  # current MPI wiring
                     if bus_addr1 == '0000:19:00.0' and bus_addr2 == '0000:68:00.0':
                         # platform team confirms that the expander whose bus address of 0000:19:00.0
