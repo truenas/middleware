@@ -1,21 +1,13 @@
-from middlewared.schema import accepts, Dataset, Dict, Int, Str
-from middlewared.service import item_method, pass_app, Service
+from middlewared.api import api_method
+from middlewared.api.current import ReplicationRestoreArgs, ReplicationRestoreResult
+
+from middlewared.service import Service
 
 
 class ReplicationService(Service):
 
-    @item_method
-    @accepts(
-        Int("id"),
-        Dict(
-            "replication_restore",
-            Str("name", required=True),
-            Dataset("target_dataset", required=True),
-            strict=True,
-        ),
-        roles=["REPLICATION_TASK_WRITE"],
-    )
-    @pass_app(require=True, rest=True)
+    @api_method(ReplicationRestoreArgs, ReplicationRestoreResult, roles=["REPLICATION_TASK_WRITE"],
+                pass_app=True, pass_app_require=True, pass_app_rest=True)
     async def restore(self, app, id_, data):
         """
         Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).
