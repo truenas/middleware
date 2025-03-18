@@ -4,8 +4,8 @@ from middlewared.validators import Email
 
 from crypto_utils.generate_certs import generate_certificate
 from crypto_utils.generate_self_signed import generate_self_signed_certificate
+from crypto_utils.generate_utils import normalize_san
 
-from .generate_utils import normalize_san
 from .utils import EKU_OIDS
 
 
