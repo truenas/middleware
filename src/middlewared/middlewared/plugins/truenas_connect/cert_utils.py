@@ -1,4 +1,4 @@
-from middlewared.plugins.crypto_.csr import generate_certificate_signing_request
+from crypto_utils.csr import generate_certificate_signing_request
 
 
 CERT_BOT_EMAIL = 'cert-bot@ixsystems.com'
