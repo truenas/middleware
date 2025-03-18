@@ -2,7 +2,7 @@ import datetime
 
 from crypto_utils.csr import generate_certificate_signing_request
 from crypto_utils.key import export_private_key
-from crypto_utils.load import load_certificate
+from crypto_utils.read import load_certificate
 
 import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
