@@ -1,6 +1,7 @@
 import datetime
 
 from crypto_utils.csr import generate_certificate_signing_request
+from crypto_utils.key import export_private_key
 
 import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
@@ -9,7 +10,6 @@ from middlewared.validators import Email, Range
 
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .cert_entry import CERT_ENTRY
-from .key_utils import export_private_key
 from .load_utils import load_certificate
 from .query_utils import normalize_cert_attrs
 from .utils import (
