@@ -1,8 +1,9 @@
 # -*- coding=utf-8 -*-
 import logging
 
-from middlewared.schema import List, returns, Str
-from middlewared.service import accepts, CallError, private, Service
+from middlewared.api import api_method
+from middlewared.api.current import NetworkConfigurationActivityChoicesArgs, NetworkConfigurationActivityChoicesResult
+from middlewared.service import CallError, private, Service
 
 logger = logging.getLogger(__name__)
 
@@ -11,8 +12,11 @@ class NetworkConfigurationService(Service):
     class Config:
         namespace = 'network.configuration'
 
-    @accepts()
-    @returns(List('activity_choices', items=[List('activity_choice', items=[Str('activity')])]))
+    @api_method(
+        NetworkConfigurationActivityChoicesArgs,
+        NetworkConfigurationActivityChoicesResult,
+        roles=["NETWORK_GENERAL_READ"]
+    )
     async def activity_choices(self):
         """
         Returns allowed/forbidden network activity choices.
