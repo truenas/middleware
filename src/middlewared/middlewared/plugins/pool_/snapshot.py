@@ -65,7 +65,9 @@ class PoolSnapshotService(CRUDService):
     @api_method(PoolSnapshotCreateArgs, PoolSnapshotCreateResult)
     def do_create(self, data):
         """Take a snapshot from a given dataset."""
-        return self.middleware.call_sync('zfs.snapshot.create', data)
+        result = self.middleware.call_sync('zfs.snapshot.create', data)
+        self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=result['id'], fields=result)
+        return result
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
@@ -74,4 +76,11 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):
-        return self.middleware.call_sync('zfs.snapshot.delete', id_, options)
+        result = self.middleware.call_sync('zfs.snapshot.delete', id_, options)
+        self.middleware.send_event(
+            f'{self._config.namespace}.query',
+            'REMOVED',
+            id=id_,
+            recursive=options['recursive']
+        )  # TODO: Events won't be sent for child snapshots in recursive delete
+        return result
