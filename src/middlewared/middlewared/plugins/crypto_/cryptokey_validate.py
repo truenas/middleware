@@ -2,11 +2,11 @@ import itertools
 
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from crypto_utils.load import load_private_key
 from OpenSSL import crypto, SSL
 
 from middlewared.service import Service
 
-from .load_utils import load_private_key
 from .utils import RE_CERTIFICATE
 
 
