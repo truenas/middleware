@@ -1,4 +1,4 @@
-from crypto_utils.read import load_certificate, load_certificate_request
+from truenas_crypto_utils.read import load_certificate, load_certificate_request
 
 from middlewared.schema import accepts, Str
 from middlewared.service import Service

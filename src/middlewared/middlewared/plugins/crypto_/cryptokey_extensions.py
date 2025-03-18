@@ -1,6 +1,6 @@
 from cryptography import x509
 
-from crypto_utils.extensions import get_extension_params
+from truenas_crypto_utils.extensions import get_extension_params
 
 from middlewared.schema import accepts, Ref, Str
 from middlewared.service import Service, ValidationErrors

@@ -1,4 +1,4 @@
-from crypto_utils.csr import generate_certificate_signing_request
+from truenas_crypto_utils.csr import generate_certificate_signing_request
 
 
 CERT_BOT_EMAIL = 'cert-bot@ixsystems.com'
