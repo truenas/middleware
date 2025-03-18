@@ -69,7 +69,7 @@ def combine_enclosures(enclosures):
                         # is mapped to drives 1-24, and bus address of 0000:68:00.0 is 25-48
                         head_unit_idx = r40_sas_ids[0][1]
                         _update_idx = r40_sas_ids[1][1]
-                    elif bus_addr2 == '0000:19:00.0' and bus_addr1 == '0000:68:00.0':
+                    else:
                         head_unit_idx = r40_sas_ids[1][1]
                         _update_idx = r40_sas_ids[0][1]
                 else:  # legacy wiring
