@@ -1099,7 +1099,12 @@ class AuthService(Service):
         return resp['response_type'] == AuthResp.SUCCESS
 
     @cli_private
-    @api_method(AuthSessionLogoutArgs, AuthSessionLogoutResult, authorization_required=False)
+    @api_method(
+        AuthSessionLogoutArgs,
+        AuthSessionLogoutResult,
+        audit="API Logout",
+        authorization_required=False
+    )
     @pass_app()
     async def logout(self, app):
         """
