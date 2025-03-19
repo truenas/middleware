@@ -118,7 +118,7 @@ def test_002_create_permanent_zpool(request, ws_client):
     try:
         sysdataset_update = ws_client.call('core.get_jobs', [
             ['method', '=', 'systemdataset.update']
-        ], {'order_by': ['-id'], 'get': True})
+        ], {'order_by': ['-time_started'], 'get': True})
     except Exception:
         fail('Failed to get status of systemdataset update')
 
