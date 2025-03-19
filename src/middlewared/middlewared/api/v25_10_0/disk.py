@@ -30,7 +30,7 @@ class DiskGetDetailsArgs(BaseModel):
 
 
 class DiskGetDetailsResult(BaseModel):
-    result: dict
+    result: list | dict
 
 
 class DiskGetUsedArgs(BaseModel):
@@ -42,7 +42,7 @@ class DiskGetUsedArgs(BaseModel):
 
 
 class DiskGetUsedResult(BaseModel):
-    result: dict
+    result: list
 
 
 class DiskTemperatureAlertsArgs(BaseModel):
