@@ -12,6 +12,7 @@ __all__ = [
     'VirtVolumeEntry', 'VirtVolumeCreateArgs', 'VirtVolumeCreateResult',
     'VirtVolumeUpdateArgs', 'VirtVolumeUpdateResult', 'VirtVolumeDeleteArgs',
     'VirtVolumeDeleteResult', 'VirtVolumeImportISOArgs', 'VirtVolumeImportISOResult',
+    'VirtVolumeImportZvolArgs', 'VirtVolumeImportZvolResult',
 ]
 
 
