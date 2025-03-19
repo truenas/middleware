@@ -5,9 +5,14 @@ from middlewared.service import Service
 
 
 class ReplicationService(Service):
-
-    @api_method(ReplicationRestoreArgs, ReplicationRestoreResult, roles=["REPLICATION_TASK_WRITE"],
-                pass_app=True, pass_app_require=True, pass_app_rest=True)
+    @api_method(
+        ReplicationRestoreArgs,
+        ReplicationRestoreResult,
+        roles=["REPLICATION_TASK_WRITE"],
+        pass_app=True,
+        pass_app_require=True,
+        pass_app_rest=True,
+    )
     async def restore(self, app, id_, data):
         """
         Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).
