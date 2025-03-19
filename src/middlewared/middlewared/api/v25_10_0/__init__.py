@@ -67,6 +67,8 @@ from .privilege import *  # noqa
 from .rdma import *  # noqa
 from .rdma_interface import *  # noqa
 from .replication import *  # noqa
+from .replication_config import *  # noqa
+from .replication_crud import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
 from .rsync_task import *  # noqa
