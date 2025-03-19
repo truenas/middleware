@@ -2,10 +2,12 @@ import os
 import tempfile
 import typing
 import yaml
-
 from contextlib import suppress
+
+from middlewared.api import api_method
+from middlewared.api.base import NfsClientCountArgs, NfsClientCountResult
 from middlewared.plugins.nfs import NFSServicePathInfo
-from middlewared.schema import accepts, Int, returns, Str, Dict
+from middlewared.schema import Str, Dict
 from middlewared.service import Service, private, filterable, filterable_returns
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
@@ -195,8 +197,7 @@ class NFSService(Service):
 
         return filter_list(clients, filters, options)
 
-    @accepts(roles=['SHARING_NFS_READ'])
-    @returns(Int('number_of_clients'))
+    @api_method(NfsClientCountArgs, NfsClientCountResult, roles=['SHARING_NFS_READ'])
     def client_count(self):
         """
         Return currently connected clients count.

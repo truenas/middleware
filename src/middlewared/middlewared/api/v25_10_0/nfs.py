@@ -15,10 +15,10 @@ from middlewared.api.base import (
 
 __all__ = [
     "NfsEntry",
-    "NfsUpdateArgs",
-    "NfsUpdateResult",
     "NfsBindipChoicesArgs",
     "NfsBindipChoicesResult",
+    "NfsClientCountArgs",
+    "NfsClientCountResult",
     "NfsShareEntry",
     "NfsShareCreateArgs",
     "NfsShareCreateResult",
@@ -26,6 +26,8 @@ __all__ = [
     "NfsShareUpdateResult",
     "NfsShareDeleteArgs",
     "NfsShareDeleteResult",
+    "NfsUpdateArgs",
+    "NfsUpdateResult",
 ]
 
 MAX_NUM_NFS_NETWORKS = 42
@@ -95,6 +97,14 @@ class NfsBindipChoicesResult(BaseModel):
     """Return a dictionary of IP addresses"""
 
     result: dict[str, str]
+
+
+class NfsClientCountArgs(BaseModel):
+    pass
+
+
+class NfsClientCountResult(BaseModel):
+    result: int
 
 
 class NfsShareEntry(BaseModel):
