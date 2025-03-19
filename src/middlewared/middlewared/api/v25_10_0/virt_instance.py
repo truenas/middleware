@@ -110,7 +110,7 @@ MemoryType: TypeAlias = Annotated[int, AfterValidator(validate_memory)]
 class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     iso_volume: NonEmptyString | None = None
-    source_type: Literal[None, 'IMAGE', 'ZVOL', 'ISO'] = 'IMAGE'
+    source_type: Literal[None, 'IMAGE', 'ZVOL', 'ISO', 'VOLUME'] = 'IMAGE'
     storage_pool: NonEmptyString | None = None
     '''
     Storage pool under which to allocate root filesystem. Must be one of the pools
@@ -140,6 +140,11 @@ class VirtInstanceCreateArgs(BaseModel):
     to be ported over to virt plugin. Virt will consume this zvol and add it as a DISK device to the instance
     with boot priority set to 1 so the VM can be booted from it.
     '''
+    volume: NonEmptyString | None = None
+    '''
+    This should be set when source type is "VOLUME" and should be the name of the virt volume which should
+    be used to boot the VM instance.
+    '''
     vnc_password: Secret[NonEmptyString | None] = None
 
     @model_validator(mode='after')
@@ -160,6 +165,9 @@ class VirtInstanceCreateArgs(BaseModel):
 
             if self.source_type == 'ISO' and self.iso_volume is None:
                 raise ValueError('ISO volume must be set when source type is "ISO"')
+
+            if self.source_type == 'VOLUME' and self.volume is None:
+                raise ValueError('volume must be set when source type is "VOLUME"')
 
             if self.source_type == 'ZVOL':
                 if self.zvol_path is None:
