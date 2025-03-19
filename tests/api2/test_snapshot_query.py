@@ -15,19 +15,19 @@ def fixture1():
                         with dataset("test/test1", pool="test"):
                             with dataset("test/test2", pool="test"):
                                 call(
-                                    "zfs.snapshot.create",
+                                    "pool.snapshot.create",
                                     {"dataset": f"{pool}/test", "name": "snap-1", "recursive": True},
                                 )
                                 call(
-                                    "zfs.snapshot.create",
+                                    "pool.snapshot.create",
                                     {"dataset": f"{pool}/test", "name": "snap-2", "recursive": True},
                                 )
                                 call(
-                                    "zfs.snapshot.create",
+                                    "pool.snapshot.create",
                                     {"dataset": "test/test", "name": "snap-1", "recursive": True},
                                 )
                                 call(
-                                    "zfs.snapshot.create",
+                                    "pool.snapshot.create",
                                     {"dataset": "test/test", "name": "snap-2", "recursive": True},
                                 )
                                 yield
@@ -36,7 +36,7 @@ def fixture1():
 def test_query_all_names(fixture1):
     names = {
         snapshot["name"]
-        for snapshot in call("zfs.snapshot.query", [], {"select": ["name"]})
+        for snapshot in call("pool.snapshot.query", [], {"select": ["name"]})
     }
     assert {f"{pool}/test@snap-1", f"{pool}/test@snap-2", f"{pool}/test/test1@snap-1", f"{pool}/test/test1@snap-2",
             f"{pool}/test/test2@snap-1", f"{pool}/test/test2@snap-2",
@@ -56,5 +56,5 @@ def test_query_all_names(fixture1):
 def test_query_names_by_pool_or_dataset(fixture1, filters, names):
     assert {
         snapshot["name"]
-        for snapshot in call("zfs.snapshot.query", filters, {"select": ["name"]})
+        for snapshot in call("pool.snapshot.query", filters, {"select": ["name"]})
     } == names

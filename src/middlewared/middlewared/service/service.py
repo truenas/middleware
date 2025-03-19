@@ -1,4 +1,8 @@
+from typing import TYPE_CHECKING
+
 from middlewared.logger import Logger
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 from .base import ServiceBase
 
@@ -9,7 +13,7 @@ class Service(object, metaclass=ServiceBase):
 
     This is meant for services that do not follow any standard.
     """
-    def __init__(self, middleware):
+    def __init__(self, middleware: "Middleware"):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 

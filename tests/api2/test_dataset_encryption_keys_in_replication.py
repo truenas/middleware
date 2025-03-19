@@ -26,7 +26,7 @@ def encryption_props():
 
 def make_assertions(source_datasets, task_id, target_dataset, unlocked_datasets):
     for source_ds in source_datasets:
-        call('zfs.snapshot.create', {'dataset': source_ds, 'name': 'snaptest-1', 'recursive': True})
+        call('pool.snapshot.create', {'dataset': source_ds, 'name': 'snaptest-1', 'recursive': True})
 
     call('replication.run', task_id, job=True)
     keys = call('pool.dataset.export_keys_for_replication_internal', task_id)

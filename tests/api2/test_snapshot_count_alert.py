@@ -12,16 +12,16 @@ NUM_SNAPSHOTS = 10
 
 def test_snapshot_total_count_alert(request):
     with dataset(DATASET_NAME) as ds:
-        base = call("zfs.snapshot.query", [], {"count": True})
+        base = call("pool.snapshot.query", [], {"count": True})
         with mock("pool.snapshottask.max_total_count", return_value=base + NUM_SNAPSHOTS):
             for i in range(NUM_SNAPSHOTS):
-                call("zfs.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
+                call("pool.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
 
             assert call("alert.run_source", "SnapshotCount") == []
             # snapshots_changed ZFS dataset property has 1 second resolution
             sleep(1)
 
-            call("zfs.snapshot.create", {"dataset": ds, "name": f"snap-{NUM_SNAPSHOTS}"})
+            call("pool.snapshot.create", {"dataset": ds, "name": f"snap-{NUM_SNAPSHOTS}"})
 
             alert = call("alert.run_source", "SnapshotCount")[0]
             assert alert["text"] % alert["args"] == (
@@ -37,13 +37,13 @@ def test_snapshot_count_alert(request):
         mock("pool.snapshottask.max_count", return_value=NUM_SNAPSHOTS)
     ):
             for i in range(NUM_SNAPSHOTS):
-                call("zfs.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
+                call("pool.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
 
             assert call("alert.run_source", "SnapshotCount") == []
             # snapshots_changed ZFS dataset property has 1 second resolution
             sleep(1)
 
-            call("zfs.snapshot.create", {"dataset": ds, "name": f"snap-{NUM_SNAPSHOTS}"})
+            call("pool.snapshot.create", {"dataset": ds, "name": f"snap-{NUM_SNAPSHOTS}"})
 
             alert = call("alert.run_source", "SnapshotCount")[0]
             assert alert["text"] % alert["args"] == (

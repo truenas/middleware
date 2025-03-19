@@ -120,7 +120,7 @@ def test_snapshot(has_zvol_sibling):
 
             time.sleep(1)
 
-            assert call("zfs.snapshot.query", [["dataset", "=", ds]]) == []
+            assert call("pool.snapshot.query", [["dataset", "=", ds]]) == []
         finally:
             if has_zvol_sibling:
                 ssh(f"zfs destroy -r {pool}/zvol")
