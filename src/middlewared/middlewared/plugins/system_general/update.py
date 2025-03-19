@@ -2,14 +2,16 @@ import asyncio
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemGeneralEntry, SystemGeneralUpdateArgs, SystemGeneralUpdateResult,
+    SystemGeneralCheckinWaitingArgs, SystemGeneralCheckinWaitingResult,
+    SystemGeneralCheckinArgs, SystemGeneralCheckinResult,
+)
 from middlewared.async_validators import validate_port
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str
 from middlewared.service import ConfigService, private
 from middlewared.utils import run
 from middlewared.utils.service.settings import SettingsHelper
-from middlewared.validators import Range
-
-from .utils import HTTPS_PROTOCOLS
 
 settings = SettingsHelper()
 
@@ -45,33 +47,7 @@ class SystemGeneralService(ConfigService):
         datastore_extend = 'system.general.general_system_extend'
         cli_namespace = 'system.general'
         role_prefix = 'SYSTEM_GENERAL'
-
-    ENTRY = Dict(
-        'system_general_entry',
-        Patch(
-            'certificate_entry', 'ui_certificate',
-            ('attr', {'null': True, 'required': True, 'private': True}),
-        ),
-        Int('ui_httpsport', validators=[Range(min_=1, max_=65535)], required=True),
-        Bool('ui_httpsredirect', required=True),
-        List(
-            'ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)],
-            empty=False, unique=True, required=True
-        ),
-        Int('ui_port', validators=[Range(min_=1, max_=65535)], required=True),
-        List('ui_address', items=[IPAddr('addr')], empty=False, required=True),
-        List('ui_v6address', items=[IPAddr('addr')], empty=False, required=True),
-        List('ui_allowlist', items=[IPAddr('addr', network=True, network_strict=True)], required=True),
-        Bool('ui_consolemsg', required=True),
-        Str('ui_x_frame_options', enum=['SAMEORIGIN', 'DENY', 'ALLOW_ALL'], required=True),
-        Str('kbdmap', required=True),
-        Str('timezone', empty=False, required=True),
-        Bool('usage_collection', null=True, required=True),
-        Bool('wizardshown', required=True),
-        Bool('usage_collection_is_set', required=True),
-        Bool('ds_auth', required=True),
-        Int('id', required=True),
-    )
+        entry = SystemGeneralEntry
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -188,37 +164,10 @@ class SystemGeneralService(ConfigService):
                 )
             )
 
-    @accepts(
-        Patch(
-            'system_general_entry', 'general_settings',
-            ('rm', {'name': 'usage_collection_is_set'}),
-            ('rm', {'name': 'wizardshown'}),
-            ('rm', {'name': 'id'}),
-            ('replace', Int('ui_certificate', null=True)),
-            ('add', Int('rollback_timeout', null=True)),
-            ('add', Int('ui_restart_delay', null=True)),
-            ('attr', {'update': True}),
-        ),
-        audit='System general update'
-    )
+    @api_method(SystemGeneralUpdateArgs, SystemGeneralUpdateResult, audit='System general update')
     async def do_update(self, data):
         """
         Update System General Service Configuration.
-
-        `ui_certificate` is used to enable HTTPS access to the system. If `ui_certificate` is not configured on boot,
-        it is automatically created by the system.
-
-        `ui_httpsredirect` when set, makes sure that all HTTP requests are converted to HTTPS requests to better
-        enhance security.
-
-        `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
-        listen on.
-
-        `ui_allowlist` is a list of IP addresses and networks that are allow to use API and UI. If this list is empty,
-        then all IP addresses are allowed to use API and UI.
-
-        `ds_auth` controls whether configured Directory Service users that are granted with Privileges are allowed to
-        log in to the Web UI or use TrueNAS API.
 
         UI configuration is not applied automatically. Call `system.general.ui_restart` to apply new UI settings (all
         HTTP connections will be aborted) or specify `ui_restart_delay` (in seconds) to automatically apply them after
@@ -297,11 +246,10 @@ class SystemGeneralService(ConfigService):
         await run(['setupcon'], check=False)
         await self.middleware.call('boot.update_initramfs', {'force': True})
 
-    @accepts()
-    @returns(Int('remaining_seconds', null=True))
+    @api_method(SystemGeneralCheckinWaitingArgs, SystemGeneralCheckinWaitingResult, roles=['SYSTEM_GENERAL_WRITE'])
     async def checkin_waiting(self):
         """
-        Determines whether or not we are waiting user to check-in the applied UI settings changes before they are rolled
+        Determines whether we are waiting user to check in the applied UI settings changes before they are rolled
         back. Returns a number of seconds before the automatic rollback or null if there are no changes pending.
         """
         if self._rollback_timer:
@@ -309,8 +257,7 @@ class SystemGeneralService(ConfigService):
             if remaining > 0:
                 return int(remaining)
 
-    @accepts()
-    @returns()
+    @api_method(SystemGeneralCheckinArgs, SystemGeneralCheckinResult, roles=['SYSTEM_GENERAL_WRITE'])
     async def checkin(self):
         """
         After UI settings are saved with `rollback_timeout` this method needs to be called within that timeout limit

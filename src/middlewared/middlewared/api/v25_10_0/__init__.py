@@ -78,6 +78,7 @@ from .smart_test import *  # noqa
 from .smb import *  # noqa
 from .snmp import *  # noqa
 from .static_route import *  # noqa
+from .system_general import *  # noqa
 from .system_general_keymap import *  # noqa
 from .system_general_ui import *  # noqa
 from .system_lifecycle import *  # noqa
