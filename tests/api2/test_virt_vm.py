@@ -240,7 +240,7 @@ def test_vm_creation_with_iso_volume(vm, iso_volume):
         vm_devices = call('virt.instance.device_list', virt_instance_name)
         assert all(
             [
-                device['name'] == ISO_VOLUME_NAME and device['io_bus'] == 'NVME'
+                device['name'] == ISO_VOLUME_NAME and device['io_bus'] == 'VIRTIO-SCSI'
                 for device in vm_devices if device['name'] == ISO_VOLUME_NAME
             ] or [False]), vm_devices
 
@@ -248,6 +248,32 @@ def test_vm_creation_with_iso_volume(vm, iso_volume):
         assert iso_vol['used_by'] == [virt_instance_name], iso_vol
     finally:
         call('virt.instance.delete', virt_instance_name, job=True)
+
+
+def test_vm_creation_with_volume(vm):
+    virt_instance_name = 'test-volume-vm'
+    with volume('test-volume', 1028) as v:
+        instance = call('virt.instance.create', {
+            'name': virt_instance_name,
+            'instance_type': 'VM',
+            'source_type': 'VOLUME',
+            'volume': v['name'],
+        }, job=True)
+
+        try:
+            assert instance['root_disk_io_bus'] == 'NVME'
+
+            vm_devices = call('virt.instance.device_list', virt_instance_name)
+            assert all(
+                [
+                    device['name'] == v['name'] and device['io_bus'] == 'NVME'
+                    for device in vm_devices if device['name'] == v['name']
+                ] or [False]), vm_devices
+
+            vol = call('virt.volume.get_instance', v['name'])
+            assert vol['used_by'] == [virt_instance_name], vol
+        finally:
+            call('virt.instance.delete', virt_instance_name, job=True)
 
 
 def test_vm_creation_with_zvol(virt_pool, vm, iso_volume):
