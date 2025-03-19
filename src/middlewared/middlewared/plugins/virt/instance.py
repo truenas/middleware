@@ -227,6 +227,14 @@ class VirtInstanceService(CRUDService):
                     'Invalid ISO volume selected. Please select a valid ISO volume.'
                 )
 
+            if new['source_type'] == 'VOLUME' and not await self.middleware.call(
+                'virt.volume.query', [['content_type', '=', 'BLOCK'], ['id', '=', new['volume']]]
+            ):
+                verrors.add(
+                    f'{schema_name}.volume',
+                    'Invalid Volume selected. Please select a valid Volume.'
+                )
+
         if instance_type == 'VM' and new.get('enable_vnc'):
             if not new.get('vnc_port'):
                 verrors.add(f'{schema_name}.vnc_port', 'VNC port is required when VNC is enabled')
@@ -365,6 +373,7 @@ class VirtInstanceService(CRUDService):
         iso_volume = data.pop('iso_volume', None)
         root_device_to_add = None
         zvol_path = data.pop('zvol_path', None)
+        volume = data.pop('volume', None)
         if data['source_type'] == 'ZVOL':
             data['source_type'] = None
             root_device_to_add = {
@@ -386,6 +395,17 @@ class VirtInstanceService(CRUDService):
                 'readonly': False,
                 'boot_priority': 1,
                 'io_bus': 'VIRTIO-SCSI',
+            }
+        elif data['source_type'] == 'VOLUME':
+            root_device_to_add = {
+                'name': volume,
+                'dev_type': 'DISK',
+                'pool': pool,
+                'source': volume,
+                'destination': None,
+                'readonly': False,
+                'boot_priority': 1,
+                'io_bus': data['root_disk_io_bus'],
             }
 
         if root_device_to_add:
