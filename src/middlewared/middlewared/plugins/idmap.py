@@ -1230,7 +1230,7 @@ class IdmapDomainService(CRUDService):
             'smbhash': None,
             'group': {},
             'home': passwd['pw_dir'],
-            'shell': passwd['pw_shell'],
+            'shell': passwd['pw_shell'] or '/usr/sbin/nologin',
             'full_name': passwd['pw_gecos'],
             'builtin': False,
             'email': None,
