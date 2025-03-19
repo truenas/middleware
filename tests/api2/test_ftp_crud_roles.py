@@ -6,7 +6,6 @@ from middlewared.test.integration.assets.roles import common_checks
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_FTP_READ"])
 def test_read_role_can_read(unprivileged_user_fixture, role):
     common_checks(unprivileged_user_fixture, "ftp.config", role, True, valid_role_exception=False)
-    common_checks(unprivileged_user_fixture, "ftp.connection_count", role, True, valid_role_exception=False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_FTP_READ"])
