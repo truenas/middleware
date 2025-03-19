@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
@@ -25,7 +25,7 @@ __all__ = [
 
 class SystemGeneralEntry(BaseModel):
     id: int
-    ui_certificate: dict | None  # FIXME: Make reference to the certificate model when we move it to new API
+    ui_certificate: Secret[dict | None]  # FIXME: Make reference to the certificate model when we move it to new API
     "Used to enable HTTPS access to the system. If `ui_certificate` is not configured on boot, it is automatically "
     "created by the system."
     ui_httpsport: TcpPort
@@ -55,7 +55,7 @@ class SystemGeneralEntry(BaseModel):
 @single_argument_args("general_settings")
 class SystemGeneralUpdateArgs(SystemGeneralEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
-    ui_certificate: int | None
+    ui_certificate: Secret[int | None]
     "Used to enable HTTPS access to the system. If `ui_certificate` is not configured on boot, it is automatically "
     "created by the system."
     wizardshown: Excluded = excluded_field()
