@@ -1,6 +1,6 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, NonEmptyString
 from .alert import Alert
 
 __all__ = (
@@ -15,8 +15,7 @@ __all__ = (
 )
 
 
-@single_argument_args("data")
-class DiskGetDetailsArgs(BaseModel):
+class DiskGetDetails(BaseModel):
     join_partitions: bool = False
     """When True will return all partitions currently
     written to disk.
@@ -27,6 +26,10 @@ class DiskGetDetailsArgs(BaseModel):
     If `USED`, only disks that are IN USE will be returned.
     If `UNUSED`, only disks that are NOT IN USE are returned.
     If `BOTH`, used and unused disks will be returned."""
+
+
+class DiskGetDetailsArgs(BaseModel):
+    data: DiskGetDetails = DiskGetDetails()
 
 
 class DiskGetDetailsResult(BaseModel):
