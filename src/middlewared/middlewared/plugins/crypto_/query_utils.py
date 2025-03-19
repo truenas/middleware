@@ -3,8 +3,8 @@ import os
 
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from truenas_crypto_utils.read import load_certificate, load_certificate_request, load_private_key
 
-from .load_utils import load_certificate, load_certificate_request, load_private_key
 from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, CERT_ROOT_PATH, RE_CERTIFICATE
 
 

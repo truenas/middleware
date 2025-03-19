@@ -1,6 +1,7 @@
 import datetime
 
-from .generate_self_signed import generate_self_signed_certificate
+from truenas_crypto_utils.generate_self_signed import generate_self_signed_certificate
+
 from middlewared.service import job, periodic, private, Service
 from middlewared.utils.time_utils import utc_now
 
