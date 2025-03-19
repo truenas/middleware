@@ -11,6 +11,7 @@ __all__ = [
     'VirtDeviceDiskChoicesResult', 'VirtDeviceNICChoicesArgs', 'VirtDeviceNICChoicesResult',
     'VirtDeviceExportDiskImageArgs', 'VirtDeviceExportDiskImageResult', 'VirtDeviceImportDiskImageArgs',
     'VirtDeviceImportDiskImageResult', 'VirtDevicePCIChoicesArgs', 'VirtDevicePCIChoicesResult',
+    'VirtInstanceBootableDiskArgs', 'VirtInstanceBootableDiskResult',
 ]
 
 
@@ -196,3 +197,12 @@ class VirtDevicePCIChoicesArgs(BaseModel):
 
 class VirtDevicePCIChoicesResult(BaseModel):
     result: dict
+
+
+class VirtInstanceBootableDiskArgs(BaseModel):
+    id: NonEmptyString
+    disk: NonEmptyString
+
+
+class VirtInstanceBootableDiskResult(BaseModel):
+    result: bool
