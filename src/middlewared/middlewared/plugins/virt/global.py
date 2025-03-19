@@ -522,6 +522,11 @@ class VirtGlobalService(ConfigService):
                 else:
                     netconfig['ipv6.address'] = config['v6_network']
 
+                update_network |= any(
+                    config[f'v{i}_network'] != result['metadata']['config'][f'ipv{i}.address']
+                    for i in (4, 6)
+                )
+
                 if update_network:
                     result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'put', {'json': {
                         'config': netconfig,
