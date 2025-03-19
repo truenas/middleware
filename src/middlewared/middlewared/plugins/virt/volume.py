@@ -185,8 +185,12 @@ class VirtVolumeService(CRUDService):
         }
 
         def read_input_stream():
-            for stream in job.pipes.input.r:
-                yield stream
+            while True:
+                chunk = job.pipes.input.r.read(1048576)
+                if not chunk:
+                    break
+
+                yield chunk
 
         def upload_file():
             job.set_progress(25, 'Importing ISO as incus volume')
