@@ -1,5 +1,6 @@
 import os
 import tempfile
+import typing
 import yaml
 
 from contextlib import suppress
@@ -228,8 +229,10 @@ class NFSService(Service):
         return pool_mode.upper()
 
     @private
-    @accepts(Str("pool_mode", enum=["AUTO", "GLOBAL", "PERCPU", "PERNODE"]))
-    def set_threadpool_mode(self, pool_mode):
+    def set_threadpool_mode(
+        self,
+        pool_mode: typing.Literal["AUTO", "GLOBAL", "PERCPU", "PERNODE"]
+    ):
         """
         Control how the NFS server code allocates CPUs to
         service thread pools.  Depending on how many NICs
