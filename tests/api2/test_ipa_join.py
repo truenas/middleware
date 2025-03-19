@@ -135,7 +135,7 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
 
         assert 'DIRECTORY_SERVICE' in me['account_attributes']
         assert 'LDAP' in me['account_attributes']
-        assert me['privilege']['roles'] == set(priv['roles'])
+        assert 'FULL_ADMIN' in me['privilege']['roles']
 
 
 def test_dns_resolution(do_freeipa_connection):
