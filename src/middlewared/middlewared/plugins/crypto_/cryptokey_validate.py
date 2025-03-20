@@ -3,11 +3,10 @@ import itertools
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from truenas_crypto_utils.read import load_private_key
+from truenas_crypto_utils.utils import RE_CERTIFICATE
 from OpenSSL import crypto, SSL
 
 from middlewared.service import Service
-
-from .utils import RE_CERTIFICATE
 
 
 class CryptoKeyService(Service):
