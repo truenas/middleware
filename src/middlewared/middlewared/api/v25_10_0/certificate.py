@@ -134,3 +134,24 @@ class CertificateCreateACMEArgs(BaseModel):
     renew_days: int = Field(min_length=1, max_length=30)
     acme_directory_uri: NonEmptyString
     dns_mapping: dict[str, int]
+
+
+@single_argument_args('certificate_create_csr')
+class CertificateCreateCSRArgs(BaseModel):
+    name: NonEmptyString
+    # Key specific
+    key_length: Literal[2046, 4098, None] = None
+    key_type: Literal['RSA', 'EC'] = 'RSA'
+    ec_curve: ECCurve = 'SECP384R1'
+    passphrase: NonEmptyString | None = None
+    # CSR specific
+    city: NonEmptyString | None = None
+    common: NonEmptyString | None = None
+    country: NonEmptyString | None = None
+    email: EmailStr | None = None
+    organization: NonEmptyString | None = None
+    organizational_unit: NonEmptyString | None = None
+    state: NonEmptyString | None = None
+    digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512']
+    cert_extensions: dict = Field(default_factory=dict)  # FIXME: Improve this
+    san: list[NonEmptyString] = Field(min_length=1)
