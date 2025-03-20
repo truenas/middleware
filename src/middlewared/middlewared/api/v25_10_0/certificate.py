@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import EmailStr, Field
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, LongString, LongNonEmptyString, NonEmptyString,
+    BaseModel, ForUpdateMetaclass, LongString, LongNonEmptyString, NonEmptyString, single_argument_args,
 )
 
 
@@ -32,7 +32,7 @@ class CertificateEntry(BaseModel):
     CSR: LongString | None
     acme_uri: str | None
     domains_authenticators: dict | None
-    renew_days: int
+    renew_days: int | None
     acme: dict | None
     add_to_trusted_store: bool
     # Normalized fields
@@ -43,7 +43,7 @@ class CertificateEntry(BaseModel):
     cert_type: NonEmptyString
     cert_type_existing: bool
     cert_type_CSR: bool
-    chain_list: list[str]
+    chain_list: list[LongString]
     key_length: int | None
     key_type: NonEmptyString | None
     # get x509 subject keys
@@ -56,7 +56,7 @@ class CertificateEntry(BaseModel):
     san: list[str] | None
     email: str | None
     DN: str | None
-    subject_name_hash: str | None
+    subject_name_hash: int | None
     extensions: dict
     digest_algorithm: str | None
     lifetime: int | None
@@ -70,6 +70,7 @@ class CertificateEntry(BaseModel):
     parsed: bool
 
 
+@single_argument_args('certificate_create')
 class CertificateCreateArgs(BaseModel):
     name: NonEmptyString  # TODO: Add regex
     create_type: Literal[
@@ -78,13 +79,13 @@ class CertificateCreateArgs(BaseModel):
         'CERTIFICATE_CREATE_IMPORTED_CSR',
         'CERTIFICATE_CREATE_ACME',
     ]
-    add_to_trusted_store: bool
+    add_to_trusted_store: bool = False
     # Fields for importing certs/CSRs
     certificate: LongNonEmptyString | None = None
     privatekey: LongNonEmptyString | None = None
     CSR: LongNonEmptyString | None = None
     # Fields used for controlling what type of key is created
-    key_length: Literal[2046, 4098, None] = None
+    key_length: Literal[2046, 4098] | None = None
     key_type: Literal['RSA', 'EC'] = 'RSA'
     ec_curve: ECCurve = 'SECP384R1'
     passphrase: NonEmptyString | None = None

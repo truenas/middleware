@@ -20,7 +20,7 @@ class CertificateCreateACMEArgs(BaseModel):
 class CertificateCreateCSRArgs(BaseModel):
     name: NonEmptyString
     # Key specific
-    key_length: Literal[2046, 4098, None] = None
+    key_length: Literal[2046, 4098] | None = None
     key_type: Literal['RSA', 'EC'] = 'RSA'
     ec_curve: ECCurve = 'SECP384R1'
     passphrase: NonEmptyString | None = None
