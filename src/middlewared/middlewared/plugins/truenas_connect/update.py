@@ -26,16 +26,16 @@ class TrueNASConnectModel(sa.Model):
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     account_service_base_url = sa.Column(
-        sa.String(255), nullable=False, default='https://account-service.dev.ixsystems.net/'
+        sa.String(255), nullable=False, default='https://account-service.staging.truenasconnect.net/'
     )
     leca_service_base_url = sa.Column(
-        sa.String(255), nullable=False, default='https://leca-server.dev.ixsystems.net/'
+        sa.String(255), nullable=False, default='https://dns-service.staging.truenasconnect.net/'
     )
     tnc_base_url = sa.Column(
-        sa.String(255), nullable=False, default='https://truenas.connect.dev.ixsystems.net/'
+        sa.String(255), nullable=False, default='https://web.staging.truenasconnect.net/'
     )
     heartbeat_url = sa.Column(
-        sa.String(255), nullable=False, default='https://heartbeat-service.dev.ixsystems.net/'
+        sa.String(255), nullable=False, default='https://heartbeat-service.staging.truenasconnect.net/'
     )
     last_heartbeat_failure_datetime = sa.Column(sa.String(255), nullable=True, default=None)
 
