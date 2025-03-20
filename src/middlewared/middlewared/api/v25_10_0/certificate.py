@@ -4,12 +4,12 @@ from typing import Literal
 from pydantic import EmailStr, Field
 
 from middlewared.api.base import (
-    BaseModel, single_argument_args, ForUpdateMetaclass, LongString, LongNonEmptyString, NonEmptyString,
+    BaseModel, single_argument_args, LongString, LongNonEmptyString, NonEmptyString,
 )
 
 
 __all__ = [
-    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
+    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult', 'CertificateCreateACMEArgs',
 ]
 
 
@@ -124,3 +124,13 @@ class CertificateCreateArgs(BaseModel):
 
 class CertificateCreateResult(BaseModel):
     result: CertificateEntry
+
+
+@single_argument_args('certificate_create_acme')
+class CertificateCreateACMEArgs(BaseModel):
+    name: NonEmptyString
+    tos: bool
+    csr_id: int
+    renew_days: int = Field(min_length=1, max_length=30)
+    acme_directory_uri: NonEmptyString
+    dns_mapping: dict[str, int]
