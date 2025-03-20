@@ -1,11 +1,13 @@
+import re
 from enum import Enum
-from typing import Literal
+from typing import Annotated, Literal
 
 from cryptography import x509
-from pydantic import EmailStr, Field
+from pydantic import AfterValidator, EmailStr, Field, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, LongString, LongNonEmptyString, NonEmptyString, single_argument_args,
+    BaseModel, ForUpdateMetaclass, LongString, LongNonEmptyString, match_validator,
+    NonEmptyString, single_argument_args,
 )
 
 
@@ -17,6 +19,14 @@ __all__ = [
 
 
 EKU_OID = Enum('EKU_OID', {i: i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')})
+RE_CERTIFICATE_NAME = re.compile(r'^[a-z0-9_\-]+$', re.I)
+CERT_NAME = Annotated[NonEmptyString, AfterValidator(
+    match_validator(
+        RE_CERTIFICATE_NAME,
+        'Name can only contain alphanumeric characters plus dash (-), and underscore (_)',
+    )
+), StringConstraints(max_length=120)]
+
 
 class ECCurves(str, Enum):
     SECP256R1 = 'SECP256R1'
@@ -108,7 +118,7 @@ class CertificateExtensions(BaseModel):
 
 @single_argument_args('certificate_create')
 class CertificateCreateArgs(BaseModel):
-    name: NonEmptyString  # TODO: Add regex
+    name: CERT_NAME
     create_type: Literal[
         'CERTIFICATE_CREATE_IMPORTED',
         'CERTIFICATE_CREATE_CSR',
@@ -168,7 +178,7 @@ class CertificateCreateResult(BaseModel):
 class CertificateUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     renew_days: int = Field(min_length=1, max_length=30)
     add_to_trusted_store: bool
-    name: NonEmptyString
+    name: CERT_NAME
 
 
 class CertificateUpdateArgs(BaseModel):
