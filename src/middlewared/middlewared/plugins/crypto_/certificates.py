@@ -12,7 +12,6 @@ from middlewared.api.current import (
 from middlewared.async_validators import validate_country
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 
-from .common_validation import validate_cert_name
 from .query_utils import normalize_cert_attrs
 from .private_models import (
     CertificateCreateACMEArgs, CertificateCreateCSRArgs, CertificateCreateImportedCSRArgs,
@@ -126,9 +125,20 @@ class CertificateService(CRUDService):
             )
 
     @private
+    async def validate_cert_name(self, cert_name, schema_name, verrors):
+        if await self.middleware.call('datastore.query', self._config.datastore, [('cert_name', '=', cert_name)]):
+            verrors.add(
+                f'{schema_name}.name',
+                'A certificate with this name already exists'
+            )
+
+    @private
     async def validate_common_attributes(self, data, schema_name):
         verrors = ValidationErrors()
         create_type = data['create_type']
+
+        await self.validate_cert_name(data['name'], schema_name, verrors)
+
         if country := data.get('country'):
             await validate_country(self.middleware, country, verrors, f'{schema_name}.country')
 
@@ -270,14 +280,6 @@ class CertificateService(CRUDService):
         verrors = await self.validate_common_attributes(data, 'certificate_create')
         if add_to_trusted_store and create_type in ('CERTIFICATE_CREATE_IMPORTED_CSR', 'CERTIFICATE_CREATE_CSR'):
             verrors.add('certificate_create.add_to_trusted_store', 'Cannot add CSR to trusted store')
-
-        if create_type == 'CERTIFICATE_CREATE_IMPORTED' and not load_certificate(data['certificate']):
-            verrors.add('certificate_create.certificate', 'Unable to parse certificate')
-
-        await validate_cert_name(
-            self.middleware, data['name'], self._config.datastore,
-            verrors, 'certificate_create.name'
-        )
 
         verrors.check()
 
@@ -428,10 +430,7 @@ class CertificateService(CRUDService):
                 verrors.check()
 
             if new['name'] != old['name']:
-                await validate_cert_name(
-                    self.middleware, new['name'], self._config.datastore,
-                    verrors, 'certificate_update.name'
-                )
+                await self.validate_cert_name(new['name'], 'certificate_update', verrors)
 
             if not new.get('acme') and data.get('renew_days'):
                 verrors.add(
