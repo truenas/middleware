@@ -27,7 +27,11 @@ def netinfo(ws_client):
             'hostname': os.environ['hostname'],
             'hostname_b': os.environ['hostname_b'],
             'hostname_virtual': os.environ['hostname_virtual'],
-            'nameservers': [os.environ[dns] for dns in ('primary_dns','secondary_dns') if dns in os.environ],
+            'nameservers': [
+                nameserver 
+                for dns in ('primary_dns','secondary_dns')
+                if (nameserver := os.environ.get(dns))
+            ],
             'hosts': hosts,
         }
     else:
@@ -39,12 +43,13 @@ def netinfo(ws_client):
         assert isinstance(ans, dict)
         assert isinstance(ans['default_routes'], list) and ans['default_routes']
         assert isinstance(ans['nameservers'], list) and ans['nameservers']
-        info = {'domain': domain_to_use, 'hostname': hostname, 'ipv4gateway': ans['default_routes'][0], 'hosts': hosts}
-        for idx, nameserver in enumerate(ans['nameservers'], start=1):
-            if idx > 3:
-                # only 3 nameservers allowed via the API
-                break
-            info[f'nameserver{idx}'] = nameserver
+        info = {
+            'domain': domain_to_use,
+            'hostname': hostname,
+            'ipv4gateway': ans['default_routes'][0],
+            'nameservers': ans['nameservers'],
+            'hosts': hosts,
+        }
 
     return info
 

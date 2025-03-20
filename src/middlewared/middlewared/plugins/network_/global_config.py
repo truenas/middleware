@@ -22,7 +22,7 @@ class NetworkConfigurationModel(sa.Model):
     gc_domain = sa.Column(sa.String(120), default='local')
     gc_ipv4gateway = sa.Column(sa.String(42), default='')
     gc_ipv6gateway = sa.Column(sa.String(45), default='')
-    gc_nameservers = sa.Column(sa.JSON(list), default=['', '', ''])
+    gc_nameservers = sa.Column(sa.JSON(list), default=[])
     gc_httpproxy = sa.Column(sa.String(255))
     gc_hosts = sa.Column(sa.Text(), default='')
     gc_domains = sa.Column(sa.Text(), default='')
@@ -90,7 +90,7 @@ class NetworkConfigurationService(ConfigService):
         data['state'] = {
             'ipv4gateway': '',
             'ipv6gateway': '',
-            'nameservers': ['', '', ''],
+            'nameservers': [],
             'hosts': self.read_etc_hosts_file(),
         }
         summary = self.middleware.call_sync('network.general.summary')

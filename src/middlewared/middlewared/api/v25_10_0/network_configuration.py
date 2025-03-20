@@ -30,7 +30,7 @@ class NetworkConfigurationActivity(BaseModel):
 class NetWorkConfigurationState(BaseModel):
     ipv4gateway: IPvAnyAddress
     ipv6gateway: IPvAnyAddress
-    nameservers: tuple[NameserverAddress, NameserverAddress, NameserverAddress]
+    nameservers: list[NameserverAddress] = Field(max_length=3)
     hosts: list[str]
 
 
