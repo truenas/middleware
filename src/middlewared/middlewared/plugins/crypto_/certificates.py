@@ -1,7 +1,7 @@
 import datetime
 
 from truenas_crypto_utils.csr import generate_certificate_signing_request
-from truenas_crypto_utils.read import load_certificate
+from truenas_crypto_utils.read import load_certificate, load_certificate_request, RE_CERTIFICATE
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -9,9 +9,10 @@ from middlewared.api.current import (
     CertificateEntry, CertificateCreateArgs, CertificateCreateResult, CertificateUpdateArgs,
     CertificateUpdateResult, CertificateDeleteArgs, CertificateDeleteResult,
 )
+from middlewared.async_validators import validate_country
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 
-from .common_validation import _validate_common_attributes, validate_cert_name
+from .common_validation import validate_cert_name
 from .query_utils import normalize_cert_attrs
 from .private_models import (
     CertificateCreateACMEArgs, CertificateCreateCSRArgs, CertificateCreateImportedCSRArgs,
@@ -127,8 +128,68 @@ class CertificateService(CRUDService):
     @private
     async def validate_common_attributes(self, data, schema_name):
         verrors = ValidationErrors()
+        create_type = data['create_type']
+        if country := data.get('country'):
+            await validate_country(self.middleware, country, verrors, f'{schema_name}.country')
 
-        await _validate_common_attributes(self.middleware, data, verrors, schema_name)
+        if certificate := data.get('certificate'):
+            matches = RE_CERTIFICATE.findall(certificate)
+
+            if not matches or not await self.middleware.run_in_thread(load_certificate, certificate):
+                verrors.add(
+                    f'{schema_name}.certificate',
+                    'Not a valid certificate'
+                )
+
+        private_key = data.get('privatekey')
+        passphrase = data.get('passphrase')
+        if private_key:
+            await self.middleware.call('cryptokey.validate_private_key', private_key, verrors, schema_name, passphrase)
+
+        if csr := data.get('CSR'):
+            if not await self.middleware.run_in_thread(load_certificate_request, csr):
+                verrors.add(
+                    f'{schema_name}.CSR',
+                    'Please provide a valid CSR'
+                )
+
+        csr_id = data.get('csr_id')
+        if csr_id and not await self.middleware.call(
+            'certificate.query', [['id', '=', csr_id], ['cert_type_CSR', '=', True]]
+        ):
+            verrors.add(
+                f'{schema_name}.csr_id',
+                'Please provide a valid csr_id'
+            )
+
+        if 'imported' in create_type.lower():
+            await self.middleware.call(
+                'cryptokey.validate_certificate_with_key', certificate, private_key, schema_name, verrors, passphrase,
+            )
+
+        if create_type == 'CERTIFICATE_CREATE_CSR':
+            key_type = data.get('key_type')
+            if not key_type:
+                verrors.add(
+                    f'{schema_name}.key_type',
+                    'This field is required.'
+                )
+            elif key_type != 'EC':
+                if not data.get('key_length'):
+                    verrors.add(
+                        f'{schema_name}.key_length',
+                        'RSA-based keys require an entry in this field.'
+                    )
+                if not data.get('digest_algorithm'):
+                    verrors.add(
+                        f'{schema_name}.digest_algorithm',
+                        'This field is required.'
+                    )
+
+            if cert_extensions := data.get('cert_extensions'):
+                verrors.extend(
+                    (await self.middleware.call('cryptokey.validate_extensions', cert_extensions, schema_name))
+                )
 
         return verrors
 
@@ -292,18 +353,9 @@ class CertificateService(CRUDService):
 
     @api_method(CertificateCreateCSRArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_csr(self, job, data):
-        verrors = ValidationErrors()
         cert_info = get_cert_info_from_data(data)
         cert_info['cert_extensions'] = data['cert_extensions']
-
-        # FIXME: Remove this extension entirely
-        # if cert_info['cert_extensions']['AuthorityKeyIdentifier']['enabled']:
-        #    verrors.add('cert_extensions.AuthorityKeyIdentifier.enabled', 'This extension is not valid for CSR')
-
-        verrors.check()
-
         req, key = generate_certificate_signing_request(cert_info)
-
         job.set_progress(90, 'Finalizing changes')
 
         return {

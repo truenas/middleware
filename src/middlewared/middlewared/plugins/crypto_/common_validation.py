@@ -1,10 +1,4 @@
-import datetime
 import re
-
-from middlewared.async_validators import validate_country
-from middlewared.utils.time_utils import utc_now
-
-from .utils import RE_CERTIFICATE
 
 
 async def validate_cert_name(middleware, cert_name, datastore, verrors, name):
@@ -29,63 +23,4 @@ async def validate_cert_name(middleware, cert_name, datastore, verrors, name):
         verrors.add(
             name,
             'Use alphanumeric characters, "_" and "-".'
-        )
-
-
-async def _validate_common_attributes(middleware, data, verrors, schema_name):
-
-    country = data.get('country')
-    if country:
-        await validate_country(middleware, country, verrors, f'{schema_name}.country')
-
-    certificate = data.get('certificate')
-    if certificate:
-        matches = RE_CERTIFICATE.findall(certificate)
-
-        if not matches or not await middleware.call('cryptokey.load_certificate', certificate):
-            verrors.add(
-                f'{schema_name}.certificate',
-                'Not a valid certificate'
-            )
-
-    private_key = data.get('privatekey')
-    passphrase = data.get('passphrase')
-    if private_key:
-        await middleware.call('cryptokey.validate_private_key', private_key, verrors, schema_name, passphrase)
-
-    csr = data.get('CSR')
-    if csr:
-        if not await middleware.call('cryptokey.load_certificate_request', csr):
-            verrors.add(
-                f'{schema_name}.CSR',
-                'Please provide a valid CSR'
-            )
-
-    csr_id = data.get('csr_id')
-    if csr_id and not await middleware.call('certificate.query', [['id', '=', csr_id], ['CSR', '!=', None]]):
-        verrors.add(
-            f'{schema_name}.csr_id',
-            'Please provide a valid csr_id which has a valid CSR filed'
-        )
-
-    await middleware.call(
-        'cryptokey.validate_certificate_with_key', certificate, private_key, schema_name, verrors, passphrase,
-    )
-
-    key_type = data.get('key_type')
-    if key_type and key_type != 'EC':
-        if not data.get('key_length'):
-            verrors.add(
-                f'{schema_name}.key_length',
-                'RSA-based keys require an entry in this field.'
-            )
-        if not data.get('digest_algorithm'):
-            verrors.add(
-                f'{schema_name}.digest_algorithm',
-                'This field is required.'
-            )
-
-    if not verrors and data.get('cert_extensions'):
-        verrors.extend(
-            (await middleware.call('cryptokey.validate_extensions', data['cert_extensions'], schema_name))
         )
