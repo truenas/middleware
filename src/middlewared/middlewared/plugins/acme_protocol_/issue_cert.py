@@ -3,6 +3,7 @@ import datetime
 import errno
 
 from acme import errors, messages
+from truenas_crypto_utils.generate_utils import normalize_san
 
 from middlewared.service import Service, ValidationErrors
 from middlewared.service_exception import CallError
@@ -41,7 +42,7 @@ class ACMEService(Service):
             if ':' in domain and domain.split(':', 1)[-1] not in dns_mapping_copy:
                 dns_mapping_copy[domain.split(':', 1)[-1]] = dns_mapping_copy[domain]
             elif ':' not in domain:
-                normalised_san = ':'.join(self.middleware.call_sync('cryptokey.normalize_san', [domain])[0])
+                normalised_san = ':'.join(normalize_san([domain])[0])
                 if normalised_san not in dns_mapping_copy:
                     dns_mapping_copy[normalised_san] = dns_mapping_copy[domain]
 

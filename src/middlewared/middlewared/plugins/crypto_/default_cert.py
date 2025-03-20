@@ -1,3 +1,5 @@
+from truenas_crypto_utils.generate_self_signed import generate_self_signed_certificate
+
 from middlewared.service import private, Service
 
 from .utils import CERT_TYPE_EXISTING, DEFAULT_CERT_NAME
@@ -34,7 +36,7 @@ class CertificateService(Service):
 
     @private
     async def setup_self_signed_cert_for_ui_impl(self, cert_name):
-        cert, key = await self.middleware.call('cryptokey.generate_self_signed_certificate')
+        cert, key = await self.middleware.run_in_thread(generate_self_signed_certificate)
 
         cert_dict = {
             'certificate': cert,
