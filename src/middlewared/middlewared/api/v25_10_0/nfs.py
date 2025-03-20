@@ -52,7 +52,7 @@ class GetNFSv3ClientsEntry(BaseModel):
 class GetNFSv4ClientsEntry(BaseModel):
     id: str
     info: dict
-    state: dict
+    states: list[dict]
 
 
 class NfsEntry(BaseModel):
