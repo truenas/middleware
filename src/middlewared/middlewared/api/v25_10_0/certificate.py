@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Literal
 
+from cryptography import x509
 from pydantic import EmailStr, Field
 
 from middlewared.api.base import (
@@ -11,9 +12,11 @@ from middlewared.api.base import (
 __all__ = [
     'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
     'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
-    'ECCurve',
+    'ECCurve', 'EKU_OID',
 ]
 
+
+EKU_OID = Enum('EKU_OID', {i: i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')})
 
 class ECCurve(str, Enum):
     SECP256R1 = 'SECP256R1'
@@ -70,6 +73,39 @@ class CertificateEntry(BaseModel):
     parsed: bool
 
 
+class BasicConstraints(BaseModel):
+    ca: bool = False
+    enabled: bool = False
+    path_length: int | None = None
+    extension_critical: bool = False
+
+
+class ExtendedKeyUsage(BaseModel):
+    usages: list[Literal[tuple(s.value for s in EKU_OID)]]
+    enabled: bool = False
+    extension_critical: bool = False
+
+
+class KeyUsage(BaseModel):
+    enabled: bool = False
+    digital_signature: bool = False
+    content_commitment: bool = False
+    key_encipherment: bool = False
+    data_encipherment: bool = False
+    key_agreement: bool = False
+    key_cert_sign: bool = False
+    crl_sign: bool = False
+    encipher_only: bool = False
+    decipher_only: bool = False
+    extension_critical: bool = False
+
+
+class CertificateExtensions(BaseModel):
+    BasicConstraints: BasicConstraints = BasicConstraints()
+    ExtendedKeyUsage: ExtendedKeyUsage = ExtendedKeyUsage()
+    KeyUsage: KeyUsage = KeyUsage()
+
+
 @single_argument_args('certificate_create')
 class CertificateCreateArgs(BaseModel):
     name: NonEmptyString  # TODO: Add regex
@@ -99,7 +135,7 @@ class CertificateCreateArgs(BaseModel):
     state: NonEmptyString | None = None
     digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512'] = 'SHA256'
     san: list[NonEmptyString] = Field(default_factory=list)
-    cert_extensions: dict = Field(default_factory=dict)  # FIXME: Improve this
+    cert_extensions: CertificateExtensions = CertificateExtensions()
     # ACME related fields
     acme_directory_uri: NonEmptyString | None = None
     '''
