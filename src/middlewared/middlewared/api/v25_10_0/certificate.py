@@ -10,6 +10,7 @@ from middlewared.api.base import (
 
 __all__ = [
     'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult', 'CertificateCreateACMEArgs',
+    'CertificateCreateCSRArgs', 'CertificateCreateImportedCSRArgs', 'CertificateCreateImportedCertificateArgs',
 ]
 
 
@@ -155,3 +156,19 @@ class CertificateCreateCSRArgs(BaseModel):
     digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512']
     cert_extensions: dict = Field(default_factory=dict)  # FIXME: Improve this
     san: list[NonEmptyString] = Field(min_length=1)
+
+
+@single_argument_args('certificate_create_csr_imported')
+class CertificateCreateImportedCSRArgs(BaseModel):
+    name: NonEmptyString
+    CSR: LongNonEmptyString
+    privatekey: LongNonEmptyString
+    passphrase: NonEmptyString | None = None
+
+
+@single_argument_args('certificate_create_certificate_imported')
+class CertificateCreateImportedCertificateArgs(BaseModel):
+    name: NonEmptyString
+    certificate: LongNonEmptyString
+    privatekey: LongNonEmptyString
+    passphrase: NonEmptyString | None = None
