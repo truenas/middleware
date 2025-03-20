@@ -12,6 +12,7 @@ __all__ = [
     'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult', 'CertificateCreateACMEArgs',
     'CertificateCreateCSRArgs', 'CertificateCreateImportedCSRArgs', 'CertificateCreateImportedCertificateArgs',
     'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
+    'CertificateCreateInternalResult',
 ]
 
 
@@ -67,7 +68,7 @@ class CertificateEntry(BaseModel):
 
 
 class CertificateCreate(BaseModel):
-    name: NonEmptyString
+    name: NonEmptyString  # TODO: Add regex
     create_type: Literal[
         'CERTIFICATE_CREATE_IMPORTED',
         'CERTIFICATE_CREATE_CSR',
@@ -171,8 +172,12 @@ class CertificateCreateImportedCSRArgs(BaseModel):
 class CertificateCreateImportedCertificateArgs(BaseModel):
     name: NonEmptyString
     certificate: LongNonEmptyString
-    privatekey: LongNonEmptyString
+    privatekey: LongNonEmptyString | None
     passphrase: NonEmptyString | None = None
+
+
+class CertificateCreateInternalResult(BaseModel):
+    result: dict
 
 
 class CertificateUpdate(BaseModel, metaclass=ForUpdateMetaclass):
