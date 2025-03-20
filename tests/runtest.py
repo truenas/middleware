@@ -176,7 +176,7 @@ def get_ipinfo(ip_to_use):
     iface = net = gate = None
     with client(host_ip=ip_to_use) as c:
         net_config = c.call('network.configuration.config')
-        ns1, ns2 = net_config['nameservers'][:2]
+        ns1, ns2 = (net_config['nameservers'] + [None, None])[:2]
         _ip_to_use = socket.gethostbyname(ip_to_use)
         for i in c.call('interface.query'):
             for j in i['state']['aliases']:

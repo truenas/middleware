@@ -27,7 +27,7 @@ def netinfo(ws_client):
             'hostname': os.environ['hostname'],
             'hostname_b': os.environ['hostname_b'],
             'hostname_virtual': os.environ['hostname_virtual'],
-            'nameservers': [os.environ['primary_dns'], os.environ.get('secondary_dns', ''), ''],
+            'nameservers': [os.environ[dns] for dns in ('primary_dns','secondary_dns') if dns in os.environ],
             'hosts': hosts,
         }
     else:

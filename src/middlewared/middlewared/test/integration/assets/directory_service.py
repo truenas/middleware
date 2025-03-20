@@ -69,18 +69,18 @@ if ha and "hostname_virtual" in os.environ:
 
 
 @contextlib.contextmanager
-def override_nameservers(_nameserver1=ADNameServer, _nameserver2='', _nameserver3=''):
-    net_config = call('network.configuration.config')
+def override_nameservers(_nameserver1=ADNameServer, _nameserver2=None, _nameserver3=None):
+    prev_nameservers = call('network.configuration.config')['nameservers']
 
     try:
         yield call(
             'network.configuration.update',
-            {'nameservers': (_nameserver1, _nameserver2, _nameserver3)}
+            {'nameservers': list(filter(None, (_nameserver1, _nameserver2, _nameserver3)))}
         )
     finally:
         call(
             'network.configuration.update',
-            {'nameservers': net_config['nameservers']}
+            {'nameservers': prev_nameservers}
         )
 
 

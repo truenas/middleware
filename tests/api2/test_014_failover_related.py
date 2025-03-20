@@ -75,8 +75,8 @@ if ha:
             call('network.configuration.update', {'nameservers': [*old_ns[:2], new_ns]})
 
             remote = call('failover.call_remote', 'network.configuration.config')
-            assert remote['nameservers'][2] == new_ns
-            assert remote['state']['nameservers'][2] == new_ns
+            assert remote['nameservers'][-1] == new_ns
+            assert remote['state']['nameservers'][-1] == new_ns
         finally:
             call('network.configuration.update', {'nameservers': old_ns})
             remote = call('failover.call_remote', 'network.configuration.config')
