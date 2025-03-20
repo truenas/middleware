@@ -63,7 +63,7 @@ class SSHService(SystemServiceService):
         """
         return self.middleware.call_sync('interface.choices')
 
-    @api_method(SSHUpdateArgs, SSHUpdateResult)
+    @api_method(SSHUpdateArgs, SSHUpdateResult, audit='Update SSH configuration')
     async def do_update(self, data):
         """
         Update settings of SSH daemon service.
