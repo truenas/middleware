@@ -4,7 +4,6 @@ from contextlib import suppress
 from middlewared.api import api_method
 from middlewared.api.base import (BaseModel, UniqueList)
 from middlewared.service import Service
-from typing import Optional
 
 import enum
 
@@ -83,10 +82,10 @@ class RPC_DBGFLAGS(enum.Enum):
 
 
 class NfsDebug(BaseModel):
-    NFS: Optional[UniqueList[NFS_DBGFLAGS.__members__]] | None = None
-    NFSD: Optional[UniqueList[NFSD_DBGFLAGS.__members__]] | None = None
-    NLM: Optional[UniqueList[NLM_DBGFLAGS.__members__]] | None = None
-    RPC: Optional[UniqueList[RPC_DBGFLAGS.__members__]] | None = None
+    NFS: UniqueList[NFS_DBGFLAGS.__members__] | None = None
+    NFSD: UniqueList[NFSD_DBGFLAGS.__members__] | None = None
+    NLM: UniqueList[NLM_DBGFLAGS.__members__] | None = None
+    RPC: UniqueList[RPC_DBGFLAGS.__members__] | None = None
 
 
 class NfsDebugGetArgs(BaseModel):
