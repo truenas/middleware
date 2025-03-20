@@ -44,7 +44,8 @@ NfsTcpPort: TypeAlias = Annotated[
 
 
 class GetNFSv3ClientsEntry(BaseModel):
-    result: list
+    ip: str
+    export: str
 
 
 @single_argument_result
