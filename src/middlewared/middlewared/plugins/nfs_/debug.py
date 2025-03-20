@@ -1,8 +1,11 @@
-from middlewared.schema import accepts, List, Str, Dict
-from middlewared.service import Service, private
-from contextlib import suppress
-
 import os
+
+from contextlib import suppress
+from middlewared.api import api_method
+from middlewared.api.base import (BaseModel, UniqueList)
+from middlewared.service import Service
+from typing import Optional
+
 import enum
 
 
@@ -79,6 +82,29 @@ class RPC_DBGFLAGS(enum.Enum):
     ALL = 0x7fff
 
 
+class NfsDebug(BaseModel):
+    NFS: Optional[UniqueList[NFS_DBGFLAGS.__members__]] | None = None
+    NFSD: Optional[UniqueList[NFSD_DBGFLAGS.__members__]] | None = None
+    NLM: Optional[UniqueList[NLM_DBGFLAGS.__members__]] | None = None
+    RPC: Optional[UniqueList[RPC_DBGFLAGS.__members__]] | None = None
+
+
+class NfsDebugGetArgs(BaseModel):
+    pass
+
+
+class NfsDebugGetResult(BaseModel):
+    result: dict
+
+
+class NfsDebugSetArgs(BaseModel):
+    svcs: NfsDebug
+
+
+class NfsDebugSetResult(BaseModel):
+    result: bool
+
+
 class NFSService(Service):
     '''
     NFSService class holds the functions to set and get the debug flags
@@ -88,7 +114,7 @@ class NFSService(Service):
 
     dbgcls = {'NFS': NFS_DBGFLAGS, 'NFSD': NFSD_DBGFLAGS, 'NLM': NLM_DBGFLAGS, 'RPC': RPC_DBGFLAGS}
 
-    @private
+    @api_method(NfsDebugGetArgs, NfsDebugGetResult, private=True)
     def get_debug(self):
         '''
         Display current debug settings for NFS, NFSD, NLM and RPC
@@ -128,14 +154,7 @@ class NFSService(Service):
 
         return output
 
-    @private
-    @accepts(Dict(
-        'svcs',
-        List("NFS", items=[Str("nfs_dbg_opts", enum=[x.name for x in NFS_DBGFLAGS])]),
-        List("NFSD", items=[Str("nfsd_dbg_opts", enum=[x.name for x in NFSD_DBGFLAGS])]),
-        List("NLM", items=[Str("nlm_dbg_opts", enum=[x.name for x in NLM_DBGFLAGS])]),
-        List("RPC", items=[Str("rpc_dbg_opts", enum=[x.name for x in RPC_DBGFLAGS])])
-    ))
+    @api_method(NfsDebugSetArgs, NfsDebugSetResult, private=True)
     def set_debug(self, services):
         '''
         Set debug flags for NFS, NFSD, NLM and RPC.
@@ -153,7 +172,8 @@ class NFSService(Service):
 
             return rv
 
-        for svc, opts in services.items():
+        changes = dict(filter(lambda item: item[1] is not None, services.items()))
+        for svc, opts in changes.items():
             if opts == []:
                 continue
             if "NONE" in opts and len(opts) > 1:
