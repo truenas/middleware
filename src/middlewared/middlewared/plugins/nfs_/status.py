@@ -5,7 +5,7 @@ import yaml
 from contextlib import suppress
 
 from middlewared.api import api_method
-from middlewared.api.base import (
+from middlewared.api.current import (
     GetNFSv3ClientsEntry,
     GetNFSv4ClientsEntry,
     NfsClientCountArgs,
