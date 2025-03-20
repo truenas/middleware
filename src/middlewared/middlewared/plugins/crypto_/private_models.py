@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import EmailStr, Field
 
 from middlewared.api.base import BaseModel, LongNonEmptyString, NonEmptyString, single_argument_args
-from middlewared.api.current import ECCurve
+from middlewared.api.current import ECCurves
 
 
 @single_argument_args('certificate_create_acme')
@@ -22,7 +22,7 @@ class CertificateCreateCSRArgs(BaseModel):
     # Key specific
     key_length: int | None = None
     key_type: Literal['RSA', 'EC'] = 'RSA'
-    ec_curve: Literal[tuple(s.value for s in ECCurve)] = 'SECP384R1'
+    ec_curve: Literal[tuple(s.value for s in ECCurves)] = 'SECP384R1'
     passphrase: NonEmptyString | None = None
     # CSR specific
     city: NonEmptyString | None = None

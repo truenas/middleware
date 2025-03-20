@@ -12,13 +12,13 @@ from middlewared.api.base import (
 __all__ = [
     'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
     'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
-    'ECCurve', 'EKU_OID',
+    'ECCurves', 'EKU_OID',
 ]
 
 
 EKU_OID = Enum('EKU_OID', {i: i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')})
 
-class ECCurve(str, Enum):
+class ECCurves(str, Enum):
     SECP256R1 = 'SECP256R1'
     SECP384R1 = 'SECP384R1'
     SECP521R1 = 'SECP521R1'
@@ -123,7 +123,7 @@ class CertificateCreateArgs(BaseModel):
     # Fields used for controlling what type of key is created
     key_length: int | None = None  # FIXME: Validate key length
     key_type: Literal['RSA', 'EC'] = 'RSA'
-    ec_curve: Literal[tuple(s.value for s in ECCurve)] = 'SECP384R1'
+    ec_curve: Literal[tuple(s.value for s in ECCurves)] = 'SECP384R1'
     passphrase: NonEmptyString | None = None
     # Fields for creating a CSR
     city: NonEmptyString | None = None
