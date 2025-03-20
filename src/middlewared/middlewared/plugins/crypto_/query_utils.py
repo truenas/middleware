@@ -19,11 +19,6 @@ def cert_extend_report_error(title: str, cert: dict) -> None:
 
 
 def normalize_cert_attrs(cert: dict) -> None:
-    # Remove ACME related keys if cert is not an ACME based cert
-    if not cert.get('acme'):
-        for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
-            cert.pop(key, None)
-
     root_path = CERT_ROOT_PATH
     cert.update({
         'root_path': root_path,
@@ -97,12 +92,11 @@ def normalize_cert_attrs(cert: dict) -> None:
 
     if failed_parsing:
         # Normalizing cert/csr
-        # Should we perhaps set the value to something like "MALFORMED_CERTIFICATE" for this list off attrs ?
         cert.update({
             key: None for key in [
                 'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
                 'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
-                'fingerprint', 'extensions', 'expired',
+                'fingerprint', 'extensions', 'expired', 'DN', 'subject_name_hash', 'chain',
             ]
         })
 
