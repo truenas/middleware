@@ -1,7 +1,7 @@
 import errno
 import pytest
 
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.utils import client, call
 
 
@@ -61,3 +61,25 @@ def test_onetime_password_generate_token_fail(onetime_password):
             c.call('auth.generate_token')
 
         assert ce.value.errno == errno.EOPNOTSUPP
+
+
+@pytest.mark.parametrize('data,revert,errmsg', (
+    (
+        {'password_disabled': True, 'smb': False},
+        {'password_disabled': False},
+        'password authentication is disabled for account.'
+    ),
+    (
+        {'locked': True},
+        {'locked': False},
+        'account is locked.'
+    ),
+))
+def test_onetime_password_validation(onetime_password_user, data, revert, errmsg):
+    dbid = call('user.query', [['username', '=', onetime_password_user.username]], {'get': True})['id']
+    try:
+        with pytest.raises(ValidationErrors, match=errmsg):
+            call('user.update', dbid, data)
+            call('auth.generate_onetime_password', {'username': onetime_password_user.username})
+    finally:
+        call('user.update', dbid, revert)

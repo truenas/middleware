@@ -30,16 +30,19 @@ class PWEncService(Service):
         return self.secret_path
 
     def _reset_passwords(self):
-        for table, field in (
-            ('directoryservice_ldap', 'ldap_bindpw'),
-            ('services_ups', 'ups_monpwd'),
-            ('system_email', 'em_pass'),
+        for table, field, value in (
+            ('directoryservice_ldap', 'ldap_bindpw', ''),
+            ('services_ups', 'ups_monpwd', ''),
+            ('system_email', 'em_pass', ''),
+            ('system_certificate', 'cert_domains_authenticators', 'NULL'),
         ):
-            self.middleware.call_sync('datastore.sql', f'UPDATE {table} SET {field} = \'\'')
+            value = value or "''"
+            self.middleware.call_sync('datastore.sql', f'UPDATE {table} SET {field} = {value}')
 
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_cloud_backup')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_cloudsync')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM system_cloudcredentials')
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM system_acmednsauthenticator')
         self.middleware.call_sync(
             'datastore.sql',
             'DELETE FROM storage_replication WHERE repl_ssh_credentials_id IS NOT NULL',

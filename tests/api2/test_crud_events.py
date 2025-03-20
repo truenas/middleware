@@ -2,19 +2,20 @@ import contextlib
 import threading
 import typing
 
-from middlewared.test.integration.assets.crypto import get_cert_params, root_certificate_authority
+from middlewared.test.integration.assets.crypto import get_cert_params, certificate_signing_request
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import client
 
 
-def event_thread(event_endpoint: str, context: dict):
+def event_thread(event_endpoint: str, context: dict, expected_collection_type: str | None = None):
     with client(py_exceptions=False) as c:
         def cb(mtype, **message):
-            if len(message) != 3 or not all(
+            if not all(
                 k in message for k in ('id', 'msg', 'collection')
             ) or message['collection'] != event_endpoint or message['msg'] not in (
                 'added', 'changed', 'removed'
-            ):
+            ) or (expected_collection_type is not None and message['msg'] != expected_collection_type):
                 return
 
             if context['result'] is None:
@@ -29,7 +30,7 @@ def event_thread(event_endpoint: str, context: dict):
 
 
 @contextlib.contextmanager
-def wait_for_event(event_endpoint: str, timeout=60):
+def wait_for_event(event_endpoint: str, timeout=60, expected_collection_type: str | None = None):
     context = {
         'subscribed': threading.Event(),
         'result': None,
@@ -37,7 +38,9 @@ def wait_for_event(event_endpoint: str, timeout=60):
         'shutdown_thread': threading.Event(),
         'timeout': timeout,
     }
-    thread = threading.Thread(target=event_thread, args=(event_endpoint, context), daemon=True)
+    thread = threading.Thread(
+        target=event_thread, args=(event_endpoint, context, expected_collection_type), daemon=True,
+    )
     thread.start()
     if not context['subscribed'].wait(30):
         raise Exception('Timed out waiting for client to subscribe')
@@ -52,46 +55,36 @@ def wait_for_event(event_endpoint: str, timeout=60):
 
 
 def assert_result(context: dict, event_endpoint: str, oid: typing.Union[int, str], event_type: str) -> None:
-    assert context['result'] == {
+    expected = {
         'msg': event_type,
         'collection': event_endpoint,
         'id': oid,
     }
+    assert all(context['result'].get(k) == v for k, v in expected.items()), context
 
 
 def test_event_create_on_non_job_method():
-    with wait_for_event('certificateauthority.query') as context:
-        with root_certificate_authority('root_ca_create_event_test') as root_ca:
-            assert root_ca['CA_type_internal'] is True, root_ca
+    with wait_for_event('pool.dataset.query', expected_collection_type='added') as context:
+        with dataset('create_crud') as ds:
+            pass
 
-    assert_result(context, 'certificateauthority.query', root_ca['id'], 'added')
+    assert_result(context, 'pool.dataset.query', ds, 'added')
 
 
 def test_event_create_on_job_method():
-    with root_certificate_authority('root_ca_create_event_test') as root_ca:
-        with wait_for_event('certificate.query') as context:
-            cert = call('certificate.create', {
-                'name': 'cert_test',
-                'signedby': root_ca['id'],
-                'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-                **get_cert_params(),
-            }, job=True)
-            try:
-                assert cert['cert_type_internal'] is True, cert
-            finally:
-                call('certificate.delete', cert['id'], job=True)
+    with wait_for_event('certificate.query') as context:
+        with certificate_signing_request('csr_event_test_job_method') as csr:
+            pass
 
-        assert_result(context, 'certificate.query', cert['id'], 'added')
+    assert_result(context, 'certificate.query', csr['id'], 'added')
 
 
 def test_event_update_on_non_job_method():
-    with root_certificate_authority('root_ca_update_event_test') as root_ca:
-        assert root_ca['CA_type_internal'] is True, root_ca
+    with dataset('update_crud') as ds:
+        with wait_for_event('pool.dataset.query') as context:
+            call('pool.dataset.update', ds, {})
 
-        with wait_for_event('certificateauthority.query') as context:
-            call('certificateauthority.update', root_ca['id'], {})
-
-        assert_result(context, 'certificateauthority.query', root_ca['id'], 'changed')
+        assert_result(context, 'pool.dataset.query', ds, 'changed')
 
 
 def test_event_update_on_job_method():
@@ -111,17 +104,11 @@ def test_event_update_on_job_method():
 
 
 def test_event_delete_on_non_job_method():
-    root_ca = call('certificateauthority.create', {
-        **get_cert_params(),
-        'name': 'test_root_ca_delete_event',
-        'create_type': 'CA_CREATE_INTERNAL',
-    })
-    assert root_ca['CA_type_internal'] is True, root_ca
+    with wait_for_event('pool.dataset.query', expected_collection_type='removed') as context:
+        with dataset('delete_crud') as ds:
+            pass
 
-    with wait_for_event('certificateauthority.query') as context:
-        call('certificateauthority.delete', root_ca['id'])
-
-    assert_result(context, 'certificateauthority.query', root_ca['id'], 'removed')
+    assert_result(context, 'pool.dataset.query', ds, 'removed')
 
 
 def test_event_delete_on_job_method():

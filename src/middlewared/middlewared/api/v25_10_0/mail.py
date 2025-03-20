@@ -109,7 +109,7 @@ class MailUpdateResult(BaseModel):
 
 class MailSendArgs(BaseModel):
     message: MailSendMessage
-    config: MailUpdate
+    config: MailUpdate = Field(default_factory=MailUpdate)
 
 
 class MailSendResult(BaseModel):

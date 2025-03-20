@@ -65,10 +65,11 @@ class IPAJoinMixin:
 
         if job:
             job.set_progress(90, 'Removing IPA certificate.')
-        if (ipa_cert := self.middleware.call_sync('certificateauthority.query', [
+        if (ipa_cert := self.middleware.call_sync('certificate.query', [
             ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
         ])):
-            self.middleware.call_sync('certificateauthority.delete', ipa_cert[0]['id'])
+            delete_job = self.middleware.call_sync('certificate.delete', ipa_cert[0]['id'])
+            delete_job.wait_sync(raise_error=True)
 
     def _ipa_leave(self, job: Job, ds_type: DSType, domain: str):
         """
@@ -459,7 +460,7 @@ class IPAJoinMixin:
             krb_principal = ktutil_list_impl(f.name)[0]['principal']
 
         # update our cacerts with IPA domain one:
-        existing_cacert = self.middleware.call_sync('certificateauthority.query', [
+        existing_cacert = self.middleware.call_sync('certificate.query', [
             ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
         ])
         if existing_cacert:
@@ -480,12 +481,13 @@ class IPAJoinMixin:
                     ipa_constants.IpaConfigName.IPA_CACERT.value
                 )
         else:
-            self.middleware.call_sync('certificateauthority.create', {
+            cert_job = self.middleware.call_sync('certificate.create', {
                 'name': ipa_constants.IpaConfigName.IPA_CACERT.value,
                 'certificate': resp['cacert'],
                 'add_to_trusted_store': True,
-                'create_type': 'CA_CREATE_IMPORTED'
+                'create_type': 'CERTIFICATE_CREATE_IMPORTED',
             })
+            cert_job.wait_sync(raise_error=True)
 
         # make sure ldap service is updated to use realm and principal and
         # clear out the bind account password since it is no longer needed. We

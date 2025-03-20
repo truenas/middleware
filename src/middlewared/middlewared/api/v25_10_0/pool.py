@@ -1,9 +1,11 @@
-from typing import Annotated, Literal
+import re
+from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, PositiveInt, Secret
+from pydantic import AfterValidator, Field, PositiveInt, Secret, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, NonEmptyString, single_argument_args, LongString, ForUpdateMetaclass
+    BaseModel, Excluded, excluded_field, match_validator, NonEmptyString, single_argument_args,
+    LongString, ForUpdateMetaclass,
 )
 
 
@@ -18,6 +20,20 @@ __all__ = [
     "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs", "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult",
     "PoolUpgradeArgs", "PoolUpgradeResult", "PoolValidateNameArgs", "PoolValidateNameResult",
     "PoolCreateEncryptionOptions",
+]
+
+
+# Incus cannot consume a pool which has whitespaces in its name.
+# FIXME: Once this is fixed on incus side, we can remove this and keep on relying libzfs to do the validation only
+POOL_NAME: TypeAlias = Annotated[
+    NonEmptyString,
+    AfterValidator(
+        match_validator(
+            re.compile(r"^\S+$"),
+            "Pool name must not contain whitespace"
+        )
+    ),
+    StringConstraints(max_length=50)
 ]
 
 
@@ -171,7 +187,7 @@ class PoolCreateTopology(BaseModel):
 
 
 class PoolCreate(BaseModel):
-    name: Annotated[str, Field(max_length=50)]
+    name: POOL_NAME
     encryption: bool = False
     """If set, create a ZFS encrypted root dataset for this pool."""
     dedup_table_quota: Literal["AUTO", "CUSTOM", None] = "AUTO"
@@ -360,7 +376,7 @@ class PoolImportFindResult(BaseModel):
 @single_argument_args("pool_import")
 class PoolImportPoolArgs(BaseModel):
     guid: str
-    name: str | None = None
+    name: POOL_NAME | None = None
     """If specified, import the pool using this name."""
 
 

@@ -16,17 +16,18 @@ class AUDITRules(enum.StrEnum):
     MODULE = '43-module-load.rules'
     FINALIZE = '99-finalize.rules'
     COMMUNITY = 'truenas-community-edition.rules'
+    TRUENAS = 'truenas.rules'  # Rules for all versions of TrueNAS
 
 
 # Set of rules applied for STIG mode
 STIG_AUDIT_RULES = frozenset([
     AUDITRules.BASE, AUDITRules.STIG, AUDITRules.PRIVILEGED,
-    AUDITRules.MODULE, AUDITRules.FINALIZE
+    AUDITRules.MODULE, AUDITRules.TRUENAS, AUDITRules.FINALIZE
 ])
 
 # Set of rules applied in Non-STIG mode (default)
 NOSTIG_AUDIT_RULES = frozenset([
-    AUDITRules.BASE, AUDITRules.COMMUNITY
+    AUDITRules.BASE, AUDITRules.TRUENAS, AUDITRules.COMMUNITY
 ])
 
 

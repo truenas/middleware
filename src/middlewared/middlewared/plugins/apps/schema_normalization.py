@@ -10,7 +10,6 @@ from .schema_utils import get_list_item_from_value, RESERVED_NAMES
 
 REF_MAPPING = {
     'definitions/certificate': 'certificate',
-    'definitions/certificate_authority': 'certificate_authorities',
     'definitions/gpu_configuration': 'gpu_configuration',
     'normalize/acl': 'acl',
     'normalize/ix_volume': 'ix_volume',
@@ -94,18 +93,6 @@ class AppSchemaService(Service):
             return value
 
         complete_config['ix_certificates'][value] = await self.middleware.call('certificate.get_instance', value)
-
-        return value
-
-    async def normalize_certificate_authorities(self, attr, value, complete_config, context):
-        assert isinstance(attr, Int) is True
-
-        if not value:
-            return value
-
-        complete_config['ix_certificate_authorities'][value] = await self.middleware.call(
-            'certificateauthority.get_instance', value
-        )
 
         return value
 

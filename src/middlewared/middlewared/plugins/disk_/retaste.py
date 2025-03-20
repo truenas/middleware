@@ -4,12 +4,10 @@ import multiprocessing
 import os
 import re
 
-from middlewared.schema import List, Str
-from middlewared.service import Service, accepts, job, private
+from middlewared.service import Service, job, private
 
 
 logger = logging.getLogger(__name__)
-
 SD_PATTERN = re.compile(r"^sd[a-z]+$")
 NVME_PATTERN = re.compile(r"^nvme\d+n\d+$")
 
@@ -69,9 +67,9 @@ class DiskService(Service):
         taste_it(devnode, errors)
         return errors
 
-    @accepts(List('disks', required=False, default=None, items=[Str('name', required=True)]))
+    @private
     @job(lock='disk_retaste', lock_queue_size=1)
-    def retaste(self, job, disks):
+    def retaste(self, job, disks: list[str] | None = None):
         if disks:
             # remove duplicates and prefix '/dev' (i.e. /dev/sda, /dev/sdb, etc)
             disks = set(f'/dev/{i.removeprefix("/dev/")}' for i in disks)

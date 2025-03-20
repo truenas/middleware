@@ -1,8 +1,14 @@
 from collections import defaultdict
 
-from middlewared.service import accepts, private, Service
+from middlewared.api import api_method
+from middlewared.api.current import (
+    DiskGetDetailsArgs,
+    DiskGetDetailsResult,
+    DiskGetUsedArgs,
+    DiskGetUsedResult,
+)
+from middlewared.service import private, Service
 from middlewared.service_exception import ValidationErrors
-from middlewared.schema import Bool, Dict, Str
 from middlewared.utils.disks import dev_to_ident
 
 
@@ -112,7 +118,7 @@ class DiskService(Service):
         """
         return (await self.details_impl({'join_partitions': join_partitions}))['unused']
 
-    @accepts(Bool('join_partitions', default=False), roles=['REPORTING_READ'])
+    @api_method(DiskGetUsedArgs, DiskGetUsedResult, roles=['REPORTING_READ'])
     async def get_used(self, join_partitions):
         """
         Return disks that are in use by any zpool that is currently imported. It will
@@ -123,25 +129,13 @@ class DiskService(Service):
         """
         return (await self.details_impl({'join_partitions': join_partitions}))['used']
 
-    @accepts(
-        Dict(
-            'disk_details_args',
-            Bool('join_partitions', default=False),
-            Str('type', enum=['USED', 'UNUSED', 'BOTH'], default='BOTH'),
-        ),
+    @api_method(
+        DiskGetDetailsArgs,
+        DiskGetDetailsResult,
         roles=['REPORTING_READ'],
     )
     async def details(self, data):
-        """Return detailed information for all disks on the system.
-
-        `data`: dict
-            `join_partitions`: Bool, when True will return all partitions
-                currently written to disk (NOTE: this is expensive)
-            `type`: str, what type of disk information will be returned.
-                If `USED`, only disks that are IN USE will be returned.
-                If `UNUSED`, only disks that are NOT IN USE are returned.
-                If `BOTH`, used and unused disks will be returned.
-        """
+        """Return detailed information for all disks on the system."""
         results = await self.details_impl(data)
         if data['type'] == 'BOTH':
             return results

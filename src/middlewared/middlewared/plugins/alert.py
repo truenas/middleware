@@ -1010,6 +1010,12 @@ class AlertService(Service):
 
     @private
     def alert_source_clear_run(self, name):
+        """
+        Mark the alert source as never ran so that it will be re-run within the next minute.
+        This is useful when you know some alert conditions were just changed.
+
+        :param name: alert source name (without `AlertClass` suffix)
+        """
         alert_source = ALERT_SOURCES.get(name)
         if not alert_source:
             raise CallError(f"Alert source {name!r} not found.", errno.ENOENT)

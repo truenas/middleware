@@ -18,7 +18,7 @@ class StorjIxError(CallError):
 
 class StorjIxRcloneRemote(BaseRcloneRemote):
     name = "STORJ_IX"
-    title = "Storj iX"
+    title = "Storj"
 
     buckets = True
     can_create_bucket = True

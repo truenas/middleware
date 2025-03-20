@@ -1,7 +1,8 @@
-from middlewared.schema import accepts, Dict, Int
+from middlewared.api import api_method
+from middlewared.api.current import ReplicationConfigEntry, ReplicationConfigUpdateArgs, ReplicationConfigUpdateResult
+
 from middlewared.service import ConfigService
 import middlewared.sqlalchemy as sa
-from middlewared.validators import Range
 
 
 class ReplicationConfigModel(sa.Model):
@@ -18,18 +19,10 @@ class ReplicationConfigService(ConfigService):
         datastore = "storage.replication_config"
         cli_namespace = "task.replication.config"
         role_prefix = "REPLICATION_TASK_CONFIG"
+        entry = ReplicationConfigEntry
 
-    @accepts(
-        Dict(
-            "replication_config_update",
-            Int("max_parallel_replication_tasks", validators=[Range(min_=1)], null=True),
-            update=True,
-        )
-    )
+    @api_method(ReplicationConfigUpdateArgs, ReplicationConfigUpdateResult)
     async def do_update(self, data):
-        """
-        `max_parallel_replication_tasks` represents a maximum number of parallel replication tasks running.
-        """
         old_config = await self.config()
         config = old_config.copy()
 

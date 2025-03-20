@@ -32,8 +32,13 @@ def import_iso_as_volume(volume_name: str, pool_name: str, size: int):
 
 
 @contextlib.contextmanager
-def volume(volume_name: str, size: int):
-    vol = call('virt.volume.create', {'name': volume_name, 'size': size, 'content_type': 'BLOCK'})
+def volume(volume_name: str, size: int, storage_pool: str | None = None):
+    vol = call('virt.volume.create', {
+        'name': volume_name,
+        'size': size,
+        'content_type': 'BLOCK',
+        'storage_pool': storage_pool
+    })
     try:
         yield vol
     finally:
@@ -52,7 +57,7 @@ def virt_device(instance_name: str, device_name: str, payload: dict):
 @contextlib.contextmanager
 def virt_instance(
     instance_name: str = 'tmp-instance',
-    image: str = 'debian/trixie',
+    image: str | None = 'debian/trixie',  # Can be null when source is null
     **kwargs
 ) -> dict:
     # Create a virt instance and return dict containing full config and raw info
@@ -66,10 +71,6 @@ def virt_instance(
     try:
         yield instance
     finally:
-        # NAS-134443: currently virt.instance.delete doesn't properly check
-        # for the instance actually stopping before deletion. Once this
-        # is fixed, remove the sleep.
-        sleep(5)
         call('virt.instance.delete', instance_name, job=True)
 
 

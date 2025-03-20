@@ -60,12 +60,13 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
                 if asyncio.iscoroutinefunction(methodobj):
                     try:
                         # Search for a synchronous implementation of the asynchronous method (i.e. `get_instance`).
-                        # Why is this needed? Imagine we have a `ZFSSnapshot` service that uses a process pool. Let's say
-                        # its `create` method calls `zfs.snapshot.get_instance` to return the result. That call will have
-                        # to be forwarded to the main middleware process, which will call `zfs.snapshot.query` in the
-                        # process pool. If the process pool is already exhausted, it will lead to a deadlock.
-                        # By executing a synchronous implementation of the same method in the same process pool we
-                        # eliminate `Hold and wait` condition and prevent deadlock situation from arising.
+                        # Why is this needed? Imagine we have a `ZFSSnapshotService` service that uses a process pool.
+                        # Let's say its `create` method calls `zfs.snapshot.get_instance` to return the result. That
+                        # call will have to be forwarded to the main middleware process, which will call
+                        # `zfs.snapshot.query` in the process pool. If the process pool is already exhausted, it will
+                        # lead to a deadlock. By executing a synchronous implementation of the same method in the same
+                        # process pool we eliminate `Hold and wait` condition and prevent deadlock situation from
+                        # arising.
                         _, sync_methodobj = self.get_method(f'{method}__sync')
                     except MethodNotFoundError:
                         # FIXME: Make this an exception in 22.MM

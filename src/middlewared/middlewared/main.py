@@ -1090,7 +1090,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 if should_send_event is None or should_send_event(wsclient):
                     wsclient.send_event(name, event_type, **kwargs)
             except Exception:
-                self.logger.warn('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
+                self.logger.warning('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
 
         async def wrap(handler):
             try:

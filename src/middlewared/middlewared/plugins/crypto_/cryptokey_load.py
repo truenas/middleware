@@ -1,7 +1,7 @@
+from truenas_crypto_utils.read import load_certificate, load_certificate_request
+
 from middlewared.schema import accepts, Str
 from middlewared.service import Service
-
-from .load_utils import load_certificate, load_certificate_request
 
 
 class CryptoKeyService(Service):

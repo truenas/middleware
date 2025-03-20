@@ -1,4 +1,3 @@
-from middlewared.schema import accepts, Str
 from middlewared.service import filterable, private, Service
 from middlewared.utils import filter_list
 
@@ -18,8 +17,7 @@ class DiskService(Service):
         return filter_list(parts, filters, options)
 
     @private
-    @accepts(Str('disk'))
-    async def get_partition(self, disk):
+    async def get_partition(self, disk: str):
         # Will retrieve zfs partition on disk if any
         return await self.get_partition_with_uuids(disk, [await self.middleware.call('disk.get_zfs_part_type')])
 

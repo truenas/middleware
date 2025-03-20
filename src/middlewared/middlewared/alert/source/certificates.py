@@ -33,13 +33,6 @@ class CertificateParsingFailedAlertClass(AlertClass):
     text = "Failed to parse %(type)s %(name)r."
 
 
-class CertificateRevokedAlertClass(AlertClass):
-    category = AlertCategory.CERTIFICATES
-    level = AlertLevel.CRITICAL
-    title = 'Certificate Revoked'
-    text = '%(service)s %(type)s has been revoked. Please replace the certificate immediately.'
-
-
 class WebUiCertificateSetupFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     # this is consumed in nginx.conf in the etc plugin
     # you don't have to specify the `AlertClass` verbiage
@@ -78,14 +71,12 @@ class CertificateChecksAlertSource(AlertSource):
     async def check(self):
         alerts = []
 
-        # system certs/cas
+        # system certs
         certs = await self.middleware.call('certificate.query', [['certificate', '!=', None]])
-        certs.extend(await self.middleware.call('certificateauthority.query'))
 
-        # service certs/cas
+        # service certs
         check_for_revocation = await self._get_service_certs()
 
-        parsed = {}
         for cert in certs:
             # make the sure certs have been parsed correctly
             if not cert['parsed']:
@@ -108,14 +99,5 @@ class CertificateChecksAlertSource(AlertSource):
                                 CertificateExpiredAlertClass,
                                 {'name': cert['name']}, key=[cert['name']]
                             ))
-
-                parsed[cert['id']] = cert['revoked']
-
-        # check the parsed certificate(s) for revocation
-        for i in filter(lambda i: parsed.get(i['id']), check_for_revocation):
-            alerts.append(Alert(
-                CertificateRevokedAlertClass,
-                {'service': i['service'], 'type': i['type']}
-            ))
 
         return alerts

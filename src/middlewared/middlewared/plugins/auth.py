@@ -31,7 +31,7 @@ from middlewared.service import (
     Service, filterable_api_method, filter_list,
     pass_app, private, cli_private, CallError,
 )
-from middlewared.service_exception import MatchNotFound, ValidationError
+from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
@@ -324,6 +324,22 @@ class AuthService(Service):
         user_data = self.middleware.call_sync('user.query', [['username', '=', username]])
         if not user_data:
             raise ValidationError('auth.generate_onetime_password.username', f'{username}: user does not exist.')
+
+        verrors = ValidationErrors()
+
+        if user_data[0]['password_disabled']:
+            verrors.add(
+                'auth.generate_onetime_password.username',
+                f'{username}: password authentication is disabled for account.'
+            )
+
+        if user_data[0]['locked']:
+            verrors.add(
+                'auth.generate_onetime_password.username',
+                f'{username}: account is locked.'
+            )
+
+        verrors.check()
 
         passwd = OTPW_MANAGER.generate_for_uid(user_data[0]['uid'])
         return passwd
@@ -836,7 +852,11 @@ class AuthService(Service):
                     if not app.origin.secure_transport:
                         # Per NEP if plain API key auth occurs over insecure transport
                         # the key should be automatically revoked.
-                        await self.middleware.call('api_key.revoke', key_id)
+                        await self.middleware.call(
+                            'api_key.revoke',
+                            key_id,
+                            'Attempt to use over an insecure transport',
+                        )
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': 'API_KEY',

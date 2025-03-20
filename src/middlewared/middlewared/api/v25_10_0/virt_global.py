@@ -15,7 +15,10 @@ __all__ = [
 class VirtGlobalEntry(BaseModel):
     id: int
     pool: str | None = None
+    "Default storage pool when creating new instances and volumes"
     dataset: str | None = None
+    storage_pools: list[str] | None = None
+    "ZFS pools to use as storage pools"
     bridge: str | None = None
     v4_network: str | None = None
     v6_network: str | None = None
@@ -29,7 +32,10 @@ class VirtGlobalUpdateResult(BaseModel):
 @single_argument_args('virt_global_update')
 class VirtGlobalUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     pool: NonEmptyString | None = None
+    "Default storage pool when creating new instances and volumes"
     bridge: NonEmptyString | None = None
+    storage_pools: list[str] | None = None
+    "ZFS pools to use as storage pools"
     v4_network: str | None = None
     v6_network: str | None = None
 

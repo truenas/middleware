@@ -28,7 +28,7 @@ def enterprise():
 def nfs_dataset():
     with dataset('nfs_snapdir') as ds:
         ssh(f'echo -n Cats > /mnt/{ds}/canary')
-        call('zfs.snapshot.create', {'dataset': ds, 'name': 'now'})
+        call('pool.snapshot.create', {'dataset': ds, 'name': 'now'})
         yield ds
 
 

@@ -1,4 +1,3 @@
-import itertools
 import os
 import shutil
 import subprocess
@@ -32,8 +31,7 @@ def write_certificates(certs: list) -> set:
     trusted_cas_path = '/var/local/ca-certificates'
     shutil.rmtree(trusted_cas_path, ignore_errors=True)
     for cert in filter(lambda c: c['chain_list'] and c['add_to_trusted_store'], certs):
-        cert_type = 'ca' if cert['cert_type'] == 'CA' else 'cert'
-        with open(os.path.join(trusted_cas_path, f'{cert_type}_{cert["name"]}.crt'), 'w') as f:
+        with open(os.path.join(trusted_cas_path, f'cert_{cert["name"]}.crt'), 'w') as f:
             f.write('\n'.join(cert['chain_list']))
 
     cp = subprocess.Popen('update-ca-certificates', stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
@@ -44,44 +42,16 @@ def write_certificates(certs: list) -> set:
     return expected_files
 
 
-def write_crls(cas: list, middleware: Middleware) -> set:
-    expected_files = set()
-    for ca in cas:
-        crl = middleware.call_sync(
-            'cryptokey.generate_crl',
-            ca, list(
-                filter(
-                    lambda cert: cert['revoked_date'],
-                    middleware.call_sync(
-                        'certificateauthority.get_ca_chain', ca['id']
-                    )
-                )
-            )
-        )
-        if crl:
-            expected_files.add(ca['crl_path'])
-            with open(ca['crl_path'], 'w') as f:
-                f.write(crl)
-
-    return expected_files
-
-
 def render(service: Service, middleware: Middleware) -> None:
     os.makedirs('/etc/certificates', 0o755, exist_ok=True)
-    os.makedirs('/etc/certificates/CA', 0o755, exist_ok=True)
 
-    expected_files = {'/etc/certificates/CA'}
+    expected_files = set()
     certs = middleware.call_sync('certificate.query')
-    cas = middleware.call_sync('certificateauthority.query')
 
-    expected_files |= write_certificates(certs + cas)
-    expected_files |= write_crls(cas, middleware)
+    expected_files |= write_certificates(certs)
 
     # We would like to remove certificates which have been deleted
-    found_files = set(itertools.chain(
-        map(lambda f: '/etc/certificates/' + f, os.listdir('/etc/certificates')),
-        map(lambda f: '/etc/certificates/CA/' + f, os.listdir('/etc/certificates/CA'))
-    ))
+    found_files = {'/etc/certificates/' + f for f in os.listdir('/etc/certificates')}
     for to_remove in found_files - expected_files:
         if os.path.isdir(to_remove):
             shutil.rmtree(to_remove)

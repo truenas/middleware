@@ -10,14 +10,15 @@ MODULE_STIG_RULE = "-a always,exit -F arch=b64 -S init_module,finit_module -F ke
 SAMPLE_STIG_RULE = "-a always,exit -F arch=b64 -S all -F path=/etc/gshadow -F perm=wa -F key=identity"
 IMMUTABLE_STIG_RULE = "-e 2"
 # Non-STIG test items
-SAMPLE_CE_RULE = "-a always,exclude -F msgtype=USER_START"
+SAMPLE_CE_RULES = ["-a always,exclude -F msgtype=USER_START", "-a always,exclude -F msgtype=SERVICE_START"]
 # Common test items
 INCUS_RULE = "-a always,exit -F arch=b64 -S all -F path=/usr/bin/incus -F perm=x -F auid!=-1 -F key=escalation"
+REBOOT_RULE = "-a always,exit -F arch=b64 -S execve -F path=/usr/sbin/reboot -F key=escalation"
 
-STIG_ASSERT_IN = [MODULE_STIG_RULE, SAMPLE_STIG_RULE]  # TODO:  IMMUTABLE_STIG_RULE when enabled
-STIG_ASSERT_NOT_IN = [SAMPLE_CE_RULE]
+STIG_ASSERT_IN = [MODULE_STIG_RULE, SAMPLE_STIG_RULE, REBOOT_RULE]  # TODO:  IMMUTABLE_STIG_RULE when enabled
+STIG_ASSERT_NOT_IN = SAMPLE_CE_RULES
 
-NON_STIG_ASSERT_IN = [SAMPLE_CE_RULE, INCUS_RULE]
+NON_STIG_ASSERT_IN = [INCUS_RULE, REBOOT_RULE] + SAMPLE_CE_RULES
 NON_STIG_ASSERT_NOT_IN = [SAMPLE_STIG_RULE]
 
 
@@ -54,9 +55,9 @@ def test__auditd_enable_gpos_stig(auditd_gpos_stig_enable):
     assert stig_rule_set != 'No rules'
 
     for audit_rule in STIG_ASSERT_IN:
-        assert audit_rule in stig_rule_set
+        assert audit_rule in stig_rule_set, f"stig_rule_set:\n{stig_rule_set}"
     for audit_rule in STIG_ASSERT_NOT_IN:
-        assert audit_rule not in stig_rule_set
+        assert audit_rule not in stig_rule_set, f"stig_rule_set:\n{stig_rule_set}"
 
 
 def test__auditd_disable_gpos_stig(auditd_gpos_stig_disable):
@@ -67,6 +68,6 @@ def test__auditd_disable_gpos_stig(auditd_gpos_stig_disable):
     assert non_stig_rule_set != 'No rules'
 
     for audit_rule in NON_STIG_ASSERT_IN:
-        assert audit_rule in non_stig_rule_set
+        assert audit_rule in non_stig_rule_set, f"non_stig_rule_set:\n{non_stig_rule_set}"
     for audit_rule in NON_STIG_ASSERT_NOT_IN:
-        assert audit_rule not in non_stig_rule_set
+        assert audit_rule not in non_stig_rule_set, f"non_stig_rule_set:\n{non_stig_rule_set}"

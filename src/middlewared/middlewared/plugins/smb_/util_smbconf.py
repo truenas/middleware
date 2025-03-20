@@ -183,7 +183,7 @@ def generate_smb_share_conf_dict(
         config_out['posix locking'] = False
 
     if share_config['timemachine']:
-        config_out['fruit:timemachine'] = True
+        config_out['fruit:time machine'] = True
 
         if share_config['timemachine_quota']:
             config_out['fruit:time machine max size'] = share_config['timemachine_quota']

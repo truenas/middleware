@@ -1,6 +1,7 @@
 import datetime
 
-from .generate_self_signed import generate_self_signed_certificate
+from truenas_crypto_utils.generate_self_signed import generate_self_signed_certificate
+
 from middlewared.service import job, periodic, private, Service
 from middlewared.utils.time_utils import utc_now
 
@@ -18,7 +19,6 @@ class CertificateService(Service):
                 system_cert[k] == v for k, v in (
                     ('organization', 'iXsystems'),
                     ('san', ['DNS:localhost']),
-                    ('signedby', None),
                     ('cert_type_existing', True),
                 )
             ) or tnc_config['certificate'] == system_cert['id']

@@ -20,7 +20,6 @@ from .common import *  # noqa
 from .config import *  # noqa
 from .core import *  # noqa
 from .cronjob import *  # noqa
-from .crypto_ca_profiles import *  # noqa
 from .crypto_cert_info import *  # noqa
 from .crypto_cert_profiles import *  # noqa
 from .device import *  # noqa
@@ -61,12 +60,15 @@ from .pool import *  # noqa
 from .pool_dataset import *  # noqa
 from .pool_resilver import *  # noqa
 from .pool_scrub import *  # noqa
+from .pool_snapshot import *  # noqa
 from .pool_snapshot_count import *  # noqa
 from .pool_snapshottask import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
 from .rdma_interface import *  # noqa
 from .replication import *  # noqa
+from .replication_config import *  # noqa
+from .replication_crud import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
 from .rsync_task import *  # noqa
@@ -75,11 +77,16 @@ from .smartctl import *  # noqa
 from .smart_test import *  # noqa
 from .smb import *  # noqa
 from .snmp import *  # noqa
+from .ssh import *  # noqa
 from .static_route import *  # noqa
+from .system_general import *  # noqa
+from .system_general_keymap import *  # noqa
+from .system_general_ui import *  # noqa
 from .system_lifecycle import *  # noqa
 from .system_ntpserver import *  # noqa
 from .system_reboot import *  # noqa
 from .system_security import *  # noqa
+from .system_general_timezone import *  # noqa
 from .tn_connect import *  # noqa
 from .truecommand import *  # noqa
 from .truenas import *  # noqa
@@ -92,5 +99,6 @@ from .virt_global import *  # noqa
 from .virt_instance import *  # noqa
 from .virt_volume import *  # noqa
 from .vmware import *  # noqa
+from .webui_crypto import *  # noqa
 from .webui_enclosure import *  # noqa
 from .webui_main_dashboard import *  # noqa

@@ -1,7 +1,6 @@
 import re
 from datetime import timedelta
 
-from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
 from middlewared.utils.disks import dev_to_ident
 from middlewared.utils.time_utils import utc_now
@@ -15,8 +14,7 @@ class DiskService(Service, ServiceChangeMixin):
     DISK_EXPIRECACHE_DAYS = 7
 
     @private
-    @accepts(Str('name'))
-    async def sync(self, name):
+    async def sync(self, name: str):
         """
         Syncs a disk `name` with the database cache.
         """
@@ -99,21 +97,19 @@ class DiskService(Service, ServiceChangeMixin):
         return dev_to_ident(name, sys_disks)
 
     @private
-    @accepts(Dict(
-        'options',
-        Bool('zfs_guid', default=False),
-    ))
     @job(lock='disk.sync_all')
-    def sync_all(self, job, opts):
-        """
-        Synchronize all disks with the cache in database.
-        """
+    def sync_all(self, job, opts: dict[str, bool] | None = None):
+        """Synchronize all disks with the cache in database."""
         # Skip sync disks on standby node
         licensed = self.middleware.call_sync('failover.licensed')
         if licensed:
             status = self.middleware.call_sync('failover.status')
             if status == 'BACKUP':
                 return
+
+        if opts is None:
+            opts = dict()
+        opts.setdefault('zfs_guid', False)
 
         job.set_progress(10, 'Enumerating system disks')
         sys_disks = self.middleware.call_sync('device.get_disks', True)

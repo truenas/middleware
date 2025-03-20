@@ -36,9 +36,14 @@ class VirtDeviceService(Service):
                 'product_id': format(i.idProduct, '04x'),
                 'bus': i.bus,
                 'dev': i.address,
-                'product': i.product,
-                'manufacturer': i.manufacturer,
             }
+            # Would like to carefully get product/manufacturer as some USB devices can not support string
+            # descriptors or the device can be malfunctioning and it can result in this.
+            for k in ('product', 'manufacturer'):
+                try:
+                    choices[name][k] = getattr(i, k)
+                except Exception:
+                    choices[name][k] = f'Unknown {k}'
         return choices
 
     @api_method(VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult, roles=['VIRT_INSTANCE_READ'])

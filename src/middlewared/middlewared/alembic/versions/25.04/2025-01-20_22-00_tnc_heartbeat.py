@@ -20,7 +20,7 @@ def upgrade():
     with op.batch_alter_table('truenas_connect', schema=None) as batch_op:
         batch_op.add_column(sa.Column(
             'heartbeat_url', sa.String(length=255), nullable=False,
-            server_default='https://heartbeat-service.dev.ixsystems.net/'
+            server_default='https://heartbeat-service.staging.truenasconnect.net/'
         ))
         batch_op.add_column(sa.Column('last_heartbeat_failure_datetime', sa.String(length=255), nullable=True))
 

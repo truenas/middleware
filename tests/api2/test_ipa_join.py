@@ -104,7 +104,7 @@ def test_check_kerberos_ticket(do_freeipa_connection):
 
 
 def test_certificate(do_freeipa_connection):
-    call('certificateauthority.query', [['name', '=', 'IPA_DOMAIN_CACERT']], {'get': True})
+    call('certificate.query', [['name', '=', 'IPA_DOMAIN_CACERT']], {'get': True})
 
 
 def test_system_keytab_has_nfs_principal(do_freeipa_connection):
@@ -135,7 +135,7 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
 
         assert 'DIRECTORY_SERVICE' in me['account_attributes']
         assert 'LDAP' in me['account_attributes']
-        assert me['privilege']['roles'] == set(priv['roles'])
+        assert 'FULL_ADMIN' in me['privilege']['roles']
 
 
 def test_dns_resolution(do_freeipa_connection):

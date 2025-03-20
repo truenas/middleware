@@ -108,7 +108,7 @@ class DiskService(Service):
 
     @private
     async def sed_unlock(self, disk_name, force=False):
-        if not self.should_try_unlock(force):
+        if not await self.should_try_unlock(force):
             return
 
         disk = await self.map_disks_to_passwd(disk_name)

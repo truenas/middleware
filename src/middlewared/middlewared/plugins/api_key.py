@@ -1,7 +1,7 @@
 import pam
 import errno
 
-from typing import Literal, TYPE_CHECKING
+from typing import Literal
 
 from datetime import datetime, UTC
 from middlewared.api import api_method
@@ -18,8 +18,6 @@ from middlewared.utils.crypto import generate_pbkdf2_512, generate_string
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
 from middlewared.utils.time_utils import utc_now
-if TYPE_CHECKING:
-    from middlewared.main import Middleware
 
 
 class APIKeyModel(sa.Model):
@@ -31,6 +29,7 @@ class APIKeyModel(sa.Model):
     key = sa.Column(sa.Text())
     created_at = sa.Column(sa.DateTime())
     expiry = sa.Column(sa.Integer())
+    revoked_reason = sa.Column(sa.Text(), nullable=True)
 
 
 class ApiKeyService(CRUDService):
@@ -118,6 +117,7 @@ class ApiKeyService(CRUDService):
         if item['username'] is None:
             # prevent keys we can't resolve from being written
             item['revoked'] = True
+            item['revoked_reason'] = 'User does not exist'
 
         match expiry:
             case -1:
@@ -216,6 +216,7 @@ class ApiKeyService(CRUDService):
             'username': user[0]['username'],
             'local': user[0]['local'],
             'revoked': False,
+            'revoked_reason': None,
         })
 
         self.middleware.call_sync('etc.generate', 'pam_middleware')
@@ -372,11 +373,14 @@ class ApiKeyService(CRUDService):
         })
 
     @private
-    async def revoke(self, key_id):
+    async def revoke(self, key_id, reason):
         """ Revoke the specified API key in the DB, deactivate in the pam_tdb file, and
         generate a middleware alert that it has been revoked. This is a private method
         that is called when API key passed as plain-text over insecure transport."""
-        await self.middleware.call('datastore.update', self._config.datastore, key_id, {'expiry': -1})
+        await self.middleware.call('datastore.update', self._config.datastore, key_id, {
+            'expiry': -1,
+            'revoked_reason': reason,
+        })
         await self.middleware.call('etc.generate', 'pam_middleware')
         await self.check_status()
 
@@ -391,13 +395,5 @@ class ApiKeyService(CRUDService):
         return await self.query([['username', '=', username]])
 
     @private
-    @periodic(3600, run_on_start=False)
     async def check_status(self) -> None:
-        keys = await self.query()
-        revoked_keys = set([key['name'] for key in filter_list(keys, [['revoked', '=', True]])])
-
-        for key_name in revoked_keys:
-            await self.middleware.call('alert.oneshot_create', 'ApiKeyRevoked', {'key_name': key_name})
-
-        # delete any fixed key alerts
-        await self.middleware.call('alert.oneshot_delete', 'ApiKeyRevoked', revoked_keys)
+        await self.middleware.call("alert.alert_source_clear_run", "ApiKeyRevoked")

@@ -2,27 +2,22 @@ import copy
 import errno
 import libzfs
 
-from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import CallError, CRUDService, filterable, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils import filter_list, filter_getattrs
-from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 from .utils import get_snapshot_count_cached
 from .validation_utils import validate_snapshot_name
 
 
-class ZFSSnapshot(CRUDService):
+class ZFSSnapshotService(CRUDService):
 
     class Config:
         datastore_primary_key_type = 'string'
         namespace = 'zfs.snapshot'
         process_pool = True
-        cli_namespace = 'storage.snapshot'
-        role_prefix = 'SNAPSHOT'
-        role_separate_delete = True
+        private = True
 
-    @private
     def count(self, dataset_names='*', recursive=False):
         kwargs = {
             'user_props': False,
@@ -43,20 +38,27 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
-    @filterable
-    def query(self, filters, options):
+    def query(self, filters=[], options={}):
         """
         Query all ZFS Snapshots with `query-filters` and `query-options`.
 
-        `query-options.extra.holds` specifies whether hold tags for snapshots should be retrieved (false by default)
+        `query-options.extra.holds` (bool) specifies whether hold tags for snapshots should be retrieved (false by
+            default)
 
-        `query-options.extra.min_txg` can be specified to limit snapshot retrieval based on minimum transaction group.
+        `query-options.extra.min_txg` (int) can be specified to limit snapshot retrieval based on minimum transaction
+            group.
 
-        `query-options.extra.max_txg` can be specified to limit snapshot retrieval based on maximum transaction group.
+        `query-options.extra.max_txg` (int) can be specified to limit snapshot retrieval based on maximum transaction
+            group.
+
+        `query-options.extra.retention` (bool) call `zettarepl.annotate_snapshots` on the query result
+
+        `query-options.extra.properties` (dict) passed to `zfs.snapshots_serialized.props`
+
         """
         # Special case for faster listing of snapshot names (#53149)
         filters_attrs = filter_getattrs(filters)
-        extra = copy.deepcopy(options['extra'])
+        extra = copy.deepcopy(options.get('extra', {}))
         min_txg = extra.get('min_txg', 0)
         max_txg = extra.get('max_txg', 0)
         if (
@@ -97,7 +99,7 @@ class ZFSSnapshot(CRUDService):
 
             return snaps
 
-        if options['extra'].get('retention'):
+        if extra.get('retention'):
             if 'id' not in filter_getattrs(filters) and not options.get('limit'):
                 raise CallError('`id` or `limit` is required if `retention` is requested', errno.EINVAL)
 
@@ -117,7 +119,7 @@ class ZFSSnapshot(CRUDService):
         select = options.pop('select', None)
         result = filter_list(snapshots, filters, options)
 
-        if options['extra'].get('retention'):
+        if extra.get('retention'):
             if isinstance(result, list):
                 result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
             elif isinstance(result, dict):
@@ -131,25 +133,15 @@ class ZFSSnapshot(CRUDService):
 
         return result
 
-    @accepts(Dict(
-        'snapshot_create',
-        Str('dataset', required=True, empty=False),
-        Str('name', empty=False),
-        Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
-        Bool('recursive', default=False),
-        List('exclude', items=[Str('dataset')]),
-        Bool('vmware_sync', default=False),
-        Dict('properties', additional_attrs=True),
-    ))
-    def do_create(self, data):
+    def create(self, data: dict):
         """
         Take a snapshot from a given dataset.
         """
-
         dataset = data['dataset']
-        recursive = data['recursive']
-        exclude = data['exclude']
-        properties = data['properties']
+        recursive = data.get('recursive', False)
+        exclude = data.get('exclude', [])
+        properties = data.get('properties', {})
+        data.setdefault('vmware_sync', False)
 
         verrors = ValidationErrors()
 
@@ -200,28 +192,12 @@ class ZFSSnapshot(CRUDService):
             self.logger.error(f'Failed to snapshot {dataset}@{name}: {err}')
             raise CallError(f'Failed to snapshot {dataset}@{name}: {err}', errno_)
         else:
-            instance = self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
-            self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=instance['id'], fields=instance)
-            return instance
+            return self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
         finally:
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 
-    @accepts(
-        Str('id'), Dict(
-            'snapshot_update',
-            List(
-                'user_properties_update',
-                items=[Dict(
-                    'user_property',
-                    Str('key', required=True, validators=[Match(r'.*:.*')]),
-                    Str('value'),
-                    Bool('remove'),
-                )],
-            ),
-        )
-    )
-    def do_update(self, snap_id, data):
+    def update(self, snap_id, data):
         verrors = ValidationErrors()
         props = data['user_properties_update']
         for index, prop in enumerate(props):
@@ -242,25 +218,21 @@ class ZFSSnapshot(CRUDService):
         else:
             return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
 
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('defer', default=False),
-            Bool('recursive', default=False),
-        ),
-    )
-    def do_delete(self, id_, options):
+    def delete(self, id_, options={}):
         """
         Delete snapshot of name `id`.
 
-        `options.defer` will defer the deletion of snapshot.
+        `options.defer` (bool) will defer the deletion of snapshot.
+
         """
+        defer_ = options.get('defer', False)
+        recursive_ = options.get('recursive', False)
         verrors = ValidationErrors()
+
         try:
             with libzfs.ZFS() as zfs:
                 snap = zfs.get_snapshot(id_)
-                snap.delete(defer=options['defer'], recursive=options['recursive'])
+                snap.delete(defer=defer_, recursive=recursive_)
         except libzfs.ZFSException as e:
             if e.code == libzfs.Error.NOENT:
                 raise InstanceNotFound(str(e))
@@ -268,7 +240,7 @@ class ZFSSnapshot(CRUDService):
             if e.args and isinstance(e.args[0], str) and 'snapshot has dependent clones' in e.args[0]:
                 with libzfs.ZFS() as zfs:
                     dep = list(zfs.get_snapshot(id_).dependents)
-                    if len(dep) and not options['defer']:
+                    if len(dep) and not defer_:
                         verrors.add(
                             'options.defer',
                             f'Please set this attribute as {snap.name!r} snapshot has dependent clones: '
@@ -278,8 +250,4 @@ class ZFSSnapshot(CRUDService):
 
             raise CallError(str(e))
         else:
-            # TODO: Events won't be sent for child snapshots in recursive delete
-            self.middleware.send_event(
-                f'{self._config.namespace}.query', 'REMOVED', id=id_, recursive=options['recursive'],
-            )
             return True

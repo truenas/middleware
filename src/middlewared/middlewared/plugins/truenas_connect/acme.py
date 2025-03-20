@@ -176,12 +176,6 @@ class TNCACMEService(Service, TNCAPIMixin):
             )
         except CallError:
             logger.error('Failed to revoke TNC certificate', exc_info=True)
-        else:
-            await self.middleware.call(
-                'datastore.update', 'system.certificate', certificate['id'], {
-                    'revoked_date': utc_now(),
-                }, {'prefix': 'cert_'}
-            )
 
 
 async def check_status(middleware):
