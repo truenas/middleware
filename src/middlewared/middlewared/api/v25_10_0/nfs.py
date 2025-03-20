@@ -47,7 +47,6 @@ class GetNFSv3ClientsEntry(BaseModel):
     result: list
 
 
-@single_argument_result
 class GetNFSv4ClientsEntry(BaseModel):
     id: str
     info: dict
