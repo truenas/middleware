@@ -11,13 +11,9 @@ class CryptoKeyService(Service):
         private = True
 
     def validate_extensions(self, extensions_data, schema):
-        # We do not need to validate some extensions like `AuthorityKeyIdentifier`.
-        # They are generated from the cert/ca's public key contents. So we skip these.
-
-        skip_extension = ['AuthorityKeyIdentifier']
         verrors = ValidationErrors()
 
-        for extension in filter(lambda v: v[1]['enabled'] and v[0] not in skip_extension, extensions_data.items()):
+        for extension in filter(lambda v: v[1]['enabled'], extensions_data.items()):
             klass = getattr(x509.extensions, extension[0])
             try:
                 klass(*get_extension_params(extension))
