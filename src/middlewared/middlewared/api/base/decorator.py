@@ -79,7 +79,7 @@ def api_method(
                 'rest': pass_app_rest,
             }
         if skip_args is not None:
-            func._skip_args = skip_args
+            func._skip_arg = skip_args
 
         args_index = calculate_args_index(func, audit_callback)
 

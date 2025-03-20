@@ -297,8 +297,8 @@ class CertificateService(CRUDService):
         cert_info['cert_extensions'] = data['cert_extensions']
 
         # FIXME: Remove this extension entirely
-        if cert_info['cert_extensions']['AuthorityKeyIdentifier']['enabled']:
-            verrors.add('cert_extensions.AuthorityKeyIdentifier.enabled', 'This extension is not valid for CSR')
+        # if cert_info['cert_extensions']['AuthorityKeyIdentifier']['enabled']:
+        #    verrors.add('cert_extensions.AuthorityKeyIdentifier.enabled', 'This extension is not valid for CSR')
 
         verrors.check()
 
