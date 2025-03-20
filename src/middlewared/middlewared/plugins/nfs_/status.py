@@ -5,10 +5,14 @@ import yaml
 from contextlib import suppress
 
 from middlewared.api import api_method
-from middlewared.api.base import NfsClientCountArgs, NfsClientCountResult
+from middlewared.api.base import (
+    GetNFSv3ClientsEntry,
+    GetNFSv4ClientsEntry,
+    NfsClientCountArgs,
+    NfsClientCountResult,
+)
 from middlewared.plugins.nfs import NFSServicePathInfo
-from middlewared.schema import Str, Dict
-from middlewared.service import Service, private, filterable, filterable_returns
+from middlewared.service import Service, private, filterable_api_method
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
@@ -68,9 +72,12 @@ class NFSService(Service):
                     os.fsync(outf.fileno())
                     os.rename(outf.name, rmtab)
 
-    # NFS_WRITE because this exposes hostnames and IP addresses
-    # READONLY is considered administrative-level permission
-    @filterable(roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE'])
+    @filterable_api_method(
+        item=GetNFSv3ClientsEntry,
+        # NFS_WRITE because this exposes hostnames and IP addresses
+        # READONLY is considered administrative-level permission
+        roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
+    )
     def get_nfs3_clients(self, filters, options):
         """
         Read contents of rmtab. This information may not
@@ -108,15 +115,12 @@ class NFSService(Service):
         # return empty list in this case
         return states or []
 
-    # NFS_WRITE because this exposes hostnames, IP addresses and other details
-    # READONLY is considered administrative-level permission
-    @filterable(roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE'])
-    @filterable_returns(Dict(
-        'client',
-        Str('id'),
-        Dict('info', additional_attrs=True),
-        Dict('state', additional_attrs=True)
-    ))
+    @filterable_api_method(
+        item=GetNFSv4ClientsEntry,
+        # NFS_WRITE because this exposes hostnames, IP addresses and other details
+        # READONLY is considered administrative-level permission
+        roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
+    )
     def get_nfs4_clients(self, filters, options):
         """
         Read information about NFSv4 clients from /proc/fs/nfsd/clients

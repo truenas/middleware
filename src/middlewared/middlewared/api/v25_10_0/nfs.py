@@ -9,11 +9,14 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     single_argument_args,
+    single_argument_result,
     TcpPort,
     exclude_tcp_ports,
 )
 
 __all__ = [
+    "GetNFSv3ClientsEntry",
+    "GetNFSv4ClientsEntry",
     "NfsEntry",
     "NfsBindipChoicesArgs",
     "NfsBindipChoicesResult",
@@ -38,6 +41,17 @@ EXCLUDED_PORTS = [NFS_RDMA_DEFAULT_PORT]
 NfsTcpPort: TypeAlias = Annotated[
     TcpPort | None, AfterValidator(exclude_tcp_ports(EXCLUDED_PORTS))
 ]
+
+
+class GetNFSv3ClientsEntry(BaseModel):
+    result: list
+
+
+@single_argument_result
+class GetNFSv4ClientsEntry(BaseModel):
+    id: str
+    info: dict
+    state: dict
 
 
 class NfsEntry(BaseModel):
