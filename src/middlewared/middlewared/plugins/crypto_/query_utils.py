@@ -27,9 +27,9 @@ def normalize_cert_attrs(cert: dict) -> None:
     root_path = CERT_ROOT_PATH
     cert.update({
         'root_path': root_path,
-        'certificate_path': os.path.join(root_path, f'{cert["name"]}.crt'),
-        'privatekey_path': os.path.join(root_path, f'{cert["name"]}.key'),
-        'csr_path': os.path.join(root_path, f'{cert["name"]}.csr'),
+        'certificate_path': None,
+        'privatekey_path': None,
+        'csr_path': None,
         'cert_type': 'CERTIFICATE',
         'cert_type_existing': bool(cert['type'] & CERT_TYPE_EXISTING),
         'cert_type_CSR': bool(cert['type'] & CERT_TYPE_CSR),
@@ -37,6 +37,13 @@ def normalize_cert_attrs(cert: dict) -> None:
         'key_length': None,
         'key_type': None,
     })
+
+    if cert['certificate']:
+        cert['certificate_path'] = os.path.join(root_path, f'{cert["name"]}.crt')
+    if cert['privatekey']:
+        cert['privatekey_path'] = os.path.join(root_path, f'{cert["name"]}.key')
+    if cert['CSR']:
+        cert['csr_path'] = os.path.join(root_path, f'{cert["name"]}.csr')
 
     certs = []
     if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) >= 1:
