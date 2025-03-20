@@ -349,11 +349,6 @@ class CertificateService(CRUDService):
     @accepts(
         Patch(
             'certificate_create', 'certificate_create_csr',
-            ('edit', _set_required('country')),
-            ('edit', _set_required('state')),
-            ('edit', _set_required('city')),
-            ('edit', _set_required('organization')),
-            ('edit', _set_required('email')),
             ('edit', _set_required('san')),
             ('rm', {'name': 'create_type'}),
             register=True
