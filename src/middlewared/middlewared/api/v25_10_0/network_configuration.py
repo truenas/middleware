@@ -1,38 +1,15 @@
-from typing import Annotated, Literal
+from typing import Literal
 
-from pydantic import IPvAnyAddress as IPvAnyAddress_, Field, AfterValidator
+from pydantic import Field
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, Excluded, excluded_field, NotRequired
-from middlewared.api.base.types.network import IPvAnyAddress, Hostname, Domain
+from middlewared.api.base.types.network import IPvAnyAddress, Hostname, Domain, NameserverAddress
 
 
 __all__ = [
     "NetworkConfigurationEntry", "NetWorkConfigurationUpdateArgs", "NetworkConfigurationUpdateResult",
     "NetworkConfigurationActivityChoicesArgs", "NetworkConfigurationActivityChoicesResult",
 ]
-
-
-def validate_nameserver(address: str):
-    nameserver = IPvAnyAddress_(address)
-    error = None
-
-    if nameserver.is_loopback:
-        error = 'Loopback is not a valid nameserver'
-    elif nameserver.is_unspecified:
-        error = 'Unspecified addresses are not valid as nameservers'
-    elif nameserver.version == 4:
-        if address == '255.255.255.255':
-            error = 'This is not a valid nameserver address'
-        elif address.startswith('169.254'):
-            error = '169.254/16 subnet is not valid for nameserver'
-
-    if error:
-        raise ValueError(error)
-
-    return address
-
-
-NameserverAddress = Literal[''] | Annotated[str, AfterValidator(validate_nameserver)]
 
 
 class ServiceAnnouncement(BaseModel):
@@ -64,7 +41,7 @@ class NetworkConfigurationEntry(BaseModel):
     ipv4gateway: IPvAnyAddress
     """Used instead of the default gateway provided by DHCP."""
     ipv6gateway: IPvAnyAddress
-    nameservers: tuple[NameserverAddress, NameserverAddress, NameserverAddress]
+    nameservers: list[NameserverAddress] = Field(max_length=3)
     """Primary, secondary, and tertiary DNS servers."""
     httpproxy: str
     """Must be provided if a proxy is to be used for network operations."""
