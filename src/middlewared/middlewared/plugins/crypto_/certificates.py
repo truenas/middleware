@@ -6,14 +6,17 @@ from truenas_crypto_utils.read import load_certificate
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CertificateEntry, CertificateCreateACMEArgs, CertificateCreateCSRArgs, CertificateCreateImportedCSRArgs,
-    CertificateCreateImportedCertificateArgs, CertificateCreateArgs, CertificateCreateResult, CertificateUpdateArgs,
-    CertificateUpdateResult, CertificateDeleteArgs, CertificateDeleteResult, CertificateCreateInternalResult,
+    CertificateEntry, CertificateCreateArgs, CertificateCreateResult, CertificateUpdateArgs,
+    CertificateUpdateResult, CertificateDeleteArgs, CertificateDeleteResult,
 )
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .query_utils import normalize_cert_attrs
+from .private_models import (
+    CertificateCreateACMEArgs, CertificateCreateCSRArgs, CertificateCreateImportedCSRArgs,
+    CertificateCreateImportedCertificateArgs, CertificateCreateInternalResult,
+)
 from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, get_cert_info_from_data, get_private_key
 
 

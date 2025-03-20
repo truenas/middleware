@@ -4,15 +4,14 @@ from typing import Literal
 from pydantic import EmailStr, Field
 
 from middlewared.api.base import (
-    BaseModel, single_argument_args, ForUpdateMetaclass, LongString, LongNonEmptyString, NonEmptyString,
+    BaseModel, ForUpdateMetaclass, LongString, LongNonEmptyString, NonEmptyString,
 )
 
 
 __all__ = [
-    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult', 'CertificateCreateACMEArgs',
-    'CertificateCreateCSRArgs', 'CertificateCreateImportedCSRArgs', 'CertificateCreateImportedCertificateArgs',
+    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
     'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
-    'CertificateCreateInternalResult',
+    'ECCurve',
 ]
 
 
@@ -71,7 +70,7 @@ class CertificateEntry(BaseModel):
     parsed: bool
 
 
-class CertificateCreate(BaseModel):
+class CertificateCreateArgs(BaseModel):
     name: NonEmptyString  # TODO: Add regex
     create_type: Literal[
         'CERTIFICATE_CREATE_IMPORTED',
@@ -125,63 +124,8 @@ class CertificateCreate(BaseModel):
     '''
 
 
-class CertificateCreateArgs(BaseModel):
-    data: CertificateCreate = CertificateCreate()
-
-
 class CertificateCreateResult(BaseModel):
     result: CertificateEntry
-
-
-@single_argument_args('certificate_create_acme')
-class CertificateCreateACMEArgs(BaseModel):
-    name: NonEmptyString
-    tos: bool
-    csr_id: int
-    renew_days: int = Field(min_length=1, max_length=30)
-    acme_directory_uri: NonEmptyString
-    dns_mapping: dict[str, int]
-
-
-@single_argument_args('certificate_create_csr')
-class CertificateCreateCSRArgs(BaseModel):
-    name: NonEmptyString
-    # Key specific
-    key_length: Literal[2046, 4098, None] = None
-    key_type: Literal['RSA', 'EC'] = 'RSA'
-    ec_curve: ECCurve = 'SECP384R1'
-    passphrase: NonEmptyString | None = None
-    # CSR specific
-    city: NonEmptyString | None = None
-    common: NonEmptyString | None = None
-    country: NonEmptyString | None = None
-    email: EmailStr | None = None
-    organization: NonEmptyString | None = None
-    organizational_unit: NonEmptyString | None = None
-    state: NonEmptyString | None = None
-    digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512']
-    cert_extensions: dict = Field(default_factory=dict)  # FIXME: Improve this
-    san: list[NonEmptyString] = Field(min_length=1)
-
-
-@single_argument_args('certificate_create_csr_imported')
-class CertificateCreateImportedCSRArgs(BaseModel):
-    name: NonEmptyString
-    CSR: LongNonEmptyString
-    privatekey: LongNonEmptyString
-    passphrase: NonEmptyString | None = None
-
-
-@single_argument_args('certificate_create_certificate_imported')
-class CertificateCreateImportedCertificateArgs(BaseModel):
-    name: NonEmptyString
-    certificate: LongNonEmptyString
-    privatekey: LongNonEmptyString | None
-    passphrase: NonEmptyString | None = None
-
-
-class CertificateCreateInternalResult(BaseModel):
-    result: dict
 
 
 class CertificateUpdate(BaseModel, metaclass=ForUpdateMetaclass):
