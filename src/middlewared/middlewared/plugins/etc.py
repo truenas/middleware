@@ -112,7 +112,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'netdata/netdata.conf', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'netdata/charts.d/exclude_netdata.conf', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'netdata/exporting.conf'},
-            {'type': 'mako', 'path': 'netdata/python.d/smart_log.conf'},
         ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
@@ -223,10 +222,6 @@ class EtcService(Service):
         ],
         'sysctl': [
             {'type': 'mako', 'path': 'sysctl.d/tunables.conf'},
-        ],
-        'smartd': [
-            {'type': 'mako', 'path': 'default/smartmontools'},
-            {'type': 'py', 'path': 'smartd'},
         ],
         'ssl': [
             {'type': 'py', 'path': 'generate_ssl_certs'},

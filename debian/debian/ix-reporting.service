@@ -3,7 +3,7 @@ Description=Setup TrueNAS Reporting
 DefaultDependencies=no
 
 # The after here reflects the after of netdata.service
-After=middlewared.service network-online.target httpd.service squid.service nfs-server.service mysqld.service named.service postfix.service smartmontools.service nut.target
+After=middlewared.service network-online.target httpd.service squid.service nfs-server.service mysqld.service named.service postfix.service nut.target
 
 [Service]
 Type=oneshot

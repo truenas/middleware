@@ -72,5 +72,4 @@ ${random.randint(1, 4)} \
 * * * root midclt call update.download > /dev/null 2>&1
     % endif
 
-@weekly root update-smart-drivedb > /dev/null 2>&1
 % endif
