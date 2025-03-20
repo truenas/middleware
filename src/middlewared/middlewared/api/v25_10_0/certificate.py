@@ -73,20 +73,20 @@ class CertificateEntry(BaseModel):
     parsed: bool
 
 
-class BasicConstraints(BaseModel):
+class BasicConstraintsModel(BaseModel):
     ca: bool = False
     enabled: bool = False
     path_length: int | None = None
     extension_critical: bool = False
 
 
-class ExtendedKeyUsage(BaseModel):
-    usages: list[Literal[tuple(s.value for s in EKU_OID)]]
+class ExtendedKeyUsageModel(BaseModel):
+    usages: list[Literal[*[s.value for s in EKU_OID]]] = Field(default_factory=list)
     enabled: bool = False
     extension_critical: bool = False
 
 
-class KeyUsage(BaseModel):
+class KeyUsageModel(BaseModel):
     enabled: bool = False
     digital_signature: bool = False
     content_commitment: bool = False
@@ -101,9 +101,9 @@ class KeyUsage(BaseModel):
 
 
 class CertificateExtensions(BaseModel):
-    BasicConstraints: BasicConstraints = BasicConstraints()
-    ExtendedKeyUsage: ExtendedKeyUsage = ExtendedKeyUsage()
-    KeyUsage: KeyUsage = KeyUsage()
+    BasicConstraints: BasicConstraintsModel = BasicConstraintsModel()
+    ExtendedKeyUsage: ExtendedKeyUsageModel = ExtendedKeyUsageModel()
+    KeyUsage: KeyUsageModel = KeyUsageModel()
 
 
 @single_argument_args('certificate_create')
@@ -135,7 +135,7 @@ class CertificateCreateArgs(BaseModel):
     state: NonEmptyString | None = None
     digest_algorithm: Literal['SHA224', 'SHA256', 'SHA384', 'SHA512'] = 'SHA256'
     san: list[NonEmptyString] = Field(default_factory=list)
-    cert_extensions: CertificateExtensions = CertificateExtensions()
+    cert_extensions: CertificateExtensions = Field(default_factory=CertificateExtensions)
     # ACME related fields
     acme_directory_uri: NonEmptyString | None = None
     '''
