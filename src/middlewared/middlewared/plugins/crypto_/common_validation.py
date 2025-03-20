@@ -69,33 +69,23 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
         )
 
     await middleware.call(
-        'cryptokey.validate_certificate_with_key', certificate, private_key, schema_name, verrors, passphrase
+        'cryptokey.validate_certificate_with_key', certificate, private_key, schema_name, verrors, passphrase,
     )
 
     key_type = data.get('key_type')
-    if key_type:
-        if key_type != 'EC':
-            if not data.get('key_length'):
-                verrors.add(
-                    f'{schema_name}.key_length',
-                    'RSA-based keys require an entry in this field.'
-                )
-            if not data.get('digest_algorithm'):
-                verrors.add(
-                    f'{schema_name}.digest_algorithm',
-                    'This field is required.'
-                )
+    if key_type and key_type != 'EC':
+        if not data.get('key_length'):
+            verrors.add(
+                f'{schema_name}.key_length',
+                'RSA-based keys require an entry in this field.'
+            )
+        if not data.get('digest_algorithm'):
+            verrors.add(
+                f'{schema_name}.digest_algorithm',
+                'This field is required.'
+            )
 
     if not verrors and data.get('cert_extensions'):
         verrors.extend(
             (await middleware.call('cryptokey.validate_extensions', data['cert_extensions'], schema_name))
         )
-
-    if lifetime := data.get('lifetime'):
-        try:
-            utc_now() + datetime.timedelta(days=lifetime)
-        except OverflowError:
-            verrors.add(
-                f'{schema_name}.lifetime',
-                'Lifetime for the certificate is too long.'
-            )
