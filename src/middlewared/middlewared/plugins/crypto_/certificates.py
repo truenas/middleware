@@ -1,20 +1,20 @@
 import datetime
 
 from truenas_crypto_utils.csr import generate_certificate_signing_request
-from truenas_crypto_utils.key import export_private_key
 from truenas_crypto_utils.read import load_certificate
 
 import middlewared.sqlalchemy as sa
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
-from middlewared.service import CallError, CRUDService, job, private, skip_arg, ValidationErrors
-from middlewared.validators import Email, Range
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CertificateEntry, CertificateCreateACMEArgs, CertificateCreateCSRArgs, CertificateCreateImportedCSRArgs,
+    CertificateCreateImportedCertificateArgs, CertificateCreateArgs, CertificateCreateResult, CertificateUpdateArgs,
+    CertificateUpdateResult, CertificateDeleteArgs, CertificateDeleteResult, CertificateCreateInternalResult,
+)
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 
 from .common_validation import _validate_common_attributes, validate_cert_name
-from .cert_entry import CERT_ENTRY
 from .query_utils import normalize_cert_attrs
-from .utils import (
-    CERT_TYPE_EXISTING, CERT_TYPE_CSR, EC_CURVES, EC_CURVE_DEFAULT, get_cert_info_from_data, _set_required,
-)
+from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, get_cert_info_from_data, get_private_key
 
 
 class CertificateModel(sa.Model):
@@ -41,8 +41,7 @@ class CertificateService(CRUDService):
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
         role_prefix = 'CERTIFICATE'
-
-    ENTRY = CERT_ENTRY
+        entry = CertificateEntry
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -140,41 +139,7 @@ class CertificateService(CRUDService):
     # CERTIFICATE_CREATE_CSR          - create_csr
     # CERTIFICATE_CREATE_ACME         - create_acme_certificate
 
-    @accepts(
-        Dict(
-            'certificate_create',
-            Bool('tos'),
-            Dict('dns_mapping', additional_attrs=True),
-            Int('csr_id'),
-            Int('key_length', enum=[2048, 4096]),
-            Int('renew_days', validators=[Range(min_=1, max_=30)]),
-            Int('type'),
-            Str('acme_directory_uri'),
-            Str('certificate', max_length=None),
-            Str('city'),
-            Str('common', max_length=None, null=True),
-            Str('country'),
-            Str('CSR', max_length=None),
-            Str('ec_curve', enum=EC_CURVES, default=EC_CURVE_DEFAULT),
-            Str('email', validators=[Email()]),
-            Str('key_type', enum=['RSA', 'EC'], default='RSA'),
-            Str('name', required=True),
-            Str('organization'),
-            Str('organizational_unit'),
-            Str('passphrase'),
-            Str('privatekey', max_length=None),
-            Str('state'),
-            Str('create_type', enum=[
-                'CERTIFICATE_CREATE_IMPORTED',
-                'CERTIFICATE_CREATE_CSR', 'CERTIFICATE_CREATE_IMPORTED_CSR',
-                'CERTIFICATE_CREATE_ACME'], required=True),
-            Str('digest_algorithm', enum=['SHA224', 'SHA256', 'SHA384', 'SHA512']),
-            List('san', items=[Str('san')]),
-            Ref('cert_extensions'),
-            Bool('add_to_trusted_store', default=False),
-            register=True
-        ),
-    )
+    @api_method(CertificateCreateArgs, CertificateCreateResult)
     @job(lock='cert_create')
     async def do_create(self, job, data):
         """
@@ -236,16 +201,7 @@ class CertificateService(CRUDService):
                 }]
             }
         """
-        if not data.get('dns_mapping'):
-            data.pop('dns_mapping')  # Default dict added
-
         create_type = data.pop('create_type')
-        if create_type in (
-            'CERTIFICATE_CREATE_IMPORTED_CSR', 'CERTIFICATE_CREATE_ACME', 'CERTIFICATE_CREATE_IMPORTED'
-        ):
-            for key in ('key_length', 'key_type', 'ec_curve'):
-                data.pop(key, None)
-
         add_to_trusted_store = data.pop('add_to_trusted_store', False)
         verrors = await self.validate_common_attributes(data, 'certificate_create')
         if add_to_trusted_store and create_type in ('CERTIFICATE_CREATE_IMPORTED_CSR', 'CERTIFICATE_CREATE_CSR'):
@@ -263,30 +219,30 @@ class CertificateService(CRUDService):
 
         job.set_progress(10, 'Initial validation complete')
 
-        if create_type in (
-            'CERTIFICATE_CREATE_IMPORTED_CSR',
-            'CERTIFICATE_CREATE_ACME',
-            'CERTIFICATE_CREATE_IMPORTED',
-        ):
-            # We add dictionaries/lists by default, so we need to explicitly remove them
-            data.pop('cert_extensions')
-            data.pop('san')
-
-        data = {
-            k: v for k, v in (
-                await self.middleware.call(f'certificate.{self.map_functions[create_type]}', job, data)
-            ).items()
-            if k in [
-                'name', 'certificate', 'CSR', 'privatekey', 'type', 'acme', 'acme_uri',
-                'domains_authenticators', 'renew_days', 'add_to_trusted_store',
+        payload_keys = []
+        if create_type == 'CERTIFICATE_CREATE_IMPORTED':
+            payload_keys = ['name', 'certificate', 'privatekey', 'passphrase']
+        elif create_type == 'CERTIFICATE_CREATE_CSR':
+            payload_keys = [
+                'name', 'key_length', 'key_type', 'ec_curve', 'passphrase', 'city', 'common', 'country', 'email',
+                'organization', 'organizational_unit', 'state', 'digest_algorithm', 'san', 'cert_extensions',
             ]
+        elif create_type == 'CERTIFICATE_CREATE_IMPORTED_CSR':
+            payload_keys = ['name', 'CSR', 'privatekey', 'passphrase']
+        elif create_type == 'CERTIFICATE_CREATE_ACME':
+            payload_keys = ['name', 'tos', 'csr_id', 'renew_days', 'acme_directory_uri', 'dns_mapping']
+
+        db_payload = await self.middleware.call(f'certificate.{self.map_functions[create_type]}', job, {
+            k: data[k] for k in payload_keys
+        }) | {
+            'name': data['name'],
+            'add_to_trusted_store': add_to_trusted_store,
         }
-        data['add_to_trusted_store'] = add_to_trusted_store
 
         pk = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
-            data,
+            db_payload,
             {'prefix': self._config.datastore_prefix}
         )
 
@@ -296,24 +252,9 @@ class CertificateService(CRUDService):
 
         return await self.get_instance(pk)
 
-    @accepts(
-        Dict(
-            'acme_create',
-            Bool('tos', default=False),
-            Int('csr_id', required=True),
-            Int('renew_days', default=10, validators=[Range(min_=1)]),
-            Str('acme_directory_uri', required=True),
-            Str('name', required=True),
-            Dict('dns_mapping', additional_attrs=True, required=True)
-        )
-    )
-    @private
-    @skip_arg(count=1)
+    @api_method(CertificateCreateACMEArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_acme_certificate(self, job, data):
-
-        csr_data = self.middleware.call_sync(
-            'certificate.get_instance', data['csr_id']
-        )
+        csr_data = self.middleware.call_sync('certificate.get_instance', data['csr_id'])
         verrors = ValidationErrors()
         email = self.middleware.call_sync('mail.local_administrator_email')
         if not email:
@@ -341,117 +282,53 @@ class CertificateService(CRUDService):
             'name': data['name'],
             'type': CERT_TYPE_EXISTING,
             'domains_authenticators': data['dns_mapping'],
-            'renew_days': data['renew_days']
+            'renew_days': data['renew_days'],
         }
 
         return cert_dict
 
-    @accepts(
-        Patch(
-            'certificate_create', 'certificate_create_csr',
-            ('edit', _set_required('san')),
-            ('rm', {'name': 'create_type'}),
-            register=True
-        )
-    )
-    @private
-    @skip_arg(count=1)
+    @api_method(CertificateCreateCSRArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_csr(self, job, data):
         verrors = ValidationErrors()
         cert_info = get_cert_info_from_data(data)
         cert_info['cert_extensions'] = data['cert_extensions']
 
+        # FIXME: Remove this extension entirely
         if cert_info['cert_extensions']['AuthorityKeyIdentifier']['enabled']:
             verrors.add('cert_extensions.AuthorityKeyIdentifier.enabled', 'This extension is not valid for CSR')
 
         verrors.check()
 
-        data['type'] = CERT_TYPE_CSR
         req, key = generate_certificate_signing_request(cert_info)
 
-        job.set_progress(80)
-
-        data['CSR'] = req
-        data['privatekey'] = key
-
         job.set_progress(90, 'Finalizing changes')
 
-        return data
+        return {
+            'CSR': req,
+            'privatekey': key,
+            'type': CERT_TYPE_CSR,
+        }
 
-    @accepts(
-        Dict(
-            'create_imported_csr',
-            Str('CSR', required=True, max_length=None, empty=False),
-            Str('name'),
-            Str('privatekey', required=True, max_length=None, empty=False),
-            Str('passphrase')
-        )
-    )
-    @private
-    @skip_arg(count=1)
+    @api_method(CertificateCreateImportedCSRArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_imported_csr(self, job, data):
-
-        # TODO: We should validate csr with private key ?
-
-        data['type'] = CERT_TYPE_CSR
-
-        job.set_progress(80)
-
-        if 'passphrase' in data:
-            data['privatekey'] = export_private_key(data['privatekey'], data['passphrase'])
-
+        # FIXME: Validate private key matches CSR
         job.set_progress(90, 'Finalizing changes')
+        return {
+            'CSR': data['CSR'],
+            'privatekey': get_private_key(data),
+            'type': CERT_TYPE_CSR,
+        }
 
-        return data
-
-    @accepts(
-        Dict(
-            'certificate_create_imported',
-            Int('csr_id'),
-            Str('certificate', required=True, max_length=None),
-            Str('name'),
-            Str('passphrase'),
-            Str('privatekey', max_length=None)
-        )
-    )
-    @private
-    @skip_arg(count=1)
+    @api_method(CertificateCreateImportedCertificateArgs, CertificateCreateInternalResult, private=True, skip_args=1)
     def create_imported_certificate(self, job, data):
-        verrors = ValidationErrors()
+        job.set_progress(90, 'Finalizing changes')
+        return {
+            'certificate': data['certificate'],
+            'privatekey': get_private_key(data),
+            'type': CERT_TYPE_EXISTING,
+        }
 
-        csr_id = data.pop('csr_id', None)
-        if csr_id:
-            csr_obj = self.middleware.call_sync(
-                'certificate.query', [
-                    ['id', '=', csr_id],
-                    ['type', '=', CERT_TYPE_CSR]
-                ],
-                {'get': True}
-            )
-
-            data['privatekey'] = csr_obj['privatekey']
-            data.pop('passphrase', None)
-
-        verrors.check()
-
-        job.set_progress(50, 'Validation complete')
-
-        data['type'] = CERT_TYPE_EXISTING
-
-        if 'passphrase' in data:
-            data['privatekey'] = export_private_key(data['privatekey'], data['passphrase'])
-
-        return data
-
-    @accepts(
-        Int('id', required=True),
-        Dict(
-            'certificate_update',
-            Int('renew_days', validators=[Range(min_=1, max_=30)]),
-            Bool('add_to_trusted_store'),
-            Str('name'),
-        ),
-    )
+    @api_method(CertificateUpdateArgs, CertificateUpdateResult)
     @job(lock='cert_update')
     async def do_update(self, job, id_, data):
         """
@@ -549,10 +426,7 @@ class CertificateService(CRUDService):
                     {'prefix': self._config.datastore_prefix}
                 )
 
-    @accepts(
-        Int('id'),
-        Bool('force', default=False),
-    )
+    @api_method(CertificateDeleteArgs, CertificateDeleteResult)
     @job(lock='cert_delete')
     def do_delete(self, job, id_, force):
         """
