@@ -1,8 +1,6 @@
 from typing import Literal
 
-from pydantic import Field
-
-from middlewared.api.base import BaseModel, LongString, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, LongString, Excluded, excluded_field, ForUpdateMetaclass, TcpPort
 
 
 __all__ = ['SSHEntry', 'SSHBindIfaceChoicesArgs', 'SSHBindIfaceChoicesResult', 'SSHUpdateArgs', 'SSHUpdateResult',]
@@ -11,7 +9,7 @@ __all__ = ['SSHEntry', 'SSHBindIfaceChoicesArgs', 'SSHBindIfaceChoicesResult', '
 class SSHEntry(BaseModel):
     id: int
     bindiface: list[str]
-    tcpport: int = Field(ge=1, le=65535)
+    tcpport: TcpPort
     password_login_groups: list[str]
     passwordauth: bool
     kerberosauth: bool
