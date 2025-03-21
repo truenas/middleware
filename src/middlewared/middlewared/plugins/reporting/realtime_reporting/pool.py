@@ -12,5 +12,8 @@ def get_pool_stats(netdata_metrics: dict) -> dict:
     for dimension_name, value in (safely_retrieve_dimension(netdata_metrics, 'truenas_pool.usage') or {}).items():
         value = value or {}
         pool_guid, stat_key = dimension_name.split('.')
+        if pool_guid not in pool_data:
+            continue
+
         data[pool_data[pool_guid]['name']][stat_key] = value
     return data
