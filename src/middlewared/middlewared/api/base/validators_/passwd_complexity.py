@@ -21,7 +21,7 @@ def __complexity_impl(
     required_cnt: int,
     min_length: int,
     max_length: int,
-) -> str:
+) -> SecretStr:
     passwd_length = len(value)
     if passwd_length < min_length:
         raise ValueError(f"Length of password must be at least {min_length} chars")
@@ -85,7 +85,7 @@ def passwd_complexity_validator(
     required_cnt: int = 0,
     min_length: int = 8,
     max_length: int = 16,
-) -> str:
+) -> partial[SecretStr]:
     """Enforce password complexity.
 
     Args:
