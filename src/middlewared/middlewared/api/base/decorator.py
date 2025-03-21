@@ -32,6 +32,7 @@ def api_method(
     pass_app: bool = False,
     pass_app_require: bool = False,
     pass_app_rest: bool = False,
+    skip_args: int | None = None,
 ):
     """
     Mark a `Service` class method as an API method.
@@ -77,6 +78,8 @@ def api_method(
                 'require': pass_app_require,
                 'rest': pass_app_rest,
             }
+        if skip_args is not None:
+            func._skip_arg = skip_args
 
         args_index = calculate_args_index(func, audit_callback)
 

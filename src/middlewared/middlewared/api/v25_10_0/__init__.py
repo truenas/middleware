@@ -13,6 +13,7 @@ from .auth_two_factor import *  # noqa
 from .boot import *  # noqa
 from .boot_environments import *  # noqa
 from .catalog import *  # noqa
+from .certificate import *  # noqa
 from .cloud_backup import *  # noqa
 from .cloud_credential import *  # noqa
 from .cloud_sync import *  # noqa

@@ -3,6 +3,8 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from truenas_crypto_utils.validation import validate_cert_with_chain
+
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
@@ -87,8 +89,8 @@ class KMIPService(ConfigService):
         ca = await self.middleware.call('certificate.query', [['id', '=', new['certificate_authority']]])
         if ca and not verrors:
             ca = ca[0]
-            if not await self.middleware.call(
-                'cryptokey.validate_cert_with_chain',
+            if not await self.middleware.run_in_thread(
+                validate_cert_with_chain,
                 (await self.middleware.call('certificate.get_instance', new['certificate']))['certificate'],
                 [ca['certificate']]
             ):

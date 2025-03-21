@@ -8,11 +8,10 @@ from middlewared.api.current import (
     CertificateECCurveChoicesResult,
     CertificateExtendedKeyUsageChoicesArgs,
     CertificateExtendedKeyUsageChoicesResult,
+    EKU_OID, ECCurves
 )
 from middlewared.service import private, Service
 from middlewared.utils.country_codes import get_country_codes
-
-from .utils import EC_CURVES, EKU_OIDS
 
 
 class CertificateService(Service):
@@ -58,7 +57,7 @@ class CertificateService(Service):
     )
     async def ec_curve_choices(self):
         """Dictionary of supported EC curves."""
-        return {k: k for k in EC_CURVES}
+        return {k.value: k.value for k in ECCurves}
 
     @api_method(
         CertificateExtendedKeyUsageChoicesArgs,
@@ -70,4 +69,4 @@ class CertificateService(Service):
         Dictionary of names that can be used in the
         ExtendedKeyUsage attribute of a certificate request.
         """
-        return {k: k for k in EKU_OIDS}
+        return {k.value: k.value for k in EKU_OID}

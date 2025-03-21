@@ -4,8 +4,9 @@ import os
 from cryptography.hazmat.primitives.asymmetric import dsa, ec, rsa
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from truenas_crypto_utils.read import load_certificate, load_certificate_request, load_private_key
+from truenas_crypto_utils.utils import RE_CERTIFICATE
 
-from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, CERT_ROOT_PATH, RE_CERTIFICATE
+from .utils import CERT_TYPE_EXISTING, CERT_TYPE_CSR, CERT_ROOT_PATH
 
 
 logger = logging.getLogger(__name__)
@@ -19,17 +20,12 @@ def cert_extend_report_error(title: str, cert: dict) -> None:
 
 
 def normalize_cert_attrs(cert: dict) -> None:
-    # Remove ACME related keys if cert is not an ACME based cert
-    if not cert.get('acme'):
-        for key in ['acme', 'acme_uri', 'domains_authenticators', 'renew_days']:
-            cert.pop(key, None)
-
     root_path = CERT_ROOT_PATH
     cert.update({
         'root_path': root_path,
-        'certificate_path': os.path.join(root_path, f'{cert["name"]}.crt'),
-        'privatekey_path': os.path.join(root_path, f'{cert["name"]}.key'),
-        'csr_path': os.path.join(root_path, f'{cert["name"]}.csr'),
+        'certificate_path': None,
+        'privatekey_path': None,
+        'csr_path': None,
         'cert_type': 'CERTIFICATE',
         'cert_type_existing': bool(cert['type'] & CERT_TYPE_EXISTING),
         'cert_type_CSR': bool(cert['type'] & CERT_TYPE_CSR),
@@ -37,6 +33,13 @@ def normalize_cert_attrs(cert: dict) -> None:
         'key_length': None,
         'key_type': None,
     })
+
+    if cert['certificate']:
+        cert['certificate_path'] = os.path.join(root_path, f'{cert["name"]}.crt')
+    if cert['privatekey']:
+        cert['privatekey_path'] = os.path.join(root_path, f'{cert["name"]}.key')
+    if cert['CSR']:
+        cert['csr_path'] = os.path.join(root_path, f'{cert["name"]}.csr')
 
     certs = []
     if len(RE_CERTIFICATE.findall(cert['certificate'] or '')) >= 1:
@@ -82,7 +85,13 @@ def normalize_cert_attrs(cert: dict) -> None:
             cert.update({
                 **csr_data,
                 'from': None,
-                'until': None,  # CSR's don't have from, until - normalizing keys
+                'until': None,  # CSR's don't have it right now
+                'digest_algorithm': None,
+                'lifetime': None,
+                'serial': None,
+                'chain': None,
+                'fingerprint': None,
+                'expired': None,
             })
         else:
             cert_extend_report_error('csr', cert)
@@ -90,12 +99,11 @@ def normalize_cert_attrs(cert: dict) -> None:
 
     if failed_parsing:
         # Normalizing cert/csr
-        # Should we perhaps set the value to something like "MALFORMED_CERTIFICATE" for this list off attrs ?
         cert.update({
             key: None for key in [
                 'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
                 'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
-                'fingerprint', 'extensions', 'expired',
+                'fingerprint', 'extensions', 'expired', 'DN', 'subject_name_hash', 'chain',
             ]
         })
 
