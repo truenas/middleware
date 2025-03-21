@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 from contextlib import suppress
 from middlewared.api import api_method
@@ -82,10 +83,10 @@ class RPC_DBGFLAGS(enum.Enum):
 
 
 class NfsDebug(BaseModel):
-    NFS: UniqueList[NFS_DBGFLAGS.__members__] | None = None
-    NFSD: UniqueList[NFSD_DBGFLAGS.__members__] | None = None
-    NLM: UniqueList[NLM_DBGFLAGS.__members__] | None = None
-    RPC: UniqueList[RPC_DBGFLAGS.__members__] | None = None
+    NFS: UniqueList[Literal[*NFS_DBGFLAGS.__members__]] | None = None
+    NFSD: UniqueList[Literal[*NFSD_DBGFLAGS.__members__]] | None = None
+    NLM: UniqueList[Literal[*NLM_DBGFLAGS.__members__]] | None = None
+    RPC: UniqueList[Literal[*RPC_DBGFLAGS.__members__]] | None = None
 
 
 class NfsDebugGetArgs(BaseModel):
