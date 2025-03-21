@@ -19,14 +19,10 @@ class Disk:
     type: str | None = None
 
 
-def parse_smartctl_for_temperature_output(json) -> Optional[int]:
-    return json['temperature']['current']
-
-
 def get_disks_for_temperature_reading() -> Dict[str, Disk]:
     disks = {}
     for disk in query_table('storage_disk', prefix='disk_'):
-        if disk['serial'] != '' and bool(disk['togglesmart']):
+        if disk['serial'] != '':
             disks[disk['serial']] = Disk(
                 id=disk['name'], identifier=disk['identifier'], serial=disk['serial'],
                 model=disk['model'], type=disk['type'], name=disk['name'],

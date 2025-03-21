@@ -249,8 +249,6 @@ class DiskService(Service, ServiceChangeMixin):
 
     @private
     async def restart_services_after_sync(self):
-        await self.middleware.call('disk.update_smartctl_args_for_disks')
-        await self._service_change('smartd', 'restart')
         await self._service_change('snmp', 'restart')
 
     expired_disks = set()

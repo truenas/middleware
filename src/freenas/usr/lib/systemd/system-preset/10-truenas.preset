@@ -9,7 +9,6 @@ enable tmp.mount
 enable zfs-zed.service
 enable nginx.service
 enable chronyd.service
-enable smartmontools.service
 enable syslog-ng.service
 
 # Disabled services
@@ -32,6 +31,7 @@ disable nvidia-*
 disable walinuxagent*
 disable serial-getty@*
 disable docker*
+disable smartmontools.service
 
 # We want middlewared to import pools
 disable zfs-mount.service

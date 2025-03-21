@@ -56,7 +56,6 @@ from .rdma import *  # noqa
 from .rdma_interface import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
-from .smartctl import *  # noqa
 from .smb import *  # noqa
 from .snmp import *  # noqa
 from .static_route import *  # noqa

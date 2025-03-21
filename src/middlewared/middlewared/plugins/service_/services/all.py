@@ -8,7 +8,6 @@ from .netbios import NetBIOSService
 from .netdata import NetdataService
 from .nfs import NFSService
 from .nscd import NSCDService
-from .smartd import SMARTDService
 from .snmp import SNMPService
 from .ssh import SSHService
 from .sssd import SSSDService
@@ -49,7 +48,6 @@ all_services = [
     NetBIOSService,
     NFSService,
     NSCDService,
-    SMARTDService,
     SNMPService,
     SSHService,
     SSSDService,

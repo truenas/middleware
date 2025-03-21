@@ -45,10 +45,7 @@ def test_002_firstboot_checks(ws_client):
     assert all(mounts[ds]['super_opts'] == ['RW', 'XATTR', 'NOACL', 'CASESENSITIVE'] for ds in expected_ds)
 
     # Verify we don't have any unexpected services running
-    # NOTE: smartd is started with "-q never" which means it should
-    # always start in all circumstances (even if there is an invalid (or empty) config)
-    ignore = ('smartd',)
-    for srv in filter(lambda x: x['service'] not in ignore, ws_client.call('service.query')):
+    for srv in ws_client.call('service.query'):
         assert srv['enable'] is False, f"{srv['service']} service is unexpectedly enabled"
         assert srv['state'] == 'STOPPED', f"{srv['service']} service expected STOPPED, but found {srv['state']}"
 
