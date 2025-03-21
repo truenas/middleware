@@ -131,7 +131,7 @@ class CertificateCreateArgs(BaseModel):
     privatekey: LongNonEmptyString | None = None
     CSR: LongNonEmptyString | None = None
     # Fields used for controlling what type of key is created
-    key_length: int | None = None  # FIXME: Validate key length
+    key_length: Literal[2048, 4096] | None = None
     key_type: Literal['RSA', 'EC'] = 'RSA'
     ec_curve: Literal[tuple(s.value for s in ECCurves)] = 'SECP384R1'
     passphrase: NonEmptyString | None = None
