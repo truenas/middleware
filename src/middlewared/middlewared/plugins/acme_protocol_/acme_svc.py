@@ -1,6 +1,6 @@
-from middlewared.service import Service
+from truenas_acme_utils.client_utils import get_acme_client_and_key
 
-from .client_utils import get_acme_client_and_key
+from middlewared.service import Service
 
 
 class ACMEService(Service):
