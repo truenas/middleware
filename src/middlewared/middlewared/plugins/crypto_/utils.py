@@ -19,7 +19,7 @@ def get_cert_info_from_data(data):
 
 
 def get_private_key(data: dict) -> str:
-    private_key = data['private_key']
+    private_key = data.get('private_key')
     if 'passphrase' in data:
         private_key = export_private_key(data['privatekey'], data['passphrase'])
 

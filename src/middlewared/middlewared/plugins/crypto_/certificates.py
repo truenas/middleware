@@ -275,9 +275,9 @@ class CertificateService(CRUDService):
                 }]
             }
         """
-        create_type = data.pop('create_type')
-        add_to_trusted_store = data.pop('add_to_trusted_store', False)
         verrors = await self.validate_common_attributes(data, 'certificate_create')
+        add_to_trusted_store = data.pop('add_to_trusted_store', False)
+        create_type = data.pop('create_type')
         if add_to_trusted_store and create_type in ('CERTIFICATE_CREATE_IMPORTED_CSR', 'CERTIFICATE_CREATE_CSR'):
             verrors.add('certificate_create.add_to_trusted_store', 'Cannot add CSR to trusted store')
 
