@@ -16,7 +16,7 @@ class SystemGeneralUICertificateChoicesArgs(BaseModel):
 
 
 class SystemGeneralUICertificateChoicesResult(BaseModel):
-    result: dict[str, str]
+    result: dict[int, str]
 
 
 class SystemGeneralUIHTTPSProtocolChoicesArgs(BaseModel):
