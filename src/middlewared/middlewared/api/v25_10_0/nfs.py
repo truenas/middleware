@@ -1,29 +1,57 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import (
-    Field, AfterValidator
-)
+from pydantic import Field, AfterValidator
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
+    BaseModel,
+    Excluded,
+    excluded_field,
+    ForUpdateMetaclass,
+    NonEmptyString,
     single_argument_args,
-    TcpPort, exclude_tcp_ports
+    single_argument_result,
+    TcpPort,
+    exclude_tcp_ports,
 )
 
-__all__ = ["NfsEntry",
-           "NfsUpdateArgs", "NfsUpdateResult",
-           "NfsBindipChoicesArgs", "NfsBindipChoicesResult",
-           "NfsShareEntry",
-           "NfsShareCreateArgs", "NfsShareCreateResult",
-           "NfsShareUpdateArgs", "NfsShareUpdateResult",
-           "NfsShareDeleteArgs", "NfsShareDeleteResult"]
+__all__ = [
+    "GetNFSv3ClientsEntry",
+    "GetNFSv4ClientsEntry",
+    "NfsEntry",
+    "NfsBindipChoicesArgs",
+    "NfsBindipChoicesResult",
+    "NfsClientCountArgs",
+    "NfsClientCountResult",
+    "NfsShareEntry",
+    "NfsShareCreateArgs",
+    "NfsShareCreateResult",
+    "NfsShareUpdateArgs",
+    "NfsShareUpdateResult",
+    "NfsShareDeleteArgs",
+    "NfsShareDeleteResult",
+    "NfsUpdateArgs",
+    "NfsUpdateResult",
+]
 
 MAX_NUM_NFS_NETWORKS = 42
 MAX_NUM_NFS_HOSTS = 42
 NFS_protocols = Literal["NFSV3", "NFSV4"]
 NFS_RDMA_DEFAULT_PORT = 20049
 EXCLUDED_PORTS = [NFS_RDMA_DEFAULT_PORT]
-NfsTcpPort: TypeAlias = Annotated[TcpPort | None, AfterValidator(exclude_tcp_ports(EXCLUDED_PORTS))]
+NfsTcpPort: TypeAlias = Annotated[
+    TcpPort | None, AfterValidator(exclude_tcp_ports(EXCLUDED_PORTS))
+]
+
+
+class GetNFSv3ClientsEntry(BaseModel):
+    ip: str
+    export: str
+
+
+class GetNFSv4ClientsEntry(BaseModel):
+    id: str
+    info: dict
+    states: list[dict]
 
 
 class NfsEntry(BaseModel):
@@ -63,7 +91,7 @@ class NfsEntry(BaseModel):
     """ Enable or disable NFS over RDMA.  Requires RDMA capable NIC. """
 
 
-@single_argument_args('nfs_update')
+@single_argument_args("nfs_update")
 class NfsUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     managed_nfsd: Excluded = excluded_field()
@@ -80,8 +108,17 @@ class NfsBindipChoicesArgs(BaseModel):
 
 
 class NfsBindipChoicesResult(BaseModel):
-    """ Return a dictionary of IP addresses """
+    """Return a dictionary of IP addresses"""
+
     result: dict[str, str]
+
+
+class NfsClientCountArgs(BaseModel):
+    pass
+
+
+class NfsClientCountResult(BaseModel):
+    result: int
 
 
 class NfsShareEntry(BaseModel):
@@ -92,7 +129,9 @@ class NfsShareEntry(BaseModel):
     """ IGNORED for now. """
     comment: str = ""
     """ User comment associated with share. """
-    networks: Annotated[list[NonEmptyString], Field(max_length=MAX_NUM_NFS_NETWORKS)] = []
+    networks: Annotated[
+        list[NonEmptyString], Field(max_length=MAX_NUM_NFS_NETWORKS)
+    ] = []
     """ List of authorized networks that are allowed to access the share having format
         "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed.
         Maximum number of entries: 42 """
