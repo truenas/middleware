@@ -164,7 +164,7 @@ class CertificateCreateArgs(BaseModel):
     For each domain listed in SAN or common name of the CSR, this field should have a mapping of domain to ACME
     DNS Authenticator ID.
     '''
-    renew_days: int = Field(min_length=1, max_length=30, default=10)
+    renew_days: int = Field(ge=1, le=30, default=10)
     '''
     If a cert is expiring on 30th day, and this field is set to 10. System will attempt to renew the cert on 20th day
     and if it fails will continue doing so until it expires.
@@ -176,7 +176,7 @@ class CertificateCreateResult(BaseModel):
 
 
 class CertificateUpdate(BaseModel, metaclass=ForUpdateMetaclass):
-    renew_days: int = Field(min_length=1, max_length=30)
+    renew_days: int = Field(ge=1, le=30)
     add_to_trusted_store: bool
     name: CERT_NAME
 

@@ -11,7 +11,7 @@ class CertificateCreateACMEArgs(BaseModel):
     name: NonEmptyString
     tos: bool
     csr_id: int
-    renew_days: int = Field(min_length=1, max_length=30)
+    renew_days: int = Field(ge=1, le=30)
     acme_directory_uri: NonEmptyString
     dns_mapping: dict[str, int]
 
