@@ -2,6 +2,7 @@ import datetime
 
 from truenas_crypto_utils.csr import generate_certificate_signing_request
 from truenas_crypto_utils.read import load_certificate, load_certificate_request, RE_CERTIFICATE
+from truenas_crypto_utils.validation import validate_certificate_with_key, validate_private_key
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -154,7 +155,8 @@ class CertificateService(CRUDService):
         private_key = data.get('privatekey')
         passphrase = data.get('passphrase')
         if private_key:
-            await self.middleware.call('cryptokey.validate_private_key', private_key, verrors, schema_name, passphrase)
+            if err := await self.middleware.run_in_thread(validate_private_key, private_key, passphrase):
+                verrors.add(f'{schema_name}.privatekey', err)
 
         if csr := data.get('CSR'):
             if not await self.middleware.run_in_thread(load_certificate_request, csr):
@@ -172,9 +174,12 @@ class CertificateService(CRUDService):
                 'Please provide a valid csr_id'
             )
 
-        if 'imported' in create_type.lower():
-            await self.middleware.call(
-                'cryptokey.validate_certificate_with_key', certificate, private_key, schema_name, verrors, passphrase,
+        if create_type == 'CERTIFICATE_CREATE_IMPORTED' and (err := await self.middleware.run_in_thread(
+            validate_certificate_with_key, certificate, private_key, passphrase
+        )):
+            verrors.add(
+                f'{schema_name}.privatekey',
+                f'Private key does not match certificate: {err}'
             )
 
         if create_type == 'CERTIFICATE_CREATE_CSR':
