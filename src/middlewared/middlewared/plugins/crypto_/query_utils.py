@@ -85,7 +85,13 @@ def normalize_cert_attrs(cert: dict) -> None:
             cert.update({
                 **csr_data,
                 'from': None,
-                'until': None,  # CSR's don't have from, until - normalizing keys
+                'until': None,  # CSR's don't have it right now
+                'digest_algorithm': None,
+                'lifetime': None,
+                'serial': None,
+                'chain': None,
+                'fingerprint': None,
+                'expired': None,
             })
         else:
             cert_extend_report_error('csr', cert)
