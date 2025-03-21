@@ -64,8 +64,13 @@ class DiskEntry:
         if relative_path is None and absolute_path is None:
             raise ValueError("relative_path or absolute_path is required")
 
+        if relative_path is not None:
+            path = f'/sys/block/{self.name}/{relative_path}'
+        else:
+            path = absolute_path
+
         try:
-            with open(relative_path or absolute_path, mode) as f:
+            with open(path, mode) as f:
                 return f.read().strip()
         except Exception:
             pass
