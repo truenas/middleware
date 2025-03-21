@@ -17,8 +17,6 @@ VALID_WHOLE_DISK = rcompile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
 class TempEntry:
     temp_c: float | None = None
     """The current temperature in celsius"""
-    temp_f: float | None = None
-    """The current temperature in farenheit"""
     crit: float | None = None
     """This value is reported as celsius.
 
@@ -179,7 +177,6 @@ class DiskEntry:
         else:
             return f"{{devicename}}{self.name}"
 
-    @property
     def temp(self) -> TempEntry:
         """Return temperature information as reported via sysfs.
         This information is obtained via the drivetemp kernel
@@ -195,7 +192,7 @@ class DiskEntry:
         else:
             path = f"{base}/device/hwmon"
 
-        rv = {"temp_c": None, "temp_f": None, "crit": None}
+        rv = {"temp_c": None, "crit": None}
         try:
             with scandir(path) as sdir:
                 for i in filter(
@@ -217,9 +214,6 @@ class DiskEntry:
                     else:
                         # sysfs values are stored in millidegrees celsius
                         rv["temp_c"] = milli_c / 1000
-                        rv["temp_f"] = round(
-                            (rv["temp_c"] * (9 / 5)) + 32 if rv["temp_c"] != 0 else 0, 2
-                        )
 
                     try:
                         crit = int(self.__opener(absolute_path=f"{i.path}/temp1_crit"))
