@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Annotated, Literal
 
 from cryptography import x509
-from pydantic import AfterValidator, EmailStr, Field, StringConstraints
+from pydantic import AfterValidator, EmailStr, Field, Secret, StringConstraints
 
 from middlewared.api.base import (
     BaseModel, ForUpdateMetaclass, LongString, LongNonEmptyString, match_validator,
@@ -41,7 +41,7 @@ class CertificateEntry(BaseModel):
     type: int
     name: NonEmptyString
     certificate: LongString | None
-    privatekey: LongString | None
+    privatekey: Secret[LongString | None]
     CSR: LongString | None
     acme_uri: str | None
     domains_authenticators: dict | None
@@ -128,7 +128,7 @@ class CertificateCreateArgs(BaseModel):
     add_to_trusted_store: bool = False
     # Fields for importing certs/CSRs
     certificate: LongNonEmptyString | None = None
-    privatekey: LongNonEmptyString | None = None
+    privatekey: Secret[LongNonEmptyString | None] = None
     CSR: LongNonEmptyString | None = None
     # Fields used for controlling what type of key is created
     key_length: Literal[2048, 4096] | None = None
