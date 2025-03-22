@@ -5,6 +5,7 @@ import errno
 from acme import errors, messages
 from truenas_acme_utils.client_utils import get_acme_client_and_key
 from truenas_acme_utils.event import event_callbacks
+from truenas_acme_utils.exceptions import CallError as AcmeUtilsCallError
 from truenas_acme_utils.issue_cert import issue_certificate
 from truenas_crypto_utils.generate_utils import normalize_san
 
@@ -103,6 +104,17 @@ class ACMEService(Service):
             dns_mapping_copy[domain] = self.middleware.call_sync(
                 'acme.dns.authenticator.get_authenticator_internal', auth_details['attributes']['authenticator'],
             )(self.middleware, auth_details['attributes'])
+
+        def progress_callback(progress_int, description):
+            job.set_progress(progress_int, description)
+
+        event_callbacks.register(progress_callback)
+        try:
+            return issue_certificate(acme_client_key_payload, csr, dns_mapping_copy)
+        except AcmeUtilsCallError as e:
+            raise CallError(str(e))
+        finally:
+            event_callbacks.remove_callback(progress_callback)
 
         acme_client, key = get_acme_client_and_key(acme_client_key_payload)
         try:
