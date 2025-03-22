@@ -106,7 +106,7 @@ class ACMEService(Service):
 
         event_callbacks.register(progress_callback)
         try:
-            return issue_certificate(acme_client_key_payload, csr, dns_mapping_copy)
+            return issue_certificate(acme_client_key_payload, csr, dns_mapping_copy, progress)
         except AcmeUtilsCallError as e:
             raise CallError(str(e))
         finally:
