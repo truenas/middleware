@@ -4,6 +4,8 @@ import errno
 
 from acme import errors, messages
 from truenas_acme_utils.client_utils import get_acme_client_and_key
+from truenas_acme_utils.event import event_callbacks
+from truenas_acme_utils.issue_cert import issue_certificate
 from truenas_crypto_utils.generate_utils import normalize_san
 
 from middlewared.service import Service, ValidationErrors
@@ -81,6 +83,27 @@ class ACMEService(Service):
         return self.issue_certificate_impl(job, progress, acme_client_key_payload, csr_data['CSR'], dns_mapping_copy)
 
     def issue_certificate_impl(self, job, progress, acme_client_key_payload, csr, dns_mapping_copy):
+        # Let's make sure for dns mapping, we have authenticator objects in place
+        authenticators = {
+            o['id']: o
+            for o in self.middleware.call_sync(
+                'acme.dns.authenticator.query', [['id', 'in', list(dns_mapping_copy.values())]]
+            )
+        }
+        for domain, authenticator_id in dns_mapping_copy.items():
+            if authenticator_id is None:
+                auth_details = {
+                    'attributes': {
+                        'authenticator': 'tn_connect', **self.middleware.call_sync('tn_connect.config_internal')
+                    }
+                }
+            else:
+                auth_details = authenticators[authenticator_id]
+
+            dns_mapping_copy[domain] = self.middleware.call_sync(
+                'acme.dns.authenticator.get_authenticator_internal', auth_details['attributes']['authenticator'],
+            )(self.middleware, auth_details['attributes'])
+
         acme_client, key = get_acme_client_and_key(acme_client_key_payload)
         try:
             # perform operations and have a cert issued

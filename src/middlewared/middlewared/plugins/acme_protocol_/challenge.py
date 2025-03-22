@@ -1,3 +1,4 @@
+from typing import Any
 import josepy as jose
 import json
 
@@ -12,7 +13,7 @@ from .authenticators.factory import auth_factory
 
 @single_argument_args('acme_dns_authenticator_performance_challenge')
 class ACMEDNSAuthenticatorPerformChallengeArgs(BaseModel):
-    authenticator: int | None
+    authenticator: Any
     key: LongString
     domain: str
     challenge: LongString
@@ -29,12 +30,12 @@ class DNSAuthenticatorService(Service):
 
     @api_method(ACMEDNSAuthenticatorPerformChallengeArgs, ACMEDNSAuthenticatorPerformChallengeResult, private=True)
     def perform_challenge(self, data):
-        authenticator = self.get_authenticator(data['authenticator'])
+        authenticator = data['authenticator']
         authenticator.perform(*self.get_validation_parameters(data['challenge'], data['domain'], data['key']))
 
     @private
     def cleanup_challenge(self, data):
-        authenticator = self.get_authenticator(data['authenticator'])
+        authenticator = data['authenticator']
         authenticator.cleanup(*self.get_validation_parameters(data['challenge'], data['domain'], data['key']))
 
     @private
