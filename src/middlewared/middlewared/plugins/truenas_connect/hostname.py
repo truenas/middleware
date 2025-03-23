@@ -1,8 +1,7 @@
 import logging
 
-from truenas_connect_utils.config import get_account_id_and_system_id
-from truenas_connect_utils.hostname import hostname_config
-from truenas_connect_utils.urls import get_hostname_url
+from truenas_connect_utils.exceptions import CallError as TNCCallError
+from truenas_connect_utils.hostname import hostname_config, register_update_ips
 
 from middlewared.service import CallError, Service
 
@@ -27,13 +26,7 @@ class TNCHostnameService(Service, TNCAPIMixin):
 
     async def register_update_ips(self, ips=None):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
-        ips = ips or tnc_config['ips']
-        logger.debug('Updating TNC hostname configuration with %r ips', ','.join(ips))
-        config = await self.config()
-        if config['error']:
-            raise CallError(f'Failed to fetch TNC hostname configuration: {config["error"]}')
-
-        creds = get_account_id_and_system_id(tnc_config)
-        return await self.call(
-            get_hostname_url(tnc_config).format(**creds), 'put', payload={'ips': ips},
-        )
+        try:
+            return await register_update_ips(tnc_config, ips or tnc_config['ips'])
+        except TNCCallError as e:
+            raise CallError(str(e))
