@@ -1,3 +1,4 @@
+import contextlib
 from datetime import datetime
 import glob
 import os
@@ -290,12 +291,24 @@ def setup(middleware):
 
         if os.path.exists(PWENC_UPLOADED):
             shutil.move(PWENC_UPLOADED, PWENC_FILE_SECRET)
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(PWENC_FILE_SECRET)
 
         if os.path.exists(ADMIN_KEYS_UPLOADED):
             shutil.move(ADMIN_KEYS_UPLOADED, CONFIG_FILES['admin_authorized_keys'])
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(CONFIG_FILES['admin_authorized_keys'])
 
         if os.path.exists(TRUENAS_ADMIN_KEYS_UPLOADED):
             shutil.move(TRUENAS_ADMIN_KEYS_UPLOADED, CONFIG_FILES['truenas_admin_authorized_keys'])
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(CONFIG_FILES['truenas_admin_authorized_keys'])
 
         if os.path.exists(ROOT_KEYS_UPLOADED):
             shutil.move(ROOT_KEYS_UPLOADED, CONFIG_FILES['root_authorized_keys'])
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(CONFIG_FILES['root_authorized_keys'])
