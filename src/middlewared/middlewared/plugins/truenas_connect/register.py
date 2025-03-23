@@ -3,6 +3,7 @@ import logging
 import uuid
 from urllib.parse import urlencode
 
+from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_registration_uri
 
 from middlewared.api import api_method
@@ -11,7 +12,6 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, Service
 
-from .status_utils import Status
 from .utils import CLAIM_TOKEN_CACHE_KEY
 
 

@@ -2,12 +2,12 @@ import asyncio
 import logging
 
 import jwt
+from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_registration_finalization_uri
 
 from middlewared.service import job, Service
 
 from .mixin import TNCAPIMixin
-from .status_utils import Status
 from .utils import CLAIM_TOKEN_CACHE_KEY
 
 

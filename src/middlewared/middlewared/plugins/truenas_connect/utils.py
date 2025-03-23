@@ -1,7 +1,7 @@
 import datetime
 import math
 
-from .status_utils import Status
+from truenas_connect_utils.status import Status
 
 
 CERT_RENEW_DAYS = 5
