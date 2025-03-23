@@ -1,8 +1,7 @@
 import logging
 import uuid
 
-from truenas_connect_utils.acme import acme_config
-from truenas_connect_utils.cert import get_hostnames_from_hostname_config, generate_csr
+from truenas_connect_utils.acme import acme_config, create_cert
 from truenas_connect_utils.status import Status
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
@@ -113,35 +112,14 @@ class TNCACMEService(Service, TNCAPIMixin):
 
     @job(lock='tn_connect_cert_generation')
     async def create_cert(self, job, cert_id=None):
-        hostname_config = await self.middleware.call('tn_connect.hostname.config')
-        if hostname_config['error']:
-            raise CallError(f'Failed to fetch TNC hostname configuration: {hostname_config["error"]}')
-
-        acme_config = await self.middleware.call('tn_connect.acme.config')
-        if acme_config['error']:
-            raise CallError(f'Failed to fetch TNC ACME configuration: {acme_config["error"]}')
-
-        hostnames = get_hostnames_from_hostname_config(hostname_config)
+        csr_details = None
         if cert := (await self.middleware.call('certificate.query', [['id', '=', cert_id]])):
-            logger.debug('Retrieved CSR of existing TNC certificate')
-            csr, private_key = cert[0]['CSR'], cert[0]['privatekey']
-        else:
-            logger.debug('Generating CSR for TNC certificate')
-            csr, private_key = generate_csr(hostnames)
+            csr_details = {
+                'csr': cert[0]['CSR'],
+                'private_key': cert[0]['privatekey'],
+            }
 
-        dns_mapping = {f'DNS:{hostname}': None for hostname in hostnames}
-
-        logger.debug('Performing ACME challenge for TNC certificate')
-        final_order = await self.middleware.call(
-            'acme.issue_certificate_impl', job, 25, acme_config['acme_details'], csr, dns_mapping,
-        )
-
-        return {
-            'cert': final_order.fullchain_pem,
-            'acme_uri': final_order.uri,
-            'private_key': private_key,
-            'csr': csr,
-        }
+        return await create_cert(await self.middleware.call('tn_connect.config_internal'), csr_details)
 
     async def revoke_cert(self):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
