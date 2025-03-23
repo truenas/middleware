@@ -11,11 +11,11 @@ __all__ = ["MailEntry", "MailUpdateArgs", "MailUpdateResult", "MailSendArgs", "M
 
 
 class MailEntryOAuth(BaseModel):
-    provider: str = NotRequired
+    provider: str
     """An email provider, e.g. "gmail", "outlook"."""
-    client_id: str = NotRequired
-    client_secret: str = NotRequired
-    refresh_token: Secret[LongString] = NotRequired
+    client_id: str
+    client_secret: str
+    refresh_token: LongString
 
 
 class MailEntry(BaseModel):
@@ -37,15 +37,8 @@ class MailEntry(BaseModel):
     id: int
 
 
-class MailUpdateOAuth(MailEntryOAuth):
-    client_id: str
-    client_secret: str
-    refresh_token: Secret[LongString]
-
-
 class MailUpdate(MailEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
-    oauth: Secret[MailUpdateOAuth | None]
 
 
 class MailSendMessage(BaseModel):
