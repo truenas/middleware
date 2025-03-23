@@ -1,9 +1,10 @@
 import logging
 
+from truenas_connect_utils.urls import get_hostname_url
+
 from middlewared.service import CallError, Service
 
 from .mixin import TNCAPIMixin
-from .urls import get_hostname_url
 from .utils import get_account_id_and_system_id
 
 

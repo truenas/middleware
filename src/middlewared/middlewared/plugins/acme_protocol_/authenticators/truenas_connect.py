@@ -2,9 +2,10 @@ import json
 import logging
 import requests
 
+from truenas_connect_utils.urls import get_leca_cleanup_url, get_leca_dns_url
+
 from middlewared.api.current import TrueNASConnectSchemaArgs
 from middlewared.plugins.truenas_connect.mixin import auth_headers
-from middlewared.plugins.truenas_connect.urls import get_leca_cleanup_url, get_leca_dns_url
 from middlewared.service import CallError
 
 from .base import Authenticator
