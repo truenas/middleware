@@ -1,15 +1,14 @@
 import asyncio
 import datetime
 import time
-import json
 
 from middlewared.api import api_method
 from middlewared.api.current import DiskTemperatureAlertsArgs, DiskTemperatureAlertsResult
-from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.disk_temperatures import parse_smartctl_for_temperature_output
+
+POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
 
 
 class DiskService(Service):
@@ -23,7 +22,6 @@ class DiskService(Service):
                 'disk.query',
                 [
                     ['name', '!=', None],
-                    ['togglesmart', '=', True],
                 ]
             )
         ]
@@ -33,7 +31,7 @@ class DiskService(Service):
         Dict(
             'options',
             Int('cache', default=None, null=True),
-            Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
+            Str('powermode', enum=POWERMODES, default=POWERMODES[0]),
         ),
         deprecated=[
             (
@@ -62,8 +60,7 @@ class DiskService(Service):
 
     @private
     async def temperature_uncached(self, name, powermode):
-        if output := await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower(), '--json=c'], {'silent': True}):
-            return parse_smartctl_for_temperature_output(json.loads(output))
+        return 0  # FIXME
 
     @private
     async def reset_temperature_cache(self):
@@ -79,7 +76,7 @@ class DiskService(Service):
             # occurs in 299.9 seconds.
             Int('cache', default=290, null=True),
             Bool('only_cached', default=False),
-            Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
+            Str('powermode', enum=POWERMODES, default=POWERMODES[0]),
         ),
         deprecated=[
             (
@@ -144,13 +141,4 @@ class DiskService(Service):
         """
         Returns existing temperature alerts for specified disk `names.`
         """
-        devices = {f'/dev/{name}' for name in names}
-        alerts = await self.middleware.call('alert.list')
-        return [
-            alert for alert in alerts
-            if (
-                alert['klass'] == 'SMART' and
-                alert['args']['device'] in devices and
-                'temperature' in alert['args']['message'].lower()
-            )
-        ]
+        return []  # FIXME
