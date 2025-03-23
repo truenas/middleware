@@ -1,14 +1,12 @@
 import logging
 import uuid
 
-from truenas_connect_utils.config import get_account_id_and_system_id
+from truenas_connect_utils.acme import acme_config
 from truenas_connect_utils.status import Status
-from truenas_connect_utils.urls import get_acme_config_url
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, job, Service
 
-from .acme_utils import normalize_acme_config
 from .cert_utils import generate_csr, get_hostnames_from_hostname_config
 from .mixin import TNCAPIMixin
 from .utils import CERT_RENEW_DAYS
@@ -28,23 +26,7 @@ class TNCACMEService(Service, TNCAPIMixin):
         return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config))
 
     async def config(self):
-        config = await self.middleware.call('tn_connect.config_internal')
-        creds = get_account_id_and_system_id(config)
-        if not config['enabled'] or creds is None:
-            return {
-                'error': 'TrueNAS Connect is not enabled or not configured properly',
-                'tnc_configured': False,
-                'acme_details': {},
-            }
-
-        resp = await self.call(get_acme_config_url(config).format(account_id=creds['account_id']), 'get')
-        resp['acme_details'] = resp.pop('response')
-        if resp['error'] is None:
-            resp = normalize_acme_config(resp)
-
-        return resp | {
-            'tnc_configured': True,
-        }
+        return await acme_config(await self.middleware.call('tn_connect.config_internal'))
 
     async def update_ui(self):
         logger.debug('Updating UI with TNC cert')
