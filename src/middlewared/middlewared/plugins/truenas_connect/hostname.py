@@ -1,6 +1,7 @@
 import logging
 
 from truenas_connect_utils.config import get_account_id_and_system_id
+from truenas_connect_utils.hostname import hostname_config
 from truenas_connect_utils.urls import get_hostname_url
 
 from middlewared.service import CallError, Service
@@ -22,28 +23,7 @@ class TNCHostnameService(Service, TNCAPIMixin):
         return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config))
 
     async def config(self):
-        config = await self.middleware.call('tn_connect.config_internal')
-        creds = get_account_id_and_system_id(config)
-        if not config['enabled'] or creds is None:
-            return {
-                'error': 'TrueNAS Connect is not enabled or not configured properly',
-                'tnc_configured': False,
-                'hostname_details': {},
-                'base_domain': None,
-                'hostname_configured': False,
-            }
-
-        resp = (await self.call(get_hostname_url(config).format(**creds), 'get')) | {'base_domain': None}
-        resp['hostname_details'] = resp.pop('response')
-        for domain in resp['hostname_details']:
-            if len(domain.rsplit('.', maxsplit=4)) == 5 and domain.startswith('*.'):
-                resp['base_domain'] = domain.split('.', maxsplit=1)[-1]
-                break
-
-        return resp | {
-            'tnc_configured': True,
-            'hostname_configured': bool(resp['hostname_details']),
-        }
+        return await hostname_config(await self.middleware.call('tn_connect.config_internal'))
 
     async def register_update_ips(self, ips=None):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
