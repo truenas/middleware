@@ -3,6 +3,7 @@ import contextlib
 import datetime
 import logging
 
+from truenas_connect_utils.config import get_account_id_and_system_id
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_heartbeat_url
 
@@ -11,9 +12,7 @@ from middlewared.utils.disks import get_disks_with_identifiers
 from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
-from .utils import (
-    calculate_sleep, CONFIGURED_TNC_STATES, get_account_id_and_system_id, get_unset_payload, HEARTBEAT_INTERVAL,
-)
+from .utils import calculate_sleep, CONFIGURED_TNC_STATES, get_unset_payload, HEARTBEAT_INTERVAL
 
 
 logger = logging.getLogger('truenas_connect')
