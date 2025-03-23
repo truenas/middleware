@@ -2,12 +2,12 @@ import logging
 import uuid
 
 from truenas_connect_utils.acme import acme_config
+from truenas_connect_utils.cert import get_hostnames_from_hostname_config, generate_csr
 from truenas_connect_utils.status import Status
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, job, Service
 
-from .cert_utils import generate_csr, get_hostnames_from_hostname_config
 from .mixin import TNCAPIMixin
 from .utils import CERT_RENEW_DAYS
 
