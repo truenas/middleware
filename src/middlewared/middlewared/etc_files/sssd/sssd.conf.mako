@@ -1,6 +1,3 @@
-#
-# NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
-#
 <%
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.plugins.ldap_ import constants, utils
