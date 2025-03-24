@@ -3,7 +3,7 @@ import pytest
 from contextlib import contextmanager
 from middlewared.test.integration.assets.directory_service import ipa, FREEIPA_ADMIN_BINDPW
 from middlewared.test.integration.assets.product import product_type
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 
@@ -143,6 +143,17 @@ def test_dns_resolution(do_freeipa_connection):
 
     addresses = call('dnsclient.forward_lookup', {'names': [ipa_config['host']]})
     assert len(addresses) != 0
+
+
+def test_ipa_config_recover(do_freeipa_connection):
+    """ Remove the default config and verify our health check restores it """
+    ssh('rm /etc/ipa/default.config')
+    with pytest.raises(Exception, match="IPA default.config is missing"):
+        call('directoryservices.heatlh.check')
+
+    call('directoryservices.health.recover')
+    st = call('directoryservices.status')
+    assert st['status'] == 'HEALTHY'
 
 
 def test_ldap_bind_legacy_kerberos_principal(do_freeipa_connection):
