@@ -123,7 +123,7 @@ class EtcService(Service):
                 {'method': 'directoryservices.status'}
             ],
             'entries': [
-                {'type': 'py', 'path': 'ipa/default_conf'},
+                {'type': 'py', 'path': 'ipa/default.conf'},
                 {'type': 'py', 'path': 'ipa/ca.crt'},
                 {'type': 'py', 'path': 'ipa/smb.keytab', 'mode': 0o600}
             ]
