@@ -7,22 +7,17 @@ from truenas_connect_utils.status import Status
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, job, Service
 
-from .mixin import TNCAPIMixin
 from .utils import CERT_RENEW_DAYS
 
 
 logger = logging.getLogger('truenas_connect')
 
 
-class TNCACMEService(Service, TNCAPIMixin):
+class TNCACMEService(Service):
 
     class Config:
         private = True
         namespace = 'tn_connect.acme'
-
-    async def call(self, url, mode, payload=None):
-        config = await self.middleware.call('tn_connect.config_internal')
-        return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config))
 
     async def config(self):
         return await acme_config(await self.middleware.call('tn_connect.config_internal'))

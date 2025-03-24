@@ -5,21 +5,15 @@ from truenas_connect_utils.hostname import hostname_config, register_update_ips
 
 from middlewared.service import CallError, Service
 
-from .mixin import TNCAPIMixin
-
 
 logger = logging.getLogger('truenas_connect')
 
 
-class TNCHostnameService(Service, TNCAPIMixin):
+class TNCHostnameService(Service):
 
     class Config:
         namespace = 'tn_connect.hostname'
         private = True
-
-    async def call(self, url, mode, payload=None):
-        config = await self.middleware.call('tn_connect.config_internal')
-        return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config))
 
     async def config(self):
         return await hostname_config(await self.middleware.call('tn_connect.config_internal'))
