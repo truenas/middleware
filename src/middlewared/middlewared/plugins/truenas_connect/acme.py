@@ -2,6 +2,7 @@ import logging
 import uuid
 
 from truenas_connect_utils.acme import acme_config, create_cert
+from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.status import Status
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
@@ -114,7 +115,10 @@ class TNCACMEService(Service):
                 'private_key': cert[0]['privatekey'],
             }
 
-        return await create_cert(await self.middleware.call('tn_connect.config_internal'), csr_details)
+        try:
+            return await create_cert(await self.middleware.call('tn_connect.config_internal'), csr_details)
+        except TNCCallError as e:
+            raise CallError(str(e))
 
     async def revoke_cert(self):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
