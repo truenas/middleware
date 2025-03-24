@@ -29,7 +29,7 @@
             )['realm']
 
         ldap_enabled = ldap['enable']
-        domain = kerberos_realm or ldap['hostname'][0]
+        domain = kerberos_realm or 'LDAP'
 
         ldap_enabled = ldap['enable']
         for param in ldap['auxiliary_parameters'].splitlines():
