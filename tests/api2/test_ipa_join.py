@@ -147,7 +147,7 @@ def test_dns_resolution(do_freeipa_connection):
 
 def test_ipa_config_recover(do_freeipa_connection):
     """ Remove the default config and verify our health check restores it """
-    ssh('rm /etc/ipa/default.config')
+    ssh('rm /etc/ipa/default.conf')
     with pytest.raises(Exception, match="IPA default.config is missing"):
         call('directoryservices.heatlh.check')
 
