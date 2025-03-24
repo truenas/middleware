@@ -54,7 +54,7 @@ class IPAHealthMixin:
             st = os.stat(ipa_constants.IPAPath.DEFAULTCONF.path)
         except FileNotFoundError:
             self._faulted_reason = (
-                'IPA default_config file is missing. This may indicate that '
+                'IPA default.conf file is missing. This may indicate that '
                 'an administrator has enabled the IPA service through '
                 'unsupported methods. Rejoining the IPA domain may be required.'
             )
