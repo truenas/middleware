@@ -854,6 +854,12 @@ class ActiveDirectoryService(ConfigService):
             )
 
         if ad['kerberos_realm']:
+            # Forcibly unset kerberos realm from LDAP plugin. This is OK because the
+            # two plugins may not be enabled simultaneously. In 25.10 these plugins
+            # will be unified into single directoryservices plugin
+            await self.middleware.call(
+                'datastore.update', 'directoryservice.ldap', 1, {'ldap_kerberos_realm': None}
+            )
             try:
                 await self.middleware.call(
                     'datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm']
