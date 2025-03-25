@@ -199,17 +199,8 @@ class DirectoryServices(Service):
     @private
     @job(lock='ds_init', lock_queue_size=1)
     def setup(self, job):
-        config_in_progress = self.middleware.call_sync("core.get_jobs", [
-            ["method", "=", "smb.configure"],
-            ["state", "=", "RUNNING"]
-        ])
-        if config_in_progress:
-            job.set_progress(0, "waiting for smb.configure to complete")
-            wait_id = self.middleware.call_sync('core.job_wait', config_in_progress[0]['id'])
-            wait_id.wait_sync()
-
-        if not self.middleware.call_sync('smb.is_configured'):
-            raise CallError('Skipping directory service setup due to SMB service being unconfigured')
+        config_job = self.middleware.call_sync('smb.configure')
+        config_job.wait_sync(raise_error=True)
 
         failover_status = self.middleware.call_sync('failover.status')
         if failover_status not in ('SINGLE', 'MASTER'):

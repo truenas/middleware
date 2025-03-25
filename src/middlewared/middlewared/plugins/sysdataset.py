@@ -200,14 +200,6 @@ class SystemDatasetService(ConfigService):
             p: p for p in sorted(set(pools))
         }
 
-    @private
-    async def _post_setup_service_restart(self):
-        await self.middleware.call('smb.setup_directories')
-
-        # The following should be backgrounded since they may be quite
-        # long-running.
-        await self.middleware.call('smb.configure', False)
-
     @accepts(Dict(
         'sysdataset_update',
         Str('pool', null=True),
@@ -357,7 +349,6 @@ class SystemDatasetService(ConfigService):
                 if job.error:
                     raise CallError(job.error)
 
-                self.middleware.call_sync('systemdataset._post_setup_service_restart')
                 return
 
         mntinfo = self.middleware.call_sync('filesystem.mount_info')
@@ -435,9 +426,6 @@ class SystemDatasetService(ConfigService):
             subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
             subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
-
-        if mounted:
-            self.middleware.call_sync('systemdataset._post_setup_service_restart')
 
         return self.middleware.call_sync('systemdataset.config')
 
