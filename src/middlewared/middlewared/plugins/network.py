@@ -549,7 +549,7 @@ class InterfaceService(CRUDService):
     @api_method(InterfaceHasPendingChangesArgs, InterfaceHasPendingChangesResult, roles=['NETWORK_INTERFACE_WRITE'])
     async def has_pending_changes(self):
         """
-        Returns whether there are pending interfaces changes to be applied or not.
+        Return whether there are pending interfaces changes to be applied or not.
         """
         return bool(self._original_datastores)
 
@@ -604,9 +604,8 @@ class InterfaceService(CRUDService):
     @api_method(InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, roles=['NETWORK_INTERFACE_WRITE'])
     async def checkin_waiting(self):
         """
-        Returns whether we are waiting user to check in the applied network changes
+        Returns whether we are waiting for the user to check in the applied network changes
         before they are rolled back.
-        Value is in number of seconds or null.
         """
         if self._rollback_timer:
             remaining = self._rollback_timer.when() - asyncio.get_event_loop().time()
@@ -617,11 +616,6 @@ class InterfaceService(CRUDService):
     async def commit(self, options):
         """
         Commit/apply pending interfaces changes.
-
-        `rollback` as true (default) will roll back changes in case they fail to apply.
-        `checkin_timeout` is the time in seconds it will wait for the checkin call to acknowledge
-        the interfaces changes happened as planned from the user. If checkin does not happen
-        within this period of time the changes will get reverted.
         """
         verrors = ValidationErrors()
         schema = 'interface.commit'
@@ -1375,12 +1369,6 @@ class InterfaceService(CRUDService):
     async def choices(self, options):
         """
         Choices of available network interfaces.
-
-        `bridge_members` will include BRIDGE members.
-        `lag_ports` will include LINK_AGGREGATION ports.
-        `vlan_parent` will include VLAN parent interface.
-        `exclude` is a list of interfaces prefix to remove.
-        `include` is a list of interfaces that should not be removed.
         """
         interfaces = await self.middleware.call('interface.query')
         choices = {i['name']: i['description'] or i['name'] for i in interfaces}
@@ -1442,9 +1430,6 @@ class InterfaceService(CRUDService):
     async def lag_ports_choices(self, id_):
         """
         Return available interface choices that can be added to a `bond` (lag) interface.
-
-        `id` is name of existing bond interface on the system that will have its member
-                interfaces included.
         """
         exclude = {}
         include = {}
@@ -1675,29 +1660,6 @@ class InterfaceService(CRUDService):
     def ip_in_use(self, choices):
         """
         Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.
-
-        `loopback` will return loopback interface addresses.
-
-        `any` will return wildcard addresses (0.0.0.0 and ::).
-
-        `static` when enabled will ensure we only return static ip's configured.
-
-        Returns a list of dicts - eg -
-
-        [
-            {
-                "type": "INET6",
-                "address": "fe80::5054:ff:fe16:4aac",
-                "netmask": 64
-            },
-            {
-                "type": "INET",
-                "address": "192.168.122.148",
-                "netmask": 24,
-                "broadcast": "192.168.122.255"
-            },
-        ]
-
         """
         list_of_ip = []
         static_ips = {}

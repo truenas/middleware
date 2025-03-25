@@ -103,16 +103,24 @@ class InterfaceEntry(BaseModel):
 
 class InterfaceChoicesOptions(BaseModel):
     bridge_members: bool = False
+    """Include BRIDGE members."""
     lag_ports: bool = False
+    """Include LINK_AGGREGATION ports."""
     vlan_parent: bool = True
+    """Include VLAN parent interface."""
     exclude: list[str] = ["epair", "tap", "vnet"]
+    """Prefixes of interfaces to exclude from the result."""
     exclude_types: list[Literal["BRIDGE", "LINK_AGGREGATION", "PHYSICAL", "UNKNOWN", "VLAN"]] = []
-    include: list = []
+    include: list[str] = []
+    """Interfaces that should not be excluded."""
 
 
 class InterfaceCommitOptions(BaseModel):
     rollback: bool = True
+    """Roll back changes in case they fail to apply."""
     checkin_timeout: int = 60
+    """Number of seconds to wait for the checkin call to acknowledge the interface changes happened as planned from the
+    user. If checkin does not happen within this period of time, the changes will get reverted."""
 
 
 class InterfaceCreate(BaseModel, ABC):
@@ -159,8 +167,11 @@ class InterfaceIPInUseOptions(BaseModel):
     ipv6: bool = True
     ipv6_link_local: bool = False
     loopback: bool = False
+    """Return loopback interface addresses."""
     any: bool = False
+    """Return wildcard addresses (0.0.0.0 and ::)."""
     static: bool = False
+    """Only return configured static IPs."""
 
 
 class InterfaceUpdateBridge(InterfaceCreateBridge, metaclass=ForUpdateMetaclass):
@@ -210,6 +221,7 @@ class InterfaceCheckinWaitingArgs(BaseModel):
 
 class InterfaceCheckinWaitingResult(BaseModel):
     result: int | None
+    """Number of seconds left to wait or `null` if not waiting."""
 
 
 class InterfaceChoicesArgs(BaseModel):
@@ -268,7 +280,19 @@ class InterfaceIPInUseArgs(BaseModel):
 
 
 class InterfaceIPInUseResult(BaseModel):
-    result: list[InterfaceEntryStateAlias]
+    result: list[InterfaceEntryStateAlias] = Field(examples=[[
+        {
+            "type": "INET6",
+            "address": "fe80::5054:ff:fe16:4aac",
+            "netmask": 64
+        },
+        {
+            "type": "INET",
+            "address": "192.168.122.148",
+            "netmask": 24,
+            "broadcast": "192.168.122.255"
+        },
+    ]])
 
 
 class InterfaceLacpduRateChoicesArgs(BaseModel):
@@ -339,6 +363,7 @@ class InterfaceWebsocketLocalIPArgs(BaseModel):
 
 class InterfaceWebsocketLocalIPResult(BaseModel):
     result: IPvAnyAddress | None
+    """The local IP address for the current websocket session or `null`."""
 
 
 class InterfaceXmitHashPolicyChoicesArgs(BaseModel):
