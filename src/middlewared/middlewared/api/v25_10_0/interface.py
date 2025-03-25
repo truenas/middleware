@@ -5,7 +5,7 @@ from pydantic import Field
 
 from middlewared.api.base import (
     BaseModel, IPv4Address, UniqueList, IPvAnyAddress, Excluded, excluded_field, ForUpdateMetaclass,
-    single_argument_result
+    single_argument_result, NotRequired
 )
 
 
@@ -36,7 +36,7 @@ class InterfaceAlias(InterfaceFailoverAlias):
 
 
 class InterfaceEntryStateAlias(InterfaceAlias):
-    broadcast: str
+    broadcast: str = NotRequired
 
 
 class InterfaceEntryStatePort(BaseModel):
