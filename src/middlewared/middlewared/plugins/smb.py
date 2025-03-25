@@ -1678,7 +1678,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 async def systemdataset_setup_hook(middleware, data):
     if not data['in_progress']:
-        await self.middleware.call('smb.setup_directories')
+        await middleware.call('smb.setup_directories')
 
 
 async def setup(middleware):
