@@ -311,7 +311,7 @@ class PoolService(CRUDService):
                     )
                 lastdatatype = vdev['type']
 
-        for i in ('cache', 'log', 'spares'):
+        for i in ('cache', 'log'):
             value = data['topology'].get(i)
             if value and len(value) > 1:
                 verrors.add(
@@ -361,9 +361,6 @@ class PoolService(CRUDService):
             verrors.add('pool_create.name', 'A pool with this name already exists.', errno.EEXIST)
         elif not validate_pool_name(data['name']):
             verrors.add('pool_create.name', 'Invalid pool name', errno.EINVAL)
-
-        if not data['topology']['data']:
-            verrors.add('pool_create.topology.data', 'At least one data vdev is required')
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', None, verrors, {
