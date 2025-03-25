@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING
 import asyncio
 import errno
 import shutil
 import subprocess
-import middlewared.sqlalchemy as sa
+from collections import defaultdict
+from typing import TYPE_CHECKING
 
+import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     VirtGlobalEntry,
@@ -142,12 +143,24 @@ class VirtGlobalService(ConfigService):
         if new['pool'] and old['pool']:
             # If we're stopping or starting the virt plugin then we don't need to worry
             # about how storage changes will impact the overall running configuration.
+            error_message = []
             for pool in removed_storage_pools:
                 if usage := (await self.storage_pool_usage(pool)):
-                    verrors.add(
-                        'virt_global_update.storage_pools',
-                        f'{pool}: pool to be removed is used by the following assets: {usage}'
+                    grouped_usage = defaultdict(list)
+                    for item in usage:
+                        grouped_usage[item["type"].capitalize()].append(item["name"])
+
+                    usage_list = '\n'.join(
+                        f'- Virt-{key}: {", ".join(value)}'
+                        for key, value in grouped_usage.items()
                     )
+
+                    error_message.append(
+                        f'The pool {pool!r} cannot be removed because it is currently used by the following asset(s):\n'
+                        f'{usage_list}'
+                    )
+            if error_message:
+                verrors.add('virt_global_update.storage_pools', '\n\n'.join(error_message))
 
         if new['pool'] in removed_storage_pools:
             verrors.add(
