@@ -52,36 +52,36 @@ class PoolEntry(BaseModel):
     guid: str
     status: str
     path: str
-    scan: dict | None
-    """
-    example={
-        'function': None,
-        'state': None,
-        'start_time': None,
-        'end_time': None,
-        'percentage': None,
-        'bytes_to_process': None,
-        'bytes_processed': None,
-        'bytes_issued': None,
-        'pause': None,
-        'errors': None,
-        'total_secs_left': None,
-    }
-    """
-    expand: dict | None
-    """
-    example={
-        'state': 'FINISHED',
-        'expanding_vdev': 0,
-        'start_time': None,
-        'end_time': None,
-        'bytes_to_reflow': 835584,
-        'bytes_reflowed': 978944,
-        'waiting_for_resilver': 0,
-        'total_secs_left': None,
-        'percentage': 85.35564853556485,
-    }
-    """
+    scan: Annotated[
+        dict,
+        Field(examples=[{
+            'function': None,
+            'state': None,
+            'start_time': None,
+            'end_time': None,
+            'percentage': None,
+            'bytes_to_process': None,
+            'bytes_processed': None,
+            'bytes_issued': None,
+            'pause': None,
+            'errors': None,
+            'total_secs_left': None,
+        }])
+    ] | None
+    expand: Annotated[
+        dict,
+        Field(examples=[{
+            'state': 'FINISHED',
+            'expanding_vdev': 0,
+            'start_time': None,
+            'end_time': None,
+            'bytes_to_reflow': 835584,
+            'bytes_reflowed': 978944,
+            'waiting_for_resilver': 0,
+            'total_secs_left': None,
+            'percentage': 85.35564853556485,
+        }])
+    ] | None
     is_upgraded: bool = False
     healthy: bool
     warning: bool
@@ -98,15 +98,12 @@ class PoolEntry(BaseModel):
     allocated_str: str | None
     free_str: str | None
     freeing_str: str | None
-    autotrim: dict
-    """
-    example={
+    autotrim: dict = Field(examples=[{
         'parsed': 'off',
         'rawvalue': 'off',
         'source': 'DEFAULT',
         'value': 'off',
-    }
-    """
+    }])
     topology: PoolTopology | None
 
 
