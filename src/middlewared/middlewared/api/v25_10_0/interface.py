@@ -34,7 +34,7 @@ class InterfaceEntryAlias(BaseModel):
 
 
 class InterfaceEntryStateAlias(InterfaceEntryAlias):
-    netmask: str = NotRequired
+    netmask: int = NotRequired
     broadcast: str = NotRequired
 
 
