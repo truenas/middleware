@@ -302,9 +302,6 @@ class SMBService(ConfigService):
         job.set_progress(0, 'Setting up SMB directories.')
         await self.setup_directories()
 
-        job.set_progress(10, 'Generating stub SMB config.')
-        await self.middleware.call('etc.generate', 'smb')
-
         """
         We cannot continue without network.
         Wait here until we see the ix-netif completion sentinel.
