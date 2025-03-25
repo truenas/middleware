@@ -1,5 +1,6 @@
 import os
 import stat
+import time
 
 from .activedirectory_health_mixin import ADHealthMixin
 from .ipa_health_mixin import IPAHealthMixin
@@ -11,7 +12,7 @@ from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.directoryservices.health import (
     ADHealthError, DSHealthObj, IPAHealthError, KRB5HealthError,
-    LDAPHealthError
+    LDAPHealthError, MAX_RECOVER_ATTEMPTS,
 )
 
 
@@ -130,11 +131,15 @@ class DomainHealth(
         DSHealthObj.update(enabled_ds, DSStatus.HEALTHY, None)
         return True
 
-    def recover(self):
+    def recover(self, attempts=0, last_reason=None) -> None:
         """
         Attempt to recover directory services from a failed health check
         If recovery attempt fails a new exception is raised indicating current
         source of failure
+
+        Params:
+            None that should be used by API callers. This is private internal
+            API for recovery attempts.
 
         Returns:
             None
@@ -149,18 +154,28 @@ class DomainHealth(
             self.check()
             return
         except ADHealthError as e:
+            reason = e.reason
             self._recover_ad(e)
 
         except IPAHealthError as e:
+            reason = e.reason
             self._recover_ipa(e)
 
         except KRB5HealthError as e:
+            reason = e.reason
             self._recover_krb5(e)
 
         except LDAPHealthError as e:
+            reason = e.reason
             self._recover_ldap(e)
 
-        # hopefully this fixed the issue
+        # Perform new recovery attempt if we haven't exceeded max attempts
+        # and if this isn't a repeat of the same error we had last attempt
+        if attempts < MAX_RECOVER_ATTEMPTS and reason != last_reason:
+            # insert a brief gap between recovery attempts
+            time.sleep(1)
+            return self.recover(attempts + 1, reason)
+
         self.check()
 
     def set_state(self, ds_type, ds_status, status_msg=None):
