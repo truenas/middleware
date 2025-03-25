@@ -44,5 +44,5 @@ def test_pool_update_spare():
         spares = [disk["name"] for disk in call("disk.get_unused")[:2]]
         assert len(spares) == 2
 
-        result = call("pool.update", pool["id"], {"topology": {"spares": spares}})
+        result = call("pool.update", pool["id"], {"topology": {"spares": spares}}, job=True)
         assert {disk["disk"] for disk in result["topology"]["spare"]} == set(spares)
