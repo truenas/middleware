@@ -502,7 +502,6 @@ class SMBService(ConfigService):
                     'multi-protocol NFS access.'
                 )
 
-
         if new['enable_smb1']:
             if audited_shares := await self.middleware.call(
                 'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['audit', 'name']}
