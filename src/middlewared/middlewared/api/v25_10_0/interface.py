@@ -26,16 +26,14 @@ __all__ = [
 ]
 
 
-class InterfaceFailoverAlias(BaseModel):
-    type: Literal["INET", "INET6"] = "INET"
-    address: IPvAnyAddress
+class InterfaceEntryAlias(BaseModel):
+    type: str
+    address: str
+    netmask: str
 
 
-class InterfaceAlias(InterfaceFailoverAlias):
-    netmask: int
-
-
-class InterfaceEntryStateAlias(InterfaceAlias):
+class InterfaceEntryStateAlias(InterfaceEntryAlias):
+    netmask: str = NotRequired
     broadcast: str = NotRequired
 
 
@@ -51,14 +49,14 @@ class InterfaceEntryState(BaseModel):
     mtu: int
     cloned: bool
     flags: list[str]
-    nd6_flags: list
-    capabilities: list
+    nd6_flags: list[str]
+    capabilities: list[str]
     link_state: str
     media_type: str
     media_subtype: str
     active_media_type: str
     active_media_subtype: str
-    supported_media: list
+    supported_media: list[str]
     media_options: list | None
     link_address: str
     permanent_link_address: str | None
@@ -84,7 +82,7 @@ class InterfaceEntry(BaseModel):
     fake: bool
     type: str
     state: InterfaceEntryState
-    aliases: list[InterfaceAlias]
+    aliases: list[InterfaceEntryAlias]
     ipv4_dhcp: bool
     ipv6_auto: bool
     description: str
@@ -123,18 +121,27 @@ class InterfaceCommitOptions(BaseModel):
     user. If checkin does not happen within this period of time, the changes will get reverted."""
 
 
+class InterfaceCreateFailoverAlias(BaseModel):
+    type: Literal["INET", "INET6"] = "INET"
+    address: IPvAnyAddress
+
+
+class InterfaceCreateAlias(InterfaceCreateFailoverAlias):
+    netmask: int
+
+
 class InterfaceCreate(BaseModel, ABC):
     name: str = None
     """Generate a name if not provided based on `type`, e.g. "br0", "bond1", "vlan0"."""
     description: str = ""
     ipv4_dhcp: bool = False
     ipv6_auto: bool = False
-    aliases: UniqueList[InterfaceAlias] = []
+    aliases: UniqueList[InterfaceCreateAlias] = []
     failover_critical: bool = False
     failover_group: int | None = None
     failover_vhid: Annotated[int, Field(ge=1, le=255)] | None = None
-    failover_aliases: list[InterfaceFailoverAlias] = []
-    failover_virtual_aliases: list[InterfaceFailoverAlias] = []
+    failover_aliases: list[InterfaceCreateFailoverAlias] = []
+    failover_virtual_aliases: list[InterfaceCreateFailoverAlias] = []
     mtu: Annotated[int, Field(ge=68, le=9216)] | None = None
 
 
@@ -172,6 +179,13 @@ class InterfaceIPInUseOptions(BaseModel):
     """Return wildcard addresses (0.0.0.0 and ::)."""
     static: bool = False
     """Only return configured static IPs."""
+
+
+class InterfaceIPInUseItem(BaseModel):
+    type: str
+    address: IPvAnyAddress
+    netmask: int
+    broadcast: str = NotRequired
 
 
 class InterfaceUpdateBridge(InterfaceCreateBridge, metaclass=ForUpdateMetaclass):
@@ -280,7 +294,7 @@ class InterfaceIPInUseArgs(BaseModel):
 
 
 class InterfaceIPInUseResult(BaseModel):
-    result: list[InterfaceEntryStateAlias] = Field(examples=[[
+    result: list[InterfaceIPInUseItem] = Field(examples=[[
         {
             "type": "INET6",
             "address": "fe80::5054:ff:fe16:4aac",
