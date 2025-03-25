@@ -1143,7 +1143,7 @@ async def service_remote(middleware, service, verb, options):
 
     This is the middleware side of what legacy UI did on service changes.
     """
-    ignore = ('system', 'smartd', 'nfs', 'netdata', 'truecommand', 'docker')
+    ignore = ('system', 'nfs', 'netdata', 'truecommand', 'docker')
     if not options['ha_propagate'] or service in ignore or service == 'nginx' and verb == 'stop':
         return
     elif await middleware.call('failover.status') != 'MASTER':

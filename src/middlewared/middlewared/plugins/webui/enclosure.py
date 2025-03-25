@@ -108,7 +108,6 @@ class WebUIEnclosureService(Service):
                         "model": "HUH721212AL4200",
                         "serial": "XXXXX",
                         "advpowermgmt": "DISABLED",
-                        "togglesmart": true,
                         "transfermode": "Auto",
                         "hddstandby": "ALWAYS ON",
                         "description": "",

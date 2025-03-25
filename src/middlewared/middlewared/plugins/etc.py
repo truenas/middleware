@@ -112,7 +112,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'netdata/netdata.conf', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'netdata/charts.d/exclude_netdata.conf', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'netdata/exporting.conf'},
-            {'type': 'mako', 'path': 'netdata/python.d/smart_log.conf'},
         ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
@@ -123,7 +122,7 @@ class EtcService(Service):
                 {'method': 'directoryservices.status'}
             ],
             'entries': [
-                {'type': 'py', 'path': 'ipa/default_conf'},
+                {'type': 'py', 'path': 'ipa/default.conf'},
                 {'type': 'py', 'path': 'ipa/ca.crt'},
                 {'type': 'py', 'path': 'ipa/smb.keytab', 'mode': 0o600}
             ]
@@ -223,10 +222,6 @@ class EtcService(Service):
         ],
         'sysctl': [
             {'type': 'mako', 'path': 'sysctl.d/tunables.conf'},
-        ],
-        'smartd': [
-            {'type': 'mako', 'path': 'default/smartmontools'},
-            {'type': 'py', 'path': 'smartd'},
         ],
         'ssl': [
             {'type': 'py', 'path': 'generate_ssl_certs'},

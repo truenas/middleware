@@ -1,8 +1,11 @@
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
-from os import scandir, O_RDWR, O_EXCL, open as os_open
+from json import loads
+from os import scandir, O_RDWR, O_EXCL, open as os_open, path
 from re import compile as rcompile
+from subprocess import PIPE, run
+from typing import Literal
 
 from .disk_io import read_gpt, wipe_disk_quick
 from .gpt_parts import GptPartEntry
@@ -65,7 +68,7 @@ class DiskEntry:
             raise ValueError("relative_path or absolute_path is required")
 
         if relative_path is not None:
-            path = f'/sys/block/{self.name}/{relative_path}'
+            path = f"/sys/block/{self.name}/{relative_path}"
         else:
             path = absolute_path
 
@@ -181,6 +184,72 @@ class DiskEntry:
             return f"{{serial}}{self.serial}"
         else:
             return f"{{devicename}}{self.name}"
+
+    @cached_property
+    def translation(self) -> Literal["SATL", "SNTL", None]:
+        """Determine if the disk is using translation.
+
+        Returns:
+
+        SATL: (S)CSI-(A)TA (T)ranslation (L)ayer ATA devices
+            that sit behind a SCSI device.
+
+        SNTL: (S)CSI-(N)VMe (T)ranslation (L)ayer NVMe devices
+            that sit behind a SCSI(SAS) device.
+
+            NOTE: THIS IS NOT A REAL SPECIFICATION. We
+            just use it internally. (tri-mode HBAs are "fun")
+
+        None: No translation.
+        """
+        if path.exists(f"/sys/block/{self.name}/vpd_pg89"):
+            return "SATL"
+        elif self.name.startswith("sd") and self.vendor == "NVMe":
+            return "SNTL"
+        return None
+
+    def __run_smartctl_cmd_impl(self, cmd: list[str]) -> str:
+        if tl := self.translation:
+            if tl == "SATL":
+                cmd.extend(["-d", "sat"])
+            elif tl == "SNTL":
+                cmd.extend(["-d", "nvme"])
+
+        cp = run(
+            cmd,
+            check=False,
+            stdout=PIPE,
+            stderr=PIPE,
+            encoding="utf8",
+            errors="ignore",
+        )
+        if (cp.returncode & 0b11) != 0:
+            raise OSError(f"{cmd!r} failed for {self.name}:\n{cp.stderr}")
+        return cp.stdout
+
+    def smartctl_info(self, json: bool = False) -> dict | str:
+        """Return smartcl -x information.
+
+        json: bool if true, will return json serialize the results.
+        """
+        cmd = ["smartctl", "-x", self.devpath]
+        if json:
+            cmd.extend(["-jc"])
+
+        stdout = self.__run_smartctl_cmd_impl(cmd)
+        if json:
+            return loads(stdout)
+        else:
+            return stdout
+
+    def smartctl_test(
+        self, ttype: Literal["long", "short", "offline", "conveyance"]
+    ) -> None:
+        """Run a SMART test.
+
+        ttype: str The type of SMART test to be ran.
+        """
+        self.__run_smartctl_cmd_impl(["smartctl", self.devpath, "-t", ttype])
 
     def temp(self) -> TempEntry:
         """Return temperature information as reported via sysfs.

@@ -2,10 +2,9 @@ from OpenSSL import crypto
 
 import josepy as jose
 from acme import errors, messages
+from truenas_acme_utils.client_utils import get_acme_client_and_key
 
 from middlewared.service import CallError, Service
-
-from .client_utils import get_acme_client_and_key
 
 
 class ACMEService(Service):

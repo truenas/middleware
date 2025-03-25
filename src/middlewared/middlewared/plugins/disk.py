@@ -1,8 +1,8 @@
 from sqlalchemy.exc import IntegrityError
 
 from middlewared.utils import ProductType
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
-from middlewared.service import filterable, private, CallError, CRUDService
+from middlewared.schema import accepts, Datetime, Dict, Int, Patch, Str
+from middlewared.service import filterable, private, CRUDService
 import middlewared.sqlalchemy as sa
 
 
@@ -20,13 +20,9 @@ class DiskModel(sa.Model):
     disk_transfermode = sa.Column(sa.String(120), default="Auto")
     disk_hddstandby = sa.Column(sa.String(120), default="Always On")
     disk_advpowermgmt = sa.Column(sa.String(120), default="Disabled")
-    disk_togglesmart = sa.Column(sa.Boolean(), default=True)
     disk_expiretime = sa.Column(sa.DateTime(), nullable=True)
     disk_enclosure_slot = sa.Column(sa.Integer(), nullable=True)
     disk_passwd = sa.Column(sa.EncryptedText(), default='')
-    disk_critical = sa.Column(sa.Integer(), nullable=True, default=None)
-    disk_difference = sa.Column(sa.Integer(), nullable=True, default=None)
-    disk_informational = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_model = sa.Column(sa.String(200), nullable=True, default=None)
     disk_rotationrate = sa.Column(sa.Integer(), nullable=True, default=None)
     disk_type = sa.Column(sa.String(20), default='UNKNOWN')
@@ -65,12 +61,8 @@ class DiskService(CRUDService):
                 'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
             ]
         ),
-        Bool('togglesmart', required=True),
         Str('advpowermgmt', required=True, enum=['DISABLED', '1', '64', '127', '128', '192', '254']),
         Datetime('expiretime', required=True, null=True),
-        Int('critical', required=True, null=True),
-        Int('difference', required=True, null=True),
-        Int('informational', required=True, null=True),
         Str('model', required=True, null=True),
         Int('rotationrate', required=True, null=True),
         Str('type', required=True, null=True),
@@ -86,7 +78,6 @@ class DiskService(CRUDService):
         Str('pool', null=True, required=True),
         Str('passwd', private=True),
         Str('kmip_uid', null=True),
-        Bool('supports_smart', null=True),
     )
 
     @filterable
@@ -98,8 +89,6 @@ class DiskService(CRUDService):
 
              include_expired: true - will also include expired disks (default: false)
              passwords: true - will not hide KMIP password for the disks (default: false)
-             supports_smart: true - will query if disks support S.M.A.R.T. Only supported if resulting disks count is
-                                    not larger than one; otherwise, raises an error.
              pools: true - will join pool name for each disk (default: false)
         """
         filters = filters or []
@@ -128,14 +117,6 @@ class DiskService(CRUDService):
             disk.pop('passwd')
             disk.pop('kmip_uid')
 
-        disk['supports_smart'] = None
-        if context['supports_smart']:
-            if await self.middleware.call('truenas.is_ix_hardware') or disk['name'].startswith('nvme'):
-                disk['supports_smart'] = True
-            else:
-                disk_query = await self.middleware.call('disk.smartctl', disk['name'], ['-a', '--json=c'], {'silent': True})
-                disk['supports_smart'] = disk_query.get('smart_support', {}).get('available', False)
-
         if disk['name'] in context['boot_pool_disks']:
             disk['pool'] = context['boot_pool_name']
         else:
@@ -150,7 +131,6 @@ class DiskService(CRUDService):
     async def disk_extend_context(self, rows, extra):
         context = {
             'passwords': extra.get('passwords', False),
-            'supports_smart': extra.get('supports_smart', False),
             'disks_keys': {},
             'real_names': extra.get('real_names', False),
             'identifier_to_name': {},
@@ -169,10 +149,6 @@ class DiskService(CRUDService):
                 disk.identifier: disk.name
                 for disk in await self.middleware.call('disk.get_disks')
             }
-
-        if context['supports_smart']:
-            if len(rows) > 1:
-                raise CallError('`supports_smart` cannot be queried if disk count is greater than 1')
 
         if context['pools']:
             context['boot_pool_disks'] = await self.middleware.call('boot.get_disks')
@@ -226,16 +202,6 @@ class DiskService(CRUDService):
     async def do_update(self, id_, data):
         """
         Update disk of `id`.
-
-        `critical`, `informational` and `difference` are integer values on which alerts for SMART are configured
-        if the disk temperature crosses the assigned threshold for each respective attribute.
-        If they are set to null, then SMARTD config values are used as defaults.
-
-        Email of log level LOG_CRIT is issued when disk temperature crosses `critical`.
-
-        Email of log level LOG_INFO is issued when disk temperature crosses `informational`.
-
-        If temperature of a disk changes by `difference` degree Celsius since the last report, SMART reports this.
         """
 
         old = await self.middleware.call(
@@ -270,19 +236,6 @@ class DiskService(CRUDService):
         if any(new[key] != old[key] for key in ['hddstandby', 'advpowermgmt']):
             await self.middleware.call('disk.power_management', new['name'])
 
-        if any(
-            new[key] != old[key]
-            for key in ['togglesmart', 'hddstandby', 'critical', 'difference', 'informational']
-        ):
-            if new['togglesmart']:
-                await self.middleware.call('disk.toggle_smart_on', new['name'])
-            else:
-                await self.middleware.call('disk.toggle_smart_off', new['name'])
-
-            await self.middleware.call('disk.update_smartctl_args_for_disks')
-            await self._service_change('smartd', 'restart')
-            await self._service_change('snmp', 'restart')
-
         if new['passwd'] and old['passwd'] != new['passwd']:
             await self.middleware.call('kmip.sync_sed_keys', [id_])
 
@@ -293,29 +246,12 @@ class DiskService(CRUDService):
         keys = []
         if copy_settings:
             keys += [
-                'togglesmart', 'advpowermgmt', 'hddstandby', 'critical', 'difference', 'informational',
+                'advpowermgmt', 'hddstandby',
             ]
         if copy_description:
             keys += ['description']
 
         await self.middleware.call('disk.update', new['identifier'], {k: v for k, v in old.items() if k in keys})
-
-        changed = False
-        for row in await self.middleware.call('datastore.query', 'tasks.smarttest_smarttest_disks', [
-            ['disk_id', '=', old['identifier']],
-        ], {'relationships': False}):
-            try:
-                await self.middleware.call('datastore.insert', 'tasks.smarttest_smarttest_disks', {
-                    'smarttest_id': row['smarttest_id'],
-                    'disk_id': new['identifier'],
-                })
-            except IntegrityError:
-                pass
-            else:
-                changed = True
-
-        if changed:
-            self.middleware.create_task(self._service_change('smartd', 'restart'))
 
     @private
     async def check_clean(self, disk):

@@ -56,6 +56,12 @@ class IPAJoinMixin:
             job.set_progress(80, 'Removing kerberos configuration.')
 
         if ldap_config['kerberos_realm']:
+            # TODO: remove after unifying the directory services plugins
+            # User may have configured our kerberos realm in AD plugin
+            # necessitating deletion from config
+            self.middleware.call_sync(
+                'datastore.update', 'directoryservice.activedirectory', 1, {'ad_kerberos_realm': None}
+            )
             self.middleware.call_sync('kerberos.realm.delete', ldap_config['kerberos_realm'])
 
         if (host_kt := self.middleware.call_sync('kerberos.keytab.query', [
@@ -511,7 +517,9 @@ class IPAJoinMixin:
                 case KRB5ErrCode.KRB5_REALM_UNKNOWN:
                     # DNS is broken in the IPA domain and so we need to roll back our config
                     # changes.
-                    self._ipa_remove_kerberos_cert_config(None, None)
+
+                    saved_config = self.middleware.call_sync('ldap.config')
+
                     self.logger.warning(
                         'Unable to resolve kerberos realm via DNS. This may indicate misconfigured '
                         'nameservers on the TrueNAS server or a misconfigured IPA domain.', exc_info=True
@@ -521,6 +529,8 @@ class IPAJoinMixin:
                         'ldap_kerberos_principal': '',
                         'ldap_bindpw': ldap_config['bindpw']
                     })
+
+                    self._ipa_remove_kerberos_cert_config(None, saved_config)
 
                     # remove any configuration files we have written
                     for p in (

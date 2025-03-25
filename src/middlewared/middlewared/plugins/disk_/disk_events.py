@@ -4,12 +4,10 @@ from middlewared.utils.disks import DISKS_TO_IGNORE
 async def added_disk(middleware, disk_name):
     await middleware.call('disk.sync', disk_name)
     await middleware.call('disk.sed_unlock', disk_name)
-    await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
 
 
 async def remove_disk(middleware, disk_name):
     await (await middleware.call('disk.sync_all')).wait()
-    await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
 
 
 async def udev_block_devices_hook(middleware, data):

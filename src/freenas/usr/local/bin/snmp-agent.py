@@ -303,7 +303,6 @@ class DiskTempThread(threading.Thread):
 
         self.initialized = False
         self.disks = []
-        self.powermode = None
 
     def run(self):
         while True:
@@ -311,7 +310,6 @@ class DiskTempThread(threading.Thread):
                 try:
                     with Client() as c:
                         self.disks = c.call("disk.disks_for_temperature_monitoring")
-                        self.powermode = c.call("smart.config")["powermode"]
                 except Exception as e:
                     print(f"Failed to query disks for temperature monitoring: {e!r}")
                 else:
@@ -328,7 +326,7 @@ class DiskTempThread(threading.Thread):
                 with Client() as c:
                     self.temperatures = {
                         disk: temperature * 1000
-                        for disk, temperature in c.call("disk.temperatures", self.disks, self.powermode).items()
+                        for disk, temperature in c.call("disk.temperatures", self.disks, "NEVER").items()
                         if temperature is not None
                     }
             except Exception as e:

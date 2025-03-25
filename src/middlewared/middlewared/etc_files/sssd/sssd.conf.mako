@@ -1,6 +1,3 @@
-#
-# NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
-#
 <%
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.plugins.ldap_ import constants, utils
@@ -32,7 +29,7 @@
             )['realm']
 
         ldap_enabled = ldap['enable']
-        domain = kerberos_realm or ldap['hostname'][0]
+        domain = kerberos_realm or 'LDAP'
 
         ldap_enabled = ldap['enable']
         for param in ldap['auxiliary_parameters'].splitlines():
