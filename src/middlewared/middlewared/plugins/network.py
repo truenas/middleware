@@ -150,8 +150,11 @@ class InterfaceService(CRUDService):
     def query(self, filters, options):
         """
         Query Interfaces with `query-filters` and `query-options`
+
+        `options.extra.retrieve_names_only` (bool): Only return interface names.
+
         """
-        retrieve_names_only = options.get('extra', {}).get('retrieve_names_only')
+        retrieve_names_only = options['extra'].get('retrieve_names_only')
         data = {}
         configs = {
             i['int_interface']: i
@@ -173,7 +176,7 @@ class InterfaceService(CRUDService):
             try:
                 data[name] = self.iface_extend(iface.asdict(), configs, ha_hardware)
             except OSError:
-                self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
+                self.logger.warning('Failed to get interface state for %s', name, exc_info=True)
 
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
             if retrieve_names_only:

@@ -19,7 +19,8 @@ __all__ = [
     "InterfaceIPInUseArgs", "InterfaceIPInUseResult", "InterfaceLacpduRateChoicesArgs",
     "InterfaceLacpduRateChoicesResult", "InterfaceLagPortsChoicesArgs", "InterfaceLagPortsChoicesResult",
     "InterfaceRollbackArgs", "InterfaceRollbackResult", "InterfaceSaveDefaultRouteArgs",
-    "InterfaceSaveDefaultRouteResult", "InterfaceUpdateArgs", "InterfaceUpdateResult",
+    "InterfaceSaveDefaultRouteResult", "InterfaceServicesRestartedOnSyncArgs",
+    "InterfaceServicesRestartedOnSyncResult", "InterfaceUpdateArgs", "InterfaceUpdateResult",
     "InterfaceVLANParentInterfaceChoicesArgs", "InterfaceVLANParentInterfaceChoicesResult",
     "InterfaceWebsocketInterfaceArgs", "InterfaceWebsocketInterfaceResult", "InterfaceWebsocketLocalIPArgs",
     "InterfaceWebsocketLocalIPResult", "InterfaceXmitHashPolicyChoicesArgs", "InterfaceXmitHashPolicyChoicesResult",
@@ -64,16 +65,16 @@ class InterfaceEntryState(BaseModel):
     rx_queues: int
     tx_queues: int
     aliases: list[InterfaceEntryStateAlias]
-    vrrp_config: list | None
+    vrrp_config: list | None = []
     # lagg section
-    protocol: str | None
-    ports: list[InterfaceEntryStatePort]
+    protocol: str | None = NotRequired
+    ports: list[InterfaceEntryStatePort] = []
     xmit_hash_policy: str | None = None
     lacpdu_rate: str | None = None
     # vlan section
-    parent: str | None
-    tag: int | None
-    pcp: int | None
+    parent: str | None = NotRequired
+    tag: int | None = NotRequired
+    pcp: int | None = NotRequired
 
 
 class InterfaceEntry(BaseModel):
@@ -87,13 +88,13 @@ class InterfaceEntry(BaseModel):
     ipv6_auto: bool
     description: str
     mtu: int | None
-    vlan_parent_interface: str | None
-    vlan_tag: int | None
-    vlan_pcp: int | None
-    lag_protocol: str
-    lag_ports: list[str]
-    bridge_members: list[str]
-    enable_learning: bool
+    vlan_parent_interface: str | None = NotRequired
+    vlan_tag: int | None = NotRequired
+    vlan_pcp: int | None = NotRequired
+    lag_protocol: str = NotRequired
+    lag_ports: list[str] = []
+    bridge_members: list[str] = []  # FIXME: Please document fields for HA Hardware
+    enable_learning: bool = NotRequired
 
     class Config:
         extra = "allow"
@@ -188,6 +189,12 @@ class InterfaceIPInUseItem(BaseModel):
     broadcast: str = NotRequired
 
 
+class InterfaceServicesRestartedOnSyncItem(BaseModel):
+    type: str
+    service: str
+    ips: list[str]
+
+
 class InterfaceUpdateBridge(InterfaceCreateBridge, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
 
@@ -200,7 +207,7 @@ class InterfaceUpdateVLAN(InterfaceCreateVLAN, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
 
 
-################   Args and Results   ###############
+#####################   Args and Results   #####################
 
 
 class InterfaceBridgeMembersChoicesArgs(BaseModel):
@@ -343,6 +350,14 @@ class InterfaceSaveDefaultRouteArgs(BaseModel):
 
 class InterfaceSaveDefaultRouteResult(BaseModel):
     result: None
+
+
+class InterfaceServicesRestartedOnSyncArgs(BaseModel):
+    pass
+
+
+class InterfaceServicesRestartedOnSyncResult(BaseModel):
+    result: list[InterfaceServicesRestartedOnSyncItem]
 
 
 class InterfaceUpdateArgs(BaseModel):

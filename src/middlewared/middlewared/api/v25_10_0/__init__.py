@@ -40,7 +40,6 @@ from .ftp import *  # noqa
 from .group import *  # noqa
 from .initshutdownscript import *  # noqa
 from .interface import *  # noqa
-from .interface_listen import *  # noqa
 from .ipmi import *  # noqa
 from .ipmi_chassis import *  # noqa
 from .ipmi_lan import *  # noqa
