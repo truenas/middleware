@@ -11,4 +11,4 @@ class TNCAPIMixin:
 
     async def _call(self, *args, **kwargs):
         # FIXME: Add network activity check for TNC
-        return call(*args, **kwargs)
+        return await call(*args, **kwargs)
