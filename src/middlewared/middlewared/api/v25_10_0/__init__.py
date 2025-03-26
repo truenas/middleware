@@ -73,6 +73,7 @@ from .replication_crud import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
 from .rsync_task import *  # noqa
+from .service import *  # noqa
 from .smb import *  # noqa
 from .snmp import *  # noqa
 from .ssh import *  # noqa

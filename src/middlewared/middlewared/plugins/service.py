@@ -1,16 +1,25 @@
 import asyncio
 import errno
 import os
+from typing import TYPE_CHECKING
 
 import middlewared.sqlalchemy as sa
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ServiceEntry, ServiceReloadArgs, ServiceReloadResult, ServiceRestartArgs, ServiceRestartResult, ServiceStartArgs,
+    ServiceStartResult, ServiceStartedArgs, ServiceStartedResult, ServiceStartedOrEnabledArgs,
+    ServiceStartedOrEnabledResult, ServiceStopArgs, ServiceStopResult, ServiceUpdateArgs, ServiceUpdateResult
+)
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
-from middlewared.service import filterable, CallError, CRUDService, pass_app, periodic, private
+from middlewared.service import filterable_api_method, CallError, CRUDService, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list, filter_getattrs
 from middlewared.utils.os import terminate_pid
+
+if TYPE_CHECKING:
+    from middlewared.plugins.service_.services.base_interface import ServiceInterface
 
 
 class ServiceModel(sa.Model):
@@ -29,15 +38,7 @@ class ServiceService(CRUDService):
         datastore_extend = 'service.service_extend'
         datastore_extend_context = 'service.service_extend_context'
         role_prefix = "SERVICE"
-
-    ENTRY = Dict(
-        'service_entry',
-        Int('id'),
-        Str('service'),
-        Bool('enable'),
-        Str('state'),
-        List('pids', items=[Int('pid')]),
-    )
+        entry = ServiceEntry
 
     @private
     async def service_extend_context(self, services, extra):
@@ -88,7 +89,7 @@ class ServiceService(CRUDService):
     async def service_extend(self, svc, ctx):
         return svc | ctx.get(svc['service'], {'state': 'UNKNOWN', 'pids': []})
 
-    @filterable
+    @filterable_api_method(item=ServiceEntry)
     async def query(self, filters, options):
         """
         Query all system services with `query-filters` and `query-options`.
@@ -109,29 +110,23 @@ class ServiceService(CRUDService):
 
         return await self.middleware.call('datastore.query', 'services.services', filters, options | default_options)
 
-    @accepts(
-        Str('id_or_name'),
-        Dict(
-            'service-update',
-            Bool('enable', default=False),
-        ),
+    @api_method(
+        ServiceUpdateArgs,
+        ServiceUpdateResult,
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
         audit='Update service configuration',
         audit_callback=True,
+        pass_app=True,
+        pass_app_rest=True
     )
-    @returns(Int('service_primary_key'))
-    @pass_app(rest=True)
     async def do_update(self, app, audit_callback, id_or_name, data):
         """
         Update service entry of `id_or_name`.
-
-        Currently, it only accepts `enable` option which means whether the service should start on boot.
-
         """
-        if not id_or_name.isdigit():
-            filters = [['service', '=', id_or_name]]
+        if isinstance(id_or_name, int) or id_or_name.isdigit():
+            filters = [['id', '=', int(id_or_name)]]
         else:
-            filters = [['id', '=', id_or_name]]
+            filters = [['service', '=', id_or_name]]
 
         if not (svc := await self.middleware.call('datastore.query', 'services.services', filters, {'prefix': 'srv_'})):
             raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
@@ -147,24 +142,16 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 'rc')
         return rv
 
-    @accepts(
-        Str('service'),
-        Dict(
-            'service-control',
-            Bool('ha_propagate', default=True),
-            Bool('silent', default=True),
-            register=True,
-        ),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+    @api_method(
+        ServiceStartArgs,
+        ServiceStartResult,
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        pass_app=True,
+        pass_app_rest=True
     )
-    @returns(Bool('started_service', description='Will return `true` if service successfully started'))
-    @pass_app(rest=True)
     async def start(self, app, service, options):
         """
         Start the service specified by `service`.
-
-        If `silent` is `true` then in case of service startup failure, `false` will be returned. If `silent` is `false`
-        then in case of service startup failure, an exception will be raised.
         """
         service_object = await self.middleware.call('service.object', service)
 
@@ -198,21 +185,20 @@ class ServiceService(CRUDService):
                     {"service": service_object.name}
                 )
             return True
-        else:
-            self.logger.error("Service %r not running after start", service)
-            await self.middleware.call('service.notify_running', service)
-            if options['silent']:
-                return False
-            else:
-                raise CallError(await service_object.failure_logs() or 'Service not running after start')
 
-    @accepts(Str('service'), roles=['SERVICE_READ'])
-    @returns(Bool('service_started', description='Will return `true` if service is running'))
+        self.logger.error("Service %r not running after start", service)
+        await self.middleware.call('service.notify_running', service)
+        if options['silent']:
+            return False
+
+        raise CallError(await service_object.failure_logs() or 'Service not running after start')
+
+    @api_method(ServiceStartedArgs, ServiceStartedResult, roles=['SERVICE_READ'])
     async def started(self, service):
         """
         Test if service specified by `service` has been started.
         """
-        service_object = await self.middleware.call('service.object', service)
+        service_object: 'ServiceInterface' = await self.middleware.call('service.object', service)
 
         state = await service_object.get_state()
 
@@ -228,9 +214,7 @@ class ServiceService(CRUDService):
 
         return state.running
 
-    @accepts(Str('service'), roles=['SERVICE_READ'])
-    @returns(Bool('service_started_or_enabled',
-                  description='Will return `true` if service is started or enabled to start automatically.'))
+    @api_method(ServiceStartedOrEnabledArgs, ServiceStartedOrEnabledResult, roles=['SERVICE_READ'])
     async def started_or_enabled(self, service):
         """
         Test if service specified by `service` is started or enabled to start automatically.
@@ -238,13 +222,13 @@ class ServiceService(CRUDService):
         svc = await self.middleware.call('service.query', [['service', '=', service]], {'get': True})
         return svc['state'] == 'RUNNING' or svc['enable']
 
-    @accepts(
-        Str('service'),
-        Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+    @api_method(
+        ServiceStopArgs,
+        ServiceStopResult,
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        pass_app=True,
+        pass_app_rest=True
     )
-    @returns(Bool('service_stopped', description='Will return `true` if service successfully stopped'))
-    @pass_app(rest=True)
     async def stop(self, app, service, options):
         """
         Stop the service specified by `service`.
@@ -269,20 +253,20 @@ class ServiceService(CRUDService):
                 await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
 
             return True
-        else:
-            self.logger.error("Service %r running after stop", service)
-            await self.middleware.call('service.notify_running', service)
-            if options['silent']:
-                return False
-            raise CallError(await service_object.failure_logs() or 'Service still running after stop')
 
-    @accepts(
-        Str('service'),
-        Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+        self.logger.error("Service %r running after stop", service)
+        await self.middleware.call('service.notify_running', service)
+        if options['silent']:
+            return False
+        raise CallError(await service_object.failure_logs() or 'Service still running after stop')
+
+    @api_method(
+        ServiceRestartArgs,
+        ServiceRestartResult,
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        pass_app=True,
+        pass_app_rest=True
     )
-    @returns(Bool('service_restarted'))
-    @pass_app(rest=True)
     async def restart(self, app, service, options):
         """
         Restart the service specified by `service`.
@@ -338,13 +322,13 @@ class ServiceService(CRUDService):
 
         return True
 
-    @accepts(
-        Str('service'),
-        Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+    @api_method(
+        ServiceReloadArgs,
+        ServiceReloadResult,
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        pass_app=True,
+        pass_app_rest=True
     )
-    @returns(Bool('service_reloaded'))
-    @pass_app(rest=True)
     async def reload(self, app, service, options):
         """
         Reload the service specified by `service`.
@@ -372,24 +356,24 @@ class ServiceService(CRUDService):
         else:
             return await self._restart(service, service_object)
 
-    SERVICES = {}
+    SERVICES: dict[str, 'ServiceInterface'] = {}
 
     @private
-    async def register_object(self, object_):
+    async def register_object(self, object_: 'ServiceInterface'):
         if object_.name in self.SERVICES:
             raise CallError(f"Service object {object_.name} is already registered")
 
         self.SERVICES[object_.name] = object_
 
     @private
-    async def object(self, name):
+    async def object(self, name: str) -> 'ServiceInterface':
         try:
             return self.SERVICES[name]
         except KeyError:
             raise MatchNotFound(name) from None
 
     @private
-    async def generate_etc(self, object_):
+    async def generate_etc(self, object_: 'ServiceInterface'):
         for etc in object_.etc:
             await self.middleware.call("etc.generate", etc)
 
