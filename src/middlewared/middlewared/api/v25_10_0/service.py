@@ -46,7 +46,7 @@ class ServiceRestartArgs(BaseModel):
 
 
 class ServiceRestartResult(BaseModel):
-    restart: bool
+    result: bool
     """The service is running after the restart."""
 
 
