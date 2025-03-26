@@ -68,7 +68,7 @@ class MemorySizeMismatchAlertSource(AlertSource):
 
         try:
             r2 = await self.middleware.call(
-                'failover.call_remote', 'system.mem_info', {'raise_connect_error': False}
+                'failover.call_remote', 'system.mem_info', [], {'raise_connect_error': False}
             )
             if r2['physmem_size'] is None:
                 return alerts
