@@ -22,8 +22,8 @@ __all__ = (
 
 
 class DiskEntryEnclosure(BaseModel):
-    number: int = NotRequired
-    slot: int = NotRequired
+    number: int
+    slot: int
 
 
 class DiskEntry(BaseModel):
