@@ -12,6 +12,8 @@ __all__ = (
     "DiskDetailsResult",
     "DiskGetUsedArgs",
     "DiskGetUsedResult",
+    "DiskTemperaturesArgs",
+    "DiskTemperaturesResult",
     "DiskTemperatureAggArgs",
     "DiskTemperatureAggResult",
     "DiskTemperatureAlertsArgs",
@@ -101,6 +103,17 @@ class DiskGetUsedArgs(BaseModel):
 
 class DiskGetUsedResult(BaseModel):
     result: list
+
+
+class DiskTemperaturesArgs(BaseModel):
+    name: list[str] = Field(default_factory=list)
+    """List of names of disks to retrieve temperature
+    information. Name should be in the form of "sda",
+    "nvme0n1", etc"""
+
+
+class DiskTemperaturesResult(BaseModel):
+    result: dict[str, float | None] = Field(default_factory=dict)
 
 
 class DiskTemperatureAggArgs(BaseModel):
