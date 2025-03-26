@@ -40,7 +40,18 @@ class DiskService(Service):
                            capture_output=True,
                            check=True)
         except subprocess.CalledProcessError as e:
-            raise CallError(f"Failed formatting disk {disk!r}: " + e.stderr.decode("utf-8", "ignore").strip())
+            error = e.stderr.decode("utf-8", "ignore").strip()
+            if "Could not create partition" in error:
+                error = (
+                    f"Could not create a partition of {size} bytes on disk {disk} because it is too small. "
+                    "If you are replacing a disk in a pool, please ensure that the new disk is not smaller than "
+                    "the disk being replaced.\n\n"
+                    f"{error}"
+                )
+            else:
+                error = f"Failed formatting disk {disk!r}: {error}"
+
+            raise CallError(error)
 
         if len(self.middleware.call_sync('disk.get_partitions_quick', disk, 10)) != 1:
             # In some rare cases udev does not re-read the partition table correctly; force it
