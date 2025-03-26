@@ -43,7 +43,7 @@ class DiskService(Service):
             error = e.stderr.decode("utf-8", "ignore").strip()
             if "Could not create partition" in error:
                 error = (
-                    f"Could not create a partition of {size} bytes on disk {disk} because it is too small. "
+                    f"Could not create a partition of {size} bytes on disk {disk} because the disk is too small. "
                     "If you are replacing a disk in a pool, please ensure that the new disk is not smaller than "
                     "the disk being replaced.\n\n"
                     f"{error}"
