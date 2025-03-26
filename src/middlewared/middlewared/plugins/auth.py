@@ -1160,10 +1160,21 @@ class AuthService(Service):
 
         username = credentials.user['username']
 
+        account_attributes = credentials.user['account_attributes'].copy()
+        # Local accounts may have hit soft limit for requiring password change
+        # If they hit a hard limit then they wouldn't be here (auth would have failed)
+        if 'LOCAL' in account_attributes:
+            user_entry = await self.middleware.call('user.query', [
+                ['username', '=', username],
+                ['local', '=', True]
+            ], {'get': True})
+            if user_entry['password_change_required']:
+                account_attributes.append('PASSWORD_CHANGE_REQUIRED')
+
         return {
             **(await self.middleware.call('user.get_user_obj', {'username': username})),
             'privilege': credentials.user['privilege'],
-            'account_attributes': credentials.user['account_attributes']
+            'account_attributes': account_attributes
         }
 
     async def _attributes(self, user):

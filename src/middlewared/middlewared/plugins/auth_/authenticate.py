@@ -158,7 +158,22 @@ class AuthService(Service):
 
             p = auth_ctx.pam_hdl
             p.authenticate(username, password, service=os.path.basename(pam_service))
-            pam_resp = {'code': p.code, 'reason': p.reason}
+            match p.code:
+                case pam.PAM_AUTH_ERR:
+                    # pam_unix will fail with PAM_AUTH_ERR for expired passwords
+                    # due to password aging.
+                    # If password is expired, convert to PAM_EXPIRED
+                    # this doesn't expose additional account information
+                    # because it's part of PAM messages to PAM client
+                    if any([msg.startswith('Your account has expired') for msg in p.messages]):
+                        pam_resp = {
+                            'code': pam.PAM_ACCT_EXPIRED,
+                            'reason': 'Account expired due to aging rules.'
+                        }
+                    else:
+                        pam_resp = {'code': p.code, 'reason': p.reason}
+                case _:
+                    pam_resp = {'code': p.code, 'reason': p.reason}
 
         return pam_resp
 
