@@ -127,7 +127,7 @@ class DiskEntry:
             if serial := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
                 serial = "".join(
                     chr(b) if 32 <= b <= 126 else "\ufffd" for b in serial
-                ).replace("\ufffd", "")
+                ).replace("\ufffd", "").strip()
 
         if not serial:
             # pmem devices have a uuid attribute that we use as serial
