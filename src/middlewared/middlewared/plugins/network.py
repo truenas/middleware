@@ -216,8 +216,8 @@ class InterfaceService(CRUDService):
             'type': itype.value,
             'state': iface_state,
             'aliases': [],
-            'ipv4_dhcp': False if configs else True,
-            'ipv6_auto': False if configs else True,
+            'ipv4_dhcp': not configs,
+            'ipv6_auto': not configs,
             'description': '',
             'mtu': None,
         }

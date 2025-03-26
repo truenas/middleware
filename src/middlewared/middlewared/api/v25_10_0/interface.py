@@ -30,7 +30,7 @@ __all__ = [
 class InterfaceEntryAlias(BaseModel):
     type: str
     address: str
-    netmask: str
+    netmask: int
 
 
 class InterfaceEntryStateAlias(InterfaceEntryAlias):
