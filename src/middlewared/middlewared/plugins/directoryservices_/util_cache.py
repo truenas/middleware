@@ -268,6 +268,10 @@ class DSCacheFill:
                     'sid': u['sid'],
                     'roles': [],
                     'api_keys': [],
+                    'last_password_change': None,
+                    'password_age': None,
+                    'password_history': None,
+                    'password_change_required': False,
                 }
 
                 if user_count % LOG_CACHE_ENTRY_INTERVAL == 0:

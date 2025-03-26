@@ -176,6 +176,7 @@ class AlertCategory(enum.Enum):
     PLUGINS = "PLUGINS"
     NETWORK = "NETWORK"
     REPORTING = "REPORTING"
+    SECURITY = "SECURITY"
     SHARING = "SHARING"
     STORAGE = "STORAGE"
     SYSTEM = "SYSTEM"

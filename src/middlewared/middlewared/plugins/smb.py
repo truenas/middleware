@@ -314,6 +314,7 @@ class SMBService(ConfigService):
 
         job.set_progress(40, 'Synchronizing passdb and groupmap.')
         await self.middleware.call('etc.generate', 'user')
+        await self.middleware.call('smb.apply_account_policy')
         pdb_job = await self.middleware.call("smb.synchronize_passdb", True)
         grp_job = await self.middleware.call("smb.synchronize_group_mappings", True)
         await pdb_job.wait()
