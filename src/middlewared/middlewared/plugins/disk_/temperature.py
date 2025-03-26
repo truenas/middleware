@@ -31,38 +31,6 @@ class DiskService(Service):
             )
         ]
 
-    @accepts(
-        Str('name'),
-        Dict(
-            'options',
-            Int('cache', default=None, null=True),
-            Str('powermode', enum=POWERMODES, default=POWERMODES[0]),
-        ),
-        deprecated=[
-            (
-                lambda args: len(args) == 2 and isinstance(args[1], str),
-                lambda name, powermode: [name, {'powermode': powermode}],
-            ),
-        ],
-        roles=['REPORTING_READ']
-    )
-    @returns(Int('temperature', null=True))
-    async def temperature(self, name, options):
-        """
-        Returns temperature for device `name` using specified S.M.A.R.T. `powermode`. If `cache` is not null
-        then the last cached within `cache` seconds value is used.
-        """
-        if options['cache'] is not None:
-            if cached := self.cache.get(name):
-                temperature, cache_time = cached
-                if cache_time > time.monotonic() - options['cache']:
-                    return temperature
-
-        temperature = await self.middleware.call('disk.temperature_uncached', name, options['powermode'])
-
-        self.cache[name] = (temperature, time.monotonic())
-        return temperature
-
     @private
     async def temperature_uncached(self, name, powermode):
         return 0  # FIXME
