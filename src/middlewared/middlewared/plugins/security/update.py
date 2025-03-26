@@ -109,12 +109,19 @@ class SystemSecurityService(ConfigService):
                 'prior to enabling General Purpose OS STIG compatibility mode.'
             )
 
-        if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles']]):
+        all_local_admins = await self.middleware.call('privilege.local_administrators')
+        excluded_admins = [user["username"] for user in all_local_admins if user['uid'] < 1000]
+
+        if not any([
+            user for user in two_factor_users
+            if user['uid'] >= 1000 and 'FULL_ADMIN' in user['roles']
+        ]):
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
                 'At least one local user with full admin privileges must be '
                 'configured with a two factor authentication token prior to enabling '
-                'General Purpose OS STIG compatibility mode.'
+                f'General Purpose OS STIG compatibility mode.  '
+                f'EXCLUDED ACCOUNTS: {", ".join(excluded_admins)}.'
             )
 
         if current_cred and current_cred.is_user_session and '2FA' not in current_cred.user['account_attributes']:
@@ -125,6 +132,16 @@ class SystemSecurityService(ConfigService):
                 'Credential used to enable General Purpose OS STIG compatibility '
                 'must have two factor authentication enabled, and have used two factor '
                 'authentication for the currently-authenticated session.'
+            )
+
+        if excluded_admins:
+            # For STIG compatibility, all general purpose administrative accounts,
+            # e.g. 'root' and 'truenas_admin', cannot use password login.  (SRG-OS-000109-GPOS-00056)
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'General purpose administrative accounts with password authentication are '
+                'not compatible with STIG compatibility mode.  '
+                f'PLEASE DISABLE PASSWORD AUTHENTICATION ON THE FOLLOWING ACCOUNTS: {", ".join(excluded_admins)}.'
             )
 
         if (await self.middleware.call('docker.config'))['pool']:
