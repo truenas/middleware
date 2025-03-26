@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Excluded, excluded_field
 from .alert import Alert
@@ -47,7 +47,7 @@ class DiskEntry(BaseModel):
     devname: str
     enclosure: DiskEntryEnclosure | None
     pool: str | None
-    passwd: SecretStr = NotRequired
+    passwd: Secret[str] = NotRequired
     kmip_uid: str | None = NotRequired
 
 
