@@ -12,6 +12,8 @@ __all__ = (
     "DiskDetailsResult",
     "DiskGetUsedArgs",
     "DiskGetUsedResult",
+    "DiskTemperatureAggArgs",
+    "DiskTemperatureAggResult",
     "DiskTemperatureAlertsArgs",
     "DiskTemperatureAlertsResult",
     "DiskUpdateArgs",
@@ -99,6 +101,21 @@ class DiskGetUsedArgs(BaseModel):
 
 class DiskGetUsedResult(BaseModel):
     result: list
+
+
+class DiskTemperatureAggArgs(BaseModel):
+    names: list[str]
+    days: int = 7
+
+
+class DiskTemperatureAggEntry(BaseModel):
+    min_: int | float | None = Field(alias="min")
+    max_: int | float | None = Field(alias="max")
+    avg: int | float | None
+
+
+class DiskTemperatureAggResult(BaseModel):
+    result: dict[str, DiskTemperatureAggEntry]
 
 
 class DiskTemperatureAlertsArgs(BaseModel):

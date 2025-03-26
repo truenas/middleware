@@ -3,7 +3,12 @@ import datetime
 import time
 
 from middlewared.api import api_method
-from middlewared.api.current import DiskTemperatureAlertsArgs, DiskTemperatureAlertsResult
+from middlewared.api.current import (
+    DiskTemperatureAggArgs,
+    DiskTemperatureAggResult,
+    DiskTemperatureAlertsArgs,
+    DiskTemperatureAlertsResult,
+)
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
@@ -115,8 +120,11 @@ class DiskService(Service):
 
         return dict(zip(names, await asyncio_map(temperature, names, semaphore=self.temperatures_semaphore)))
 
-    @accepts(List('names', items=[Str('name')]), Int('days', default=7), roles=['REPORTING_READ'])
-    @returns(Dict('temperatures', additional_attrs=True))
+    @api_method(
+        DiskTemperatureAggArgs,
+        DiskTemperatureAggResult,
+        roles=['REPORTING_READ']
+    )
     def temperature_agg(self, names, days):
         """Returns min/max/avg temperature for `names` disks for the last `days` days"""
         # we only keep 7 days of historical data because we keep per second information
@@ -133,7 +141,6 @@ class DiskService(Service):
                     'max': disk['aggregations']['max'].get('temperature_value', None),
                     'avg': disk['aggregations']['mean'].get('temperature_value', None),
                 }
-
         return final
 
     @api_method(DiskTemperatureAlertsArgs, DiskTemperatureAlertsResult, roles=['REPORTING_READ'])
