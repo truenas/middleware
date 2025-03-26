@@ -2,15 +2,14 @@ import contextlib
 import logging
 import os
 
-from .disks import get_disk_names, get_disks_with_identifiers
+from .disks_.disk_class import iterate_disks
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_disk_stats(disk_identifier_mapping: dict | None = None) -> dict[str, dict]:
-    disk_identifier_mapping = disk_identifier_mapping or get_disks_with_identifiers()
-    available_disks = get_disk_names()
+def get_disk_stats() -> dict[str, dict]:
+    available_disks = {d.name: d for d in iterate_disks()}
     stats = {}
     with contextlib.suppress(IOError):
         with open('/proc/diskstats', 'r') as disk_stats_fd:
@@ -38,7 +37,7 @@ def get_disk_stats(disk_identifier_mapping: dict | None = None) -> dict[str, dic
                     logger.error('Failed to parse disk stats for %r: %r', disk_name, e)
                     continue
 
-                stats[disk_identifier_mapping.get(disk_name, disk_name)] = {
+                stats[available_disks[disk_name].identifier] = {
                     'reads': (read_sectors * sector_size) / 1024,  # convert to kb
                     'writes': (write_sectors * sector_size) / 1024,  # convert to kb
                     'read_ops': read_ops,

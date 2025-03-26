@@ -51,10 +51,17 @@ class DISKPlugin(GraphBase):
 
     async def build_context(self):
         all_charts = await self.all_charts()
-        self.disk_mapping = {
-            get_human_disk_name(disk): disk['identifier']
-            for disk in await self.middleware.call('disk.query')
-            if f'truenas_disk_stats.io.{disk["identifier"]}' in all_charts
+        self.disk_mapping = await self.middleware.run_in_thread(self.get_mapping, all_charts)
+
+    def get_mapping(self, all_charts):
+        return {
+            get_human_disk_name({
+                'identifier': disk.identifier,
+                'type': disk.media_type,
+                'name': disk.name,
+                'model': disk.model,
+            }): disk.identifier for disk in iterate_disks()
+            if f'truenas_disk_stats.io.{disk.identifier}' in all_charts
         }
 
     async def get_identifiers(self) -> typing.Optional[list]:
