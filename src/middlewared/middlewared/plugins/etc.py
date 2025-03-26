@@ -87,6 +87,7 @@ class EtcService(Service):
         'shadow': {
             'ctx': [
                 {'method': 'user.query', 'args': [[['local', '=', True]]]},
+                {'method': 'system.security.config'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
@@ -94,6 +95,7 @@ class EtcService(Service):
         },
         'user': {
             'ctx': [
+                {'method': 'system.security.config'},
                 {'method': 'user.query', 'args': [[['local', '=', True]]]},
                 {'method': 'group.query', 'args': [[['local', '=', True]]]},
             ],
