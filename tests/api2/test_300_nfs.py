@@ -1990,7 +1990,7 @@ def test_threadpool_mode():
 @pytest.mark.parametrize('exports', ['missing', 'empty'])
 def test_missing_or_empty_exports(exports):
     '''
-    NAS-123498: Eliminate conditions on exports for service start                                                                                                                                                                                                    NAS-123498: Eliminate conditions on exports for service start
+    NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
     '''
     # Setup /etc/exports
@@ -2053,3 +2053,12 @@ def test_files_in_exportsd(expect_NFS_start):
             assert any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
         else:  # Alert should have been cleared
             assert not any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
+
+
+def test_bad_json_db_value():
+    '''
+    NAS-135035: Verify that JSON columns of type=list are using list as their default
+    '''
+    with nfs_db():
+        ssh("sqlite3 /data/freenas-v1.db 'UPDATE services_nfs SET nfs_srv_protocols=\"[\"'")
+        assert isinstance(call("nfs.config")["protocols"], list)
