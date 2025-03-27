@@ -7,7 +7,7 @@ from sqlalchemy import (
 )  # noqa
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship  # noqa
-from sqlalchemy.types import UserDefinedType
+from sqlalchemy.types import UserDefinedType, TypeDecorator
 
 from truenas_api_client import json
 
@@ -61,17 +61,16 @@ class EncryptedText(UserDefinedType):
         return self._result_processor
 
 
-class JSON(UserDefinedType):
+class JSON(TypeDecorator):
+    impl = Text
     cache_ok = True
 
     def __init__(self, type_=dict, encrypted=False):
+        super().__init__()
         self.type = type_
         self.encrypted = encrypted
 
-    def get_col_spec(self, **kw):
-        return "TEXT"
-
-    def _bind_processor(self, value):
+    def process_bind_param(self, value, dialect):
         if value is None:
             if self.type is not None:
                 value = self.type()
@@ -80,10 +79,7 @@ class JSON(UserDefinedType):
             result = encrypt(result)
         return result
 
-    def bind_processor(self, dialect):
-        return self._bind_processor
-
-    def _result_processor(self, value):
+    def process_result_value(self, value, dialect):
         try:
             if self.encrypted:
                 value = decrypt(value, _raise=True)
@@ -91,11 +87,6 @@ class JSON(UserDefinedType):
         except Exception:
             if self.type is not None:
                 return self.type()
-            else:
-                return None
-
-    def result_processor(self, dialect, coltype):
-        return self._result_processor
 
 
 class MultiSelectField(UserDefinedType):
