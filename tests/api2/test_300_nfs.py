@@ -2053,12 +2053,3 @@ def test_files_in_exportsd(expect_NFS_start):
             assert any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
         else:  # Alert should have been cleared
             assert not any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
-
-
-def test_bad_json_db_value():
-    '''
-    NAS-135035: Verify that JSON columns of type=list are using list as their default
-    '''
-    with nfs_db():
-        ssh("sqlite3 /data/freenas-v1.db 'UPDATE services_nfs SET nfs_srv_protocols=\"[\"'")
-        assert isinstance(call("nfs.config")["protocols"], list)

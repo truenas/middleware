@@ -389,33 +389,36 @@ class JSONModel(Model):
     __tablename__ = 'test_json'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    object = sa.Column(JSON())
+    json_dict = sa.Column(JSON())
+    json_list = sa.Column(JSON(list))
 
 
-@pytest.mark.parametrize("string,object_", [
-    ('{"key": "value"}', {"key": "value"}),
-    ('{"key": "value"', {}),
+@pytest.mark.parametrize("id_, json_dict, json_list, json_dict_result, json_list_result", [
+    (1, '{"key": "value"}', '[1, 2]', {"key": "value"}, [1, 2]),  # proper JSON
+    (2, '{"key": "value"', '[1, 2', {}, []),                      # improper JSON
 ])
 @pytest.mark.asyncio
-async def test__json_load(string, object_):
+async def test__json_load(id_, json_dict, json_list, json_dict_result, json_list_result):
     async with datastore_test() as ds:
-        ds.execute("INSERT INTO test_json VALUES (1, ?)", string)
-
-        assert (await ds.query("test.json", [], {"get": True}))["object"] == object_
+        ds.execute(f"INSERT INTO test_json VALUES ({id_}, '{json_dict}', '{json_list}')")
+        row = await ds.query("test.json", [["id", "=", id_]], {"get": True})
+        assert row["json_dict"] == json_dict_result and row["json_list"] == json_list_result
 
 
 @pytest.mark.asyncio
 async def test__json_save():
     async with datastore_test() as ds:
-        await ds.insert("test.json", {"object": {"key": "value"}})
-        assert (ds.fetchall("SELECT * FROM test_json"))[0]["object"] == '{"key": "value"}'
+        await ds.insert("test.json", {"json_dict": {"key": "value"}, "json_list": [1, 2]})
+        row = ds.fetchall("SELECT * FROM test_json")[0]
+        assert row["json_dict"] == '{"key": "value"}' and row["json_list"] == '[1, 2]'
 
 
 class EncryptedJSONModel(Model):
     __tablename__ = 'test_encryptedjson'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    object = sa.Column(JSON(encrypted=True))
+    json_dict = sa.Column(JSON(encrypted=True))
+    json_list = sa.Column(JSON(list, encrypted=True))
 
 
 class EncryptedTextModel(Model):
@@ -445,19 +448,19 @@ def encrypt(s):
     return f"!{s}"
 
 
-@pytest.mark.parametrize("string,object_", [
-    ('!{"key":"value"}', {"key": "value"}),
-    ('!{"key":"value"', {}),
-    ('{"key":"value"}', {}),
+@pytest.mark.parametrize("id_, json_dict, json_list, json_dict_result, json_list_result", [
+    (1, '!{"key": "value"}', '![1, 2]', {"key": "value"}, [1, 2]),  # proper JSON
+    (2, '!{"key": "value"', '![1, 2', {}, []),                      # improper JSON
+    (3, '{"key": "value"}', '[1, 2]', {}, []),                      # not encrypted
 ])
 @pytest.mark.asyncio
-async def test__encrypted_json_load(string, object_):
+async def test__encrypted_json_load(id_, json_dict, json_list, json_dict_result, json_list_result):
     async with datastore_test() as ds:
-        ds.execute("INSERT INTO test_encryptedjson VALUES (1, ?)", string)
+        ds.execute(f"INSERT INTO test_encryptedjson VALUES ({id_}, '{json_dict}', '{json_list}')")
 
         with patch("middlewared.sqlalchemy.decrypt", decrypt):
-            assert (await ds.query("test.encryptedjson", [], {"get": True}))["object"] == object_
-
+            row = await ds.query("test.encryptedjson", [["id", "=", id_]], {"get": True})
+            assert row["json_dict"] == json_dict_result and row["json_list"] == json_list_result
 
 @pytest.mark.asyncio
 async def test__encrypted_json_save():
