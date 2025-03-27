@@ -8,7 +8,7 @@ from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_heartbeat_url
 
 from middlewared.service import CallError, Service
-from middlewared.utils.disks import get_disks_with_identifiers
+from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
@@ -39,7 +39,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
             system_id=creds['system_id'],
             version=parse_version_string(await self.middleware.call('system.version_short')),
         )
-        disk_mapping = await self.middleware.run_in_thread(get_disks_with_identifiers)
+        disk_mapping = {i.name: i.identifier for i in iterate_disks()}
         while tnc_config['status'] in CONFIGURED_TNC_STATES:
             sleep_error = False
             resp = await self.call(heartbeat_url, 'post', await self.payload(disk_mapping), get_response=False)
