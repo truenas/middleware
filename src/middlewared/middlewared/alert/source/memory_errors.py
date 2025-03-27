@@ -75,7 +75,13 @@ class MemorySizeMismatchAlertSource(AlertSource):
         except Exception:
             return alerts
 
-        if r1 != r2:
+        # UEFI reserves parts of memory at every boot so
+        # this means the exact amount of bytes is not
+        # guaranteed. This also means that each controller
+        # might not have the _exact_ amount of bytes. We're
+        # going to consider > 2% of difference is too much
+        # and alert on it.
+        if abs(r1 - r2) > (0.02 * max(abs(r1), abs(r2))):
             alerts.append(Alert(
                 MemorySizeMismatchAlertClass,
                 {'r1': format_size(r1), 'r2': format_size(r2)}
