@@ -21,7 +21,7 @@ from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
     CoreGetServicesArgs, CoreGetServicesResult,
     CoreGetMethodsArgs, CoreGetMethodsResult,
-    CoreGetJobsArgs, CoreGetJobsResult,
+    CoreGetJobsItem,
     CoreResizeShellArgs, CoreResizeShellResult,
     CoreJobDownloadLogsArgs, CoreJobDownloadLogsResult,
     CoreJobWaitArgs, CoreJobWaitResult,
@@ -48,7 +48,7 @@ from middlewared.validators import IpAddress
 from .compound_service import CompoundService
 from .config_service import ConfigService
 from .crud_service import CRUDService
-from .decorators import job, no_authz_required, private
+from .decorators import filterable_api_method, job, no_authz_required, private
 from .service import Service
 
 
@@ -112,7 +112,7 @@ class CoreService(Service):
 
         return job
 
-    @api_method(CoreGetJobsArgs, CoreGetJobsResult, authorization_required=False, pass_app=True, pass_app_rest=True)
+    @filterable_api_method(item=CoreGetJobsItem, authorization_required=False, pass_app=True, pass_app_rest=True)
     def get_jobs(self, app, filters, options):
         """
         Get information about long-running jobs.
@@ -705,7 +705,7 @@ class CoreService(Service):
                 else:
                     msg = await self.middleware.call(method, *p)
 
-                status = {"error": None}
+                status = {"job_id": None, "result": None, "error": None}
 
                 if isinstance(msg, Job):
                     b_job = msg
@@ -779,10 +779,18 @@ class CoreService(Service):
     @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False,
                 pass_app=True)
     async def set_options(self, app, options):
+        if "legacy_jobs" in options:
+            app.legacy_jobs = options["legacy_jobs"]
         if "private_methods" in options:
             app.private_methods = options["private_methods"]
         if "py_exceptions" in options:
             app.py_exceptions = options["py_exceptions"]
+
+        return {
+            "legacy_jobs": app.legacy_jobs,
+            "private_methods": app.private_methods,
+            "py_exceptions": app.py_exceptions,
+        }
 
     @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False, pass_app=True)
     async def subscribe(self, app, event):

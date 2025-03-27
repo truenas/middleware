@@ -75,6 +75,7 @@ def api_method(
         if pass_app:
             # Pass the application instance as parameter to the method
             func._pass_app = {
+                'message_id': False,
                 'require': pass_app_require,
                 'rest': pass_app_rest,
             }

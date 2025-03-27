@@ -1,37 +1,77 @@
 Jobs
 ----
 
-Tasks which require significant time to execute or process a significant amount
-of input or output are tagged as jobs.
-When a client connects to an endpoint marked as a job, they receive a job id
-from the endpoint. With this job id, the client can query the status of the job
-to see the progress and status. Errors are shown
-in the output, or the output contains the result returned by the endpoint on completion.
+Tasks that require significant time to execute or process a large amount of input or output are categorized as jobs.
+Job execution can be time-consuming, but its progress can be monitored.
 
-e.g. `ws://truenas.domain/websocket`
+To monitor the progress of running jobs, subscribe to the `core.get_jobs event <api_events_core.get_jobs.html>`_.
 
-Example of connecting to endpoint marked as a job
-#################################################
+When a new job is initiated through a JSON-RPC 2.0 API call, its `message_ids` field will include the `id` of the call.
+Therefore, when starting a new job, the client should listen for the `added` event in the `core.get_jobs` subscription.
+Additionally, the client should monitor `changed` events because a `changed` event with a new `message_ids` field value
+may be emitted if a method call triggers a job that has already been scheduled.
 
-Client connects to websocket endpoint and sends a `connect` message.
-********************************************************************
+Example of Calling a Job Method
+###############################
 
-    :::javascript
+The client initiates a method call:
+
+.. code:: json
+
     {
+        "jsonrpc": "2.0",
         "id": "6841f242-840a-11e6-a437-00e04d680384",
-        "msg": "method",
-        "method": "catalog.sync_all",
-        "params": []
+        "method": "filesystem.copy",
+        "params": ["/mnt/tank/src", "/mnt/tank/dst"]
     }
 
-Server answers with `job_id`.
-*****************************
+The server responds with the newly added job:
 
-    :::javascript
+.. code:: json
+
     {
-      "msg": "result",
-      "id": "c0bb5952-fc60-232a-3d6c-a47961b771a5",
-      "result": 53
+        "jsonrpc": "2.0",
+        "method": "collection_update",
+        "params": {
+            "msg": "added",
+            "collection": "core.get_jobs",
+            "fields": {
+                "id": 101,
+                "message_ids": ["6841f242-840a-11e6-a437-00e04d680384"],
+                ...
+            }
+        }
+    }
+
+Then, it updates the progress:
+
+.. code:: json
+
+    {
+        "jsonrpc": "2.0",
+        "method": "collection_update",
+        "params": {
+            "msg": "changed",
+            "collection": "core.get_jobs",
+            "fields": {
+                "id": 101,
+                "progress": {
+                    "percent": 50,
+                    "description": "Copied 1000000 or 2000000 bytes"
+                },
+                ...
+            }
+        }
+    }
+
+Finally, it sends the method execution result as usual:
+
+.. code:: json
+
+    {
+        "jsonrpc": "2.0",
+        "id": "6841f242-840a-11e6-a437-00e04d680384",
+        "result": true
     }
 
 Query Job Status

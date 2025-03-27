@@ -41,7 +41,9 @@ def test_authorized():
             async def mock(self, app):
                 return app.authenticated_credentials.dump()["username"].startswith("unprivileged")
         """):
-            assert c.call("core.bulk", "test.test1", [[]], job=True) == [{"result": True, "error": None}]
+            assert c.call("core.bulk", "test.test1", [[]], job=True) == [
+                {"job_id": None, "result": True, "error": None}
+            ]
 
 
 def test_authorized_audit():
