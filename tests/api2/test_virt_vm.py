@@ -553,3 +553,38 @@ def test_disk_source_uniqueness(virt_pool):
                         'dev_type': 'DISK',
                         'source': f'/dev/zvol/{ds}',
                     })
+
+
+def test_set_bootable_disk(vm, iso_volume):
+    virt_instance_name = 'test-vm'
+    call('virt.instance.create', {
+        'name': virt_instance_name,
+        'instance_type': 'VM',
+        'source_type': None,
+    }, job=True)
+    call('virt.instance.stop', virt_instance_name, {'force': True}, job=True)
+
+    with volume('test-volume', 1024) as vol:
+        with volume('test-volume2', 1024) as vol2:
+            call('virt.instance.device_add', virt_instance_name, {
+                'dev_type': 'DISK',
+                'source': vol['name'],
+                'boot_priority': 2,
+                'io_bus': 'NVME'
+            })
+            call('virt.instance.device_add', virt_instance_name, {
+                'dev_type': 'DISK',
+                'source': vol2['name'],
+                'boot_priority': 1,
+                'io_bus': 'VIRTIO-SCSI'
+            })
+
+            try:
+                call('virt.instance.set_bootable_disk', virt_instance_name, 'disk1')
+                vm_devices = call('virt.instance.device_list', virt_instance_name)
+                disk_device = next(device for device in vm_devices if device['name'] == 'disk1')
+
+                assert disk_device['boot_priority'] == 3, disk_device
+                assert disk_device['io_bus'] == 'VIRTIO-SCSI', disk_device
+            finally:
+                call('virt.instance.delete', virt_instance_name, job=True)
