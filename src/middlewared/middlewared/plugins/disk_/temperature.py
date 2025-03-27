@@ -11,7 +11,7 @@ from middlewared.api.current import (
     DiskTemperatureAlertsResult,
 )
 from middlewared.service import Service
-from middlewared.utils.disk_class import TempEntry
+from middlewared.utils.disks_.disk_class import TempEntry
 
 
 class DiskService(Service):
