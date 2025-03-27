@@ -1,5 +1,5 @@
 import types
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.job import Job
 
@@ -26,11 +26,12 @@ class Method:
     def private(self):
         return getattr(self.methodobj, "_private", False)
 
-    async def call(self, app: "RpcWebSocketApp", params: list):
+    async def call(self, app: "RpcWebSocketApp", id_: Any, params: list):
         """
         Calls the method in the context of a given `app`.
 
         :param app: `RpcWebSocketApp` instance.
+        :param id_: `id` of the JSON-RPC 2.0 message that triggered the method call.
         :param params: method arguments.
         :return: method return value.
         """
@@ -41,11 +42,14 @@ class Method:
         if mock := self.middleware._mock_method(self.name, params):
             methodobj = mock
 
-        result = await self.middleware.call_with_audit(self.name, self.serviceobj, methodobj, params, app)
+        result = await self.middleware.call_with_audit(self.name, self.serviceobj, methodobj, params, app,
+                                                       message_id=id_)
         if isinstance(result, Job):
-            return result.id
+            if app.legacy_jobs:
+                return result.id
 
-        if isinstance(result, types.GeneratorType):
+            result = await result.wait(raise_error=True, raise_error_forward_classes=(Exception,))
+        elif isinstance(result, types.GeneratorType):
             result = list(result)
         elif isinstance(result, types.AsyncGeneratorType):
             result = [i async for i in result]

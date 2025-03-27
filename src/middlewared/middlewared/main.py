@@ -625,7 +625,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call_prepare(
         self, name, serviceobj, methodobj, params, *, app=None, audit_callback=None, job_on_progress_cb=None,
-        pipes=None, in_event_loop: bool = True,
+        message_id=None, pipes=None, in_event_loop: bool = True,
     ):
         """
         :param in_event_loop: Whether we are in the event loop thread.
@@ -655,7 +655,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 job_options['process'] = True
             # Create a job instance with required args
             job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, app,
-                      audit_callback)
+                      message_id, audit_callback)
             # Add the job to the queue.
             # At this point an `id` is assigned to the job.
             # Job might be replaced with an already existing job if `lock_queue_size` is used.
@@ -733,7 +733,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def dump_result(
         self,
         serviceobj,
-        methodobj: Method | LegacyAPIMethod,
+        methodobj: Method,
         app: object | None,
         result: dict | str | int | list | None | Job,
         *,
@@ -893,8 +893,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             # If the method is a job, audit message will be logged by `job_on_finish_cb`
             if job is None:
                 await log_audit_message_for_method(success)
-
-        return result
 
     async def log_audit_message_for_method(self, method, methodobj, params, app, authenticated, authorized, success,
                                            callback_messages=None):

@@ -278,7 +278,7 @@ class Job:
     logs_fd: None
 
     def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb, app,
-                 audit_callback):
+                 message_id, audit_callback):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
@@ -289,6 +289,7 @@ class Job:
         self.pipes = pipes or Pipes(input_=None, output=None)
         self.on_progress_cb = on_progress_cb
         self.app = app
+        self.message_id = message_id
         self.audit_callback = audit_callback
 
         self.id = None
@@ -666,6 +667,7 @@ class Job:
 
         return {
             'id': self.id,
+            'message_id': self.message_id,
             'method': self.method_name,
             'arguments': self.middleware.dump_args(self.args, method=self.method),
             'transient': self.options['transient'],
@@ -697,7 +699,7 @@ class Job:
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
         job = Job(middleware, job_dict['method'], serviceobj, methodobj, job_dict['arguments'], methodobj._job, None,
-                  None, None, None)
+                  None, None, None, None)
         job.id = job_dict['id']
         job.description = job_dict['description']
         if logs is not None:
