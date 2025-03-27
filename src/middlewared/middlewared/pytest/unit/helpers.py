@@ -1,12 +1,15 @@
 import functools
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.model_provider import ModelProvider
 from middlewared.utils.plugins import LoadPluginsMixin
+if TYPE_CHECKING:
+    from middlewared.service import Service
 
 
-def load_compound_service(name):
+def load_compound_service(name: str) -> 'functools.partial[Service]':
     lpm = LoadPluginsMixin()
     lpm.event_register = Mock()
     lpm.get_events = Mock(return_value=[])
