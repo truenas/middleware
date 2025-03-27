@@ -466,14 +466,15 @@ async def test__encrypted_json_load(id_, json_dict, json_list, json_dict_result,
 async def test__encrypted_json_save():
     async with datastore_test() as ds:
         with patch("middlewared.sqlalchemy.encrypt", encrypt):
-            await ds.insert("test.encryptedjson", {"object": {"key": "value"}})
+            await ds.insert("test.encryptedjson", {"json_dict": {"key": "value"}, "json_list": [1, 2]})
 
-        assert (ds.fetchall("SELECT * FROM test_encryptedjson"))[0]["object"] == '!{"key": "value"}'
+        row = ds.fetchall("SELECT * FROM test_encryptedjson")[0]
+        assert row["json_dict"] == '!{"key": "value"}' and row["json_list"] == '![1, 2]'
 
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
-            "INSERT INTO test_encryptedjson (object) VALUES (?)",
-            ['!{"key": "value"}'],
+            "INSERT INTO test_encryptedjson (json_dict, json_list) VALUES (?, ?)",
+            ['!{"key": "value"}', '![1, 2]'],
             ANY,
         )
 
