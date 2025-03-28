@@ -17,9 +17,9 @@ class DiskTemperatureTooHotAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Disk Temperature Is Too Hot"
     text = (
-        "Disk %(n)s (with serial: %(s)s) critical temperature"
-        " threshold is %(t)d degrees celsius and the current temp is"
-        " %(ct)d degrees celsius"
+        "Disk %(device)s (with serial: %(serial)s) critical temperature"
+        " threshold is %(crit_threshold)d degrees celsius and the"
+        " current temp is %(temp)d degrees celsius"
     )
 
 
@@ -47,7 +47,12 @@ class DiskTemperatureTooHotAlertSource(AlertSource):
                 alerts.append(
                     Alert(
                         DiskTemperatureTooHotAlertClass,
-                        {"n": disk, "s": di.serial, "t": crit, "ct": temp},
+                        {
+                            "device": f"/dev/{disk}",
+                            "serial": di.serial,
+                            "crit_threshold": crit,
+                            "temp": temp,
+                        },
                     )
                 )
         return alerts

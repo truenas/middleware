@@ -81,7 +81,10 @@ class DiskService(Service):
         roles=['REPORTING_READ']
     )
     async def temperature_alerts(self, names):
-        """
-        Returns existing temperature alerts for specified disk `names.`
-        """
-        return []  # FIXME
+        """Returns existing temperature alerts for specified disks."""
+        alerts = list()
+        names = {f'/dev/{i}' for i in names}
+        for i in await self.middleware.call("alert.list"):
+            if i["klass"] == "DiskTemperatureTooHot" and i["args"]["device"] in names:
+                alerts.append(i)
+        return alerts
