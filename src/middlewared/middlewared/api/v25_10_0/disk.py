@@ -110,10 +110,13 @@ class DiskTemperaturesArgs(BaseModel):
     """List of names of disks to retrieve temperature
     information. Name should be in the form of "sda",
     "nvme0n1", etc"""
+    include_thresholds: bool = False
+    """If true, will include the temperature thresholds
+    as reported by the disk (i.e. the critical temp)"""
 
 
 class DiskTemperaturesResult(BaseModel):
-    result: dict[str, float | None] = Field(default_factory=dict)
+    result: dict
 
 
 class DiskTemperatureAggArgs(BaseModel):
