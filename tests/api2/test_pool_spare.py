@@ -27,8 +27,9 @@ def test_pool_create_too_small_spare():
         assert ve.value.errors[0].errmsg.startswith("Spare sdz (1 GiB) is smaller than the smallest data disk")
 
 
-def test_pool_update_too_small_spare():
+def test_pool_update_spare():
     with another_pool() as pool:
+        # Test too small
         with fake_disks({"sdz": {"size_bytes": 1024 * 1024 * 1024}}):
             with pytest.raises(ValidationErrors) as ve:
                 call("pool.update", pool["id"], {
@@ -38,3 +39,10 @@ def test_pool_update_too_small_spare():
                 }, job=True)
 
             assert ve.value.errors[0].errmsg.startswith("Spare sdz (1 GiB) is smaller than the smallest data disk")
+
+        # Test multiple spares
+        spares = [disk["name"] for disk in call("disk.get_unused")[:2]]
+        assert len(spares) == 2
+
+        result = call("pool.update", pool["id"], {"topology": {"spares": spares}}, job=True)
+        assert {disk["disk"] for disk in result["topology"]["spare"]} == set(spares)

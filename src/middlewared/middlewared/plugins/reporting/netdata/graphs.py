@@ -1,7 +1,6 @@
 import typing
 
-from middlewared.utils.cpu import cpu_info
-from middlewared.utils.disk_temperatures import get_disks_for_temperature_reading
+from middlewared.utils.disks_.disk_class import iterate_disks
 
 from .graph_base import GraphBase
 from .utils import get_human_disk_name
@@ -52,10 +51,17 @@ class DISKPlugin(GraphBase):
 
     async def build_context(self):
         all_charts = await self.all_charts()
-        self.disk_mapping = {
-            get_human_disk_name(disk): disk['identifier']
-            for disk in await self.middleware.call('disk.query')
-            if f'truenas_disk_stats.io.{disk["identifier"]}' in all_charts
+        self.disk_mapping = await self.middleware.run_in_thread(self.get_mapping, all_charts)
+
+    def get_mapping(self, all_charts):
+        return {
+            get_human_disk_name({
+                'identifier': disk.identifier,
+                'type': disk.media_type,
+                'name': disk.name,
+                'model': disk.model,
+            }): disk.identifier for disk in iterate_disks()
+            if f'truenas_disk_stats.io.{disk.identifier}' in all_charts
         }
 
     async def get_identifiers(self) -> typing.Optional[list]:
@@ -365,17 +371,25 @@ class DiskTempPlugin(GraphBase):
         return 'Disk Temperature {identifier}'
 
     async def build_context(self):
-        self.disk_mapping = {}
         all_charts = await self.all_charts()
-        for disk in (await self.middleware.run_in_thread(get_disks_for_temperature_reading)).values():
-            identifier = disk.id if disk.id.startswith('nvme') else disk.serial
-            for k in (identifier, identifier.replace('-', '_')):
-                if f'smart_log_smart.disktemp.{k}' in all_charts:
-                    self.disk_mapping[get_human_disk_name(disk.__dict__)] = k
-                    break
+        self.disk_mapping = await self.middleware.run_in_thread(self.get_mapping, all_charts)
+
+    def get_mapping(self, all_charts):
+        return {
+            get_human_disk_name({
+                'identifier': disk.identifier,
+                'type': disk.media_type,
+                'name': disk.name,
+                'model': disk.model,
+            }): disk.identifier for disk in iterate_disks()
+            if f'truenas_disk_temp.{disk.identifier}' in all_charts
+        }
 
     async def get_identifiers(self) -> typing.Optional[list]:
         return list(self.disk_mapping.keys())
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return f'truenas_disk_temp.{self.disk_mapping[identifier]}'
 
     def normalize_metrics(self, metrics) -> dict:
         metrics = super().normalize_metrics(metrics)
@@ -387,9 +401,6 @@ class DiskTempPlugin(GraphBase):
             metrics['legend'][1] = 'temperature_value'
 
         return metrics
-
-    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return f'smart_log_smart.disktemp.{self.disk_mapping[identifier]}'
 
 
 class UPSBase(GraphBase):

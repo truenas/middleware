@@ -1,49 +1,27 @@
 import logging
 import uuid
 
+from truenas_connect_utils.acme import acme_config, create_cert
+from truenas_connect_utils.exceptions import CallError as TNCCallError
+from truenas_connect_utils.status import Status
+
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, job, Service
-from middlewared.utils.time_utils import utc_now
 
-from .acme_utils import normalize_acme_config
-from .cert_utils import generate_csr, get_hostnames_from_hostname_config
-from .mixin import TNCAPIMixin
-from .status_utils import Status
-from .urls import get_acme_config_url
-from .utils import CERT_RENEW_DAYS, get_account_id_and_system_id
+from .utils import CERT_RENEW_DAYS
 
 
 logger = logging.getLogger('truenas_connect')
 
 
-class TNCACMEService(Service, TNCAPIMixin):
+class TNCACMEService(Service):
 
     class Config:
         private = True
         namespace = 'tn_connect.acme'
 
-    async def call(self, url, mode, payload=None):
-        config = await self.middleware.call('tn_connect.config_internal')
-        return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config))
-
     async def config(self):
-        config = await self.middleware.call('tn_connect.config_internal')
-        creds = get_account_id_and_system_id(config)
-        if not config['enabled'] or creds is None:
-            return {
-                'error': 'TrueNAS Connect is not enabled or not configured properly',
-                'tnc_configured': False,
-                'acme_details': {},
-            }
-
-        resp = await self.call(get_acme_config_url(config).format(account_id=creds['account_id']), 'get')
-        resp['acme_details'] = resp.pop('response')
-        if resp['error'] is None:
-            resp = normalize_acme_config(resp)
-
-        return resp | {
-            'tnc_configured': True,
-        }
+        return await acme_config(await self.middleware.call('tn_connect.config_internal'))
 
     async def update_ui(self):
         logger.debug('Updating UI with TNC cert')
@@ -130,35 +108,17 @@ class TNCACMEService(Service, TNCAPIMixin):
 
     @job(lock='tn_connect_cert_generation')
     async def create_cert(self, job, cert_id=None):
-        hostname_config = await self.middleware.call('tn_connect.hostname.config')
-        if hostname_config['error']:
-            raise CallError(f'Failed to fetch TNC hostname configuration: {hostname_config["error"]}')
-
-        acme_config = await self.middleware.call('tn_connect.acme.config')
-        if acme_config['error']:
-            raise CallError(f'Failed to fetch TNC ACME configuration: {acme_config["error"]}')
-
-        hostnames = get_hostnames_from_hostname_config(hostname_config)
+        csr_details = None
         if cert := (await self.middleware.call('certificate.query', [['id', '=', cert_id]])):
-            logger.debug('Retrieved CSR of existing TNC certificate')
-            csr, private_key = cert[0]['CSR'], cert[0]['privatekey']
-        else:
-            logger.debug('Generating CSR for TNC certificate')
-            csr, private_key = generate_csr(hostnames)
+            csr_details = {
+                'csr': cert[0]['CSR'],
+                'private_key': cert[0]['privatekey'],
+            }
 
-        dns_mapping = {f'DNS:{hostname}': None for hostname in hostnames}
-
-        logger.debug('Performing ACME challenge for TNC certificate')
-        final_order = await self.middleware.call(
-            'acme.issue_certificate_impl', job, 25, acme_config['acme_details'], csr, dns_mapping,
-        )
-
-        return {
-            'cert': final_order.fullchain_pem,
-            'acme_uri': final_order.uri,
-            'private_key': private_key,
-            'csr': csr,
-        }
+        try:
+            return await create_cert(await self.middleware.call('tn_connect.config_internal'), csr_details)
+        except TNCCallError as e:
+            raise CallError(str(e))
 
     async def revoke_cert(self):
         tnc_config = await self.middleware.call('tn_connect.config_internal')

@@ -5,8 +5,11 @@ import itertools
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from middlewared.schema import Schemas
+if TYPE_CHECKING:
+    from middlewared.service import Service
 
 logger = logging.getLogger(__name__)
 
@@ -90,8 +93,8 @@ class SchemasMixin:
 class LoadPluginsMixin(SchemasMixin):
 
     def __init__(self):
-        self._services = {}
-        self._services_aliases = {}
+        self._services: dict[str, 'Service'] = {}
+        self._services_aliases: dict[str, 'Service'] = {}
         super().__init__()
 
     def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None, whitelist=None):
@@ -134,12 +137,12 @@ class LoadPluginsMixin(SchemasMixin):
         # to make sure every schema is patched and references match
         self._resolve_methods(list(self._services.values()), self.get_events())
 
-    def add_service(self, service):
+    def add_service(self, service: 'Service'):
         self._services[service._config.namespace] = service
         if service._config.namespace_alias:
             self._services_aliases[service._config.namespace_alias] = service
 
-    def get_service(self, name):
+    def get_service(self, name: str) -> 'Service':
         service = self._services.get(name)
         if service:
             return service

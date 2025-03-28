@@ -1,13 +1,6 @@
-import asyncio
-
-import aiohttp
-from truenas_api_client import json
+from truenas_connect_utils.request import auth_headers, call
 
 from middlewared.service import private
-
-
-def auth_headers(config: dict) -> dict:
-    return {'Authorization': f'Bearer {config["jwt_token"]}'}
 
 
 class TNCAPIMixin:
@@ -16,40 +9,6 @@ class TNCAPIMixin:
     async def auth_headers(self, config: dict) -> dict:
         return auth_headers(config)
 
-    async def _call(
-        self, endpoint: str, mode: str, *, options: dict | None = None, payload: dict | None = None,
-        headers: dict | None = None, json_response: bool = True, get_response: bool = True,
-    ):
+    async def _call(self, *args, **kwargs):
         # FIXME: Add network activity check for TNC
-        options = options or {}
-        timeout = options.get('timeout', 15)
-        response = {
-            'error': None,
-            'response': {},
-            'status_code': None,
-        }
-        if payload is not None and (headers is None or 'Content-Type' not in headers):
-            headers = headers or {}
-            headers['Content-Type'] = 'application/json'
-        try:
-            async with asyncio.timeout(timeout):
-                async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as session:
-                    req = await getattr(session, mode)(
-                        endpoint,
-                        data=json.dumps(payload) if payload is not None else payload,
-                        headers=headers,
-                    )
-                    response['status_code'] = req.status
-        except asyncio.TimeoutError:
-            response['error'] = f'Unable to connect with TNC in {timeout} seconds.'
-        except aiohttp.ClientResponseError as e:
-            response.update({
-                'error': str(e),
-                'status_code': e.status,
-            })
-        except aiohttp.ClientConnectorError as e:
-            response['error'] = f'Failed to connect to TNC: {e}'
-        else:
-            if get_response:
-                response['response'] = await req.json() if json_response else await req.text()
-        return response
+        return await call(*args, **kwargs)

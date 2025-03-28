@@ -127,13 +127,15 @@ class DiskEntry:
             if serial := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
                 serial = "".join(
                     chr(b) if 32 <= b <= 126 else "\ufffd" for b in serial
-                ).replace("\ufffd", "")
+                ).replace("\ufffd", "").strip()
 
         if not serial:
             # pmem devices have a uuid attribute that we use as serial
             serial = self.__opener(relative_path="uuid")
 
-        return serial
+        # strip is required because we see these cases otherwise
+        # >>> d.serial reported as '        3FJ1U1HT'
+        return serial.strip() if serial else None
 
     @cached_property
     def lunid(self) -> str | None:
@@ -150,7 +152,11 @@ class DiskEntry:
         if wwid is not None:
             wwid = wwid.removeprefix("naa.").removeprefix("0x").removeprefix("eui.")
 
-        return wwid
+        # Doing a replace here because we have seen cases where this value
+        # gets reported -> 't10.ATA     QEMU HARDDISK                           QM00003'
+        # It is like this in the file itself, it could just perhaps be isolated only to VMs
+        # but there is no harm to remove empty spaces
+        return wwid.replace(" ", "") if wwid else wwid
 
     @cached_property
     def model(self) -> str | None:
@@ -167,6 +173,11 @@ class DiskEntry:
         if fr is None:
             fr = self.__opener(relative_path="device/firmware_rev")
         return fr
+
+    @cached_property
+    def media_type(self) -> str:
+        fr = self.__opener(relative_path="queue/rotational")
+        return "HDD" if fr == "1" else "SSD"
 
     @cached_property
     def identifier(self) -> str:

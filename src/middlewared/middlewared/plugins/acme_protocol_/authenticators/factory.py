@@ -7,7 +7,6 @@ from .digitalocean import DigitalOceanAuthenticator
 from .ovh import OVHAuthenticator
 from .route53 import Route53Authenticator
 from .shell import ShellAuthenticator
-from .truenas_connect import TrueNASConnectAuthenticator
 
 
 class AuthenticatorFactory:
@@ -34,6 +33,5 @@ for authenticator in [
     Route53Authenticator,
     OVHAuthenticator,
     ShellAuthenticator,
-    TrueNASConnectAuthenticator,
 ]:
     auth_factory.register(authenticator)

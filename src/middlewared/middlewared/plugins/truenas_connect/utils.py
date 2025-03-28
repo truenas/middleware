@@ -1,7 +1,7 @@
 import datetime
 import math
 
-from .status_utils import Status
+from truenas_connect_utils.status import Status
 
 
 CERT_RENEW_DAYS = 5
@@ -12,17 +12,6 @@ CONFIGURED_TNC_STATES = (
     Status.CERT_RENEWAL_SUCCESS.name,
 )
 HEARTBEAT_INTERVAL = 120
-
-
-def get_account_id_and_system_id(config: dict) -> dict | None:
-    jwt_details = config['registration_details'] or {}
-    if all(jwt_details.get(k) for k in ('account_id', 'system_id')) is False:
-        return None
-
-    return {
-        'account_id': jwt_details['account_id'],
-        'system_id': jwt_details['system_id'],
-    }
 
 
 def get_unset_payload() -> dict:

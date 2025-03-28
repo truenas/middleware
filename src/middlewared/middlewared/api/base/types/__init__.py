@@ -1,3 +1,4 @@
+from .dict import *  # noqa
 from .fc import *  # noqa
 from .filesystem import *  # noqa
 from .iscsi import *  # noqa

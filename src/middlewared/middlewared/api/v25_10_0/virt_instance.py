@@ -110,7 +110,7 @@ MemoryType: TypeAlias = Annotated[int, AfterValidator(validate_memory)]
 class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     iso_volume: NonEmptyString | None = None
-    source_type: Literal[None, 'IMAGE', 'ZVOL', 'ISO', 'VOLUME'] = 'IMAGE'
+    source_type: Literal[None, 'IMAGE', 'ISO', 'VOLUME'] = 'IMAGE'
     storage_pool: NonEmptyString | None = None
     '''
     Storage pool under which to allocate root filesystem. Must be one of the pools
@@ -134,12 +134,6 @@ class VirtInstanceCreateArgs(BaseModel):
     secure_boot: bool = False
     enable_vnc: bool = False
     vnc_port: int | None = Field(ge=5900, le=65535, default=None)
-    zvol_path: NonEmptyString | None = None
-    '''
-    This is useful when a VM wants to be booted where a ZVOL already has a VM bootstrapped in it and needs
-    to be ported over to virt plugin. Virt will consume this zvol and add it as a DISK device to the instance
-    with boot priority set to 1 so the VM can be booted from it.
-    '''
     volume: NonEmptyString | None = None
     '''
     This should be set when source type is "VOLUME" and should be the name of the virt volume which should
@@ -154,8 +148,6 @@ class VirtInstanceCreateArgs(BaseModel):
                 raise ValueError('Source type must be set to "IMAGE" when instance type is CONTAINER')
             if self.enable_vnc:
                 raise ValueError('VNC is not supported for containers and `enable_vnc` should be unset')
-            if self.zvol_path:
-                raise ValueError('Zvol path is only supported for VMs')
         else:
             if self.enable_vnc and self.vnc_port is None:
                 raise ValueError('VNC port must be set when VNC is enabled')
@@ -168,14 +160,6 @@ class VirtInstanceCreateArgs(BaseModel):
 
             if self.source_type == 'VOLUME' and self.volume is None:
                 raise ValueError('volume must be set when source type is "VOLUME"')
-
-            if self.source_type == 'ZVOL':
-                if self.zvol_path is None:
-                    raise ValueError('Zvol path must be set when source type is "ZVOL"')
-                if self.zvol_path.startswith('/dev/zvol/') is False:
-                    raise ValueError('Zvol path must be a valid zvol path')
-                elif not os.path.exists(self.zvol_path):
-                    raise ValueError(f'Zvol path {self.zvol_path} does not exist')
 
         if self.source_type == 'IMAGE' and self.image is None:
             raise ValueError('Image must be set when source type is "IMAGE"')

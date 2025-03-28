@@ -2,8 +2,8 @@ from collections import defaultdict
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DiskGetDetailsArgs,
-    DiskGetDetailsResult,
+    DiskDetailsArgs,
+    DiskDetailsResult,
     DiskGetUsedArgs,
     DiskGetUsedResult,
 )
@@ -130,8 +130,8 @@ class DiskService(Service):
         return (await self.details_impl({'join_partitions': join_partitions}))['used']
 
     @api_method(
-        DiskGetDetailsArgs,
-        DiskGetDetailsResult,
+        DiskDetailsArgs,
+        DiskDetailsResult,
         roles=['REPORTING_READ'],
     )
     async def details(self, data):

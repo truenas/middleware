@@ -1990,7 +1990,7 @@ def test_threadpool_mode():
 @pytest.mark.parametrize('exports', ['missing', 'empty'])
 def test_missing_or_empty_exports(exports):
     '''
-    NAS-123498: Eliminate conditions on exports for service start                                                                                                                                                                                                    NAS-123498: Eliminate conditions on exports for service start
+    NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
     '''
     # Setup /etc/exports

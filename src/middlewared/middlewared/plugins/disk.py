@@ -1,9 +1,8 @@
-from sqlalchemy.exc import IntegrityError
-
-from middlewared.utils import ProductType
-from middlewared.schema import accepts, Datetime, Dict, Int, Patch, Str
-from middlewared.service import filterable, private, CRUDService
+from middlewared.api import api_method
+from middlewared.api.current import DiskEntry, DiskUpdateArgs, DiskUpdateResult
+from middlewared.service import filterable_api_method, private, CRUDService
 import middlewared.sqlalchemy as sa
+from middlewared.utils import ProductType
 
 
 class DiskModel(sa.Model):
@@ -44,52 +43,19 @@ class DiskService(CRUDService):
         event_send = False
         cli_namespace = 'storage.disk'
         role_prefix = 'DISK'
+        entry = DiskEntry
 
-    ENTRY = Dict(
-        'disk_entry',
-        Str('identifier', required=True),
-        Str('name', required=True),
-        Str('subsystem', required=True),
-        Int('number', required=True),
-        Str('serial', required=True),
-        Str('lunid', required=True, null=True),
-        Int('size', required=True),
-        Str('description', required=True),
-        Str('transfermode', required=True),
-        Str(
-            'hddstandby', required=True, enum=[
-                'ALWAYS ON', '5', '10', '20', '30', '60', '120', '180', '240', '300', '330'
-            ]
-        ),
-        Str('advpowermgmt', required=True, enum=['DISABLED', '1', '64', '127', '128', '192', '254']),
-        Datetime('expiretime', required=True, null=True),
-        Str('model', required=True, null=True),
-        Int('rotationrate', required=True, null=True),
-        Str('type', required=True, null=True),
-        Str('zfs_guid', required=True, null=True),
-        Str('bus', required=True),
-        Str('devname', required=True),
-        Dict(
-            'enclosure',
-            Int('number'),
-            Int('slot'),
-            null=True, required=True
-        ),
-        Str('pool', null=True, required=True),
-        Str('passwd', private=True),
-        Str('kmip_uid', null=True),
-    )
-
-    @filterable
+    @filterable_api_method(item=DiskEntry)
     async def query(self, filters, options):
         """
         Query disks.
 
         The following extra options are supported:
 
-             include_expired: true - will also include expired disks (default: false)
-             passwords: true - will not hide KMIP password for the disks (default: false)
-             pools: true - will join pool name for each disk (default: false)
+        `include_expired` (bool): Also include expired disks (default: false).
+        `passwords` (bool): Don't hide KMIP password for the disks (default: false).
+        `pools` (bool): Join pool name for each disk (default: false).
+
         """
         filters = filters or []
         options = options or {}
@@ -179,26 +145,7 @@ class DiskService(CRUDService):
             disk['enclosure_slot'] = None
         del disk['enclosure']
 
-    @accepts(
-        Str('id'),
-        Patch(
-            'disk_entry', 'disk_update',
-            ('rm', {'name': 'identifier'}),
-            ('rm', {'name': 'name'}),
-            ('rm', {'name': 'subsystem'}),
-            ('rm', {'name': 'serial'}),
-            ('rm', {'name': 'kmip_uid'}),
-            ('rm', {'name': 'size'}),
-            ('rm', {'name': 'transfermode'}),
-            ('rm', {'name': 'expiretime'}),
-            ('rm', {'name': 'model'}),
-            ('rm', {'name': 'rotationrate'}),
-            ('rm', {'name': 'type'}),
-            ('rm', {'name': 'zfs_guid'}),
-            ('rm', {'name': 'devname'}),
-            ('attr', {'update': True}),
-        )
-    )
+    @api_method(DiskUpdateArgs, DiskUpdateResult)
     async def do_update(self, id_, data):
         """
         Update disk of `id`.

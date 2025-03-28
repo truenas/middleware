@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Secret, Field
 
 from middlewared.api.base import (
-    BaseModel, EmailString, ForUpdateMetaclass, Excluded, excluded_field, NotRequired, LongString
+    BaseModel, EmailString, EmptyDict, ForUpdateMetaclass, Excluded, excluded_field, NotRequired, LongString
 )
 
 
@@ -33,7 +33,7 @@ class MailEntry(BaseModel):
     """SMTP username."""
     pass_: Secret[str | None] = Field(alias="pass")
     """SMTP password."""
-    oauth: Secret[MailEntryOAuth | None]
+    oauth: Secret[MailEntryOAuth | EmptyDict | None]
     id: int
 
 

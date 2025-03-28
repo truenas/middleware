@@ -120,9 +120,6 @@ def get_metrics_approximation(
             # cpu usage, it is core count + 1 with +1 saving aggregated stats
             'cpu.usage': core_count + 1,
 
-            # pool usage
-            'truenas_pool.usage': pool_count * 3,
-
             # cputemp
             'cputemp.temperatures': core_count + 1,
 
@@ -193,8 +190,12 @@ def get_metrics_approximation(
             'cgroup_hash.io_full_pressure': 3 * containers_count,
             'cgroup_hash.io_full_pressure_stall_time': containers_count,
         },
-        60: {  # smartd_logs
-            'smart_log.temperature_celsius': disk_count}
+        300: {
+            # disk temp logs
+            'truenas_disk_temp.temp': disk_count,
+            # pool usage
+            'truenas_pool.usage': pool_count * 3,
+        }
     }
     return {
         sec: sum(d.values()) for sec, d in data.items()

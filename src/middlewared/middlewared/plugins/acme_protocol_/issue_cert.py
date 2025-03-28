@@ -88,15 +88,7 @@ class ACMEService(Service):
             )
         }
         for domain, authenticator_id in dns_mapping_copy.items():
-            if authenticator_id is None:
-                auth_details = {
-                    'attributes': {
-                        'authenticator': 'tn_connect', **self.middleware.call_sync('tn_connect.config_internal')
-                    }
-                }
-            else:
-                auth_details = authenticators[authenticator_id]
-
+            auth_details = authenticators[authenticator_id]
             dns_mapping_copy[domain] = self.middleware.call_sync(
                 'acme.dns.authenticator.get_authenticator_internal', auth_details['attributes']['authenticator'],
             )(self.middleware, auth_details['attributes'])

@@ -3,12 +3,18 @@ import time
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Float, Int
 from middlewared.service import Service
-from middlewared.utils.disks import get_disk_names, get_disks_with_identifiers
+from middlewared.utils.disks import get_disk_names
+from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.validators import Range
 
 from .realtime_reporting import (
     get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats,
 )
+
+
+def get_disks_with_identifiers() -> dict[str, str]:
+    return {i.name: i.identifier for i in iterate_disks()}
+
 
 class ReportingRealtimeService(Service):
 
