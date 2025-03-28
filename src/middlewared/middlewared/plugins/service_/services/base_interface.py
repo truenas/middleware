@@ -1,3 +1,8 @@
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .base_state import ServiceState
+
+
 class ServiceInterface:
     name = NotImplemented
 
@@ -9,7 +14,7 @@ class ServiceInterface:
     def __init__(self, middleware):
         self.middleware = middleware
 
-    async def get_state(self):
+    async def get_state(self) -> 'ServiceState':
         raise NotImplementedError
 
     async def get_unit_state(self):
