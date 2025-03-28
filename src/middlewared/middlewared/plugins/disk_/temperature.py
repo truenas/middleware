@@ -23,7 +23,7 @@ class DiskService(Service):
         DiskTemperaturesResult,
         roles=['REPORTING_READ']
     )
-    def temperatures(self, names):
+    def temperatures(self, names, include_thresholds):
         """Returns disk temperatures for disks in degrees celsius.
 
         NOTE:
@@ -43,7 +43,13 @@ class DiskService(Service):
                 self.temp_cache[i.name] = (i.temp(), now)
 
             if not names or i.name in names:
-                rv[i.name] = self.temp_cache[i.name][0].temp_c
+                if include_thresholds:
+                    rv[i.name] = (
+                        self.temp_cache[i.name][0].temp_c,
+                        self.temp_cache[i.name][0].crit,
+                    )
+                else:
+                    rv[i.name] = self.temp_cache[i.name][0].temp_c
         return rv
 
     @api_method(
@@ -75,7 +81,10 @@ class DiskService(Service):
         roles=['REPORTING_READ']
     )
     async def temperature_alerts(self, names):
-        """
-        Returns existing temperature alerts for specified disk `names.`
-        """
-        return []  # FIXME
+        """Returns existing temperature alerts for specified disks."""
+        alerts = list()
+        names = {f'/dev/{i}' for i in names}
+        for i in await self.middleware.call("alert.list"):
+            if i["klass"] == "DiskTemperatureTooHot" and i["args"]["device"] in names:
+                alerts.append(i)
+        return alerts
