@@ -504,6 +504,13 @@ def user_entry_to_passdb_entry(
     if not user_entry['smbhash']:
         raise ValueError(f'{user_entry["username"]}: SMB hash not available')
 
+    try:
+        nt_pw = user_smbhash_to_nt_pw(user_entry['username'], user_entry['smbhash'])
+    except Exception:
+        raise ValueError(
+            f'{user_entry["username"]}: failed to parse SMB hash of {user_entry["smbhash"]}'
+        )
+
     pdb_times = PDBTimes(
         logon=0,
         logoff=PASSDB_TIME_T_MAX,
@@ -528,7 +535,7 @@ def user_entry_to_passdb_entry(
         'group_rid': 513,  # samba default -- domain users rid
         'acct_desc': '',
         'acct_ctrl': user_entry_to_uac_flags(user_entry),
-        'nt_pw': user_smbhash_to_nt_pw(user_entry['username'], user_entry['smbhash']),
+        'nt_pw': nt_pw,
         'logon_count': 0,
         'bad_pw_count': 0,
         'times': pdb_times
