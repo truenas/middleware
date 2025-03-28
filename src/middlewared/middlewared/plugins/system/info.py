@@ -5,7 +5,8 @@ import time
 
 from datetime import datetime, timedelta, timezone
 
-from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import SystemHostIDArgs, SystemHostIDResult, SystemInfoArgs, SystemInfoResult
 from middlewared.service import no_authz_required, private, Service
 from middlewared.utils import sw_buildtime
 from middlewared.utils.cpu import cpu_info
@@ -52,13 +53,10 @@ class SystemService(Service):
 
     @private
     @no_authz_required
-    @accepts()
-    @returns(Str('hostname'))
-    async def hostname(self):
+    async def hostname(self) -> str:
         return socket.gethostname()
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Str('system_host_identifier'))
+    @api_method(SystemHostIDArgs, SystemHostIDResult, roles=['READONLY_ADMIN'])
     def host_id(self):
         """
         Retrieve a hex string that is generated based
@@ -83,29 +81,7 @@ class SystemService(Service):
         buildtime = sw_buildtime()
         return datetime.fromtimestamp(int(buildtime)) if buildtime else buildtime
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Dict(
-        'system_info',
-        Str('version', required=True, title='TrueNAS Version'),
-        Datetime('buildtime', required=True, title='TrueNAS build time'),
-        Str('hostname', required=True, title='System host name'),
-        Int('physmem', required=True, title='System physical memory'),
-        Str('model', required=True, title='CPU Model'),
-        Int('cores', required=True, title='CPU Cores'),
-        Int('physical_cores', required=True, title='CPU Physical Cores'),
-        List('loadavg', required=True),
-        Str('uptime', required=True),
-        Float('uptime_seconds', required=True),
-        Str('system_serial', required=True, null=True),
-        Str('system_product', required=True, null=True),
-        Str('system_product_version', required=True, null=True),
-        Dict('license', additional_attrs=True, null=True),  # TODO: Fill this in please
-        Datetime('boottime', required=True),
-        Datetime('datetime', required=True),
-        Str('timezone', required=True),
-        Str('system_manufacturer', required=True, null=True),
-        Bool('ecc_memory', required=True),
-    ))
+    @api_method(SystemInfoArgs, SystemInfoResult, roles=['READONLY_ADMIN'])
     async def info(self):
         """
         Returns basic system information.
