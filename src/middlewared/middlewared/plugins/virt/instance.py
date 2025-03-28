@@ -372,20 +372,8 @@ class VirtInstanceService(CRUDService):
         data_devices = data['devices'] or []
         iso_volume = data.pop('iso_volume', None)
         root_device_to_add = None
-        zvol_path = data.pop('zvol_path', None)
         volume = data.pop('volume', None)
-        if data['source_type'] == 'ZVOL':
-            data['source_type'] = None
-            root_device_to_add = {
-                'name': 'ix_virt_zvol_root',
-                'dev_type': 'DISK',
-                'source': zvol_path,
-                'destination': None,
-                'readonly': False,
-                'boot_priority': 1,
-                'io_bus': data['root_disk_io_bus'],
-            }
-        elif data['source_type'] == 'ISO':
+        if data['source_type'] == 'ISO':
             root_device_to_add = {
                 'name': iso_volume,
                 'dev_type': 'DISK',

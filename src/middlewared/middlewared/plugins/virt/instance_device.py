@@ -563,5 +563,6 @@ class VirtInstanceDeviceService(Service):
             'dev_type': 'DISK',
             'name': disk,
             'source': desired_disk.get('source'),
+            'io_bus': desired_disk.get('io_bus'),
             'boot_priority': max_boot_priority_device['boot_priority'] + 1 if max_boot_priority_device else 1,
         } | ({'destination': desired_disk['destination']} if disk != 'root' else {}))
