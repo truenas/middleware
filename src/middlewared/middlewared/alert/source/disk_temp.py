@@ -8,7 +8,7 @@ from middlewared.alert.base import (
     AlertCategory,
     AlertClass,
     AlertLevel,
-    ThreadedAlertSource,
+    AlertSource,
 )
 
 
@@ -23,13 +23,13 @@ class DiskTemperatureTooHotAlertClass(AlertClass):
     )
 
 
-class DiskTemperatureTooHotAlertSource(ThreadedAlertSource):
+class DiskTemperatureTooHotAlertSource(AlertSource):
     run_on_backup_node = False
 
-    def check_sync(self):
+    async def check(self):
         alerts = list()
-        map = {i.name: i for i in self.middleware.call_sync("disk.get_disks")}
-        temp_cache = self.middleware.call_sync("disk.temperatures", [], True)
+        map = {i.name: i for i in await self.middleware.call("disk.get_disks")}
+        temp_cache = await self.middleware.call("disk.temperatures", [], True)
         for disk, (temp, crit) in temp_cache.items():
             if temp is None or crit is None:
                 continue
