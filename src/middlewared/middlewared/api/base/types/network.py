@@ -8,8 +8,10 @@ from pydantic import AfterValidator, Field
 
 from ..validators import match_validator
 
-__all__ = ["exclude_tcp_ports", "TcpPort", "Hostname", "Domain", "IPv4Address", "IPv6Address", "IPvAnyAddress",
-           "IPNetwork"]
+__all__ = [
+    "exclude_tcp_ports", "TcpPort", "Hostname", "Domain", "IPv4Address", "IPv6Address", "IPvAnyAddress", "IPNetwork",
+    "IPv4Nameserver", "IPv6Nameserver"
+]
 
 
 def _exclude_port_validation(value: int, *, ports: list[int]) -> int:
@@ -49,6 +51,16 @@ def _validate_ip_network(network: str):
     return network
 
 
+def _validate_nameserver(address: pydantic.IPvAnyAddress) -> str:
+    str_form = address.compressed
+
+    for address_type in ('multicast', 'loopback', 'link_local', 'reserved'):
+        if getattr(address, 'is_' + address_type):
+            raise ValueError(f'{str_form}: {address_type} addresses are not permitted.')
+
+    return str_form
+
+
 TcpPort = Annotated[int, Field(ge=1, le=65535)]
 Hostname = Annotated[str, AfterValidator(match_validator(
     re.compile(r"^[a-z.\-0-9]*[a-z0-9]$", re.IGNORECASE),
@@ -61,4 +73,6 @@ Domain = Annotated[str, AfterValidator(match_validator(
 IPv4Address = Annotated[str, AfterValidator(_validate_ipv4_address)]
 IPv6Address = Annotated[str, AfterValidator(_validate_ipv6_address)]
 IPvAnyAddress = Literal[''] | Annotated[str, AfterValidator(_validate_ipaddr)]
+IPv4Nameserver = Annotated[ipaddress.IPv4Address, AfterValidator(_validate_nameserver)]
+IPv6Nameserver = Annotated[ipaddress.IPv6Address, AfterValidator(_validate_nameserver)]
 IPNetwork = Annotated[str, AfterValidator(_validate_ip_network)]

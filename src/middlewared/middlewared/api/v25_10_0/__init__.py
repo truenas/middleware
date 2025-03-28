@@ -25,6 +25,7 @@ from .crypto_cert_info import *  # noqa
 from .crypto_cert_profiles import *  # noqa
 from .device import *  # noqa
 from .disk import *  # noqa
+from .dns import *  # noqa
 from .docker import *  # noqa
 from .docker_network import *  # noqa
 from .enclosure2 import *  # noqa
