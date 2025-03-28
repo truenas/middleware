@@ -9,6 +9,18 @@ from middlewared.test.integration.utils import call, client, password
 from truenas_api_client import ValidationErrors
 
 
+def get_excluded_admins():
+    """ Return the list of immutable admins with passwords enabled """
+    return [
+        user["id"] for user in call(
+            'user.query', [
+                ["immutable", "=", True], ["password_disabled", "=", False],
+                ["locked", "=", False], ["unixhash", "!=", "*"]
+            ],
+        )
+    ]
+
+
 @pytest.fixture(autouse=True)
 def clear_ratelimit():
     call('rate.limit.cache_clear')
@@ -64,6 +76,22 @@ def two_factor_full_admin(two_factor_enabled, unprivileged_user_fixture):
         call('privilege.update', privilege[0]['id'], {'roles': []})
 
 
+@pytest.fixture(scope='module')
+def two_factor_full_admin_as_builtin_admin(two_factor_enabled, unprivileged_user_fixture):
+    privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
+    assert len(privilege) > 0, 'Privilege not found'
+    builtin_admin = call('group.query', [['name', '=', 'builtin_administrators']], {'get': True})
+    call('group.update', builtin_admin['id'], {'users': builtin_admin['users'] + [privilege[0]['id']]})
+
+    try:
+        call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 60})
+        user_obj_id = call('user.query', [['username', '=', unprivileged_user_fixture.username]], {'get': True})['id']
+        secret = get_user_secret(user_obj_id)
+        yield (unprivileged_user_fixture, secret)
+    finally:
+        call('group.update', builtin_admin['id'], {'users': builtin_admin['users']})
+
+
 def do_stig_auth(c, user_obj, secret):
     resp = c.call('auth.login_ex', {
         'mechanism': 'PASSWORD_PLAIN',
@@ -82,9 +110,9 @@ def do_stig_auth(c, user_obj, secret):
 
 
 @pytest.fixture(scope='module')
-def setup_stig(two_factor_full_admin):
+def setup_stig(two_factor_full_admin_as_builtin_admin):
     """ Configure STIG and yield admin user object and an authenticated session """
-    user_obj, secret = two_factor_full_admin
+    user_obj, secret = two_factor_full_admin_as_builtin_admin
 
     # Create websocket connection from prior to STIG being enabled to pass to
     # test methods. This connection will have unrestricted privileges (due to
@@ -97,6 +125,12 @@ def setup_stig(two_factor_full_admin):
             with client(auth=None) as c:
                 # Do two-factor authentication before enabling STIG support
                 do_stig_auth(c, user_obj, secret)
+
+                # Disable password authentication for immutable admin accounts
+                admin_id = get_excluded_admins()
+                for id in admin_id:
+                    c.call('user.update', id, {"password_disabled": True})
+
                 c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
                 aal = c.call('auth.get_authenticator_assurance_level')
                 assert aal == 'LEVEL_2'
@@ -109,6 +143,8 @@ def setup_stig(two_factor_full_admin):
                     }
                 finally:
                     c.call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': False}, job=True)
+                    for admin in admin_id:
+                        c.call('user.update', id, {"password_disabled": False})
 
 
 # The order of the following tests is significant. We gradually add fixtures that have module scope
@@ -143,6 +179,17 @@ def test_no_current_cred_no_2fa(enterprise_product, two_factor_full_admin):
     with pytest.raises(ValidationErrors, match='Credential used to enable General Purpose OS STIG compatibility'):
         # root / truenas_admin does not have 2FA and so this should fail
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
+
+
+def test_auth_enabled_admin_users_fail(enterprise_product, two_factor_full_admin_as_builtin_admin):
+    """ Attempt to enable STIG with password enabled admins still available """
+    user_obj, secret = two_factor_full_admin_as_builtin_admin
+    with client(auth=None) as c:
+        # Do two-factor authentication before using the client for the call
+        do_stig_auth(c, user_obj, secret)
+        with pytest.raises(ValidationErrors, match='General purpose administrative accounts with password authentication are'):
+            # There are immutable admins with passwords enabled, so this should fail
+            c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
 # At this point STIG should be enabled on TrueNAS until end of file

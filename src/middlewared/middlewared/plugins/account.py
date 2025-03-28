@@ -777,8 +777,6 @@ class UserService(CRUDService):
             verrors.add('user_update.smb',
                         'Password must be reset in order to enable SMB authentication')
 
-        verrors.check()
-
         must_change_pdb_entry = False
         for k in ('username', 'password', 'locked'):
             new_val = data.get(k)
@@ -817,6 +815,21 @@ class UserService(CRUDService):
 
         # After this point user dict has values from data
         user.update(data)
+
+        is_enabled_system_account = user['immutable'] and any([
+            not user['password_disabled'], not user['locked'], user['unixhash'] != "*"
+        ])
+
+        stig_enabled = self.middleware.call_sync('system.security.config')['enable_gpos_stig']
+        if stig_enabled and is_enabled_system_account:
+            verrors.add(
+                'user.update.immutable',
+                f'{user["username"]} is a System Administrator account and is not permitted to be '
+                'enabled for password authentication when General Purpose OS STIG compatibility is enabled. '
+                'Please disable the password or lock the account.'
+            )
+
+        verrors.check()
 
         mode_to_set = user.get('home_mode')
         if not mode_to_set:
@@ -1361,7 +1374,8 @@ class UserService(CRUDService):
                 f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
             )
 
-        if combined['smb'] and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+        stig_enabled = (await self.middleware.call('system.security.config'))['enable_gpos_stig']
+        if combined['smb'] and stig_enabled:
             verrors.add(
                 f'{schema}.smb',
                 'SMB authentication for local user accounts is not permitted when General Purpose OS '
