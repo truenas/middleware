@@ -1,12 +1,16 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Dict, Int, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemGlobalIdEntry,
+    SystemGlobalIdArgs,
+    SystemGlobalIdResult,
+)
 from middlewared.service import Service
 
 
 class SystemGlobalID(sa.Model):
     __tablename__ = 'system_globalid'
-
     id = sa.Column(sa.Integer(), primary_key=True)
     system_uuid = sa.Column(sa.String(32))
 
@@ -16,16 +20,13 @@ class SystemGlobalIDService(Service):
         datastore_prefix = 'system_globalid'
         namespace = 'system.global'
         cli_namespace = 'system.global'
+        entry = SystemGlobalIdEntry
 
-    ENTRY = Dict(
-        'system_globalid_entry',
-        Int('id'),
-        Str('system_uuid', required=True),
-        register=True
+    @api_method(
+        SystemGlobalIdArgs,
+        SystemGlobalIdResult,
+        roles=['READONLY_ADMIN']
     )
-
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Str('system_uuid'))
     async def id(self):
         """
         Retrieve a 128 bit hexadecimal UUID value unique for each TrueNAS system.
