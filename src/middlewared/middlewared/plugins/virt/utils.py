@@ -202,6 +202,18 @@ def incus_pool_to_storage_pool(incus_pool_name: str) -> str:
     return incus_pool_name
 
 
+def get_max_boot_priority_device(device_list: list[dict]) -> dict | None:
+    max_boot_priority_device = None
+
+    for device_entry in device_list:
+        if (max_boot_priority_device is None and device_entry.get('boot_priority') is not None) or (
+            (device_entry.get('boot_priority') or 0) > ((max_boot_priority_device or {}).get('boot_priority') or 0)
+        ):
+            max_boot_priority_device = device_entry
+
+    return max_boot_priority_device
+
+
 @dataclass(slots=True, frozen=True, kw_only=True)
 class PciEntry:
     pci_addr: str
