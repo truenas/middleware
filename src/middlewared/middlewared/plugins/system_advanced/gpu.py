@@ -1,4 +1,10 @@
-from middlewared.schema import accepts, Dict, List, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemAdvancedGpuArgs,
+    SystemAdvancedGpuResult,
+    SystemAdvancedUpdateGpuPciIdArgs,
+    SystemAdvancedUpdateGpuPciIdResult,
+)
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.utils.gpu import get_gpus
 
@@ -9,8 +15,11 @@ class SystemAdvancedService(Service):
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
 
-    @accepts(roles=['SYSTEM_ADVANCED_READ'])
-    @returns(Dict(additional_attrs=True))
+    @api_method(
+        SystemAdvancedGpuArgs,
+        SystemAdvancedGpuResult,
+        roles=['SYSTEM_ADVANCED_READ']
+    )
     def get_gpu_pci_choices(self):
         """
         This endpoint gives all the gpu pci ids/slots that can be isolated.
@@ -25,8 +34,11 @@ class SystemAdvancedService(Service):
 
         return gpus
 
-    @accepts(List('isolated_gpu_pci_ids', items=[Str('pci_id')], required=True), roles=['SYSTEM_ADVANCED_WRITE'])
-    @returns()
+    @api_method(
+        SystemAdvancedUpdateGpuPciIdArgs,
+        SystemAdvancedUpdateGpuPciIdResult,
+        roles=['SYSTEM_ADVANCED_WRITE']
+    )
     async def update_gpu_pci_ids(self, isolated_gpu_pci_ids):
         """
         `isolated_gpu_pci_ids` is a list of PCI ids which are isolated from host system.
