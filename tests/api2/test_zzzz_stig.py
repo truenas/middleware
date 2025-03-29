@@ -81,11 +81,11 @@ def two_factor_full_admin_as_builtin_admin(two_factor_enabled, unprivileged_user
     privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
     assert len(privilege) > 0, 'Privilege not found'
     builtin_admin = call('group.query', [['name', '=', 'builtin_administrators']], {'get': True})
-    call('group.update', builtin_admin['id'], {'users': builtin_admin['users'] + [privilege[0]['id']]})
+    user_obj_id = call('user.query', [['username', '=', unprivileged_user_fixture.username]], {'get': True})['id']
+    call('group.update', builtin_admin['id'], {'users': builtin_admin['users'] + [user_obj_id]})
 
     try:
         call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 60})
-        user_obj_id = call('user.query', [['username', '=', unprivileged_user_fixture.username]], {'get': True})['id']
         secret = get_user_secret(user_obj_id)
         yield (unprivileged_user_fixture, secret)
     finally:
