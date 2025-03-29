@@ -1,13 +1,18 @@
 from middlewared.api.base import BaseModel
 
-__all__ = ("SystemAdvancedGpuArgs", "SystemAdvancedGpuResult")
+__all__ = (
+    "SystemAdvancedGpuChoicesArgs",
+    "SystemAdvancedGpuChoicesResult",
+    "SystemAdvancedUpdateGpuPciIdArgs",
+    "SystemAdvancedUpdateGpuPciIdResult",
+)
 
 
-class SystemAdvancedGpuArgs(BaseModel):
+class SystemAdvancedGpuChoicesArgs(BaseModel):
     pass
 
 
-class SystemAdvancedGpuResult(BaseModel):
+class SystemAdvancedGpuChoicesResult(BaseModel):
     result: dict
 
 

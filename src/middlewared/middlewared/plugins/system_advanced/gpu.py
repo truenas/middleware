@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemAdvancedGpuArgs,
-    SystemAdvancedGpuResult,
+    SystemAdvancedGpuChoicesArgs,
+    SystemAdvancedGpuChoicesResult,
     SystemAdvancedUpdateGpuPciIdArgs,
     SystemAdvancedUpdateGpuPciIdResult,
 )
@@ -16,8 +16,8 @@ class SystemAdvancedService(Service):
         cli_namespace = 'system.advanced'
 
     @api_method(
-        SystemAdvancedGpuArgs,
-        SystemAdvancedGpuResult,
+        SystemAdvancedGpuChoicesArgs,
+        SystemAdvancedGpuChoicesResult,
         roles=['SYSTEM_ADVANCED_READ']
     )
     def get_gpu_pci_choices(self):
