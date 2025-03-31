@@ -802,6 +802,8 @@ class UserService(CRUDService):
         if user['smb'] is False and data.get('smb') is True:
             must_change_pdb_entry = True
 
+        verrors.check()
+
         # Copy the home directory if it changed
         home_copy = False
         home_old = None
