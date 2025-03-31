@@ -11,9 +11,13 @@ from pathlib import Path
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemDatasetEntry, SystemDatasetPoolChoicesArgs, SystemDatasetPoolChoicesResult, SystemDatasetUpdateArgs,
+    SystemDatasetUpdateResult
+)
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
@@ -39,16 +43,7 @@ class SystemDatasetService(ConfigService):
         datastore_prefix = 'sys_'
         cli_namespace = 'system.system_dataset'
         role_prefix = 'DATASET'
-
-    ENTRY = Dict(
-        'systemdataset_entry',
-        Int('id', required=True),
-        Str('pool', required=True),
-        Bool('pool_set', required=True),
-        Str('uuid', required=True),
-        Str('basename', required=True),
-        Str('path', required=True, null=True),
-    )
+        entry = SystemDatasetEntry
 
     force_pool = None
     sysdataset_release_lock = threading.Lock()
@@ -181,8 +176,7 @@ class SystemDatasetService(ConfigService):
 
         return pool in BOOT_POOL_NAME_VALID
 
-    @accepts(Bool('include_current_pool', default=True))
-    @returns(Dict('systemdataset_pool_choices', additional_attrs=True))
+    @api_method(SystemDatasetPoolChoicesArgs, SystemDatasetPoolChoicesResult, roles=['POOL_READ'])
     async def pool_choices(self, include_current_pool):
         """
         Retrieve pool choices which can be used for configuring system dataset.
@@ -200,21 +194,11 @@ class SystemDatasetService(ConfigService):
             p: p for p in sorted(set(pools))
         }
 
-    @accepts(Dict(
-        'sysdataset_update',
-        Str('pool', null=True),
-        Str('pool_exclude', null=True),
-        update=True
-    ))
+    @api_method(SystemDatasetUpdateArgs, SystemDatasetUpdateResult)
     @job(lock='sysdataset_update')
     async def do_update(self, job, data):
         """
         Update System Dataset Service Configuration.
-
-        `pool` is the name of a valid pool configured in the system which will be used to host the system dataset.
-
-        `pool_exclude` can be specified to make sure that we don't place the system dataset on that pool if `pool`
-        is not provided.
         """
         data.setdefault('pool_exclude', None)
 
@@ -312,9 +296,8 @@ class SystemDatasetService(ConfigService):
                 f'Need {format_size(used)}'
             )
 
-    @accepts(Str('exclude_pool', default=None, null=True))
     @private
-    def setup(self, exclude_pool):
+    def setup(self, exclude_pool: str | None = None):
         self.middleware.call_hook_sync('sysdataset.setup', data={'in_progress': True})
         try:
             return self.setup_impl(exclude_pool)
