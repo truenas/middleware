@@ -777,6 +777,8 @@ class UserService(CRUDService):
             verrors.add('user_update.smb',
                         'Password must be reset in order to enable SMB authentication')
 
+        verrors.check()
+
         must_change_pdb_entry = False
         for k in ('username', 'password', 'locked'):
             new_val = data.get(k)
@@ -801,8 +803,6 @@ class UserService(CRUDService):
 
         if user['smb'] is False and data.get('smb') is True:
             must_change_pdb_entry = True
-
-        verrors.check()
 
         # Copy the home directory if it changed
         home_copy = False
