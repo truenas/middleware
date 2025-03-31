@@ -82,6 +82,7 @@ from .system_advanced import *  # noqa
 from .system_general import *  # noqa
 from .system_general_keymap import *  # noqa
 from .system_general_ui import *  # noqa
+from .system_global import *  # noqa
 from .system_lifecycle import *  # noqa
 from .system_ntpserver import *  # noqa
 from .system_reboot import *  # noqa
