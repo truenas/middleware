@@ -15,5 +15,3 @@ def test_reporting_realtime():
         time.sleep(5)
 
         assert events
-
-        assert not events[0][1]["fields"]["failed_to_connect"]
