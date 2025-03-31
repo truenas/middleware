@@ -59,7 +59,7 @@ class DNSService(Service):
                     if ip not in ips:
                         ips.append(ip)
 
-        return filter_list(list(ips), filters, options)
+        return filter_list(ips, filters, options)
 
     @private
     def sync(self):
