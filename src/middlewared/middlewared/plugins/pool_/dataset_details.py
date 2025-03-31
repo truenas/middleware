@@ -112,6 +112,9 @@ class PoolDatasetService(Service):
     @private
     def get_mount_info(self, path, mntinfo):
         mount_info = {}
+        if path.startswith('zvol/'):
+            path = f'/dev/{path}'
+
         try:
             devid = os.stat(path).st_dev
         except Exception:
