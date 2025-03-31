@@ -56,6 +56,7 @@ from .kmip import *  # noqa
 from .k8s_to_docker import *  # noqa
 from .mail import *  # noqa
 from .network_configuration import *  # noqa
+from .network_general import *  # noqa
 from .nfs import *  # noqa
 from .pool import *  # noqa
 from .pool_dataset import *  # noqa
