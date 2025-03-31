@@ -1,15 +1,6 @@
 from middlewared.api.base import BaseModel
 
-__all__ = (
-    "SystemGlobalIdEntry",
-    "SystemGlobalIdArgs",
-    "SystemGlobalIdResult"
-)
-
-
-class SystemGlobalIdEntry(BaseModel):
-    id: int
-    system_uuid: str
+__all__ = ("SystemGlobalIdArgs", "SystemGlobalIdResult")
 
 
 class SystemGlobalIdArgs(BaseModel):
@@ -17,4 +8,4 @@ class SystemGlobalIdArgs(BaseModel):
 
 
 class SystemGlobalIdResult(BaseModel):
-    result: SystemGlobalIdEntry
+    result: str
