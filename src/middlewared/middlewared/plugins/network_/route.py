@@ -7,7 +7,7 @@ import asyncio
 from pyroute2.netlink.exceptions import NetlinkError
 
 from middlewared.api import api_method
-from middlewared.api.current import RouteSystemRoutesItem, RouteIPv4gwReachableArgs, RouteIPv4gwReachableResult
+from middlewared.api.current import RouteSystemRoutes, RouteIPv4gwReachableArgs, RouteIPv4gwReachableResult
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils import filter_list
@@ -22,7 +22,7 @@ class RouteService(Service):
         namespace_alias = 'routes'
         cli_namespace = 'network.route'
 
-    @filterable_api_method(item=RouteSystemRoutesItem, roles=['NETWORK_INTERFACE_READ'])
+    @filterable_api_method(item=RouteSystemRoutes, roles=['NETWORK_INTERFACE_READ'])
     def system_routes(self, filters, options):
         """
         Get current/applied network routes.
