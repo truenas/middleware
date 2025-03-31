@@ -52,7 +52,6 @@ class SystemService(Service):
         }
 
     @private
-    @no_authz_required
     async def hostname(self) -> str:
         return socket.gethostname()
 
