@@ -112,6 +112,9 @@ class PoolDatasetService(Service):
     @private
     def get_mount_info(self, path, mntinfo):
         mount_info = {}
+        if path.startswith('zvol/'):
+            path = f'/dev/{path}'
+
         try:
             devid = os.stat(path).st_dev
         except Exception:
@@ -244,22 +247,24 @@ class PoolDatasetService(Service):
     def get_iscsi_shares(self, ds, iscsishares):
         iscsi_shares = []
         for share in iscsishares:
-            if share['extent']['type'] == 'DISK' and share['extent']['path'].removeprefix('zvol/') == ds['id']:
-                # we store extent information prefixed with `zvol/` (i.e. zvol/tank/zvol01).
-                iscsi_shares.append({
-                    'enabled': share['extent']['enabled'],
-                    'type': 'DISK',
-                    'path': f'/dev/{share["extent"]["path"]}',
-                })
-            elif share['extent']['type'] == 'FILE' and share['mount_info'].get('mount_source') == ds['id']:
-                # this isn't common but possible, you can share a "file"
-                # via iscsi which means it's not a dataset but a file inside
-                # a dataset so we need to find the source dataset for the file
-                iscsi_shares.append({
-                    'enabled': share['extent']['enabled'],
-                    'type': 'FILE',
-                    'path': share['extent']['path'],
-                })
+            if share['extent']['type'] == 'DISK' and ds['type'] == 'VOLUME':
+                if zvol_path_to_name(f"/dev/{share['extent']['path']}") == ds['id']:
+                    # we store extent information prefixed with `zvol/` (i.e. zvol/tank/zvol01).
+                    iscsi_shares.append({
+                        'enabled': share['extent']['enabled'],
+                        'type': 'DISK',
+                        'path': f'/dev/{share["extent"]["path"]}',
+                    })
+            elif share['extent']['type'] == 'FILE' and ds['type'] == 'FILESYSTEM':
+                if share['mount_info'].get('mount_source') == ds['id']:
+                    # this isn't common but possible, you can share a "file"
+                    # via iscsi which means it's not a dataset but a file inside
+                    # a dataset so we need to find the source dataset for the file
+                    iscsi_shares.append({
+                        'enabled': share['extent']['enabled'],
+                        'type': 'FILE',
+                        'path': share['extent']['path'],
+                    })
 
         return iscsi_shares
 
