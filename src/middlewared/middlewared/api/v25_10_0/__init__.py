@@ -72,6 +72,7 @@ from .replication_config import *  # noqa
 from .replication_crud import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
+from .route import *  # noqa
 from .rsync_task import *  # noqa
 from .service import *  # noqa
 from .smb import *  # noqa
