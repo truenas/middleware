@@ -65,12 +65,12 @@ class InterfaceEntryState(BaseModel):
     rx_queues: int
     tx_queues: int
     aliases: list[InterfaceEntryStateAlias]
-    vrrp_config: list | None = []
+    vrrp_config: list | None = NotRequired
     # lagg section
     protocol: str | None = NotRequired
-    ports: list[InterfaceEntryStatePort] = []
-    xmit_hash_policy: str | None = None
-    lacpdu_rate: str | None = None
+    ports: list[InterfaceEntryStatePort] = NotRequired
+    xmit_hash_policy: str | None = NotRequired
+    lacpdu_rate: str | None = NotRequired
     # vlan section
     parent: str | None = NotRequired
     tag: int | None = NotRequired
@@ -92,8 +92,8 @@ class InterfaceEntry(BaseModel):
     vlan_tag: int | None = NotRequired
     vlan_pcp: int | None = NotRequired
     lag_protocol: str = NotRequired
-    lag_ports: list[str] = []
-    bridge_members: list[str] = []  # FIXME: Please document fields for HA Hardware
+    lag_ports: list[str] = NotRequired
+    bridge_members: list[str] = NotRequired  # FIXME: Please document fields for HA Hardware
     enable_learning: bool = NotRequired
 
     class Config:
