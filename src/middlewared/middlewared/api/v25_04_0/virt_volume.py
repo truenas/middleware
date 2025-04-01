@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Annotated, Literal, TypeAlias
 
@@ -92,13 +91,6 @@ class VirtVolumeImportISOArgs(BaseModel):
     in virt.global.config output under `storage_pools`. If the value is None, then
     the pool defined as `pool` in virt.global.config will be used.
     '''
-
-    @field_validator('iso_location')
-    @classmethod
-    def validate_iso_location(cls, v):
-        if v and not os.path.exists(v):
-            raise ValueError('Specified ISO location does not exist')
-        return v
 
 
 class VirtVolumeImportISOResult(BaseModel):
