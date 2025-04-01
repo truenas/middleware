@@ -208,7 +208,6 @@ class FailoverRebootService(Service):
             raise CallError('Other controller failed to reboot')
 
         job.set_progress(100, 'Other controller rebooted successfully')
-        return True
 
     async def _ensure_remote_be(self, id_: str):
         try:
