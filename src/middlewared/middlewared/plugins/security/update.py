@@ -127,6 +127,25 @@ class SystemSecurityService(ConfigService):
                 'authentication for the currently-authenticated session.'
             )
 
+        excluded_admins = [
+            user['username'] for user in await self.middleware.call(
+                'user.query', [
+                    ["immutable", "=", True], ["password_disabled", "=", False],
+                    ["locked", "=", False], ["unixhash", "!=", "*"]
+                ],
+            )
+        ]
+
+        if excluded_admins:
+            # For STIG compatibility, all general purpose administrative accounts,
+            # e.g. 'root' and 'truenas_admin', cannot use password login.  (SRG-OS-000109-GPOS-00056)
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'General purpose administrative accounts with password authentication are '
+                'not compatible with STIG compatibility mode.  '
+                f'PLEASE DISABLE PASSWORD AUTHENTICATION ON THE FOLLOWING ACCOUNTS: {", ".join(excluded_admins)}.'
+            )
+
         if (await self.middleware.call('docker.config'))['pool']:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',

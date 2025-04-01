@@ -1361,12 +1361,26 @@ class UserService(CRUDService):
                 f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
             )
 
-        if combined['smb'] and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+        stig_enabled = (await self.middleware.call('system.security.config'))['enable_gpos_stig']
+        if combined['smb'] and stig_enabled:
             verrors.add(
                 f'{schema}.smb',
                 'SMB authentication for local user accounts is not permitted when General Purpose OS '
                 'STIG compatibility is enabled.'
             )
+
+        if old:
+            is_enabled_system_account = combined['immutable'] and any([
+                not combined['password_disabled'], not combined['locked'], combined['unixhash'] != "*"
+            ])
+
+            if stig_enabled and is_enabled_system_account:
+                verrors.add(
+                    f'{schema}.immutable',
+                    f'{combined["username"]} is a System Administrator account and is not permitted to be '
+                    'enabled for password authentication when General Purpose OS STIG compatibility is enabled. '
+                    'Please disable the password or lock the account.'
+                )
 
         password = data.get('password')
         if not old and not password and not data.get('password_disabled'):
