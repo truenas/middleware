@@ -7,9 +7,14 @@ from copy import deepcopy
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, returns, Str
-from middlewared.service import ConfigService, private, no_auth_required
-from middlewared.validators import Range
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemAdvancedEntry, SystemAdvancedLoginBannerArgs, SystemAdvancedLoginBannerResult,
+    SystemAdvancedSEDGlobalPasswordArgs, SystemAdvancedSEDGlobalPasswordResult,
+    SystemAdvancedSEDGlobalPasswordIsSetArgs, SystemAdvancedSEDGlobalPasswordIsSetResult, SystemAdvancedUpdateArgs,
+    SystemAdvancedUpdateResult
+)
+from middlewared.service import ConfigService, private
 from middlewared.utils import run
 from middlewared.utils.service.settings import SettingsHelper
 
@@ -59,40 +64,7 @@ class SystemAdvancedService(ConfigService):
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
         role_prefix = 'SYSTEM_ADVANCED'
-
-    ENTRY = Dict(
-        'system_advanced_entry',
-        Bool('advancedmode', required=True),
-        Bool('autotune', required=True),
-        Bool('kdump_enabled', required=True),
-        Int('boot_scrub', validators=[Range(min_=1)], required=True),
-        Bool('consolemenu', required=True),
-        Bool('consolemsg', required=True),
-        Bool('debugkernel', required=True),
-        Bool('fqdn_syslog', required=True),
-        Str('motd', required=True),
-        Str('login_banner', required=True, max_length=4096),
-        Bool('powerdaemon', required=True),
-        Bool('serialconsole', required=True),
-        Str('serialport', required=True),
-        Str('anonstats_token', required=True),
-        Str('serialspeed', enum=['9600', '19200', '38400', '57600', '115200'], required=True),
-        Int('overprovision', validators=[Range(min_=0)], null=True, required=True),
-        Bool('traceback', required=True),
-        Bool('uploadcrash', required=True),
-        Bool('anonstats', required=True),
-        Str('sed_user', enum=['USER', 'MASTER'], required=True),
-        Str('sysloglevel', enum=[
-            'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG',
-        ], required=True),
-        Str('syslogserver'),
-        Str('syslog_transport', enum=['UDP', 'TCP', 'TLS'], required=True),
-        Int('syslog_tls_certificate', null=True, required=True),
-        Bool('syslog_audit'),
-        List('isolated_gpu_pci_ids', items=[Str('pci_id')], required=True),
-        Str('kernel_extra_options', required=True),
-        Int('id', required=True),
-    )
+        entry = SystemAdvancedEntry
 
     @private
     async def system_advanced_extend(self, data):
@@ -180,32 +152,10 @@ class SystemAdvancedService(ConfigService):
             #  foot-shooting
             verrors.add('kernel_extra_options', f'Modifying {invalid_param!r} is not allowed')
 
-    @accepts(
-        Patch(
-            'system_advanced_entry', 'system_advanced_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'anonstats_token'}),
-            ('rm', {'name': 'isolated_gpu_pci_ids'}),
-            ('add', Password('sed_passwd')),
-            ('attr', {'update': True}),
-        ),
-        audit='System advanced update'
-    )
+    @api_method(SystemAdvancedUpdateArgs, SystemAdvancedUpdateResult, audit='System advanced update')
     async def do_update(self, data):
         """
         Update System Advanced Service Configuration.
-
-        `consolemenu` should be disabled if the menu at console is not desired. It will default to standard login
-        in the console if disabled.
-
-        `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
-        hardware.
-
-        When `syslogserver` is defined, logs of `sysloglevel` or above are sent. If syslog_audit is also set
-        then the remote syslog server will also receive audit messages.
-
-        `consolemsg` is a deprecated attribute and will be removed in further releases. Please, use `consolemsg`
-        attribute in the `system.general` plugin.
         """
         consolemsg = None
         if 'consolemsg' in data:
@@ -291,15 +241,21 @@ class SystemAdvancedService(ConfigService):
 
         return await self.config()
 
-    @accepts(roles=['SYSTEM_ADVANCED_READ'])
-    @returns(Bool('sed_global_password_is_set'))
+    @api_method(
+        SystemAdvancedSEDGlobalPasswordIsSetArgs,
+        SystemAdvancedSEDGlobalPasswordIsSetResult,
+        roles=['SYSTEM_ADVANCED_READ']
+    )
     async def sed_global_password_is_set(self):
         """Returns a boolean identifying whether or not a global
         SED password has been set"""
         return bool(await self.sed_global_password())
 
-    @accepts(roles=['SYSTEM_ADVANCED_READ'])
-    @returns(Password('sed_global_password'))
+    @api_method(
+        SystemAdvancedSEDGlobalPasswordArgs,
+        SystemAdvancedSEDGlobalPasswordResult,
+        roles=['SYSTEM_ADVANCED_READ']
+    )
     async def sed_global_password(self):
         """Returns configured global SED password in clear-text if one
         is configured, otherwise an empty string"""
@@ -308,9 +264,7 @@ class SystemAdvancedService(ConfigService):
         ))['sed_passwd']
         return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
 
-    @no_auth_required
-    @accepts()
-    @returns(Str())
+    @api_method(SystemAdvancedLoginBannerArgs, SystemAdvancedLoginBannerResult, authentication_required=False)
     def login_banner(self):
         """Returns user set login banner"""
         # NOTE: This endpoint doesn't require authentication because
