@@ -250,6 +250,35 @@ def test_vm_creation_with_iso_volume(vm, iso_volume):
         call('virt.instance.delete', virt_instance_name, job=True)
 
 
+def test_vm_creation_with_iso_and_devices(vm, iso_volume):
+    virt_instance_name = 'test-iso-vm'
+    with volume('test-volume', 1024) as v:
+        instance = call('virt.instance.create', {
+            'name': virt_instance_name,
+            'instance_type': 'VM',
+            'source_type': 'ISO',
+            'iso_volume': ISO_VOLUME_NAME,
+            'devices': [
+                {
+                    'dev_type': 'DISK',
+                    'source': v['name'],
+                    'boot_priority': 5
+                }
+            ]
+        }, job=True)
+
+        try:
+            assert instance['root_disk_io_bus'] == 'NVME'
+
+            vm_devices = call('virt.instance.device_list', virt_instance_name)
+            disk_device = next(device for device in vm_devices if device['name'] == ISO_VOLUME_NAME)
+            assert disk_device['boot_priority'] == 6, disk_device
+            assert disk_device['io_bus'] is not None, disk_device
+        finally:
+            call('virt.instance.delete', virt_instance_name, job=True)
+
+
+
 def test_vm_creation_with_volume(vm):
     virt_instance_name = 'test-volume-vm'
     with volume('test-volume', 1028) as v:
@@ -272,6 +301,34 @@ def test_vm_creation_with_volume(vm):
 
             vol = call('virt.volume.get_instance', v['name'])
             assert vol['used_by'] == [virt_instance_name], vol
+        finally:
+            call('virt.instance.delete', virt_instance_name, job=True)
+
+
+def test_vm_creation_with_volume_and_devices(vm, iso_volume):
+    virt_instance_name = 'test-iso-vm'
+    with volume('test-volume', 1024) as v:
+        instance = call('virt.instance.create', {
+            'name': virt_instance_name,
+            'instance_type': 'VM',
+            'source_type': 'VOLUME',
+            'volume': v['name'],
+            'devices': [
+                {
+                    'dev_type': 'DISK',
+                    'source': ISO_VOLUME_NAME,
+                    'boot_priority': 5
+                }
+            ]
+        }, job=True)
+
+        try:
+            assert instance['root_disk_io_bus'] == 'NVME'
+
+            vm_devices = call('virt.instance.device_list', virt_instance_name)
+            disk_device = next(device for device in vm_devices if device['name'] == v['name'])
+            assert disk_device['boot_priority'] == 6, disk_device
+            assert disk_device['io_bus'] is not None, disk_device
         finally:
             call('virt.instance.delete', virt_instance_name, job=True)
 

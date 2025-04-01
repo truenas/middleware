@@ -24,9 +24,9 @@ from middlewared.api.current import (
 from middlewared.utils.size import normalize_size
 
 from .utils import (
-    create_vnc_password_file, get_vnc_info_from_config, get_root_device_dict, get_vnc_password_file_path,
-    Status, incus_call, incus_call_and_wait, VNC_BASE_PORT, root_device_pool_from_raw,
-    storage_pool_to_incus_pool, incus_pool_to_storage_pool,
+    create_vnc_password_file, get_max_boot_priority_device, get_root_device_dict, get_vnc_info_from_config,
+    get_vnc_password_file_path, incus_call, incus_call_and_wait, incus_pool_to_storage_pool,
+    root_device_pool_from_raw, Status, storage_pool_to_incus_pool, VNC_BASE_PORT,
 )
 
 
@@ -370,6 +370,8 @@ class VirtInstanceService(CRUDService):
             pool = storage_pool_to_incus_pool(defpool)
 
         data_devices = data['devices'] or []
+        max_boot_priority_device = get_max_boot_priority_device(data_devices)
+        max_boot_priority = max_boot_priority_device['boot_priority'] + 1 if max_boot_priority_device else 1
         iso_volume = data.pop('iso_volume', None)
         root_device_to_add = None
         volume = data.pop('volume', None)
@@ -381,7 +383,7 @@ class VirtInstanceService(CRUDService):
                 'source': iso_volume,
                 'destination': None,
                 'readonly': False,
-                'boot_priority': 1,
+                'boot_priority': max_boot_priority,
                 'io_bus': 'VIRTIO-SCSI',
             }
         elif data['source_type'] == 'VOLUME':
@@ -392,7 +394,7 @@ class VirtInstanceService(CRUDService):
                 'source': volume,
                 'destination': None,
                 'readonly': False,
-                'boot_priority': 1,
+                'boot_priority': max_boot_priority,
                 'io_bus': data['root_disk_io_bus'],
             }
 
