@@ -104,6 +104,10 @@ class FailoverRebootService(Service):
                 if remote_reboot_reason.boot_id is None:
                     # This reboot reason was added while the remote node was not functional.
                     # In that case, when the remote system comes online, an additional reboot is required.
+                    self.logger.debug(
+                        f"Setting unbound remote reboot reason {remote_reboot_reason!r} boot ID to "
+                        f"{other_node['boot_id']!r}"
+                    )
                     remote_reboot_reason.boot_id = other_node['boot_id']
                     changed = True
 
@@ -268,6 +272,12 @@ class FailoverRebootService(Service):
             k: asdict(v)
             for k, v in self.remote_reboot_reasons.items()
         })
+
+    @private
+    async def discard_unbound_remote_reboot_reasons(self):
+        for k, v in list(self.remote_reboot_reasons.items()):
+            if v.boot_id is None:
+                self.remote_reboot_reasons.pop(k)
 
 
 def remote_reboot_info(middleware, *args, **kwargs):

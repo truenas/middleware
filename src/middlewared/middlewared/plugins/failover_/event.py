@@ -739,6 +739,10 @@ class FailoverEventsService(Service):
         self.run_call('truecommand.start_truecommand_service')
         logger.info('Done starting truecommand service (if necessary)')
 
+        # The system, while it was in BACKUP state, might have failed to contact the remote node and reached a
+        # conclusion that the other node needs to be rebooted. Let's clean this up.
+        self.run_call('failover.reboot.discard_unbound_remote_reboot_reasons')
+
         kmip_config = self.run_call('kmip.config')
         if kmip_config and kmip_config['enabled']:
             logger.info('Syncing encryption keys with KMIP server')
