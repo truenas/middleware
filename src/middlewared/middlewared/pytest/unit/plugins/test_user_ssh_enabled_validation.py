@@ -105,6 +105,7 @@ async def test_use_ssh_enabled_validation(data, old_data, twofactor_enabled, two
     m['user.translate_username'] = lambda *args: {'twofactor_auth_configured': twofactor_enabled}
     m['system.security.config'] = lambda *arg: {"enable_fips": False, "enable_gpos_stig": False}
     data['smb'] = False
+    data['immutable'] = False
     data.update(
         {
             'smb': False,
