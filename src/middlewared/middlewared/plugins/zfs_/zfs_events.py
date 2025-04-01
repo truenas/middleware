@@ -67,18 +67,7 @@ class ScrubStartedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.INFO
     title = "Scrub Started"
-    text = "Scrub of pool %r started."
-
-    deleted_automatically = False
-
-
-class ScrubFinishedAlertClass(AlertClass, SimpleOneShotAlertClass):
-    category = AlertCategory.TASKS
-    level = AlertLevel.INFO
-    title = "Scrub Finished"
-    text = "Scrub of pool %r finished."
-
-    deleted_automatically = False
+    text = "Scrub of pool %r has started. Performance may be degraded during this time."
 
 
 async def resilver_scrub_start(middleware, pool_name):
@@ -104,8 +93,7 @@ async def resilver_scrub_stop_abort(middleware, pool_name):
 
 
 async def scrub_finished(middleware, pool_name):
-    await middleware.call('alert.oneshot_delete', 'ScrubFinished', pool_name)
-    await middleware.call('alert.oneshot_create', 'ScrubFinished', pool_name)
+    await middleware.call('alert.oneshot_delete', 'ScrubStarted', pool_name)
 
 
 async def retrieve_pool_from_db(middleware, pool_name):
