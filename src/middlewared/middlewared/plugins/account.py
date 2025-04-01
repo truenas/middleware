@@ -818,21 +818,6 @@ class UserService(CRUDService):
         # After this point user dict has values from data
         user.update(data)
 
-        is_enabled_system_account = user['immutable'] and any([
-            not user['password_disabled'], not user['locked'], user['unixhash'] != "*"
-        ])
-
-        stig_enabled = self.middleware.call_sync('system.security.config')['enable_gpos_stig']
-        if stig_enabled and is_enabled_system_account:
-            verrors.add(
-                'user.update.immutable',
-                f'{user["username"]} is a System Administrator account and is not permitted to be '
-                'enabled for password authentication when General Purpose OS STIG compatibility is enabled. '
-                'Please disable the password or lock the account.'
-            )
-
-        verrors.check()
-
         mode_to_set = user.get('home_mode')
         if not mode_to_set:
             mode_to_set = '700' if old_mode is None else old_mode
@@ -1383,6 +1368,19 @@ class UserService(CRUDService):
                 'SMB authentication for local user accounts is not permitted when General Purpose OS '
                 'STIG compatibility is enabled.'
             )
+
+        if old:
+            is_enabled_system_account = combined['immutable'] and any([
+                not combined['password_disabled'], not combined['locked'], combined['unixhash'] != "*"
+            ])
+
+            if stig_enabled and is_enabled_system_account:
+                verrors.add(
+                    f'{schema}.immutable',
+                    f'{combined["username"]} is a System Administrator account and is not permitted to be '
+                    'enabled for password authentication when General Purpose OS STIG compatibility is enabled. '
+                    'Please disable the password or lock the account.'
+                )
 
         password = data.get('password')
         if not old and not password and not data.get('password_disabled'):
