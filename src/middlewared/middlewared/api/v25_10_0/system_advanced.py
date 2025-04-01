@@ -2,7 +2,9 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, NonNegativeInt, Secret
 
-from middlewared.api.base import BaseModel, NotRequired, ForUpdateMetaclass, Excluded, excluded_field
+from middlewared.api.base import (
+    BaseModel, NotRequired, ForUpdateMetaclass, Excluded, excluded_field, NonEmptyString, EmptyDict
+)
 
 
 __all__ = [
@@ -10,7 +12,9 @@ __all__ = [
     "SystemAdvancedLoginBannerArgs", "SystemAdvancedLoginBannerResult", "SystemAdvancedSEDGlobalPasswordArgs",
     "SystemAdvancedSEDGlobalPasswordResult", "SystemAdvancedSEDGlobalPasswordIsSetArgs",
     "SystemAdvancedSEDGlobalPasswordIsSetResult", "SystemAdvancedSerialPortChoicesArgs",
-    "SystemAdvancedSerialPortChoicesResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
+    "SystemAdvancedSerialPortChoicesResult", "SystemAdvancedSyslogCertificateAuthorityChoicesArgs",
+    "SystemAdvancedSyslogCertificateAuthorityChoicesResult", "SystemAdvancedSyslogCertificateChoicesArgs",
+    "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
     "SystemAdvancedUpdateGpuPciIdArgs", "SystemAdvancedUpdateGpuPciIdResult",
 ]
 
@@ -96,6 +100,23 @@ class SystemAdvancedSerialPortChoicesArgs(BaseModel):
 
 class SystemAdvancedSerialPortChoicesResult(BaseModel):
     result: dict[str, str]
+
+
+class SystemAdvancedSyslogCertificateAuthorityChoicesArgs(BaseModel):
+    pass
+
+
+class SystemAdvancedSyslogCertificateAuthorityChoicesResult(BaseModel):
+    result: EmptyDict
+
+
+class SystemAdvancedSyslogCertificateChoicesArgs(BaseModel):
+    pass
+
+
+class SystemAdvancedSyslogCertificateChoicesResult(BaseModel):
+    result: dict[int, NonEmptyString]
+    """IDs of certificates mapped to their names."""
 
 
 class SystemAdvancedUpdateArgs(BaseModel):
