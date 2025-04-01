@@ -9,7 +9,8 @@ __all__ = [
     "SystemAdvancedEntry", "SystemAdvancedGpuChoicesArgs", "SystemAdvancedGpuChoicesResult",
     "SystemAdvancedLoginBannerArgs", "SystemAdvancedLoginBannerResult", "SystemAdvancedSEDGlobalPasswordArgs",
     "SystemAdvancedSEDGlobalPasswordResult", "SystemAdvancedSEDGlobalPasswordIsSetArgs",
-    "SystemAdvancedSEDGlobalPasswordIsSetResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
+    "SystemAdvancedSEDGlobalPasswordIsSetResult", "SystemAdvancedSerialPortChoicesArgs",
+    "SystemAdvancedSerialPortChoicesResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
     "SystemAdvancedUpdateGpuPciIdArgs", "SystemAdvancedUpdateGpuPciIdResult",
 ]
 
@@ -87,6 +88,14 @@ class SystemAdvancedSEDGlobalPasswordIsSetArgs(BaseModel):
 
 class SystemAdvancedSEDGlobalPasswordIsSetResult(BaseModel):
     result: bool
+
+
+class SystemAdvancedSerialPortChoicesArgs(BaseModel):
+    pass
+
+
+class SystemAdvancedSerialPortChoicesResult(BaseModel):
+    result: dict[str, str]
 
 
 class SystemAdvancedUpdateArgs(BaseModel):
