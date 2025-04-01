@@ -179,6 +179,29 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'exports', 'checkpoint': 'interface_sync'},
             ]
         },
+        'nvmet': {
+            'ctx': [
+                {'method': 'failover.licensed'},
+                {'method': 'failover.node'},
+                {'method': 'failover.status'},
+                {'method': 'nvmet.global.ana_enabled'},
+                {'method': 'nvmet.global.config'},
+                {'method': 'nvmet.global.rdma_enabled'},
+                {'method': 'nvmet.host.query'},
+                {'method': 'nvmet.namespace.query'},
+                {'method': 'nvmet.port.query'},
+                {'method': 'nvmet.subsys.query'},
+                {'method': 'nvmet.host_subsys.query'},
+                {'method': 'nvmet.port_subsys.query'},
+                {'method': 'nvmet.port.transport_address_choices', 'args': ['TCP'], 'ctx_prefix': 'tcp'},
+                {'method': 'nvmet.port.transport_address_choices', 'args': ['RDMA'], 'ctx_prefix': 'rdma'},
+                {'method': 'system.info'},
+                {'method': 'system.vendor.name'},
+            ],
+            'entries': [
+                {'type': 'py', 'path': 'nvmet_kernel'},
+            ]
+        },
         'pam': {
             'ctx': [
                 {'method': 'directoryservices.status'},

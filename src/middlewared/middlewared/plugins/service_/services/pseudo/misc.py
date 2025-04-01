@@ -193,3 +193,33 @@ class UserService(PseudoServiceBase):
 
     async def reload(self):
         pass
+
+
+class NVMETargetService(PseudoServiceBase):
+    name = "nvmet"
+    systemd_unit = NotImplemented
+
+    etc = ["nvmet"]
+    reloadable = True
+
+    async def start(self):
+        await self.middleware.call('nvmet.global.start')
+
+    async def stop(self):
+        await self.middleware.call('nvmet.global.stop')
+
+    async def reload(self):
+        # etc.generate is called before we get here
+        pass
+
+    async def become_active(self):
+        # If necessary we can optimize to *just* poke the
+        # 1. port ANA group state
+        # 2. namespace enabled
+        await self.middleware.call('etc.generate', self.name)
+
+    async def get_state(self):
+        return ServiceState(
+            (await self.middleware.call('nvmet.global.running')),
+            [],
+        )
