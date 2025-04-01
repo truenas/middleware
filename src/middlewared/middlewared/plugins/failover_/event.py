@@ -106,6 +106,18 @@ class FailoverEventsService(Service):
         else:
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
 
+        # Certain services on TrueNAS need to have correct nameserver information.
+        # We are seeing a situation where the active controller is being
+        # configured while the standby is in a non-functional state. So this
+        # exposes a gap in our service bring up on a master event. So we're going
+        # to synchronize the DNS information written in the db to the OS.
+        try:
+            self.logger.debug('Synchronizing DNS')
+            await self.middleware.call('dns.sync')
+            self.logger.debug('Done synchronizing DNS')
+        except Exception:
+            self.logger.exception('Unexpected failure synchronizing DNS')
+
         exceptions = await asyncio.gather(
             *[
                 self.become_active_service(svc, data['timeout'])
