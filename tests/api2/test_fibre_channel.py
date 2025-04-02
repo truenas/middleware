@@ -19,6 +19,7 @@ NODE_A_0 = {
     'port_name': NODE_A_0_WWPN,
     'port_type': 'NPort (fabric via point-to-point)',
     'port_state': 'Online',
+    'model': 'QLE2692',
     'speed': '8 Gbit',
     'addr': 'pci0000:b2/0000:b2:00.0/0000:b3:00.0',
     'max_npiv_vports': 254,
@@ -35,6 +36,7 @@ NODE_A_1 = {
     'port_name': NODE_A_1_WWPN,
     'port_type': 'NPort (fabric via point-to-point)',
     'port_state': 'Online',
+    'model': 'QLE2692',
     'speed': '8 Gbit',
     'addr': 'pci0000:b2/0000:b2:00.0/0000:b3:00.1',
     'max_npiv_vports': 254,
@@ -54,6 +56,7 @@ NODE_B_0 = {
     'port_name': NODE_B_0_WWPN,
     'port_type': 'NPort (fabric via point-to-point)',
     'port_state': 'Online',
+    'model': 'QLE2692',
     'speed': '8 Gbit',
     'addr': 'pci0000:b2/0000:b2:00.0/0000:b3:00.0',
     'max_npiv_vports': 254,
@@ -70,6 +73,7 @@ NODE_B_1 = {
     'port_name': NODE_B_1_WWPN,
     'port_type': 'NPort (fabric via point-to-point)',
     'port_state': 'Online',
+    'model': 'QLE2692',
     'speed': '8 Gbit',
     'addr': 'pci0000:b2/0000:b2:00.0/0000:b3:00.1',
     'max_npiv_vports': 254,
@@ -79,6 +83,194 @@ NODE_B_1 = {
 }
 
 NODE_B_FC_PHYSICAL_PORTS = [NODE_B_0, NODE_B_1]
+
+NO_SLOT_NODE_A_0_WWPN = '0x210011aa22bb1864'
+NO_SLOT_NODE_A_1_WWPN = '0x210011aa22bb1865'
+NO_SLOT_NODE_A_2_WWPN = '0x210012345678bde4'
+NO_SLOT_NODE_A_3_WWPN = '0x210012345678bde5'
+NO_SLOT_NODE_A_4_WWPN = '0x210012345678bde6'
+NO_SLOT_NODE_A_5_WWPN = '0x210012345678bde7'
+
+NO_SLOT_NODE_A_FC_PHYSICAL_PORTS = [
+    {
+        'name': 'host5',
+        'path': '/sys/class/fc_host/host5',
+        'node_name': '0x200012345678bde7',
+        'port_name': NO_SLOT_NODE_A_5_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.3',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host3',
+        'path': '/sys/class/fc_host/host3',
+        'node_name': '0x200012345678bde5',
+        'port_name': NO_SLOT_NODE_A_3_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.1',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host1',
+        'path': '/sys/class/fc_host/host1',
+        'node_name': '0x200011aa22bb1865',
+        'port_name': NO_SLOT_NODE_A_1_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2742',
+        'speed': 'unknown',
+        'addr': 'pci0000:80/0000:80:03.1/0000:87:00.1',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host4',
+        'path': '/sys/class/fc_host/host4',
+        'node_name': '0x200012345678bde6',
+        'port_name': NO_SLOT_NODE_A_4_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.2',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host2',
+        'path': '/sys/class/fc_host/host2',
+        'node_name': '0x200012345678bde4',
+        'port_name': NO_SLOT_NODE_A_2_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.0',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host0',
+        'path': '/sys/class/fc_host/host0',
+        'node_name': '0x200011aa22bb1864',
+        'port_name': NO_SLOT_NODE_A_0_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2742',
+        'speed': 'unknown',
+        'addr': 'pci0000:80/0000:80:03.1/0000:87:00.0',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    }
+]
+
+NO_SLOT_NODE_B_0_WWPN = '0x210011aa22bb18f8'
+NO_SLOT_NODE_B_1_WWPN = '0x210011aa22bb18f9'
+NO_SLOT_NODE_B_2_WWPN = '0x210012345678bd54'
+NO_SLOT_NODE_B_3_WWPN = '0x210012345678bd55'
+NO_SLOT_NODE_B_4_WWPN = '0x210012345678bd56'
+NO_SLOT_NODE_B_5_WWPN = '0x210012345678bd57'
+
+NO_SLOT_NODE_B_FC_PHYSICAL_PORTS = [
+    {
+        'name': 'host5',
+        'path': '/sys/class/fc_host/host5',
+        'node_name': '0x200012345678bd57',
+        'port_name': NO_SLOT_NODE_B_5_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.3',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host3',
+        'path': '/sys/class/fc_host/host3',
+        'node_name': '0x200012345678bd55',
+        'port_name': NO_SLOT_NODE_B_3_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.1',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host1',
+        'path': '/sys/class/fc_host/host1',
+        'node_name': '0x200011aa22bb18f9',
+        'port_name': NO_SLOT_NODE_B_1_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2742',
+        'speed': 'unknown',
+        'addr': 'pci0000:80/0000:80:03.1/0000:8d:00.1',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host4',
+        'path': '/sys/class/fc_host/host4',
+        'node_name': '0x200012345678bd56',
+        'port_name': NO_SLOT_NODE_B_4_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.2',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host2',
+        'path': '/sys/class/fc_host/host2',
+        'node_name': '0x200012345678bd54',
+        'port_name': NO_SLOT_NODE_B_2_WWPN,
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'model': 'QLE2694L',
+        'speed': 'unknown',
+        'addr': 'pci0000:00/0000:00:03.1/0000:09:00.0',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    },
+    {
+        'name': 'host0',
+        'path': '/sys/class/fc_host/host0',
+        'node_name': '0x200011aa22bb18f8',
+        'port_name': NO_SLOT_NODE_B_0_WWPN,
+        'model': 'QLE2742',
+        'port_type': 'Unknown',
+        'port_state': 'Linkdown',
+        'speed': 'unknown',
+        'addr': 'pci0000:80/0000:80:03.1/0000:8d:00.0',
+        'max_npiv_vports': 254,
+        'npiv_vports_inuse': 0,
+        'physical': True
+    }
+]
 
 
 def _str_to_naa(string):
@@ -166,18 +358,10 @@ def target_lun_zero(target_name, zvol_name, mb):
 
 
 @contextlib.contextmanager
-def node_a_hardware(remote=False):
-    with mock('fc.fc_hosts', return_value=NODE_A_FC_PHYSICAL_PORTS, remote=remote):
+def node_hardware(physical_ports, remote=False):
+    with mock('fc.fc_hosts', return_value=physical_ports, remote=remote):
         physical_port_filter = [['physical', '=', True]]
-        with mock('fc.fc_hosts', args=physical_port_filter, return_value=NODE_A_FC_PHYSICAL_PORTS, remote=remote):
-            yield
-
-
-@contextlib.contextmanager
-def node_b_hardware(remote=False):
-    with mock('fc.fc_hosts', return_value=NODE_B_FC_PHYSICAL_PORTS, remote=remote):
-        physical_port_filter = [['physical', '=', True]]
-        with mock('fc.fc_hosts', args=physical_port_filter, return_value=NODE_B_FC_PHYSICAL_PORTS, remote=remote):
+        with mock('fc.fc_hosts', args=physical_port_filter, return_value=physical_ports, remote=remote):
             yield
 
 
@@ -209,15 +393,15 @@ class TestFixtureFibreChannel:
                 if ha:
                     node = call('failover.node')
                     if node == 'A':
-                        with node_a_hardware():
-                            with node_b_hardware(True):
+                        with node_hardware(NODE_A_FC_PHYSICAL_PORTS):
+                            with node_hardware(NODE_B_FC_PHYSICAL_PORTS, True):
                                 yield
                     else:
-                        with node_a_hardware(True):
-                            with node_b_hardware():
+                        with node_hardware(NODE_A_FC_PHYSICAL_PORTS, True):
+                            with node_hardware(NODE_B_FC_PHYSICAL_PORTS):
                                 yield
                 else:
-                    with node_a_hardware():
+                    with node_hardware(NODE_A_FC_PHYSICAL_PORTS):
                         yield
 
     @pytest.fixture(scope='class')
@@ -234,6 +418,7 @@ class TestFixtureFibreChannel:
         finally:
             for fc in call('fc.fc_host.query'):
                 call('fc.fc_host.delete', fc['id'])
+            call('fc.fc_host.reset_wired', True)
 
     @pytest.fixture(scope='class')
     def fc_hosts(self, fibre_channel_wired):
@@ -407,15 +592,23 @@ class TestFixtureFibreChannel:
                             call('iscsi.target.update', target3_id, {'mode': 'FC'})
 
                             # Make sure we CAN update the old fcport to this target
-                            assert call('fcport.update', map0['id'], {'target_id': target3_id})['target']['id'] == target3_id
+                            assert call('fcport.update',
+                                        map0['id'],
+                                        {'target_id': target3_id})['target']['id'] == target3_id
                             # Then put is back
-                            assert call('fcport.update', map0['id'], {'target_id': target_id})['target']['id'] == target_id
+                            assert call('fcport.update',
+                                        map0['id'],
+                                        {'target_id': target_id})['target']['id'] == target_id
 
                     # We've just left the context where the 2nd fcport was created
                     # So now ensure we CAN update the old fcport to this port
-                    assert call('fcport.update', map0['id'], {'port': fc_hosts[1]['alias']})['port'] == fc_hosts[1]['alias']
+                    assert call('fcport.update',
+                                map0['id'],
+                                {'port': fc_hosts[1]['alias']})['port'] == fc_hosts[1]['alias']
                     # Then put is back
-                    assert call('fcport.update', map0['id'], {'port': fc_hosts[0]['alias']})['port'] == fc_hosts[0]['alias']
+                    assert call('fcport.update',
+                                map0['id'],
+                                {'port': fc_hosts[0]['alias']})['port'] == fc_hosts[0]['alias']
 
     def test_target_delete(self, fc_hosts):
         """Ensure that we can delete a mapped FC target."""
@@ -634,3 +827,74 @@ class TestFixtureFibreChannel:
                     'wwpn_b': str_to_wwpn_b_naa(NODE_B_1_WWPN)
                 }
             }
+
+
+class TestFixtureNoSlotFibreChannel:
+    """
+    Fixture with Fibre Channel without working BIOS, so
+    no slot information reported in fc.fc_hosts
+    """
+
+    @pytest.fixture(scope='class')
+    def fibre_channel_hardware(self):
+        # Make sure iSCSI service is not running.  Would go boom
+        assert call('service.query', [['service', '=', 'iscsitarget']], {'get': True})['state'] == 'STOPPED'
+        with mock('fc.capable', return_value=True):
+            with mock('system.feature_enabled', args=['FIBRECHANNEL',], return_value=True):
+                call('fc.fc_host.reset_wired', True)
+                if ha:
+                    node = call('failover.node')
+                    if node == 'A':
+                        with node_hardware(NO_SLOT_NODE_A_FC_PHYSICAL_PORTS):
+                            with node_hardware(NO_SLOT_NODE_B_FC_PHYSICAL_PORTS, True):
+                                yield
+                    else:
+                        with node_hardware(NO_SLOT_NODE_A_FC_PHYSICAL_PORTS, True):
+                            with node_hardware(NO_SLOT_NODE_B_FC_PHYSICAL_PORTS):
+                                yield
+                else:
+                    with node_hardware(NO_SLOT_NODE_A_FC_PHYSICAL_PORTS):
+                        yield
+
+    @pytest.fixture(scope='class')
+    def fibre_channel_wired(self, fibre_channel_hardware):
+        """
+        Wire the mocked FC ports together.
+        """
+        assert call('fcport.query') == []
+        try:
+            yield
+        finally:
+            for fc in call('fc.fc_host.query'):
+                call('fc.fc_host.delete', fc['id'])
+
+    @pytest.fixture(scope='class')
+    def fc_hosts(self, fibre_channel_wired):
+        yield sorted(call('fc.fc_host.query'), key=lambda d: d['alias'])
+
+    def assert_fc_host(self, fc_host, alias, wwpn, wwpn_b, npiv):
+        assert fc_host['alias'] == alias
+        assert fc_host['wwpn'] == str_to_wwpn_naa(wwpn)
+        if wwpn_b is None:
+            assert fc_host['wwpn_b'] is None
+        else:
+            assert fc_host['wwpn_b'] == str_to_wwpn_b_naa(wwpn_b)
+        assert fc_host['npiv'] == npiv
+
+    def test_wired(self, fc_hosts):
+        assert len(fc_hosts) == 6
+        if ha:
+            self.assert_fc_host(fc_hosts[0], 'fc0', NO_SLOT_NODE_A_0_WWPN, NO_SLOT_NODE_B_0_WWPN, 0)
+            self.assert_fc_host(fc_hosts[1], 'fc1', NO_SLOT_NODE_A_1_WWPN, NO_SLOT_NODE_B_1_WWPN, 0)
+            self.assert_fc_host(fc_hosts[2], 'fc2', NO_SLOT_NODE_A_2_WWPN, NO_SLOT_NODE_B_2_WWPN, 0)
+            self.assert_fc_host(fc_hosts[3], 'fc3', NO_SLOT_NODE_A_3_WWPN, NO_SLOT_NODE_B_3_WWPN, 0)
+            self.assert_fc_host(fc_hosts[4], 'fc4', NO_SLOT_NODE_A_4_WWPN, NO_SLOT_NODE_B_4_WWPN, 0)
+            self.assert_fc_host(fc_hosts[5], 'fc5', NO_SLOT_NODE_A_5_WWPN, NO_SLOT_NODE_B_5_WWPN, 0)
+        else:
+            self.assert_fc_host(fc_hosts[0], 'fc0', NO_SLOT_NODE_A_0_WWPN, None, 0)
+            self.assert_fc_host(fc_hosts[1], 'fc1', NO_SLOT_NODE_A_1_WWPN, None, 0)
+            self.assert_fc_host(fc_hosts[2], 'fc2', NO_SLOT_NODE_A_2_WWPN, None, 0)
+            self.assert_fc_host(fc_hosts[3], 'fc3', NO_SLOT_NODE_A_3_WWPN, None, 0)
+            self.assert_fc_host(fc_hosts[4], 'fc4', NO_SLOT_NODE_A_4_WWPN, None, 0)
+            self.assert_fc_host(fc_hosts[5], 'fc5', NO_SLOT_NODE_A_5_WWPN, None, 0)
+        self.fc_hosts = fc_hosts
