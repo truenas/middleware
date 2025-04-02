@@ -303,6 +303,17 @@ class SMBService(ConfigService):
         await self.setup_directories()
 
         """
+        We may have failed over and changed our netbios name, which would also
+        change the system SID. Flush out gencache entries before proceeding with
+        local user account setup, otherwise we may end up with the incorrect
+        domain SID for the guest account.
+        """
+        try:
+            await self.middleware.call('idmap.gencache.flush')
+        except Exception:
+            self.logger.warning('SMB gencache flush failed', exc_info=True)
+
+        """
         We cannot continue without network.
         Wait here until we see the ix-netif completion sentinel.
         """
