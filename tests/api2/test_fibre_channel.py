@@ -831,8 +831,8 @@ class TestFixtureFibreChannel:
 
 class TestFixtureNoSlotFibreChannel:
     """
-    Fixture with Fibre Channel without working BIOS, so
-    no slot information reported in fc.fc_hosts
+    Fixture with Fibre Channel without slot information
+    reported in fc.fc_hosts
     """
 
     @pytest.fixture(scope='class')
