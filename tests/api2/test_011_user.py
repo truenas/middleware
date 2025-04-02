@@ -5,7 +5,7 @@ import time
 import stat
 
 import pytest
-from datetime import datetime
+from datetime import datetime, UTC
 from pytest_dependency import depends
 
 from truenas_api_client import ClientException
