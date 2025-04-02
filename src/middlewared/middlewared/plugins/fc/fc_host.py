@@ -396,7 +396,7 @@ class FCHostService(CRUDService):
             if all(['slot' in fc_host for fc_host in raw_fc_hosts]):
                 fc_hosts = sorted(raw_fc_hosts, key=lambda d: d['slot'])
             else:
-                # When we were paiting in HA we used the model and PCI function
+                # When we were pairing in HA we used the model and PCI function
                 # to check that the entries on both controllers matched.  That's
                 # not useful on non-HA. so just use the /sys/class/fc_host host
                 # number, from the name (always present).
