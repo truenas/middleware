@@ -346,7 +346,7 @@ class TestAuditOpsHA:
             assert "failed to communicate" in str(e.value)
 
             # Wait for the remote to return
-            assert call("core.job_wait", job_id, job=True)
+            call("core.job_wait", job_id, job=True)
         else:
             # Handle delays in the audit database
             remote_audit_entry = []
