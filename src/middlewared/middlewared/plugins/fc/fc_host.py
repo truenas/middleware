@@ -392,7 +392,15 @@ class FCHostService(CRUDService):
             return result
         else:
             # Not HA - just wire up all fc_hosts in wwpn
-            fc_hosts = sorted(await self.middleware.call('fc.fc_hosts'), key=lambda d: d['slot'])
+            raw_fc_hosts = await self.middleware.call('fc.fc_hosts')
+            if all(['slot' in fc_host for fc_host in raw_fc_hosts]):
+                fc_hosts = sorted(raw_fc_hosts, key=lambda d: d['slot'])
+            else:
+                # When we were paiting in HA we used the model and PCI function
+                # to check that the entries on both controllers matched.  That's
+                # not useful on non-HA. so just use the /sys/class/fc_host host
+                # number, from the name (always present).
+                fc_hosts = sorted(raw_fc_hosts, key=lambda x: int(x['name'][4:]))
             for fchost in fc_hosts:
                 if naa := str_to_naa(fchost.get('port_name')):
                     existing = await self.middleware.call('fc.fc_host.query', [['wwpn', '=', naa]])
