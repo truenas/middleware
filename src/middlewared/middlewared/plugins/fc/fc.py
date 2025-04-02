@@ -82,6 +82,7 @@ class FCService(Service):
                             'port_name': (path / 'port_name').read_text().strip(),
                             'port_type': (path / 'port_type').read_text().strip(),
                             'port_state': (path / 'port_state').read_text().strip(),
+                            'model': (path / 'symbolic_name').read_text().strip().split()[0],
                             'speed': (path / 'speed').read_text().strip(),
                             'addr': addr,
                         }
@@ -114,17 +115,24 @@ class FCService(Service):
                         result.append(entry)
         return filter_list(result, filters, options)
 
-    @cache
-    def fc_host_nport_wwpn_choices(self):
+    async def fc_host_nport_wwpn_choices(self):
         """
         Return a list of physical N_Port WWPNs on this node.
         """
+        # Use more manual cache, so that we can pop it during CI
+        try:
+            return await self.middleware.call('cache.get', 'fc.fc_host_nport_wwpn_choices')
+        except KeyError:
+            pass
+
         result = []
-        for fc in (self.middleware.call_sync('fc.fc_hosts', [["physical", "=", True]])):
+        for fc in (await self.middleware.call('fc.fc_hosts', [["physical", "=", True]])):
             port_name = fc['port_name']
             # Replace the leading '0x' with 'naa.'
             wwpn = f'naa.{port_name[2:]}'
             result.append(wwpn)
+
+        await self.middleware.call('cache.put', 'fc.fc_host_nport_wwpn_choices', result)
         return result
 
     def __load_kernel_module(self):
