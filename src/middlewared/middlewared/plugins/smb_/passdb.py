@@ -3,6 +3,7 @@ import os
 from middlewared.api.current import UserEntry
 from middlewared.service import filterable_api_method, Service, job, private
 from middlewared.utils.sid import get_domain_rid
+from .util_account_policy import sync_account_policy
 from .util_passdb import (
     delete_passdb_entry,
     insert_passdb_entries,
@@ -46,6 +47,11 @@ class SMBService(Service):
     @private
     def remove_passdb_user(self, username, sid):
         delete_passdb_entry(username, get_domain_rid(sid))
+
+    @private
+    def apply_account_policy(self):
+        security = self.middleware.call_sync('system.security.config')
+        sync_account_policy(security)
 
     @private
     @job(lock="passdb_sync", lock_queue_size=1)

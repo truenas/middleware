@@ -14,6 +14,7 @@ from contextlib import suppress
 from sqlalchemy.orm import relationship
 
 from dataclasses import asdict
+from datetime import datetime
 from middlewared.api import api_method
 from middlewared.api.current import (
     GroupEntry,
@@ -51,14 +52,20 @@ from middlewared.service import CallError, CRUDService, ValidationErrors, pass_a
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_string
+from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_string, check_unixhash
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.utils.security import (
+    check_password_complexity,
+    MAX_PASSWORD_HISTORY,
+    PASSWORD_PROMPT_AGE,
+)
 from middlewared.utils.sid import db_id_to_rid, DomainRid
+from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
@@ -206,6 +213,8 @@ class UserModel(sa.Model):
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
     bsdusr_groups = relationship('GroupModel', secondary=lambda: GroupMembershipModel.__table__)
+    bsdusr_last_password_change = sa.Column(sa.Integer(), nullable=True)
+    bsdusr_password_history = sa.Column(sa.EncryptedText(), default=[], nullable=True)
 
 
 class UserService(CRUDService):
@@ -234,7 +243,8 @@ class UserService(CRUDService):
             user_api_keys[key['username']].append(key['id'])
 
         return {
-            'stig_enabled': (await self.middleware.call('system.security.config'))['enable_gpos_stig'],
+            'now': utc_now(naive=False),
+            'security': await self.middleware.call('system.security.config'),
             'server_sid': await self.middleware.call('smb.local_server_sid'),
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
@@ -273,6 +283,31 @@ class UserService(CRUDService):
         elif user['userns_idmap'] == USERNS_IDMAP_NONE:
             user['userns_idmap'] = None
 
+        if user['password_history']:
+            user['password_history'] = user['password_history'].split()
+        else:
+            user['password_history'] = []
+
+        if user['last_password_change'] is not None:
+            user['last_password_change'] = datetime.fromtimestamp(user['last_password_change'], UTC)
+            user['password_age'] = (ctx['now'] - user['last_password_change']).days
+            if user['password_age'] < 0:
+                # This means user is from the future. We don't want negative
+                # ages and so we'll set this to None to differentiate from
+                # accounts that are brand new
+                user['password_age'] = None
+        else:
+            user['password_age'] = None
+
+        # Set bool indicating user needs to change password
+        # Depending on security configuration this can be a soft limit
+        # that still allows login or a hard limit that blocks auth
+        if user['password_age'] and ctx['security']['max_password_age']:
+            max_age = ctx['security']['max_password_age']
+            user['password_change_required'] = user['password_age'] >= (max_age - PASSWORD_PROMPT_AGE)
+        else:
+            user['password_change_required'] = False
+
         user_roles = set()
         for g in user['groups'] + [user['group']['id']]:
             if not (entry := ctx['roles_mapping'].get(g)):
@@ -292,7 +327,7 @@ class UserService(CRUDService):
             'roles': list(user_roles),
             'api_keys': ctx['user_api_keys'][user['username']]
         })
-        if ctx['stig_enabled']:
+        if ctx['security']['enable_gpos_stig']:
             # NTLM authentication relies on non-FIPS crypto
             user.update({
                 'smb': False,
@@ -314,6 +349,8 @@ class UserService(CRUDService):
             'roles',
             'random_password',
             'twofactor_auth_configured',
+            'password_age',
+            'password_change_required',
         ]
 
         match user['userns_idmap']:
@@ -326,6 +363,15 @@ class UserService(CRUDService):
 
         for i in to_remove:
             user.pop(i, None)
+
+        for key in ['last_password_change', 'account_expiration_date']:
+            if user.get(key) is None:
+                continue
+
+            user[key] = int(user[key].timestamp())
+
+        if user.get('password_history') is not None:
+            user['password_history'] = ' '.join(user['password_history'])
 
         return user
 
@@ -704,6 +750,7 @@ class UserService(CRUDService):
             )
 
         user = self.middleware.call_sync('user.get_instance', pk)
+
         audit_callback(user['username'])
 
         if app and app.authenticated_credentials.is_user_session:
@@ -1277,9 +1324,46 @@ class UserService(CRUDService):
         return asdict(copytree(home_old, home_new, CopyTreeConfig(exist_ok=True, job=job)))
 
     @private
+    async def password_security_validate(self, schema, verrors, password, password_history, password_field='password'):
+        sec = await self.middleware.call('system.security.config')
+        field = f'{schema}.{password_field}'
+        if sec['password_complexity_ruleset']:
+            unmet_rules = check_password_complexity(sec['password_complexity_ruleset'], password)
+            if unmet_rules:
+                verrors.add(
+                    field,
+                    'The specified password does not meet minimum complexity requirements. '
+                    f'The following character types are absent: {", ".join(unmet_rules)}'
+                )
+
+        if sec['min_password_length'] and len(password) < sec['min_password_length']:
+            verrors.add(
+                field,
+                'The specified password is too short. The minimum password length '
+                f'is {sec["min_password_length"]} characters.'
+            )
+
+        if password_history and sec['password_history_length']:
+            # the most recent hashes are at end of list and so we reverse order when evaluating whether there
+            # is a repeat in the password history
+            for idx, unix_hash in enumerate(reversed(password_history)):
+                if idx >= sec['password_history_length']:
+                    # History may be longer than currently configured history length
+                    break
+
+                if check_unixhash(password, unix_hash):
+                    verrors.add(
+                        field,
+                        'The security configuration of the TrueNAS server requires a password '
+                        f'that does not match any of the last {sec["password_history_length"]} '
+                        'passwords for this account.'
+                    )
+
+    @private
     async def common_validation(self, verrors, data, schema, group_ids, old=None):
         exclude_filter = [('id', '!=', old['id'])] if old else []
         combined = data if not old else old | data
+        password_changed = False
 
         users = await self.middleware.call(
             'datastore.query',
@@ -1307,6 +1391,25 @@ class UserService(CRUDService):
             )
         elif data.get('random_password'):
             data['password'] = generate_string(string_size=20)
+            password_changed = True
+        elif data.get('password'):
+            history = old['password_history'] + [old['unixhash']] if old else None
+            await self.password_security_validate(schema, verrors, data['password'], history)
+            password_changed = True
+
+        if password_changed:
+            data['last_password_change'] = utc_now(naive=False)
+
+            # We store a number of hashes equal to the maximum possible value
+            # of the password history parameter so that admins can bump the
+            # history value up and have it take actual effect.
+            if old:
+                password_history = old['password_history'] or []
+                password_history.append(old['unixhash'])
+                while len(password_history) > MAX_PASSWORD_HISTORY:
+                    password_history.pop(0)
+
+                data['password_history'] = password_history
 
         if data.get('uid') is not None:
             try:
@@ -1648,6 +1751,9 @@ class UserService(CRUDService):
                         f'{username}: failed to validate password.'
                     )
 
+        history = entry['password_history'] + [entry['unixhash']]
+        await self.password_security_validate('user.set_password', verrors, password, history, 'new_password')
+
         verrors.check()
 
         if entry['password_disabled']:
@@ -1665,10 +1771,13 @@ class UserService(CRUDService):
         verrors.check()
 
         entry = self.__set_password(entry | {'password': password})
+        entry['last_password_change'] = utc_now(naive=False)
 
         await self.middleware.call('datastore.update', 'account.bsdusers', entry['id'], {
             'bsdusr_unixhash': entry['unixhash'],
             'bsdusr_smbhash': entry['smbhash'],
+            'bsdusr_password_history': ', '.join(history),
+            'bsdusr_last_password_change': int(entry['last_password_change'].timestamp()),
         })
         await self.middleware.call('etc.generate', 'shadow')
 
