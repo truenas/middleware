@@ -1,10 +1,55 @@
 import asyncio
 from dns.asyncresolver import Resolver
 from io import StringIO
+from typing import Literal
 
+from pydantic import Field
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, single_argument_args, IPvAnyAddress, Excluded, excluded_field
+from middlewared.api.current import QueryFilters, QueryOptions
 from middlewared.service import private, Service, ValidationError
 from middlewared.schema import accepts, returns, IPAddr, Dict, Int, List, Str, Ref, OROperator
 from middlewared.utils import filter_list
+
+
+class DNSClientOptions(BaseModel):
+    nameservers: list[IPvAnyAddress] = []
+    lifetime: int = 12
+    timeout: int = 4
+    raise_error: Literal['NEVER', 'ANY_FAILURE', 'HOST_FAILURE', 'ALL_FAILURE'] = 'HOST_FAILURE'
+
+
+class DNSClientLookupItem(BaseModel):
+    name: str
+    class_: str = Field(alias='class')
+    type: str
+    ttl: int
+    target: str
+
+
+class DNSClientAddressLookupItem(DNSClientLookupItem):
+    target: Excluded = excluded_field()
+    address: IPvAnyAddress
+
+
+class DNSClientSrvLookupItem(DNSClientLookupItem):
+    priority: int
+    weight: int
+    port: int
+
+
+@single_argument_args('data')
+class DNSClientForwardLookupArgs(BaseModel):
+    names: list[str]
+    record_types: list[Literal['A', 'AAAA', 'SRV', 'CNAME']] = ['A', 'AAAA']
+    dns_client_options: DNSClientOptions = Field(default_factory=DNSClientOptions)
+    query_filters: QueryFilters = Field(alias='query-filters', default_factory=QueryFilters)
+    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+
+
+class DNSClientForwardLookupResult(BaseModel):
+    result: list[DNSClientLookupItem] | list[DNSClientAddressLookupItem] | list[DNSClientSrvLookupItem]
 
 
 class DNSClient(Service):
@@ -68,14 +113,14 @@ class DNSClient(Service):
             'rdata_list_srv',
             items=[
                 Dict(
-                    Str('name'),
+                    #Str('name'),
                     Int('priority'),
                     Int('weight'),
                     Int('port'),
-                    Str('class'),
-                    Str('type'),
-                    Int('ttl'),
-                    Str('target'),
+                    #Str('class'),
+                    #Str('type'),
+                    #Int('ttl'),
+                    #Str('target'),
                 )
             ],
         ),
