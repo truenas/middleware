@@ -137,7 +137,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def _load_apis(self) -> dict[str, API]:
         api_versions = self._load_api_versions()
         api_versions_adapter = APIVersionsAdapter(api_versions)
-        self.api_versions = api_versions  # FIXME: Only necessary as a class member for legacy WS API
+        self.api_versions = api_versions
         self.api_versions_adapter = api_versions_adapter  # FIXME: Only necessary as a class member for legacy WS API
         return self._create_apis(api_versions, api_versions_adapter)
 
@@ -1237,6 +1237,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             return False
         return True
 
+    async def api_versions_handler(self, request):
+        return web.Response(
+            body=json.dumps([version.version for version in self.api_versions]),
+            content_type="application/json",
+        )
+
     _loop_monitor_ignore_frames = (
         LoopMonitorIgnoreFrame(
             re.compile(r'\s+File ".+/middlewared/main\.py", line [0-9]+, in run_in_thread\s+'
@@ -1379,6 +1385,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         for version, api in apis.items():
             self._add_api_route(version, api)
+
+        app.router.add_route('GET', '/api/versions', self.api_versions_handler)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
