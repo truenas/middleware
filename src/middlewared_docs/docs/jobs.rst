@@ -25,7 +25,7 @@ The client initiates a method call:
         "params": ["/mnt/tank/src", "/mnt/tank/dst"]
     }
 
-The server responds with the newly added job:
+The server responds with the newly added job (e.g. id 101):
 
 .. code:: json
 
@@ -57,7 +57,7 @@ Then, it updates the progress:
                 "id": 101,
                 "progress": {
                     "percent": 50,
-                    "description": "Copied 1000000 or 2000000 bytes"
+                    "description": "Copied 1000000 of 2000000 bytes"
                 },
                 ...
             }

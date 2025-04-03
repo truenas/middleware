@@ -200,7 +200,6 @@ def calculate_args_index(f, audit_callback):
         args_index += 1
     if hasattr(f, '_pass_app'):
         args_index += 1
-    if hasattr(f, '_pass_app'):
         if f._pass_app['message_id']:
             args_index += 1
     if audit_callback:
