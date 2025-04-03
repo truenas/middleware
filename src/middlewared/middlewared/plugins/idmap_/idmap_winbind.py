@@ -41,6 +41,12 @@ class WBClient:
     def _as_dict(self, results, convert_unmapped=False):
         for entry in list(results['mapped'].keys()):
             new = self._pyuidgid_to_dict(results['mapped'][entry])
+            if new['id_type'] == IDType.BOTH.name:
+                if results['mapped'][entry].sid_type['parsed'] in ('SID_DOM_GROUP', 'SID_ALIAS'):
+                    new['id_type'] = IDType.GROUP.name
+                else:
+                    new['id_type'] = IDType.USER.name
+
             results['mapped'][entry] = new
 
         # The unmapped entry value may be uidgid type or simply SID string
