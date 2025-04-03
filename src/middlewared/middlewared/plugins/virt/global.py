@@ -14,7 +14,7 @@ from middlewared.api.current import (
     VirtGlobalPoolChoicesArgs, VirtGlobalPoolChoicesResult,
     VirtGlobalGetNetworkArgs, VirtGlobalGetNetworkResult,
 )
-
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service import job, private
 from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
@@ -51,6 +51,7 @@ class VirtGlobalModel(sa.Model):
     bridge = sa.Column(sa.String(120), nullable=True)
     v4_network = sa.Column(sa.String(120), nullable=True)
     v6_network = sa.Column(sa.String(120), nullable=True)
+    export_dir = sa.Column(sa.Text(), nullable=True)
 
 
 class VirtGlobalService(ConfigService):
@@ -117,6 +118,11 @@ class VirtGlobalService(ConfigService):
                         'Please reconfigure these services to bind to specific IP addresses instead of wildcard IPs.'
                     )
                 )
+
+        if new.get('export_dir'):
+            await check_path_resides_within_volume(
+                verrors, self.middleware, f'{schema_name}.export_dir', new['export_dir']
+            )
 
     @api_method(
         VirtGlobalUpdateArgs,

@@ -1,12 +1,12 @@
 import asyncio
+import enum
+import json
 import os
 from dataclasses import dataclass
+from typing import Callable
 
 import aiohttp
-import enum
 import httpx
-import json
-from collections.abc import Callable
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service import CallError
@@ -96,6 +96,26 @@ def incus_call_sync(path: str, method: str, request_kwargs: dict = None, json: b
             return response.json()
         else:
             return response.content
+
+
+def read_from_incus_stream_and_write_to_file(path: str, backup_file: str):
+    with open(backup_file, 'wb') as w:
+        transport = httpx.HTTPTransport(uds=SOCKET)
+        with httpx.Client(
+            transport=transport, timeout=httpx.Timeout(connect=5.0, read=300.0, write=300.0, pool=None)
+        ) as client:
+            with client.stream('GET', f'{HTTP_URI}/{path.lstrip("/")}') as resp:
+                resp.raise_for_status()
+                for chunk in resp.iter_bytes():
+                    w.write(chunk)
+
+
+def write_to_incus_stream(path: str, request_kwargs: dict, file_location: str):
+    try:
+        with open(file_location, 'rb') as f:
+            return incus_call_sync(path, 'post', request_kwargs=request_kwargs | {'data': f})
+    except Exception:
+        raise CallError('Unable to open file for reading')
 
 
 async def incus_call(path: str, method: str, request_kwargs: dict = None, json: bool = True):

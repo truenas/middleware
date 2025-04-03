@@ -112,6 +112,7 @@ from .tunable import *  # noqa
 from .update import *  # noqa
 from .ups import *  # noqa
 from .user import *  # noqa
+from .virt_backup import *  # noqa
 from .virt_device import *  # noqa
 from .virt_global import *  # noqa
 from .virt_instance import *  # noqa
