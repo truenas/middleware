@@ -23,6 +23,7 @@ class VirtGlobalEntry(BaseModel):
     v4_network: str | None = None
     v6_network: str | None = None
     state: Literal['INITIALIZING', 'INITIALIZED', 'NO_POOL', 'ERROR', 'LOCKED'] | None = None
+    export_dir: NonEmptyString | None
 
 
 class VirtGlobalUpdateResult(BaseModel):
@@ -38,6 +39,7 @@ class VirtGlobalUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     "ZFS pools to use as storage pools"
     v4_network: str | None = None
     v6_network: str | None = None
+    export_dir: NonEmptyString | None = None
 
 
 class VirtGlobalBridgeChoicesArgs(BaseModel):

@@ -14,7 +14,7 @@ from middlewared.api.current import (
     VirtGlobalPoolChoicesArgs, VirtGlobalPoolChoicesResult,
     VirtGlobalGetNetworkArgs, VirtGlobalGetNetworkResult,
 )
-
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.service import job, private
 from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
@@ -51,6 +51,7 @@ class VirtGlobalModel(sa.Model):
     bridge = sa.Column(sa.String(120), nullable=True)
     v4_network = sa.Column(sa.String(120), nullable=True)
     v6_network = sa.Column(sa.String(120), nullable=True)
+    export_dir = sa.Column(sa.Text(), nullable=True)
 
 
 class VirtGlobalService(ConfigService):
@@ -102,6 +103,9 @@ class VirtGlobalService(ConfigService):
 
         if pool and not await self.middleware.call('virt.global.license_active'):
             verrors.add(f'{schema_name}.pool', 'System is not licensed to run virtualization')
+
+        for k in filter(lambda v: new.get(v), ('export_dir', 'import_dir')):
+            await check_path_resides_within_volume(verrors, self.middleware, f'{schema_name}.{k}', new[k])
 
     @api_method(
         VirtGlobalUpdateArgs,
