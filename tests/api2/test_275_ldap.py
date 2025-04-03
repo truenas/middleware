@@ -70,8 +70,12 @@ def test_account_privilege_authentication(do_ldap_connection):
         }):
             with client(auth=(LDAPUSER, LDAPPASSWORD)) as c:
                 methods = c.call("core.get_methods")
+                me = c.call("auth.me")
 
             assert "system.info" in methods
             assert "pool.create" not in methods
+            assert "DIRECTORY_SERVICE" in me['account_attributes']
+            assert "LDAP" in me['account_attributes']
+
     finally:
         call("system.general.update", {"ds_auth": False})

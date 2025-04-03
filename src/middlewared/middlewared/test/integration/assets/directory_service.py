@@ -30,6 +30,7 @@ try:
         LDAPBINDPASSWORD,
         LDAPHOSTNAME,
         LDAPUSER,
+        LDAPADMIN,
         LDAPPASSWORD
     )
 except ImportError:
@@ -37,6 +38,7 @@ except ImportError:
     LDAPBINDDN = None
     LDAPBINDPASSWORD = None
     LDAPHOSTNAME = None
+    LDAPADMIN = None
     LDAPUSER = None
     LDAPPASSWORD = None
 
@@ -201,7 +203,7 @@ def ldap(
         "hostname": [hostname],
         "ssl": "ON",
         "auxiliary_parameters": "",
-        "validate_certificates": True,
+        "validate_certificates": False,
         "enable": True,
         **kwargs
     }, job=True)
