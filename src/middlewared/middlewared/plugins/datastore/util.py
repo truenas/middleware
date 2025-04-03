@@ -1,5 +1,4 @@
-from middlewared.schema import accepts
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service
 from middlewared.sqlalchemy import Model
 
 from .schema import SchemaMixin
@@ -10,7 +9,6 @@ class DatastoreService(Service, SchemaMixin):
     class Config:
         private = True
 
-    @private
     async def get_backrefs(self, name):
         """
         Returns list of (datastore_name, column_name) for all tables that reference this table
@@ -32,7 +30,6 @@ class DatastoreService(Service, SchemaMixin):
 
         return result
 
-    @private
     async def sql(self, query, *args):
         try:
             if query.strip().split()[0].upper() == 'SELECT':
@@ -42,7 +39,6 @@ class DatastoreService(Service, SchemaMixin):
         except Exception as e:
             raise CallError(e)
 
-    @accepts()
     async def dump_json(self):
         models = []
         for table, in await self.middleware.call(

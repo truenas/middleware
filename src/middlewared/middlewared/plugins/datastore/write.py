@@ -1,12 +1,13 @@
+from dataclasses import asdict, dataclass
+from typing import Any
+
 from sqlalchemy import and_, types
 from sqlalchemy.sql import sqltypes
 
-from middlewared.schema import accepts, Any, Bool, Dict, Str
 from middlewared.service import Service
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
-
 
 """
 By default, when an update/insert/delete operation occurs we will
@@ -28,28 +29,32 @@ after all the db operations are complete.
 """
 
 
+@dataclass(slots=True, kw_only=True)
+class DatastoreOptions:
+    ha_sync: bool = True
+    prefix: str = ""
+    send_events: bool = True
+
+
 class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     class Config:
         private = True
 
-    @accepts(
-        Str('name'),
-        Dict('data', additional_attrs=True),
-        Dict(
-            'options',
-            Bool('ha_sync', default=True),
-            Str('prefix', default=''),
-            Bool('send_events', default=True),
-        ),
-    )
-    async def insert(self, name, data, options):
+    def _handle_datastore_opts(self, options: dict | None = None):
+        if options is None:
+            opts = asdict(DatastoreOptions())
+        else:
+            opts = asdict(DatastoreOptions(**options))
+        return opts
+
+    async def insert(self, name: str, data: dict, options: dict | None = None):
         """
         Insert a new entry to `name`.
         """
         table = self._get_table(name)
+        options = self._handle_datastore_opts(options)
         insert, relationships = self._extract_relationships(table, options['prefix'], data)
-
         for column in table.c:
             if column.default is not None:
                 insert.setdefault(column.name, column.default.arg)
@@ -89,24 +94,13 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         return pk
 
-    @accepts(
-        Str('name'),
-        Any('id_or_filters'),
-        Dict('data', additional_attrs=True),
-        Dict(
-            'options',
-            Bool('ha_sync', default=True),
-            Str('prefix', default=''),
-            Bool('send_events', default=True),
-        ),
-    )
-    async def update(self, name, id_or_filters, data, options):
+    async def update(self, name: str, id_or_filters: Any, data: dict, options: dict | None = None):
         """
         Update an entry `id` in `name`.
         """
         table = self._get_table(name)
         data = data.copy()
-
+        options = self._handle_datastore_opts(options)
         if isinstance(id_or_filters, list):
             rows = await self.middleware.call('datastore.query', name, id_or_filters, {'prefix': options['prefix']})
             if len(rows) != 1:
@@ -183,22 +177,12 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         else:
             return self._get_pk(table) == id_or_filters
 
-    @accepts(
-        Str('name'),
-        Any('id_or_filters'),
-        Dict(
-            'options',
-            Bool('ha_sync', default=True),
-            Str('prefix', default=''),
-            Bool('send_events', default=True),
-        ),
-    )
-    async def delete(self, name, id_or_filters, options):
+    async def delete(self, name: str, id_or_filters: Any, options: dict | None = None):
         """
         Delete an entry `id` in `name`.
         """
         table = self._get_table(name)
-
+        options = self._handle_datastore_opts(options)
         await self.middleware.call(
             'datastore.execute_write',
             table.delete().where(self._where_clause(table, id_or_filters, {'prefix': options['prefix']})),

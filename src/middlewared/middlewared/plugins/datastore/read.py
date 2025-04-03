@@ -5,7 +5,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.sql import Alias
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filters
@@ -158,14 +158,18 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         return result
 
-    @accepts(Str('name'), Ref('query-options'))
-    async def config(self, name, options):
+    async def config(self, name: str, options: dict | None = None):
         """
         Get configuration settings object for a given `name`.
 
         This is a shortcut for `query(name, {"get": true})`.
         """
-        options['get'] = True
+        if options is None:
+            options = dict()
+
+        options.setdefault('get', True)
+        QueryOptions().__call__(options)
+
         return await self.query(name, [], options)
 
     def _get_queryset_joins(self, table):
