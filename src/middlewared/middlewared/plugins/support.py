@@ -119,7 +119,7 @@ class SupportService(ConfigService):
         Returns whether Proactive Support is available and enabled.
         """
 
-        return await self.is_available() and (await self.config())['enabled']
+        return await self.is_available() and bool((await self.config())['enabled'])
 
     @api_method(SupportFieldsArgs, SupportFieldsResult, roles=['SUPPORT_READ'])
     async def fields(self):
