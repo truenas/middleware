@@ -13,6 +13,7 @@ from middlewared.api.current import DNSQueryItem
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.plugins.interface.netif import netif
+from middlewared.schema import IPAddr, ValidationErrors
 from middlewared.service_exception import CallError
 
 
@@ -55,9 +56,15 @@ class DNSService(Service):
         with contextlib.suppress(Exception):
             with open('/etc/resolv.conf') as f:
                 for line in filter(lambda x: x.startswith('nameserver'), f):
-                    ip = {'nameserver': line[len('nameserver'):].strip()}
-                    if ip not in ips:
-                        ips.append(ip)
+                    ip = line[len('nameserver'):].strip()
+                    try:
+                        IPAddr().validate(ip)  # make sure it's a valid IP (better safe than sorry)
+                    except ValidationErrors:
+                        self.logger.warning('IP %r in resolv.conf does not seem to be valid', ip)
+                    else:
+                        ip = {'nameserver': ip}
+                        if ip not in ips:
+                            ips.append(ip)
 
         return filter_list(ips, filters, options)
 
