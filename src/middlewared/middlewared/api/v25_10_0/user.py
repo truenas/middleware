@@ -1,6 +1,5 @@
-from typing import Annotated, Literal
+from typing import Literal
 
-from annotated_types import Ge, Le
 from datetime import datetime
 from pydantic import EmailStr, Field, Secret
 
@@ -279,9 +278,9 @@ class UserUnset2faSecretResult(BaseModel):
 
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
-    otp_digits: Annotated[int, Ge(6), Le(8)]
+    otp_digits: int = Field(ge=6, le=8)
     "Represents number of allowed digits in the OTP"
-    interval: Annotated[int, Ge(5)]
+    interval: int = Field(ge=5)
     "Time duration in seconds specifying OTP expiration time from its creation time"
 
 

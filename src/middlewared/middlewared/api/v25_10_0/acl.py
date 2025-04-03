@@ -1,4 +1,3 @@
-from annotated_types import Ge, Le
 from middlewared.api.base import (
     BaseModel,
     Excluded,
@@ -37,7 +36,7 @@ __all__ = [
 
 ACL_MAX_ID = 2 ** 32 // 2 - 1
 
-AceWhoId = Annotated[int, Ge(ACL_UNDEFINED_ID), Le(ACL_MAX_ID)]
+AceWhoId = Annotated[int, Field(ge=ACL_UNDEFINED_ID, le=ACL_MAX_ID)]
 
 NFS4ACE_BasicPermset = Literal[
     NFS4ACE_MaskSimple.FULL_CONTROL,
