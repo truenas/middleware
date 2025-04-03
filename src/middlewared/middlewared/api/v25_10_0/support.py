@@ -29,6 +29,28 @@ class SupportEntry(BaseModel):
     secondary_phone: str
 
 
+class SupportNewTicketCommunity(BaseModel):
+    title: str = Field(max_length=200)
+    body: str = Field(max_length=20000)
+    attach_debug: bool = False
+    token: Secret[str]
+    type: Literal['BUG', 'FEATURE']
+    cc: list[EmailString] = []
+
+
+class SupportNewTicketEnterprise(BaseModel):
+    title: str = Field(max_length=200)
+    body: str = Field(max_length=20000)
+    category: str
+    attach_debug: bool = False
+    criticality: str
+    environment: LongString
+    phone: str
+    name: str
+    email: EmailString
+    cc: list[EmailString] = []
+
+
 class SupportSimilarIssue(BaseModel):
     url: str = NotRequired
     summary: str = NotRequired
@@ -85,20 +107,8 @@ class SupportIsAvailableAndEnabledResult(BaseModel):
     result: bool
 
 
-@single_argument_args('data')
 class SupportNewTicketArgs(BaseModel):
-    title: str = Field(max_length=200)
-    body: str = Field(max_length=20000)
-    category: str = NotRequired
-    attach_debug: bool = False
-    token: Secret[str] = NotRequired
-    type: Literal['BUG', 'FEATURE'] = NotRequired
-    criticality: str = NotRequired
-    environment: LongString = NotRequired
-    phone: str = NotRequired
-    name: str = NotRequired
-    email: EmailString = NotRequired
-    cc: list[EmailString] = []
+    data: SupportNewTicketEnterprise | SupportNewTicketCommunity
 
 
 @single_argument_result
