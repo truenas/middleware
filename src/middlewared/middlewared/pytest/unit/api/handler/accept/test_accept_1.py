@@ -1,6 +1,4 @@
-from typing import Annotated
-
-from annotated_types import Gt
+from pydantic import PositiveInt
 import pytest
 
 from middlewared.api.base import BaseModel
@@ -15,7 +13,7 @@ class MethodArgs(BaseModel):
 
 class Param(BaseModel):
     name: str
-    count: Annotated[int, Gt(0)] = 1
+    count: PositiveInt = 1
 
 
 @pytest.mark.parametrize("params,result_or_error", [
