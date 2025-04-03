@@ -201,7 +201,7 @@ def ldap(
         "binddn": binddn,
         "bindpw": bindpw,
         "hostname": [hostname],
-        "ssl": "STARTTLS",
+        "ssl": "START_TLS",
         "auxiliary_parameters": "",
         "validate_certificates": False,
         "enable": True,
