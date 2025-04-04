@@ -7,7 +7,17 @@ import subprocess
 import tempfile
 import time
 
-from middlewared.schema import accepts, Dict, Int, List, Patch, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    KerberosEntry, KerberosRealmEntry, KerberosKeytabEntry,
+    KerberosUpdateArgs, KerberosUpdateResult,
+    KerberosRealmCreateArgs, KerberosRealmCreateResult,
+    KerberosRealmUpdateArgs, KerberosRealmUpdateResult,
+    KerberosRealmDeleteArgs, KerberosRealmDeleteResult,
+    KerberosKeytabCreateArgs, KerberosKeytabCreateResult,
+    KerberosKeytabUpdateArgs, KerberosKeytabUpdateResult,
+    KerberosKeytabDeleteArgs, KerberosKeytabDeleteResult,
+)
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -57,13 +67,9 @@ class KerberosService(ConfigService):
         datastore_prefix = "ks_"
         cli_namespace = "directory_service.kerberos.settings"
         role_prefix = 'DIRECTORY_SERVICE'
+        entry = KerberosEntry
 
-    @accepts(Dict(
-        'kerberos_settings_update',
-        Str('appdefaults_aux', max_length=None),
-        Str('libdefaults_aux', max_length=None),
-        update=True
-    ), audit='Kerberos configuration update')
+    @api_method(KerberosUpdateArgs, KerberosUpdateResult, audit='Kerberos configuration update')
     async def do_update(self, data):
         """
         `appdefaults_aux` add parameters to "appdefaults" section of the krb5.conf file.
@@ -564,6 +570,7 @@ class KerberosRealmService(CRUDService):
         namespace = 'kerberos.realm'
         cli_namespace = 'directory_service.kerberos.realm'
         role_prefix = 'DIRECTORY_SERVICE'
+        entry = KerberosRealmEntry
 
     @private
     async def kerberos_extend(self, data):
@@ -579,20 +586,8 @@ class KerberosRealmService(CRUDService):
 
         return data
 
-    ENTRY = Patch(
-        'kerberos_realm_create', 'kerberos_realm_entry',
-        ('add', Int('id')),
-    )
-
-    @accepts(
-        Dict(
-            'kerberos_realm_create',
-            Str('realm', required=True),
-            List('kdc'),
-            List('admin_server'),
-            List('kpasswd_server'),
-            register=True
-        ),
+    @api_method(
+        KerberosRealmCreateArgs, KerberosRealmCreateResult,
         audit='Kerberos realm create:',
         audit_extended=lambda data: data['realm']
     )
@@ -624,13 +619,8 @@ class KerberosRealmService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "kerberos_realm_create",
-            "kerberos_realm_update",
-            ("attr", {"update": True})
-        ),
+    @api_method(
+        KerberosRealmUpdateArgs, KerberosRealmUpdateResult,
         audit='Kerberos realm update:',
         audit_callback=True
     )
@@ -654,7 +644,11 @@ class KerberosRealmService(CRUDService):
         await self.middleware.call('etc.generate', 'kerberos')
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), audit='Kerberos realm delete:', audit_callback=True)
+    @api_method(
+        KerberosRealmDeleteArgs, KerberosRealmDeleteResult,
+        audit='Kerberos realm delete:',
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete a kerberos realm by ID.
@@ -689,19 +683,10 @@ class KerberosKeytabService(CRUDService):
         namespace = 'kerberos.keytab'
         cli_namespace = 'directory_service.kerberos.keytab'
         role_prefix = 'DIRECTORY_SERVICE'
+        entry = KerberosKeytabEntry
 
-    ENTRY = Patch(
-        'kerberos_keytab_create', 'kerberos_keytab_entry',
-        ('add', Int('id')),
-    )
-
-    @accepts(
-        Dict(
-            'kerberos_keytab_create',
-            Str('file', max_length=None, private=True),
-            Str('name'),
-            register=True
-        ),
+    @api_method(
+        KerberosKeytabCreateArgs, KerberosKeytabCreateResult,
         audit='Kerberos keytab create:',
         audit_extended=lambda data: data['name']
     )
@@ -727,12 +712,8 @@ class KerberosKeytabService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'kerberos_keytab_create',
-            'kerberos_keytab_update',
-        ),
+    @api_method(
+        KerberosKeytabUpdateArgs, KerberosKeytabUpdateResult,
         audit='Kerberos keytab update:',
         audit_callback=True
     )
@@ -759,7 +740,11 @@ class KerberosKeytabService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), audit='Kerberos keytab delete:', audit_callback=True)
+    @api_method(
+        KerberosKeytabDeleteArgs, KerberosKeytabDeleteResult,
+        audit='Kerberos keytab delete:',
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete kerberos keytab by id, and force regeneration of
