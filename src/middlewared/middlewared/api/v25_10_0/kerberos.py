@@ -6,8 +6,8 @@ from middlewared.api.base import (
     NonEmptyString,
     single_argument_args,
 )
-from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params 
-from pydantic import Field, field_validator
+from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params
+from pydantic import field_validator, Secret
 from typing import Literal
 
 __all__ = [
@@ -20,6 +20,7 @@ __all__ = [
     'KerberosKeytabUpdateArgs', 'KerberosKeytabUpdateResult',
     'KerberosKeytabDeleteArgs', 'KerberosKeytabDeleteResult',
 ]
+
 
 class KerberosEntry(BaseModel):
     id: int
@@ -41,13 +42,13 @@ class KerberosEntry(BaseModel):
     @field_validator('appdefaults_aux')
     @classmethod
     def validate_appdefaults(cls, v):
-        parse_krb5_aux_params(KRB5ConfSection.APPDEFAULTS, {}, v)
+        parse_krb_aux_params(KRB5ConfSection.APPDEFAULTS, {}, v)
         return v
 
     @field_validator('libdefaults_aux')
     @classmethod
     def validate_libdefaults(cls, v):
-        parse_krb5_aux_params(KRB5ConfSection.LIBDEFAULTS, {}, v)
+        parse_krb_aux_params(KRB5ConfSection.LIBDEFAULTS, {}, v)
         return v
 
 
@@ -136,7 +137,7 @@ class KerberosKeytabCreate(KerberosKeytabEntry):
 
 
 class KerberosKeytabCreateArgs(BaseModel):
-    data: KerberosKeytabCreate 
+    data: KerberosKeytabCreate
 
 
 class KerberosKeytabCreateResult(BaseModel):
