@@ -235,7 +235,8 @@ class FCHostService(CRUDService):
                         alias = old.get('alias')
                     if alias:
                         vpfilter = [['port', '~', f'^{alias}/[1-9][0-9]*$']]
-                        vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
+                        vports = [int(p['port'].split('/')[-1]) for p in
+                                  await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
                         for chan in vports:
                             if chan > npiv:
                                 verrors.add(
@@ -303,11 +304,36 @@ class FCHostService(CRUDService):
                     node_b_fc_hosts = await self.middleware.call('fc.fc_hosts', physical_port_filter)
                 case _:
                     raise CallError('Cannot configure FC until HA is configured')
-            # Match pairs by slot (includes PCI function)
-            for fc_host in node_a_fc_hosts:
-                slot_2_fc_host_wwpn[fc_host['slot']]['A'] = str_to_naa(fc_host.get('port_name'))
-            for fc_host in node_b_fc_hosts:
-                slot_2_fc_host_wwpn[fc_host['slot']]['B'] = str_to_naa(fc_host.get('port_name'))
+
+            # Assume that we will match pairs by slot (includes PCI function), but will
+            # have a fall-back mechanism to handle platforms with deficient BIOS so that
+            # DMI information is missing.
+            do_match_by_slot = all(
+                [
+                    all(['slot' in fc_host for fc_host in node_a_fc_hosts]),
+                    all(['slot' in fc_host for fc_host in node_b_fc_hosts])
+                ])
+            if do_match_by_slot:
+                for fc_host in node_a_fc_hosts:
+                    slot_2_fc_host_wwpn[fc_host['slot']]['A'] = str_to_naa(fc_host.get('port_name'))
+                for fc_host in node_b_fc_hosts:
+                    slot_2_fc_host_wwpn[fc_host['slot']]['B'] = str_to_naa(fc_host.get('port_name'))
+            else:
+                # If we can't rely upon slots then we will still use slot_2_fc_host_wwpn, but
+                # instead use different keys.  Assume that the host names in /sys/class/fc_host
+                # increment in order on both controllers.  We'll augment this will the model name
+                # and PCI function.
+                for _controller, _fc_hosts in [('A', node_a_fc_hosts), ('B', node_b_fc_hosts)]:
+                    _fc_host_dict = {fc_host['name']: fc_host for fc_host in _fc_hosts}
+                    # We expect the keys to be 'hostX'.  Sort them.
+                    keys = [key for key in _fc_host_dict.keys() if key.startswith('host')]
+                    keys.sort(key=lambda x: int(x[4:]))
+                    for index, key in enumerate(keys):
+                        fc_host = _fc_host_dict[key]
+                        _pci_function = fc_host['addr'].rsplit('.', 1)[-1]
+                        _fake_slot = f'Index:{index}:{fc_host.get("model")}:PCI Function:{_pci_function}'
+                        slot_2_fc_host_wwpn[_fake_slot][_controller] = str_to_naa(fc_host.get('port_name'))
+
             # Iterate over each slot and make sure the corresponding fc_host entry is present
             sorted_slots = sorted(list(slot_2_fc_host_wwpn.keys()))
             result = True
@@ -366,7 +392,15 @@ class FCHostService(CRUDService):
             return result
         else:
             # Not HA - just wire up all fc_hosts in wwpn
-            fc_hosts = sorted(await self.middleware.call('fc.fc_hosts'), key=lambda d: d['slot'])
+            raw_fc_hosts = await self.middleware.call('fc.fc_hosts')
+            if all(['slot' in fc_host for fc_host in raw_fc_hosts]):
+                fc_hosts = sorted(raw_fc_hosts, key=lambda d: d['slot'])
+            else:
+                # When we were pairing in HA we used the model and PCI function
+                # to check that the entries on both controllers matched.  That's
+                # not useful on non-HA. so just use the /sys/class/fc_host host
+                # number, from the name (always present).
+                fc_hosts = sorted(raw_fc_hosts, key=lambda x: int(x['name'][4:]))
             for fchost in fc_hosts:
                 if naa := str_to_naa(fchost.get('port_name')):
                     existing = await self.middleware.call('fc.fc_host.query', [['wwpn', '=', naa]])
@@ -398,6 +432,12 @@ class FCHostService(CRUDService):
             self.logger.info('Reset wired')
             self.wired = False
             self.do_reset_wired = False
+            await self.middleware.call('cache.pop', 'fc.fc_host_nport_wwpn_choices')
+            if await self.middleware.call('failover.licensed'):
+                await self.middleware.call('failover.call_remote',
+                                           'cache.pop',
+                                           ['fc.fc_host_nport_wwpn_choices'],
+                                           {'raise_connect_error': False})
 
 
 async def _failover_status_change(middleware, event_type, args):

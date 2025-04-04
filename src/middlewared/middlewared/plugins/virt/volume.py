@@ -201,12 +201,15 @@ class VirtVolumeService(CRUDService):
                     request_kwargs=request_kwargs | {'data': read_input_stream()},
                 )
             else:
-                with open(data['iso_location'], 'rb') as f:
-                    return incus_call_sync(
-                        f'1.0/storage-pools/{target_pool}/volumes/custom',
-                        'post',
-                        request_kwargs=request_kwargs | {'data': f},
-                    )
+                try:
+                    with open(data['iso_location'], 'rb') as f:
+                        return incus_call_sync(
+                            f'1.0/storage-pools/{target_pool}/volumes/custom',
+                            'post',
+                            request_kwargs=request_kwargs | {'data': f},
+                        )
+                except Exception as e:
+                    raise CallError(f'Failed opening ISO: {e}')
 
         response = await self.middleware.run_in_thread(upload_file)
         job.set_progress(70, 'ISO copied over to incus volume')

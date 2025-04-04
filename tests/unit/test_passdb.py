@@ -6,6 +6,9 @@ import subprocess
 
 from dataclasses import asdict
 from middlewared.plugins.smb_ import util_passdb
+from middlewared.plugins.smb_.util_account_policy import (
+    SMBAccountPolicy, sync_account_policy, get_account_policy
+)
 from middlewared.utils.crypto import generate_nt_hash
 from time import sleep, time
 
@@ -29,6 +32,15 @@ PDB_DICT_DEFAULTS = {
     'logon_count': 0,
     'bad_pw_count': 0,
     'times': None
+}
+
+DEFAULT_ACCOUNT_POLICY = {
+    "min_password_age": None,
+    "max_password_age": None,
+    "password_warn_period": None,
+    "password_inactivity_period": None,
+    "min_password_length": None,
+    "password_history_length": None
 }
 
 SAMPLE_USER = {
@@ -66,7 +78,8 @@ SAMPLE_USER = {
     'local': True,
     'id_type_both': False,
     'sid': 'S-1-5-21-710078819-430336432-4106732522-20075',
-    'roles': []
+    'roles': [],
+    'last_password_change': 1711547527,  # Deliberately old password
 }
 
 PDB_DOMAIN = 'CANARY'
@@ -74,6 +87,7 @@ NORMAL_ACCOUNT = util_passdb.UserAccountControl.NORMAL_ACCOUNT
 LOCKED_ACCOUNT = NORMAL_ACCOUNT | util_passdb.UserAccountControl.AUTO_LOCKED
 DISABLED_ACCOUNT = NORMAL_ACCOUNT | util_passdb.UserAccountControl.DISABLED
 EXPIRED_ACCOUNT = NORMAL_ACCOUNT | util_passdb.UserAccountControl.PASSWORD_EXPIRED
+PDB_PASSWD_CHANGE_STR = 'Password last set:    Wed, 27 Mar 2024 06:52:07 PDT'
 
 
 @pytest.fixture(scope='module')
@@ -134,6 +148,14 @@ def check_pdbedit(usernames):
 
     extra = found - expected
     assert extra == set(), str(extra)
+
+
+def check_password_set_timestamp():
+    # This assumes that server TZ is PDT
+    pdbedit = subprocess.run(['pdbedit', '-Lv'], capture_output=True)
+    assert pdbedit.returncode == 0, pdbedit.stderr.decode()
+    output = pdbedit.stdout.decode()
+    assert PDB_PASSWD_CHANGE_STR in output, output
 
 
 @pytest.mark.parametrize('pdbentrydict', [
@@ -211,7 +233,37 @@ def test__pdb_update(pdb_user, changes):
 
     # validate that timestamps were preserved
     assert now != new_entry.times.pass_last_set
-    assert pdb_user.times == new_entry.times
+    assert user_entry['last_password_change'] == new_entry.times.pass_last_set
     assert new_entry.nt_pw == user_entry['smbhash']
     assert new_entry.domain == PDB_DOMAIN
     assert util_passdb.user_entry_to_uac_flags(user_entry) == new_entry.acct_ctrl
+
+
+def test__validate_pass_last_set():
+    """
+    This test checks that pdbedit shows the pass_last_set field appropriately
+    If this is broken then account policy management over SMB protocol won't work
+    """
+    entry = util_passdb.user_entry_to_passdb_entry(PDB_DOMAIN, SAMPLE_USER)
+    util_passdb.insert_passdb_entries([entry])
+
+    try:
+        check_password_set_timestamp()
+    finally:
+        util_passdb.delete_passdb_entry(entry.username, entry.user_rid)
+
+
+@pytest.mark.parametrize('policy_item', SMBAccountPolicy)
+def test__validate_account_policy(policy_item):
+    full_policy = DEFAULT_ACCOUNT_POLICY.copy() | {policy_item.name.lower(): 10}
+    sync_account_policy(full_policy)
+
+    for to_check in SMBAccountPolicy:
+        value = get_account_policy(to_check)
+        if to_check == policy_item:
+            if policy_item is SMBAccountPolicy.MIN_PASSWORD_LENGTH:
+                assert value == 10
+            else:
+                assert value == 10 * 86400
+        else:
+            assert value == to_check.default

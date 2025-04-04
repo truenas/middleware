@@ -15,7 +15,7 @@ from middlewared.api.current import (
     VirtInstanceBootableDiskArgs, VirtInstanceBootableDiskResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from .utils import incus_call_and_wait, storage_pool_to_incus_pool, incus_pool_to_storage_pool
+from .utils import get_max_boot_priority_device, incus_call_and_wait, incus_pool_to_storage_pool, storage_pool_to_incus_pool
 
 
 class VirtInstanceDeviceService(Service):
@@ -539,16 +539,11 @@ class VirtInstanceDeviceService(Service):
 
         device_list = await self.device_list(id)
         desired_disk = None
-        max_boot_priority_device = None
 
-        for device_entry in device_list:
-            if (max_boot_priority_device is None and device_entry.get('boot_priority') is not None) or (
-                (device_entry.get('boot_priority') or 0) > ((max_boot_priority_device or {}).get('boot_priority') or 0)
-            ):
-                max_boot_priority_device = device_entry
-
-            if device_entry['name'] == disk:
-                desired_disk = device_entry
+        max_boot_priority_device = get_max_boot_priority_device(device_list)
+        for device in device_list:
+            if device['name'] == disk:
+                desired_disk = device
 
         if desired_disk is None:
             raise CallError(f'{disk!r} device does not exist.', errno.ENOENT)
@@ -563,5 +558,6 @@ class VirtInstanceDeviceService(Service):
             'dev_type': 'DISK',
             'name': disk,
             'source': desired_disk.get('source'),
+            'io_bus': desired_disk.get('io_bus'),
             'boot_priority': max_boot_priority_device['boot_priority'] + 1 if max_boot_priority_device else 1,
         } | ({'destination': desired_disk['destination']} if disk != 'root' else {}))

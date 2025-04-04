@@ -1,10 +1,11 @@
 from typing import Annotated, Literal
 
-from annotated_types import Ge, Le
 from pydantic import Field, StringConstraints
 
-from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize, IscsiExtentRPM,
-                                  IscsiExtentType, NonEmptyString, excluded_field)
+from middlewared.api.base import (
+    BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize,
+    IscsiExtentRPM, IscsiExtentType, NonEmptyString, excluded_field
+)
 
 __all__ = [
     "IscsiExtentEntry",
@@ -29,7 +30,7 @@ class IscsiExtentEntry(BaseModel):
     filesize: str | int = '0'
     blocksize: IscsiExtentBlockSize = 512
     pblocksize: bool = False
-    avail_threshold: Annotated[int, Ge(1), Le(99)] | None = None
+    avail_threshold: Annotated[int, Field(ge=1, le=99)] | None = None
     comment: str = ''
     naa: str = Field(max_length=34)
     insecure_tpc: bool = True

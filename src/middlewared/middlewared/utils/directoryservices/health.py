@@ -3,6 +3,8 @@ import enum
 from .constants import DSStatus, DSType
 from threading import Lock
 
+MAX_RECOVER_ATTEMPTS = 5
+
 
 class KRB5HealthCheckFailReason(enum.IntEnum):
     KRB5_NO_CONFIG = enum.auto()

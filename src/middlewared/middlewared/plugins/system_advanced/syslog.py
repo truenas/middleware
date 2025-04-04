@@ -1,4 +1,8 @@
-from middlewared.schema import accepts, Dict, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemAdvancedSyslogCertificateChoicesArgs, SystemAdvancedSyslogCertificateChoicesResult,
+    SystemAdvancedSyslogCertificateAuthorityChoicesArgs, SystemAdvancedSyslogCertificateAuthorityChoicesResult
+)
 from middlewared.service import Service
 
 
@@ -8,11 +12,11 @@ class SystemAdvancedService(Service):
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
 
-    @accepts()
-    @returns(Dict(
-        additional_attrs=True,
-        title='Syslog Certificate Choices',
-    ))
+    @api_method(
+        SystemAdvancedSyslogCertificateChoicesArgs,
+        SystemAdvancedSyslogCertificateChoicesResult,
+        roles=['READONLY_ADMIN']
+    )
     async def syslog_certificate_choices(self):
         """
         Return choices of certificates which can be used for `syslog_tls_certificate`.
@@ -24,11 +28,11 @@ class SystemAdvancedService(Service):
             )
         }
 
-    @accepts()
-    @returns(Dict(
-        additional_attrs=True,
-        title='Syslog Certificate Authority Choices',
-    ))
+    @api_method(
+        SystemAdvancedSyslogCertificateAuthorityChoicesArgs,
+        SystemAdvancedSyslogCertificateAuthorityChoicesResult,
+        authorization_required=False
+    )
     async def syslog_certificate_authority_choices(self):
         """
         Return choices of certificate authorities which can be used for `syslog_tls_certificate_authority`.

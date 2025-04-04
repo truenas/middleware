@@ -1,7 +1,6 @@
 import string
 from typing import Annotated
 
-from annotated_types import Ge, Le
 from pydantic import Field
 from pydantic.functional_validators import AfterValidator
 
@@ -66,10 +65,10 @@ def validate_sid(value: str) -> str:
 
 LocalUsername = Annotated[str, AfterValidator(validate_local_username)]
 RemoteUsername = Annotated[str, Field(min_length=1)]
-LocalUID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
+LocalUID = Annotated[int, Field(ge=0, le=TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
-LocalGID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
+LocalGID = Annotated[int, Field(ge=0, le=TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
-ContainerXID = Annotated[int, Ge(1), Le(XID_MAX)]
+ContainerXID = Annotated[int, Field(ge=1, le=XID_MAX)]
 
 SID = Annotated[str, AfterValidator(validate_sid)]

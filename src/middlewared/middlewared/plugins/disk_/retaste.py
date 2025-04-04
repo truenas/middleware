@@ -2,14 +2,11 @@ import fcntl
 import logging
 import multiprocessing
 import os
-import re
 
 from middlewared.service import Service, job, private
-
+from middlewared.utils.disks_.disk_class import iterate_disks
 
 logger = logging.getLogger(__name__)
-SD_PATTERN = re.compile(r"^sd[a-z]+$")
-NVME_PATTERN = re.compile(r"^nvme\d+n\d+$")
 
 
 def taste_it(disk, errors):
@@ -32,13 +29,13 @@ def taste_it(disk, errors):
             os.close(fd)
 
 
-def retaste_disks_impl(disks: set = None):
-    if disks is None:
+def retaste_disks_impl(disk_serials: set = None):
+    if disk_serials is None:
+        disks = {i.path for i in iterate_disks()}
+    else:
         disks = set()
-        with os.scandir('/dev') as sdir:
-            for i in sdir:
-                if SD_PATTERN.match(i.name) or NVME_PATTERN.match(i.name):
-                    disks.add(i.path)
+        for i in filter(lambda x: x.serial in disk_serials, iterate_disks()):
+            disks.add(i.path)
 
     with multiprocessing.Manager() as m:
         errors = m.dict()
@@ -69,13 +66,9 @@ class DiskService(Service):
 
     @private
     @job(lock='disk_retaste', lock_queue_size=1)
-    def retaste(self, job, disks: list[str] | None = None):
-        if disks:
-            # remove duplicates and prefix '/dev' (i.e. /dev/sda, /dev/sdb, etc)
-            disks = set(f'/dev/{i.removeprefix("/dev/")}' for i in disks)
-
+    def retaste(self, job, disks_serials: list[str] | None = None):
         job.set_progress(85, 'Retasting disks')
-        retaste_disks_impl(disks)
+        retaste_disks_impl(disks_serials)
 
         job.set_progress(95, 'Waiting for disk events to settle')
         self.middleware.call_sync('device.settle_udev_events')

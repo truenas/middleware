@@ -1,9 +1,37 @@
+from typing import Literal
+
 from pydantic import Field
 
 from middlewared.api.base import BaseModel, NonEmptyString
 
-__all__ = ["SystemRebootArgs", "SystemRebootResult",
-           "SystemShutdownArgs", "SystemShutdownResult"]
+__all__ = [
+    "SystemBootIdArgs",
+    "SystemBootIdResult",
+    "SystemReadyArgs",
+    "SystemReadyResult",
+    "SystemRebootArgs",
+    "SystemRebootResult",
+    "SystemShutdownArgs",
+    "SystemShutdownResult",
+    "SystemStateArgs",
+    "SystemStateResult",
+]
+
+
+class SystemBootIdArgs(BaseModel):
+    pass
+
+
+class SystemBootIdResult(BaseModel):
+    result: str
+
+
+class SystemReadyArgs(BaseModel):
+    pass
+
+
+class SystemReadyResult(BaseModel):
+    result: bool
 
 
 class SystemRebootOptions(BaseModel):
@@ -12,7 +40,7 @@ class SystemRebootOptions(BaseModel):
 
 class SystemRebootArgs(BaseModel):
     reason: NonEmptyString
-    options: SystemRebootOptions = Field(default=SystemRebootOptions())
+    options: SystemRebootOptions = Field(default_factory=SystemRebootOptions)
 
 
 class SystemRebootResult(BaseModel):
@@ -25,8 +53,16 @@ class SystemShutdownOptions(BaseModel):
 
 class SystemShutdownArgs(BaseModel):
     reason: NonEmptyString
-    options: SystemShutdownOptions = Field(default=SystemShutdownOptions())
+    options: SystemShutdownOptions = Field(default_factory=SystemShutdownOptions)
 
 
 class SystemShutdownResult(BaseModel):
     result: None
+
+
+class SystemStateArgs(BaseModel):
+    pass
+
+
+class SystemStateResult(BaseModel):
+    result: Literal["BOOTING", "READY", "SHUTTING_DOWN"]

@@ -1,6 +1,10 @@
-from collections import namedtuple
 import logging
+from typing import NamedTuple
+
 
 logger = logging.getLogger(__name__)
 
-ServiceState = namedtuple("ServiceState", ["running", "pids"])
+
+class ServiceState(NamedTuple):
+    running: bool
+    pids: list

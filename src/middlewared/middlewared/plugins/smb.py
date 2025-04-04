@@ -293,21 +293,25 @@ class SMBService(ConfigService):
 
     @private
     @job(lock="smb_configure")
-    async def configure(self, job, create_paths=True):
+    async def configure(self, job):
         """
         Many samba-related tools will fail if they are unable to initialize
         a messaging context, which will happen if the samba-related directories
         do not exist or have incorrect permissions.
         """
         job.set_progress(0, 'Setting up SMB directories.')
-        if create_paths:
-            await self.setup_directories()
+        await self.setup_directories()
 
-        job.set_progress(10, 'Generating stub SMB config.')
-        await self.middleware.call('etc.generate', 'smb')
-
-        job.set_progress(25, 'generating SMB, idmap, and directory service config.')
-        await self.middleware.call('etc.generate', 'smb')
+        """
+        We may have failed over and changed our netbios name, which would also
+        change the system SID. Flush out gencache entries before proceeding with
+        local user account setup, otherwise we may end up with the incorrect
+        domain SID for the guest account.
+        """
+        try:
+            await self.middleware.call('idmap.gencache.flush')
+        except Exception:
+            self.logger.warning('SMB gencache flush failed', exc_info=True)
 
         """
         We cannot continue without network.
@@ -321,6 +325,7 @@ class SMBService(ConfigService):
 
         job.set_progress(40, 'Synchronizing passdb and groupmap.')
         await self.middleware.call('etc.generate', 'user')
+        await self.middleware.call('smb.apply_account_policy')
         pdb_job = await self.middleware.call("smb.synchronize_passdb", True)
         grp_job = await self.middleware.call("smb.synchronize_group_mappings", True)
         await pdb_job.wait()
@@ -505,7 +510,6 @@ class SMBService(ConfigService):
                     'This option may not be enabled concurrently with shares that are configured for '
                     'multi-protocol NFS access.'
                 )
-
 
         if new['enable_smb1']:
             if audited_shares := await self.middleware.call(
@@ -1666,6 +1670,11 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         ) else False
 
 
+async def systemdataset_setup_hook(middleware, data):
+    if not data['in_progress']:
+        await middleware.call('smb.setup_directories')
+
+
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
@@ -1673,3 +1682,4 @@ async def setup(middleware):
     )
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    middleware.register_hook("sysdataset.setup", systemdataset_setup_hook)

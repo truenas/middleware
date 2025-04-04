@@ -3,12 +3,18 @@ import time
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Float, Int
 from middlewared.service import Service
-from middlewared.utils.disks import get_disk_names, get_disks_with_identifiers
+from middlewared.utils.disks import get_disk_names
+from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.validators import Range
 
 from .realtime_reporting import (
     get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info, get_pool_stats,
 )
+
+
+def get_disks_with_identifiers() -> dict[str, str]:
+    return {i.name: i.identifier for i in iterate_disks()}
+
 
 class ReportingRealtimeService(Service):
 
@@ -32,14 +38,13 @@ class ReportingRealtimeService(Service):
             else:
                 break
 
-        if failed_to_connect := not bool(netdata_metrics):
-            data = {'failed_to_connect': failed_to_connect}
-        else:
+        data = dict()
+        if netdata_metrics:
             disks = get_disk_names()
             if len(disks) != len(disk_mapping):
                 disk_mapping = get_disks_with_identifiers()
 
-            data = {
+            data.update({
                 'zfs': get_arc_stats(netdata_metrics),  # ZFS ARC Size
                 'memory': get_memory_info(netdata_metrics),
                 'cpu': get_cpu_stats(netdata_metrics),
@@ -52,8 +57,7 @@ class ReportingRealtimeService(Service):
                     ]
                 ),
                 'pools': get_pool_stats(netdata_metrics),
-                'failed_to_connect': False,
-            }
+            })
 
         return data
 
@@ -119,7 +123,9 @@ class RealtimeEventSource(EventSource):
         disk_mapping = get_disks_with_identifiers()
 
         while not self._cancel_sync.is_set():
-            self.send_event('ADDED', fields=self.middleware.call_sync('reporting.realtime.stats', disk_mapping))
+            fields = self.middleware.call_sync('reporting.realtime.stats', disk_mapping)
+            if fields:
+                self.send_event('ADDED', fields=fields)
             time.sleep(interval)
 
 

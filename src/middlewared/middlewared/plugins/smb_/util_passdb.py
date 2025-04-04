@@ -489,7 +489,7 @@ def user_smbhash_to_nt_pw(username, smbhash) -> str:
 def user_entry_to_passdb_entry(
     netbiosname: str,
     user_entry: dict,
-    existing_entry: dict = None
+    existing_entry: dict = None,
 ) -> PDBEntry:
     """ Create an updated PDBEntry based on user-provided specifications
 
@@ -504,12 +504,27 @@ def user_entry_to_passdb_entry(
     if not user_entry['smbhash']:
         raise ValueError(f'{user_entry["username"]}: SMB hash not available')
 
+    try:
+        nt_pw = user_smbhash_to_nt_pw(user_entry['username'], user_entry['smbhash'])
+    except Exception:
+        raise ValueError(
+            f'{user_entry["username"]}: failed to parse SMB hash of {user_entry["smbhash"]}'
+        )
+
+    if user_entry['last_password_change']:
+        if isinstance(user_entry['last_password_change'], int):
+            pass_last_set = user_entry['last_password_change']
+        else:
+            pass_last_set = int(user_entry['last_password_change'].timestamp())
+    else:
+        pass_last_set = int(time())
+
     pdb_times = PDBTimes(
         logon=0,
         logoff=PASSDB_TIME_T_MAX,
         kickoff=PASSDB_TIME_T_MAX,
         bad_password=0,
-        pass_last_set=int(time()),
+        pass_last_set=pass_last_set,
         pass_can_change=0,
         pass_must_change=PASSDB_TIME_T_MAX
     )
@@ -528,16 +543,13 @@ def user_entry_to_passdb_entry(
         'group_rid': 513,  # samba default -- domain users rid
         'acct_desc': '',
         'acct_ctrl': user_entry_to_uac_flags(user_entry),
-        'nt_pw': user_smbhash_to_nt_pw(user_entry['username'], user_entry['smbhash']),
+        'nt_pw': nt_pw,
         'logon_count': 0,
         'bad_pw_count': 0,
         'times': pdb_times
     }
 
     if existing_entry:
-        # preserve existing times:
-        pdb_dict['times'] = PDBTimes(**existing_entry['times'])
-
         # preserve counters
         pdb_dict['logon_count'] = existing_entry['logon_count']
         pdb_dict['bad_pw_count'] = existing_entry['bad_pw_count']

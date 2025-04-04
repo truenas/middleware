@@ -32,11 +32,11 @@ def get_datastore_primary_key_schema(klass):
     })
 
 
-def get_instance_args(entry):
+def get_instance_args(entry, primary_key="id"):
     return create_model(
         entry.__name__.removesuffix("Entry") + "GetInstanceArgs",
         __base__=(BaseModel,),
-        id=Annotated[entry.model_fields["id"].annotation, Field()],
+        id=Annotated[entry.model_fields[primary_key].annotation, Field()],
         options=Annotated[QueryOptions, Field(default={})],
     )
 
@@ -91,7 +91,10 @@ class CRUDServiceMetabase(ServiceBase):
                     )
 
             # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
-            get_instance_args_model = get_instance_args(klass._config.entry)
+            get_instance_args_model = get_instance_args(
+                klass._config.entry,
+                primary_key=klass._config.datastore_primary_key
+            )
             get_instance_result_model = get_instance_result(klass._config.entry)
             klass.get_instance = api_method(get_instance_args_model,
                                             get_instance_result_model)(klass.get_instance.wraps)

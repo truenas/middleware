@@ -250,6 +250,35 @@ def test_vm_creation_with_iso_volume(vm, iso_volume):
         call('virt.instance.delete', virt_instance_name, job=True)
 
 
+def test_vm_creation_with_iso_and_devices(vm, iso_volume):
+    virt_instance_name = 'test-iso-vm'
+    with volume('test-volume', 1024) as v:
+        instance = call('virt.instance.create', {
+            'name': virt_instance_name,
+            'instance_type': 'VM',
+            'source_type': 'ISO',
+            'iso_volume': ISO_VOLUME_NAME,
+            'devices': [
+                {
+                    'dev_type': 'DISK',
+                    'source': v['name'],
+                    'boot_priority': 5
+                }
+            ]
+        }, job=True)
+
+        try:
+            assert instance['root_disk_io_bus'] == 'NVME'
+
+            vm_devices = call('virt.instance.device_list', virt_instance_name)
+            disk_device = next(device for device in vm_devices if device['name'] == ISO_VOLUME_NAME)
+            assert disk_device['boot_priority'] == 6, disk_device
+            assert disk_device['io_bus'] is not None, disk_device
+        finally:
+            call('virt.instance.delete', virt_instance_name, job=True)
+
+
+
 def test_vm_creation_with_volume(vm):
     virt_instance_name = 'test-volume-vm'
     with volume('test-volume', 1028) as v:
@@ -276,39 +305,32 @@ def test_vm_creation_with_volume(vm):
             call('virt.instance.delete', virt_instance_name, job=True)
 
 
-def test_vm_creation_with_zvol(virt_pool, vm, iso_volume):
-    virt_instance_name = 'test-zvol-vm'
-    zvol_name = f'{virt_pool["pool"]}/test_zvol'
-    call('zfs.dataset.create', {
-        'name': zvol_name,
-        'type': 'VOLUME',
-        'properties': {'volsize': '514MiB'}
-    })
-    instance = call('virt.instance.create', {
-        'name': virt_instance_name,
-        'instance_type': 'VM',
-        'source_type': 'ZVOL',
-        'zvol_path': f'/dev/zvol/{zvol_name}',
-    }, job=True)
+def test_vm_creation_with_volume_and_devices(vm, iso_volume):
+    virt_instance_name = 'test-iso-vm'
+    with volume('test-volume', 1024) as v:
+        instance = call('virt.instance.create', {
+            'name': virt_instance_name,
+            'instance_type': 'VM',
+            'source_type': 'VOLUME',
+            'volume': v['name'],
+            'devices': [
+                {
+                    'dev_type': 'DISK',
+                    'source': ISO_VOLUME_NAME,
+                    'boot_priority': 5
+                }
+            ]
+        }, job=True)
 
-    try:
-        assert instance['root_disk_size'] == 10 * (1024 ** 3)
-        assert instance['root_disk_io_bus'] == 'NVME'
+        try:
+            assert instance['root_disk_io_bus'] == 'NVME'
 
-        call('virt.instance.stop', virt_instance_name, {'force': True, 'timeout': 1}, job=True)
-        vm_devices = call('virt.instance.device_list', virt_instance_name)
-        disk_device = next(device for device in vm_devices if device['name'] == 'ix_virt_zvol_root')
-        assert disk_device['boot_priority'] == 1, disk_device
-        assert disk_device['io_bus'] == 'NVME', disk_device
-        disk_device['io_bus'] = 'VIRTIO-BLK'
-        call('virt.instance.device_update', virt_instance_name, disk_device)
-
-        vm_devices = call('virt.instance.device_list', virt_instance_name)
-        disk_device = next(device for device in vm_devices if device['name'] == 'ix_virt_zvol_root')
-        assert disk_device['io_bus'] == 'VIRTIO-BLK', disk_device
-    finally:
-        call('virt.instance.delete', virt_instance_name, job=True)
-        call('zfs.dataset.delete', zvol_name)
+            vm_devices = call('virt.instance.device_list', virt_instance_name)
+            disk_device = next(device for device in vm_devices if device['name'] == v['name'])
+            assert disk_device['boot_priority'] == 6, disk_device
+            assert disk_device['io_bus'] is not None, disk_device
+        finally:
+            call('virt.instance.delete', virt_instance_name, job=True)
 
 
 @pytest.mark.parametrize('iso_volume,error_msg', [
@@ -588,3 +610,38 @@ def test_disk_source_uniqueness(virt_pool):
                         'dev_type': 'DISK',
                         'source': f'/dev/zvol/{ds}',
                     })
+
+
+def test_set_bootable_disk(vm, iso_volume):
+    virt_instance_name = 'test-vm'
+    call('virt.instance.create', {
+        'name': virt_instance_name,
+        'instance_type': 'VM',
+        'source_type': None,
+    }, job=True)
+    call('virt.instance.stop', virt_instance_name, {'force': True}, job=True)
+
+    with volume('test-volume', 1024) as vol:
+        with volume('test-volume2', 1024) as vol2:
+            call('virt.instance.device_add', virt_instance_name, {
+                'dev_type': 'DISK',
+                'source': vol['name'],
+                'boot_priority': 2,
+                'io_bus': 'NVME'
+            })
+            call('virt.instance.device_add', virt_instance_name, {
+                'dev_type': 'DISK',
+                'source': vol2['name'],
+                'boot_priority': 1,
+                'io_bus': 'VIRTIO-SCSI'
+            })
+
+            try:
+                call('virt.instance.set_bootable_disk', virt_instance_name, 'disk1')
+                vm_devices = call('virt.instance.device_list', virt_instance_name)
+                disk_device = next(device for device in vm_devices if device['name'] == 'disk1')
+
+                assert disk_device['boot_priority'] == 3, disk_device
+                assert disk_device['io_bus'] == 'VIRTIO-SCSI', disk_device
+            finally:
+                call('virt.instance.delete', virt_instance_name, job=True)

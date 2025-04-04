@@ -3,6 +3,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import EnclosureLabelSetArgs, EnclosureLabelUpdateResult
 from middlewared.service import private, Service
+from middlewared.service_exception import MatchNotFound, ValidationError
 
 
 class EnclosureLabelModel(sa.Model):
@@ -13,7 +14,7 @@ class EnclosureLabelModel(sa.Model):
     label = sa.Column(sa.String(200))
 
 
-class EnclosureService(Service):
+class EnclosureLabelService(Service):
     class Config:
         namespace = "enclosure.label"
         cli_namespace = "storage.enclosure.label"
@@ -27,6 +28,11 @@ class EnclosureService(Service):
 
     @api_method(EnclosureLabelSetArgs, EnclosureLabelUpdateResult, roles=["ENCLOSURE_WRITE"])
     async def set(self, id_, label):
+        try:
+            await self.middleware.call("enclosure2.query", [["id", "=", id_]], {"get": True})
+        except MatchNotFound:
+            raise ValidationError("id", f'Enclosure with id: {id_!r} not found')
+
         await self.middleware.call(
             "datastore.delete", "enclosure.label", [["encid", "=", id_]]
         )

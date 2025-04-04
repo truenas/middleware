@@ -106,6 +106,18 @@ class FailoverEventsService(Service):
         else:
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
 
+        # Certain services on TrueNAS need to have correct nameserver information.
+        # We are seeing a situation where the active controller is being
+        # configured while the standby is in a non-functional state. So this
+        # exposes a gap in our service bring up on a master event. So we're going
+        # to synchronize the DNS information written in the db to the OS.
+        try:
+            self.logger.debug('Synchronizing DNS')
+            await self.middleware.call('dns.sync')
+            self.logger.debug('Done synchronizing DNS')
+        except Exception:
+            self.logger.exception('Unexpected failure synchronizing DNS')
+
         exceptions = await asyncio.gather(
             *[
                 self.become_active_service(svc, data['timeout'])
@@ -738,6 +750,10 @@ class FailoverEventsService(Service):
         logger.info('Starting truecommand service (if necessary)')
         self.run_call('truecommand.start_truecommand_service')
         logger.info('Done starting truecommand service (if necessary)')
+
+        # The system, while it was in BACKUP state, might have failed to contact the remote node and reached a
+        # conclusion that the other node needs to be rebooted. Let's clean this up.
+        self.run_call('failover.reboot.discard_unbound_remote_reboot_reasons')
 
         kmip_config = self.run_call('kmip.config')
         if kmip_config and kmip_config['enabled']:
