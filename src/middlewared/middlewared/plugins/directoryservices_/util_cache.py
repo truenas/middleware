@@ -238,11 +238,17 @@ class DSCacheFill:
             for u in users:
                 if u['domain_info']:
                     id_type_both = u['domain_info']['idmap_backend'] in ('AUTORID', 'RID')
+                    low_range = u['domain_info']['range_low']
                 else:
                     id_type_both = False
+                    low_range = 0
 
                 user_data = u['nss']
-                groups = [BASE_SYNTHETIC_DATASTORE_ID + gid for gid in os.getgrouplist(user_data.pw_name, user_data.pw_gid)]
+                groups = [
+                    BASE_SYNTHETIC_DATASTORE_ID + gid 
+                    for gid in os.getgrouplist(user_data.pw_name, user_data.pw_gid)
+                    if gid >= low_range
+                ]
                 entry = {
                     'id': BASE_SYNTHETIC_DATASTORE_ID + user_data.pw_uid,
                     'uid': user_data.pw_uid,
