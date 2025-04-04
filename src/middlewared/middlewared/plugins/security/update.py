@@ -300,9 +300,9 @@ class SystemSecurityService(ConfigService):
         """
         Update System Security Service Configuration.
 
-        `enable_fips` when set, enables FIPS mode.
-        `enable_gpos_stig` when set, enables compatibility with the General
-        Purpose Operating System STIG.
+        This method is used to change the FIPS, STIG, and local account
+        policies for TrueNAS Enterprise. These features are not
+        available in community editions of TrueNAS.
         """
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')
