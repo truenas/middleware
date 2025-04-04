@@ -1,7 +1,18 @@
+from dataclasses import asdict, dataclass, field
 from collections import defaultdict
 
-from middlewared.schema import accepts, Dict, Str
 from middlewared.service import Service
+
+
+@dataclass(slots=True, kw_only=True)
+class DatastoreRegisterEventArgs:
+    description: str
+    datastore: str
+    plugin: str
+    prefix: str = ""
+    extra: dict = field(default_factory=dict)
+    id: str = "id"
+    process_event: str | None = None
 
 
 class DatastoreService(Service):
@@ -11,20 +22,9 @@ class DatastoreService(Service):
 
     events = defaultdict(list)
 
-    @accepts(Dict(
-        "options",
-        Str("description", required=True),
-        Str("datastore", required=True),
-        Str("plugin", required=True),
-        Str("prefix", default=""),
-        Dict("extra", additional_attrs=True),
-        Str("id", default="id"),
-        Str("process_event", null=True, default=None),
-        strict=True,
-    ))
-    async def register_event(self, options):
+    async def register_event(self, options: dict) -> None:
+        options = asdict(DatastoreRegisterEventArgs(**options))
         self.events[options["datastore"]].append(options)
-
         self.middleware.event_register(f"{options['plugin']}.query", options["description"], roles=["READONLY_ADMIN"])
 
     async def send_insert_events(self, datastore, row):
