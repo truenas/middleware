@@ -132,15 +132,15 @@ class InterfaceCreateAlias(InterfaceCreateFailoverAlias):
 
 
 class InterfaceCreate(BaseModel, ABC):
-    name: str = None
+    name: str = NotRequired
     """Generate a name if not provided based on `type`, e.g. "br0", "bond1", "vlan0"."""
     description: str = ""
     ipv4_dhcp: bool = False
     ipv6_auto: bool = False
     aliases: UniqueList[InterfaceCreateAlias] = []
     failover_critical: bool = False
-    failover_group: int | None = None
-    failover_vhid: Annotated[int, Field(ge=1, le=255)] | None = None
+    failover_group: int | None = NotRequired
+    failover_vhid: Annotated[int, Field(ge=1, le=255)] | None = NotRequired
     failover_aliases: list[InterfaceCreateFailoverAlias] = []
     failover_virtual_aliases: list[InterfaceCreateFailoverAlias] = []
     mtu: Annotated[int, Field(ge=68, le=9216)] | None = None

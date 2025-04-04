@@ -674,7 +674,7 @@ class InterfaceService(CRUDService):
 
         await self.__save_datastores()
 
-        name = data['name']
+        name = data.get('name')
         if name is None:
             prefix = {'BRIDGE': 'br', 'LINK_AGGREGATION': 'bond', 'VLAN': 'vlan'}[type_]
             name = await self.get_next(prefix)
