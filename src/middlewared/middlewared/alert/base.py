@@ -197,6 +197,7 @@ alert_category_names = {
     AlertCategory.PLUGINS: "Plugins",
     AlertCategory.NETWORK: "Network",
     AlertCategory.REPORTING: "Reporting",
+    AlertCategory.SECURITY: "Security",
     AlertCategory.SHARING: "Sharing",
     AlertCategory.STORAGE: "Storage",
     AlertCategory.SYSTEM: "System",
@@ -204,6 +205,9 @@ alert_category_names = {
     AlertCategory.TRUENAS_CONNECT: "TrueNAS Connect Service",
     AlertCategory.UPS: "UPS",
 }
+
+
+assert all([category in alert_category_names for category in AlertCategory]), 'Alert Category Mismatch'
 
 
 class AlertLevel(enum.Enum):
