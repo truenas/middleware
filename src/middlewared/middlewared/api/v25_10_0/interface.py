@@ -65,7 +65,7 @@ class InterfaceEntryState(BaseModel):
     rx_queues: int
     tx_queues: int
     aliases: list[InterfaceEntryStateAlias]
-    vrrp_config: list | None = NotRequired
+    vrrp_config: list | None = []
     # lagg section
     protocol: str | None = NotRequired
     ports: list[InterfaceEntryStatePort] = NotRequired
@@ -148,7 +148,7 @@ class InterfaceCreate(BaseModel, ABC):
 
 class InterfaceCreateBridge(InterfaceCreate):
     type: Literal["BRIDGE"]
-    bridge_members: list
+    bridge_members: list = []
     stp: bool = True
     enable_learning: bool = True
 
@@ -156,7 +156,7 @@ class InterfaceCreateBridge(InterfaceCreate):
 class InterfaceCreateLinkAggregation(InterfaceCreate):
     type: Literal["LINK_AGGREGATION"]
     lag_protocol: Literal["LACP", "FAILOVER", "LOADBALANCE", "ROUNDROBIN", "NONE"]
-    lag_ports: list[str]
+    lag_ports: list[str] = Field(min_length=1)
     xmit_hash_policy: Literal["LAYER2", "LAYER2+3", "LAYER3+4", None] = None
     """Default to "LAYER2+3" if `lag_protocol` is either "LACP" or "LOADBALANCE"."""
     lacpdu_rate: Literal["SLOW", "FAST", None] = None

@@ -695,7 +695,7 @@ class InterfaceService(CRUDService):
                         # Based on stress testing done by the performance team, we default to layer2+3
                         # because the system default is layer2 and with the system default outbound
                         # traffic did not use the other ports in the lagg. Using layer2+3 fixed it.
-                        xmit = data['xmit_hash_policy'].lower() if data['xmit_hash_policy'] else 'layer2+3'
+                        xmit = data['xmit_hash_policy'].lower() if data['xmit_hash_policy'] is not None else 'layer2+3'
 
                         if lag_proto == 'lacp':
                             # obviously, lacpdu_rate does not apply to any lagg mode except for lacp
