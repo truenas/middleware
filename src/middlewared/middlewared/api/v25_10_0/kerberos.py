@@ -3,6 +3,7 @@ from middlewared.api.base import (
     excluded_field,
     Excluded,
     ForUpdateMetaclass,
+    LongNonEmptyString,
     NonEmptyString,
     single_argument_args,
 )
@@ -70,7 +71,7 @@ class KerberosRealmEntry(BaseModel):
     List of kerberos admin servers. If the list is empty then the kerberos
     libraries will use DNS to look them up.
     """
-    kpassword_server: list[NonEmptyString] = []
+    kpasswd_server: list[NonEmptyString] = []
     """
     list of kerberos kpasswd servers. If the list is empty then DNS will be used
     to look them up if needed.
@@ -85,7 +86,7 @@ class KerberosKeytabEntry(BaseModel):
     the name of the keytab file. Some names are used for internal purposes such
     as AD_MACHINE_ACCOUNT and IPA_MACHINE_ACCOUNT.
     """
-    file: Secret[NonEmptyString | None]
+    file: Secret[LongNonEmptyString | None]
     """ Base64 encoded kerberos keytab entries to append to the system keytab. """
 
 
