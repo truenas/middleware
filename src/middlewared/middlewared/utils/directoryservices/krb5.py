@@ -481,3 +481,38 @@ def concatenate_keytab_data(keytab_data: list[bytes]) -> bytes:
         # to delete it
         with open(unified, 'rb') as f:
             return f.read()
+
+
+def middleware_ccache_uid(data: dict) -> int:
+    cc_uid = data.get('ccache_uid', 0)
+    if not isinstance(cc_uid, int):
+        raise TypeError(f'{type(cc_uid)}: expected ccache_uid to be an int')
+
+    return cc_uid
+
+
+def middleware_ccache_type(data: dict) -> krb5ccache:
+    cc = data.get('ccache', krb5ccache.SYSTEM.name)
+    if not isinstance(cc, str):
+        raise TypeError(f'{type(cc)}: expected ccache to be string')
+
+    return krb5ccache[cc]
+
+
+def middleware_ccache_path(data: dict) -> str:
+    """
+    Historically there are various places in the API where parameters related
+    to the kerberos credential path could be included in a python dictionary
+
+    This function replaces some heavy-lifting that the legacy schema was
+    performing to convert this payload into a path for the kerberos
+    credential cache.
+    """
+    krb_ccache = middleware_ccache_type(data)
+    cc_uid = middleware_ccache_uid(data)
+    ccache_path = krb_ccache.value
+
+    if krb_ccache is krb5ccache.USER:
+        ccache_path += str(cc_uid)
+
+    return ccache_path

@@ -798,7 +798,7 @@ class ActiveDirectoryService(ConfigService):
         out = json.loads(lookup.stdout.decode())
         return out
 
-    @accepts(Ref('kerberos_username_password'), roles=['DIRECTORY_SERVICE_WRITE'], audit='Active directory leave')
+    @accepts(Dict('leave_credentials', Str('username', required=True), Str('password', private=True, required=True)))
     @returns()
     @job(lock="AD_start_stop")
     async def leave(self, job, data):
