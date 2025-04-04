@@ -89,6 +89,7 @@ from .system_general_ui import *  # noqa
 from .system_global import *  # noqa
 from .system_lifecycle import *  # noqa
 from .system_ntpserver import *  # noqa
+from .system_product import *  # noqa
 from .system_reboot import *  # noqa
 from .system_security import *  # noqa
 from .system_general_timezone import *  # noqa
