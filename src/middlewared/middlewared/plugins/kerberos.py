@@ -262,8 +262,8 @@ class KerberosService(ConfigService):
             raise CallError(f'{type(conf)}: expected `conf` key to be dict')
 
         if conf.get('kerberos_principal'):
-            if not isinstance(conf['kerberos_principal'], dict):
-                raise CallError(f'{type(conf["kerberos_principal"])}: expected dictionary')
+            if not isinstance(conf['kerberos_principal'], str):
+                raise CallError(f'{type(conf["kerberos_principal"])}: expected string.')
 
             return {'kerberos_principal': conf['kerberos_principal']}
 
