@@ -1,25 +1,22 @@
 import time
 
 from middlewared.event import EventSource
-from middlewared.schema import Dict, Str
+from middlewared.schema import Dict, Int
 from middlewared.plugins.reporting.realtime_reporting.cgroup import get_cgroup_stats
+from middlewared.validators import Range
 
 
 class VirtInstancesMetricsEventSource(EventSource):
 
     ACCEPTS = Dict(
-        Str('id'),
+        Int('interval', default=2, validators=[Range(min_=2)]),
     )
 
     def run_sync(self):
 
-        instance_id = self.arg['id']
-
+        interval = self.arg['interval']
         while not self._cancel_sync.is_set():
-
             netdata_metrics = None
-            # TODO: code duplication with reporting.realtime
-            # this gathers the most recent metric recorded via netdata (for all charts)
             retries = 2
             while retries > 0:
                 try:
@@ -33,18 +30,12 @@ class VirtInstancesMetricsEventSource(EventSource):
                 else:
                     break
 
-            data = {}
-            if not bool(netdata_metrics):
-                data['error'] = True
-                data['errname'] = 'FAILED_TO_CONNECT'
-            else:
-                data.update(get_cgroup_stats(netdata_metrics, [instance_id])[instance_id])
-                data['error'] = False
-                data['errname'] = None
+            if netdata_metrics:
+                self.send_event('ADDED', fields=get_cgroup_stats(
+                    netdata_metrics, self.middleware.call_sync('virt.instance.get_instance_names')
+                ))
 
-            self.send_event('ADDED', fields=data)
-
-            time.sleep(2)
+            time.sleep(interval)
 
 
 async def setup(middleware):

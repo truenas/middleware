@@ -131,7 +131,6 @@ class VirtInstanceService(CRUDService):
 
             entry['memory'] = normalize_size(i['config'].get('limits.memory'), False)
 
-
             for k, v in i['config'].items():
                 if not k.startswith('environment.'):
                     continue
@@ -748,3 +747,15 @@ class VirtInstanceService(CRUDService):
             })
 
         return filter_list(out, filters or [], options or {})
+
+    @private
+    async def get_instance_names(self):
+        """
+        Return list of instance names, this is an endpoint to get just list of names as quickly as possible
+        """
+        try:
+            instances = (await incus_call('1.0/instances', 'get'))['metadata']
+        except Exception:
+            return []
+        else:
+            return [name.split('/')[-1] for name in instances]
