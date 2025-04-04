@@ -6,7 +6,8 @@ import shutil
 import tarfile
 import time
 
-from middlewared.schema import accepts, returns
+from middlewared.api import api_method
+from middlewared.api.current import SystemDebugArgs, SystemDebugResult
 from middlewared.service import CallError, job, private, Service
 
 from ixdiagnose.config import conf
@@ -66,8 +67,7 @@ class SystemService(Service):
         except Exception as e:
             raise CallError(f"Failed to generate debug: {e!r}")
 
-    @accepts(roles=["READONLY_ADMIN"])
-    @returns()
+    @api_method(SystemDebugArgs, SystemDebugResult, roles=["READONLY_ADMIN"])
     @job(lock="system.debug", lock_queue_size=0, pipes=["output"])
     def debug(self, job):
         """
