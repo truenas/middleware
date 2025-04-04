@@ -4,13 +4,26 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import os
-
 from datetime import date
-from licenselib.license import ContractType, Features, License
 
+from licenselib.license import ContractType, Features, License
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemProductFeatureEnabledArgs,
+    SystemProductFeatureEnabledResult,
+    SystemProductLicenseArgs,
+    SystemProductLicenseResult,
+    SystemProductReleaseNotesUrlArgs,
+    SystemProductReleaseNotesUrlResult,
+    SystemProductTypeArgs,
+    SystemProductTypeResult,
+    SystemProductVersionArgs,
+    SystemProductVersionResult,
+    SystemProductVersionShortArgs,
+    SystemProductVersionShortResult,
+)
 from middlewared.plugins.truenas import EULA_PENDING_PATH
-from middlewared.schema import accepts, Bool, returns, Str
-from middlewared.service import CallError, no_authz_required, private, Service, ValidationError
+from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 from middlewared.utils.version import parse_version_string
@@ -25,15 +38,13 @@ class SystemService(Service):
 
     PRODUCT_TYPE = None
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Str('product_type'))
+    @api_method(
+        SystemProductTypeArgs,
+        SystemProductTypeResult,
+        roles=['SYSTEM_PRODUCT_READ']
+    )
     async def product_type(self):
-        """
-        Returns the type of the product.
-
-        COMMUNITY_EDITION - TrueNAS SCALE, community version
-        ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
-        """
+        """Returns the type of the product"""
         if SystemService.PRODUCT_TYPE is None:
             if await self.is_ha_capable():
                 # HA capable hardware
@@ -61,15 +72,20 @@ class SystemService(Service):
     async def is_enterprise(self):
         return await self.middleware.call('system.product_type') == ProductType.ENTERPRISE
 
-    @no_authz_required
-    @accepts()
-    @returns(Str('truenas_version_shortname'))
+    @api_method(
+        SystemProductVersionShortArgs,
+        SystemProductVersionShortResult,
+        authorization_required=False,
+    )
     def version_short(self):
         """Returns the short name of the software version of the system."""
         return sw_info()['version']
 
-    @accepts(Str('version_str', default=None, required=False))
-    @returns(Str('truenas_release_notes_url', null=True))
+    @api_method(
+        SystemProductReleaseNotesUrlArgs,
+        SystemProductReleaseNotesUrlResult,
+        roles=['SYSTEM_PRODUCT_READ']
+    )
     def release_notes_url(self, version_str):
         """Returns the release notes URL for a version of SCALE.
 
@@ -90,9 +106,11 @@ class SystemService(Service):
         else:
             return f'{base_url}/#{"".join(version_split)}'
 
-    @no_authz_required
-    @accepts()
-    @returns(Str('truenas_version'))
+    @api_method(
+        SystemProductVersionArgs,
+        SystemProductVersionResult,
+        authorization_required=False,
+    )
     def version(self):
         """Returns the full name of the software version of the system."""
         return sw_info()['fullname']
@@ -155,8 +173,11 @@ class SystemService(Service):
     def license_path(self):
         return LICENSE_FILE
 
-    @accepts(Str('license'))
-    @returns()
+    @api_method(
+        SystemProductLicenseArgs,
+        SystemProductLicenseResult,
+        roles=['SYSTEM_PRODUCT_WRITE']
+    )
     def license_update(self, license_):
         """Update license file"""
         try:
@@ -185,8 +206,11 @@ class SystemService(Service):
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
 
-    @accepts(Str('feature', enum=['DEDUP', 'FIBRECHANNEL', 'VM']))
-    @returns(Bool('feature_enabled'))
+    @api_method(
+        SystemProductFeatureEnabledArgs,
+        SystemProductFeatureEnabledResult,
+        roles=['SYSTEM_PRODUCT_READ'],
+    )
     async def feature_enabled(self, name):
         """
         Returns whether the `feature` is enabled or not
