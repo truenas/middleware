@@ -3,7 +3,6 @@ from typing import Annotated, TypeVar
 from pydantic_core import PydanticCustomError
 from pydantic import AfterValidator, Field
 
-
 __all__ = ['UniqueList']
 
 
