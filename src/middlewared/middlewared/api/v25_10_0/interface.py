@@ -62,8 +62,8 @@ class InterfaceEntryState(BaseModel):
     link_address: str
     permanent_link_address: str | None
     hardware_link_address: str
-    rx_queues: int
-    tx_queues: int
+    rx_queues: int = NotRequired
+    tx_queues: int = NotRequired
     aliases: list[InterfaceEntryStateAlias]
     vrrp_config: list | None = []
     # lagg section
