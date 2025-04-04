@@ -483,10 +483,10 @@ def concatenate_keytab_data(keytab_data: list[bytes]) -> bytes:
             return f.read()
 
 
-def middleware_ccache_uid(data:dict) -> int:
+def middleware_ccache_uid(data: dict) -> int:
     cc_uid = data.get('ccache_uid', 0)
     if not isinstance(cc_uid, int):
-        raise TypeError(f'{type(cc_id)}: expected ccache_uid to be an int')
+        raise TypeError(f'{type(cc_uid)}: expected ccache_uid to be an int')
 
     return cc_uid
 

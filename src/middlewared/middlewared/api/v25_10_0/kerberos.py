@@ -8,7 +8,6 @@ from middlewared.api.base import (
 )
 from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params
 from pydantic import field_validator, Secret
-from typing import Literal
 
 __all__ = [
     'KerberosEntry', 'KerberosRealmEntry', 'KerberosKeytabEntry',
