@@ -245,7 +245,7 @@ class DSCacheFill:
 
                 user_data = u['nss']
                 groups = [
-                    BASE_SYNTHETIC_DATASTORE_ID + gid 
+                    BASE_SYNTHETIC_DATASTORE_ID + gid
                     for gid in os.getgrouplist(user_data.pw_name, user_data.pw_gid)
                     if gid >= low_range
                 ]
