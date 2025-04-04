@@ -242,6 +242,7 @@ class DSCacheFill:
                     id_type_both = False
 
                 user_data = u['nss']
+                groups = [BASE_SYNTHETIC_DATASTORE_ID + gid for gid in os.getgrouplist(user_data.pw_name, user_data.pw_gid)]
                 entry = {
                     'id': BASE_SYNTHETIC_DATASTORE_ID + user_data.pw_uid,
                     'uid': user_data.pw_uid,
@@ -258,7 +259,7 @@ class DSCacheFill:
                     'locked': False,
                     'sudo_commands': [],
                     'sudo_commands_nopasswd': [],
-                    'groups': [],
+                    'groups': groups,
                     'sshpubkey': None,
                     'immutable': True,
                     'twofactor_auth_configured': False,
