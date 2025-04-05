@@ -13,6 +13,7 @@ import time
 import traceback
 import threading
 
+from middlewared.api.current import CoreGetJobsAddedEvent, CoreGetJobsChangedEvent
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs, credential_has_full_admin
@@ -95,7 +96,10 @@ class JobsQueue:
         # Shared lock (JobSharedLock) dict
         self.job_locks = {}
 
-        self.middleware.event_register('core.get_jobs', 'Updates on job changes.', no_authz_required=True)
+        self.middleware.event_register('core.get_jobs', 'Updates on job changes.', no_authz_required=True, models={
+            "ADDED": CoreGetJobsAddedEvent,
+            "CHANGED": CoreGetJobsChangedEvent,
+        })
 
     def __getitem__(self, item):
         return self.deque[item]
@@ -119,7 +123,7 @@ class JobsQueue:
 
         return out
 
-    def add(self, job):
+    def add(self, job: "Job"):
         self.handle_lock(job)
         if job.options["lock_queue_size"] is not None:
             if job.options["lock_queue_size"] == 0:
@@ -130,13 +134,17 @@ class JobsQueue:
                 queued_jobs = [another_job for another_job in self.queue if another_job.lock is job.lock]
                 if len(queued_jobs) >= job.options["lock_queue_size"]:
                     for queued_job in reversed(queued_jobs):
-                        if not credential_is_limited_to_own_jobs(job.credentials):
-                            return queued_job
                         if (
-                            job.credentials.is_user_session and
-                            queued_job.credentials.is_user_session and
-                            job.credentials.user['username'] == queued_job.credentials.user['username']
+                                not credential_is_limited_to_own_jobs(job.credentials) or (
+                                    job.credentials.is_user_session and
+                                    queued_job.credentials.is_user_session and
+                                    job.credentials.user['username'] == queued_job.credentials.user['username']
+                                )
                         ):
+                            if job.message_ids:
+                                queued_job.message_ids += job.message_ids
+                                queued_job.send_changed_event()
+
                             return queued_job
 
                     raise CallError('This job is already being performed by another user', errno.EBUSY)
@@ -278,7 +286,7 @@ class Job:
     logs_fd: None
 
     def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb, app,
-                 audit_callback):
+                 message_id, audit_callback):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
@@ -289,6 +297,7 @@ class Job:
         self.pipes = pipes or Pipes(input_=None, output=None)
         self.on_progress_cb = on_progress_cb
         self.app = app
+        self.message_ids = [message_id] if message_id else []
         self.audit_callback = audit_callback
 
         self.id = None
@@ -398,6 +407,9 @@ class Job:
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
             self.time_finished = utc_now()
 
+    def send_changed_event(self):
+        send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
+
     def set_description(self, description):
         """
         Sets a human-readable job description for the task manager UI. Use this if you need to build a job description
@@ -407,7 +419,7 @@ class Job:
         """
         if self.description != description:
             self.description = description
-            send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
+            self.send_changed_event()
 
     def set_progress(self, percent=None, description=None, extra=None):
         """
@@ -508,7 +520,7 @@ class Job:
                 raise asyncio.CancelledError()
             else:
                 self.set_state('RUNNING')
-                send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
+                self.send_changed_event()
 
             self.future = asyncio.ensure_future(self.__run_body())
             try:
@@ -666,6 +678,7 @@ class Job:
 
         return {
             'id': self.id,
+            'message_ids': self.message_ids,
             'method': self.method_name,
             'arguments': self.middleware.dump_args(self.args, method=self.method),
             'transient': self.options['transient'],
@@ -697,7 +710,7 @@ class Job:
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
         job = Job(middleware, job_dict['method'], serviceobj, methodobj, job_dict['arguments'], methodobj._job, None,
-                  None, None, None)
+                  None, None, None, None)
         job.id = job_dict['id']
         job.description = job_dict['description']
         if logs is not None:

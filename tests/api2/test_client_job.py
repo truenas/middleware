@@ -7,7 +7,7 @@ from middlewared.test.integration.utils import client, mock
 
 
 # FIXME: Sometimes an equal message for `SUCCESS` state is being sent (or received) twice, we were not able
-# to understand why and this does not break anything so we are not willing to waste our time investigating
+# to understand why and this does not break anything, so we are not willing to waste our time investigating
 # this.
 # Also, `RUNNING` message sometimes is not received, this does not have a logical explanation as well and is not
 # repeatable.

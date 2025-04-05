@@ -5,7 +5,6 @@ from truenas_api_client import ClientException
 
 
 def test_job_errno():
-
     with mock("test.test1", """
         from middlewared.service import job
         from middlewared.schema import returns, Password

@@ -109,10 +109,10 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
         options['prefix'] = self._config.datastore_prefix
         return await self._get_or_insert(self._config.datastore, options)
 
-    @pass_app(rest=True)
-    async def update(self, app, data):
+    @pass_app(message_id=True, rest=True)
+    async def update(self, app, message_id, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.update', self, self.do_update, [data], app=app
+            f'{self._config.namespace}.update', self, self.do_update, [data], app=app, message_id=message_id,
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
         return rv

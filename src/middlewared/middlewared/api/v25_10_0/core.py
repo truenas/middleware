@@ -4,14 +4,14 @@ from typing import Any, Literal
 from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, LongString, query_result, single_argument_args, single_argument_result,
+    BaseModel, ForUpdateMetaclass, LongString, single_argument_args, single_argument_result,
 )
-from .common import QueryArgs
 
 __all__ = [
     "CoreGetServicesArgs", "CoreGetServicesResult",
     "CoreGetMethodsArgs", "CoreGetMethodsResult",
-    "CoreGetJobsArgs", "CoreGetJobsResult",
+    "CoreGetJobsItem",
+    "CoreGetJobsAddedEvent", "CoreGetJobsChangedEvent",
     "CoreResizeShellArgs", "CoreResizeShellResult",
     "CoreJobDownloadLogsArgs", "CoreJobDownloadLogsResult",
     "CoreJobWaitArgs", "CoreJobWaitResult",
@@ -46,10 +46,6 @@ class CoreGetMethodsResult(BaseModel):
     result: dict[str, Any]
 
 
-class CoreGetJobsArgs(QueryArgs):
-    pass
-
-
 class CoreGetJobsItemProgress(BaseModel):
     percent: int | None
     description: LongString | None
@@ -70,6 +66,7 @@ class CoreGetJobsItemCredentials(BaseModel):
 
 class CoreGetJobsItem(BaseModel):
     id: int
+    message_ids: list
     method: str
     arguments: list
     transient: bool
@@ -89,7 +86,14 @@ class CoreGetJobsItem(BaseModel):
     credentials: CoreGetJobsItemCredentials | None
 
 
-CoreGetJobsResult = query_result(CoreGetJobsItem)
+class CoreGetJobsAddedEvent(BaseModel):
+    id: int
+    fields: CoreGetJobsItem
+
+
+class CoreGetJobsChangedEvent(BaseModel):
+    id: int
+    fields: CoreGetJobsItem
 
 
 class CoreResizeShellArgs(BaseModel):
@@ -203,7 +207,7 @@ class CoreBulkResult(BaseModel):
     result: list[CoreBulkResultItem]
 
 
-class CoreSetOptionsOptions(BaseModel, metaclass=ForUpdateMetaclass):
+class CoreOptions(BaseModel, metaclass=ForUpdateMetaclass):
     # We can't use `extra="forbid"` here because newer version clients might try to set more options than we support
     model_config = ConfigDict(
         strict=True,
@@ -212,15 +216,20 @@ class CoreSetOptionsOptions(BaseModel, metaclass=ForUpdateMetaclass):
         extra="ignore",
     )
 
+    legacy_jobs: bool
     private_methods: bool
     py_exceptions: bool
 
 
 class CoreSetOptionsArgs(BaseModel):
-    options: CoreSetOptionsOptions
+    options: CoreOptions
 
 
-CoreSetOptionsResult = single_argument_result(None, "CoreSetOptionsResult")
+class CoreSetOptionsResult(BaseModel):
+    result: CoreOptions
+
+    def to_previous(cls, value):
+        return None
 
 
 class CoreSubscribeArgs(BaseModel):
