@@ -370,4 +370,4 @@ async def test__interfaces_service__update_mtu_options():
                 'options': 'mtu 1550',
             },
         )
-    assert 'interface_update.options' in ve.value
+    assert 'options: Extra inputs are not permitted' in str(ve.value)
