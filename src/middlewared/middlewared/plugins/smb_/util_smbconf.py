@@ -35,6 +35,8 @@ AD_KEYTAB_PARAMS = (
     f"{SAMBA_KEYTAB_DIR}/krb5.keytab2:spn_prefixes=nfs:sync_kvno:machine_password"
 )
 
+EXCLUDED_IDMAP_ITEMS = frozenset(['name', 'range_low', 'range_high', 'idmap_backend', 'sssd_compat'])
+
 
 class TrueNASVfsObjects(enum.StrEnum):
     # Ordering here determines order in which objects entered into
@@ -265,32 +267,19 @@ def generate_smb_share_conf_dict(
 
 
 def generate_smb_conf_dict(
-    ds_type: DSType,
     ds_config: dict | None,
     smb_service_config: dict,
     smb_shares: list,
     smb_bind_choices: dict,
-    idmap_settings: list,
     is_enterprise: bool,
     security_config: dict[str, bool]
 ):
     guest_enabled = any(filter_list(smb_shares, [['guestok', '=', True]]))
     fsrvp_enabled = any(filter_list(smb_shares, [['fsrvp', '=', True]]))
-    ad_idmap = None
-    ipa_domain = None
-
-    match ds_type:
-        case DSType.AD:
-            ad_idmap = filter_list(
-                idmap_settings,
-                [('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')],
-                {'get': True}
-            )
-        case DSType.IPA:
-            ipa_domain = ds_config['ipa_domain']
-            ipa_config = ds_config['ipa_config']
-        case _:
-            pass
+    if ds_config['service_type']:
+        ds_type = DSType(ds_config['service_type'])
+    else:
+        ds_type = None
 
     home_share = filter_list(smb_shares, [['home', '=', True]])
     if home_share:
@@ -459,7 +448,6 @@ def generate_smb_conf_dict(
     via getpwent / getgrent. It does not impact getpwnam and getgrnam.
     """
     if ds_type is DSType.AD:
-        ac = ds_config
         smbconf.update({
             'server role': 'member server',
             'kerberos method': 'secrets only',
@@ -470,16 +458,55 @@ def generate_smb_conf_dict(
             'preferred master': False,
             'winbind cache time': 7200,
             'winbind max domain connections': 10,
-            'winbind use default domain': ac['use_default_domain'],
+            'winbind use default domain': ds_config['configuration']['use_default_domain'],
             'client ldap sasl wrapping': 'seal',
             'template shell': '/bin/sh',
-            'allow trusted domains': ac['allow_trusted_doms'],
-            'realm': ac['domainname'],
-            'winbind nss info': ac['nss_info'].lower(),
+            'allow trusted domains': ds_config['configuration']['enable_trusted_domains'],
+            'realm': ds_config['configuration']['domain'],
             'template homedir': home_path,
-            'winbind enum users': not ac['disable_freenas_cache'],
-            'winbind enum groups': not ac['disable_freenas_cache'],
+            'winbind enum users': ds_config['enable_account_cache'],
+            'winbind enum groups': ds_config['enable_account_cache'],
         })
+
+        if ds_config['configuration']['idmap']['idmap_domain']['idmap_backend'] == 'AUTORID':
+            idmap_prefix = 'idmap config * :'
+            idmap = ds_config['configuration']['idmap']['idmap_domain']
+        else:
+            builtin = ds_config['configuration']['idmap']['builtin']
+            idmap = ds_config['configuration']['idmap']['idmap_domain']
+            idmap_prefix = f'idmap config {idmap["name"]}'
+
+            smbconf.update({
+                'idmap config * : backend': 'tdb',
+                'idmap config * : range': f'{builtin["range_low"]} - {builtin["range_high"]}'
+            })
+
+        smbconf.update({
+            f'{idmap_prefix} : backend': idmap['idmap_backend'].lower(),
+            f'{idmap_prefix} : range': f'{idmap["range_low"]} - {idmap["range_high"]}',
+        })
+        for key, value in idmap.items():
+            if key in EXCLUDED_IDMAP_ITEMS:
+                continue
+
+            smbconf[f'{idmap_prefix} : {key}'] = value
+
+        # Set trusted domains in the configuration. This has no impact if
+        # enable_trusted_domains is False and so we don't need another check
+        for idmap in ds_config['configuration']['trusted_domains']:
+            idmap_prefix = f'idmap config {idmap["name"]} :'
+            # Set basic parameters
+            smbconf.update({
+                f'{idmap_prefix} backend': idmap['idmap_backend'].lower(),
+                f'{idmap_prefix} range': f'{idmap["range_low"]} - {idmap["range_high"]}',
+            })
+
+            # Set other configuration options
+            for key, value in idmap.items():
+                if key in EXCLUDED_IDMAP_ITEMS:
+                    continue
+
+                smbconf[f'{idmap_prefix} {key}'] = value
 
     """
     The following parameters are based on what is performed when admin runs
@@ -492,70 +519,24 @@ def generate_smb_conf_dict(
     NOTE2: There is some chance that the IPA domain will not have SMB information
     and in this situation we will omit from our smb.conf.
     """
-    if ds_type is DSType.IPA and ipa_domain is not None:
+    if ds_type is DSType.IPA and ds_config['connection']['smb_domain'] is not None:
         # IPA SMB config is stored in remote IPA server and so we don't let
         # users override the config. If this is a problem it should be fixed on
         # the other end.
-        domain_short = ipa_domain['netbios_name']
-        range_low = ipa_domain['range_id_min']
-        range_high = ipa_domain['range_id_max']
+        domain_short = ds_config['connection']['smb_domain']['name']
+        range_low = ds_config['connection']['smb_domain']['range_low']
+        range_high = ds_config['connetion']['smb_domain']['range_high']
+        domain_name = ds_config['connection']['smb_domain']['domain_name']
 
         smbconf.update({
             'server role': 'member server',
             'kerberos method': 'dedicated keytab',
             'dedicated keytab file': 'FILE:/etc/ipa/smb.keytab',
-            'workgroup': ipa_domain['netbios_name'],
-            'realm': ipa_config['realm'],
+            'workgroup': domain_short,
+            'realm': domain_name,
             f'idmap config {domain_short} : backend': 'sss',
             f'idmap config {domain_short} : range': f'{range_low} - {range_high}',
         })
-
-    """
-    The following part generates the smb.conf parameters from our idmap plugin
-    settings. This is primarily relevant for case where TrueNAS is joined to
-    an Active Directory domain.
-    """
-    for i in idmap_settings:
-        match i['name']:
-            case 'DS_TYPE_DEFAULT_DOMAIN':
-                if ad_idmap and ad_idmap['idmap_backend'] == 'AUTORID':
-                    continue
-
-                domain = '*'
-            case 'DS_TYPE_ACTIVEDIRECTORY':
-                if ds_type is not DSType.AD:
-                    continue
-
-                if i['idmap_backend'] == 'AUTORID':
-                    domain = '*'
-                else:
-                    domain = smb_service_config['workgroup']
-            case 'DS_TYPE_LDAP':
-                # TODO: in future we will have migration remove this
-                # from the idmap table
-                continue
-            case _:
-                domain = i['name']
-
-        idmap_prefix = f'idmap config {domain} :'
-        smbconf.update({
-            f'{idmap_prefix} backend': i['idmap_backend'].lower(),
-            f'{idmap_prefix} range': f'{i["range_low"]} - {i["range_high"]}',
-        })
-
-        for k, v in i['options'].items():
-            backend_parameter = 'realm' if k == 'cn_realm' else k
-            match k:
-                case 'ldap_server':
-                    value = 'ad' if v == 'AD' else 'stand-alone'
-                case 'ldap_url':
-                    value = f'{"ldaps://" if i["options"]["ssl"]  == "ON" else "ldap://"}{v}'
-                case 'ssl':
-                    continue
-                case _:
-                    value = v
-
-            smbconf.update({f'{idmap_prefix} {backend_parameter}': value})
 
     for e in smb_service_config['smb_options'].splitlines():
         # Add relevant auxiliary parameters

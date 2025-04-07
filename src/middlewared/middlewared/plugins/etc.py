@@ -366,8 +366,6 @@ class EtcService(Service):
         'ssh': {
             "ctx": [
                 {'method': 'ssh.config'},
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
                 {'method': 'auth.twofactor.config'},
                 {'method': 'interface.query'},
                 {'method': 'system.advanced.login_banner'},

@@ -1,14 +1,10 @@
-import ldap
 import os
 
-from middlewared.utils.directoryservices import (
-    ipa_constants, ldap_utils
-)
+from middlewared.utils.directoryservices import ipa_constants
 from middlewared.utils.directoryservices.health import (
     IPAHealthCheckFailReason,
     IPAHealthError
 )
-from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.service_exception import CallError
 
 
@@ -97,7 +93,7 @@ class IPAHealthMixin:
                 self._faulted_reason
             )
 
-        config = self.middleware.call_sync('ldap.config')
+        config = self.middleware.call_sync('directoryservices.config')
 
         # By this point we know kerberos should be healthy and we should
         # have ticket. Verify we can use our kerberos ticket to access the
@@ -106,20 +102,8 @@ class IPAHealthMixin:
         # We're peforming GSSAPI bind with SEAL set so don't bother with
         # ldaps. This is simple query for root DSE to detect whether LDAP
         # connection is profoundly broken.
-        uris = ldap_utils.hostnames_to_uris(config['hostname'], False)
         try:
-            LdapClient.search({
-                'uri_list': uris,
-                'bind_type': 'GSSAPI',
-                'options': {
-                    'timeout': config['timeout'],
-                    'dns_timeout': config['dns_timeout'],
-                },
-                'security': {
-                    'ssl': 'OFF',
-                    'sasl': 'SEAL'
-                }
-            }, '', ldap.SCOPE_BASE, '(objectclass=*)')
+            self._ldap_get_root_dse(config)
         except Exception as e:
             self._faulted_reason = str(e)
             raise IPAHealthError(
