@@ -1,9 +1,10 @@
 import enum
+import middlewared.sqlalchemy as sa
 import struct
 
 from base64 import b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, returns, Str
-from middlewared.service import no_authz_required, Service, private, job
+from middlewared.service import no_authz_required, ConfigService, private, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import (
     DSStatus, DSType, NSS_Info
@@ -13,22 +14,18 @@ from middlewared.utils.directoryservices.health import DSHealthObj
 DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
 
 
-class SSL(enum.Enum):
-    NOSSL = 'OFF'
-    USESSL = 'ON'
-    USESTARTTLS = 'START_TLS'
-
-
 class SASL_Wrapping(enum.Enum):
     PLAIN = 'PLAIN'
     SIGN = 'SIGN'
     SEAL = 'SEAL'
 
 
-class DirectoryServices(Service):
+class DirectoryServices(ConfigService):
     class Config:
         service = "directoryservices"
         cli_namespace = "directory_service"
+        datastore = "directoryservices"
+        datastore_extend = "directoryservices.extend"
 
     @no_authz_required
     @accepts()
@@ -101,15 +98,6 @@ class DirectoryServices(Service):
 
     @private
     @returns(List(
-        'ldap_ssl_choices', items=[
-            Str('ldap_ssl_choice', enum=[x.value for x in list(SSL)], default=SSL.USESSL.value, register=True)
-        ]
-    ))
-    async def ssl_choices(self, dstype):
-        return [x.value for x in list(SSL)]
-
-    @private
-    @returns(List(
         'sasl_wrapping_choices', items=[
             Str('sasl_wrapping_choice', enum=[x.value for x in list(SASL_Wrapping)], register=True)
         ]
@@ -176,7 +164,7 @@ class DirectoryServices(Service):
 
     @private
     @job()
-    async def initialize(self, job, data=None):
+    async def initialize(self, job):
         # retrieve status to force initialization of status
         if (await self.middleware.call('directoryservices.status'))['type'] is None:
             return

@@ -165,13 +165,11 @@ class DomainSecrets(Service):
         store backup of secrets.tdb contents (keyed on current netbios name) in
         freenas-v1.db file.
         """
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == "UNIFIED":
-            failover_status = await self.middleware.call("failover.status")
-            if failover_status != "MASTER":
-                self.logger.debug("Current failover status [%s]. Skipping secrets backup.",
-                                  failover_status)
-                return
+        failover_status = await self.middleware.call('failover.status')
+        if failover_status not in ('SINGLE', 'MASTER'): 
+            self.logger.debug("Current failover status [%s]. Skipping secrets backup.",
+                              failover_status)
+            return
 
         netbios_name = (await self.middleware.call('smb.config'))['netbiosname']
         db_secrets = await self.get_db_secrets()
@@ -190,13 +188,11 @@ class DomainSecrets(Service):
         )
 
     async def restore(self, netbios_name=None):
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == "UNIFIED":
-            failover_status = await self.middleware.call("failover.status")
-            if failover_status != "MASTER":
-                self.logger.debug("Current failover status [%s]. Skipping secrets restore.",
-                                  failover_status)
-                return False
+        failover_status = await self.middleware.call('failover.status')
+        if failover_status not in ('SINGLE', 'MASTER'): 
+            self.logger.debug("Current failover status [%s]. Skipping secrets restore.",
+                              failover_status)
+            return False
 
         if netbios_name is None:
             netbios_name = (await self.middleware.call('smb.config'))['netbiosname']

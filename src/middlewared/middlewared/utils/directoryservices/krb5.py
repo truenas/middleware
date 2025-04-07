@@ -14,6 +14,7 @@ import subprocess
 import time
 
 from contextlib import contextmanager
+from .constants import DSCredType
 from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
@@ -516,3 +517,17 @@ def middleware_ccache_path(data: dict) -> str:
         ccache_path += str(cc_uid)
 
     return ccache_path
+
+
+def __kinit_with_principal(kerberos_principal: str):
+
+
+def kinit_with_cred(
+    cred: dict, *,
+    lifetime: int | None = None,
+    ccache: krb5ccache = krb5ccache.SYSTEM
+) -> dict:
+    cred_type = DSCredType(cred.get('credential_type'))
+    match cred_type:
+        case DSCredType.KERBEROS_PRINCIPAL:
+

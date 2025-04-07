@@ -113,6 +113,7 @@ class UserCreate(UserEntry):
     password_change_required: Excluded = excluded_field()
 
     uid: LocalUID | None = None
+    username: LocalUsername
     "UNIX UID. If not provided, it is automatically filled with the next one available."
     username: LocalUsername
     """

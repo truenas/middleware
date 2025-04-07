@@ -7,10 +7,13 @@ from middlewared.utils.directoryservices.ad_constants import (
     MAX_SERVER_TIME_OFFSET,
 )
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.credentials import kinit_with_cred
 from middlewared.utils.directoryservices.health import (
     ADHealthCheckFailReason,
     ADHealthError,
 )
+from middlewared.utils.directoryservices.krb5 import krb5ccache
+from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -25,25 +28,32 @@ class ADHealthMixin:
         """
         Validate that our machine account password can be used to kinit
         """
-        config = self.middleware.call_sync('activedirectory.config')
+        config = self.middleware.call_sync('directoryservices.config')
+        netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
 
-        cred = self.middleware.call_sync('kerberos.get_cred', {
-            'dstype': DSType.AD.value,
-            'conf': {
-                'bindname': config['netbiosname'].upper() + '$',
-                'bindpw': b64decode(account_password).decode(),
-                'domainname': config['domainname']
-            }
+        # Write temporary krb5.conf targeting kdc
+        krbconf = KRB5Conf()
+        krbconf.add_libdefaults({
+            str(KRB_LibDefaults.DEFAULT_REALM): ds_config['kerberos_realm'],
+            str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
+            str(KRB_LibDefaults.FORWARDABLE): 'true',
+            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
         })
+        krbconf.add_realms([{
+            'realm': ds_config['kerberos_realm'],
+            'admin_server': [],
+            'kdc': [kdc],
+            'kpasswd_server': [],
+        }])
+        krbconf.write()
 
-        # validate machine account secret can kinit
-        self.middleware.call_sync('kerberos.do_kinit', {
-            'krb5_cred': cred,
-            'kinit-options': {'ccache': 'TEMP', 'kdc_override': {
-                'domain': config['domainname'].upper(),
-                'kdc': kdc
-            }}
-        })
+        cred = {
+            'credential_type': 'KERBEROS_USER',
+            'username': netbiosname,
+            'password': b64decode(account_password).decode(),
+        }
+
+        kinit_with_cred(cred, ccache=krb5ccache.TEMP.value)
 
         # remove our ticket
         self.middleware.call_sync('kerberos.kdestroy', {'ccache': 'TEMP'})
@@ -75,9 +85,9 @@ class ADHealthMixin:
         credentials it contains.
         """
         self.logger.warning('Attempting to recover from broken or missing AD secrets file')
-        config = self.middleware.call_sync('activedirectory.config')
+        config = self.middleware.call_sync('directoryservices.config')
         smb_config = self.middleware.call_sync('smb.config')
-        domain_info = get_domain_info(config['domainname'])
+        domain_info = get_domain_info(ds_config['configuration']['domain'])
 
         if not self.middleware.call_sync('directoryservices.secrets.restore', smb_config['netbiosname']):
             raise CallError(
@@ -133,9 +143,9 @@ class ADHealthMixin:
         # We should validate some basic AD configuration before the common
         # kerberos health checks. This will expose issues with clock slew
         # and invalid stored machine account passwords
-        config = self.middleware.call_sync('activedirectory.config')
+        config = self.middleware.call_sync('directoryservices.config')
         try:
-            domain_info = get_domain_info(config['domainname'])
+            domain_info = get_domain_info(config['configuration']['domain'])
         except Exception:
             domain_info = None
 

@@ -110,17 +110,7 @@ class IPAJoinMixin:
         # At this point we can start removing local configuration
         job.set_progress(50, 'Disabling LDAP service.')
 
-        # This disables the LDAP service and cancels any in progress cache
-        # jobs
-        ldap_update_job = self.middleware.call_sync('ldap.update', {
-            'binddn': '',
-            'bindpw': '',
-            'kerberos_principal': '',
-            'kerberos_realm': None,
-            'enable': False,
-        })
-
-        ldap_update_job.wait_sync()
+        self.middleware.call_sync('directoryservices.reset')
 
         self._ipa_remove_kerberos_cert_config(job, ldap_config)
 
@@ -415,7 +405,7 @@ class IPAJoinMixin:
         return resp
 
     @kerberos_ticket
-    def _ipa_join(self, job: Job, ds_type: DSType, domain: str):
+    def _ipa_join(self, job: Job, ds_config: dict):
         """
         This method performs all the steps required to join TrueNAS to an
         IPA domain and update our TrueNAS configuration with details gleaned
@@ -429,17 +419,15 @@ class IPAJoinMixin:
         5. updated samba's secrets.tdb to contain the info from SMB keytab
         6. backed up samba's secrets.tdb
         """
-        ldap_config = self.middleware.call_sync('ldap.config')
-        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
         self.__ipa_smb_domain = undefined
 
         job.set_progress(15, 'Performing IPA join')
         resp = self._ipa_join_impl(
-            ipa_config['host'],
-            ipa_config['basedn'],
-            ipa_config['domain'],
-            ipa_config['realm'],
-            ipa_config['target_server']
+            ds_config['configuration']['host'],
+            ds_config['configuration']['basedn'],
+            ds_config['configuration']['domain'],
+            ds_config['configuration']['realm'],
+            ds_config['configuration']['host']
         )
         # resp includes `cacert` for domain and `keytab` for our host principal to use
         # in future.
@@ -450,7 +438,7 @@ class IPAJoinMixin:
 
         # make sure database also has the IPA realm
         ipa_realm = self.middleware.call_sync('kerberos.realm.query', [
-            ['realm', '=', ipa_config['realm']]
+            ['realm', '=', config['realm']]
         ])
         if ipa_realm:
             ipa_realm_id = ipa_realm[0]['id']

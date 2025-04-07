@@ -155,8 +155,16 @@ class ADJoinMixin:
 
         return dc_info
 
-    def _ad_leave(self, job: Job, ds_type: DSType, domain: str):
+
+    def _ad_leave(self, job: Job, ds_config: dict):
         """ Delete our computer object from active directory """
+
+        # remove privileges
+        job.set_progress('Removing local domain admin privilege from TrueNAS')
+        try:
+            self._ad_remove_privileges(ds_config)
+        except Exception:
+            self.logger.warning('Failed to remove domain admins privilege')
 
         # remove all samba keytabs
         for file in os.listdir(SAMBA_KEYTAB_DIR):
@@ -164,6 +172,7 @@ class ADJoinMixin:
 
         username = str(gss_get_current_cred(krb5ccache.SYSTEM.value).name)
 
+        job.set_progress('Removing machine account from Active Directory')
         netads = subprocess.run([
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
@@ -176,6 +185,35 @@ class ADJoinMixin:
                 'Failed to cleanly leave domain. Further action may be required '
                 'by an Active Directory administrator: %s', netads.stderr.decode()
             )
+
+        # Above step nukes our secrets file so we can forcibly overwrite our secrets backup
+        try:
+            self.middleware.call_sync('directoryservices.secrets.backup')
+        except Exception:
+            self.logger.debug('Failed to remove stale secrets', exc_info=True)
+
+        dns_name = f'{ds_config["configuration"]["hostname"]}@{ds_config["configuration"]["domain"]}'
+        if ds_config['enable_dns_updates']:
+            job.set_progress('Unregistering from active directory DNS')
+            try:
+                self.unregister_dns(dns_name, True)
+            except Exception:
+                # We're committed now and so we need to finish up our local reconfiguration 
+                self.logger.warning('Failed to unregister from active directory DNS. Manual cleanup required', exc_info=True)
+
+        job.set_progress('Removing local configuration')
+        self.middleware.call_sync('directoryservices.reset')
+
+        # Remove the AD kerberos principal
+        princ = self.middleware.call_sync('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']])
+        if princ:
+            self.middleware.call_sync('datastore.delete', 'directoryservice.kerberoskeytab', princ[0]['id'])
+
+        # Remove the AD kerberos realm
+        if ds_config['kerberos_realm']:
+            realm = self.middleware.call_sync('kerberos_realm.query', [['realm', '=', ds_config['kerberos_realm']]])
+            if realm:
+                self.middleware.call_sync('datastore.delete', 'directoryservice.kerberosrealm', realm[0]['id'])
 
     @kerberos_ticket
     def _ad_set_spn(self, netbiosname, domainname):
@@ -265,12 +303,22 @@ class ADJoinMixin:
                 'TrueNAS API.', exc_info=True
             )
 
+    def _ad_remove_privileges(self, ds_config: dict) -> None:
+        priv = self.middleware.call_sync('privilege.query', [['name', '=', ds_config['configuration']['domain']]])
+        if not priv:
+            return
+
+        self.middleware.call('privilege.delete', priv[0]['id'])
+
     def _ad_post_join_actions(self, job: Job, conf: dict):
         self._ad_set_spn(conf['netbiosname'], conf['domainname'])
         # The password in secrets.tdb has been replaced so make
         # sure we have it backed up in our config.
         self.middleware.call_sync('directoryservices.secrets.backup')
-        self.middleware.call_sync('activedirectory.register_dns')
+
+        if conf['enable_dns_updates']:
+            # Register forward + reverse
+            self.register_dns(conf['dns_name'], True)
 
         # start up AD service, but skip kerberos start for now
         self._ad_activate(False)
@@ -281,6 +329,8 @@ class ADJoinMixin:
         If post-join operations fail, then we attempt to roll back changes on
         the DC.
         """
+        domain = conf['configuration']['domain']
+        computer_account_ou = conf['configuration']['computer_account_ou']
         cmd = [
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
@@ -289,12 +339,11 @@ class ADJoinMixin:
             'ads', 'join',
         ]
 
-        if conf['createcomputer']:
-            cmd.append(f'createcomputer={conf["createcomputer"]}')
+        if conf['computer_account_ou']:
+            cmd.append(f'createcomputer={computer_account_ou}')
 
-        cmd.extend([
-            '--no-dns-updates', conf['domainname']
-        ])
+        # we perform DNS updates as-needed in post_join_actions
+        cmd.extend(['--no-dns-updates', domain ])
 
         netads = subprocess.run(cmd, check=False, capture_output=True)
         if netads.returncode != 0:
@@ -313,13 +362,16 @@ class ADJoinMixin:
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
             # roll back and present user with error
-            self._ad_leave(job, DSType.AD, conf['domainname'])
+            self._ad_leave(job, DSType.AD, domain)
             self.middleware.call_sync('idmap.gencache.flush')
             raise e from None
 
     @kerberos_ticket
-    def _ad_join(self, job: Job, ds_type: DSType, domain: str):
-        ad_config = self.middleware.call_sync('activedirectory.config')
+    def _ad_join(self, job: Job, ds_config: dict):
+        assert ds_config['service_type'] == 'ACTIVEDIRECTORY', 'Unexpected service configuration'
+        domain = ds_config['configuration']['domain']
+        realm_id = None
+
         smb = self.middleware.call_sync('smb.config')
         workgroup = smb['workgroup']
 
@@ -329,7 +381,7 @@ class ADJoinMixin:
                 'through the active storage controller and if high availability is healthy.'
             )
 
-        dc_info = self._ad_lookup_dc(ad_config['domainname'])
+        dc_info = self._ad_lookup_dc(domain)
 
         job.set_progress(0, 'Preparing to join Active Directory')
         self.middleware.call_sync('etc.generate', 'smb')
@@ -340,27 +392,25 @@ class ADJoinMixin:
         and use the kerberos ticket to execute 'net ads' commands.
         """
         job.set_progress(5, 'Configuring Kerberos Settings.')
-        if not ad_config['kerberos_realm']:
+        if not ds_config['kerberos_realm']:
             try:
                 realm_id = self.middleware.call_sync(
                     'kerberos.realm.query',
-                    [('realm', '=', ad_config['domainname'])],
+                    [('realm', '=', domain])],
                     {'get': True}
                 )['id']
             except MatchNotFound:
                 realm_id = self.middleware.call_sync(
                     'datastore.insert', 'directoryservice.kerberosrealm',
-                    {'krb_realm': ad_config['domainname'].upper()}
+                    {'krb_realm': domain.upper()}
                 )
-
-            self.middleware.call_sync(
-                'datastore.update', 'directoryservice.activedirectory', ad_config['id'],
-                {"kerberos_realm": realm_id}, {'prefix': 'ad_'}
-            )
-            ad_config['kerberos_realm'] = realm_id
+        else:
+            realm_id = self.middleware.call_sync('kerberos.realm.query', [
+                ['realm', '=', ds_config['realm']]
+            ], {'get': True})['id']
 
         job.set_progress(20, 'Detecting Active Directory Site.')
-        site = ad_config['site'] or dc_info['client_site_name']
+        site = ds_config['site'] or dc_info['client_site_name']
 
         job.set_progress(30, 'Detecting Active Directory NetBIOS Domain Name.')
         if workgroup != dc_info['pre-win2k_domain']:
@@ -369,44 +419,55 @@ class ADJoinMixin:
             })
             workgroup = dc_info['pre-win2k_domain']
 
+        # Update datastore with credential information. We do this before the
+        # actual join so that correct kerberos information gets inserted into SMB config
+        dns_name = f'{smb["netbiosname"]}@{domain}'
+        machine_acct = f'{smb["netbiosname"].upper()}$@{domain}'
+        krb_cred = {'credential_type': 'KERBEROS_PRINCIPAL', 'kerberos_princpal': machine_acct}
+        self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], {
+            'cred_type': 'KERBEROS_PRINCIPAL',
+            'cred_krb5': cred,
+            'ad_site': site,
+            'kerberos_realm_id': realm_id
+        })
+
         # Ensure smb4.conf has correct workgorup.
         self.middleware.call_sync('etc.generate', 'smb')
 
         job.set_progress(50, 'Performing domain join.')
-        self._ad_join_impl(job, ad_config)
-        machine_acct = f'{ad_config["netbiosname"].upper()}$@{ad_config["domainname"]}'
-        self.middleware.call_sync('datastore.update', 'directoryservice.activedirectory', ad_config['id'], {
-            'kerberos_principal': machine_acct,
-            'site': site,
-            'kerberos_realm': ad_config['kerberos_realm']
-        }, {'prefix': 'ad_'})
+        self._ad_join_impl(job, ds_config | {'dns_name': dns_name})
+
+        # Get updated config
+        ds_config = self.middleware.call_sync('directoryservices.config')
 
         job.set_progress(75, 'Performing kinit using new computer account.')
         # Remove our temporary administrative ticket and replace with machine account.
         # Sysvol replication may not have completed (new account only exists on the DC we're
         # talking to) and so during this operation we need to hard-code which KDC we use for
         # the new kinit.
-        domain_info = self._ad_domain_info(ad_config['domainname'])
-        cred = self.middleware.call_sync('kerberos.get_cred', {
-            'dstype': DSType.AD.value,
-            'conf': {
-                'domainname': ad_config['domainname'],
-                'kerberos_principal': machine_acct,
-            }
-        })
+        domain_info = self._ad_domain_info(domain)
 
         # remove admin ticket
         self.middleware.call_sync('kerberos.kdestroy')
 
         # remove stub krb5.conf to allow overriding with fix on KDC
-        os.remove('/etc/krb5.conf')
+        krbconf = KRB5Conf()
+        krbconf.add_libdefaults({
+            str(KRB_LibDefaults.DEFAULT_REALM): ds_config['kerberos_realm'],
+            str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
+            str(KRB_LibDefaults.FORWARDABLE): 'true',
+            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
+        })
+        krbconf.add_realms([{
+            'realm': ds_config['kerberos_realm'],
+            'admin_server': [],
+            'kdc': domain_info['kdc_server'],
+            'kpasswd_server': [],
+        }])
+        krbconf.write()
+
         try:
-            self.middleware.call_sync('kerberos.do_kinit', {
-                'krb5_cred': cred,
-                'kinit-options': {
-                    'kdc_override': {'domain': ad_config['domainname'], 'kdc': domain_info['kdc_server']}
-                }
-            })
+            kinit_with_cred(krb_cred)
         except KRB5Error:
             # Attempt to kinit against DC we were talking to failed and so we'll switch to generic
             # kinit loop to wait for things to settle.
