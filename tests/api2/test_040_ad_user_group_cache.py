@@ -9,7 +9,7 @@ sys.path.append(apifolder)
 from functions import SSH_TEST
 from auto_config import password, user
 from middlewared.service_exception import CallError
-from middlewared.test.integration.assets.directory_service import active_directory
+from middlewared.test.integration.assets.directory_service import directory_service 
 from middlewared.test.integration.utils import call
 
 
@@ -18,7 +18,7 @@ WINBIND_SEPARATOR = "\\"
 
 @pytest.fixture(scope="module")
 def do_ad_connection(request):
-    with active_directory() as ad:
+    with directoryservices('ACTIVEDIRECTORY') as ad:
         # make sure we are extra sure cache fill complete
         cache_fill_job = call(
             'core.get_jobs',
@@ -46,10 +46,11 @@ def do_ad_connection(request):
 
 
 def get_ad_user_and_group(ad_connection):
-    WORKGROUP = ad_connection['dc_info']['Pre-Win2k Domain']
+    domain_info = ad_connection['domain_info']
+    WORKGROUP = domain_info['domain_controller']['pre-win2k_domain']
 
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
-    ad_user = ad_connection['user_obj']['pw_name']
+    ad_user = ad_connection['account'].user_obj['pw_name']
     ad_group = f'{domain_prefix}domain users'
 
     user = call(

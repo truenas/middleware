@@ -14,7 +14,7 @@ from base64 import b64decode
 from protocols import nfs_share
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.assets.directory_service import active_directory
+from middlewared.test.integration.assets.directory_service import directory_service
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, AD_COMPUTER_OU
@@ -107,15 +107,9 @@ def add_kerberos_realm(realm_name):
 
 
 @pytest.fixture(scope="function")
-def do_ad_connection(request):
-    with active_directory(
-        AD_DOMAIN,
-        ADUSERNAME,
-        ADPASSWORD,
-        netbiosname=hostname,
-        createcomputer=AD_COMPUTER_OU,
-    ) as ad:
-        yield (request, ad)
+def do_ad_connection():
+    with directory_service('ACTIVEDIRECTORY') as ad:
+        yield ad
 
 
 def test_kerberos_keytab_and_realm(do_ad_connection):

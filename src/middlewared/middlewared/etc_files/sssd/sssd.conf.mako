@@ -1,38 +1,32 @@
 <%
     from middlewared.plugins.etc import FileShouldNotExist
-    from middlewared.plugins.ldap_ import constants, utils
+    from middlewared.utils.directoryservices import ldap_constants as constants
+    from middlewared.utils.directoryservices import ldap_utils as utils
     from middlewared.utils.directoryservices.constants import DSType
 
     ds_type = middleware.call_sync('directoryservices.status')['type']
+    ds_config = middleware.call_sync('directoryservices.config')
     if ds_type == DSType.LDAP.value:
-        ldap = middleware.call_sync('ldap.config')
         kerberos_realm = None
         aux = []
-        map_params = utils.attribute_maps_data_to_params(ldap[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME])
-        search_params = utils.search_base_data_to_params(ldap[constants.LDAP_SEARCH_BASES_SCHEMA_NAME])
+        map_params = utils.attribute_maps_data_to_params(ds_config['configuration']['attribute_maps'])
+        search_params = utils.search_base_data_to_params(ds_config['configuration']['search_bases'])
         min_uid = 1000
         kerberos_realm = None
         certpath = None
-        if ldap['certificate']:
+        if ds_config['credential']['credential_type'] == 'LDAP_MTLS':
             try:
-                cert = middleware.call_sync('certificate.query', [('id', '=', ldap['certificate'])], {'get': True})
-            except IndexError:
-                pass
+                cert = middleware.call_sync('certificate.query', [
+                    ('cert_name', '=', ds_config['credential']['client_certificate'])
+                ], {'get': True})
+            except Exception:
+                middleware.logger.error('Failed to retrieve client certificate', exc_info=True)
             else:
                 certpath = cert['certificate_path']
                 keypath = cert['privatekey_path']
-        if ldap['kerberos_realm']:
-            kerberos_realm = middleware.call_sync(
-                'kerberos.realm.query',
-                [('id', '=', ldap['kerberos_realm'])],
-                {'get': True}
-            )['realm']
 
-        ldap_enabled = ldap['enable']
-        domain = kerberos_realm or 'LDAP'
-
-        ldap_enabled = ldap['enable']
-        for param in ldap['auxiliary_parameters'].splitlines():
+        domain = ds_config['kerberos_realm'] or 'LDAP'
+        for param in (ds_config['configuration']['auxiliary_parameters'] or '').splitlines():
             param = param.strip()
             if not param.startswith('nss_min_uid'):
                 aux.append(param)
@@ -42,14 +36,7 @@
                 except Exception:
                     pass
 
-    elif ds_type == DSType.IPA.value:
-        ldap = middleware.call_sync('ldap.config')
-        try:
-            ipa_info = middleware.call_sync('ldap.ipa_config')
-        except Exception:
-            middleware.logger.debug("Failed to retrieve IPA config", exc_info=True)
-            raise FileShouldNotExist
-    else:
+    elif ds_type != DSType.IPA.value:
         raise FileShouldNotExist
 
 %>
@@ -62,9 +49,9 @@ config_file_version = 2
 [domain/${domain}]
 id_provider = ldap
 auth_provider = ldap
-ldap_uri = ${','.join(ldap['uri_list'])}
-ldap_search_base = ${ldap['basedn']}
-% if ldap['ssl'] == 'START_TLS':
+ldap_uri = ${','.join(ds_config['configuration']['server_urls'])}
+ldap_search_base = ${ds_config['configuration']['basedn']}
+% if ds_config['configuration']['starttls']:
 ldap_id_use_start_tls =  true
 % endif
 ldap_tls_cacert = /etc/ssl/certs/ca-certificates.crt
@@ -72,21 +59,21 @@ ldap_tls_cacert = /etc/ssl/certs/ca-certificates.crt
 ldap_tls_cert = ${certpath}
 ldap_tls_key = ${keypath}
 % endif
-ldap_tls_reqcert = ${'demand' if ldap['validate_certificates'] else 'allow'}
-% if ldap['binddn'] and ldap['bindpw']:
-ldap_default_bind_dn = ${ldap['binddn']}
-ldap_default_authtok = ${ldap['bindpw']}
+ldap_tls_reqcert = ${'demand' if ds_config['configuration']['validate_certificates'] else 'allow'}
+% if ds_config['credential']['credential_type'] == 'LDAP_PLAIN':
+ldap_default_bind_dn = ${ds_config['credential']['binddn']}
+ldap_default_authtok = ${ds_config['credential']['bindpw']}
 % endif
-enumerate = ${not ldap['disable_freenas_cache']}
+enumerate = ${ds_config['enable_account_cache']}
 % if kerberos_realm:
 ldap_sasl_mech = GSSAPI
 ldap_sasl_realm = ${kerberos_realm}
-  % if ldap['kerberos_principal']:
-ldap_sasl_authid = ${ldap['kerberos_principal']}
-  % endif
+% if ds_config['credential']['credential_type'] == 'KERBEROS_PRINCIPAL':
+ldap_sasl_authid = ${ds_config['credential']['principal']}
 % endif
-timeout = ${ldap['timeout']}
-ldap_schema = ${ldap['schema'].lower()}
+% endif
+timeout = ${ds_config['timeout']}
+ldap_schema = ${ds_config['configuration']['schema'].lower()}
 min_id = ${min_uid}
 ${'\n    '.join(search_params)}
 ${'\n    '.join(map_params)}
@@ -95,17 +82,17 @@ ${'\n    '.join(aux)}
 % endif
 % elif ds_type == DSType.IPA.value:
 [sssd]
-domains = ${ipa_info['domain']}
+domains = ${ds_config['configuration']['domain']}
 services = nss, pam
 
-[domain/${ipa_info['domain']}]
+[domain/${ds_config['configuration']['domain']}]
 id_provider = ipa
-ipa_server = _srv_, ${ipa_info['target_server']}
-ipa_domain = ${ipa_info['realm'].lower()}
-ipa_hostname = ${ipa_info['host'].lower()}
+ipa_server = _srv_, ${ds_config['configuration']['target_server']}
+ipa_domain = ${ds_config['configuration']['domain']}
+ipa_hostname = ${ds_config['configuration']['hostname']}
 auth_provider = ipa
 access_provider = ipa
 cache_credentials = True
 ldap_tls_cacert = /etc/ipa/ca.crt
-enumerate = ${not ldap['disable_freenas_cache']}
+enumerate = ${ds_config['enable_account_cache']}
 % endif

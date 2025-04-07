@@ -2,8 +2,14 @@ import copy
 import threading
 import ldap as pyldap
 
+from .constants import DSCredType
 from ldap.controls import SimplePagedResultsControl
-from middlewared.plugins.directoryservices import SSL
+"""
+from middlewared.api.base import (
+    BaseModel, LDAP_DN, LDAP_URL,
+    CredKRBUser, CredKRBPrincipal, CredLDAPPlain, CredLDAPAnonymous, CredLDAPMTLS,
+)
+"""
 
 client_lock = threading.RLock()
 
@@ -14,6 +20,17 @@ def ldap_client_lock(fn):
             return fn(*args, **kwargs)
 
     return inner
+
+
+"""
+class LDAPClientConfig(BaseModel):
+    server_urls: list[LDAP_URL]
+    basedn: LDAP_DN
+    credential: CredKRBUser | CredKRBPrincipal | CredLDAPPlain | CredLDAPAnonymous | CredLDAPMTLS
+    validate_certificates: bool
+    starttls: bool
+    timeout: int
+"""
 
 
 class LDAPClient:
@@ -27,11 +44,9 @@ class LDAPClient:
         pyldap.set_option(pyldap.OPT_REFERRALS, 0)
 
     def __setup_ssl(self, data):
-        if SSL(data['security']['ssl']) == SSL.NOSSL:
-            return
+        if data['credential']['credential_type'] == DSCredType.LDAP_MTLS:
+            cert = data['credential']['client_certificate']
 
-        cert = data['security']['client_certificate']
-        if cert:
             pyldap.set_option(
                 pyldap.OPT_X_TLS_CERTFILE,
                 f"/etc/certificates/{cert}.crt"
@@ -46,7 +61,7 @@ class LDAPClient:
             '/etc/ssl/certs/ca-certificates.crt'
         )
 
-        if data['security']['validate_certificates']:
+        if data['validate_certificates']:
             pyldap.set_option(
                 pyldap.OPT_X_TLS_REQUIRE_CERT,
                 pyldap.OPT_X_TLS_DEMAND
@@ -69,37 +84,42 @@ class LDAPClient:
 
             raise
 
-        pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['options']['dns_timeout'])
+        pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['timeout'])
 
         self.__setup_ssl(data)
-        if SSL(data['security']['ssl']) == SSL.USESTARTTLS:
+        if data['starttls']:
             try:
                 self._handle.start_tls_s()
-
             except Exception:
                 self._handle = None
                 if not raise_error:
                     return False
+
                 raise
 
         try:
-            if data['bind_type'] == 'ANONYMOUS':
-                bound = self._handle.simple_bind_s()
-            elif data['bind_type'] == 'EXTERNAL':
-                bound = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
-            elif data['bind_type'] == 'GSSAPI':
-                self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
-                self._handle.sasl_gssapi_bind_s()
-                bound = True
-            else:
-                bound = self._handle.simple_bind_s(
-                    data['credentials']['binddn'],
-                    data['credentials']['bindpw']
-                )
+            match data['credential']['credential_type']:
+                case DSCredType.LDAP_ANONYMOUS:
+                    bound = self._handle.simple_bind_s()
+                case DSCredType.LDAP_PLAIN:
+                    bound = self._handle.simple_bind_s(
+                        data['credential']['binddn'],
+                        data['credential']['bindpw']
+                    )
+                case DSCredType.LDAP_MTLS:
+                    self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                    bound = True
+                case DSCredType.KERBEROS_USER | DSCredType.KERBEROS_PRINCIPAL:
+                    self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
+                    self._handle.sasl_gssapi_bind_s()
+                    bound = True
+                case _:
+                    raise ValueError('Unhandled credential type')
         except Exception:
             self._handle = None
             if not raise_error:
                 return False
+
             raise
 
         return bound
@@ -123,12 +143,9 @@ class LDAPClient:
             self.close()
             self._handle = None
 
-        if not data['uri_list']:
-            raise ValueError("No URIs specified")
-
         saved_error = None
 
-        for server in data['uri_list']:
+        for server in data['server_urls']:
             try:
                 bound = self.__perform_bind(data, server)
             except Exception as e:
@@ -156,6 +173,25 @@ class LDAPClient:
             self._handle = None
             self.ldap_parameters = None
 
+    def parse_results(self, results):
+        res = []
+        for r in results:
+            parsed_data = {}
+            if len(r) > 1 and isinstance(r[1], dict):
+                for k, v in r[1].items():
+                    try:
+                        v = list(i.decode() for i in v)
+                    except Exception:
+                        v = list(str(i) for i in v)
+                    parsed_data.update({k: v})
+
+                res.append({
+                    'dn': r[0],
+                    'data': parsed_data
+                })
+
+        return res
+
     @ldap_client_lock
     def search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filterstr='', sizelimit=0):
         self.open(ldap_config)
@@ -182,7 +218,7 @@ class LDAPClient:
                     attrsonly=0,
                     serverctrls=serverctrls,
                     clientctrls=clientctrls,
-                    timeout=ldap_config['options']['timeout'],
+                    timeout=ldap_config['timeout'],
                     sizelimit=sizelimit
                 )
 
@@ -216,7 +252,7 @@ class LDAPClient:
 
             page += 1
 
-        return result
+        return self.parse_results(result)
 
 
 LdapClient = LDAPClient()

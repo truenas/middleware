@@ -377,19 +377,11 @@ class NFSService(SystemServiceService):
                 )
 
         if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
-            """
-            In environments with kerberized NFSv4 enabled, we need to tell winbindd to not prefix
-            usernames with the short form of the AD domain. Directly update the db and regenerate
-            the smb.conf to avoid having a service disruption due to restarting the samba server.
-            """
-            ad_config = await self.middleware.call('activedirectory.config')
-            if ad_config['enable'] and not ad_config['use_default_domain']:
-                await self.middleware.call(
-                    'datastore.update', 'directoryservice.activedirectory', ad_config['id'],
-                    {'use_default_domain': True}, {'prefix': 'ad_'}
-                )
-                await self.middleware.call('etc.generate', 'smb')
-                await (await self.middleware.call('service.control', 'RELOAD', 'idmap')).wait(raise_error=True)
+            # If we're using KRB5 + NFS then we need a v4_domain defined
+            # We can get this from the configured `kerberos_realm`.
+            ds_config = await self.middleware.call('directoryservices.config')
+            if ds_config["enable"] and ds_config["kerberos_realm"] and not new["v4_domain"]:
+                new["v4_domain"] = ds_config["kerberos_realm"]
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")

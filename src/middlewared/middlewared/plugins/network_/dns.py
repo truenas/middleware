@@ -33,6 +33,9 @@ class DNSNsUpdateOpAAAA(DNSNsUpdateOpA):
 
 @single_argument_args('data')
 class DNSNsUpdateArgs(BaseModel):
+    nameserver_override: str | None = None
+    """ Override the nameserver used for nsupdate command. This may be required in
+    more complex environments where the nameservers are also KDCs. """
     use_kerberos: bool = True
     ops: UniqueList[DNSNsUpdateOpA | DNSNsUpdateOpAAAA] = Field(min_length=1)
     timeout: int = 30
@@ -182,9 +185,18 @@ class DNSService(Service):
             if data['use_kerberos']:
                 cmd.append('-g')
 
-            cmd.append(tmpfile.name)
+            with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmp_resolvconf:
+                if data['nameserver_override']:
+                    ds = self.middleware.call_sync('directoryservices.config')
+                    if ds['service_type'] in ('ACTIVEDIRECTORY', 'IPA'):
+                        tmp_resolvconf.write(f'domain {ds["configuration"]["domain"]}\n'.encode())
 
-            nsupdate_proc = subprocess.run(cmd, capture_output=True)
+                    tmp_resolvconf.write(f'nameserver {data["nameserver_override"]}\n'.encode())
+                    tmp_resolvconf.flush()
+                    cmd.extend(['-C', tmp_resolvconf.name])
+
+                cmd.append(tmpfile.name)
+                nsupdate_proc = subprocess.run(cmd, capture_output=True)
 
             # tsig verify failure is possible if reverse zone is misconfigured
             # Unfortunately, this is quite common and so we have to skip it.
