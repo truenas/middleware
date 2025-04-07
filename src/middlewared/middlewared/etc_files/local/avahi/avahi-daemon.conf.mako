@@ -16,7 +16,6 @@
 <%
     from middlewared.utils import filter_list
 
-    hamode = middleware.call_sync('smb.get_smb_ha_mode')
     hostname_override = None
 
     failover_status = middleware.call_sync('failover.status')
