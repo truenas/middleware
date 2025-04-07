@@ -1,10 +1,10 @@
+import errno
 import ipaddress
 
 from .activedirectory_join_mixin import ADJoinMixin
 from .ipa_join_mixin import IPAJoinMixin
 from .ldap_join_mixin import LDAPJoinMixin
 from middlewared.job import Job
-from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
 from middlewared.service import job, Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DomainJoinResponse, DSType
@@ -25,15 +25,8 @@ class DomainConnection(
         private = True
 
     def _get_enabled_ds(self):
-        ad = self.middleware.call_sync('datastore.config', 'directoryservice.activedirectory')
-        if ad['ad_enable']:
-            return DSType.AD
-
-        ldap = self.middleware.call_sync('datastore.config', 'directoryservice.ldap')
-        if ldap['ldap_enable'] is False:
-            return None
-
-        return DSType.IPA if ldap['ldap_server_type'] == SERVER_TYPE_FREEIPA else DSType.LDAP
+        server_type = self.middleware.call_sync('directoryservices.config')['service_type']
+        return DSType(server_type)
 
     def activate(self) -> int:
         """ Generate etc files and start services, then start cache fill job and return job id """
@@ -111,12 +104,17 @@ class DomainConnection(
         elif dot not in fqdn:
             raise ValueError(f'{fqdn}: missing domain component of name')
 
-        ds_type_str = self.middleware.call_sync('directoryservices.status')['type']
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        if not ds_config['enable']:
+            raise CallError('Directory services must be enabled in order to register DNS')
+
+        if not ds_config['enable_dns_updates']:
+            raise CallError('DNS updates are disabled for the directory service')
+
+        ds_type_str = ds_config['service_type']
         match ds_type_str:
             case DSType.AD.value | DSType.IPA.value:
                 pass
-            case None:
-                raise CallError('Directory services must be enabled in order to register DNS')
             case _:
                 raise CallError(f'{ds_type_str}: directory service type does not support DNS registration')
 
@@ -136,14 +134,16 @@ class DomainConnection(
         elif dot not in fqdn:
             raise ValueError(f'{fqdn}: missing domain component of name')
 
-        ds_type_str = self.middleware.call_sync('directoryservices.status')['type']
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        if not ds_config['enable']:
+            raise CallError('Directory services must be enabled in order to deregister DNS')
+
+        ds_type_str = ds_config['service_type']
         match ds_type_str:
             case DSType.AD.value | DSType.IPA.value:
                 pass
-            case None:
-                raise CallError('Directory services must be enabled in order to unregister DNS')
             case _:
-                raise CallError(f'{ds_type_str}: directory service type does not support DNS registration')
+                raise CallError(f'{ds_type_str}: directory service type does not support DNS unregistration')
 
         if fqdn.startswith('localhost'):
             raise CallError(f'{fqdn}: Invalid domain name.')
@@ -183,18 +183,18 @@ class DomainConnection(
                 is_joined_fn = self._ipa_test_join
             case _:
                 raise CallError(
-                    f'{ds_type}: specified directory service type does not '
-                    'support domain join functionality.'
+                    f'{ds_type}: The configured directory service type does not support joining a domain.',
+                    errno.EOPNOTSUPP
                 )
 
-        return is_joined_fn(ds_type, domain)
+        return is_joined_fn(domain)
 
     @job(lock="directoryservices_join_leave")
     @kerberos_ticket
-    def join_domain(self, job: Job, ds_type_str: str, domain: str, force: bool = False) -> None:
+    def join_domain(self, job: Job, force: bool = False) -> None:
         """ Join an IPA or active directory domain
 
-        Create TrueNAS account on remote domain controller (DC) and clean
+        Create TrueNAS account on remote domain controller (DC) and
         update TrueNAS configuration to reflect settings determined during
         the join process. Requires a valid kerberos ticket for a privileged
         account on the domain because we performing operations on the DC.
@@ -203,11 +203,6 @@ class DomainConnection(
         clean state.
 
         Args:
-            ds_type_str: String value of the DSType to be joined. Supported
-                values are 'ACTIVEDIRECTORY' and 'IPA'
-            domain: Name of domain to be joined. For AD domains this should
-                be the pre-win2k domain, and for IPA domains the kerberos
-                realm.
             force: Skip the step where we check whether TrueNAS is already
                 joined to the domain. Join should not be forced without very
                 good reason as this will cause auditing events on the domain
@@ -215,18 +210,17 @@ class DomainConnection(
 
         Returns:
             str - One of DomainJoinResponse strings
-
-        Raises:
-            ValueError - ds_type_str is an invalid DSType
         """
 
-        ds_type = DSType(ds_type_str)
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        ds_type = DSType(ds_config['service_type'])
+        domain = ds_config['configuration']['domain']
 
         if not force:
             if self._test_is_joined(ds_type, domain):
                 self.logger.debug(
                     '%s: server is already joined to domain %s',
-                    ds_type_str, domain
+                    ds_type, domain
                 )
                 return DomainJoinResponse.ALREADY_JOINED.value
 
@@ -237,11 +231,11 @@ class DomainConnection(
                 do_join_fn = self._ipa_join
             case _:
                 raise CallError(
-                    f'{ds_type}: specified directory service type does not '
-                    'support domain join functionality.'
+                    f'{ds_type}: The configured directory service type does not support joining a domain.',
+                    errno.EOPNOTSUPP
                 )
 
-        do_join_fn(job, ds_type, domain)
+        do_join_fn(job, ds_config)
         return DomainJoinResponse.PERFORMED_JOIN.value
 
     def grant_privileges(self, ds_type_str: str, domain: str) -> None:
@@ -252,15 +246,26 @@ class DomainConnection(
 
         match ds_type:
             case DSType.AD:
-                self._ad_grant_privileges()
+                self._ad_grant_privileges(domain)
             case DSType.IPA:
-                self._ipa_grant_privileges()
+                self._ipa_grant_privileges(domain)
             case _:
                 raise ValueError(f'{ds_type}: unexpected directory sevice type')
 
+    def remove_privileges(self, domain: str) -> None:
+        if not (priv := self.middleware.call_sync('privilege.query', [['name', '=', domain]])):
+            return
+
+        if priv[0]['local_groups']:
+            self.logger.warning('%s: cannot remove the RBAC privilege for the domain because '
+                                'local accounts use the privilege.', domain)
+            return
+
+        self.middleware.call_sync('privilege.delete', priv[0]['id'])
+
     @job(lock="directoryservices_join_leave")
     @kerberos_ticket
-    def leave_domain(self, job: Job, ds_type_str: str, domain: str) -> None:
+    def leave_domain(self, job: Job) -> None:
         """ Leave an IPA or active directory domain
 
         Remove TrueNAS configuration from remote domain controller (DC) and clean
@@ -268,39 +273,44 @@ class DomainConnection(
         account on the domain because we performing operations on the DC.
 
         Args:
-            ds_type_str: String value of the DSType to be left. Supported
-                values are 'ACTIVEDIRECTORY' and 'IPA'
-            domain: Name of domain to be left. For AD domains this should
-                be the pre-win2k domain, and for IPA domains the kerberos
-                realm.
+            None
 
         Returns:
             None
 
         Raises:
-            ValueError - ds_type_str is an invalid DSType
+            CallError - directory service does not support join / leave operations.
+                        errno will be set to EOPNOTSUPP
+            CallError - the current domain join is not healthy. Configuration was automatically
+                        cleared. errno will be set to EFAULT
         """
 
-        ds_type = DSType(ds_type_str)
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        ds_type = DSType(ds_config['service_type'])
 
         match ds_type:
             case DSType.AD:
                 do_leave_fn = self._ad_leave
+                do_cleanup_fn = self._ad_cleanup
             case DSType.IPA:
                 do_leave_fn = self._ipa_leave
+                do_cleanup_fn = self._ipa_cleanup
             case _:
                 raise CallError(
-                    f'{ds_type}: specified directory service type does not '
-                    'support domain join functionality.'
+                    f'{ds_type}: The configured directory service type does not support leaving a domain.',
+                    errno.EOPNOTSUPP
                 )
 
+        domain = ds_config['configuration']['domain']
+        self.remove_privileges(domain)
         # Only make actual attempt to leave the domain if we have a valid join
         if self._test_is_joined(ds_type, domain):
-            do_leave_fn(job, ds_type, domain)
+            do_leave_fn(job, ds_config)
         else:
-            self.logger.warning(
-                '%s: domain join is not healthy. Manual cleanup of machine account on '
-                'remote domain controller for domain may be required.', domain
+            # There's not much we can do to recover from this and so we'll just rip out old configuration
+            # server-side and complain to admin that they may need to clean up.
+            do_cleanup_fn(job, ds_config)
+            raise CallError(
+                f'{domain}: The domain join is not healthy. This prevents the TrueNAS server from leaving the domain. '
+                'You may need to manually clean up the machine account on the remote domain controller.'
             )
-
-        # TODO move cleanup methods here

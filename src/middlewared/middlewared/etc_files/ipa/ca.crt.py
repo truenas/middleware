@@ -5,7 +5,7 @@ from middlewared.utils.directoryservices.constants import DSType
 
 def render(service, middleware, render_ctx):
 
-    if render_ctx['directoryservices.status']['type'] != DSType.IPA.value:
+    if render_ctx['directoryservices.config']['service_type'] != DSType.IPA.value:
         raise FileShouldNotExist()
 
     cert = middleware.call_sync('certificate.query', [[
