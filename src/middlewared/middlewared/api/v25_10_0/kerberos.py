@@ -103,7 +103,7 @@ class KerberosRealmCreate(KerberosRealmEntry):
     id: Excluded = excluded_field()
 
 
-class KerberosRealmCreateArgs(KerberosRealmCreate):
+class KerberosRealmCreateArgs(BaseModel):
     data: KerberosRealmCreate
 
 
