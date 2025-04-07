@@ -1,4 +1,7 @@
-from middlewared.schema import Str, Ref, Int, Dict, Bool, accepts
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
+from middlewared.api.current import GroupEntry, UserEntry
+from pydantic import Field, model_validator
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
@@ -17,6 +20,55 @@ from .util_cache import (
 )
 
 from time import sleep
+from typing import Literal, Self
+
+
+dscache_idtype = Literal['USER', 'GROUP']
+
+
+class DscachePrincipalInfo(BaseModel):
+    idtype: dscache_idtype
+    who: str | None = None
+    xid: int | None = Field(alias='id', default=None)
+
+    @model_validator(mode='after')
+    def check_identifier(self) -> Self:
+        if self.who is None and self.id is None:
+            raise ValueError('who or id required')
+
+        return self
+
+
+class DscacheInsertArgs(BaseModel):
+    idtype: dscache_idtype
+    cache_entry: UserEntry | GroupEntry
+
+
+class DscacheInsertResult(BaseModel):
+    result: None
+
+
+class DscacheRetrieveOptions(BaseModel):
+    smb: bool = True
+
+
+class DscacheRetrieveArgs(BaseModel):
+    principal_info: DscachePrincipalInfo
+    options: DscacheRetrieveOptions = Field(default=DscacheRetrieveOptions())
+
+
+class DscacheRetrieveResult(BaseModel):
+    result: UserEntry | GroupEntry | None
+
+
+class DscacheQueryArgs(BaseModel):
+    idtype: dscache_idtype = 'USER'
+    filters: list = []
+    options: dict = {}
+
+
+class DscacheQueryResult(BaseModel):
+    result: list[UserEntry | GroupEntry]
 
 
 class DSCache(Service):
@@ -25,10 +77,7 @@ class DSCache(Service):
         namespace = 'directoryservices.cache'
         private = True
 
-    @accepts(
-        Str('idtype', enum=['USER', 'GROUP'], required=True),
-        Dict('cache_entry', additional_attrs=True),
-    )
+    @api_method(DscacheInsertArgs, DscacheInsertResult, private=True)
     def _insert(self, idtype, entry):
         """
         Internal method to insert an entry into cache. Only consumers should be in this
@@ -45,18 +94,7 @@ class DSCache(Service):
             case _:
                 raise ValueError(f'{id_type}: unexpected ID type')
 
-    @accepts(
-        Dict(
-            'principal_info',
-            Str('idtype', enum=['USER', 'GROUP']),
-            Str('who'),
-            Int('id'),
-        ),
-        Dict(
-            'options',
-            Bool('smb', default=False)
-        )
-    )
+    @api_method(DscacheRetrieveArgs, DscacheRetrieveResult, private=True)
     def _retrieve(self, data, options):
         """
         Internal method to retrieve an entry from cache. If the entry does not exist then
@@ -129,11 +167,7 @@ class DSCache(Service):
 
         return entry
 
-    @accepts(
-        Str('id_type', enum=['USER', 'GROUP'], default='USER'),
-        Ref('query-filters'),
-        Ref('query-options'),
-    )
+    @api_method(DscacheQueryArgs, DscacheQueryResult, private=True)
     def query(self, id_type, filters, options):
         """
         Query User / Group cache with `query-filters` and `query-options`.
