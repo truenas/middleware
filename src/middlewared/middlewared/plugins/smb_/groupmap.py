@@ -11,6 +11,7 @@ from middlewared.utils.sid import (
     lsa_sidtype,
     sid_is_valid,
     BASE_RID_USER,
+    WellKnownSid,
     DomainRid
 )
 from middlewared.utils.tdb import (
@@ -34,6 +35,10 @@ from middlewared.plugins.smb_.util_groupmap import (
 
 WINBINDD_AUTO_ALLOCATED = ('S-1-5-32-544', 'S-1-5-32-545', 'S-1-5-32-546')
 WINBINDD_WELL_KNOWN_PADDING = 100
+MAPPED_WELL_KNOWN_SIDS_CNT = len([s for s in WellKnownSid if s.valid_for_mapping])
+# Simple sanity check that we haven't added hard-coded mappings for well-known-sids that
+# exceed the space we've reserved in tdb file for them.
+assert MAPPED_WELL_KNOWN_SIDS_CNT + len(WINBINDD_AUTO_ALLOCATED) < WINBINDD_WELL_KNOWN_PADDING
 
 WINBIND_IDMAP_CACHE = f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb'
 WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
@@ -239,9 +244,11 @@ class SMBService(Service):
             tdb_handle.transaction_start()
             group_hwm_bytes = tdb_handle.get(b'GROUP HWM\00')
             hwm = struct.unpack("<L", group_hwm_bytes)[0]
-            if hwm < low_range + len_wb_groups + len(builtins):
-                hwm = low_range + len_wb_groups + len(builtins) + WINBINDD_WELL_KNOWN_PADDING
-                new_hwm_bytes = struct.pack("<L", hwm)
+            min_hwm = low_range + WINBINDD_WELL_KNOWN_PADDING
+            # We need to keep some space available for any new winbindd entries we want
+            # to have hard-coded relative mappings in the idmap.tdb file
+            if hwm < min_hwm:
+                new_hwm_bytes = struct.pack("<L", min_hwm)
                 tdb_handle.store(b'GROUP HWM\00', new_hwm_bytes)
                 must_reload = True
 

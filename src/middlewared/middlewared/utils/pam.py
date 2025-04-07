@@ -270,7 +270,11 @@ AD_SESSION = PAMConfLines(
         PAMLine(
             pam_service=PAMService.SESSION,
             pam_control=PAMSimpleControl.OPTIONAL,
-            pam_module=PAMModule.WINBIND
+            pam_module=PAMModule.WINBIND,
+            # We have pam_winbind handle mkhomedir because pam_mkhomedir
+            # is erratic for automatic home directory creation for AD users.
+            # This is simpler than fixing pam_mkhomedir.
+            pam_module_args=('mkhomedir',)
         ),
     )
 )

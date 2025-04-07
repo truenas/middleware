@@ -33,6 +33,8 @@ class DNSNsUpdateOpAAAA(DNSNsUpdateOpA):
 
 @single_argument_args('data')
 class DNSNsUpdateArgs(BaseModel):
+    """ Override the nameserver used for nsupdate command. This may be required in
+    more complex environments where the nameservers are also KDCs. """
     use_kerberos: bool = True
     ops: UniqueList[DNSNsUpdateOpA | DNSNsUpdateOpAAAA] = Field(min_length=1)
     timeout: int = 30
@@ -183,7 +185,6 @@ class DNSService(Service):
                 cmd.append('-g')
 
             cmd.append(tmpfile.name)
-
             nsupdate_proc = subprocess.run(cmd, capture_output=True)
 
             # tsig verify failure is possible if reverse zone is misconfigured

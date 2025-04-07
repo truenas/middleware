@@ -5,7 +5,8 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
     accepts, LDAP_DN
 )
-from middlewared.plugins.ldap_ import constants, utils
+from middlewared.utils.directoryservices import ldap_constants as constants
+from middlewared.utils.directoryservices import ldap_utils as utils
 
 FREEIPA_SAMPLE_SEARCH_BASE = {
     "base_user": "cn=users,cn=accounts,dc=tn,dc=ixsystems,dc=net",
@@ -23,7 +24,6 @@ FREEIPA_SAMPLE_ATTR_MAPS = {
         "user_shell": None
     },
     "shadow": {
-        "shadow_object_class": None,
         "shadow_last_change": None,
         "shadow_min": None,
         "shadow_max": None,
@@ -48,6 +48,7 @@ NONE_SAMPLE_SEARCH_BASE = {
     "base_group": None,
     "base_netgroup": None
 }
+
 
 @pytest.mark.parametrize('value,expected', [
     ('o=5def63d2b12d4332c706a57f,dc=jumpcloud,dc=com', 'o=5def63d2b12d4332c706a57f,dc=jumpcloud,dc=com'),
