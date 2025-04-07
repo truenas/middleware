@@ -2,12 +2,12 @@
         from middlewared.plugins.network_.global_config import HOSTS_FILE_EARMARKER
 
 	network_config = middleware.call_sync('network.configuration.config')
-	ad_config = middleware.call_sync('datastore.config', 'directoryservice.activedirectory')
+        ds_config = middleware.call_sync('directoryservices.config')
 	hostname = network_config['hostname_local']
 	domain_name = network_config['domain']
-	if ad_config['ad_enable']:
-		hostname = middleware.call_sync('smb.config')['netbiosname'].lower()
-		domain_name = ad_config['ad_domainname'].lower()
+        if ds_config['enable'] and ds_config['service_type'] in ('ACTIVEDIRECTORY', 'IPA'):
+            hostname = ds_config['configuration']['hostname'].lower()
+            domain_name = ds_config['configuration']['domain'].lower()
 %>
 127.0.0.1	${hostname}.${domain_name} ${hostname}
 127.0.0.1	localhost

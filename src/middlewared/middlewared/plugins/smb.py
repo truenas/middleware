@@ -33,7 +33,6 @@ from middlewared.plugins.smb_.constants import (
     SMB_AUDIT_DEFAULTS,
     INVALID_SHARE_NAME_CHARACTERS,
     RESERVED_SHARE_NAMES,
-    SMBHAMODE,
     SMBCmd,
     SMBPath,
     SMBSharePreset
@@ -125,38 +124,13 @@ class SMBService(ConfigService):
 
     @private
     def generate_smb_configuration(self):
-        if self.middleware.call_sync('failover.status') not in ('SINGLE', 'MASTER'):
-            return {'netbiosname': 'TN_STANDBY', 'SHARES': {}}
+        if self.middleware.call_sync('failover.status') in ('SINGLE', 'MASTER'):
+            smb_shares = self.middleware.call_sync('sharing.smb.query')
+        else:
+            # Do not include SMB shares in configuration on standby controller
+            smb_shares = []
 
-        if (ds_type := self.middleware.call_sync('directoryservices.status')['type']) is not None:
-            ds_type = DSType(ds_type)
-
-        match ds_type:
-            case DSType.AD:
-                ds_config = self.middleware.call_sync('activedirectory.config')
-            case DSType.IPA:
-                ds_config = self.middleware.call_sync('ldap.config')
-                try:
-                    ipa_domain = self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
-                except Exception:
-                    ipa_domain = None
-                try:
-                    ipa_config = self.middleware.call_sync('ldap.ipa_config')
-                except Exception:
-                    self.middleware.logger.warning(
-                        'Failed to retrieve IPA configuration. Disabling IPA SMB support',
-                        exc_info=True
-                    )
-                    ipa_config = {}
-                    ipa_domain = None
-
-                ds_config |= {'ipa_domain': ipa_domain, 'ipa_config': ipa_config}
-            case DSType.LDAP:
-                ds_config = self.middleware.call_sync('ldap.config')
-            case _:
-                ds_config = None
-
-        idmap_config = self.middleware.call_sync('idmap.query')
+        ds_config = self.middleware.call_sync('directoryservices.config')
         smb_config = self.middleware.call_sync('smb.config')
         smb_shares = self.middleware.call_sync('sharing.smb.query')
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
@@ -164,12 +138,10 @@ class SMBService(ConfigService):
         security_config = self.middleware.call_sync('system.security.config')
 
         return generate_smb_conf_dict(
-            ds_type,
             ds_config,
             smb_config,
             smb_shares,
             bind_ip_choices,
-            idmap_config,
             is_enterprise,
             security_config,
         )
@@ -181,9 +153,8 @@ class SMBService(ConfigService):
         Addresses assigned by DHCP are excluded from the results.
         """
         choices = {}
-        ha_mode = await self.get_smb_ha_mode()
 
-        if ha_mode == 'UNIFIED':
+        if await self.middleware.call('failover.licensed'):
             master, backup, init = await self.middleware.call('failover.vip.get_states')
             for master_iface in await self.middleware.call('interface.query', [["id", "in", master + backup]]):
                 for i in master_iface['failover_virtual_aliases']:
@@ -206,23 +177,6 @@ class SMBService(ConfigService):
         return [dom['netbios_domain'] for dom in domains]
 
     @private
-    async def store_ldap_admin_password(self):
-        """
-        This is required if the LDAP directory service is enabled. The ldap admin dn and
-        password are stored in private/secrets.tdb file.
-        """
-        ldap = await self.middleware.call('ldap.config')
-        if not ldap['enable']:
-            return True
-
-        set_pass = await run([SMBCmd.SMBPASSWD.value, '-w', ldap['bindpw']], check=False)
-        if set_pass.returncode != 0:
-            self.logger.debug(f"Failed to set set ldap bindpw in secrets.tdb: {set_pass.stdout.decode()}")
-            return False
-
-        return True
-
-    @private
     def getparm(self, parm, section):
         """
         Get a parameter from the smb4.conf file. This is more reliable than
@@ -230,11 +184,6 @@ class SMBService(ConfigService):
         conditions without returning the parameter's value.
         """
         return smbconf_getparm(parm, section)
-
-    @private
-    async def get_next_rid(self, objtype, id_):
-        base_rid = 20000 if objtype == 'USER' else 200000
-        return base_rid + id_
 
     @private
     async def setup_directories(self):
@@ -248,7 +197,6 @@ class SMBService(ConfigService):
                 if spec.is_dir():
                     os.mkdir(path, spec.mode())
 
-        await self.reset_smb_ha_mode()
         await self.middleware.call('etc.generate', 'smb')
 
         for p in SMBPath:
@@ -338,16 +286,7 @@ class SMBService(ConfigService):
         if they are missing from the current running configuration.
         """
         job.set_progress(65, 'Initializing directory services')
-        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
-        if ad_enabled:
-            ldap_enabled = False
-        else:
-            ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
-
-        ds_job = await self.middleware.call(
-            "directoryservices.initialize",
-            {"activedirectory": ad_enabled, "ldap": ldap_enabled}
-        )
+        ds_job = await self.middleware.call("directoryservices.initialize")
         await ds_job.wait()
 
         job.set_progress(70, 'Checking SMB server status.')
@@ -391,26 +330,6 @@ class SMBService(ConfigService):
         conf_job = await self.middleware.call("smb.configure")
         await conf_job.wait(raise_error=True)
         return True
-
-    @private
-    async def get_smb_ha_mode(self):
-        try:
-            return await self.middleware.call('cache.get', 'SMB_HA_MODE')
-        except KeyError:
-            pass
-
-        if await self.middleware.call('failover.licensed'):
-            hamode = SMBHAMODE['UNIFIED'].name
-        else:
-            hamode = SMBHAMODE['STANDALONE'].name
-
-        await self.middleware.call('cache.put', 'SMB_HA_MODE', hamode)
-        return hamode
-
-    @private
-    async def reset_smb_ha_mode(self):
-        await self.middleware.call('cache.pop', 'SMB_HA_MODE')
-        return await self.get_smb_ha_mode()
 
     @private
     async def validate_smb(self, new, verrors):
@@ -561,10 +480,8 @@ class SMBService(ConfigService):
 
         verrors = ValidationErrors()
         # Skip this check if we're joining AD
-        ds = await self.middleware.call('directoryservices.status')
-        if ds['type'] == DSType.AD.value and ds['status'] in (
-            DSStatus.HEALTHY.name, DSStatus.FAULTED.name
-        ):
+        ds = await self.middleware.call('directoryservices.config')
+        if ds['enable']:
             await self.middleware.call('activedirectory.netbios_name_check', 'smb_update', old, new)
             if old['workgroup'].casefold() != new['workgroup'].casefold():
                 verrors.add('smb_update.workgroup', 'Workgroup may not be changed while AD is enabled')
@@ -588,7 +505,6 @@ class SMBService(ConfigService):
 
         await self.middleware.call('etc.generate', 'smb')
         new_config = await self.config()
-        await self.reset_smb_ha_mode()
 
         if old['netbiosname'] != new_config['netbiosname']:
             await self.middleware.call('smb.set_system_sid')
@@ -1332,8 +1248,8 @@ class SharingSMBService(SharingService):
     @api_method(SmbSharePrecheckArgs, SmbSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
         verrors = ValidationErrors()
-        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
-        if not ad_enabled:
+        ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
+        if not ds_enabled:
             local_smb_user_cnt = await self.middleware.call(
                 'user.query',
                 [['smb', '=', True], ['local', '=', True]],
@@ -1342,7 +1258,7 @@ class SharingSMBService(SharingService):
             if local_smb_user_cnt == 0:
                 verrors.add(
                     'sharing.smb.share_precheck',
-                    'TrueNAS server must be joined to Active Directory or have '
+                    'TrueNAS server must be joined to a directory service or have '
                     'at least one local SMB user before creating an SMB share.'
                 )
 

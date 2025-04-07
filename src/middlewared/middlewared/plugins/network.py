@@ -7,7 +7,7 @@ from ipaddress import ip_address, ip_interface
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult, 
+    InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
     InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, InterfaceCheckinArgs, InterfaceCheckinResult,
     InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, InterfaceChoicesArgs, InterfaceChoicesResult,
     InterfaceCommitArgs, InterfaceCommitResult, InterfaceCreateArgs, InterfaceCreateResult,

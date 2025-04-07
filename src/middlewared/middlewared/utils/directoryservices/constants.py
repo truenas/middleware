@@ -1,12 +1,12 @@
 import enum
 
 
-class DSStatus(enum.Enum):
-    DISABLED = enum.auto()
-    FAULTED = enum.auto()
-    LEAVING = enum.auto()
-    JOINING = enum.auto()
-    HEALTHY = enum.auto()
+class DSStatus(enum.StrEnum):
+    DISABLED = 'DISABLED' 
+    FAULTED = 'FAULTED' 
+    LEAVING = 'LEAVING' 
+    JOINING = 'JOINING'
+    HEALTHY = 'HEALTHY'
 
 
 class DSType(enum.Enum):
@@ -53,6 +53,17 @@ class NSS_Info(enum.Enum):
         return self.value[1]
 
 
-class DomainJoinResponse(enum.Enum):
+class DomainJoinResponse(enum.StrEnum):
     PERFORMED_JOIN = 'PERFORMED_JOIN'
     ALREADY_JOINED = 'ALREADY_JOINED'
+
+
+class DSCredType(enum.StrEnum):
+    KERBEROS_USER = 'KERBEROS_USER'
+    KERBEROS_PRINCIPAL = 'KERBEROS_PRINCIPAL'
+    LDAP_PLAIN = 'LDAP_PLAIN'
+    LDAP_ANONYMOUS = 'LDAP_ANONYMOUS'
+    LDAP_MTLS = 'LDAP_MTLS'
+
+
+DEF_SVC_OPTS = {'silent': False, 'ha_propagate': False}
