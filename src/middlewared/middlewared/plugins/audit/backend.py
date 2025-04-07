@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+from typing import Literal
 
 from sqlalchemy import create_engine, inspect
 from sqlalchemy import and_, func, select
@@ -164,12 +165,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         return data
 
     @private
-    @accepts(
-        Str('db_name', enum=[svc[0] for svc in AUDITED_SERVICES], required=True),
-        Ref('query-filters'),
-        Ref('query-options')
-    )
-    def query(self, db_name, filters, options):
+    def query(self, db_name: Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM'], filters=[], options={}):
         """
         Query the specied auditable service's database based on the specified
         `query-filters` and `query-options`. This is the private endpoint for the
