@@ -1,6 +1,5 @@
 import enum
 
-
 class DSStatus(enum.Enum):
     DISABLED = enum.auto()
     FAULTED = enum.auto()
@@ -56,3 +55,11 @@ class NSS_Info(enum.Enum):
 class DomainJoinResponse(enum.Enum):
     PERFORMED_JOIN = 'PERFORMED_JOIN'
     ALREADY_JOINED = 'ALREADY_JOINED'
+
+
+class DSCredType(enum.StrEnum):
+    KERBEROS_USER = 'KERBEROS_USER'
+    KERBEROS_PRINCIPAL = 'KERBEROS_PRINCIPAL'
+    LDAP_PLAIN = 'LDAP_PLAIN'
+    LDAP_ANONYMOUS = 'LDAP_ANONYMOUS'
+    LDAP_MTLS = 'LDAP_MTLS'

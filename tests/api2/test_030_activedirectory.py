@@ -8,7 +8,8 @@ from truenas_api_client import \
     ValidationErrors as ClientValidationErrors
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import (
-    active_directory, override_nameservers)
+    directory_service, AD_DOM2_LIMITED_USER, AD_DOM2_LIMITED_USER_PASSWORD
+)
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.product import product_type
@@ -36,32 +37,6 @@ except ImportError:
 SMB_NAME = "TestADShare"
 
 
-def remove_dns_entries(payload):
-    call('dns.nsupdate', {'ops': payload})
-
-
-def cleanup_forward_zone():
-    try:
-        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{AD_DOMAIN}']})
-    except dns.resolver.NXDOMAIN:
-        # No entry, nothing to do
-        return
-
-    ips_to_remove = [rdata['address'] for rdata in result]
-
-    payload = []
-    for i in ips_to_remove:
-        addr = ipaddress.ip_address(i)
-        payload.append({
-            'command': 'DELETE',
-            'name': f'{hostname}.{AD_DOMAIN}.',
-            'address': str(addr),
-            'type': 'A' if addr.version == 4 else 'AAAA'
-        })
-
-    remove_dns_entries(payload)
-
-
 def check_ad_started():
     ds = call('directoryservices.status')
     if ds['type'] is None:
@@ -70,31 +45,6 @@ def check_ad_started():
     assert ds['type'] == 'ACTIVEDIRECTORY'
     assert ds['status'] == 'HEALTHY'
     return True
-
-
-def cleanup_reverse_zone():
-    result = call('activedirectory.ipaddresses_to_register', {'hostname': f'{hostname}.{AD_DOMAIN}.', 'bindip': []}, False)
-    ptr_table = {f'{ipaddress.ip_address(i).reverse_pointer}.': i for i in result}
-
-    try:
-        result = call('dnsclient.reverse_lookup', {'addresses': list(ptr_table.values())})
-    except dns.resolver.NXDOMAIN:
-        # No entry, nothing to do
-        return
-
-    payload = []
-    for host in result:
-        reverse_pointer = host["name"]
-        assert reverse_pointer in ptr_table, str(ptr_table)
-        addr = ipaddress.ip_address(ptr_table[reverse_pointer])
-        payload.append({
-            'command': 'DELETE',
-            'name': host['target'],
-            'address': str(addr),
-            'type': 'A' if addr.version == 4 else 'AAAA'
-        })
-
-    remove_dns_entries(payload)
 
 
 @pytest.fixture(scope="function")
@@ -117,36 +67,6 @@ def enable_ds_auth(set_product_type):
         call("system.general.update", {"ds_auth": False})
 
 
-@pytest.fixture(scope="function")
-def set_ad_nameserver(request):
-    with override_nameservers() as ns:
-        yield (request, ns)
-
-
-def test_cleanup_nameserver(set_ad_nameserver):
-    domain_info = call('activedirectory.domain_info', AD_DOMAIN)
-
-    cred = call('kerberos.get_cred', {'dstype': 'ACTIVEDIRECTORY',
-                                      'conf': {'bindname': ADUSERNAME,
-                                               'bindpw': ADPASSWORD,
-                                               'domainname': AD_DOMAIN
-                                               }
-                                      })
-
-    call('kerberos.do_kinit', {'krb5_cred': cred,
-                               'kinit-options': {'kdc_override': {'domain': AD_DOMAIN.upper(),
-                                                                  'kdc': domain_info['KDC server']
-                                                                  },
-                                                 }
-                               })
-
-    # Now that we have proper kinit as domain admin
-    # we can nuke stale DNS entries from orbit.
-    #
-    cleanup_forward_zone()
-    cleanup_reverse_zone()
-
-
 def test_enable_leave_activedirectory():
     reset_systemd_svcs('winbind')
     assert check_ad_started() is False
@@ -158,8 +78,10 @@ def test_enable_leave_activedirectory():
 
     short_name = None
 
-    with active_directory(dns_timeout=15) as ad:
-        short_name = ad['dc_info']['Pre-Win2k Domain']
+    with directory_service('ACTIVEDIRECTORY', timeout=15) as ad:
+        domain_name = ad['config']['configuration']['domain']
+        domain_info = ad['domain_info']
+        short_name = domain_info['domain_controller']['pre-win2k_domain']
 
         # Make sure we can read our secrets.tdb file
         secrets_has_domain = call('directoryservices.secrets.has_domain', short_name)
@@ -174,25 +96,10 @@ def test_enable_leave_activedirectory():
         assert passwd_change['dbconfig'] is not None
         assert passwd_change['secrets'] is not None
 
-        # We should be able tZZo change some parameters when joined to AD
-        call('activedirectory.update', {'domainname': AD_DOMAIN, 'verbose_logging': True}, job=True)
-
-        # Changing kerberos realm should raise ValidationError
-        with pytest.raises(ClientValidationErrors) as ve:
-            call('activedirectory.update', {'domainname': AD_DOMAIN, 'kerberos_realm': None}, job=True)
-
-        assert ve.value.errors[0].errmsg.startswith('Kerberos realm may not be altered')
-
-        # This should be caught by our catchall
-        with pytest.raises(ClientValidationErrors) as ve:
-            call('activedirectory.update', {'domainname': AD_DOMAIN, 'createcomputer': ''}, job=True)
-
-        assert ve.value.errors[0].errmsg.startswith('Parameter may not be changed')
-
         assert check_ad_started() is True
 
         # Verify that idmapping is working
-        pw = ad['user_obj']
+        pw = ad['account'].user_obj
 
         # Verify winbindd information
         assert pw['sid'] is not None, str(ad)
@@ -217,19 +124,21 @@ def test_enable_leave_activedirectory():
     assert secrets_has_domain is False
 
     with pytest.raises(KeyError):
-        call('user.get_user_obj', {'username': AD_USER})
+        call('user.get_user_obj', {'username': pw['pw_name']})
 
-    result = call('privilege.query', [['name', 'C=', AD_DOMAIN]])
+    result = call('privilege.query', [['name', 'C=', domain_name]])
     assert len(result) == 0, str(result)
 
 
 def test_activedirectory_smb_ops():
     reset_systemd_svcs('winbind')
-    with active_directory(dns_timeout=15) as ad:
-        short_name = ad['dc_info']['Pre-Win2k Domain']
+    with directory_service('ACTIVEDIRECTORY') as ad:
+        domain_info = ad['domain_info']
+        short_name = domain_info['domain_controller']['pre-win2k_domain']
         machine_password_key = f'SECRETS/MACHINE_PASSWORD/{short_name}'
         running_pwd = call('directoryservices.secrets.dump')[machine_password_key]
         db_pwd = call('directoryservices.secrets.get_db_secrets')[f'{hostname.upper()}$'][machine_password_key]
+        account = ad['account']
 
         # We've joined and left AD already. Verify secrets still getting backed up correctly.
         assert running_pwd == db_pwd
@@ -239,7 +148,7 @@ def test_activedirectory_smb_ops():
             {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
-                'id': ad['user_obj']['pw_uid'],
+                'id': account.user_obj['pw_uid'],
                 'perms': {'BASIC': 'FULL_CONTROL'},
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
@@ -251,9 +160,9 @@ def test_activedirectory_smb_ops():
                 with smb_connection(
                     host=truenas_server.ip,
                     share=SMB_NAME,
-                    username=ADUSERNAME,
-                    domain='AD02',
-                    password=ADPASSWORD
+                    username=account.username,
+                    domain=short_name,
+                    password=account.password
                 ) as c:
                     fd = c.create_file('testfile.txt', 'w')
                     c.write(fd, b'foo')
@@ -275,7 +184,7 @@ def test_activedirectory_smb_ops():
             {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
-                'id': ad['user_obj']['pw_uid'],
+                'id': account.user_obj['pw_uid'],
                 'perms': {'BASIC': 'FULL_CONTROL'},
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
@@ -290,15 +199,15 @@ def test_activedirectory_smb_ops():
                 with smb_connection(
                     host=truenas_server.ip,
                     share='DATASETS',
-                    username=ADUSERNAME,
-                    domain='AD02',
-                    password=ADPASSWORD
+                    username=account.username,
+                    domain=short_name,
+                    password=account.password
                 ) as c:
                     fd = c.create_file('nested_test_file', "w")
                     c.write(fd, b'EXTERNAL_TEST')
                     c.close(fd)
 
-            acl = call('filesystem.getacl', os.path.join(f'/mnt/{ds}', 'AD02', ADUSERNAME), True)
+            acl = call('filesystem.getacl', os.path.join(f'/mnt/{ds}', short_name, account.username), True)
             assert acl['trivial'] is False, str(acl)
 
         with dataset(
@@ -306,7 +215,7 @@ def test_activedirectory_smb_ops():
             {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
-                'id': ad['user_obj']['pw_uid'],
+                'id': account.user_obj['pw_uid'],
                 'perms': {'BASIC': 'FULL_CONTROL'},
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
@@ -326,23 +235,26 @@ def test_activedirectory_smb_ops():
                 with smb_connection(
                     host=truenas_server.ip,
                     share='HOMES',
-                    username=ADUSERNAME,
-                    domain='AD02',
-                    password=ADPASSWORD
+                    username=account.username,
+                    domain=short_name,
+                    password=account.password
                 ) as c:
                     fd = c.create_file('homes_test_file', "w")
                     c.write(fd, b'EXTERNAL_TEST')
                     c.close(fd)
 
-            file_local_path = os.path.join(f'/mnt/{ds}', 'AD02', ADUSERNAME, 'homes_test_file')
-            acl = call('filesystem.getacl', file_local_path, True)
+            acl = call('filesystem.getacl', os.path.join(f'/mnt/{ds}', short_name, account.username), True)
             assert acl['trivial'] is False, str(acl)
 
 
 def test_account_privilege_authentication(enable_ds_auth):
     reset_systemd_svcs('winbind smbd')
 
-    with active_directory(dns_timeout=15):
+    with directory_service('ACTIVEDIRECTORY') as ds:
+        domain_name = ds['config']['configuration']['domain']
+        domain_info = ad['domain_info']
+        short_name = domain_info['domain_controller']['pre-win2k_domain']
+
         nusers = call("user.query", [["local", "=", False]], {"count": True})
         assert nusers > 0
         ngroups = call("group.query", [["local", "=", False]], {"count": True})
@@ -372,7 +284,7 @@ def test_account_privilege_authentication(enable_ds_auth):
 
             # Verify that onetime password for AD users works
             # and that second call fails
-            username = r'AD02\limiteduser'
+            username = ds['account'].user_obj['pw_name'] 
             otpw = call('auth.generate_onetime_password', {'username': username})
             with client(auth=None) as c:
                 resp = c.call('auth.login_ex', {
@@ -392,16 +304,15 @@ def test_account_privilege_authentication(enable_ds_auth):
 
                 assert resp['response_type'] == 'AUTH_ERR'
 
-            # ADUSERNAME is member of domain admins and will have
-            # all privileges
-            with client(auth=(f"{ADUSERNAME}@{AD_DOMAIN}", ADPASSWORD)) as c:
+            username = f'{ds["account"].username}@{domain_name}' 
+            with client(auth=(username, ds['account'].password)) as c:
                 methods = c.call("core.get_methods")
 
             assert "pool.create" in methods
 
             # Alternative formatting for user name <DOMAIN>\<username>.
             # this should also work for auth
-            with client(auth=(AD_USER, ADPASSWORD)) as c:
+            with client(auth=(ds['acccount'].user_obj['pw_name'], ds['account'].password)) as c:
                 methods = c.call("core.get_methods")
 
             assert "pool.create" in methods
@@ -409,7 +320,7 @@ def test_account_privilege_authentication(enable_ds_auth):
 
 def test_secrets_restore():
 
-    with active_directory():
+    with directoryservices('ACTIVEDIRECTORY'):
         reset_systemd_svcs('winbind smbd')
         assert check_ad_started() is True
 
@@ -425,7 +336,7 @@ def test_secrets_restore():
 
 def test_keytab_restore():
 
-    with active_directory():
+    with directoryservices('ACTIVEDIRECTORY'):
         reset_systemd_svcs('winbind smbd')
         assert check_ad_started() is True
 

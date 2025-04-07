@@ -1,4 +1,6 @@
 import enum
+import os
+import middlewared.sqlalchemy as sa
 import struct
 
 from base64 import b64decode
@@ -13,12 +15,6 @@ from middlewared.utils.directoryservices.health import DSHealthObj
 DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
 
 
-class SSL(enum.Enum):
-    NOSSL = 'OFF'
-    USESSL = 'ON'
-    USESTARTTLS = 'START_TLS'
-
-
 class SASL_Wrapping(enum.Enum):
     PLAIN = 'PLAIN'
     SIGN = 'SIGN'
@@ -29,6 +25,9 @@ class DirectoryServices(Service):
     class Config:
         service = "directoryservices"
         cli_namespace = "directory_service"
+        datastore = "directoryservices"
+        datastore_extend = "directoryservices.extend"
+        role_prefix = "DIRECTORY_SERVICE"
 
     @no_authz_required
     @accepts()
@@ -101,15 +100,6 @@ class DirectoryServices(Service):
 
     @private
     @returns(List(
-        'ldap_ssl_choices', items=[
-            Str('ldap_ssl_choice', enum=[x.value for x in list(SSL)], default=SSL.USESSL.value, register=True)
-        ]
-    ))
-    async def ssl_choices(self, dstype):
-        return [x.value for x in list(SSL)]
-
-    @private
-    @returns(List(
         'sasl_wrapping_choices', items=[
             Str('sasl_wrapping_choice', enum=[x.value for x in list(SASL_Wrapping)], register=True)
         ]
@@ -176,7 +166,7 @@ class DirectoryServices(Service):
 
     @private
     @job()
-    async def initialize(self, job, data=None):
+    async def initialize(self, job):
         # retrieve status to force initialization of status
         if (await self.middleware.call('directoryservices.status'))['type'] is None:
             return
@@ -199,6 +189,11 @@ class DirectoryServices(Service):
     @private
     @job(lock='ds_init', lock_queue_size=1)
     def setup(self, job):
+        # ensure SSSD directories exist
+        os.makedirs('/var/run/sssd-cache/mc', mode=0o755, exist_ok=True)
+        os.makedirs('/var/run/sssd-cache/db', mode=0o755, exist_ok=True)
+
+        # ensure that samba is properly configured
         config_job = self.middleware.call_sync('smb.configure')
         config_job.wait_sync(raise_error=True)
 

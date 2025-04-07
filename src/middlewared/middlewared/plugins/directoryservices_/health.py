@@ -6,7 +6,6 @@ from .activedirectory_health_mixin import ADHealthMixin
 from .ipa_health_mixin import IPAHealthMixin
 from .kerberos_health_mixin import KerberosHealthMixin
 from .ldap_health_mixin import LDAPHealthMixin
-from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
 from middlewared.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
@@ -30,23 +29,11 @@ class DomainHealth(
         private = True
 
     def _get_enabled_ds(self):
-        ad = self.middleware.call_sync('datastore.config', 'directoryservice.activedirectory')
-        if ad['ad_enable']:
-            return DSType.AD
-
-        ldap = self.middleware.call_sync('datastore.config', 'directoryservice.ldap')
-        if ldap['ldap_enable'] is False:
+        server_type = self.middleware.call_sync('directoryservices.config')['service_type']
+        if server_type is None:
             return None
 
-        # For now we are handling the IPA join as a layer on top of LDAP
-        # plugin.
-        if ldap['ldap_server_type'] == SERVER_TYPE_FREEIPA:
-            # there is no way to become healthy for IPA join without a host
-            # keytab and so we'll try to fall through to a regular LDAP bind
-            if self.middleware.call_sync('ldap.has_ipa_host_keytab'):
-                return DSType.IPA
-
-        return DSType.LDAP
+        return DSType(server_type)
 
     def _perm_check(
         self,
@@ -109,8 +96,8 @@ class DomainHealth(
         try:
             match enabled_ds:
                 case DSType.AD:
-                    self._health_check_krb5()
                     self._health_check_ad()
+                    self._health_check_krb5()
                 case DSType.IPA:
                     self._health_check_krb5()
                     self._health_check_ipa()
