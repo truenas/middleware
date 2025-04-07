@@ -84,7 +84,6 @@ class VirtGlobalService(ConfigService):
 
     @private
     async def validate(self, new: dict, schema_name: str, verrors: ValidationErrors):
-
         bridge = new['bridge']
         if not bridge:
             bridge = BRIDGE_AUTO
@@ -103,6 +102,22 @@ class VirtGlobalService(ConfigService):
 
         if pool and not await self.middleware.call('virt.global.license_active'):
             verrors.add(f'{schema_name}.pool', 'System is not licensed to run virtualization')
+
+        if new['pool'] and (mapping := (await self.middleware.call('port.ports_mapping')).get(53)):
+            port_usages = set()
+            for usages in map(lambda i: mapping.get(i, {}).get('port_details', []), ('0.0.0.0', '::')):
+                for u in usages:
+                    port_usages.add(u['description'])
+
+            if port_usages:
+                verrors.add(
+                    f'{schema_name}.pool',
+                    (
+                        f'Port 53 is required for virtualization but is currently in use by the following services '
+                        f'on wildcard IPs (0.0.0.0/::): {", ".join(port_usages)}. '
+                        'Please reconfigure these services to bind to specific IP addresses instead of wildcard IPs.'
+                    )
+                )
 
     @api_method(
         VirtGlobalUpdateArgs,
