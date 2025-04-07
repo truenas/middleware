@@ -9,7 +9,6 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 
-from middlewared.schema import accepts, Ref, Str
 from middlewared.service import periodic, private, Service
 from middlewared.service_exception import CallError, MatchNotFound
 
