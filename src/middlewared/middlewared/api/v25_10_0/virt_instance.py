@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Annotated, Literal, TypeAlias
 
@@ -20,6 +19,8 @@ __all__ = [
 ]
 
 
+# Some popular OS choices
+OS_ENUM = Literal['LINUX', 'FREEBSD', 'WINDOWS', 'ARCHLINUX', None]
 REMOTE_CHOICES: TypeAlias = Literal['LINUX_CONTAINERS']
 ENV_KEY: TypeAlias = Annotated[
     str,
@@ -140,6 +141,7 @@ class VirtInstanceCreateArgs(BaseModel):
     be used to boot the VM instance.
     '''
     vnc_password: Secret[NonEmptyString | None] = None
+    image_os: str | OS_ENUM = None
 
     @model_validator(mode='after')
     def validate_attrs(self):
@@ -160,6 +162,9 @@ class VirtInstanceCreateArgs(BaseModel):
 
             if self.source_type == 'VOLUME' and self.volume is None:
                 raise ValueError('volume must be set when source type is "VOLUME"')
+
+            if self.image_os and self.source_type != 'ISO':
+                raise ValueError('image_os can only be set when source type is "ISO"')
 
         if self.source_type == 'IMAGE' and self.image is None:
             raise ValueError('Image must be set when source type is "IMAGE"')
@@ -185,6 +190,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     secure_boot: bool = False
     root_disk_size: int | None = Field(ge=5, default=None)
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None] = None
+    image_os: str | OS_ENUM = None
 
 
 class VirtInstanceUpdateArgs(BaseModel):
