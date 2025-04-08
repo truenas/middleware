@@ -4,15 +4,17 @@
  <a href="https://jira.ixsystems.com"><img alt="File Issue" src="https://badgen.net/badge/Jira/File%20Issue//red?icon=jira" /></a>
 </p>
 
-TrueNAS CORE/Enterprise/SCALE main source repo
-=============
+# TrueNAS CORE/Enterprise/SCALE main source repo
 
-## IMPORTANT NOTE:  
-This is the master branch of TrueNAS, which is used for the creation and testing of TrueNAS CORE / Enterprise and TrueNAS SCALE Nightly builds. Submit pull requests here if you want to get changes into the next major release of TrueNAS. To build this source repo, checkout https://github.com/truenas/core-build for CORE/Enterprise and https://github.com/truenas/scale-build for SCALE
+## IMPORTANT
+
+This is the master branch of TrueNAS, which is used for the creation and testing of TrueNAS CORE / Enterprise and TrueNAS SCALE Nightly builds.
+Submit pull requests here if you want to get changes into the next major release of TrueNAS.
+To build this source repo, checkout https://github.com/truenas/core-build for CORE/Enterprise and https://github.com/truenas/scale-build for SCALE.
 
 ## Pull Request Instructions / Jenkins Commands
 
-When submitting a pull-request, Jenkins will attempt to verify the changes to ensure it does not break our builds and/or passes QA tests.
+When submitting a PR, Jenkins will attempt to verify the changes, to ensure that they do not break our builds and/or do pass QA tests.
 
 Once whitelisted, the following commands may be used to interact with that service:
 
@@ -20,7 +22,7 @@ Once whitelisted, the following commands may be used to interact with that servi
     "test this please" for a one time test run
     "add to whitelist" to add the author to the whitelist
 
-If the build fails for other various reasons you can rebuild.
+If the build fails, you may rebuild:
 
     "retest this please" to start a new build
     "retest this please CLEAN" to start a new build, non-incremental
