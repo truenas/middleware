@@ -1,5 +1,7 @@
 from typing import Annotated, Literal
+
 from pydantic import Field, StringConstraints
+
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
 __all__ = [
@@ -24,6 +26,7 @@ class NVMetSubsysEntry(BaseModel):
     pi_enable: bool | None = None
     qid_max: int | None = None
     ieee_oui: str | None = None
+    ana: bool | None = None
 
 
 class NVMetSubsysCreate(NVMetSubsysEntry):

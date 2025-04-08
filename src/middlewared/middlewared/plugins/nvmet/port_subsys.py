@@ -5,6 +5,7 @@ from middlewared.api.current import (NVMetPortSubsysCreateArgs, NVMetPortSubsysC
                                      NVMetPortSubsysUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
+from .mixin import NVMetStandbyMixin
 
 
 class NVMetPortSubsysModel(sa.Model):
@@ -15,7 +16,7 @@ class NVMetPortSubsysModel(sa.Model):
     nvmet_port_subsys_subsys_id = sa.Column(sa.ForeignKey('services_nvmet_subsys.id'), index=True)
 
 
-class NVMetPortSubsysService(CRUDService):
+class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
 
     class Config:
         namespace = 'nvmet.port_subsys'
@@ -36,9 +37,10 @@ class NVMetPortSubsysService(CRUDService):
         await self.__validate(verrors, data, 'nvmet_port_subsys_create')
         verrors.check()
 
-        data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+        async with self._handle_standby_service_state(await self.middleware.call('nvmet.global.running')):
+            data['id'] = await self.middleware.call(
+                'datastore.insert', self._config.datastore, data,
+                {'prefix': self._config.datastore_prefix})
 
         await self._service_change('nvmet', 'reload')
         return await self.get_instance(data['id'])
@@ -62,10 +64,11 @@ class NVMetPortSubsysService(CRUDService):
         await self.__validate(verrors, new, 'nvmet_port_subsys_update', old=old)
         verrors.check()
 
-        await self.middleware.call(
-            'datastore.update', self._config.datastore, id_, new,
-            {'prefix': self._config.datastore_prefix}
-        )
+        async with self._handle_standby_service_state(await self.middleware.call('nvmet.global.running')):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, id_, new,
+                {'prefix': self._config.datastore_prefix}
+            )
 
         await self._service_change('nvmet', 'reload')
         return await self.get_instance(id_)
@@ -80,7 +83,8 @@ class NVMetPortSubsysService(CRUDService):
         data = await self.get_instance(id_)
         audit_callback(self.__audit_summary(data))
 
-        rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
+        async with self._handle_standby_service_state(await self.middleware.call('nvmet.global.running')):
+            rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         await self._service_change('nvmet', 'reload')
         return rv

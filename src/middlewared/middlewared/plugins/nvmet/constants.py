@@ -5,6 +5,7 @@ NVMET_NODE_A_ANA_GRPID = 2
 NVMET_NODE_B_ANA_GRPID = 3
 
 NVMET_NQN_UUID = 'nqn.2011-06.com.truenas:uuid'
+NVMET_SERVICE_NAME = 'nvmet'
 
 
 class ApiMapper(enum.Enum):

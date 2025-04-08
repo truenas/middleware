@@ -6,6 +6,7 @@ from middlewared.api.current import (NVMetSubsysCreateArgs, NVMetSubsysCreateRes
                                      NVMetSubsysDeleteResult, NVMetSubsysEntry, NVMetSubsysUpdateArgs,
                                      NVMetSubsysUpdateResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
+from .mixin import NVMetStandbyMixin
 
 SERIAL_RETRIES = 10
 MAX_NQN_LEN = 223
@@ -22,9 +23,10 @@ class NVMetSubsysModel(sa.Model):
     nvmet_subsys_pi_enable = sa.Column(sa.Boolean(), nullable=True, default=None)
     nvmet_subsys_qid_max = sa.Column(sa.Integer(), nullable=True, default=None)
     nvmet_subsys_ieee_oui = sa.Column(sa.Integer(), nullable=True, default=None)
+    nvmet_subsys_ana = sa.Column(sa.Boolean(), nullable=True, default=None)
 
 
-class NVMetSubsysService(CRUDService):
+class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
 
     class Config:
         namespace = 'nvmet.subsys'
@@ -71,10 +73,11 @@ class NVMetSubsysService(CRUDService):
         await self.__validate(verrors, new, 'nvmet_subsys_update', old=old)
         verrors.check()
 
-        await self.middleware.call(
-            'datastore.update', self._config.datastore, id_, new,
-            {'prefix': self._config.datastore_prefix}
-        )
+        async with self._handle_standby_service_state(await self.middleware.call('nvmet.global.running')):
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, id_, new,
+                {'prefix': self._config.datastore_prefix}
+            )
 
         await self._service_change('nvmet', 'reload')
         return await self.get_instance(id_)
@@ -129,7 +132,8 @@ class NVMetSubsysService(CRUDService):
         if host_subsys_ids:
             await self.middleware.call('nvmet.host_subsys.delete_ids', host_subsys_ids)
 
-        rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
+        async with self._handle_standby_service_state(await self.middleware.call('nvmet.global.running')):
+            rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         await self._service_change('nvmet', 'reload')
         return rv

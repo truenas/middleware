@@ -104,10 +104,8 @@ class NVMetPortDeleteResult(BaseModel):
 class NVMetPortTransportAddressChoicesArgs(BaseModel):
     addr_trtype: FabricTransportType
     """ Fabric transport technology name.  """
-    addr_adrfam: AddressFamily | None = None
-    """ Address family.  If None all applicable families will be selected. """
-    exclude_used: bool = True
-    """ Exclude addresses already configured for use. """
+    force_ana: bool = False
+    """ Return information as if ANA was enabled. """
 
 
 class NVMetPortTransportAddressChoicesResult(BaseModel):
