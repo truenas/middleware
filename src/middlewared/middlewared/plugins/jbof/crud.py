@@ -1,22 +1,70 @@
 import asyncio
+import ipaddress
 import subprocess
 import time
+from typing import Literal
 
-import middlewared.sqlalchemy as sa
+from pydantic import Field, field_validator
+
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel, NotRequired, IPvAnyAddress, IPv4Address, IPv6Address
 from middlewared.api.current import (
     JBOFEntry, JBOFCreateArgs, JBOFCreateResult, JBOFDeleteArgs, JBOFDeleteResult, JBOFLicensedArgs,
-    JBOFLicensedResult, JBOFReapplyConfigArgs, JBOFReapplyConfigResult, JBOFSetMgmtIPArgs, JBOFSetMgmtIPResult,
-    JBOFUpdateArgs, JBOFUpdateResult
+    JBOFLicensedResult, JBOFReapplyConfigArgs, JBOFReapplyConfigResult, JBOFUpdateArgs, JBOFUpdateResult
 )
 from middlewared.plugins.jbof.redfish import InvalidCredentialsError, RedfishClient
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 from .functions import (
     decode_static_ip, get_sys_class_nvme, initiator_ip_from_jbof_static_ip, initiator_static_ip, jbof_static_ip,
     jbof_static_ip_from_initiator_ip, static_ip_netmask_int, static_ip_netmask_str, static_mtu
 )
+
+
+class StaticIPv4Address(BaseModel):
+    address: IPv4Address = NotRequired
+    netmask: str = NotRequired
+    gateway: IPv4Address = NotRequired
+
+    @field_validator('netmask')
+    @classmethod
+    def validate_netmask(cls, value: str) -> str:
+        if value.isdigit():
+            raise ValueError('Please specify expanded netmask, e.g. 255.255.255.128')
+
+        try:
+            ipaddress.ip_network(f'1.1.1.1/{value}', strict=False)
+        except ValueError:
+            raise ValueError('Not a valid netmask')
+
+
+class StaticIPv6Address(BaseModel):
+    address: IPv6Address = NotRequired
+    prefixlen: int = Field(ge=1, le=64, default=NotRequired)
+
+
+class JBOFSetMgmtIPIOMNetwork(BaseModel):
+    dhcp: bool = NotRequired
+    fqdn: str = NotRequired
+    hostname: str = NotRequired
+    ipv4_static_addresses: list[StaticIPv4Address] | None = None
+    ipv6_static_addresses: list[StaticIPv6Address] | None = None
+    nameservers: list[IPvAnyAddress] | None = None
+
+
+class JBOFSetMgmtIPArgs(BaseModel):
+    id: int
+    iom: Literal['IOM1', 'IOM2']
+    iom_network: JBOFSetMgmtIPIOMNetwork = Field(default_factory=JBOFSetMgmtIPIOMNetwork)
+    ethindex: int = 1
+    force: bool = False
+    check: bool = True
+
+
+class JBOFSetMgmtIPResult(BaseModel):
+    result: None
 
 
 class JBOFModel(sa.Model):
