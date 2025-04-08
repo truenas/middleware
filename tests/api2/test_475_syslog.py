@@ -1,9 +1,10 @@
 from time import sleep
 
 import pytest
-from auto_config import password, user
+from auto_config import ha, password, user
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.assets.system import standby_syslog_to_remote_syslog
 
 
 def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_INFO'):
@@ -17,7 +18,9 @@ def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_I
     ssh(cmd)
 
 
-def check_syslog(log_path, message, target_ip=None, target_user=user, target_passwd=password, timeout=30):
+def check_syslog(log_path, message,
+                 target_user=user, target_passwd=password,
+                 remote=False, timeout=30):
     """
     Common function to check whether a particular message exists in a log file.
     This will be used to check local and remote syslog servers.
@@ -26,7 +29,10 @@ def check_syslog(log_path, message, target_ip=None, target_user=user, target_pas
     onus is on test developer to not under-specify `message` in order to avoid
     false positives.
     """
-    target_ip = target_ip or truenas_server.ip
+    if remote:
+        assert ha is True, "remote option is for HA only"
+
+    target_ip = truenas_server.ip if not remote else truenas_server.ha_ips()['standby']
     sleep_time = 1
     while timeout > 0:
         found = ssh(
@@ -94,6 +100,17 @@ def test_set_remote_syslog(request):
         call('service.restart', 'syslogd', {'silent': False})
     finally:
         call('system.advanced.update', {'syslogserver': ''})
+
+
+@pytest.mark.skipif(not ha, reason='Test only valid for HA')
+def test_remote_syslog_function(request):
+    """
+    End to end validation of remote syslog using temporary
+    reconfiguration of the syslog on the standby node.
+    """
+    with standby_syslog_to_remote_syslog() as remote_log:
+        do_syslog("CANARY", "In a coal mine")
+        assert check_syslog(remote_log, "In a coal mine", remote=True, timeout=10)
 
 
 def test_set_remote_syslog_with_TLS_transport():

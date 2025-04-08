@@ -89,7 +89,6 @@ log {
   parser(p_tnaudit);
   rewrite(r_rewrite_success);
   destination(d_tnaudit_${svc.lower()});
-  flags(final);
 };
 %endif
 % endfor
