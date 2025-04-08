@@ -29,7 +29,7 @@ dscache_idtype = Literal['USER', 'GROUP']
 class DscachePrincipalInfo(BaseModel):
     idtype: dscache_idtype
     who: str | None = None
-    xid: int | None = Field(alias='id', default=None)
+    id: int | None = None
 
     @model_validator(mode='after')
     def check_identifier(self) -> Self:
