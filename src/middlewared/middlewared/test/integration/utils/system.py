@@ -1,6 +1,14 @@
+import os
+import sys
 from .ssh import ssh
-from auto_config import ha
 from middlewared.test.integration.utils import truenas_server
+
+try:
+    apifolder = os.getcwd()
+    sys.path.append(apifolder)
+    from auto_config import ha
+except ImportError:
+    ha = False
 
 __all__ = ["reset_systemd_svcs", "restart_systemd_svc"]
 
@@ -25,8 +33,8 @@ def restart_systemd_svc(svc_to_restart: str, remote_node: bool = False):
     assert ssh(f"systemctl status {svc_to_restart}")
     node_ip = None
     if remote_node:
-        ha_ips = truenas_server.ha_ips()
         assert ha is True, "Cannot select remote_node on non-HA system"
+        ha_ips = truenas_server.ha_ips()
         node_ip = ha_ips['standby']
 
     ssh(f"systemctl restart {svc_to_restart}", ip=node_ip)
