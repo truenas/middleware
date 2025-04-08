@@ -29,7 +29,7 @@ class NVMetPortEntry(BaseModel):
     addr_trtype: FabricTransportType
     """ Fabric transport technology name. """
     addr_trsvcid: int | NonEmptyString = Field(ge=1024, le=65535)
-    """ Transport-specific TRSVCID field.  For IP this will be a port number. """
+    """ Transport-specific TRSVCID field.  When configured for TCP/IP or RDMA this will be the port number. """
     addr_traddr: NonEmptyString
     """ A transport-specific field identifying the NVMe host port to use for the connection to the controller. """
     addr_adrfam: AddressFamily
@@ -102,10 +102,8 @@ class NVMetPortDeleteResult(BaseModel):
 class NVMetPortTransportAddressChoicesArgs(BaseModel):
     addr_trtype: FabricTransportType
     """ Fabric transport technology name.  """
-    addr_adrfam: AddressFamily | None = None
-    """ Address family.  If None all applicable families will be selected. """
-    exclude_used: bool = True
-    """ Exclude addresses already configured for use. """
+    force_ana: bool = False
+    """ Return information as if ANA was enabled. """
 
 
 class NVMetPortTransportAddressChoicesResult(BaseModel):

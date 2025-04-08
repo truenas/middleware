@@ -8,7 +8,9 @@ from middlewared.api.current import (NVMetGlobalAnaEnabledArgs, NVMetGlobalAnaEn
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import filter_list
+from .constants import NVMET_SERVICE_NAME
 from .kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
+from .mixin import NVMetStandbyMixin
 from .utils import uuid_nqn
 
 NVMET_DEBUG_DIR = '/sys/kernel/debug/nvmet'
@@ -24,13 +26,13 @@ class NVMetGlobalModel(sa.Model):
     nvmet_global_rdma = sa.Column(sa.Boolean(), default=False)
 
 
-class NVMetGlobalService(SystemServiceService):
+class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     class Config:
         namespace = 'nvmet.global'
         datastore = 'services.nvmet_global'
         datastore_prefix = 'nvmet_global_'
-        service = 'nvmet'
+        service = NVMET_SERVICE_NAME
         cli_namespace = 'sharing.nvmet.global'
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetGlobalEntry
@@ -53,16 +55,8 @@ class NVMetGlobalService(SystemServiceService):
         await self.__validate(verrors, new, 'nvmet_global_update', old=old)
         verrors.check()
 
-        await self._update_service(old, new)
-
-        # In HA, do we need to update the remote node
-        if old['ana'] != new['ana'] and await self.running():
-            if old['ana']:
-                # Turn off on STANDBY node
-                await self.middleware.call('failover.call_remote', 'service.stop', [self._config.service])
-            else:
-                # Turn on on STANDBY node
-                await self.middleware.call('failover.call_remote', 'service.start', [self._config.service])
+        async with self._handle_standby_service_state(old['ana'] != new['ana'] and await self.running()):
+            await self._update_service(old, new)
 
         return await self.config()
 
@@ -89,14 +83,6 @@ class NVMetGlobalService(SystemServiceService):
                     f'{schema_name}.ana',
                     "This platform does not support Asymmetric Namespace Access(ANA)."
                 )
-            elif await self.middleware.call('nvmet.port.has_active_ports'):
-                verrors.add(
-                    f'{schema_name}.ana',
-                    "Cannot change Asymmetric Namespace Access(ANA) while ports are active."
-                )
-
-        # Maybe add a check to only allow basenqn to be modified if the service is
-        # not currently running.
 
     @api_method(
         NVMetGlobalAnaEnabledArgs,
@@ -111,6 +97,21 @@ class NVMetGlobalService(SystemServiceService):
             return False
 
         return (await self.middleware.call('nvmet.global.config'))['ana']
+
+    @private
+    async def ana_active(self):
+        # Similar to ana_enabled, but also takes into account
+        # the per-subsystem ANA setting.
+        if await self.__ana_forbidden():
+            return False
+
+        if (await self.middleware.call('nvmet.global.config'))['ana']:
+            return True
+
+        if (await self.middleware.call('nvmet.port.usage'))[1]:
+            return True
+
+        return False
 
     @api_method(
         NVMetGlobalRDMAEnabledArgs,
@@ -191,7 +192,7 @@ class NVMetGlobalService(SystemServiceService):
         if (await self.config())['kernel']:
             do_load = any([
                 await self.middleware.call('failover.status') in ['MASTER', 'SINGLE'],
-                await self.middleware.call('nvmet.global.ana_enabled')
+                await self.middleware.call('nvmet.global.ana_active')
             ])
             if do_load:
                 modules = await self.__kernel_modules()
