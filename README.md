@@ -8,7 +8,7 @@ TrueNAS CORE/Enterprise/SCALE main source repo
 =============
 
 ## IMPORTANT NOTE:  
-This is the master branch of freenas, which is used for the creation and testing of TrueNAS CORE / Enterprise and TrueNAS SCALE Nightly builds. Submit Pull Requests here if you want to get changes into the next major release of TrueNAS. To build this source repo, checkout https://github.com/freenas/build for CORE/Enterprise and https://github.com/truenas/truenas-build for SCALE
+This is the master branch of TrueNAS, which is used for the creation and testing of TrueNAS CORE / Enterprise and TrueNAS SCALE Nightly builds. Submit pull requests here if you want to get changes into the next major release of TrueNAS. To build this source repo, checkout https://github.com/truenas/core-build for CORE/Enterprise and https://github.com/truenas/scale-build for SCALE
 
 ## Pull Request Instructions / Jenkins Commands
 
