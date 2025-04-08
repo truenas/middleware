@@ -8,7 +8,6 @@ from middlewared.api.current import (NVMetPortCreateArgs, NVMetPortCreateResult,
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import MatchNotFound, ValidationErrors
 from .constants import PORT_ADDR_FAMILY, PORT_TRTYPE
-from .utils import is_ip
 
 
 class NVMetPortModel(sa.Model):
@@ -169,6 +168,51 @@ class NVMetPortService(CRUDService):
             return True
         return False
 
+    @private
+    async def usage(self) -> tuple:
+        """
+        Return a tuple of (non_ana_port_ids, ana_port_ids).
+
+        In addition to the global ANA setting, there is also a per-subsystem setting
+        which, if used, will override whether ANA will be used for that particular
+        subsystem.  It will only handle exceptions to the global setting.
+        """
+        all_port_ids = {port['id'] for port in await self.middleware.call('nvmet.port.query', [], {'select': ['id']})}
+        if not await self.middleware.call('failover.licensed'):
+            # Simple case.  No ANA possible.
+            return list(all_port_ids), []
+
+        ana_enabled = await self.middleware.call('nvmet.global.ana_enabled')
+        if ana_enabled:
+            non_ana_port_ids = set()
+            ana_port_ids = all_port_ids
+        else:
+            non_ana_port_ids = all_port_ids
+            ana_port_ids = set()
+
+        # See if any subsystems have the ana override
+        subsystems = {sub['id']: sub for sub in await self.middleware.call('nvmet.subsys.query', [['ana', '!=', None]])}
+        if subsystems:
+            # It's complicated
+            if ana_enabled:
+                for subsys_id, subsys in subsystems.items():
+                    if not subsys['ana']:
+                        # We don't want to use ANA for this subsystem.  Add the ports
+                        # to non_ana_port_ids
+                        delta = {ps['port']['id'] for ps in await self.middleware.call('nvmet.port_subsys.query',
+                                                                                       [['subsys_id', '=', subsys_id]])}
+                        non_ana_port_ids = non_ana_port_ids | delta
+            else:
+                for subsys_id, subsys in subsystems.items():
+                    if subsys['ana']:
+                        # We do want to use ANA for this subsystem.  Add the ports
+                        # to ana_port_ids
+                        delta = {ps['port']['id'] for ps in await self.middleware.call('nvmet.port_subsys.query',
+                                                                                       [['subsys_id', '=', subsys_id]])}
+                        ana_port_ids = ana_port_ids | delta
+
+        return list(non_ana_port_ids), list(ana_port_ids)
+
     async def __validate(self, verrors, data, schema_name, old=None):
         try:
             existing = await self.middleware.call('nvmet.port.query',
@@ -216,46 +260,35 @@ class NVMetPortService(CRUDService):
         return f"{data['addr_trtype']}:{data['addr_traddr']}:{data['addr_trsvcid']}"
 
     @api_method(NVMetPortTransportAddressChoicesArgs, NVMetPortTransportAddressChoicesResult)
-    async def transport_address_choices(self, addr_trtype, addr_adrfam, exclude_used):
+    async def transport_address_choices(self, addr_trtype, force_ana):
         """
         Returns possible choices for `addr_traddr` attribute of portal create and update.
         """
-        match addr_trtype:
-            case 'TCP' | 'RDMA':
-                if addr_adrfam not in ['IPV4', 'IPV6', None]:
-                    raise ValueError((f'With addr_trtype {addr_trtype} addr_adrfam '
-                                      'must be one of: "IPV4", "IPV6", or None'))
-            case 'FC':
-                if addr_adrfam not in ['FC', None]:
-                    raise ValueError((f'With addr_trtype {addr_trtype} addr_adrfam '
-                                      'must be "FC", or None'))
-
         choices = {}
-        candidates = {}
         match addr_trtype:
             case PORT_TRTYPE.TCP.api:
-                if (await self.middleware.call('nvmet.global.config'))['ana']:
+                if force_ana or (await self.middleware.call('nvmet.global.config'))['ana']:
                     # If ANA is enabled we actually want to show the user the IPs of each node
                     # instead of the VIP so its clear its not going to bind to the VIP even though
                     # thats the value used under the hood.
                     filters = [('int_vip', 'nin', [None, ''])]
                     for i in await self.middleware.call('datastore.query', 'network.interfaces', filters):
-                        candidates[i['int_vip']] = f'{i["int_address"]}/{i["int_address_b"]}'
+                        choices[i['int_vip']] = f'{i["int_address"]}/{i["int_address_b"]}'
 
                     filters = [('alias_vip', 'nin', [None, ''])]
                     for i in await self.middleware.call('datastore.query', 'network.alias', filters):
-                        candidates[i['alias_vip']] = f'{i["alias_address"]}/{i["alias_address_b"]}'
+                        choices[i['alias_vip']] = f'{i["alias_address"]}/{i["alias_address_b"]}'
                 else:
                     if await self.middleware.call('failover.licensed'):
                         # If ANA is disabled, HA system should only offer Virtual IPs
                         for i in await self.middleware.call('interface.query'):
                             for alias in i.get('failover_virtual_aliases') or []:
-                                candidates[alias['address']] = alias['address']
+                                choices[alias['address']] = alias['address']
                     else:
                         # Non-HA system should offer all addresses
                         for i in await self.middleware.call('interface.query'):
                             for alias in i['aliases']:
-                                candidates[alias['address']] = alias['address']
+                                choices[alias['address']] = alias['address']
 
             case PORT_TRTYPE.RDMA.api:
                 # raise NotImplementedError('Not yet implemented (TODO)')
@@ -264,16 +297,6 @@ class NVMetPortService(CRUDService):
             case PORT_TRTYPE.FC.api:
                 # raise NotImplementedError('Not yet implemented (TODO)')
                 return choices
-
-        match addr_adrfam:
-            case None:
-                choices = candidates
-            case PORT_ADDR_FAMILY.IPV4.api:
-                choices = {k: v for k, v in candidates.items() if is_ip(k, 4)}
-            case PORT_ADDR_FAMILY.IPV6.api:
-                choices = {k: v for k, v in candidates.items() if is_ip(k, 6)}
-            case PORT_ADDR_FAMILY.FC.api:
-                choices = candidates
 
         return choices
 
