@@ -3,20 +3,20 @@ import subprocess
 import time
 
 import middlewared.sqlalchemy as sa
-from middlewared.plugins.jbof.redfish import (InvalidCredentialsError,
-                                              RedfishClient)
-from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Password, Patch,
-                                Str, accepts, returns)
-from middlewared.service import (CallError, CRUDService, ValidationErrors, job,
-                                 private)
+from middlewared.api import api_method
+from middlewared.api.current import (
+    JBOFEntry, JBOFCreateArgs, JBOFCreateResult, JBOFDeleteArgs, JBOFDeleteResult, JBOFLicensedArgs,
+    JBOFLicensedResult, JBOFReapplyConfigArgs, JBOFReapplyConfigResult, JBOFSetMgmtIPArgs, JBOFSetMgmtIPResult,
+    JBOFUpdateArgs, JBOFUpdateResult
+)
+from middlewared.plugins.jbof.redfish import InvalidCredentialsError, RedfishClient
+from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
-from middlewared.validators import Netmask, Range
 
-from .functions import (decode_static_ip, get_sys_class_nvme,
-                        initiator_ip_from_jbof_static_ip, initiator_static_ip,
-                        jbof_static_ip, jbof_static_ip_from_initiator_ip,
-                        static_ip_netmask_int, static_ip_netmask_str,
-                        static_mtu)
+from .functions import (
+    decode_static_ip, get_sys_class_nvme, initiator_ip_from_jbof_static_ip, initiator_static_ip, jbof_static_ip,
+    jbof_static_ip_from_initiator_ip, static_ip_netmask_int, static_ip_netmask_str, static_mtu
+)
 
 
 class JBOFModel(sa.Model):
@@ -47,19 +47,7 @@ class JBOFService(CRUDService):
         datastore_prefix = "jbof_"
         cli_private = True
         role_prefix = 'JBOF'
-
-    ENTRY = Dict(
-        'jbof_entry',
-        Int('id', required=True),
-
-        Str('description'),
-
-        # Redfish
-        IPAddr('mgmt_ip1', required=True),
-        IPAddr('mgmt_ip2', required=False),
-        Str('mgmt_username', required=True),
-        Password('mgmt_password', required=True),
-    )
+        entry = JBOFEntry
 
     # Number of seconds we need to wait for a ES24N to start responding on
     # a newly configured IP
@@ -128,13 +116,7 @@ class JBOFService(CRUDService):
         await self.add_index(data)
         return verrors, data
 
-    @accepts(
-        Patch(
-            'jbof_entry', 'jbof_create',
-            ('rm', {'name': 'id'}),
-            register=True
-        )
-    )
+    @api_method(JBOFCreateArgs, JBOFCreateResult)
     async def do_create(self, data):
         """
         Create a new JBOF.
@@ -143,15 +125,6 @@ class JBOFService(CRUDService):
         the expansion shelf for direct connection to ROCE capable network cards on
         the TrueNAS head unit.
 
-        `description` Optional description of the JBOF.
-
-        `mgmt_ip1` IP of 1st Redfish management interface.
-
-        `mgmt_ip2` Optional IP of 2nd Redfish management interface.
-
-        `mgmt_username` Redfish administrative username.
-
-        `mgmt_password` Redfish administrative password.
         """
         verrors, data = await self.validate(data, 'jbof_create')
         verrors.check()
@@ -191,13 +164,7 @@ class JBOFService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'jbof_create', 'jbof_update',
-            ('attr', {'update': True})
-        )
-    )
+    @api_method(JBOFUpdateArgs, JBOFUpdateResult)
     async def do_update(self, id_, data):
         """
         Update JBOF of `id`
@@ -220,7 +187,7 @@ class JBOFService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), Bool('force', default=False))
+    @api_method(JBOFDeleteArgs, JBOFDeleteResult)
     async def do_delete(self, id_, force):
         """
         Delete a JBOF by ID.
@@ -251,7 +218,9 @@ class JBOFService(CRUDService):
         response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
         return response
 
-    @accepts()
+    # Used by support team in the event that an IOM is replaced
+    # in the field and the JBOF needs to be reconfigured.
+    @api_method(JBOFReapplyConfigArgs, JBOFReapplyConfigResult, roles=['JBOF_WRITE'])
     async def reapply_config(self):
         """
         Reapply the JBOF configuration to attached JBOFs.
@@ -261,6 +230,7 @@ class JBOFService(CRUDService):
 
         This API can then be called to configure each JBOF with the expected data-plane
         IP configuration, and then attach NVMe drives.
+
         """
         verrors = ValidationErrors()
         await self.middleware.call('jbof.hardwire_shelves')
@@ -296,8 +266,7 @@ class JBOFService(CRUDService):
             RedfishClient.cache_set(mgmt_ip, redfish)
             return redfish
 
-    @accepts(roles=['JBOF_READ'])
-    @returns(Int())
+    @api_method(JBOFLicensedArgs, JBOFLicensedResult, roles=['JBOF_READ'])
     async def licensed(self):
         """Return a count of the number of JBOF units licensed."""
         result = 0
@@ -322,30 +291,7 @@ class JBOFService(CRUDService):
                     result += quantity
         return result
 
-    @private
-    @accepts(
-        Int('id', required=True),
-        Str('iom', enum=['IOM1', 'IOM2'], required=True),
-        Dict(
-            'iom_network',
-            Bool('dhcp'),
-            Str('fqdn'),
-            Str('hostname'),
-            List('ipv4_static_addresses', items=[Dict(
-                'ipv4_static_address',
-                IPAddr('address', v6=False),
-                Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
-                IPAddr('gateway', v6=False))], default=None),
-            List('ipv6_static_addresses', items=[Dict(
-                'ipv6_static_address',
-                IPAddr('address', v4=False),
-                Int('prefixlen', validators=[Range(min_=1, max_=64)]))], default=None),
-            List('nameservers', items=[IPAddr('nameserver')], default=None),
-        ),
-        Int('ethindex', default=1),
-        Bool('force', default=False),
-        Bool('check', default=True),
-    )
+    @api_method(JBOFSetMgmtIPArgs, JBOFSetMgmtIPResult, private=True)
     def set_mgmt_ip(self, id_, iom, data, ethindex, force, check):
         """Change the mamagement IP for a particular IOM"""
         # Fetch the existing JBOF config
