@@ -50,7 +50,7 @@ def standby_syslog_to_remote_syslog(remote_log_path="/var/log/remote_log.txt"):
         results = send_file('syslogconf.py', '/etc/syslog-ng/syslog-ng.conf', user, password, remote_ip)
         assert results['result'], str(results['output'])
         restart_systemd_svc("syslog-ng", remote_node=True)
-        yield remote_log_path
+        yield (remote_ip, remote_log_path)
     finally:
         if ssh(f"ls /etc/syslog-ng/{restore_syslog_config}", ip=remote_ip):
             ssh(f"mv /etc/syslog-ng/{restore_syslog_config} /etc/syslog-ng/syslog-ng.conf", ip=remote_ip)
