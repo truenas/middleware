@@ -2,11 +2,12 @@ import contextlib
 import os
 import sys
 from middlewared.test.integration.utils import ssh, truenas_server, restart_systemd_svc
+from functions import send_file
 
 try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
-    from auto_config import ha
+    from auto_config import ha, user, password
 except ImportError:
     ha = False
 
@@ -43,10 +44,18 @@ def standby_syslog_to_remote_syslog(remote_log_path="/var/log/remote_log.txt"):
     restore_syslog_config = "ORIG_syslog-ng.config_ORIG"
     try:
         ssh(f"cp /etc/syslog-ng/syslog-ng.conf /etc/syslog-ng/{restore_syslog_config}", ip=remote_ip)
-        ssh(f"echo {remote_syslog_config} > etc/syslog-ng/syslog-ng.conf", ip=remote_ip)
+        cmd_file = open('syslogconf.py', 'w')
+        cmd_file.writelines(remote_syslog_config)
+        cmd_file.close()
+        results = send_file('syslogconf.py', '/etc/syslog-ng/syslog-ng.conf', user, password, remote_ip)
+        assert results['result'], str(results['output'])
         restart_systemd_svc("syslog-ng", remote_node=True)
         yield remote_log_path
     finally:
         if ssh("ls /etc/syslog-ng/{restore_syslog_config}", ip=remote_ip):
             ssh(f"mv /etc/syslog-ng/{restore_syslog_config} /etc/syslog-ng/syslog-ng.conf", ip=remote_ip)
         restart_systemd_svc("syslog-ng", remote_node=True)
+        try:
+            os.unlink('syslogconf.py')
+        except FileNotFoundError:
+            pass
