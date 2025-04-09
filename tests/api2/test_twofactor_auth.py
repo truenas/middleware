@@ -309,4 +309,4 @@ def test_login_with_ad_otp(clear_ratelimit, enterprise_ad):
         user_secret_obj = get_user_secret_sid(user_obj['sid'], True)
         assert user_secret_obj['secret'] is not None
 
-        do_login(user_obj['username'], ADPASSWORD, get_2fa_totp_token(user_secret_obj)))
+        do_login(user_obj['username'], ADPASSWORD, get_2fa_totp_token(user_secret_obj))
