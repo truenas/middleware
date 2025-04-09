@@ -119,7 +119,8 @@ def test_remote_syslog_function():
         call('service.restart', 'syslogd', {'silent': False})
 
         # Make sure we don't have old test cruft and start with a zero byte file
-        ssh(f'rm -f {test_log}', ip=remote_ip)
+        if not ssh(f'rm -f {test_log}', ip=remote_ip, check=False):
+            ssh(f'rm -f {test_log}', ip=remote_ip)
 
         # Configure standby node as a remote syslog server
         with standby_syslog_to_remote_syslog() as remote_info:
