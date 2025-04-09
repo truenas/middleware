@@ -300,7 +300,7 @@ def test_login_with_ad_otp(clear_ratelimit, enterprise_ad):
     """ Validate AD account can use 2FA """
     with enabled_twofactor_auth():
         user_obj = call('user.query', [['username', '=', enterprise_ad['user_obj']['pw_name']]], {'get': True})
-        assert user_obj['twofactor_atuh_configured'] is False
+        assert user_obj['twofactor_auth_configured'] is False
 
         call('user.renew_2fa_secret', user_obj['username'], TEST_TWOFACTOR_INTERVAL)
         user_obj = call('user.query', [['username', '=', enterprise_ad['user_obj']['pw_name']]], {'get': True})
