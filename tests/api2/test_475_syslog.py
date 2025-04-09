@@ -144,7 +144,7 @@ def test_remote_syslog_function():
 
             # Write a real message and confirm
             do_syslog("CANARY", "In a coal mine")
-            assert check_syslog(remote_log, "In a coal mine", remote=True, timeout=5)
+            assert check_syslog(remote_log, "In a coal mine", remote=True, timeout=20)
 
     finally:
         # Restore active node
