@@ -114,6 +114,13 @@ class UserCreate(UserEntry):
 
     uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."
+    username: LocalUsername
+    """
+    String used to uniquely identify the user on the server. In order to be portable across
+    systems, local user names must be composed of characters from the POSIX portable filename
+    character set (IEEE Std 1003.1-2024 section 3.265). This means alphanumeric characters,
+    hyphens, underscores, and periods. Usernames also may not begin with a hyphen or a period.
+    """
     full_name: NonEmptyString
 
     group_create: bool = False
