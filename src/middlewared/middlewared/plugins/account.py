@@ -409,7 +409,7 @@ class UserService(CRUDService):
                         ad_users_2fa_mapping = set(await self.middleware.call('auth.twofactor.get_ad_users'))
                         if ad_users_2fa_mapping:
                             for u in ds_users:
-                                u['twofactor_user_auth_configured'] = u['sid'] in ad_users_2fa_mapping
+                                u['twofactor_auth_configured'] = u['sid'] in ad_users_2fa_mapping
                     case _:
                         # FIXME - map twofactor_auth_configured hint for LDAP users
                         pass
