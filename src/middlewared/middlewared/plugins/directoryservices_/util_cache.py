@@ -250,7 +250,7 @@ class DSCacheFill:
                     'smbhash': None,
                     'group': {},
                     'home': user_data.pw_dir,
-                    'shell': user_data.pw_shell,
+                    'shell': user_data.pw_shell or '/usr/bin/sh',  # An empty string as pw_shell means sh
                     'full_name': user_data.pw_gecos,
                     'builtin': False,
                     'email': None,
