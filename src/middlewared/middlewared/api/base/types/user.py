@@ -21,7 +21,7 @@ INCUS_IDMAP_COUNT = 65536 * INCUS_MAX_ISOLATED_CONTAINER
 INCUS_IDMAP_MAX = INCUS_IDMAP_MIN + INCUS_IDMAP_COUNT
 TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
-DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + '_' + '-' + '$' + '.'
+DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + '_' + '-' + '.'
 DEFAULT_VALID_START = string.ascii_letters + '_'
 DEFAULT_MAX_LENGTH = 32
 
@@ -39,7 +39,6 @@ def validate_username(
     if valid_start_chars is not None:
         assert val[0] in valid_start_chars, 'Username must start with a letter or an underscore'
 
-    assert '$' not in val or val[-1] == '$', 'Username must end with a dollar sign character'
     assert all(char in valid_chars for char in val), f'Valid characters for a username are: {", ".join(valid_chars)!r}'
     return val
 
