@@ -404,12 +404,12 @@ class UserService(CRUDService):
 
                 match DSType(ds['type']):
                     case DSType.AD:
-                        # For AD users, we will not have 2FA attribute normalized so let's do that
-                        ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
-                        for index, user in enumerate(filter(
-                            lambda u: not u['local'] and 'twofactor_auth_configured' not in u, ds_users)
-                        ):
-                            ds_users[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
+                        # We do not cache 2FA mappings since they have security implications
+                        # So they need to be reapplied on every user.query call
+                        ad_users_2fa_mapping = set(await self.middleware.call('auth.twofactor.get_ad_users'))
+                        if ad_users_2fa_mapping:
+                            for u in ds_users:
+                                u['twofactor_auth_configured'] = u['sid'] in ad_users_2fa_mapping
                     case _:
                         # FIXME - map twofactor_auth_configured hint for LDAP users
                         pass
