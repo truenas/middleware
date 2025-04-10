@@ -717,9 +717,8 @@ class iSCSITargetService(CRUDService):
     def clustered_extents(self):
         # Extents may have had their names sanitized for SCST.  We want the official
         # unsanitized names as output.
-        sys_to_name = {sanitize_extent(ext['name']): ext['name'] for ext in self.middleware.call_sync('iscsi.extent.query',
-                                                                                                      [],
-                                                                                                      {'select': ['name']})}
+        sys_to_name = {sanitize_extent(ext['name']): ext['name'] for ext in
+                       self.middleware.call_sync('iscsi.extent.query', [], {'select': ['name']})}
         extents = []
         basepath = pathlib.Path('/sys/kernel/scst_tgt/handlers')
         for p in basepath.glob('*/*/cluster_mode'):
