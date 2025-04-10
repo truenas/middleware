@@ -141,7 +141,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.api_versions_adapter = api_versions_adapter  # FIXME: Only necessary as a class member for legacy WS API
         return self._create_apis(api_versions, api_versions_adapter)
 
-    def _load_api_versions(self) -> [APIVersion]:
+    def _load_api_versions(self) -> list[APIVersion]:
         versions = []
         api_dir = os.path.join(os.path.dirname(__file__), 'api')
         api_versions = [
@@ -962,7 +962,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             }
         })
 
-        self.__audit_logger.debug(message)
+        self.__audit_logger.info(message)
 
     async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
                    profile=False):
