@@ -2,7 +2,7 @@ import asyncio
 import pathlib
 
 from middlewared.service import Service
-from .utils import ISCSI_TARGET_PARAMETERS
+from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
 
 SCST_BASE = '/sys/kernel/scst_tgt'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
@@ -58,22 +58,22 @@ class iSCSITargetService(Service):
 
     def check_cluster_mode_paths_present(self, devices):
         for device in devices:
-            if not pathlib.Path(f'{SCST_DEVICES}/{device}/cluster_mode').exists():
+            if not pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode').exists():
                 return False
         return True
 
     def get_cluster_mode(self, device):
         try:
-            return pathlib.Path(f'{SCST_DEVICES}/{device}/cluster_mode').read_text().splitlines()[0]
+            return pathlib.Path(f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode').read_text().splitlines()[0]
         except Exception:
             return "UNKNOWN"
 
     async def set_device_cluster_mode(self, device, value):
-        await self.middleware.call('iscsi.scst.path_write', f'{SCST_DEVICES}/{device}/cluster_mode', f'{int(value)}\n')
+        await self.middleware.call('iscsi.scst.path_write', f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode', f'{int(value)}\n')
 
     async def set_devices_cluster_mode(self, devices, value):
         text = f'{int(value)}\n'
-        paths = [f'{SCST_DEVICES}/{device}/cluster_mode' for device in devices]
+        paths = [f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode' for device in devices]
         if paths:
             await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in paths])
 
