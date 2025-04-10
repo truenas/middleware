@@ -1238,6 +1238,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             return False
         return True
 
+    async def boot_id_handler(self, request):
+        return web.Response(
+            body=json.dumps(await self.call("system.boot_id")),
+            content_type="application/json",
+        )
+
     async def api_versions_handler(self, request):
         return web.Response(
             body=json.dumps([version.version for version in self.api_versions]),
@@ -1387,6 +1393,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         for version, api in apis.items():
             self._add_api_route(version, api)
 
+        # Used by UI team
+        app.router.add_route('GET', '/api/boot_id', self.boot_id_handler)
         app.router.add_route('GET', '/api/versions', self.api_versions_handler)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
