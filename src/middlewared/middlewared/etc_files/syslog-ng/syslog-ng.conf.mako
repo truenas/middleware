@@ -38,7 +38,7 @@ def generate_syslog_remote_destination(advanced_config):
     remotelog_stanza += '); };\n'
     remotelog_stanza += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
     remotelog_stanza += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
-    remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
+    remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };'
 
     return remotelog_stanza
 %>\
@@ -84,6 +84,14 @@ source tn_auditd_src {
 ##################
 @include "/etc/syslog-ng/conf.d/tndestinations.conf"
 
+## Remote syslog stanza needs to here _before_ the audit-related configuration
+% if render_ctx['system.advanced.config']['syslogserver']:
+##################
+# remote logging
+##################
+${generate_syslog_remote_destination(render_ctx['system.advanced.config'])}
+% endif
+
 ##################
 # audit-related configuration
 ##################
@@ -98,7 +106,6 @@ log {
   destination { file("/var/log/scst.log"); };
   flags(final);
 };
-
 
 #######################
 # Middlewared-related log files
@@ -123,8 +130,3 @@ log { source(s_src); filter(f_error); destination(d_error); };
 log { source(s_src); filter(f_messages); destination(d_messages); };
 log { source(s_src); filter(f_console); destination(d_console_all); destination(d_xconsole); };
 log { source(s_src); filter(f_crit); destination(d_console); };
-
-
-% if render_ctx['system.advanced.config']['syslogserver']:
-${generate_syslog_remote_destination(render_ctx['system.advanced.config'])}
-% endif
