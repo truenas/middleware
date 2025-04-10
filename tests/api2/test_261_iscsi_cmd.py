@@ -3087,3 +3087,54 @@ def test__target_iscsi_parameters(iscsi_running):
             del new_params['QueuedCommands']
             call('iscsi.target.update', target_id, {'iscsi_parameters': new_params})
             assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS
+
+
+def test__target_extent_special_characters(iscsi_running):
+    """
+    Validate that we can create a target using dot, dash & colon, and an extent
+    with these characters, and also a '/'.
+    """
+    target1_name = f'target-name:{target_name}.1'
+    target2_name = f'target-name:{target_name}.2'
+    extent1_name = f'some/extent-name:{zvol_name}.1'
+    extent2_name = f'some/extent-name:{zvol_name}.2'
+    iqn1 = f'{basename}:{target1_name}'
+    iqn2 = f'{basename}:{target2_name}'
+
+    with initiator_portal() as config:
+        # First create a target and extent with the special characters
+        with configured_target_to_zvol_extent(config, target1_name, f'{zvol}1',
+                                              extent_name=extent1_name, volsize_mb=100) as target1_config:
+            serial1 = target1_config['extent']['serial']
+            naa1 = target1_config['extent']['naa']
+            # Ensure that we see everything as expected
+            with iscsi_scsi_connection(truenas_server.ip, iqn1) as s:
+                verify_ha_inquiry(s, serial1, naa1)
+                verify_capacity(s, MB_100)
+
+            if ha:
+                with alua_enabled():
+                    _ensure_alua_state(True)
+                    _wait_for_alua_settle()
+                    # Ensure that we can see the targets on each node
+                    with iscsi_scsi_connection(truenas_server.nodea_ip, iqn1) as s1:
+                        verify_ha_inquiry(s1, serial1, naa1, 1)
+                        verify_capacity(s1, MB_100)
+                    with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn1) as s2:
+                        verify_ha_inquiry(s2, serial1, naa1, 1)
+                        verify_capacity(s2, MB_100)
+                    # Now with ALUA already enabled, repeat the process
+                    with configured_target_to_zvol_extent(config, target2_name, f'{zvol}2',
+                                                          extent_name=extent2_name, volsize_mb=200) as target2_config:
+                        serial2 = target2_config['extent']['serial']
+                        naa2 = target2_config['extent']['naa']
+                        _wait_for_alua_settle()
+                        with iscsi_scsi_connection(truenas_server.nodea_ip, iqn2) as s1:
+                            verify_ha_inquiry(s1, serial2, naa2, 1)
+                            verify_capacity(s1, MB_200)
+                        with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn2) as s2:
+                            verify_ha_inquiry(s2, serial2, naa2, 1)
+                            verify_capacity(s2, MB_200)
+            with iscsi_scsi_connection(truenas_server.ip, iqn1) as s:
+                verify_ha_inquiry(s, serial1, naa1)
+                verify_capacity(s, MB_100)
