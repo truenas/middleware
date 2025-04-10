@@ -29,6 +29,7 @@ def restart_systemd_svc(svc_to_restart: str, remote_node: bool = False):
     --- CI testing function ---
     Command a service restart via systemctl.
     Optional to request command on remote node (HA only)
+    NOTE: May be unstable with calls to standby node.
     '''
     assert ssh(f"systemctl status {svc_to_restart}")
     node_ip = None
