@@ -1,4 +1,7 @@
+import re
 from enum import StrEnum
+
+HBTL = re.compile('^\\d:\\d:\\d:\\d$')
 
 
 class IscsiAuthType(StrEnum):
@@ -29,3 +32,9 @@ MAX_EXTENT_NAME_LEN = 64
 # We deliberately only support a subset of target parameters
 ISCSI_TARGET_PARAMETERS = ['QueuedCommands']
 ISCSI_HA_TARGET_PARAMETERS = ['QueuedCommands']
+
+
+def sanitize_extent(device):
+    if HBTL.match(device):
+        return device
+    return device.replace('.', '_').replace('/', '-')
