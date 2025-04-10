@@ -38,5 +38,4 @@ def restart_systemd_svc(svc_to_restart: str, remote_node: bool = False):
         node_ip = ha_ips['standby']
 
     assert ssh(f"systemctl restart {svc_to_restart}", ip=node_ip), \
-        [ssh(f"systemctl status {svc_to_restart}", ip=node_ip),
-         ssh(f"journalctl -xeu {svc_to_restart} | tail -120", ip=node_ip)][1]
+        (ssh(f"systemctl status {svc_to_restart}", ip=node_ip), ssh(f"journalctl -xeu {svc_to_restart} | tail -100", ip=node_ip))
