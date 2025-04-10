@@ -69,7 +69,9 @@ class iSCSITargetService(Service):
             return "UNKNOWN"
 
     async def set_device_cluster_mode(self, device, value):
-        await self.middleware.call('iscsi.scst.path_write', f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode', f'{int(value)}\n')
+        await self.middleware.call('iscsi.scst.path_write',
+                                   f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode',
+                                   f'{int(value)}\n')
 
     async def set_devices_cluster_mode(self, devices, value):
         text = f'{int(value)}\n'
