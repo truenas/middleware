@@ -248,7 +248,7 @@ class SystemSecurityService(ConfigService):
             # SRG-OS-000071-GPOS-00039
             # Passwords must contain at least one lowercase character, one lowercase character, and
             # one number.
-            ruleset = combined['password_complexity_ruleset'] or GPOS_STIG_PASSWORD_COMPLEXITY
+            ruleset = combined['password_complexity_ruleset'] or set(GPOS_STIG_PASSWORD_COMPLEXITY)
             new['password_complexity_ruleset'] = ruleset
             if missing := GPOS_STIG_PASSWORD_COMPLEXITY - new['password_complexity_ruleset']:
                 raise ValidationError(
