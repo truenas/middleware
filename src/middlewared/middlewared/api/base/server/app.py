@@ -14,6 +14,7 @@ class App:
         self.authenticated = False
         self.authentication_context: AuthenticationContext = AuthenticationContext()
         self.authenticated_credentials: SessionManagerCredentials | None = None
+        self.legacy_jobs = True
         self.private_methods = False
         self.py_exceptions = False
         self.websocket = False
