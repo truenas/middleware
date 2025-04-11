@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import Field, Secret
 
@@ -26,7 +26,8 @@ __all__ = [
     "PoolDatasetProcessesResult", "PoolDatasetGetQuotaArgs", "PoolDatasetGetQuotaResult", "PoolDatasetSetQuotaArgs",
     "PoolDatasetSetQuotaResult", "PoolDatasetRecordSizeChoicesArgs", "PoolDatasetRecordSizeChoicesResult",
     "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
-    "PoolDatasetPromoteArgs", "PoolDatasetPromoteResult",
+    "PoolDatasetDestroySnapshotsArgs", "PoolDatasetDestroySnapshotsResult", "PoolDatasetPromoteArgs",
+    "PoolDatasetPromoteResult",
 ]
 
 
@@ -551,6 +552,26 @@ class PoolDatasetUnlockArgs(BaseModel):
 
 class PoolDatasetUnlockResult(BaseModel):
     result: PoolDatasetUnlock
+
+
+class PoolDatasetDestroySnapshotsArgs(BaseModel):
+    name: str
+    snapshots: "PoolDatasetDestroySnapshotsArgsSnapshots"
+
+
+class PoolDatasetDestroySnapshotsArgsSnapshots(BaseModel):
+    all: bool = False
+    recursive: bool = False
+    snapshots: list[Union["PoolDatasetDestroySnapshotsArgsSnapshotSpec", str]] = []
+
+
+class PoolDatasetDestroySnapshotsArgsSnapshotSpec(BaseModel):
+    start: str | None = None
+    end: str | None = None
+
+
+class PoolDatasetDestroySnapshotsResult(BaseModel):
+    result: list[str]
 
 
 class PoolDatasetUpdateArgs(BaseModel):

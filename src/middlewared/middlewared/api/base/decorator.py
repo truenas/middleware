@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import re
 from typing import Callable
 
 from .handler.accept import accept_params
@@ -14,6 +15,7 @@ CONFIG_CRUD_METHODS = frozenset([
     'create', 'update', 'delete',
     'query', 'get_instance', 'config'
 ])
+MAJOR_VERSION = re.compile(r"^v([0-9]{2})\.([0-9]{2})$")
 
 
 def api_method(
@@ -33,6 +35,7 @@ def api_method(
     pass_app_require: bool = False,
     pass_app_rest: bool = False,
     skip_args: int | None = None,
+    removed_in: str | None = None,
 ):
     """
     Mark a `Service` class method as an API method.
@@ -64,6 +67,8 @@ def api_method(
     `authorization_required` is False API endpoint does not require authorization, but does require authentication.
     This is incompatible with `roles`. Additional review will be required in order to validate that its use complies
     with security standards.
+
+    `removed_in` specifies major TrueNAS version (in the format vXX.YY) which removes this API method.
     """
     if list(returns.model_fields.keys()) != ["result"]:
         raise TypeError("`returns` model must only have one field called `result`")
@@ -130,6 +135,13 @@ def api_method(
         wrapped.roles = roles or []
         wrapped._private = private
         wrapped._cli_private = cli_private
+        if removed_in is not None:
+            if not MAJOR_VERSION.match(removed_in):
+                raise ValueError(
+                    f'{func.__name__}: removed_in must be a valid major TrueNAS version number in the format vXX.YY'
+                )
+
+            wrapped._removed_in = removed_in
 
         # FIXME: This is only here for backwards compatibility and should be removed eventually
         wrapped.accepts = []
