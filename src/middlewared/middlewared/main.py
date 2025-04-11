@@ -140,6 +140,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         api_versions_adapter = APIVersionsAdapter(api_versions)
         self.api_versions = api_versions
         self.api_versions_adapter = api_versions_adapter  # FIXME: Only necessary as a class member for legacy WS API
+        self._check_removed_in(api_versions)
         return self._create_apis(api_versions, api_versions_adapter)
 
     def _load_api_versions(self) -> list[APIVersion]:
@@ -159,6 +160,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             versions.append(APIVersion(version, module_provider))
 
         return versions
+
+    def _check_removed_in(self, api_versions: list[APIVersion]):
+        min_version = min([version.version for version in api_versions])
+        for method_name, method in self._get_methods():
+            if removed_in := getattr(method, "_removed_in", None):
+                if removed_in < min_version:
+                    raise ValueError(
+                        f"Method {method_name} was scheduled to be removed in API version {removed_in}. "
+                        "This API version is no longer present. Please, either remove this method, or make it private."
+                    )
 
     def _create_apis(
         self,
@@ -184,23 +195,35 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _create_api(self, version: str, method_factory: typing.Callable[["Middleware", str], Method]) -> API:
         methods = []
-        for service_name, service in self.get_services().items():
-            for attribute in dir(service):
-                if attribute.startswith("_"):
+        for method_name, method in self._get_methods():
+            if removed_in := getattr(method, "_removed_in", None):
+                if version >= removed_in:
                     continue
 
-                if not callable(getattr(service, attribute)):
-                    continue
-
-                method_name = f"{service_name}.{attribute}"
-
-                methods.append(method_factory(self, method_name))
+            methods.append(method_factory(self, method_name))
 
         events = []
         for name, event in self.events:
             events.append(Event(self, name))
 
         return API(version, methods, events)
+
+    def _get_methods(self) -> list[tuple[str, callable]]:
+        methods = []
+        for service_name, service in self.get_services().items():
+            for attribute in dir(service):
+                if attribute.startswith("_"):
+                    continue
+
+                method = getattr(service, attribute)
+                if not callable(method):
+                    continue
+
+                method_name = f"{service_name}.{attribute}"
+
+                methods.append((method_name, method))
+
+        return methods
 
     def _add_api_route(self, version: str, api: API):
         self.app.router.add_route('GET', f'/api/{version}', RpcWebSocketHandler(self, api.methods))

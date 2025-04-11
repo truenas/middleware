@@ -160,6 +160,9 @@ class DocumentationGenerator:
         if item.doc:
             result += f"{item.doc}\n\n"
 
+        if item.removed_in:
+            result += f"*DEPRECATED: this method is scheduled to be removed in {item.removed_in}.*\n\n"
+
         result += f".. raw:: html\n\n"
         result += textwrap.indent(
             f"<div id=\"json-schema\">" + schemas_html + "</div><br><br>", " " * 4
