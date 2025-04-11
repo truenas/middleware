@@ -6,6 +6,7 @@ from time import time
 
 
 URL = "https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/"
+MAX_ADMIN_LOGINS_LISTED = 100
 
 
 class AdminSessionAlertClass(AlertClass):
@@ -68,7 +69,7 @@ class AdminSessionAlertSource(AlertSource):
         if not admin_logins:
             return
 
-        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins])
+        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins[-MAX_ADMIN_LOGINS_LISTED:]])
         return Alert(
             AdminSessionAlertClass,
             {'count': len(admin_logins), 'sessions': audit_msg},
