@@ -333,6 +333,12 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.disk', 'Disk name must start with "zvol/"')
                 raise verrors
 
+            if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', disk]]):
+                ns = namespaces[0]
+                verrors.add(f'{schema_name}.disk',
+                            f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["nvmet_subsys_name"]} NSID {ns["nsid"]}')
+                raise verrors
+
             device = os.path.join('/dev', disk)
 
             zvol_name = zvol_path_to_name(device)
