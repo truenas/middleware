@@ -27,6 +27,7 @@ class FCHostService(CRUDService):
     # ensure_wired (indirectly)
     wired = False
     do_reset_wired = False
+    check_hardware = True
 
     class Config:
         private = True
@@ -419,6 +420,12 @@ class FCHostService(CRUDService):
         """
         Ensure that fc_port.wire has been called sucessfully since middlewared started.
         """
+        # First check for hardware changes
+        if self.check_hardware:
+            if await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+                if await self.middleware.call('fc.fc_host.handle_hardware_changes'):
+                    self.check_hardware = False
+        # Basic check
         if not self.wired:
             if await self.middleware.call('fc.fc_host.wire'):
                 self.wired = True
@@ -433,11 +440,106 @@ class FCHostService(CRUDService):
             self.wired = False
             self.do_reset_wired = False
             await self.middleware.call('cache.pop', 'fc.fc_host_nport_wwpn_choices')
+            await self.middleware.call('cache.pop', 'fc.fc_host.hbas_changed')
             if await self.middleware.call('failover.licensed'):
                 await self.middleware.call('failover.call_remote',
                                            'cache.pop',
                                            ['fc.fc_host_nport_wwpn_choices'],
                                            {'raise_connect_error': False})
+                await self.middleware.call('failover.call_remote',
+                                           'cache.pop',
+                                           ['fc.fc_host.hbas_changed'],
+                                           {'raise_connect_error': False})
+
+    @private
+    async def hbas_changed(self):
+        """
+        Detect whether the Fibre Channel HBAs in this system have changed
+        since the last wire.
+        """
+        result = {'added': False, 'removed': False}
+        # Use more manual cache, so that we can pop it during CI
+        try:
+            return await self.middleware.call('cache.get', 'fc.fc_host.hbas_changed')
+        except KeyError:
+            pass
+
+        if await self.middleware.call('fc.capable'):
+            current_wwpns = set(await self.middleware.call('fc.fc_host_nport_wwpn_choices'))
+            if await self.middleware.call('failover.node') in ['MANUAL', 'A']:
+                key = 'wwpn'
+            else:
+                key = 'wwpn_b'
+            old_wwpns = {fchost[key] for fchost in await self.middleware.call('fc.fc_host.query')}
+            # Have we removed some and added others ?
+            if current_wwpns - old_wwpns:
+                result['added'] = True
+            if old_wwpns - current_wwpns:
+                result['removed'] = True
+
+        await self.middleware.call('cache.put', 'fc.fc_host.hbas_changed', result)
+        return result
+
+    @private
+    async def handle_hardware_changes(self):
+        if not await self.middleware.call('fc.capable'):
+            # No FC support.  We're done.
+            return True
+
+        complete_rewire = False
+        addition_only = False
+
+        # First check the local node
+        changed = await self.middleware.call('fc.fc_host.hbas_changed')
+        if changed['removed'] and changed['added']:
+            complete_rewire = True
+        elif changed['added']:
+            addition_only = True
+
+        # If HA check remote
+        if await self.middleware.call('failover.licensed'):
+            try:
+                changed = await self.middleware.call('failover.call_remote', 'fc.fc_host.hbas_changed')
+            except CallError:
+                # We don't have all the data.  Abort for now.
+                return False
+            if changed['removed'] and changed['added']:
+                complete_rewire = True
+            elif changed['added']:
+                addition_only = True
+
+        if complete_rewire:
+            await self.middleware.call('fc.fc_host.reset_wired', True)
+            for fc_host in await self.middleware.call('fc.fc_host.query'):
+                await self.middleware.call('fc.fc_host.delete', fc_host['id'])
+            await self.middleware.call('fc.fc_host.wire')
+            self.logger.warning('Fibre Channel ports rewired')
+            await self.middleware.call("alert.oneshot_create", "FCHardwareReplaced", None)
+        elif addition_only:
+            await self.middleware.call('fc.fc_host.reset_wired', True)
+            await self.middleware.call('fc.fc_host.wire')
+            self.logger.warning('Fibre Channel ports added')
+            await self.middleware.call("alert.oneshot_create", "FCHardwareAdded", None)
+
+        return True
+
+    @private
+    async def reset_check_hardware(self):
+        # The check_hardware flags defaults to True on boot, and will
+        # be cleared on a successful handle_hardware_changes.
+        if await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+            self.check_hardware = True
+        else:
+            # If we're the BACKUP node and we've not yet communicated to tell the MASTER
+            # to reset the flag, then do so.
+            if self.check_hardware:
+                try:
+                    await self.middleware.call('failover.call_remote', 'fc.fc_host.reset_check_hardware')
+                    self.check_hardware = False
+                except CallError:
+                    # Shouldn't occur.  We only come in here on the BACKUP node when
+                    # connectivity is up.
+                    self.logger.warning('Failed to inform other controller to check Fibre Channel hardware')
 
 
 async def _failover_status_change(middleware, event_type, args):
@@ -447,5 +549,11 @@ async def _failover_status_change(middleware, event_type, args):
         await middleware.call('fc.fc_host.reset_wired')
 
 
+def _remote_connect_event(middleware, *args, **kwargs):
+    if middleware.call_sync('failover.status') == 'BACKUP':
+        middleware.call_sync('fc.fc_host.reset_check_hardware')
+
+
 async def setup(middleware):
     middleware.event_subscribe("failover.status", _failover_status_change)
+    await middleware.call('failover.remote_on_connect', _remote_connect_event)
