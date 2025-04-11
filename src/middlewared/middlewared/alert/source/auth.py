@@ -5,6 +5,9 @@ from middlewared.utils.audit import UNAUTHENTICATED
 from time import time
 
 
+MAX_ADMIN_LOGINS_LISTED = 100
+
+
 class AdminSessionAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
@@ -65,7 +68,7 @@ class AdminSessionAlertSource(AlertSource):
         if not admin_logins:
             return
 
-        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins])
+        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins[-MAX_ADMIN_LOGINS_LISTED:]])
         return Alert(
             AdminSessionAlertClass,
             {'count': len(admin_logins), 'sessions': audit_msg},
