@@ -1010,7 +1010,12 @@ class PoolDatasetService(CRUDService):
 
     # Used by Democratic CSI
     # FIXME: phase it out
-    @api_method(PoolDatasetDestroySnapshotsArgs, PoolDatasetDestroySnapshotsResult, roles=['SNAPSHOT_WRITE'])
+    @api_method(
+        PoolDatasetDestroySnapshotsArgs,
+        PoolDatasetDestroySnapshotsResult,
+        roles=['SNAPSHOT_WRITE'],
+        removed_in="v26.04",
+    )
     @job(lock=lambda args: f'destroy_snapshots_{args[0]}')
     async def destroy_snapshots(self, job, name, snapshots_spec):
         """
