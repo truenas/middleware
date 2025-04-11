@@ -2,10 +2,7 @@ from collections import namedtuple
 from itertools import zip_longest
 
 from middlewared.api import api_method
-from middlewared.api.current import (
-    InterfaceListenServicesRestartedOnSyncArgs,
-    InterfaceListenServicesRestartedOnSyncResult,
-)
+from middlewared.api.current import InterfaceServicesRestartedOnSyncArgs, InterfaceServicesRestartedOnSyncResult
 from middlewared.service import Service, private
 
 PreparedDelegate = namedtuple("PreparedDelegate", ["delegate", "state", "addresses"])
@@ -26,8 +23,8 @@ class InterfaceService(Service):
         self.delegates.append(delegate)
 
     @api_method(
-        InterfaceListenServicesRestartedOnSyncArgs,
-        InterfaceListenServicesRestartedOnSyncResult,
+        InterfaceServicesRestartedOnSyncArgs,
+        InterfaceServicesRestartedOnSyncResult,
         roles=['NETWORK_INTERFACE_READ']
     )
     async def services_restarted_on_sync(self):

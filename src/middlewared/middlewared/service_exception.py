@@ -1,6 +1,5 @@
 import errno
 import subprocess
-import typing
 
 from truenas_api_client import ErrnoMixin
 
@@ -53,7 +52,7 @@ class ValidationErrors(CallException):
     CallException with a collection of ValidationError
     """
 
-    def __init__(self, errors: typing.List[ValidationError] = None):
+    def __init__(self, errors: list[ValidationError] = None):
         self.errors = errors or []
         super().__init__(self.errors)
 
@@ -93,7 +92,7 @@ class ValidationErrors(CallException):
         return item in [e.attribute for e in self.errors]
 
 
-def adapt_exception(e) -> typing.Union[CallError, None]:
+def adapt_exception(e) -> CallError | None:
     from .utils.shell import join_commandline
 
     if isinstance(e, subprocess.CalledProcessError):
