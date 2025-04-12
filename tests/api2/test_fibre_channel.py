@@ -1056,7 +1056,7 @@ class TestFibreChannelHardwareReplace(AbstractFibreChannel, AlertMixin):
                 assert_fc_host(fc_hosts[0], 'fc0', NODE_A_2_WWPN, NODE_B_2_WWPN, 0)
                 assert_fc_host(fc_hosts[1], 'fc1', NODE_A_3_WWPN, NODE_B_3_WWPN, 0)
             else:
-                assert_fc_host(fc_hosts[2], 'fc0', NODE_A_2_WWPN, None, 0)
-                assert_fc_host(fc_hosts[3], 'fc1', NODE_A_3_WWPN, None, 0)
+                assert_fc_host(fc_hosts[0], 'fc0', NODE_A_2_WWPN, None, 0)
+                assert_fc_host(fc_hosts[1], 'fc1', NODE_A_3_WWPN, None, 0)
             self.assert_alert_count(1)
         self.clear_alert()
