@@ -154,6 +154,10 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         if data["cache_path"]:
             await check_path_resides_within_volume(verrors, self.middleware, f"{name}.cache_path", data["cache_path"],
                                                    True)
+            if not verrors:
+                statfs = await self.middleware.call("filesystem.statfs", data["cache_path"])
+                if "RO" in statfs["flags"]:
+                    verrors.add(f"{name}.cache_path", "The cache directory must be writeable")
 
         if not verrors:
             try:
