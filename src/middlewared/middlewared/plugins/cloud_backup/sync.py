@@ -11,6 +11,7 @@ from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, Service, item_method, job, private
+from middlewared.utils import run
 from middlewared.utils.time_utils import utc_now
 
 
@@ -91,6 +92,9 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
         await run_script(job, "Pre-script", cloud_backup["pre_script"], env)
 
         await run_restic(job, cmd, restic_config.env, cwd=cwd, stdin=stdin, track_progress=True)
+
+        if cloud_backup["cache_path"]:
+            await run(["restic", "--cache-dir", cloud_backup["cache_path"]], "cache", "--cleanup", check=False)
 
         await run_script(job, "Post-script", cloud_backup["post_script"], env)
     finally:
