@@ -47,6 +47,15 @@ class DockerService(ConfigService):
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
         return data
 
+    @private
+    async def license_active(self):
+        can_run_apps = True
+        if await self.middleware.call('system.is_ha_capable'):
+            license_ = await self.middleware.call('system.license')
+            can_run_apps = license_ is not None and 'JAILS' in license_['features']
+
+        return can_run_apps
+
     @api_method(DockerUpdateArgs, DockerUpdateResult, audit='Docker: Updating Configurations')
     @job(lock='docker_update')
     async def do_update(self, job, data):
@@ -60,8 +69,15 @@ class DockerService(ConfigService):
         config['cidr_v6'] = str(config['cidr_v6'])
 
         verrors = ValidationErrors()
-        if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
-            verrors.add('docker_update.pool', 'Pool not found.')
+        if config['pool']:
+            if not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
+                verrors.add('docker_update.pool', 'Pool not found.')
+
+            if not await self.license_active():
+                verrors.add(
+                    'docker_update.pool',
+                    'System is not licensed to use Applications'
+                )
 
         verrors.check()
 
