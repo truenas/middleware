@@ -61,6 +61,40 @@ class IdmapDomainService(Service):
     class Config:
         namespace = 'idmap'
 
+    @filterable_api_method(private=True)
+    async def query(self, filters, options):
+        """ This is a temporary compatibiltiy method to prevent breaking the UI during transition
+        to the new directory services APIs """
+        return filter_list([ 
+            {
+                'id': 1,
+                'name': 'DS_TYPE_ACTIVEDIRECTORY',
+                'range_low': 100000001,
+                'range_high': 200000001,
+                'idmap_backend': 'RID',
+                'options': {},
+                'certificate': None,
+            },
+            {
+                'id': 2,
+                'name': 'DS_TYPE_LDAP',
+                'range_low': 100000001,
+                'range_high': 200000001,
+                'idmap_backend': 'LDAP',
+                'options': {},
+                'certificate': None,
+            },
+            {
+                'id': 5,
+                'name': 'DS_TYPE_DEFAULT_DOMAIN',
+                'range_low': 90000001,
+                'range_high': 100000000,
+                'idmap_backend': 'TDB',
+                'options': {},
+                'certificate': None,
+            },
+        ], filters, options) 
+
     def __wbclient_ctx(self, retry=True):
         """
         Wrapper around setting up a temporary winbindd client context
@@ -406,16 +440,14 @@ class IdmapDomainService(Service):
 
         idmap_range = await self.middleware.call("smb.getparm", "idmap config * : range", "GLOBAL")
         low_range = int(idmap_range.split("-")[0].strip())
-        for idx, entry in enumerate(WellKnownSid):
-            if not entry.valid_for_mapping:
-                continue
-
-            finalized_entry = entry.copy()
-            finalized_entry.update({
+        for idx, sid_entry in enumerate(WellKnownSid):
+            out.append({
+                'name': sid_entry.name,
                 'id': idx,
-                'gid': low_range + 3 + idx
+                'gid': low_range + 3 + idx,
+                'sid': sid_entry.sid,
+                'set': sid_entry.valid_for_mapping,
             })
-            out.append(finalized_entry)
 
         return filter_list(out, filters, options)
 
