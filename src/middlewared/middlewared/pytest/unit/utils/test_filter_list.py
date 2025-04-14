@@ -591,3 +591,7 @@ def test__filter_list_undefined():
 
 def test__filter_list_invalid_key():
     assert len(filter_list(DATA_WITH_NULL, [['canary', 'in', 'canary2']])) == 0
+
+
+def test__filter_list_regex_null():
+    assert len(filter_list(DATA_WITH_NULL, [['foo', '~', '(?i)Foo1']])) == 1
