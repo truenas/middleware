@@ -24,7 +24,7 @@ TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
 DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + '_' + '-' + '.'
 DEFAULT_VALID_START = string.ascii_letters + '_'
-DEFAULT_MAX_LENGTH = 32
+DEFAULT_MAX_LENGTH = 32  # WARNING UT_NAMESIZE = 32. If we go above this then utmp accounting may break
 
 
 def validate_username(
