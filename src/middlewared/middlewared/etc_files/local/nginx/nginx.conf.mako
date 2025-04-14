@@ -83,6 +83,8 @@
         disabled_ciphers = ''
 
     has_tn_connect = middleware.call_sync('tn_connect.config')['certificate'] is not None
+
+    current_api_version = middleware.api_versions[-1].version
 %>
 #
 #    TrueNAS nginx configuration file
@@ -223,6 +225,14 @@ http {
 
         location /api/docs {
             alias /usr/share/middlewared/docs;
+            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
+            add_header Expires 0;
+        }
+
+        location /api/docs/current {
+            alias /usr/share/middlewared/docs/${current_api_version};
+            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
+            add_header Expires 0;
         }
 
         location @index {

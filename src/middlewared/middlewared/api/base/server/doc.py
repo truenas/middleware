@@ -12,6 +12,7 @@ from .method import Method
 
 class APIDump(BaseModel):
     version: str
+    version_title: str
     methods: list["APIDumpMethod"]
     events: list["APIDumpEvent"]
 
@@ -33,13 +34,19 @@ class APIDumpEvent(BaseModel):
 
 
 class APIDumper:
-    def __init__(self, version: str, api: API, role_manager: RoleManager):
+    def __init__(self, version: str, version_title: str, api: API, role_manager: RoleManager):
         self.version = version
+        self.version_title = version_title
         self.api = api
         self.role_manager = role_manager
 
     def dump(self):
-        return APIDump(version=self.version, methods=self._dump_methods(), events=self._dump_events())
+        return APIDump(
+            version=self.version,
+            version_title=self.version_title,
+            methods=self._dump_methods(),
+            events=self._dump_events(),
+        )
 
     def _dump_methods(self):
         result = []
