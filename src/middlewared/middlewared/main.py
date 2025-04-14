@@ -1306,10 +1306,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__plugins_load()
 
         apis = self._load_apis()
+        current_api = apis.pop("current")
 
         result = {"versions": []}
         for version, api in apis.items():
-            result["versions"].append(APIDumper(version, api, self.role_manager).dump().model_dump())
+            version_title = version
+            if api.version == current_api.version:
+                version_title += " (current)"
+
+            result["versions"].append(APIDumper(version, version_title, api, self.role_manager).dump().model_dump())
 
         json.dump(result, stream)
 

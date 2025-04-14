@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: iX Engineering <dev@ixsystems.net>
 Build-Depends: debhelper-compat (= 12),
                middlewared,
-               python3-virtualenv
+               python3-virtualenv,
+               zip
 Standards-Version: 4.4.0
 Homepage: https://github.com/truenas/middleware
 

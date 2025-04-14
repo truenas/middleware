@@ -29,7 +29,7 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/conf.py") as f:
             conf = f.read()
 
-        conf = conf.replace("$VERSION", self.api.version)
+        conf = conf.replace("$VERSION", self.api.version_title)
 
         with open(f"{self.output_dir}/conf.py", "w") as f:
             f.write(conf)
@@ -185,6 +185,10 @@ class DocumentationGenerator:
         pass
 
 
+def docs_filename(version: str):
+    return f"truenas-{version}-docs.zip"
+
+
 def main(output_dir):
     data = json.loads(
         subprocess.run(
@@ -194,11 +198,18 @@ def main(output_dir):
             text=True,
         ).stdout
     )
-    for api_dump in data["versions"]:
-        api = APIDump.model_validate(api_dump)
-
+    apis = [APIDump.model_validate(api_dump) for api_dump in data["versions"]]
+    for api in apis:
         rst_dir = f"{output_dir}/rst/{api.version}"
         DocumentationGenerator(api, rst_dir).generate()
+
+        with open(f"{rst_dir}/index.rst") as f:
+            index = f.read()
+
+        index = index.replace("<download URL>", f"<{docs_filename(api.version)}>")
+
+        with open(f"{rst_dir}/index.rst", "w") as f:
+            f.write(index)
 
         build_dir = f"{output_dir}/html/{api.version}"
         subprocess.run(
@@ -216,17 +227,45 @@ def main(output_dir):
     shutil.rmtree(f"{output_dir}/rst")
     shutil.rmtree(f"{output_dir}/html")
 
-    for root, dirs, files in os.walk(output_dir):
-        for filename in files:
-            if filename.endswith(".html"):
-                with open(f"{root}/{filename}") as f:
-                    contents = f.read()
+    for version in os.listdir(output_dir):
+        cwd = f"{output_dir}/{version}"
 
-                # Make sphinx show a summary of the search result (sphinxbootstrap4theme breaks this)
-                contents = contents.replace('<div class="bodywrapper">', '<div class="bodywrapper" role="main">')
+        for root, dirs, files in os.walk(cwd):
+            for filename in files:
+                if filename.endswith(".html"):
+                    with open(f"{root}/{filename}") as f:
+                        contents = f.read()
 
-                with open(f"{root}/{filename}", "w") as f:
-                    f.write(contents)
+                    # Version switch
+                    version_switch = [
+                        (
+                            f'<option value="{api.version}" {"selected" if api.version == version else ""}>' +
+                            f'{api.version_title}' +
+                            '</option>'
+                        )
+                        for api in sorted(apis, key=lambda api: api.version, reverse=True)
+                    ]
+                    version_switch = (
+                        '<form class="form-inline">'
+                        '<select class="form-control" onchange="navigateToVersion(this.value);">' +
+                        ''.join(version_switch) +
+                        '</select>'
+                        '</form>'
+                    )
+                    navbar = '<ul class="navbar-nav mr-auto">'
+                    contents = contents.replace(navbar, version_switch + navbar)
+
+                    # Make sphinx show a summary of the search result (sphinxbootstrap4theme breaks this)
+                    contents = contents.replace('<div class="bodywrapper">', '<div class="bodywrapper" role="main">')
+
+                    with open(f"{root}/{filename}", "w") as f:
+                        f.write(contents)
+
+        subprocess.run(
+            ["zip", "-r", docs_filename(version)] + os.listdir(cwd),
+            check=True,
+            cwd=cwd,
+        )
 
 
 if __name__ == "__main__":
