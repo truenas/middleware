@@ -214,6 +214,13 @@ def get_max_boot_priority_device(device_list: list[dict]) -> dict | None:
     return max_boot_priority_device
 
 
+def get_max_requested_memory_of_instance(instance: dict) -> int:
+    return instance['memory'] if instance['memory'] else (
+        instance['raw'].get('state', {}).get('memory', {}).get('total') or 0
+        # Can happen if VM is stopped and explicit memory is not requested
+    )
+
+
 @dataclass(slots=True, frozen=True, kw_only=True)
 class PciEntry:
     pci_addr: str

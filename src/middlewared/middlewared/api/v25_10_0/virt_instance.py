@@ -1,10 +1,11 @@
-import os
 import re
 from typing import Annotated, Literal, TypeAlias
 
 from pydantic import AfterValidator, Field, model_validator, Secret, StringConstraints
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, match_validator, NonEmptyString, single_argument_args
+from middlewared.api.base import (
+    BaseModel, ForUpdateMetaclass, match_validator, NonEmptyString, single_argument_args, single_argument_result,
+)
 
 from .virt_device import DeviceType, InstanceType
 
@@ -17,6 +18,8 @@ __all__ = [
     'VirtInstanceImageChoicesResult', 'VirtInstanceDeviceListArgs', 'VirtInstanceDeviceListResult',
     'VirtInstanceDeviceAddArgs', 'VirtInstanceDeviceAddResult', 'VirtInstanceDeviceUpdateArgs',
     'VirtInstanceDeviceUpdateResult', 'VirtInstanceDeviceDeleteArgs', 'VirtInstanceDeviceDeleteResult',
+    'VirtInstanceGetMemoryUsageArgs', 'VirtInstanceGetMemoryUsageResult', 'VirtInstanceGetAvailableMemoryArgs',
+    'VirtInstanceGetAvailableMemoryResult', 'VirtInstanceGetVMMemoryInfoArgs', 'VirtInstanceGetVMMemoryInfoResult',
 ]
 
 
@@ -204,8 +207,16 @@ class VirtInstanceDeleteResult(BaseModel):
     result: Literal[True]
 
 
+class StartOptions(BaseModel):
+    overcommit: bool = False
+    '''
+    This is only applicable for VMs and should be set if enough memory is not available to start the VM.
+    '''
+
+
 class VirtInstanceStartArgs(BaseModel):
     id: str
+    options: StartOptions = StartOptions()
 
 
 class VirtInstanceStartResult(BaseModel):
@@ -295,3 +306,51 @@ class VirtInstanceDeviceDeleteArgs(BaseModel):
 
 class VirtInstanceDeviceDeleteResult(BaseModel):
     result: Literal[True]
+
+
+class VirtInstanceGetMemoryUsageArgs(BaseModel):
+    id: NonEmptyString
+
+
+@single_argument_result
+class VirtInstanceGetMemoryUsageResult(BaseModel):
+    total: int
+    '''Total requested memory in bytes'''
+    usage: int
+    '''Memory being consumed in bytes'''
+
+
+class VirtInstanceGetAvailableMemoryArgs(BaseModel):
+    overcommit: bool = False
+
+
+class VirtInstanceGetAvailableMemoryResult(BaseModel):
+    result: int
+
+
+class VirtInstanceGetVMMemoryInfoArgs(BaseModel):
+    id: NonEmptyString
+
+
+@single_argument_result
+class VirtInstanceGetVMMemoryInfoResult(BaseModel):
+    total_memory_requested: int
+    '''Maximum / total memory requested by the VM'''
+    overcommit_required: bool
+    '''Overcommit of memory is required to start VM'''
+    memory_req_fulfilled_after_overcommit: bool
+    '''Memory requirements of VM are fulfilled if over-committing memory is specified'''
+    arc_to_shrink: int | None
+    '''Size of ARC to shrink in bytes'''
+    current_arc_max: int
+    '''Current size of max ARC in bytes'''
+    arc_min: int
+    '''Minimum size of ARC in bytes'''
+    arc_max_after_shrink: int
+    '''Size of max ARC in bytes after shrinking'''
+    actual_vm_requested_memory: int
+    '''
+    VM memory in bytes to consider when making calculations for available/required memory. If VM ballooning is
+    specified for the VM, the minimum VM memory specified by user will be taken into account otherwise total VM
+    memory requested will be taken into account.
+    '''

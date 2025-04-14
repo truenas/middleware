@@ -665,9 +665,14 @@ async def _event_system_ready(middleware: 'Middleware', event_type, args):
 
 
 async def setup(middleware: 'Middleware'):
+    # it's _very_ important that we run this before we do
+    # any type of VM initialization. We have to capture the
+    # zfs c_max value before we start manipulating these
+    # sysctls during vm start/stop
+    await middleware.call('sysctl.store_default_arc_max')
     middleware.event_register(
         'virt.global.config',
-        'Sent on virtualziation configuration changes.',
+        'Sent on virtualization configuration changes.',
         roles=['VIRT_GLOBAL_READ']
     )
     middleware.event_subscribe('system.ready', _event_system_ready)

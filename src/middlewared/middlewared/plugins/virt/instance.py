@@ -564,16 +564,17 @@ class VirtInstanceService(CRUDService):
         roles=['VIRT_INSTANCE_WRITE']
     )
     @job(lock=lambda args: f'instance_action_{args[0]}', logs=True)
-    async def start(self, job, id):
+    async def start(self, job, id, options):
         """
         Start an instance.
         """
         await self.middleware.call('virt.global.check_initialized')
-        return await self.start_impl(job, id)
+        return await self.start_impl(job, id, options)
 
     @private
-    async def start_impl(self, job, id):
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+    async def start_impl(self, job, id, options=None):
+        options = options or {}
+        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
 
         # Apply any idmap changes
         if instance['status'] != 'RUNNING':
@@ -581,6 +582,11 @@ class VirtInstanceService(CRUDService):
 
         if instance['vnc_password']:
             await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
+
+        if instance['type'] == 'VM':
+            await self.middleware.call('virt.instance.init_guest_vmemory', instance, options.get('overcommit', False))
+        elif options.get('overcommit'):
+            raise CallError('Overcommit is not supported for containers')
 
         try:
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
@@ -600,6 +606,9 @@ class VirtInstanceService(CRUDService):
             except json.decoder.JSONDecodeError:
                 await job.logs_fd_write(output)
                 errmsg += ' Please check job logs.'
+
+            if instance['type'] == 'VM' and (await self.get_instance(id))['status'] != 'RUNNING':
+                await self.middleware.call('virt.instance.teardown_guest_vmemory', id)
             raise CallError(errmsg)
 
         return True
@@ -658,9 +667,18 @@ class VirtInstanceService(CRUDService):
         if instance['vnc_password']:
             await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
 
-        await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
-            'action': 'start',
-        }})
+        if instance['type'] == 'VM':
+            await self.middleware.call('virt.instance.init_guest_vmemory', instance, True)
+
+        try:
+            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+                'action': 'start',
+            }})
+        except Exception:
+            if instance['type'] == 'VM' and (await self.get_instance(id))['status'] != 'RUNNING':
+                await self.middleware.call('virt.instance.teardown_guest_vmemory', id)
+
+            raise
 
         return True
 
