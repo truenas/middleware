@@ -7,7 +7,7 @@ import boto3
 import pytest
 
 from truenas_api_client import ClientException
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.cloud_backup import task, run_task
 from middlewared.test.integration.assets.cloud_sync import credential
 from middlewared.test.integration.assets.pool import dataset
@@ -456,3 +456,10 @@ def test_pre_script_failure(cloud_backup_task, error, expected):
 
     job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
     assert job["logs_excerpt"].strip() == expected
+
+
+def test_cloud_sync_credential_deletion(s3_credential, cloud_backup_task):
+    with pytest.raises(CallError) as ve:
+        call("cloudsync.credentials.delete", s3_credential["id"])
+
+    assert "This credential is used by cloud backup task" in ve.value.errmsg
