@@ -63,6 +63,9 @@ class AdminSessionAlertSource(AlertSource):
                     'username',
                     'address',
                     'success'
+                ],
+                'order_by': [
+                    'message_timestamp'
                 ]
             }
         })
