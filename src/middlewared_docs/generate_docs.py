@@ -1,4 +1,6 @@
 # -*- coding=utf-8 -*-
+import tempfile
+
 import json
 import logging
 import os
@@ -261,11 +263,9 @@ def main(output_dir):
                     with open(f"{root}/{filename}", "w") as f:
                         f.write(contents)
 
-        subprocess.run(
-            ["zip", "-r", docs_filename(version)] + os.listdir(cwd),
-            check=True,
-            cwd=cwd,
-        )
+        with tempfile.NamedTemporaryFile() as tf:
+            shutil.make_archive(tf.name, "zip", cwd)
+            shutil.move(f"{tf.name}.zip", cwd + "/" + docs_filename(version))
 
 
 if __name__ == "__main__":
