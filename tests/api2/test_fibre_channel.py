@@ -8,6 +8,7 @@ from assets.websocket.pool import zvol
 from auto_config import ha, pool_name
 
 from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
+from middlewared.test.integration.assets.alert import AlertMixin
 from middlewared.test.integration.utils import call, mock, ssh
 
 SLOT_0 = 'CPU SLOT4 PCI-E 3.0 X16 / PCI Function 0'
@@ -976,16 +977,6 @@ class TestFixtureNoSlotFibreChannel(AbstractFibreChannel):
             assert_fc_host(fc_hosts[3], 'fc3', NO_SLOT_NODE_A_3_WWPN, None, 0)
             assert_fc_host(fc_hosts[4], 'fc4', NO_SLOT_NODE_A_4_WWPN, None, 0)
             assert_fc_host(fc_hosts[5], 'fc5', NO_SLOT_NODE_A_5_WWPN, None, 0)
-
-
-class AlertMixin:
-    def assert_alert_count(self, count):
-        alerts = [alert for alert in call('alert.list') if alert['klass'] == self.ALERT_CLASS_NAME]
-        assert len(alerts) == count, alerts
-
-    def clear_alert(self):
-        call('alert.oneshot_delete', self.ALERT_CLASS_NAME)
-        self.assert_alert_count(0)
 
 
 class TestFibreChannelHardwareAdd(AbstractFibreChannel, AlertMixin):
