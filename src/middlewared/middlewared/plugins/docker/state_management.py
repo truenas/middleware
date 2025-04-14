@@ -13,6 +13,9 @@ class DockerStateService(Service):
 
     async def before_start_check(self):
         try:
+            if not await self.middleware.call('docker.license_active'):
+                raise CallError('System is not licensed to use Applications')
+
             await self.middleware.call('docker.setup.validate_fs')
         except CallError as e:
             if e.errno != CallError.EDATASETISLOCKED:
@@ -41,10 +44,10 @@ class DockerStateService(Service):
         await self.set_status(Status.INITIALIZING.value)
         catalog_sync_job = None
         try:
+            await self.before_start_check()
             if mount_datasets:
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
-            # TODO: Check license active
-            await self.before_start_check()
+
             await self.middleware.call('service.start', 'docker')
         except Exception as e:
             await self.set_status(Status.FAILED.value, str(e))
