@@ -128,7 +128,7 @@ class UserCreate(UserEntry):
     "Required if `group_create` is `false`."
     home_create: bool = False
     home_mode: str = "700"
-    password: Secret[str | None] = None
+    password: Secret[NonEmptyString | None] = None
     random_password: bool = False
     "Generate a random 20 character password for the user"
 
