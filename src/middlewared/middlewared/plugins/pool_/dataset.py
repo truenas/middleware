@@ -2,6 +2,8 @@ import copy
 import errno
 import os
 
+from middlewared.api import api_method
+from middlewared.api.current import PoolDatasetDestroySnapshotsArgs, PoolDatasetDestroySnapshotsResult
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
@@ -1005,6 +1007,41 @@ class PoolDatasetService(CRUDService):
             'recursive': options['recursive'],
         })
         return result
+
+    # Used by Democratic CSI
+    # FIXME: phase it out
+    @api_method(
+        PoolDatasetDestroySnapshotsArgs,
+        PoolDatasetDestroySnapshotsResult,
+        roles=['SNAPSHOT_WRITE'],
+        removed_in="v26.04",
+    )
+    @job(lock=lambda args: f'destroy_snapshots_{args[0]}')
+    async def destroy_snapshots(self, job, name, snapshots_spec):
+        """
+        Destroy specified snapshots of a given dataset.
+        """
+        await self.get_instance(name, {'extra': {
+            'properties': [],
+            'retrieve_children': False,
+        }})
+
+        verrors = ValidationErrors()
+        schema_name = 'destroy_snapshots'
+        if snapshots_spec['all'] and snapshots_spec['snapshots']:
+            verrors.add(
+                f'{schema_name}.snapshots', 'Must not be specified when all snapshots are specified for removal'
+            )
+        else:
+            for i, entry in enumerate(snapshots_spec['snapshots']):
+                if not entry:
+                    verrors.add(f'{schema_name}.snapshots.{i}', 'Either "start" or "end" must be specified')
+
+        verrors.check()
+
+        job.set_progress(20, 'Initial validation complete')
+
+        return await self.middleware.call('zfs.dataset.destroy_snapshots', name, snapshots_spec)
 
     def __handle_zfs_set_property_error(self, e, properties_definitions):
         zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}

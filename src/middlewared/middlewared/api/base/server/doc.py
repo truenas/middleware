@@ -21,6 +21,7 @@ class APIDumpMethod(BaseModel):
     roles: list[str]
     doc: str | None
     schemas: dict
+    removed_in: str | None
 
 
 class APIDumpEvent(BaseModel):
@@ -28,6 +29,7 @@ class APIDumpEvent(BaseModel):
     roles: list[str]
     doc: str | None
     schemas: dict
+    removed_in: str | None
 
 
 class APIDumper:
@@ -79,6 +81,7 @@ class APIDumper:
             roles=sorted(self.role_manager.atomic_roles_for_method(name)),
             doc=doc,
             schemas=self._dump_method_schemas(method),
+            removed_in=getattr(method.methodobj, "_removed_in", None),
         )
 
     def _dump_method_schemas(self, method: Method):
@@ -127,6 +130,7 @@ class APIDumper:
             roles=sorted(self.role_manager.atomic_roles_for_event(event.name)),
             doc=event.event["description"],
             schemas=self._dump_event_schemas(event),
+            removed_in=None,
         )
 
     def _dump_event_schemas(self, event: Event):
