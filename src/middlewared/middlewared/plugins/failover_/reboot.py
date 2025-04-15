@@ -279,6 +279,10 @@ class FailoverRebootService(Service):
                 self.remote_reboot_reasons.pop(k)
 
 
+async def system_reboot_info_handler(middleware, *args, **kwargs):
+    middleware.create_task(middleware.call('failover.reboot.send_event'))
+
+
 def remote_reboot_info(middleware, *args, **kwargs):
     asyncio.run_coroutine_threadsafe(middleware.call('failover.reboot.send_event'), loop=middleware.loop)
 
@@ -288,6 +292,6 @@ async def setup(middleware):
 
     middleware.event_register('failover.reboot.info', 'Sent when a system reboot is required.', roles=['FAILOVER_READ'])
 
-    middleware.event_subscribe('system.reboot.info', remote_reboot_info)
+    middleware.event_subscribe('system.reboot.info', system_reboot_info_handler)
     await middleware.call('failover.remote_on_connect', remote_reboot_info)
     await middleware.call('failover.remote_subscribe', 'system.reboot.info', remote_reboot_info)
