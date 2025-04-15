@@ -1,4 +1,5 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.api import api_method
 from middlewared.api.current import (
     CloudBackupEntry, CloudBackupTransferSettingChoicesArgs, CloudBackupTransferSettingChoicesResult,
@@ -23,6 +24,7 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
     keep_last = sa.Column(sa.Integer())
     transfer_setting = sa.Column(sa.String(16))
     absolute_paths = sa.Column(sa.Boolean())
+    cache_path = sa.Column(sa.Text(), nullable=True)
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
@@ -148,6 +150,14 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         if data["snapshot"] and data["absolute_paths"]:
             verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
+
+        if data["cache_path"]:
+            await check_path_resides_within_volume(verrors, self.middleware, f"{name}.cache_path", data["cache_path"],
+                                                   True)
+            if not verrors:
+                statfs = await self.middleware.call("filesystem.statfs", data["cache_path"])
+                if "RO" in statfs["flags"]:
+                    verrors.add(f"{name}.cache_path", "The cache directory must be writeable")
 
         if not verrors:
             try:

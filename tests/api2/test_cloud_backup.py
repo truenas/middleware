@@ -10,7 +10,7 @@ from truenas_api_client import ClientException
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.cloud_backup import task, run_task
 from middlewared.test.integration.assets.cloud_sync import credential
-from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils.call import call
 from middlewared.test.integration.utils.mock import mock
 from middlewared.test.integration.utils.ssh import ssh
@@ -67,6 +67,12 @@ def cloud_backup_task(s3_credential, request):
     clean()
 
     with dataset("cloud_backup") as local_dataset:
+        data = getattr(request, "param", {})
+        if "cache_path" in data:
+            data["cache_path"] = f"/mnt/{pool}/.restic-cache"
+            ssh(f"rm -rf {data['cache_path']}")
+            ssh(f"mkdir {data['cache_path']}")
+
         with task({
             "path": f"/mnt/{local_dataset}",
             "credentials": s3_credential["id"],
@@ -76,7 +82,7 @@ def cloud_backup_task(s3_credential, request):
             },
             "password": "test",
             "keep_last": 100,
-            **getattr(request, "param", {}),
+            **data,
         }) as t:
             yield types.SimpleNamespace(
                 local_dataset=local_dataset,
@@ -87,6 +93,7 @@ def cloud_backup_task(s3_credential, request):
 @pytest.mark.parametrize("cloud_backup_task", [
     {"absolute_paths": False},
     {"absolute_paths": True},
+    {"cache_path": "<placeholder>"},
 ], indirect=["cloud_backup_task"])
 def test_cloud_backup(cloud_backup_task):
     task_ = cloud_backup_task.task
