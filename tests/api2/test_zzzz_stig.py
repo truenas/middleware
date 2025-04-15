@@ -1,5 +1,6 @@
 import pytest
 
+from middlewared.service_exception import CallError
 from middlewared.service_exception import ValidationErrors as Verr
 from middlewared.test.integration.assets.product import product_type, set_fips_available
 from middlewared.test.integration.assets.two_factor_auth import (
@@ -19,6 +20,17 @@ def get_excluded_admins():
             ],
         )
     ]
+
+
+def user_cleanup():
+    """ Re-running this module can get tripped up by temporary users """
+    two_factor_users = call('user.query', [
+        ['twofactor_auth_configured', '=', True],
+        ['locked', '=', False],
+        ['local', '=', True]
+    ])
+    for user in two_factor_users:
+        call('user.delete', user['id'])
 
 
 @pytest.fixture(autouse=True)
@@ -139,18 +151,30 @@ def setup_stig(two_factor_full_admin_as_builtin_admin):
                     yield {
                         'connection': c,
                         'user_obj': user_obj,
-                        'secret': secret
+                        'secret': secret,
+                        'aal': aal
                     }
                 finally:
-                    c.call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': False}, job=True)
+                    # Restore default security, user and network settings
+                    c.call('system.security.update', {
+                        'enable_fips': False, 'enable_gpos_stig': False,
+                        'min_password_age': None, 'max_password_age': None,
+                        'password_complexity_ruleset': None, 'min_password_length': None,
+                        'password_history_length': None
+                    }, job=True)
+
                     for admin in admin_id:
                         c.call('user.update', id, {"password_disabled": False})
+
+                    c.call('network.configuration.update', {"activity": {"type": "DENY", "activities": []}})
 
 
 # The order of the following tests is significant. We gradually add fixtures that have module scope
 # as we finish checking for correct ValidationErrors
 
 def test_nonenterprise_fail(community_product):
+    # Clean up from prior runs of this module.
+    user_cleanup()
     with pytest.raises(ValidationErrors, match='Please contact iX sales for more information.'):
         call('system.security.update', {'enable_gpos_stig': True}, job=True)
 
@@ -176,7 +200,7 @@ def test_no_full_admin_users_fail(enterprise_product, two_factor_non_admin):
 
 
 def test_no_current_cred_no_2fa(enterprise_product, two_factor_full_admin):
-    with pytest.raises(ValidationErrors, match='Credential used to enable General Purpose OS STIG compatibility'):
+    with pytest.raises(ValidationErrors, match='Credential used to enable General Purpose OS STIG compatibility must have two factor'):
         # root / truenas_admin does not have 2FA and so this should fail
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
@@ -260,3 +284,18 @@ def test_stig_smb_auth_disabled(setup_stig, clear_ratelimit):
             'group_create': True,
             'smb': True
         })
+
+
+def test_stig_usage_reporting_disabled(setup_stig):
+    ''' In GPOS STIG mode usage reporting should be disabled '''
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    netconf = call("network.configuration.config")
+    assert netconf["activity"]["type"] == "DENY"
+    assert "usage" in netconf["activity"]["activities"]
+
+    can_run_usage = call("network.general.can_perform_activity", "usage")
+    assert can_run_usage is False
+
+    with pytest.raises(CallError, match='Network activity "Anonymous usage statistics" is disabled'):
+        call("network.general.will_perform_activity", "usage")
