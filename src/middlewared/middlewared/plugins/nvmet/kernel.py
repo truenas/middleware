@@ -335,14 +335,9 @@ class NvmetNamespaceConfig(NvmetConfig):
             result[k] = attrs[k]
 
         device_path = attrs.get('device_path')
-        if device_path:
-            match attrs['device_type']:
-                case 'FILE':
-                    if device_path.startswith('/mnt/'):
-                        result['device_path'] = device_path
-                case 'ZVOL':
-                    if device_path.startswith('zvol/'):
-                        result['device_path'] = zvol_name_to_path(device_path[5:])
+        if device_path and not attrs['locked']:
+            if dp := _map_device_path(attrs['device_type'], device_path):
+                result['device_path'] = dp
 
         result['buffered_io'] = NAMESPACE_DEVICE_TYPE.by_api(attrs['device_type']).sysfs
 
@@ -373,7 +368,7 @@ class NvmetNamespaceConfig(NvmetConfig):
 
         match render_ctx['failover.status']:
             case 'SINGLE' | 'MASTER':
-                result['enable'] = '1' if attrs['enabled'] else '0'
+                result['enable'] = '1' if attrs['enabled'] and not attrs['locked'] else '0'
             case 'BACKUP':
                 result['enable'] = '0'
 
@@ -525,6 +520,45 @@ def write_config(config):
                     with NvmetPortSubsysConfig.render(config):
                         with NvmetNamespaceConfig.render(config):
                             pass
+
+
+def _map_device_path(device_type, device_path):
+    match device_type:
+        case 'FILE':
+            if device_path.startswith('/mnt/'):
+                return device_path
+        case 'ZVOL':
+            if device_path.startswith('zvol/'):
+                return zvol_name_to_path(device_path[5:])
+
+
+def _set_namespace_field(subnqn, nsnum, field, value):
+    p = pathlib.Path(NVMET_KERNEL_CONFIG_DIR,
+                     'subsystems',
+                     subnqn,
+                     'namespaces',
+                     str(nsnum),
+                     field)
+    try:
+        p.write_text(f'{value}\n')
+    except FileNotFoundError:
+        pass
+
+
+def _set_namespace_enable(subnqn, nsnum, value):
+    _set_namespace_field(subnqn, nsnum, 'enable', value)
+
+
+def lock_namespace(data):
+    _set_namespace_enable(data['subsys']['nvmet_subsys_subnqn'], data['nsid'], 0)
+
+
+def unlock_namespace(data):
+    _set_namespace_field(data['subsys']['nvmet_subsys_subnqn'],
+                         data['nsid'],
+                         'device_path',
+                         _map_device_path(data['device_type'], data['device_path']))
+    _set_namespace_enable(data['subsys']['nvmet_subsys_subnqn'], data['nsid'], 1)
 
 
 def clear_config():
