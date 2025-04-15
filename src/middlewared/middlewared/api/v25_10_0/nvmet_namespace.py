@@ -27,6 +27,7 @@ class NVMetNamespaceEntry(BaseModel):
     device_uuid: NonEmptyString
     device_nguid: NonEmptyString
     enabled: bool = True
+    locked: bool | None
 
 
 class NVMetNamespaceCreate(NVMetNamespaceEntry):
@@ -34,6 +35,7 @@ class NVMetNamespaceCreate(NVMetNamespaceEntry):
     subsys: Excluded = excluded_field()
     device_uuid: Excluded = excluded_field()
     device_nguid: Excluded = excluded_field()
+    locked: Excluded = excluded_field()
     subsys_id: int
 
 

@@ -1,3 +1,4 @@
+import os
 import pathlib
 import uuid
 
@@ -6,10 +7,12 @@ from middlewared.api import api_method
 from middlewared.api.current import (NVMetNamespaceCreateArgs, NVMetNamespaceCreateResult, NVMetNamespaceDeleteArgs,
                                      NVMetNamespaceDeleteResult, NVMetNamespaceEntry, NVMetNamespaceUpdateArgs,
                                      NVMetNamespaceUpdateResult)
-from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.service import CRUDService, ValidationErrors, private
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.service import SharingService, ValidationErrors, private
 from middlewared.service_exception import CallError, MatchNotFound
 from .constants import NAMESPACE_DEVICE_TYPE
+from .kernel import lock_namespace as kernel_lock_namespace
+from .kernel import unlock_namespace as kernel_unlock_namespace
 
 UUID_GENERATE_RETRIES = 10
 
@@ -33,7 +36,10 @@ class NVMetNamespaceModel(sa.Model):
     nvmet_namespace_enabled = sa.Column(sa.Boolean())
 
 
-class NVMetNamespaceService(CRUDService):
+class NVMetNamespaceService(SharingService):
+
+    # For SharingService
+    path_field = 'device_path'
 
     class Config:
         namespace = 'nvmet.namespace'
@@ -122,6 +128,7 @@ class NVMetNamespaceService(CRUDService):
             # Foreign key subsys_id was expanded on query.  Compress again here.
             data['subsys_id'] = data['subsys']['id']
             del data['subsys']
+        data.pop(self.locked_field, None)
         return data
 
     @private
@@ -242,3 +249,40 @@ class NVMetNamespaceService(CRUDService):
             if i not in existing:
                 return i
         raise ValueError("Unable to determine namespace ID (NSID)")
+
+    @private
+    async def get_path_field(self, data):
+        """Required by SharingService."""
+        if data['device_type'] == 'ZVOL' and data[self.path_field].startswith('zvol/'):
+            return os.path.join('/mnt', zvol_path_to_name(os.path.join('/dev', data[self.path_field])))
+        return data[self.path_field]
+
+    @private
+    async def stop(self, id_):
+        data = await self.get_instance(id_)
+        if data['enabled']:
+            if (await self.middleware.call('nvmet.global.config'))['kernel']:
+                await self.middleware.run_in_thread(kernel_lock_namespace, data)
+
+    @private
+    async def start(self, id_):
+        data = await self.get_instance(id_)
+        if data['enabled'] and await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+            if (await self.middleware.call('nvmet.global.config'))['kernel']:
+                await self.middleware.run_in_thread(kernel_unlock_namespace, data)
+
+    @private
+    async def sharing_task_determine_locked(self, data, locked_datasets):
+        """
+        `mountpoint` attribute of zvol will be unpopulated and so we
+        first try direct comparison between the two strings.
+
+        The parent dataset of a zvol may also be locked, which renders
+        the zvol inaccessible as well, and so we need to continue to the
+        common check for whether the path is in the locked datasets.
+        """
+        path = await self.get_path_field(data)
+        if data['device_type'] == 'ZVOL' and any(path == os.path.join('/mnt', d['id']) for d in locked_datasets):
+            return True
+
+        return await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets)
