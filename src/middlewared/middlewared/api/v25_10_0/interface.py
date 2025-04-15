@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -30,11 +29,11 @@ __all__ = [
 class InterfaceEntryAlias(BaseModel):
     type: str
     address: str
-    netmask: int
+    netmask: str | int
 
 
 class InterfaceEntryStateAlias(InterfaceEntryAlias):
-    netmask: int = NotRequired
+    netmask: str | int = NotRequired
     broadcast: str = NotRequired
 
 
@@ -50,27 +49,27 @@ class InterfaceEntryState(BaseModel):
     mtu: int
     cloned: bool
     flags: list[str]
-    nd6_flags: list[str]
-    capabilities: list[str]
+    nd6_flags: list
+    capabilities: list
     link_state: str
     media_type: str
     media_subtype: str
     active_media_type: str
     active_media_subtype: str
-    supported_media: list[str]
+    supported_media: list
     media_options: list | None
     link_address: str
     permanent_link_address: str | None
     hardware_link_address: str
-    rx_queues: int = NotRequired
-    tx_queues: int = NotRequired
+    rx_queues: int
+    tx_queues: int
     aliases: list[InterfaceEntryStateAlias]
     vrrp_config: list | None = []
     # lagg section
     protocol: str | None = NotRequired
-    ports: list[InterfaceEntryStatePort] = NotRequired
-    xmit_hash_policy: str | None = NotRequired
-    lacpdu_rate: str | None = NotRequired
+    ports: list[InterfaceEntryStatePort] = []
+    xmit_hash_policy: str | None = None
+    lacpdu_rate: str | None = None
     # vlan section
     parent: str | None = NotRequired
     tag: int | None = NotRequired
@@ -92,8 +91,8 @@ class InterfaceEntry(BaseModel):
     vlan_tag: int | None = NotRequired
     vlan_pcp: int | None = NotRequired
     lag_protocol: str = NotRequired
-    lag_ports: list[str] = NotRequired
-    bridge_members: list[str] = NotRequired  # FIXME: Please document fields for HA Hardware
+    lag_ports: list[str] = []
+    bridge_members: list[str] = []  # FIXME: Please document fields for HA Hardware
     enable_learning: bool = NotRequired
 
     class Config:
@@ -107,7 +106,7 @@ class InterfaceChoicesOptions(BaseModel):
     """Include LINK_AGGREGATION ports."""
     vlan_parent: bool = True
     """Include VLAN parent interface."""
-    exclude: list[str] = ["epair", "tap", "vnet"]
+    exclude: list = ["epair", "tap", "vnet"]
     """Prefixes of interfaces to exclude from the result."""
     exclude_types: list[Literal["BRIDGE", "LINK_AGGREGATION", "PHYSICAL", "UNKNOWN", "VLAN"]] = []
     include: list[str] = []
@@ -131,10 +130,11 @@ class InterfaceCreateAlias(InterfaceCreateFailoverAlias):
     netmask: int
 
 
-class InterfaceCreate(BaseModel, ABC):
+class InterfaceCreate(BaseModel):
     name: str = NotRequired
     """Generate a name if not provided based on `type`, e.g. "br0", "bond1", "vlan0"."""
     description: str = ""
+    type: Literal["BRIDGE", "LINK_AGGREGATION", "VLAN"]
     ipv4_dhcp: bool = False
     ipv6_auto: bool = False
     aliases: UniqueList[InterfaceCreateAlias] = []
@@ -143,31 +143,17 @@ class InterfaceCreate(BaseModel, ABC):
     failover_vhid: Annotated[int, Field(ge=1, le=255)] | None = NotRequired
     failover_aliases: list[InterfaceCreateFailoverAlias] = []
     failover_virtual_aliases: list[InterfaceCreateFailoverAlias] = []
-    mtu: Annotated[int, Field(ge=68, le=9216)] | None = None
-
-
-class InterfaceCreateBridge(InterfaceCreate):
-    type: Literal["BRIDGE"]
     bridge_members: list = []
-    stp: bool = True
     enable_learning: bool = True
-
-
-class InterfaceCreateLinkAggregation(InterfaceCreate):
-    type: Literal["LINK_AGGREGATION"]
-    lag_protocol: Literal["LACP", "FAILOVER", "LOADBALANCE", "ROUNDROBIN", "NONE"]
-    lag_ports: list[str] = Field(min_length=1)
+    stp: bool = True
+    lag_protocol: Literal["LACP", "FAILOVER", "LOADBALANCE", "ROUNDROBIN", "NONE"] = NotRequired
     xmit_hash_policy: Literal["LAYER2", "LAYER2+3", "LAYER3+4", None] = None
-    """Default to "LAYER2+3" if `lag_protocol` is either "LACP" or "LOADBALANCE"."""
     lacpdu_rate: Literal["SLOW", "FAST", None] = None
-    """Default to "SLOW" if `lag_protocol` is "LACP"."""
-
-
-class InterfaceCreateVLAN(InterfaceCreate):
-    type: Literal["VLAN"]
-    vlan_parent_interface: str
-    vlan_tag: int = Field(ge=1, le=4094)
-    vlan_pcp: Annotated[int, Field(ge=0, le=7)] | None = None
+    lag_ports: list[str] = []
+    vlan_parent_interface: str = NotRequired
+    vlan_tag: int = Field(ge=1, le=4094, default=NotRequired)
+    vlan_pcp: Annotated[int, Field(ge=0, le=7)] | None = NotRequired
+    mtu: Annotated[int, Field(ge=68, le=9216)] | None = None
 
 
 class InterfaceIPInUseOptions(BaseModel):
@@ -195,15 +181,7 @@ class InterfaceServicesRestartedOnSyncItem(BaseModel):
     ips: list[str]
 
 
-class InterfaceUpdateBridge(InterfaceCreateBridge, metaclass=ForUpdateMetaclass):
-    type: Excluded = excluded_field()
-
-
-class InterfaceUpdateLinkAggregation(InterfaceCreateLinkAggregation, metaclass=ForUpdateMetaclass):
-    type: Excluded = excluded_field()
-
-
-class InterfaceUpdateVLAN(InterfaceCreateVLAN, metaclass=ForUpdateMetaclass):
+class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
 
 
@@ -263,7 +241,7 @@ class InterfaceCommitResult(BaseModel):
 
 
 class InterfaceCreateArgs(BaseModel):
-    data: InterfaceCreateBridge | InterfaceCreateLinkAggregation | InterfaceCreateVLAN = Field(discriminator="type")
+    data: InterfaceCreate
 
 
 class InterfaceCreateResult(BaseModel):
@@ -362,7 +340,7 @@ class InterfaceServicesRestartedOnSyncResult(BaseModel):
 
 class InterfaceUpdateArgs(BaseModel):
     id: str
-    data: InterfaceUpdateBridge | InterfaceUpdateLinkAggregation | InterfaceUpdateVLAN
+    data: InterfaceUpdate
 
 
 class InterfaceUpdateResult(BaseModel):
