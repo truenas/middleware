@@ -561,6 +561,13 @@ def unlock_namespace(data):
     _set_namespace_enable(data['subsys']['nvmet_subsys_subnqn'], data['nsid'], 1)
 
 
+def resize_namespace(data):
+    _set_namespace_field(data['subsys']['nvmet_subsys_subnqn'],
+                         data['nsid'],
+                         'revalidate_size',
+                         1)
+
+
 def clear_config():
     config_root = pathlib.Path(NVMET_KERNEL_CONFIG_DIR)
     if not config_root.exists():

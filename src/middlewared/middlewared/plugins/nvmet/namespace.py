@@ -1,5 +1,6 @@
 import os
 import pathlib
+import subprocess
 import uuid
 
 import middlewared.sqlalchemy as sa
@@ -13,6 +14,7 @@ from middlewared.service_exception import CallError, MatchNotFound
 from .constants import NAMESPACE_DEVICE_TYPE
 from .kernel import lock_namespace as kernel_lock_namespace
 from .kernel import unlock_namespace as kernel_unlock_namespace
+from .kernel import resize_namespace as kernel_resize_namespace
 
 UUID_GENERATE_RETRIES = 10
 
@@ -31,6 +33,7 @@ class NVMetNamespaceModel(sa.Model):
     nvmet_namespace_subsys_id = sa.Column(sa.ForeignKey('services_nvmet_subsys.id'), index=True)
     nvmet_namespace_device_type = sa.Column(sa.Integer())
     nvmet_namespace_device_path = sa.Column(sa.String(255), unique=True)
+    nvmet_namespace_filesize = sa.Column(sa.Integer(), nullable=True)
     nvmet_namespace_device_uuid = sa.Column(sa.String(40), unique=True)
     nvmet_namespace_device_nguid = sa.Column(sa.String(40), unique=True)
     nvmet_namespace_enabled = sa.Column(sa.Boolean())
@@ -59,6 +62,7 @@ class NVMetNamespaceService(SharingService):
     async def do_create(self, data):
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'nvmet_namespace_create')
+        await self.middleware.call('nvmet.namespace.save_file', data, 'nvmet_namespace_create', verrors)
         verrors.check()
 
         if not data.get('nsid'):
@@ -89,6 +93,7 @@ class NVMetNamespaceService(SharingService):
 
         verrors = ValidationErrors()
         await self.__validate(verrors, new, 'nvmet_namespace_update', old=old)
+        await self.middleware.call('nvmet.namespace.save_file', new, 'nvmet_namespace_update', verrors, old)
         verrors.check()
 
         await self.compress(new)
@@ -106,9 +111,15 @@ class NVMetNamespaceService(SharingService):
         audit='Delete NVMe target namespace',
         audit_callback=True
     )
-    async def do_delete(self, audit_callback, id_):
+    async def do_delete(self, audit_callback, id_, options):
+        remove = options.get('remove', False)
         data = await self.get_instance(id_)
         audit_callback(self.__audit_summary(data))
+
+        if remove:
+            delete = await self.remove_file(data)
+            if delete is not True:
+                raise CallError('Failed to remove namespace file')
 
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
@@ -136,6 +147,48 @@ class NVMetNamespaceService(SharingService):
         # This is called internally (from nvmet.subsys.delete).  Does not require
         # a reload, because the caller will perform one
         return await self.middleware.call('datastore.delete', self._config.datastore, [['id', 'in', to_remove]])
+
+    @private
+    def save_file(self, data, schema_name, verrors, old=None):
+        if data['device_type'] == 'FILE':
+            path = data['device_path']
+            dirs = '/'.join(path.split('/')[:-1])
+
+            # create extent directories
+            try:
+                pathlib.Path(dirs).mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                raise CallError(
+                    f'Failed to create {dirs} with error: {e}'
+                )
+
+            # create the file, or perhaps extend it
+            if not os.path.exists(path):
+                subprocess.run(['truncate', '-s', str(data['filesize']), path])
+            else:
+                if old:
+                    old_size = int(old['filesize'])
+                    new_size = int(data['filesize'])
+                    # Only allow expansion
+                    if new_size > old_size:
+                        subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                        # resync so connected initiators can see the new size
+                        self.middleware.call_sync('nvmet.namespace.resize_namespace', data['id'])
+                    elif old_size > new_size:
+                        verrors.add(f'{schema_name}.filesize',
+                                    'Shrinking an namespace file is not allowed. This can lead to data loss.')
+
+    @private
+    async def remove_file(self, data):
+        if data['device_type'] == 'FILE':
+            try:
+                os.unlink(data['device_path'])
+            except FileNotFoundError:
+                pass
+            except Exception as e:
+                return e
+
+        return True
 
     @private
     def clean_type_and_path(self, data, schema_name, verrors):
@@ -214,7 +267,7 @@ class NVMetNamespaceService(SharingService):
             if old['enabled'] and await self.middleware.call('nvmet.global.running'):
                 # Ensure we're only changing enabled
                 for key, oldvalue in old.items():
-                    if key == 'enabled':
+                    if key in ['enabled', 'filesize']:
                         continue
                     if data[key] == oldvalue:
                         continue
@@ -270,6 +323,13 @@ class NVMetNamespaceService(SharingService):
         if data['enabled'] and await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
             if (await self.middleware.call('nvmet.global.config'))['kernel']:
                 await self.middleware.run_in_thread(kernel_unlock_namespace, data)
+
+    @private
+    async def resize_namespace(self, id_):
+        data = await self.get_instance(id_)
+        if data['enabled'] and await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+            if (await self.middleware.call('nvmet.global.config'))['kernel']:
+                await self.middleware.run_in_thread(kernel_resize_namespace, data)
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):

@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
@@ -24,10 +24,19 @@ class NVMetNamespaceEntry(BaseModel):
     subsys: dict | None
     device_type: DeviceType
     device_path: str
+    filesize: int | None = None
     device_uuid: NonEmptyString
     device_nguid: NonEmptyString
     enabled: bool = True
     locked: bool | None
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.device_type == 'FILE':
+            if self.filesize is None:
+                raise ValueError('filesize must be supplied when device_type is FILE')
+
+        return self
 
 
 class NVMetNamespaceCreate(NVMetNamespaceEntry):
@@ -60,8 +69,14 @@ class NVMetNamespaceUpdateResult(BaseModel):
     result: NVMetNamespaceEntry
 
 
+class NVMetNamespaceDeleteOptions(BaseModel):
+    remove: bool = False
+    """Remove file underlying namespace if `device_type` is FILE."""
+
+
 class NVMetNamespaceDeleteArgs(BaseModel):
     id: int
+    options: NVMetNamespaceDeleteOptions = Field(default_factory=NVMetNamespaceDeleteOptions)
 
 
 class NVMetNamespaceDeleteResult(BaseModel):
