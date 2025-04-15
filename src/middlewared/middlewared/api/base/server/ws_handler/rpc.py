@@ -347,7 +347,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
     async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: list):
         try:
             async with app.softhardsemaphore:
-                result = await method.call(app, params)
+                result = await method.call(app, id_, params)
         except SoftHardSemaphoreLimit as e:
             if id_ != undefined:
                 app.send_error(id_, JSONRPCError.TRUENAS_TOO_MANY_CONCURRENT_CALLS.value,

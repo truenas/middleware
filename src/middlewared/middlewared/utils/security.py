@@ -112,7 +112,10 @@ def shadow_parse_aging(
     else:
         # We set timestamp on UI / API initiated password changes
         # unexpected None here should result in forcing password change
-        outstr += '0'
+        # We cannot do this for the root account though because it will break
+        # ability to su to root.
+        if user['username'] != 'root':
+            outstr += '0'
 
     outstr += SHADOW_SEPARATOR
 

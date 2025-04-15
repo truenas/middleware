@@ -12,12 +12,12 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (IscsiTargetCreateArgs, IscsiTargetCreateResult, IscsiTargetDeleteArgs,
-                                     IscsiTargetDeleteResult, IscsiTargetEntry,
-                                     IscsiTargetUpdateArgs, IscsiTargetUpdateResult,
-                                     IscsiTargetValidateNameArgs, IscsiTargetValidateNameResult)
+                                     IscsiTargetDeleteResult, IscsiTargetEntry, IscsiTargetUpdateArgs,
+                                     IscsiTargetUpdateResult, IscsiTargetValidateNameArgs,
+                                     IscsiTargetValidateNameResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.utils import UnexpectedFailure, run
-from .utils import AUTHMETHOD_LEGACY_MAP
+from .utils import AUTHMETHOD_LEGACY_MAP, sanitize_extent
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 MODE_FC_CAPABLE = ['FC', 'BOTH']
@@ -419,16 +419,6 @@ class iSCSITargetService(CRUDService):
         await self.middleware.call('iscsi.target.remove_target', target["name"])
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
-        # Attempt to cleanup initiators as the wizard may have created a single-use one
-        try:
-            initiators = [group['initiator'] for group in target['groups'] if group['initiator'] is not None]
-            for initiator in initiators:
-                # Ensure not used elsewhere
-                targets = await self.middleware.call('iscsi.target.query', [['groups.*.initiator', '=', initiator]])
-                if not targets:
-                    await self.middleware.call('iscsi.initiator.delete', initiator)
-        except Exception:
-            self.logger.error('Failed to clean up target initiators for %r', target['name'], exc_info=True)
         return rv
 
     @api_method(
@@ -725,12 +715,19 @@ class iSCSITargetService(CRUDService):
 
     @private
     def clustered_extents(self):
+        # Extents may have had their names sanitized for SCST.  We want the official
+        # unsanitized names as output.
+        sys_to_name = {sanitize_extent(ext['name']): ext['name'] for ext in
+                       self.middleware.call_sync('iscsi.extent.query', [], {'select': ['name']})}
         extents = []
         basepath = pathlib.Path('/sys/kernel/scst_tgt/handlers')
         for p in basepath.glob('*/*/cluster_mode'):
             with p.open() as f:
                 if f.readline().strip() == '1':
-                    extents.append(p.parent.name)
+                    try:
+                        extents.append(sys_to_name[p.parent.name])
+                    except KeyError:
+                        extents.append(p.parent.name)
         return extents
 
     @private
