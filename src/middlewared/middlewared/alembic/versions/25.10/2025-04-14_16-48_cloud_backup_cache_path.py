@@ -1,7 +1,7 @@
 """Cloud backup cache path
 
 Revision ID: cafccdf50053
-Revises: d7e3a916db65
+Revises: 595b38b52541
 Create Date: 2025-04-14 12:48:44.722722+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'cafccdf50053'
-down_revision = 'd7e3a916db65'
+down_revision = '595b38b52541'
 branch_labels = None
 depends_on = None
 
