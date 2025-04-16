@@ -30,7 +30,7 @@ DEFAULT_MAX_LENGTH = 32  # WARNING UT_NAMESIZE = 32. If we go above this then ut
 def validate_username(
     val: str,
     valid_chars: str = DEFAULT_VALID_CHARS,
-    valid_start_chars : str | None = DEFAULT_VALID_START,
+    valid_start_chars: str | None = DEFAULT_VALID_START,
     max_length: int | None = DEFAULT_MAX_LENGTH
 ) -> str:
     val_len = len(val)
