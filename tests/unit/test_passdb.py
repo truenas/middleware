@@ -267,3 +267,19 @@ def test__validate_account_policy(policy_item):
                 assert value == 10 * 86400
         else:
             assert value == to_check.default
+
+
+@pytest.mark.parametrize('nthash_str,error', [
+    ('', 'SMB hash not available'),
+    ('*', 'failed to parse SMB hash'),
+    ('canary', 'failed to parse SMB hash'),
+    ('B3F34FF0FBB772A1A70810CBB3320740B3F34FF0FBB772A1A70810CBB3320740', 'failed to parse SMB hash'),
+    ('B3F34FF0FBB772A1A70810CBB3320740', None),
+])
+def test__invalid_smb_hash(nthash_str, error):
+    user = SAMPLE_USER | {'smbhash': nthash_str}
+    if error:
+        with pytest.raises(ValueError, match=error):
+            util_passdb.user_entry_to_passdb_entry(PDB_DOMAIN, user)
+    else:
+        util_passdb.user_entry_to_passdb_entry(PDB_DOMAIN, user)
