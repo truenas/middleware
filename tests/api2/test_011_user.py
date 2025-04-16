@@ -8,9 +8,7 @@ import pytest
 from datetime import datetime, UTC
 from pytest_dependency import depends
 
-from truenas_api_client import ClientException
 from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 
