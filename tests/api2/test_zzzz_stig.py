@@ -286,6 +286,32 @@ def test_stig_smb_auth_disabled(setup_stig, clear_ratelimit):
         })
 
 
+def test_stig_usage_collection_disabled(setup_stig):
+    ''' In GPOS STIG mode usage collection should be disabled
+        and not allowed to be enabled.
+    '''
+    # LEVEL_2 means gpos_stig_enabled
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    with client(auth=None) as c:
+        do_stig_auth(c, setup_stig['user_obj'], setup_stig['secret'])
+
+        general_config = c.call('system.general.config')
+
+        # usage_collection should default to the inverse of STIG enable
+        if not general_config['usage_collection_is_set']:
+            assert general_config['usage_collection'] is False
+        else:
+            c.call('system.general.update', {'usage_collection': None})
+            gc = c.call('system.general.config')
+            assert gc['usage_collection_is_set'] is False
+            assert gc['usage_collection'] is False
+
+        # Under STIG mode we should not be able to enable usage_collection
+        with pytest.raises(Verr, match='Usage collection is not allowed in GPOS STIG mode'):
+            c.call('system.general.update', {'usage_collection': True})
+
+
 def test_stig_usage_reporting_disabled(setup_stig):
     ''' In GPOS STIG mode usage reporting should be disabled '''
     assert setup_stig['aal'] == "LEVEL_2"
