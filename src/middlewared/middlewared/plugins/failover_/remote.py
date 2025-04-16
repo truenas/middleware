@@ -240,6 +240,9 @@ class RemoteClient:
                 'Authorization': f'Token {token}',
             },
         )
+        if r.status_code != 200:
+            raise CallError(f'Failed to send {local_path} to Standby Controller: {r.text}')
+
         job_id = r.json()['job_id']
         # TODO: use event subscription in the client instead of polling
         while True:

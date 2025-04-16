@@ -32,6 +32,7 @@ class ProductNames:
 ProductType = ProductTypes()
 ProductName = ProductNames()
 
+MAX_SESSIONS = 1000
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
