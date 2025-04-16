@@ -676,7 +676,7 @@ def test_060_immutable_user_validation(request):
     to_validate = [
         ({'group': 1}, default_err),
         ({'home': '/mnt/tank', 'home_create': True}, default_err),
-        ({'smb': True}, default_err),
+        ({'smb': True}, 'Password authentication may not be disabled for SMB users.'),
         ({'username': 'no_way_bad'}, default_err),
     ]
     for attr, expected_err in to_validate:
