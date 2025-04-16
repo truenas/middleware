@@ -1,6 +1,6 @@
 from middlewared.service import CallError, periodic, Service, private
 
-from .state_utils import APPS_STATUS, Status, STATUS_DESCRIPTIONS
+from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
 
 
 class DockerStateService(Service):
@@ -48,6 +48,10 @@ class DockerStateService(Service):
             if mount_datasets:
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
 
+            config = await self.middleware.call('docker.config')
+            # Make sure correct ix-apps dataset is mounted
+            if not await self.middleware.call('docker.fs_manage.ix_apps_is_mounted', config['dataset']):
+                raise CallError(f'{config["dataset"]!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}')
             await self.middleware.call('service.start', 'docker')
         except Exception as e:
             await self.set_status(Status.FAILED.value, str(e))
