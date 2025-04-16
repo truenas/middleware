@@ -572,31 +572,32 @@ class Job:
         if self.logs_fd:
             self.logs_fd.close()
 
-            def get_logs_excerpt():
-                head = []
-                tail = []
-                lines = 0
-                try:
-                    with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
-                        for line in f:
-                            if len(head) < 10:
-                                head.append(line)
-                            else:
-                                tail.append(line)
-                                tail = tail[-10:]
+            if not self.logs_excerpt:
+                def get_logs_excerpt():
+                    head = []
+                    tail = []
+                    lines = 0
+                    try:
+                        with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
+                            for line in f:
+                                if len(head) < 10:
+                                    head.append(line)
+                                else:
+                                    tail.append(line)
+                                    tail = tail[-10:]
 
-                            lines += 1
-                except FileNotFoundError:
-                    return "Log file was removed"
+                                lines += 1
+                    except FileNotFoundError:
+                        return "Log file was removed"
 
-                if lines > 20:
-                    excerpt = "%s... %d more lines ...\n%s" % ("".join(head), lines - 20, "".join(tail))
-                else:
-                    excerpt = "".join(head + tail)
+                    if lines > 20:
+                        excerpt = "%s... %d more lines ...\n%s" % ("".join(head), lines - 20, "".join(tail))
+                    else:
+                        excerpt = "".join(head + tail)
 
-                return excerpt
+                    return excerpt
 
-            self.logs_excerpt = await self.middleware.run_in_thread(get_logs_excerpt)
+                self.logs_excerpt = await self.middleware.run_in_thread(get_logs_excerpt)
 
     async def __close_pipes(self):
         def close_pipes():
