@@ -67,7 +67,7 @@ class DetectVirtualIpStates(Service):
         return masters, backups, offline
 
     async def get_states(self, interfaces=None):
-        masters, backups, inits = [], [], []
+        masters, backups, offline = [], [], []
 
         if interfaces is None:
             interfaces = await self.middleware.call('interface.query')
@@ -80,16 +80,22 @@ class DetectVirtualIpStates(Service):
                     masters.append(i['name'])
                 elif vrrp_state == 'BACKUP':
                     backups.append(i['name'])
+            else:
+                offline.append(i['name'])
 
-        return masters, backups, inits
+        return masters, backups, offline
 
     async def check_states(self, local, remote):
         errors = []
-        interfaces = set(local[0] + local[1] + remote[0] + remote[1])
+        interfaces = set(local[0] + local[1] + local[2] + remote[0] + remote[1] + remote[2])
         if not interfaces:
             errors.append('There are no failover interfaces')
 
         for name in interfaces:
+            if name in local[2]:
+                errors.append(f'Interface "{name}" is OFFLINE on local node')
+            if name in remote[2]:
+                errors.append(f'Interface "{name}" is OFFLINE on remote node')
             if name in local[1] and name in remote[1]:
                 errors.append(f'Interface "{name}" is BACKUP on both nodes')
             if name in local[0] and name in remote[0]:

@@ -7,7 +7,7 @@ class SystemTestingAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
     title = "System mocking endpoints used"
-    text = "System mocking endpoits used on server."
+    text = "System mocking endpoints used on server."
 
     deleted_automatically = False
 

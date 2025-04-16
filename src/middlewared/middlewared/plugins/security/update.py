@@ -8,6 +8,14 @@ from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.service import ConfigService, ValidationError, job, private
 from middlewared.utils.io import set_io_uring_enabled
+from middlewared.utils.security import (
+    GPOS_STIG_MIN_PASSWORD_AGE,
+    GPOS_STIG_MAX_PASSWORD_AGE,
+    GPOS_STIG_PASSWORD_COMPLEXITY,
+    GPOS_STIG_PASSWORD_REUSE_LIMIT,
+    GPOS_STIG_PASSWORD_LENGTH,
+    ENTERPRISE_OPTIONS,
+)
 
 
 class SystemSecurityModel(sa.Model):
@@ -16,6 +24,11 @@ class SystemSecurityModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     enable_fips = sa.Column(sa.Boolean(), default=False)
     enable_gpos_stig = sa.Column(sa.Boolean(), default=False)
+    min_password_age = sa.Column(sa.Integer(), nullable=True)
+    max_password_age = sa.Column(sa.Integer(), nullable=True)
+    password_complexity_ruleset = sa.Column(sa.JSON(set), nullable=True)
+    min_password_length = sa.Column(sa.Integer(), nullable=True)
+    password_history_length = sa.Column(sa.Integer(), nullable=True)
 
 
 class SystemSecurityService(ConfigService):
@@ -74,6 +87,12 @@ class SystemSecurityService(ConfigService):
         # access and changes, and so we globally disable it when doing STIG
         # compatibility.
         await self.middleware.run_in_thread(set_io_uring_enabled, False)
+
+        # Disable non-critical outgoing network activity
+        await self.middleware.call(
+            'network.configuration.update',
+            {"activity": {"type": "DENY", "activities": ["usage"]}}
+        )
 
     @private
     async def validate_stig(self, current_cred):
@@ -166,14 +185,19 @@ class SystemSecurityService(ConfigService):
             )
 
     @private
-    async def validate(self, is_ha, ha_disabled_reasons):
+    async def validate(self, is_ha, new, ha_disabled_reasons):
         schema = 'system_security_update.enable_fips'
+
         if not await self.middleware.call('system.security.info.fips_available'):
-            raise ValidationError(
-                schema,
-                'This feature can only be enabled on licensed iX enterprise systems. '
-                'Please contact iX sales for more information.'
-            )
+            for key in new.keys():
+                if key not in ENTERPRISE_OPTIONS or not new[key]:
+                    continue
+
+                raise ValidationError(
+                    f'system_security_update.{key}',
+                    'This feature can only be enabled on licensed iX enterprise systems. '
+                    'Please contact iX sales for more information.'
+                )
 
         if is_ha and ha_disabled_reasons:
             bad_reasons = set(ha_disabled_reasons) - {
@@ -187,6 +211,92 @@ class SystemSecurityService(ConfigService):
                     f'Security settings cannot be updated while HA is in an unhealthy state: ({formatted})'
                 )
 
+    @private
+    async def validate_password_security(self, old: dict, new: dict) -> bool:
+        """
+        Performs validation of global local account security settings.
+
+        returns boolean indicating that we need to reload local users after applying settings
+        """
+        combined = old | new
+        if new['enable_gpos_stig']:
+            # For convenience we'll override defaults when GPOS STIG is enabled
+
+            # SRG-OS-000073-GPOS-00041
+            # GPOS STIG requires a min_password_age to be set to 1 day
+            # Increasing beyond this represents a stricter standard.
+            new['min_password_age'] = combined['min_password_age'] or GPOS_STIG_MIN_PASSWORD_AGE
+
+            # SRG-OS-000076-GPOS-00044
+            # Operating systems must enforce a 60-day maximum password lifetime restriction.
+            # Decreasing below this represents a stricter standard.
+            new['max_password_age'] = combined['max_password_age'] or GPOS_STIG_MAX_PASSWORD_AGE
+            if new['max_password_age'] > GPOS_STIG_MAX_PASSWORD_AGE:
+                raise ValidationError(
+                    'system_security_update.max_password_age',
+                    f'{new["max_password_age"]}: Maximum password age must be less than or equal to '
+                    f'{GPOS_STIG_MAX_PASSWORD_AGE} days in GPOS STIG compatibility mode.'
+                )
+
+            # SRG-OS-000077-GPOS-00045
+            # Prohibit reuse for minimum of 5 generations
+            # Increasing beyond this represents a stricter standard
+            new['password_history_length'] = combined['password_history_length'] or GPOS_STIG_PASSWORD_REUSE_LIMIT
+            if new['password_history_length'] < GPOS_STIG_PASSWORD_REUSE_LIMIT:
+                raise ValidationError(
+                    'system_security_update.password_history_length',
+                    'GPOS STIG compatibility requires that password reuse be '
+                    'limited for a minimum of five generations.'
+                )
+
+            # SRG-OS-000069-GPOS-00037
+            # SRG-OS-000070-GPOS-00038
+            # SRG-OS-000071-GPOS-00039
+            # Passwords must contain at least one lowercase character, one lowercase character, and
+            # one number.
+            ruleset = combined['password_complexity_ruleset'] or set(GPOS_STIG_PASSWORD_COMPLEXITY)
+            new['password_complexity_ruleset'] = ruleset
+            if missing := GPOS_STIG_PASSWORD_COMPLEXITY - new['password_complexity_ruleset']:
+                raise ValidationError(
+                    'system_security_update.password_complexity_ruleset',
+                    'GPOS STIG compatibility requires the following password complexity '
+                    f'rules: {", ".join(missing)}'
+                )
+
+            new['min_password_length'] = combined['min_password_length'] or GPOS_STIG_PASSWORD_LENGTH
+            if new['min_password_length'] < GPOS_STIG_PASSWORD_LENGTH:
+                raise ValidationError(
+                    'system_security_update.min_password_length',
+                    'GPOS STIG compatibility requires password lengths of at least 15 characters.'
+                )
+
+        # The following keys determine whether we need to rewrite our shadow file
+        # At some point if we decide to plumb through password changes via pam / middleware
+        # we can add password warn and password inactivity fields
+        if all([old[key] == new[key] for key in (
+            'min_password_age',
+            'max_password_age',
+        )]):
+            return False
+
+        if new['min_password_age'] is not None and new['max_password_age'] is not None:
+            if new['min_password_age'] >= new['max_password_age']:
+                raise ValidationError(
+                    'system_security_update.min_password_age',
+                    'Minimum password age must be lower than the maximum password age in '
+                    'order to allow users to change their passwords.'
+                )
+
+        if new['max_password_age'] is not None and new['max_password_age'] < 7:
+            # Setting max password age to less than 7 days runs very high risk
+            # of admins accidentally locking themselves out
+            raise ValidationError(
+                'system_security_update.max_password_age',
+                'Maximum password age may not be set to a value of less than 7 days.'
+            )
+
+        return True
+
     @api_method(
         SystemSecurityUpdateArgs, SystemSecurityUpdateResult,
         audit='System security update'
@@ -196,21 +306,24 @@ class SystemSecurityService(ConfigService):
         """
         Update System Security Service Configuration.
 
-        `enable_fips` when set, enables FIPS mode.
-        `enable_gpos_stig` when set, enables compatibility with the General
-        Purpose Operating System STIG.
+        This method is used to change the FIPS, STIG, and local account
+        policies for TrueNAS Enterprise. These features are not
+        available in community editions of TrueNAS.
         """
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')
         fips_toggled = False
         reboot_reason = None
-        await self.validate(is_ha, reasons)
 
         old = await self.config()
         new = old.copy()
         new.update(data)
         if new == old:
             return new
+
+        await self.validate(is_ha, new, reasons)
+
+        must_update_account_policy = await self.validate_password_security(old, new)
 
         if new['enable_gpos_stig']:
             if not new['enable_fips']:
@@ -245,6 +358,11 @@ class SystemSecurityService(ConfigService):
             await self.middleware.call(
                 'system.reboot.toggle_reason', reboot_reason.name, reboot_reason.value
             )
+
+        if must_update_account_policy:
+            await self.middleware.call('etc.generate', 'shadow')
+            await self.middleware.call('smb.apply_account_policy')
+
         return await self.config()
 
 

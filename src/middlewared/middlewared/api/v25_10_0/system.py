@@ -5,7 +5,22 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, single_argument_result
 
 
-__all__ = ["SystemHostIDArgs", "SystemHostIDResult", "SystemInfoArgs", "SystemInfoResult",]
+__all__ = [
+    "SystemDebugArgs",
+    "SystemDebugResult",
+    "SystemHostIDArgs",
+    "SystemHostIDResult",
+    "SystemInfoArgs",
+    "SystemInfoResult",
+]
+
+
+class SystemDebugArgs(BaseModel):
+    pass
+
+
+class SystemDebugResult(BaseModel):
+    result: None
 
 
 class SystemHostIDArgs(BaseModel):
@@ -45,7 +60,7 @@ class SystemInfoResult(BaseModel):
     system_product_version: str | None
     license: dict | None
     boottime: datetime
-    datetime_: datetime = Field(alias='datetime')
+    datetime_: datetime = Field(alias="datetime")
     timezone: str
     system_manufacturer: str | None
     ecc_memory: bool

@@ -27,6 +27,7 @@ class FCHostService(CRUDService):
     # ensure_wired (indirectly)
     wired = False
     do_reset_wired = False
+    check_hardware = True
 
     class Config:
         private = True
@@ -235,7 +236,8 @@ class FCHostService(CRUDService):
                         alias = old.get('alias')
                     if alias:
                         vpfilter = [['port', '~', f'^{alias}/[1-9][0-9]*$']]
-                        vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
+                        vports = [int(p['port'].split('/')[-1]) for p in
+                                  await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
                         for chan in vports:
                             if chan > npiv:
                                 verrors.add(
@@ -303,11 +305,36 @@ class FCHostService(CRUDService):
                     node_b_fc_hosts = await self.middleware.call('fc.fc_hosts', physical_port_filter)
                 case _:
                     raise CallError('Cannot configure FC until HA is configured')
-            # Match pairs by slot (includes PCI function)
-            for fc_host in node_a_fc_hosts:
-                slot_2_fc_host_wwpn[fc_host['slot']]['A'] = str_to_naa(fc_host.get('port_name'))
-            for fc_host in node_b_fc_hosts:
-                slot_2_fc_host_wwpn[fc_host['slot']]['B'] = str_to_naa(fc_host.get('port_name'))
+
+            # Assume that we will match pairs by slot (includes PCI function), but will
+            # have a fall-back mechanism to handle platforms with deficient BIOS so that
+            # DMI information is missing.
+            do_match_by_slot = all(
+                [
+                    all(['slot' in fc_host for fc_host in node_a_fc_hosts]),
+                    all(['slot' in fc_host for fc_host in node_b_fc_hosts])
+                ])
+            if do_match_by_slot:
+                for fc_host in node_a_fc_hosts:
+                    slot_2_fc_host_wwpn[fc_host['slot']]['A'] = str_to_naa(fc_host.get('port_name'))
+                for fc_host in node_b_fc_hosts:
+                    slot_2_fc_host_wwpn[fc_host['slot']]['B'] = str_to_naa(fc_host.get('port_name'))
+            else:
+                # If we can't rely upon slots then we will still use slot_2_fc_host_wwpn, but
+                # instead use different keys.  Assume that the host names in /sys/class/fc_host
+                # increment in order on both controllers.  We'll augment this will the model name
+                # and PCI function.
+                for _controller, _fc_hosts in [('A', node_a_fc_hosts), ('B', node_b_fc_hosts)]:
+                    _fc_host_dict = {fc_host['name']: fc_host for fc_host in _fc_hosts}
+                    # We expect the keys to be 'hostX'.  Sort them.
+                    keys = [key for key in _fc_host_dict.keys() if key.startswith('host')]
+                    keys.sort(key=lambda x: int(x[4:]))
+                    for index, key in enumerate(keys):
+                        fc_host = _fc_host_dict[key]
+                        _pci_function = fc_host['addr'].rsplit('.', 1)[-1]
+                        _fake_slot = f'Index:{index}:{fc_host.get("model")}:PCI Function:{_pci_function}'
+                        slot_2_fc_host_wwpn[_fake_slot][_controller] = str_to_naa(fc_host.get('port_name'))
+
             # Iterate over each slot and make sure the corresponding fc_host entry is present
             sorted_slots = sorted(list(slot_2_fc_host_wwpn.keys()))
             result = True
@@ -366,7 +393,15 @@ class FCHostService(CRUDService):
             return result
         else:
             # Not HA - just wire up all fc_hosts in wwpn
-            fc_hosts = sorted(await self.middleware.call('fc.fc_hosts'), key=lambda d: d['slot'])
+            raw_fc_hosts = await self.middleware.call('fc.fc_hosts')
+            if all(['slot' in fc_host for fc_host in raw_fc_hosts]):
+                fc_hosts = sorted(raw_fc_hosts, key=lambda d: d['slot'])
+            else:
+                # When we were pairing in HA we used the model and PCI function
+                # to check that the entries on both controllers matched.  That's
+                # not useful on non-HA. so just use the /sys/class/fc_host host
+                # number, from the name (always present).
+                fc_hosts = sorted(raw_fc_hosts, key=lambda x: int(x['name'][4:]))
             for fchost in fc_hosts:
                 if naa := str_to_naa(fchost.get('port_name')):
                     existing = await self.middleware.call('fc.fc_host.query', [['wwpn', '=', naa]])
@@ -385,6 +420,12 @@ class FCHostService(CRUDService):
         """
         Ensure that fc_port.wire has been called sucessfully since middlewared started.
         """
+        # First check for hardware changes
+        if self.check_hardware:
+            if await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+                if await self.middleware.call('fc.fc_host.handle_hardware_changes'):
+                    self.check_hardware = False
+        # Basic check
         if not self.wired:
             if await self.middleware.call('fc.fc_host.wire'):
                 self.wired = True
@@ -398,6 +439,107 @@ class FCHostService(CRUDService):
             self.logger.info('Reset wired')
             self.wired = False
             self.do_reset_wired = False
+            await self.middleware.call('cache.pop', 'fc.fc_host_nport_wwpn_choices')
+            await self.middleware.call('cache.pop', 'fc.fc_host.hbas_changed')
+            if await self.middleware.call('failover.licensed'):
+                await self.middleware.call('failover.call_remote',
+                                           'cache.pop',
+                                           ['fc.fc_host_nport_wwpn_choices'],
+                                           {'raise_connect_error': False})
+                await self.middleware.call('failover.call_remote',
+                                           'cache.pop',
+                                           ['fc.fc_host.hbas_changed'],
+                                           {'raise_connect_error': False})
+
+    @private
+    async def hbas_changed(self):
+        """
+        Detect whether the Fibre Channel HBAs in this system have changed
+        since the last wire.
+        """
+        result = {'added': False, 'removed': False}
+        # Use more manual cache, so that we can pop it during CI
+        try:
+            return await self.middleware.call('cache.get', 'fc.fc_host.hbas_changed')
+        except KeyError:
+            pass
+
+        if await self.middleware.call('fc.capable'):
+            current_wwpns = set(await self.middleware.call('fc.fc_host_nport_wwpn_choices'))
+            if await self.middleware.call('failover.node') in ['MANUAL', 'A']:
+                key = 'wwpn'
+            else:
+                key = 'wwpn_b'
+            old_wwpns = {fchost[key] for fchost in await self.middleware.call('fc.fc_host.query')}
+            # Have we removed some and added others ?
+            if current_wwpns - old_wwpns:
+                result['added'] = True
+            if old_wwpns - current_wwpns:
+                result['removed'] = True
+
+        await self.middleware.call('cache.put', 'fc.fc_host.hbas_changed', result)
+        return result
+
+    @private
+    async def handle_hardware_changes(self):
+        if not await self.middleware.call('fc.capable'):
+            # No FC support.  We're done.
+            return True
+
+        complete_rewire = False
+        addition_only = False
+
+        # First check the local node
+        changed = await self.middleware.call('fc.fc_host.hbas_changed')
+        if changed['removed'] and changed['added']:
+            complete_rewire = True
+        elif changed['added']:
+            addition_only = True
+
+        # If HA check remote
+        if await self.middleware.call('failover.licensed'):
+            try:
+                changed = await self.middleware.call('failover.call_remote', 'fc.fc_host.hbas_changed')
+            except CallError:
+                # We don't have all the data.  Abort for now.
+                return False
+            if changed['removed'] and changed['added']:
+                complete_rewire = True
+            elif changed['added']:
+                addition_only = True
+
+        if complete_rewire:
+            await self.middleware.call('fc.fc_host.reset_wired', True)
+            for fc_host in await self.middleware.call('fc.fc_host.query'):
+                await self.middleware.call('fc.fc_host.delete', fc_host['id'])
+            await self.middleware.call('fc.fc_host.wire')
+            self.logger.warning('Fibre Channel ports rewired')
+            await self.middleware.call("alert.oneshot_create", "FCHardwareReplaced", None)
+        elif addition_only:
+            await self.middleware.call('fc.fc_host.reset_wired', True)
+            await self.middleware.call('fc.fc_host.wire')
+            self.logger.warning('Fibre Channel ports added')
+            await self.middleware.call("alert.oneshot_create", "FCHardwareAdded", None)
+
+        return True
+
+    @private
+    async def reset_check_hardware(self):
+        # The check_hardware flags defaults to True on boot, and will
+        # be cleared on a successful handle_hardware_changes.
+        if await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+            self.check_hardware = True
+        else:
+            # If we're the BACKUP node and we've not yet communicated to tell the MASTER
+            # to reset the flag, then do so.
+            if self.check_hardware:
+                try:
+                    await self.middleware.call('failover.call_remote', 'fc.fc_host.reset_check_hardware')
+                    self.check_hardware = False
+                except CallError:
+                    # Shouldn't occur.  We only come in here on the BACKUP node when
+                    # connectivity is up.
+                    self.logger.warning('Failed to inform other controller to check Fibre Channel hardware')
 
 
 async def _failover_status_change(middleware, event_type, args):
@@ -407,5 +549,11 @@ async def _failover_status_change(middleware, event_type, args):
         await middleware.call('fc.fc_host.reset_wired')
 
 
+def _remote_connect_event(middleware, *args, **kwargs):
+    if middleware.call_sync('failover.status') == 'BACKUP':
+        middleware.call_sync('fc.fc_host.reset_check_hardware')
+
+
 async def setup(middleware):
     middleware.event_subscribe("failover.status", _failover_status_change)
+    await middleware.call('failover.remote_on_connect', _remote_connect_event)

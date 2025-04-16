@@ -140,9 +140,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         api_versions_adapter = APIVersionsAdapter(api_versions)
         self.api_versions = api_versions
         self.api_versions_adapter = api_versions_adapter  # FIXME: Only necessary as a class member for legacy WS API
+        self._check_removed_in(api_versions)
         return self._create_apis(api_versions, api_versions_adapter)
 
-    def _load_api_versions(self) -> [APIVersion]:
+    def _load_api_versions(self) -> list[APIVersion]:
         versions = []
         api_dir = os.path.join(os.path.dirname(__file__), 'api')
         api_versions = [
@@ -159,6 +160,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             versions.append(APIVersion(version, module_provider))
 
         return versions
+
+    def _check_removed_in(self, api_versions: list[APIVersion]):
+        min_version = min([version.version for version in api_versions])
+        for method_name, method in self._get_methods():
+            if removed_in := getattr(method, "_removed_in", None):
+                if removed_in < min_version:
+                    raise ValueError(
+                        f"Method {method_name} was scheduled to be removed in API version {removed_in}. "
+                        "This API version is no longer present. Please, either remove this method, or make it private."
+                    )
 
     def _create_apis(
         self,
@@ -184,23 +195,35 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _create_api(self, version: str, method_factory: typing.Callable[["Middleware", str], Method]) -> API:
         methods = []
-        for service_name, service in self.get_services().items():
-            for attribute in dir(service):
-                if attribute.startswith("_"):
+        for method_name, method in self._get_methods():
+            if removed_in := getattr(method, "_removed_in", None):
+                if version >= removed_in:
                     continue
 
-                if not callable(getattr(service, attribute)):
-                    continue
-
-                method_name = f"{service_name}.{attribute}"
-
-                methods.append(method_factory(self, method_name))
+            methods.append(method_factory(self, method_name))
 
         events = []
         for name, event in self.events:
             events.append(Event(self, name))
 
         return API(version, methods, events)
+
+    def _get_methods(self) -> list[tuple[str, callable]]:
+        methods = []
+        for service_name, service in self.get_services().items():
+            for attribute in dir(service):
+                if attribute.startswith("_"):
+                    continue
+
+                method = getattr(service, attribute)
+                if not callable(method):
+                    continue
+
+                method_name = f"{service_name}.{attribute}"
+
+                methods.append((method_name, method))
+
+        return methods
 
     def _add_api_route(self, version: str, api: API):
         self.app.router.add_route('GET', f'/api/{version}', RpcWebSocketHandler(self, api.methods))
@@ -625,7 +648,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call_prepare(
         self, name, serviceobj, methodobj, params, *, app=None, audit_callback=None, job_on_progress_cb=None,
-        pipes=None, in_event_loop: bool = True,
+        message_id=None, pipes=None, in_event_loop: bool = True,
     ):
         """
         :param in_event_loop: Whether we are in the event loop thread.
@@ -645,6 +668,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if getattr(methodobj, 'audit_callback', None):
             args.append(audit_callback)
 
+        if hasattr(methodobj, '_pass_app'):
+            if methodobj._pass_app['message_id']:
+                args.append(message_id)
+
         args.extend(params)
 
         # If the method is marked as a @job we need to create a new
@@ -655,7 +682,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 job_options['process'] = True
             # Create a job instance with required args
             job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, app,
-                      audit_callback)
+                      message_id, audit_callback)
             # Add the job to the queue.
             # At this point an `id` is assigned to the job.
             # Job might be replaced with an already existing job if `lock_queue_size` is used.
@@ -733,7 +760,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def dump_result(
         self,
         serviceobj,
-        methodobj: Method | LegacyAPIMethod,
+        methodobj: Method,
         app: object | None,
         result: dict | str | int | list | None | Job,
         *,
@@ -894,8 +921,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if job is None:
                 await log_audit_message_for_method(success)
 
-        return result
-
     async def log_audit_message_for_method(self, method, methodobj, params, app, authenticated, authorized, success,
                                            callback_messages=None):
         callback_messages = callback_messages or []
@@ -963,7 +988,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             }
         })
 
-        self.__audit_logger.debug(message)
+        self.__audit_logger.info(message)
 
     async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
                    profile=False):
@@ -1238,6 +1263,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             return False
         return True
 
+    async def boot_id_handler(self, request):
+        return web.Response(
+            body=json.dumps(await self.call("system.boot_id")),
+            content_type="application/json",
+        )
+
     async def api_versions_handler(self, request):
         return web.Response(
             body=json.dumps([version.version for version in self.api_versions]),
@@ -1300,10 +1331,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__plugins_load()
 
         apis = self._load_apis()
+        current_api = apis.pop("current")
 
         result = {"versions": []}
         for version, api in apis.items():
-            result["versions"].append(APIDumper(version, api, self.role_manager).dump().model_dump())
+            version_title = version
+            if api.version == current_api.version:
+                version_title += " (current)"
+
+            result["versions"].append(APIDumper(version, version_title, api, self.role_manager).dump().model_dump())
 
         json.dump(result, stream)
 
@@ -1387,6 +1423,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         for version, api in apis.items():
             self._add_api_route(version, api)
 
+        # Used by UI team
+        app.router.add_route('GET', '/api/boot_id', self.boot_id_handler)
         app.router.add_route('GET', '/api/versions', self.api_versions_handler)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)

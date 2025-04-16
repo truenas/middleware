@@ -70,7 +70,7 @@ class KRB_LibDefaults(enum.Enum):
     PROXIABLE = ('proxiable', 'boolean')
     VERIFY_AP_REQ_NOFAIL = ('verify_ap_req_nofail', 'boolean')
     PERMITTED_ENCTYPES = ('permitted_enctypes', 'etypes')
-    NOADDRESSES = ('noaddresses', 'boolan')
+    NOADDRESSES = ('noaddresses', 'boolean')
     EXTRA_ADDRESSES = ('extra_addresses', 'address')
     RDNS = ('rdns', 'boolean')
     UDP_PREFERENCE_LIMIT = ('udp_preference_limit', 'number')

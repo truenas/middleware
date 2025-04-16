@@ -6,8 +6,12 @@ import pytest
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user as user_create
-from middlewared.test.integration.assets.two_factor_auth import enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
+from middlewared.test.integration.assets.directory_service import active_directory, ADPASSWORD
+from middlewared.test.integration.assets.two_factor_auth import (
+    enabled_twofactor_auth, get_user_secret, get_user_secret_sid, get_2fa_totp_token,
+)
 from middlewared.test.integration.assets.account import unprivileged_user
+from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
 
 
@@ -41,6 +45,17 @@ def ensure_small_time_difference():
     local_time = datetime.now(timezone.utc)
     if abs((nas_time - local_time).total_seconds()) > 5:
         raise Exception(f'Time difference between NAS ({nas_time!r}) and test client ({local_time}) is too large')
+
+
+@pytest.fixture(scope='function')
+def enterprise_ad():
+    with product_type():
+        with active_directory() as ad:
+            call("system.general.update", {"ds_auth": True})
+            try:
+                yield ad
+            finally:
+                call("system.general.update", {"ds_auth": False})
 
 
 def do_login(username, password, otp=None, expected=True):
@@ -279,3 +294,19 @@ def test_login_with_otp_switch_account(clear_ratelimit):
                         'password': TEST_PASSWORD_2,
                     })
                     assert resp['response_type'] == 'SUCCESS'
+
+
+def test_login_with_ad_otp(clear_ratelimit, enterprise_ad):
+    """ Validate AD account can use 2FA """
+    with enabled_twofactor_auth():
+        user_obj = call('user.query', [['username', '=', enterprise_ad['user_obj']['pw_name']]], {'get': True})
+        assert user_obj['twofactor_auth_configured'] is False
+
+        call('user.renew_2fa_secret', user_obj['username'], TEST_TWOFACTOR_INTERVAL)
+        user_obj = call('user.query', [['username', '=', enterprise_ad['user_obj']['pw_name']]], {'get': True})
+        assert user_obj['twofactor_auth_configured'] is True
+
+        user_secret_obj = get_user_secret_sid(user_obj['sid'], True)
+        assert user_secret_obj['secret'] is not None
+
+        do_login(user_obj['username'], ADPASSWORD, get_2fa_totp_token(user_secret_obj))

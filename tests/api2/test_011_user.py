@@ -5,11 +5,10 @@ import time
 import stat
 
 import pytest
+from datetime import datetime, UTC
 from pytest_dependency import depends
 
-from truenas_api_client import ClientException
 from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 
@@ -20,6 +19,7 @@ VAR_EMPTY = '/var/empty'
 BUILTIN_ADMINS_GROUP = 'builtin_administrators'
 DEFAULT_HOMEDIR_OCTAL = 0o40700
 SMB_CONFIGURED_SENTINEL = '/var/run/samba/.configured'
+UTC_EPOCH = datetime.fromtimestamp(0, UTC)
 
 
 @dataclasses.dataclass
@@ -154,7 +154,7 @@ def test_001_create_and_verify_testuser():
     qry = call(
         'user.query',
         [['username', '=', username]],
-        {'get': True, 'extra': {'additional_information': ['SMB']}}
+        {'get': True}
     )
     UserAssets.TestUser01['query_response'].update(qry)
 
@@ -162,11 +162,13 @@ def test_001_create_and_verify_testuser():
     for key in ('username', 'full_name', 'shell'):
         assert qry[key] == UserAssets.TestUser01['create_payload'][key]
 
+    shadow_days = (qry['last_password_change'] - UTC_EPOCH).days
+
     # verify various /etc files were updated
     for f in (
         {
             'file': '/etc/shadow',
-            'value': f'{username}:{qry["unixhash"]}:18397:0:99999:7:::'
+            'value': f'{username}:{qry["unixhash"]}:{shadow_days}::::0::'
         },
         {
             'file': '/etc/passwd',
@@ -318,12 +320,13 @@ def test_007_add_smbuser_to_sudoers(request):
 def test_008_disable_smb_and_password(request):
     depends(request, ['SMB_CONVERT', UserAssets.TestUser01['depends_name']])
     username = UserAssets.TestUser01['create_payload']['username']
-    call(
+    qry = call(
         'user.update',
         UserAssets.TestUser01['query_response']['id'],
         {'password_disabled': True, 'smb': False}
     )
-    check_config_file('/etc/shadow', f'{username}:*:18397:0:99999:7:::')
+    shadow_days = (qry['last_password_change'] - UTC_EPOCH).days
+    check_config_file('/etc/shadow', f'{username}:*:{shadow_days}::::0::')
 
 
 @pytest.mark.parametrize('username', [UserAssets.TestUser01['create_payload']['username']])
@@ -537,9 +540,11 @@ def test_038_change_homedir_to_existing_path(request):
 
 def test_041_lock_smb_user(request):
     depends(request, [UserAssets.TestUser02['depends_name']], scope='session')
-    assert call('user.update', UserAssets.TestUser02['query_response']['id'], {'locked': True})
+    qry = call('user.update', UserAssets.TestUser02['query_response']['id'], {'locked': True})
     username = UserAssets.TestUser02['create_payload']['username']
-    check_config_file('/etc/shadow', f'{username}:!:18397:0:99999:7:::')
+    shadow_days = (qry['last_password_change'] - UTC_EPOCH).days
+
+    check_config_file('/etc/shadow', f'{username}:!:{shadow_days}::::0::')
 
     username = UserAssets.TestUser02['create_payload']['username']
 
@@ -667,16 +672,17 @@ def test_059_create_user_ro_dataset(request):
 def test_060_immutable_user_validation(request):
     # the `news` user is immutable
     immutable_id = call('user.query', [['username', '=', 'news']], {'get': True})['id']
+    default_err = 'This attribute cannot be changed'
     to_validate = [
-        {'group': 1},
-        {'home': '/mnt/tank', 'home_create': True},
-        {'smb': True},
-        {'username': 'no_way_bad'},
+        ({'group': 1}, default_err),
+        ({'home': '/mnt/tank', 'home_create': True}, default_err),
+        ({'smb': True}, 'Password authentication may not be disabled for SMB users.'),
+        ({'username': 'no_way_bad'}, default_err),
     ]
-    for i in to_validate:
+    for attr, expected_err in to_validate:
         with pytest.raises(ValidationErrors) as ve:
-            call('user.update', immutable_id, i)
-        assert ve.value.errors[0].errmsg == 'This attribute cannot be changed'
+            call('user.update', immutable_id, attr)
+        assert ve.value.errors[0].errmsg == expected_err
 
 
 @contextlib.contextmanager

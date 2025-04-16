@@ -25,6 +25,7 @@ from .crypto_cert_info import *  # noqa
 from .crypto_cert_profiles import *  # noqa
 from .device import *  # noqa
 from .disk import *  # noqa
+from .dns import *  # noqa
 from .docker import *  # noqa
 from .docker_network import *  # noqa
 from .enclosure2 import *  # noqa
@@ -39,7 +40,7 @@ from .filesystem import *  # noqa
 from .ftp import *  # noqa
 from .group import *  # noqa
 from .initshutdownscript import *  # noqa
-from .interface_listen import *  # noqa
+from .interface import *  # noqa
 from .ipmi import *  # noqa
 from .ipmi_chassis import *  # noqa
 from .ipmi_lan import *  # noqa
@@ -51,6 +52,7 @@ from .iscsi_initiator import *  # noqa
 from .iscsi_portal import *  # noqa
 from .iscsi_target import *  # noqa
 from .iscsi_target_to_extent import *  # noqa
+from .kerberos import *  # noqa
 from .keychain import *  # noqa
 from .kmip import *  # noqa
 from .k8s_to_docker import *  # noqa
@@ -73,6 +75,7 @@ from .replication_config import *  # noqa
 from .replication_crud import *  # noqa
 from .reporting import *  # noqa
 from .reporting_exporters import *  # noqa
+from .route import *  # noqa
 from .rsync_task import *  # noqa
 from .service import *  # noqa
 from .smb import *  # noqa
@@ -87,6 +90,7 @@ from .system_general_ui import *  # noqa
 from .system_global import *  # noqa
 from .system_lifecycle import *  # noqa
 from .system_ntpserver import *  # noqa
+from .system_product import *  # noqa
 from .system_reboot import *  # noqa
 from .system_security import *  # noqa
 from .system_general_timezone import *  # noqa

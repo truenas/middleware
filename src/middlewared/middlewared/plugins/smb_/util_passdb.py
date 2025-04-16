@@ -54,6 +54,8 @@ MINOR_VERSION_VAL = b64encode(pack('<I', 0))
 MAJOR_VERSION_KEY = 'INFO/version'
 MAJOR_VERSION_VAL = b64encode(pack('<I', 4))
 
+NTHASH_LEN = 16
+
 # The following constants are taken from default values
 # generated in samu_new() in source3/passdb/passdb.c
 DEFAULT_HOURS_LEN = 21
@@ -483,13 +485,17 @@ def user_smbhash_to_nt_pw(username, smbhash) -> str:
         # we may have a legacy entry in smbpasswd format
         smbhash = smbhash.split(':')[3]
 
+    # Check that the SMB hash is actually a hex string of the required length
+    if len(bytes.fromhex(smbhash)) != NTHASH_LEN:
+        raise ValueError('smbhash has incorrect length')
+
     return smbhash
 
 
 def user_entry_to_passdb_entry(
     netbiosname: str,
     user_entry: dict,
-    existing_entry: dict = None
+    existing_entry: dict = None,
 ) -> PDBEntry:
     """ Create an updated PDBEntry based on user-provided specifications
 
@@ -511,12 +517,20 @@ def user_entry_to_passdb_entry(
             f'{user_entry["username"]}: failed to parse SMB hash of {user_entry["smbhash"]}'
         )
 
+    if user_entry['last_password_change']:
+        if isinstance(user_entry['last_password_change'], int):
+            pass_last_set = user_entry['last_password_change']
+        else:
+            pass_last_set = int(user_entry['last_password_change'].timestamp())
+    else:
+        pass_last_set = int(time())
+
     pdb_times = PDBTimes(
         logon=0,
         logoff=PASSDB_TIME_T_MAX,
         kickoff=PASSDB_TIME_T_MAX,
         bad_password=0,
-        pass_last_set=int(time()),
+        pass_last_set=pass_last_set,
         pass_can_change=0,
         pass_must_change=PASSDB_TIME_T_MAX
     )
@@ -542,9 +556,6 @@ def user_entry_to_passdb_entry(
     }
 
     if existing_entry:
-        # preserve existing times:
-        pdb_dict['times'] = PDBTimes(**existing_entry['times'])
-
         # preserve counters
         pdb_dict['logon_count'] = existing_entry['logon_count']
         pdb_dict['bad_pw_count'] = existing_entry['bad_pw_count']

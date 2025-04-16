@@ -215,7 +215,9 @@ class filters(object):
         return not operator.contains(x, y)
 
     def op_re(x, y):
-        return re.match(y, x)
+        # Some string fields are nullable. If this is the case then we will treat the null as an empty string
+        # so that the regex match doesn't raise an exception.
+        return re.match(y, x or '')
 
     def op_startswith(x, y):
         if x is None:

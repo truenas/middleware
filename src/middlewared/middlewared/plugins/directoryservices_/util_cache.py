@@ -250,7 +250,7 @@ class DSCacheFill:
                     'smbhash': None,
                     'group': {},
                     'home': user_data.pw_dir,
-                    'shell': user_data.pw_shell,
+                    'shell': user_data.pw_shell or '/usr/bin/sh',  # An empty string as pw_shell means sh
                     'full_name': user_data.pw_gecos,
                     'builtin': False,
                     'email': None,
@@ -268,6 +268,10 @@ class DSCacheFill:
                     'sid': u['sid'],
                     'roles': [],
                     'api_keys': [],
+                    'last_password_change': None,
+                    'password_age': None,
+                    'password_history': None,
+                    'password_change_required': False,
                 }
 
                 if user_count % LOG_CACHE_ENTRY_INTERVAL == 0:

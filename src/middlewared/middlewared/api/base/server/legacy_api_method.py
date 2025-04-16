@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from middlewared.api.base.handler.accept import model_dict_from_list
 from middlewared.api.base.handler.dump_params import dump_params
@@ -42,11 +42,11 @@ class LegacyAPIMethod(Method):
             self.accepts_model = None
             self.returns_model = None
 
-    async def call(self, app: "RpcWebSocketApp", params):
+    async def call(self, app: "RpcWebSocketApp", id_: Any, params):
         if self.accepts_model:  # FIXME: Remove this check when all models become new style
             params = await self._adapt_params(params)
 
-        return await super().call(app, params)
+        return await super().call(app, id_, params)
 
     async def _adapt_params(self, params):
         try:

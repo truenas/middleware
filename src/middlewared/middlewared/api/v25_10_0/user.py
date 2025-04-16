@@ -1,6 +1,6 @@
-from typing import Annotated, Literal
+from typing import Literal
 
-from annotated_types import Ge, Le
+from datetime import datetime
 from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
@@ -74,6 +74,17 @@ class UserEntry(BaseModel):
     immutable: bool
     twofactor_auth_configured: bool
     sid: str | None
+    last_password_change: datetime | None
+    "The date of the last password change for local user accounts."
+    password_age: int | None
+    "The age in days of the password for local user accounts."
+    password_history: Secret[list | None]
+    """
+    This contains hashes of the ten most recent passwords used by local user accounts, and is
+    for enforcing password history requirements as defined in system.security.
+    """
+    password_change_required: bool
+    "Password change for local user account is required on next login."
     roles: list[str]
     api_keys: list[int]
 
@@ -96,9 +107,20 @@ class UserCreate(UserEntry):
     sid: Excluded = excluded_field()
     roles: Excluded = excluded_field()
     api_keys: Excluded = excluded_field()
+    password_history: Excluded = excluded_field()
+    password_age: Excluded = excluded_field()
+    last_password_change: Excluded = excluded_field()
+    password_change_required: Excluded = excluded_field()
 
     uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."
+    username: LocalUsername
+    """
+    String used to uniquely identify the user on the server. In order to be portable across
+    systems, local user names must be composed of characters from the POSIX portable filename
+    character set (IEEE Std 1003.1-2024 section 3.265). This means alphanumeric characters,
+    hyphens, underscores, and periods. Usernames also may not begin with a hyphen or a period.
+    """
     full_name: NonEmptyString
 
     group_create: bool = False
@@ -106,7 +128,7 @@ class UserCreate(UserEntry):
     "Required if `group_create` is `false`."
     home_create: bool = False
     home_mode: str = "700"
-    password: Secret[str | None] = None
+    password: Secret[NonEmptyString | None] = None
     random_password: bool = False
     "Generate a random 20 character password for the user"
 
@@ -263,9 +285,9 @@ class UserUnset2faSecretResult(BaseModel):
 
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
-    otp_digits: Annotated[int, Ge(6), Le(8)]
+    otp_digits: int = Field(ge=6, le=8)
     "Represents number of allowed digits in the OTP"
-    interval: Annotated[int, Ge(5)]
+    interval: int = Field(ge=5)
     "Time duration in seconds specifying OTP expiration time from its creation time"
 
 

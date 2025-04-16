@@ -6,6 +6,7 @@ import sqlite3
 
 from middlewared.plugins.account import ADMIN_UID, ADMIN_GID, crypted_password
 from middlewared.utils.db import FREENAS_DATABASE
+from middlewared.utils.time_utils import utc_now
 
 if __name__ == "__main__":
     authentication_method = json.loads(sys.stdin.read())
@@ -14,10 +15,14 @@ if __name__ == "__main__":
 
     conn = sqlite3.connect(FREENAS_DATABASE)
     conn.row_factory = sqlite3.Row
+    now = int(utc_now(False).timestamp())
 
     c = conn.cursor()
     if username == "root":
-        c.execute("UPDATE account_bsdusers SET bsdusr_unixhash = ? WHERE bsdusr_username = 'root'", (password,))
+        c.execute(
+            "UPDATE account_bsdusers SET bsdusr_password_disabled = ? bsdusr_unixhash = ?, bsdusr_last_password_change = ?"
+            "WHERE bsdusr_username = 'root'", (False, password, now)
+        )
     else:
         home = f"/home/{username}"
 
@@ -47,6 +52,7 @@ if __name__ == "__main__":
         user["bsdusr_locked"] = 0
         user["bsdusr_sudo_commands"] = '["ALL"]'
         user["bsdusr_group_id"] = group_id
+        user["bsdusr_last_password_change"] = now
         c.execute(f"""
             INSERT INTO account_bsdusers ({', '.join([k for k in user.keys()])})
             VALUES ({', '.join(['?' for k in user.keys()])})

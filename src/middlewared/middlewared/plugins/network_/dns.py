@@ -3,12 +3,43 @@ import ipaddress
 import re
 import subprocess
 import tempfile
+from typing import Literal
 
-from middlewared.service import Service, filterable, filterable_returns, private
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str, ValidationErrors
+from pydantic import Field
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, single_argument_args, UniqueList, IPv4Nameserver, IPv6Nameserver
+from middlewared.api.current import DNSQueryItem
+from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.plugins.interface.netif import netif
+from middlewared.schema import IPAddr, ValidationErrors
 from middlewared.service_exception import CallError
+
+
+class DNSNsUpdateOpA(BaseModel):
+    command: Literal['ADD', 'DELETE']
+    name: str
+    type: Literal['A'] = 'A'
+    ttl: int = 3600
+    address: IPv4Nameserver
+    do_ptr: bool = True
+
+
+class DNSNsUpdateOpAAAA(DNSNsUpdateOpA):
+    type: Literal['AAAA']
+    address: IPv6Nameserver
+
+
+@single_argument_args('data')
+class DNSNsUpdateArgs(BaseModel):
+    use_kerberos: bool = True
+    ops: UniqueList[DNSNsUpdateOpA | DNSNsUpdateOpAAAA] = Field(min_length=1)
+    timeout: int = 30
+
+
+class DNSNsUpdateResult(BaseModel):
+    result: None
 
 
 class DNSService(Service):
@@ -16,8 +47,7 @@ class DNSService(Service):
     class Config:
         cli_namespace = 'network.dns'
 
-    @filterable
-    @filterable_returns(Dict('nameserver', IPAddr('nameserver', required=True)))
+    @filterable_api_method(item=DNSQueryItem, roles=['NETWORK_INTERFACE_READ'])
     def query(self, filters, options):
         """
         Query Name Servers with `query-filters` and `query-options`.
@@ -102,46 +132,15 @@ class DNSService(Service):
 
         return result
 
-    @accepts(Dict(
-        'nsupdate_info',
-        Bool('use_kerberos', default=True),
-        List(
-            'ops',
-            required=True,
-            unique=True,
-            items=[
-                Dict(
-                    Str('command', enum=['ADD', 'DELETE'], required=True),
-                    Str('name', required=True),
-                    Str('type', enum=['A', 'AAAA'], default='A'),
-                    Int('ttl', default=3600),
-                    IPAddr('address', required=True, excluded_address_types=[
-                        'MULTICAST', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED'
-                    ]),
-                    Bool('do_ptr', default=True)
-                )
-            ],
-        ),
-        Int('timeout', default=30),
-    ))
-    @private
+    @api_method(DNSNsUpdateArgs, DNSNsUpdateResult, private=True)
     def nsupdate(self, data):
         if data['use_kerberos']:
             self.middleware.call_sync('kerberos.check_ticket')
-
-        if len(data['ops']) == 0:
-            raise CallError('At least one nsupdate command must be specified')
 
         with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
             ptrs = []
             for entry in data['ops']:
                 addr = ipaddress.ip_address(entry['address'])
-
-                if entry['type'] == 'A' and not addr.version == 4:
-                    raise CallError(f'{addr.compressed}: not an IPv4 address')
-
-                if entry['type'] == 'AAAA' and not addr.version == 6:
-                    raise CallError(f'{addr.compressed}: not an IPv6 address')
 
                 directive = ' '.join([
                     'update',

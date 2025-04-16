@@ -41,6 +41,8 @@ class CloudBackupEntry(BaseCloudEntry):
     """
     absolute_paths: bool = False
     """Whether to preserve absolute paths in each backup (cannot be set when `snapshot=True`)"""
+    cache_path: str | None = None
+    """Cache path. If not set, performance may degrade."""
 
 
 class CloudBackupCreate(CloudBackupEntry):
