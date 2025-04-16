@@ -57,7 +57,7 @@ def test_distinguishes_attributes():
         "full_name": "Admin",
         "group_create": True,
         "groups": [builtin_administrators_group_id],
-        "home": "/nonexistent",
+        "home": "/var/empty",
         "password": "test1234",
     }) as admin:
         with client(auth=("admin", "test1234")) as c:

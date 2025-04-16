@@ -1,6 +1,8 @@
 import enum
 from dataclasses import dataclass
 
+from middlewared.utils.account.faillock import FAIL_INTERVAL, MAX_FAILURE, UNLOCK_TIME
+
 
 class PAMModule(enum.StrEnum):
     DENY = 'pam_deny.so'
@@ -17,6 +19,7 @@ class PAMModule(enum.StrEnum):
     TDB = 'pam_tdb.so'
     TTY_AUDIT = 'pam_tty_audit.so'
     WINBIND = 'pam_winbind.so'
+    FAILLOCK = 'pam_faillock.so'
 
 
 class PAMService(enum.StrEnum):
@@ -294,9 +297,36 @@ SSS_SESSION = PAMConfLines(
     )
 )
 
+
 TTY_AUDIT_LINE = PAMLine(
     pam_service=PAMService.SESSION,
     pam_control=PAMSimpleControl.REQUIRED,
     pam_module=PAMModule.TTY_AUDIT,
     pam_module_args=('disable=*', 'enable=root')
+)
+
+
+FAILLOCK_AUTH_FAIL = PAMLine(
+    pam_service=PAMService.AUTH,
+    pam_control=(PAMControl(PAMResponse.DEFAULT, PAMAction.DIE),),
+    pam_module=PAMModule.FAILLOCK,
+    pam_module_args=(
+        'authfail',
+        f'deny={MAX_FAILURE}',
+        f'unlock_time={UNLOCK_TIME}',
+        f'fail_interval={FAIL_INTERVAL}',
+    )
+)
+
+
+FAILLOCK_AUTH_SUCC = PAMLine(
+    pam_service=PAMService.AUTH,
+    pam_control=PAMSimpleControl.SUFFICIENT,
+    pam_module=PAMModule.FAILLOCK,
+    pam_module_args=(
+        'authsucc',
+        f'deny={MAX_FAILURE}',
+        f'unlock_time={UNLOCK_TIME}',
+        f'fail_interval={FAIL_INTERVAL}',
+    )
 )
