@@ -7,7 +7,16 @@ __all__ = ["bitmask_to_set", "INTERNAL_INTERFACES", "run"]
 # is used all over the place and we don't want
 # the contents to change
 INTERNAL_INTERFACES = (
-    "wg", "lo", "tun", "tap", "docker", "veth", "vnet", "macvtap", "ix", "tailscale",
+    "wg",
+    "lo",
+    "tun",
+    "tap",
+    "docker",
+    "veth",
+    "vnet",
+    "ix",
+    "tailscale",
+    "mac",  # macvtap AND mac (latter being macvlan)
 )
 
 
