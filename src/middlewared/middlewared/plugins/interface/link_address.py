@@ -28,12 +28,7 @@ class InterfaceService(Service):
     @private
     async def persist_link_addresses(self):
         try:
-            if await self.middleware.call("failover.node") == "B":
-                local_key = "link_address_b"
-                remote_key = "link_address"
-            else:
-                local_key = "link_address"
-                remote_key = "link_address_b"
+            local_key, remote_key = await self._get_keys()
 
             real_interfaces = RealInterfaceCollection(
                 await self.middleware.call("interface.query", INTERFACE_FILTERS),
@@ -73,6 +68,16 @@ class InterfaceService(Service):
             self.middleware.logger.error("Unhandled exception while persisting network interfaces link addresses",
                                          exc_info=True)
 
+    async def _get_keys(self):
+        if await self.middleware.call("failover.node") == "B":
+            local_key = "link_address_b"
+            remote_key = "link_address"
+        else:
+            local_key = "link_address"
+            remote_key = "link_address_b"
+
+        return local_key, remote_key
+
     async def __handle_interface(self, db_interfaces, name, key, link_address):
         interface = db_interfaces.by_name.get(name)
         if interface is None:
@@ -92,6 +97,15 @@ class InterfaceService(Service):
 
             await self.middleware.call("datastore.update", "network.interface_link_address", interface["id"],
                                        {key: link_address})
+
+    @private
+    async def local_macs_to_remote_macs(self):
+        local_key, remote_key = await self._get_keys()
+        return {
+            interface[local_key]: interface[remote_key]
+            for interface in await self.middleware.call("datastore.query", "network.interface_link_address")
+            if interface[local_key] is not None and interface[remote_key] is not None
+        }
 
 
 class InterfaceCollection:
