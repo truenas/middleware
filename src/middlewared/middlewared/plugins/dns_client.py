@@ -43,7 +43,7 @@ class DNSClientForwardLookupArgs(BaseModel):
     names: list[str]
     record_types: list[Literal['A', 'AAAA', 'SRV', 'CNAME']] = ['A', 'AAAA']
     dns_client_options: DNSClientOptions = Field(default_factory=DNSClientOptions)
-    query_filters: QueryFilters = Field(alias='query-filters', default_factory=QueryFilters)
+    query_filters: QueryFilters = Field(alias='query-filters', default=[])
     query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
 
 
@@ -55,7 +55,7 @@ class DNSClientForwardLookupResult(BaseModel):
 class DNSClientReverseLookupArgs(BaseModel):
     addresses: list[IPvAnyAddress]
     dns_client_options: DNSClientOptions = Field(default_factory=DNSClientOptions)
-    query_filters: QueryFilters = Field(alias='query-filters', default_factory=QueryFilters)
+    query_filters: QueryFilters = Field(alias='query-filters', default=[])
     query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
 
 
