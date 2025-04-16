@@ -13,4 +13,4 @@ ${'\n'.join(line.as_conf() for line in STANDALONE_AUTH.primary)}
 %endif
 @include common-account
 password	required	pam_deny.so
-session	required	pam_deny.so
+@include common-session
