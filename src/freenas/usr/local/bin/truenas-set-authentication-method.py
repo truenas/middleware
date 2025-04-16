@@ -19,7 +19,10 @@ if __name__ == "__main__":
 
     c = conn.cursor()
     if username == "root":
-        c.execute("UPDATE account_bsdusers SET bsdusr_unixhash = ?, bsdusr_last_password_change = ?  WHERE bsdusr_username = 'root'", (password, now))
+        c.execute(
+            "UPDATE account_bsdusers SET bsdusr_password_disabled = ? bsdusr_unixhash = ?, bsdusr_last_password_change = ?"
+            "WHERE bsdusr_username = 'root'", (False, password, now)
+        )
     else:
         home = f"/home/{username}"
 

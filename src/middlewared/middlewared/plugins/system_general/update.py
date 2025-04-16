@@ -67,7 +67,9 @@ class SystemGeneralService(ConfigService):
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
-            data['usage_collection'] = True
+            # Under no circumstances under GPOS STIG mode should usage_collection show enabled
+            security_config = await self.middleware.call('system.security.config')
+            data['usage_collection'] = not security_config['enable_gpos_stig']
 
         data.pop('pwenc_check')
 
@@ -162,6 +164,16 @@ class SystemGeneralService(ConfigService):
                 await self.middleware.call(
                     'certificate.cert_services_validation', ui_certificate, 'ui_certificate', False
                 )
+            )
+
+    @settings.fields_validator('usage_collection')
+    async def _validate_usage_collection(self, verrors, usage_collection):
+        """ Cannot enable usage_collection when STIG is enabled """
+        security_config = await self.middleware.call('system.security.config')
+        if usage_collection and security_config['enable_gpos_stig']:
+            verrors.add(
+                'usage_collection',
+                'Usage collection is not allowed in GPOS STIG mode',
             )
 
     @api_method(SystemGeneralUpdateArgs, SystemGeneralUpdateResult, audit='System general update')
