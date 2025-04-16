@@ -88,6 +88,12 @@ class SystemSecurityService(ConfigService):
         # compatibility.
         await self.middleware.run_in_thread(set_io_uring_enabled, False)
 
+        # Disable non-critical outgoing network activity
+        await self.middleware.call(
+            'network.configuration.update',
+            {"activity": {"type": "DENY", "activities": ["usage"]}}
+        )
+
     @private
     async def validate_stig(self, current_cred):
         # The following validation steps ensure that users have the ability to
