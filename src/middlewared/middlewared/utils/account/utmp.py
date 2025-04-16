@@ -140,6 +140,10 @@ def __getutent():
 
 def __parse_utmp_exit(utmp_type: PyUtmpType, data: StructExitStatus) -> PyUtmpExit:
     if utmp_type != PyUtmpType.DEAD_PROCESS:
+        # Per utmp(5) manpage the struct exit_status is only populated on DEAD_PROCESS
+        # i.e. processes that have been terminated. This means we'll set it to None
+        # type to differentiate from exit status of zero to prevent users from trying
+        # to rely on it.
         return None
 
     return PyUtmpExit(e_termination=data.e_termination, e_exit=data.e_exit)
@@ -155,7 +159,7 @@ def __parse_timeval(data: StructTimeval) -> datetime:
 
 
 def __parse_address(int_array) -> IPv4Address | IPv6Address | None:
-    if not int_array[0]:
+    if not any(int_array):
         return None
 
     if not int_array[1]:
