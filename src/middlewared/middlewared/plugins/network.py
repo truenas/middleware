@@ -666,6 +666,15 @@ class InterfaceService(CRUDService):
         """
         verrors = ValidationErrors()
         await self.middleware.call('network.common.check_failover_disabled', 'interface.create', verrors)
+
+        if data['type'] == 'BRIDGE':
+            required_attrs = ('bridge_members', )
+        elif data['type'] == 'LINK_AGGREGATION':
+            required_attrs = ('lag_protocol', 'lag_ports')
+        elif data['type'] == 'VLAN':
+            required_attrs = ('vlan_parent_interface', 'vlan_tag')
+        for i in filter(lambda x: x not in data, required_attrs):
+            verrors.add(f'interface_create.{i}', 'This field is required')
         verrors.check()
 
         type_ = data['type']
@@ -713,7 +722,7 @@ class InterfaceService(CRUDService):
                         'vlan_vint': name,
                         'vlan_pint': data['vlan_parent_interface'],
                         'vlan_tag': data['vlan_tag'],
-                        'vlan_pcp': data['vlan_pcp'],
+                        'vlan_pcp': data.get('vlan_pcp'),
                     })
         except Exception:
             if lag_id:
