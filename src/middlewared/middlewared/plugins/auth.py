@@ -33,6 +33,9 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.account.authenticator import (
+    ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator, AccountFlag
+)
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
     AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS, OTPW_MANAGER,
@@ -118,6 +121,9 @@ class SessionManager:
 
     async def login(self, app, credentials):
         if app.authenticated:
+            await self.middleware.run_in_thread(credentials.login, app.session_id)
+            # If previous credential had associated utmp entry then it will be automatically
+            # cleared when old credentials object is garbage collected
             self.sessions[app.session_id].credentials = credentials
             app.authenticated_credentials = credentials
             await self.middleware.log_audit_message(app, "AUTHENTICATION", {
@@ -125,6 +131,17 @@ class SessionManager:
                 "error": None,
             }, True)
             return
+
+        # Generate utmp entry for logged in session
+        resp = await self.middleware.run_in_thread(credentials.login, app.session_id)
+        if resp.code == pam.PAM_ABORT:
+            # Special response for case where we had to scavenge IDs
+            self.middleware.logger.error('Available utmp session ids exhausted, scavenged stale sessions.')
+            # Now that we've complained, try it again
+            resp = await self.middleware.run_in_thread(credentials.login, app.session_id)
+
+        if resp.code != pam.PAM_SUCCESS:
+            raise CallError(f'Login with credentials failed: {resp.reason}')
 
         session = Session(self, credentials, app)
         self.sessions[app.session_id] = session
@@ -421,7 +438,8 @@ class AuthService(Service):
         }
 
     @private
-    def get_token_for_action(self, token_id, origin, method, resource):
+    @pass_app(require=True)
+    def get_token_for_action(self, app, token_id, origin, method, resource):
         if (token := self.token_manager.get(token_id, origin)) is None:
             return None
 
@@ -431,6 +449,14 @@ class AuthService(Service):
         if not token.parent_credentials.authorize(method, resource):
             return None
 
+        auth_ctx = app.authentication_context
+
+        if not auth_ctx:
+            raise CallError('Authentication context was not initialized')
+
+        if not auth_ctx.pam_hdl:
+            raise CallError('Authenticator was not initialized')
+
         if token.single_use:
             self.token_manager.destroy(token)
         else:
@@ -439,7 +465,12 @@ class AuthService(Service):
                                 'at the current security level',
                                 errno.EOPNOTSUPP)
 
-        return TokenSessionManagerCredentials(self.token_manager, token)
+        cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
+        pam_resp = cred.pam_authenticate()
+        if pam_resp.code != pam.PAM_SUCCESS:
+            raise CallError(f'Failed to get token for action: {pam_resp.reason}')
+
+        return cred
 
     @private
     def get_token_for_shell_application(self, token_id, origin):
@@ -713,6 +744,9 @@ class AuthService(Service):
                 }
 
         mechanism = AuthMech[data['mechanism']]
+        if app.authentication_context is None:
+            app.authentication_context = AuthenticationContext()
+
         auth_ctx = app.authentication_context
         login_fn = self.session_manager.login
         response = {'response_type': AuthResp.AUTH_ERR}
@@ -724,11 +758,11 @@ class AuthService(Service):
                 # Both of these mechanisms are de-factor username + password
                 # combinations and pass through libpam.
                 cred_type = 'LOGIN_PASSWORD'
+                auth_ctx.pam_hdl = UserPamAuthenticator()
                 resp = await self.get_login_user(
                     app,
                     data['username'],
                     data['password'],
-                    mechanism
                 )
 
                 if resp['otp_required']:
@@ -779,9 +813,17 @@ class AuthService(Service):
                 match resp['pam_response']['code']:
                     case pam.PAM_SUCCESS:
                         if cred_type == 'ONETIME_PASSWORD':
-                            cred = LoginOnetimePasswordSessionManagerCredentials(resp['user_data'], CURRENT_AAL.level)
+                            cred = LoginOnetimePasswordSessionManagerCredentials(
+                                resp['user_data'],
+                                CURRENT_AAL.level,
+                                auth_ctx.pam_hdl
+                            )
                         else:
-                            cred = LoginPasswordSessionManagerCredentials(resp['user_data'], CURRENT_AAL.level)
+                            cred = LoginPasswordSessionManagerCredentials(
+                                resp['user_data'],
+                                CURRENT_AAL.level,
+                                auth_ctx.pam_hdl
+                            )
 
                         await login_fn(app, cred)
                     case pam.PAM_AUTH_ERR:
@@ -805,11 +847,11 @@ class AuthService(Service):
                 # API key that we receive over wire is concatenation of the
                 # datastore `id` of the particular key with the key itself,
                 # delimited by a dash. <id>-<key>.
+                auth_ctx.pam_hdl = ApiKeyPamAuthenticator()
                 resp = await self.get_login_user(
                     app,
                     data['username'],
                     data['api_key'],
-                    mechanism
                 )
                 if resp['pam_response']['code'] == pam.PAM_AUTHINFO_UNAVAIL:
                     # This is a special error code that means we need to
@@ -825,7 +867,6 @@ class AuthService(Service):
                         app,
                         data['username'],
                         data['api_key'],
-                        mechanism
                     )
 
                 # Retrieve the API key here so that we can upgrade the underlying
@@ -862,6 +903,8 @@ class AuthService(Service):
                         }, False)
 
                         response['response_type'] = AuthResp.EXPIRED.name
+                        # Revoke the pam handle and clean it up
+                        auth_ctx.pam_hdl.end()
                         return response
 
                     if thehash.startswith('$pbkdf2-sha256'):
@@ -870,7 +913,7 @@ class AuthService(Service):
                         # use it to update the hash in backend.
                         await self.middleware.call('api_key.update_hash', data['api_key'])
 
-                    cred = ApiKeySessionManagerCredentials(resp['user_data'], key, CURRENT_AAL.level)
+                    cred = ApiKeySessionManagerCredentials(resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl)
                     await login_fn(app, cred)
                 else:
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
@@ -913,7 +956,9 @@ class AuthService(Service):
                     # factor for password-based logins (not user-linked API keys).
                     # Hence we don't have to worry about whether this is based on
                     # an API key.
-                    cred = LoginTwofactorSessionManagerCredentials(auth_data['user'], CURRENT_AAL.level)
+                    cred = LoginTwofactorSessionManagerCredentials(
+                        auth_data['user'], CURRENT_AAL.level, auth_ctx.pam_hdl
+                    )
                     await login_fn(app, cred)
                 else:
                     # Add a sleep like pam_delay() would add for pam_oath
@@ -974,7 +1019,27 @@ class AuthService(Service):
                     }, False)
                     return response
 
-                cred = TokenSessionManagerCredentials(self.token_manager, token)
+                # Use the AF_UNIX style authenticator with username from base auth
+                auth_ctx.pam_hdl = UnixPamAuthenticator()
+
+                cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
+                pam_resp = await self.middleware.run_in_thread(cred.pam_authenticate)
+                if pam_resp.code != pam.PAM_SUCCESS:
+                    # Account may have gotten locked between when token originally generated and when it was used.
+                    # Alternatively we may have hit session limits.
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
+
+                    # Unlike other failure types we can't print the token in the audit log
+                    # since it is actually still valid
+                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                        'credentials': {
+                            'credentials': 'TOKEN',
+                            'credentials_data': cred.dump() 
+                        },
+                        'error': pam_resp.reason,
+                    }, False)
+                    return response
+
                 await login_fn(app, cred)
                 if token.single_use:
                     self.token_manager.destroy(token)
@@ -1001,6 +1066,10 @@ class AuthService(Service):
 
                 response['authenticator'] = await self.get_authenticator_assurance_level()
 
+                # Remove reference to pam handle. This ensures that logout(3) occurs when
+                # the SessionManagerCredential is deallocated or logout() explicitly called
+                auth_ctx.pam_hdl = None
+
             case pam.PAM_AUTH_ERR | pam.PAM_USER_UNKNOWN:
                 # We have to squash AUTH_ERR and USER_UNKNOWN into a generic response
                 # to prevent unauthenticated remote clients from guessing valid usernames.
@@ -1020,7 +1089,7 @@ class AuthService(Service):
 
     @private
     @pass_app()
-    async def get_login_user(self, app, username, password, mechanism):
+    async def get_login_user(self, app, username, password):
         """
         This is a private endpoint that performs the actual validation of username/password
         combination and returns user information and whether additional OTP is required.
@@ -1031,16 +1100,13 @@ class AuthService(Service):
         resp = await self.middleware.call(
             'auth.authenticate_plain',
             username, password,
-            mechanism == AuthMech.API_KEY_PLAIN,
             app=app
         )
-        if mechanism == AuthMech.PASSWORD_PLAIN and resp['pam_response']['code'] == pam.PAM_SUCCESS:
-            if 'OTPW' in resp['user_data']['account_attributes']:
+        if resp['pam_response']['code'] == pam.PAM_SUCCESS:
+            if AccountFlag.OTPW in resp['user_data']['account_attributes']:
                 otpw_used = True
-            else:
-                twofactor_auth = await self.middleware.call('auth.twofactor.config')
-                if twofactor_auth['enabled'] and '2FA' in resp['user_data']['account_attributes']:
-                    otp_required = True
+            elif AccountFlag.TWOFACTOR in resp['user_data']['account_attributes']:
+                otp_required = True
 
         return resp | {'otp_required': otp_required, 'otpw_used': otpw_used}
 
@@ -1191,27 +1257,38 @@ async def check_permission(middleware, app):
     if origin is None:
         return
 
+    authenticator = UnixPamAuthenticator()
+
     if origin.is_unix_family:
         if origin.uid == 0 and not origin.session_is_interactive:
+            # We can bypass more complex privilege composition for internal root sessions
             user = await middleware.call('auth.authenticate_root')
+            resp = await middleware.run_in_thread(authenticator.authenticate, 'root', app.origin)
+            if resp.code != pam.PAM_SUCCESS:
+                middleware.logger.error('root: AF_UNIX authentication for user failed: %s', resp.reason)
         else:
+            # We first have to convert the UID to a username to send to PAM. The PAM
+            # authenticator will handle retrieving group membership and setting account flags
             try:
-                user_info = (await middleware.call(
-                    'datastore.query',
-                    'account.bsdusers',
-                    [['uid', '=', origin.uid]],
-                    {'get': True, 'prefix': 'bsdusr_', 'select': ['id', 'uid', 'username']},
-                )) | {'local': True}
-                query = {'username': user_info.pop('username')}
-            except MatchNotFound:
-                query = {'uid': origin.uid}
-                user_info = {'id': None, 'uid': None, 'local': False}
-
-            user = await middleware.call('auth.authenticate_user', query, user_info, None)
-            if user is None:
+                user_info = await middleware.call('user.get_user_obj', {'uid': origin.uid})
+            except KeyError:
+                # User does not exist
                 return
 
-        await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
+            resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'], app.origin)
+            if resp.code != pam.PAM_SUCCESS:
+                middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
+                                        user_info['pw_name'], resp.reason)
+                return
+
+            # Use the user_info from the authenticator (contains more information than user.get_user_obj)
+            # to generate the credentials dict that will be inserted as the SessionManagerCredentials.
+            user = await middleware.call('auth.authenticate_user', resp.user_info)
+            if user is None:
+                # User may not have privileges to TrueNAS
+                return
+
+        await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user, authenticator))
 
 
 def setup(middleware):

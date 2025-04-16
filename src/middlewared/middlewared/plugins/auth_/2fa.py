@@ -113,6 +113,7 @@ class TwoFactorAuthService(ConfigService):
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
 
         await self.middleware.call('service.reload', 'ssh')
+        await self.middleware.call('etc.generate', 'user')
 
         return await self.config()
 

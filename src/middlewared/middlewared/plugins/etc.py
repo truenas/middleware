@@ -99,6 +99,7 @@ class EtcService(Service):
                 {'method': 'system.security.config'},
                 {'method': 'user.query', 'args': [[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]},
                 {'method': 'group.query', 'args': [[['local', '=', True]]]},
+                {'method': 'auth.twofactor.config'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'group'},
@@ -109,6 +110,7 @@ class EtcService(Service):
                 {'type': 'py', 'path': 'web_ui_root_login_alert'},
                 {'type': 'mako', 'path': 'subuid'},
                 {'type': 'mako', 'path': 'subgid'},
+                {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600, 'checkpoint': 'pool_import'},
             ]
         },
         'netdata': [
@@ -192,16 +194,19 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'pam.d/common-session-noninteractive'},
                 {'type': 'mako', 'path': 'pam.d/common-session'},
                 {'type': 'mako', 'path': 'security/pam_winbind.conf'},
+                {'type': 'mako', 'path': 'security/limits.conf'},
             ]
         },
         'pam_middleware': {
             'ctx': [
                 {'method': 'datastore.config', 'args': ['system.settings']},
+                {'method': 'system.security.config'},
                 {'method': 'api_key.query', 'args': [[['revoked', '=', False]]]}
             ],
             'entries': [
                 {'type': 'mako', 'path': 'pam.d/middleware'},
                 {'type': 'mako', 'path': 'pam.d/middleware-api-key'},
+                {'type': 'mako', 'path': 'pam.d/middleware-unix'},
                 {'type': 'py', 'path': 'pam_tdb'},
             ]
         },
@@ -349,7 +354,6 @@ class EtcService(Service):
             "entries": [
                 {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
                 {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux'},
-                {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600, 'checkpoint': 'pool_import'},
                 {'type': 'py', 'path': 'local/ssh/config'},
                 {'type': 'mako', 'path': 'login_banner', 'mode': 0o600},
             ]

@@ -2,6 +2,7 @@ import pytest
 import types
 
 from middlewared.auth import UserSessionManagerCredentials
+from middlewared.utils.account.authenticator import UserPamAuthenticator
 from middlewared.utils.auth import AA_LEVEL1
 from middlewared.utils.privilege import (
     app_credential_full_admin_or_user,
@@ -10,6 +11,9 @@ from middlewared.utils.privilege import (
     privilege_has_webui_access,
 )
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
+
+
+pam_hdl = UserPamAuthenticator()
 
 
 @pytest.mark.parametrize('privilege,expected', [
@@ -28,7 +32,7 @@ def test_privilege_has_webui_access(privilege, expected):
     ({'username': 'BOB', 'privilege': {'allowlist': [{'method': '*', 'resource': '*'}], 'roles': []}}, True),
 ])
 def test_privilege_has_full_admin(credential, expected):
-    user_cred = UserSessionManagerCredentials(credential, AA_LEVEL1)
+    user_cred = UserSessionManagerCredentials(credential, AA_LEVEL1, pam_hdl)
     assert credential_has_full_admin(user_cred) == expected
     assert credential_full_admin_or_user(user_cred, 'canary') == expected
     assert credential_full_admin_or_user(user_cred, 'BOB')
@@ -67,5 +71,5 @@ def test_privilege_has_full_admin(credential, expected):
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, True),
 ])
 def test_privilege_has_write_to_service(service, credential, expected):
-    user_cred = UserSessionManagerCredentials({'username': 'BOB'} | credential, AA_LEVEL1)
+    user_cred = UserSessionManagerCredentials({'username': 'BOB'} | credential, AA_LEVEL1, pam_hdl)
     assert app_has_write_privilege_for_service(types.SimpleNamespace(authenticated_credentials=user_cred), service) == expected
