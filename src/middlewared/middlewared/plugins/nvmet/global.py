@@ -24,6 +24,7 @@ class NVMetGlobalModel(sa.Model):
     nvmet_global_kernel = sa.Column(sa.Boolean(), default=True)
     nvmet_global_ana = sa.Column(sa.Boolean(), default=False)
     nvmet_global_rdma = sa.Column(sa.Boolean(), default=False)
+    nvmet_global_xport_referral = sa.Column(sa.Boolean(), default=True)
 
 
 class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
@@ -108,7 +109,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         if (await self.middleware.call('nvmet.global.config'))['ana']:
             return True
 
-        if (await self.middleware.call('nvmet.port.usage'))[1]:
+        if (await self.middleware.call('nvmet.port.usage'))['ana_port_ids']:
             return True
 
         return False

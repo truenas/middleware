@@ -72,9 +72,8 @@ class NvmetConfig(abc.ABC):
             path.rmdir()
 
     @classmethod
-    def set_attrs(cls, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
-        new_attrs = cls.map_attrs(attrs, render_ctx)
-        for k, v in new_attrs.items():
+    def set_mapped_attrs(cls, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
+        for k, v in attrs.items():
             p = pathlib.Path(path, k)
             # DEBUG print(f"Want to write {v} to {p}")
             while not p.exists() and retries > 0:
@@ -82,6 +81,11 @@ class NvmetConfig(abc.ABC):
                 retries -= 1
             p.write_text(f'{v}\n')
         return retries
+
+    @classmethod
+    def set_attrs(cls, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
+        new_attrs = cls.map_attrs(attrs, render_ctx)
+        return cls.set_mapped_attrs(path, new_attrs, retries, render_ctx)
 
     @staticmethod
     def values_match(oldval, newval):
@@ -134,7 +138,8 @@ class NvmetPortConfig(NvmetConfig):
         # For ports we may want to inject or remove ports wrt the ANA
         # settings.  ANA ports will be offset by ANA_PORT_INDEX_OFFSET (5000).
         config = {}
-        non_ana_port_ids, ana_port_ids = render_ctx['nvmet.port.usage']
+        non_ana_port_ids = render_ctx['nvmet.port.usage']['non_ana_port_ids']
+        ana_port_ids = render_ctx['nvmet.port.usage']['ana_port_ids']
         for entry in render_ctx[cls.query]:
             port_id = entry['id']
             if port_id in non_ana_port_ids:
@@ -219,6 +224,180 @@ class NvmetPortConfig(NvmetConfig):
         if ana_path := cls.port_ana_path(path, render_ctx):
             if ana_path.is_dir():
                 ana_path.rmdir()
+
+
+class NvmetPortReferralConfig(NvmetConfig):
+    directory = 'ports'
+    query = 'nvmet.port.usage'
+    query_key = 'non_ana_referrals'
+
+    ITEMS = ['addr_trtype', 'addr_adrfam', 'addr_traddr', 'addr_trsvcid']
+
+    @classmethod
+    def handle_port(cls, index):
+        return index < ANA_PORT_INDEX_OFFSET
+
+    @classmethod
+    def index(cls, index):
+        return index
+
+    @classmethod
+    def map_port_to_referral_attrs(cls, attrs: dict, render_ctx: dict, remote: bool):
+        return {
+            'addr_trtype': PORT_TRTYPE.by_api(attrs['addr_trtype']).sysfs,
+            'addr_adrfam': PORT_ADDR_FAMILY.by_api(attrs['addr_adrfam']).sysfs,
+            'addr_traddr': attrs['addr_traddr'],
+            'addr_trsvcid': str(attrs['addr_trsvcid']),
+        }
+
+    @classmethod
+    def read(cls, parent: pathlib.Path):
+        result = {}
+        for item in cls.ITEMS:
+            result[item] = pathlib.Path(parent, item).read_text().strip()
+        return result
+
+    @classmethod
+    @contextmanager
+    def modify(cls, parent: pathlib.Path):
+        enable_path = pathlib.Path(parent, 'enable')
+        enable_path.write_text("0\n")
+        try:
+            yield
+        finally:
+            enable_path.write_text("1\n")
+
+    @classmethod
+    def ports_by_index(cls, render_ctx):
+        return {cls.index(port['index']): port for port in render_ctx['nvmet.port.query']}
+
+    @classmethod
+    def update_referral(cls, refdir, attrs):
+        existing = cls.read(refdir)
+        if attrs != existing:
+            with cls.modify(refdir):
+                for item in cls.ITEMS:
+                    if attrs[item] == existing[item]:
+                        continue
+                    pathlib.Path(refdir, item).write_text(f'{attrs[item]}\n')
+
+    @classmethod
+    @contextmanager
+    def render(cls, render_ctx: dict):
+        to_remove = []
+        referral_ids = render_ctx[cls.query][cls.query_key]
+        port_id_to_index = {port['id']: cls.index(port['index']) for port in render_ctx['nvmet.port.query']}
+        ports_by_index = cls.ports_by_index(render_ctx)
+        referrals = defaultdict(set)
+        for src_id, dst_id in referral_ids:
+            referrals[port_id_to_index[src_id]].add(port_id_to_index[dst_id])
+
+        for portpath in pathlib.Path(NVMET_KERNEL_CONFIG_DIR, 'ports').iterdir():
+            try:
+                parent_index = int(portpath.name)
+            except ValueError:
+                continue
+
+            # Are we the right *class* of port? (ANA vs non-ANA)
+            if not cls.handle_port(parent_index):
+                continue
+
+            referrals_path = pathlib.Path(portpath, 'referrals')
+            # First check if there are any ports whose referrals are to be ENTIRELY removed
+            if parent_index not in referrals:
+                for referral_path in referrals_path.iterdir():
+                    to_remove.append(referral_path)
+            else:
+                # We're supposed to have some referrals.  Check for additions,
+                # updates, removals.
+                config_keys = {str(index) for index in referrals[parent_index]}
+                live_keys = {ref.name for ref in referrals_path.iterdir() if ref.name.isnumeric}
+                add_keys = config_keys - live_keys
+                remove_keys = live_keys - config_keys
+                update_keys = config_keys - remove_keys - add_keys
+
+                for key in remove_keys:
+                    to_remove.append(pathlib.Path(referrals_path, key))
+
+                for key in add_keys:
+                    pathlib.Path(referrals_path, key).mkdir()
+
+                for key in update_keys:
+                    index = int(key)
+                    port = ports_by_index[index]
+                    attrs = cls.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
+                    cls.update_referral(pathlib.Path(referrals_path, key), attrs)
+
+                # Now ensure the newly created directories have the correct attributes
+                retries = 10
+                for key in add_keys:
+                    index = int(key)
+                    port = ports_by_index[index]
+                    attrs = cls.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
+                    attrs['enable'] = '1'
+                    path = pathlib.Path(referrals_path, key)
+                    retries = cls.set_mapped_attrs(path, attrs, retries, render_ctx)
+
+        yield
+
+        for path in to_remove:
+            path.rmdir()
+
+
+class NvmetPortAnaReferralConfig(NvmetPortReferralConfig):
+    directory = 'ports'
+    query = 'nvmet.port.usage'
+    query_key = 'ana_referrals'
+
+    @classmethod
+    def handle_port(cls, index):
+        return index >= ANA_PORT_INDEX_OFFSET
+
+    @classmethod
+    def index(cls, index):
+        if index < ANA_PORT_INDEX_OFFSET:
+            return index + ANA_PORT_INDEX_OFFSET
+        else:
+            return index
+
+    @classmethod
+    def ports_by_index(cls, render_ctx):
+        # We want to update the index to the ANA specific one.
+        # This will then be used by the map_port_to_referral_attrs in
+        # this class to work out the address to be used.
+        result = {}
+        for port in render_ctx['nvmet.port.query']:
+            new_index = cls.index(port['index'])
+            if new_index != port['index']:
+                result[new_index] = port.copy() | {'index': new_index}
+            else:
+                result[new_index] = port
+        return result
+
+    @classmethod
+    def map_port_to_referral_attrs(cls, attrs: dict, render_ctx: dict, remote: bool):
+        data = super().map_port_to_referral_attrs(attrs, render_ctx, remote)
+        # This is an ANA port, update the addr_traddr
+        # We could be pointing at other ports on the same node, or on the
+        # other node - specified by remote parameter
+        if attrs.get('index', 0) > ANA_PORT_INDEX_OFFSET:
+            curval = attrs['addr_traddr']
+            prefix = attrs['addr_trtype'].lower()
+            choices = render_ctx[f'{prefix}.nvmet.port.transport_address_choices']
+            pair = choices[curval].split('/')
+            match render_ctx['failover.node']:
+                case 'A':
+                    if remote:
+                        newval = pair[1]
+                    else:
+                        newval = pair[0]
+                case 'B':
+                    if remote:
+                        newval = pair[0]
+                    else:
+                        newval = pair[1]
+            data['addr_traddr'] = newval
+        return data
 
 
 class NvmetSubsysConfig(NvmetConfig):
@@ -516,10 +695,12 @@ def write_config(config):
     with NvmetSubsysConfig.render(config):
         with NvmetHostConfig.render(config):
             with NvmetPortConfig.render(config):
-                with NvmetHostSubsysConfig.render(config):
-                    with NvmetPortSubsysConfig.render(config):
-                        with NvmetNamespaceConfig.render(config):
-                            pass
+                with NvmetPortReferralConfig.render(config):
+                    with NvmetPortAnaReferralConfig.render(config):
+                        with NvmetHostSubsysConfig.render(config):
+                            with NvmetPortSubsysConfig.render(config):
+                                with NvmetNamespaceConfig.render(config):
+                                    pass
 
 
 def _map_device_path(device_type, device_path):
@@ -577,7 +758,7 @@ def clear_config():
         for subsys in pathlib.Path(port, 'subsystems').iterdir():
             subsys.unlink()
         for referral in pathlib.Path(port, 'referrals').iterdir():
-            referral.unlink()
+            referral.rmdir()
         for ana in pathlib.Path(port, 'ana_groups').iterdir():
             if ana.name != '1':
                 ana.rmdir()

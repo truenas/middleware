@@ -20,6 +20,7 @@ class NVMetGlobalEntry(BaseModel):
     kernel: bool = True
     ana: bool = False
     rdma: bool = False
+    xport_referral: bool = True
 
 
 @single_argument_args('nvmet_update')

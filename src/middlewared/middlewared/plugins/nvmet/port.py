@@ -1,4 +1,5 @@
 import ipaddress
+import itertools
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -7,7 +8,7 @@ from middlewared.api.current import (NVMetPortCreateArgs, NVMetPortCreateResult,
                                      NVMetPortTransportAddressChoicesResult, NVMetPortUpdateArgs, NVMetPortUpdateResult)
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import MatchNotFound, ValidationErrors
-from .constants import PORT_ADDR_FAMILY, PORT_TRTYPE
+from .constants import PORT_ADDR_FAMILY, PORT_TRTYPE, similar_ports
 
 
 class NVMetPortModel(sa.Model):
@@ -169,49 +170,80 @@ class NVMetPortService(CRUDService):
         return False
 
     @private
-    async def usage(self) -> tuple:
+    async def usage(self) -> dict:
         """
-        Return a tuple of (non_ana_port_ids, ana_port_ids).
+        Return a dict with information about non_ana_port_ids, ana_port_ids and more.
 
         In addition to the global ANA setting, there is also a per-subsystem setting
         which, if used, will override whether ANA will be used for that particular
         subsystem.  It will only handle exceptions to the global setting.
+
+        Referrals will be added between ports using the same transport, address family,
+        and which are of the same ANA/non-ANA type.
         """
-        all_port_ids = {port['id'] for port in await self.middleware.call('nvmet.port.query', [], {'select': ['id']})}
+        all_ports = {port['id']: port for port in await self.middleware.call('nvmet.port.query')}
+        all_port_ids = set(all_ports.keys())
         if not await self.middleware.call('failover.licensed'):
             # Simple case.  No ANA possible.
-            return list(all_port_ids), []
-
-        ana_enabled = await self.middleware.call('nvmet.global.ana_enabled')
-        if ana_enabled:
-            non_ana_port_ids = set()
-            ana_port_ids = all_port_ids
-        else:
             non_ana_port_ids = all_port_ids
             ana_port_ids = set()
-
-        # See if any subsystems have the ana override
-        subsystems = {sub['id']: sub for sub in await self.middleware.call('nvmet.subsys.query', [['ana', '!=', None]])}
-        if subsystems:
-            # It's complicated
+        else:
+            ana_enabled = await self.middleware.call('nvmet.global.ana_enabled')
             if ana_enabled:
-                for subsys_id, subsys in subsystems.items():
-                    if not subsys['ana']:
-                        # We don't want to use ANA for this subsystem.  Add the ports
-                        # to non_ana_port_ids
-                        delta = {ps['port']['id'] for ps in await self.middleware.call('nvmet.port_subsys.query',
-                                                                                       [['subsys_id', '=', subsys_id]])}
-                        non_ana_port_ids = non_ana_port_ids | delta
+                non_ana_port_ids = set()
+                ana_port_ids = all_port_ids
             else:
-                for subsys_id, subsys in subsystems.items():
-                    if subsys['ana']:
-                        # We do want to use ANA for this subsystem.  Add the ports
-                        # to ana_port_ids
-                        delta = {ps['port']['id'] for ps in await self.middleware.call('nvmet.port_subsys.query',
-                                                                                       [['subsys_id', '=', subsys_id]])}
-                        ana_port_ids = ana_port_ids | delta
+                non_ana_port_ids = all_port_ids
+                ana_port_ids = set()
 
-        return list(non_ana_port_ids), list(ana_port_ids)
+            # See if any subsystems have the ana override
+            subsystems = {sub['id']: sub for sub in await self.middleware.call('nvmet.subsys.query',
+                                                                               [['ana', '!=', None]])}
+            if subsystems:
+                # It's complicated
+                if ana_enabled:
+                    for subsys_id, subsys in subsystems.items():
+                        if not subsys['ana']:
+                            # We don't want to use ANA for this subsystem.  Add the ports
+                            # to non_ana_port_ids
+                            delta = {ps['port']['id'] for ps in
+                                     await self.middleware.call('nvmet.port_subsys.query',
+                                                                [['subsys_id', '=', subsys_id]])}
+                            non_ana_port_ids = non_ana_port_ids | delta
+                else:
+                    for subsys_id, subsys in subsystems.items():
+                        if subsys['ana']:
+                            # We do want to use ANA for this subsystem.  Add the ports
+                            # to ana_port_ids
+                            delta = {ps['port']['id'] for ps in
+                                     await self.middleware.call('nvmet.port_subsys.query',
+                                                                [['subsys_id', '=', subsys_id]])}
+                            ana_port_ids = ana_port_ids | delta
+
+        # Calculate referrals
+        non_ana_referrals = []
+        ana_referrals = []
+        if (await self.middleware.call('nvmet.global.config'))['xport_referral']:
+            for xport_ports in similar_ports(all_ports):
+                # xport_ports will all have the same addr_trtype & addr_adrfam
+                similar_ids = set(xport_ports.keys())
+                # Now check against non_ana_port_ids
+                todo = non_ana_port_ids & similar_ids
+                non_ana_referrals.extend(list(itertools.permutations(todo, 2)))
+                # Now check against non_ana_port_ids
+                todo = ana_port_ids & similar_ids
+                ana_referrals.extend(list(itertools.permutations(todo, 2)))
+
+        # For ANA there is also an implicit referral to the same port
+        # on the other controller.  We'll add that one here.
+        ana_referrals.extend([(port_id, port_id) for port_id in ana_port_ids])
+
+        return {
+            'non_ana_port_ids': list(non_ana_port_ids),
+            'ana_port_ids': list(ana_port_ids),
+            'non_ana_referrals': non_ana_referrals,
+            'ana_referrals': ana_referrals,
+        }
 
     async def __validate(self, verrors, data, schema_name, old=None):
         try:
