@@ -429,7 +429,7 @@ def test_script_shebang(cloud_backup_task, expected):
     ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
     job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
-    assert job["logs_excerpt"].strip().split("\n")[-2] == expected
+    assert ssh("cat " + job["logs_path"]).strip().split("\n")[-2] == expected
 
 
 @pytest.mark.parametrize("cloud_backup_task", [
