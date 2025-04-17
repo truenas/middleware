@@ -30,6 +30,7 @@ def upgrade_available_for_app(
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
     catalog_app_metadata = app_metadata['metadata']
+    catalog_app = catalog_app_metadata['name']
     if app_metadata['custom_app'] is False and version_mapping.get(
         catalog_app_metadata['train'], {}
     ).get(catalog_app_metadata['name']):
@@ -37,7 +38,7 @@ def upgrade_available_for_app(
         return parse_version(catalog_app_metadata['version']) < parse_version(
             latest_version
         ), latest_version
-    elif app_metadata['custom_app'] and image_updates_available:
+    elif (app_metadata['custom_app'] or catalog_app == 'ix-app') and image_updates_available:
         return True, None
     else:
         return False, None
@@ -125,8 +126,8 @@ def list_apps(
             'image_updates_available': image_updates_available,
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         }
-        if app_data['custom_app'] and image_updates_available:
-            # We want to mark custom apps as upgrade available if image updates are available
+        if (app_data['custom_app'] or app_metadata['metadata']['name'] == 'ix-app') and image_updates_available:
+            # We want to mark custom apps and ix-apps as upgrade available if image updates are available
             # so if user tries to upgrade, we will just be pulling a newer version of the image
             # against the same docker tag
             app_data['upgrade_available'] = True

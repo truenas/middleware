@@ -85,7 +85,7 @@ class AppService(Service):
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
-        if app['custom_app']:
+        if app['custom_app'] or app['metadata']['name'] == 'ix-app':
             job.set_progress(20, 'Pulling app images')
             try:
                 self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
