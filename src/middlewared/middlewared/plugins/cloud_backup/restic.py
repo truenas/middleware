@@ -2,7 +2,6 @@ import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 import json
-import pprint
 import subprocess
 
 from middlewared.job import JobProgressBuffer
@@ -127,7 +126,7 @@ async def restic_check_progress(job, proc, track_progress=False):
 
             case "summary":
                 await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
-                job.logs_excerpt = pprint.pformat(read)
+                job.logs_excerpt = "\n".join(f"{k}: {v}" for k, v in read.items())
                 continue
 
             case "error":
