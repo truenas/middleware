@@ -159,7 +159,11 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             get_account_service_url(config).format(**creds), 'delete', headers=await self.auth_headers(config),
         )
         if response['error']:
-            raise CallError(f'Failed to revoke account: {response["error"]}')
+            if response['status_code'] == 401:
+                # This can happen when user removed NAS from TNC UI, so we still want unset to proceed
+                logger.error('Failed to revoke account with 401 status code: %s', response['error'])
+            else:
+                raise CallError(f'Failed to revoke account: {response["error"]}')
 
     @api_method(TNCIPChoicesArgs, TNCIPChoicesResult, roles=['TRUENAS_CONNECT_READ'])
     async def ip_choices(self):
