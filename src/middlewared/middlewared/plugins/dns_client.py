@@ -1,10 +1,66 @@
 import asyncio
 from dns.asyncresolver import Resolver
 from io import StringIO
+from typing import Literal
 
+from pydantic import Field
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, single_argument_args, IPvAnyAddress, Excluded, excluded_field
+from middlewared.api.current import QueryFilters, QueryOptions
 from middlewared.service import private, Service, ValidationError
-from middlewared.schema import accepts, returns, IPAddr, Dict, Int, List, Str, Ref, OROperator
 from middlewared.utils import filter_list
+
+
+class DNSClientOptions(BaseModel):
+    nameservers: list[IPvAnyAddress] = []
+    lifetime: int = 12
+    timeout: int = 4
+    raise_error: Literal['NEVER', 'ANY_FAILURE', 'HOST_FAILURE', 'ALL_FAILURE'] = 'HOST_FAILURE'
+
+
+class DNSClientCnameLookupItem(BaseModel):
+    name: str
+    class_: str = Field(alias='class')
+    type: str
+    ttl: int
+    target: str
+
+
+class DNSClientLookupItem(DNSClientCnameLookupItem):
+    target: Excluded = excluded_field()
+    address: IPvAnyAddress
+
+
+class DNSClientSrvLookupItem(DNSClientCnameLookupItem):
+    priority: int
+    weight: int
+    port: int
+
+
+@single_argument_args('data')
+class DNSClientForwardLookupArgs(BaseModel):
+    names: list[str]
+    record_types: list[Literal['A', 'AAAA', 'SRV', 'CNAME']] = ['A', 'AAAA']
+    dns_client_options: DNSClientOptions = Field(default_factory=DNSClientOptions)
+    query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+
+
+class DNSClientForwardLookupResult(BaseModel):
+    result: list[DNSClientCnameLookupItem] | list[DNSClientLookupItem] | list[DNSClientSrvLookupItem]
+
+
+@single_argument_args('data')
+class DNSClientReverseLookupArgs(BaseModel):
+    addresses: list[IPvAnyAddress]
+    dns_client_options: DNSClientOptions = Field(default_factory=DNSClientOptions)
+    query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+
+
+class DNSClientReverseLookupResult(BaseModel):
+    result: list[DNSClientCnameLookupItem]
 
 
 class DNSClient(Service):
@@ -44,67 +100,7 @@ class DNSClient(Service):
 
         return ans
 
-    @accepts(Dict(
-        'lookup_data',
-        List('names', items=[Str('name')], required=True),
-        List(
-            'record_types',
-            items=[Str('record_type', default='A', enum=['A', 'AAAA', 'SRV', 'CNAME'])],
-            default=['A', 'AAAA']
-        ),
-        Dict(
-            'dns_client_options',
-            List('nameservers', items=[IPAddr("ip")], default=[]),
-            Int('lifetime', default=12),
-            Int('timeout', default=4),
-            Str('raise_error', default='HOST_FAILURE', enum=['NEVER', 'ANY_FAILURE', 'HOST_FAILURE', 'ALL_FAILURE']),
-            register=True
-        ),
-        Ref('query-filters'),
-        Ref('query-options'),
-    ))
-    @returns(OROperator(
-        List(
-            'rdata_list_srv',
-            items=[
-                Dict(
-                    Str('name'),
-                    Int('priority'),
-                    Int('weight'),
-                    Int('port'),
-                    Str('class'),
-                    Str('type'),
-                    Int('ttl'),
-                    Str('target'),
-                )
-            ],
-        ),
-        List(
-            'rdata_list_cname',
-            items=[
-                Dict(
-                    Str('name'),
-                    Str('class'),
-                    Str('type'),
-                    Int('ttl'),
-                    Str('target'),
-                )
-            ],
-        ),
-        List(
-            'rdata_list',
-            items=[
-                Dict(
-                    Str('name'),
-                    Str('class'),
-                    Str('type'),
-                    Int('ttl'),
-                    IPAddr('address'),
-                )
-            ],
-        ),
-        name='record_list',
-    ))
+    @api_method(DNSClientForwardLookupArgs, DNSClientForwardLookupResult, private=True)
     async def forward_lookup(self, data):
         """
         Rules: We can combine 'A' and 'AAAA', but 'SRV' and 'CNAME' must be singular.
@@ -188,25 +184,7 @@ class DNSClient(Service):
 
         return filter_list(output, data['query-filters'], data['query-options'])
 
-    @accepts(Dict(
-        'lookup_data',
-        List("addresses", items=[IPAddr("address")], required=True),
-        Ref('dns_client_options'),
-        Ref('query-filters'),
-        Ref('query-options'),
-    ))
-    @returns(List(
-        'rdata_list',
-        items=[
-            Dict(
-                Str('name'),
-                Str('class'),
-                Str('type'),
-                Int('ttl'),
-                Str('target'),
-            )
-        ]
-    ))
+    @api_method(DNSClientReverseLookupArgs, DNSClientReverseLookupResult, private=True)
     async def reverse_lookup(self, data):
         output = []
         options = data['dns_client_options']
