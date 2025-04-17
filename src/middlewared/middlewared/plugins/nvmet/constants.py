@@ -72,6 +72,22 @@ class PORT_ADDR_FAMILY(ApiMapper):
     FC = (4, 'FC', 'fc')
 
 
+def port_transport_family_generator():
+    for transport in PORT_TRTYPE:
+        match transport:
+            case PORT_TRTYPE.RDMA | PORT_TRTYPE.TCP:
+                for addr_family in [PORT_ADDR_FAMILY.IPV4, PORT_ADDR_FAMILY.IPV6]:
+                    yield (transport.api, addr_family.api)
+            case PORT_TRTYPE.FC:
+                yield (transport.api, PORT_ADDR_FAMILY.FC.api)
+
+
+def similar_ports(ports: dict):
+    for transport, family in port_transport_family_generator():
+        yield dict(filter(lambda item: all([item[1]['addr_trtype'] == transport,
+                                            item[1]['addr_adrfam'] == family]), ports.items()))
+
+
 class NAMESPACE_DEVICE_TYPE(ApiMapper):
     ZVOL = (1, 'ZVOL', '0')
     FILE = (2, 'FILE', '1')
