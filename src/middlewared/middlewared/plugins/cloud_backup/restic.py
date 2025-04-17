@@ -121,6 +121,7 @@ async def restic_check_progress(job, proc, track_progress=False):
 
             case "summary":
                 await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
+                job.logs_excerpt = "\n".join(f"{k}: {v}" for k, v in read.items())
                 continue
 
             case "error":
