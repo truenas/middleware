@@ -74,7 +74,7 @@ class VirtInstanceEntry(BaseModel):
     id: str
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     type: InstanceType = 'CONTAINER'
-    status: Literal['RUNNING', 'STOPPED', 'UNKNOWN']
+    status: Literal['RUNNING', 'STOPPED', 'UNKNOWN', 'ERROR', 'FROZEN', 'STARTING', 'STOPPING', 'FREEZING', 'THAWED', 'ABORTING']
     cpu: str | None
     memory: int | None
     autostart: bool
