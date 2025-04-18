@@ -1,3 +1,5 @@
+import socket
+
 from dataclasses import dataclass
 from ipaddress import ip_address
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
@@ -167,20 +169,23 @@ def get_tcp_ip_info(sock, request) -> tuple:
         # 0 (root) or 33 (www-data (nginx forks workers))
         ra = request.headers["X-Real-Remote-Addr"]
         rp = int(request.headers["X-Real-Remote-Port"])
+        family = socket.AF_INET6 if ":" in ra else socket.AF_INET
         ssl = request.headers.get("X-Https", "") == "on"
         check_uids = True
     except (KeyError, ValueError):
         ra, rp = sock.getpeername()
+        family = sock.family
         ssl = False
         check_uids = False
 
     with DiagSocket() as ds:
         ds.bind()
-        for i in ds.get_sock_stats(family=sock.family):
+        for i in ds.get_sock_stats(family=family):
             if i['idiag_dst'] == ra and i['idiag_dport'] == rp:
                 if check_uids:
                     if i['idiag_uid'] in UIDS_TO_CHECK:
                         return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
                 else:
                     return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
-    return (None, None, None, None, None)
+
+    return None, None, None, None, None
