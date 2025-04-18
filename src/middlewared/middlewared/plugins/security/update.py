@@ -88,6 +88,12 @@ class SystemSecurityService(ConfigService):
         # compatibility.
         await self.middleware.run_in_thread(set_io_uring_enabled, False)
 
+        # Disable non-critical outgoing network activity
+        await self.middleware.call(
+            'network.configuration.update',
+            {"activity": {"type": "DENY", "activities": ["usage"]}}
+        )
+
     @private
     async def validate_stig(self, current_cred):
         # The following validation steps ensure that users have the ability to
@@ -248,7 +254,7 @@ class SystemSecurityService(ConfigService):
             # SRG-OS-000071-GPOS-00039
             # Passwords must contain at least one lowercase character, one lowercase character, and
             # one number.
-            ruleset = combined['password_complexity_ruleset'] or GPOS_STIG_PASSWORD_COMPLEXITY
+            ruleset = combined['password_complexity_ruleset'] or set(GPOS_STIG_PASSWORD_COMPLEXITY)
             new['password_complexity_ruleset'] = ruleset
             if missing := GPOS_STIG_PASSWORD_COMPLEXITY - new['password_complexity_ruleset']:
                 raise ValidationError(
@@ -300,9 +306,9 @@ class SystemSecurityService(ConfigService):
         """
         Update System Security Service Configuration.
 
-        `enable_fips` when set, enables FIPS mode.
-        `enable_gpos_stig` when set, enables compatibility with the General
-        Purpose Operating System STIG.
+        This method is used to change the FIPS, STIG, and local account
+        policies for TrueNAS Enterprise. These features are not
+        available in community editions of TrueNAS.
         """
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')

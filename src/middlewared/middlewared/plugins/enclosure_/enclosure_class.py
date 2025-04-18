@@ -185,7 +185,7 @@ class Enclosure:
             case 'ECStream_2024Jp' | 'ECStream_2024Js' | 'iX_2024Jp' | 'iX_2024Js':
                 self.model = JbodModels.ES24F.value
                 self.controller = False
-            case 'CELESTIC_R0904-F0001-01':
+            case 'CELESTIC_R0904-F0001-01' | 'CELESTIC_R0904-F1001-01':
                 self.model = JbodModels.ES60.value
                 self.controller = False
             case 'HGST_H4060-J':

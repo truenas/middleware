@@ -519,9 +519,10 @@ class iSCSITargetExtentService(SharingService):
 
         global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
         ha_basename = f'{global_basename}:HA:'
+        ha_basename_len = len(ha_basename)
 
         for iqn in filter(lambda x: x.startswith(ha_basename), iqns):
-            target_name = iqn.split(':')[-1]
+            target_name = iqn[ha_basename_len:]
             target_id = target_to_id[target_name]
             for ctl in iqns[iqn]:
                 lun = int(ctl.split(':')[-1])

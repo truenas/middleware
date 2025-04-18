@@ -6,8 +6,9 @@ import signal
 import asyncio
 from pyroute2.netlink.exceptions import NetlinkError
 
-from middlewared.service import Service, filterable, filterable_returns, private
-from middlewared.schema import Dict, List, Str, Int, IPAddr, accepts, returns, Bool
+from middlewared.api import api_method
+from middlewared.api.current import RouteSystemRoutes, RouteIPv4gwReachableArgs, RouteIPv4gwReachableResult
+from middlewared.service import Service, filterable_api_method, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils import filter_list
 
@@ -21,18 +22,7 @@ class RouteService(Service):
         namespace_alias = 'routes'
         cli_namespace = 'network.route'
 
-    @filterable
-    @filterable_returns(Dict(
-        'system_route',
-        IPAddr('network', required=True),
-        IPAddr('netmask', required=True),
-        IPAddr('gateway', null=True, required=True),
-        Str('interface', required=True),
-        List('flags', required=True),
-        Int('table_id', required=True),
-        Int('scope', required=True),
-        Str('preferred_source', null=True, required=True),
-    ))
+    @filterable_api_method(item=RouteSystemRoutes, roles=['NETWORK_INTERFACE_READ'])
     def system_routes(self, filters, options):
         """
         Get current/applied network routes.
@@ -153,14 +143,10 @@ class RouteService(Service):
             if remove:
                 routing_table.delete(routing_table.default_route_ipv6)
 
-    @accepts(Str('ipv4_gateway'))
-    @returns(Bool())
+    @api_method(RouteIPv4gwReachableArgs, RouteIPv4gwReachableResult, roles=['NETWORK_INTERFACE_READ'])
     def ipv4gw_reachable(self, ipv4_gateway):
         """
-            Get the IPv4 gateway and verify if it is reachable by any interface.
-
-            Returns:
-                bool: True if the gateway is reachable or otherwise False.
+        Get the IPv4 gateway and verify if it is reachable by any interface.
         """
         ignore_nics = ('lo', 'tap', 'epair')
         for if_name, iface in list(netif.list_interfaces().items()):

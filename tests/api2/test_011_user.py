@@ -8,9 +8,7 @@ import pytest
 from datetime import datetime, UTC
 from pytest_dependency import depends
 
-from truenas_api_client import ClientException
 from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 
@@ -674,16 +672,17 @@ def test_059_create_user_ro_dataset(request):
 def test_060_immutable_user_validation(request):
     # the `news` user is immutable
     immutable_id = call('user.query', [['username', '=', 'news']], {'get': True})['id']
+    default_err = 'This attribute cannot be changed'
     to_validate = [
-        {'group': 1},
-        {'home': '/mnt/tank', 'home_create': True},
-        {'smb': True},
-        {'username': 'no_way_bad'},
+        ({'group': 1}, default_err),
+        ({'home': '/mnt/tank', 'home_create': True}, default_err),
+        ({'smb': True}, 'Password authentication may not be disabled for SMB users.'),
+        ({'username': 'no_way_bad'}, default_err),
     ]
-    for i in to_validate:
+    for attr, expected_err in to_validate:
         with pytest.raises(ValidationErrors) as ve:
-            call('user.update', immutable_id, i)
-        assert ve.value.errors[0].errmsg == 'This attribute cannot be changed'
+            call('user.update', immutable_id, attr)
+        assert ve.value.errors[0].errmsg == expected_err
 
 
 @contextlib.contextmanager

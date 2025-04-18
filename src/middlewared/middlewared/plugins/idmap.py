@@ -1212,7 +1212,7 @@ class IdmapDomainService(CRUDService):
         return False
 
     @private
-    async def synthetic_user(self, passwd, sid):
+    async def synthetic_user(self, passwd: dict, sid: str | None) -> dict | None:
         match passwd['source']:
             case 'LOCAL':
                 # local user, should be retrieved via user.query
@@ -1228,30 +1228,32 @@ class IdmapDomainService(CRUDService):
             'username': passwd['pw_name'],
             'unixhash': None,
             'smbhash': None,
-            'group': {},
             'home': passwd['pw_dir'],
-            'shell': passwd['pw_shell'] or '/usr/sbin/nologin',
+            'shell': passwd['pw_shell'] or '/usr/bin/sh',  # An empty string as pw_shell means sh
             'full_name': passwd['pw_gecos'],
             'builtin': False,
-            'email': None,
+            'smb': True,
+            'userns_idmap': None,
+            'group': {},
+            'groups': [],
             'password_disabled': False,
+            'ssh_password_enabled': False,
+            'sshpubkey': None,
             'locked': False,
             'sudo_commands': [],
             'sudo_commands_nopasswd': [],
-            'groups': [],
-            'sshpubkey': None,
-            'local': False,
+            'email': None,
             'id_type_both': id_type_both,
-            'roles': [],
-            'api_keys': [],
+            'local': False,
+            'immutable': True,
+            'twofactor_auth_configured': False,
+            'sid': sid,
             'last_password_change': None,
             'password_age': None,
             'password_history': None,
             'password_change_required': False,
-            'immutable': True,
-            'smb': True,
-            'userns_idmap': None,
-            'sid': sid
+            'roles': [],
+            'api_keys': [],
         }
 
     @private

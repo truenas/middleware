@@ -31,11 +31,11 @@ def taste_it(disk, errors):
 
 def retaste_disks_impl(disk_serials: set = None):
     if disk_serials is None:
-        disks = {i.path for i in iterate_disks()}
+        disks = {i.devpath for i in iterate_disks()}
     else:
         disks = set()
         for i in filter(lambda x: x.serial in disk_serials, iterate_disks()):
-            disks.add(i.path)
+            disks.add(i.devpath)
 
     with multiprocessing.Manager() as m:
         errors = m.dict()

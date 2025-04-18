@@ -1,6 +1,5 @@
-from typing import Annotated, Literal
+from typing import Literal
 
-from annotated_types import Ge, Le
 from datetime import datetime
 from pydantic import EmailStr, Field, Secret
 
@@ -115,6 +114,13 @@ class UserCreate(UserEntry):
 
     uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."
+    username: LocalUsername
+    """
+    String used to uniquely identify the user on the server. In order to be portable across
+    systems, local user names must be composed of characters from the POSIX portable filename
+    character set (IEEE Std 1003.1-2024 section 3.265). This means alphanumeric characters,
+    hyphens, underscores, and periods. Usernames also may not begin with a hyphen or a period.
+    """
     full_name: NonEmptyString
 
     group_create: bool = False
@@ -122,7 +128,7 @@ class UserCreate(UserEntry):
     "Required if `group_create` is `false`."
     home_create: bool = False
     home_mode: str = "700"
-    password: Secret[str | None] = None
+    password: Secret[NonEmptyString | None] = None
     random_password: bool = False
     "Generate a random 20 character password for the user"
 
@@ -279,9 +285,9 @@ class UserUnset2faSecretResult(BaseModel):
 
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
-    otp_digits: Annotated[int, Ge(6), Le(8)]
+    otp_digits: int = Field(ge=6, le=8)
     "Represents number of allowed digits in the OTP"
-    interval: Annotated[int, Ge(5)]
+    interval: int = Field(ge=5)
     "Time duration in seconds specifying OTP expiration time from its creation time"
 
 

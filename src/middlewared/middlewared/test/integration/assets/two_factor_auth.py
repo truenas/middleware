@@ -20,6 +20,10 @@ def get_user_secret(user_id: int, get: typing.Optional[bool] = True) -> typing.U
     return call('datastore.query', 'account.twofactor_user_auth', [['user_id', '=', user_id]], {'get': get})
 
 
+def get_user_secret_sid(user_sid: str, get: typing.Optional[bool] = True) -> typing.Union[dict, list]:
+    return call('datastore.query', 'account.twofactor_user_auth', [['user_sid', '=', user_sid]], {'get': get})
+
+
 def get_2fa_totp_token(users_config: dict) -> str:
     second = datetime.now().second
     if second >= 55 or second < 5:

@@ -1,4 +1,5 @@
-from middlewared.schema import accepts, Dict, returns
+from middlewared.api import api_method
+from middlewared.api.current import SystemAdvancedSerialPortChoicesArgs, SystemAdvancedSerialPortChoicesResult
 from middlewared.service import private, Service
 from middlewared.utils import run
 
@@ -9,8 +10,7 @@ class SystemAdvancedService(Service):
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
 
-    @accepts()
-    @returns(Dict('serial_port_choices', additional_attrs=True))
+    @api_method(SystemAdvancedSerialPortChoicesArgs, SystemAdvancedSerialPortChoicesResult, roles=['READONLY_ADMIN'])
     async def serial_port_choices(self):
         """
         Get available choices for `serialport`.

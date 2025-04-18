@@ -174,7 +174,7 @@ class CertificateService(CRUDService):
                 'Please provide a valid csr_id'
             )
 
-        if create_type == 'CERTIFICATE_CREATE_IMPORTED' and (err := await self.middleware.run_in_thread(
+        if not verrors and create_type == 'CERTIFICATE_CREATE_IMPORTED' and (err := await self.middleware.run_in_thread(
             validate_certificate_with_key, certificate, private_key, passphrase
         )):
             verrors.add(

@@ -30,6 +30,9 @@ EXPECTED_FA_RESOURCES = frozenset({
     'config.upload',
     'filesystem.get',
     'config.save',
+    'core.ping_remote',
+    'core.arp',
+    'core.debug',
 })
 
 

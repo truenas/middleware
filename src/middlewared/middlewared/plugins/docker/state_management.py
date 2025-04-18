@@ -1,6 +1,6 @@
 from middlewared.service import CallError, periodic, Service, private
 
-from .state_utils import APPS_STATUS, Status, STATUS_DESCRIPTIONS
+from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
 
 
 class DockerStateService(Service):
@@ -13,6 +13,9 @@ class DockerStateService(Service):
 
     async def before_start_check(self):
         try:
+            if not await self.middleware.call('docker.license_active'):
+                raise CallError('System is not licensed to use Applications')
+
             await self.middleware.call('docker.setup.validate_fs')
         except CallError as e:
             if e.errno != CallError.EDATASETISLOCKED:
@@ -41,10 +44,14 @@ class DockerStateService(Service):
         await self.set_status(Status.INITIALIZING.value)
         catalog_sync_job = None
         try:
+            await self.before_start_check()
             if mount_datasets:
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
-            # TODO: Check license active
-            await self.before_start_check()
+
+            config = await self.middleware.call('docker.config')
+            # Make sure correct ix-apps dataset is mounted
+            if not await self.middleware.call('docker.fs_manage.ix_apps_is_mounted', config['dataset']):
+                raise CallError(f'{config["dataset"]!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}')
             await self.middleware.call('service.start', 'docker')
         except Exception as e:
             await self.set_status(Status.FAILED.value, str(e))

@@ -92,7 +92,6 @@ PasswordAuthentication no
 GSSAPIAuthentication yes
 % endif
 PubkeyAuthentication yes
-${ssh_config['options']}
 
 # These are forced to be enabled with 2FA
 UsePAM yes
@@ -115,3 +114,8 @@ Match Group "${group}"
 % if login_banner != '':
 Banner /etc/login_banner
 % endif
+# These are aux params that MUST COME LAST
+# in the config. User provided "Match" blocks,
+# for example, need to come AFTER the UsePam
+# line. Otherwise ssh service WILL NOT START.
+${ssh_config['options']}
