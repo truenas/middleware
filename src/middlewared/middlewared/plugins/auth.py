@@ -33,6 +33,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.account.authenticator import TrueNAS_UnixPamAuthenticator
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
     AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS, OTPW_MANAGER,
@@ -118,6 +119,9 @@ class SessionManager:
 
     async def login(self, app, credentials):
         if app.authenticated:
+            await self.middleware.run_in_thread(credentials.login, app.session_id, app.origin)
+            # If previous credential had associated utmp entry then it will be automatically
+            # cleared when old credentials object is garbage collected
             self.sessions[app.session_id].credentials = credentials
             app.authenticated_credentials = credentials
             await self.middleware.log_audit_message(app, "AUTHENTICATION", {
@@ -126,6 +130,8 @@ class SessionManager:
             }, True)
             return
 
+        # Generate utmp entry for logged in session
+        await self.middleware.run_in_thread(credentials.login, app.session_id, app.origin)
         session = Session(self, credentials, app)
         self.sessions[app.session_id] = session
 
@@ -779,9 +785,17 @@ class AuthService(Service):
                 match resp['pam_response']['code']:
                     case pam.PAM_SUCCESS:
                         if cred_type == 'ONETIME_PASSWORD':
-                            cred = LoginOnetimePasswordSessionManagerCredentials(resp['user_data'], CURRENT_AAL.level)
+                            cred = LoginOnetimePasswordSessionManagerCredentials(
+                                resp['user_data'],
+                                CURRENT_AAL.level,
+                                auth_ctx.pam_hdl
+                            )
                         else:
-                            cred = LoginPasswordSessionManagerCredentials(resp['user_data'], CURRENT_AAL.level)
+                            cred = LoginPasswordSessionManagerCredentials(
+                                resp['user_data'],
+                                CURRENT_AAL.level,
+                                auth_ctx.pam_hdl
+                            )
 
                         await login_fn(app, cred)
                     case pam.PAM_AUTH_ERR:
@@ -866,6 +880,7 @@ class AuthService(Service):
                         }, False)
 
                         response['response_type'] = AuthResp.EXPIRED.name
+                        auth_ctx.pam_hdl.end()
                         return response
 
                     if thehash.startswith('$pbkdf2-sha256'):
@@ -874,7 +889,7 @@ class AuthService(Service):
                         # use it to update the hash in backend.
                         await self.middleware.call('api_key.update_hash', data['api_key'])
 
-                    cred = ApiKeySessionManagerCredentials(resp['user_data'], key, CURRENT_AAL.level)
+                    cred = ApiKeySessionManagerCredentials(resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl)
                     await login_fn(app, cred)
                 else:
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
@@ -917,7 +932,9 @@ class AuthService(Service):
                     # factor for password-based logins (not user-linked API keys).
                     # Hence we don't have to worry about whether this is based on
                     # an API key.
-                    cred = LoginTwofactorSessionManagerCredentials(auth_data['user'], CURRENT_AAL.level)
+                    cred = LoginTwofactorSessionManagerCredentials(
+                        auth_data['user'], CURRENT_AAL.level, auth_ctx.pam_hdl
+                    )
                     await login_fn(app, cred)
                 else:
                     # Add a sleep like pam_delay() would add for pam_oath
@@ -1200,22 +1217,22 @@ async def check_permission(middleware, app):
             user = await middleware.call('auth.authenticate_root')
         else:
             try:
-                user_info = (await middleware.call(
-                    'datastore.query',
-                    'account.bsdusers',
-                    [['uid', '=', origin.uid]],
-                    {'get': True, 'prefix': 'bsdusr_', 'select': ['id', 'uid', 'username']},
-                )) | {'local': True}
-                query = {'username': user_info.pop('username')}
-            except MatchNotFound:
-                query = {'uid': origin.uid}
-                user_info = {'id': None, 'uid': None, 'local': False}
+                user_info = await middleware.call('user.get_user_obj', {'uid': origin.uid, 'get_groups': True})
+            except KeyError:
+                # User does not exist
+                return
 
-            user = await middleware.call('auth.authenticate_user', query, user_info, None)
+            user = await middleware.call('auth.authenticate_user', user_info, None)
             if user is None:
                 return
 
-        await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
+        authenticator = TrueNAS_UnixPamAuthenticator()
+        resp = await middleware.run_in_thread(authenticator.authenticate, user['username'])
+        if resp.code != pam.PAM_SUCCESS:
+            middleware.logger.error(f'{user["username"]}: AF_UNIX authentication for user failed: {resp.reason}')
+            return None
+
+        await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user, authenticator))
 
 
 def setup(middleware):
