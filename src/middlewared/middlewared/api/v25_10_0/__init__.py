@@ -52,6 +52,7 @@ from .iscsi_initiator import *  # noqa
 from .iscsi_portal import *  # noqa
 from .iscsi_target import *  # noqa
 from .iscsi_target_to_extent import *  # noqa
+from .jbof import *  # noqa
 from .kerberos import *  # noqa
 from .keychain import *  # noqa
 from .kmip import *  # noqa
