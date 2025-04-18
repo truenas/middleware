@@ -7,7 +7,17 @@ import subprocess
 import tempfile
 import time
 
-from middlewared.schema import accepts, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Bool
+from middlewared.api import api_method
+from middlewared.api.current import (
+    KerberosEntry, KerberosRealmEntry, KerberosKeytabEntry,
+    KerberosUpdateArgs, KerberosUpdateResult,
+    KerberosRealmCreateArgs, KerberosRealmCreateResult,
+    KerberosRealmUpdateArgs, KerberosRealmUpdateResult,
+    KerberosRealmDeleteArgs, KerberosRealmDeleteResult,
+    KerberosKeytabCreateArgs, KerberosKeytabCreateResult,
+    KerberosKeytabUpdateArgs, KerberosKeytabUpdateResult,
+    KerberosKeytabDeleteArgs, KerberosKeytabDeleteResult,
+)
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -31,7 +41,10 @@ from middlewared.utils.directoryservices.krb5 import (
     extract_from_keytab,
     keytab_services,
     klist_impl,
-    ktutil_list_impl
+    ktutil_list_impl,
+    middleware_ccache_path,
+    middleware_ccache_type,
+    middleware_ccache_uid,
 )
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
 from middlewared.utils.directoryservices.krb5_error import KRB5Error
@@ -54,13 +67,9 @@ class KerberosService(ConfigService):
         datastore_prefix = "ks_"
         cli_namespace = "directory_service.kerberos.settings"
         role_prefix = 'DIRECTORY_SERVICE'
+        entry = KerberosEntry
 
-    @accepts(Dict(
-        'kerberos_settings_update',
-        Str('appdefaults_aux', max_length=None),
-        Str('libdefaults_aux', max_length=None),
-        update=True
-    ), audit='Kerberos configuration update')
+    @api_method(KerberosUpdateArgs, KerberosUpdateResult, audit='Kerberos configuration update')
     async def do_update(self, data):
         """
         `appdefaults_aux` add parameters to "appdefaults" section of the krb5.conf file.
@@ -89,17 +98,6 @@ class KerberosService(ConfigService):
 
         await self.middleware.call('etc.generate', 'kerberos')
         return await self.config()
-
-    @private
-    @accepts(Ref('kerberos-options'))
-    def ccache_path(self, data):
-        krb_ccache = krb5ccache[data['ccache']]
-
-        path_out = krb_ccache.value
-        if krb_ccache == krb5ccache.USER:
-            path_out += str(data['ccache_uid'])
-
-        return path_out
 
     @private
     def generate_stub_config(self, realm, kdc=None, libdefaultsaux=None):
@@ -137,16 +135,7 @@ class KerberosService(ConfigService):
         krbconf.write()
 
     @private
-    @accepts(
-        Dict(
-            'kerberos-options',
-            Str('ccache', enum=[x.name for x in krb5ccache], default=krb5ccache.SYSTEM.name),
-            Int('ccache_uid', default=0),
-            register=True,
-        ),
-        Bool('raise_error', default=True)
-    )
-    def check_ticket(self, data, raise_error):
+    def check_ticket(self, data=None, raise_error=True):
         """
         Perform very basic test that we have a valid kerberos ticket in the
         specified ccache.
@@ -157,10 +146,10 @@ class KerberosService(ConfigService):
         returns True if ccache can be read and ticket is not expired, otherwise
         returns False
         """
-        krb_ccache = krb5ccache[data['ccache']]
-        ccache_path = krb_ccache.value
-        if krb_ccache is krb5ccache.USER:
-            ccache_path += str(data['ccache_uid'])
+        ccache_path = middleware_ccache_path(data or {})
+
+        if not isinstance(raise_error, bool):
+            raise ValueError(f'{type(raise_error)}: expected bool for raise_error')
 
         if (cred := gss_get_current_cred(ccache_path, False)) is not None:
             return gss_dump_cred(cred)
@@ -270,35 +259,22 @@ class KerberosService(ConfigService):
         return verrors
 
     @private
-    @accepts(Dict(
-        "get-kerberos-creds",
-        Str("dstype", required=True, enum=[x.value for x in DSType]),
-        OROperator(
-            Dict(
-                'ad_parameters',
-                Str('bindname'),
-                Str('bindpw'),
-                Str('domainname'),
-                Str('kerberos_principal')
-            ),
-            Dict(
-                'ldap_parameters',
-                Str('binddn'),
-                Str('bindpw'),
-                Int('kerberos_realm'),
-                Str('kerberos_principal')
-            ),
-            name='conf',
-            required=True
-        )
-    ))
     async def get_cred(self, data):
         '''
         Get kerberos cred from directory services config to use for `do_kinit`.
         '''
         conf = data.get('conf', {})
+        if not isinstance(conf, dict):
+            raise CallError(f'{type(conf)}: expected `conf` key to be dict')
+
         if conf.get('kerberos_principal'):
+            if not isinstance(conf['kerberos_principal'], str):
+                raise CallError(f'{type(conf["kerberos_principal"])}: expected string.')
+
             return {'kerberos_principal': conf['kerberos_principal']}
+
+        if not data.get('dstype'):
+            raise CallError('dstype key is required')
 
         verrors = ValidationErrors()
         dstype = DSType(data['dstype'])
@@ -347,47 +323,28 @@ class KerberosService(ConfigService):
         return None
 
     @private
-    @accepts(Dict(
-        'do_kinit',
-        OROperator(
-            Dict(
-                'kerberos_username_password',
-                Str('username', required=True),
-                Password('password', required=True),
-                register=True
-            ),
-            Dict(
-                'kerberos_keytab',
-                Str('kerberos_principal', required=True),
-            ),
-            name='krb5_cred',
-            required=True,
-        ),
-        Patch(
-            'kerberos-options',
-            'kinit-options',
-            ('add', {'name': 'renewal_period', 'type': 'int', 'default': 7}),
-            ('add', {'name': 'lifetime', 'type': 'int', 'default': 0}),
-            ('add', {
-                'name': 'kdc_override',
-                'type': 'dict',
-                'args': [
-                    Str('domain', default=None),
-                    Str('kdc', default=None),
-                    List('libdefaults_aux', default=None)
-                ]
-            }),
-        )
-    ))
     def do_kinit(self, data):
-        ccache = krb5ccache[data['kinit-options']['ccache']]
-        creds = data['krb5_cred']
+        kinit_options = data.get('kinit-options', {})
+        ccache_path = middleware_ccache_path(kinit_options)
+        ccache = middleware_ccache_type(kinit_options)
+        ccache_uid = middleware_ccache_uid(kinit_options)
+        kdc_override = kinit_options.get('kdc_override', {})
+
+        creds = data.get('krb5_cred')
+        if not creds:
+            raise CallError('krb5_cred is required')
+
+        if not isinstance(creds, dict):
+            raise TypeError(f'{type(creds)}: expected dictionary for krb5_cred')
+
         has_principal = 'kerberos_principal' in creds
-        ccache_uid = data['kinit-options']['ccache_uid']
-        ccache_path = self.ccache_path({
-            'ccache': data['kinit-options']['ccache'],
-            'ccache_uid': data['kinit-options']['ccache_uid']
-        })
+        if not has_principal:
+            for key in ('username', 'password'):
+                if key not in creds:
+                    raise CallError(f'{key}: krb5_cred is missing required key')
+
+                if not isinstance(creds[key], str):
+                    raise TypeError(f'{type(creds[key])}: {key} in krb5_cred should be str')
 
         if ccache == krb5ccache.USER:
             if has_principal:
@@ -396,12 +353,15 @@ class KerberosService(ConfigService):
             if ccache_uid == 0:
                 raise CallError('User-specific ccache not permitted for uid 0')
 
-        if data['kinit-options']['kdc_override']['kdc'] is not None:
-            override = data['kinit-options']['kdc_override']
-            if override['domain'] is None:
+        if kdc_override.get('kdc'):
+            if kdc_override.get('domain') is None:
                 raise CallError('Domain missing from KDC override')
 
-            self.generate_stub_config(override['domain'], override['kdc'], override['libdefaults_aux'])
+            self.generate_stub_config(
+                kdc_override.get('domain'),
+                kdc_override.get('kdc'),
+                kdc_override.get('libdefaults_aux')
+            )
 
         if has_principal:
             principals = self.middleware.call_sync('kerberos.keytab.kerberos_principal_choices')
@@ -418,7 +378,7 @@ class KerberosService(ConfigService):
                 gss_acquire_cred_principal(
                     creds['kerberos_principal'],
                     ccache_path=ccache_path,
-                    lifetime=data['kinit-options']['lifetime'] or None
+                    lifetime=kinit_options.get('lifetime')
                 )
             except gssapi.exceptions.BadNameError:
                 raise CallError(
@@ -452,7 +412,7 @@ class KerberosService(ConfigService):
                     creds['username'],
                     creds['password'],
                     ccache_path=ccache_path,
-                    lifetime=data['kinit-options']['lifetime'] or None
+                    lifetime=kinit_options.get('lifetime')
                 )
             except gssapi.exceptions.BadNameError:
                 raise CallError(
@@ -516,26 +476,26 @@ class KerberosService(ConfigService):
         return await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
     @private
-    @accepts(Patch(
-        'kerberos-options',
-        'klist-options',
-        ('add', {'name': 'timeout', 'type': 'int', 'default': 10}),
-    ))
-    async def klist(self, data):
-        ccache = krb5ccache[data['ccache']].value
+    async def klist(self, data=None):
+        ccache = middleware_ccache_path(data or {})
+        if data:
+            timeout = data.get('timeout', 10)
+        else:
+            timeout = 10
 
         try:
             return await asyncio.wait_for(
                 self.middleware.run_in_thread(klist_impl, ccache),
-                timeout=data['timeout']
+                timeout=timeout
             )
         except asyncio.TimeoutError:
             raise CallError(f'Attempt to list kerberos tickets timed out after {data["timeout"]} seconds')
 
     @private
-    @accepts(Ref('kerberos-options'))
-    async def kdestroy(self, data):
-        kdestroy = await run(['kdestroy', '-c', krb5ccache[data['ccache']].value], check=False)
+    async def kdestroy(self, data=None):
+        ccache = middleware_ccache_path(data or {})
+
+        kdestroy = await run(['kdestroy', '-c', ccache], check=False)
         if kdestroy.returncode != 0:
             raise CallError(f'kdestroy failed with error: {kdestroy.stderr.decode()}')
 
@@ -614,6 +574,7 @@ class KerberosRealmService(CRUDService):
         namespace = 'kerberos.realm'
         cli_namespace = 'directory_service.kerberos.realm'
         role_prefix = 'DIRECTORY_SERVICE'
+        entry = KerberosRealmEntry
 
     @private
     async def kerberos_extend(self, data):
@@ -629,20 +590,8 @@ class KerberosRealmService(CRUDService):
 
         return data
 
-    ENTRY = Patch(
-        'kerberos_realm_create', 'kerberos_realm_entry',
-        ('add', Int('id')),
-    )
-
-    @accepts(
-        Dict(
-            'kerberos_realm_create',
-            Str('realm', required=True),
-            List('kdc'),
-            List('admin_server'),
-            List('kpasswd_server'),
-            register=True
-        ),
+    @api_method(
+        KerberosRealmCreateArgs, KerberosRealmCreateResult,
         audit='Kerberos realm create:',
         audit_extended=lambda data: data['realm']
     )
@@ -674,13 +623,8 @@ class KerberosRealmService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            "kerberos_realm_create",
-            "kerberos_realm_update",
-            ("attr", {"update": True})
-        ),
+    @api_method(
+        KerberosRealmUpdateArgs, KerberosRealmUpdateResult,
         audit='Kerberos realm update:',
         audit_callback=True
     )
@@ -704,7 +648,11 @@ class KerberosRealmService(CRUDService):
         await self.middleware.call('etc.generate', 'kerberos')
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), audit='Kerberos realm delete:', audit_callback=True)
+    @api_method(
+        KerberosRealmDeleteArgs, KerberosRealmDeleteResult,
+        audit='Kerberos realm delete:',
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete a kerberos realm by ID.
@@ -739,19 +687,10 @@ class KerberosKeytabService(CRUDService):
         namespace = 'kerberos.keytab'
         cli_namespace = 'directory_service.kerberos.keytab'
         role_prefix = 'DIRECTORY_SERVICE'
+        entry = KerberosKeytabEntry
 
-    ENTRY = Patch(
-        'kerberos_keytab_create', 'kerberos_keytab_entry',
-        ('add', Int('id')),
-    )
-
-    @accepts(
-        Dict(
-            'kerberos_keytab_create',
-            Str('file', max_length=None, private=True),
-            Str('name'),
-            register=True
-        ),
+    @api_method(
+        KerberosKeytabCreateArgs, KerberosKeytabCreateResult,
         audit='Kerberos keytab create:',
         audit_extended=lambda data: data['name']
     )
@@ -777,12 +716,8 @@ class KerberosKeytabService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'kerberos_keytab_create',
-            'kerberos_keytab_update',
-        ),
+    @api_method(
+        KerberosKeytabUpdateArgs, KerberosKeytabUpdateResult,
         audit='Kerberos keytab update:',
         audit_callback=True
     )
@@ -809,7 +744,11 @@ class KerberosKeytabService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), audit='Kerberos keytab delete:', audit_callback=True)
+    @api_method(
+        KerberosKeytabDeleteArgs, KerberosKeytabDeleteResult,
+        audit='Kerberos keytab delete:',
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete kerberos keytab by id, and force regeneration of

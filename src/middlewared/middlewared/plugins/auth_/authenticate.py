@@ -10,6 +10,7 @@ from middlewared.service import Service, pass_app, private
 from middlewared.service_exception import CallError
 from middlewared.utils.auth import OTPW_MANAGER, OTPWResponse
 from middlewared.utils.crypto import check_unixhash
+from middlewared.utils.security import GPOS_STIG_MAX_USER_LOGINS
 
 PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
 
@@ -174,6 +175,21 @@ class AuthService(Service):
                         pam_resp = {'code': p.code, 'reason': p.reason}
                 case _:
                     pam_resp = {'code': p.code, 'reason': p.reason}
+
+        if pam_resp['code'] == pam.PAM_SUCCESS:
+            # Apply max login limits if needed
+            if self.middleware.call_sync('system.security.config')['enable_gpos_stig']:
+                session_count = self.middleware.call_sync(
+                    'system.security.sessions.query',
+                    [['passwd.pw_name', '=', username]],
+                    {'count': True}
+                )
+
+                if session_count >= GPOS_STIG_MAX_USER_LOGINS:
+                    # Convert to an AUTH_ERR but generate an audit message explaining
+                    # rejection
+                    pam_resp['code'] = pam.PAM_AUTH_ERR
+                    pam_resp['reason'] = 'Max logins for user account exceeded.'
 
         return pam_resp
 

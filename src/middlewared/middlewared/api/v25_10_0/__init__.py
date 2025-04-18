@@ -41,7 +41,7 @@ from .filesystem import *  # noqa
 from .ftp import *  # noqa
 from .group import *  # noqa
 from .initshutdownscript import *  # noqa
-from .interface_listen import *  # noqa
+from .interface import *  # noqa
 from .ipmi import *  # noqa
 from .ipmi_chassis import *  # noqa
 from .ipmi_lan import *  # noqa
@@ -53,6 +53,7 @@ from .iscsi_initiator import *  # noqa
 from .iscsi_portal import *  # noqa
 from .iscsi_target import *  # noqa
 from .iscsi_target_to_extent import *  # noqa
+from .kerberos import *  # noqa
 from .keychain import *  # noqa
 from .kmip import *  # noqa
 from .k8s_to_docker import *  # noqa

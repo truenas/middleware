@@ -12,6 +12,7 @@ GPOS_STIG_MIN_PASSWORD_AGE = 1  # SRG-OS-000075-GPOS-00043
 GPOS_STIG_MAX_PASSWORD_AGE = 60  # SRG-OS-000076-GPOS-00044
 GPOS_STIG_PASSWORD_REUSE_LIMIT = 5  # SRG-OS-000077-GPOS-00045
 GPOS_STIG_PASSWORD_LENGTH = 15  # SRG-OS-000078-GPOS-00046
+GPOS_STIG_MAX_USER_LOGINS = 10  # SRG-OS-000027-GPOS-00008
 
 # The security plugin contains many options that are only
 # available for enterprise-licensed users
@@ -112,7 +113,10 @@ def shadow_parse_aging(
     else:
         # We set timestamp on UI / API initiated password changes
         # unexpected None here should result in forcing password change
-        outstr += '0'
+        # We cannot do this for the root account though because it will break
+        # ability to su to root.
+        if user['username'] != 'root':
+            outstr += '0'
 
     outstr += SHADOW_SEPARATOR
 

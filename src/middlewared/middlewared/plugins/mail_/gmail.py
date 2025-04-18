@@ -3,11 +3,31 @@ from threading import Lock
 
 import googleapiclient
 from googleapiclient.discovery import build
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 import google_auth_httplib2
 import httplib2
 
+from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 from middlewared.service import private, Service
+
+
+class GMailConfigurationDiscardedAlertClass(AlertClass, OneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.WARNING
+    title = "GMail OAuth Configuration Discarded"
+    text = (
+        "Your Gmail OAuth configuration was discarded due to a token refresh error. "
+        "Please go to the system email configuration and click the \"Log In to Gmail\" button again."
+    )
+
+    async def create(self, args):
+        return Alert(GMailConfigurationDiscardedAlertClass, args)
+
+    async def delete(self, alerts, query):
+        return []
 
 
 class GmailService:
@@ -88,6 +108,19 @@ class MailService(Service):
             if self.gmail_service is not None:
                 self.gmail_service.close()
             return self.gmail_send(message, config, _retry_broken_pipe=False)
+        except RefreshError as e:
+            # e.args were ('invalid_grant: Bad Request', {'error': 'invalid_grant', 'error_description': 'Bad Request'})
+            # There's no documented structure for this error, so it might change at any time, let's be extra safe
+            if "invalid_grant" in str(e):
+                if gmail_service == self.gmail_service:
+                    # Currently setup credentials were used. Discard them
+                    self.middleware.logger.warning(f"GMail credentials RefreshError: {e}. Discarding GMail OAuth")
+                    id_ = self.middleware.call_sync("datastore.config", "system.email")["id"]
+                    self.middleware.call_sync("datastore.update", "system.email", id_, {"em_oauth": None})
+                    self.middleware.call_sync("mail.gmail_initialize")
+                    self.middleware.call_sync("alert.oneshot_create", "GMailConfigurationDiscarded", None)
+
+            raise
 
         if gmail_service != self.gmail_service:
             gmail_service.close()

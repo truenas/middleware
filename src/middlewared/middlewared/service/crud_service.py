@@ -254,50 +254,55 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                 'datastore.query', self._config.datastore, filters, options,
             )
 
-    @pass_app(rest=True)
-    async def create(self, app, audit_callback, data):
+    @pass_app(message_id=True, rest=True)
+    async def create(self, app, audit_callback, message_id, data):
         return await self.middleware._call(
             f'{self._config.namespace}.create', self, await self._get_crud_wrapper_func(
                 self.do_create, 'create', 'ADDED',
-            ), [data], app=app, audit_callback=audit_callback,
+            ), [data], app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
     create.audit_callback = True
 
-    @pass_app(rest=True)
-    async def update(self, app, audit_callback, id_, data):
+    @pass_app(message_id=True, rest=True)
+    async def update(self, app, audit_callback, message_id, id_, data):
         return await self.middleware._call(
             f'{self._config.namespace}.update', self, await self._get_crud_wrapper_func(
                 self.do_update, 'update', 'CHANGED', id_,
-            ), [id_, data], app=app, audit_callback=audit_callback,
+            ), [id_, data], app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
     update.audit_callback = True
 
-    @pass_app(rest=True)
-    async def delete(self, app, audit_callback, id_, *args):
+    @pass_app(message_id=True, rest=True)
+    async def delete(self, app, audit_callback, message_id, id_, *args):
         return await self.middleware._call(
             f'{self._config.namespace}.delete', self, await self._get_crud_wrapper_func(
                 self.do_delete, 'delete', 'REMOVED', id_,
-            ), [id_] + list(args), app=app, audit_callback=audit_callback,
+            ), [id_] + list(args), app=app, audit_callback=audit_callback, message_id=message_id,
         )
 
     delete.audit_callback = True
 
     async def _get_crud_wrapper_func(self, func, action, event_type, oid=None):
+        def send_event(rv):
+            if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
+                kwargs = {'id': oid or rv['id']}
+                if isinstance(rv, dict):
+                    kwargs['fields'] = rv
+                self.middleware.send_event(f'{self._config.namespace}.query', event_type, **kwargs)
+
         if asyncio.iscoroutinefunction(func):
             async def nf(*args, **kwargs):
                 rv = await func(*args, **kwargs)
                 await self.middleware.call_hook(f'{self._config.namespace}.post_{action}', rv)
-                if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
-                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid or rv['id'])
+                send_event(rv)
                 return rv
         else:
             def nf(*args, **kwargs):
                 rv = func(*args, **kwargs)
                 self.middleware.call_hook_sync(f'{self._config.namespace}.post_{action}', rv)
-                if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
-                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid or rv['id'])
+                send_event(rv)
                 return rv
 
         copy_function_metadata(func, nf)

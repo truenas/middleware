@@ -64,11 +64,11 @@ class ReplicationEntry(BaseModel):
     target_dataset: str
     "dataset to put snapshots into"
     recursive: bool
-    exclude: list[str] = Field(default_factory=list)
+    exclude: list[str] = []
     properties: bool = True
     "whether we should send dataset properties along with snapshots"
-    properties_exclude: list[NonEmptyString] = Field(default_factory=list)
-    properties_override: dict[str, str] = Field(default_factory=dict)
+    properties_exclude: list[NonEmptyString] = []
+    properties_override: dict[str, str] = {}
     replicate: bool = False
     encryption: bool = False
     encryption_inherit: bool | None = None
@@ -78,9 +78,9 @@ class ReplicationEntry(BaseModel):
     periodic_snapshot_tasks: list[PoolSnapshotTaskDBEntry]
     """list of periodic snapshot tasks that are sources of snapshots for this replication task. Only push replication
     tasks can be bound to periodic snapshot tasks."""
-    naming_schema: list[SnapshotNameSchema] = Field(default_factory=list)
+    naming_schema: list[SnapshotNameSchema] = []
     "list of naming schemas for pull replication"
-    also_include_naming_schema: list[SnapshotNameSchema] = Field(default_factory=list)
+    also_include_naming_schema: list[SnapshotNameSchema] = []
     "list of naming schemas for push replication"
     name_regex: NonEmptyString | None = None
     "replicate all snapshots which names match specified regular expression"
@@ -115,7 +115,7 @@ class ReplicationEntry(BaseModel):
     """
     lifetime_value: int | None = Field(default=None, ge=1)
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] | None = None
-    lifetimes: list[ReplicationLifetimeModel] = Field(default_factory=list)
+    lifetimes: list[ReplicationLifetimeModel] = []
     compression: Literal["LZ4", "PIGZ", "PLZIP"] | None = None
     "compresses SSH stream. Available only for SSH transport"
     speed_limit: int | None = Field(default=None, ge=1)
@@ -136,7 +136,7 @@ class ReplicationCreate(ReplicationEntry):
     id: Excluded = excluded_field()
     ssh_credentials: int | None = None
     "Keychain Credential ID of type `SSH_CREDENTIALS`"
-    periodic_snapshot_tasks: UniqueList[int] = Field(default_factory=list)
+    periodic_snapshot_tasks: UniqueList[int] = []
     """list of periodic snapshot task IDs that are sources of snapshots for this replication task. Only push replication
     tasks can be bound to periodic snapshot tasks."""
     state: Excluded = excluded_field()
@@ -228,7 +228,7 @@ class ReplicationListNamingSchemasResult(BaseModel):
 @single_argument_args("count_eligible_manual_snapshots")
 class ReplicationCountEligibleManualSnapshotsArgs(BaseModel):
     datasets: list[str] = Field(min_items=1)
-    naming_schema: list[SnapshotNameSchema] = Field(default_factory=list)
+    naming_schema: list[SnapshotNameSchema] = []
     name_regex: NonEmptyString | None = None
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"]
     ssh_credentials: int | None = None

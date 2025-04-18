@@ -67,15 +67,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if data['enabled'] and not data['ips']:
             verrors.add('tn_connect_update.ips', 'This field is required when TrueNAS Connect is enabled')
 
-        ip_choices = await self.ip_choices()
-        ips = []
-        for index, ip in enumerate(data['ips']):
-            ip = str(ip)
-            if ip not in ip_choices:
-                verrors.add(f'tn_connect_update.ips.{index}', 'Provided IP is not valid')
-            ips.append(ip)
-
-        data['ips'] = ips
+        data['ips'] = [str(ip) for ip in data['ips']]
 
         ips_changed = set(old_config['ips']) != set(data['ips'])
         if ips_changed and (
@@ -167,13 +159,19 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             get_account_service_url(config).format(**creds), 'delete', headers=await self.auth_headers(config),
         )
         if response['error']:
-            raise CallError(f'Failed to revoke account: {response["error"]}')
+            if response['status_code'] == 401:
+                # This can happen when user removed NAS from TNC UI, so we still want unset to proceed
+                logger.error('Failed to revoke account with 401 status code: %s', response['error'])
+            else:
+                raise CallError(f'Failed to revoke account: {response["error"]}')
 
     @api_method(TNCIPChoicesArgs, TNCIPChoicesResult, roles=['TRUENAS_CONNECT_READ'])
     async def ip_choices(self):
         """
         Returns IP choices which can be used with TrueNAS Connect.
         """
+        # This is used by UI to present some options to the user but user can choose any other
+        # IP as well of course
         return {
             ip['address']: ip['address']
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': False})

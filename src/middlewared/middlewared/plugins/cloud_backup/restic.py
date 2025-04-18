@@ -24,7 +24,12 @@ def get_restic_config(cloud_backup):
 
     url, env = remote.get_restic_config(cloud_backup)
 
-    cmd = ["restic", "--no-cache", "--json", "-r", f"{remote.rclone_type}:{url}/{remote_path}"]
+    if cloud_backup["cache_path"]:
+        cache = ["--cache-dir", cloud_backup["cache_path"]]
+    else:
+        cache = ["--no-cache"]
+
+    cmd = ["restic"] + cache + ["--json", "-r", f"{remote.rclone_type}:{url}/{remote_path}"]
 
     env["RESTIC_PASSWORD"] = cloud_backup["password"]
 
@@ -121,6 +126,7 @@ async def restic_check_progress(job, proc, track_progress=False):
 
             case "summary":
                 await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
+                job.logs_excerpt = "\n".join(f"{k}: {v}" for k, v in read.items())
                 continue
 
             case "error":

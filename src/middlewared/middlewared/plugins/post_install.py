@@ -2,12 +2,14 @@ import json
 import os
 
 import jsonschema
+from truenas_connect_utils.install_schema import TNC_CONFIG_SCHEMA
 
 from middlewared.service import Service
 
-PATH = "/data/post_install.json"
+PATH = "/data/post-install.json"
 
 SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "additionalProperties": False,
     "properties": {
@@ -37,6 +39,7 @@ SCHEMA = {
                 },
             },
         },
+        "tnc_config": TNC_CONFIG_SCHEMA,
     },
 }
 
@@ -59,6 +62,7 @@ class PostInstallService(Service):
                 os.unlink(PATH)
 
     def process_data(self, data):
+        self.middleware.call_sync("tn_connect.post_install.process", data)
         for interface in data.get("network_interfaces", []):
             try:
                 self.middleware.call_sync("interface.update", interface["name"], {

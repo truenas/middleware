@@ -192,10 +192,10 @@ SYSTEM_STATE = {
             },
             'available_keys': [
                 {
-                   'id': 2,
-                   'name': 'test',
-                   'encryption_key': 'de06572a58e834985cafecb0e56756a24db77a6512817d1f8f93b4346b7979e0',
-                   'kmip_uid': None
+                    'id': 2,
+                    'name': 'test',
+                    'encryption_key': 'de06572a58e834985cafecb0e56756a24db77a6512817d1f8f93b4346b7979e0',
+                    'kmip_uid': None
                 }
             ]
         },
@@ -242,6 +242,7 @@ async def test_docker_update_validation(system_state, new_values, old_values, er
     m['datastore.query'] = lambda *arg: system_state['available_keys']
     m['zfs.dataset.query'] = lambda *arg: filter_list(system_state['available_dataset'], arg[0])
     m['pool.dataset.get_instance_quick'] = lambda *arg: system_state['pool_quick_info']
+    m['system.is_ha_capable'] = lambda *arg: False
     with patch('middlewared.plugins.docker.update.query_imported_fast_impl') as run:
         run.return_value = system_state['import_query_pool']
         if not error_msgs:

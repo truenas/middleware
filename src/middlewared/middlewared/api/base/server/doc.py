@@ -12,6 +12,7 @@ from .method import Method
 
 class APIDump(BaseModel):
     version: str
+    version_title: str
     methods: list["APIDumpMethod"]
     events: list["APIDumpEvent"]
 
@@ -21,6 +22,7 @@ class APIDumpMethod(BaseModel):
     roles: list[str]
     doc: str | None
     schemas: dict
+    removed_in: str | None
 
 
 class APIDumpEvent(BaseModel):
@@ -28,16 +30,23 @@ class APIDumpEvent(BaseModel):
     roles: list[str]
     doc: str | None
     schemas: dict
+    removed_in: str | None
 
 
 class APIDumper:
-    def __init__(self, version: str, api: API, role_manager: RoleManager):
+    def __init__(self, version: str, version_title: str, api: API, role_manager: RoleManager):
         self.version = version
+        self.version_title = version_title
         self.api = api
         self.role_manager = role_manager
 
     def dump(self):
-        return APIDump(version=self.version, methods=self._dump_methods(), events=self._dump_events())
+        return APIDump(
+            version=self.version,
+            version_title=self.version_title,
+            methods=self._dump_methods(),
+            events=self._dump_events(),
+        )
 
     def _dump_methods(self):
         result = []
@@ -79,6 +88,7 @@ class APIDumper:
             roles=sorted(self.role_manager.atomic_roles_for_method(name)),
             doc=doc,
             schemas=self._dump_method_schemas(method),
+            removed_in=getattr(method.methodobj, "_removed_in", None),
         )
 
     def _dump_method_schemas(self, method: Method):
@@ -127,6 +137,7 @@ class APIDumper:
             roles=sorted(self.role_manager.atomic_roles_for_event(event.name)),
             doc=event.event["description"],
             schemas=self._dump_event_schemas(event),
+            removed_in=None,
         )
 
     def _dump_event_schemas(self, event: Event):
