@@ -3,8 +3,11 @@ import base64
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (NVMetHostCreateArgs, NVMetHostCreateResult, NVMetHostDeleteArgs,
-                                     NVMetHostDeleteResult, NVMetHostEntry, NVMetHostUpdateArgs, NVMetHostUpdateResult)
+                                     NVMetHostDeleteResult, NVMetHostEntry, NVMetHostGenerateKeyArgs,
+                                     NVMetHostGenerateKeyResult, NVMetHostUpdateArgs, NVMetHostUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
+from middlewared.service_exception import CallError
+from middlewared.utils import run
 from .constants import DHCHAP_DHGROUP, DHCHAP_HASH
 
 
@@ -150,3 +153,18 @@ class NVMetHostService(CRUDService):
                     case _:
                         verrors.add(f'{schema_name}.{keyname}',
                                     'Unexpected key format.  Use "nvme gen-dhchap-key" to generate.')
+
+    @api_method(NVMetHostGenerateKeyArgs, NVMetHostGenerateKeyResult, roles=['SHARING_NVME_TARGET_WRITE'])
+    async def generate_key(self, dhchap_hash, nqn):
+        # We happen to use the same DB mapping as nvme uses for its parameter
+        hash_value = DHCHAP_HASH.by_api(dhchap_hash).db
+        command = ['nvme', 'gen-dhchap-key', f'-hmac={hash_value}']
+        if nqn:
+            command.append(f'-nqn={nqn}')
+        cp = await run(command, check=False)
+        key = cp.stdout.strip().decode("utf-8")
+        if cp.returncode:
+            raise CallError(
+                f'Failed to key with exit code ({cp.returncode}): {cp.stderr.decode()}'
+            )
+        return key
