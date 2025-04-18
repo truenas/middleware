@@ -100,6 +100,14 @@ class MailService(Service):
             gmail_service.service.users().messages().send(userId="me", body={
                 "raw": base64.urlsafe_b64encode(message.as_string().encode("ascii")).decode("ascii"),
             }).execute()
+            if gmail_service == self.gmail_service:
+                credentials = gmail_service._service._http.credentials
+                self._set_gmail_config({
+                    "provider": "gmail",
+                    "client_id": credentials.client_id,
+                    "client_secret": credentials.client_secret,
+                    "refresh_token": credentials.refresh_token,
+                })
         except BrokenPipeError:
             if not _retry_broken_pipe:
                 raise
@@ -115,8 +123,7 @@ class MailService(Service):
                 if gmail_service == self.gmail_service:
                     # Currently setup credentials were used. Discard them
                     self.middleware.logger.warning(f"GMail credentials RefreshError: {e}. Discarding GMail OAuth")
-                    id_ = self.middleware.call_sync("datastore.config", "system.email")["id"]
-                    self.middleware.call_sync("datastore.update", "system.email", id_, {"em_oauth": None})
+                    self._set_gmail_config(None)
                     self.middleware.call_sync("mail.gmail_initialize")
                     self.middleware.call_sync("alert.oneshot_create", "GMailConfigurationDiscarded", None)
 
@@ -124,6 +131,12 @@ class MailService(Service):
 
         if gmail_service != self.gmail_service:
             gmail_service.close()
+
+    @private
+    def _set_gmail_config(self, config):
+        existing_config = self.middleware.call_sync("datastore.config", "system.email")
+        if existing_config["em_oauth"] != config:
+            self.middleware.call_sync("datastore.update", "system.email", existing_config["id"], {"em_oauth": config})
 
 
 async def setup(middleware):
