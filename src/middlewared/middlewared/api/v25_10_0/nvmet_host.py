@@ -12,6 +12,8 @@ __all__ = [
     "NVMetHostUpdateResult",
     "NVMetHostDeleteArgs",
     "NVMetHostDeleteResult",
+    "NVMetHostGenerateKeyArgs",
+    "NVMetHostGenerateKeyResult"
 ]
 
 
@@ -60,3 +62,14 @@ class NVMetHostDeleteArgs(BaseModel):
 
 class NVMetHostDeleteResult(BaseModel):
     result: Literal[True]
+
+
+class NVMetHostGenerateKeyArgs(BaseModel):
+    dhchap_hash: Literal['SHA-256', 'SHA-384', 'SHA-512'] = 'SHA-256'
+    """ Hash to be used with the generated key.  """
+    nqn: str = None
+    """ NQN to be used for the transformation. """
+
+
+class NVMetHostGenerateKeyResult(BaseModel):
+    result: str
