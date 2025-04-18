@@ -42,6 +42,7 @@ html_css_files = [
 ]
 html_js_files = [
     "language_data.js",
+    "script.js",
 ]
 
 html_show_sphinx = False

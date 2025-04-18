@@ -447,24 +447,42 @@ class FailoverService(ConfigService):
         """Determine if NICs match between both controllers."""
         result = {'missing_local': list(), 'missing_remote': list()}
         try:
-            local_nics = await self.middleware.call('interface.query', [], {'extra': {'retrieve_names_only': True}})
-            local_nics = set(i['name'] for i in local_nics)
+            local_nics = await self.middleware.call('interface.query')
+            local_nonphysical_names = {i['name'] for i in local_nics if i['type'] != 'PHYSICAL'}
+            local_physical_mac_to_name = {i['state']['link_address']: i['name']
+                                          for i in local_nics
+                                          if i['type'] == 'PHYSICAL'}
         except Exception:
             self.logger.error('Unhandled exception querying ifaces on local controller', exc_info=True)
             return result
 
         try:
             remote_nics = await self.middleware.call(
-                'failover.call_remote', 'interface.query', [[], {'extra': {'retrieve_names_only': True}}],
+                'failover.call_remote', 'interface.query', [],
                 {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
             )
         except Exception:
             self.logger.error('Unhandled exception querying ifaces on remote controller', exc_info=True)
         else:
             if remote_nics is not None:
-                remote_nics = set(i['name'] for i in remote_nics)
-                result['missing_local'] = sorted(remote_nics - local_nics)
-                result['missing_remote'] = sorted(local_nics - remote_nics)
+                remote_nonphysical_names = {i['name'] for i in remote_nics if i['type'] != 'PHYSICAL'}
+                remote_physical_mac_to_name = {i['state']['link_address']: i['name']
+                                               for i in remote_nics
+                                               if i['type'] == 'PHYSICAL'}
+
+                # Physical NICs can't be just matched by name, because names can change due to OS kernel upgrades.
+                # Match them by hardware addresses instead.
+                missing_local, missing_remote = mismatch_nics(
+                    local_physical_mac_to_name,
+                    remote_physical_mac_to_name,
+                    await self.middleware.call('interface.local_macs_to_remote_macs'),
+                )
+
+                missing_local += list(remote_nonphysical_names - local_nonphysical_names)
+                missing_remote += list(local_nonphysical_names - remote_nonphysical_names)
+
+                result['missing_local'] = sorted(missing_local)
+                result['missing_remote'] = sorted(missing_remote)
 
         return result
 
@@ -1165,6 +1183,33 @@ async def _event_system_ready(middleware, event_type, args):
 
 def remote_status_event(middleware, *args, **kwargs):
     middleware.call_sync('failover.status_refresh')
+
+
+def mismatch_nics(
+    local_mac_to_name: dict[str, str],
+    remote_mac_to_name: dict[str, str],
+    local_macs_to_remote_macs: dict[str, str],
+) -> tuple[list[str], list[str]]:
+    missing_local = []
+    missing_remote = []
+
+    remote_macs_to_local_macs = {v: k for k, v in local_macs_to_remote_macs.items()}
+
+    for local_mac, local_name in local_mac_to_name.items():
+        remote_mac = local_macs_to_remote_macs.get(local_mac)
+        if remote_mac is None:
+            missing_remote.append(f"{local_name} (has no known remote pair)")
+        elif remote_mac not in remote_mac_to_name:
+            missing_remote.append(f"{remote_mac} (local name {local_name})")
+
+    for remote_mac, remote_name in remote_mac_to_name.items():
+        local_mac = remote_macs_to_local_macs.get(remote_mac)
+        if local_mac is None:
+            missing_local.append(f"{remote_name} (has no known local pair)")
+        elif local_mac not in local_mac_to_name:
+            missing_local.append(f"{local_mac} (remote name {remote_name})")
+
+    return missing_local, missing_remote
 
 
 async def setup(middleware):

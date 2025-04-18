@@ -229,10 +229,11 @@ def no_authz_required(fn):
     return fn
 
 
-def pass_app(*, require=False, rest=False):
+def pass_app(*, message_id=False, require=False, rest=False):
     """Pass the application instance as parameter to the method."""
     def wrapper(fn):
         fn._pass_app = {
+            'message_id': message_id,
             'require': require,
             'rest': rest,
         }

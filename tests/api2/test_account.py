@@ -218,3 +218,25 @@ def test_update_user_with_random_password():
 
         new = call('user.update', u['id'], {'full_name': 'bob2'})
         assert not new['password']
+
+
+def test_account_create_invalid_username():
+    with pytest.raises(ValidationErrors, match="Valid characters for a username"):
+        with user({
+            "username": "_блин",
+            "full_name": "bob",
+            "group_create": True,
+            "password": "canary"
+        }):
+            pass
+
+
+def test_account_update_invalid_username():
+    with user({
+        "username": "bob",
+        "full_name": "bob",
+        "group_create": True,
+        "password": "canary"
+    }, get_instance=True) as u:
+        with pytest.raises(ValidationErrors, match="Valid characters for a username"):
+            call("user.update", u["id"], {"username": "_блин"})

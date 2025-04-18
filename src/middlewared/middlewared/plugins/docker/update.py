@@ -48,8 +48,24 @@ class DockerService(ConfigService):
         return data
 
     @private
+    async def license_active(self):
+        can_run_apps = True
+        if await self.middleware.call('system.is_ha_capable'):
+            license_ = await self.middleware.call('system.license')
+            can_run_apps = license_ is not None and 'JAILS' in license_['features']
+
+        return can_run_apps
+
+    @private
     async def validate_data(self, old_config, config, schema='docker_update'):
         verrors = ValidationErrors()
+
+        if config['pool'] and not await self.license_active():
+            verrors.add(
+                f'{schema}.pool',
+                'System is not licensed to use Applications'
+            )
+
         if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
             verrors.add(f'{schema}.pool', 'Pool not found.')
 
