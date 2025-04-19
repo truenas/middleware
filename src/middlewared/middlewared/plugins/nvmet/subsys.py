@@ -43,6 +43,17 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
         audit_extended=lambda data: data['name']
     )
     async def do_create(self, data):
+        """
+        Create a NVMe target subsystem (`subsys`).
+
+        When a `subsys` contains one of more `namespaces`, and is associated with one or
+        more `ports` then clients may access the storage using NVMe-oF.
+
+        All clients may access the subsystem if the `allow_any_host` attribute is set.  Otherwise,
+        access is only permitted to `hosts` who have been associated with the subsystem.
+
+        See `nvmet.host.create` and `nvmet.host_subsys.create`.
+        """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'nvmet_subsys_create')
         verrors.check()
@@ -62,7 +73,7 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update iSCSI Target of `id`.
+        Update NVMe target subsystem (`subsys`) of `id`.
         """
         old = await self.get_instance(id_)
         audit_callback(old['name'])
@@ -89,6 +100,9 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_, data):
+        """
+        Delete NVMe target subsystem (`subsys`) of `id`.
+        """
         force = data.get('force', False)
         subsys = await self.get_instance(id_)
         audit_callback(subsys['name'])
@@ -121,7 +135,8 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
                 await self.middleware.call('nvmet.port_subsys.delete_ids', list(port_subsys_ids))
             else:
                 count = len(port_subsys_ids)
-                verrors.add('nvmet_subsys_delete.id', f'Subsystem {subsys["name"]} visible on {count} {"ports" if count > 1 else "port"}')
+                verrors.add('nvmet_subsys_delete.id',
+                            f'Subsystem {subsys["name"]} visible on {count} {"ports" if count > 1 else "port"}')
 
         verrors.check()
 

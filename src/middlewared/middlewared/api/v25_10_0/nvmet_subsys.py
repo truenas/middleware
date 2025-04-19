@@ -20,13 +20,26 @@ MAX_NQN_LEN = 223
 class NVMetSubsysEntry(BaseModel):
     id: int
     name: NonEmptyString
+    """
+    Human readable name for the subsystem.
+
+    If `subnqn` is not provided on creation, then this name will be appended to the `basenqn` from `nvmet.global.config` to generate a subnqn.
+    """
     subnqn: Annotated[NonEmptyString, StringConstraints(max_length=MAX_NQN_LEN)] | None = None
     serial: str
     allow_any_host: bool = False
+    """
+    If `True` then any host can access the storage associated with this subsystem (i.e. no access control).
+    """
     pi_enable: bool | None = None
     qid_max: int | None = None
     ieee_oui: str | None = None
     ana: bool | None = None
+    """
+    If set to either `True` or `False` then *override* the global `ana` setting from `nvmet.global.config` for this subsystem only.
+
+    If `null` then the global `ana` setting will take effect.
+    """
 
 
 class NVMetSubsysCreate(NVMetSubsysEntry):
@@ -57,6 +70,7 @@ class NVMetSubsysUpdateResult(BaseModel):
 
 class NVMetSubsysDeleteOptions(BaseModel):
     force: bool = False
+    """ Optional `boolean` to force subsystem deletion, even if currently associated with one or more namespaces or ports. """
 
 
 class NVMetSubsysDeleteArgs(BaseModel):

@@ -45,6 +45,11 @@ class NVMetPortService(CRUDService):
         audit_extended=lambda data: data['name']
     )
     async def do_create(self, data):
+        """
+        Create a NVMe target `port`.
+
+        `ports` are the means through which subsystems (`subsys`) are made available to clients (`hosts`).
+        """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'nvmet_port_create')
         verrors.check()
@@ -66,7 +71,7 @@ class NVMetPortService(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update NVMe target port of `id`.
+        Update NVMe target `port` of `id`.
         """
         old = await self.get_instance(id_)
         audit_callback(self.__audit_name(old))
@@ -93,6 +98,9 @@ class NVMetPortService(CRUDService):
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_, options):
+        """
+        Delete NVMe target `port` of `id`.
+        """
         force = options.get('force', False)
         port = await self.get_instance(id_)
         audit_callback(self.__audit_name(port))
@@ -294,7 +302,7 @@ class NVMetPortService(CRUDService):
     @api_method(NVMetPortTransportAddressChoicesArgs, NVMetPortTransportAddressChoicesResult)
     async def transport_address_choices(self, addr_trtype, force_ana):
         """
-        Returns possible choices for `addr_traddr` attribute of portal create and update.
+        Returns possible choices for `addr_traddr` attribute of `port` create and update.
         """
         choices = {}
         match addr_trtype:
