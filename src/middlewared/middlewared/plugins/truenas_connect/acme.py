@@ -142,7 +142,7 @@ async def check_status(middleware):
     if not await middleware.call('failover.is_single_master_node'):
         return
 
-    await middleware.call('tn_connect.state.handle_cert_generation_renewal_state')
+    await middleware.call('tn_connect.state.check')
 
 
 async def _event_system_ready(middleware, event_type, args):
