@@ -142,18 +142,7 @@ async def check_status(middleware):
     if not await middleware.call('failover.is_single_master_node'):
         return
 
-    tnc_config = await middleware.call('tn_connect.config')
-    if tnc_config['status'] == Status.CERT_GENERATION_IN_PROGRESS.name:
-        logger.debug('Middleware started and cert generation is in progress, initiating process')
-        middleware.create_task(middleware.call('tn_connect.acme.initiate_cert_generation'))
-    elif tnc_config['status'] in (
-            Status.CERT_GENERATION_SUCCESS.name, Status.CERT_RENEWAL_SUCCESS.name,
-    ):
-        logger.debug('Middleware started and cert generation is already successful, updating UI')
-        middleware.create_task(middleware.call('tn_connect.acme.update_ui'))
-    elif tnc_config['status'] == Status.CERT_RENEWAL_IN_PROGRESS.name:
-        logger.debug('Middleware started and cert renewal is in progress, initiating process')
-        middleware.create_task(middleware.call('tn_connect.acme.renew_cert'))
+    await middleware.call('tn_connect.state.handle_cert_generation_renewal_state')
 
 
 async def _event_system_ready(middleware, event_type, args):
