@@ -747,6 +747,10 @@ class FailoverEventsService(Service):
         self.run_call('alert.initialize', False)
         logger.info('Done initializing alert system')
 
+        logger.info('Initializing task to renew certs if necessary')
+        self.middleware.create_task(self.middleware.call('certificate.renew_certs'))
+        logger.info('Done initializing task to renew certs if necessary')
+
         logger.info('Starting truecommand service (if necessary)')
         self.run_call('truecommand.start_truecommand_service')
         logger.info('Done starting truecommand service (if necessary)')
