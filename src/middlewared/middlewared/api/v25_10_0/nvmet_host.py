@@ -20,10 +20,27 @@ __all__ = [
 class NVMetHostEntry(BaseModel):
     id: int
     hostnqn: NonEmptyString
+    """ NQN of the host that will connect to this TrueNAS. """
     dhchap_key: Secret[NonEmptyString | None] = None
+    """
+    If set, the secret that the host must present when connecting.
+
+    A suitable secret can be generated using `nvme gen-dhchap-key`, or by using the `nvmet.host.generate_key` API.
+    """
     dhchap_ctrl_key: Secret[NonEmptyString | None] = None
+    """
+    If set, the secret that this TrueNAS will present to the host when the host is connecting (Bi-Directional Authentication).
+
+    A suitable secret can be generated using `nvme gen-dhchap-key`, or by using the `nvmet.host.generate_key` API.
+    """
     dhchap_dhgroup: Literal['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT'] | None = None
+    """
+    If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication.
+    """
     dhchap_hash: Literal['SHA-256', 'SHA-384', 'SHA-512'] = 'SHA-256'
+    """
+    HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected.
+    """
 
 
 class NVMetHostCreate(NVMetHostEntry):
@@ -53,6 +70,7 @@ class NVMetHostUpdateResult(BaseModel):
 
 class NVMetHostDeleteOptions(BaseModel):
     force: bool = False
+    """ Optional `boolean` to force host deletion, even if currently associated with one or more subsystems. """
 
 
 class NVMetHostDeleteArgs(BaseModel):

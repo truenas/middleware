@@ -33,6 +33,13 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
         audit_extended=lambda data: data['name']
     )
     async def do_create(self, data):
+        """
+        Create an association between a `port` and a subsystem (`subsys`).
+
+        This will make the subsystem accessible on that port (subject to access
+        control by either the  `allow_any_host` subsystem attribute, or `hosts`
+        associated with the subsystem).
+        """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'nvmet_port_subsys_create')
         verrors.check()
@@ -53,7 +60,7 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update iSCSI Target of `id`.
+        Update `port`/`subsys` association of `id`.
         """
         old = await self.get_instance(id_)
         audit_callback(self.__audit_summary(old))
@@ -80,6 +87,11 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_):
+        """
+        Delete `port`/`subsys` association of `id`.
+
+        The specified subsystem will no longer be accessible on the `port`.
+        """
         data = await self.get_instance(id_)
         audit_callback(self.__audit_summary(data))
 

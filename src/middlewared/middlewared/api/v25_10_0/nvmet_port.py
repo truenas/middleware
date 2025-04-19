@@ -31,7 +31,11 @@ class NVMetPortEntry(BaseModel):
     addr_trsvcid: int | NonEmptyString
     """ Transport-specific TRSVCID field.  When configured for TCP/IP or RDMA this will be the port number. """
     addr_traddr: NonEmptyString
-    """ A transport-specific field identifying the NVMe host port to use for the connection to the controller. """
+    """
+    A transport-specific field identifying the NVMe host port to use for the connection to the controller.
+
+    For TCP or RDMA transports, this will be an IPv4 or IPv6 address.
+    """
     addr_adrfam: AddressFamily
     """ Address family."""
     inline_data_size: int | None = None
@@ -90,6 +94,7 @@ class NVMetPortUpdateResult(BaseModel):
 
 class NVMetPortDeleteOptions(BaseModel):
     force: bool = False
+    """ Optional `boolean` to force port deletion, even if currently associated with one or more subsystems. """
 
 
 class NVMetPortDeleteArgs(BaseModel):
