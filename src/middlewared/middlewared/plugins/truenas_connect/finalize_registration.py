@@ -109,15 +109,7 @@ async def check_status(middleware):
     if not await middleware.call('failover.is_single_master_node'):
         return
 
-    tn_config = await middleware.call('tn_connect.config')
-    if tn_config['status'] == Status.REGISTRATION_FINALIZATION_WAITING.name:
-        logger.debug(
-            'Registration finalization failed as middleware was restarted while waiting '
-            'for TNC registration finalization'
-        )
-        # This means middleware got restarted or the system was rebooted while we were waiting for
-        # registration to finalize, so in this case we set the state to registration failed
-        await middleware.call('tn_connect.finalize.status_update', Status.REGISTRATION_FINALIZATION_FAILED)
+    await middleware.call('tn_connect.state.handle_registration_finalization_waiting_state')
 
 
 async def _event_system_ready(middleware, event_type, args):
