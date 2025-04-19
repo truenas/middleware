@@ -167,14 +167,18 @@ ROLES = {
 
     'SHARING_NFS_READ': Role(),
     'SHARING_NFS_WRITE': Role(includes=['SHARING_NFS_READ']),
+    'SHARING_NVME_TARGET_READ': Role(),
+    'SHARING_NVME_TARGET_WRITE': Role(includes=['SHARING_NVME_TARGET_READ']),
     'SHARING_SMB_READ': Role(),
     'SHARING_SMB_WRITE': Role(includes=['SHARING_SMB_READ']),
     'SHARING_READ': Role(includes=['SHARING_ISCSI_READ',
                                    'SHARING_NFS_READ',
+                                   'SHARING_NVME_TARGET_READ',
                                    'SHARING_SMB_READ',
                                    'SHARING_FTP_READ']),
     'SHARING_WRITE': Role(includes=['SHARING_ISCSI_WRITE',
                                     'SHARING_NFS_WRITE',
+                                    'SHARING_NVME_TARGET_WRITE',
                                     'SHARING_SMB_WRITE',
                                     'SHARING_FTP_WRITE']),
 
