@@ -12,6 +12,12 @@ class CertificateService(Service):
     @private
     @job(lock='acme_cert_renewal')
     def renew_certs(self, job):
+        if not self.middleware.call_sync('failover.is_single_master_node'):
+            # We do not want to try and renew certs on standby node
+            # However when master boots, it is highly likely that it is not master yet
+            # So on master event, we will try to renew certs
+            return
+
         system_cert = self.middleware.call_sync('system.general.config')['ui_certificate']
         tnc_config = self.middleware.call_sync('tn_connect.config')
         if system_cert and (
