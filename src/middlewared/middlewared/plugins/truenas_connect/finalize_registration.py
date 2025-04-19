@@ -103,20 +103,3 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
             get_registration_finalization_uri(tnc_config), 'post',
             payload={'system_id': system_id, 'claim_token': claim_token},
         )
-
-
-async def check_status(middleware):
-    if not await middleware.call('failover.is_single_master_node'):
-        return
-
-    await middleware.call('tn_connect.state.handle_registration_finalization_waiting_state')
-
-
-async def _event_system_ready(middleware, event_type, args):
-    await check_status(middleware)
-
-
-async def setup(middleware):
-    middleware.event_subscribe('system.ready', _event_system_ready)
-    if await middleware.call('system.ready'):
-        await check_status(middleware)
