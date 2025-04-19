@@ -38,6 +38,16 @@ class TNCACMEService(Service):
             # Let's restart UI now
             # TODO: Hash this out with everyone
             await self.middleware.call('system.general.ui_restart', 2)
+            if await self.middleware.call('system.is_ha_capable'):
+                # We would like to make sure nginx is reloaded on the remote controller as well
+                logger.debug('Restarting UI on remote controller')
+                try:
+                    await self.middleware.call(
+                        'failover.call_remote', 'system.general.ui_restart', [2],
+                        {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+                    )
+                except Exception:
+                    logger.error('Failed to restart UI on remote controller', exc_info=True)
 
     async def update_ui_impl(self):
         config = await self.middleware.call('tn_connect.config')
