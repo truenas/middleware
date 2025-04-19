@@ -14,9 +14,9 @@ class TrueNASConnectStateService(Service):
         namespace = 'tn_connect.state'
         private = True
 
-    async def handle_registration_finalization_waiting_state(self):
-        tn_config = await self.middleware.call('tn_connect.config')
-        if tn_config['status'] == Status.REGISTRATION_FINALIZATION_WAITING.name:
+    async def check(self):
+        tnc_config = await self.middleware.call('tn_connect.config')
+        if tnc_config['status'] == Status.REGISTRATION_FINALIZATION_WAITING.name:
             logger.debug(
                 'Registration finalization failed as middleware was restarted while waiting '
                 'for TNC registration finalization'
@@ -24,10 +24,7 @@ class TrueNASConnectStateService(Service):
             # This means middleware got restarted or the system was rebooted while we were waiting for
             # registration to finalize, so in this case we set the state to registration failed
             await self.middleware.call('tn_connect.finalize.status_update', Status.REGISTRATION_FINALIZATION_FAILED)
-
-    async def handle_cert_generation_renewal_state(self):
-        tnc_config = await self.middleware.call('tn_connect.config')
-        if tnc_config['status'] == Status.CERT_GENERATION_IN_PROGRESS.name:
+        elif tnc_config['status'] == Status.CERT_GENERATION_IN_PROGRESS.name:
             logger.debug('Middleware started and cert generation is in progress, initiating process')
             self.middleware.create_task(self.middleware.call('tn_connect.acme.initiate_cert_generation'))
         elif tnc_config['status'] in (
