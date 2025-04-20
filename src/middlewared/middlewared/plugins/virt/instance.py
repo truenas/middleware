@@ -92,6 +92,7 @@ class VirtInstanceService(CRUDService):
                 **get_vnc_info_from_config(i['config']),
                 'raw': None,  # Default required by pydantic
                 'secure_boot': None,
+                'privileged_mode': None,
                 'root_disk_size': None,
                 'root_disk_io_bus': None,
                 'storage_pool': incus_pool_to_storage_pool(root_device_pool_from_raw(i)),
@@ -102,6 +103,8 @@ class VirtInstanceService(CRUDService):
                 entry['root_disk_size'] = normalize_size(root_device.get('size'), False)
                 # If one isn't set, it defaults to virtio-scsi
                 entry['root_disk_io_bus'] = (root_device.get('io.bus') or 'virtio-scsi').upper()
+            else:
+                entry['privileged_mode'] = i['config'].get('security.privileged') == 'true'
 
             idmap = None
             if idmap_current := i['config'].get('volatile.idmap.current'):
@@ -183,8 +186,8 @@ class VirtInstanceService(CRUDService):
                 verrors.add(f'{schema_name}.cpu', 'Cannot reserve more than system cores')
 
         if old:
-            if 'secure_boot' not in new:
-                new['secure_boot'] = old['secure_boot']
+            for k in filter(lambda x: x not in new, ('secure_boot', 'privileged_mode')):
+                new[k] = old[k]
 
             enable_vnc = new.get('enable_vnc')
             if enable_vnc is False:
@@ -299,6 +302,10 @@ class VirtInstanceService(CRUDService):
                 config['raw.qemu'] = vnc_config
             if data.get('enable_vnc') is False:
                 config['raw.qemu'] = ''
+        else:
+            config.update({
+                'security.privileged': 'true' if data.get('privileged_mode') else 'false',
+            })
 
         return config
 
@@ -587,7 +594,7 @@ class VirtInstanceService(CRUDService):
             )
 
         # Apply any idmap changes
-        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED':
+        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED'  and not instance['privileged_mode']:
             await self.set_account_idmaps(id)
 
         if instance['vnc_password']:
@@ -669,7 +676,7 @@ class VirtInstanceService(CRUDService):
             }})
 
         # Apply any idmap changes
-        if instance['type'] == 'CONTAINER':
+        if instance['type'] == 'CONTAINER' and not instance['privileged_mode']:
             await self.set_account_idmaps(id)
 
         if instance['vnc_password']:
