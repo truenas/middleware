@@ -27,7 +27,7 @@ __all__ = [
     "PoolDatasetSetQuotaResult", "PoolDatasetRecordSizeChoicesArgs", "PoolDatasetRecordSizeChoicesResult",
     "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
     "PoolDatasetDestroySnapshotsArgs", "PoolDatasetDestroySnapshotsResult", "PoolDatasetPromoteArgs",
-    "PoolDatasetPromoteResult",
+    "PoolDatasetPromoteResult", "PoolDatasetRenameArgs", "PoolDatasetRenameResult",
 ]
 
 
@@ -581,3 +581,17 @@ class PoolDatasetUpdateArgs(BaseModel):
 
 class PoolDatasetUpdateResult(BaseModel):
     result: PoolDatasetEntry
+
+
+class PoolDatasetRenameOptions(BaseModel):
+    new_name: NonEmptyString
+    recursive: bool = False
+
+
+class PoolDatasetRenameArgs(BaseModel):
+    id: NonEmptyString
+    data: PoolDatasetRenameOptions
+
+
+class PoolDatasetRenameResult(BaseModel):
+    result: None

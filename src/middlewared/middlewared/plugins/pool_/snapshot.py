@@ -3,7 +3,8 @@ from middlewared.api.current import (
     PoolSnapshotEntry, PoolSnapshotCloneArgs, PoolSnapshotCloneResult, PoolSnapshotCreateArgs,
     PoolSnapshotCreateResult, PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult, PoolSnapshotHoldArgs,
     PoolSnapshotHoldResult, PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, PoolSnapshotRollbackArgs,
-    PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult
+    PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult, PoolSnapshotRenameArgs,
+    PoolSnapshotRenameResult,
 )
 from middlewared.service import CRUDService, filterable_api_method
 
@@ -85,3 +86,17 @@ class PoolSnapshotService(CRUDService):
             recursive=options['recursive']
         )  # TODO: Events won't be sent for child snapshots in recursive delete
         return result
+
+    @api_method(
+        PoolSnapshotRenameArgs,
+        PoolSnapshotRenameResult,
+        audit='Pool snapshot rename from',
+        audit_extended=lambda id_, new_name: f'{id_!r} to {new_name!r}',
+        roles=['SNAPSHOT_WRITE']
+    )
+    def rename(self, id_, new_name):
+        """
+        Rename a snapshot `id` to `new_name`
+        """
+        self.get_instance__sync(id_)
+        return self.middleware.call_sync('zfs.snapshot.rename', id_, new_name)

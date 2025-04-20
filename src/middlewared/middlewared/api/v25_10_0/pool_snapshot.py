@@ -12,7 +12,8 @@ __all__ = [
     "PoolSnapshotEntry", "PoolSnapshotCloneArgs", "PoolSnapshotCloneResult", "PoolSnapshotCreateArgs",
     "PoolSnapshotCreateResult", "PoolSnapshotDeleteArgs", "PoolSnapshotDeleteResult", "PoolSnapshotHoldArgs",
     "PoolSnapshotHoldResult", "PoolSnapshotReleaseArgs", "PoolSnapshotReleaseResult", "PoolSnapshotRollbackArgs",
-    "PoolSnapshotRollbackResult", "PoolSnapshotUpdateArgs", "PoolSnapshotUpdateResult",
+    "PoolSnapshotRollbackResult", "PoolSnapshotUpdateArgs", "PoolSnapshotUpdateResult", "PoolSnapshotRenameArgs",
+    "PoolSnapshotRenameResult",
 ]
 
 
@@ -194,3 +195,12 @@ class PoolSnapshotUpdateArgs(BaseModel):
 
 class PoolSnapshotUpdateResult(BaseModel):
     result: PoolSnapshotCreateUpdateEntry
+
+
+class PoolSnapshotRenameArgs(BaseModel):
+    id: NonEmptyString
+    new_name: NonEmptyString
+
+
+class PoolSnapshotRenameResult(BaseModel):
+    result: None
