@@ -4,6 +4,7 @@ from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 
 COMMUNITY_TRAIN = 'community'
+IX_APP_NAME = 'ix-app'
 OFFICIAL_ENTERPRISE_TRAIN = 'enterprise'
 OFFICIAL_LABEL = 'TRUENAS'
 OFFICIAL_CATALOG_REPO = 'https://github.com/truenas/apps'
