@@ -176,7 +176,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
         return data
 
-    @api_method(AuditBackendQueryArgs, AuditBackendQueryResult)
+    @api_method(AuditBackendQueryArgs, AuditBackendQueryResult, private=True)
     def query(self, db_name, filters, options):
         """
         Query the specied auditable service's database based on the specified
