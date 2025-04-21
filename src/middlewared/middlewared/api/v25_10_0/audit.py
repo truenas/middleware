@@ -59,7 +59,18 @@ class AuditEntry(BaseModel):
     enabled."""
 
 
-class AuditQuery(BaseModel, metaclass=ForUpdateMetaclass):
+class AuditQuery(BaseModel):
+    services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = ['MIDDLEWARE', 'SUDO']
+    query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+    """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form for
+    better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
+    remote_controller: bool = False
+    """HA systems may direct the query to the 'remote' controller by including 'remote_controller=True'.  The default
+    is the 'current' controller."""
+
+
+class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
     audit_id: UUID | None
     """GUID uniquely identifying this specific audit event."""
     message_timestamp: int
@@ -86,7 +97,7 @@ class AuditQuery(BaseModel, metaclass=ForUpdateMetaclass):
     """Boolean value indicating whether the action generating the event message succeeded."""
 
 
-class AuditQueryExport(AuditQuery):
+class AuditQueryExport(AuditQueryResultItem):
     export_format: Literal['CSV', 'JSON', 'YAML'] = 'JSON'
 
 
@@ -106,20 +117,12 @@ class AuditDownloadReportResult(BaseModel):
     result: None
 
 
-@single_argument_args('data')
 class AuditQueryArgs(BaseModel):
-    services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = ['MIDDLEWARE', 'SUDO']
-    query_filters: QueryFilters = Field(alias='query-filters', default=[])
-    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
-    """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form for
-    better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
-    remote_controller: bool = False
-    """HA systems may direct the query to the 'remote' controller by including 'remote_controller=True'.  The default
-    is the 'current' controller."""
+    data: AuditQuery = Field(default_factory=AuditQuery)
 
 
 class AuditQueryResult(BaseModel):
-    result: int | AuditQuery | list[AuditQuery]
+    result: int | AuditQueryResultItem | list[AuditQueryResultItem]
 
 
 class AuditQueryExportArgs(BaseModel):
