@@ -971,7 +971,7 @@ class FailoverEventsService(Service):
                 else:
                     self.run_call('service.start', 'iscsitarget', self.HA_PROPAGATE)
 
-        if self.run_call('nvmet.global.ana_enabled') and self.run_call('service.started_or_enabled', 'nvmet'):
+        if self.run_call('nvmet.global.ana_active') and self.run_call('service.started_or_enabled', 'nvmet'):
             if self.run_call('nvmet.global.running'):
                 logger.info('Reloading NVMe-oF target for ANA')
                 self.run_call('service.reload', 'nvmet', self.HA_PROPAGATE)
