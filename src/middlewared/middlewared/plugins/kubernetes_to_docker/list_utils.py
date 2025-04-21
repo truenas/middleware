@@ -3,6 +3,7 @@ import os
 import yaml
 
 from catalog_reader.train_utils import get_train_path
+from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.plugins.docker.state_utils import catalog_ds_path
 
 from .secrets_utils import list_secrets
@@ -75,7 +76,7 @@ def release_details(
     })
 
     if config['app_name'] == 'ix-chart' and release_train == 'stable':
-        config['app_name'] = 'ix-app'
+        config['app_name'] = IX_APP_NAME
 
     if config['app_name'] not in apps_mapping[release_train]:
         return config | {'error': 'Unable to locate release\'s app'}

@@ -3,6 +3,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pkg_resources import parse_version
 
+from middlewared.plugins.catalog.utils import IX_APP_NAME
+
 from .docker.query import list_resources_by_project
 from .metadata import get_collective_config, get_collective_metadata
 from .lifecycle import get_current_app_config
@@ -38,7 +40,7 @@ def upgrade_available_for_app(
         return parse_version(catalog_app_metadata['version']) < parse_version(
             latest_version
         ), latest_version
-    elif (app_metadata['custom_app'] or catalog_app == 'ix-app') and image_updates_available:
+    elif (app_metadata['custom_app'] or catalog_app == IX_APP_NAME) and image_updates_available:
         return True, None
     else:
         return False, None
@@ -126,7 +128,7 @@ def list_apps(
             'image_updates_available': image_updates_available,
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         }
-        if (app_data['custom_app'] or app_metadata['metadata']['name'] == 'ix-app') and image_updates_available:
+        if (app_data['custom_app'] or app_metadata['metadata']['name'] == IX_APP_NAME) and image_updates_available:
             # We want to mark custom apps and ix-apps as upgrade available if image updates are available
             # so if user tries to upgrade, we will just be pulling a newer version of the image
             # against the same docker tag
