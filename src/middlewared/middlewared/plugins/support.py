@@ -9,14 +9,20 @@ import aiohttp
 import requests
 
 from licenselib.utils import proactive_support_allowed
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SupportEntry, SupportAttachTicketArgs, SupportAttachTicketResult, SupportAttachTicketMaxSizeArgs,
+    SupportAttachTicketMaxSizeResult, SupportFieldsArgs, SupportFieldsResult, SupportIsAvailableArgs,
+    SupportIsAvailableResult, SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult,
+    SupportNewTicketArgs, SupportNewTicketResult, SupportSimilarIssuesArgs, SupportSimilarIssuesResult,
+    SupportUpdateArgs, SupportUpdateResult,
+)
 from middlewared.pipe import Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
-from middlewared.schema import accepts, Bool, Dict, Int, List, Password, returns, Str
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
 from middlewared.utils.network import INTERNET_TIMEOUT
-from middlewared.validators import Email
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
@@ -60,21 +66,9 @@ class SupportService(ConfigService):
         datastore = 'system.support'
         cli_namespace = 'system.support'
         role_prefix = 'SUPPORT'
+        entry = SupportEntry
 
-    ENTRY = Dict(
-        'support_entry',
-        Bool('enabled', null=True, required=True),
-        Str('name', required=True),
-        Str('title', required=True),
-        Str('email', required=True),
-        Str('phone', required=True),
-        Str('secondary_name', required=True),
-        Str('secondary_title', required=True),
-        Str('secondary_email', required=True),
-        Str('secondary_phone', required=True),
-        Int('id', required=True),
-    )
-
+    @api_method(SupportUpdateArgs, SupportUpdateResult)
     async def do_update(self, data):
         """
         Update Proactive Support settings.
@@ -101,8 +95,7 @@ class SupportService(ConfigService):
 
         return await self.config()
 
-    @accepts(roles=['SUPPORT_READ'])
-    @returns(Bool('proactive_support_is_available'))
+    @api_method(SupportIsAvailableArgs, SupportIsAvailableResult, roles=['SUPPORT_READ'])
     async def is_available(self):
         """
         Returns whether Proactive Support is available for this product type and current license.
@@ -120,17 +113,15 @@ class SupportService(ConfigService):
 
         return proactive_support_allowed(license_['contract_type'])
 
-    @accepts(roles=['SUPPORT_READ'])
-    @returns(Bool('proactive_support_is_available_and_enabled'))
+    @api_method(SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult, roles=['SUPPORT_READ'])
     async def is_available_and_enabled(self):
         """
         Returns whether Proactive Support is available and enabled.
         """
 
-        return await self.is_available() and (await self.config())['enabled']
+        return await self.is_available() and bool((await self.config())['enabled'])
 
-    @accepts(roles=['SUPPORT_READ'])
-    @returns(List('support_fields', items=[List('support_field', items=[Str('field')])]))
+    @api_method(SupportFieldsArgs, SupportFieldsResult, roles=['SUPPORT_READ'])
     async def fields(self):
         """
         Returns list of pairs of field names and field titles for Proactive Support.
@@ -146,13 +137,7 @@ class SupportService(ConfigService):
             ['secondary_phone', 'Secondary Contact Phone'],
         ]
 
-    @accepts(Str('query'), roles=['SUPPORT_READ'])
-    @returns(List('similar_issues', items=[Dict(
-        'similar_issue',
-        Str('url'),
-        Str('summary'),
-        additional_attrs=True,
-    )]))
+    @api_method(SupportSimilarIssuesArgs, SupportSimilarIssuesResult, roles=['SUPPORT_READ'])
     async def similar_issues(self, query):
         await self.middleware.call('network.general.will_perform_activity', 'support')
 
@@ -168,28 +153,7 @@ class SupportService(ConfigService):
 
         return data
 
-    @accepts(Dict(
-        'new_ticket',
-        Str('title', required=True, max_length=200),
-        Str('body', required=True, max_length=20000),
-        Str('category'),
-        Bool('attach_debug', default=False),
-        Password('token'),
-        Str('type', enum=['BUG', 'FEATURE']),
-        Str('criticality'),
-        Str('environment', max_length=None),
-        Str('phone'),
-        Str('name'),
-        Str('email', validators=[Email()]),
-        List('cc', items=[Str('email', validators=[Email()])])
-    ), roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
-    @returns(Dict(
-        'new_ticket_response',
-        Int('ticket', null=True),
-        Str('url', null=True),
-        Bool('has_debug'),
-        register=True
-    ))
+    @api_method(SupportNewTicketArgs, SupportNewTicketResult, roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
     @job()
     async def new_ticket(self, job, data):
         """
@@ -318,13 +282,7 @@ class SupportService(ConfigService):
             'has_debug': has_debug,
         }
 
-    @accepts(Dict(
-        'attach_ticket',
-        Int('ticket', required=True),
-        Str('filename', required=True, max_length=None),
-        Password('token'),
-    ), roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
-    @returns()
+    @api_method(SupportAttachTicketArgs, SupportAttachTicketResult, roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
     @job(pipes=["input"])
     def attach_ticket(self, job, data):
         """
@@ -362,8 +320,7 @@ class SupportService(ConfigService):
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)
 
-    @accepts(roles=['SUPPORT_READ'])
-    @returns(Int())
+    @api_method(SupportAttachTicketMaxSizeArgs, SupportAttachTicketMaxSizeResult, roles=['SUPPORT_READ'])
     async def attach_ticket_max_size(self):
         """
         Returns maximum uploaded file size for `support.attach_ticket`

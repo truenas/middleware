@@ -83,6 +83,7 @@ from .smb import *  # noqa
 from .snmp import *  # noqa
 from .ssh import *  # noqa
 from .static_route import *  # noqa
+from .support import *  # noqa
 from .system import *  # noqa
 from .system_advanced import *  # noqa
 from .system_general import *  # noqa
