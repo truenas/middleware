@@ -76,13 +76,13 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
             if RDMAprotocols.NVMET.value not in available_rdma_protocols:
                 verrors.add(
                     f'{schema_name}.rdma',
-                    "This platform cannot support NVMe-oF(RDMA) or is missing a RDMA capable NIC."
+                    'This platform cannot support NVMe-oF(RDMA) or is missing a RDMA capable NIC.'
                 )
         if old['ana'] != data['ana']:
             if data['ana'] and await self.__ana_forbidden():
                 verrors.add(
                     f'{schema_name}.ana',
-                    "This platform does not support Asymmetric Namespace Access(ANA)."
+                    'This platform does not support Asymmetric Namespace Access(ANA).'
                 )
 
     @api_method(
@@ -223,10 +223,46 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     @private
     async def start(self):
         await self.middleware.call('nvmet.global.load_kernel_modules')
-        await self.middleware.call("etc.generate", "nvmet")
+        await self.middleware.call('etc.generate', 'nvmet')
 
     @private
     async def stop(self):
         if await self.running():
             await self.middleware.run_in_thread(clear_config)
             await self.middleware.call('nvmet.global.unload_kernel_modules')
+
+    @private
+    async def system_ready(self):
+        # Because the kernel nvmet service does not have a systemd unit
+        # we need to ensure it gets started (if necessary).
+        service = await self.middleware.call('service.query',
+                                             [['service', '=', NVMET_SERVICE_NAME]],
+                                             {'get': True})
+        if not service['enable'] or service['state'] == 'RUNNING':
+            return
+
+        # We do need to start things
+        if await self.middleware.call('system.is_ha_capable'):
+            if not await self.middleware.call('failover.licensed'):
+                return
+            # If failover is enabled then we don't need to do anything
+            # here as it will be handled in failover.vrrp_master and
+            # failover.vrrp_backup
+            if not (await self.middleware.call('failover.config'))['disabled']:
+                return
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                if await self.middleware.call('nvmet.global.ana_active'):
+                    await self.middleware.call('nvmet.global.start')
+        else:
+            await self.middleware.call('nvmet.global.start')
+
+
+async def __event_system_ready(middleware, event_type, args):
+    await middleware.call('nvmet.global.system_ready')
+
+
+async def setup(middleware):
+    if await middleware.call('system.ready'):
+        await middleware.call('iscsi.auth.load_upgrade_alerts')
+    else:
+        middleware.event_subscribe('system.ready', __event_system_ready)
