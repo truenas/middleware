@@ -1,7 +1,6 @@
 import os
 import threading
 import time
-import typing
 
 from pydantic import Field
 from sqlalchemy import create_engine, inspect
@@ -29,7 +28,7 @@ class AuditBackendQueryArgs(BaseModel):
 
 
 class AuditBackendQueryResult(BaseModel):
-    result: typing.Any
+    result: list[dict]
 
 
 class SQLConn:
