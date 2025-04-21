@@ -73,7 +73,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
             verrors.add(f'{schema_name}.kernel', 'Cannot disable kernel mode.')
         if data['rdma'] and old['rdma'] != data['rdma']:
             available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if RDMAprotocols.NVME.value not in available_rdma_protocols:
+            if RDMAprotocols.NVMET.value not in available_rdma_protocols:
                 verrors.add(
                     f'{schema_name}.rdma',
                     "This platform cannot support NVMe-oF(RDMA) or is missing a RDMA capable NIC."

@@ -6,6 +6,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (NVMetPortCreateArgs, NVMetPortCreateResult, NVMetPortDeleteArgs,
                                      NVMetPortDeleteResult, NVMetPortEntry, NVMetPortTransportAddressChoicesArgs,
                                      NVMetPortTransportAddressChoicesResult, NVMetPortUpdateArgs, NVMetPortUpdateResult)
+from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import MatchNotFound, ValidationErrors
 from .constants import PORT_ADDR_FAMILY, PORT_TRTYPE, similar_ports
@@ -296,6 +297,12 @@ class NVMetPortService(CRUDService):
                         verrors.add(schema_name,
                                     f'Cannot change {key} on an active port.  Disable first to allow change.')
 
+        if data.get('addr_trtype') == 'RDMA':
+            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
+            if RDMAprotocols.NVMET.value not in available_rdma_protocols:
+                verrors.add(schema_name,
+                            "This platform cannot support NVMe-oF(RDMA) or is missing an RDMA capable NIC.")
+
     def __audit_name(self, data):
         return f"{data['addr_trtype']}:{data['addr_traddr']}:{data['addr_trsvcid']}"
 
@@ -331,7 +338,37 @@ class NVMetPortService(CRUDService):
                                 choices[alias['address']] = alias['address']
 
             case PORT_TRTYPE.RDMA.api:
-                # raise NotImplementedError('Not yet implemented (TODO)')
+                if not (await self.middleware.call('nvmet.global.config'))['rdma']:
+                    return choices
+                if RDMAprotocols.NVMET.value not in await self.middleware.call('rdma.capable_protocols'):
+                    return choices
+                rdma_netdevs = [link['netdev'] for link in await self.middleware.call('rdma.get_link_choices', True)]
+
+                if force_ana or (await self.middleware.call('nvmet.global.config'))['ana']:
+                    # If ANA is enabled we actually want to show the user the IPs of each node
+                    # instead of the VIP so its clear its not going to bind to the VIP even though
+                    # thats the value used under the hood.
+                    filters = [('int_vip', 'nin', [None, '']), ('int_interface', 'in', rdma_netdevs)]
+                    for i in await self.middleware.call('datastore.query', 'network.interfaces', filters):
+                        choices[i['int_vip']] = f'{i["int_address"]}/{i["int_address_b"]}'
+
+                    filters = [('alias_vip', 'nin', [None, ''])]
+                    for i in await self.middleware.call('datastore.query', 'network.alias', filters):
+                        if i['alias_interface'].get('int_interface') in rdma_netdevs:
+                            choices[i['alias_vip']] = f'{i["alias_address"]}/{i["alias_address_b"]}'
+                else:
+                    filters = [('name', 'in', rdma_netdevs)]
+                    if await self.middleware.call('failover.licensed'):
+                        # If ANA is disabled, HA system should only offer Virtual IPs
+                        for i in await self.middleware.call('interface.query', filters):
+                            for alias in i.get('failover_virtual_aliases') or []:
+                                choices[alias['address']] = alias['address']
+                    else:
+                        # Non-HA system should offer all addresses
+                        for i in await self.middleware.call('interface.query', filters):
+                            for alias in i['aliases']:
+                                choices[alias['address']] = alias['address']
+
                 return choices
 
             case PORT_TRTYPE.FC.api:

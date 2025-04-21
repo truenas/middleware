@@ -1,19 +1,16 @@
 import json
 import subprocess
 from pathlib import Path
-from .constants import RDMAprotocols
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.api.current import (
-    RdmaLinkConfig,
-    RdmaCardConfigArgs, RdmaCardConfigResult,
-    RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult
-)
+from middlewared.api.current import (RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult, RdmaCardConfigArgs,
+                                     RdmaCardConfigResult, RdmaLinkConfig)
+from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (just import to start the service)
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils.functools_ import cache
-from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (just import to start the service)
+from .constants import RDMAprotocols
 
 PRODUCT_NAME_PREFIX = 'Product Name: '
 SERIAL_NUMBER_PREFIX = '[SN] Serial number: '
@@ -141,5 +138,5 @@ class RDMAService(Service):
         is_ent = await self.middleware.call('system.is_enterprise')
         if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):
             if await self.middleware.call('rdma.get_link_choices', True):
-                result.extend([RDMAprotocols.NFS.value, RDMAprotocols.ISER.value])
+                result.extend([RDMAprotocols.NFS.value, RDMAprotocols.ISER.value, RDMAprotocols.NVMET.value])
         return result
