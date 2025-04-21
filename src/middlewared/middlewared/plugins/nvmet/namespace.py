@@ -172,19 +172,24 @@ class NVMetNamespaceService(SharingService):
 
             # create the file, or perhaps extend it
             if not os.path.exists(path):
-                subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                if _filesize := data.get('filesize'):
+                    subprocess.run(['truncate', '-s', str(_filesize), path])
+                else:
+                    verrors.add(f'{schema_name}.filesize',
+                                'Must supply filesize if device_path FILE does not exist.')
             else:
                 if old:
-                    old_size = int(old['filesize'])
-                    new_size = int(data['filesize'])
-                    # Only allow expansion
-                    if new_size > old_size:
-                        subprocess.run(['truncate', '-s', str(data['filesize']), path])
-                        # resync so connected initiators can see the new size
-                        self.middleware.call_sync('nvmet.namespace.resize_namespace', data['id'])
-                    elif old_size > new_size:
-                        verrors.add(f'{schema_name}.filesize',
-                                    'Shrinking an namespace file is not allowed. This can lead to data loss.')
+                    if _new_size := data.get('filesize'):
+                        old_size = int(old['filesize'])
+                        new_size = int(_new_size)
+                        # Only allow expansion
+                        if new_size > old_size:
+                            subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                            # resync so connected initiators can see the new size
+                            self.middleware.call_sync('nvmet.namespace.resize_namespace', data['id'])
+                        elif old_size > new_size:
+                            verrors.add(f'{schema_name}.filesize',
+                                        'Shrinking an namespace file is not allowed. This can lead to data loss.')
 
     @private
     async def remove_file(self, data):

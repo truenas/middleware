@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
@@ -56,14 +56,6 @@ class NVMetNamespaceEntry(BaseModel):
 
     The underlying `device_path` could be an encrypted ZVOL, or a file on an encrypted dataset.  In either case `locked` will be `True` if the underlying entity is locked.
     """
-
-    @model_validator(mode='after')
-    def validate_attrs(self):
-        if self.device_type == 'FILE':
-            if self.filesize is None:
-                raise ValueError('filesize must be supplied when device_type is FILE')
-
-        return self
 
 
 class NVMetNamespaceCreate(NVMetNamespaceEntry):
