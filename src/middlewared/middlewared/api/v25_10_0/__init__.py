@@ -61,6 +61,13 @@ from .mail import *  # noqa
 from .network_configuration import *  # noqa
 from .network_general import *  # noqa
 from .nfs import *  # noqa
+from .nvmet_global import *  # noqa
+from .nvmet_host import *  # noqa
+from .nvmet_host_subsys import *  # noqa
+from .nvmet_namespace import *  # noqa
+from .nvmet_port import *  # noqa
+from .nvmet_port_subsys import *  # noqa
+from .nvmet_subsys import *  # noqa
 from .pool import *  # noqa
 from .pool_dataset import *  # noqa
 from .pool_resilver import *  # noqa
