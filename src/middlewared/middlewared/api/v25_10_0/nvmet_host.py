@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, Secret
+from pydantic import Field, Secret, model_validator
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
@@ -41,6 +41,13 @@ class NVMetHostEntry(BaseModel):
     """
     HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected.
     """
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.dhchap_ctrl_key and not self.dhchap_key:
+            raise ValueError('Cannot configure bi-directional authentication without setting dhchap_key')
+
+        return self
 
 
 class NVMetHostCreate(NVMetHostEntry):
