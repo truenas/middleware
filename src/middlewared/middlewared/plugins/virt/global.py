@@ -102,6 +102,12 @@ class VirtGlobalService(ConfigService):
         if pool and not await self.middleware.call('virt.global.license_active'):
             verrors.add(f'{schema_name}.pool', 'System is not licensed to run virtualization')
 
+        if pool and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+            verrors.add(
+                f'{schema_name}.pool',
+                'VM support cannot be enabled under General Purpose OS STIG compatibility mode.'
+            )
+
         if new['pool'] and (mapping := (await self.middleware.call('port.ports_mapping')).get(53)):
             port_usages = set()
             for usages in map(lambda i: mapping.get(i, {}).get('port_details', []), ('0.0.0.0', '::')):
@@ -138,7 +144,6 @@ class VirtGlobalService(ConfigService):
 
         new = old.copy()
         new.update(data)
-        new_storage_pools = set(new['storage_pools']) - set(old['storage_pools'])
         removed_storage_pools = set(old['storage_pools']) - set(new['storage_pools'])
 
         verrors = ValidationErrors()
@@ -637,7 +642,7 @@ class VirtGlobalService(ConfigService):
         # Have incus start fresh
         # Use subprocess because shutil.rmtree will traverse filesystems
         # and we do have instances datasets that might be mounted beneath
-        await run(f'rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
+        await run('rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
 
         if start and not await self.middleware.call('service.start', 'incus', {'ha_propagate': False}):
             raise CallError('Failed to start virtualization service')

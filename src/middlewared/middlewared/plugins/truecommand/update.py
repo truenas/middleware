@@ -114,6 +114,12 @@ class TruecommandService(ConfigService):
                     'API Key must be provided when Truecommand service is enabled.'
                 )
 
+            if new['enabled'] and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+                verrors.add(
+                    'truecommand_update.enabled',
+                    'TrueCommand cannot be enabled under General Purpose OS STIG compatibility mode.'
+                )
+
             verrors.check()
 
             if all(old[k] == new[k] for k in ('enabled', 'api_key')):

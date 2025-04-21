@@ -67,6 +67,14 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if data['enabled'] and not data['ips']:
             verrors.add('tn_connect_update.ips', 'This field is required when TrueNAS Connect is enabled')
 
+        if data['enabled'] and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+            verrors.add(
+                'tn_connect_update.enabled',
+                'TrueNAS Connect cannot be enabled under General Purpose OS STIG compatibility mode.'
+            )
+        # Stop here if STIG is enabled
+        verrors.check()
+
         data['ips'] = [str(ip) for ip in data['ips']]
 
         ips_changed = set(old_config['ips']) != set(data['ips'])

@@ -3,10 +3,11 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.service_exception import ValidationErrors as Verr
 from middlewared.test.integration.assets.product import product_type, set_fips_available
+from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
-from middlewared.test.integration.utils import call, client, password
+from middlewared.test.integration.utils import call, client, mock, password
 from truenas_api_client import ValidationErrors
 
 
@@ -22,8 +23,15 @@ def get_excluded_admins():
     ]
 
 
-def user_cleanup():
-    """ Re-running this module can get tripped up by temporary users """
+def remove_stale_mocks():
+    mocked = ['system.product_type', 'system.security.info.fips_available']
+    for remove_mock in mocked:
+        call('test.remove_mock', remove_mock, None)
+
+
+def user_and_config_cleanup():
+    """ Re-running this module can get tripped up by stale configurations """
+    call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': False}, job=True)
     two_factor_users = call('user.query', [
         ['twofactor_auth_configured', '=', True],
         ['locked', '=', False],
@@ -31,6 +39,18 @@ def user_cleanup():
     ])
     for user in two_factor_users:
         call('user.delete', user['id'])
+    call('virt.global.update', {'pool': None, 'storage_pools': []}, job=True)  # disable VM support
+    call('tn_connect.update', {'enabled': False, 'ips': []})  # disable TrueNAS Connect
+    call('user.update', 1, {"password_disabled": False})
+    remove_stale_mocks()
+
+
+@pytest.fixture(scope='module')
+def restore_after_stig():
+    try:
+        yield
+    finally:
+        user_and_config_cleanup()
 
 
 @pytest.fixture(autouse=True)
@@ -39,16 +59,18 @@ def clear_ratelimit():
 
 
 @pytest.fixture(scope='function')
-def enterprise_product():
-    with product_type('ENTERPRISE'):
-        with set_fips_available(True):
+def community_product():
+    # Remove pesky stuck mock
+    call('test.remove_mock', 'system.product_type', None)
+    with product_type('COMMUNITY_EDITION'):
+        with set_fips_available(False):
             yield
 
 
 @pytest.fixture(scope='function')
-def community_product():
-    with product_type('COMMUNITY_EDITION'):
-        with set_fips_available(False):
+def enterprise_product(restore_after_stig):
+    with product_type('ENTERPRISE'):
+        with set_fips_available(True):
             yield
 
 
@@ -59,7 +81,7 @@ def two_factor_enabled():
 
 
 @pytest.fixture(scope='module')
-def two_factor_non_admin(two_factor_enabled, unprivileged_user_fixture):
+def non_admin_w_2fa(two_factor_enabled, unprivileged_user_fixture):
     privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
     assert len(privilege) > 0, 'Privilege not found'
     call('privilege.update', privilege[0]['id'], {'roles': ['SHARING_ADMIN']})
@@ -74,7 +96,7 @@ def two_factor_non_admin(two_factor_enabled, unprivileged_user_fixture):
 
 
 @pytest.fixture(scope='module')
-def two_factor_full_admin(two_factor_enabled, unprivileged_user_fixture):
+def full_admin_w_2fa(two_factor_enabled, unprivileged_user_fixture):
     privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
     assert len(privilege) > 0, 'Privilege not found'
     call('privilege.update', privilege[0]['id'], {'roles': ['FULL_ADMIN']})
@@ -89,7 +111,7 @@ def two_factor_full_admin(two_factor_enabled, unprivileged_user_fixture):
 
 
 @pytest.fixture(scope='module')
-def two_factor_full_admin_as_builtin_admin(two_factor_enabled, unprivileged_user_fixture):
+def full_admin_w_2fa_builtin_admin(two_factor_enabled, unprivileged_user_fixture):
     privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
     assert len(privilege) > 0, 'Privilege not found'
     builtin_admin = call('group.query', [['name', '=', 'builtin_administrators']], {'get': True})
@@ -103,6 +125,9 @@ def two_factor_full_admin_as_builtin_admin(two_factor_enabled, unprivileged_user
     finally:
         call('group.update', builtin_admin['id'], {'users': builtin_admin['users']})
 
+
+# @pytest.fixture(scope='module')
+# def full_admin_2fa_(two_factor_full_admin_as_builtin_admin):
 
 def do_stig_auth(c, user_obj, secret):
     resp = c.call('auth.login_ex', {
@@ -122,9 +147,10 @@ def do_stig_auth(c, user_obj, secret):
 
 
 @pytest.fixture(scope='module')
-def setup_stig(two_factor_full_admin_as_builtin_admin):
+def setup_stig(full_admin_w_2fa_builtin_admin):
     """ Configure STIG and yield admin user object and an authenticated session """
-    user_obj, secret = two_factor_full_admin_as_builtin_admin
+    # user_obj, secret = two_factor_full_admin_as_builtin_admin
+    user_obj, secret = full_admin_w_2fa_builtin_admin
 
     # Create websocket connection from prior to STIG being enabled to pass to
     # test methods. This connection will have unrestricted privileges (due to
@@ -174,7 +200,7 @@ def setup_stig(two_factor_full_admin_as_builtin_admin):
 
 def test_nonenterprise_fail(community_product):
     # Clean up from prior runs of this module.
-    user_cleanup()
+    user_and_config_cleanup()
     with pytest.raises(ValidationErrors, match='Please contact iX sales for more information.'):
         call('system.security.update', {'enable_gpos_stig': True}, job=True)
 
@@ -194,24 +220,48 @@ def test_no_twofactor_users_fail(enterprise_product, two_factor_enabled):
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
-def test_no_full_admin_users_fail(enterprise_product, two_factor_non_admin):
+def test_truecommand_enabled_fail(enterprise_product, two_factor_enabled):
+    with mock('truecommand.config', return_value={"enabled": True}):
+        with pytest.raises(ValidationErrors, match='TrueCommand is not supported under General Purpose OS STIG'):
+            call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
+
+
+def test_docker_apps_enabled_fail(enterprise_product, two_factor_enabled):
+    with mock('docker.config', return_value={"pool": "DockerPool"}):
+        with pytest.raises(ValidationErrors, match='Please disable Apps as Apps are not supported'):
+            call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
+
+
+def test_vm_support_enabled_fail(enterprise_product, two_factor_enabled):
+    with mock('virt.global.config', return_value={"pool": "VirtualMachinePool"}):
+        with pytest.raises(ValidationErrors, match='Please disable VMs as VMs are not supported'):
+            call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
+
+
+def test_tn_connect_enabled_fail(enterprise_product, two_factor_enabled):
+    with mock('tn_connect.config', return_value={"enabled": True}):
+        with pytest.raises(ValidationErrors, match='Please disable TrueNAS Connect as it is not supported'):
+            call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
+
+
+def test_no_full_admin_users_fail(enterprise_product, non_admin_w_2fa):
     with pytest.raises(ValidationErrors, match='At least one local user with full admin privileges must be'):
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
-def test_no_current_cred_no_2fa(enterprise_product, two_factor_full_admin):
-    with pytest.raises(ValidationErrors, match='Credential used to enable General Purpose OS STIG compatibility must have two factor'):
+def test_no_current_cred_no_2fa(enterprise_product, full_admin_w_2fa):
+    with pytest.raises(ValidationErrors, match='Credential used to enable General Purpose OS STIG compatibility'):
         # root / truenas_admin does not have 2FA and so this should fail
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
-def test_auth_enabled_admin_users_fail(enterprise_product, two_factor_full_admin_as_builtin_admin):
-    """ Attempt to enable STIG with password enabled admins still available """
-    user_obj, secret = two_factor_full_admin_as_builtin_admin
+def test_auth_enabled_admin_users_fail(enterprise_product, full_admin_w_2fa_builtin_admin):
+    """ Attempt STIG with password enabled admins still available """
+    user_obj, secret = full_admin_w_2fa_builtin_admin
     with client(auth=None) as c:
         # Do two-factor authentication before using the client for the call
         do_stig_auth(c, user_obj, secret)
-        with pytest.raises(ValidationErrors, match='General purpose administrative accounts with password authentication are'):
+        with pytest.raises(ValidationErrors, match='General purpose administrative accounts with password'):
             # There are immutable admins with passwords enabled, so this should fail
             c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
@@ -325,3 +375,39 @@ def test_stig_usage_reporting_disabled(setup_stig):
 
     with pytest.raises(CallError, match='Network activity "Anonymous usage statistics" is disabled'):
         call("network.general.will_perform_activity", "usage")
+
+
+def test_stig_prevent_truecommand_enable(setup_stig):
+    ''' Wnen in GPOS STIG mode TrueCommand must remain disabled '''
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    with pytest.raises(Verr, match='TrueCommand cannot be enabled under General Purpose OS STIG'):
+        call('truecommand.update', {'enabled': True, 'api_key': '1234567890-ABCDE'}, job=True)
+
+
+def test_stig_prevent_docker_apps_enable(setup_stig):
+    ''' Wnen in GPOS STIG mode Apps must remain disabled '''
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    with another_pool() as docker_pool:
+        with pytest.raises(ValidationErrors, match='Apps cannot be enabled under General Purpose OS STIG'):
+            call('docker.update', {'pool': docker_pool['name']}, job=True)
+
+
+def test_stig_prevent_vm_enable(setup_stig):
+    ''' Wnen in GPOS STIG mode VM support must remain disabled '''
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    with another_pool() as vm_pool:
+        with pytest.raises(ValidationErrors, match='VM support cannot be enabled under General Purpose OS STIG'):
+            call('virt.global.update', {'pool': vm_pool['name']}, job=True)
+
+
+def test_stig_prevent_tn_connect_enable(setup_stig):
+    ''' Wnen in GPOS STIG mode TrueNAS Connect must remain disabled '''
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    ip_options = call('tn_connect.ip_choices')
+    ip_to_use = list(ip_options.keys())[0]
+    with pytest.raises(Verr, match='TrueNAS Connect cannot be enabled under General Purpose OS STIG'):
+        call('tn_connect.update', {'enabled': True, 'ips': [ip_to_use]})

@@ -66,6 +66,15 @@ class DockerService(ConfigService):
                 'System is not licensed to use Applications'
             )
 
+        if config['pool'] and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+            verrors.add(
+                f'{schema}.pool',
+                'Apps cannot be enabled under General Purpose OS STIG compatibility mode.'
+            )
+
+        # No point in contining if we're in STIG or not licensed
+        verrors.check()
+
         if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
             verrors.add(f'{schema}.pool', 'Pool not found.')
 
