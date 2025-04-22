@@ -4,7 +4,7 @@ import time
 
 from truenas_api_client import ValidationErrors
 
-from middlewared.service_exception import InstanceNotFound
+from middlewared.service_exception import InstanceNotFound, MatchNotFound
 from middlewared.test.integration.utils import call, fail, pool, ssh
 from middlewared.test.integration.utils.disk import retry_get_parts_on_disk
 
@@ -52,8 +52,15 @@ def another_pool(data=None, topology=None):
     try:
         yield pool
     finally:
+        pool_id = pool["id"]
+        # If the pool has been exported and reimported then it may change id
+        # Therefore query by the guid to see if this is the case.
         try:
-            call("pool.export", pool["id"], {"destroy": True}, job=True)
+            pool_id = call('pool.query', [['guid', '=', pool['guid']]], {'get': True})['id']
+        except MatchNotFound:
+            pass
+        try:
+            call("pool.export", pool_id, {"destroy": True}, job=True)
         except ValidationErrors as e:
             if not any(error.errcode == errno.ENOENT for error in e.errors):
                 raise
