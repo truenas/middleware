@@ -19,10 +19,15 @@ class FIPSProviderAlertSource(AlertSource):
 
     async def check(self):
         fips_configured = (await self.middleware.call('system.security.config'))['enable_fips']
-        fips_enabled = await self.middleware.call('system.security.info.fips_enabled')
+        configuration = "enabled" if fips_configured else "disabled"
+
+        try:
+            fips_enabled = await self.middleware.call('system.security.info.fips_enabled')
+        except Exception:
+            return Alert(FIPSMisconfigurationAlertClass, {"configuration": configuration, "state": "unknown"})
 
         if fips_configured and not fips_enabled:
-            return Alert(FIPSMisconfigurationAlertClass, {"configuration": "enabled", "state": "not active"})
+            return Alert(FIPSMisconfigurationAlertClass, {"configuration": configuration, "state": "not active"})
 
         if not fips_configured and fips_enabled:
-            return Alert(FIPSMisconfigurationAlertClass, {"configuration": "disabled", "state": "active"})
+            return Alert(FIPSMisconfigurationAlertClass, {"configuration": configuration, "state": "active"})
