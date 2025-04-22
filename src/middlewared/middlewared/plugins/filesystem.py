@@ -29,6 +29,7 @@ from middlewared.api.current import (
 )
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
+from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import private, CallError, filterable_api_method, Service, job
 from middlewared.utils import filter_list
@@ -404,7 +405,10 @@ class FilesystemService(Service):
         try:
             stat['user'] = pwd.getpwuid(stat['uid']).pw_name
         except KeyError:
-            stat['user'] = None
+            if stat['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
+                stat['user'] = SYNTHETIC_CONTAINER_ROOT['pw_name']
+            else:
+                stat['user'] = None
 
         try:
             stat['group'] = grp.getgrgid(stat['gid']).gr_name

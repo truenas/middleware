@@ -29,3 +29,19 @@ ALLOWED_BUILTIN_GIDS = {
     951,  # truenas_readonly_administrators
     952,  # truenas_sharing_administrators
 }
+
+# TRUENAS_IDMAP_MAX + 1, this is also first ID in range allocated for Incus idmaps
+CONTAINER_ROOT_UID = 2147000001
+
+SYNTHETIC_CONTAINER_ROOT = {
+    'pw_name': 'truenas_container_unpriv_root',
+    'pw_uid': CONTAINER_ROOT_UID,
+    'pw_gid': 2147000001,
+    'pw_gecos': 'Unprivileged root user for containers',
+    'pw_dir': '/var/empty',
+    'pw_shell': '/usr/sbin/nologin',
+    'grouplist': None,
+    'sid': None,
+    'source': 'LOCAL',
+    'local': True
+}
