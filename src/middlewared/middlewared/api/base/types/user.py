@@ -33,14 +33,17 @@ def validate_name(
     max_length: int | None = DEFAULT_MAX_LENGTH
 ) -> str:
     val_len = len(val)
-    assert val_len > 0, 'Must be at least 1 character in length'
-    if max_length is not None:
-        assert val_len <= max_length, f'Cannot exceed {max_length} charaters in length'
+    if val_len == 0:
+        raise ValueError('Must be at least 1 character in length')
+    if max_length is not None and val_len > max_length:
+        raise ValueError(f'Cannot exceed {max_length} charaters in length')
 
     if valid_start_chars is not None:
-        assert val[0] in valid_start_chars, f'Cannot start with "{val[0]!r}"'
+        if val[0] not in valid_start_chars:
+            raise ValueError(f'Cannot start with "{val[0]!r}"')
 
-    assert all(char in valid_chars for char in val), f'Valid characters are: {", ".join(valid_chars)!r}'
+    if not all(char in valid_chars for char in val):
+        raise ValueError(f'Valid characters are: {", ".join(valid_chars)!r}')
 
     return val
 
