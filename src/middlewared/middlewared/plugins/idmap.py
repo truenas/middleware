@@ -11,6 +11,7 @@ from middlewared.service import (
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
 from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
+from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID, IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
 )
@@ -1216,7 +1217,12 @@ class IdmapDomainService(CRUDService):
         match passwd['source']:
             case 'LOCAL':
                 # local user, should be retrieved via user.query
-                return None
+                # with exception of our special synthetic account for the container root
+                if passwd['pw_uid'] != CONTAINER_ROOT_UID:
+                    return None
+
+                id_type_both = False
+
             case 'ACTIVEDIRECTORY':
                 id_type_both = await self.has_id_type_both(passwd['pw_uid'])
             case _:
