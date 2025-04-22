@@ -12,7 +12,7 @@ from sqlalchemy.sql.expression import nullsfirst, nullslast
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.base.types import NonEmptyString
-from middlewared.api.current import QueryFilters, QueryOptions
+from middlewared.api.current import GenericQueryResult, QueryFilters, QueryOptions
 from middlewared.service import periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -23,12 +23,12 @@ from middlewared.plugins.datastore.schema import SchemaMixin
 
 class AuditBackendQueryArgs(BaseModel):
     db_name: NonEmptyString
-    query_filters: QueryFilters = Field(default_factory=list)
+    query_filters: QueryFilters = []
     query_options: QueryOptions = Field(default_factory=QueryOptions)
 
 
-class AuditBackendQueryResult(BaseModel):
-    result: list[dict]
+class AuditBackendQueryResult(GenericQueryResult):
+    pass
 
 
 class SQLConn:
@@ -185,12 +185,11 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         """
         try:
             conn = self.connections[db_name]
-            if conn.connection is None:
-                raise CallError(
-                    f'{db_name}: connection to audit database is not initialized.'
-                )
         except KeyError:
             raise CallError(f'Invalid database name: {db_name!r}')
+
+        if conn.connection is None:
+            raise CallError(f'{db_name}: connection to audit database is not initialized.')
 
         order_by = options.get('order_by', []).copy()
         from_ = conn.table
