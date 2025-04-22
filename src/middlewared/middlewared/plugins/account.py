@@ -424,7 +424,7 @@ class UserService(CRUDService):
             'pw_uid': SYNTHENTIC_CONTAINER_ROOT.pw_uid,
             'pw_gid': SYNTHENTIC_CONTAINER_ROOT.pw_gid,
             'pw_gecos': SYNTHENTIC_CONTAINER_ROOT.pw_gecos,
-            'pw_dir': SYNTHENTIC_CONTAINER_ROOT.pw_path,
+            'pw_dir': SYNTHENTIC_CONTAINER_ROOT.pw_dir,
             'pw_shell': SYNTHENTIC_CONTAINER_ROOT.pw_shell,
             'source': SYNTHENTIC_CONTAINER_ROOT.source,
         }, None)
