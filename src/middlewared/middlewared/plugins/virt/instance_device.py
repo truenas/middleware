@@ -366,8 +366,6 @@ class VirtInstanceDeviceService(Service):
                         available_volumes = {v['id']: v for v in await self.middleware.call('virt.volume.query')}
                         if source not in available_volumes:
                             verrors.add(schema, f'No {source!r} incus volume found which can be used for source')
-                        elif available_volumes[source]['content_type'] == 'ISO' and device['boot_priority'] is None:
-                            verrors.add(schema, 'Boot priority is required for ISO volumes.')
                         else:
                             # We need to specify the storage pool for device adding to VM
                             # copy in what is known for the virt volume
