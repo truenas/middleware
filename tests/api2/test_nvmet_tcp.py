@@ -613,8 +613,8 @@ class TestNVMe(NVMeRunning):
                                     fixture_port,
                                     loopback_client: NVMeCLIClient):
         """
-        Test that we can lock and unlock a ZVOL used for a subsystem namespace,
-        and that an attached client sees the namespace disappear and reappear.
+        Test that we can resize a ZVOL used for a subsystem namespace,
+        and that an attached client sees the namespace change size.
         """
         nc = loopback_client
 
