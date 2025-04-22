@@ -69,6 +69,7 @@ from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
+    SYNTHETIC_CONTAINER_ROOT,
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -418,8 +419,14 @@ class UserService(CRUDService):
             'datastore.query', self._config.datastore, [], datastore_options
         )
 
+        # Add a synthetic user for the root account in containers
+        container_root = await self.middleware.call('idmap.synthetic_user', SYNTHETIC_CONTAINER_ROOT.copy(), None)
+        # NOTE: we deliberately don't include a userns_idmap value here because it is
+        # implicit when we set up subuid for container
+        container_root.update({'builtin': True, 'local': True})
+
         return await self.middleware.run_in_thread(
-            filter_list, result + ds_users, filters, options
+            filter_list, result + ds_users + [container_root], filters, options
         )
 
     @private
@@ -1094,6 +1101,12 @@ class UserService(CRUDService):
         if data['username'] and data['uid'] is not None:
             verrors.add('get_user_obj.username', '"username" and "uid" may not be simultaneously specified')
         verrors.check()
+
+        # Return the container root if requestedt
+        if data['username'] == SYNTHETIC_CONTAINER_ROOT['pw_name']:
+            return SYNTHETIC_CONTAINER_ROOT.copy()
+        elif data['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
+            return SYNTHETIC_CONTAINER_ROOT.copy()
 
         # NOTE: per request from UI team we are overriding default library
         # KeyError message with a clearer one
