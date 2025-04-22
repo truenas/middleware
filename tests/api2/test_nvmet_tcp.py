@@ -11,12 +11,12 @@ from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import ha, pool_name
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import MatchNotFound, ValidationErrors
 from middlewared.test.integration.assets.iscsi import iscsi_extent
 from middlewared.test.integration.assets.nvmet import (NVME_DEFAULT_TCP_PORT, nvmet_ana, nvmet_host, nvmet_host_subsys,
                                                        nvmet_namespace, nvmet_port, nvmet_port_subsys, nvmet_subsys,
                                                        nvmet_xport_referral)
-from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
@@ -54,6 +54,7 @@ ZVOL_RESIZE_END_MB = 150
 FAKE_HOSTNQN = 'nqn.2014-08.org.nvmexpress:uuid:48747223-7535-4f8e-a789-b8af8bfdea54'
 DEVICE_TYPE_FILE = 'FILE'
 MB_100 = 100 * MB
+MB_150 = 150 * MB
 MB_200 = 200 * MB
 NVME_ALT1_TCP_PORT = 4444
 NVME_ALT2_TCP_PORT = 4555
@@ -724,6 +725,70 @@ class TestNVMe(NVMeRunning):
                     devices = nc.nvme_devices()
                     assert len(devices) == 1, devices
                     self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200)])
+
+    def test__pool_export_import(self, fixture_port, loopback_client: NVMeCLIClient, zvol1):
+        """
+        Test that we can lock and unlock a ZVOL used for a subsystem namespace,
+        and that an attached client sees the namespace disappear and reappear.
+        """
+        nc = loopback_client
+
+        zvol1_path = f'zvol/{zvol1["name"]}'
+        with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
+            subsys_id = subsys['id']
+            subsys_nqn = subsys['nqn']
+            with nvmet_namespace(subsys_id, zvol1_path):
+                # First ensure that we access the subsys with one namespace
+                with nc.connect_ctx(subsys_nqn):
+                    devices = nc.nvme_devices()
+                    assert len(devices) == 1, devices
+                    self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB)])
+
+                # Now create another pool
+                with another_pool() as pool2:
+                    # Test with a ZVOL based namespace
+                    with zvol("pool2zvol1", 50, pool2['name']) as zvol_config:
+                        with nvmet_namespace(subsys_id, f'zvol/{zvol_config["name"]}'):
+                            with nc.connect_ctx(subsys_nqn):
+                                devices = nc.nvme_devices()
+                                assert len(devices) == 1, devices
+                                self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 50)])
+                            call("pool.export", pool2["id"], job=True)
+                            with nc.connect_ctx(subsys_nqn):
+                                devices = nc.nvme_devices()
+                                assert len(devices) == 1, devices
+                                self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB)])
+                            call('pool.import_pool', {'guid': pool2['guid']}, job=True)
+                            with nc.connect_ctx(subsys_nqn):
+                                devices = nc.nvme_devices()
+                                assert len(devices) == 1, devices
+                                self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 50)])
+                    # Lookup the pool again, the id may have changed
+                    try:
+                        pool2 = call('pool.query', [['guid', '=', pool2['guid']]], {'get': True})
+                    except MatchNotFound:
+                        pass
+                    # Test with a FILE based namespace
+                    file2 = f'/mnt/{zvol_config["name"]}/file_{digits}'
+                    with nvmet_namespace(subsys_id,
+                                         file2,
+                                         DEVICE_TYPE_FILE,
+                                         filesize=MB_150,
+                                         delete_options={'remove': True}):
+                        with nc.connect_ctx(subsys_nqn):
+                            devices = nc.nvme_devices()
+                            assert len(devices) == 1, devices
+                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 150)])
+                        call("pool.export", pool2["id"], job=True)
+                        with nc.connect_ctx(subsys_nqn):
+                            devices = nc.nvme_devices()
+                            assert len(devices) == 1, devices
+                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB)])
+                        call('pool.import_pool', {'guid': pool2['guid']}, job=True)
+                        with nc.connect_ctx(subsys_nqn):
+                            devices = nc.nvme_devices()
+                            assert len(devices) == 1, devices
+                            self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, 150)])
 
     def test__discovery_referrals(self, fixture_port, loopback_client: NVMeCLIClient):
         """
