@@ -36,8 +36,8 @@ SYNTHENTIC_CONTAINER_ROOT = pwd_struct(
     'truenas_container_unpriv_root',
     2147000001,
     2147000001,
-    '/var/empty',
     'Unprivileged root user for containers',
+    '/var/empty',
     '/usr/sbin/nologin',
     'LOCAL'
 )

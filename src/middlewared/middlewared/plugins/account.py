@@ -419,6 +419,7 @@ class UserService(CRUDService):
             'datastore.query', self._config.datastore, [], datastore_options
         )
 
+        # Add a synthetic user for the root account in containers
         container_root = await self.middleware.call('idmap.synthetic_user', {
             'pw_name': SYNTHENTIC_CONTAINER_ROOT.pw_name,
             'pw_uid': SYNTHENTIC_CONTAINER_ROOT.pw_uid,
@@ -428,6 +429,8 @@ class UserService(CRUDService):
             'pw_shell': SYNTHENTIC_CONTAINER_ROOT.pw_shell,
             'source': SYNTHENTIC_CONTAINER_ROOT.source,
         }, None)
+        container_root['userns_idmap'] = 'DIRECT'
+        container_root['builtin'] = True
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users + [container_root], filters, options
