@@ -72,14 +72,21 @@ class VirtInstanceDeviceService(Service):
                     'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
                 })
             case 'nic':
-                device['dev_type'] = 'NIC'
-                device['network'] = incus.get('network')
+                device.update({
+                    'dev_type': 'NIC',
+                    'network': incus.get('network'),
+                    'mac': incus.get('hwaddr'),
+                })
                 if device['network']:
-                    device['parent'] = None
-                    device['nic_type'] = None
+                    device.update({
+                        'parent': None,
+                        'nic_type': None,
+                    })
                 elif incus.get('nictype'):
-                    device['nic_type'] = incus.get('nictype').upper()
-                    device['parent'] = incus.get('parent')
+                    device.update({
+                        'nic_type': incus.get('nictype').upper(),
+                        'parent': incus.get('parent'),
+                    })
                 device['description'] = device['network']
             case 'proxy':
                 device['dev_type'] = 'PROXY'
@@ -190,10 +197,13 @@ class VirtInstanceDeviceService(Service):
                     new['io.bus'] = device['io_bus'].lower()
 
             case 'NIC':
-                new['type'] = 'nic'
-                new['network'] = device['network']
-                new['nictype'] = device['nic_type'].lower()
-                new['parent'] = device['parent']
+                new.update({
+                    'type': 'nic',
+                    'network': device['network'],
+                    'nictype': device['nic_type'].lower(),
+                    'parent': device['parent'],
+                    'hwaddr': device['mac'],
+                })
             case 'PROXY':
                 new['type'] = 'proxy'
                 # For now follow docker lead for simplification
