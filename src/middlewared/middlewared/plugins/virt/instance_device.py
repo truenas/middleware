@@ -381,7 +381,10 @@ class VirtInstanceDeviceService(Service):
                         verrors.add(f'{schema}.io_bus', 'IO bus is only available for VMs')
                     elif instance_config and instance_config['status'] != 'STOPPED':
                         verrors.add(f'{schema}.io_bus', 'VM should be stopped before updating IO bus')
-                if source:
+                if source and instance_type == 'VM':
+                    # Containers only can consume host paths as sources and volumes or zvols are not supported
+                    # For host paths, we have no concern regarding same host path being mounted inside different
+                    # containers.
                     await self.validate_disk_device_source(instance_name, schema, source, verrors, device['name'])
             case 'NIC':
                 if await self.middleware.call('interface.has_pending_changes'):
