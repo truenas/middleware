@@ -728,8 +728,7 @@ class TestNVMe(NVMeRunning):
 
     def test__pool_export_import(self, fixture_port, loopback_client: NVMeCLIClient, zvol1):
         """
-        Test that we can lock and unlock a ZVOL used for a subsystem namespace,
-        and that an attached client sees the namespace disappear and reappear.
+        Test that we can export and import a pool underlying subsystem namespaces.
         """
         nc = loopback_client
 
