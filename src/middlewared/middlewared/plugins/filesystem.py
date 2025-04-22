@@ -405,7 +405,7 @@ class FilesystemService(Service):
         try:
             stat['user'] = pwd.getpwuid(stat['uid']).pw_name
         except KeyError:
-            if state['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
+            if stat['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
                 stat['user'] = SYNTHETIC_CONTAINER_ROOT['pw_name']
             else:
                 stat['user'] = None  
