@@ -261,7 +261,22 @@ async def __event_system_ready(middleware, event_type, args):
     await middleware.call('nvmet.global.system_ready')
 
 
+async def pool_post_import(middleware, pool):
+    if pool is None:
+        return
+
+    if await middleware.call('nvmet.global.running'):
+        path = pool.get('path', '')
+        name = pool.get('name', '')
+        if await middleware.call('nvmet.namespace.query', [
+            ('OR', [
+                ('device_path', '^', f'zvol/{name}/'),
+                ('device_path', '^', f'{path}/'),])]):
+            await middleware.call('service.reload', NVMET_SERVICE_NAME)
+
+
 async def setup(middleware):
+    middleware.register_hook("pool.post_import", pool_post_import, sync=True)
     if await middleware.call('system.ready'):
         await middleware.call('iscsi.auth.load_upgrade_alerts')
     else:
