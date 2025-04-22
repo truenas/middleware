@@ -23,7 +23,7 @@ def _validate_uuid(value: str | int):
     return value
 
 
-UUID = Annotated[str | int, AfterValidator(_validate_uuid)]
+UUID = Literal[''] | Annotated[str | int, AfterValidator(_validate_uuid)]
 
 
 class AuditEntrySpace(BaseModel):
