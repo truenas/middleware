@@ -429,8 +429,11 @@ class UserService(CRUDService):
             'pw_shell': SYNTHENTIC_CONTAINER_ROOT.pw_shell,
             'source': SYNTHENTIC_CONTAINER_ROOT.source,
         }, None)
-        container_root['userns_idmap'] = 'DIRECT'
-        container_root['builtin'] = True
+        container_root.update({
+            'userns_idmap': 'DIRECT',
+            'builtin': True,
+            'local': True
+        })
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users + [container_root], filters, options
