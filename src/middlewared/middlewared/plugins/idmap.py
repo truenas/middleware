@@ -1216,7 +1216,12 @@ class IdmapDomainService(CRUDService):
         match passwd['source']:
             case 'LOCAL':
                 # local user, should be retrieved via user.query
-                return None
+                # with exception of our special synthetic account for the container root
+                if passwd['pw_uid'] != 2147000001:
+                    return None
+
+                id_type_both = False
+
             case 'ACTIVEDIRECTORY':
                 id_type_both = await self.has_id_type_both(passwd['pw_uid'])
             case _:

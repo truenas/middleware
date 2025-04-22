@@ -1,3 +1,5 @@
+from middlewared.utils.nss.pwd import pwd_struct
+
 ADMIN_UID = 950
 ADMIN_GID = 950
 SKEL_PATH = '/etc/skel/'  # TODO evaluate whether this is still needed
@@ -29,3 +31,13 @@ ALLOWED_BUILTIN_GIDS = {
     951,  # truenas_readonly_administrators
     952,  # truenas_sharing_administrators
 }
+
+SYNTHENTIC_CONTAINER_ROOT = pwd_struct(
+    'truenas_container_unpriv_root',
+    2147000001,
+    2147000001,
+    '/var/empty',
+    'Unprivilieged root user for containers',
+    '/usr/sbin/nologin',
+    'LOCAL'
+)

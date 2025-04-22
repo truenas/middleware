@@ -69,6 +69,7 @@ from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
+    SYNTHENTIC_CONTAINER_ROOT,
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -418,8 +419,18 @@ class UserService(CRUDService):
             'datastore.query', self._config.datastore, [], datastore_options
         )
 
+        container_root = await self.middleware.call('idmap.synthetic_user', {
+            'pw_name': SYNTHENTIC_CONTAINER_ROOT.pw_name,
+            'pw_uid': SYNTHENTIC_CONTAINER_ROOT.pw_uid,
+            'pw_gid': SYNTHENTIC_CONTAINER_ROOT.pw_gid,
+            'pw_gecos': SYNTHENTIC_CONTAINER_ROOT.pw_gecos,
+            'pw_dir': SYNTHENTIC_CONTAINER_ROOT.pw_path,
+            'pw_shell': SYNTHENTIC_CONTAINER_ROOT.pw_shell,
+            'source': SYNTHENTIC_CONTAINER_ROOT.source,
+        }, None)
+
         return await self.middleware.run_in_thread(
-            filter_list, result + ds_users, filters, options
+            filter_list, result + ds_users + [container_root], filters, options
         )
 
     @private
