@@ -25,12 +25,6 @@ def get_excluded_admins():
     ]
 
 
-def remove_stale_mocks():
-    mocked = ['system.product_type', 'system.security.info.fips_available']
-    for remove_mock in mocked:
-        call('test.remove_mock', remove_mock, None)
-
-
 def user_and_config_cleanup():
     """ Re-running this module can get tripped up by stale configurations """
     call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': False}, job=True)
@@ -41,7 +35,6 @@ def user_and_config_cleanup():
     ])
     for user in two_factor_users:
         call('user.delete', user['id'])
-    remove_stale_mocks()
 
 
 @pytest.fixture(scope='module')
@@ -59,8 +52,6 @@ def clear_ratelimit():
 
 @pytest.fixture(scope='function')
 def community_product():
-    # Remove pesky stuck mock
-    call('test.remove_mock', 'system.product_type', None)
     with product_type('COMMUNITY_EDITION'):
         with set_fips_available(False):
             yield
