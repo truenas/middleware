@@ -25,6 +25,8 @@ DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + '_' + '-' + '.'
 DEFAULT_VALID_START = string.ascii_letters + '_'
 DEFAULT_MAX_LENGTH = 32  # WARNING UT_NAMESIZE = 32. If we go above this then utmp accounting may break
 
+GROUP_VALID_START = string.ascii_letters + string.digits + '_' + '.'
+
 
 def validate_name(
     val: str,
@@ -71,7 +73,7 @@ LocalUsername = Annotated[str, AfterValidator(validate_local_username)]
 RemoteUsername = Annotated[str, Field(min_length=1)]
 GroupName = Annotated[
     str,
-    AfterValidator(lambda x: validate_name(x, valid_start_chars=DEFAULT_VALID_START + '.', max_length=None))
+    AfterValidator(lambda x: validate_name(x, valid_start_chars=GROUP_VALID_START, max_length=None))
 ]
 LocalUID = Annotated[int, Field(ge=0, le=TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 

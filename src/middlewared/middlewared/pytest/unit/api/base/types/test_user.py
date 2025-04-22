@@ -5,13 +5,18 @@ from middlewared.service_exception import ValidationErrors
 
 
 @pytest.mark.parametrize("value, error", [
-    ("0" * 2000, "String should have at most 1024 characters")
+    ("", "Must be at least 1 character in length"),
+    ("-group", "Cannot start with \"-\""),
+    ("$group", "Valid characters are:"),
+    ("_abcd-1234.ABCD", None),
 ])
-def test_base_types(value, error):
+def test_group_name(value, error: str | None):
     class Model(BaseModel):
         group: GroupName
 
-    with pytest.raises(ValidationErrors) as ve:
+    if error:
+        with pytest.raises(ValidationErrors) as ve:
+            Model(group=value)
+        assert error in ve.value.errors[0].errmsg
+    else:
         Model(group=value)
-
-    assert ve.value.errors[0].errmsg == error
