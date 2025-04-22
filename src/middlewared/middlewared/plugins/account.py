@@ -421,7 +421,9 @@ class UserService(CRUDService):
 
         # Add a synthetic user for the root account in containers
         container_root = await self.middleware.call('idmap.synthetic_user', SYNTHETIC_CONTAINER_ROOT.copy(), None)
-        container_root.update({'userns_idmap': 'DIRECT', 'builtin': True, 'local': True})
+        # NOTE: we deliberately don't include a userns_idmap value here because it is
+        # implicit when we set up subuid for container
+        container_root.update({'builtin': True, 'local': True})
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users + [container_root], filters, options
