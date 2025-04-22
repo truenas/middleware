@@ -30,7 +30,7 @@ ALLOWED_BUILTIN_GIDS = {
     952,  # truenas_sharing_administrators
 }
 
-SYNTHENTIC_CONTAINER_ROOT = { 
+SYNTHETIC_CONTAINER_ROOT = { 
     'pw_name': 'truenas_container_unpriv_root',
     'pw_uid': 2147000001,
     'pw_gid': 2147000001,

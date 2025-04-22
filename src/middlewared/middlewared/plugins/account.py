@@ -69,7 +69,7 @@ from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
-    SYNTHENTIC_CONTAINER_ROOT,
+    SYNTHETIC_CONTAINER_ROOT,
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -420,7 +420,7 @@ class UserService(CRUDService):
         )
 
         # Add a synthetic user for the root account in containers
-        container_root = await self.middleware.call('idmap.synthetic_user', SYNTHENTIC_CONTAINER_ROOT.copy(), None)
+        container_root = await self.middleware.call('idmap.synthetic_user', SYNTHETIC_CONTAINER_ROOT.copy(), None)
         container_root.update({'userns_idmap': 'DIRECT', 'builtin': True, 'local': True})
 
         return await self.middleware.run_in_thread(
@@ -1100,11 +1100,11 @@ class UserService(CRUDService):
             verrors.add('get_user_obj.username', '"username" and "uid" may not be simultaneously specified')
         verrors.check()
 
-        # Return the container root if requested
-        if data['username'] == SYNTHENTIC_CONTAINER_ROOT['pw_name']:
-            return SYNTHENTIC_CONTAINER_ROOT.copy()
-        elif data['uid'] == SYNTHENTIC_CONTAINER_ROOT['pw_uid']:
-            return SYNTHENTIC_CONTAINER_ROOT.copy()
+        # Return the container root if requestedt
+        if data['username'] == SYNTHETIC_CONTAINER_ROOT['pw_name']:
+            return SYNTHETIC_CONTAINER_ROOT.copy()
+        elif data['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
+            return SYNTHETIC_CONTAINER_ROOT.copy()
 
         # NOTE: per request from UI team we are overriding default library
         # KeyError message with a clearer one
