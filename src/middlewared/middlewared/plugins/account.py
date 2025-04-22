@@ -420,20 +420,8 @@ class UserService(CRUDService):
         )
 
         # Add a synthetic user for the root account in containers
-        container_root = await self.middleware.call('idmap.synthetic_user', {
-            'pw_name': SYNTHENTIC_CONTAINER_ROOT.pw_name,
-            'pw_uid': SYNTHENTIC_CONTAINER_ROOT.pw_uid,
-            'pw_gid': SYNTHENTIC_CONTAINER_ROOT.pw_gid,
-            'pw_gecos': SYNTHENTIC_CONTAINER_ROOT.pw_gecos,
-            'pw_dir': SYNTHENTIC_CONTAINER_ROOT.pw_dir,
-            'pw_shell': SYNTHENTIC_CONTAINER_ROOT.pw_shell,
-            'source': SYNTHENTIC_CONTAINER_ROOT.source,
-        }, None)
-        container_root.update({
-            'userns_idmap': 'DIRECT',
-            'builtin': True,
-            'local': True
-        })
+        container_root = await self.middleware.call('idmap.synthetic_user', SYNTHENTIC_CONTAINER_ROOT.copy(), None)
+        container_root.update({'userns_idmap': 'DIRECT', 'builtin': True, 'local': True})
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users + [container_root], filters, options
@@ -1111,6 +1099,12 @@ class UserService(CRUDService):
         if data['username'] and data['uid'] is not None:
             verrors.add('get_user_obj.username', '"username" and "uid" may not be simultaneously specified')
         verrors.check()
+
+        # Return the container root if requested
+        if data['username'] == SYNTHENTIC_CONTAINER_ROOT['pw_name']:
+            return SYNTHENTIC_CONTAINER_ROOT.copy()
+        elif data['uid'] == SYNTHENTIC_CONTAINER_ROOT['pw_uid']:
+            return SYNTHENTIC_CONTAINER_ROOT.copy()
 
         # NOTE: per request from UI team we are overriding default library
         # KeyError message with a clearer one
