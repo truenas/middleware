@@ -29,7 +29,7 @@ from middlewared.api.current import (
 )
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
-from middlewared.plugins.accounts_.constants import SYNTHETIC_CONTAINER_ROOT
+from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import private, CallError, filterable_api_method, Service, job
 from middlewared.utils import filter_list
