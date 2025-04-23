@@ -1,4 +1,5 @@
 import os
+import pytest
 
 from truenas_api_client import Client
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
@@ -39,3 +40,10 @@ def test__user_obj_stat():
     with Client() as c:
         st = c.call('filesystem.stat', DIR)
         assert st['user'] == SYNTHETIC_CONTAINER_ROOT['pw_name']
+
+
+@pytest.mark.parametrize('file', ['/etc/shadow', '/etc/passwd'])
+def test__no_sythentic_entry(file):
+    with open(file, 'r') as f:
+        data = f.read()
+        assert SYNTHETIC_CONTAINER_ROOT['pw_name'] not in data
