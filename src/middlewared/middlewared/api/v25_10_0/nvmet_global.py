@@ -1,5 +1,4 @@
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
-from .common import QueryFilters, QueryOptions
 
 __all__ = [
     "NVMetGlobalEntry",
@@ -9,8 +8,7 @@ __all__ = [
     "NVMetGlobalAnaEnabledResult",
     "NVMetGlobalRDMAEnabledArgs",
     "NVMetGlobalRDMAEnabledResult",
-    "NVMetGlobalSessionsArgs",
-    "NVMetGlobalSessionsResult",
+    "NVMetSession"
 ]
 
 
@@ -84,12 +82,3 @@ class NVMetSession(BaseModel):
     """ `id` of the port on this TrueNAS through which the host is connected. """
     ctrl: int
     """ NVMe controller number. """
-
-
-class NVMetGlobalSessionsArgs(BaseModel):
-    query_filters: QueryFilters = []
-    query_options: QueryOptions = QueryOptions()
-
-
-class NVMetGlobalSessionsResult(BaseModel):
-    result: list[NVMetSession]

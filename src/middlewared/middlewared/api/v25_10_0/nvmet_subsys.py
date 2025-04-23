@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import Field, StringConstraints
+from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
@@ -25,7 +25,7 @@ class NVMetSubsysEntry(BaseModel):
 
     If `subnqn` is not provided on creation, then this name will be appended to the `basenqn` from `nvmet.global.config` to generate a subnqn.
     """
-    subnqn: Annotated[NonEmptyString, StringConstraints(max_length=MAX_NQN_LEN)] | None = None
+    subnqn: Annotated[NonEmptyString, Field(max_length=MAX_NQN_LEN)] | None = None
     serial: str
     allow_any_host: bool = False
     """

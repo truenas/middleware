@@ -21,6 +21,7 @@ from .kernel import unlock_namespace as kernel_unlock_namespace
 from .kernel import resize_namespace as kernel_resize_namespace
 
 UUID_GENERATE_RETRIES = 10
+NSID_SEARCH_RANGE = 0xFFFF  # This is much less than NSID, but good enough for practical purposes.
 
 
 class NVMetNamespaceModel(sa.Model):
@@ -61,7 +62,7 @@ class NVMetNamespaceService(SharingService):
         NVMetNamespaceCreateArgs,
         NVMetNamespaceCreateResult,
         audit='Create NVMe target namespace',
-        audit_extended=lambda data: data['name']
+        audit_extended=lambda data: f"Subsys ID: {data['subsys_id']} device path: {data['device_path']}"
     )
     async def do_create(self, data):
         """
@@ -315,7 +316,7 @@ class NVMetNamespaceService(SharingService):
                                                                     [['subsys.id', '=', subsys_id]],
                                                                     {'select': ['nsid']})}
 
-        for i in range(1, 32000):
+        for i in range(1, NSID_SEARCH_RANGE):
             if i not in existing:
                 return i
         raise ValueError("Unable to determine namespace ID (NSID)")

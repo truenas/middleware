@@ -33,7 +33,7 @@ class NVMetHostSubsysService(CRUDService):
         NVMetHostSubsysCreateArgs,
         NVMetHostSubsysCreateResult,
         audit='Create NVMe target host to subsystem mapping',
-        audit_extended=lambda data: data['name']
+        audit_extended=lambda data: f"Host ID: {data['host_id']} Subsys ID: {data['subsys_id']}"
     )
     async def do_create(self, data):
         """

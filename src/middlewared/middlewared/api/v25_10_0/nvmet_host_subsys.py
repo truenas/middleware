@@ -1,6 +1,6 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, ForUpdateMetaclass
 
 __all__ = [
     "NVMetHostSubsysEntry",
@@ -19,10 +19,7 @@ class NVMetHostSubsysEntry(BaseModel):
     subsys: dict | None
 
 
-class NVMetHostSubsysCreate(NVMetHostSubsysEntry):
-    id: Excluded = excluded_field()
-    host: Excluded = excluded_field()
-    subsys: Excluded = excluded_field()
+class NVMetHostSubsysCreate(BaseModel):
     host_id: int
     subsys_id: int
 

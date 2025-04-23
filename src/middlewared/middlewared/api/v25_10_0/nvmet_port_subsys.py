@@ -1,6 +1,6 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, ForUpdateMetaclass
 
 __all__ = [
     "NVMetPortSubsysEntry",
@@ -19,10 +19,7 @@ class NVMetPortSubsysEntry(BaseModel):
     subsys: dict | None
 
 
-class NVMetPortSubsysCreate(NVMetPortSubsysEntry):
-    id: Excluded = excluded_field()
-    port: Excluded = excluded_field()
-    subsys: Excluded = excluded_field()
+class NVMetPortSubsysCreate(BaseModel):
     port_id: int
     subsys_id: int
 

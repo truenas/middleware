@@ -49,7 +49,8 @@ class NVMetPortService(CRUDService):
         NVMetPortCreateArgs,
         NVMetPortCreateResult,
         audit='Create NVMe target port',
-        audit_extended=lambda data: data['name']
+        audit_extended=lambda data:
+        f"Transport: {data['addr_trtype']} Address: {data['addr_traddr']}/{data['addr_trsvcid']}"
     )
     async def do_create(self, data):
         """

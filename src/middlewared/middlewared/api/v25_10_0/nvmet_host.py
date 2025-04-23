@@ -42,16 +42,16 @@ class NVMetHostEntry(BaseModel):
     HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected.
     """
 
+
+class NVMetHostCreate(NVMetHostEntry):
+    id: Excluded = excluded_field()
+
     @model_validator(mode='after')
     def validate_attrs(self):
         if self.dhchap_ctrl_key and not self.dhchap_key:
             raise ValueError('Cannot configure bi-directional authentication without setting dhchap_key')
 
         return self
-
-
-class NVMetHostCreate(NVMetHostEntry):
-    id: Excluded = excluded_field()
 
 
 class NVMetHostCreateArgs(BaseModel):
@@ -92,7 +92,7 @@ class NVMetHostDeleteResult(BaseModel):
 class NVMetHostGenerateKeyArgs(BaseModel):
     dhchap_hash: Literal['SHA-256', 'SHA-384', 'SHA-512'] = 'SHA-256'
     """ Hash to be used with the generated key.  """
-    nqn: str = None
+    nqn: str | None = None
     """ NQN to be used for the transformation. """
 
 

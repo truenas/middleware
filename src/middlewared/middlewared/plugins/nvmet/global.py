@@ -7,12 +7,11 @@ from middlewared.api.current import (NVMetGlobalAnaEnabledArgs,
                                      NVMetGlobalEntry,
                                      NVMetGlobalRDMAEnabledArgs,
                                      NVMetGlobalRDMAEnabledResult,
-                                     NVMetGlobalSessionsArgs,
-                                     NVMetGlobalSessionsResult,
                                      NVMetGlobalUpdateArgs,
-                                     NVMetGlobalUpdateResult)
+                                     NVMetGlobalUpdateResult,
+                                     NVMetSession)
 from middlewared.plugins.rdma.constants import RDMAprotocols
-from middlewared.service import SystemServiceService, ValidationErrors, private
+from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 from middlewared.utils import filter_list
 from .constants import NVMET_SERVICE_NAME
 from .kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
@@ -26,7 +25,7 @@ class NVMetGlobalModel(sa.Model):
     __tablename__ = 'services_nvmet_global'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    nvmet_global_basenqn = sa.Column(sa.String(255), default=uuid_nqn())
+    nvmet_global_basenqn = sa.Column(sa.String(255), default=uuid_nqn)
     nvmet_global_kernel = sa.Column(sa.Boolean(), default=True)
     nvmet_global_ana = sa.Column(sa.Boolean(), default=False)
     nvmet_global_rdma = sa.Column(sa.Boolean(), default=False)
@@ -130,11 +129,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
         return (await self.middleware.call('nvmet.global.config'))['rdma']
 
-    @api_method(
-        NVMetGlobalSessionsArgs,
-        NVMetGlobalSessionsResult,
-        roles=['SHARING_NVME_TARGET_READ']
-    )
+    @filterable_api_method(item=NVMetSession, roles=['SHARING_NVME_TARGET_READ'])
     async def sessions(self, filters, options):
         sessions = []
         subsys_id = None
@@ -151,6 +146,17 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         return filter_list(sessions, filters, options)
 
     def __parse_session_dir(self, path: pathlib.Path, port_index_to_id: dict):
+        """
+        Parse the session directory, e.g.
+        /sys/kernel/debug/nvmet/<SUBSYS_NQN>/ctrl<NUMBER>
+        """
+        # For example
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/host_traddr
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/state
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/kato
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/hostnqn
+        # /sys/kernel/debug/nvmet/nqn.2011-06.com.truenas:uuid:cef24057-8050-4fc7-ab87-773e19b32b0e:foo1/ctrl2/port
         if path.name.startswith('ctrl'):
             result = {}
             result['ctrl'] = int(path.name[4:])
@@ -193,25 +199,22 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     @private
     async def load_kernel_modules(self):
         if (await self.config())['kernel']:
-            do_load = any([
-                await self.middleware.call('failover.is_single_master_node'),
-                await self.middleware.call('nvmet.global.ana_active')
-            ])
-            if do_load:
+            if await self.middleware.call('failover.is_single_master_node') or \
+               await self.middleware.call('nvmet.global.ana_active'):
                 modules = await self.__kernel_modules()
                 await self.middleware.run_in_thread(load_modules, modules)
 
     @private
     async def unload_kernel_modules(self):
-        if modules := await self.__kernel_modules():
+        if modules := await self.__kernel_modules(True):
             modules.reverse()
             for m in modules:
                 await self.middleware.run_in_thread(unload_module, m)
 
-    async def __kernel_modules(self):
+    async def __kernel_modules(self, all_modules=None):
         if (await self.config())['kernel']:
             modules = ['nvmet', 'nvmet_tcp']
-            if await self.middleware.call('nvmet.global.rdma_enabled'):
+            if all_modules or await self.middleware.call('nvmet.global.rdma_enabled'):
                 modules.append('nvmet_rdma')
             return modules
 

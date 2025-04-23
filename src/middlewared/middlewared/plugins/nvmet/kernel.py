@@ -307,10 +307,7 @@ class NvmetPortReferralConfig(NvmetConfig):
 
             referrals_path = pathlib.Path(portpath, 'referrals')
             # First check if there are any ports whose referrals are to be ENTIRELY removed
-            if parent_index not in referrals:
-                for referral_path in referrals_path.iterdir():
-                    to_remove.append(referral_path)
-            else:
+            if parent_index in referrals:
                 # We're supposed to have some referrals.  Check for additions,
                 # updates, removals.
                 config_keys = {str(index) for index in referrals[parent_index]}
@@ -319,8 +316,7 @@ class NvmetPortReferralConfig(NvmetConfig):
                 remove_keys = live_keys - config_keys
                 update_keys = config_keys - remove_keys - add_keys
 
-                for key in remove_keys:
-                    to_remove.append(pathlib.Path(referrals_path, key))
+                to_remove.extend(pathlib.Path(referrals_path, key) for key in remove_keys)
 
                 for key in add_keys:
                     pathlib.Path(referrals_path, key).mkdir()
@@ -340,6 +336,8 @@ class NvmetPortReferralConfig(NvmetConfig):
                     attrs['enable'] = '1'
                     path = pathlib.Path(referrals_path, key)
                     retries = cls.set_mapped_attrs(path, attrs, retries, render_ctx)
+            else:
+                to_remove.extend(referrals_path.iterdir())
 
         yield
 
@@ -522,16 +520,10 @@ class NvmetNamespaceConfig(NvmetConfig):
         # Is ANA active for this namespace (subsystem)
         if render_ctx['nvmet.global.ana_active']:
             # Maybe ANA applies to this namespace
-            match attrs['subsys']['nvmet_subsys_ana']:
-                case True:
-                    do_ana = True
-                case False:
-                    do_ana = False
-                case _:
-                    if render_ctx['nvmet.global.ana_enabled']:
-                        do_ana = True
-                    else:
-                        do_ana = False
+            if isinstance(nvmet_subsys_ana := attrs['subsys']['nvmet_subsys_ana'], bool):
+                do_ana = nvmet_subsys_ana
+            else:
+                do_ana = bool(render_ctx['nvmet.global.ana_enabled'])
 
         if do_ana:
             match render_ctx['failover.node']:
@@ -685,15 +677,17 @@ def write_config(config):
     #
     # Therefore we can nest them to enfore the necessary
     # order of operations.
-    with NvmetSubsysConfig.render(config):
-        with NvmetHostConfig.render(config):
-            with NvmetPortConfig.render(config):
-                with NvmetPortReferralConfig.render(config):
-                    with NvmetPortAnaReferralConfig.render(config):
-                        with NvmetHostSubsysConfig.render(config):
-                            with NvmetPortSubsysConfig.render(config):
-                                with NvmetNamespaceConfig.render(config):
-                                    pass
+    with (
+        NvmetSubsysConfig.render(config),
+        NvmetHostConfig.render(config),
+        NvmetPortConfig.render(config),
+        NvmetPortReferralConfig.render(config),
+        NvmetPortAnaReferralConfig.render(config),
+        NvmetHostSubsysConfig.render(config),
+        NvmetPortSubsysConfig.render(config),
+        NvmetNamespaceConfig.render(config),
+    ):
+        pass
 
 
 def _map_device_path(device_type, device_path):
