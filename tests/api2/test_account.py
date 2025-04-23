@@ -221,7 +221,7 @@ def test_update_user_with_random_password():
 
 
 def test_account_create_invalid_username():
-    with pytest.raises(ValidationErrors, match="Valid characters for a username"):
+    with pytest.raises(ValidationErrors, match="Valid characters are:"):
         with user({
             "username": "_блин",
             "full_name": "bob",
@@ -238,5 +238,5 @@ def test_account_update_invalid_username():
         "group_create": True,
         "password": "canary"
     }, get_instance=True) as u:
-        with pytest.raises(ValidationErrors, match="Valid characters for a username"):
+        with pytest.raises(ValidationErrors, match="Valid characters are:"):
             call("user.update", u["id"], {"username": "_блин"})

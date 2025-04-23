@@ -2,8 +2,10 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import (BaseModel, ContainerXID, Excluded, excluded_field, ForUpdateMetaclass, LocalUID,
-                                  NonEmptyString, single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel, ContainerXID, Excluded, excluded_field, ForUpdateMetaclass, LocalUID, GroupName, NonEmptyString,
+    single_argument_args, single_argument_result
+)
 
 __all__ = ["GroupEntry",
            "GroupCreateArgs", "GroupCreateResult",
@@ -52,6 +54,7 @@ class GroupCreate(GroupEntry):
 
     gid: LocalUID | None = None
     "If `null`, it is automatically filled with the next one available."
+    name: GroupName
 
 
 class GroupCreateArgs(BaseModel):
@@ -107,22 +110,22 @@ class GroupGetGroupObjArgs(BaseModel):
 @single_argument_result
 class GroupGetGroupObjResult(BaseModel):
     gr_name: str
-    "name of the group"
+    "Name of the group."
     gr_gid: int
-    "group id of the group"
+    "Group ID of the group."
     gr_mem: list[str]
-    "list of group names that are members of the group"
+    "List of group names that are members of the group."
     sid: str | None = None
-    "optional SID value for the account that is present if `sid_info` is specified in payload."
+    "Optional SID value for the account that is present if `sid_info` is specified in payload."
     source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
     """
-    the name server switch module that provided the user. Options are:
+    The name server switch module that provided the user. Options are:
         FILES - local user in passwd file of server,
         WINBIND - user provided by winbindd,
         SSS - user provided by SSSD.
     """
     local: bool
-    "boolean indicating whether this group is local to the NAS or provided by a directory service."
+    "Boolean indicating whether this group is local to the NAS or provided by a directory service."
 
 
 class GroupHasPasswordEnabledUserArgs(BaseModel):

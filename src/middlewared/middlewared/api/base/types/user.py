@@ -7,7 +7,7 @@ from pydantic.functional_validators import AfterValidator
 
 from middlewared.utils.sid import sid_is_valid
 
-__all__ = ["LocalUsername", "RemoteUsername", "LocalUID", "LocalGID", "SID", "ContainerXID"]
+__all__ = ["LocalUsername", "RemoteUsername", "GroupName", "LocalUID", "LocalGID", "SID", "ContainerXID"]
 
 XID_MAX = 2 ** 32 - 2  # uid_t -1 can have special meaning depending on context
 # TRUENAS_IDMAP_MAX + 1
@@ -26,21 +26,28 @@ DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + '_' + '-' + '.'
 DEFAULT_VALID_START = string.ascii_letters + '_'
 DEFAULT_MAX_LENGTH = 32  # WARNING UT_NAMESIZE = 32. If we go above this then utmp accounting may break
 
+GROUP_VALID_START = string.ascii_letters + string.digits + '_' + '.'
 
-def validate_username(
+
+def validate_name(
     val: str,
     valid_chars: str = DEFAULT_VALID_CHARS,
     valid_start_chars: str | None = DEFAULT_VALID_START,
     max_length: int | None = DEFAULT_MAX_LENGTH
 ) -> str:
     val_len = len(val)
-    assert val_len > 0, 'Username must be at least 1 character in length'
-    if max_length is not None:
-        assert val_len <= max_length, f'Username cannot exceed {max_length} charaters in length'
-    if valid_start_chars is not None:
-        assert val[0] in valid_start_chars, 'Username must start with a letter or an underscore'
+    if val_len == 0:
+        raise ValueError('Must be at least 1 character in length')
+    if max_length is not None and val_len > max_length:
+        raise ValueError(f'Cannot exceed {max_length} charaters in length')
 
-    assert all(char in valid_chars for char in val), f'Valid characters for a username are: {", ".join(valid_chars)!r}'
+    if valid_start_chars is not None:
+        if val[0] not in valid_start_chars:
+            raise ValueError(f'Cannot start with "{val[0]!r}"')
+
+    if not all(char in valid_chars for char in val):
+        raise ValueError(f'Valid characters are: {", ".join(valid_chars)!r}')
+
     return val
 
 
@@ -49,7 +56,7 @@ def validate_local_username(val: str) -> str:
     # NOTE: we are ignoring the man page's recommendation for insistence
     # upon the starting character of a username be a lower-case letter.
     # We aren't enforcing this for maximum backwards compatibility
-    return validate_username(val)
+    return validate_name(val)
 
 
 def validate_sid(value: str) -> str:
@@ -65,6 +72,10 @@ def validate_sid(value: str) -> str:
 
 LocalUsername = Annotated[str, AfterValidator(validate_local_username)]
 RemoteUsername = Annotated[str, Field(min_length=1)]
+GroupName = Annotated[
+    str,
+    AfterValidator(lambda x: validate_name(x, valid_start_chars=GROUP_VALID_START, max_length=None))
+]
 LocalUID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
 LocalGID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
