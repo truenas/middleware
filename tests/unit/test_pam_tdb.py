@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from middlewared.utils import crypto
 from middlewared.utils import user_api_key
 from time import monotonic
+from truenas_api_client import Client
 
 EXPIRED_TS = 1
 BASE_ID = 1325
@@ -138,6 +139,17 @@ def fail_delay() -> Generator[None, None, None]:
     yield
     elapsed = monotonic() - now
     assert elapsed > PAM_FAIL_DELAY
+
+
+@contextmanager
+def api_key(username, key_name):
+    with Client() as c:
+        resp = c.call('api_key.create', {'username': username, 'name': key_name})
+        pk = resp['id']
+        try:
+            yield resp
+        finally:
+            c.call('api_key.delete', pk)
 
 
 @pytest.fixture(scope='module')
@@ -326,3 +338,21 @@ def test_invalid_tdb_data(current_username, fuzz_fn):
         authd = p.authenticate(current_username, f'{db_id}-{key}', service=svc)
         assert authd is False
         assert p.code == pam.PAM_AUTHINFO_UNAVAIL
+
+
+def test_max_api_key_verror():
+    with (
+        api_key('root', 'key1'),
+        api_key('root', 'key2'),
+        api_key('root', 'key3'),
+        api_key('root', 'key4'),
+        api_key('root', 'key5'),
+        api_key('root', 'key6'),
+        api_key('root', 'key7'),
+        api_key('root', 'key8'),
+        api_key('root', 'key9'),
+        api_key('root', 'key10'),
+    ):
+        with pytest.raises(Exception, match='exceeds maximum per-user API key limit'):
+            with api_key('root', 'key11'):
+                pass

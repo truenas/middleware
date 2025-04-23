@@ -17,6 +17,7 @@ from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_pbkdf2_512, generate_string
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
+from middlewared.utils.user_api_key import PAM_TDB_MAX_KEYS
 from middlewared.utils.time_utils import utc_now
 
 
@@ -190,6 +191,14 @@ class ApiKeyService(CRUDService):
 
         if user and not user[0]['roles']:
             verrors.add('api_key_create', 'User lacks privilege role membership.')
+
+        if user and self.middleware.call_sync('api_key.query', [
+            ["username", "=", user[0]['username']]
+        ], {'count': True}) >= PAM_TDB_MAX_KEYS:
+            verrors.add(
+                'api_key_create.username',
+                f'User already meets or exceeds maximum per-user API key limit of {PAM_TDB_MAX_KEYS}'
+            )
         verrors.check()
 
         if user[0]['local']:
