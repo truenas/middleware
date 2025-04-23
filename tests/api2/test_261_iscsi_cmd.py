@@ -127,6 +127,14 @@ def get_ip_addr(ip):
 
 
 @contextlib.contextmanager
+def assert_validation_errors(attribute: str, errmsg: str):
+    with pytest.raises(ValidationErrors) as ve:
+        yield
+    assert ve.value.errors[0].attribute == attribute
+    assert ve.value.errors[0].errmsg.startswith(errmsg)
+
+
+@contextlib.contextmanager
 def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None, discovery_auth=None):
     payload = {
         'tag': tag,
@@ -1328,6 +1336,40 @@ def generate_name(length, base="target"):
     remaining = length - len(result)
     assert remaining >= 0, f"Function not suitable for such a short length: {length}"
     return result + ''.join(random.choices(string.ascii_lowercase + string.digits, k=remaining))
+
+
+class TestEntentNames:
+    @pytest.fixture(scope='class')
+    def dup_extent_zvols(self, iscsi_running):
+        zvol_a = f'zvol{digit}a'
+        zvol_b = f'zvol{digit}b'
+
+        with zvol_dataset(f'{pool_name}/{zvol_a}', 100) as zvola:
+            with zvol_dataset(f'{pool_name}/{zvol_b}', 200) as zvolb:
+                yield zvola, zvolb
+
+    @pytest.mark.parametrize('name1,bad_name2,good_name2',
+                             [
+                                 ('test_1', 'test.1', 'test_2'),
+                                 ('test-1', 'test/1', 'test-2'),
+                             ])
+    def test__test_duplicate_extent_name(self, name1, bad_name2, good_name2, dup_extent_zvols):
+        """
+        Test that an extent name may not be duplicated, even with flattening.
+        """
+        zvola, zvolb = dup_extent_zvols
+        with zvol_extent(zvola['name'], extent_name=name1):
+            with assert_validation_errors('iscsi_extent_create.name', 'Extent name must be unique'):
+                with zvol_extent(zvolb['name'], extent_name=name1):
+                    pass
+            with assert_validation_errors('iscsi_extent_create.name', f'Extent name must be unique when flattened ({name1})'):
+                with zvol_extent(zvolb['name'], extent_name=bad_name2):
+                    pass
+            with zvol_extent(zvolb['name'], extent_name=good_name2) as extent2:
+                with assert_validation_errors('iscsi_extent_update.name', 'Extent name must be unique'):
+                    call('iscsi.extent.update', extent2['id'], {'name': name1})
+                with assert_validation_errors('iscsi_extent_update.name', f'Extent name must be unique when flattened ({name1})'):
+                    call('iscsi.extent.update', extent2['id'], {'name': bad_name2})
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
