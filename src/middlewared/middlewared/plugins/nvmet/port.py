@@ -3,9 +3,15 @@ import itertools
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (NVMetPortCreateArgs, NVMetPortCreateResult, NVMetPortDeleteArgs,
-                                     NVMetPortDeleteResult, NVMetPortEntry, NVMetPortTransportAddressChoicesArgs,
-                                     NVMetPortTransportAddressChoicesResult, NVMetPortUpdateArgs, NVMetPortUpdateResult)
+from middlewared.api.current import (NVMetPortCreateArgs,
+                                     NVMetPortCreateResult,
+                                     NVMetPortDeleteArgs,
+                                     NVMetPortDeleteResult,
+                                     NVMetPortEntry,
+                                     NVMetPortTransportAddressChoicesArgs,
+                                     NVMetPortTransportAddressChoicesResult,
+                                     NVMetPortUpdateArgs,
+                                     NVMetPortUpdateResult)
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import MatchNotFound, ValidationErrors

@@ -5,8 +5,12 @@ import uuid
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (NVMetNamespaceCreateArgs, NVMetNamespaceCreateResult, NVMetNamespaceDeleteArgs,
-                                     NVMetNamespaceDeleteResult, NVMetNamespaceEntry, NVMetNamespaceUpdateArgs,
+from middlewared.api.current import (NVMetNamespaceCreateArgs,
+                                     NVMetNamespaceCreateResult,
+                                     NVMetNamespaceDeleteArgs,
+                                     NVMetNamespaceDeleteResult,
+                                     NVMetNamespaceEntry,
+                                     NVMetNamespaceUpdateArgs,
                                      NVMetNamespaceUpdateResult)
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import SharingService, ValidationErrors, private
@@ -280,19 +284,19 @@ class NVMetNamespaceService(SharingService):
             if old['enabled'] and await self.middleware.call('nvmet.global.running'):
                 # Ensure we're only changing enabled
                 for key, oldvalue in old.items():
-                    if key in ['enabled', 'filesize']:
+                    if key in ('enabled', 'filesize'):
                         continue
                     if data[key] == oldvalue:
                         continue
                     verrors.add(schema_name,
                                 f'Cannot change {key} on an active namespace.  Disable first to allow change.')
 
-        for key in ['device_uuid', 'device_nguid']:
+        for key in ('device_uuid', 'device_nguid'):
             data[key] = await self.__generate_uuid(data.get(key), key)
 
     @private
     async def __generate_uuid(self, old_uuid, key):
-        if old_uuid not in [None, '']:
+        if old_uuid not in (None, ''):
             return old_uuid
         existing = [i[key] for i in (
             await self.middleware.call('nvmet.namespace.query', [], {'select': [key]})

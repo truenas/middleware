@@ -2,9 +2,15 @@ import pathlib
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (NVMetGlobalAnaEnabledArgs, NVMetGlobalAnaEnabledResult, NVMetGlobalEntry,
-                                     NVMetGlobalRDMAEnabledArgs, NVMetGlobalRDMAEnabledResult, NVMetGlobalSessionsArgs,
-                                     NVMetGlobalSessionsResult, NVMetGlobalUpdateArgs, NVMetGlobalUpdateResult)
+from middlewared.api.current import (NVMetGlobalAnaEnabledArgs,
+                                     NVMetGlobalAnaEnabledResult,
+                                     NVMetGlobalEntry,
+                                     NVMetGlobalRDMAEnabledArgs,
+                                     NVMetGlobalRDMAEnabledResult,
+                                     NVMetGlobalSessionsArgs,
+                                     NVMetGlobalSessionsResult,
+                                     NVMetGlobalUpdateArgs,
+                                     NVMetGlobalUpdateResult)
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import filter_list
@@ -62,11 +68,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         return await self.config()
 
     async def __ana_forbidden(self):
-        # if not await self.middleware.call('system.is_enterprise'):
-        #     return True
-        if not await self.middleware.call('failover.licensed'):
-            return True
-        return False
+        return not await self.middleware.call('failover.licensed')
 
     async def __validate(self, verrors, data, schema_name, old=None):
         if not data.get('kernel', False):
@@ -192,7 +194,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     async def load_kernel_modules(self):
         if (await self.config())['kernel']:
             do_load = any([
-                await self.middleware.call('failover.status') in ['MASTER', 'SINGLE'],
+                await self.middleware.call('failover.is_single_master_node'),
                 await self.middleware.call('nvmet.global.ana_active')
             ])
             if do_load:
@@ -201,10 +203,10 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     @private
     async def unload_kernel_modules(self):
-        modules = await self.__kernel_modules()
-        modules.reverse()
-        for m in modules:
-            await self.middleware.run_in_thread(unload_module, m)
+        if modules := await self.__kernel_modules():
+            modules.reverse()
+            for m in modules:
+                await self.middleware.run_in_thread(unload_module, m)
 
     async def __kernel_modules(self):
         if (await self.config())['kernel']:
@@ -241,20 +243,10 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         if not service['enable'] or service['state'] == 'RUNNING':
             return
 
-        # We do need to start things
-        if await self.middleware.call('system.is_ha_capable'):
-            if not await self.middleware.call('failover.licensed'):
-                return
-            # If failover is enabled then we don't need to do anything
-            # here as it will be handled in failover.vrrp_master and
-            # failover.vrrp_backup
-            if not (await self.middleware.call('failover.config'))['disabled']:
-                return
-            if await self.middleware.call('failover.status') == 'BACKUP':
-                if await self.middleware.call('nvmet.global.ana_active'):
-                    await self.middleware.call('nvmet.global.start')
-        else:
-            await self.middleware.call('nvmet.global.start')
+        if await self.middleware.call('failover.licensed'):
+            return
+
+        await self.middleware.call('nvmet.global.start')
 
 
 async def __event_system_ready(middleware, event_type, args):

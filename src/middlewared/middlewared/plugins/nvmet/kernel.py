@@ -7,8 +7,14 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from .constants import (DHCHAP_DHGROUP, DHCHAP_HASH, NAMESPACE_DEVICE_TYPE, NVMET_KERNEL_CONFIG_DIR,
-                        NVMET_NODE_A_ANA_GRPID, NVMET_NODE_B_ANA_GRPID, PORT_ADDR_FAMILY, PORT_TRTYPE)
+from .constants import (DHCHAP_DHGROUP,
+                        DHCHAP_HASH,
+                        NAMESPACE_DEVICE_TYPE,
+                        NVMET_KERNEL_CONFIG_DIR,
+                        NVMET_NODE_A_ANA_GRPID,
+                        NVMET_NODE_B_ANA_GRPID,
+                        PORT_ADDR_FAMILY,
+                        PORT_TRTYPE)
 
 ANA_OPTIMIZED_STATE = 'optimized'
 ANA_INACCESSIBLE_STATE = 'inaccessible'
@@ -75,7 +81,6 @@ class NvmetConfig(abc.ABC):
     def set_mapped_attrs(cls, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
         for k, v in attrs.items():
             p = pathlib.Path(path, k)
-            # DEBUG print(f"Want to write {v} to {p}")
             while not p.exists() and retries > 0:
                 time.sleep(1)
                 retries -= 1
@@ -106,7 +111,6 @@ class NvmetConfig(abc.ABC):
             p = pathlib.Path(path, k)
             curval = p.read_text().strip()
             if not cls.values_match(curval, v):
-                # print(f"Writing {k} value *{v}* to {p} [current value: *{curval}*]")
                 p.write_text(f'{v}\n')
 
 
@@ -119,7 +123,7 @@ class NvmetHostConfig(NvmetConfig):
     def map_attrs(cls, attrs: dict, render_ctx: dict):
         result = {}
         for k, v in attrs.items():
-            if k in ['dhchap_key', 'dhchap_ctrl_key']:
+            if k in ('dhchap_key', 'dhchap_ctrl_key'):
                 result[k] = '\0' if v is None else v
             elif k == 'dhchap_dhgroup':
                 result[k] = DHCHAP_DHGROUP.by_api(v).sysfs
@@ -178,7 +182,7 @@ class NvmetPortConfig(NvmetConfig):
                     if v is not None:
                         result['param_max_queue_size'] = str(v)
                 case 'pi_enable':
-                    result['param_pi_enable'] = '0' if v in [None, False] else '1'
+                    result['param_pi_enable'] = '0' if v in (None, False) else '1'
 
         return result
 
@@ -198,8 +202,7 @@ class NvmetPortConfig(NvmetConfig):
             return
         ana_path = cls.port_ana_path(path, render_ctx)
         if render_ctx['nvmet.global.ana_active']:
-            if not ana_path.is_dir():
-                ana_path.mkdir()
+            ana_path.mkdir(exist_ok=True)
             ana_state_path = pathlib.Path(ana_path, 'ana_state')
             cur_state = ana_state_path.read_text().strip()
             new_state = ANA_OPTIMIZED_STATE if render_ctx['failover.status'] == 'MASTER' else ANA_INACCESSIBLE_STATE
@@ -231,7 +234,7 @@ class NvmetPortReferralConfig(NvmetConfig):
     query = 'nvmet.port.usage'
     query_key = 'non_ana_referrals'
 
-    ITEMS = ['addr_trtype', 'addr_adrfam', 'addr_traddr', 'addr_trsvcid']
+    ITEMS = ('addr_trtype', 'addr_adrfam', 'addr_traddr', 'addr_trsvcid')
 
     @classmethod
     def handle_port(cls, index):
@@ -423,7 +426,7 @@ class NvmetSubsysConfig(NvmetConfig):
                 case 'allow_any_host':
                     result['attr_allow_any_host'] = '1' if v else '0'
                 case 'pi_enable':
-                    result['attr_pi_enable'] = '0' if v in [None, False] else '1'
+                    result['attr_pi_enable'] = '0' if v in (None, False) else '1'
                 case 'qid_max' | 'ieee_oui':
                     if v:
                         result[f'attr_{k}'] = v
@@ -434,16 +437,8 @@ class NvmetSubsysConfig(NvmetConfig):
             case 'B':
                 result['attr_cntlid_min'] = 32000
 
-        if render_ctx['system.vendor.name']:
-            result['attr_model'] = render_ctx['system.info'].get('system_product', render_ctx['system.vendor.name'])
-        else:
-            name = render_ctx['system.info'].get('system_product', 'TrueNAS')
-            if name.lower().startswith('truenas'):
-                result['attr_model'] = name
-            else:
-                result['attr_model'] = f'TrueNAS {name}'
-
-        result['attr_firmware'] = render_ctx['system.info'].get('version', 'Unknown')[:8]
+        result['attr_model'] = render_ctx['nvmet.subsys.model']
+        result['attr_firmware'] = render_ctx['nvmet.subsys.firmware']
         return result
 
 
@@ -510,7 +505,7 @@ class NvmetNamespaceConfig(NvmetConfig):
     @classmethod
     def map_attrs(cls, attrs: dict, render_ctx: dict):
         result = {}
-        for k in ['device_uuid', 'device_nguid']:
+        for k in ('device_uuid', 'device_nguid'):
             result[k] = attrs[k]
 
         device_path = attrs.get('device_path')
@@ -609,14 +604,12 @@ class NvmetLinkConfig(abc.ABC):
             srcdir = pathlib.Path(rootdir, k, cls.src_subdir)
             for entry_name in v:
                 new_link = pathlib.Path(srcdir, entry_name)
-                # DEBUG print("Making link", k, entry_name)
                 new_link.symlink_to(pathlib.Path(dstdir, entry_name))
 
         yield
 
         # Remove any links no longer required
         for link in to_unlink:
-            # DEBUG print("Removing link", path)
             link.unlink()
 
 
@@ -714,14 +707,13 @@ def _map_device_path(device_type, device_path):
 
 
 def _set_namespace_field(subnqn, nsnum, field, value):
-    p = pathlib.Path(NVMET_KERNEL_CONFIG_DIR,
+    try:
+        pathlib.Path(NVMET_KERNEL_CONFIG_DIR,
                      'subsystems',
                      subnqn,
                      'namespaces',
                      str(nsnum),
-                     field)
-    try:
-        p.write_text(f'{value}\n')
+                     field).write_text(f'{value}\n')
     except FileNotFoundError:
         pass
 

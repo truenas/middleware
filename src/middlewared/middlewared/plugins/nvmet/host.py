@@ -2,9 +2,15 @@ import base64
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (NVMetHostCreateArgs, NVMetHostCreateResult, NVMetHostDeleteArgs,
-                                     NVMetHostDeleteResult, NVMetHostEntry, NVMetHostGenerateKeyArgs,
-                                     NVMetHostGenerateKeyResult, NVMetHostUpdateArgs, NVMetHostUpdateResult)
+from middlewared.api.current import (NVMetHostCreateArgs,
+                                     NVMetHostCreateResult,
+                                     NVMetHostDeleteArgs,
+                                     NVMetHostDeleteResult,
+                                     NVMetHostEntry,
+                                     NVMetHostGenerateKeyArgs,
+                                     NVMetHostGenerateKeyResult,
+                                     NVMetHostUpdateArgs,
+                                     NVMetHostUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
@@ -141,7 +147,7 @@ class NVMetHostService(CRUDService):
         await self._ensure_unique(verrors, schema_name, 'hostnqn', data['hostnqn'], id_)
 
         # Check any keys supplied
-        for keyname in ['dhchap_key', 'dhchap_ctrl_key']:
+        for keyname in ('dhchap_key', 'dhchap_ctrl_key'):
             key = data.get(keyname)
             if key is not None:
                 match key[:10]:

@@ -1,9 +1,14 @@
 import secrets
+from functools import cache
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (NVMetSubsysCreateArgs, NVMetSubsysCreateResult, NVMetSubsysDeleteArgs,
-                                     NVMetSubsysDeleteResult, NVMetSubsysEntry, NVMetSubsysUpdateArgs,
+from middlewared.api.current import (NVMetSubsysCreateArgs,
+                                     NVMetSubsysCreateResult,
+                                     NVMetSubsysDeleteArgs,
+                                     NVMetSubsysDeleteResult,
+                                     NVMetSubsysEntry,
+                                     NVMetSubsysUpdateArgs,
                                      NVMetSubsysUpdateResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from .mixin import NVMetStandbyMixin
@@ -155,7 +160,7 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
 
     @private
     async def subsys_serial(self, serial):
-        if serial not in [None, '']:
+        if serial not in (None, ''):
             return serial
         used_serials = [i['serial'] for i in (
             await self.middleware.call('nvmet.subsys.query', [], {'select': ['serial']})
@@ -168,7 +173,7 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
 
     @private
     async def subsys_subnqn(self, subnqn, name):
-        if subnqn not in [None, '']:
+        if subnqn not in (None, ''):
             return subnqn
 
         basenqn = (await self.middleware.call('nvmet.global.config'))['basenqn']
@@ -179,3 +184,27 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
         await self._ensure_unique(verrors, schema_name, 'name', data['name'], id_)
         data['serial'] = await self.subsys_serial(data.get('serial'))
         data['subnqn'] = await self.subsys_subnqn(data.get('subnqn'), data.get('name', ''))
+
+    @private
+    @cache
+    def model(self):
+        vendor = self.middleware.call_sync('system.vendor.name')
+        dmiinfo = self.middleware.call_sync('system.dmidecode_info')
+        if dmiinfo.get('system-manufacturer') == 'QEMU':
+            system_product = 'KVM VM'
+        else:
+            system_product = dmiinfo.get('system-product-name', '')
+
+        if vendor:
+            return system_product or vendor
+        else:
+            if system_product.lower().startswith('truenas'):
+                return system_product
+            return f'TrueNAS {system_product}'
+
+    @private
+    @cache
+    def firmware(self):
+        if version := self.middleware.call_sync('system.version_short'):
+            return version[:8]
+        return 'Unknown'
