@@ -10,7 +10,7 @@ from .common import QueryFilters, QueryOptions
 
 __all__ = [
     "AuditEntry", "AuditDownloadReportArgs", "AuditDownloadReportResult", "AuditQueryArgs", "AuditQueryResult",
-    "AuditQueryExportArgs", "AuditQueryExportResult", "AuditUpdateArgs", "AuditUpdateResult",
+    "AuditExportArgs", "AuditExportResult", "AuditUpdateArgs", "AuditUpdateResult",
 ]
 
 
@@ -66,8 +66,12 @@ class AuditQuery(BaseModel):
     """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form for
     better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
     remote_controller: bool = False
-    """HA systems may direct the query to the 'remote' controller by including 'remote_controller=True'.  The default
+    """HA systems may direct the query to the 'remote' controller by including 'remote_controller=True'. The default
     is the 'current' controller."""
+
+
+class AuditExport(AuditQuery):
+    export_format: Literal['CSV', 'JSON', 'YAML'] = 'JSON'
 
 
 class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
@@ -97,10 +101,6 @@ class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
     """Boolean value indicating whether the action generating the event message succeeded."""
 
 
-class AuditQueryExport(AuditQueryResultItem):
-    export_format: Literal['CSV', 'JSON', 'YAML'] = 'JSON'
-
-
 class AuditUpdate(AuditEntry):
     available: Excluded = excluded_field()
     space: Excluded = excluded_field()
@@ -117,20 +117,20 @@ class AuditDownloadReportResult(BaseModel):
     result: None
 
 
+class AuditExportArgs(BaseModel):
+    data: AuditExport
+
+
+class AuditExportResult(BaseModel):
+    result: str
+
+
 class AuditQueryArgs(BaseModel):
     data: AuditQuery = Field(default_factory=AuditQuery)
 
 
 class AuditQueryResult(BaseModel):
     result: int | AuditQueryResultItem | list[AuditQueryResultItem]
-
-
-class AuditQueryExportArgs(BaseModel):
-    data: AuditQueryExport
-
-
-class AuditQueryExportResult(BaseModel):
-    result: str
 
 
 class AuditUpdateArgs(BaseModel):

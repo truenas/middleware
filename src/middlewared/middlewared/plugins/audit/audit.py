@@ -29,7 +29,7 @@ from .schema.sudo import AUDIT_EVENT_SUDO_JSON_SCHEMAS, AUDIT_EVENT_SUDO_PARAM_S
 from middlewared.api import api_method
 from middlewared.api.current import (
     AuditEntry, AuditDownloadReportArgs, AuditDownloadReportResult, AuditQueryArgs, AuditQueryResult,
-    AuditQueryExportArgs, AuditQueryExportResult, AuditUpdateArgs, AuditUpdateResult
+    AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
 )
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service import filterable, job, private, ConfigService
@@ -212,7 +212,7 @@ class AuditService(ConfigService):
 
         return filter_list(results, data['query-filters'], data['query-options'])
 
-    @api_method(AuditQueryExportArgs, AuditQueryExportResult, roles=['SYSTEM_AUDIT_READ'], audit='Export Audit Data')
+    @api_method(AuditExportArgs, AuditExportResult, roles=['SYSTEM_AUDIT_READ'], audit='Export Audit Data')
     @job()
     def export(self, job, data):
         """
