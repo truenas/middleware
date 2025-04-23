@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Annotated, Literal
-import uuid
+from typing import Literal
 
-from pydantic import AfterValidator, Field
+from pydantic import Field
 
 from middlewared.api.base import BaseModel, single_argument_args, ForUpdateMetaclass, Excluded, excluded_field
 from .common import QueryFilters, QueryOptions
@@ -14,16 +13,9 @@ __all__ = [
 ]
 
 
-def _validate_uuid(value: str | int):
-    if isinstance(value, int):
-        uuid.UUID(int=value)
-    else:
-        uuid.UUID(value)
-
-    return value
-
-
-UUID = Literal[''] | Annotated[str | int, AfterValidator(_validate_uuid)]
+# In theory, this should be a type to represent the values able to be passed to `uuid.UUID()`.
+# Unfortunately, our UUID values would fail this validation.
+UUID = str | int
 
 
 class AuditEntrySpace(BaseModel):
