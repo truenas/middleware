@@ -1,4 +1,3 @@
-import abc
 import os
 import pathlib
 import subprocess
@@ -21,33 +20,28 @@ ANA_INACCESSIBLE_STATE = 'inaccessible'
 ANA_PORT_INDEX_OFFSET = 5000
 
 
-class NvmetConfig(abc.ABC):
+class NvmetConfig:
 
     directory = None  # Directory below which the entities will be created
     query = None  # Query in the render_ctx that contains the entities
     query_key = None  # Field from the query used to name the directory entry
 
-    @classmethod
-    def post_create(cls, path: pathlib.Path, render_ctx: dict):
+    def post_create(self, path: pathlib.Path, render_ctx: dict):
         pass
 
-    @classmethod
-    def post_update(cls, path: pathlib.Path, render_ctx: dict):
+    def post_update(self, path: pathlib.Path, render_ctx: dict):
         pass
 
-    @classmethod
-    def pre_delete(cls, path: pathlib.Path, render_ctx: dict):
+    def pre_delete(self, path: pathlib.Path, render_ctx: dict):
         pass
 
-    @classmethod
-    def config_dict(cls, render_ctx):
-        return {str(entry[cls.query_key]): entry for entry in render_ctx[cls.query]}
+    def config_dict(self, render_ctx):
+        return {str(entry[self.query_key]): entry for entry in render_ctx[self.query]}
 
-    @classmethod
     @contextmanager
-    def render(cls, render_ctx: dict):
-        parent_dir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, cls.directory)
-        config = cls.config_dict(render_ctx)
+    def render(self, render_ctx: dict):
+        parent_dir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.directory)
+        config = self.config_dict(render_ctx)
         config_keys = set(config.keys())
         live_keys = set(os.listdir(parent_dir))
         add_keys = config_keys - live_keys
@@ -60,25 +54,24 @@ class NvmetConfig(abc.ABC):
 
         for key in update_keys:
             path = pathlib.Path(parent_dir, key)
-            cls.update_attrs(path, config[key], render_ctx)
-            cls.post_update(path, render_ctx)
+            self.update_attrs(path, config[key], render_ctx)
+            self.post_update(path, render_ctx)
 
         # Now ensure the newly created directories have the correct attributes
         retries = 10
         for key in add_keys:
             path = pathlib.Path(parent_dir, key)
-            retries = cls.set_attrs(path, config[key], retries, render_ctx)
-            cls.post_create(path, render_ctx)
+            retries = self.set_attrs(path, config[key], retries, render_ctx)
+            self.post_create(path, render_ctx)
 
         yield
 
         for key in remove_keys:
-            path = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, cls.directory, key)
-            cls.pre_delete(path, render_ctx)
+            path = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.directory, key)
+            self.pre_delete(path, render_ctx)
             path.rmdir()
 
-    @classmethod
-    def set_mapped_attrs(cls, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
+    def set_mapped_attrs(self, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
         for k, v in attrs.items():
             p = pathlib.Path(path, k)
             while not p.exists() and retries > 0:
@@ -87,13 +80,11 @@ class NvmetConfig(abc.ABC):
             p.write_text(f'{v}\n')
         return retries
 
-    @classmethod
-    def set_attrs(cls, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
-        new_attrs = cls.map_attrs(attrs, render_ctx)
-        return cls.set_mapped_attrs(path, new_attrs, retries, render_ctx)
+    def set_attrs(self, path: pathlib.Path, attrs: dict, retries: int, render_ctx: dict):
+        new_attrs = self.map_attrs(attrs, render_ctx)
+        return self.set_mapped_attrs(path, new_attrs, retries, render_ctx)
 
-    @staticmethod
-    def values_match(oldval, newval):
+    def values_match(self, oldval, newval):
         if oldval == newval:
             return True
         # Include the special case where we treat '\0' and '' the same
@@ -104,13 +95,12 @@ class NvmetConfig(abc.ABC):
             return True
         return False
 
-    @classmethod
-    def update_attrs(cls, path: pathlib.Path, attrs: dict, render_ctx: dict):
-        new_attrs = cls.map_attrs(attrs, render_ctx)
+    def update_attrs(self, path: pathlib.Path, attrs: dict, render_ctx: dict):
+        new_attrs = self.map_attrs(attrs, render_ctx)
         for k, v in new_attrs.items():
             p = pathlib.Path(path, k)
             curval = p.read_text().strip()
-            if not cls.values_match(curval, v):
+            if not self.values_match(curval, v):
                 p.write_text(f'{v}\n')
 
 
@@ -119,8 +109,7 @@ class NvmetHostConfig(NvmetConfig):
     query = 'nvmet.host.query'
     query_key = 'hostnqn'
 
-    @classmethod
-    def map_attrs(cls, attrs: dict, render_ctx: dict):
+    def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
         for k, v in attrs.items():
             if k in ('dhchap_key', 'dhchap_ctrl_key'):
@@ -137,24 +126,22 @@ class NvmetPortConfig(NvmetConfig):
     query = 'nvmet.port.query'
     query_key = 'index'
 
-    @classmethod
-    def config_dict(cls, render_ctx):
+    def config_dict(self, render_ctx):
         # For ports we may want to inject or remove ports wrt the ANA
         # settings.  ANA ports will be offset by ANA_PORT_INDEX_OFFSET (5000).
         config = {}
         non_ana_port_ids = render_ctx['nvmet.port.usage']['non_ana_port_ids']
         ana_port_ids = render_ctx['nvmet.port.usage']['ana_port_ids']
-        for entry in render_ctx[cls.query]:
+        for entry in render_ctx[self.query]:
             port_id = entry['id']
             if port_id in non_ana_port_ids:
-                config[str(entry[cls.query_key])] = entry
+                config[str(entry[self.query_key])] = entry
             if port_id in ana_port_ids:
-                new_index = ANA_PORT_INDEX_OFFSET + entry[cls.query_key]
+                new_index = ANA_PORT_INDEX_OFFSET + entry[self.query_key]
                 config[str(new_index)] = entry | {'index': new_index}
         return config
 
-    @classmethod
-    def map_attrs(cls, attrs: dict, render_ctx: dict):
+    def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
         for k, v in attrs.items():
             match k:
@@ -186,8 +173,7 @@ class NvmetPortConfig(NvmetConfig):
 
         return result
 
-    @classmethod
-    def port_ana_path(cls, path: pathlib.Path, render_ctx: dict):
+    def port_ana_path(self, path: pathlib.Path, render_ctx: dict):
         match render_ctx['failover.node']:
             case 'A':
                 return pathlib.Path(path, 'ana_groups', str(NVMET_NODE_A_ANA_GRPID))
@@ -196,11 +182,10 @@ class NvmetPortConfig(NvmetConfig):
             case _:
                 return None
 
-    @classmethod
-    def ensure_ana_state(cls, path: pathlib.Path, render_ctx: dict):
+    def ensure_ana_state(self, path: pathlib.Path, render_ctx: dict):
         if not render_ctx['failover.licensed']:
             return
-        ana_path = cls.port_ana_path(path, render_ctx)
+        ana_path = self.port_ana_path(path, render_ctx)
         if render_ctx['nvmet.global.ana_active']:
             ana_path.mkdir(exist_ok=True)
             ana_state_path = pathlib.Path(ana_path, 'ana_state')
@@ -212,19 +197,16 @@ class NvmetPortConfig(NvmetConfig):
             if ana_path.is_dir():
                 ana_path.rmdir()
 
-    @classmethod
-    def post_create(cls, path: pathlib.Path, render_ctx: dict):
-        cls.ensure_ana_state(path, render_ctx)
+    def post_create(self, path: pathlib.Path, render_ctx: dict):
+        self.ensure_ana_state(path, render_ctx)
 
-    @classmethod
-    def post_update(cls, path: pathlib.Path, render_ctx: dict):
-        cls.ensure_ana_state(path, render_ctx)
+    def post_update(self, path: pathlib.Path, render_ctx: dict):
+        self.ensure_ana_state(path, render_ctx)
 
-    @classmethod
-    def pre_delete(cls, path: pathlib.Path, render_ctx: dict):
+    def pre_delete(self, path: pathlib.Path, render_ctx: dict):
         if not render_ctx['failover.licensed']:
             return
-        if ana_path := cls.port_ana_path(path, render_ctx):
+        if ana_path := self.port_ana_path(path, render_ctx):
             if ana_path.is_dir():
                 ana_path.rmdir()
 
@@ -236,16 +218,13 @@ class NvmetPortReferralConfig(NvmetConfig):
 
     ITEMS = ('addr_trtype', 'addr_adrfam', 'addr_traddr', 'addr_trsvcid')
 
-    @classmethod
-    def handle_port(cls, index):
+    def handle_port(self, index):
         return index < ANA_PORT_INDEX_OFFSET
 
-    @classmethod
-    def index(cls, index):
+    def index(self, index):
         return index
 
-    @classmethod
-    def map_port_to_referral_attrs(cls, attrs: dict, render_ctx: dict, remote: bool):
+    def map_port_to_referral_attrs(self, attrs: dict, render_ctx: dict, remote: bool):
         return {
             'addr_trtype': PORT_TRTYPE.by_api(attrs['addr_trtype']).sysfs,
             'addr_adrfam': PORT_ADDR_FAMILY.by_api(attrs['addr_adrfam']).sysfs,
@@ -253,16 +232,14 @@ class NvmetPortReferralConfig(NvmetConfig):
             'addr_trsvcid': str(attrs['addr_trsvcid']),
         }
 
-    @classmethod
-    def read(cls, parent: pathlib.Path):
+    def read(self, parent: pathlib.Path):
         result = {}
-        for item in cls.ITEMS:
+        for item in self.ITEMS:
             result[item] = pathlib.Path(parent, item).read_text().strip()
         return result
 
-    @classmethod
     @contextmanager
-    def modify(cls, parent: pathlib.Path):
+    def modify(self, parent: pathlib.Path):
         enable_path = pathlib.Path(parent, 'enable')
         enable_path.write_text("0\n")
         try:
@@ -270,27 +247,24 @@ class NvmetPortReferralConfig(NvmetConfig):
         finally:
             enable_path.write_text("1\n")
 
-    @classmethod
-    def ports_by_index(cls, render_ctx):
-        return {cls.index(port['index']): port for port in render_ctx['nvmet.port.query']}
+    def ports_by_index(self, render_ctx):
+        return {self.index(port['index']): port for port in render_ctx['nvmet.port.query']}
 
-    @classmethod
-    def update_referral(cls, refdir, attrs):
-        existing = cls.read(refdir)
+    def update_referral(self, refdir, attrs):
+        existing = self.read(refdir)
         if attrs != existing:
-            with cls.modify(refdir):
-                for item in cls.ITEMS:
+            with self.modify(refdir):
+                for item in self.ITEMS:
                     if attrs[item] == existing[item]:
                         continue
                     pathlib.Path(refdir, item).write_text(f'{attrs[item]}\n')
 
-    @classmethod
     @contextmanager
-    def render(cls, render_ctx: dict):
+    def render(self, render_ctx: dict):
         to_remove = []
-        referral_ids = render_ctx[cls.query][cls.query_key]
-        port_id_to_index = {port['id']: cls.index(port['index']) for port in render_ctx['nvmet.port.query']}
-        ports_by_index = cls.ports_by_index(render_ctx)
+        referral_ids = render_ctx[self.query][self.query_key]
+        port_id_to_index = {port['id']: self.index(port['index']) for port in render_ctx['nvmet.port.query']}
+        ports_by_index = self.ports_by_index(render_ctx)
         referrals = defaultdict(set)
         for src_id, dst_id in referral_ids:
             referrals[port_id_to_index[src_id]].add(port_id_to_index[dst_id])
@@ -302,7 +276,7 @@ class NvmetPortReferralConfig(NvmetConfig):
                 continue
 
             # Are we the right *class* of port? (ANA vs non-ANA)
-            if not cls.handle_port(parent_index):
+            if not self.handle_port(parent_index):
                 continue
 
             referrals_path = pathlib.Path(portpath, 'referrals')
@@ -324,18 +298,18 @@ class NvmetPortReferralConfig(NvmetConfig):
                 for key in update_keys:
                     index = int(key)
                     port = ports_by_index[index]
-                    attrs = cls.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
-                    cls.update_referral(pathlib.Path(referrals_path, key), attrs)
+                    attrs = self.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
+                    self.update_referral(pathlib.Path(referrals_path, key), attrs)
 
                 # Now ensure the newly created directories have the correct attributes
                 retries = 10
                 for key in add_keys:
                     index = int(key)
                     port = ports_by_index[index]
-                    attrs = cls.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
+                    attrs = self.map_port_to_referral_attrs(port, render_ctx, parent_index == index)
                     attrs['enable'] = '1'
                     path = pathlib.Path(referrals_path, key)
-                    retries = cls.set_mapped_attrs(path, attrs, retries, render_ctx)
+                    retries = self.set_mapped_attrs(path, attrs, retries, render_ctx)
             else:
                 to_remove.extend(referrals_path.iterdir())
 
@@ -350,33 +324,29 @@ class NvmetPortAnaReferralConfig(NvmetPortReferralConfig):
     query = 'nvmet.port.usage'
     query_key = 'ana_referrals'
 
-    @classmethod
-    def handle_port(cls, index):
+    def handle_port(self, index):
         return index >= ANA_PORT_INDEX_OFFSET
 
-    @classmethod
-    def index(cls, index):
+    def index(self, index):
         if index < ANA_PORT_INDEX_OFFSET:
             return index + ANA_PORT_INDEX_OFFSET
         else:
             return index
 
-    @classmethod
-    def ports_by_index(cls, render_ctx):
+    def ports_by_index(self, render_ctx):
         # We want to update the index to the ANA specific one.
         # This will then be used by the map_port_to_referral_attrs in
         # this class to work out the address to be used.
         result = {}
         for port in render_ctx['nvmet.port.query']:
-            new_index = cls.index(port['index'])
+            new_index = self.index(port['index'])
             if new_index != port['index']:
                 result[new_index] = port.copy() | {'index': new_index}
             else:
                 result[new_index] = port
         return result
 
-    @classmethod
-    def map_port_to_referral_attrs(cls, attrs: dict, render_ctx: dict, remote: bool):
+    def map_port_to_referral_attrs(self, attrs: dict, render_ctx: dict, remote: bool):
         data = super().map_port_to_referral_attrs(attrs, render_ctx, remote)
         # This is an ANA port, update the addr_traddr
         # We could be pointing at other ports on the same node, or on the
@@ -406,16 +376,14 @@ class NvmetSubsysConfig(NvmetConfig):
     query = 'nvmet.subsys.query'
     query_key = 'subnqn'
 
-    @classmethod
-    def pre_delete(cls, path: pathlib.Path, render_ctx: dict):
+    def pre_delete(self, path: pathlib.Path, render_ctx: dict):
         # If we are force deleting a subsystem, then namespaces
         # will have been deleted from the config, but not yet
         # propagated live.  So, delete the namespaces here.
         for ns in pathlib.Path(path / 'namespaces').iterdir():
             ns.rmdir()
 
-    @classmethod
-    def map_attrs(cls, attrs: dict, render_ctx: dict):
+    def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
         for k, v in attrs.items():
             match k:
@@ -445,14 +413,13 @@ class NvmetNamespaceConfig(NvmetConfig):
     query = 'nvmet.namespace.query'
     query_key = 'nsid'
 
-    @classmethod
     @contextmanager
-    def render(cls, render_ctx: dict):
+    def render(self, render_ctx: dict):
 
         # First pre-process the data in the query
         subsys_to_subnqn = {}
         subsys_to_ns = defaultdict(dict)
-        for entry in render_ctx[cls.query]:
+        for entry in render_ctx[self.query]:
             subsys = entry['subsys']
             subsys_id = subsys['id']
             subsys_to_subnqn[subsys_id] = subsys['nvmet_subsys_subnqn']
@@ -472,7 +439,7 @@ class NvmetNamespaceConfig(NvmetConfig):
             parent_dir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR,
                                       'subsystems',
                                       subsys_to_subnqn[subsys_id],
-                                      cls.directory)
+                                      self.directory)
 
             config_keys = set(namespaces.keys())
             live_keys = set(os.listdir(parent_dir))
@@ -485,12 +452,12 @@ class NvmetNamespaceConfig(NvmetConfig):
                 pathlib.Path(parent_dir, key).mkdir()
 
             for key in update_keys:
-                cls.update_attrs(pathlib.Path(parent_dir, key), namespaces[key], render_ctx)
+                self.update_attrs(pathlib.Path(parent_dir, key), namespaces[key], render_ctx)
 
             # Now ensure the newly created directories have the correct attributes
             retries = 10
             for key in add_keys:
-                retries = cls.set_attrs(pathlib.Path(parent_dir, key), namespaces[key], retries, render_ctx)
+                retries = self.set_attrs(pathlib.Path(parent_dir, key), namespaces[key], retries, render_ctx)
 
             for key in remove_keys:
                 remove_dirs.append(pathlib.Path(parent_dir, key))
@@ -500,8 +467,7 @@ class NvmetNamespaceConfig(NvmetConfig):
         for d in remove_dirs:
             d.rmdir()
 
-    @classmethod
-    def map_attrs(cls, attrs: dict, render_ctx: dict):
+    def map_attrs(self, attrs: dict, render_ctx: dict):
         result = {}
         for k in ('device_uuid', 'device_nguid'):
             result[k] = attrs[k]
@@ -541,7 +507,7 @@ class NvmetNamespaceConfig(NvmetConfig):
         return result
 
 
-class NvmetLinkConfig(abc.ABC):
+class NvmetLinkConfig:
     query = None
     src_parentdir = None
     src_subdir = None
@@ -549,31 +515,27 @@ class NvmetLinkConfig(abc.ABC):
     dst_dir = None
     dst_query_keys = []
 
-    @classmethod
-    def src_name_prefix(cls, render_ctx: dict):
+    def src_name_prefix(self, render_ctx: dict):
         return ''
 
-    @classmethod
-    def dst_name_prefix(cls, render_ctx: dict):
+    def dst_name_prefix(self, render_ctx: dict):
         return ''
 
-    @classmethod
-    def create_links(cls, entry: dict):
+    def create_links(self, entry: dict):
         return True
 
-    @classmethod
     @contextmanager
-    def render(cls, render_ctx: dict):
+    def render(self, render_ctx: dict):
         # First we will see if any link sources need to be entirely removed
         src_to_dst = defaultdict(set)
-        for entry in render_ctx[cls.query]:
-            if cls.create_links(entry):
-                if _src_dir_name := cls.src_dir_name(entry, render_ctx):
-                    src_to_dst[_src_dir_name].add(cls.dst_name(entry))
-        rootdir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, cls.src_parentdir)
-        dstdir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, cls.dst_dir)
+        for entry in render_ctx[self.query]:
+            if self.create_links(entry):
+                if _src_dir_name := self.src_dir_name(entry, render_ctx):
+                    src_to_dst[_src_dir_name].add(self.dst_name(entry))
+        rootdir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.src_parentdir)
+        dstdir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.dst_dir)
         to_unlink = []
-        for path in rootdir.glob(f'*/{cls.src_subdir}/*'):
+        for path in rootdir.glob(f'*/{self.src_subdir}/*'):
             if path.is_symlink():
                 name = path.name
                 parent = path.parent.parent.name
@@ -593,7 +555,7 @@ class NvmetLinkConfig(abc.ABC):
         for k, v in src_to_dst.items():
             if not v:
                 continue
-            srcdir = pathlib.Path(rootdir, k, cls.src_subdir)
+            srcdir = pathlib.Path(rootdir, k, self.src_subdir)
             for entry_name in v:
                 new_link = pathlib.Path(srcdir, entry_name)
                 new_link.symlink_to(pathlib.Path(dstdir, entry_name))
@@ -613,13 +575,11 @@ class NvmetHostSubsysConfig(NvmetLinkConfig):
     dst_dir = 'hosts'
     dst_query_keys = ['host', 'nvmet_host_hostnqn']
 
-    @classmethod
-    def src_dir_name(cls, entry, render_ctx: dict):
-        return f'{entry[cls.src_query_keys[0]][cls.src_query_keys[1]]}'
+    def src_dir_name(self, entry, render_ctx: dict):
+        return f'{entry[self.src_query_keys[0]][self.src_query_keys[1]]}'
 
-    @classmethod
-    def dst_name(cls, entry):
-        return f'{entry[cls.dst_query_keys[0]][cls.dst_query_keys[1]]}'
+    def dst_name(self, entry):
+        return f'{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}'
 
 
 class NvmetPortSubsysConfig(NvmetLinkConfig):
@@ -630,8 +590,7 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
     dst_dir = 'subsystems'
     dst_query_keys = ['subsys', 'nvmet_subsys_subnqn']
 
-    @classmethod
-    def src_dir_name(cls, entry, render_ctx: dict):
+    def src_dir_name(self, entry, render_ctx: dict):
         # Because we have elected to support overriding the global ANA
         # setting for individual subsystems this has two knock-on effects
         # 1. Additional ANA-specific port indexes are in injected
@@ -639,7 +598,7 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
         #    port index.
         # However, if we're on the standby node we never want to setup
         # a link to the VIP port.
-        raw_index = entry[cls.src_query_keys[0]][cls.src_query_keys[1]]
+        raw_index = entry[self.src_query_keys[0]][self.src_query_keys[1]]
         # Now check whether ANA is playing a part.
         match entry['subsys']['nvmet_subsys_ana']:
             case True:
@@ -657,12 +616,10 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
 
         return str(index)
 
-    @classmethod
-    def dst_name(cls, entry):
-        return f'{entry[cls.dst_query_keys[0]][cls.dst_query_keys[1]]}'
+    def dst_name(self, entry):
+        return f'{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}'
 
-    @classmethod
-    def create_links(cls, entry: dict):
+    def create_links(self, entry: dict):
         return entry['port']['nvmet_port_enabled']
 
 
@@ -678,14 +635,14 @@ def write_config(config):
     # Therefore we can nest them to enfore the necessary
     # order of operations.
     with (
-        NvmetSubsysConfig.render(config),
-        NvmetHostConfig.render(config),
-        NvmetPortConfig.render(config),
-        NvmetPortReferralConfig.render(config),
-        NvmetPortAnaReferralConfig.render(config),
-        NvmetHostSubsysConfig.render(config),
-        NvmetPortSubsysConfig.render(config),
-        NvmetNamespaceConfig.render(config),
+        NvmetSubsysConfig().render(config),
+        NvmetHostConfig().render(config),
+        NvmetPortConfig().render(config),
+        NvmetPortReferralConfig().render(config),
+        NvmetPortAnaReferralConfig().render(config),
+        NvmetHostSubsysConfig().render(config),
+        NvmetPortSubsysConfig().render(config),
+        NvmetNamespaceConfig().render(config),
     ):
         pass
 
