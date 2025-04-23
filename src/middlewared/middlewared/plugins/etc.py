@@ -4,6 +4,7 @@ import imp
 import os
 
 from mako import exceptions
+from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, Service
 from middlewared.utils.io import write_if_changed, FileChanges
 from middlewared.utils.mako import get_template
@@ -86,7 +87,7 @@ class EtcService(Service):
         ],
         'shadow': {
             'ctx': [
-                {'method': 'user.query', 'args': [[['local', '=', True]]]},
+                {'method': 'user.query', 'args': [[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]},
                 {'method': 'system.security.config'},
             ],
             'entries': [
@@ -96,7 +97,7 @@ class EtcService(Service):
         'user': {
             'ctx': [
                 {'method': 'system.security.config'},
-                {'method': 'user.query', 'args': [[['local', '=', True]]]},
+                {'method': 'user.query', 'args': [[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]},
                 {'method': 'group.query', 'args': [[['local', '=', True]]]},
             ],
             'entries': [
