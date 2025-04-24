@@ -459,8 +459,14 @@ class PoolDatasetService(CRUDService):
         verrors.check()
 
         parent_ds = parent_ds[0]
+        if parent_ds['type'] == 'VOLUME':
+            verrors.add(
+                'pool_dataset_create.name',
+                f'{parent_ds["name"]}: parent may not be a ZFS volume'
+            )
+
         parent_mp = parent_ds['mountpoint']
-        if parent_ds['locked']:
+        if parent_ds['locked'] or not parent_mp:
             parent_st = {'acl': False}
         else:
             parent_st = await self.middleware.call('filesystem.stat', parent_mp)
