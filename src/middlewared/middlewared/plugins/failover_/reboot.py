@@ -87,17 +87,28 @@ class FailoverRebootService(Service):
                     other_node = None
                 else:
                     if other_node_boot_id is not None:
-                        # Mark the remote system as needing reboot. `boot_id` is None so that the code below sends
-                        # CHANGED event
-                        self.remote_reboot_reasons.setdefault(RebootReason.UPGRADE.name, RemoteRebootReason(
-                            boot_id=None,
-                            reason=RebootReason.UPGRADE.value,
-                        ))
-                        # Fake `system.reboot.info` so that the code below functions properly
-                        other_node = {
-                            'boot_id': other_node_boot_id,
-                            'reboot_required_reasons': [],
-                        }
+                        # Try querying `system.reboot.info` once more in case the system is really upgraded, and the
+                        # failure was just a hiccup.
+                        try:
+                            other_node = await self.middleware.call('failover.call_remote', 'system.reboot.info', [], {
+                                'raise_connect_error': False,
+                                'timeout': 2,
+                                'connect_timeout': 2,
+                            })
+                        except Exception:
+                            other_node = None
+
+                        if other_node is None:
+                            # It is indeed a legacy system. Mark it as needing reboot
+                            self.remote_reboot_reasons.setdefault(RebootReason.UPGRADE.name, RemoteRebootReason(
+                                boot_id=None,
+                                reason=RebootReason.UPGRADE.value,
+                            ))
+                            # Fake `system.reboot.info` so that the code below functions properly
+                            other_node = {
+                                'boot_id': other_node_boot_id,
+                                'reboot_required_reasons': [],
+                            }
 
         if other_node is not None:
             for remote_reboot_reason_code, remote_reboot_reason in list(self.remote_reboot_reasons.items()):
