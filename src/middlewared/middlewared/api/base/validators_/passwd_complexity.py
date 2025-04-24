@@ -1,8 +1,6 @@
 from functools import partial
 from string import digits, ascii_uppercase, ascii_lowercase, punctuation
 
-from pydantic import SecretStr
-
 
 __all__ = ("passwd_complexity_validator",)
 
@@ -15,13 +13,13 @@ ALLOWED_TYPES = (
 
 
 def __complexity_impl(
-    value: SecretStr,
+    value: str,
     *,
     required_types: list[str] | None,
     required_cnt: int,
     min_length: int,
     max_length: int,
-) -> SecretStr:
+) -> str:
     passwd_length = len(value)
     if passwd_length < min_length:
         raise ValueError(f"Length of password must be at least {min_length} chars")
@@ -31,8 +29,7 @@ def __complexity_impl(
     cnt = 0
     reqs = []
     errstr = ""
-    cleartext_passwd = value.get_secret_value()
-    if cleartext_passwd and required_types:
+    if value and required_types:
         for rt in filter(lambda x: x not in ALLOWED_TYPES, required_types):
             raise ValueError(
                 f"{rt} is in invalid type. Allowed types are {','.join(ALLOWED_TYPES)}"
@@ -40,7 +37,7 @@ def __complexity_impl(
 
         if "ASCII_LOWER" in required_types:
             reqs.append("lowercase character")
-            if not any(c in ascii_lowercase for c in cleartext_passwd):
+            if not any(c in ascii_lowercase for c in value):
                 if required_cnt is None:
                     errstr += "Must contain at least one lowercase character. "
             else:
@@ -48,7 +45,7 @@ def __complexity_impl(
 
         if "ASCII_UPPER" in required_types:
             reqs.append("uppercase character")
-            if not any(c in ascii_uppercase for c in cleartext_passwd):
+            if not any(c in ascii_uppercase for c in value):
                 if required_cnt is None:
                     errstr += "Must contain at least one uppercase character. "
             else:
@@ -56,7 +53,7 @@ def __complexity_impl(
 
         if "DIGIT" in required_types:
             reqs.append("digits 0-9")
-            if not any(c in digits for c in cleartext_passwd):
+            if not any(c in digits for c in value):
                 if required_cnt is None:
                     errstr += "Must contain at least one numeric digit (0-9). "
             else:
@@ -64,7 +61,7 @@ def __complexity_impl(
 
         if "SPECIAL" in required_types:
             reqs.append("special characters (!, $, #, %, etc.)")
-            if not any(c in punctuation for c in cleartext_passwd):
+            if not any(c in punctuation for c in value):
                 if required_cnt is None:
                     errstr += "Must contain at least one special character (!, $, #, %, etc.). "
             else:
@@ -85,7 +82,7 @@ def passwd_complexity_validator(
     required_cnt: int = 0,
     min_length: int = 8,
     max_length: int = 16,
-) -> partial[SecretStr]:
+) -> partial[str]:
     """Enforce password complexity.
 
     Args:
