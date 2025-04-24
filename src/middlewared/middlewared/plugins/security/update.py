@@ -169,7 +169,8 @@ class SystemSecurityService(ConfigService):
             user['username'] for user in await self.middleware.call(
                 'user.query', [
                     ["immutable", "=", True], ["password_disabled", "=", False],
-                    ["locked", "=", False], ["unixhash", "!=", "*"]
+                    ["locked", "=", False], ["unixhash", "!=", "*"],
+                    ["local", "=", True]
                 ],
             )
         ]

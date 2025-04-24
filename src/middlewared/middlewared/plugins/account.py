@@ -423,7 +423,7 @@ class UserService(CRUDService):
         container_root = await self.middleware.call('idmap.synthetic_user', SYNTHETIC_CONTAINER_ROOT.copy(), None)
         # NOTE: we deliberately don't include a userns_idmap value here because it is
         # implicit when we set up subuid for container
-        container_root.update({'builtin': True, 'local': True})
+        container_root.update({'builtin': True, 'local': True, 'locked': True, 'smb': False})
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users + [container_root], filters, options
