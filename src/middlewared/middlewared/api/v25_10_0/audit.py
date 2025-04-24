@@ -110,7 +110,7 @@ class AuditDownloadReportResult(BaseModel):
 
 
 class AuditExportArgs(BaseModel):
-    data: AuditExport
+    data: AuditExport = Field(default_factory=AuditExport)
 
 
 class AuditExportResult(BaseModel):
