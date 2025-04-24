@@ -54,9 +54,9 @@ def test_long_string_default():
 
 def test_no_secretstr():
     result = subprocess.run(
-        ["grep", "-r", "/usr/local/lib/python3.11/dist-packages/middlewared/", "SecretStr"],
+        ["grep", "-r", "--exclude-dir=pytest", "SecretStr", "/usr/local/lib/python3.11/dist-packages/middlewared/"],
         capture_output=True,
         text=True
     )
     errmsg = result.stdout + "References to pydantic.SecretStr not allowed; use Secret[str] instead"
-    assert len("\n".split(result.stdout)) == 1, errmsg
+    assert result.stdout.strip() == "", errmsg
