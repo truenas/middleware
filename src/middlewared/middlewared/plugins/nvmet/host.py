@@ -43,7 +43,7 @@ class NVMetHostService(CRUDService):
         NVMetHostCreateArgs,
         NVMetHostCreateResult,
         audit='Create NVMe target host',
-        audit_extended=lambda data: data['name']
+        audit_extended=lambda data: data['hostnqn']
     )
     async def do_create(self, data):
         """
@@ -154,7 +154,7 @@ class NVMetHostService(CRUDService):
                     case 'DHHC-1:00:':
                         if key[-1] != ':':
                             verrors.add(f'{schema_name}.{keyname}',
-                                        'Unexpected key termination.  Use "nvme gen-dhchap-key" to generate.')
+                                        'Unexpected key termination. Use "nvme gen-dhchap-key" to generate.')
                     case 'DHHC-1:01:':
                         if len(base64.b64decode(key.split(':')[2])) != 36:
                             verrors.add(f'{schema_name}.{keyname}', 'Expected key length of 32')
@@ -166,7 +166,7 @@ class NVMetHostService(CRUDService):
                             verrors.add(f'{schema_name}.{keyname}', 'Expected key length of 64')
                     case _:
                         verrors.add(f'{schema_name}.{keyname}',
-                                    'Unexpected key format.  Use "nvme gen-dhchap-key" to generate.')
+                                    'Unexpected key format. Use "nvme gen-dhchap-key" to generate.')
 
     @api_method(NVMetHostGenerateKeyArgs, NVMetHostGenerateKeyResult, roles=['SHARING_NVME_TARGET_WRITE'])
     async def generate_key(self, dhchap_hash, nqn):
