@@ -20,15 +20,15 @@ class NVMetGlobalEntry(BaseModel):
 
     Modifying this value will *not* change the subnqn of any existing subsystems.
     """
-    kernel: bool = True
+    kernel: bool
     """
     Select the NVMe-oF backend.
     """
-    ana: bool = False
+    ana: bool
     """
     Asymmetric Namespace Access (ANA) enabled.
     """
-    rdma: bool = False
+    rdma: bool
     """
     RDMA is enabled for NVMe-oF.
 
@@ -36,7 +36,7 @@ class NVMetGlobalEntry(BaseModel):
 
     Once enabled one or more `ports` may be configured with RDMA selected as the transport. See `nvmet.port.create`.
     """
-    xport_referral: bool = True
+    xport_referral: bool
     """
     Controls whether cross-port referrals will be generated for ports on this TrueNAS.
 
