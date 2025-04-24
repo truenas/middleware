@@ -18,6 +18,10 @@ from middlewared.service_exception import MatchNotFound, ValidationErrors
 from .constants import PORT_ADDR_FAMILY, PORT_TRTYPE, similar_ports
 
 
+def _port_summary(data):
+    return f"{data['addr_trtype']}:{data['addr_traddr']}:{data['addr_trsvcid']}"
+
+
 class NVMetPortModel(sa.Model):
     __tablename__ = 'services_nvmet_port'
 
@@ -49,8 +53,7 @@ class NVMetPortService(CRUDService):
         NVMetPortCreateArgs,
         NVMetPortCreateResult,
         audit='Create NVMe target port',
-        audit_extended=lambda data:
-        f"Transport: {data['addr_trtype']} Address: {data['addr_traddr']}/{data['addr_trsvcid']}"
+        audit_extended=lambda data: _port_summary(data)
     )
     async def do_create(self, data):
         """
@@ -82,7 +85,7 @@ class NVMetPortService(CRUDService):
         Update NVMe target `port` of `id`.
         """
         old = await self.get_instance(id_)
-        audit_callback(self.__audit_name(old))
+        audit_callback(_port_summary(old))
         new = old.copy()
         new.update(data)
 
@@ -111,7 +114,7 @@ class NVMetPortService(CRUDService):
         """
         force = options.get('force', False)
         port = await self.get_instance(id_)
-        audit_callback(self.__audit_name(port))
+        audit_callback(_port_summary(port))
 
         verrors = ValidationErrors()
         port_subsys_ids = {x['id']: x['subsys']['nvmet_subsys_name'] for x in
@@ -309,9 +312,6 @@ class NVMetPortService(CRUDService):
             if RDMAprotocols.NVMET.value not in available_rdma_protocols:
                 verrors.add(schema_name,
                             "This platform cannot support NVMe-oF(RDMA) or is missing an RDMA capable NIC.")
-
-    def __audit_name(self, data):
-        return f"{data['addr_trtype']}:{data['addr_traddr']}:{data['addr_trsvcid']}"
 
     @api_method(NVMetPortTransportAddressChoicesArgs, NVMetPortTransportAddressChoicesResult)
     async def transport_address_choices(self, addr_trtype, force_ana):
