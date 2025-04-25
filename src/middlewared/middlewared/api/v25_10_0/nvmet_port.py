@@ -1,9 +1,9 @@
 from abc import ABC
 from typing import Literal, TypeAlias
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
-from middlewared.api.base import IPvAnyAddress, BaseModel, ForUpdateMetaclass, NonEmptyString
+from middlewared.api.base import IPvAnyAddress, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
 __all__ = [
     "NVMetPortEntry",
@@ -30,7 +30,7 @@ class NVMetPortEntry(BaseModel):
     """ Fabric transport technology name. """
     addr_trsvcid: int | NonEmptyString
     """ Transport-specific TRSVCID field.  When configured for TCP/IP or RDMA this will be the port number. """
-    addr_traddr: NonEmptyString
+    addr_traddr: str
     """
     A transport-specific field identifying the NVMe host port to use for the connection to the controller.
 
@@ -50,17 +50,23 @@ class NVMetPortEntry(BaseModel):
     """ Port enabled.  When NVMe target is running, cannot make changes to an enabled port. """
 
 
-class NVMetPortCreateTemplate(BaseModel, ABC):
-    inline_data_size: int | None = None
-    max_queue_size: int | None = None
-    pi_enable: bool | None = None
-    enabled: bool = True
+class NVMetPortCreateTemplate(NVMetPortEntry, ABC):
+    id: Excluded = excluded_field()
+    index: Excluded = excluded_field()
+    addr_adrfam: Excluded = excluded_field()
 
 
 class NVMetPortCreateRDMATCP(NVMetPortCreateTemplate):
     addr_trtype: Literal['TCP', 'RDMA']
     addr_trsvcid: int = Field(ge=1024, le=65535)
     addr_traddr: IPvAnyAddress
+
+    @field_validator('addr_traddr')
+    @classmethod
+    def normalize_addr_traddr(cls, value: str) -> str:
+        if not value:
+            raise ValueError('addr_traddr is required')
+        return value
 
 
 class NVMetPortCreateFC(NVMetPortCreateTemplate):
@@ -77,13 +83,17 @@ class NVMetPortCreateResult(BaseModel):
     result: NVMetPortEntry
 
 
-class NVMetPortUpdate(NVMetPortCreateRDMATCP, NVMetPortCreateFC, metaclass=ForUpdateMetaclass):
+class NVMetPortUpdateRDMATCP(NVMetPortCreateRDMATCP, metaclass=ForUpdateMetaclass):
+    pass
+
+
+class NVMetPortUpdateFC(NVMetPortCreateFC, metaclass=ForUpdateMetaclass):
     pass
 
 
 class NVMetPortUpdateArgs(BaseModel):
     id: int
-    nvmet_port_update: NVMetPortUpdate
+    nvmet_port_update: NVMetPortUpdateRDMATCP | NVMetPortUpdateFC
 
 
 class NVMetPortUpdateResult(BaseModel):
