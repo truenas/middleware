@@ -91,7 +91,7 @@ class SystemSecurityService(ConfigService):
         # Disable non-critical outgoing network activity
         await self.middleware.call(
             'network.configuration.update',
-            {"activity": {"type": "DENY", "activities": ["usage"]}}
+            {"activity": {"type": "DENY", "activities": ["usage", "update"]}}
         )
 
     @private
