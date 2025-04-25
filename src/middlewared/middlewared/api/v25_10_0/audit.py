@@ -14,17 +14,26 @@ __all__ = [
 
 
 # In theory, this should be a type to represent the values able to be passed to `uuid.UUID()`.
-# Unfortunately, our UUID values would fail this validation.
+# Unfortunately, some values we store would fail this validation.
 UUID = str | int
 
 
 class AuditEntrySpace(BaseModel):
     used: int
+    used_by_dataset: int
+    used_by_reservation: int
     used_by_snapshots: int
     available: int
 
 
+class AuditEntryEnabledServices(BaseModel):
+    MIDDLEWARE: list
+    SMB: list
+    SUDO: list[str]
+
+
 class AuditEntry(BaseModel):
+    id: int
     retention: int = Field(ge=1, le=30)
     """Number of days to retain local audit messages."""
     reservation: int = Field(ge=0, le=100)
@@ -38,14 +47,13 @@ class AuditEntry(BaseModel):
     """Percentage used of dataset quota at which to generate a warning alert."""
     quota_fill_critical: int = Field(ge=50, le=95)
     """Percentage used of dataset quota at which to generate a critical alert."""
-    available: int
-    space: AuditEntrySpace
-    """ZFS dataset properties relating space used and available for the dataset where the audit databases are
-    written."""
     remote_logging_enabled: bool
     """Boolean indicating whether logging to a remote syslog server is enabled on TrueNAS and if audit logs are
     included in what is sent remotely."""
-    enabled_services: list
+    space: AuditEntrySpace
+    """ZFS dataset properties relating space used and available for the dataset where the audit databases are
+    written."""
+    enabled_services: AuditEntryEnabledServices
     """JSON object with key denoting service, and value containing a JSON array of what aspects of this service are
     being audited. In the case of the SMB audit, the list contains share names of shares for which auditing is
     enabled."""
