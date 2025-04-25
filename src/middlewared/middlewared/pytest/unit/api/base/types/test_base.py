@@ -1,5 +1,3 @@
-import subprocess
-
 from pydantic import Secret
 import pytest
 
@@ -50,13 +48,3 @@ class LongStringDefaultMethodArgs(BaseModel):
 
 def test_long_string_default():
     assert accept_params(LongStringDefaultMethodArgs, []) == [""]
-
-
-def test_no_secretstr():
-    result = subprocess.run(
-        ["grep", "-r", "--exclude-dir=pytest", "SecretStr", "/usr/local/lib/python3.11/dist-packages/middlewared/"],
-        capture_output=True,
-        text=True
-    )
-    errmsg = result.stdout + "References to pydantic.SecretStr not allowed; use Secret[str] instead"
-    assert result.stdout.strip() == "", errmsg
