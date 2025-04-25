@@ -648,8 +648,10 @@ class UserService(CRUDService):
         else:
             group = self.middleware.call_sync('group.query', [('id', '=', data['group'])])
             if not group:
-                raise CallError(f'Group {data["group"]} not found')
-            group = group[0]
+                verrors.add('user_create.group', f'Group {data["group"]} not found', errno.ENOENT)
+            else:
+                group = group[0]
+        verrors.check()
 
         if data['smb']:
             data['groups'].append((self.middleware.call_sync(
@@ -779,10 +781,12 @@ class UserService(CRUDService):
             ])
             if not group:
                 verrors.add('user_update.group', f'Group {data["group"]} not found', errno.ENOENT)
-            group = group[0]
+            else:
+                group = group[0]
         else:
             group = user['group']
             user['group'] = group['id']
+        verrors.check()
 
         if same_user_logged_in and (
             self.middleware.call_sync('auth.twofactor.config')
