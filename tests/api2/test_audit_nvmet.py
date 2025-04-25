@@ -46,7 +46,7 @@ def test_nvmet_host_audit():
                     'hostnqn': HOST1_NQN,
                 }
             ],
-            'description': 'Create NVMe target host',
+            'description': f'Create NVMe target host {HOST1_NQN}',
         }]):
             payload = {
                 'hostnqn': HOST1_NQN,
