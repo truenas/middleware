@@ -10,6 +10,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
 )
+from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -85,7 +86,7 @@ class AppService(Service):
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
-        if app['custom_app']:
+        if app['custom_app'] or app['metadata']['name'] == IX_APP_NAME:
             job.set_progress(20, 'Pulling app images')
             try:
                 self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})

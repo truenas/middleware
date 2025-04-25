@@ -55,7 +55,7 @@ class TruecommandEntry(BaseModel):
 @single_argument_args('truecommand_update')
 class TruecommandUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
-    api_key: SecretStr | None = Field(min_length=16, max_length=16)
+    api_key: Secret[str | None] = Field(min_length=16, max_length=16)
 
 
 class TrueCommandUpdateResult(BaseModel):

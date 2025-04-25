@@ -72,14 +72,21 @@ class VirtInstanceDeviceService(Service):
                     'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
                 })
             case 'nic':
-                device['dev_type'] = 'NIC'
-                device['network'] = incus.get('network')
+                device.update({
+                    'dev_type': 'NIC',
+                    'network': incus.get('network'),
+                    'mac': incus.get('hwaddr'),
+                })
                 if device['network']:
-                    device['parent'] = None
-                    device['nic_type'] = None
+                    device.update({
+                        'parent': None,
+                        'nic_type': None,
+                    })
                 elif incus.get('nictype'):
-                    device['nic_type'] = incus.get('nictype').upper()
-                    device['parent'] = incus.get('parent')
+                    device.update({
+                        'nic_type': incus.get('nictype').upper(),
+                        'parent': incus.get('parent'),
+                    })
                 device['description'] = device['network']
             case 'proxy':
                 device['dev_type'] = 'PROXY'
@@ -190,10 +197,13 @@ class VirtInstanceDeviceService(Service):
                     new['io.bus'] = device['io_bus'].lower()
 
             case 'NIC':
-                new['type'] = 'nic'
-                new['network'] = device['network']
-                new['nictype'] = device['nic_type'].lower()
-                new['parent'] = device['parent']
+                new.update({
+                    'type': 'nic',
+                    'network': device['network'],
+                    'nictype': device['nic_type'].lower(),
+                    'parent': device['parent'],
+                    'hwaddr': device['mac'],
+                })
             case 'PROXY':
                 new['type'] = 'proxy'
                 # For now follow docker lead for simplification
@@ -366,8 +376,6 @@ class VirtInstanceDeviceService(Service):
                         available_volumes = {v['id']: v for v in await self.middleware.call('virt.volume.query')}
                         if source not in available_volumes:
                             verrors.add(schema, f'No {source!r} incus volume found which can be used for source')
-                        elif available_volumes[source]['content_type'] == 'ISO' and device['boot_priority'] is None:
-                            verrors.add(schema, 'Boot priority is required for ISO volumes.')
                         else:
                             # We need to specify the storage pool for device adding to VM
                             # copy in what is known for the virt volume
@@ -383,7 +391,10 @@ class VirtInstanceDeviceService(Service):
                         verrors.add(f'{schema}.io_bus', 'IO bus is only available for VMs')
                     elif instance_config and instance_config['status'] != 'STOPPED':
                         verrors.add(f'{schema}.io_bus', 'VM should be stopped before updating IO bus')
-                if source:
+                if source and instance_type == 'VM':
+                    # Containers only can consume host paths as sources and volumes or zvols are not supported
+                    # For host paths, we have no concern regarding same host path being mounted inside different
+                    # containers.
                     await self.validate_disk_device_source(instance_name, schema, source, verrors, device['name'])
             case 'NIC':
                 if await self.middleware.call('interface.has_pending_changes'):

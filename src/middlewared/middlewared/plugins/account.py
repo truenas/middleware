@@ -69,6 +69,7 @@ from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
+    SYNTHETIC_CONTAINER_ROOT,
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -418,8 +419,14 @@ class UserService(CRUDService):
             'datastore.query', self._config.datastore, [], datastore_options
         )
 
+        # Add a synthetic user for the root account in containers
+        container_root = await self.middleware.call('idmap.synthetic_user', SYNTHETIC_CONTAINER_ROOT.copy(), None)
+        # NOTE: we deliberately don't include a userns_idmap value here because it is
+        # implicit when we set up subuid for container
+        container_root.update({'builtin': True, 'local': True, 'locked': True, 'smb': False})
+
         return await self.middleware.run_in_thread(
-            filter_list, result + ds_users, filters, options
+            filter_list, result + ds_users + [container_root], filters, options
         )
 
     @private
@@ -641,8 +648,10 @@ class UserService(CRUDService):
         else:
             group = self.middleware.call_sync('group.query', [('id', '=', data['group'])])
             if not group:
-                raise CallError(f'Group {data["group"]} not found')
-            group = group[0]
+                verrors.add('user_create.group', f'Group {data["group"]} not found', errno.ENOENT)
+            else:
+                group = group[0]
+        verrors.check()
 
         if data['smb']:
             data['groups'].append((self.middleware.call_sync(
@@ -767,15 +776,26 @@ class UserService(CRUDService):
                 verrors.add('user_update.password_disabled', e.errmsg)
 
         if 'group' in data:
-            group = self.middleware.call_sync('datastore.query', 'account.bsdgroups', [
-                ('id', '=', data['group'])
-            ])
-            if not group:
-                verrors.add('user_update.group', f'Group {data["group"]} not found', errno.ENOENT)
-            group = group[0]
+            if data['group'] is None:
+                # sending `group` as None is okay in user.create since
+                # it means, during user creation, a new primary group
+                # will automatically be created for said user. However,
+                # on update, a user MUST have a primary group. If someone
+                # tries to send an explicit None value here, let's raise
+                # an informative validation error.
+                verrors.add('user_update.group', 'User must have a primary group', errno.EINVAL)
+            else:
+                group = self.middleware.call_sync('datastore.query', 'account.bsdgroups', [
+                    ('id', '=', data['group'])
+                ])
+                if not group:
+                    verrors.add('user_update.group', f'Group {data["group"]} not found', errno.ENOENT)
+                else:
+                    group = group[0]
         else:
             group = user['group']
             user['group'] = group['id']
+        verrors.check()
 
         if same_user_logged_in and (
             self.middleware.call_sync('auth.twofactor.config')
@@ -1094,6 +1114,12 @@ class UserService(CRUDService):
         if data['username'] and data['uid'] is not None:
             verrors.add('get_user_obj.username', '"username" and "uid" may not be simultaneously specified')
         verrors.check()
+
+        # Return the container root if requestedt
+        if data['username'] == SYNTHETIC_CONTAINER_ROOT['pw_name']:
+            return SYNTHETIC_CONTAINER_ROOT.copy()
+        elif data['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
+            return SYNTHETIC_CONTAINER_ROOT.copy()
 
         # NOTE: per request from UI team we are overriding default library
         # KeyError message with a clearer one

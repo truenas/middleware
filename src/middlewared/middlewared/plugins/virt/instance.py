@@ -158,6 +158,9 @@ class VirtInstanceService(CRUDService):
                 f'{schema_name}.instance_type', f'System is not licensed to manage {instance_type!r} instances'
             )
 
+        if instance_type == 'CONTAINER' and new.get('image_os'):
+            verrors.add(f'{schema_name}.image_os', 'This attribute is only valid for VMs')
+
         if new.get('storage_pool'):
             valid_pools = await self.middleware.call('virt.global.pool_choices')
             if new['storage_pool'] not in valid_pools:
@@ -274,6 +277,9 @@ class VirtInstanceService(CRUDService):
             config['user.autostart'] = str(data['autostart']).lower()
 
         if instance_type == 'VM':
+            if data.get('image_os'):
+                config['image.os'] = data['image_os'].capitalize()
+
             config.update({
                 'security.secureboot': 'true' if data['secure_boot'] else 'false',
                 'user.ix_old_raw_qemu_config': raw.get('raw.qemu', '') if raw else '',

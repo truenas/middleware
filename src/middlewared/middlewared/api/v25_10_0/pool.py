@@ -460,7 +460,7 @@ class PoolUpgradeResult(BaseModel):
 
 
 class PoolValidateNameArgs(BaseModel):
-    pool_name: str
+    pool_name: POOL_NAME
 
 
 class PoolValidateNameResult(BaseModel):

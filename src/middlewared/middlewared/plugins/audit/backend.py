@@ -1,20 +1,34 @@
 import os
 import threading
 import time
-from typing import Literal
 
+from pydantic import Field
 from sqlalchemy import create_engine, inspect
 from sqlalchemy import and_, func, select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 
-from middlewared.service import periodic, private, Service
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
+from middlewared.api.base.types import NonEmptyString
+from middlewared.api.current import GenericQueryResult, QueryFilters, QueryOptions
+from middlewared.service import periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
 
 from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
+
+
+class AuditBackendQueryArgs(BaseModel):
+    db_name: NonEmptyString
+    query_filters: QueryFilters = []
+    query_options: QueryOptions = Field(default_factory=QueryOptions)
+
+
+class AuditBackendQueryResult(GenericQueryResult):
+    pass
 
 
 class SQLConn:
@@ -116,7 +130,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
     connections = {svc[0]: SQLConn(*svc) for svc in AUDITED_SERVICES}
 
-    @private
     def setup(self):
         """
         This method reinitializes the database connections for audit databases.
@@ -137,7 +150,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                     svc, exc_info=True
                 )
 
-    @private
     def serialize_results(self, results, table, select):
         out = []
         for row in results:
@@ -163,22 +175,24 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
         return data
 
-    @private
-    def query(self, db_name: Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM'], filters=[], options={}):
+    @api_method(AuditBackendQueryArgs, AuditBackendQueryResult, private=True)
+    def query(self, db_name, filters, options):
         """
         Query the specied auditable service's database based on the specified
         `query-filters` and `query-options`. This is the private endpoint for the
         audit backend and so it should generally not be used by websocket API
         consumers except in special circumstances.
         """
-        conn = self.connections[db_name]
-        order_by = options.get('order_by', []).copy()
-        from_ = conn.table
+        try:
+            conn = self.connections[db_name]
+        except KeyError:
+            raise CallError(f'Invalid database name: {db_name!r}')
 
         if conn.connection is None:
-            raise CallError(
-                f'{db_name}: connection to audit database is not initialized.'
-            )
+            raise CallError(f'{db_name}: connection to audit database is not initialized.')
+
+        order_by = options.get('order_by', []).copy()
+        from_ = conn.table
 
         if options['count']:
             qs = select([func.count('ROW_ID')]).select_from(from_)
@@ -231,7 +245,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
         return self.serialize_results(result, conn.table, options.get('select'))
 
-    @private
     @periodic(interval=86400, run_on_start=False)
     def __lifecycle_cleanup(self):
         """

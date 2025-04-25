@@ -6,6 +6,8 @@ from middlewared.api.v25_04_0 import AppSimilarArgs, AppSimilarResult
 from middlewared.service import filterable_api_method, Service
 from middlewared.utils import filter_list
 
+from .utils import IX_APP_NAME
+
 
 class AppService(Service):
 
@@ -20,7 +22,7 @@ class AppService(Service):
         return filter_list(
             await self.middleware.call(
                 'app.available', [
-                    ['last_update', '!=', None], ['name', '!=', 'ix-app'],
+                    ['last_update', '!=', None], ['name', '!=', IX_APP_NAME],
                 ], {'order_by': ['-last_update']}
             ), filters, options
         )

@@ -91,7 +91,7 @@ class SystemSecurityService(ConfigService):
         # Disable non-critical outgoing network activity
         await self.middleware.call(
             'network.configuration.update',
-            {"activity": {"type": "DENY", "activities": ["usage"]}}
+            {"activity": {"type": "DENY", "activities": ["usage", "update"]}}
         )
 
     @private
@@ -111,6 +111,25 @@ class SystemSecurityService(ConfigService):
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
                 'TrueCommand is not supported under General Purpose OS STIG compatibility mode.'
+            )
+
+        if (await self.middleware.call('docker.config'))['pool']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Please disable Apps as Apps are not supported under General Purpose OS STIG compatibility mode.'
+            )
+
+        if (await self.middleware.call('virt.global.config'))['pool']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Please disable VMs as VMs are not supported under General Purpose OS STIG compatibility mode.'
+            )
+
+        if (await self.middleware.call('tn_connect.config'))['enabled']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Please disable TrueNAS Connect as it is not supported under '
+                'General Purpose OS STIG compatibility mode.'
             )
 
         # We want to make sure that at least one local user account is usable
@@ -150,7 +169,8 @@ class SystemSecurityService(ConfigService):
             user['username'] for user in await self.middleware.call(
                 'user.query', [
                     ["immutable", "=", True], ["password_disabled", "=", False],
-                    ["locked", "=", False], ["unixhash", "!=", "*"]
+                    ["locked", "=", False], ["unixhash", "!=", "*"],
+                    ["local", "=", True]
                 ],
             )
         ]
@@ -163,25 +183,6 @@ class SystemSecurityService(ConfigService):
                 'General purpose administrative accounts with password authentication are '
                 'not compatible with STIG compatibility mode.  '
                 f'PLEASE DISABLE PASSWORD AUTHENTICATION ON THE FOLLOWING ACCOUNTS: {", ".join(excluded_admins)}.'
-            )
-
-        if (await self.middleware.call('docker.config'))['pool']:
-            raise ValidationError(
-                'system_security_update.enable_gpos_stig',
-                'Please disable Apps as Apps are not supported under General Purpose OS STIG compatibility mode.'
-            )
-
-        if (await self.middleware.call('virt.global.config'))['pool']:
-            raise ValidationError(
-                'system_security_update.enable_gpos_stig',
-                'Please disable VMs as VMs are not supported under General Purpose OS STIG compatibility mode.'
-            )
-
-        if (await self.middleware.call('tn_connect.config'))['enabled']:
-            raise ValidationError(
-                'system_security_update.enable_gpos_stig',
-                'Please disable TrueNAS Connect as it is not supported under '
-                'General Purpose OS STIG compatibility mode.'
             )
 
     @private
