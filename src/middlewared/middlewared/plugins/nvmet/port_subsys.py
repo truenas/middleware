@@ -9,6 +9,7 @@ from middlewared.api.current import (NVMetPortSubsysCreateArgs,
                                      NVMetPortSubsysUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
+from .constants import PORT_TRTYPE
 from .mixin import NVMetStandbyMixin
 
 
@@ -34,7 +35,7 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
         NVMetPortSubsysCreateArgs,
         NVMetPortSubsysCreateResult,
         audit='Create NVMe target port to subsystem mapping',
-        audit_extended=lambda data: data['name']
+        audit_extended=lambda data: f"Port ID: {data['port_id']} Subsys ID: {data['subsys_id']}"
     )
     async def do_create(self, data):
         """
@@ -56,6 +57,16 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
         await self._service_change('nvmet', 'reload')
         return await self.get_instance(data['id'])
 
+    @private
+    def flatten(self, data: dict):
+        if port_id := data.get('port', {}).get('id'):
+            data['port_id'] = port_id
+            del data['port']
+        if subsys_id := data.get('subsys', {}).get('id'):
+            data['subsys_id'] = subsys_id
+            del data['subsys']
+        return data
+
     @api_method(
         NVMetPortSubsysUpdateArgs,
         NVMetPortSubsysUpdateResult,
@@ -68,6 +79,7 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
         """
         old = await self.get_instance(id_)
         audit_callback(self.__audit_summary(old))
+        old = self.flatten(old)
         new = old.copy()
         new.update(data)
 
@@ -137,6 +149,6 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
 
     def __audit_summary(self, data):
         port = data['port']
-        port_summary = (f'{port["nvmet_port_addr_trtype"]}:'
-                        f'{port["nvmet_port_addr_traddr"]}:{port["nvmet_port_addr_trsvcid"]}')
+        transport = PORT_TRTYPE.by_db(port['nvmet_port_addr_trtype']).api
+        port_summary = (f'{transport}:{port["nvmet_port_addr_traddr"]}:{port["nvmet_port_addr_trsvcid"]}')
         return f'{port_summary}/{data["subsys"]["nvmet_subsys_name"]}'

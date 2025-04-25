@@ -53,6 +53,16 @@ class NVMetHostSubsysService(CRUDService):
         await self._service_change('nvmet', 'reload')
         return await self.get_instance(data['id'])
 
+    @private
+    def flatten(self, data: dict):
+        if host_id := data.get('host', {}).get('id'):
+            data['host_id'] = host_id
+            del data['host']
+        if subsys_id := data.get('subsys', {}).get('id'):
+            data['subsys_id'] = subsys_id
+            del data['subsys']
+        return data
+
     @api_method(
         NVMetHostSubsysUpdateArgs,
         NVMetHostSubsysUpdateResult,
@@ -65,6 +75,7 @@ class NVMetHostSubsysService(CRUDService):
         """
         old = await self.get_instance(id_)
         audit_callback(self.__audit_summary(old))
+        old = self.flatten(old)
         new = old.copy()
         new.update(data)
 
