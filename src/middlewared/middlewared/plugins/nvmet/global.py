@@ -25,7 +25,7 @@ class NVMetGlobalModel(sa.Model):
     __tablename__ = 'services_nvmet_global'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    nvmet_global_basenqn = sa.Column(sa.String(255), default=uuid_nqn)
+    nvmet_global_basenqn = sa.Column(sa.String(255), default=uuid_nqn())
     nvmet_global_kernel = sa.Column(sa.Boolean(), default=True)
     nvmet_global_ana = sa.Column(sa.Boolean(), default=False)
     nvmet_global_rdma = sa.Column(sa.Boolean(), default=False)
