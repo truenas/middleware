@@ -57,7 +57,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         insert, relationships = self._extract_relationships(table, options['prefix'], data)
         for column in table.c:
             if column.default is not None:
-                insert.setdefault(column.name, column.default.arg)
+                value = column.default.arg
+                if callable(value):
+                    value = value(None)
+                insert.setdefault(column.name, value)
             if not column.nullable:
                 if isinstance(column.type, (types.String, types.Text)):
                     insert.setdefault(column.name, '')

@@ -704,6 +704,21 @@ async def test__insert_default_has_value():
         assert (await ds.query("test.default", [], {"get": True}))["string"] == "VALUE"
 
 
+class CallableDefaultModel(Model):
+    __tablename__ = "test_callable_default"
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    string = sa.Column(sa.String(100), default=lambda: "DEFAULT")
+
+
+@pytest.mark.asyncio
+async def test__insert_callable_default():
+    async with datastore_test() as ds:
+        await ds.insert("test.callable_default", {})
+
+        assert (await ds.query("test.callable_default", [], {"get": True}))["string"] == "DEFAULT"
+
+
 class StringPrimaryKeyModel(Model):
     __tablename__ = 'test_stringprimarykey'
 
