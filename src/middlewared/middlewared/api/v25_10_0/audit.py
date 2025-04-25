@@ -101,10 +101,10 @@ class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
     """Boolean value indicating whether the action generating the event message succeeded."""
 
 
-class AuditUpdate(AuditEntry):
-    available: Excluded = excluded_field()
-    space: Excluded = excluded_field()
+class AuditUpdate(AuditEntry, metaclass=ForUpdateMetaclass):
+    id: Excluded = excluded_field()
     remote_logging_enabled: Excluded = excluded_field()
+    space: Excluded = excluded_field()
     enabled_services: Excluded = excluded_field()
 
 
