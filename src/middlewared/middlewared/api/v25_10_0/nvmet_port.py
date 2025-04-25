@@ -1,9 +1,9 @@
-import ipaddress
+from abc import ABC
 from typing import Literal, TypeAlias
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import IPvAnyAddress, BaseModel, ForUpdateMetaclass, NonEmptyString
 
 __all__ = [
     "NVMetPortEntry",
@@ -49,37 +49,35 @@ class NVMetPortEntry(BaseModel):
     enabled: bool = True
     """ Port enabled.  When NVMe target is running, cannot make changes to an enabled port. """
 
-    @model_validator(mode='after')
-    def validate_nvmet_port(self):
-        match self.addr_trtype:
-            case 'TCP' | 'RDMA':
-                try:
-                    ipaddress.ip_address(self.addr_traddr)
-                except ValueError:
-                    raise ValueError('addr_traddr must be a valid IP address')
-                if not isinstance(self.addr_trsvcid, int):
-                    raise ValueError('For TCP or RDMA addr_trsvcid must be a port number integer')
-                if self.addr_trsvcid < 1024 or self.addr_trsvcid > 65535:
-                    raise ValueError('addr_trsvcid port number must be an integer in the range 1024..65535')
 
-        return self
+class NVMetPortCreateTemplate(BaseModel, ABC):
+    inline_data_size: int | None = None
+    max_queue_size: int | None = None
+    pi_enable: bool | None = None
+    enabled: bool = True
 
 
-class NVMetPortCreate(NVMetPortEntry):
-    id: Excluded = excluded_field()
-    index: Excluded = excluded_field()
-    addr_adrfam: Excluded = excluded_field()
+class NVMetPortCreateRDMATCP(NVMetPortCreateTemplate):
+    addr_trtype: Literal['TCP', 'RDMA']
+    addr_trsvcid: int = Field(ge=1024, le=65535)
+    addr_traddr: IPvAnyAddress
+
+
+class NVMetPortCreateFC(NVMetPortCreateTemplate):
+    addr_trtype: Literal['FC']
+    addr_trsvcid: NonEmptyString
+    addr_traddr: NonEmptyString
 
 
 class NVMetPortCreateArgs(BaseModel):
-    nvmet_port_create: NVMetPortCreate
+    nvmet_port_create: NVMetPortCreateRDMATCP | NVMetPortCreateFC = Field(discriminator='addr_trtype')
 
 
 class NVMetPortCreateResult(BaseModel):
     result: NVMetPortEntry
 
 
-class NVMetPortUpdate(NVMetPortCreate, metaclass=ForUpdateMetaclass):
+class NVMetPortUpdate(NVMetPortCreateRDMATCP, NVMetPortCreateFC, metaclass=ForUpdateMetaclass):
     pass
 
 
