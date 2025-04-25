@@ -45,7 +45,8 @@ class NVMetPortService(CRUDService):
         datastore = 'services.nvmet_port'
         datastore_prefix = 'nvmet_port_'
         datastore_extend = 'nvmet.port.extend'
-        cli_namespace = 'sharing.nvmet.port'
+        # cli_namespace = 'sharing.nvmet.port'
+        cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetPortEntry
 
