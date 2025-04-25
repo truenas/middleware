@@ -348,24 +348,25 @@ def test_stig_usage_collection_disabled(setup_stig):
             c.call('system.general.update', {'usage_collection': True})
 
 
-def test_stig_usage_reporting_disabled(setup_stig):
+@pytest.mark.parametrize('activity', ["usage", "update"])
+def test_stig_usage_reporting_disabled(setup_stig, activity):
     ''' In GPOS STIG mode usage reporting should be disabled '''
     assert setup_stig['aal'] == "LEVEL_2"
 
     netconf = call("network.configuration.config")
     assert netconf["activity"]["type"] == "DENY"
-    assert "usage" in netconf["activity"]["activities"]
+    assert activity in netconf["activity"]["activities"]
 
-    can_run_usage = call("network.general.can_perform_activity", "usage")
+    can_run_usage = call("network.general.can_perform_activity", activity)
     assert can_run_usage is False
 
-    with pytest.raises(CallError, match='Network activity "Anonymous usage statistics" is disabled'):
-        call("network.general.will_perform_activity", "usage")
+    msg = activity.capitalize() if activity != 'usage' else 'Anonymous usage statistics'
+    with pytest.raises(CallError, match=f'Network activity "{msg}" is disabled'):
+        call("network.general.will_perform_activity", activity)
 
 
 class TestNotAuthorizedOps:
-    ''' Truecommand, Docker (Apps), VM support and TrueNAS Connect are
-        not authorized under STIG mode '''
+    ''' In GPOS STIG mode disabled capabilities cannot be re-enabled '''
     @pytest.fixture(scope="class")
     def stig_admin(self, setup_stig):
         assert setup_stig['aal'] == "LEVEL_2"
