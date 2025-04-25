@@ -776,13 +776,22 @@ class UserService(CRUDService):
                 verrors.add('user_update.password_disabled', e.errmsg)
 
         if 'group' in data:
-            group = self.middleware.call_sync('datastore.query', 'account.bsdgroups', [
-                ('id', '=', data['group'])
-            ])
-            if not group:
-                verrors.add('user_update.group', f'Group {data["group"]} not found', errno.ENOENT)
+            if data['group'] is None:
+                # sending `group` as None is okay in user.create since
+                # it means, during user creation, a new primary group
+                # will automatically be created for said user. However,
+                # on update, a user MUST have a primary group. If someone
+                # tries to send an explicit None value here, let's raise
+                # an informative validation error.
+                verrors.add('user_update.group', 'User must have a primary group', errno.EINVAL)
             else:
-                group = group[0]
+                group = self.middleware.call_sync('datastore.query', 'account.bsdgroups', [
+                    ('id', '=', data['group'])
+                ])
+                if not group:
+                    verrors.add('user_update.group', f'Group {data["group"]} not found', errno.ENOENT)
+                else:
+                    group = group[0]
         else:
             group = user['group']
             user['group'] = group['id']
