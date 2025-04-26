@@ -489,6 +489,8 @@ class UserPamAuthenticator(pam.PamAuthenticator):
     def login(self, middleware_session_id: str) -> TrueNASAuthenticatorResponse:
         """ create utmp + wtmp entry and call pam_open_session() """
         self.truenas_check_stage(TrueNASAuthenticatorStage.LOGIN)
+        origin = self.truenas_state.origin
+
         resp = self.open_session()
         if resp.code != pam.PAM_SUCCESS:
             self.end()
@@ -631,4 +633,4 @@ class UnixPamAuthenticator(UserPamAuthenticator):
             self.truenas_state.stage = TrueNASAuthenticatorStage.LOGOUT
             return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGIN, pam.PAM_SUCCESS, None)
 
-        return super().login(middleware_session_id, origin)
+        return super().login(middleware_session_id)
