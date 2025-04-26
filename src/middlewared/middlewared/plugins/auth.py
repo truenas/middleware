@@ -121,7 +121,7 @@ class SessionManager:
 
     async def login(self, app, credentials):
         if app.authenticated:
-            await self.middleware.run_in_thread(credentials.login, app.session_id, app.origin)
+            await self.middleware.run_in_thread(credentials.login, app.session_id)
             # If previous credential had associated utmp entry then it will be automatically
             # cleared when old credentials object is garbage collected
             self.sessions[app.session_id].credentials = credentials
@@ -133,12 +133,12 @@ class SessionManager:
             return
 
         # Generate utmp entry for logged in session
-        resp = await self.middleware.run_in_thread(credentials.login, app.session_id, app.origin)
+        resp = await self.middleware.run_in_thread(credentials.login, app.session_id)
         if resp.code == pam.PAM_ABORT:
             # Special response for case where we had to scavenge IDs
             self.middleware.logger.error('Available utmp session ids exhausted, scavenged stale sessions.')
             # Now that we've complained, try it again
-            resp = await self.middleware.run_in_thread(credentials.login, app.session_id, app.origin)
+            resp = await self.middleware.run_in_thread(credentials.login, app.session_id)
 
         if resp.code != pam.PAM_SUCCESS:
             raise CallError(f'Login with credentials failed: {resp.reason}')
@@ -1245,7 +1245,7 @@ async def check_permission(middleware, app):
         if origin.uid == 0 and not origin.session_is_interactive:
             # We can bypass more complex privilege composition for internal root sessions
             user = await middleware.call('auth.authenticate_root')
-            resp = await middleware.run_in_thread(authenticator.authenticate, 'root')
+            resp = await middleware.run_in_thread(authenticator.authenticate, 'root', app.origin)
             if resp.code != pam.PAM_SUCCESS:
                 middleware.logger.error('root: AF_UNIX authentication for user failed: %s', resp.reason)
         else:
@@ -1257,7 +1257,7 @@ async def check_permission(middleware, app):
                 # User does not exist
                 return
 
-            resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'])
+            resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'], app.origin)
             if resp.code != pam.PAM_SUCCESS:
                 middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
                                         user_info['pw_name'], resp.reason)

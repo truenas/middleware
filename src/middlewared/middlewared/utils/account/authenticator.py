@@ -122,6 +122,8 @@ class TrueNASAuthenticatorState:
     AVAILABLE_SESSION_IDS set defined above, and re-added on deallocation. """
     libpam_state: PamConvCallbackState | None = None
     """ State passed into pam_conv(3) """
+    origin: ConnectionOrigin | None = None
+    """ Initialized ConnectionOrigin provided during authenticate() call """
 
     def __del__(self):
         if self.utmp_session_id:
@@ -275,8 +277,16 @@ class UserPamAuthenticator(pam.PamAuthenticator):
             ctypes.byref(self.handle)
         )
         if retval == pam.PAM_SUCCESS:
+            origin = str(self.truenas_state.origin).encode()
             self.truenas_state.stage = TrueNASAuthenticatorStage.AUTH
-        if retval != pam.PAM_SUCCESS:
+            # pam_set_item(3) interally performs strdup on string and so we don't have
+            # to worry about ctypes deallocating the string once it's outside of scope
+            #
+            # This sets the rhost internally in the pam handle to our ConnectionOrigin string.
+            # The pam rhost appears as the source of authentication failures in pam_faillock tally
+            # file and associated audit entries.
+            self.pam_set_item(self.handle, pam.PAM_RHOST, ctypes.c_char_py(origin))
+        else:
             reason = self.pam_strerror(self.handle, retval).encode()
 
         return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.START, retval, reason)
@@ -336,8 +346,10 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         self,
         username: str,
         password: str,
+        origin: ConnectionOrigin,
     ) -> TrueNASAuthenticatorResponse:
         stage = TrueNASAuthenticatorStage.AUTH
+        self.truenas_state.origin = origin
 
         try:
             pw = self._get_user_obj(username)
@@ -474,7 +486,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         consumed_ids = set([int(entry['ut_line'].split('/')[1]) for entry in entries])
         AVAILABLE_SESSION_IDS.update(set(range(1, UTMP_MAX_SESSIONS)) - consumed_ids)
 
-    def login(self, middleware_session_id: str, origin: ConnectionOrigin) -> TrueNASAuthenticatorResponse:
+    def login(self, middleware_session_id: str) -> TrueNASAuthenticatorResponse:
         """ create utmp + wtmp entry and call pam_open_session() """
         self.truenas_check_stage(TrueNASAuthenticatorStage.LOGIN)
         resp = self.open_session()
@@ -589,11 +601,13 @@ class UnixPamAuthenticator(UserPamAuthenticator):
         super().__init__()
         self.truenas_state = TrueNASAuthenticatorState(otpw_possible=False, twofactor_possible=False)
 
-    def authenticate(self, username: str) -> TrueNASAuthenticatorResponse:
+    def authenticate(self, username: str, origin: ConnectionOrigin) -> TrueNASAuthenticatorResponse:
         """
         Authentication for our unix socket is somewhat different. We just simply
         verify username exists and set up pam handle
         """
+        self.truenas_state.origin = origin
+
         with self.TRUENAS_LOCK:
             return self._pam_start_account_no_password(username)
 
@@ -607,7 +621,7 @@ class UnixPamAuthenticator(UserPamAuthenticator):
 
         return super().logout()
 
-    def login(self, middleware_session_id: str, origin: ConnectionOrigin) -> TrueNASAuthenticatorResponse:
+    def login(self, middleware_session_id: str) -> TrueNASAuthenticatorResponse:
         """ We need special handling for internal non-interactive middleware sessions """
         self.truenas_state.interactive_session = origin.session_is_interactive
 
