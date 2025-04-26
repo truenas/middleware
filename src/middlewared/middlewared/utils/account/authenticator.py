@@ -285,7 +285,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
             # This sets the rhost internally in the pam handle to our ConnectionOrigin string.
             # The pam rhost appears as the source of authentication failures in pam_faillock tally
             # file and associated audit entries.
-            self.pam_set_item(self.handle, pam.PAM_RHOST, ctypes.c_char_py(origin))
+            self.pam_set_item(self.handle, pam.PAM_RHOST, ctypes.c_char_p(origin))
         else:
             reason = self.pam_strerror(self.handle, retval).encode()
 
