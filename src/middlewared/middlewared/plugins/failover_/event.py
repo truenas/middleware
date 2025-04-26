@@ -56,11 +56,11 @@ class FailoverEventsService(Service):
 
     # list of critical services that get restarted first
     # before the other services during a failover event
-    CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs']
+    CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs', 'nvmet']
 
     # list of services that use service.become_active instead of
     # service.restart during a failover on the MASTER node.
-    BECOME_ACTIVE_SERVICES = ['iscsitarget']
+    BECOME_ACTIVE_SERVICES = ['iscsitarget', 'nvmet']
 
     # option to be given when changing the state of a service
     # during a failover event, we do not want to replicate
@@ -970,6 +970,19 @@ class FailoverEventsService(Service):
                     self.run_call('service.restart', 'iscsitarget', self.HA_PROPAGATE)
                 else:
                     self.run_call('service.start', 'iscsitarget', self.HA_PROPAGATE)
+
+        if self.run_call('nvmet.global.ana_active') and self.run_call('service.started_or_enabled', 'nvmet'):
+            if self.run_call('nvmet.global.running'):
+                logger.info('Reloading NVMe-oF target for ANA')
+                self.run_call('service.reload', 'nvmet', self.HA_PROPAGATE)
+            else:
+                logger.info('Starting NVMe-oF target for ANA')
+                self.run_call('service.start', 'nvmet', self.HA_PROPAGATE)
+        elif self.run_call('nvmet.global.running'):
+            logger.info('Stopping NVMe-oF target')
+            self.run_call('service.stop', 'nvmet', self.HA_PROPAGATE)
+        else:
+            logger.info('No changes required for NVMe-oF target')
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:

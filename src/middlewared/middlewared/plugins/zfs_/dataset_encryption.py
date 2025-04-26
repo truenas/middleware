@@ -49,9 +49,17 @@ class ZFSDatasetService(Service):
                         continue
                     # Remove /dev/zvol/ from source
                     instance_zvols[device['source'][10:]] = instance
+
+            namespaces = self.middleware.call_sync(
+                'nvmet.namespace.query', [['device_type', '=', 'ZVOL']], {'select': ['device_path']}
+            )
+            nvmet_zvols = {
+                zvol_path_to_name('/dev/' + i['device_path']): i for i in namespaces
+            }
             return {
                 'iscsi.extent.query': iscsi_zvols,
                 'virt.instance.query': instance_zvols,
+                'nvmet.namespace.query': nvmet_zvols,
             }
 
         data = {}
