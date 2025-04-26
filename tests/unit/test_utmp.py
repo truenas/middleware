@@ -59,11 +59,11 @@ def unix_pam_authenticator(username: str, origin: ConnectionOrigin, session: str
     pam_hdl = authenticator.UnixPamAuthenticator()
 
     # First authenticate
-    pam_resp = pam_hdl.authenticate(username)
+    pam_resp = pam_hdl.authenticate(username, origin)
     assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
 
     # Now login
-    pam_resp = pam_hdl.login(session, origin)
+    pam_resp = pam_hdl.login(session)
     assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
 
     try:
@@ -79,11 +79,11 @@ def user_pam_authenticator(username: str, password: str, origin: ConnectionOrigi
     pam_hdl = authenticator.UserPamAuthenticator()
 
     # First authenticate
-    pam_resp = pam_hdl.authenticate(username, password)
+    pam_resp = pam_hdl.authenticate(username, password, origin)
     assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
 
     # Now login
-    pam_resp = pam_hdl.login(session, origin)
+    pam_resp = pam_hdl.login(session)
     assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
 
     try:
