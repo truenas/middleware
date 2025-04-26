@@ -26,7 +26,7 @@ class SessionManagerCredentials:
             cls.__name__.replace("SessionManagerCredentials", "")
         ).lstrip("_").upper()
 
-    def login(self, session_id: str, origin) -> TrueNASAuthenticatorResponse:
+    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
         # Default to failure. This method should not be hit
         return DEFAULT_LOGIN_FAIL
 
@@ -86,8 +86,8 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
             self.expiry = now + self.assurance.max_session_age
             self.inactivity_timeout = self.assurance.max_inactivity
 
-    def login(self, session_id: str, origin) -> TrueNASAuthenticatorResponse:
-        resp = self.authenticator.login(session_id, origin)
+    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
+        resp = self.authenticator.login(session_id)
         self.login_at = self.authenticator.login_at
         return resp
 
@@ -225,8 +225,8 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.root_credentials.notify_used()
         self.token.notify_used()
 
-    def login(self, session_id: str, origin) -> TrueNASAuthenticatorResponse:
-        resp = self.authenticator.login(session_id, origin)
+    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
+        resp = self.authenticator.login(session_id)
         self.login_at = self.authenticator.login_at
         return resp
 
@@ -249,7 +249,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
 class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
     """ Authentication from other HA node """
-    def login(self, session_id: str, origin) -> TrueNASAuthenticatorResponse:
+    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
         return DEFAULT_LOGIN_SUCCESS
 
     def logout(self) -> TrueNASAuthenticatorResponse:
