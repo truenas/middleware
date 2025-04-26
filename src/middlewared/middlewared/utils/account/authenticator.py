@@ -625,9 +625,7 @@ class UnixPamAuthenticator(UserPamAuthenticator):
 
     def login(self, middleware_session_id: str) -> TrueNASAuthenticatorResponse:
         """ We need special handling for internal non-interactive middleware sessions """
-        self.truenas_state.interactive_session = origin.session_is_interactive
-
-        if not origin.session_is_interactive:
+        if not self.truenas_state.origin.session_is_interactive:
             # short-circuit login if this is a middleware worker or other backend job
             self.truenas_state.login_at = datetime.now(UTC)
             self.truenas_state.stage = TrueNASAuthenticatorStage.LOGOUT
