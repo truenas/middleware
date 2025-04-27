@@ -104,13 +104,6 @@ class TrueNASAuthenticatorState:
     """ The authenticator supports authentication using single-use passwords. """
     twofactor_possible: bool = True
     """ The authenticator supports two-factor authentication """
-    interactive_session: bool | None = None
-    """ The session underlying the authenticator is an interactive one. A session
-    will be non-interactive if it is initiated by backend processes. This is used
-    as an optimization to avoid generating unnecessary utmp entries and associated
-    locking. We determine whether session is interactive during the login stage
-    when we have access to the ConnectionOrigin object. This is indicated by the
-    parent process having its loginid unset. """
     utmp_entry: PyUtmpEntry | None = None
     """ Utmp entry for the login. This is used to log out the account. """
     login_at: datetime | None = None
