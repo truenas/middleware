@@ -9,6 +9,7 @@ from middlewared.utils.account.authenticator import (
     UserPamAuthenticator, ApiKeyPamAuthenticator, UnixPamAuthenticator,
     TrueNASAuthenticatorResponse,
 )
+from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.auth import AuthMech, AuthenticatorAssuranceLevel
 from time import monotonic
 
@@ -192,7 +193,13 @@ class LoginOnetimePasswordSessionManagerCredentials(UserSessionManagerCredential
 
 
 class TokenSessionManagerCredentials(SessionManagerCredentials):
-    def __init__(self, token_manager, token, authenticator: UnixPamAuthenticator):
+    def __init__(
+        self,
+        token_manager,
+        token,
+        authenticator: UnixPamAuthenticator,
+        origin: ConnectionOrigin,
+    ):
         self.root_credentials = token.root_credentials()
         self.authenticator = authenticator
 
@@ -202,10 +209,10 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.login_at = datetime.now(UTC)
         if self.is_user_session:
             self.user = self.root_credentials.user
-            self.authenticator.authenticate(self.user['username'])
+            self.authenticator.authenticate(self.user['username'], origin)
         else:
             # This may be a token generated for HA Node session
-            self.authenticator.authenticate('root')
+            self.authenticator.authenticate('root', origin)
 
         self.allowlist = self.root_credentials.allowlist
 

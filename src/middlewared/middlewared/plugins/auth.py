@@ -465,7 +465,7 @@ class AuthService(Service):
                                 'at the current security level',
                                 errno.EOPNOTSUPP)
 
-        return TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl)
+        return TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
 
     @private
     def get_token_for_shell_application(self, token_id, origin):
@@ -1021,7 +1021,7 @@ class AuthService(Service):
                 # Use the AF_UNIX style authenticator with username from base auth
                 auth_ctx.pam_hdl = UnixPamAuthenticator()
 
-                cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl)
+                cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
                 await login_fn(app, cred)
                 if token.single_use:
                     self.token_manager.destroy(token)
