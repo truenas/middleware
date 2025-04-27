@@ -251,22 +251,22 @@ def test__session_limits(fake_session_id, admin_user, pam_stig):
 def test__session_login_fail_unlock_middleware(fake_session_id, admin_user, pam_stig):
     # Sanity check that our pasword works
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v6_origin)
     assert resp.code == pam.PAM_SUCCESS
 
     # First should be an AUTH_ERR
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v6_origin)
     assert resp.code == pam.PAM_AUTH_ERR
 
     # So should be second
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v6_origin)
     assert resp.code == pam.PAM_AUTH_ERR
 
     # This time the PAM code changes to PAM_PERM_DENIED to indicate that account is locked
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v6_origin)
     assert resp.code == pam.PAM_PERM_DENIED
     assert resp.reason == 'Account is locked due to failed login attempts.'
 
@@ -275,7 +275,7 @@ def test__session_login_fail_unlock_middleware(fake_session_id, admin_user, pam_
 
     # Auth attempt with correct password should fail
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v6_origin)
     assert resp.code == pam.PAM_PERM_DENIED
 
     with Client() as c:
@@ -296,29 +296,29 @@ def test__session_login_fail_unlock_middleware(fake_session_id, admin_user, pam_
 
     # Auth attempt with correct password should succeed after unlock 
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v6_origin)
     assert resp.code == pam.PAM_SUCCESS
 
 
 def test__session_login_fail_unlock_time(fake_session_id, admin_user, pam_stig):
     # Sanity check that our pasword works
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v4_origin)
     assert resp.code == pam.PAM_SUCCESS
 
     # First should be an AUTH_ERR
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v4_origin)
     assert resp.code == pam.PAM_AUTH_ERR
 
     # So should be second
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v4_origin)
     assert resp.code == pam.PAM_AUTH_ERR
 
     # This time the PAM code changes to PAM_PERM_DENIED to indicate that account is locked
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v4_origin)
     assert resp.code == pam.PAM_PERM_DENIED
     assert resp.reason == 'Account is locked due to failed login attempts.'
 
@@ -327,7 +327,7 @@ def test__session_login_fail_unlock_time(fake_session_id, admin_user, pam_stig):
 
     # Auth attempt with correct password should fail
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v4_origin)
     assert resp.code == pam.PAM_PERM_DENIED
 
     # rewrite pam middleware file so that we don't have to wait 15 minutes
@@ -342,5 +342,5 @@ def test__session_login_fail_unlock_time(fake_session_id, admin_user, pam_stig):
 
     sleep(5)
     pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v4_origin)
     assert resp.code == pam.PAM_SUCCESS
