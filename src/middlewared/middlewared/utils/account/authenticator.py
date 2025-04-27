@@ -617,7 +617,7 @@ class UnixPamAuthenticator(UserPamAuthenticator):
         """ If we have a non-interactive session then bypass normal logout. This is differentiated
         from an unitialized state where truenas_interactive_session is None. In latter case we want
         the logout to fail with exception that account was not logged in. """
-        if self.truenas_state.interactive_session is False:
+        if self.truenas_state.origin.interactive_session is False:
             self.end()
             return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGOUT, pam.PAM_SUCCESS, None)
 
