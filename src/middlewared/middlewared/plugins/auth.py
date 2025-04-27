@@ -465,7 +465,12 @@ class AuthService(Service):
                                 'at the current security level',
                                 errno.EOPNOTSUPP)
 
-        return TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
+        cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
+        pam_resp = cred.pam_authenticate()
+        if pam_resp != pam.PAM_SUCCESS:
+            raise CallError(f'Failed to get token for action: {pam_resp.reason}')
+
+        return cred
 
     @private
     def get_token_for_shell_application(self, token_id, origin):
@@ -1022,6 +1027,23 @@ class AuthService(Service):
                 auth_ctx.pam_hdl = UnixPamAuthenticator()
 
                 cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
+                pam_resp = await self.middleawre.run_in_thread(cred.pam_authenticate)
+                if pam_resp.code != pam.PAM_SUCCESS:
+                    # Account may have gotten locked between when token originally generated and when it was used.
+                    # Alternatively we may have hit session limits.
+                    await asyncio.sleep(CURRENT_AAL.get_delay_interval())
+
+                    # Unlike other failure types we can't print the token in the audit log
+                    # since it is actually still valid
+                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                        'credentials': {
+                            'credentials': 'TOKEN',
+                            'credentials_data': cred.dump() 
+                        },
+                        'error': pam_resp.reason,
+                    }, False)
+                    return response
+
                 await login_fn(app, cred)
                 if token.single_use:
                     self.token_manager.destroy(token)
