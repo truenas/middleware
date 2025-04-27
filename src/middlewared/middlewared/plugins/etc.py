@@ -205,6 +205,7 @@ class EtcService(Service):
             'entries': [
                 {'type': 'mako', 'path': 'pam.d/middleware'},
                 {'type': 'mako', 'path': 'pam.d/middleware-api-key'},
+                {'type': 'mako', 'path': 'pam.d/middleware-unix'},
                 {'type': 'py', 'path': 'pam_tdb'},
             ]
         },

@@ -45,6 +45,7 @@ AVAILABLE_SESSION_IDS = set(range(1, UTMP_MAX_SESSIONS))
 class MiddlewarePamFile(enum.StrEnum):
     DEFAULT = '/etc/pam.d/middleware'
     API_KEY = '/etc/pam.d/middleware-api-key'
+    UNIX = '/etc/pam.d/middleware-unix'
 
     @property
     def service(self):
@@ -594,7 +595,11 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
 class UnixPamAuthenticator(UserPamAuthenticator):
     def __init__(self):
         super().__init__()
-        self.truenas_state = TrueNASAuthenticatorState(otpw_possible=False, twofactor_possible=False)
+        self.truenas_state = TrueNASAuthenticatorState(
+            otpw_possible=False,
+            twofactor_possible=False,
+            service=MiddlewarePamFile.UNIX
+        )
 
     def authenticate(self, username: str, origin: ConnectionOrigin) -> TrueNASAuthenticatorResponse:
         """
