@@ -1027,7 +1027,7 @@ class AuthService(Service):
                 auth_ctx.pam_hdl = UnixPamAuthenticator()
 
                 cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
-                pam_resp = await self.middleawre.run_in_thread(cred.pam_authenticate)
+                pam_resp = await self.middleware.run_in_thread(cred.pam_authenticate)
                 if pam_resp.code != pam.PAM_SUCCESS:
                     # Account may have gotten locked between when token originally generated and when it was used.
                     # Alternatively we may have hit session limits.
