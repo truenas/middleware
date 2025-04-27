@@ -1,7 +1,7 @@
 <%
     from middlewared.utils import filter_list
     from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
-    from middlewared.utils.pam import STANDALONE_ACCOUNT
+    from middlewared.utils.pam import STANDALONE_AUTH, FAILLOCK_AUTH_FAIL, FAILLOCK_AUTH_SUCC
 
     ds_auth = render_ctx['datastore.config']['stg_ds_auth']
     truenas_admin_string = ''
