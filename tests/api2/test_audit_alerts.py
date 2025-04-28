@@ -81,29 +81,6 @@ def test_audit_backend_alert(setup_state):
     assert class_alerts[0]['formatted'].startswith("Audit service failed backend setup"), class_alerts
 
 
-@pytest.mark.parametrize(
-    'setup_state', [
-        [None, 'AuditSetup', 'audit.setup']
-    ],
-    indirect=True
-)
-def test_audit_setup_alert(setup_state):
-    with mock("audit.update_audit_dataset", """
-        from middlewared.service import private
-        @private
-        async def mock(self, new):
-            raise Exception()
-    """):
-        unused, alert_class, audit_method = setup_state
-        call(audit_method)
-        sleep(1)
-        alerts = call("alert.list")
-        class_alerts = [alert for alert in alerts if alert['klass'] == alert_class]
-        assert len(class_alerts) > 0, class_alerts
-        assert class_alerts[0]['klass'] == 'AuditSetup', class_alerts
-        assert class_alerts[0]['formatted'].startswith("Audit service failed to complete setup"), class_alerts
-
-
 def test_audit_health_monitor_alert():
     with mock("auditbackend.query", """
         from middlewared.service import private

@@ -15,6 +15,11 @@ class SystemService(Service):
     async def first_boot(self):
         return lifecycle_conf.SYSTEM_FIRST_BOOT
 
+    @private
+    async def boot_env_first_boot(self):
+        # First boot after upgrading server
+        return lifecycle_conf.SYSTEM_BOOT_ENV_FIRST_BOOT
+
     @no_auth_required
     @accepts()
     @returns(Str('system_boot_identifier'))
