@@ -348,7 +348,7 @@ def test_stig_usage_collection_disabled(setup_stig):
             c.call('system.general.update', {'usage_collection': True})
 
 
-@pytest.mark.parametrize('activity', ["usage", "update"])
+@pytest.mark.parametrize('activity', ["usage", "update", "support"])
 def test_stig_usage_reporting_disabled(setup_stig, activity):
     ''' In GPOS STIG mode usage reporting should be disabled '''
     assert setup_stig['aal'] == "LEVEL_2"
