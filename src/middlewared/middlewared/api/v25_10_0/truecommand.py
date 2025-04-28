@@ -1,7 +1,7 @@
 import enum
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, Secret, SecretStr
+from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args
 
@@ -55,7 +55,7 @@ class TruecommandEntry(BaseModel):
 @single_argument_args('truecommand_update')
 class TruecommandUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
-    api_key: Secret[str | None] = Field(min_length=16, max_length=16)
+    api_key: Secret[Annotated[str, Field(min_length=16, max_length=16)] | None]
 
 
 class TrueCommandUpdateResult(BaseModel):

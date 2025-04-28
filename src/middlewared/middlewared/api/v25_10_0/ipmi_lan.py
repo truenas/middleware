@@ -1,7 +1,7 @@
 from ipaddress import IPv4Address
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, Field, SecretStr
+from pydantic import AfterValidator, Field, Secret
 
 from middlewared.api.base import BaseModel, query_result, ForUpdateMetaclass
 from middlewared.api.base.validators import passwd_complexity_validator
@@ -43,17 +43,18 @@ class IPMILanQuery(BaseModel):
 class IPMILanUpdateOptionsDHCP(BaseModel):
     dhcp: Literal[True] = True
     """Turn on DHCP protocol for IP address management."""
-    password: Annotated[
-        SecretStr,
-        AfterValidator(
-            passwd_complexity_validator(
+    password: Secret[
+        Annotated[
+            str,
+            AfterValidator(passwd_complexity_validator(
                 required_types=["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"],
                 required_cnt=3,
                 min_length=8,
                 max_length=16,
-            )
-        )
-    ] | None = None
+            ))
+        ]
+        | None
+    ] = None
     """The password to be applied. Must be between 8 and 16 characters long and
     contain only ascii upper,lower, 0-9, and special characters."""
     vlan: Annotated[int, Field(ge=0, le=4096)] | None = None
