@@ -1,13 +1,13 @@
 [Unit]
 Description=Exec TrueNAS reboot tasks
 
-After=network.target middlewared.service
+Before=reboot.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=true
-ExecStop=/usr/local/bin/scst_util.sh stop-alua
+ExecStop=/bin/true
 StandardOutput=null
 StandardError=null
 TimeoutStopSec=0
