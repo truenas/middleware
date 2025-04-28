@@ -59,10 +59,10 @@ def setup_smb_tests(request):
         }) as u:
             with smb_share(os.path.join('/mnt', ds), 'client_share') as s:
                 try:
-                    call('service.start', 'cifs')
+                    call('service.start', 'cifs', job=True)
                     yield {'dataset': ds, 'share': s, 'user': u}
                 finally:
-                    call('service.stop', 'cifs')
+                    call('service.stop', 'cifs', job=True)
 
 
 @pytest.fixture(scope='module')

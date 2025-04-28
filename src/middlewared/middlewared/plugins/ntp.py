@@ -130,7 +130,7 @@ class NTPServerService(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.restart', 'ntpd')
+        await (await self.middleware.call('service.restart', 'ntpd')).wait(raise_error=True)
 
         return await self.get_instance(data['id'])
 
@@ -150,7 +150,7 @@ class NTPServerService(CRUDService):
             'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.middleware.call('service.restart', 'ntpd')
+        await (await self.middleware.call('service.restart', 'ntpd')).wait(raise_error=True)
 
         return await self.get_instance(id_)
 
@@ -161,7 +161,7 @@ class NTPServerService(CRUDService):
         """
         response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
-        await self.middleware.call('service.restart', 'ntpd')
+        await (await self.middleware.call('service.restart', 'ntpd')).wait(raise_error=True)
 
         return response
 

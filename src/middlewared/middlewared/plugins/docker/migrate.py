@@ -21,7 +21,7 @@ class DockerService(Service):
             raise CallError(f'Failed to backup docker apps: {backup_job.error}')
 
         job.set_progress(35, 'Stopping docker service')
-        await self.middleware.call('service.stop', 'docker')
+        await (await self.middleware.call('service.stop', 'docker')).wait(raise_error=True)
 
         try:
             job.set_progress(40, f'Replicating datasets from {old_config["pool"]!r} to {new_pool!r} pool')

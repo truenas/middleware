@@ -21,8 +21,8 @@ class LDAPHealthMixin:
                 # not recoverable
                 raise error from None
 
-        self.middleware.call_sync('service.stop', 'sssd')
-        self.middleware.call_sync('service.start', 'sssd', {'silent': False})
+        self.middleware.call_sync('service.stop', 'sssd').wait_sync(raise_error=True)
+        self.middleware.call_sync('service.start', 'sssd', {'silent': False}).wait_sync(raise_error=True)
 
     def _health_check_ldap(self) -> None:
         """
@@ -57,7 +57,7 @@ class LDAPHealthMixin:
         # it appears in our directory services summary
         if not self.middleware.call_sync('service.started', 'sssd'):
             try:
-                self.middleware.call_sync('service.start', 'sssd', {'silent': False})
+                self.middleware.call_sync('service.start', 'sssd', {'silent': False}).wait_sync(raise_error=True)
             except CallError as e:
                 self._faulted_reason = str(e)
                 raise LDAPHealthError(

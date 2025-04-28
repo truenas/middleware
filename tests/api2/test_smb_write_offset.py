@@ -29,10 +29,10 @@ def setup_smb_tests():
         }) as u:
             with smb_share(os.path.join('/mnt', ds), SHARE_NAME) as s:
                 try:
-                    call('service.start', 'cifs')
+                    call('service.start', 'cifs', job=True)
                     yield (ds, s, u)
                 finally:
-                    call('service.stop', 'cifs')
+                    call('service.stop', 'cifs', job=True)
 
 
 def test_valid_offset(setup_smb_tests):

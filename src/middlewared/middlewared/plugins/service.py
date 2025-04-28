@@ -13,7 +13,7 @@ from middlewared.api.current import (
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
-from middlewared.service import filterable_api_method, CallError, CRUDService, periodic, private
+from middlewared.service import filterable_api_method, CallError, CRUDService, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list, filter_getattrs
 from middlewared.utils.os import terminate_pid
@@ -149,7 +149,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True
     )
-    async def start(self, app, service, options):
+    @job(lock=lambda service, *args: f'service_{service}')
+    async def start(self, app, job, service, options):
         """
         Start the service specified by `service`.
         """
@@ -229,7 +230,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True
     )
-    async def stop(self, app, service, options):
+    @job(lock=lambda service, *args: f'service_{service}')
+    async def stop(self, app, job, service, options):
         """
         Stop the service specified by `service`.
         """
@@ -267,7 +269,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True
     )
-    async def restart(self, app, service, options):
+    @job(lock=lambda service, *args: f'service_{service}')
+    async def restart(self, app, job, service, options):
         """
         Restart the service specified by `service`.
         """
@@ -329,7 +332,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True
     )
-    async def reload(self, app, service, options):
+    @job(lock=lambda service, *args: f'service_{service}')
+    async def reload(self, app, job, service, options):
         """
         Reload the service specified by `service`.
         """

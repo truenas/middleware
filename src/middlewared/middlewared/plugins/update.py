@@ -95,7 +95,7 @@ class UpdateService(Service):
         """
         config = await self.middleware.call('datastore.config', 'system.update')
         await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
-        await self.middleware.call('service.restart', 'cron')
+        await (await self.middleware.call('service.restart', 'cron')).wait(raise_error=True)
 
     @api_method(UpdateGetTrainsArgs, UpdateGetTrainsResult, roles=['SYSTEM_UPDATE_READ'])
     def get_trains(self):

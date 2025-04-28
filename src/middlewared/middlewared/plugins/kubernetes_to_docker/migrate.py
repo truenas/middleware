@@ -80,7 +80,7 @@ class K8stoDockerMigrationService(Service):
         docker_config = self.middleware.call_sync('docker.config')
         if docker_config['pool'] and docker_config['pool'] != kubernetes_pool:
             # For good measure we stop docker service and unset docker pool if any configured
-            self.middleware.call_sync('service.stop', 'docker')
+            self.middleware.call_sync('service.stop', 'docker').wait_sync(raise_error=True)
             job.set_progress(15, 'Un-configuring docker service if configured')
             docker_job = self.middleware.call_sync('docker.update', {'pool': None})
             docker_job.wait_sync()

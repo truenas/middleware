@@ -96,7 +96,7 @@ class PoolResilverService(ConfigService):
                 new_config
             )
 
-            await self.middleware.call('service.restart', 'cron')
+            await (await self.middleware.call('service.restart', 'cron')).wait(raise_error=True)
             await self.middleware.call('pool.configure_resilver_priority')
 
         return await self.config()

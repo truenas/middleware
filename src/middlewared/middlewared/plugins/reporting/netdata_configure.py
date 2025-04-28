@@ -44,4 +44,4 @@ class ReportingService(Service):
         if await self.middleware.call('failover.licensed'):
             return
 
-        await self.middleware.call('service.start', 'netdata')
+        await (await self.middleware.call('service.start', 'netdata')).wait(raise_error=True)
