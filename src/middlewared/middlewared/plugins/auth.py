@@ -468,7 +468,7 @@ class AuthService(Service):
         cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
         pam_resp = cred.pam_authenticate()
         if pam_resp != pam.PAM_SUCCESS:
-            raise CallError(f'Failed to get token for action: {pam_resp.reason}')
+            raise CallError(f'Failed to get token for action: {pam_resp}')
 
         return cred
 
