@@ -441,8 +441,8 @@ class UpdateService(Service):
         job.set_progress(100, 'Update completed')
 
     @private
-    async def get_update_location(self):
-        syspath = (await self.middleware.call('systemdataset.config'))['path']
+    def get_update_location(self):
+        syspath = self.middleware.call_sync('systemdataset.config')['path']
         if syspath:
             path = f'{syspath}/update'
         else:
