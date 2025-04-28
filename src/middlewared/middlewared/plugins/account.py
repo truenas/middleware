@@ -2240,7 +2240,7 @@ class GroupService(CRUDService):
                 f'{schema}.smb', 'SMB groups may not be configured while SMB service backend is unitialized.'
             )
 
-        if data.get('userns_idmap') and pk:
+        if 'userns_idmap' in data and pk:
             entry = await self.query([['local', '=', True], ['id', '=', pk]], {'get': True})
             if entry['roles']:
                 verrors.add(
