@@ -61,10 +61,11 @@ class SystemSecurityEntry(BaseModel):
     The minimum length of passwords used for local accounts. The value of None
     means that there is no minimum password length.
     """
-    password_history_length: Annotated[int, Ge(1), Le(MAX_PASSWORD_HISTORY)] | None
+    password_history_length: Annotated[int, Ge(1), Le(MAX_PASSWORD_HISTORY)] | None = None
     """
     The number of password generations to keep in history for checks against
-    password reuse for local user accounts.
+    password reuse for local user accounts. The value of None means that history checks
+    for password reuse are not performed.
     """
 
 
