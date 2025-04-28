@@ -13,8 +13,9 @@ from middlewared.api.current import (IscsiExtentCreateArgs, IscsiExtentCreateRes
                                      IscsiExtentEntry, IscsiExtentUpdateArgs, IscsiExtentUpdateResult)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.service import CallError, private, SharingService, ValidationErrors
+from middlewared.service import CallError, SharingService, ValidationErrors, private
 from middlewared.utils.size import format_size
+from .utils import sanitize_extent
 
 
 class iSCSITargetExtentModel(sa.Model):
@@ -211,7 +212,9 @@ class iSCSITargetExtentService(SharingService):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
             # Only try to set volthreading if the volume still exists.
             if await self.middleware.call('pool.dataset.query', [['name', '=', zvolname], ['type', '=', 'VOLUME']]):
-                await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'on'}}})
+                await self.middleware.call('zfs.dataset.update',
+                                           zvolname,
+                                           {'properties': {'volthreading': {'value': 'on'}}})
 
         try:
             return await self.middleware.call(
@@ -219,7 +222,8 @@ class iSCSITargetExtentService(SharingService):
             )
         finally:
             await self._service_change('iscsitarget', 'reload')
-            if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+            if all([await self.middleware.call("iscsi.global.alua_enabled"),
+                    await self.middleware.call('failover.remote_connected')]):
                 await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
     @private
@@ -262,6 +266,7 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def clean_name(self, data, schema_name, verrors, old=None):
+        old_id = old['id'] if old else None
         name = data['name']
         old = old['name'] if old is not None else None
         name_filters = [('name', '=', name)]
@@ -278,6 +283,26 @@ class iSCSITargetExtentService(SharingService):
             )
             if name_result:
                 verrors.add(f'{schema_name}.name', 'Extent name must be unique')
+            else:
+                # We can't *just* compare the names, because names get
+                # flattened using sanitize_extent.  However, we'll preserve
+                # the above check as-is so that we can be precise wrt the
+                # error message given.
+                if old_id:
+                    name_filters = [('id', '!=', old_id)]
+                else:
+                    name_filters = []
+                extents = await self.middleware.call(
+                    'datastore.query',
+                    self._config.datastore,
+                    name_filters,
+                    {'prefix': self._config.datastore_prefix}
+                )
+                name_to_fname = {sanitize_extent(ext['name']): ext['name'] for ext in extents}
+                sname = sanitize_extent(name)
+                if sname in name_to_fname:
+                    clash = name_to_fname[sname]
+                    verrors.add(f'{schema_name}.name', f'Extent name must be unique when flattened ({clash})')
 
     @private
     async def clean_serial(self, data, schema_name, verrors, old=None):
@@ -510,8 +535,12 @@ class iSCSITargetExtentService(SharingService):
         if not iqns:
             return result
 
-        target_to_id = {t['name']: t['id'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
-        extents = {e['id']: e for e in await self.middleware.call('iscsi.extent.query', [], {'select': ['id', 'name', 'locked']})}
+        target_to_id = {t['name']: t['id'] for t in await self.middleware.call('iscsi.target.query',
+                                                                               [],
+                                                                               {'select': ['id', 'name']})}
+        extents = {e['id']: e for e in await self.middleware.call('iscsi.extent.query',
+                                                                  [],
+                                                                  {'select': ['id', 'name', 'locked']})}
         assoc = await self.middleware.call('iscsi.targetextent.query')
         # Generate a dict, keyed by target ID whose value is a set of (lunID, extent name) tuples
         target_luns = defaultdict(set)
@@ -581,7 +610,9 @@ class iSCSITargetExtentService(SharingService):
         filters = [['name', 'in', zvols], ['properties.volthreading.value', '=', 'on']]
         options = {'select': ['name']}
         for zvol in await self.middleware.call('zfs.dataset.query', filters, options):
-            await self.middleware.call('zfs.dataset.update', zvol['name'], {'properties': {'volthreading': {'value': 'off'}}})
+            await self.middleware.call('zfs.dataset.update',
+                                       zvol['name'],
+                                       {'properties': {'volthreading': {'value': 'off'}}})
 
 
 async def pool_post_import(middleware, pool):
