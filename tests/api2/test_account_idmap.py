@@ -1,13 +1,13 @@
-import os
-import sys
-
 import pytest
 
-from middlewared.test.integration.assets.account import user
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.assets.account import group, user
+from middlewared.test.integration.utils import call
+
+from middlewared.service_exception import ValidationErrors
 
 LOCAL_USER_SID_PREFIX = 'S-1-22-1-'
 LOCAL_GROUP_SID_PREFIX = 'S-1-22-2-'
+
 
 def test_uid_idmapping():
     with user({
@@ -42,3 +42,38 @@ def test_uid_idmapping():
         user_obj = call('user.get_user_obj', {'uid': u['uid'], 'sid_info': True})
         assert 'sid' in user_obj
         assert user_obj['sid'] == pdb_sid
+
+
+def test_unsetting_immutable_idmaps():
+    # User
+    app_uid = call('user.query', [['username', '=', 'apps']], {'get': True})['id']
+    with pytest.raises(ValidationErrors) as ve:
+        call('user.update', app_uid, {'userns_idmap': None})
+    assert ve.value.errors[0].errmsg == 'This attribute cannot be changed'
+
+    # Group
+    app_gid = call('group.query', [['group', '=', 'apps']], {'get': True})['id']
+    with pytest.raises(ValidationErrors) as ve:
+        call('group.update', app_gid, {'userns_idmap': None})
+    assert ve.value.errors[0].errmsg == 'User namespace idmaps may not be configured for builtin accounts.'
+
+
+def test_mutable_idmaps():
+    with group({'name': 'dummy_group'}) as g:
+        with user({
+            'username': 'dummy_user',
+            'full_name': 'dummy_user',
+            'smb': True,
+            'password': 'test1234',
+            'group': g['id'],
+        }) as u:
+            # Adding user and group to Incus mapping
+            call('user.update', u['id'], {'userns_idmap': 'DIRECT'})
+            call('group.update', g['id'], {'userns_idmap': 'DIRECT'})
+
+            # Removing user from Incus mapping
+            user_response = call('user.update', u['id'], {'userns_idmap': None})
+            group_response = call('group.update', g['id'], {'userns_idmap': None})
+
+            assert user_response['id'] == u['id']
+            assert group_response == g['id']
