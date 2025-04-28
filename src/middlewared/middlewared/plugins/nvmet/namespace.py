@@ -54,7 +54,7 @@ class NVMetNamespaceService(SharingService):
         datastore = 'services.nvmet_namespace'
         datastore_prefix = 'nvmet_namespace_'
         datastore_extend = 'nvmet.namespace.extend'
-        cli_namespace = 'sharing.nvmet.namespace'
+        cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetNamespaceEntry
 

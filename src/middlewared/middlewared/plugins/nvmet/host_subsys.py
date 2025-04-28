@@ -25,7 +25,7 @@ class NVMetHostSubsysService(CRUDService):
         namespace = 'nvmet.host_subsys'
         datastore = 'services.nvmet_host_subsys'
         datastore_prefix = 'nvmet_host_subsys_'
-        cli_namespace = 'sharing.nvmet.host_subsys'
+        cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetHostSubsysEntry
 

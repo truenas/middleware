@@ -35,7 +35,7 @@ class NVMetHostService(CRUDService):
         datastore = 'services.nvmet_host'
         datastore_prefix = 'nvmet_host_'
         datastore_extend = 'nvmet.host.extend'
-        cli_namespace = 'sharing.nvmet.host'
+        cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetHostEntry
 

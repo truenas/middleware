@@ -39,7 +39,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         datastore = 'services.nvmet_global'
         datastore_prefix = 'nvmet_global_'
         service = NVMET_SERVICE_NAME
-        cli_namespace = 'sharing.nvmet.global'
+        cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetGlobalEntry
 
