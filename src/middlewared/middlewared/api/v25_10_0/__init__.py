@@ -8,6 +8,7 @@ from .app import *  # noqa
 from .app_image import *  # noqa
 from .app_ix_volume import *  # noqa
 from .app_registry import *  # noqa
+from .audit import *  # noqa
 from .auth import *  # noqa
 from .auth_two_factor import *  # noqa
 from .boot import *  # noqa

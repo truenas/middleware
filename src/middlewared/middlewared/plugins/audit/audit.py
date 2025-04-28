@@ -26,16 +26,17 @@ from .utils import (
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from .schema.sudo import AUDIT_EVENT_SUDO_JSON_SCHEMAS, AUDIT_EVENT_SUDO_PARAM_SET
-from middlewared.plugins.zfs_.utils import TNUserProp
-from middlewared.schema import (
-    accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str, UUID
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AuditEntry, AuditDownloadReportArgs, AuditDownloadReportResult, AuditQueryArgs, AuditQueryResult,
+    AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
 )
-from middlewared.service import filterable, filterable_returns, job, private, ConfigService
+from middlewared.plugins.zfs_.utils import TNUserProp
+from middlewared.service import filterable, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.functools_ import cache
-from middlewared.validators import Range
 
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
@@ -65,19 +66,7 @@ class AuditService(ConfigService):
         cli_namespace = 'system.audit'
         datastore_extend = 'audit.extend'
         role_prefix = 'SYSTEM_AUDIT'
-
-    ENTRY = Patch(
-        'system_audit_update', 'system_audit_config',
-        ('add', Int('available')),
-        ('add', Dict(
-            'space',
-            Int('used'),
-            Int('used_by_snapshots'),
-            Int('available'),
-        )),
-        ('add', Bool('remote_logging_enabled')),
-        ('add', List('enabled_services'))
-    )
+        entry = AuditEntry
 
     @private
     @cache
@@ -130,74 +119,11 @@ class AuditService(ConfigService):
 
         return data
 
-    @accepts(Dict(
-        'audit_query',
-        List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=NON_BULK_AUDIT),
-        Ref('query-filters'),
-        Ref('query-options'),
-        Bool('remote_controller', default=False),
-        register=True
-    ))
-    @filterable_returns(Dict(
-        'audit_entry',
-        UUID('audit_id'),
-        Int('message_timestamp'),
-        Datetime('timestamp'),
-        Str('address'),
-        Str('username'),
-        UUID('session'),
-        Str('service', enum=ALL_AUDITED),
-        Dict('service_data', additional_attrs=True, null=True),
-        Str('event'),
-        Dict('event_data', additional_attrs=True, null=True),
-        Bool('success')
-    ))
+    @api_method(AuditQueryArgs, AuditQueryResult)
     async def query(self, data):
         """
         Query contents of audit databases specified by `services`.
-
-        If the query-option `force_sql_filters` is true, then the query will be
-        converted into a more efficient form for better performance. This will
-        not be possible if filters use keys within `svc_data` and `event_data`.
-
-        HA systems may direct the query to the 'remote' controller by
-        including 'remote_controller=True'.  The default is the 'current' controller.
-
-        Each audit entry contains the following keys:
-
-        `audit_id` - GUID uniquely identifying this specific audit event.
-
-        `message_timestamp` - Unix timestamp for when the audit event was
-        written to the auditing database.
-
-        `timestamp` - converted ISO-8601 timestamp from application recording
-        when event occurred.
-
-        `address` - IP address of client performing action that generated the
-        audit message.
-
-        `username` - Username used by client performing action.
-
-        `session` - GUID uniquely identifying the client session.
-
-        `services` - Name of the service that generated the message. This will
-        be one of the names specified in `services`.
-
-        `service_data` - JSON object containing variable data depending on the
-        particular service. See TrueNAS auditing documentation for the service
-        in question.
-
-        `event` - Name of the event type that generated the audit record. Each
-        service has its own unique event identifiers.
-
-        `event_data` - JSON object containing variable data depending on the
-        particular event type. See TrueNAS auditing documentation for the
-        service in question.
-
-        `success` - boolean value indicating whether the action generating the
-        event message succeeded.
         """
-
         verrors = ValidationErrors()
 
         # If HA, handle the possibility of remote controller requests
@@ -233,7 +159,11 @@ class AuditService(ConfigService):
                 if isinstance(entry, list):
                     entry = entry[0]
 
-                if entry not in (AUDIT_EVENT_MIDDLEWARE_PARAM_SET | AUDIT_EVENT_SMB_PARAM_SET | AUDIT_EVENT_SUDO_PARAM_SET):
+                if entry not in (
+                    AUDIT_EVENT_MIDDLEWARE_PARAM_SET
+                    | AUDIT_EVENT_SMB_PARAM_SET
+                    | AUDIT_EVENT_SUDO_PARAM_SET
+                ):
                     verrors.add(
                         f'audit.query.query-options.select.{idx}',
                         f'{entry}: column does not exist'
@@ -282,15 +212,7 @@ class AuditService(ConfigService):
 
         return filter_list(results, data['query-filters'], data['query-options'])
 
-    @accepts(
-        Patch(
-            'audit_query', 'audit_export',
-            ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
-        ),
-        roles=['SYSTEM_AUDIT_READ'],
-        audit='Export Audit Data'
-    )
-    @returns(Str('audit_file_path'))
+    @api_method(AuditExportArgs, AuditExportResult, roles=['SYSTEM_AUDIT_READ'], audit='Export Audit Data')
     @job()
     def export(self, job, data):
         """
@@ -345,15 +267,12 @@ class AuditService(ConfigService):
         job.set_progress(100, f'Audit report completed and available at {destination}')
         return os.path.join(target_dir, destination)
 
-    @accepts(
-        Dict(
-            'audit_download',
-            Str('report_name', required=True),
-        ),
+    @api_method(
+        AuditDownloadReportArgs,
+        AuditDownloadReportResult,
         roles=['SYSTEM_AUDIT_READ'],
-        audit='Download Audit Data',
+        audit='Download Audit Data'
     )
-    @returns()
     @job(pipes=["output"])
     def download_report(self, job, data):
         """
@@ -479,55 +398,17 @@ class AuditService(ConfigService):
             'zfs.dataset.update', ds['id'], {'properties': payload}
         )
 
-    @accepts(
-        Dict(
-            'system_audit_update',
-            Int('retention', validators=[Range(1, 30)]),
-            Int('reservation', validators=[Range(0, 100)]),
-            Int('quota', validators=[Range(0, 100)]),
-            Int('quota_fill_warning', validators=[Range(5, 80)]),
-            Int('quota_fill_critical', validators=[Range(50, 95)]),
-            register=True
-        ),
-        audit='Update Audit Configuration',
-    )
+    @api_method(AuditUpdateArgs, AuditUpdateResult, audit='Update Audit Configuration')
     async def update(self, data):
         """
         Update default audit settings.
 
-        The following fields may be modified:
-
-        `retention` - number of days to retain local audit messages.
-
-        `reservation` - size in GiB of refreservation to set on ZFS dataset
-        where the audit databases are stored. The refreservation specifies the
-        minimum amount of space guaranteed to the dataset, and counts against
-        the space available for other datasets in the zpool where the audit
-        dataset is located.
-
-        `quota` - size in GiB of the maximum amount of space that may be
-        consumed by the dataset where the audit dabases are stored.
-
-        `quota_fill_warning` - percentage used of dataset quota at which to
-        generate a warning alert.
-
-        `quota_fill_critical` - percentage used of dataset quota at which to
-        generate a critical alert.
-
         The following fields contain read-only data and are returned in calls
         to `audit.config` and `audit.update`:
+        - `space`
+        - `remote_logging_enabled`
+        - `enabled_services`
 
-        `space` - ZFS dataset properties relating space used and available for
-        the dataset where the audit databases are written.
-
-        `remote_logging_enabled` - Boolean indicating whether logging to a
-        remote syslog server is enabled on TrueNAS and if audit logs are
-        included in what is sent remotely.
-
-        `enabled_services` - JSON object with key denoting service, and value
-        containing a JSON array of what aspects of this service are being
-        audited. In the case of the SMB audit, the list contains share names
-        of shares for which auditing is enabled.
         """
         old = await self.config()
         new = old.copy()
@@ -613,4 +494,8 @@ class AuditService(ConfigService):
     @private
     @filterable
     async def json_schemas(self, filters, options):
-        return filter_list(AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS + AUDIT_EVENT_SUDO_JSON_SCHEMAS, filters, options)
+        return filter_list(
+            AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS + AUDIT_EVENT_SUDO_JSON_SCHEMAS,
+            filters,
+            options
+        )
