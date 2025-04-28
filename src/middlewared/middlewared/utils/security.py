@@ -26,7 +26,7 @@ ENTERPRISE_OPTIONS = frozenset([
     'password_history_length',
 ])
 
-PASSWORD_PROMPT_AGE = 7  # Number of days before expiry at which point we prompt for new password
+PASSWORD_PROMPT_AGE = 6  # Number of days before expiry at which point we prompt for new password
 
 
 class PasswordComplexity(enum.StrEnum):
