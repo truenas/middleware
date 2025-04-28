@@ -655,6 +655,11 @@ class VirtInstanceService(CRUDService):
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
+        if instance['status'] not in ('RUNNING', 'STOPPED'):
+            raise ValidationError(
+                f'virt.instance.restart.{id}',
+                f'{id}: instance may not be restarted because current status is: {instance["status"]}'
+            )
 
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
@@ -664,7 +669,8 @@ class VirtInstanceService(CRUDService):
             }})
 
         # Apply any idmap changes
-        await self.set_account_idmaps(id)
+        if instance['type'] == 'CONTAINER':
+            await self.set_account_idmaps(id)
 
         if instance['vnc_password']:
             await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
