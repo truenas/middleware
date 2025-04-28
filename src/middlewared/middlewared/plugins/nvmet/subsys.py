@@ -37,7 +37,7 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
         namespace = 'nvmet.subsys'
         datastore = 'services.nvmet_subsys'
         datastore_prefix = 'nvmet_subsys_'
-        cli_namespace = 'sharing.nvmet.subsys'
+        cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetSubsysEntry
 
