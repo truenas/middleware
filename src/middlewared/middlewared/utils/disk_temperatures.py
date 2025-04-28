@@ -20,7 +20,10 @@ class Disk:
 
 
 def parse_smartctl_for_temperature_output(json) -> Optional[int]:
-    return json['temperature']['current']
+    try:
+        return json['temperature']['current']
+    except KeyError:
+        return 0
 
 
 def get_disks_for_temperature_reading() -> Dict[str, Disk]:
