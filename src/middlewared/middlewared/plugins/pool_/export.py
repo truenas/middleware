@@ -101,7 +101,7 @@ class PoolService(Service):
                 if options["cascade"]:
                     await delegate.delete(attachments)
                 else:
-                    await delegate.toggle(attachments, False)
+                    await delegate.disable(attachments)
                     enable_on_import[delegate.name] = list(
                         set(enable_on_import.get(delegate.name, [])) |
                         {attachment['id'] for attachment in attachments}

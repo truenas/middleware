@@ -13,6 +13,17 @@ INSTANCE_QUERY = [
     },
 ]
 
+GLOBAL_CONFIG = {
+    'pool': 'test',
+    'storage_pools': [
+        'test',
+        'test1',
+        'test2',
+        'test3',
+        'test4',
+    ],
+}
+
 
 @pytest.mark.parametrize('path,devices,expected', [
     (
@@ -37,12 +48,17 @@ INSTANCE_QUERY = [
         ],
         [
             {
-                'id': 'test-instance',
-                'name': 'test-instance',
-                'disk_devices': [
-                    'disk0'
+                'id': 'test4',
+                'name': 'virt',
+                'instances': [
+                    {
+                        'id': 'test-instance',
+                        'name': 'test-instance',
+                        'disk_devices': ['disk0'],
+                        'dataset': 'test4'
+                    }
                 ],
-                'dataset': 'test4'
+                'incus_pool_change': True
             }
         ],
     ),
@@ -64,39 +80,49 @@ INSTANCE_QUERY = [
         ],
         [
             {
-                'id': 'test-instance',
-                'name': 'test-instance',
-                'disk_devices': [
-                    'disk1'
+                'id': 'test/test_zvol',
+                'name': 'virt',
+                'instances': [
+                    {
+                        'id': 'test-instance',
+                        'name': 'test-instance',
+                        'disk_devices': ['disk1'],
+                        'dataset': 'test/test_zvol'
+                    }
                 ],
-                'dataset': 'test/test_zvol'
+                'incus_pool_change': False
             }
         ],
     ),
     (
-        '/mnt/test',
+        '/mnt/test5',
         [
             {
                 'name': 'disk0',
                 'dev_type': 'DISK',
-                'source': '/mnt/evo/test_zvol',
+                'source': '/mnt/test5/test_zvol',
                 'storage_pool': 'test2'
             },
             {
                 'name': 'disk1',
                 'dev_type': 'DISK',
-                'source': '/mnt/test/test_zvol',
+                'source': '/mnt/test5/test_zvol',
                 'storage_pool': 'test2'
             },
         ],
         [
             {
-                'id': 'test-instance',
-                'name': 'test-instance',
-                'disk_devices': [
-                    'disk1'
+                'id': 'test5',
+                'name': 'virt',
+                'instances': [
+                    {
+                        'id': 'test-instance',
+                        'name': 'test-instance',
+                        'disk_devices': ['disk0', 'disk1'],
+                        'dataset': 'test5'
+                    }
                 ],
-                'dataset': 'test'
+                'incus_pool_change': False
             }
         ],
     ),
@@ -112,14 +138,19 @@ INSTANCE_QUERY = [
         ],
         [
             {
-                'id': 'test-instance',
-                'name': 'test-instance',
-                'disk_devices': [
-                    'disk0'
+                'id': 'test45',
+                'name': 'virt',
+                'instances': [
+                    {
+                        'id': 'test-instance',
+                        'name': 'test-instance',
+                        'disk_devices': ['disk0'],
+                        'dataset': 'test45'
+                    }
                 ],
-                'dataset': 'test45'
+                'incus_pool_change': False
             }
-        ],
+        ]
     ),
     (
         '/mnt/test2',
@@ -127,7 +158,7 @@ INSTANCE_QUERY = [
             {
                 'name': 'disk0',
                 'dev_type': 'DISK',
-                'source': '/mnt/evo/test_zvol',
+                'source': '/mnt/test4/test_zvol',
                 'storage_pool': 'test3'
             },
             {
@@ -139,20 +170,27 @@ INSTANCE_QUERY = [
         ],
         [
             {
-                'id': 'test-instance',
-                'name': 'test-instance',
-                'disk_devices': [],
-                'dataset': 'test2'
+                'id': 'test2',
+                'name': 'virt',
+                'instances': [
+                    {
+                        'id': 'test-instance',
+                        'name': 'test-instance',
+                        'disk_devices': [],
+                        'dataset': 'test2'
+                    }
+                ],
+                'incus_pool_change': True
             }
         ],
     ),
     (
-        '/mnt/test3',
+        '/mnt/test',
         [
             {
                 'name': 'disk0',
                 'dev_type': 'DISK',
-                'source': '/mnt/evo/test_zvol',
+                'source': '/mnt/test4/test_zvol',
                 'storage_pool': 'test3'
             },
             {
@@ -164,10 +202,17 @@ INSTANCE_QUERY = [
         ],
         [
             {
-                'id': 'test-instance',
-                'name': 'test-instance',
-                'disk_devices': ['disk0', 'disk1'],
-                'dataset': 'test3'
+                'id': 'test',
+                'name': 'virt',
+                'instances': [
+                    {
+                        'id': 'test-instance',
+                        'name': 'test-instance',
+                        'disk_devices': ['disk1'],
+                        'dataset': 'test'
+                    }
+                ],
+                'incus_pool_change': True
             }
         ],
     ),
@@ -175,6 +220,7 @@ INSTANCE_QUERY = [
 @pytest.mark.asyncio
 async def test_virt_instance_attachment_delegate(path, devices, expected):
     m = Middleware()
+    m['virt.global.config'] = lambda *arg: GLOBAL_CONFIG
     m['virt.instance.query'] = lambda *arg: INSTANCE_QUERY
     m['virt.instance.device_list'] = lambda *arg: devices
     m['filesystem.is_child'] = is_child_realpath
