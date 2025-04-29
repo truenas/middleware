@@ -11,7 +11,10 @@ class TrueNASVerifyServiceChangeDetectionAlertClass(AlertClass):
     category = AlertCategory.AUDIT
     level = AlertLevel.ERROR
     title = "TrueNAS Verify Service: Changes detected in root file system."
-    text = "%(verrs)s"
+    text = (
+        "Root File System Verification reported %(verrs)s  Please see syslog for details regarding these files. '"
+        "NOTE: Search syslog for messages from 'truenas_verify' and some descrepancies might be nominal."
+    )
 
 
 class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
@@ -27,10 +30,9 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
             # Capture the results in syslog
             res = subprocess.run(['truenas_verify', 'syslog'], capture_output=True, text=True)
             if res.returncode:
-                errmsg = f"{res.stderr}  See syslog for details."
                 return Alert(
                     TrueNASVerifyServiceChangeDetectionAlertClass,
-                    {'verrs': errmsg},
+                    {'verrs': res.stdout.strip()},
                     key=None
                 )
 
