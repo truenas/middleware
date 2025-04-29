@@ -480,7 +480,7 @@ class PoolDatasetService(CRUDService):
                 raise ValidationError(
                     'pool_dataset_create.name',
                     f'{parent_name} must be unlocked to create {data["name"]}.'
-            )
+                )
             if parent_ds['encrypted']:
                 if unencrypted_parent is not None:
                     raise ValidationError(
