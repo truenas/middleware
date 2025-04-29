@@ -411,7 +411,6 @@ class PoolDatasetService(CRUDService):
                 }]
             }
         """
-        acl_to_set = None
         if '/' not in data['name']:
             raise ValidationError(
                 'pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset'
@@ -424,16 +423,32 @@ class PoolDatasetService(CRUDService):
                 'Trailing spaces are not permitted in dataset names'
             )
 
-        parents = list(reversed(get_dataset_parents(data['name'])))
-        for idx, parent_name in enumerate(parents, start=1):
-            parent_ds = await self.middleware.call(
-                'pool.dataset.query',
-                [['id', '=', parent_name]],
-                {
-                    'extra': {'retrieve_children': False, 'properties': []}
-                }
+        encryption_dict = {}
+        inherit_encryption_properties = data.pop('inherit_encryption')
+        if data['encryption'] and inherit_encryption_properties:
+            raise ValidationError(
+                'pool_dataset_create.inherit_encryption',
+                'Must be disabled when encryption is enabled.'
             )
-            if not parent_ds:
+        elif not inherit_encryption_properties:
+            encryption_dict = {'encryption': 'off'}
+
+        unencrypted_parent = None
+        for idx, parent_name in enumerate(
+            reversed(get_dataset_parents(data['name'])), start=1
+        ):
+            parent_ds = None
+            try:
+                parent_ds = await self.middleware.call(
+                    'pool.dataset.get_instance_quick',
+                    parent_name,
+                    {'encryption': True}
+                )
+            except InstanceNotFound:
+                # doesn't exist
+                pass
+
+            if parent_ds is None:
                 if idx == 1:
                     # since the parents list is reversed, the 1st
                     # entry will always be the zpool name, so we
@@ -453,11 +468,46 @@ class PoolDatasetService(CRUDService):
                         'pool_dataset_create.name',
                         f'parent dataset {parent_name!r} does not exist'
                     )
-            elif parent_ds[0]['type'] == 'VOLUME':
+            if parent_ds['type'] == 'VOLUME':
                 raise ValidationError(
                     'pool_dataset_create.name',
-                    f'{parent_ds[0]["name"]}: parent may not be a ZFS volume'
+                    f'parent is a ZFS volume ({parent_name}) which is not allowed'
                 )
+            if parent_ds['locked']:
+                raise ValidationError(
+                    'pool_dataset_create.name',
+                    f'{parent_name} must be unlocked to create {data["name"]}.'
+            )
+            if parent_ds['encrypted']:
+                if unencrypted_parent is not None:
+                    raise ValidationError(
+                        'pool_dataset_create.name',
+                        'Creating an encrypted dataset within an unencrypted dataset is not allowed. '
+                        f'In this case, {unencrypted_parent!r} must be moved to an unencrypted dataset.'
+                    )
+                elif not data['encryption'] and not inherit_encryption_properties:
+                    # This was a design decision when native zfs encryption support was added to provide
+                    # a simple straight workflow not allowing end users to create unencrypted datasets
+                    # within an encrypted dataset.
+                    raise ValidationError(
+                        'pool_dataset_create.encryption',
+                        f'Cannot create an unencrypted dataset within an encrypted dataset ({parent_name}).'
+                    )
+                elif data['encryption'] and not data['encyption_options']['passphrase']:
+                    if parent_ds['encryption_root'] and ZFSKeyFormat(
+                        (await self.get_insance(parent_ds['enryption_root']))['key_format']['value']
+                    ) == ZFSKeyFormat.PASSPHRASE:
+                        # We want to ensure that we don't have any parent for this dataset which is encrypted
+                        # with PASSPHRASE because we don't allow children to be unlocked while parent is locked
+                        raise ValidationError(
+                            'pool_dataset_create.encryption',
+                            'Passphrase encrypted datasets cannot have children encrypted with a key.'
+                        )
+            else:
+                # The unencrypted parent story is pool/encrypted/unencrypted/new_ds so in this case
+                # we want to make sure user does not specify inherit encryption as it will lead to new_ds
+                # not getting encryption props from pool/encrypted.
+                unencrypted_parent = parent_name
 
         match data['share_type']:
             case 'SMB':
@@ -471,10 +521,9 @@ class PoolDatasetService(CRUDService):
                 data['aclmode'] = 'PASSTHROUGH'
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
+        await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', [parent_ds])
         verrors.check()
 
-        parent_ds = parent_ds[0]
         parent_mp = parent_ds['mountpoint']
         if parent_ds['locked'] or not parent_mp:
             parent_st = {'acl': False}
@@ -491,6 +540,7 @@ class PoolDatasetService(CRUDService):
             if e.errno != errno.ENOENT:
                 raise
 
+        acl_to_set = None
         if data['share_type'] == 'SMB':
             if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
                 acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
@@ -540,64 +590,7 @@ class PoolDatasetService(CRUDService):
         if data['type'] == 'FILESYSTEM' and data.get('acltype', 'INHERIT') != 'INHERIT':
             data['aclinherit'] = 'PASSTHROUGH' if data['acltype'] == 'NFSV4' else 'DISCARD'
 
-        if parent_ds['locked']:
-            verrors.add(
-                'pool_dataset_create.name',
-                f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
-            )
 
-        encryption_dict = {}
-        inherit_encryption_properties = data.pop('inherit_encryption')
-        if not inherit_encryption_properties:
-            encryption_dict = {'encryption': 'off'}
-
-        unencrypted_parent = False
-        for parent in get_dataset_parents(data['name']):
-            try:
-                check_ds = await self.middleware.call('pool.dataset.get_instance_quick', parent, {'encryption': True})
-            except InstanceNotFound:
-                continue
-
-            if check_ds['encrypted']:
-                if unencrypted_parent:
-                    verrors.add(
-                        'pool_dataset_create.name',
-                        'Creating an encrypted dataset within an unencrypted dataset is not allowed. '
-                        f'In this case, {unencrypted_parent!r} must be moved to an unencrypted dataset.'
-                    )
-                    break
-                elif data['encryption'] is False and not inherit_encryption_properties:
-                    # This was a design decision when native zfs encryption support was added to provide
-                    # a simple straight workflow not allowing end users to create unencrypted datasets
-                    # within an encrypted dataset.
-                    verrors.add(
-                        'pool_dataset_create.encryption',
-                        f'Cannot create an unencrypted dataset within an encrypted dataset ({parent}).'
-                    )
-                    break
-            else:
-                # The unencrypted parent story is pool/encrypted/unencrypted/new_ds so in this case
-                # we want to make sure user does not specify inherit encryption as it will lead to new_ds
-                # not getting encryption props from pool/encrypted.
-                unencrypted_parent = parent
-
-        if data['encryption']:
-            if inherit_encryption_properties:
-                verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
-
-            if not data['encryption_options']['passphrase']:
-                # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
-                # because we don't allow children to be unlocked while parent is locked
-                parent_encryption_root = parent_ds['encryption_root']
-                if (
-                    parent_encryption_root and ZFSKeyFormat(
-                        (await self.get_instance(parent_encryption_root))['key_format']['value']
-                    ) == ZFSKeyFormat.PASSPHRASE
-                ):
-                    verrors.add(
-                        'pool_dataset_create.encryption',
-                        'Passphrase encrypted datasets cannot have children encrypted with a key.'
-                    )
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', None, verrors,
