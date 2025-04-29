@@ -13,6 +13,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationErrors, filterable_api_method
 )
+from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 
@@ -410,61 +411,70 @@ class PoolDatasetService(CRUDService):
                 }]
             }
         """
-        verrors = ValidationErrors()
         acl_to_set = None
-
         if '/' not in data['name']:
-            verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
-        elif not validate_dataset_name(data['name']):
-            verrors.add('pool_dataset_create.name', 'Invalid dataset name')
-        elif data['name'][-1] == ' ':
-            verrors.add(
+            raise ValidationError(
+                'pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset'
+            )
+        if not validate_dataset_name(data['name']):
+            raise ValidationError('pool_dataset_create.name', 'Invalid dataset name')
+        if data['name'][-1] == ' ':
+            raise ValidationError(
                 'pool_dataset_create.name',
                 'Trailing spaces are not permitted in dataset names'
             )
-        else:
-            parent_name = data['name'].rsplit('/', 1)[0]
-            if data['create_ancestors']:
-                # If we want to create ancestors, let's just ensure that we have at least one parent which exists
-                while not await self.middleware.call(
-                        'pool.dataset.query',
-                        [['id', '=', parent_name]], {
-                            'extra': {'retrieve_children': False, 'properties': []}
-                        }
-                ):
-                    if '/' not in parent_name:
-                        # Root dataset / pool does not exist
-                        break
-                    parent_name = parent_name.rsplit('/', 1)[0]
 
+        parents = list(reversed(get_dataset_parents(data['name'])))
+        for idx, parent_name in enumerate(parents, start=1):
             parent_ds = await self.middleware.call(
                 'pool.dataset.query',
-                [('id', '=', parent_name)],
-                {'extra': {'retrieve_children': False}}
+                [['id', '=', parent_name]],
+                {
+                    'extra': {'retrieve_children': False, 'properties': []}
+                }
             )
+            if not parent_ds:
+                if idx == 1:
+                    # since the parents list is reversed, the 1st
+                    # entry will always be the zpool name, so we
+                    # can raise a validation error that makes sense.
+                    # Furthermore, it doesn't matter if the end-user
+                    # has specified to create ancestors, without a
+                    # zpool, we bail out early
+                    raise ValidationError(
+                        'pool_dataset_create.name',
+                        f'zpool {parent_name!r} does not exist'
+                    )
+                elif not data['create_ancestors']:
+                    # if create ancestors wasn't specified and we
+                    # get to a parent dataset that doesn't exist
+                    # then bail out here
+                    raise ValidationError(
+                        'pool_dataset_create.name',
+                        f'parent dataset {parent_name!r} does not exist'
+                    )
+            elif parent_ds[0]['type'] == 'VOLUME':
+                raise ValidationError(
+                    'pool_dataset_create.name',
+                    f'{parent_ds[0]["name"]}: parent may not be a ZFS volume'
+                )
 
-            match data['share_type']:
-                case 'SMB':
-                    data['casesensitivity'] = 'INSENSITIVE'
-                    data['acltype'] = 'NFSV4'
-                    data['aclmode'] = 'RESTRICTED'
-                case 'APPS' | 'MULTIPROTOCOL' | 'NFS':
-                    data['casesensitivity'] = 'SENSITIVE'
-                    data['atime'] = 'OFF'
-                    data['acltype'] = 'NFSV4'
-                    data['aclmode'] = 'PASSTHROUGH'
+        match data['share_type']:
+            case 'SMB':
+                data['casesensitivity'] = 'INSENSITIVE'
+                data['acltype'] = 'NFSV4'
+                data['aclmode'] = 'RESTRICTED'
+            case 'APPS' | 'MULTIPROTOCOL' | 'NFS':
+                data['casesensitivity'] = 'SENSITIVE'
+                data['atime'] = 'OFF'
+                data['acltype'] = 'NFSV4'
+                data['aclmode'] = 'PASSTHROUGH'
 
-            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
-
+        verrors = ValidationErrors()
+        await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
         verrors.check()
 
         parent_ds = parent_ds[0]
-        if parent_ds['type'] == 'VOLUME':
-            verrors.add(
-                'pool_dataset_create.name',
-                f'{parent_ds["name"]}: parent may not be a ZFS volume'
-            )
-
         parent_mp = parent_ds['mountpoint']
         if parent_ds['locked'] or not parent_mp:
             parent_st = {'acl': False}
