@@ -24,7 +24,7 @@ def upgrade():
     for c in map(dict, conn.execute("SELECT * FROM system_keychaincredential WHERE type = 'SSH_CREDENTIALS'").fetchall()):
         if attributes := decrypt(c["attributes"]):
             attributes = json.loads(attributes)
-            del attributes["cipher"]
+            attributes.pop("cipher", None)
             conn.execute("UPDATE system_keychaincredential SET attributes = ? WHERE id = ?", (
                 encrypt(json.dumps(attributes)), c["id"]
             ))
