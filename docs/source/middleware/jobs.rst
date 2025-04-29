@@ -33,7 +33,7 @@ Using the pipes in the job object
 =================================
 
 .. automodule:: middlewared.pipe
-    :members: Pipes
+    :members: Pipes, InputPipes
 
 .. automodule:: middlewared.pipe
     :members: Pipe
@@ -114,6 +114,28 @@ You can upload a file to the job's `input` pipe using `/_upload` API endpoint.
         -F 'file=@config.tar'
 
     {"job_id": 4501}
+
+Uploading multiple files to the job's `inputs` pipes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can upload multiple files to the job's `inputs` pipes using the same `/_upload` API endpoint.
+
+.. code-block:: bash
+
+    curl localhost/_upload \
+        -u root:abcd1234 \
+        -F 'data={"method": "vm.create", "params": []}' \
+        -F 'file=@metadata.json' \
+        -F 'file=@rootfs.squashfs'
+
+    {"job_id": 4501}
+
+The files must be accessed sequentially iterating over the `job.pipes.inputs`:
+
+.. code-block:: python
+
+    for pipe in job.pipes.inputs:
+        pipe.r.read()
 
 Downloading the job's `output` pipe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

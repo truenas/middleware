@@ -1,28 +1,88 @@
 import os
+from queue import Queue
 import tempfile
+from threading import Lock
+import typing
 
 
 class Pipes:
     """
     `job.pipes` object containing job's open pipes. Each pipe is a :class:`middlewared.pipe.Pipe` object.
 
-    :ivar input: Input pipe
+    :ivar inputs: :class:`middlewared.pipe.InputPipes` instance
 
     :ivar output: Output pipe
     """
-    def __init__(self, input_=None, output=None):
-        self.input = input_
+    def __init__(self, inputs: typing.Optional["InputPipes"] = None, output: typing.Optional["Pipe"] = None):
+        self.inputs = inputs
         self.output = output
 
-    def __iter__(self):
-        if self.input is not None:
-            yield self.input
+    @property
+    def input(self):
+        """
+        Shortcut to access the job's first input pipe.
 
-        if self.output is not None:
-            yield self.output
+        :return: :class:`middlewared.pipe.Pipe`
+        """
+        if self.inputs is None:
+            return None
+
+        return self.inputs.first_pipe
 
     async def close(self):
-        for pipe in self:
+        if self.inputs is not None:
+            await self.inputs.close()
+
+        if self.output is not None:
+            await self.output.close()
+
+
+class InputPipes:
+    """
+    `job.pipes.inputs` object containing job's input pipes.
+    """
+    def __init__(self, first_pipe: "Pipe"):
+        self.first_pipe = first_pipe
+        self.pipes_to_close = [first_pipe]
+        self.queue = Queue()
+        self.iterating_lock = Lock()
+        self.iterating = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.queue.put(None)
+
+    def __iter__(self) -> typing.Iterable["Pipe"]:
+        """
+        :return: job's input pipes one by one.
+        """
+        with self.iterating_lock:
+            if self.iterating:
+                raise RuntimeError("Cannot iterate on %r more than once" % self)
+
+            self.iterating = True
+
+        yield self.first_pipe
+        # Consume the unread contents so that the HTTP request parser could proceed to the next part
+        self.first_pipe.r.read()
+
+        while True:
+            item = self.queue.get()
+            if item is None:
+                break
+
+            yield item
+            # Consume the unread contents so that the HTTP request parser could proceed to the next part
+            item.r.read()
+
+    def add_pipe(self, pipe: "Pipe"):
+        self.queue.put(pipe)
+        self.pipes_to_close.append(pipe)
+
+    async def close(self):
+        for pipe in self.pipes_to_close:
             await pipe.close()
 
 
