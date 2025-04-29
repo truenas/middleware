@@ -225,18 +225,6 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.name', 'Parent dataset does not exist for specified name')
         else:
             parent = parent[0]
-            if mode == 'CREATE' and parent['readonly']['rawvalue'] == 'on':
-                # creating a zvol/dataset when the parent object is set to readonly=on
-                # is allowed via ZFS. However, if it's a dataset an error will be raised
-                # stating that it was unable to be mounted. If it's a zvol, then the service
-                # that tries to open the zvol device will get read only related errors.
-                # Currently, there is no way to mount a dataset in the webUI so we will
-                # prevent this scenario from occuring by preventing creation if the parent
-                # is set to readonly=on.
-                verrors.add(
-                    f'{schema}.readonly',
-                    f'Turn off readonly mode on {parent["id"]} to create {data["name"].rsplit("/")[0]}'
-                )
 
         # We raise validation errors here as parent could be used down to validate other aspects of the dataset
         verrors.check()
@@ -473,6 +461,21 @@ class PoolDatasetService(CRUDService):
                     'pool_dataset_create.name',
                     f'parent is a ZFS volume ({parent_name}) which is not allowed'
                 )
+            elif 'RO' in (await self.middleware.call(
+                'filesystem.mount_info', [["mount_source", "=", parent_name]]
+            ))['super_opts']:
+                # creating a zvol/dataset when the parent object is set to readonly=on
+                # is allowed via ZFS. However, if it's a dataset an error will be raised
+                # stating that it was unable to be mounted. If it's a zvol, then the service
+                # that tries to open the zvol device will get read only related errors.
+                # Currently, there is no way to mount a dataset in the webUI so we will
+                # prevent this scenario from occuring by preventing creation if the parent
+                # is set to readonly=on.
+                raise ValidationError(
+                    'pool_dataset_create.readonly',
+                    f'Turn off readonly mode on {parent_name} to create {data["name"].rsplit("/")[0]}'
+                )
+
             if parent_ds['locked']:
                 raise ValidationError(
                     'pool_dataset_create.name',
@@ -589,8 +592,6 @@ class PoolDatasetService(CRUDService):
 
         if data['type'] == 'FILESYSTEM' and data.get('acltype', 'INHERIT') != 'INHERIT':
             data['aclinherit'] = 'PASSTHROUGH' if data['acltype'] == 'NFSV4' else 'DISCARD'
-
-
 
         encryption_dict = await self.middleware.call(
             'pool.dataset.validate_encryption_data', None, verrors,
