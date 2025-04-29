@@ -16,7 +16,7 @@ def virt(pool_data: dict | None = None):
     try:
         yield virt_config
     finally:
-        virt_config = call('virt.global.update', {'pool': None}, job=True)
+        virt_config = call('virt.global.update', {'pool': None, 'storage_pools': []}, job=True)
         assert virt_config['pool'] is None, virt_config
 
 
