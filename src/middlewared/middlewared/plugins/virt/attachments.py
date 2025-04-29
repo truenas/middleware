@@ -16,6 +16,7 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
     async def query(self, path, enabled, options=None):
         instances = []
         pool = path.split('/')[2] if path.count("/") == 2 else None  # only set if path is pool mp
+        dataset = path.removeprefix('/mnt/')
 
         for i in await self.middleware.call('virt.instance.query'):
             append = False
@@ -23,36 +24,53 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
                 instances.append({
                     'id': i['id'],
                     'name': i['name'],
+                    'disk_devices': [],
+                    'dataset': dataset,
                 })
                 continue
 
+            disks = []
             for device in await self.middleware.call('virt.instance.device_list', i['id']):
                 if device['dev_type'] != 'DISK':
                     continue
 
                 if pool and device['storage_pool'] == pool:
                     append = True
-                    break
+                    disks.append(device['name'])
+                    continue
 
                 if device['source'] is None:
                     continue
 
-                if await self.middleware.call('filesystem.is_child', device['source'], path):
+                source_path = device['source'].removeprefix('/dev/zvol/').removeprefix('/mnt/')
+                if await self.middleware.call('filesystem.is_child', source_path, dataset):
                     append = True
-                    break
+                    disks.append(device['name'])
+                    continue
 
             if append:
                 instances.append({
                     'id': i['id'],
                     'name': i['name'],
+                    'disk_devices': disks,
+                    'dataset': dataset,
                 })
 
         return instances
 
     async def delete(self, attachments):
-        if attachments:
-            job = await self.middleware.call('virt.global.update', {'pool': None})
-            await job.wait(raise_error=True)
+        virt_config = await self.middleware.call('virt.global.config')
+        if not attachments or any(
+            virt_config['pool'] == attachment['dataset'] for attachment in attachments
+        ):
+            # If there are no attachments or if any attachment we have the virt pool
+            # being removed we should not do anything here
+            return
+
+        disks_to_remove = [i for i in filter(lambda i: i.get('disk_devices'), attachments)]
+        for instance_data in disks_to_remove:
+            for to_remove_disk in instance_data['disk_devices']:
+                await self.middleware.call('virt.instance.device_delete', instance_data['name'], to_remove_disk)
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
