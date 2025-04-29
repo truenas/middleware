@@ -19,23 +19,6 @@ class CloudCredentialEntry(BaseModel):
     name: NonEmptyString
     provider: CloudCredentialProvider
 
-    @classmethod
-    def from_previous(cls, value):
-        attributes = value.pop("attributes")
-        return {
-            **value,
-            "provider": {
-                "type": value["provider"],
-                **attributes,
-            }
-        }
-
-    @classmethod
-    def to_previous(cls, value):
-        value["attributes"] = value["provider"]
-        value["provider"] = value["attributes"].pop("type")
-        return value
-
 
 class CloudCredentialCreate(CloudCredentialEntry):
     id: Excluded = excluded_field()
