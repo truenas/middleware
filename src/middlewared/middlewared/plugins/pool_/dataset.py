@@ -11,9 +11,9 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import (
-    CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationErrors, filterable_api_method
+    CallError, CRUDService, item_method, job, private, ValidationErrors, filterable_api_method
 )
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 
@@ -428,11 +428,11 @@ class PoolDatasetService(CRUDService):
             parent_ds = None
             try:
                 parent_ds = await self.middleware.call(
-                    'pool.dataset.get_instance_quick',
-                    parent_name,
-                    {'encryption': True}
+                    'pool.dataset.query',
+                    [['name', '=', parent_name]],
+                    {'get': True}
                 )
-            except InstanceNotFound:
+            except MatchNotFound:
                 # doesn't exist
                 pass
 
@@ -462,8 +462,8 @@ class PoolDatasetService(CRUDService):
                     f'parent is a ZFS volume ({parent_name}) which is not allowed'
                 )
             elif 'RO' in (await self.middleware.call(
-                'filesystem.mount_info', [["mount_source", "=", parent_name]]
-            ))['super_opts']:
+                'filesystem.mount_info', [['mount_source', '=', parent_name]], {'get': True}
+            ))['mount_opts']:
                 # creating a zvol/dataset when the parent object is set to readonly=on
                 # is allowed via ZFS. However, if it's a dataset an error will be raised
                 # stating that it was unable to be mounted. If it's a zvol, then the service
