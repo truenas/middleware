@@ -361,6 +361,9 @@ class FailoverService(ConfigService):
         """
         standby = ' standby controller.'
 
+        self.logger.debug('Persisting interface link addresses')
+        self.middleware.call_sync('interface.persist_link_addresses')
+
         self.logger.debug('Pulling system dataset UUID from' + standby)
         self.middleware.call_sync('systemdataset.ensure_standby_uuid')
 
