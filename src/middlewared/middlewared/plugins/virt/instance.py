@@ -6,7 +6,7 @@ import platform
 import aiohttp
 
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, job, private
+    CallError, CRUDService, ValidationError, ValidationErrors, job, private
 )
 from middlewared.utils import filter_list
 
@@ -585,9 +585,14 @@ class VirtInstanceService(CRUDService):
     @private
     async def start_impl(self, job, id):
         instance = await self.middleware.call('virt.instance.get_instance', id)
+        if instance['status'] not in ('RUNNING', 'STOPPED'):
+            raise ValidationError(
+                'virt.instance.start.id',
+                f'{id}: instance may not be started because current status is: {instance["status"]}'
+            )
 
         # Apply any idmap changes
-        if instance['status'] != 'RUNNING':
+        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED':
             await self.set_account_idmaps(id)
 
         if instance['vnc_password']:
@@ -655,6 +660,11 @@ class VirtInstanceService(CRUDService):
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
+        if instance['status'] not in ('RUNNING', 'STOPPED'):
+            raise ValidationError(
+                f'virt.instance.restart.{id}',
+                f'{id}: instance may not be restarted because current status is: {instance["status"]}'
+            )
 
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
@@ -664,7 +674,8 @@ class VirtInstanceService(CRUDService):
             }})
 
         # Apply any idmap changes
-        await self.set_account_idmaps(id)
+        if instance['type'] == 'CONTAINER':
+            await self.set_account_idmaps(id)
 
         if instance['vnc_password']:
             await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
@@ -686,7 +697,7 @@ class VirtInstanceService(CRUDService):
         if instance['type'] != 'CONTAINER':
             raise CallError('Only available for containers.')
         if instance['status'] != 'RUNNING':
-            raise CallError('Container must be running.')
+            raise CallError(f'{id}: container must be running. Current status is: {instance["status"]}')
         config = self.middleware.call_sync('virt.global.config')
         mount_info = self.middleware.call_sync(
             'filesystem.mount_info', [['mount_source', '=', f'{config["dataset"]}/containers/{id}']]
