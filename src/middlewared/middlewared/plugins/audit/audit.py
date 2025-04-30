@@ -13,6 +13,7 @@ from truenas_api_client import json as ejson
 from .utils import (
     AUDIT_DATASET_PATH,
     AUDIT_LIFETIME,
+    AUDIT_LOG_PATH_NAME,
     AUDIT_DEFAULT_RESERVATION,
     AUDIT_DEFAULT_QUOTA,
     AUDIT_DEFAULT_FILL_CRITICAL,
@@ -36,7 +37,6 @@ from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.functools_ import cache
 from middlewared.validators import Range
-
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
 BULK_AUDIT = ['SMB', 'SYSTEM']
@@ -600,9 +600,9 @@ class AuditService(ConfigService):
             current_version = await self.middleware.call('system.version')
             rc = await setup_truenas_verify(self.middleware, current_version)
             if rc:
-                self.logger.error(
-                    'Did not get clean result from truenas_verify initial setup. '
-                    'See /var/log/truenas_verify.%s.log', current_version
+                self.logger.warning(
+                    'Did not get clean result from truenas_verify initial setup. See %s'
+                    f'{AUDIT_LOG_PATH_NAME}.{current_version}.log'
                 )
         except Exception:
             self.logger.error('Error detected in truenas_verify setup.', exc_info=True)

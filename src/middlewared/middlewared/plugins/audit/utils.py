@@ -26,7 +26,7 @@ SQL_SAFE_FIELDS = (
     AuditEventParam.EVENT.value,
     AuditEventParam.SUCCESS.value,
 )
-
+AUDIT_LOG_PATH_NAME = mtree_verify.LOG_PATH_NAME
 
 AuditBase = declarative_base()
 
