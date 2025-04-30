@@ -71,7 +71,6 @@ class SQLConn:
                 connect_args={'check_same_thread': False}
             )
             self.connection = self.engine.connect()
-            self.connection.connection.execute('VACUUM')
             self.connection.execute('PRAGMA journal_mode=WAL')
             self.dbfd = os.open(self.path, os.O_PATH)
 
