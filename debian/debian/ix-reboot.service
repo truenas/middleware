@@ -1,7 +1,7 @@
 [Unit]
 Description=Exec TrueNAS reboot tasks
 
-Before=reboot.target
+After=network.target middlewared.service scst.service
 
 [Service]
 Type=oneshot
