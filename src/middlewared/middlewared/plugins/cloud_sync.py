@@ -544,10 +544,7 @@ class CredentialsService(CRUDService):
         """
         await self.middleware.call("network.general.will_perform_activity", "cloud_sync")
 
-        data = dict(name="", provider=data)
-        await self._validate("cloud_sync_credentials_create", data)
-
-        async with RcloneConfig({"credentials": data}) as config:
+        async with RcloneConfig({"credentials": {"provider": data}}) as config:
             proc = await run(["rclone", "--config", config.config_path, "--contimeout", "15s", "--timeout", "30s",
                               "lsjson", "remote:"],
                              check=False, encoding="utf8")
