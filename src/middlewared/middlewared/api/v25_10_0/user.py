@@ -162,7 +162,7 @@ class UserDeleteOptions(BaseModel):
 
 class UserDeleteArgs(BaseModel):
     id: int
-    options: UserDeleteOptions = Field(default=UserDeleteOptions())
+    options: UserDeleteOptions = Field(default_factory=UserDeleteOptions)
 
 
 class UserDeleteResult(BaseModel):
@@ -251,7 +251,7 @@ class UserSetupLocalAdministratorOptions(BaseModel):
 class UserSetupLocalAdministratorArgs(BaseModel):
     username: Literal['root', 'truenas_admin']
     password: Secret[str]
-    options: UserSetupLocalAdministratorOptions = Field(default=UserSetupLocalAdministratorOptions())
+    options: UserSetupLocalAdministratorOptions = Field(default_factory=UserSetupLocalAdministratorOptions)
 
 
 class UserSetupLocalAdministratorResult(BaseModel):
