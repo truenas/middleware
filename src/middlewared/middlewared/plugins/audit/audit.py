@@ -431,9 +431,9 @@ class AuditService(ConfigService):
         configuration to the current boot environment.
         """
         try:
-            os.mkdir(AUDIT_REPORTS_DIR, 0o700)
+            await self.middleware.run_in_thread(os.mkdir, AUDIT_REPORTS_DIR, 0o700)
         except FileExistsError:
-            os.chmod(AUDIT_REPORTS_DIR, 0o700)
+            await self.middleware.run_in_thread(os.chmod, AUDIT_REPORTS_DIR, 0o700)
 
         cur = await self.middleware.call('audit.get_audit_dataset')
         parent = os.path.dirname(cur['id'])
@@ -470,13 +470,10 @@ class AuditService(ConfigService):
                     'cleanup may be required', ds['id'], exc_info=True
                 )
 
-        # Dismiss any existing AuditSetup one-shot alerts
-        await self.middleware.call('alert.oneshot_delete', 'AuditSetup', None)
         audit_config = await self.middleware.call('audit.config')
         try:
             await self.middleware.call('audit.update_audit_dataset', audit_config)
         except Exception:
-            await self.middleware.call('alert.oneshot_create', 'AuditSetup', None)
             self.logger.error('Failed to apply auditing dataset configuration.', exc_info=True)
 
         # Generate the initial truenas_verify file

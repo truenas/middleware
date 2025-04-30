@@ -3,7 +3,7 @@ import uuid
 
 from middlewared.utils import BOOTREADY
 
-from .utils import FIRST_INSTALL_SENTINEL, lifecycle_conf
+from .utils import FIRST_INSTALL_SENTINEL, BOOTENV_FIRSTBOOT_SENTINEL, lifecycle_conf
 
 
 def firstboot(middleware):
@@ -18,6 +18,15 @@ def firstboot(middleware):
         if middleware.call_sync('system.is_enterprise'):
             config = middleware.call_sync('datastore.config', 'system.advanced')
             middleware.call_sync('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
+
+
+def firstboot_after_upgrade(middleware):
+    if not os.path.exists(BOOTENV_FIRSTBOOT_SENTINEL):
+        os.makedirs(os.path.dirname(BOOTENV_FIRSTBOOT_SENTINEL), mode=0o700, exist_ok=True)
+        with open(BOOTENV_FIRSTBOOT_SENTINEL, 'w'):
+            pass
+
+        lifecycle_conf.SYSTEM_BOOT_ENV_FIRST_BOOT = True
 
 
 def read_system_boot_id(middleware):
@@ -36,6 +45,7 @@ async def setup(middleware):
     middleware.event_register('system.shutdown', 'Started shutdown process', roles=['SYSTEM_GENERAL_READ'])
 
     await middleware.run_in_thread(firstboot, middleware)
+    await middleware.run_in_thread(firstboot_after_upgrade, middleware)
 
     settings = await middleware.call('system.general.config')
     middleware.logger.debug('Setting timezone to %r', settings['timezone'])
