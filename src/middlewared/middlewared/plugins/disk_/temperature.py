@@ -67,8 +67,11 @@ class DiskService(Service):
         opts = {'start': round(start.timestamp()), 'end': round(end.timestamp())}
         final = dict()
         for disk in self.middleware.call_sync('reporting.netdata_graph', 'disktemp', opts):
-            if disk['identifier'] in names:
-                final[disk['identifier']] = {
+            # identifier looks like "sda | Type: HDD | Model: HUH721212AL4200 | Serial: aaa"
+            # so we need to normalize it before checking if caller has specified it
+            name = disk['identifier'].split(' | ')[0].strip()
+            if name in names:
+                final[name] = {
                     'min': disk['aggregations']['min'].get('temperature_value', None),
                     'max': disk['aggregations']['max'].get('temperature_value', None),
                     'avg': disk['aggregations']['mean'].get('temperature_value', None),

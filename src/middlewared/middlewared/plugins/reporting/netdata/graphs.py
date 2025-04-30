@@ -55,12 +55,7 @@ class DISKPlugin(GraphBase):
 
     def get_mapping(self, all_charts):
         return {
-            get_human_disk_name({
-                'identifier': disk.identifier,
-                'type': disk.media_type,
-                'name': disk.name,
-                'model': disk.model,
-            }): disk.identifier for disk in iterate_disks()
+            get_human_disk_name(disk): disk.identifier for disk in iterate_disks()
             if f'truenas_disk_stats.io.{disk.identifier}' in all_charts
         }
 
@@ -376,12 +371,7 @@ class DiskTempPlugin(GraphBase):
 
     def get_mapping(self, all_charts):
         return {
-            get_human_disk_name({
-                'identifier': disk.identifier,
-                'type': disk.media_type,
-                'name': disk.name,
-                'model': disk.model,
-            }): disk.identifier for disk in iterate_disks()
+            get_human_disk_name(disk): disk.identifier for disk in iterate_disks()
             if f'truenas_disk_temp.{disk.identifier}' in all_charts
         }
 
