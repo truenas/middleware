@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
 
+from middlewared.utils.disks_.disk_class import DiskEntry
 
 NETDATA_PORT = 6999
 NETDATA_REQUEST_TIMEOUT = 30  # seconds
@@ -22,24 +23,19 @@ def get_query_parameters(query_params: dict | None, prefix: str = '&') -> str:
     return f'{prefix}{encoded_params}'
 
 
-def get_human_disk_name(disk_details: dict) -> str:
-    """
-    This will return a human-readable name for the disk which is guaranteed to be unique
-    """
-    identifier = disk_details['identifier']
-    disk_type = disk_details['type']
-    if disk_type == 'SSD' and disk_details['name'].startswith('nvme'):
-        disk_type = 'NVME'
-
-    model = disk_details['model']
-
-    human_identifier = ''
-    if disk_type:
-        human_identifier = f'{disk_type} | '
-
-    if model:
-        human_identifier += f'{model} Model | '
-
-    human_identifier += f'{identifier}'
-
-    return human_identifier
+def get_human_disk_name(disk: DiskEntry) -> str:
+    """This will return a human-readable name which
+    is used, primarily, in the title of the netdata
+    for disk related reports."""
+    # follows the form of <name> | <type> | <model> | <serial>
+    # the _ONLY_ guaranteed value is the <name>
+    # so we'll return "<attr>: Unknown" for any
+    # attributes of the disk that we can't determine
+    return ' | '.join(
+        [
+            disk.name,
+            f'Type: {disk.media_type if disk.media_type else "Unknown"}',
+            f'Model: {disk.model if disk.model else "Unknown"}',
+            f'Serial: {disk.serial if disk.serial else "Unknown"}',
+        ]
+    )
