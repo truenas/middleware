@@ -285,7 +285,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
 
         return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.START, retval, reason)
 
-    def _pam_start_account_no_password(self, username: str) -> TrueNASAuthenticatorResponse:
+    def _pam_start_account_no_password(self, username: str, do_acct_mgmt=True) -> TrueNASAuthenticatorResponse:
         """ This function assumes self.TRUENAS_LOCK held """
         try:
             passwd = self._get_user_obj(username)
@@ -301,7 +301,13 @@ class UserPamAuthenticator(pam.PamAuthenticator):
             return pam_resp
 
         # Verify that account not disabled / expired
-        retval = self.pam_acct_mgmt(self.handle, 0)
+        if do_acct_mgmt:
+            retval = self.pam_acct_mgmt(self.handle, 0)
+        else:
+            # If someone user has managed to totally break the root account we don't want the
+            # backend middleware processes to break
+            retval = pam.PAM_SUCCESS
+
         reason = None
         if retval == pam.PAM_SUCCESS:
             self.truenas_state.passwd = passwd
@@ -601,30 +607,43 @@ class UnixPamAuthenticator(UserPamAuthenticator):
             service=MiddlewarePamFile.UNIX
         )
 
+    def skip(self):
+        """ return whether PAM operations and login should be skipped for this session """
+        if not self.truenas_state.origin.session_is_interactive:
+            # This is a middleware worker or backend job
+            return True
+
+        if self.truenas_state.origin.is_ha_connection:
+            # This is an HA connection from other controller. We don't need utmp
+            # entry for it (session still subject to normal middleware logging)
+            return True
+
+        return False
+
     def authenticate(self, username: str, origin: ConnectionOrigin) -> TrueNASAuthenticatorResponse:
         """
         Authentication for our unix socket is somewhat different. We just simply
         verify username exists and set up pam handle
         """
         self.truenas_state.origin = origin
+        if self.skip():
+            passwd = self._get_user_obj(username)
+            return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.AUTH, pam.PAM_SUCCESS, passwd)
 
-        with self.TRUENAS_LOCK:
-            return self._pam_start_account_no_password(username)
+        return super().authenticate(username, '', origin)
 
     def logout(self):
         """ If we have a non-interactive session then bypass normal logout. This is differentiated
         from an unitialized state where truenas_interactive_session is None. In latter case we want
         the logout to fail with exception that account was not logged in. """
-        if not self.truenas_state.origin.session_is_interactive:
+        if self.skip():
             self.end()
             return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGOUT, pam.PAM_SUCCESS, None)
 
         return super().logout()
 
     def login(self, middleware_session_id: str) -> TrueNASAuthenticatorResponse:
-        """ We need special handling for internal non-interactive middleware sessions """
-        if not self.truenas_state.origin.session_is_interactive:
-            # short-circuit login if this is a middleware worker or other backend job
+        if self.skip():
             self.truenas_state.login_at = datetime.now(UTC)
             self.truenas_state.stage = TrueNASAuthenticatorStage.LOGOUT
             return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGIN, pam.PAM_SUCCESS, None)

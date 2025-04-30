@@ -70,6 +70,7 @@ class SystemService(Service):
         Emits an "added" event of name "system" and id "reboot".
         """
         await self.middleware.log_audit_message(app, 'REBOOT', {'reason': reason}, True)
+        self.logger.debug("XXX: reboot called: %s", reason)
 
         self.middleware.send_event('system.reboot', 'ADDED', fields={'reason': reason})
 
