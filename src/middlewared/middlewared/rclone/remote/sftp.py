@@ -13,7 +13,7 @@ class SFTPRcloneRemote(BaseRcloneRemote):
     async def get_credentials_extra(self, credentials):
         result = {}
 
-        if "private_key" in credentials["provider"]:
+        if credentials["provider"].get("private_key") is not None:
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp_file:
                 tmp_file.write((await self.middleware.call("keychaincredential.get_of_type",
                                                            credentials["provider"]["private_key"],
@@ -24,5 +24,5 @@ class SFTPRcloneRemote(BaseRcloneRemote):
         return result
 
     async def cleanup(self, task, config):
-        if "private_key" in task["credentials"]["provider"]:
+        if task["credentials"]["provider"].get("private_key") is not None:
             os.unlink(config["key_file"])
