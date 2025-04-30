@@ -115,7 +115,10 @@ def shadow_parse_aging(
         # unexpected None here should result in forcing password change
         # We cannot do this for the root account though because it will break
         # ability to su to root.
-        if user['username'] != 'root':
+        #
+        # NAS-135623 -- this check was relaxed to only set zero here if
+        # password authentication is not disabled.
+        if user['username'] != 'root' and not user['password_disabled']:
             outstr += '0'
 
     outstr += SHADOW_SEPARATOR
