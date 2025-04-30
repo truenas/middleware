@@ -14,13 +14,6 @@ class AuditBackendSetupAlertClass(AlertClass, SimpleOneShotAlertClass):
     text = "Audit service failed backend setup: %(service)s. See /var/log/middlewared.log"
 
 
-class AuditSetupAlertClass(AlertClass, SimpleOneShotAlertClass):
-    category = AlertCategory.AUDIT
-    level = AlertLevel.ERROR
-    title = "Audit Service Setup Failed"
-    text = "Audit service failed to complete setup. See /var/log/middlewared.log"
-
-
 # --------------- Monitored Alerts ----------------
 class AuditServiceHealthAlertClass(AlertClass):
     category = AlertCategory.AUDIT
