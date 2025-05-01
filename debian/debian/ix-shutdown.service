@@ -1,7 +1,7 @@
 [Unit]
 Description=Exec TrueNAS shutdown tasks
 
-After=network.target middlewared.service
+After=network.target middlewared.service scst.service
 
 [Service]
 Type=oneshot
