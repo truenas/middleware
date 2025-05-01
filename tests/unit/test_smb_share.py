@@ -389,7 +389,7 @@ def test__multiprotocol_nfs_preset(nfsacl_dataset):
     }, BASE_SMB_CONFIG)
 
     assert conf['path'] == nfsacl_dataset
-    assert conf['oplocks'] == 'True'
+    assert conf['kernel oplocks'] == 'True'
 
 
 def test__shadow_copy_off(nfsacl_dataset):
