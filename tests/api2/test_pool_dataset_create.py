@@ -2,8 +2,16 @@ from itertools import product
 
 import pytest
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
+
+
+def test_create_dataset_nonexistent_pool():
+    bad = "does_not_exist_zpool"
+    with pytest.raises(ValidationErrors, match=f"zpool ({bad}) does not exist"):
+        with dataset("zz", pool=bad):
+            pass
 
 
 @pytest.mark.parametrize("child", ["a/b", "a/b/c"])
