@@ -94,7 +94,7 @@ def is_tally_locked(username: str, unlock_time: int = UNLOCK_TIME) -> bool:
 
     for entry in entries:
         if entry.status & TallyStatus.VALID.value and (last_time - entry.timestamp) < FAIL_INTERVAL:
-            failures +=1
+            failures += 1
             if failures >= MAX_FAILURE:
                 return True
 
