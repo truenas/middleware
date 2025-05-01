@@ -27,6 +27,4 @@ ${FAILLOCK_AUTH_SUCC.as_conf()}
 @include common-account-unix
 %endif
 password	required			pam_deny.so
-%if render_ctx['system.security.config']['enable_gpos_stig']:
-session		required			pam_limits.so
-%endif
+@include middleware-session
