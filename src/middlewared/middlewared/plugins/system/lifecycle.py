@@ -77,6 +77,9 @@ class SystemService(Service):
         if options['delay'] is not None:
             await asyncio.sleep(options['delay'])
 
+        if (await self.middleware.call('iscsi.global.config'))['alua']:
+            await run(['/usr/local/bin/scst_util.sh', 'stop-alua'])
+
         await run(['/sbin/shutdown', '-r', 'now'])
 
     @api_method(SystemShutdownArgs, SystemShutdownResult, roles=['FULL_ADMIN'])
