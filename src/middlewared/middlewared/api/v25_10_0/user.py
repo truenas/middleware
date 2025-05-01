@@ -1,7 +1,7 @@
 from typing import Literal
 
 from datetime import datetime
-from pydantic import EmailStr, Field, Secret
+from pydantic import EmailStr, Field, Secret, model_validator
 
 from middlewared.api.base import (
     BaseModel,
@@ -105,12 +105,12 @@ class UserCreate(UserEntry):
     immutable: Excluded = excluded_field()
     twofactor_auth_configured: Excluded = excluded_field()
     sid: Excluded = excluded_field()
+    last_password_change: Excluded = excluded_field()
+    password_age: Excluded = excluded_field()
+    password_history: Excluded = excluded_field()
+    password_change_required: Excluded = excluded_field()
     roles: Excluded = excluded_field()
     api_keys: Excluded = excluded_field()
-    password_history: Excluded = excluded_field()
-    password_age: Excluded = excluded_field()
-    last_password_change: Excluded = excluded_field()
-    password_change_required: Excluded = excluded_field()
 
     uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."
@@ -131,6 +131,16 @@ class UserCreate(UserEntry):
     password: Secret[NonEmptyString | None] = None
     random_password: bool = False
     "Generate a random 20 character password for the user"
+
+    @model_validator(mode="after")
+    def validate_user_create(self):
+        if (not self.group and not self.group_create) or (self.group is not None and self.group_create):
+            raise ValueError("Either enter a group name or create a new group to continue.")
+
+        if self.sshpubkey and not self.home.startswith("/mnt"):
+            raise ValueError("The home directory is not writable; do not provide sshpubkey.")
+
+        return self
 
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
