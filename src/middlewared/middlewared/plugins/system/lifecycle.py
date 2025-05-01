@@ -70,15 +70,11 @@ class SystemService(Service):
         Emits an "added" event of name "system" and id "reboot".
         """
         await self.middleware.log_audit_message(app, 'REBOOT', {'reason': reason}, True)
-        self.logger.debug("XXX: reboot called: %s", reason)
 
         self.middleware.send_event('system.reboot', 'ADDED', fields={'reason': reason})
 
         if options['delay'] is not None:
             await asyncio.sleep(options['delay'])
-
-        if (await self.middleware.call('iscsi.global.config'))['alua']:
-            await run(['/usr/local/bin/scst_util.sh', 'stop-alua'])
 
         await run(['/sbin/shutdown', '-r', 'now'])
 
