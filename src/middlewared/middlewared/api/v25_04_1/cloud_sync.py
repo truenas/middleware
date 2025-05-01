@@ -56,15 +56,6 @@ class CloudCredentialDeleteResult(BaseModel):
 class CloudCredentialVerifyArgs(BaseModel):
     cloud_sync_credentials_create: CloudCredentialProvider
 
-    @classmethod
-    def from_previous(cls, value):
-        return {
-            "cloud_sync_credentials_create": {
-                "type": value["cloud_sync_credentials_create"]["provider"],
-                **value["cloud_sync_credentials_create"]["attributes"]
-            }
-        }
-
 
 @single_argument_result
 class CloudCredentialVerifyResult(BaseModel):
