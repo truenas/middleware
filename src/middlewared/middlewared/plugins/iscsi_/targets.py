@@ -323,7 +323,7 @@ class iSCSITargetService(CRUDService):
                              new['mode'] not in MODE_FC_CAPABLE])
 
         verrors = ValidationErrors()
-        await self.__validate(verrors, new, 'iscsi_target_create', old=old)
+        await self.__validate(verrors, new, 'iscsi_target_update', old=old)
         verrors.check()
 
         await self.compress(new)
