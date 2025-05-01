@@ -5,4 +5,4 @@ if API_LOADING_FORBIDDEN:
         "provided traceback and ensure that nothing is imported from `middlewared.api.current`."
     )
 
-from .v25_04_1 import *  # noqa
+from .v25_04_2 import *  # noqa
