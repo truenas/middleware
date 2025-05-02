@@ -132,16 +132,6 @@ class UserCreate(UserEntry):
     random_password: bool = False
     "Generate a random 20 character password for the user"
 
-    @model_validator(mode="after")
-    def validate_user_create(self):
-        if (not self.group and not self.group_create) or (self.group is not None and self.group_create):
-            raise ValueError("Either enter a group name or create a new group to continue.")
-
-        if self.sshpubkey and not self.home.startswith("/mnt"):
-            raise ValueError("The home directory is not writable; do not provide sshpubkey.")
-
-        return self
-
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
     uid: Excluded = excluded_field()

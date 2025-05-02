@@ -594,12 +594,30 @@ class UserService(CRUDService):
         """
         verrors = ValidationErrors()
 
+        if (
+            not data['group'] and not data['group_create']
+        ) or (
+            data['group'] is not None and data['group_create']
+        ):
+            verrors.add(
+                'user_create.group',
+                'Enter either a group name or create a new group to '
+                'continue.',
+                errno.EINVAL
+            )
+
         group_ids = []
         if data['group']:
             group_ids.append(data['group'])
         group_ids.extend(data['groups'])
 
         self.middleware.call_sync('user.common_validation', verrors, data, 'user_create', group_ids)
+
+        if data['sshpubkey'] and not data['home'].startswith('/mnt'):
+            verrors.add(
+                'user_create.sshpubkey',
+                'The home directory is not writable. Leave this field blank.'
+            )
 
         verrors.check()
 
