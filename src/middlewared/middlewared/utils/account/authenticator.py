@@ -44,8 +44,14 @@ AVAILABLE_SESSION_IDS = set(range(1, UTMP_MAX_SESSIONS))
 
 class MiddlewarePamFile(enum.StrEnum):
     DEFAULT = '/etc/pam.d/middleware'
+    """ used for regular username / password authentication """
     API_KEY = '/etc/pam.d/middleware-api-key'
+    """ used for authentication with API key """
     UNIX = '/etc/pam.d/middleware-unix'
+    """ used for authentication via unix socket """
+    COMMON_SESSION = '/etc/pam.d/middleware-session'
+    """ session-related modules common to all middleware authenticators """
+
 
     @property
     def service(self):
