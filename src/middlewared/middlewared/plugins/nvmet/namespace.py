@@ -24,6 +24,17 @@ UUID_GENERATE_RETRIES = 10
 NSID_SEARCH_RANGE = 0xFFFF  # This is much less than NSID, but good enough for practical purposes.
 
 
+def remove_file(data: dict) -> bool:
+    if data['device_type'] == 'FILE':
+        try:
+            os.unlink(data['device_path'])
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            return e
+    return True
+
+
 class NVMetNamespaceModel(sa.Model):
     __tablename__ = 'services_nvmet_namespace'
     __table_args__ = (
@@ -130,9 +141,11 @@ class NVMetNamespaceService(SharingService):
         audit_callback(self.__audit_summary(data))
 
         if remove:
-            delete = await self.remove_file(data)
-            if delete is not True:
-                raise CallError('Failed to remove namespace file')
+            delete = await self.middleware.run_in_thread(remove_file, data)
+            if isinstance(delete, Exception):
+                # exception type is caught and returned in the
+                # event an unexpected error happens
+                raise CallError(f'Failed to remove namespace file: {delete!r}')
 
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
@@ -195,18 +208,6 @@ class NVMetNamespaceService(SharingService):
                         elif old_size > new_size:
                             verrors.add(f'{schema_name}.filesize',
                                         'Shrinking an namespace file is not allowed. This can lead to data loss.')
-
-    @private
-    async def remove_file(self, data):
-        if data['device_type'] == 'FILE':
-            try:
-                os.unlink(data['device_path'])
-            except FileNotFoundError:
-                pass
-            except Exception as e:
-                return e
-
-        return True
 
     @private
     def clean_type_and_path(self, data, schema_name, verrors):
