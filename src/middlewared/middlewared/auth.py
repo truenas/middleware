@@ -218,13 +218,9 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
         self.token_manager = token_manager
         self.token = token
-
         self.is_user_session = self.root_credentials.is_user_session
         self.login_at = datetime.now(UTC)
         self.pam_authenticated = False
-
-        self.origin = origin
-
         self.allowlist = self.root_credentials.allowlist
 
         # Middleware has already determined that the token string matches, but
@@ -242,9 +238,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
         username = self.user['username'] if self.is_user_session else 'root'
         pam_resp = self.authenticator.authenticate(username, self.origin)
-        if pam_resp.code == pam.PAM_SUCCESS:
-            self.pam_authenticated = True
-
+        self.pam_authenticated = pam_resp.code == pam.PAM_SUCCESS
         return pam_resp
 
     def is_valid(self):
