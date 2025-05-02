@@ -1,5 +1,7 @@
 import pytest
 
+from auto_config import pool_name
+from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import user, group, unprivileged_user_client
 from middlewared.test.integration.utils import call, client
@@ -240,3 +242,22 @@ def test_account_update_invalid_username():
     }, get_instance=True) as u:
         with pytest.raises(ValidationErrors, match="Valid characters are:"):
             call("user.update", u["id"], {"username": "_блин"})
+
+
+@pytest.mark.parametrize("args, errmsg", [
+    ({"ssh_password_enabled": True}, "aaa"),  # bad homedir
+    ({"ssh_password_enabled": True, "home": pool_name, "shell": NO_LOGIN_SHELL}, "bbb"),  # bad shell
+    ({"ssh_password_enabled": True, "home": pool_name}, None),
+])
+def test_user_create_ssh_password_login(args: dict, errmsg: str):
+    with pytest.raises(ValidationErrors, match=errmsg):
+        with user({
+            "username": "bob",
+            "full_name": "bob",
+            "group_create": True,
+            "password": "canary",
+            **args
+        }):
+            pass
+
+# TODO: Add user.update
