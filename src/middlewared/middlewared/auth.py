@@ -231,7 +231,6 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         # we still need to generate the utmp entry
         if self.is_user_session:
             self.user = self.root_credentials.user
-            self.authenticator.authenticate('root', origin)
 
         self.allowlist = self.root_credentials.allowlist
 
