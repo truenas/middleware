@@ -218,7 +218,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 
     def __init_subclass__(cls, **kwargs):
         """Bind `query` method to the CRUD service."""
-        @filterable_api_method(item=cls._config.entry)
+        @filterable_api_method(item=cls._config.entry, private=cls._config.private)
         async def query(self, filters, options):
             if not self._config.datastore:
                 raise NotImplementedError(
