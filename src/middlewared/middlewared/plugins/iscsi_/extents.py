@@ -17,6 +17,18 @@ from middlewared.service import CallError, private, SharingService, ValidationEr
 from middlewared.utils.size import format_size
 
 
+def remove_extent_file(data: dict) -> str | bool:
+    if data['type'] == 'FILE':
+        try:
+            os.unlink(data['path'])
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            return e
+
+    return True
+
+
 class iSCSITargetExtentModel(sa.Model):
     __tablename__ = 'services_iscsitargetextent'
 
@@ -198,10 +210,11 @@ class iSCSITargetExtentService(SharingService):
                 raise CallError(sessions_str)
 
         if remove:
-            delete = await self.remove_extent_file(data)
-
-            if delete is not True:
-                raise CallError('Failed to remove extent file')
+            delete = await self.middleware.run_in_thread(remove_extent_file, data)
+            if isinstance(delete, Exception):
+                # exception type is caught and returned in the
+                # event an unexpected error happens
+                raise CallError(f'Failed to remove extent file: {delete!r}')
 
         for target_to_extent in target_to_extents:
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
@@ -476,18 +489,6 @@ class iSCSITargetExtentService(SharingService):
             data.pop('disk', None)
         else:
             data['path'] = data.pop('disk', None)
-
-    @private
-    async def remove_extent_file(self, data):
-        if data['type'] == 'FILE':
-            try:
-                os.unlink(data['path'])
-            except FileNotFoundError:
-                pass
-            except Exception as e:
-                return e
-
-        return True
 
     @private
     async def logged_in_extents(self):
