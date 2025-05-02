@@ -400,7 +400,7 @@ class LDAPService(ConfigService):
                 new["certificate"], "ldap_update.certificate", False
             ))
 
-        if not new["bindpw"] and not new["kerberos_principal"] and not new["anonbind"]:
+        if not new["bindpw"] and not new["kerberos_principal"] and not new["anonbind"] and not new["certificate"]:
             verrors.add(
                 "ldap_update.binddn",
                 "Bind credentials or kerberos keytab are required for an authenticated bind."
