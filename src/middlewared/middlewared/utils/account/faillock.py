@@ -101,7 +101,7 @@ def is_tally_locked(username: str, unlock_time: int = UNLOCK_TIME) -> bool:
     return False
 
 
-def tally_locked_users() -> set:
+def tally_locked_users() -> set[str]:
     """ Return set of user names of users who are locked due to tally limits
     defined by pam_faillock """
     out = set()
