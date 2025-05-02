@@ -2,7 +2,7 @@ import json
 import os
 
 from middlewared.service import private, Service
-from .utils import SCALE_MANIFEST_FILE, DOWNLOAD_UPDATE_FILE
+from .utils import can_update, SCALE_MANIFEST_FILE, DOWNLOAD_UPDATE_FILE
 from .utils_linux import mount_update
 
 
@@ -23,16 +23,18 @@ class UpdateService(Service):
             self.middleware.logger.error("Failed reading update", exc_info=True)
             return []
 
-        return [
-            {
-                "operation": "upgrade",
-                "old": {
-                    "name": "TrueNAS",
-                    "version": old_manifest["version"],
-                },
-                "new": {
-                    "name": "TrueNAS",
-                    "version": new_manifest["version"],
+        if can_update(old_manifest["version"], new_manifest["version"]):
+            return [
+                {
+                    "operation": "upgrade",
+                    "old": {
+                        "name": "TrueNAS",
+                        "version": old_manifest["version"],
+                    },
+                    "new": {
+                        "name": "TrueNAS",
+                        "version": new_manifest["version"],
+                    }
                 }
-            }
-        ]
+            ]
+        return []
