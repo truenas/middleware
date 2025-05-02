@@ -2034,7 +2034,6 @@ def _ha_reboot_master(delay=900, description=''):
     new_master_node = other_node(orig_master_node)
 
     call('system.reboot', f'iSCSI test {description}')
-    #call('failover.become_passive')
 
     # First we'll loop until the node is no longer the orig_node
     new_master = False

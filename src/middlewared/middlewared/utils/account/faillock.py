@@ -46,7 +46,7 @@ def has_tally(username: str) -> bool:
     except FileNotFoundError:
         return False
 
-    # NOTE: pam_tally will reset tally file via ftruncate(tally_fd, 0)
+    # NOTE: pam_faillock will reset tally file via ftruncate(tally_fd, 0)
     return st.st_size > 0
 
 
