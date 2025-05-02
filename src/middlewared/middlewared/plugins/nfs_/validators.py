@@ -26,13 +26,12 @@ def sanitize_networks(
     """ Entries must be acceptible to ip_network and make all valid entries CIDR formatted """
     not_valid = []
     found_all_networks = ""  # If found, this will be 0.0.0.0/0 or ::/0 which we would like to exclude
+
     for v in networks:
         try:
-            ip_network(v, strict=strict_test)
-
-            # Passed validity check, now trap the old-school 'all-networks' entries: 0.0.0.0/0
+            # Validity test and trap the old-school 'all-networks' entries: 0.0.0.0/0
             # Exclude these entries as they should be represented with no entry.
-            if ip_network(v).prefixlen == 0:
+            if ip_network(v, strict=strict_test).prefixlen == 0:
                 found_all_networks = v
         except ValueError:
             not_valid.append(v)
@@ -49,10 +48,11 @@ def sanitize_networks(
             f"No entry is required to configure 'allow everybody'.  "
             f"Please remove {v}."
         )
-
     elif convert:
         # Perform the courtesy conversion to CIDR format
         return [str(ip_network(v, strict=False)) for v in networks]
+
+    return networks
 
 
 def sanitize_hosts(schema_name: str, hosts: list, verrors: ValidationErrors):
