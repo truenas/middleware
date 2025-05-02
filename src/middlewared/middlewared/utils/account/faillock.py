@@ -3,8 +3,8 @@
 import enum
 import os
 from dataclasses import dataclass
-from datetime import datetime, UTC
 from struct import unpack
+from middlewared.utils.time_utils import utc_now
 from typing import Iterator
 
 
@@ -51,6 +51,10 @@ def has_tally(username: str) -> bool:
 
 
 def reset_tally(username: str) -> None:
+    """ Reset the tally file so that temporary account lock is removed. This function
+    is used in user.update in order to provide admin a mechanism to remove a temporary
+    lock. NOTE: behavior matches reset_tally() in pam_faillock.c in that it does not perform
+    any locking before truncation."""
     try:
         fd = os.open(os.path.join(FAILLOCK_DIR, username), os.O_RDWR)
     except FileNotFoundError:
@@ -80,7 +84,7 @@ def is_tally_locked(username: str, unlock_time: int = UNLOCK_TIME) -> bool:
     failures = 0
     last_time = 0
     entries = []
-    now = int(datetime.now(UTC).timestamp())
+    now = int(utc_now(naive=False).timestamp())
 
     for entry in iter_tally(username):
         if entry.timestamp > last_time:
