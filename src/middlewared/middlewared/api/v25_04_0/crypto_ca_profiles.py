@@ -2,7 +2,7 @@ from typing import final
 
 from middlewared.api.base import BaseModel
 
-__all__ = ("CAProfilesArgs",  "CAProfilesModel", "CAProfilesResult")
+__all__ = ("CAProfilesArgs", "CAProfilesModel", "CAProfilesResult")
 
 # Defines the default lifetime of a certificate
 # (https://support.apple.com/en-us/HT211025)

@@ -31,7 +31,7 @@ class AddressPool(BaseModel):
         if self.base.version == 4 and self.size > 32:
             raise ValueError('Size must be <= 32 for IPv4.')
         elif self.base.version == 6 and self.size > 128:
-                raise ValueError('Size must be <= 128 for IPv6.')
+            raise ValueError('Size must be <= 128 for IPv6.')
         return self
 
 
