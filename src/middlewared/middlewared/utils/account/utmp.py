@@ -29,7 +29,6 @@ __all__ = [
 
 libc = ctypes.CDLL('libc.so.6', use_errno=True)
 UTMP_LOCK = RLock()
-MIDDLEWARE_HOST_PREFIX = 'truenas-middleware-session'
 
 
 class MiddlewareTTYName(enum.StrEnum):
