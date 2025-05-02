@@ -1,11 +1,10 @@
-from middlewared.service import filterable, private, Service
+from middlewared.service import filterable_api_method, private, Service
 from middlewared.utils import filter_list
 
 
 class DiskService(Service):
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     async def list_all_partitions(self, filters, options):
         """
         Returns list of all partitions present in the system

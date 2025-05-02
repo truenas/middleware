@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import errno
+import types
 from typing import Annotated
 
 from pydantic import create_model, Field
@@ -17,7 +18,7 @@ from middlewared.utils import filter_list
 from middlewared.utils.type import copy_function_metadata
 
 from .base import ServiceBase
-from .decorators import filterable, pass_app, private
+from .decorators import filterable_api_method, pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
 
@@ -215,6 +216,42 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                 **kwargs,
             )
 
+    def __init_subclass__(cls, **kwargs):
+        """Bind `query` method to the CRUD service."""
+        @filterable_api_method(item=cls._config.entry)
+        async def query(self, filters, options):
+            if not self._config.datastore:
+                raise NotImplementedError(
+                    f'{self._config.namespace}.query must be implemented or a '
+                    '`datastore` Config attribute provided.'
+                )
+
+            if not filters:
+                filters = []
+
+            options = await self.get_options(options)
+
+            # In case we are extending which may transform the result in numerous ways
+            # we can only filter the final result. Exception is when forced to use sql
+            # for filters for performance reasons.
+            if not options['force_sql_filters'] and options['extend']:
+                datastore_options = options.copy()
+                for option in PAGINATION_OPTS:
+                    datastore_options.pop(option, None)
+                result = await self.middleware.call(
+                    'datastore.query', self._config.datastore, [], datastore_options
+                )
+                return await self.middleware.run_in_thread(
+                    filter_list, result, filters, options
+                )
+            else:
+                return await self.middleware.call(
+                    'datastore.query', self._config.datastore, filters, options,
+                )
+
+        super().__init_subclass__(**kwargs)
+        setattr(cls, 'query', types.MethodType(query, cls))
+
     @private
     async def get_options(self, options):
         options = options or {}
@@ -222,37 +259,6 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         options['extend_context'] = self._config.datastore_extend_context
         options['prefix'] = self._config.datastore_prefix
         return options
-
-    @filterable
-    async def query(self, filters, options):
-        if not self._config.datastore:
-            raise NotImplementedError(
-                f'{self._config.namespace}.query must be implemented or a '
-                '`datastore` Config attribute provided.'
-            )
-
-        if not filters:
-            filters = []
-
-        options = await self.get_options(options)
-
-        # In case we are extending which may transform the result in numerous ways
-        # we can only filter the final result. Exception is when forced to use sql
-        # for filters for performance reasons.
-        if not options['force_sql_filters'] and options['extend']:
-            datastore_options = options.copy()
-            for option in PAGINATION_OPTS:
-                datastore_options.pop(option, None)
-            result = await self.middleware.call(
-                'datastore.query', self._config.datastore, [], datastore_options
-            )
-            return await self.middleware.run_in_thread(
-                filter_list, result, filters, options
-            )
-        else:
-            return await self.middleware.call(
-                'datastore.query', self._config.datastore, filters, options,
-            )
 
     @pass_app(message_id=True, rest=True)
     async def create(self, app, audit_callback, message_id, data):
