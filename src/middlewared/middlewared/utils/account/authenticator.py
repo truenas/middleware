@@ -434,9 +434,6 @@ class UserPamAuthenticator(pam.PamAuthenticator):
             with UTMP_LOCK:
                 resp = super().open_session()
 
-        if resp == pam.PAM_SUCCESS:
-            self.truenas_session_opened = True
-
         reason = self.pam_strerror(self.handle, resp).decode()
         return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.OPEN_SESSION, resp, reason)
 
@@ -444,9 +441,6 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         self.truenas_check_stage(TrueNASAuthenticatorStage.LOGOUT)
         with self.TRUENAS_LOCK:
             resp = super().close_session()
-
-        if resp == pam.PAM_SUCCESS:
-            self.truenas_session_opened = False
 
         reason = self.pam_strerror(self.handle, resp)
         return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.CLOSE_SESSION, resp, reason)
