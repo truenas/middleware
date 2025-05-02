@@ -1,3 +1,4 @@
+import contextlib
 import pytest
 
 from auto_config import pool_name
@@ -10,6 +11,30 @@ from middlewared.test.integration.utils.audit import expect_audit_method_calls
 BASE_SYNTHETIC_DATASTORE_ID = 100000000
 DS_USR_VERR_STR = "Directory services users may not be added as members of local groups."
 DS_GRP_VERR_STR = "Local users may not be members of directory services groups."
+
+
+@pytest.fixture(scope="module")
+def test_user():
+    with user({
+        "username": "bob",
+        "full_name": "bob",
+        "group_create": True,
+        "password": "canary",
+    }) as entry:
+        yield entry
+
+
+@contextlib.contextmanager
+def temporary_update(user: dict, data: dict):
+    """Perform a call to user.update and roll it back on teardown.
+
+    Assume keys in `data` are a subset of the keys in `user`.
+
+    """
+    try:
+        yield call("user.update", user["id"], data)
+    finally:
+        call("user.update", user["id"], {k: user[k] for k in data.keys()})
 
 
 def test_create_account_audit():
@@ -41,19 +66,14 @@ def test_create_account_audit():
             call("user.delete", user_id)
 
 
-def test_update_account_audit():
-    with user({
-        "username": "user2",
-        "full_name": "user2",
-        "group_create": True,
-        "password": "test1234",
-    }) as u:
-        with expect_audit_method_calls([{
-            "method": "user.update",
-            "params": [u["id"], {}],
-            "description": "Update user user2",
-        }]):
-            call("user.update", u["id"], {})
+def test_update_account_audit(test_user):
+    with expect_audit_method_calls([{
+        "method": "user.update",
+        "params": [test_user["id"], {}],
+        "description": f"Update user {test_user['username']}",
+    }]):
+        with temporary_update(test_user, {}):
+            pass
 
 
 def test_delete_account_audit():
@@ -206,20 +226,12 @@ def test_create_user_with_random_password():
         assert u['password']
 
 
-def test_update_user_with_random_password():
-    with user({
-        "username": "bobrandom",
-        "full_name": "bob",
-        "group_create": True,
-        "password": "canary"
-    }, get_instance=True) as u:
-        assert u['password'] == 'canary'
+def test_update_user_with_random_password(test_user):
+    with temporary_update(test_user, {'random_password': True}) as new:
+        assert new['password'] != test_user['password']
 
-        new = call('user.update', u['id'], {'random_password': True})
-        assert new['password'] != 'canary'
-
-        new = call('user.update', u['id'], {'full_name': 'bob2'})
-        assert not new['password']
+        with temporary_update(new, {'full_name': 'bob2'}) as newer:
+            assert not newer['password']
 
 
 def test_account_create_invalid_username():
@@ -233,23 +245,36 @@ def test_account_create_invalid_username():
             pass
 
 
-def test_account_update_invalid_username():
-    with user({
-        "username": "bob",
-        "full_name": "bob",
-        "group_create": True,
-        "password": "canary"
-    }, get_instance=True) as u:
-        with pytest.raises(ValidationErrors, match="Valid characters are:"):
-            call("user.update", u["id"], {"username": "_блин"})
+def test_account_update_invalid_username(test_user: dict):
+    with pytest.raises(ValidationErrors, match="Valid characters are:"):
+        with temporary_update(test_user, {"username": "_блин"}):
+            pass
 
 
 @pytest.mark.parametrize("args, errmsg", [
-    ({"ssh_password_enabled": True}, "aaa"),  # bad homedir
-    ({"ssh_password_enabled": True, "home": pool_name, "shell": NO_LOGIN_SHELL}, "bbb"),  # bad shell
-    ({"ssh_password_enabled": True, "home": pool_name}, None),
+    (
+        {"ssh_password_enabled": True},
+        "SSH password login requires a valid home path."
+    ),
+    (
+        {"ssh_password_enabled": True, "home": pool_name, "shell": NO_LOGIN_SHELL},
+        "SSH password login requires a login shell."
+    ),
+    (
+        {"ssh_password_enabled": True, "home": pool_name},
+        None
+    ),
 ])
-def test_user_create_ssh_password_login(args: dict, errmsg: str):
+def test_user_create_ssh_password_login(args: dict, errmsg: str | None):
+    if errmsg is None:
+        with user({
+            "username": "bob",
+            "full_name": "bob",
+            "group_create": True,
+            "password": "canary",
+            **args
+        }):
+            return
     with pytest.raises(ValidationErrors, match=errmsg):
         with user({
             "username": "bob",
@@ -260,4 +285,18 @@ def test_user_create_ssh_password_login(args: dict, errmsg: str):
         }):
             pass
 
-# TODO: Add user.update
+
+@pytest.mark.parametrize("args, errmsg", [
+    # When test begins: ssh_password_enabled=False, home is invalid, shell is valid.
+    ({"ssh_password_enabled": True}, "Cannot be enabled without a valid home path and login shell."),
+    ({"ssh_password_enabled": True, "home": "/var/empty"}, "SSH password login requires a valid home path."),
+    ({"ssh_password_enabled": True, "shell": NO_LOGIN_SHELL}, "SSH password login requires a login shell."),
+    ({"ssh_password_enabled": True, "home": pool_name}, None),
+])
+def test_user_update_ssh_password_login(test_user: dict, args: dict, errmsg: str | None):
+    if errmsg is None:
+        with temporary_update(test_user["id"], args):
+            return
+    with pytest.raises(ValidationErrors, match=errmsg):
+        with temporary_update(test_user["id"], args):
+            pass
