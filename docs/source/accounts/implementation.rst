@@ -178,3 +178,65 @@ daily and may be disabled by administrators. The primary function of this cache 
 accounts in user.query and group.query responses. Disabling caching prevents middlewared from enumerating all
 users and groups in a directory service and inserting the entries. For a better UX middlewared will still insert
 cache entries as accounts are looked up for various reasons (for example when loading permissions forms).
+
+
+Identity providers and TrueNAS features
+=======================================
+
+The interaction between accounts from the configured NSS modules and features / services provided by the TrueNAS
+server are complex. An example is when a service defines a guest account or overrides NSS responses when generating
+internal user account tokens ("unix token" in following discussion). What follows is a rough overview of this
+interaction on a per-service basis.
+
+NOTE: applications will often not regenerate unix tokens after initial authentication. This means that sessions
+may need to be terminated in order to see changes in user group membership.
+
+
+Middlewared
+-----------
+
+All accounts used in middlewared sessions are provided by an NSS module. Guest access and guest accounts are not
+permitted. Group membership is determined when account authenticates, but is not re-evaluated during the session
+lifetime.
+
+
+SMB
+---
+
+All accounts used by the SMB server are provided by one or more NSS modules. Guest access is configurable, but
+off by default. The administrator must specify a valid existing account on the truenas server for the guest
+account, which defaults to `nobody`. Server administrators may override the default unix token for local accounts
+by using share or global auxiliary parameters in the SMB configuration (though this is discouraged and unsupported).
+When kerberos authentication is used, the unix token is generated from the client kerberos ticket. Unix tokens are
+generated when the client authenticates and connects to a share and are not re-evaluated for the lifetime of
+the connection.
+
+
+NFS
+---
+
+How the Unix token for an NFS client is constructed depends on the particulars of the server configuration. The list
+of gids for a unix token is either determined client-side or server-side depending on the value of the userd_manage_gids
+key in the `nfs.config`. If kerberos authentication is used, then the unix token is constructed based on the client
+kerberos ticket. The unix token is not re-evaluated for the lifetime of the NFS "session".
+
+
+FTP
+---
+
+All accounts used by the FTP server are provided by one or more NSS modules. Guest access is configurable.
+The unix token is not re-evaluated for the lifetime of the FTP session. NOTE that not all NSS-provided accounts
+will be able to authenticate to the FTP server.
+
+
+SSH
+---
+
+All accounts used by the SSH server are provided by one or more NSS modules. The unix token is not re-evaluated for the
+lifetime of the SSH session. NOTE that not all NSS-provided accounts will be able to authenticate to the SSH server.
+
+
+Apps and containers
+-------------------
+
+There is no interaction between the host identity providers and accounts in apps or incus containers.
