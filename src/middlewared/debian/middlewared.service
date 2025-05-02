@@ -11,7 +11,7 @@ Conflicts=reboot.target shutdown.target halt.target
 [Service]
 Type=notify
 ExecStart=/usr/bin/middlewared --log-handler=file
-TimeoutStartSec=240
+TimeoutStartSec=900
 Restart=always
 Environment="REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt"
 # SIGTERM will only happen if systemd kills process that timed out booting (it is the only case in which we don't
