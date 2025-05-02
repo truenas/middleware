@@ -1,5 +1,3 @@
-from pydantic import ConfigDict
-
 from middlewared.api.base import BaseModel, NonEmptyString
 
 
