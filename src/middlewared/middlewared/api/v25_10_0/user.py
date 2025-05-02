@@ -1,7 +1,7 @@
 from typing import Literal
 
 from datetime import datetime
-from pydantic import EmailStr, Field, Secret, model_validator
+from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
