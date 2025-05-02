@@ -10,19 +10,14 @@ from middlewared.test.integration.utils import call, client, ssh
 
 
 @contextlib.contextmanager
-def user(data, *, get_instance=True):
+def user(data):
     data.setdefault('home_create', True)  # create user homedir by default
 
     user = call("user.create", data)
     pk = user['id']
 
     try:
-        value = None
-
-        if get_instance:
-            value = user
-
-        yield value
+        yield user
     finally:
         try:
             call("user.delete", pk)

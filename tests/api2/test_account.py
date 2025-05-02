@@ -16,8 +16,8 @@ DS_GRP_VERR_STR = "Local users may not be members of directory services groups."
 @pytest.fixture(scope="module")
 def test_user():
     with user({
-        "username": "bob",
-        "full_name": "bob",
+        "username": "testuser",
+        "full_name": "testuser",
         "group_create": True,
         "password": "canary",
     }) as entry:
@@ -222,7 +222,7 @@ def test_create_user_with_random_password():
         "full_name": "bob",
         "group_create": True,
         "random_password": True
-    }, get_instance=True) as u:
+    }) as u:
         assert u['password']
 
 
