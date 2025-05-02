@@ -1,8 +1,9 @@
-from middlewared.schema import Bool, Dict, Ref, Str
+from middlewared.schema import Bool, Dict, List, Int, Str
 from middlewared.service import Service, accepts
 from middlewared.plugins.smb import SMBCmd
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
+from middlewared.validators import QueryFilters, QueryOptions
 
 import enum
 import json
@@ -27,8 +28,24 @@ class SMBService(Service):
 
     @accepts(
         Str('info_level', enum=[x.name for x in InfoLevel], default=InfoLevel.ALL.name),
-        Ref('query-filters'),
-        Ref('query-options'),
+        List('query-filters', items=[List('query-filter')], validators=[QueryFilters()], register=True),
+        Dict(
+            'query-options',
+            Bool('relationships', default=True),
+            Str('extend', default=None, null=True),
+            Str('extend_context', default=None, null=True),
+            Str('prefix', default=None, null=True),
+            Dict('extra', additional_attrs=True),
+            List('order_by'),
+            List('select'),
+            Bool('count', default=False),
+            Bool('get', default=False),
+            Int('offset', default=0),
+            Int('limit', default=0),
+            Bool('force_sql_filters', default=False),
+            register=True,
+            validators=[QueryOptions()]
+        ),
         Dict(
             'status_options',
             Bool('verbose', default=True),

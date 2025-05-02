@@ -1,18 +1,26 @@
 from collections import defaultdict
 import re
 
+from pydantic import Field
 from sqlalchemy import and_, func, select
 from sqlalchemy.sql import Alias
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
+from middlewared.api.current import QueryFilters, QueryOptions, GenericQueryResult
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filters
-from middlewared.validators import QueryFilters, QueryOptions
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
+
+
+class DatastoreQueryArgs(BaseModel):
+    name: str
+    filters: QueryFilters = []
+    options: QueryOptions = Field(default_factory=QueryOptions)
 
 
 do_select = filters().do_select
@@ -28,27 +36,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
     class Config:
         private = True
 
-    @accepts(
-        Str('name'),
-        List('query-filters', items=[List('query-filter')], validators=[QueryFilters()], register=True),
-        Dict(
-            'query-options',
-            Bool('relationships', default=True),
-            Str('extend', default=None, null=True),
-            Str('extend_context', default=None, null=True),
-            Str('prefix', default=None, null=True),
-            Dict('extra', additional_attrs=True),
-            List('order_by'),
-            List('select'),
-            Bool('count', default=False),
-            Bool('get', default=False),
-            Int('offset', default=0),
-            Int('limit', default=0),
-            Bool('force_sql_filters', default=False),
-            register=True,
-            validators=[QueryOptions()]
-        ),
-    )
+    @api_method(DatastoreQueryArgs, GenericQueryResult, private=True)
     async def query(self, name, filters, options):
         """
         Query for items in a given collection `name`.
@@ -168,7 +156,6 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             options = dict()
 
         options.setdefault('get', True)
-        QueryOptions().__call__(options)
 
         return await self.query(name, [], options)
 
