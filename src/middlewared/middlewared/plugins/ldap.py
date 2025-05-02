@@ -272,10 +272,10 @@ class LDAPService(ConfigService):
                 "dns_timeout": data["dns_timeout"],
             }
         }
-        if data['anonbind']:
-            client_config['bind_type'] = 'ANONYMOUS'
-        elif data['cert_name']:
+        if data['cert_name']:
             client_config['bind_type'] = 'EXTERNAL'
+        elif data['anonbind']:
+            client_config['bind_type'] = 'ANONYMOUS'
         elif data['kerberos_realm']:
             client_config['bind_type'] = 'GSSAPI'
         else:
