@@ -710,7 +710,8 @@ class TestNFSops:
             pp(["192.168.0.0/64"], False, "do not appear to be valid IPv4 or IPv6", id="IPv4 - invalid range"),
             pp(["bogus_network"], False, "do not appear to be valid IPv4 or IPv6", id="IPv4 - invalid format"),
             pp(["192.168.27.211"], True, "", id="IPv4 - auto-convert to CIDR"),
-            pp(["0.0.0.0/0"], False, "Please do not use", id="IPv4 - all-hosts (0.0.0.0)"),
+            pp(["0.0.0.0/0"], False, "Please do not use", id="IPv4 - all-hosts (0.0.0.0/0)"),
+            pp(["0.0.0.0/24"], False, "Please do not use", id="IPv4 - all-hosts (0.0.0.0/24)"),
             pp(["192.168.0.0/24", "0.0.0.0/0"], False, "Please do not use", id="IPv4 - overlap with all-hosts"),
             # IPv6
             pp(["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/96"],
@@ -724,6 +725,7 @@ class TestNFSops:
             pp(["2001:0db8:85a3:0000:0000:8a2e:0370:7334"],
                True, "", id="IPv6 - auto-convert to CIDR"),
             pp(["::/0"], False, "Please do not use", id="IPv6 - all-networks (::/0)"),
+            pp(["::/48"], False, "Please do not use", id="IPv6 - all-networks (::/48)"),
             pp(["192.168.0.0/24", "::/0"], False, "Please do not use", id="IPv6 - overlap with all-networks"),
             # The following two entries use hostlist to specify the size of the list to create
             pp(42, True, "", id="Valid - Max allowed entries"),

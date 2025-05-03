@@ -31,7 +31,7 @@ def sanitize_networks(
         try:
             # Validity test and trap the old-school 'all-networks' entries: 0.0.0.0/0
             # Exclude these entries as they should be represented with no entry.
-            if ip_network(v, strict=strict_test).prefixlen == 0:
+            if int(ip_network(v, strict=strict_test).network_address) == 0:
                 found_all_networks = v
         except ValueError:
             not_valid.append(v)
