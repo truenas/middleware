@@ -44,7 +44,7 @@ def sanitize_networks(
     elif found_all_networks:
         verrors.add(
             f"{schema_name}.networks",
-            f"Please do not use {v} to represent all-networks.  "
+            f"Do not use {v} to represent all-networks.  "
             f"No entry is required to configure 'allow everybody'.  "
             f"Please remove {v}."
         )
@@ -83,7 +83,7 @@ def sanitize_hosts(schema_name: str, hosts: list, verrors: ValidationErrors):
     if found_all_hosts:
         verrors.add(
             f"{schema_name}.hosts",
-            f"Please do not use {v} to represent all-hosts.  "
+            f"Do not use {v} to represent all-hosts.  "
             f"No entry is required to configure 'allow everybody'.  "
             f"Please remove {v} or replace with '*'."
         )
