@@ -143,12 +143,17 @@ class SessionManager:
             }, True)
 
     async def logout(self, app):
-        session = self.sessions.pop(app.session_id, None)
+        if session := self.sessions.get(app.session_id):
+            if not (internal_session := is_internal_session(session)):
+                await self.middleware.log_audit_message(app, "LOGOUT", {
+                    "credentials": dump_credentials(app.authenticated_credentials),
+                }, True)
 
-        if session is not None:
+            del self.sessions[app.session_id]
+
             session.credentials.logout()
 
-            if not is_internal_session(session):
+            if not internal_session:
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
 
         app.authenticated = False
