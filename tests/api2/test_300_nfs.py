@@ -790,7 +790,7 @@ class TestNFSops:
                False, "Unable to resolve", id="Invalid - names,domains (not resolvable)"),
             pp(["bogus/name"], False, "Unable to resolve", id="Invalid - name (path)"),
             pp(["192.168.1.0/24"], False, "Unable to resolve", id="Invalid - name (network format)"),
-            pp(["0.0.0.0"], False, "Please do not use", id="Invalid - IPv4 everybody as 0.0.0.0"),
+            pp(["0.0.0.0"], False, "No entry is required", id="Invalid - IPv4 everybody as 0.0.0.0"),
             pp(["asdfdm[0-9].example.com", "-asdffail", "devteam-*.ixsystems.com", "*.asdffail.com"],
                False, "Unable to resolve", id="Mix - valid and invalid names"),
             pp(["192.168.1.0", "192.168.1.0"], False, "Entries must be unique", id="Invalid - duplicate address"),
@@ -800,7 +800,7 @@ class TestNFSops:
             pp(["192.168.1.o"], False, "Unable to resolve", id="Invalid - character in address"),
             pp(["bad host"], False, "Cannot contain spaces", id="Invalid - name with spaces"),
             pp(["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True, "", id="Valid - IPv6 address"),
-            pp(["::"], False, "Please do not use", id="Invalid - IPv6 everybody as ::"),
+            pp(["::"], False, "No entry is required", id="Invalid - IPv6 everybody as ::"),
             # The following two entries use hostlist to specify size of the list to create
             pp(42, True, "", id="Valid - Max allowed entries"),
             pp(43, False, "should have at most", id="Invalid - Too many entries"),
