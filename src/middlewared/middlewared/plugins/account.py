@@ -1351,6 +1351,8 @@ class UserService(CRUDService):
 
     @private
     async def password_security_validate(self, schema, verrors, password, password_history, password_field='password'):
+        # NOTE: min_password_age is *not* validated here because the system administator needs
+        # to be able to reset passwords in case the user forgets theirs
         sec = await self.middleware.call('system.security.config')
         field = f'{schema}.{password_field}'
         if sec['password_complexity_ruleset']:
@@ -1779,8 +1781,15 @@ class UserService(CRUDService):
 
         history = entry['password_history'] + [entry['unixhash']]
         await self.password_security_validate('user.set_password', verrors, password, history, 'new_password')
+        min_password_age = (await self.middleware.call('system.security.config'))['min_password_age']
 
         verrors.check()
+
+        if min_password_age and entry['password_age'] < min_password_age:
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: password changed too recently. Minimum password age is: {min_password_age}'
+            )
 
         if entry['password_disabled']:
             verrors.add(
