@@ -101,6 +101,15 @@ def old_admin():
 
 
 @pytest.fixture(scope='function')
+def readonly_admin():
+    with create_user('ro_admin_user') as u:
+        with Client() as c:
+            ba_id = c.call('group.query', [['name', '=', 'truenas_readonly_administrators']], {'get': True})['id']
+            c.call('user.update', u['id'], {'groups': u['groups'] + [ba_id]})
+            yield u
+
+
+@pytest.fixture(scope='function')
 def old_root():
     """ deliberately change password age of root account to forcibly expire it """
     with Client() as c:
@@ -493,3 +502,27 @@ def test__stig_password_policy(config, update_account_policy, error):
         else:
             result = c.call('system.security.validate_password_security', DEFAULT_SEC, config)
             assert result == update_account_policy
+
+
+def test_stig_min_password_age(readonly_admin):
+    with security_config(min_password_age=3) as config:
+        assert config['min_password_age'] == 3
+
+        with Client() as c2:
+            resp = c2.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': readonly_admin['username'],
+                'password': readonly_admin['password']
+            })
+            assert resp['response_type'] == 'SUCCESS'
+            assert resp['user_info']['pw_name'] == readonly_admin['username']
+
+            with pytest.raises(Exception, match='password changed too recently'):
+                c2.call('user.set_password', {
+                    'username': readonly_admin['username'],
+                    'old_password': readonly_admin['password'],
+                    'new_password': 'canary'
+                })
+
+        with Client() as c:
+            c.call('user.update', readonly_admin['id'], {'password': 'canary'})
