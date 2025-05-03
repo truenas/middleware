@@ -25,9 +25,14 @@ def sanitize_networks(
 ) -> list[str] | None:
     """ Entries must be acceptible to ip_network and make all valid entries CIDR formatted """
     not_valid = []
+    found_all_networks = ""  # If found, this will be 0.0.0.0/0 or ::/0 which we would like to exclude
+
     for v in networks:
         try:
-            ip_network(v, strict=strict_test)
+            # Validity test and trap the old-school 'all-networks' entries: 0.0.0.0/0
+            # Exclude these entries as they should be represented with no entry.
+            if int(ip_network(v, strict=strict_test).network_address) == 0:
+                found_all_networks = v
         except ValueError:
             not_valid.append(v)
 
@@ -36,24 +41,51 @@ def sanitize_networks(
             f"{schema_name}.networks",
             f"The following do not appear to be valid IPv4 or IPv6 networks: {', '.join(not_valid)}"
         )
+    elif found_all_networks:
+        verrors.add(
+            f"{schema_name}.networks",
+            f"Do not use {v} to represent all-networks.  "
+            f"No entry is required to configure 'allow everybody'.  "
+            f"Please remove {v}."
+        )
     elif convert:
         # Perform the courtesy conversion to CIDR format
         return [str(ip_network(v, strict=False)) for v in networks]
+
+    return networks
 
 
 def sanitize_hosts(schema_name: str, hosts: list, verrors: ValidationErrors):
     """ host entries cannot contain spaces or quotes """
     regex = re.compile(r'.*[\s"]')
     not_valid = []
+    found_all_hosts = ""
     for v in hosts:
         # Entries in hosts are pre-validated to be NonEmptyString
         if regex.match(v):
             not_valid.append(v)
+        else:
+            try:
+                # Passed simple validity test, now trap the old-school 'all-hosts' entries: 0.0.0.0
+                # Exclude these entries as they should be represented with no entry or '*'
+                if int.from_bytes(ip_address(v).packed) == 0:
+                    found_all_hosts = v
+            except ValueError:
+                # Not an IP address. Very likely path for a host entry
+                pass
 
     if not_valid:
         verrors.add(
             f"{schema_name}.hosts",
             f"Cannot contain spaces or quotes: {', '.join(not_valid)}"
+        )
+
+    if found_all_hosts:
+        verrors.add(
+            f"{schema_name}.hosts",
+            f"Do not use {v} to represent all-hosts.  "
+            f"No entry is required to configure 'allow everybody'.  "
+            f"Please remove {v} or replace with '*'."
         )
 
 
