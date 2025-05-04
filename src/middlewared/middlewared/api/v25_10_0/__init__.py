@@ -115,6 +115,7 @@ from .user import *  # noqa
 from .virt_device import *  # noqa
 from .virt_global import *  # noqa
 from .virt_instance import *  # noqa
+from .virt_instance_storage import *  # noqa
 from .virt_volume import *  # noqa
 from .vmware import *  # noqa
 from .webui_crypto import *  # noqa
