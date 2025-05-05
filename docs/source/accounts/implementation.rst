@@ -143,6 +143,58 @@ The following is a brief synopsis of major account-related APIs in middleware. A
 be obtained through the explicit API documentation.
 
 
+Account IDs verses UIDs and GIDs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A common developer mistake is to conflate that datastore primary key `id` with the NSS user id `uid` or
+group id `gid`. In the case of local accounts, the datastore primary key `id` has no relationship at
+all with the NSS `uid` or `gid`. For example in the following group entry::
+
+  {
+    "id": 114,
+    "gid": 3004,
+    "name": "test",
+    "builtin": false,
+    "sudo_commands": [],
+    "sudo_commands_nopasswd": [],
+    "smb": false,
+    "group": "test",
+    "id_type_both": false,
+    "local": true,
+    "sid": null,
+    "roles": [],
+    "users": [
+      74
+    ]
+  }
+
+The `id` here is a datastore primary key, `gid` is the group id provided by NSS, `users` is an array
+of datastore `id` values for datastore entries for local user accounts. It is critical for developers in
+documentation to specify whether an entry is a datastore `id` or a NSS `uid` or `gid` since there have been
+several UI bugs where the two were conflated.
+
+NOTE about directory services. Accounts provided by directory services do not have an actual datastore
+primary key `id` because they do not get inserted into the accounts tables in the freenas-v1.db database.
+They are, however, provided with an `id` when generating a synthetic user or group entry
+(see "user.query and group.query" below). This `id` value is created by adding the NSS `uid` or `gid` to
+a base constant (`BASE_SYNTHETIC_DATASTORE_ID`) of `100000000`.
+
+`uid` and `gid` values for accounts are obtained from the following sources depending on the account origin.
+
+Local - the `uid` or `gid` value is written to the `/etc/passwd` or `/etc/group` file respectively, which
+are written when `etc.generate` `users` is called.
+
+LDAP / IPA - the `uid` or `gid` value is assigned in the LDAP schema of the remote LDAP server. The NSS
+modules on TrueNAS prevent honoring values that are less than `1000` to prevent collisions between accounts
+on the LDAP server and local system accounts.
+
+Active Directory - by default the LDAP schema in active directory does not explicitly specify `uid` or `gid`
+mappings and so the onus is on the system administrator to select reasonable ranges to assign to the AD domain.
+
+NOTE that TrueNAS may have multiple ranges assigned to different active directory domains depending on TrueNAS
+configuration and the particulars of the domain to which TrueNAS is joined.
+
+
 user.get_user_obj and group.get_group_obj
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -166,7 +218,8 @@ we want users to be able to perform administrative actions such as granting them
 authentication to TrueNAS. Since many fields here are not available for directory services users and groups, there
 are methods in the idmap plugin to create `synthetic_user` and `synthetic_group` based on NSS responses to ensure
 API stability. The practical impact of this is that any schema change to user and group entries must also update
-those methods for users and groups provided by directory services.
+those methods for users and groups provided by directory services. NOTE that changes to directory services accounts
+through the user and group plugins is explicitly prohibited.
 
 
 directoryservices.cache
