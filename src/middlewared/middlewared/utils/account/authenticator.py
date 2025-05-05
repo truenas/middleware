@@ -224,7 +224,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         if self.truenas_state.service is MiddlewarePamFile.API_KEY:
             passwd['account_attributes'].append(AccountFlag.API_KEY)
 
-        # Compare normalized username from NSS with usernames in the /etc/local/user.oath file
+        # Compare normalized username from NSS with usernames in the /etc/user.oath file
         elif self.truenas_state.twofactor_possible and any(user == passwd['pw_name'] for user in iter_oath_users()):
             passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
 

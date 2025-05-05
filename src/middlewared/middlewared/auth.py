@@ -210,7 +210,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         generating it. These are used for method authorization. """
         self.authenticator = authenticator
         """ The PamAuthenticator generated for the middleware session that is
-        using the token (alredy authenticated by providing the token string) """
+        using the token (already authenticated by providing the token string) """
         self.origin = origin
         """ A reference for the origin of this connection is required in order
         to ensure that PAM auditd entries properly account for the remote host
@@ -221,7 +221,6 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.is_user_session = self.root_credentials.is_user_session
         self.login_at = datetime.now(UTC)
         self.pam_authenticated = False
-        self.allowlist = self.root_credentials.allowlist
 
         # Middleware has already determined that the token string matches, but
         # we still need to generate the utmp entry

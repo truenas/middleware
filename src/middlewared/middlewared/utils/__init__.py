@@ -32,7 +32,6 @@ class ProductNames:
 ProductType = ProductTypes()
 ProductName = ProductNames()
 
-MAX_SESSIONS = 1000
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 MIDDLEWARE_BOOT_ENV_STATE_DIR = '/var/lib/truenas-middleware'
