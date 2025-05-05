@@ -92,8 +92,12 @@ def is_tally_locked(username: str, unlock_time: int = UNLOCK_TIME) -> bool:
 
         entries.append(entry)
 
-    if not last_time or now > (last_time + unlock_time):
-        # Short-circuit if no entries or if timeout has expired
+    if not last_time:
+        # Short-circuit if no entries
+        return False
+
+    if int(utc_now(naive=False).timestamp()) > (last_time + unlock_time):
+        # Short-circuit if timeout has expired
         return False
 
     for entry in entries:
