@@ -52,7 +52,6 @@ class MiddlewarePamFile(enum.StrEnum):
     COMMON_SESSION = '/etc/pam.d/middleware-session'
     """ session-related modules common to all middleware authenticators """
 
-
     @property
     def service(self):
         return os.path.basename(self.value)

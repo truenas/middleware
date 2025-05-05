@@ -84,7 +84,6 @@ def is_tally_locked(username: str, unlock_time: int = UNLOCK_TIME) -> bool:
     failures = 0
     last_time = 0
     entries = []
-    now = int(utc_now(naive=False).timestamp())
 
     for entry in iter_tally(username):
         if entry.timestamp > last_time:
