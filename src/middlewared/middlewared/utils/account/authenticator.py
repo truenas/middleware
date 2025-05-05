@@ -223,7 +223,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         if self.truenas_state.service is MiddlewarePamFile.API_KEY:
             passwd['account_attributes'].append(AccountFlag.API_KEY)
 
-        # Compare normalized username from NSS with usernames in the /etc/user.oath file
+        # Compare normalized username from NSS with usernames in the /etc/users.oath file
         elif self.truenas_state.twofactor_possible and any(user == passwd['pw_name'] for user in iter_oath_users()):
             passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
 
@@ -364,7 +364,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         code = None
         reason = None
 
-        # Compare normalized username from NSS with usernames in the /etc/local/user.oath file
+        # Compare normalized username from NSS with usernames in the /etc/users.oath file
         if not os.path.exists(self.truenas_state.service):
             # Explicitly raise an exception if our service file doesn't exist. If we proceed
             # then PAM will fallback to using defaults. We want caller to catch this error and

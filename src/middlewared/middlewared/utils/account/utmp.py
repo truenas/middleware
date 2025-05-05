@@ -182,7 +182,7 @@ def __getutent():
 
 
 def __pututline(entry: StructUtmp) -> None:
-    # Write the utmp strucutre to the utmp file specified by prior __utmpname() call
+    # Write the utmp structure to the utmp file specified by prior __utmpname() call
     # struct utmp *pututline(const struct utmp *ut);
     func = libc.pututline
     func.argtypes = [ctypes.POINTER(StructUtmp)]
@@ -196,8 +196,9 @@ def __pututline(entry: StructUtmp) -> None:
 
 
 def __logout(ut_line: bytes) -> None:
-    # Clear the speciied utmp entry by zeroing out the ut_name and ut_host fields, updating
-    # ut_tv (timestamp) and changing ut_type to DEAD_PROCESS.
+    # Clear the specified utmp entry by zeroing out the ut_name and ut_host fields, updating
+    # ut_tv (timestamp) and changing ut_type to DEAD_PROCESS. The changes are accomplished
+    # via logout(3).
     func = libc.logout
     func.argtypes = [ctypes.c_char_p]
     func.restype = ctypes.c_int
@@ -320,7 +321,7 @@ def wtmp_query(filters: list | None = None, options: dict | None = None) -> list
 
 
 def __pututline_file(file: LoginFile, entry: StructUtmp) -> None:
-    # WARNING: this assumes global lock already held
+    # WARNING: this assumes global lock (UTMP_LOCK) already held
     __utmpname(file)
     __setutent()
     try:
@@ -331,9 +332,10 @@ def __pututline_file(file: LoginFile, entry: StructUtmp) -> None:
 
         __pututline(entry)
     finally:
+        __endutent()
+
         if file != LoginFile.UTMP:
             __utmpname(LoginFile.UTMP)
-        __endutent()
 
 
 def login(entry: PyUtmpEntry):
@@ -346,18 +348,6 @@ def login(entry: PyUtmpEntry):
     with UTMP_LOCK:
         __pututline_file(LoginFile.UTMP, utmp_entry)
         __pututline_file(LoginFile.WTMP, utmp_entry)
-
-
-def __logout_impl(entry: StructUtmp):
-    # Seek to our line in the utmp file and replace
-    while e := __getutent():
-        if e.contents.ut_line == entry.ut_line:
-            break
-
-    if e is None:
-        raise FileNotFoundError(f'{entry.ut_line}: entry not found in utmp')
-
-    __pututline(entry)
 
 
 def logout(to_remove: PyUtmpEntry):
