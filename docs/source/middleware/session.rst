@@ -50,7 +50,7 @@ See `middlewared.utils.crypto.generate_token`.
 Token
 =====
 
-An authentication token is an intenal middleware object that stores a reference to a root SessionManagerCredentials
+An authentication token is an internal middleware object that stores a reference to a root SessionManagerCredentials
 object from which it derives authorization to the TrueNAS server. The originating credential can be retrieved through
 the `root_credentials()` method of the token object. Tokens have various security-related attributes such as
 a ttl, origin matching, and a single-use option. There are two primary use-cases for tokens:
@@ -74,7 +74,8 @@ Connection origin
 
 From the standpoint of authentication and session lifecycles, there are three broad categories of client connection
 origins when viewed from the context of authenticated sessions: unix socket origins, external TCP socket origins, and
-TrueNAS node connection origins. See `utils/origin.py` for details and ConnectionOrigin dataclass.
+TrueNAS node connection origins. See `utils/origin.py` for details and ConnectionOrigin dataclass. This is
+covered in more depth in the "Connection origins" section below.
 
 
 Authenticator
