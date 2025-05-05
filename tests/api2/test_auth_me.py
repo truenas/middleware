@@ -57,7 +57,7 @@ def test_distinguishes_attributes():
         "full_name": "Admin",
         "group_create": True,
         "groups": [builtin_administrators_group_id],
-        "home": "/nonexistent",
+        "home": "/var/empty",
         "password": "test1234",
     }) as admin:
         with client(auth=("admin", "test1234")) as c:
@@ -81,7 +81,7 @@ def test_distinguishes_attributes():
     assert not call("datastore.query", "account.bsdusers_webui_attribute", [["uid", "=", admin["uid"]]])
 
 
-@pytest.mark.parametrize("role,expected",  [
+@pytest.mark.parametrize("role,expected", [
     (["READONLY_ADMIN", "FILESYSTEM_ATTRS_WRITE"], True),
     (["READONLY_ADMIN"], True),
     (["SHARING_ADMIN"], True),

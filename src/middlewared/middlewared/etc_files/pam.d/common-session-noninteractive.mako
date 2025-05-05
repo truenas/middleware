@@ -8,7 +8,7 @@
 #
 <%
     from middlewared.utils.directoryservices.constants import DSType
-    from middlewared.utils.pam import STANDALONE_SESSION, AD_SESSION, SSS_SESSION
+    from middlewared.utils.pam import PAMModule, STANDALONE_SESSION, AD_SESSION, SSS_SESSION
 
     match (dstype := render_ctx['directoryservices.status']['type']):
         # dstype of None means standalone server
@@ -29,6 +29,5 @@ session	[default=1]			pam_permit.so
 session	requisite			pam_deny.so
 session	required			pam_permit.so
 % if conf.secondary:
-${'\n'.join(line.as_conf() for line in conf.secondary)}
+${'\n'.join(line.as_conf() for line in conf.secondary if line.pam_module is not PAMModule.MKHOMEDIR)}
 % endif
-
