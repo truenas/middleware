@@ -15,7 +15,7 @@ Middleware session ID
 =====================
 
 For the purposes of this document the middleware session ID is a UUID generated when the middleware client connection
-is accepted. This middleware session ID will exist prior to authetication and insertion of session into the middleware
+is accepted. This middleware session ID will exist prior to authentication and insertion of session into the middleware
 session manager.
 
 
