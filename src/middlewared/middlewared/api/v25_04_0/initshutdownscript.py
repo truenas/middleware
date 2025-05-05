@@ -27,7 +27,7 @@ class InitShutdownScriptCreate(BaseModel):
     enabled: bool = True
     timeout: int = 10
     """An integer time in seconds that the system should wait for the execution of the script/command.
-    
+
     A hard limit for a timeout is configured by the base OS, so when a script/command is set to execute on SHUTDOWN,
     the hard limit configured by the base OS is changed adding the timeout specified by script/command so it can be
     ensured that it executes as desired and is not interrupted by the base OS's limit.

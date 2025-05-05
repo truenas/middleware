@@ -21,9 +21,6 @@ class AlertServiceEntry(AlertServiceCreate):
     type__title: str
 
 
-###########   Arguments   ###########
-
-
 class AlertServiceCreateArgs(BaseModel):
     alert_service_create: AlertServiceCreate
 
@@ -39,9 +36,6 @@ class AlertServiceDeleteArgs(BaseModel):
 
 class AlertServiceTestArgs(BaseModel):
     alert_service_create: AlertServiceCreate
-
-
-###########   Returns   ###########
 
 
 class AlertServiceCreateResult(BaseModel):
