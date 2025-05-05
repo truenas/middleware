@@ -111,7 +111,7 @@ to connect to the middlewared AF_UNIX socket at `/var/run/middlewared/middleware
 established, the client is automatically authenticated to middleware using the client credentials used by the
 peer process connected to the socket. See SO_PEERCRED in unix(7). If the peer process has an unset loginuid,
 then the session will be treated by middlewared as an internal session. This makes the `login` and `logout`
-stages of the authentication process no-ops (to avoid unnecessary churn in `utmp` and pam_moduels). The
+stages of the authentication process no-ops (to avoid unnecessary churn in `utmp` and pam_modules). The
 most typical reason for the loginuid to be unset for a process opening a middleware session is the `midclt`
 client being used in a systemd unit.
 
@@ -120,7 +120,7 @@ TrueNAS node origin
 ===================
 
 This is a special type of client TCP connection originating from the remote node in an HA pair. It establishes
-establishes an internal root session.
+an internal root session.
 
 
 TCP origin
