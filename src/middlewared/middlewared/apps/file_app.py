@@ -146,7 +146,7 @@ class FileApplication:
         app = await create_application(request)
         try:
             authenticated_credentials = await authenticate(
-                self.middleware, request, credentials, "CALL", data["method"]
+                app, self.middleware, request, credentials, "CALL", data["method"]
             )
             if authenticated_credentials is None:
                 raise web.HTTPUnauthorized()

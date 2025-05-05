@@ -1062,11 +1062,8 @@ class FailoverService(ConfigService):
 
 
 async def ha_permission(middleware, app):
-    try:
-        if not app.authenticated and app.origin.is_ha_connection:
-            await AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
-    except AttributeError:
-        pass
+    if not app.authenticated and app.origin.is_ha_connection:
+        await AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
 
 
 async def interface_pre_sync_hook(middleware):
