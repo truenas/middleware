@@ -503,13 +503,6 @@ class SMBService(ConfigService):
                     'smb_update.aapl_extensions',
                     'This option must be enabled when AFP or time machine shares are present'
                 )
-        else:
-            if await self.middleware.call('sharing.smb.query', [['purpose', '=', 'MULTI_PROTOCOL_NFS']]):
-                verrors.add(
-                    'smb_update.aapl_extensions',
-                    'This option may not be enabled concurrently with shares that are configured for '
-                    'multi-protocol NFS access.'
-                )
 
         if new['enable_smb1']:
             if audited_shares := await self.middleware.call(
@@ -1326,13 +1319,6 @@ class SharingSMBService(SharingService):
                 f'{schema_name}.afp',
                 'Apple SMB2/3 protocol extension support is required by this parameter. '
                 'This feature may be enabled in the general SMB server configuration.'
-            )
-
-        if data['purpose'] == 'MULTI_PROTOCOL_NFS' and smb_config['aapl_extensions']:
-            verrors.add(
-                f'{schema_name}.purpose',
-                'MULTI_PROTOCOL_NFS purpose requires global changes that are incompatible '
-                'with the enabling of Apple SMB protocol extensions.'
             )
 
         if data['timemachine'] or data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
