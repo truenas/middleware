@@ -18,54 +18,16 @@
     dhparams_file = middleware.call_sync('certificate.dhparam')
     x_frame_options = '' if general_settings['ui_x_frame_options'] == 'ALLOW_ALL' else general_settings['ui_x_frame_options']
 
-    # We can't afford nginx not running due to `bind(): Can't assign requested address` so we check that listen
-    # addresses exist.
-    ip_in_use = [ip['address'] for ip in middleware.call_sync('interface.ip_in_use', {'ipv6_link_local': False})]
+    ip_list = []
+    for ip in general_settings['ui_address']:
+        ip_list.append(ip)
 
-    middleware.call_sync('alert.oneshot_delete', 'WebUiBindAddressV2', 'IPv4')
-    if general_settings['ui_address'] == ['0.0.0.0']:
-        ip4_list = general_settings['ui_address']
-    else:
-        ip4_list = [ip for ip in general_settings['ui_address'] if ip in ip_in_use]
-        ip4_absent = [ip for ip in general_settings['ui_address'] if ip not in ip_in_use]
-        if ip4_absent:
-            ip4_list = ['0.0.0.0']
-            middleware.call_sync('alert.oneshot_create', 'WebUiBindAddressV2', {
-                'family': 'IPv4',
-                'addresses': ', '.join(ip4_absent),
-                'wildcard': '0.0.0.0',
-            })
-
-    middleware.call_sync('alert.oneshot_delete', 'WebUiBindAddressV2', 'IPv6')
-    if general_settings['ui_v6address'] == ['::']:
-        ip6_list = general_settings['ui_v6address']
-    else:
-        ip6_list = [ip for ip in general_settings['ui_v6address'] if ip in ip_in_use]
-        ip6_absent = [ip for ip in general_settings['ui_v6address'] if ip not in ip_in_use]
-        if ip6_absent:
-            ip6_list = ['::']
-            middleware.call_sync('alert.oneshot_create', 'WebUiBindAddressV2', {
-                'family': 'IPv6',
-                'addresses': ', '.join(ip6_absent),
-                'wildcard': '::',
-            })
-    ip6_list = [f'[{ip}]' for ip in ip6_list]
+    for ip in general_settings['ui_v6address']:
+        ip_list.append(f'[{ip}]')
 
     wg_config = middleware.call_sync('datastore.config', 'system.truecommand')
-    if (
-        middleware.call_sync('failover.is_single_master_node') and wg_config['api_key_state'] == 'CONNECTED'
-        and wg_config['wg_address'] and middleware.call_sync('service.started', 'truecommand')
-    ):
-        # We use api key state to determine connected because sometimes when nginx config is reloaded
-        # it is not necessary that health of wireguard connection has been established at that point
-        # and another reload of nginx config is required then at that point then which is redundant
-        # An example is that when failover takes place, system knows it is master now but wireguard health hasn't
-        # been established at this point and we miss out on adding wireguard address to listen directive
-        # We also want to make sure wireguard interface is actually up before we add this because it will definitely otherwise result in
-        # nginx to not start on boot as wireguard won't be up at that time
-        ip4_list.append(ipaddress.ip_network(wg_config['wg_address'], False).network_address)
-
-    ip_list = ip4_list + ip6_list
+    if wg_config['wg_address']:
+        ip_list.append(ipaddress.ip_network(wg_config['wg_address'], False).network_address)
 
     # Let's verify that required SSL support in the backend is complete by middlewared
     if not cert or middleware.call_sync('certificate.cert_services_validation', cert['id'], 'nginx.certificate', False):
