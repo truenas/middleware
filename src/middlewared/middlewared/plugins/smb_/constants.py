@@ -139,7 +139,7 @@ class SMBSharePreset(enum.Enum):
     MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv4/SMB) shares", "params": {
         'streams': True,
         'durablehandle': False,
-        'auxsmbconf': 'kernel oplocks=True',
+        'auxsmbconf': 'oplocks=no\nlevel2 oplocks=no',
     }, "cluster": False}
     PRIVATE_DATASETS = {"verbose_name": "Private SMB Datasets and Shares", "params": {
         'path_suffix': '%U',
