@@ -6,6 +6,7 @@ Middleware Daemon
     :caption: Contents:
 
     development.rst
+    session.rst
     state.rst
     process_pool.rst
     jobs.rst

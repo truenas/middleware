@@ -9,7 +9,10 @@
 
 <%
     from middlewared.utils.directoryservices.constants import DSType
-    from middlewared.utils.pam import STANDALONE_AUTH, AD_AUTH, SSS_AUTH
+    from middlewared.utils.pam import (
+        STANDALONE_AUTH, AD_AUTH, SSS_AUTH,
+        FAILLOCK_AUTH_FAIL, FAILLOCK_AUTH_SUCC,
+    )
 
     match (dstype := render_ctx['directoryservices.status']['type']):
         # dstype of None means standalone server
@@ -28,6 +31,10 @@ auth	optional	pam_faildelay.so	delay=4000000
 %endif
 % if conf.primary:
 ${'\n'.join(line.as_conf() for line in conf.primary)}
+% endif
+%if render_ctx['system.security.config']['enable_gpos_stig']:
+${FAILLOCK_AUTH_FAIL.as_conf()}
+${FAILLOCK_AUTH_SUCC.as_conf()}
 % endif
 @include common-auth-unix
 % if conf.secondary:

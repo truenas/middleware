@@ -212,4 +212,5 @@ class UserService(Service):
 
         user_entry = await self.translate_username(username)
         twofactor_config = await self.twofactor_config(username)
+        await self.middleware.call('etc.generate', 'user')
         return user_entry | {'twofactor_config': twofactor_config}
