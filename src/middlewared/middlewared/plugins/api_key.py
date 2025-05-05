@@ -359,7 +359,8 @@ class ApiKeyService(CRUDService):
         self.middleware.call_sync('etc.generate', 'pam_middleware')
 
     @private
-    async def authenticate(self, key: str) -> dict | None:
+    @pass_app(require=True)
+    async def authenticate(self, app, key: str) -> dict | None:
         """ Wrapper around auth.authenticate for REST API """
         try:
             key_id = int(key.split('-', 1)[0])
@@ -369,8 +370,7 @@ class ApiKeyService(CRUDService):
         entry = await self.get_instance(key_id)
         resp = await self.middleware.call('auth.authenticate_plain',
                                           entry['username'],
-                                          key,
-                                          True)
+                                          key, app=app)
 
         if resp['pam_response']['code'] != pam.PAM_SUCCESS:
             return None

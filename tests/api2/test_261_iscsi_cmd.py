@@ -1926,7 +1926,7 @@ def _wait_for_alua_settle(retries=20):
         sleep(5)
 
 
-def _ha_reboot_master(delay=900):
+def _ha_reboot_master(delay=900, description=''):
     """
     Reboot the MASTER node and wait for both the new MASTER
     and new BACKUP to become available.
@@ -1935,7 +1935,7 @@ def _ha_reboot_master(delay=900):
     orig_master_node = _get_node()
     new_master_node = other_node(orig_master_node)
 
-    call('system.reboot', 'iSCSI test')
+    call('system.reboot', f'iSCSI test {description}')
 
     # First we'll loop until the node is no longer the orig_node
     new_master = False
@@ -2101,7 +2101,7 @@ def test__alua_config(iscsi_running):
                             _check_target_rw_paths(s1, s2)
 
                             # Let's failover
-                            _ha_reboot_master()
+                            _ha_reboot_master(description='first failover')
                             expect_check_condition(s1, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
                             expect_check_condition(s2, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
@@ -2141,7 +2141,7 @@ def test__alua_config(iscsi_running):
                                         _check_target_rw_paths(s3, s4)
 
                                         # Reboot again (to failback to the original ACTIVE node)
-                                        _ha_reboot_master()
+                                        _ha_reboot_master(description='second failover')
                                         for s in [s1, s2, s3, s4]:
                                             expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 

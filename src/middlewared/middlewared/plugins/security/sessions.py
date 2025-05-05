@@ -39,7 +39,7 @@ class SecuritySessionEntry(BaseModel):
     """ Process ID of the login process """
     ut_line: NonEmptyString
     """ Device name of the tty with the prefix "/dev" removed """
-    ut_id: NonEmptyString
+    ut_id: str
     """ Terminal name suffix. """
     ut_user: NonEmptyString | None
     """ Username. Note that utmp only has a 32 byte buffer for usernames and so
