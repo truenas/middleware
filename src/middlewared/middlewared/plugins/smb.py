@@ -1335,7 +1335,6 @@ class SharingSMBService(SharingService):
                 'This feature may be enabled in the general SMB server configuration.'
             )
 
-
         if data['timemachine'] or data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
             if not smb_config['aapl_extensions']:
                 verrors.add(
