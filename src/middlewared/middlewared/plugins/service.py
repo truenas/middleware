@@ -159,40 +159,47 @@ class ServiceService(CRUDService):
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to start service', errno.EPERM)
 
-        await self.middleware.call_hook('service.pre_action', service, 'start', options)
-
-        await self.middleware.call('service.generate_etc', service_object)
-
         try:
-            await service_object.check_configuration()
-        except CallError:
+            async with asyncio.timeout(options['timeout']):
+                await self.middleware.call_hook('service.pre_action', service, 'start', options)
+
+                await self.middleware.call('service.generate_etc', service_object)
+
+                try:
+                    await service_object.check_configuration()
+                except CallError:
+                    if options['silent']:
+                        self.logger.warning('%s: service failed configuration check',
+                                            service_object.name, exc_info=True)
+                        return False
+
+                    raise
+
+                await service_object.before_start()
+                await service_object.start()
+                state = await service_object.get_state()
+                if state.running:
+                    await service_object.after_start()
+                    await self.middleware.call('service.notify_running', service)
+                    if service_object.deprecated:
+                        await self.middleware.call(
+                            'alert.oneshot_create',
+                            'DeprecatedService',
+                            {"service": service_object.name}
+                        )
+                    return True
+
+                self.logger.error("Service %r not running after start", service)
+                await self.middleware.call('service.notify_running', service)
+                if options['silent']:
+                    return False
+
+                raise CallError(await service_object.failure_logs() or 'Service not running after start')
+        except asyncio.TimeoutError:
             if options['silent']:
-                self.logger.warning('%s: service failed configuration check',
-                                    service_object.name, exc_info=True)
                 return False
 
-            raise
-
-        await service_object.before_start()
-        await service_object.start()
-        state = await service_object.get_state()
-        if state.running:
-            await service_object.after_start()
-            await self.middleware.call('service.notify_running', service)
-            if service_object.deprecated:
-                await self.middleware.call(
-                    'alert.oneshot_create',
-                    'DeprecatedService',
-                    {"service": service_object.name}
-                )
-            return True
-
-        self.logger.error("Service %r not running after start", service)
-        await self.middleware.call('service.notify_running', service)
-        if options['silent']:
-            return False
-
-        raise CallError(await service_object.failure_logs() or 'Service not running after start')
+            raise CallError('Timed out while starting the service', errno.ETIMEDOUT)
 
     @api_method(ServiceStartedArgs, ServiceStartedResult, roles=['SERVICE_READ'])
     async def started(self, service):
@@ -240,27 +247,34 @@ class ServiceService(CRUDService):
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to stop service')
 
-        await self.middleware.call_hook('service.pre_action', service, 'stop', options)
-
         try:
-            await service_object.before_stop()
-        except Exception:
-            self.logger.error("Failed before stop action for %r service", service)
-        await service_object.stop()
-        state = await service_object.get_state()
-        if not state.running:
-            await service_object.after_stop()
-            await self.middleware.call('service.notify_running', service)
-            if service_object.deprecated:
-                await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
+            async with asyncio.timeout(options['timeout']):
+                await self.middleware.call_hook('service.pre_action', service, 'stop', options)
 
-            return True
+                try:
+                    await service_object.before_stop()
+                except Exception:
+                    self.logger.error("Failed before stop action for %r service", service)
+                await service_object.stop()
+                state = await service_object.get_state()
+                if not state.running:
+                    await service_object.after_stop()
+                    await self.middleware.call('service.notify_running', service)
+                    if service_object.deprecated:
+                        await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
 
-        self.logger.error("Service %r running after stop", service)
-        await self.middleware.call('service.notify_running', service)
-        if options['silent']:
-            return False
-        raise CallError(await service_object.failure_logs() or 'Service still running after stop')
+                    return True
+
+                self.logger.error("Service %r running after stop", service)
+                await self.middleware.call('service.notify_running', service)
+                if options['silent']:
+                    return False
+                raise CallError(await service_object.failure_logs() or 'Service still running after stop')
+        except asyncio.TimeoutError:
+            if options['silent']:
+                return False
+
+            raise CallError('Timed out while stopping the service', errno.ETIMEDOUT)
 
     @api_method(
         ServiceRestartArgs,
@@ -279,11 +293,18 @@ class ServiceService(CRUDService):
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
 
-        await self.middleware.call_hook('service.pre_action', service, 'restart', options)
+        try:
+            async with asyncio.timeout(options['timeout']):
+                await self.middleware.call_hook('service.pre_action', service, 'restart', options)
 
-        await self.middleware.call('service.generate_etc', service_object)
+                await self.middleware.call('service.generate_etc', service_object)
 
-        return await self._restart(service, service_object)
+                return await self._restart(service, service_object)
+        except asyncio.TimeoutError:
+            if options['silent']:
+                return False
+
+            raise CallError('Timed out while restarting the service', errno.ETIMEDOUT)
 
     async def _restart(self, service, service_object):
         if service_object.restartable:
@@ -342,23 +363,30 @@ class ServiceService(CRUDService):
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
 
-        await self.middleware.call_hook('service.pre_action', service, 'reload', options)
+        try:
+            async with asyncio.timeout(options['timeout']):
+                await self.middleware.call_hook('service.pre_action', service, 'reload', options)
 
-        await self.middleware.call('service.generate_etc', service_object)
+                await self.middleware.call('service.generate_etc', service_object)
 
-        if service_object.reloadable:
-            await service_object.before_reload()
-            await service_object.reload()
-            await service_object.after_reload()
+                if service_object.reloadable:
+                    await service_object.before_reload()
+                    await service_object.reload()
+                    await service_object.after_reload()
 
-            state = await service_object.get_state()
-            if state.running:
-                return True
-            else:
-                self.logger.error("Service %r not running after reload", service)
+                    state = await service_object.get_state()
+                    if state.running:
+                        return True
+                    else:
+                        self.logger.error("Service %r not running after reload", service)
+                        return False
+                else:
+                    return await self._restart(service, service_object)
+        except asyncio.TimeoutError:
+            if options['silent']:
                 return False
-        else:
-            return await self._restart(service, service_object)
+
+            raise CallError('Timed out while reloading the service', errno.ETIMEDOUT)
 
     SERVICES: dict[str, 'ServiceInterface'] = {}
 
