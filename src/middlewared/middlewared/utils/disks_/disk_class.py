@@ -295,7 +295,10 @@ class DiskEntry:
                             self.__opener(absolute_path=f"{i.path}/temp1_input")
                         )
                     except Exception:
-                        pass
+                        # if we can't get the temperature
+                        # then there is no reason to try
+                        # the other sysfs files.
+                        continue
                     else:
                         # sysfs values are stored in millidegrees celsius
                         rv["temp_c"] = milli_c / 1000
