@@ -16,7 +16,7 @@ from truenas_api_client import json
 from .api.base.server.app import App
 from .auth import ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials, AuthenticationContext
 from .job import Job
-from .pipe import Pipes
+from .pipe import Pipes, InputPipes
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
 from .utils.account.authenticator import ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator
@@ -780,9 +780,9 @@ class Resource(object):
                     return resp
 
         if upload_pipe and download_pipe:
-            method_kwargs['pipes'] = Pipes(input_=upload_pipe, output=download_pipe)
+            method_kwargs['pipes'] = Pipes(inputs=InputPipes(upload_pipe), output=download_pipe)
         elif upload_pipe:
-            method_kwargs['pipes'] = Pipes(input_=upload_pipe)
+            method_kwargs['pipes'] = Pipes(inputs=InputPipes(upload_pipe))
         elif download_pipe:
             method_kwargs['pipes'] = Pipes(output=download_pipe)
 

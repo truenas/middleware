@@ -294,7 +294,7 @@ class Job:
         self.method = method
         self.args = args
         self.options = options
-        self.pipes = pipes or Pipes(input_=None, output=None)
+        self.pipes = pipes or Pipes(inputs=None, output=None)
         self.on_progress_cb = on_progress_cb
         self.app = app
         self.message_ids = [message_id] if message_id else []
@@ -613,8 +613,9 @@ class Job:
 
     async def __close_pipes(self):
         def close_pipes():
-            if self.pipes.input:
-                self.pipes.input.r.close()
+            if self.pipes.inputs:
+                for pipe in self.pipes.inputs.pipes_to_close:
+                    pipe.r.close()
             if self.pipes.output:
                 self.pipes.output.w.close()
 
