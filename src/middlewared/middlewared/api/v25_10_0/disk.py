@@ -37,7 +37,7 @@ class DiskEntry(BaseModel):
     number: int
     serial: str
     lunid: str | None
-    size: int
+    size: int | None
     description: str
     transfermode: str
     hddstandby: Literal["ALWAYS ON", "5", "10", "20", "30", "60", "120", "180", "240", "300", "330"]
