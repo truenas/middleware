@@ -113,6 +113,11 @@ def tally_locked_users() -> set[str]:
     defined by pam_faillock """
     out = set()
 
+    if not os.path.exists(FAILLOCK_DIR):
+        # pam_faillock(8) may not have created the directory yet. If it doesn't
+        # exist then we can short-circuit. There's no need to create the directory.
+        return out
+
     with os.scandir(FAILLOCK_DIR) as it:
         for dirent in it:
             if is_tally_locked(dirent.name):
