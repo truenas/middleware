@@ -1,22 +1,25 @@
+from abc import ABC, abstractmethod
 import asyncio
 from concurrent.futures import Executor
 import importlib
 import logging
 from types import ModuleType
+from typing import Callable
 
 from middlewared.api.base import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
-class ModelProvider:
+class ModelProvider(ABC):
+
+    @abstractmethod
+    def __init__(self):
+        self.models: dict[str, type[BaseModel]]
+
     async def get_model(self, name: str) -> type[BaseModel]:
-        """
-        Get API model by name
-        :param name:
-        :return: model
-        """
-        raise NotImplementedError
+        """Get API model by name."""
+        return self.models[name]
 
 
 class ModuleModelProvider(ModelProvider):
@@ -28,9 +31,6 @@ class ModuleModelProvider(ModelProvider):
         :param module: module that contains models
         """
         self.models = models_from_module(module)
-
-    async def get_model(self, name: str) -> type[BaseModel]:
-        return self.models[name]
 
 
 class LazyModuleModelProvider(ModelProvider):
@@ -47,7 +47,7 @@ class LazyModuleModelProvider(ModelProvider):
         self.module_name = module_name
         self.lock = asyncio.Lock()
         self.models = None
-        self.models_factories = {}
+        self.models_factories: dict[str, Callable[[], type[BaseModel]]] = {}
 
     async def get_model(self, name: str) -> type[BaseModel]:
         async with self.lock:
@@ -64,9 +64,8 @@ class LazyModuleModelProvider(ModelProvider):
             try:
                 return self.models[name]
             except KeyError:
-                # FIXME: Please see `Middleware.__initialize`
                 if model_factory := self.models_factories.get(name):
-                    new_model = model_factory()
+                    new_model = model_factory()  # We may raise another KeyError here.
                     self.models[name] = new_model
                     return new_model
 
