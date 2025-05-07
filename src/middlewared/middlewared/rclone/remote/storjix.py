@@ -63,11 +63,11 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
             auth = AWSRequestsAuth(aws_access_key=provider["access_key_id"],
                                    aws_secret_access_key=provider["secret_access_key"],
-                                   aws_host=endpoint,
+                                   aws_host=endpoint.removeprefix("https://").strip("/"),
                                    aws_region="",
                                    aws_service="s3")
 
-            r = requests.get(f"{endpoint}/?attribution", auth=auth, timeout=INTERNET_TIMEOUT)
+            r = requests.get(f"{endpoint}?attribution", auth=auth, timeout=INTERNET_TIMEOUT)
             r.raise_for_status()
 
             ns = "{http://s3.amazonaws.com/doc/2006-03-01/}"
@@ -99,4 +99,4 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
             "AWS_ACCESS_KEY_ID": provider["access_key_id"],
             "AWS_SECRET_ACCESS_KEY": provider["secret_access_key"],
         }
-        return provider["endpoint"], env
+        return provider["endpoint"].removeprefix("https://").strip("/"), env

@@ -24,7 +24,7 @@ def upgrade():
     for entry in map(dict, conn.execute("SELECT id, attributes FROM system_cloudcredentials WHERE provider = 'STORJ_IX'").fetchall()):
         if attributes := decrypt(entry["attributes"]):
             attributes = json.loads(attributes)
-            attributes.setdefault("endpoint", "https://gateway.storjshare.io")
+            attributes.setdefault("endpoint", "https://gateway.storjshare.io/")
             conn.execute("UPDATE system_cloudcredentials SET attributes = ? WHERE id = ?", (
                 encrypt(json.dumps(attributes)), entry["id"]
             ))
