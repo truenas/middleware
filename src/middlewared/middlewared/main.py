@@ -1367,30 +1367,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         apis = self._load_apis()
 
-        # FIXME: handle this in a more appropriate place
-        def create_model(model_provider, model_factory, arg_model_name):
-            try:
-                arg = model_provider.models[arg_model_name]
-            except KeyError:
-                pass
-            else:
-                return model_factory(arg)
-
         for service in self.get_services().values():
             for current_api_model, model_factory, arg_model_name in getattr(service, '_register_models', []):
-                # Newest version has `ModuleModelProvider`, we can add directly to the models list
-                self.api_versions[-1].model_provider.models[current_api_model.__name__] = current_api_model
-                for api_version in self.api_versions[:-1]:
-                    # All others have `LazyModuleModelProvider`.
-                    # FIXME: We must initialize derived models lazily since they are not loaded yet.
-                    # This abstraction exposes unnecessary implementation details, we must come up with something better
-                    model_provider = api_version.model_provider
-                    model_provider.models_factories[current_api_model.__name__] = functools.partial(
-                        create_model,
-                        model_provider,
-                        model_factory,
-                        arg_model_name,
-                    )
+                for api_version in self.api_versions:
+                    api_version.register_model(current_api_model, model_factory, arg_model_name)
 
         self._console_write('registering services')
 
