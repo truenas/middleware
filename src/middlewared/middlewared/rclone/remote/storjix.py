@@ -12,9 +12,6 @@ from middlewared.service_exception import CallError
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
-STORJ_ENDPOINT = "gateway.storjshare.io"
-
-
 class StorjIxError(CallError):
     pass
 
@@ -35,12 +32,13 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     async def create_bucket(self, credentials, name):
         def create_bucket_sync():
+            provider = credentials["provider"]
             s3_client = boto3.client(
                 "s3",
                 config=botocore.config.Config(user_agent="ix-storj-1"),
-                endpoint_url=f"https://{STORJ_ENDPOINT}",
-                aws_access_key_id=credentials["provider"]["access_key_id"],
-                aws_secret_access_key=credentials["provider"]["secret_access_key"],
+                endpoint_url=provider["endpoint"],
+                aws_access_key_id=provider["access_key_id"],
+                aws_secret_access_key=provider["secret_access_key"],
             )
             # s3 bucket naming rules: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
             try:
@@ -60,13 +58,16 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     async def list_buckets(self, credentials):
         def list_buckets_sync():
-            auth = AWSRequestsAuth(aws_access_key=credentials["provider"]["access_key_id"],
-                                   aws_secret_access_key=credentials["provider"]["secret_access_key"],
-                                   aws_host=STORJ_ENDPOINT,
+            provider = credentials["provider"]
+            endpoint = provider["endpoint"]
+
+            auth = AWSRequestsAuth(aws_access_key=provider["access_key_id"],
+                                   aws_secret_access_key=provider["secret_access_key"],
+                                   aws_host=endpoint,
                                    aws_region="",
                                    aws_service="s3")
 
-            r = requests.get(f"https://{STORJ_ENDPOINT}/?attribution", auth=auth, timeout=INTERNET_TIMEOUT)
+            r = requests.get(f"{endpoint}/?attribution", auth=auth, timeout=INTERNET_TIMEOUT)
             r.raise_for_status()
 
             ns = "{http://s3.amazonaws.com/doc/2006-03-01/}"
@@ -82,7 +83,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         return await self.middleware.run_in_thread(list_buckets_sync)
 
     async def get_credentials_extra(self, credentials):
-        return {"endpoint": f"https://{STORJ_ENDPOINT}", "provider": "Other"}
+        return {"endpoint": credentials["provider"]["endpoint"], "provider": "Other"}
 
     async def get_task_extra(self, task):
         # Storj recommended these settings
@@ -93,8 +94,9 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         }
 
     def get_restic_config(self, task):
+        provider = task["credentials"]["provider"]
         env = {
-            "AWS_ACCESS_KEY_ID": task["credentials"]["provider"]["access_key_id"],
-            "AWS_SECRET_ACCESS_KEY": task["credentials"]["provider"]["secret_access_key"],
+            "AWS_ACCESS_KEY_ID": provider["access_key_id"],
+            "AWS_SECRET_ACCESS_KEY": provider["secret_access_key"],
         }
-        return STORJ_ENDPOINT, env
+        return provider["endpoint"], env
