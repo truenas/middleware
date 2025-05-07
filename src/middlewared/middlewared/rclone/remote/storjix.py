@@ -12,6 +12,9 @@ from middlewared.service_exception import CallError
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
+STORJ_ENDPOINT = "gateway.storjshare.io"
+
+
 class StorjIxError(CallError):
     pass
 
@@ -35,7 +38,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
             s3_client = boto3.client(
                 "s3",
                 config=botocore.config.Config(user_agent="ix-storj-1"),
-                endpoint_url="https://gateway.storjshare.io",
+                endpoint_url=f"https://{STORJ_ENDPOINT}",
                 aws_access_key_id=credentials["provider"]["access_key_id"],
                 aws_secret_access_key=credentials["provider"]["secret_access_key"],
             )
@@ -59,11 +62,11 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         def list_buckets_sync():
             auth = AWSRequestsAuth(aws_access_key=credentials["provider"]["access_key_id"],
                                    aws_secret_access_key=credentials["provider"]["secret_access_key"],
-                                   aws_host="gateway.storjshare.io",
+                                   aws_host=STORJ_ENDPOINT,
                                    aws_region="",
                                    aws_service="s3")
 
-            r = requests.get("https://gateway.storjshare.io/?attribution", auth=auth, timeout=INTERNET_TIMEOUT)
+            r = requests.get(f"https://{STORJ_ENDPOINT}/?attribution", auth=auth, timeout=INTERNET_TIMEOUT)
             r.raise_for_status()
 
             ns = "{http://s3.amazonaws.com/doc/2006-03-01/}"
@@ -79,7 +82,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         return await self.middleware.run_in_thread(list_buckets_sync)
 
     async def get_credentials_extra(self, credentials):
-        return {"endpoint": "https://gateway.storjshare.io", "provider": "Other"}
+        return {"endpoint": f"https://{STORJ_ENDPOINT}", "provider": "Other"}
 
     async def get_task_extra(self, task):
         # Storj recommended these settings
@@ -90,11 +93,8 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         }
 
     def get_restic_config(self, task):
-        url = "gateway.storjshare.io"
-
         env = {
             "AWS_ACCESS_KEY_ID": task["credentials"]["provider"]["access_key_id"],
             "AWS_SECRET_ACCESS_KEY": task["credentials"]["provider"]["secret_access_key"],
         }
-
-        return url, env
+        return STORJ_ENDPOINT, env

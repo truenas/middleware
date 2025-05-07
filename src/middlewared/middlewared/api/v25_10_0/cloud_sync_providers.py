@@ -128,6 +128,7 @@ class StorjIxCredentialsModel(BaseModel):
     type: Literal["STORJ_IX"]
     access_key_id: Secret[NonEmptyString]
     secret_access_key: Secret[NonEmptyString]
+    endpoint: NonEmptyString = "https://gateway.storjshare.io"
 
 
 class SwiftCredentialsModel(BaseModel):
