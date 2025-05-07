@@ -201,21 +201,18 @@ class PoolDatasetService(CRUDService):
         assert mode in ('CREATE', 'UPDATE')
 
         parents = get_dataset_parents(data['name'])
-        id_ = None
+        parent_name = None
         if not parents:
-            if cur_dataset:
-                # means someone is using API to alter the root dataset
-                # AND cur_dataset is set (happens in do_update())
-                parent = [cur_dataset]
-            else:
-                id_ = data['name']
+            # happens when someone is making
+            # changes to the root dataset (zpool)
+            parent_name = data['name']
         else:
-            id_ = parents[-1]
+            parent_name = parents[-1]
 
-        if id_ is not None:
+        if not parent:
             parent = await self.middleware.call(
                 'pool.dataset.query',
-                [('id', '=', id_)],
+                [('id', '=', parent_name)],
                 {'extra': {'retrieve_children': False}}
             )
 
@@ -233,7 +230,7 @@ class PoolDatasetService(CRUDService):
                     'Please specify a pool which exists for the dataset/volume to be created'
                 )
             else:
-                msg = f'({id_}) does not exist.'
+                msg = f'({parent_name}) does not exist.'
                 if len(parents) == 1:
                     msg = f'zpool {msg}'
                 else:
