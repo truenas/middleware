@@ -36,82 +36,14 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.account.authenticator import (
     ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator, AccountFlag
 )
+from middlewared.utils.account.auth_token import TokenManager, TokenResult
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
     AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS, OTPW_MANAGER,
 )
-from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
 
 PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
-
-
-class TokenManager:
-    def __init__(self):
-        self.tokens = {}
-
-    def create(self, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
-        credentials = parent_credentials
-        if isinstance(credentials, TokenSessionManagerCredentials):
-            if root_credentials := credentials.token.root_credentials():
-                credentials = root_credentials
-
-        token = generate_token(48, url_safe=True)
-        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials, session_id, single_use)
-        return self.tokens[token]
-
-    def get(self, token, origin):
-        token = self.tokens.get(token)
-        if token is None:
-            return None
-
-        if not token.is_valid():
-            self.tokens.pop(token.token)
-            return None
-
-        if token.match_origin:
-            if not isinstance(origin, type(token.match_origin)):
-                return None
-            if not token.match_origin.match(origin):
-                return None
-
-        return token
-
-    def destroy(self, token):
-        self.tokens.pop(token.token, None)
-
-    def destroy_by_session_id(self, session_id):
-        self.tokens = {k: v for k, v in self.tokens.items() if session_id not in v.session_ids}
-
-
-class Token:
-    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
-        self.manager = manager
-        self.token = token
-        self.ttl = ttl
-        self.attributes = attributes
-        self.match_origin = match_origin
-        self.parent_credentials = parent_credentials
-        self.session_ids = {session_id}
-        self.single_use = single_use
-
-        self.last_used_at = time.monotonic()
-
-    def is_valid(self):
-        return time.monotonic() < self.last_used_at + self.ttl
-
-    def notify_used(self):
-        self.last_used_at = time.monotonic()
-
-    def root_credentials(self):
-        credentials = self.parent_credentials
-        while True:
-            if isinstance(credentials, TokenSessionManagerCredentials):
-                credentials = credentials.token.parent_credentials
-            elif credentials is None:
-                return None
-            else:
-                return credentials
 
 
 class SessionManager:
@@ -414,7 +346,7 @@ class AuthService(Service):
             if job.pipes.output is None:
                 raise CallError(f'{job_id}: job is not suitable for download token')
 
-        token = self.token_manager.create(
+        resp = self.token_manager.create(
             ttl,
             attrs,
             app.origin if match_origin else None,
@@ -422,12 +354,33 @@ class AuthService(Service):
             app.session_id,
             single_use
         )
+        # We currently don't check resp.result because the op always succeeds
 
-        return token.token
+        return resp.token.token
 
     @private
-    def get_token(self, token_id, origin):
-        if (token := self.token_manager.get(token_id, origin)) is None:
+    @pass_app(require=True)
+    async def get_token(self, app, token_id, origin):
+        resp = self.token_manager.get(token_id, origin)
+        if (token := resp.token) is None:
+            match resp.result:
+                case TokenResult.NO_ENTRY:
+                    errmsg = 'Invalid token'
+                case TokenResult.EXPIRED:
+                    errmsg = 'Token has expired'
+                case TokenResult.ORIGIN_MATCH_FAILED:
+                    errmsg = 'Token used from unexpected origin'
+                case _:
+                    errmsg = f'Unexpected failure: {resp.result}'
+
+            self.logger.warning('Failed to retrieve authentication token: %s', errmsg)
+            await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                'credentials': {
+                    'credentials': 'TOKEN',
+                    'credentials_data': {}
+                },
+                'error': errmsg,
+            }, False)
             return None
 
         if token.single_use:
@@ -445,13 +398,22 @@ class AuthService(Service):
     @private
     @pass_app(require=True)
     def get_token_for_action(self, app, token_id, origin, method, resource):
-        if (token := self.token_manager.get(token_id, origin)) is None:
-            return None
+        token_auth_failure = None
+
+        resp = self.token_manager.get(token_id, origin)
+        if (token := resp.token) is None:
+            token_auth_failure = f'{resource}: failed to get token for action: {resp.result}'
 
         if token.attributes:
-            return None
+            token_auth_failure = f'{resource}: invalid token used for action'
 
         if not token.parent_credentials.authorize(method, resource):
+            token_auth_failure = f'{resource}: token not authorized for resource'
+
+        if token_auth_failure:
+            self.logger.warning('Failed to get token for action: %s', token_auth_failure)
+            # This API endpoint is consumed by restful.py which generates its own audit
+            # authentication failure entry.
             return None
 
         auth_ctx = app.authentication_context
@@ -479,17 +441,22 @@ class AuthService(Service):
 
     @private
     def get_token_for_shell_application(self, token_id, origin):
-        if (token := self.token_manager.get(token_id, origin)) is None:
+        resp = self.token_manager.get(token_id, origin)
+        if (token := resp.token) is None:
+            self.logger.warning('Failed to get token for shell application: %s.', resp.result)
             return None
 
         if token.attributes:
+            self.logger.warning('Invalid token used for shell application from origin: %s', origin)
             return None
 
         root_credentials = token.root_credentials()
         if not isinstance(root_credentials, UserSessionManagerCredentials):
+            self.logger.warning('Invalid credential type used for shell application from origin: %s', origin)
             return None
 
         if not root_credentials.user['privilege']['web_shell']:
+            self.logger.warning('%s: credential used by client does not support web shell', origin)
             return None
 
         if token.single_use:
@@ -1001,17 +968,31 @@ class AuthService(Service):
                 # may be removed more safely than for other authentication methods
                 # since the tokens are short-lived.
                 token_str = data['token']
-                token = self.token_manager.get(token_str, app.origin)
+                token_resp = self.token_manager.get(token_str, app.origin)
+                token_repr = '********'
+                token = token_resp.token
                 if token is None:
+                    match token_resp.result:
+                        case TokenResult.NO_ENTRY:
+                            errmsg = 'Invalid token'
+                            # Expose string passed as a token since it may be relevant
+                            token_repr = token.token
+                        case TokenResult.EXPIRED:
+                            errmsg = 'Token has expired'
+                        case TokenResult.ORIGIN_MATCH_FAILED:
+                            errmsg = 'Token used from unexpected origin'
+                        case _:
+                            errmsg = f'Unexpected failure: {token_resp.result}'
+
                     await asyncio.sleep(CURRENT_AAL.get_delay_interval())
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'TOKEN',
                             'credentials_data': {
-                                'token': token_str,
+                                'token': token_repr,
                             }
                         },
-                        'error': 'Invalid token',
+                        'error': errmsg,
                     }, False)
                     return response
 
@@ -1021,7 +1002,7 @@ class AuthService(Service):
                         'credentials': {
                             'credentials': 'TOKEN',
                             'credentials_data': {
-                                'token': token.token,
+                                'token': token_repr,
                             }
                         },
                         'error': 'Bad token',
