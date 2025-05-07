@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import AfterValidator, Discriminator, Field, Secret
 
-from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, NonEmptyString
+from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, NonEmptyString, HttpsOnlyURL
 
 __all__ = ["CloudCredentialProvider"]
 
@@ -128,7 +128,7 @@ class StorjIxCredentialsModel(BaseModel):
     type: Literal["STORJ_IX"]
     access_key_id: Secret[NonEmptyString]
     secret_access_key: Secret[NonEmptyString]
-    endpoint: NonEmptyString = "https://gateway.storjshare.io"
+    endpoint: HttpsOnlyURL = "https://gateway.storjshare.io/"
 
 
 class SwiftCredentialsModel(BaseModel):
