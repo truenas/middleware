@@ -49,6 +49,7 @@ class PoolSnapshotTaskDeleteOptions(BaseModel):
 
 class PoolSnapshotTaskDBEntry(PoolSnapshotTaskCreate):
     id: int
+    state: str
 
 
 class PoolSnapshotTaskEntry(PoolSnapshotTaskDBEntry):

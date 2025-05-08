@@ -34,6 +34,7 @@ class PeriodicSnapshotTaskModel(sa.Model):
     task_month = sa.Column(sa.String(100), default='*')
     task_dayweek = sa.Column(sa.String(100), default="*")
     task_allow_empty = sa.Column(sa.Boolean(), default=True)
+    task_state = sa.Column(sa.Text(), default='{}')
 
 
 class PeriodicSnapshotTaskService(CRUDService):
