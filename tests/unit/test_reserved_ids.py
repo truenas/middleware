@@ -1,5 +1,6 @@
 import pytest
 from middlewared.utils import reserved_ids
+from multiprocessing import Pool
 from threading import Lock
 from time import monotonic
 from truenas_api_client import Client
@@ -34,14 +35,24 @@ def test_expire_entry(reserve_obj):
     assert 865 not in reserve_obj.in_use()
 
 
+def get_uid():
+    with Client() as c:
+        return c.call('user.get_next_uid')
+
+
+def get_gid():
+    with Client() as c:
+        return c.call('group.get_next_gid')
+
+
 @pytest.mark.parametrize('method,minimum', [
-    ('user.get_next_uid', 3000),
-    ('group.get_next_gid', 3000),
+    (get_uid, 3000),
+    (get_gid, 3000),
 ])
 def test_check_increment_method(method, minimum):
-    with Client() as c:
-        xid = c.call(method)
-        assert xid == minimum
+    with Pool(4) as pool:
+        results = [pool.apply_async(method, ()) for i in range(0, 20)]
+        ids = [res.get(timeout=1) for res in results]
 
-        xid = c.call(method)
-        assert xid == minimum + 1
+    assert min(ids) == minimum
+    assert len(set(ids)) == len(ids), 'duplicate ids assigned'
