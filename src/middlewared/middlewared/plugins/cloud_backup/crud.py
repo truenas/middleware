@@ -102,7 +102,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         cloud_backup = await self._compress(cloud_backup)
         cloud_backup["id"] = await self.middleware.call("datastore.insert", "tasks.cloud_backup",
                                                         {**cloud_backup, "job": None})
-        await (await self.middleware.call("service.restart", "cron")).wait(raise_error=True)
+        await self.middleware.call("service.restart", "cron")
 
         return await self.get_instance(cloud_backup["id"])
 
@@ -129,7 +129,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         cloud_backup = await self._compress(cloud_backup)
 
         await self.middleware.call("datastore.update", "tasks.cloud_backup", id_, cloud_backup)
-        await (await self.middleware.call("service.restart", "cron")).wait(raise_error=True)
+        await self.middleware.call("service.restart", "cron")
 
         return await self.get_instance(id_)
 
@@ -141,7 +141,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         await self.middleware.call("cloud_backup.abort", id_)
         await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", id_)
         rv = await self.middleware.call("datastore.delete", "tasks.cloud_backup", id_)
-        await (await self.middleware.call("service.restart", "cron")).wait(raise_error=True)
+        await self.middleware.call("service.restart", "cron")
         return rv
 
     @private
@@ -189,7 +189,7 @@ class CloudBackupFSAttachmentDelegate(LockableFSAttachmentDelegate):
     resource_name = "path"
 
     async def restart_reload_services(self, attachments):
-        await (await self.middleware.call("service.restart", "cron")).wait(raise_error=True)
+        await self.middleware.call("service.restart", "cron")
 
 
 async def setup(middleware):

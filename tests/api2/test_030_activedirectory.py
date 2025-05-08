@@ -245,7 +245,7 @@ def test_activedirectory_smb_ops():
                 'type': 'ALLOW'
             }]
         ) as ds:
-            call('service.restart', 'cifs', job=True)
+            call('service.restart', 'cifs')
 
             with smb_share(f'/mnt/{ds}', {'name': SMB_NAME}):
                 with smb_connection(

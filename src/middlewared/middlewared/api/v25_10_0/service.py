@@ -23,7 +23,6 @@ class ServiceOptions(BaseModel):
     ha_propagate: bool = True
     silent: bool = True
     """Return `false` instead of an error if the operation fails."""
-    timeout: int | None = 120
 
 
 class ServiceUpdate(BaseModel):

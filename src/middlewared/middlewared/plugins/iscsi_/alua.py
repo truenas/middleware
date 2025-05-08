@@ -85,7 +85,7 @@ class iSCSITargetAluaService(Service):
             tochange = [extents[name] for name in devices]
             await self.middleware.call('iscsi.scst.set_devices_cluster_mode', tochange, 1)
             # We could expose the targets as we go along, but will just wait until the end.
-            # await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)
+            # await self.middleware.call('service.reload', 'iscsitarget')
             return True
         else:
             return False
@@ -201,7 +201,7 @@ class iSCSITargetAluaService(Service):
         # become ready, instead we will need to restart iscsitarget
         if not self.standby_alua_ready:
             self.logger.debug('STANDBY node was not yet ready, skip become_active shortcut')
-            await (await self.middleware.call('service.restart', 'iscsitarget')).wait(raise_error=True)
+            await self.middleware.call('service.restart', 'iscsitarget')
             self.logger.debug('iscsitarget restarted')
             return
 
@@ -322,8 +322,7 @@ class iSCSITargetAluaService(Service):
         # Reload on ACTIVE node.  This will ensure the HA targets are available
         if self.standby_starting:
             try:
-                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE],
-                                           {'job': True})
+                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
             except Exception:
                 self.logger.warning('Failed to reload ACTIVE iscsitarget', exc_info=True)
 
@@ -348,30 +347,15 @@ class iSCSITargetAluaService(Service):
                             break
                         job.set_progress(23, f'Detected {len(active_iqns_set - after_iqns_set)} missing HA targets')
                         if reload_remote_quick_retries > 0:
-                            await self.middleware.call(
-                                'failover.call_remote',
-                                'service.reload',
-                                ['iscsitarget', self.HA_PROPAGATE],
-                                {'job': True},
-                            )
+                            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
                             reload_remote_quick_retries -= 1
                             await asyncio.sleep(HA_TARGET_SETTLE_SECONDS)
                         else:
-                            await self.middleware.call(
-                                'failover.call_remote',
-                                'service.reload',
-                                ['iscsitarget', self.HA_PROPAGATE],
-                                {'job': True},
-                            )
+                            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
                             await asyncio.sleep(REMOTE_RELOAD_LONG_DELAY_SECS)
                     except Exception:
                         if reload_remote_quick_retries > 0:
-                            await self.middleware.call(
-                                'failover.call_remote',
-                                'service.reload',
-                                ['iscsitarget', self.HA_PROPAGATE],
-                                {'job': True},
-                            )
+                            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
                             reload_remote_quick_retries -= 1
                         await asyncio.sleep(RETRY_SECONDS)
                 if not self.standby_starting:
@@ -384,7 +368,7 @@ class iSCSITargetAluaService(Service):
                 # Now that we've logged in the HA targets, regenerate the config so that the
                 # dev_disk DEVICEs are present (we cleared _standby_write_empty_config above).
                 # We will need these, so that then we can switch them to cluster_mode
-                await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)
+                await self.middleware.call('service.reload', 'iscsitarget')
                 job.set_progress(30, 'Non cluster_mode config written')
 
                 # Sanity check that all the targets surfaced up thru SCST okay.
@@ -396,7 +380,7 @@ class iSCSITargetAluaService(Service):
                 self.logger.debug('Detected missing cluster_mode.  Retrying.')
                 self._standby_write_empty_config = False
                 await self.middleware.call('iscsi.target.logout_ha_targets')
-                await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)
+                await self.middleware.call('service.reload', 'iscsitarget')
                 job.set_progress(20, 'Logged out HA targets (local node)')
             except Exception:
                 self.logger.warning('Failed to login and surface HA targets', exc_info=True)
@@ -463,18 +447,13 @@ class iSCSITargetAluaService(Service):
         if remote_requires_reload:
             try:
                 if local_requires_reload:
-                    await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'], {'job': True})
+                    await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
                 else:
-                    await self.middleware.call(
-                        'failover.call_remote',
-                        'service.reload',
-                        ['iscsitarget', self.HA_PROPAGATE],
-                        {'job': True},
-                    )
+                    await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
             except Exception as e:
                 self.logger.warning('Failed to reload iscsitarget: %r', e, exc_info=True)
         elif local_requires_reload:
-            await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)
+            await self.middleware.call('service.reload', 'iscsitarget')
 
         job.set_progress(100, 'All targets in cluster_mode')
         self.standby_starting = False
@@ -487,7 +466,7 @@ class iSCSITargetAluaService(Service):
         # Verify again that we are ALUA STANDBY
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
-                await (await self.middleware.call('service.reload', 'iscsitarget', {'ha_propagate': False})).wait(raise_error=True)
+                await self.middleware.call('service.reload', 'iscsitarget', {'ha_propagate': False})
 
     @job(lock='standby_fix_cluster_mode', transient=True)
     async def standby_fix_cluster_mode(self, job, devices):
@@ -546,7 +525,7 @@ class iSCSITargetAluaService(Service):
             await asyncio.sleep(1)
             # Now that we have enabled cluster_mode, need to reload iscsitarget so that
             # it will now offer the targets to the world.
-            await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)
+            await self.middleware.call('service.reload', 'iscsitarget')
             job.set_progress(100, 'Reloaded iscsitarget service')
             self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents (reloaded)')
         else:
@@ -673,7 +652,7 @@ class iSCSITargetAluaService(Service):
                 # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
                 await self.middleware.call('iscsi.target.logout_ha_target', target_name)
             finally:
-                await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)
+                await self.middleware.call('service.reload', 'iscsitarget')
 
     async def has_active_jobs(self):
         """Return whether any ALUA jobs are running or queued."""

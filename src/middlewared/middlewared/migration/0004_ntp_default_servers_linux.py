@@ -12,4 +12,4 @@ async def migrate(middleware):
         )
 
     if servers:
-        await (await middleware.call('service.restart', 'ntpd')).wait(raise_error=True)
+        await middleware.call('service.restart', 'ntpd')

@@ -702,14 +702,14 @@ class SystemDatasetService(ConfigService):
 
             try:
                 for i in restart:
-                    self.middleware.call_sync('service.stop', i).wait_sync(raise_error=True)
+                    self.middleware.call_sync('service.stop', i)
 
                 close_sysdataset_tdb_handles()
                 yield
             finally:
                 restart.reverse()
                 for i in restart:
-                    self.middleware.call_sync('service.start', i).wait_sync(raise_error=True)
+                    self.middleware.call_sync('service.start', i)
 
     @private
     def get_system_dataset_spec(self, pool, uid):

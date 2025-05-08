@@ -195,20 +195,20 @@ class SystemAdvancedService(ConfigService):
             )
 
             if original_data['boot_scrub'] != config_data['boot_scrub']:
-                await (await self.middleware.call('service.restart', 'cron')).wait(raise_error=True)
+                await self.middleware.call('service.restart', 'cron')
 
             generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
             if original_data['motd'] != config_data['motd']:
                 await self.middleware.call('etc.generate', 'motd')
 
             if original_data['login_banner'] != config_data['login_banner']:
-                await (await self.middleware.call('service.reload', 'ssh')).wait(raise_error=True)
+                await self.middleware.call('service.reload', 'ssh')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
-                await (await self.middleware.call('service.restart', 'powerd')).wait(raise_error=True)
+                await self.middleware.call('service.restart', 'powerd')
 
             if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
-                await (await self.middleware.call('service.restart', 'syslogd')).wait(raise_error=True)
+                await self.middleware.call('service.restart', 'syslogd')
 
             if (
                 original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
@@ -217,7 +217,7 @@ class SystemAdvancedService(ConfigService):
                 original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate'] or
                 original_data['syslog_audit'] != config_data['syslog_audit']
             ):
-                await (await self.middleware.call('service.restart', 'syslogd')).wait(raise_error=True)
+                await self.middleware.call('service.restart', 'syslogd')
 
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')

@@ -70,7 +70,7 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
-            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'], {'job': True})
+            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('iscsi.alua.wait_cluster_mode', data['target'], data['extent'])
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
@@ -182,7 +182,7 @@ class iSCSITargetToExtentService(CRUDService):
                 if e.errno != CallError.ENOMETHOD:
                     self.logger.warning('Failed up update STANDBY node', exc_info=True)
                     # Better to continue than to raise the exception
-                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'], {'job': True})
+                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         return result

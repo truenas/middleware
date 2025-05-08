@@ -110,12 +110,12 @@ def fix_iscsi_enabled():
 
 @pytest.fixture(scope='module')
 def fix_iscsi_started(fix_iscsi_enabled):
-    call('service.start', 'iscsitarget', job=True)
+    call('service.start', 'iscsitarget')
     sleep(1)
     try:
         yield
     finally:
-        call('service.stop', 'iscsitarget', job=True)
+        call('service.stop', 'iscsitarget')
 
 
 def test_add_iscsi_initiator(fix_initiator):

@@ -317,7 +317,7 @@ class CertificateService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await (await self.middleware.call('service.start', 'ssl')).wait(raise_error=True)
+        await self.middleware.call('service.start', 'ssl')
 
         job.set_progress(100, 'Certificate created successfully')
 
@@ -461,7 +461,7 @@ class CertificateService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await (await self.middleware.call('service.start', 'ssl')).wait(raise_error=True)
+            await self.middleware.call('service.start', 'ssl')
 
         job.set_progress(90, 'Finalizing changes')
 
@@ -532,7 +532,7 @@ class CertificateService(CRUDService):
             id_
         )
 
-        self.middleware.call_sync('service.start', 'ssl').wait_sync(raise_error=True)
+        self.middleware.call_sync('service.start', 'ssl')
 
         self.middleware.call_sync('alert.alert_source_clear_run', 'CertificateChecks')
 

@@ -95,7 +95,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         ) or not service_obj[0]['enable'] or service_obj[0]['state'] == 'RUNNING':
             return
 
-        await (await self.middleware.call('service.start', self.service)).wait(raise_error=True)
+        await self.middleware.call('service.start', self.service)
 
     async def query(self, path, enabled, options=None):
         results = []

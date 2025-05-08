@@ -183,7 +183,7 @@ class FTPService(SystemServiceService):
         await self._update_service(old, new)
 
         if not old['tls'] and new['tls']:
-            await (await self.middleware.call('service.start', 'ssl')).wait(raise_error=True)
+            await self.middleware.call('service.start', 'ssl')
 
         return new
 
@@ -200,7 +200,7 @@ async def pool_post_import(middleware, pool):
         finally:
             return
 
-    await (await middleware.call("service.reload", "ftp")).wait(raise_error=True)
+    await middleware.call("service.reload", "ftp")
 
 
 async def setup(middleware):

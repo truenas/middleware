@@ -389,7 +389,7 @@ class NFSService(SystemServiceService):
                     {'use_default_domain': True}, {'prefix': 'ad_'}
                 )
                 await self.middleware.call('etc.generate', 'smb')
-                await (await self.middleware.call('service.reload', 'idmap')).wait(raise_error=True)
+                await self.middleware.call('service.reload', 'idmap')
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
@@ -409,7 +409,7 @@ class NFSService(SystemServiceService):
         await self._update_service(old, new, "restart")
 
         if old['mountd_log'] != new['mountd_log']:
-            await (await self.middleware.call('service.reload', 'syslogd')).wait(raise_error=True)
+            await self.middleware.call('service.reload', 'syslogd')
 
         return await self.config()
 
@@ -955,7 +955,7 @@ async def pool_post_import(middleware, pool):
     path = f'/mnt/{pool["name"]}'
     for share in await middleware.call('sharing.nfs.query', [], {'select': ['path']}):
         if share['path'].startswith(path):
-            await middleware.call('service.reload', 'nfs')  # No need to wait for this to complete
+            middleware.create_task(middleware.call('service.reload', 'nfs'))
             break
 
 

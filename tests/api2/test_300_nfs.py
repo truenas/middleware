@@ -311,7 +311,7 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
     # Remove the user/group and restart nfs
     call(f'{usrgrp}.delete', usrgrpInst['id'])
-    call('service.restart', 'nfs', job=True)
+    call('service.restart', 'nfs')
 
     # An alert should be generated
     alerts = call('alert.list')
@@ -326,7 +326,7 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
     # Modify share to map with a built-in user or group and restart NFS
     call('sharing.nfs.update', share, {data[0]: "ftp"})
-    call('service.restart', 'nfs', job=True)
+    call('service.restart', 'nfs')
 
     # The alert should be cleared
     alerts = call('alert.list')
@@ -576,12 +576,12 @@ class TestNFSops:
         assert bootds_nfs['name'] == sysds['pool'] + "/.system/nfs"
 
         # Confirm the required entries are present
-        required_nfs_entries = {"nfsdcld", "nfsdcltrack", "sm", "sm.bak", "state", "v4recovery"}
+        required_nfs_entries = set(["nfsdcld", "nfsdcltrack", "sm", "sm.bak", "state", "v4recovery"])
         current_nfs_entries = set(list(ssh(f'ls {nfs_state_dir}').splitlines()))
         assert required_nfs_entries.issubset(current_nfs_entries)
 
         # Confirm proc entry reports expected value after nfs restart
-        call('service.restart', 'nfs', job=True)
+        call('service.restart', 'nfs')
         sleep(1)
         recovery_dir = ssh('cat /proc/fs/nfsd/nfsv4recoverydir').strip()
         assert recovery_dir == os.path.join(nfs_state_dir, 'v4recovery'), \
@@ -1955,7 +1955,7 @@ class TestNFSops:
             with nfs_db():
                 monkey_with_db()
                 ssh("rm -f /etc/nfs.conf")
-                call('service.restart', 'nfs', job=True)
+                call('service.restart', 'nfs')
                 confirm_clean()
 
 
@@ -2010,12 +2010,12 @@ def test_missing_or_empty_exports(exports):
     with nfs_config() as nfs_conf:
         try:
             # Start NFS
-            call('service.start', 'nfs', job=True)
+            call('service.start', 'nfs')
             sleep(1)
             confirm_nfsd_processes(nfs_conf['servers'])
         finally:
             # Return NFS to stopped condition
-            call('service.stop', 'nfs', job=True)
+            call('service.stop', 'nfs')
             sleep(1)
 
     # Confirm stopped

@@ -14,13 +14,13 @@ def ensure_service_started(service_name, delay=0):
     if old_value:
         yield
     else:
-        call('service.start', service_name, job=True)
+        call('service.start', service_name)
         if delay:
             sleep(delay)
         try:
             yield
         finally:
-            call('service.stop', service_name, job=True)
+            call('service.stop', service_name)
             if delay:
                 sleep(delay)
 
@@ -31,13 +31,13 @@ def ensure_service_stopped(service_name, delay=0):
     if not old_value:
         yield
     else:
-        call('service.stop', service_name, job=True)
+        call('service.stop', service_name)
         if delay:
             sleep(delay)
         try:
             yield
         finally:
-            call('service.start', service_name, job=True)
+            call('service.start', service_name)
             if delay:
                 sleep(delay)
 
@@ -65,9 +65,9 @@ def ensure_service_enabled(service_name):
         new_config = call('service.query', [['service', '=', service_name]])[0]
         if new_config['state'] != old_config['state']:
             if old_config['state'] == 'RUNNING':
-                call('service.start', service_name, job=True)
+                call('service.start', service_name)
             else:
-                call('service.stop', service_name, job=True)
+                call('service.stop', service_name)
 
 
 @contextlib.contextmanager
@@ -93,6 +93,6 @@ def ensure_service_disabled(service_name):
         new_config = call('service.query', [['service', '=', service_name]])[0]
         if new_config['state'] != old_config['state']:
             if old_config['state'] == 'RUNNING':
-                call('service.start', service_name, job=True)
+                call('service.start', service_name)
             else:
-                call('service.stop', service_name, job=True)
+                call('service.stop', service_name)

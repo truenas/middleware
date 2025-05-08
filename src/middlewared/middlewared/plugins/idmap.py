@@ -281,7 +281,7 @@ class IdmapDomainService(CRUDService):
                 'dataset configuration.', errno.EAGAIN
             )
 
-        self.middleware.call_sync('service.start', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+        self.middleware.call_sync('service.start', 'idmap', {'silent': False})
         return self.__wbclient_ctx(False)
 
     @private
@@ -422,7 +422,7 @@ class IdmapDomainService(CRUDService):
         This should be performed after finalizing idmap changes.
         """
         smb_started = await self.middleware.call('service.started', 'cifs')
-        await (await self.middleware.call('service.stop', 'idmap')).wait(raise_error=True)
+        await self.middleware.call('service.stop', 'idmap')
 
         try:
             await self.middleware.run_in_thread(clear_winbind_cache)
@@ -435,9 +435,9 @@ class IdmapDomainService(CRUDService):
 
         await self.middleware.call('idmap.gencache.flush')
 
-        await (await self.middleware.call('service.start', 'idmap')).wait(raise_error=True)
+        await self.middleware.call('service.start', 'idmap')
         if smb_started:
-            await (await self.middleware.call('service.restart', 'cifs')).wait(raise_error=True)
+            await self.middleware.call('service.restart', 'cifs')
 
     @private
     async def may_enable_trusted_domains(self):
@@ -835,7 +835,7 @@ class IdmapDomainService(CRUDService):
         )
         out = await self.query([('id', '=', id_)], {'get': True})
         await self.middleware.call('etc.generate', 'smb')
-        await (await self.middleware.call('service.restart', 'idmap')).wait(raise_error=True)
+        await self.middleware.call('service.restart', 'idmap')
         return out
 
     async def do_update(self, id_, data):

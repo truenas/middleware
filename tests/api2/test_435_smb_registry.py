@@ -86,14 +86,14 @@ def setup_smb_shares(mountpoint):
         })
         SHARE_DICT[share] = new_share['id']
 
-    call('service.start', 'cifs', job=True)
+    call('service.start', 'cifs')
     try:
         yield SHARE_DICT
     finally:
         for share_id in SHARE_DICT.values():
             call('sharing.smb.delete', share_id)
 
-        call('service.stop', 'cifs', job=True)
+        call('service.stop', 'cifs')
 
 
 @pytest.fixture(scope='module')
