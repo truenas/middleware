@@ -1,8 +1,5 @@
-from asyncio import Lock as AsyncioLock
 from dataclasses import dataclass
-from threading import Lock
 from time import monotonic
-from typing import Union
 
 
 LOCKED_XID_TTL = 3600
@@ -11,7 +8,6 @@ LOCKED_XID_TTL = 3600
 @dataclass(slots=True)
 class ReservedXid:
     in_flight: dict[int, int]
-    lock: Union[Lock, AsyncioLock]
 
     def available(self, xid: int) -> bool:
         if (expiry := self.in_flight.get(xid)) is None:
