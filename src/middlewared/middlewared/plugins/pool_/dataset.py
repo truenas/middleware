@@ -200,10 +200,19 @@ class PoolDatasetService(CRUDService):
     async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):
         assert mode in ('CREATE', 'UPDATE')
 
-        if parent is None:
+        parents = get_dataset_parents(data['name'])
+        parent_name = None
+        if not parents:
+            # happens when someone is making
+            # changes to the root dataset (zpool)
+            parent_name = data['name']
+        else:
+            parent_name = parents[-1]
+
+        if not parent:
             parent = await self.middleware.call(
                 'pool.dataset.query',
-                [('id', '=', data['name'].rsplit('/', 1)[0])],
+                [('id', '=', parent_name)],
                 {'extra': {'retrieve_children': False}}
             )
 
@@ -221,7 +230,12 @@ class PoolDatasetService(CRUDService):
                     'Please specify a pool which exists for the dataset/volume to be created'
                 )
             else:
-                verrors.add(f'{schema}.name', 'Parent dataset does not exist for specified name')
+                msg = f'({parent_name}) does not exist.'
+                if len(parents) == 1:
+                    msg = f'zpool {msg}'
+                else:
+                    msg = f'Parent dataset {msg}'
+                verrors.add(f'{schema}.name', msg)
         else:
             parent = parent[0]
             if mode == 'CREATE' and parent['readonly']['rawvalue'] == 'on':

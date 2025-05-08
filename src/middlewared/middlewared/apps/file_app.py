@@ -3,7 +3,7 @@ from urllib.parse import parse_qs
 
 from aiohttp import web
 
-from middlewared.pipe import Pipes
+from middlewared.pipe import Pipes, InputPipes
 from middlewared.restful import (
     parse_credentials,
     authenticate,
@@ -15,6 +15,8 @@ from middlewared.service_exception import CallError
 from truenas_api_client import json
 
 __all__ = ("FileApplication",)
+
+MAX_UPLOADED_FILES = 5
 
 
 class FileApplication:
@@ -146,7 +148,7 @@ class FileApplication:
         app = await create_application(request)
         try:
             authenticated_credentials = await authenticate(
-                self.middleware, request, credentials, "CALL", data["method"]
+                app, self.middleware, request, credentials, "CALL", data["method"]
             )
             if authenticated_credentials is None:
                 raise web.HTTPUnauthorized()
@@ -175,7 +177,6 @@ class FileApplication:
         )
 
         filepart = await reader.next()
-
         if not filepart or filepart.name != "file":
             resp = web.Response(
                 status=405, body='"file" not found as second part on payload'
@@ -184,17 +185,9 @@ class FileApplication:
             return resp
 
         try:
-            serviceobj, methodobj = self.middleware.get_method(data["method"])
-            if authenticated_credentials.authorize("CALL", data["method"]):
-                job = await self.middleware.call_with_audit(
-                    data["method"],
-                    serviceobj,
-                    methodobj,
-                    data.get("params") or [],
-                    app,
-                    pipes=Pipes(input_=self.middleware.pipe()),
-                )
-            else:
+            params = data.get("params") or []
+            serviceobj, methodobj = self.middleware.get_method(data["method"], mocks=True, params=params)
+            if not authenticated_credentials.authorize("CALL", data["method"]):
                 await self.middleware.log_audit_message_for_method(
                     data["method"],
                     methodobj,
@@ -205,9 +198,36 @@ class FileApplication:
                     False,
                 )
                 raise web.HTTPForbidden()
-            await self.middleware.run_in_thread(
-                copy_multipart_to_pipe, self.loop, filepart, job.pipes.input
-            )
+
+            first_pipe = self.middleware.pipe()
+            with InputPipes(first_pipe) as input_pipes:
+                job = await self.middleware.call_with_audit(
+                    data["method"],
+                    serviceobj,
+                    methodobj,
+                    params,
+                    app,
+                    pipes=Pipes(inputs=input_pipes),
+                )
+
+                await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, first_pipe)
+
+                for i in range(MAX_UPLOADED_FILES - 1):
+                    filepart = await reader.next()
+                    if not filepart:
+                        break
+
+                    if filepart.name != "file":
+                        resp = web.Response(status=405, body=f'Unknown payload part {filepart.name!r}')
+                        return resp
+
+                    next_pipe = self.middleware.pipe()
+                    input_pipes.add_pipe(next_pipe)
+                    await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, next_pipe)
+
+                if await reader.next():
+                    resp = web.Response(status=405, body='Too many uploaded files')
+                    return resp
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
                 status_code = 422

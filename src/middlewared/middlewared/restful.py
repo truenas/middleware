@@ -14,11 +14,12 @@ from aiohttp import web
 from truenas_api_client import json
 
 from .api.base.server.app import App
-from .auth import ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials
+from .auth import ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials, AuthenticationContext
 from .job import Job
-from .pipe import Pipes
+from .pipe import Pipes, InputPipes
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
+from .utils.account.authenticator import ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator
 from .utils.auth import AA_LEVEL1, CURRENT_AAL
 from .utils.origin import ConnectionOrigin
 
@@ -71,13 +72,16 @@ def parse_credentials(request):
         }
 
 
-async def authenticate(middleware, request, credentials, method, resource):
+async def authenticate(app, middleware, request, credentials, method, resource):
 
     if credentials['credentials'] == 'TOKEN':
         origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
+        # We are using the UnixPamAuthenticator here because we are generating a
+        # fresh login based on the username in base token's credentials
+        app.authentication_context.pam_hdl = UnixPamAuthenticator()
         try:
             token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
-                                          origin, method, resource)
+                                          origin, method, resource, app=app)
         except CallError as ce:
             raise web.HTTPForbidden(text=ce.errmsg)
 
@@ -90,22 +94,32 @@ async def authenticate(middleware, request, credentials, method, resource):
         if twofactor_auth['enabled']:
             raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
+        app.authentication_context.pam_hdl = UserPamAuthenticator()
         resp = await middleware.call('auth.authenticate_plain',
                                      credentials['credentials_data']['username'],
-                                     credentials['credentials_data']['password'])
+                                     credentials['credentials_data']['password'], app=app)
         if resp['pam_response']['code'] != pam.PAM_SUCCESS:
             raise web.HTTPUnauthorized(text='Bad username or password')
 
-        return LoginPasswordSessionManagerCredentials(resp['user_data'], assurance=CURRENT_AAL.level)
+        return LoginPasswordSessionManagerCredentials(
+            resp['user_data'],
+            assurance=CURRENT_AAL.level,
+            authenticator=app.authentication_context.pam_hdl
+        )
     elif credentials['credentials'] == 'API_KEY':
         if CURRENT_AAL.level is not AA_LEVEL1:
             raise web.HTTPForbidden(text='API key authentication is not permitted by server authentication security level')
 
-        api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'])
+        app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
+        api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
         if api_key is None:
             raise web.HTTPUnauthorized(text='Invalid API key')
 
-        return ApiKeySessionManagerCredentials(*api_key, assurance=CURRENT_AAL.level)
+        return ApiKeySessionManagerCredentials(
+            *api_key,
+            assurance=CURRENT_AAL.level,
+            authenticator=app.authentication_context.pam_hdl
+        )
     else:
         raise web.HTTPUnauthorized()
 
@@ -131,6 +145,7 @@ class Application(App):
         self.session_id = None
         self.authenticated = authenticated_credentials is not None
         self.authenticated_credentials = authenticated_credentials
+        self.authentication_context = AuthenticationContext()
         self.rest = True
 
 
@@ -568,7 +583,7 @@ class Resource(object):
                     authenticated_credentials = None
                 else:
                     try:
-                        authenticated_credentials = await authenticate(self.middleware, req, credentials,
+                        authenticated_credentials = await authenticate(app, self.middleware, req, credentials,
                                                                        method.upper(), resource)
                     except web.HTTPException as e:
                         credentials['credentials_data'].pop('password', None)
@@ -765,9 +780,9 @@ class Resource(object):
                     return resp
 
         if upload_pipe and download_pipe:
-            method_kwargs['pipes'] = Pipes(input_=upload_pipe, output=download_pipe)
+            method_kwargs['pipes'] = Pipes(inputs=InputPipes(upload_pipe), output=download_pipe)
         elif upload_pipe:
-            method_kwargs['pipes'] = Pipes(input_=upload_pipe)
+            method_kwargs['pipes'] = Pipes(inputs=InputPipes(upload_pipe))
         elif download_pipe:
             method_kwargs['pipes'] = Pipes(output=download_pipe)
 

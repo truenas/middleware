@@ -294,7 +294,10 @@ class DiskEntry:
                         milli_c = int(
                             self.__opener(absolute_path=f"{i.path}/temp1_input")
                         )
-                    except (ValueError, FileNotFoundError):
+                    except Exception:
+                        # if we can't get the temperature
+                        # then there is no reason to try
+                        # the other sysfs files.
                         continue
                     else:
                         # sysfs values are stored in millidegrees celsius
@@ -302,8 +305,8 @@ class DiskEntry:
 
                     try:
                         crit = int(self.__opener(absolute_path=f"{i.path}/temp1_crit"))
-                    except (ValueError, FileNotFoundError):
-                        continue
+                    except Exception:
+                        pass
                     else:
                         # syfs values are stored in millidegrees celsius
                         rv["crit"] = crit / 1000

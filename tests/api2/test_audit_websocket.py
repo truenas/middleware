@@ -259,6 +259,28 @@ def test_password_login():
                 "error": None,
             },
             "success": True,
+        },
+        {
+            "service_data": {
+                "vers": {
+                    "major": 0,
+                    "minor": 1,
+                },
+                "origin": ANY,
+                "protocol": "WEBSOCKET",
+                "credentials": {
+                    "credentials": "LOGIN_PASSWORD",
+                    "credentials_data": {"username": "root", "login_at": ANY},
+                },
+            },
+            "event": "LOGOUT",
+            "event_data": {
+                "credentials": {
+                    "credentials": "LOGIN_PASSWORD",
+                    "credentials_data": {"username": "root", "login_at": ANY},
+                },
+            },
+            "success": True,
         }
     ], include_logins=True):
         with client():

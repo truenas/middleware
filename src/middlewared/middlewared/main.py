@@ -129,6 +129,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.api_versions_adapter = None
         self.__audit_logger = setup_audit_logging()
 
+    def get_method(self, name, *, mocks=False, params=None):
+        serviceobj, methodobj = super().get_method(name)
+
+        if mocks:
+            if mock := self._mock_method(name, params):
+                methodobj = mock
+
+        return serviceobj, methodobj
+
     def create_task(self, coro, *, name=None):
         task = self.loop.create_task(coro, name=name)
         self.tasks.add(task)
@@ -737,12 +746,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if method is None:
             if method_name is not None:
                 try:
-                    method = self.get_method(method_name)[1]
+                    method = self.get_method(method_name, mocks=True, params=args)[1]
                 except Exception:
                     return args
-
-                if mock := self._mock_method(method_name, args):
-                    method = mock
 
         if not hasattr(method, 'accepts'):
             if crud_method := real_crud_method(method):
@@ -992,10 +998,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
                    profile=False):
-        serviceobj, methodobj = self.get_method(name)
-
-        if mock := self._mock_method(name, params):
-            methodobj = mock
+        serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
         if profile:
             methodobj = profile_wrap(methodobj)
@@ -1012,10 +1015,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if background:
             return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params, app=app)))
 
-        serviceobj, methodobj = self.get_method(name)
-
-        if mock := self._mock_method(name, params):
-            methodobj = mock
+        serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, app=app, audit_callback=audit_callback,
                                            job_on_progress_cb=job_on_progress_cb, in_event_loop=False)
@@ -1381,30 +1381,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         apis = self._load_apis()
 
-        # FIXME: handle this in a more appropriate place
-        def create_model(model_provider, model_factory, arg_model_name):
-            try:
-                arg = model_provider.models[arg_model_name]
-            except KeyError:
-                pass
-            else:
-                return model_factory(arg)
-
         for service in self.get_services().values():
             for current_api_model, model_factory, arg_model_name in getattr(service, '_register_models', []):
-                # Newest version has `ModuleModelProvider`, we can add directly to the models list
-                self.api_versions[-1].model_provider.models[current_api_model.__name__] = current_api_model
-                for api_version in self.api_versions[:-1]:
-                    # All others have `LazyModuleModelProvider`.
-                    # FIXME: We must initialize derived models lazily since they are not loaded yet.
-                    # This abstraction exposes unnecessary implementation details, we must come up with something better
-                    model_provider = api_version.model_provider
-                    model_provider.models_factories[current_api_model.__name__] = functools.partial(
-                        create_model,
-                        model_provider,
-                        model_factory,
-                        arg_model_name,
-                    )
+                for api_version in self.api_versions:
+                    api_version.register_model(current_api_model, model_factory, arg_model_name)
 
         self._console_write('registering services')
 

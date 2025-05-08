@@ -52,6 +52,8 @@ from middlewared.service import CallError, CRUDService, ValidationErrors, pass_a
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
+from middlewared.utils.account.authenticator import UserPamAuthenticator
+from middlewared.utils.account.faillock import tally_locked_users, reset_tally
 from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_string, check_unixhash
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
@@ -243,9 +245,17 @@ class UserService(CRUDService):
 
             user_api_keys[key['username']].append(key['id'])
 
+        sec = await self.middleware.call('system.security.config')
+        if sec['enable_gpos_stig']:
+            # When GPOS stig is enabled it's possible that users are locked due to pam_faillock(8)
+            pam_locked_users = await self.middleware.run_in_thread(tally_locked_users)
+        else:
+            pam_locked_users = set()
+
         return {
             'now': utc_now(naive=False),
-            'security': await self.middleware.call('system.security.config'),
+            'security': sec,
+            'pam_locked_users': pam_locked_users,
             'server_sid': await self.middleware.call('smb.local_server_sid'),
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
@@ -335,6 +345,8 @@ class UserService(CRUDService):
                 'sid': None,
                 'smbhash': '*'
             })
+            if user['username'] in ctx['pam_locked_users']:
+                user['locked'] = True
 
         return user
 
@@ -941,6 +953,7 @@ class UserService(CRUDService):
         user = self.user_compress(user)
         self.middleware.call_sync('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
+        reset_tally(user['username'])
         self.middleware.call_sync('service.reload', 'ssh')
         self.middleware.call_sync('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
@@ -1053,6 +1066,7 @@ class UserService(CRUDService):
 
         self.middleware.call_sync('datastore.delete', 'account.bsdusers', pk)
         self.middleware.call_sync('service.reload', 'ssh')
+        reset_tally(user['username'])
         self.middleware.call_sync('service.reload', 'user')
         try:
             self.middleware.call_sync('idmap.gencache.del_idmap_cache_entry', {
@@ -1350,6 +1364,8 @@ class UserService(CRUDService):
 
     @private
     async def password_security_validate(self, schema, verrors, password, password_history, password_field='password'):
+        # NOTE: min_password_age is *not* validated here because the system administator needs
+        # to be able to reset passwords in case the user forgets theirs
         sec = await self.middleware.call('system.security.config')
         field = f'{schema}.{password_field}'
         if sec['password_complexity_ruleset']:
@@ -1766,10 +1782,14 @@ class UserService(CRUDService):
                     'FULL_ADMIN role is required in order to bypass check for current password.'
                 )
             else:
-                pam_resp = await self.middleware.call(
-                    'auth.libpam_authenticate', username, data['old_password']
+                # Create a temporary authentication context. Calling into auth.libpam_authenticate
+                # would try to re-authenticate under the current session's authentication context,
+                # which would fail.
+                pam_hdl = UserPamAuthenticator()
+                pam_resp = await self.middleware.run_in_thread(
+                    pam_hdl.authenticate, username, data['old_password'], origin=app.origin
                 )
-                if pam_resp['code'] != pam.PAM_SUCCESS:
+                if pam_resp.code != pam.PAM_SUCCESS:
                     verrors.add(
                         'user.set_password.old_password',
                         f'{username}: failed to validate password.'
@@ -1777,8 +1797,15 @@ class UserService(CRUDService):
 
         history = entry['password_history'] + [entry['unixhash']]
         await self.password_security_validate('user.set_password', verrors, password, history, 'new_password')
+        min_password_age = (await self.middleware.call('system.security.config'))['min_password_age']
 
         verrors.check()
+
+        if min_password_age and entry['password_age'] < min_password_age:
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: password changed too recently. Minimum password age is: {min_password_age}'
+            )
 
         if entry['password_disabled']:
             verrors.add(

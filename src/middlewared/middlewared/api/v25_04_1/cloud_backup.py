@@ -123,9 +123,6 @@ class CloudBackupSyncOptions(BaseModel):
     """Whether to simulate the backup without actually writing to the remote repository"""
 
 
-###############   Args and Results   ###############
-
-
 class CloudBackupTransferSettingChoicesArgs(BaseModel):
     pass
 

@@ -82,5 +82,5 @@ def generate_pbkdf2_512(passwd):
     rounds = 500000
     salt_length = 16
     salt = generate_string(string_size=salt_length, extra_chars='./').encode()
-    hash = pbkdf2_hmac('sha512', passwd.encode(), salt, rounds)
-    return f'${prefix}${rounds}${b64encode(salt).decode()}${b64encode(hash).decode()}'
+    thehash = pbkdf2_hmac('sha512', passwd.encode(), salt, rounds)
+    return f'${prefix}${rounds}${b64encode(salt).decode()}${b64encode(thehash).decode()}'

@@ -17,7 +17,7 @@ from middlewared.api.current import (
     SupportNewTicketArgs, SupportNewTicketResult, SupportSimilarIssuesArgs, SupportSimilarIssuesResult,
     SupportUpdateArgs, SupportUpdateResult,
 )
-from middlewared.pipe import Pipes
+from middlewared.pipe import Pipes, InputPipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -262,7 +262,7 @@ class SupportService(ConfigService):
                     if 'token' in data:
                         t['token'] = data['token']
                     tjob = await self.middleware.call(
-                        'support.attach_ticket', t, pipes=Pipes(input_=self.middleware.pipe()),
+                        'support.attach_ticket', t, pipes=Pipes(inputs=InputPipes(self.middleware.pipe())),
                     )
 
                     def copy2():

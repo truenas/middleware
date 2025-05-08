@@ -3,6 +3,8 @@
 
 import ctypes
 import enum
+import os
+import struct
 
 from .constants import (
     UT_LINESIZE,
@@ -17,13 +19,23 @@ from middlewared.utils import filter_list
 from middlewared.utils.auth import get_login_uid, AUID_UNSET, AUID_FAULTED
 from middlewared.utils.nss.pwd import getpwuid
 from socket import ntohl
-from threading import Lock  # Generally utmp operations are MT-UNSAFE and race prone
+from threading import RLock  # Generally utmp operations are MT-UNSAFE and race prone
 
+
+__all__ = [
+    'iter_utent', 'utmp_query', 'wtmp_query', 'LoginFile', 'PyUtmpType', 'PyUtmpEntry',
+    'PyUtmpExit', 'login', 'logout',
+]
 
 libc = ctypes.CDLL('libc.so.6', use_errno=True)
-UTMP_LOCK = Lock()
+UTMP_LOCK = RLock()
 
-__all__ = ['iter_utent', 'utmp_query', 'LoginFile', 'PyUtmpType', 'PyUtmpEntry', 'PyUtmpExit']
+
+class MiddlewareTTYName(enum.StrEnum):
+    """ Names for the ut_id and ut_line fields """
+    WEBSOCKET = 'ws'
+    WEBSOCKET_SECURE = 'wss'
+    WEBSOCKET_UNIX = 'wsu'
 
 
 class PyUtmpType(enum.IntEnum):
@@ -96,6 +108,37 @@ class PyUtmpEntry:
     ut_tv: datetime  # Time entry was made (struct timeval)
     ut_addr: IPv4Address | IPv6Address  # IP address of remote host  (int32_t ut_addr_v6[4])
 
+    def to_ctype(self):
+        """ Convert dataclass into ctypes StructUtmp for login / logout calls """
+        tv_sec = int(self.ut_tv.timestamp())
+        ut_exit = self.ut_exit or PyUtmpExit(0, 0)
+        # Pack up until address
+        packed = struct.pack(
+            f'hi{UT_LINESIZE}s4s{UT_NAMESIZE}s{UT_HOSTSIZE}shhiii',
+            self.ut_type,
+            self.ut_pid,
+            self.ut_line.encode(),
+            self.ut_id.encode(),
+            self.ut_user.encode(),
+            self.ut_host.encode(),
+            ut_exit.e_termination,
+            ut_exit.e_exit,
+            self.ut_session,
+            tv_sec,
+            self.ut_tv.microsecond,
+        )
+
+        if isinstance(self.ut_addr, IPv4Address):
+            packed += self.ut_addr.packed
+            packed += struct.pack('iii', 0, 0, 0)
+
+        else:
+            packed += self.ut_addr.packed
+
+        packed += struct.pack('20s', 20 * b'\x00')
+
+        return StructUtmp.from_buffer_copy(packed)
+
 
 def __setutent():
     # Rewind the file pointer to beginning of utmp file
@@ -123,7 +166,7 @@ def __utmpname(file: LoginFile):
 
     res = int(func(ctypes.c_char_p(str(file).encode())))
     if res != 0:
-        raise RuntimeError(f'utmpname() failed with error: {ctypes.get_errno()}')
+        raise RuntimeError(f'utmpname() failed with error: {os.strerror(ctypes.get_errno())}')
 
 
 def __getutent():
@@ -136,6 +179,34 @@ def __getutent():
 
     res = func()
     return ctypes.cast(res, ctypes.POINTER(StructUtmp))
+
+
+def __pututline(entry: StructUtmp) -> None:
+    # Write the utmp structure to the utmp file specified by prior __utmpname() call
+    # struct utmp *pututline(const struct utmp *ut);
+    func = libc.pututline
+    func.argtypes = [ctypes.POINTER(StructUtmp)]
+    func.restype = ctypes.c_void_p
+
+    res = func(ctypes.byref(entry))
+    if not res:
+        raise RuntimeError(f'pututline() failed with error: {os.strerror(ctypes.get_errno())}')
+
+    return ctypes.cast(res, ctypes.POINTER(StructUtmp))
+
+
+def __logout(ut_line: bytes) -> None:
+    # Clear the specified utmp entry by zeroing out the ut_name and ut_host fields, updating
+    # ut_tv (timestamp) and changing ut_type to DEAD_PROCESS. The changes are accomplished
+    # via logout(3).
+    func = libc.logout
+    func.argtypes = [ctypes.c_char_p]
+    func.restype = ctypes.c_int
+
+    rv = func(ut_line)
+    if rv == 0:
+        # logout returns 1 on success and 0 on failure
+        raise RuntimeError(f'logout() failed with error: {os.strerror(ctypes.get_errno())}')
 
 
 def __parse_utmp_exit(utmp_type: PyUtmpType, data: StructExitStatus) -> PyUtmpExit:
@@ -162,17 +233,17 @@ def __parse_address(int_array) -> IPv4Address | IPv6Address | None:
     if not any(int_array):
         return None
 
-    if not int_array[1]:
+    if not any(val for val in int_array[1:3]):
         # IPv4 Address only uses ut_addr_v6[0]
         try:
             return IPv4Address(ntohl(int_array[0]))
         except Exception:
             return None
 
-    ipv6_val = ntohl(int_array[0])
-    ipv6_val += ntohl(int_array[1]) << 32
-    ipv6_val += ntohl(int_array[2]) << 64
-    ipv6_val += ntohl(int_array[3]) << 96
+    ipv6_val = ntohl(int_array[0]) << 96
+    ipv6_val += ntohl(int_array[1]) << 64
+    ipv6_val += ntohl(int_array[2]) << 32
+    ipv6_val += ntohl(int_array[3])
 
     try:
         return IPv6Address(ipv6_val)
@@ -247,3 +318,41 @@ def utmp_query(filters: list | None = None, options: dict | None = None) -> list
 def wtmp_query(filters: list | None = None, options: dict | None = None) -> list:
     """ Use query-filters and query-options to iterate /var/log/wtmp """
     return filter_list(__iter_expanded_utent(LoginFile.WTMP), filters or [], options or {})
+
+
+def __pututline_file(file: LoginFile, entry: StructUtmp) -> None:
+    # WARNING: this assumes global lock (UTMP_LOCK) already held
+    __utmpname(file)
+    __setutent()
+    try:
+        # Seek to current entry (if it exists) then insert
+        while existing := __getutent():
+            if existing.contents.ut_line == entry.ut_line:
+                break
+
+        __pututline(entry)
+    finally:
+        __endutent()
+
+        if file != LoginFile.UTMP:
+            __utmpname(LoginFile.UTMP)
+
+
+def login(entry: PyUtmpEntry):
+    """
+    Create utmp and wtmp entries based on the specified entry.
+    We are using putent(3) rather than login(3) because the latter tries to resolve to
+    tty and will in the end only write to the wtmp file.
+    """
+    utmp_entry = entry.to_ctype()
+    with UTMP_LOCK:
+        __pututline_file(LoginFile.UTMP, utmp_entry)
+        __pututline_file(LoginFile.WTMP, utmp_entry)
+
+
+def logout(to_remove: PyUtmpEntry):
+    """ Remove utmp entry and insert logout into wtmp """
+
+    assert to_remove.ut_type == PyUtmpType.USER_PROCESS
+    with UTMP_LOCK:
+        __logout(to_remove.ut_line.encode())

@@ -135,7 +135,7 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
         me = c.call('auth.me')
 
         assert 'DIRECTORY_SERVICE' in me['account_attributes']
-        assert 'LDAP' in me['account_attributes']
+        assert 'IPA' in me['account_attributes']
         assert 'FULL_ADMIN' in me['privilege']['roles']
 
 

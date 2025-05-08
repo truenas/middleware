@@ -52,10 +52,12 @@ class PasswordComplexity(enum.StrEnum):
 # SRG-OS-000069-GPOS-00037
 # SRG-OS-000070-GPOS-00038
 # SRG-OS-000071-GPOS-00039
+# SRG-OS-000266-GPOS-00101
 GPOS_STIG_PASSWORD_COMPLEXITY = frozenset([
     PasswordComplexity.UPPER,
     PasswordComplexity.LOWER,
     PasswordComplexity.NUMBER,
+    PasswordComplexity.SPECIAL,
 ])
 
 
