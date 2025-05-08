@@ -28,9 +28,3 @@ class ReservedXid:
 
     def in_use(self) -> set:
         return set([entry for entry in self.in_flight.keys() if not self.available(entry)])
-
-
-# WARNING: the lock type for this dataclass will need to update if changed from sync to async
-# or vice-versa
-ReservedUids = ReservedXid({}, Lock())
-ReservedGids = ReservedXid({}, AsyncioLock())

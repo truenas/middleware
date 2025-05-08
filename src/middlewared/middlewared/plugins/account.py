@@ -13,6 +13,7 @@ from contextlib import suppress
 
 from sqlalchemy.orm import relationship
 
+from asyncio import Lock as AsyncioLock
 from dataclasses import asdict
 from datetime import datetime
 from middlewared.api import api_method
@@ -61,7 +62,7 @@ from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.utils.reserved_ids import ReservedUids, ReservedGids
+from middlewared.utils.reserved_ids import ReservedXid
 from middlewared.utils.security import (
     check_password_complexity,
     MAX_PASSWORD_HISTORY,
@@ -81,6 +82,7 @@ from middlewared.plugins.idmap_.idmap_constants import (
 )
 from middlewared.plugins.idmap_ import idmap_winbind
 from middlewared.plugins.idmap_ import idmap_sss
+from threading import Lock
 
 
 def pw_checkname(verrors, attribute, name):
@@ -234,6 +236,8 @@ class UserService(CRUDService):
         cli_namespace = 'account.user'
         role_prefix = 'ACCOUNT'
         entry = UserEntry
+
+    self.ReservedUids = ReservedXid({}, Lock())
 
     @private
     async def user_extend_context(self, rows, extra):
@@ -691,8 +695,8 @@ class UserService(CRUDService):
                 if group_created:
                     self.middleware.call_sync('group.delete', data['group'])
 
-                with ReservedUids.lock:
-                    ReservedUids.remove_entry(data['uid'])
+                with self.ReservedUids.lock:
+                    self.ReservedUids.remove_entry(data['uid'])
 
                 raise
 
@@ -720,8 +724,8 @@ class UserService(CRUDService):
                 shutil.rmtree(data['home'])
             raise
         finally:
-            with ReservedUids.lock:
-                ReservedUids.remove_entry(data['uid'])
+            with self.ReservedUids.lock:
+                self.ReservedUids.remove_entry(data['uid'])
 
         self.middleware.call_sync('service.reload', 'ssh')
         self.middleware.call_sync('service.reload', 'user')
@@ -1233,13 +1237,13 @@ class UserService(CRUDService):
         Get the next available/free uid.
         """
         # We want to create new users from 3000 to avoid potential conflicts - Reference: NAS-117892
-        with ReservedUids.lock:
+        with self.ReservedUids.lock:
             allocated_uids = set([u['uid'] for u in self.middleware.call_sync(
                 'datastore.query', 'account.bsdusers',
                 [('builtin', '=', False), ('uid', '>=', MIN_AUTO_XID)], {'prefix': 'bsdusr_'}
             )])
 
-            in_flight_uids = ReservedUids.in_use()
+            in_flight_uids = self.ReservedUids.in_use()
 
             total_uids = allocated_uids | in_flight_uids
             max_uid = max(total_uids) if total_uids else MIN_AUTO_XID - 1
@@ -1249,7 +1253,7 @@ class UserService(CRUDService):
             else:
                 next_uid = max_uid + 1
 
-            ReservedUids.add_entry(next_uid)
+            self.ReservedUids.add_entry(next_uid)
             return next_uid
 
     @api_method(
@@ -1873,6 +1877,8 @@ class GroupService(CRUDService):
         role_prefix = 'ACCOUNT'
         entry = GroupEntry
 
+    self.ReservedGids = ReservedXid({}, AsyncioLock())
+
     @private
     async def group_extend_context(self, rows, extra):
         privileges = await self.middleware.call('datastore.query', 'account.privilege')
@@ -1999,8 +2005,8 @@ class GroupService(CRUDService):
             pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
         finally:
             # Once the data store entry is created we can safely remove the reservation
-            async with ReservedGids.lock:
-                ReservedGids.remove_entry(data['gid'])
+            async with self.ReservedGids.lock:
+                self.ReservedGids.remove_entry(data['gid'])
 
         if reload_users:
             await self.middleware.call('service.reload', 'user')
@@ -2159,13 +2165,13 @@ class GroupService(CRUDService):
         """
         Get the next available/free gid.
         """
-        async with ReservedGids.lock:
+        async with self.ReservedGids.lock:
             groups = await self.middleware.call(
                 'datastore.query', 'account.bsdgroups', [['bsdgrp_gid', '>=', MIN_AUTO_XID], ['bsdgrp_builtin', '=', False]]
             )
             used_gids = set(group['bsdgrp_gid'] for group in groups)
             used_gids |= set([gid for gid in (await self.middleware.call('privilege.used_local_gids')).keys() if gid >= MIN_AUTO_XID])
-            in_flight_gids = ReservedGids.in_use()
+            in_flight_gids = self.ReservedGids.in_use()
             total_gids = used_gids | in_flight_gids
             max_gid = max(total_gids) if total_gids else MIN_AUTO_XID - 1
 
@@ -2174,7 +2180,7 @@ class GroupService(CRUDService):
             else:
                 next_gid = max_gid + 1
 
-            ReservedGids.add_entry(next_gid)
+            self.ReservedGids.add_entry(next_gid)
             return next_gid
 
     @api_method(GroupGetGroupObjArgs, GroupGetGroupObjResult, roles=['ACCOUNT_READ'])
