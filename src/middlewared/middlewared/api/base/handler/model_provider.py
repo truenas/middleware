@@ -81,6 +81,7 @@ class LazyModuleModelProvider(ModelProvider):
 
         :param name: Name of the model or name that its model factory was registered with.
         :return: Either the model belonging to module `self.module_name` or the model returned by a model factory.
+        :raise KeyError:
         """
         async with self.lock:
             if self.models is None:
@@ -122,7 +123,7 @@ def _create_model(model_provider: ModelProvider, model_factory: ModelFactory, ar
     :param model_factory: A callable that returns the model.
     :param arg_model_name: Name of the model to pass to `model_factory`.
 
-    :raises KeyError: `arg_model_name` is not registered with `model_provider`.
+    :raise KeyError: `arg_model_name` is not registered with `model_provider`.
     """
     arg = model_provider.models[arg_model_name]
     return model_factory(arg)

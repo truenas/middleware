@@ -44,8 +44,12 @@ class APIVersion:
 
         :param name:
         :return: The API model registered with `name`.
+        :raise APIVersionDoesNotContainModelException: `arg_model_name` not found in this API version.
         """
-        return await self.model_provider.get_model(name)
+        try:
+            return await self.model_provider.get_model(name)
+        except KeyError:
+            raise APIVersionDoesNotContainModelException(self.version, name) from None
 
     def register_model(self, model_cls: type[BaseModel], model_factory: ModelFactory, arg_model_name: str) -> None:
         """Store an API method to be retrieved later by `get_model`.
@@ -53,8 +57,6 @@ class APIVersion:
         :param model_cls: The `BaseModel` class to register.
         :param model_factory: A callable that returns the `BaseModel` when `LazyModuleModelProvider` is used.
         :param arg_model_name: Name of the model to pass to `model_factory`.
-
-        :raises KeyError: `arg_model_name` not found in this API version.
         """
         self.model_provider.register_model(model_cls, model_factory, arg_model_name)
 
@@ -82,6 +84,8 @@ class APIVersionsAdapter:
         :param version1: original API version from which the `value` comes from
         :param version2: target API version that needs `value`
         :return: converted value
+        :raise APIVersionDoesNotExistException:
+        :raise APIVersionDoesNotContainModelException:
         """
         return (await self.adapt_model(value, model_name, version1, version2))[1]
 
@@ -91,9 +95,12 @@ class APIVersionsAdapter:
         model_name: str,
         version1: str,
         version2: str,
-    ) -> tuple[type[BaseModel], dict]:
+    ) -> tuple[type[BaseModel] | None, dict]:
         """
         Same as `adapt`, but returned value will be a tuple of `version2` model instance and converted value.
+
+        :raise APIVersionDoesNotExistException:
+        :raise APIVersionDoesNotContainModelException:
         """
         try:
             version1_index = self.versions_history.index(version1)
@@ -106,10 +113,7 @@ class APIVersionsAdapter:
             raise APIVersionDoesNotExistException(version2) from None
 
         current_version = self.versions[version1]
-        try:
-            current_version_model = await current_version.get_model(model_name)
-        except KeyError:
-            raise APIVersionDoesNotContainModelException(current_version.version, model_name)
+        current_version_model = await current_version.get_model(model_name)
 
         value_factory = functools.partial(async_validate_model, current_version_model, value)
         model = current_version_model
@@ -129,7 +133,7 @@ class APIVersionsAdapter:
             )
             try:
                 model = await new_version.get_model(model_name)
-            except KeyError:
+            except APIVersionDoesNotContainModelException:
                 model = None
 
             current_version = new_version
@@ -144,16 +148,11 @@ class APIVersionsAdapter:
         new_version: APIVersion,
         direction: Direction,
     ):
-        try:
-            current_model = await current_version.get_model(model_name)
-        except KeyError:
-            raise APIVersionDoesNotContainModelException(current_version.version, model_name) from None
-
-        try:
-            new_model = await new_version.get_model(model_name)
-        except KeyError:
-            raise APIVersionDoesNotContainModelException(new_version.version, model_name) from None
-
+        """
+        :raise APIVersionDoesNotContainModelException:
+        """
+        current_model = await current_version.get_model(model_name)
+        new_model = await new_version.get_model(model_name)
         return self._adapt_value(await value_factory(), current_model, new_model, direction)
 
     def _adapt_value(

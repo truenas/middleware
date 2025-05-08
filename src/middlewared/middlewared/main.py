@@ -217,7 +217,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return API(version, methods, events)
 
-    def _get_methods(self) -> list[tuple[str, callable]]:
+    def _get_methods(self) -> list[tuple[str, typing.Callable]]:
         methods = []
         for service_name, service in self.get_services().items():
             for attribute in dir(service):
