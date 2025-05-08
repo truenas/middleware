@@ -23,7 +23,7 @@ class ModelProvider(ABC):
 
     def register_model(self, model_cls: type[BaseModel], *extra: Any) -> None:
         """Register an API model.
-        
+
         :param model_cls: The model class to register.
         :param *extra: Extra arguments are ignored.
         """
@@ -127,15 +127,15 @@ def models_from_module(module: ModuleType) -> dict[str, type[BaseModel]]:
 
 
 def _create_model(
-        model_provider: ModelProvider, model_factory: ModelFactory, arg_model_name: str
-    ) -> type[BaseModel] | None:
+    model_provider: ModelProvider, model_factory: ModelFactory, arg_model_name: str
+) -> type[BaseModel] | None:
     """Call a model factory.
 
     :param model_provider: An instance of `ModelProvider` that contains the model to pass to `model_factory`.
     :param model_factory: A callable that returns the model.
     :param arg_model_name: Name of the model to pass to `model_factory`.
     :return: Either the `BaseModel` class returned by `model_factory` or `None` if `arg_model_name` is not a registered
-        model name with `model_provider`. 
+        model name with `model_provider`.
     """
     if arg := model_provider.models.get(arg_model_name):
         return model_factory(arg)
