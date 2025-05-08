@@ -126,7 +126,7 @@ async def _event_system_ready(middleware, event_type, args):
 
 async def _event_system_shutdown(middleware, event_type, args):
     if await middleware.call('service.started', 'docker'):
-        middleware.call('service.stop', 'docker')  # No need to wait for this to complete
+        await middleware.call('service.stop', 'docker')  # No need to wait for this to complete
 
 
 async def setup(middleware):
