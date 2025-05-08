@@ -237,7 +237,7 @@ class UserService(CRUDService):
         role_prefix = 'ACCOUNT'
         entry = UserEntry
 
-    self.ReservedUids = ReservedXid({}, Lock())
+    ReservedUids = ReservedXid({}, Lock())
 
     @private
     async def user_extend_context(self, rows, extra):
@@ -1877,7 +1877,7 @@ class GroupService(CRUDService):
         role_prefix = 'ACCOUNT'
         entry = GroupEntry
 
-    self.ReservedGids = ReservedXid({}, AsyncioLock())
+    ReservedGids = ReservedXid({}, AsyncioLock())
 
     @private
     async def group_extend_context(self, rows, extra):
