@@ -620,7 +620,7 @@ class KerberosRealmService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
         await self.middleware.call('etc.generate', 'kerberos')
-        await (await self.middleware.call('service.restart', 'cron')).wait(raise_error=True)
+        await self.middleware.call('service.restart', 'cron')
         return await self.get_instance(id_)
 
     @api_method(

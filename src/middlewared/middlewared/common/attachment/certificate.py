@@ -37,7 +37,7 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
 
     async def redeploy(self, cert_id):
         if await self.middleware.call('service.started', self.SERVICE):
-            await (await self.middleware.call(f'service.{self.SERVICE_VERB}', self.SERVICE)).wait(raise_error=True)
+            await self.middleware.call(f'service.{self.SERVICE_VERB}', self.SERVICE)
 
 
 class CertificateCRUDServiceAttachmentDelegate(CertificateAttachmentDelegate, ServiceChangeMixin):

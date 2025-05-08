@@ -92,10 +92,10 @@ class PoolDatasetService(Service):
                         for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
                     ):
                         self.logger.info('Restarting service %r that holds dataset %r', service, oid)
-                        await (await self.middleware.call('service.restart', service)).wait(raise_error=True)
+                        await self.middleware.call('service.restart', service)
                     else:
                         self.logger.info('Stopping service %r that holds dataset %r', service, oid)
-                        await (await self.middleware.call('service.stop', service)).wait(raise_error=True)
+                        await self.middleware.call('service.stop', service)
                 else:
                     self.logger.info('Killing process %r (%r) that holds dataset %r', process['pid'],
                                      process['cmdline'], oid)

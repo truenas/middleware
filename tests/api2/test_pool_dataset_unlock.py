@@ -82,7 +82,7 @@ def test_pool_dataset_unlock_smb(smb_user, toggle_attachments):
         smb_share(f'/mnt/{encrypted}', 'encrypted', {'guestok': True})
     ):
         ssh(f'touch /mnt/{encrypted}/secret')
-        assert call('service.start', 'cifs', job=True)
+        assert call('service.start', 'cifs')
         lock_dataset(encrypted)
         # Mount test SMB share
         with smb_connection(
@@ -128,4 +128,4 @@ def test_pool_dataset_unlock_smb(smb_user, toggle_attachments):
 
             assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
 
-    assert call('service.stop', 'cifs', job=True)
+    assert call('service.stop', 'cifs')

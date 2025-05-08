@@ -267,7 +267,7 @@ async def pool_post_import(middleware, pool):
             ('OR', [
                 ('device_path', '^', f'zvol/{name}/'),
                 ('device_path', '^', f'{path}/'),])]):
-            await (await middleware.call('service.reload', NVMET_SERVICE_NAME)).wait(raise_error=True)
+            await middleware.call('service.reload', NVMET_SERVICE_NAME)
 
 
 async def setup(middleware):

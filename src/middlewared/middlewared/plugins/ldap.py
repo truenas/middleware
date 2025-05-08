@@ -988,7 +988,7 @@ class LDAPService(ConfigService):
     async def __stop(self, job, ds_type):
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
         await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
-        await (await self.middleware.call('service.stop', 'sssd')).wait(raise_error=True)
+        await self.middleware.call('service.stop', 'sssd')
         for etc_file in ds_type.etc_files:
             await self.middleware.call('etc.generate', etc_file)
 

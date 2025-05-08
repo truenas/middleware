@@ -13,9 +13,9 @@ SNAPDIR_EXPORTS_ENTRY = 'zfs_snapdir'
 
 @pytest.fixture(scope='module')
 def start_nfs():
-    call('service.start', 'nfs', job=True)
+    call('service.start', 'nfs')
     yield
-    call('service.stop', 'nfs', job=True)
+    call('service.stop', 'nfs')
 
 
 @pytest.fixture(scope='function')
@@ -110,8 +110,8 @@ def test__snapdir_enable_enterprise_update(start_nfs, enterprise, nfs_export):
 def test__snapdir_functional(start_nfs, enterprise, nfs_dataset, nfs_export, vers):
     share = call('sharing.nfs.update', nfs_export, {'expose_snapshots': True})
     assert share['expose_snapshots'] is True
-    call('service.stop', 'nfs', job=True)
-    call('service.start', 'nfs', {'silent': False}, job=True)
+    call('service.stop', 'nfs')
+    call('service.start', 'nfs', {'silent': False})
     with SSH_NFS(
         hostname=truenas_server.ip,
         path=f'/mnt/{nfs_dataset}',

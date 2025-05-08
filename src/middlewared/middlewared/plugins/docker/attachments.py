@@ -37,7 +37,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
         if not attachments:
             return
         try:
-            await (await self.middleware.call('service.stop', self.service)).wait(raise_error=True)
+            await self.middleware.call('service.stop', self.service)
         except Exception as e:
             self.middleware.logger.error('Failed to stop docker: %s', e)
 

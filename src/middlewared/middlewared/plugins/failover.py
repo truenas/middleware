@@ -1089,7 +1089,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
     if ssh_enabled and not remote_ssh_started:
         middleware.logger.debug('[HA] Starting SSH on standby node')
-        await middleware.call('failover.call_remote', 'service.start', ['ssh'], {'job': True})
+        await middleware.call('failover.call_remote', 'service.start', ['ssh'])
 
     middleware.logger.debug('[HA] Refreshing failover status')
     await middleware.call('failover.status_refresh')

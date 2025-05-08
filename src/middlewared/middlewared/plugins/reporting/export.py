@@ -66,7 +66,7 @@ class ReportingExportsService(CRUDService):
 
         if data['enabled']:
             # Only restart if this is enabled
-            await (await self.middleware.call('service.restart', 'netdata')).wait(raise_error=True)
+            await self.middleware.call('service.restart', 'netdata')
 
         return await self.get_instance(oid)
 
@@ -90,7 +90,7 @@ class ReportingExportsService(CRUDService):
             new
         )
 
-        await (await self.middleware.call('service.restart', 'netdata')).wait(raise_error=True)
+        await self.middleware.call('service.restart', 'netdata')
 
         return await self.get_instance(oid)
 
@@ -104,7 +104,7 @@ class ReportingExportsService(CRUDService):
             self._config.datastore,
             oid,
         )
-        await (await self.middleware.call('service.restart', 'netdata')).wait(raise_error=True)
+        await self.middleware.call('service.restart', 'netdata')
         return True
 
     @api_method(ReportingExporterSchemasArgs, ReportingExporterSchemasResult, roles=['REPORTING_READ'])

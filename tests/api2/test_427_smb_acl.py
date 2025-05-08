@@ -112,10 +112,10 @@ def initialize_for_smb_tests(request):
         'password': SMB_PWD
     }) as u:
         try:
-            call('service.start', 'cifs', job=True)
+            call('service.start', 'cifs')
             yield {'user': u}
         finally:
-            call('service.stop', 'cifs', job=True)
+            call('service.stop', 'cifs')
 
 
 @pytest.mark.dependency(name="SMB_SERVICE_STARTED")

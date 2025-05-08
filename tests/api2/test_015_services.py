@@ -6,13 +6,12 @@ sys.path.append(apifolder)
 
 import pytest
 
-from truenas_api_client import ClientException
+from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, ssh
 
 def test_001_oom_check():
     pid = call('core.get_pid')
     assert call('core.get_oom_score_adj', pid) == -1000
-
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)  # Sometimes systemd unit state is erroneously reported as active
 def test_non_silent_service_start_failure():
@@ -23,8 +22,8 @@ def test_non_silent_service_start_failure():
             has a timestamp and that timestamp changes
             with each failure
     """
-    with pytest.raises(ClientException) as e:
-        call('service.start', 'ups', {'silent': False}, job=True)
+    with pytest.raises(CallError) as e:
+        call('service.start', 'ups', {'silent': False})
 
     # Error looks like
     """
@@ -38,8 +37,8 @@ def test_non_silent_service_start_failure():
     Jan 10 08:49:14 systemd[1]: nut-monitor.service: Failed with result 'exit-code'.
     Jan 10 08:49:14 systemd[1]: Failed to start Network UPS Tools - power device monitor and shutdown controller.
     """
-    lines1 = e.value.error.splitlines()
-    first_ts, len_lines1 = ' '.join(lines1.pop(0).split()[:4]), len(lines1)
+    lines1 = e.value.errmsg.splitlines()
+    first_ts, len_lines1 = ' '.join(lines1.pop(0).split()[:3]), len(lines1)
     assert any('nut-monitor[' in line for line in lines1), lines1
     assert any('systemd[' in line for line in lines1), lines1
 
@@ -53,8 +52,8 @@ def test_non_silent_service_start_failure():
     # with reality
     time.sleep(1)
 
-    with pytest.raises(ClientException) as e:
-        call('service.start', 'ups', {'silent': False}, job=True)
+    with pytest.raises(CallError) as e:
+        call('service.start', 'ups', {'silent': False})
 
     # Error looks like: (Notice timestamp change, which is what we verify
     """
@@ -68,8 +67,8 @@ def test_non_silent_service_start_failure():
     Jan 10 08:49:15 systemd[1]: nut-monitor.service: Failed with result 'exit-code'.
     Jan 10 08:49:15 systemd[1]: Failed to start Network UPS Tools - power device monitor and shutdown controller.
     """
-    lines2 = e.value.error.splitlines()
-    second_ts, len_lines2 = ' '.join(lines2.pop(0).split()[:4]), len(lines2)
+    lines2 = e.value.errmsg.splitlines()
+    second_ts, len_lines2 = ' '.join(lines2.pop(0).split()[:3]), len(lines2)
     assert any('nut-monitor[' in line for line in lines2), lines2
     assert any('systemd[' in line for line in lines2), lines2
 
@@ -81,4 +80,4 @@ def test_non_silent_service_start_failure():
     assert len_lines1 == len_lines2
 
     # Stop the service to avoid syslog spam
-    call('service.stop', 'ups', job=True)
+    call('service.stop', 'ups')

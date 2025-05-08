@@ -32,7 +32,7 @@ class CertificateService(Service):
             {'stg_guicertificate': cert_id}
         )
 
-        await (await self.middleware.call('service.start', 'ssl')).wait(raise_error=True)
+        await self.middleware.call('service.start', 'ssl')
 
     @private
     async def setup_self_signed_cert_for_ui_impl(self, cert_name):

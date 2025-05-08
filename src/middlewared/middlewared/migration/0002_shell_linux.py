@@ -27,4 +27,4 @@ def migrate(middleware):
         updated = True
 
     if updated:
-        middleware.call_sync("service.reload", "user").wait_sync(raise_error=True)
+        middleware.call_sync("service.reload", "user")

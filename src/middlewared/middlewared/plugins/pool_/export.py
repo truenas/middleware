@@ -181,7 +181,7 @@ class PoolService(Service):
         await self.middleware.call_hook('dataset.post_delete', pool['name'])
 
         # scrub needs to be regenerated in crontab
-        await (await self.middleware.call('service.restart', 'cron')).wait(raise_error=True)
+        await self.middleware.call('service.restart', 'cron')
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
         self.middleware.send_event('pool.query', 'REMOVED', id=oid)

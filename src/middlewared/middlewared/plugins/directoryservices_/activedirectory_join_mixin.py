@@ -44,8 +44,8 @@ class ADJoinMixin:
         for etc_file in DSType.AD.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        self.middleware.call_sync('service.stop', 'idmap').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.start', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+        self.middleware.call_sync('service.stop', 'idmap')
+        self.middleware.call_sync('service.start', 'idmap', {'silent': False})
 
         # Wait for winbind to come online to provide some time for sysvol replication
         self._ad_wait_wbclient()

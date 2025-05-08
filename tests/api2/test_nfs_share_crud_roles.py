@@ -26,18 +26,14 @@ def test_write_role_can_write(unprivileged_user_fixture, role):
     common_checks(unprivileged_user_fixture, "nfs.get_nfs3_clients", role, True, valid_role_exception=False)
     common_checks(unprivileged_user_fixture, "nfs.get_nfs4_clients", role, True, valid_role_exception=False)
     common_checks(
-        unprivileged_user_fixture, "service.start", role, True, method_args=["nfs"], method_kwargs=dict(job=True),
-        valid_role_exception=False
+        unprivileged_user_fixture, "service.start", role, True, method_args=["nfs"], valid_role_exception=False
     )
     common_checks(
-        unprivileged_user_fixture, "service.restart", role, True, method_args=["nfs"], method_kwargs=dict(job=True),
-        valid_role_exception=False
+        unprivileged_user_fixture, "service.restart", role, True, method_args=["nfs"], valid_role_exception=False
     )
     common_checks(
-        unprivileged_user_fixture, "service.reload", role, True, method_args=["nfs"], method_kwargs=dict(job=True),
-        valid_role_exception=False
+        unprivileged_user_fixture, "service.reload", role, True, method_args=["nfs"], valid_role_exception=False
     )
     common_checks(
-        unprivileged_user_fixture, "service.stop", role, True, method_args=["nfs"], method_kwargs=dict(job=True),
-        valid_role_exception=False
+        unprivileged_user_fixture, "service.stop", role, True, method_args=["nfs"], valid_role_exception=False
     )

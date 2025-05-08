@@ -79,7 +79,7 @@ def initialize_and_start_snmp():
     try:
         # Get initial config and start SNMP
         orig_config = call('snmp.config')
-        call('service.start', 'snmp', job=True)
+        call('service.start', 'snmp')
         yield orig_config
     finally:
         # Restore default config (which will also delete any created user),
@@ -359,9 +359,9 @@ class TestSNMP:
             # Reset the systemd restart counter
             reset_systemd_svcs("snmpd snmp-agent")
 
-            res = call('service.stop', 'snmp', job=True)
+            res = call('service.stop', 'snmp')
             assert res is True
-            res = call('service.start', 'snmp', job=True)
+            res = call('service.start', 'snmp')
             assert res is True
             res = call('snmp.get_snmp_users')
             assert "snmpSystemUser" in res

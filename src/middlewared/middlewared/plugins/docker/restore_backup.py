@@ -35,7 +35,7 @@ class DockerService(Service):
         job.set_progress(10, 'Basic validation complete')
 
         logger.debug('Restoring backup %r', backup_name)
-        self.middleware.call_sync('service.stop', 'docker').wait_sync(raise_error=True)
+        self.middleware.call_sync('service.stop', 'docker')
         job.set_progress(20, 'Stopped Docker service')
 
         docker_config = self.middleware.call_sync('docker.config')
