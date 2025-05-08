@@ -7,7 +7,7 @@ import socket
 import requests
 
 from middlewared.service_exception import CallError
-from truenas_api_client import Client as TNClient
+from truenas_api_client import Client as TNClient, ClientException
 from truenas_api_client.utils import undefined
 
 from .pytest import fail
@@ -21,6 +21,7 @@ truenas_server object is used by both websocket client and REST client for deter
 server to access for API calls. For HA, the `ip` attribute should be set to the virtual IP
 of the truenas server.
 """
+
 
 class Client(TNClient):
     def uri_check(self, *args, **kwargs):
@@ -192,6 +193,14 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                         resp = c.call("auth.login_ex", auth_req)
                     else:
                         raise
+                except ClientException as e:
+                    if e.errno == errno.EBUSY and e.error == 'Rate Limit Exceeded':
+                        # Same as above, but for clients with `py_exceptions=False`
+                        truenas_server.client.call("rate.limit.cache_clear")
+                        resp = c.call("auth.login_ex", auth_req)
+                    else:
+                        raise
+
                 if auth_required:
                     assert resp['response_type'] == 'SUCCESS'
             yield c
