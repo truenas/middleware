@@ -86,8 +86,11 @@ class LDAPClient:
             if data['bind_type'] == 'ANONYMOUS':
                 bound = self._handle.simple_bind_s()
             elif data['bind_type'] == 'EXTERNAL':
-                bound = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                # SASL binds raise an exception if they fail, simple binds return a boolean value
+                self._handle.sasl_non_interactive_bind_s('EXTERNAL')
+                bound = True
             elif data['bind_type'] == 'GSSAPI':
+                # SASL binds raise an exception if they fail, simple binds return a boolean value
                 self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
                 self._handle.sasl_gssapi_bind_s()
                 bound = True
