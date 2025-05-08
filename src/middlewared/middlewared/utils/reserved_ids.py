@@ -17,7 +17,11 @@ class ReservedXid:
         if (expiry := self.in_flight.get(xid)) is None:
             return True
 
-        return monotonic() > expiry
+        if monotonic() > expiry:
+            self.in_flight.pop(xid, None)
+            return True
+
+        return False
 
     def add_entry(self, xid: int) -> None:
         assert self.available(xid)
