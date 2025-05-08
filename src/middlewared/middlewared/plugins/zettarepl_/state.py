@@ -3,9 +3,10 @@ import re
 
 from truenas_api_client import json as ejson
 
-from middlewared.service import periodic, Service
+from middlewared.service import Service
 from middlewared.utils.service.task_state import TaskStateMixin
 
+RE_PERIODIC_SNAPSHOT_TASK_ID = re.compile(r"periodic_snapshot_task_([0-9]+)$")
 RE_REPLICATION_TASK_ID = re.compile(r"replication_task_([0-9]+)$")
 
 
@@ -62,6 +63,9 @@ class ZettareplService(Service, TaskStateMixin):
 
         state = self.state.get(task_id, {}).copy()
 
+        if RE_PERIODIC_SNAPSHOT_TASK_ID.match(task_id):
+            state["last_snapshot"] = self.last_snapshot.get(task_id)
+
         if m := RE_REPLICATION_TASK_ID.match(task_id):
             state["job"] = self.middleware.call_sync("zettarepl.get_task_state_job", context, int(m.group(1)))
             state["last_snapshot"] = self.last_snapshot.get(task_id)
@@ -99,7 +103,7 @@ class ZettareplService(Service, TaskStateMixin):
             if task_id not in task_ids:
                 self.last_snapshot.pop(task_id, None)
         for task_id in list(self.serializable_state.keys()):
-            if f"replication_task_{task_id}" not in task_ids:
+            if task_id not in task_ids:
                 self.serializable_state.pop(task_id, None)
 
     def get_internal_task_state(self, task_id):
@@ -108,17 +112,17 @@ class ZettareplService(Service, TaskStateMixin):
     def set_state(self, task_id, state):
         self.state[task_id] = state
 
-        if task_id.startswith("replication_task_"):
-            if state["state"] in ("ERROR", "FINISHED"):
-                self.serializable_state[int(task_id.split("_")[-1])]["state"] = state
+        if state["state"] in ("ERROR", "FINISHED"):
+            self.serializable_state[task_id]["state"] = state
+            self.middleware.call_sync("zettarepl.flush_state")
 
         self._notify_state_change(task_id)
 
     def set_last_snapshot(self, task_id, last_snapshot):
         self.last_snapshot[task_id] = last_snapshot
 
-        if task_id.startswith("replication_task_"):
-            self.serializable_state[int(task_id.split("_")[-1])]["last_snapshot"] = last_snapshot
+        self.serializable_state[task_id]["last_snapshot"] = last_snapshot
+        self.middleware.call_sync("zettarepl.flush_state")
 
         self._notify_state_change(task_id)
 
@@ -127,6 +131,13 @@ class ZettareplService(Service, TaskStateMixin):
         self.middleware.call_hook_sync("zettarepl.state_change", id_=task_id, fields=state)
 
     async def load_state(self):
+        for snapshot in await self.middleware.call("datastore.query", "storage.task"):
+            state = ejson.loads(snapshot["task_state"])
+            if "last_snapshot" in state:
+                self.last_snapshot[f"periodic_snapshot_task_{snapshot['id']}"] = state["last_snapshot"]
+            if "state" in state:
+                self.state[f"periodic_snapshot_task_{snapshot['id']}"] = state["state"]
+
         for replication in await self.middleware.call("datastore.query", "storage.replication"):
             state = ejson.loads(replication["repl_state"])
             if "last_snapshot" in state:
@@ -134,11 +145,17 @@ class ZettareplService(Service, TaskStateMixin):
             if "state" in state:
                 self.state[f"replication_task_{replication['id']}"] = state["state"]
 
-    @periodic(3600)
     async def flush_state(self):
         for task_id, state in self.serializable_state.items():
-            try:
-                await self.middleware.call("datastore.update", "storage.replication", task_id,
-                                           {"repl_state": ejson.dumps(state)})
-            except RuntimeError:
-                pass
+            if RE_PERIODIC_SNAPSHOT_TASK_ID.match(task_id):
+                try:
+                    await self.middleware.call("datastore.update", "storage.task", int(task_id.split("_")[-1]),
+                                               {"task_state": ejson.dumps(state)})
+                except RuntimeError:
+                    pass
+            elif RE_REPLICATION_TASK_ID.match(task_id):
+                try:
+                    await self.middleware.call("datastore.update", "storage.replication", int(task_id.split("_")[-1]),
+                                               {"repl_state": ejson.dumps(state)})
+                except RuntimeError:
+                    pass
