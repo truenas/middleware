@@ -158,7 +158,6 @@ Depends: alembic,
          python3-websocket,
          python3-zeroconf,
          python3-zettarepl,
-         # This is required by incus VMs
          qemu-system-modules-spice,
          qemu-utils,
          rclone,
