@@ -1,11 +1,11 @@
 import enum
 import functools
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, TypeAlias
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from .accept import validate_model
 from .inspect import model_field_is_model, model_field_is_list_of_models
-from .model_provider import ModelProvider
+from .model_provider import ModelProvider, LazyModuleModelProvider
 from middlewared.utils.lang import Undefined
 
 
@@ -27,6 +27,22 @@ class APIVersionDoesNotContainModelException(Exception):
         super().__init__(f"API version {version!r} does not contain model {model_name!r}")
 
 
+ModelFactory: TypeAlias = Callable[[type[BaseModel]], type[BaseModel]]
+
+
+def _create_model(model_provider: ModelProvider, model_factory: ModelFactory, arg_model_name: str) -> type[BaseModel]:
+    """Call a model factory.
+
+    :param model_provider: An instance of `ModelProvider` that contains the model to pass to `model_factory`.
+    :param model_factory: A callable that returns the model.
+    :param arg_model_name: Name of the model to pass to `model_factory`.
+
+    :raises KeyError: `arg_model_name` is not registered with `model_provider`.
+    """
+    arg = model_provider.models[arg_model_name]
+    return model_factory(arg)
+
+
 class APIVersion:
     def __init__(self, version: str, model_provider: ModelProvider):
         """
@@ -40,12 +56,30 @@ class APIVersion:
         return f"<APIVersion {self.version}>"
 
     async def get_model(self, name: str) -> type[BaseModel]:
-        """
-        Get API model by name
+        """Get API model by name.
+
         :param name:
         :return: model
         """
         return await self.model_provider.get_model(name)
+
+    def register_model(self, model_cls: type[BaseModel], model_factory: ModelFactory, arg_model_name: str) -> None:
+        """Store an API method to be retrieved later by `get_model`.
+
+        :param model_cls: The `BaseModel` class to register.
+        :param model_factory: A callable that returns the `BaseModel` when `LazyModuleModelProvider` is used.
+        :param arg_model_name: Name of the model to pass to `model_factory`.
+
+        :raises KeyError: `arg_model_name` not found in this API version.
+        """
+        mp = self.model_provider
+        if isinstance(mp, LazyModuleModelProvider):
+            mp.models_factories[model_cls.__name__] = functools.partial(
+                _create_model, mp, model_factory, arg_model_name
+            )
+        else:
+            # Newest version uses `ModuleModelProvider`. We can add directly to the models list.
+            mp.models[model_cls.__name__] = model_cls
 
 
 class APIVersionsAdapter:
