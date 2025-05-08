@@ -915,6 +915,9 @@ class ZettareplService(Service):
                     })
 
                 if isinstance(message, PeriodicSnapshotTaskSuccess):
+                    self.middleware.call_sync("zettarepl.set_last_snapshot", f"periodic_snapshot_{message.task_id}",
+                                              f"{message.dataset}@{message.snapshot}")
+
                     self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "FINISHED",
                         "datetime": utc_now(),
