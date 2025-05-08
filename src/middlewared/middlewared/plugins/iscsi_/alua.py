@@ -85,7 +85,7 @@ class iSCSITargetAluaService(Service):
             tochange = [extents[name] for name in devices]
             await self.middleware.call('iscsi.scst.set_devices_cluster_mode', tochange, 1)
             # We could expose the targets as we go along, but will just wait until the end.
-            # await (await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)).wait(raise_error=True)
+            # await (await self.middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)
             return True
         else:
             return False
