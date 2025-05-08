@@ -4,7 +4,7 @@ import os
 import pathlib
 import re
 import subprocess
-from asynio import Lock
+from asyncio import Lock
 from collections import defaultdict
 
 from pydantic import IPvAnyNetwork
