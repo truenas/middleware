@@ -81,8 +81,7 @@ class RsyncTaskCreateResult(BaseModel):
 
 
 class RsyncTaskUpdate(RsyncTaskCreate, metaclass=ForUpdateMetaclass):
-    validate_rpath: Excluded = excluded_field()
-    ssh_keyscan: Excluded = excluded_field()
+    pass
 
 
 class RsyncTaskUpdateArgs(BaseModel):
