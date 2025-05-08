@@ -12,4 +12,4 @@ async def migrate(middleware):
         )
 
     if extents:
-        await middleware.call('service.reload', 'iscsitarget')
+        await (await middleware.call('service.reload', 'iscsitarget')).wait(raise_error=True)

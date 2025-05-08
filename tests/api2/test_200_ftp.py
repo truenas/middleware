@@ -310,13 +310,13 @@ def ftp_server(service_state=None):
 
     try:
         # Start FTP service
-        call('service.start', 'ftp', {'silent': False})
+        call('service.start', 'ftp', {'silent': False}, job=True)
         yield
     finally:
         # proftpd can core dump if stopped while it's busy
         # processing a prior config change. Give it a sec.
         sleep(1)
-        call('service.stop', 'ftp', {'silent': False})
+        call('service.stop', 'ftp', {'silent': False}, job=True)
         # Restore original service state
         if service_state is not None:
             ftp_set_service_enable_state(restore_state)
@@ -1398,7 +1398,7 @@ def test_085_ftp_service_starts_after_reboot():
 
 
 def test_100_ftp_service_stop():
-    call('service.stop', 'ftp', {'silent': False})
+    call('service.stop', 'ftp', {'silent': False}, job=True)
     rv = query_ftp_service()
     assert rv['state'] == 'STOPPED'
     assert rv['enable'] is False

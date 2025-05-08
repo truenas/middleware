@@ -111,11 +111,11 @@ def configured_target_to_extent():
 def configure_iscsi_service():
     with configured_target_to_extent() as iscsi_config:
         try:
-            call('service.start', 'iscsitarget')
+            call('service.start', 'iscsitarget', job=True)
             assert call('service.started', 'iscsitarget') is True
             yield iscsi_config
         finally:
-            call('service.stop', 'iscsitarget')
+            call('service.stop', 'iscsitarget', job=True)
 
 
 @pytest.mark.parametrize('valid', [True, False])

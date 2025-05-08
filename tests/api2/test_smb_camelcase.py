@@ -24,10 +24,10 @@ def smb_setup(request):
         }, get_instance=False):
             with smb_share(os.path.join('/mnt', ds), SMB_NAME) as s:
                 try:
-                    call('service.start', 'cifs')
+                    call('service.start', 'cifs', job=True)
                     yield {'dataset': ds, 'share': s}
                 finally:
-                    call('service.stop', 'cifs')
+                    call('service.stop', 'cifs', job=True)
 
 
 def test__smb_auth_camel(smb_setup):

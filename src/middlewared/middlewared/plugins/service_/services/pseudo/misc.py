@@ -22,7 +22,7 @@ class KmipService(PseudoServiceBase):
     name = "kmip"
 
     async def start(self):
-        await self.middleware.call("service.start", "ssl")
+        await (await self.middleware.call("service.start", "ssl")).wait(raise_error=True)
         await self.middleware.call("etc.generate", "kmip")
 
     async def get_state(self):
@@ -49,7 +49,7 @@ class HostnameService(PseudoServiceBase):
 
     async def reload(self):
         await self.middleware.call("etc.generate", "hostname")
-        await self.middleware.call("service.restart", "mdns")
+        await (await self.middleware.call("service.restart", "mdns")).wait(raise_error=True)
 
 
 class HttpService(PseudoServiceBase):
@@ -82,8 +82,8 @@ class NetworkGeneralService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self):
-        await self.middleware.call("service.reload", "resolvconf")
-        await self.middleware.call("service.restart", "routing")
+        await (await self.middleware.call("service.reload", "resolvconf")).wait(raise_error=True)
+        await (await self.middleware.call("service.restart", "routing")).wait(raise_error=True)
 
 
 class NfsMountdService(PseudoServiceBase):
@@ -135,7 +135,7 @@ class ResolvConfService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self):
-        await self.middleware.call("service.reload", "hostname")
+        await (await self.middleware.call("service.reload", "hostname")).wait(raise_error=True)
         await self.middleware.call("dns.sync")
 
 
@@ -179,7 +179,7 @@ class TimeservicesService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self):
-        await self.middleware.call("service.restart", "ntpd")
+        await (await self.middleware.call("service.restart", "ntpd")).wait(raise_error=True)
 
         settings = await self.middleware.call("datastore.config", "system.settings")
         await self.middleware.call("core.environ_update", {"TZ": settings["stg_timezone"]})

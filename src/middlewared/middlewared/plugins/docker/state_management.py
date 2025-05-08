@@ -52,7 +52,7 @@ class DockerStateService(Service):
             # Make sure correct ix-apps dataset is mounted
             if not await self.middleware.call('docker.fs_manage.ix_apps_is_mounted', config['dataset']):
                 raise CallError(f'{config["dataset"]!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}')
-            await self.middleware.call('service.start', 'docker')
+            await (await self.middleware.call('service.start', 'docker')).wait(raise_error=True)
         except Exception as e:
             await self.set_status(Status.FAILED.value, str(e))
             raise
@@ -126,7 +126,7 @@ async def _event_system_ready(middleware, event_type, args):
 
 async def _event_system_shutdown(middleware, event_type, args):
     if await middleware.call('service.started', 'docker'):
-        middleware.create_task(middleware.call('service.stop', 'docker'))
+        await middleware.call('service.stop', 'docker')  # No need to wait for this to complete
 
 
 async def setup(middleware):

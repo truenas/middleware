@@ -155,7 +155,7 @@ def test_004_creating_a_smb_share_path(request):
 @pytest.mark.dependency(name="VSS_SMB_SERVICE_STARTED")
 def test_005_starting_cifs_service(request):
     depends(request, ["VSS_SHARE_CREATED"])
-    assert call("service.start", "cifs")
+    assert call("service.start", "cifs", job=True)
 
 
 @pytest.mark.dependency(name="VSS_SMB1_ENABLED")
@@ -299,7 +299,7 @@ def test_051_disable_smb1(request):
 
 def test_052_stopping_smb_service(request):
     depends(request, ["VSS_SMB_SERVICE_STARTED"])
-    assert call("service.stop", "cifs")
+    assert call("service.stop", "cifs", job=True)
     sleep(1)
 
 

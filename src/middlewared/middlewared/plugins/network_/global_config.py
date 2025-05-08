@@ -175,7 +175,7 @@ class NetworkConfigurationService(ConfigService):
             if not verb:
                 continue
 
-            await self.middleware.call(f'service.{verb}', service_name)
+            await (await self.middleware.call(f'service.{verb}', service_name)).wait(raise_error=True)
 
     @api_method(NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult)
     async def do_update(self, data):
@@ -336,7 +336,7 @@ class NetworkConfigurationService(ConfigService):
                 service_actions.add((service_name, verb))
 
         for service, verb in service_actions:
-            await self.middleware.call(f'service.{verb}', service)
+            await (await self.middleware.call(f'service.{verb}', service)).wait(raise_error=True)
 
         await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
 

@@ -95,10 +95,10 @@ def initialize_for_smb_tests(request):
                     'auxsmbconf': 'zfs_core:base_user_quota = 1G'
                 }) as s:
                     try:
-                        call('service.start', 'cifs')
+                        call('service.start', 'cifs', job=True)
                         yield {'dataset': ds, 'share': s, 'user': u}
                     finally:
-                        call('service.stop', 'cifs')
+                        call('service.stop', 'cifs', job=True)
             finally:
                 # In test_140_enable_aapl we turned afp on for the share, so wait until
                 # it has been destroyed before turning off aapl_extensions.

@@ -86,9 +86,9 @@ class InterfaceService(Service):
 
         if vip or alias_vips:
             if not self.middleware.call_sync('service.started', 'keepalived'):
-                self.middleware.call_sync('service.start', 'keepalived')
+                self.middleware.call_sync('service.start', 'keepalived').wait_sync(raise_error=True)
             else:
-                self.middleware.call_sync('service.reload', 'keepalived')
+                self.middleware.call_sync('service.reload', 'keepalived').wait_sync(raise_error=True)
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):

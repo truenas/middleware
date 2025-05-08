@@ -398,5 +398,5 @@ class FCPortService(CRUDService):
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             if do_module_load:
                 await self.middleware.call('failover.call_remote', 'fcport.load_kernel_module')
-            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'], {'job': True})
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')

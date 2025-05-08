@@ -97,7 +97,7 @@ def test_set_remote_syslog(request):
     try:
         data = call('system.advanced.update', {'syslogserver': '127.0.0.1'})
         assert data['syslogserver'] == '127.0.0.1'
-        call('service.restart', 'syslogd', {'silent': False})
+        call('service.restart', 'syslogd', {'silent': False}, job=True)
     finally:
         call('system.advanced.update', {'syslogserver': ''})
 
@@ -119,7 +119,7 @@ def test_remote_syslog_function():
         payload = {"syslogserver": remote_ip, "syslog_transport": "TCP"}
         data = call('system.advanced.update', payload)
         assert data['syslogserver'] == remote_ip
-        call('service.restart', 'syslogd', {'silent': False})
+        call('service.restart', 'syslogd', {'silent': False}, job=True)
 
         # Make sure we don't have old test cruft and start with a zero byte file
         if not ssh(f'rm -f {test_log}', ip=remote_ip, check=False):
