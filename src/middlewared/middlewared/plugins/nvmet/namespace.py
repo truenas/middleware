@@ -4,6 +4,7 @@ import subprocess
 import uuid
 
 import middlewared.sqlalchemy as sa
+from asyncio import Lock
 from middlewared.api import api_method
 from middlewared.api.current import (NVMetNamespaceCreateArgs,
                                      NVMetNamespaceCreateResult,
@@ -22,6 +23,7 @@ from .kernel import resize_namespace as kernel_resize_namespace
 
 UUID_GENERATE_RETRIES = 10
 NSID_SEARCH_RANGE = 0xFFFF  # This is much less than NSID, but good enough for practical purposes.
+NSID_LOCK = Lock()
 
 
 def remove_file(data: dict) -> bool:
@@ -86,13 +88,14 @@ class NVMetNamespaceService(SharingService):
         await self.middleware.call('nvmet.namespace.save_file', data, 'nvmet_namespace_create', verrors)
         verrors.check()
 
-        if not data.get('nsid'):
-            data['nsid'] = await self.__get_next_nsid(data['subsys_id'])
+        async with NSID_LOCK:
+            if not data.get('nsid'):
+                data['nsid'] = await self.__get_next_nsid(data['subsys_id'])
 
-        await self.compress(data)
-        data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+            await self.compress(data)
+            data['id'] = await self.middleware.call(
+                'datastore.insert', self._config.datastore, data,
+                {'prefix': self._config.datastore_prefix})
 
         await self._service_change('nvmet', 'reload')
         return await self.get_instance(data['id'])

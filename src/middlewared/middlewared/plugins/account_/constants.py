@@ -1,5 +1,6 @@
 ADMIN_UID = 950
 ADMIN_GID = 950
+MIN_AUTO_XID = 3000  # See NAS-117892 - purpose is to avoid collision with apps uids/gids
 SKEL_PATH = '/etc/skel/'  # TODO evaluate whether this is still needed
 
 # TrueNAS historically used /nonexistent as the default home directory for new

@@ -61,6 +61,7 @@ from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.utils.reserved_ids import ReservedUids, ReservedGids
 from middlewared.utils.security import (
     check_password_complexity,
     MAX_PASSWORD_HISTORY,
@@ -71,7 +72,7 @@ from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
-    SYNTHETIC_CONTAINER_ROOT,
+    SYNTHETIC_CONTAINER_ROOT, MIN_AUTO_XID,
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -671,7 +672,7 @@ class UserService(CRUDService):
             ))['id'])
 
         if data.get('uid') is None:
-            data['uid'] = self.middleware.call_sync('user.get_next_uid')
+            data['uid'] = self.get_next_uid()
 
         new_homedir = False
         home_mode = data.pop('home_mode')
@@ -689,6 +690,9 @@ class UserService(CRUDService):
                 # Homedir setup failed, we should remove any auto-generated group
                 if group_created:
                     self.middleware.call_sync('group.delete', data['group'])
+
+                with ReservedUids.lock:
+                    ReservedUids.remove_entry(data['uid'])
 
                 raise
 
@@ -715,6 +719,9 @@ class UserService(CRUDService):
                 # commands failed to execute cleanly.
                 shutil.rmtree(data['home'])
             raise
+        finally:
+            with ReservedUids.lock:
+                ReservedUids.remove_entry(data['uid'])
 
         self.middleware.call_sync('service.reload', 'ssh')
         self.middleware.call_sync('service.reload', 'user')
@@ -1221,26 +1228,29 @@ class UserService(CRUDService):
         return user_obj
 
     @api_method(UserGetNextUidArgs, UserGetNextUidResult, roles=['ACCOUNT_READ'])
-    async def get_next_uid(self):
+    def get_next_uid(self):
         """
         Get the next available/free uid.
         """
         # We want to create new users from 3000 to avoid potential conflicts - Reference: NAS-117892
-        last_uid = 2999
-        builtins = await self.middleware.call(
-            'datastore.query', 'account.bsdusers',
-            [('builtin', '=', False)], {'order_by': ['uid'], 'prefix': 'bsdusr_'}
-        )
-        for i in builtins:
-            # If the difference between the last uid and the current one is
-            # bigger than 1, it means we have a gap and can use it.
-            if i['uid'] - last_uid > 1:
-                return last_uid + 1
+        with ReservedUids.lock:
+            allocated_uids = set([u['uid'] for u in self.middleware.call_sync(
+                'datastore.query', 'account.bsdusers',
+                [('builtin', '=', False), ('uid', '>=', MIN_AUTO_XID)], {'prefix': 'bsdusr_'}
+            )])
 
-            if i['uid'] > last_uid:
-                last_uid = i['uid']
+            in_flight_uids = ReservedUids.in_use()
 
-        return last_uid + 1
+            total_uids = allocated_uids | in_flight_uids
+            max_uid = max(total_uids) if total_uids else MIN_AUTO_XID - 1
+
+            if gap_uids := set(range(MIN_AUTO_XID, max_uid)) - total_uids:
+                next_uid = min(gap_uids)
+            else:
+                next_uid = max_uid + 1
+
+            ReservedUids.add_entry(next_uid)
+            return next_uid
 
     @api_method(
         UserHasLocalAdministratorSetUpArgs, UserHasLocalAdministratorSetUpResult,
@@ -1984,8 +1994,13 @@ class GroupService(CRUDService):
         group = data.copy()
         group['group'] = group.pop('name')
 
-        group = await self.group_compress(group)
-        pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
+        try:
+            group = await self.group_compress(group)
+            pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
+        finally:
+            # Once the data store entry is created we can safely remove the reservation
+            async with ReservedGids.lock:
+                ReservedGids.remove_entry(data['gid'])
 
         if reload_users:
             await self.middleware.call('service.reload', 'user')
@@ -2144,18 +2159,23 @@ class GroupService(CRUDService):
         """
         Get the next available/free gid.
         """
-        used_gids = {
-            group['bsdgrp_gid']
-            for group in await self.middleware.call('datastore.query', 'account.bsdgroups')
-        }
-        used_gids |= set((await self.middleware.call('privilege.used_local_gids')).keys())
+        async with ReservedGids.lock:
+            groups = await self.middleware.call(
+                'datastore.query', 'account.bsdgroups', [['bsdgrp_gid', '>=', MIN_AUTO_XID], ['bsdgrp_builtin', '=', False]]
+            )
+            used_gids = set(group['bsdgrp_gid'] for group in groups)
+            used_gids |= set([gid for gid in (await self.middleware.call('privilege.used_local_gids')).keys() if gid >= MIN_AUTO_XID])
+            in_flight_gids = ReservedGids.in_use()
+            total_gids = used_gids | in_flight_gids
+            max_gid = max(total_gids) if total_gids else MIN_AUTO_XID - 1
 
-        # We should start gid from 3000 to avoid potential conflicts - Reference: NAS-117892
-        next_gid = 3000
-        while next_gid in used_gids:
-            next_gid += 1
+            if gid_gap := (set(range(MIN_AUTO_XID, max_gid)) - total_gids):
+                next_gid = min(gid_gap)
+            else:
+                next_gid = max_gid + 1
 
-        return next_gid
+            ReservedGids.add_entry(next_gid)
+            return next_gid
 
     @api_method(GroupGetGroupObjArgs, GroupGetGroupObjResult, roles=['ACCOUNT_READ'])
     def get_group_obj(self, data):
