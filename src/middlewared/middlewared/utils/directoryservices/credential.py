@@ -134,6 +134,7 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
                 realm = new['configuration']['domain']
 
             new['configuration']['idmap']['idmap_domain']['name'] = domain_info['workgroup']
+            new['kerberos_realm'] = realm
 
         case DSType.IPA:
             if not kdc:

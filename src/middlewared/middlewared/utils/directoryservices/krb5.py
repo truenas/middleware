@@ -363,7 +363,7 @@ def parse_keytab(keytab_output: list) -> list:
     return keytab_entries
 
 
-def ktutil_list_impl(keytab_file: str) -> list:
+def ktutil_list_impl(keytab_file: str = KRB_Keytab.SYSTEM.value) -> list:
     """
     Thin wrapper around `klist -ket` that returns keytab entries as a list
 

@@ -9,6 +9,7 @@ from middlewared.api.current import (
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils.directoryservices.ad import get_machine_account_status
+from middlewared.utils.directoryservices.krb5 import ktutil_list_impl
 from middlewared.utils.directoryservices.constants import (
     DSCredType, DomainJoinResponse, DSStatus, DSType
 )
@@ -511,7 +512,7 @@ class DirectoryServices(ConfigService):
             case 'IPA':
                 self.validate_ipa(old, new, verrors, revert)
             case 'LDAP':
-                # pre-validated when we call validate_redential() above
+                # pre-validated when we call validate_credential() above
                 pass
             case None:
                 # Disabling directory services
@@ -523,6 +524,16 @@ class DirectoryServices(ConfigService):
             self.__revert_changes(revert)
 
         verrors.check()
+
+        # If admin specified a realm and we got past credential verification then it was probably
+        # not garbage and so it should be inserted.
+        if new['kerberos_realm']:
+            if not self.middleware.call_sync('kerberos.realm.query', [['realm', '=', new['kerberos_realm']]]):
+                realm_id = self.middleware.call_sync(
+                    'datastore.insert', 'directoryservice.kerberosrealm',
+                    {'krb_realm': new['kerberos_realm']}
+                )
+                revert.append({'method': 'kerberos.realm.delete', 'args': [realm_id]})
 
         # At this point we know that our credenitals are good and we can properly bind to directory services
         # We'll commit the changes to the datastore to simplify further directory services ops
@@ -609,8 +620,22 @@ class DirectoryServices(ConfigService):
         self.middleware.call_sync('directoryservices.health.recover')
 
         # We may have used our domain secrets to restore the AD machine account keytab
-        if ds_type is DSType.AD and new['configuration']['credential_type'] == DSCredType.KERBEROS_USER:
+        if ds_type is DSType.AD and new['credential']['credential_type'] == DSCredType.KERBEROS_USER:
             sam_account_name = get_machine_account_status()['sAMAccountName']
+            principal = None
+            for entry in ktutil_list_impl():
+                if entry['principal'].startswith(sam_account_name):
+                    principal = entry['principal']
+                    break
+
+            if not principal:
+                self.logger.warning('%s: sAMAccountName not found in keytab file', sam_account_name)
+                # Make a guess at principal name
+                principal = f'{sam_account_name}@{new["configuration"]["domain"]}'
+
+            new['credential'] = {'credential_type': 'KERBEROS_PRINCIPAL', 'principal': principal}
+            compressed = self.compress(new)
+            self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
              
         return self.middleware.call_sync('directoryservices.config')
 
@@ -651,13 +676,13 @@ class DirectoryServices(ConfigService):
             raise CallError('Directory service must be enabled and healthy prior to leaving domain.')
 
         # overwrite cred with admin-provided one. We need elevated permissions to do this
-        ds_config['credentials'] = cred
+        ds_config['credential'] = cred['credential']
 
         ds_type = DSType(ds_config['service_type'])
         if ds_type not in (DSType.IPA, DSType.AD):
             raise CallError('Directory service type does not support leave operations')
 
-        validate_credential('directoryservices.leave_domain', verrors, revert)
+        validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
         if verrors:
             self.__revert_changes(revert)
 
@@ -675,7 +700,7 @@ class DirectoryServices(ConfigService):
         job.set_progress(description='Restarting services')
         self.middleware.call_sync('kerberos.stop')
 
-        for etc_file in DSType.etc_files:
+        for etc_file in ds_type.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
         if ds_type is DSType.IPA:

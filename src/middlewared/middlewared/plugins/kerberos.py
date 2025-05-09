@@ -520,7 +520,7 @@ class KerberosKeytabService(CRUDService):
         if not samba_keytabs:
             return
 
-        ds_config = self.middleware.call_sync('directorysevices.config')
+        ds_config = self.middleware.call_sync('directoryservices.config')
         keytab_file = concatenate_keytab_data(samba_keytabs)
         keytab_file_encoded = base64.b64encode(keytab_file).decode()
 
@@ -541,7 +541,8 @@ class KerberosKeytabService(CRUDService):
         netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
         machine_acct = f'{netbiosname}$@{ds_config["configuration"]["domain"]}' 
 
-        if ds_config['credential_type'] != 'KERBEROS_PRINCIPAL' or ds_config['principal'] != machine_acct: 
+        ds_cred = ds_config['credential']
+        if ds_cred['credential_type'] != 'KERBEROS_PRINCIPAL' or ds_cred['principal'] != machine_acct: 
             krb_cred = {
                 'credential_type': 'KERBEROS_PRINCIPAL',
                 'principal': machine_acct

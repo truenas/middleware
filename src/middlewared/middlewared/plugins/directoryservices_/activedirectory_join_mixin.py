@@ -30,6 +30,7 @@ from middlewared.utils.directoryservices.krb5_error import (
     KRB5Error,
     KRB5ErrCode,
 )
+from middlewared.utils.netbios import validate_netbios_name, NETBIOSNAME_MAX_LEN
 from time import sleep, time
 
 
@@ -166,7 +167,7 @@ class ADJoinMixin:
         """ Delete our computer object from active directory """
 
         # remove privileges
-        job.set_progress('Removing local domain admin privilege from TrueNAS')
+        job.set_progress(description='Removing local domain admin privilege from TrueNAS')
         try:
             self._ad_remove_privileges(ds_config)
         except Exception:
@@ -176,7 +177,7 @@ class ADJoinMixin:
         for file in os.listdir(SAMBA_KEYTAB_DIR):
             os.unlink(os.path.join(SAMBA_KEYTAB_DIR, file))
 
-        job.set_progress('Removing machine account from Active Directory')
+        job.set_progress(description='Removing machine account from Active Directory')
         netads = subprocess.run([
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
@@ -198,14 +199,14 @@ class ADJoinMixin:
 
         dns_name = f'{ds_config["configuration"]["hostname"]}@{ds_config["configuration"]["domain"]}'
         if ds_config['enable_dns_updates']:
-            job.set_progress('Unregistering from active directory DNS')
+            job.set_progress(description='Unregistering from active directory DNS')
             try:
                 self.unregister_dns(dns_name, True)
             except Exception:
                 # We're committed now and so we need to finish up our local reconfiguration
                 self.logger.warning('Failed to unregister from active directory DNS. Manual cleanup required', exc_info=True)
 
-        job.set_progress('Removing local configuration')
+        job.set_progress(description='Removing local configuration')
         self.middleware.call_sync('directoryservices.reset')
 
         # Remove the AD kerberos principal
@@ -215,7 +216,7 @@ class ADJoinMixin:
 
         # Remove the AD kerberos realm
         if ds_config['kerberos_realm']:
-            realm = self.middleware.call_sync('kerberos_realm.query', [['realm', '=', ds_config['kerberos_realm']]])
+            realm = self.middleware.call_sync('kerberos.realm.query', [['realm', '=', ds_config['kerberos_realm']]])
             if realm:
                 self.middleware.call_sync('datastore.delete', 'directoryservice.kerberosrealm', realm[0]['id'])
 
@@ -334,6 +335,7 @@ class ADJoinMixin:
         the DC.
         """
         domain = conf['configuration']['domain']
+        hostname = conf['configuration']['hostname']
         computer_account_ou = conf['configuration']['computer_account_ou']
         cmd = [
             SMBCmd.NET.value,
@@ -342,6 +344,8 @@ class ADJoinMixin:
             '-d', '5',
             'ads', 'join',
         ]
+
+        cmd.append(f'dnshostname={hostname}@{domain}')
 
         if computer_account_ou:
             cmd.append(f'createcomputer={computer_account_ou}')
@@ -366,7 +370,8 @@ class ADJoinMixin:
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
             # roll back and present user with error
-            self._ad_leave(job, DSType.AD, domain)
+            self.logger.debug('Post-join actions failed. Rolling back configuration', exc_info=True)
+            self._ad_leave(job, conf)
             self.middleware.call_sync('idmap.gencache.flush')
             raise e from None
 
@@ -374,16 +379,44 @@ class ADJoinMixin:
     def _ad_join(self, job: Job, ds_config: dict):
         assert ds_config['service_type'] == 'ACTIVEDIRECTORY', 'Unexpected service configuration'
         domain = ds_config['configuration']['domain']
+        hostname = ds_config['configuration']['hostname']
         realm_id = None
-
-        smb = self.middleware.call_sync('smb.config')
-        workgroup = smb['workgroup']
 
         if (failover_status := self.middleware.call_sync('failover.status')) not in ('MASTER', 'SINGLE'):
             raise CallError(
                 f'{failover_status}: TrueNAS may only be joined to active directory '
                 'through the active storage controller and if high availability is healthy.'
             )
+
+        ngc = self.middleware.call_sync('network.configuration.config')
+        smb = self.middleware.call_sync('smb.config')
+
+        # Make some reasonable hostname guesses if user hasn't done override
+        if not hostname:
+            hostname = ngc.get('hostname_virutal') or ngc['hostname_local']
+
+        # If user has specified a hostname to use for join, then overwrite other parts of config if needed
+        elif hostname != (ngc.get('hostname_virutal') or ngc['hostname_local']):
+            if ngc.get('hostname_virtual'): 
+                self.middleware.call_sync('network.configuration.update', {'hostname_virtual': hostname})
+            else:
+                self.middleware.call_sync('network.configuration.update', {'hostname': hostname})
+        
+        # Update the netbiosname to something reasonably related to our hostname
+        # There are probably some legacy users who have "truenas" as the name of their server
+        # because that was the default netbiosname. This isn't a great choice because if another device
+        # joins AD with same generic name then it will clobber this one's computer account in AD, and so
+        # we want to discourage that.
+        if smb['netbiosname'] != hostname and smb['netbiosname'] == 'truenas':
+            # Default netbiosname. We *really* don't want to collide with other servers.
+            # We'll start by trying to truncate to max netbiosname length
+            smb['netbiosname'] = hostname[:NETBIOSNAME_MAX_LEN - 1]
+
+            # Allow job failure if our best guess at a valid netbiosname fails
+            validate_netbios_name(smb['netbiosname'])
+            self.middleware.call_sync('datastore.update', 'services.cifs', {'cifs_srv_netbiosname': smb['netbiosname']})
+
+        workgroup = smb['workgroup']
 
         dc_info = self._ad_lookup_dc(domain)
 
@@ -408,10 +441,18 @@ class ADJoinMixin:
                     'datastore.insert', 'directoryservice.kerberosrealm',
                     {'krb_realm': domain.upper()}
                 )
+
+            ds_config['kerberos_realm'] = domain
         else:
-            realm_id = self.middleware.call_sync('kerberos.realm.query', [
-                ['realm', '=', ds_config['realm']]
-            ], {'get': True})['id']
+            try:
+                realm_id = self.middleware.call_sync('kerberos.realm.query', [
+                    ['realm', '=', ds_config['kerberos_realm']]
+                ], {'get': True})['id']
+            except MatchNotFound:
+                realm_id = self.middleware.call_sync(
+                    'datastore.insert', 'directoryservice.kerberosrealm',
+                    {'krb_realm': domain.upper()}
+                )
 
         job.set_progress(20, 'Detecting Active Directory Site.')
         site = ds_config['configuration']['site'] or dc_info['client_site_name']
