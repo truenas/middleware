@@ -49,7 +49,7 @@ def temporary_update(user: dict, data: dict, with_audit: bool = False):
         yield updated_user
 
     finally:
-        call("user.update", user["id"], {k: user[k] for k in data.keys()})
+        call("user.update", user["id"], {k: user[k] for k in data.keys() if k in user})
 
 
 def test_create_account_audit():
