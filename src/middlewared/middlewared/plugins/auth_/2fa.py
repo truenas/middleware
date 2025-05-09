@@ -98,7 +98,7 @@ class TwoFactorAuthService(ConfigService):
         if not config['enabled']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
 
-        await self.middleware.call('service.reload', 'ssh')
+        await (await self.middleware.call('service.control', 'RELOAD', 'ssh')).wait(raise_error=True)
         await self.middleware.call('etc.generate', 'user')
 
         return await self.config()

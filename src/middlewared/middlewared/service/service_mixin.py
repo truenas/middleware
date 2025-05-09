@@ -16,7 +16,9 @@ class ServiceChangeMixin:
         await self.middleware.call('etc.generate', 'rc')
 
         if svc_state == 'running':
-            started = await self.middleware.call(f'service.{verb}', service, options or {})
+            started = await (
+                await self.middleware.call('service.control', verb.upper(), service, options or {})
+            ).wait(raise_error=True)
 
             if not started:
                 raise CallError(
