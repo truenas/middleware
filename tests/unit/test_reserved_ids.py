@@ -8,7 +8,7 @@ from truenas_api_client import Client
 
 @pytest.fixture(scope='function')
 def reserve_obj():
-    return reserved_ids.ReservedXid({}, Lock())
+    return reserved_ids.ReservedXid({})
 
 
 def test_add_entry(reserve_obj):
