@@ -2,7 +2,6 @@ import contextlib
 import pytest
 
 from auto_config import pool_name
-from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import user, group, unprivileged_user_client
 from middlewared.test.integration.utils import call, client
@@ -11,6 +10,8 @@ from middlewared.test.integration.utils.audit import expect_audit_method_calls
 BASE_SYNTHETIC_DATASTORE_ID = 100000000
 DS_USR_VERR_STR = "Directory services users may not be added as members of local groups."
 DS_GRP_VERR_STR = "Local users may not be members of directory services groups."
+NO_LOGIN_SHELL = "/usr/sbin/nologin"
+HOME_DIR = f"/mnt/{pool_name}"
 
 
 @pytest.fixture(scope="module")
@@ -25,41 +26,47 @@ def test_user():
 
 
 @contextlib.contextmanager
-def temporary_update(user: dict, data: dict):
+def temporary_update(user: dict, data: dict, with_audit: bool = False):
     """Perform a call to user.update and roll it back on teardown.
 
     Assume keys in `data` are a subset of the keys in `user`.
 
+    :param user: The user entry to update.
+    :param data: Fields to update with their new values.
+    :param with_audit: Verify the audit logs after the first user.update call.
     """
     try:
-        yield call("user.update", user["id"], data)
+        if with_audit:
+            with expect_audit_method_calls([{
+                "method": "user.update",
+                "params": [user["id"], data],
+                "description": f"Update user {user['username']}",
+            }]):
+                updated_user = call("user.update", user["id"], data)
+        else:
+            updated_user = call("user.update", user["id"], data)
+
+        yield updated_user
+
     finally:
         call("user.update", user["id"], {k: user[k] for k in data.keys()})
 
 
 def test_create_account_audit():
     user_id = None
+    payload = {
+        "username": "sergey",
+        "full_name": "Sergey",
+        "group_create": True,
+        "home": "/nonexistent",
+        "password": "password",
+    }
     try:
         with expect_audit_method_calls([{
             "method": "user.create",
-            "params": [
-                {
-                    "username": "sergey",
-                    "full_name": "Sergey",
-                    "group_create": True,
-                    "home": "/nonexistent",
-                    "password": "********",
-                }
-            ],
+            "params": [{**payload, "password": "********"}],
             "description": "Create user sergey",
         }]):
-            payload = {
-                "username": "sergey",
-                "full_name": "Sergey",
-                "group_create": True,
-                "home": "/nonexistent",
-                "password": "password",
-            }
             user_id = call("user.create", payload)['id']
     finally:
         if user_id is not None:
@@ -67,13 +74,8 @@ def test_create_account_audit():
 
 
 def test_update_account_audit(test_user):
-    with expect_audit_method_calls([{
-        "method": "user.update",
-        "params": [test_user["id"], {}],
-        "description": f"Update user {test_user['username']}",
-    }]):
-        with temporary_update(test_user, {}):
-            pass
+    with temporary_update(test_user, {}, with_audit=True):
+        pass
 
 
 def test_delete_account_audit():
@@ -104,19 +106,13 @@ def test_delete_self(roles, message):
 
 def test_create_group_audit():
     group_id = None
+    payload = {"name": "group2"}
     try:
         with expect_audit_method_calls([{
             "method": "group.create",
-            "params": [
-                {
-                    "name": "group2",
-                }
-            ],
+            "params": [payload],
             "description": "Create group group2",
         }]):
-            payload = {
-                "name": "group2",
-            }
             group_id = call("group.create", payload)
     finally:
         if group_id is not None:
@@ -124,9 +120,7 @@ def test_create_group_audit():
 
 
 def test_update_group_audit():
-    with group({
-        "name": "group2",
-    }) as g:
+    with group({"name": "group2"}) as g:
         with expect_audit_method_calls([{
             "method": "group.update",
             "params": [g["id"], {}],
@@ -136,9 +130,7 @@ def test_update_group_audit():
 
 
 def test_delete_group_audit():
-    with group({
-        "name": "group2",
-    }) as g:
+    with group({"name": "group2"}) as g:
         with expect_audit_method_calls([{
             "method": "group.delete",
             "params": [g["id"]],
@@ -170,7 +162,10 @@ def test_update_account_using_token():
 
 def test_create_local_group_ds_user():
     with pytest.raises(ValidationErrors) as ve:
-        with group({"name": "local_ds", "users": [BASE_SYNTHETIC_DATASTORE_ID + 1]}):
+        with group({
+            "name": "local_ds",
+            "users": [BASE_SYNTHETIC_DATASTORE_ID + 1]
+        }):
             pass
 
     assert DS_USR_VERR_STR in str(ve)
@@ -227,11 +222,19 @@ def test_create_user_with_random_password():
 
 
 def test_update_user_with_random_password(test_user):
-    with temporary_update(test_user, {'random_password': True}) as new:
-        assert new['password'] != test_user['password']
+    user_id = test_user["id"]
+    old_password = test_user["password"]
 
-        with temporary_update(new, {'full_name': 'bob2'}) as newer:
-            assert not newer['password']
+    try:
+        new_entry = call("user.update", user_id, {"random_password": True})
+        assert new_entry["password"] != old_password
+
+        with temporary_update(new_entry, {"full_name": "bob2"}) as newer_entry:
+            assert not newer_entry["password"]
+
+    finally:
+        # Rollback state
+        call("user.update", user_id, {"password": old_password})
 
 
 def test_account_create_invalid_username():
@@ -257,11 +260,11 @@ def test_account_update_invalid_username(test_user: dict):
         "SSH password login requires a valid home path."
     ),
     (
-        {"ssh_password_enabled": True, "home": pool_name, "shell": NO_LOGIN_SHELL},
+        {"ssh_password_enabled": True, "home": HOME_DIR, "shell": NO_LOGIN_SHELL},
         "SSH password login requires a login shell."
     ),
     (
-        {"ssh_password_enabled": True, "home": pool_name},
+        {"ssh_password_enabled": True, "home": HOME_DIR},
         None
     ),
 ])
@@ -288,15 +291,27 @@ def test_user_create_ssh_password_login(args: dict, errmsg: str | None):
 
 @pytest.mark.parametrize("args, errmsg", [
     # When test begins: ssh_password_enabled=False, home is invalid, shell is valid.
-    ({"ssh_password_enabled": True}, "Cannot be enabled without a valid home path and login shell."),
-    ({"ssh_password_enabled": True, "home": "/var/empty"}, "SSH password login requires a valid home path."),
-    ({"ssh_password_enabled": True, "shell": NO_LOGIN_SHELL}, "SSH password login requires a login shell."),
-    ({"ssh_password_enabled": True, "home": pool_name}, None),
+    (
+        {"ssh_password_enabled": True},
+        "Cannot be enabled without a valid home path and login shell."
+    ),
+    (
+        {"ssh_password_enabled": True, "home": "/var/empty"},
+        "SSH password login requires a valid home path."
+    ),
+    (
+        {"ssh_password_enabled": True, "shell": NO_LOGIN_SHELL},
+        "SSH password login requires a login shell."
+    ),
+    (
+        {"ssh_password_enabled": True, "home": HOME_DIR, "home_create": True},
+        None
+    ),
 ])
 def test_user_update_ssh_password_login(test_user: dict, args: dict, errmsg: str | None):
     if errmsg is None:
-        with temporary_update(test_user["id"], args):
+        with temporary_update(test_user, args):
             return
     with pytest.raises(ValidationErrors, match=errmsg):
-        with temporary_update(test_user["id"], args):
+        with temporary_update(test_user, args):
             pass
