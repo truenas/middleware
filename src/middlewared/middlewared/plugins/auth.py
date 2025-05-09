@@ -976,7 +976,7 @@ class AuthService(Service):
                         case TokenResult.NO_ENTRY:
                             errmsg = 'Invalid token'
                             # Expose string passed as a token since it may be relevant
-                            token_repr = token.token
+                            token_repr = token_str
                         case TokenResult.EXPIRED:
                             errmsg = 'Token has expired'
                         case TokenResult.ORIGIN_MATCH_FAILED:
