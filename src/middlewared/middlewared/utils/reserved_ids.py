@@ -27,4 +27,4 @@ class ReservedXid:
         self.in_flight.pop(xid, None)
 
     def in_use(self) -> set:
-        return set([entry for entry in self.in_flight.keys() if not self.available(entry)])
+        return set([entry for entry in list(self.in_flight.keys()) if not self.available(entry)])
