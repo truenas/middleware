@@ -400,21 +400,22 @@ class KerberosKeytabService(CRUDService):
         kt = await self.get_instance(id_)
         audit_callback(kt['name'])
         if kt['name'] == 'AD_MACHINE_ACCOUNT':
-            ad_config = await self.middleware.call('activedirectory.config')
-            if ad_config['enable']:
+            ds_config = await self.middleware.call('directoryservices.config')
+            if ds_config['enable'] and ds_config['service_type'] == 'ACTIVEDIRECTORY':
                 raise CallError(
                     'Active Directory machine account keytab may not be deleted while '
                     'the Active Directory service is enabled.'
                 )
 
-            await self.middleware.call(
-                'datastore.update', 'directoryservice.activedirectory',
-                ad_config['id'], {'kerberos_principal': ''}, {'prefix': 'ad_'}
-            )
+            if ds_confg['service_type'] == 'ACTIVEDIRECTORY':
+                if ds_config['credential']['credential_type'] == 'KERBEROS_PRINCIPAL':
+                    # remove credential reference
+                    await self.middleware.call('datastore.update', 'directoryservices', ds_config['id'], {
+                        'cred_type': None, 'cred_krb5': None
+                    }) 
 
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
-        await self._cleanup_kerberos_principals()
         await self.middleware.call('kerberos.stop')
         try:
             await self.middleware.call('kerberos.start')
@@ -422,16 +423,6 @@ class KerberosKeytabService(CRUDService):
             self.logger.debug(
                 'Failed to start kerberos service after deleting keytab entry: %s' % e
             )
-
-    @private
-    async def _cleanup_kerberos_principals(self):
-        principal_choices = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
-        ad = await self.middleware.call('activedirectory.config')
-        ldap = await self.middleware.call('ldap.config')
-        if ad['kerberos_principal'] and ad['kerberos_principal'] not in principal_choices:
-            await self.middleware.call('activedirectory.update', {'kerberos_principal': ''})
-        if ldap['kerberos_principal'] and ldap['kerberos_principal'] not in principal_choices:
-            await self.middleware.call('ldap.update', {'kerberos_principal': ''})
 
     @private
     def _validate_impl(self, schema, data, verrors):
@@ -542,6 +533,7 @@ class KerberosKeytabService(CRUDService):
         machine_acct = f'{netbiosname}$@{ds_config["configuration"]["domain"]}' 
 
         ds_cred = ds_config['credential']
+        self.logger.debug("XXX: %s", ds_cred)
         if ds_cred['credential_type'] != 'KERBEROS_PRINCIPAL' or ds_cred['principal'] != machine_acct: 
             krb_cred = {
                 'credential_type': 'KERBEROS_PRINCIPAL',

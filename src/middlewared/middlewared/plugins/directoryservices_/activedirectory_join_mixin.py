@@ -197,8 +197,8 @@ class ADJoinMixin:
         except Exception:
             self.logger.debug('Failed to remove stale secrets', exc_info=True)
 
-        dns_name = f'{ds_config["configuration"]["hostname"]}@{ds_config["configuration"]["domain"]}'
         if ds_config['enable_dns_updates']:
+            dns_name = f'{ds_config["configuration"]["hostname"]}.{ds_config["configuration"]["domain"]}'
             job.set_progress(description='Unregistering from active directory DNS')
             try:
                 self.unregister_dns(dns_name, True)
@@ -221,7 +221,7 @@ class ADJoinMixin:
                 self.middleware.call_sync('datastore.delete', 'directoryservice.kerberosrealm', realm[0]['id'])
 
     @kerberos_ticket
-    def _ad_set_spn(self, netbiosname, domainname):
+    def _ad_set_spn(self, hostname, domainname):
         def setspn(spn):
             cmd = [
                 SMBCmd.NET.value,
@@ -235,8 +235,8 @@ class ADJoinMixin:
                 self.logger.error("%s: failed to set spn entry: %s", spn,
                                   netads.stdout.decode().strip())
 
-        setspn(f'nfs/{netbiosname.upper()}')
-        setspn(f'nfs/{netbiosname.upper()}.{domainname.lower()}')
+        setspn(f'nfs/{hostname.upper()}')
+        setspn(f'nfs/{hostname.upper()}.{domainname.lower()}')
         self.middleware.call_sync('kerberos.keytab.store_ad_keytab')
 
     @kerberos_ticket
@@ -316,7 +316,10 @@ class ADJoinMixin:
         self.middleware.call('privilege.delete', priv[0]['id'])
 
     def _ad_post_join_actions(self, job: Job, conf: dict):
-        self._ad_set_spn(conf['netbiosname'], conf['domainname'])
+        domain = conf['configuration']['domain']
+        hostname = conf['configuration']['hostname']
+
+        self._ad_set_spn(hostname, domain)
         # The password in secrets.tdb has been replaced so make
         # sure we have it backed up in our config.
         self.middleware.call_sync('directoryservices.secrets.backup')
@@ -345,7 +348,7 @@ class ADJoinMixin:
             'ads', 'join',
         ]
 
-        cmd.append(f'dnshostname={hostname}@{domain}')
+        cmd.append(f'dnshostname={hostname}.{domain}')
 
         if computer_account_ou:
             cmd.append(f'createcomputer={computer_account_ou}')
@@ -416,6 +419,7 @@ class ADJoinMixin:
             validate_netbios_name(smb['netbiosname'])
             self.middleware.call_sync('datastore.update', 'services.cifs', {'cifs_srv_netbiosname': smb['netbiosname']})
 
+        ds_config['configuration']['hostname'] = hostname
         workgroup = smb['workgroup']
 
         dc_info = self._ad_lookup_dc(domain)
@@ -466,9 +470,9 @@ class ADJoinMixin:
 
         # Update datastore with credential information. We do this before the
         # actual join so that correct kerberos information gets inserted into SMB config
-        dns_name = f'{smb["netbiosname"]}@{domain}'
+        dns_name = f'{hostname}.{domain}'
         machine_acct = f'{smb["netbiosname"].upper()}$@{domain}'
-        krb_cred = {'credential_type': 'KERBEROS_PRINCIPAL', 'kerberos_princpal': machine_acct}
+        krb_cred = {'credential_type': 'KERBEROS_PRINCIPAL', 'principal': machine_acct}
         self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], {
             'cred_type': 'KERBEROS_PRINCIPAL',
             'cred_krb5': krb_cred,
@@ -506,10 +510,11 @@ class ADJoinMixin:
         krbconf.add_realms([{
             'realm': ds_config['kerberos_realm'],
             'admin_server': [],
-            'kdc': domain_info['kdc_server'],
+            'kdc': [domain_info['kdc_server']],
             'kpasswd_server': [],
         }])
         krbconf.write()
+        self.logger.debug("XXX: %s", krbconf.generate())
 
         try:
             kinit_with_cred(krb_cred)

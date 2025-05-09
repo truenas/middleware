@@ -85,15 +85,15 @@ def kinit_with_cred(
     cred_type = DSCredType(cred.get('credential_type'))
     match cred_type:
         case DSCredType.KERBEROS_PRINCIPAL:
-            if (krbcred := __get_current_cred(cred['kerberos_principal'], ccache)) is None:
-                krbcred = __kinit_with_principal(cred['kerberos_principal'], ccache, lifetime)
+            if (krbcred := __get_current_cred(cred['principal'], ccache)) is None:
+                krbcred = __kinit_with_principal(cred['principal'], ccache, lifetime)
         case DSCredType.KERBEROS_USER:
             if (krbcred := __get_current_cred(cred['username'], ccache)) is None:
                 krbcred = __kinit_with_user(cred['username'], cred['password'], ccache, lifetime)
         case _:
             raise ValueError(f'{cred_type}: not a kerberos credential type')
 
-    return gss_dump_cred(krbcred)
+    return gss_dump_cred(gss_get_current_cred(ccache))
 
 
 def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationErrors, revert: list):
@@ -195,7 +195,7 @@ def __validate_kerberos_credential(schema: str, new: dict, verrors: ValidationEr
         if dump['name_type'] == cred['credential_type']:
             match cred['credential_type']:
                 case DSCredType.KERBEROS_PRINCIPAL:
-                    if cred['kerberos_principal'] == cred['name']:
+                    if cred['principal'] == cred['name']:
                         return
                 case DSCredType.KERBEROS_USER:
                     if cred['username'] == cred['name']:
@@ -212,14 +212,14 @@ def __validate_kerberos_credential(schema: str, new: dict, verrors: ValidationEr
     # Now try to kinit
     if krb_cred == DSCredType.KERBEROS_PRINCIPAL:
         # check that kerberos principal exists in our keytab
-        if not any([k['principal'] == cred['kerberos_principal'] for k in ktutil_list_impl(KRB_Keytab.SYSTEM.value)]):
+        if not any([k['principal'] == cred['principal'] for k in ktutil_list_impl(KRB_Keytab.SYSTEM.value)]):
             verrors.add(
-                f'{schema}.credential.kerberos_principal',
+                f'{schema}.credential.principal',
                 'Specified kerberos principal does not exist on the TrueNAS server.'
             )
             return
 
-        key = f'{schema}.credential.kerberos_principal'
+        key = f'{schema}.credential.principal'
     else:
         key = f'{schema}.credential.username'
 
