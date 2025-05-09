@@ -125,8 +125,8 @@ class ISCSIDiscover:
         connected = False
         try:
             ctx = iscsi.Context(self._initiator_name)
-            ctx.set_session_type(iscsi.ISCSI_SESSION_DISCOVERY)
-            ctx.set_header_digest(iscsi.ISCSI_HEADER_DIGEST_NONE)
+            ctx.set_session_type(iscsi.iscsi_session_type.ISCSI_SESSION_DISCOVERY)
+            ctx.set_header_digest(iscsi.iscsi_header_digest.ISCSI_HEADER_DIGEST_NONE)
             if self._initiator_username and self._initiator_password:
                 ctx.set_initiator_username_pwd(self._initiator_username, self._initiator_password)
             if self._target_username and self._target_password:
