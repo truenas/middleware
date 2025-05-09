@@ -48,7 +48,7 @@ class UserEntry(BaseModel):
     full_name: str
     builtin: bool
     smb: bool = True
-    userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
+    userns_idmap: Literal['DIRECT', None] | ContainerXID = None
     """
     Specifies the subuid mapping for this user. If DIRECT then the UID will be
     directly mapped to all containers. Alternatively, the target UID may be
@@ -105,12 +105,12 @@ class UserCreate(UserEntry):
     immutable: Excluded = excluded_field()
     twofactor_auth_configured: Excluded = excluded_field()
     sid: Excluded = excluded_field()
+    last_password_change: Excluded = excluded_field()
+    password_age: Excluded = excluded_field()
+    password_history: Excluded = excluded_field()
+    password_change_required: Excluded = excluded_field()
     roles: Excluded = excluded_field()
     api_keys: Excluded = excluded_field()
-    password_history: Excluded = excluded_field()
-    password_age: Excluded = excluded_field()
-    last_password_change: Excluded = excluded_field()
-    password_change_required: Excluded = excluded_field()
 
     uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."
@@ -162,7 +162,7 @@ class UserDeleteOptions(BaseModel):
 
 class UserDeleteArgs(BaseModel):
     id: int
-    options: UserDeleteOptions = Field(default=UserDeleteOptions())
+    options: UserDeleteOptions = Field(default_factory=UserDeleteOptions)
 
 
 class UserDeleteResult(BaseModel):
@@ -251,7 +251,7 @@ class UserSetupLocalAdministratorOptions(BaseModel):
 class UserSetupLocalAdministratorArgs(BaseModel):
     username: Literal['root', 'truenas_admin']
     password: Secret[str]
-    options: UserSetupLocalAdministratorOptions = Field(default=UserSetupLocalAdministratorOptions())
+    options: UserSetupLocalAdministratorOptions = Field(default_factory=UserSetupLocalAdministratorOptions)
 
 
 class UserSetupLocalAdministratorResult(BaseModel):

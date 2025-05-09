@@ -21,7 +21,7 @@ def smb_setup(request):
             'full_name': SHAREUSER,
             'group_create': True,
             'password': PASSWD
-        }, get_instance=False):
+        }):
             with smb_share(os.path.join('/mnt', ds), SMB_NAME) as s:
                 try:
                     call('service.start', 'cifs')

@@ -73,7 +73,7 @@ from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
-    SYNTHETIC_CONTAINER_ROOT, MIN_AUTO_XID,
+    SYNTHETIC_CONTAINER_ROOT, NO_LOGIN_SHELL, MIN_AUTO_XID
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -616,9 +616,9 @@ class UserService(CRUDService):
         verrors = ValidationErrors()
 
         if (
-            not data.get('group') and not data.get('group_create')
+            not data['group'] and not data['group_create']
         ) or (
-            data.get('group') is not None and data.get('group_create')
+            data['group'] is not None and data['group_create']
         ):
             verrors.add(
                 'user_create.group',
@@ -628,14 +628,13 @@ class UserService(CRUDService):
             )
 
         group_ids = []
-        if data.get('group'):
+        if data['group']:
             group_ids.append(data['group'])
-        if data.get('groups'):
-            group_ids.extend(data['groups'])
+        group_ids.extend(data['groups'])
 
         self.middleware.call_sync('user.common_validation', verrors, data, 'user_create', group_ids)
 
-        if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
+        if data['sshpubkey'] and not data['home'].startswith('/mnt'):
             verrors.add(
                 'user_create.sshpubkey',
                 'The home directory is not writable. Leave this field blank.'
@@ -679,7 +678,7 @@ class UserService(CRUDService):
                 'group.query', [('group', '=', 'builtin_users'), ('local', '=', True)], {'get': True},
             ))['id'])
 
-        if data.get('uid') is None:
+        if data['uid'] is None:
             data['uid'] = self.get_next_uid()
 
         new_homedir = False
@@ -1111,7 +1110,7 @@ class UserService(CRUDService):
         }
 
         shells = {
-            '/usr/sbin/nologin': 'nologin',
+            NO_LOGIN_SHELL: 'nologin',
         }
         if self.middleware.call_sync('privilege.privileges_for_groups', 'local_groups', group_ids):
             shells.update(**{
@@ -1420,7 +1419,9 @@ class UserService(CRUDService):
                     )
 
     @private
-    async def common_validation(self, verrors, data, schema, group_ids, old=None):
+    async def common_validation(
+        self, verrors: ValidationErrors, data: dict, schema: str, group_ids: list[int], old: dict | None = None
+    ) -> None:
         exclude_filter = [('id', '!=', old['id'])] if old else []
         combined = data if not old else old | data
         password_changed = False
@@ -1557,6 +1558,8 @@ class UserService(CRUDService):
         if 'home' in data:
             if await self.middleware.run_in_thread(self.validate_homedir_path, verrors, schema, data, users):
                 await check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
+            elif combined['ssh_password_enabled']:
+                verrors.add(f'{schema}.home', 'SSH password login requires a valid home path.')
 
         if 'home_mode' in data:
             try:
@@ -1608,22 +1611,15 @@ class UserService(CRUDService):
                         f'{entry["bsdgrp_group"]}: membership of this builtin group may not be altered.'
                     )
 
-        if 'full_name' in data and ':' in data['full_name']:
-            verrors.add(
-                f'{schema}.full_name',
-                'The ":" character is not allowed in a "Full Name".'
-            )
+        if 'full_name' in data:
+            for illegal_char in filter(lambda c: c in data['full_name'], (':', '\n')):
+                verrors.add(f'{schema}.full_name', f'The {illegal_char!r} character is not allowed.')
 
-        if 'full_name' in data and '\n' in data['full_name']:
-            verrors.add(
-                f'{schema}.full_name',
-                'The "\\n" character is not allowed in a "Full Name".'
-            )
-
-        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', group_ids):
-            verrors.add(
-                f'{schema}.shell', 'Please select a valid shell.'
-            )
+        if 'shell' in data:
+            if data['shell'] not in await self.middleware.call('user.shell_choices', group_ids):
+                verrors.add(f'{schema}.shell', 'Please select a valid shell.')
+            elif combined['ssh_password_enabled'] and data['shell'] == NO_LOGIN_SHELL:
+                verrors.add(f'{schema}.shell', 'SSH password login requires a login shell.')
 
         if 'sudo_commands' in data:
             verrors.add_child(
@@ -1637,24 +1633,26 @@ class UserService(CRUDService):
                 await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands_nopasswd']),
             )
 
-        two_factor_config = await self.middleware.call('auth.twofactor.config')
-        if (
-            data.get(
-                'ssh_password_enabled', False
-            ) and two_factor_config['enabled'] and two_factor_config['services']['ssh']
-        ):
-            error = [
-                f'{schema}.ssh_password_enabled',
-                '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
-            ]
-            if old is None:
-                error[1] += (' User will be created with SSH password access disabled and after 2FA has been '
-                             'configured for this user, SSH password access can be enabled.')
-                verrors.add(*error)
-            elif (
-                await self.middleware.call('user.translate_username', old['username'])
-            )['twofactor_auth_configured'] is False:
-                verrors.add(*error)
+        if data.get('ssh_password_enabled'):
+            two_factor_config = await self.middleware.call('auth.twofactor.config')
+            if two_factor_config['enabled'] and two_factor_config['services']['ssh']:
+                error = [
+                    f'{schema}.ssh_password_enabled',
+                    '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
+                ]
+                if old is None:
+                    error[1] += (' User will be created with SSH password access disabled and after 2FA has been '
+                                'configured for this user, SSH password access can be enabled.')
+                    verrors.add(*error)
+                elif (
+                    await self.middleware.call('user.translate_username', old['username'])
+                )['twofactor_auth_configured'] is False:
+                    verrors.add(*error)
+            if combined['home'] in DEFAULT_HOME_PATHS or combined['shell'] == NO_LOGIN_SHELL:
+                verrors.add(
+                    f'{schema}.ssh_password_enabled',
+                    'Cannot be enabled without a valid home path and login shell.'
+                )
 
     def __set_password(self, data):
         if 'password' not in data:
