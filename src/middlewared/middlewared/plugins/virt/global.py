@@ -305,7 +305,9 @@ class VirtGlobalService(ConfigService):
             INCUS_STORAGE.state = Status.INITIALIZED
         finally:
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
-            await self.auto_start_instances()
+            if INCUS_STORAGE.state == Status.INITIALIZED:
+                # We only want to auto start instances if incus is initialized
+                await self.auto_start_instances()
 
     @private
     async def setup_storage_pool(self, pool_name):
@@ -657,6 +659,11 @@ class VirtGlobalService(ConfigService):
                 # We can remove this in FT release perhaps.
             ]
         )
+
+    @private
+    async def set_status(self, new_status):
+        INCUS_STORAGE.state = new_status
+        self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
 
 
 async def _event_system_ready(middleware: 'Middleware', event_type, args):
