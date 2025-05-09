@@ -26,4 +26,4 @@ async def setup(middleware):
         # BMC device, it always reports as a failure which is expected since no IPMI device exists. Instead
         # we check to see if dmidecode reports an ipmi device via type "38" of the SMBIOS spec. It's not
         # fool-proof but it's the best we got atm.
-        await middleware.call('service.start', 'openipmi')
+        await (await middleware.call('service.control', 'START', 'openipmi')).wait(raise_error=True)

@@ -17,14 +17,18 @@ def test_read_role_cant_write(unprivileged_user_fixture, role):
 def test_write_role_can_write(unprivileged_user_fixture, role):
     common_checks(unprivileged_user_fixture, "ftp.update", role, True)
     common_checks(
-        unprivileged_user_fixture, "service.start", role, True, method_args=["ftp"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["ftp", "START"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )
     common_checks(
-        unprivileged_user_fixture, "service.restart", role, True, method_args=["ftp"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["ftp", "RESTART"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )
     common_checks(
-        unprivileged_user_fixture, "service.reload", role, True, method_args=["ftp"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["ftp", "RELOAD"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )
     common_checks(
-        unprivileged_user_fixture, "service.stop", role, True, method_args=["ftp"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["ftp", "STOP"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )

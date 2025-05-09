@@ -125,15 +125,15 @@ class SNMPService(SystemServiceService):
         snmp_service = await self.middleware.call("service.query", [("service", "=", "snmp")], {"get": True})
 
         # 2) Stop SNMP and delete the private config file
-        await self.middleware.call("service.stop", "snmp")
+        await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
         with suppress(FileNotFoundError):
             await self.middleware.run_in_thread(os.remove, SNMPSystem.PRIV_CONF)
 
         # 3) Start SNMP to regenerate a new config file without any v3 users
-        await self.middleware.call('service.start', 'snmp')
+        await (await self.middleware.call('service.control', 'START', 'snmp')).wait(raise_error=True)
 
         # 4) Stop SNMP and add v3 user markers to the private config
-        await self.middleware.call("service.stop", "snmp")
+        await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
         await self.middleware.run_in_thread(_add_system_user)
 
         # if configured, add the v3 user
@@ -141,11 +141,11 @@ class SNMPService(SystemServiceService):
             await self.middleware.run_in_thread(add_snmp_user, config)
 
         # 5) Start SNMP to integrate the v3 users
-        await self.middleware.call('service.start', 'snmp')
+        await (await self.middleware.call('service.control', 'START', 'snmp')).wait(raise_error=True)
 
         # 6) Restore SNMP to 'current' run state
         if snmp_service['state'] == "STOPPED":
-            await self.middleware.call("service.stop", "snmp")
+            await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
 
     @api_method(SnmpUpdateArgs, SnmpUpdateResult)
     async def do_update(self, data):
@@ -213,7 +213,7 @@ class SNMPService(SystemServiceService):
             # 3) Clear the v3 settings in the config
             # 3) Restore SNMP run state
             snmp_service = await self.middleware.call("service.query", [("service", "=", "snmp")], {"get": True})
-            await self.middleware.call('service.start', 'snmp')
+            await (await self.middleware.call('service.control', 'START', 'snmp')).wait(raise_error=True)
             try:
                 await self.middleware.run_in_thread(delete_snmp_user, old['v3_username'])
             except Exception:
@@ -225,7 +225,7 @@ class SNMPService(SystemServiceService):
 
             # Restore original SNMP state
             if 'STOPPED' in snmp_service['state']:
-                await self.middleware.call('service.stop', 'snmp')
+                await (await self.middleware.call('service.control', 'STOP', 'snmp')).wait(raise_error=True)
 
         await self._update_service(old, new)
 

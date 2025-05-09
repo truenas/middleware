@@ -194,7 +194,7 @@ class DirectoryServices(Service):
             ['enable', '=', True],
             ['state', '=', 'RUNNING']
         ]], ['service', 'in', DEPENDENT_SERVICES]]):
-            self.middleware.call_sync('service.restart', svc['service'])
+            self.middleware.call_sync('service.control', 'RESTART', svc['service']).wait_sync(raise_error=True)
 
     @private
     @job(lock='ds_init', lock_queue_size=1)

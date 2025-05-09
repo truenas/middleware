@@ -37,7 +37,7 @@ class ReportingService(ConfigService):
 
         await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
 
-        await self.middleware.call('service.restart', 'netdata')
+        await (await self.middleware.call('service.control', 'RESTART', 'netdata')).wait(raise_error=True)
         return await self.config()
 
     @filterable_api_method(roles=['REPORTING_READ'], item=ReportingGraph, cli_private=True)

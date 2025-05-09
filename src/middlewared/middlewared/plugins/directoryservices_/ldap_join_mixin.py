@@ -8,8 +8,8 @@ class LDAPJoinMixin:
 
         ldap_config = self.middleware.call_sync('ldap.config')
 
-        self.middleware.call_sync('service.stop', 'sssd')
-        self.middleware.call_sync('service.start', 'sssd', {'silent': False})
+        self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
 
         if ldap_config['kerberos_realm']:
             self.middleware.call_sync('kerberos.start')

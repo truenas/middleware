@@ -11,7 +11,7 @@ class KmipCertificateAttachment(CertificateServiceAttachmentDelegate):
 
     HUMAN_NAME = 'KMIP Service'
     SERVICE = 'kmip'
-    SERVICE_VERB = 'start'
+    SERVICE_VERB = 'START'
 
 
 class KMIPServicePortDelegate(ServicePortDelegate):

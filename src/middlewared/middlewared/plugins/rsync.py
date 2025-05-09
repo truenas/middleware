@@ -376,7 +376,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             data,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.restart', 'cron')
+        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
         return await self.get_instance(data['id'])
 
@@ -409,7 +409,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             new,
             {'prefix': self._config.datastore_prefix}
         )
-        await self.middleware.call('service.restart', 'cron')
+        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
         return await self.get_instance(id_)
 
@@ -419,7 +419,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         Delete Rsync Task of `id`.
         """
         res = await self.middleware.call('datastore.delete', self._config.datastore, id_)
-        await self.middleware.call('service.restart', 'cron')
+        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
         return res
 
     @private
@@ -580,7 +580,7 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     resource_name = 'path'
 
     async def restart_reload_services(self, attachments):
-        await self.middleware.call('service.restart', 'cron')
+        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
 
 async def setup(middleware):

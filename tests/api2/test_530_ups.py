@@ -130,7 +130,7 @@ def test__set_ups_options():
 
 
 def test__start_ups_service():
-    call('service.start', 'ups')
+    call('service.control', 'START', 'ups', job=True)
     results = get_service_state()
     assert results['state'] == 'RUNNING', results
 
@@ -157,7 +157,7 @@ def test__change_ups_options_while_service_is_running():
 def test__stop_ups_service():
     results = get_service_state()
     assert results['state'] == 'RUNNING', results
-    call('service.stop', 'ups')
+    call('service.control', 'STOP', 'ups', job=True)
     results = get_service_state()
     assert results['state'] == 'STOPPED', results
 
@@ -166,7 +166,7 @@ def test__change_ups_options():
     results = call('ups.update', second_ups_payload)
     for data in second_ups_payload.keys():
         assert second_ups_payload[data] == results[data], results
-    call('service.start', 'ups')
+    call('service.control', 'START', 'ups', job=True)
     results = get_service_state()
     assert results['state'] == 'RUNNING', results
     results = call('ups.config')
@@ -189,7 +189,7 @@ def test__disable_and_stop_ups_service():
     call('service.update', 'ups', {'enable': False})
     results = get_service_state()
     assert results['enable'] is False, results
-    call('service.stop', 'ups')
+    call('service.control', 'STOP', 'ups', job=True)
     results = get_service_state()
     assert results['state'] == 'STOPPED', results
 

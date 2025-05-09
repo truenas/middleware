@@ -731,8 +731,8 @@ class UserService(CRUDService):
             with SYNC_NEXT_UID_LOCK:
                 self.ReservedUids.remove_entry(data['uid'])
 
-        self.middleware.call_sync('service.reload', 'ssh')
-        self.middleware.call_sync('service.reload', 'user')
+        self.middleware.call_sync('service.control', 'RELOAD', 'ssh').wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'RELOAD', 'user').wait_sync(raise_error=True)
 
         if data['smb']:
             self.middleware.call_sync('smb.update_passdb_user', data | {'id': pk})
@@ -970,8 +970,8 @@ class UserService(CRUDService):
         self.middleware.call_sync('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
         reset_tally(user['username'])
-        self.middleware.call_sync('service.reload', 'ssh')
-        self.middleware.call_sync('service.reload', 'user')
+        self.middleware.call_sync('service.control', 'RELOAD', 'ssh').wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'RELOAD', 'user').wait_sync(raise_error=True)
         if user['smb'] and must_change_pdb_entry:
             self.middleware.call_sync('smb.update_passdb_user', user)
 
@@ -1081,9 +1081,9 @@ class UserService(CRUDService):
             self.middleware.call_sync('datastore.delete', 'account.bsdusers_webui_attribute', attributes[0]['id'])
 
         self.middleware.call_sync('datastore.delete', 'account.bsdusers', pk)
-        self.middleware.call_sync('service.reload', 'ssh')
+        self.middleware.call_sync('service.control', 'RELOAD', 'ssh').wait_sync(raise_error=True)
         reset_tally(user['username'])
-        self.middleware.call_sync('service.reload', 'user')
+        self.middleware.call_sync('service.control', 'RELOAD', 'user').wait_sync(raise_error=True)
         try:
             self.middleware.call_sync('idmap.gencache.del_idmap_cache_entry', {
                 'entry_type': 'UID2SID',
@@ -2013,7 +2013,7 @@ class GroupService(CRUDService):
                 self.ReservedGids.remove_entry(data['gid'])
 
         if reload_users:
-            await self.middleware.call('service.reload', 'user')
+            await (await self.middleware.call('service.control', 'RELOAD', 'user')).wait(raise_error=True)
 
         if data['smb']:
             await self.middleware.call('smb.add_groupmap', group | {'id': pk})
@@ -2100,7 +2100,7 @@ class GroupService(CRUDService):
         group = await self.group_compress(group)
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
 
-        await self.middleware.call('service.reload', 'user')
+        await (await self.middleware.call('service.control', 'RELOAD', 'user')).wait(raise_error=True)
         return pk
 
     @api_method(GroupDeleteArgs, GroupDeleteResult, audit='Delete group', audit_callback=True)
@@ -2153,7 +2153,7 @@ class GroupService(CRUDService):
         if group['smb']:
             await self.middleware.call('smb.del_groupmap', group['id'])
 
-        await self.middleware.call('service.reload', 'user')
+        await (await self.middleware.call('service.control', 'RELOAD', 'user')).wait(raise_error=True)
         try:
             await self.middleware.call('idmap.gencache.del_idmap_cache_entry', {
                 'entry_type': 'GID2SID',

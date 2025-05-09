@@ -184,7 +184,7 @@ class DockerService(ConfigService):
             if pool_changed or address_pools_changed or nvidia_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
-                    await self.middleware.call('service.stop', 'docker')
+                    await (await self.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
                 except Exception as e:
                     raise CallError(f'Failed to stop docker service: {e}')
 
@@ -218,7 +218,7 @@ class DockerService(ConfigService):
                 if catalog_sync_job:
                     await catalog_sync_job.wait()
 
-                await self.middleware.call('service.start', 'docker')
+                await (await self.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)
 
             if config['pool'] and address_pools_changed:
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
