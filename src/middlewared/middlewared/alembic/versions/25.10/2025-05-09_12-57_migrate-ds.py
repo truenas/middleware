@@ -1,6 +1,6 @@
-"""empty message
+"""Migrate directory services to new schema
 
-Revision ID: f8b0ab7c2275
+Revision ID: aeae837fb2d5
 Revises: 08febd74cdf9
 Create Date: 2025-05-07 12:57:43.575785+00:00
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f8b0ab7c2275'
+revision = 'aeae837fb2d5'
 down_revision = '08febd74cdf9'
 branch_labels = None
 depends_on = None
