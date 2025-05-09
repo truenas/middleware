@@ -51,7 +51,7 @@ class LegacyAPIMethod(Method):
     async def _adapt_params(self, params):
         try:
             legacy_accepts_model = await self.adapter.versions[self.api_version].get_model(self.accepts_model.__name__)
-        except KeyError:
+        except APIVersionDoesNotContainModelException:
             if self.passthrough_nonexistent_methods:
                 return params
 

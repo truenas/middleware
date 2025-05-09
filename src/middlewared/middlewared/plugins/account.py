@@ -13,6 +13,7 @@ from contextlib import suppress
 
 from sqlalchemy.orm import relationship
 
+from asyncio import Lock as AsyncioLock
 from dataclasses import asdict
 from datetime import datetime
 from middlewared.api import api_method
@@ -61,6 +62,7 @@ from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.utils.reserved_ids import ReservedXid
 from middlewared.utils.security import (
     check_password_complexity,
     MAX_PASSWORD_HISTORY,
@@ -71,7 +73,7 @@ from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
-    SYNTHETIC_CONTAINER_ROOT, NO_LOGIN_SHELL
+    SYNTHETIC_CONTAINER_ROOT, NO_LOGIN_SHELL, MIN_AUTO_XID
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -80,6 +82,11 @@ from middlewared.plugins.idmap_.idmap_constants import (
 )
 from middlewared.plugins.idmap_ import idmap_winbind
 from middlewared.plugins.idmap_ import idmap_sss
+from threading import Lock
+
+
+SYNC_NEXT_UID_LOCK = Lock()
+ASYNC_NEXT_GID_LOCK = AsyncioLock()
 
 
 def pw_checkname(verrors, attribute, name):
@@ -233,6 +240,8 @@ class UserService(CRUDService):
         cli_namespace = 'account.user'
         role_prefix = 'ACCOUNT'
         entry = UserEntry
+
+    ReservedUids = ReservedXid({})
 
     @private
     async def user_extend_context(self, rows, extra):
@@ -670,7 +679,7 @@ class UserService(CRUDService):
             ))['id'])
 
         if data['uid'] is None:
-            data['uid'] = self.middleware.call_sync('user.get_next_uid')
+            data['uid'] = self.get_next_uid()
 
         new_homedir = False
         home_mode = data.pop('home_mode')
@@ -688,6 +697,9 @@ class UserService(CRUDService):
                 # Homedir setup failed, we should remove any auto-generated group
                 if group_created:
                     self.middleware.call_sync('group.delete', data['group'])
+
+                with SYNC_NEXT_UID_LOCK:
+                    self.ReservedUids.remove_entry(data['uid'])
 
                 raise
 
@@ -714,6 +726,9 @@ class UserService(CRUDService):
                 # commands failed to execute cleanly.
                 shutil.rmtree(data['home'])
             raise
+        finally:
+            with SYNC_NEXT_UID_LOCK:
+                self.ReservedUids.remove_entry(data['uid'])
 
         self.middleware.call_sync('service.reload', 'ssh')
         self.middleware.call_sync('service.reload', 'user')
@@ -1220,26 +1235,29 @@ class UserService(CRUDService):
         return user_obj
 
     @api_method(UserGetNextUidArgs, UserGetNextUidResult, roles=['ACCOUNT_READ'])
-    async def get_next_uid(self):
+    def get_next_uid(self):
         """
         Get the next available/free uid.
         """
         # We want to create new users from 3000 to avoid potential conflicts - Reference: NAS-117892
-        last_uid = 2999
-        builtins = await self.middleware.call(
-            'datastore.query', 'account.bsdusers',
-            [('builtin', '=', False)], {'order_by': ['uid'], 'prefix': 'bsdusr_'}
-        )
-        for i in builtins:
-            # If the difference between the last uid and the current one is
-            # bigger than 1, it means we have a gap and can use it.
-            if i['uid'] - last_uid > 1:
-                return last_uid + 1
+        with SYNC_NEXT_UID_LOCK:
+            allocated_uids = set([u['uid'] for u in self.middleware.call_sync(
+                'datastore.query', 'account.bsdusers',
+                [('builtin', '=', False), ('uid', '>=', MIN_AUTO_XID)], {'prefix': 'bsdusr_'}
+            )])
 
-            if i['uid'] > last_uid:
-                last_uid = i['uid']
+            in_flight_uids = self.ReservedUids.in_use()
 
-        return last_uid + 1
+            total_uids = allocated_uids | in_flight_uids
+            max_uid = max(total_uids) if total_uids else MIN_AUTO_XID - 1
+
+            if gap_uids := set(range(MIN_AUTO_XID, max_uid)) - total_uids:
+                next_uid = min(gap_uids)
+            else:
+                next_uid = max_uid + 1
+
+            self.ReservedUids.add_entry(next_uid)
+            return next_uid
 
     @api_method(
         UserHasLocalAdministratorSetUpArgs, UserHasLocalAdministratorSetUpResult,
@@ -1861,6 +1879,8 @@ class GroupService(CRUDService):
         role_prefix = 'ACCOUNT'
         entry = GroupEntry
 
+    ReservedGids = ReservedXid({})
+
     @private
     async def group_extend_context(self, rows, extra):
         privileges = await self.middleware.call('datastore.query', 'account.privilege')
@@ -1982,8 +2002,13 @@ class GroupService(CRUDService):
         group = data.copy()
         group['group'] = group.pop('name')
 
-        group = await self.group_compress(group)
-        pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
+        try:
+            group = await self.group_compress(group)
+            pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
+        finally:
+            # Once the data store entry is created we can safely remove the reservation
+            async with ASYNC_NEXT_GID_LOCK:
+                self.ReservedGids.remove_entry(data['gid'])
 
         if reload_users:
             await self.middleware.call('service.reload', 'user')
@@ -2142,18 +2167,23 @@ class GroupService(CRUDService):
         """
         Get the next available/free gid.
         """
-        used_gids = {
-            group['bsdgrp_gid']
-            for group in await self.middleware.call('datastore.query', 'account.bsdgroups')
-        }
-        used_gids |= set((await self.middleware.call('privilege.used_local_gids')).keys())
+        async with ASYNC_NEXT_GID_LOCK:
+            groups = await self.middleware.call(
+                'datastore.query', 'account.bsdgroups', [['bsdgrp_gid', '>=', MIN_AUTO_XID], ['bsdgrp_builtin', '=', False]]
+            )
+            used_gids = set(group['bsdgrp_gid'] for group in groups)
+            used_gids |= set([gid for gid in (await self.middleware.call('privilege.used_local_gids')).keys() if gid >= MIN_AUTO_XID])
+            in_flight_gids = self.ReservedGids.in_use()
+            total_gids = used_gids | in_flight_gids
+            max_gid = max(total_gids) if total_gids else MIN_AUTO_XID - 1
 
-        # We should start gid from 3000 to avoid potential conflicts - Reference: NAS-117892
-        next_gid = 3000
-        while next_gid in used_gids:
-            next_gid += 1
+            if gid_gap := (set(range(MIN_AUTO_XID, max_gid)) - total_gids):
+                next_gid = min(gid_gap)
+            else:
+                next_gid = max_gid + 1
 
-        return next_gid
+            self.ReservedGids.add_entry(next_gid)
+            return next_gid
 
     @api_method(GroupGetGroupObjArgs, GroupGetGroupObjResult, roles=['ACCOUNT_READ'])
     def get_group_obj(self, data):

@@ -4,6 +4,7 @@ import os
 import pathlib
 import re
 import subprocess
+from asyncio import Lock
 from collections import defaultdict
 
 from pydantic import IPvAnyNetwork
@@ -21,6 +22,7 @@ from .utils import AUTHMETHOD_LEGACY_MAP, sanitize_extent
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 MODE_FC_CAPABLE = ['FC', 'BOTH']
+ISCSI_RELTGT_LOCK = Lock()
 
 
 class iSCSITargetModel(sa.Model):
@@ -121,10 +123,13 @@ class iSCSITargetService(CRUDService):
 
         await self.compress(data)
         groups = data.pop('groups')
-        data['rel_tgt_id'] = await self.middleware.call('iscsi.target.get_rel_tgt_id')
-        pk = await self.middleware.call(
-            'datastore.insert', self._config.datastore, data,
-            {'prefix': self._config.datastore_prefix})
+
+        async with ISCSI_RELTGT_LOCK:
+            data['rel_tgt_id'] = await self.middleware.call('iscsi.target.get_rel_tgt_id')
+            pk = await self.middleware.call(
+                'datastore.insert', self._config.datastore, data,
+                {'prefix': self._config.datastore_prefix})
+
         try:
             await self.__save_groups(pk, groups)
         except Exception as e:
@@ -440,10 +445,16 @@ class iSCSITargetService(CRUDService):
 
     @private
     async def get_rel_tgt_id(self):
-        existing = {target['rel_tgt_id'] for target in await self.middleware.call(f'{self._config.namespace}.query', [], {'select': ['rel_tgt_id']})}
+        """ WARNING: this endpoint must be called while holding ISCSI_RELTGT_LOCK """
+        existing = {
+            target['rel_tgt_id']
+            for target in await self.middleware.call(f'{self._config.namespace}.query', [], {'select': ['rel_tgt_id']})
+        }
+
         for i in range(1, 32000):
             if i not in existing:
                 return i
+
         raise ValueError("Unable to deletmine rel_tgt_id")
 
     @private
