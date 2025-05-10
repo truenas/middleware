@@ -601,7 +601,7 @@ class ActiveDirectoryService(ConfigService):
             await self.__stop(job, new)
 
         elif new['enable'] and old['enable']:
-            await self.middleware.call('service.restart', 'idmap')
+            await (await self.middleware.call('service.control', 'RESTART', 'idmap')).wait(raise_error=True)
 
         return await self.config()
 
@@ -652,15 +652,15 @@ class ActiveDirectoryService(ConfigService):
         job.set_progress(10, 'Stopping kerberos service')
         await self.middleware.call('kerberos.stop')
         job.set_progress(20, 'Reconfiguring SMB.')
-        await self.middleware.call('service.stop', 'cifs')
-        await self.middleware.call('service.restart', 'idmap')
+        await (await self.middleware.call('service.control', 'STOP', 'cifs')).wait(raise_error=True)
+        await (await self.middleware.call('service.control', 'RESTART', 'idmap')).wait(raise_error=True)
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('directoryservices.health.set_state', DSType.AD.value, DSStatus.DISABLED.name)
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('directoryservices.cache.abort_refresh')
-        await self.middleware.call('service.start', 'cifs')
+        await (await self.middleware.call('service.control', 'START', 'cifs')).wait(raise_error=True)
         job.set_progress(100, 'Active Directory stop completed.')
 
     @private
@@ -905,7 +905,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'smb')
 
         job.set_progress(60, 'Restarting services.')
-        await self.middleware.call('service.restart', 'cifs')
-        await self.middleware.call('service.restart', 'idmap')
+        await (await self.middleware.call('service.control', 'RESTART', 'cifs')).wait(raise_error=True)
+        await (await self.middleware.call('service.control', 'RESTART', 'idmap')).wait(raise_error=True)
         job.set_progress(100, 'Successfully left activedirectory domain.')
         return

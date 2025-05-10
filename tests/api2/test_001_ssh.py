@@ -73,7 +73,7 @@ def test_004_enable_and_start_ssh(ws_client):
     assert ws_client.call('datastore.query', 'services.services', filters, options)['srv_enable'] is True
 
     # start ssh
-    ws_client.call('service.start', 'ssh')
+    ws_client.call('service.control', 'START', 'ssh', job=True)
     assert ws_client.call('service.query', [['service', '=', 'ssh']], options)['state'] == 'RUNNING'
 
 

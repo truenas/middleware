@@ -20,11 +20,11 @@ class CIFSService(SimpleService):
 
     async def after_start(self):
         # We reconfigure mdns (add SMB service, possibly also ADISK)
-        await self.middleware.call('service.reload', 'mdns')
+        await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
 
     async def stop(self):
         await self._systemd_unit("smbd", "stop")
 
     async def after_stop(self):
         # reconfigure mdns (remove SMB service, possibly also ADISK)
-        await self.middleware.call('service.reload', 'mdns')
+        await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)

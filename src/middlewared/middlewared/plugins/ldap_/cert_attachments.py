@@ -5,7 +5,7 @@ class LdapCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
     HUMAN_NAME = 'LDAP Service'
     SERVICE = 'ldap'
-    SERVICE_VERB = 'start'
+    SERVICE_VERB = 'START'
 
 
 async def setup(middleware):

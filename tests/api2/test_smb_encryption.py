@@ -25,10 +25,10 @@ def smb_setup(request):
         }, get_instance=False):
             with smb_share(os.path.join('/mnt', ds), SMB_NAME) as s:
                 try:
-                    call('service.start', 'cifs')
+                    call('service.control', 'START', 'cifs', job=True)
                     yield {'dataset': ds, 'share': s}
                 finally:
-                    call('service.stop', 'cifs')
+                    call('service.control', 'STOP', 'cifs', job=True)
 
 
 @contextmanager

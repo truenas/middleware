@@ -10,7 +10,7 @@ from middlewared.test.integration.utils import call, host, ssh
 
 @pytest.fixture()
 def snmpd_running():
-    call("service.start", "snmp")
+    call("service.control", "START", "snmp", job=True)
     time.sleep(2)
     yield
 

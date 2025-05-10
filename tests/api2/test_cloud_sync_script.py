@@ -33,7 +33,7 @@ def test_post_script_not_running_after_failure():
     with local_ftp_task({
         "post_script": "rm /tmp/cloud_sync_test",
     }) as task:
-        call("service.stop", "ftp")
+        call("service.control", "STOP", "ftp", job=True)
 
         with pytest.raises(ClientException) as ve:
             run_task(task)
