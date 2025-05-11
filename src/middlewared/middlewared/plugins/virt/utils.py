@@ -9,14 +9,16 @@ import json
 from collections.abc import Callable
 
 from middlewared.plugins.zfs_.utils import TNUserProp
-from middlewared.service import CallError
+from middlewared.service import CallError, ValidationErrors
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 from .websocket import IncusWS
 
 
-SOCKET = '/var/lib/incus/unix.socket'
+CDROM_PREFIX = 'ix_cdrom'
 HTTP_URI = 'http://unix.socket'
+INCUS_METADATA_CDROM_KEY = 'user.ix_cdrom_devices'
+SOCKET = '/var/lib/incus/unix.socket'
 VNC_BASE_PORT = 5900
 VNC_PASSWORD_DIR = os.path.join(MIDDLEWARE_RUN_DIR, 'incus/passwords')
 TRUENAS_STORAGE_PROP_STR = TNUserProp.INCUS_POOL.value
@@ -226,3 +228,44 @@ class PciEntry:
     reset_mechanism_defined: bool
     description: str
     error: str | None
+
+
+def generate_qemu_cmd(instance_config: dict, instance_name: str) -> str:
+    vnc_config = json.loads(instance_config.get('user.ix_vnc_config', '{}'))
+    cdrom_config = json.loads(instance_config.get(INCUS_METADATA_CDROM_KEY, '[]'))
+    cmd = ''
+    if vnc_config['vnc_enabled'] and vnc_config['vnc_port']:
+        cmd = f'-vnc :{vnc_config["vnc_port"] - VNC_BASE_PORT}'
+        if vnc_config.get('vnc_password'):
+            cmd = (f'-object secret,id=vnc0,file={get_vnc_password_file_path(instance_name)} '
+                   f'{cmd},password-secret=vnc0')
+
+    for cdrom_file in cdrom_config:
+        cmd += f'{" " if cmd else ""}-drive media=cdrom,if=ide,file={cdrom_file},file.locking=off'
+
+    return cmd
+
+
+def generate_qemu_cdrom_metadata(devices: dict) -> str:
+    return json.dumps([
+        d['source'] for name, d in devices.items() if name.startswith(CDROM_PREFIX)
+    ])
+
+
+def validate_device_name(device: dict, verrors: ValidationErrors):
+    if device['dev_type'] == 'CDROM':
+        if device['name'] and device['name'].startswith(CDROM_PREFIX) is False:
+            verrors.add('virt_device_add.name', f'CDROM device name must start with {CDROM_PREFIX!r} prefix')
+    elif device['name'] and device['name'].startswith(CDROM_PREFIX):
+        verrors.add('virt_device_add.name', f'Device name must not start with {CDROM_PREFIX!r} prefix')
+
+
+def update_instance_metadata_and_qemu_cmd_on_device_change(
+    instance_name: str, instance_config: dict, devices: dict
+) -> dict:
+    data = {
+        INCUS_METADATA_CDROM_KEY: generate_qemu_cdrom_metadata(devices)
+    }
+    data['raw.qemu'] = generate_qemu_cmd(instance_config | data, instance_name)
+    data['user.ix_old_raw_qemu_config'] = instance_config.get('raw.qemu', '')
+    return data
