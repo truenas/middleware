@@ -486,7 +486,7 @@ class MailService(ConfigService):
             ["email", "!=", None]
         ])))
 
-    @private
+    @accepts()
     async def local_administrator_email(self):
         emails = await self.local_administrators_emails()
         if emails:
