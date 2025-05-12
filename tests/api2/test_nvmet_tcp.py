@@ -1082,6 +1082,18 @@ class TestNVMeHostAuth(NVMeRunning):
         self.assert_single_namespace(nc, subnqn, ZVOL1_MB, dhchap_secret=dhchap_secret,
                                      dhchap_ctrl_secret=dhchap_ctrl_secret)
 
+    def test__host_dhchap_dhgroup_choices(self):
+        assert set(call('nvmet.host.dhchap_dhgroup_choices')) == set(['2048-BIT',
+                                                                      '3072-BIT',
+                                                                      '4096-BIT',
+                                                                      '6144-BIT',
+                                                                      '8192-BIT'])
+
+    def test__host_dhchap_hash_choices(self):
+        assert set(call('nvmet.host.dhchap_hash_choices')) == set(['SHA-256',
+                                                                   'SHA-384',
+                                                                   'SHA-512'])
+
 
 class TestForceDelete(NVMeRunning):
 
