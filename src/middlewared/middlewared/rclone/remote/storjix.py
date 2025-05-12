@@ -1,5 +1,6 @@
 import errno
 import io
+from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 
 from aws_requests_auth.aws_auth import AWSRequestsAuth
@@ -63,7 +64,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
             auth = AWSRequestsAuth(aws_access_key=provider["access_key_id"],
                                    aws_secret_access_key=provider["secret_access_key"],
-                                   aws_host=endpoint.removeprefix("https://").strip("/"),
+                                   aws_host=urlparse(endpoint).hostname,
                                    aws_region="",
                                    aws_service="s3")
 
@@ -99,4 +100,4 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
             "AWS_ACCESS_KEY_ID": provider["access_key_id"],
             "AWS_SECRET_ACCESS_KEY": provider["secret_access_key"],
         }
-        return provider["endpoint"].removeprefix("https://").strip("/"), env
+        return urlparse(provider["endpoint"]).hostname, env
