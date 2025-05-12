@@ -67,8 +67,8 @@ class IdmapUserNsEntry(BaseModel):
 
 
 class UserNsIdmap(BaseModel):
-    uid: IdmapUserNsEntry
-    gid: IdmapUserNsEntry
+    uid: IdmapUserNsEntry | None
+    gid: IdmapUserNsEntry | None
 
 
 class VirtInstanceEntry(BaseModel):
@@ -88,6 +88,7 @@ class VirtInstanceEntry(BaseModel):
     vnc_port: int | None
     vnc_password: Secret[NonEmptyString | None]
     secure_boot: bool | None
+    privileged_mode: bool | None
     root_disk_size: int | None
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None]
     storage_pool: NonEmptyString
@@ -142,6 +143,11 @@ class VirtInstanceCreateArgs(BaseModel):
     '''
     vnc_password: Secret[NonEmptyString | None] = None
     image_os: str | OS_ENUM = None
+    privileged_mode: bool = False
+    '''
+    This is only valid for containers and should only be set when container instance which is to be deployed is to
+    run in a privileged mode.
+    '''
 
     @model_validator(mode='after')
     def validate_attrs(self):
@@ -151,6 +157,9 @@ class VirtInstanceCreateArgs(BaseModel):
             if self.enable_vnc:
                 raise ValueError('VNC is not supported for containers and `enable_vnc` should be unset')
         else:
+            if self.privileged_mode:
+                raise ValueError('Privileged mode is not supported for VMs and `privileged_mode` should be unset')
+
             if self.enable_vnc and self.vnc_port is None:
                 raise ValueError('VNC port must be set when VNC is enabled')
 
@@ -187,10 +196,15 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     enable_vnc: bool
     vnc_password: Secret[NonEmptyString | None]
     '''Setting vnc_password to null will unset VNC password'''
-    secure_boot: bool = False
+    secure_boot: bool
     root_disk_size: int | None = Field(ge=5, default=None)
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None] = None
     image_os: str | OS_ENUM = None
+    privileged_mode: bool
+    '''
+    This is only valid for containers and should only be set when container instance which is to be deployed is to
+    run in a privileged mode.
+    '''
 
 
 class VirtInstanceUpdateArgs(BaseModel):
