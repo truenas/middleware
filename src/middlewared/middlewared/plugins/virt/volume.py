@@ -13,7 +13,7 @@ from middlewared.service import CallError, CRUDService, job, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.size import normalize_size
 
-from .utils import incus_call, incus_call_sync, Status, incus_wait, storage_pool_to_incus_pool
+from .utils import incus_call, incus_call_sync, VirtGlobalStatus, incus_wait, storage_pool_to_incus_pool
 
 
 class VirtVolumeService(CRUDService):
@@ -26,7 +26,7 @@ class VirtVolumeService(CRUDService):
 
     async def query(self, filters, options):
         config = await self.middleware.call('virt.global.config')
-        if config['state'] != Status.INITIALIZED.value:
+        if config['state'] != VirtGlobalStatus.INITIALIZED.value:
             return []
 
         entries = []

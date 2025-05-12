@@ -22,7 +22,7 @@ VNC_PASSWORD_DIR = os.path.join(MIDDLEWARE_RUN_DIR, 'incus/passwords')
 TRUENAS_STORAGE_PROP_STR = TNUserProp.INCUS_POOL.value
 
 
-class Status(enum.StrEnum):
+class VirtGlobalStatus(enum.StrEnum):
     INITIALIZING = 'INITIALIZING'
     INITIALIZED = 'INITIALIZED'
     NO_POOL = 'NO_POOL'
@@ -43,7 +43,7 @@ class IncusStorage:
 
     The INCUS_STORAGE instance below is set during virt.global.setup.
     """
-    __status = Status.INITIALIZING
+    __status = VirtGlobalStatus.INITIALIZING
     default_storage_pool = None  # Compatibility with 25.04 BETA / RC
 
     def zfs_pool_to_storage_pool(self, zfs_pool: str) -> str:
@@ -56,12 +56,12 @@ class IncusStorage:
         return zfs_pool
 
     @property
-    def state(self) -> Status:
+    def state(self) -> VirtGlobalStatus:
         return self.__status
 
     @state.setter
     def state(self, status_in) -> None:
-        if not isinstance(status_in, Status):
+        if not isinstance(status_in, VirtGlobalStatus):
             raise TypeError(f'{status_in}: not valid Incus status')
 
         self.__status = status_in

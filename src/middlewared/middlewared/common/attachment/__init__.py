@@ -62,6 +62,15 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     async def stop(self, attachments):
         pass
 
+    async def disable(self, attachments):
+        """
+        Disable said items, this is used when we export pool but do not want to delete
+        related attachments
+        :param attachments: list of the items returned by `query`
+        :return: None
+        """
+        await self.toggle(attachments, False)
+
 
 class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     """

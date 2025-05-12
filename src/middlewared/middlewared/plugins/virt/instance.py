@@ -26,7 +26,7 @@ from middlewared.utils.size import normalize_size
 from .utils import (
     create_vnc_password_file, get_max_boot_priority_device, get_root_device_dict, get_vnc_info_from_config,
     get_vnc_password_file_path, incus_call, incus_call_and_wait, incus_pool_to_storage_pool,
-    root_device_pool_from_raw, Status, storage_pool_to_incus_pool, VNC_BASE_PORT,
+    root_device_pool_from_raw, VirtGlobalStatus, storage_pool_to_incus_pool, VNC_BASE_PORT,
 )
 
 
@@ -49,7 +49,7 @@ class VirtInstanceService(CRUDService):
         """
         if not options['extra'].get('skip_state'):
             config = await self.middleware.call('virt.global.config')
-            if config['state'] != Status.INITIALIZED.value:
+            if config['state'] != VirtGlobalStatus.INITIALIZED.value:
                 return []
         results = (await incus_call('1.0/instances?filter=&recursion=2', 'get'))['metadata']
         entries = []
