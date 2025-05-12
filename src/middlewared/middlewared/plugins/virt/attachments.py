@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import PortDelegate
 
-from .utils import Status
+from .utils import VirtGlobalStatus
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -149,7 +149,7 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.error('Failed to stop incus', exc_info=True)
             finally:
-                await self.middleware.call('virt.global.set_status', Status.LOCKED)
+                await self.middleware.call('virt.global.set_status', VirtGlobalStatus.LOCKED)
         else:
             await self.stop_instances(attachment['instances'])
 

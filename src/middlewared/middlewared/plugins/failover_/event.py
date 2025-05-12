@@ -19,7 +19,7 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
-from middlewared.plugins.virt.utils import Status as VirtStatus
+from middlewared.plugins.virt.utils import VirtGlobalStatus as VirtStatus
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 
 logger = logging.getLogger('failover')

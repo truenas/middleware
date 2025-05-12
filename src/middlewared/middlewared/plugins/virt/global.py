@@ -21,7 +21,7 @@ from middlewared.service_exception import CallError
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 
 from .utils import (
-    Status, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_STORAGE
+    VirtGlobalStatus, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_STORAGE
 )
 
 if TYPE_CHECKING:
@@ -250,7 +250,7 @@ class VirtGlobalService(ConfigService):
     async def check_initialized(self, config=None):
         if config is None:
             config = await self.config()
-        if config['state'] != Status.INITIALIZED.value:
+        if config['state'] != VirtGlobalStatus.INITIALIZED.value:
             raise CallError('Virtualization not initialized.')
 
     @private
@@ -292,20 +292,20 @@ class VirtGlobalService(ConfigService):
         Will create necessary storage datasets if required.
         """
         try:
-            INCUS_STORAGE.state = Status.INITIALIZING
+            INCUS_STORAGE.state = VirtGlobalStatus.INITIALIZING
             await self._setup_impl()
         except NoPoolConfigured:
-            INCUS_STORAGE.state = Status.NO_POOL
+            INCUS_STORAGE.state = VirtGlobalStatus.NO_POOL
         except LockedDataset:
-            INCUS_STORAGE.state = Status.LOCKED
+            INCUS_STORAGE.state = VirtGlobalStatus.LOCKED
         except Exception:
-            INCUS_STORAGE.state = Status.ERROR
+            INCUS_STORAGE.state = VirtGlobalStatus.ERROR
             raise
         else:
-            INCUS_STORAGE.state = Status.INITIALIZED
+            INCUS_STORAGE.state = VirtGlobalStatus.INITIALIZED
         finally:
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
-            if INCUS_STORAGE.state == Status.INITIALIZED:
+            if INCUS_STORAGE.state == VirtGlobalStatus.INITIALIZED:
                 # We only want to auto start instances if incus is initialized
                 await self.auto_start_instances()
 
