@@ -1,6 +1,13 @@
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
+from middlewared.alert.base import (
+    AlertClass,
+    AlertCategory,
+    AlertLevel,
+    Alert,
+    AlertSource,
+    UnavailableException,
+)
 from middlewared.alert.schedule import IntervalSchedule
 
 
@@ -9,7 +16,7 @@ class ZpoolCapacityNoticeAlertClass(AlertClass):
     level = AlertLevel.NOTICE
     title = "Pool Space Usage Is Above 70%"
     text = (
-        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
+        'Space usage for pool "%(volume)s" is %(capacity)d%%. '
         "Optimal pool performance requires used space remain below 80%%."
     )
 
@@ -21,7 +28,7 @@ class ZpoolCapacityWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Pool Space Usage Is Above 80%"
     text = (
-        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
+        'Space usage for pool "%(volume)s" is %(capacity)d%%. '
         "Optimal pool performance requires used space remain below 80%%."
     )
 
@@ -33,7 +40,7 @@ class ZpoolCapacityCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Pool Space Usage Is Above 90%"
     text = (
-        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
+        'Space usage for pool "%(volume)s" is %(capacity)d%%. '
         "Optimal pool performance requires used space remain below 80%%."
     )
 
