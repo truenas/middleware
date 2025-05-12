@@ -38,7 +38,7 @@ class TNCACMEService(Service):
             # Let's restart UI now
             # TODO: Hash this out with everyone
             await self.middleware.call('system.general.ui_restart', 2)
-            if await self.middleware.call('system.is_ha_capable'):
+            if await self.middleware.call('failover.licensed'):
                 # We would like to make sure nginx is reloaded on the remote controller as well
                 logger.debug('Restarting UI on remote controller')
                 try:
