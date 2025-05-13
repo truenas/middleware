@@ -1,42 +1,37 @@
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
+from middlewared.alert.base import (
+    AlertClass,
+    AlertCategory,
+    AlertLevel,
+    Alert,
+    AlertSource,
+    UnavailableException,
+)
 from middlewared.alert.schedule import IntervalSchedule
 
 
 class ZpoolCapacityNoticeAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.NOTICE
-    title = "Pool Space Usage Is Above 70%"
-    text = (
-        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
-        "Optimal pool performance requires used space remain below 80%%."
-    )
-
+    title = "Pool Space Usage Is Above 85%"
+    text = "Space usage for pool '%(volume)s' is %(capacity)d%%."
     proactive_support = True
 
 
 class ZpoolCapacityWarningAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "Pool Space Usage Is Above 80%"
-    text = (
-        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
-        "Optimal pool performance requires used space remain below 80%%."
-    )
-
+    title = "Pool Space Usage Is Above 90%"
+    text = "Space usage for pool '%(volume)s' is %(capacity)d%%."
     proactive_support = True
 
 
 class ZpoolCapacityCriticalAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
-    title = "Pool Space Usage Is Above 90%"
-    text = (
-        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
-        "Optimal pool performance requires used space remain below 80%%."
-    )
-
+    title = "Pool Space Usage Is Above 95%"
+    text = "Space usage for pool '%(volume)s' is %(capacity)d%%."
     proactive_support = True
 
 
@@ -52,9 +47,9 @@ class ZpoolCapacityAlertSource(AlertSource):
                 continue
 
             for target_capacity, klass in [
-                (90, ZpoolCapacityCriticalAlertClass),
-                (80, ZpoolCapacityWarningAlertClass),
-                (70, ZpoolCapacityNoticeAlertClass),
+                (95, ZpoolCapacityCriticalAlertClass),
+                (90, ZpoolCapacityWarningAlertClass),
+                (85, ZpoolCapacityNoticeAlertClass),
             ]:
                 if capacity >= target_capacity:
                     alerts.append(
