@@ -73,17 +73,17 @@ class PsuAlertSource(AlertSource):
                     # 30mins is justification for opening up a proactive ticket
                     if self.incident_id is None:
                         self.incident_id = generate_token(16, url_safe=True)
-                        alerts.append(
-                            Alert(
-                                PowerSupplyAlertClass,
-                                {
-                                    "id": self.incident_id,
-                                    "psu": i["name"],
-                                    "state": i["state"],
-                                    "errors": ", ".join(i["event"]),
-                                },
-                            )
+                    alerts.append(
+                        Alert(
+                            PowerSupplyAlertClass,
+                            {
+                                "id": self.incident_id,
+                                "psu": i["name"],
+                                "state": i["state"],
+                                "errors": ", ".join(i["event"]),
+                            },
                         )
+                    )
                 else:
                     raise UnavailableException()
         return alerts
