@@ -1,7 +1,7 @@
 """Add `endpoint` field to system_cloudcredentials.attributes for type STORJ_IX.
 
 Revision ID: 30c9619bf9e7
-Revises: aeae837fb2d5
+Revises: 7c663f5ec8a1
 Create Date: 2025-05-07 20:47:46.751451+00:00
 
 """
@@ -14,7 +14,7 @@ from middlewared.plugins.pwenc import encrypt, decrypt
 
 # revision identifiers, used by Alembic.
 revision = '30c9619bf9e7'
-down_revision = 'aeae837fb2d5'
+down_revision = '7c663f5ec8a1'
 branch_labels = None
 depends_on = None
 
