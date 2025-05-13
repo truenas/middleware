@@ -38,6 +38,16 @@ class TNCACMEService(Service):
             # Let's restart UI now
             # TODO: Hash this out with everyone
             await self.middleware.call('system.general.ui_restart', 2)
+            if await self.middleware.call('failover.licensed'):
+                # We would like to make sure nginx is reloaded on the remote controller as well
+                logger.debug('Restarting UI on remote controller')
+                try:
+                    await self.middleware.call(
+                        'failover.call_remote', 'system.general.ui_restart', [2],
+                        {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+                    )
+                except Exception:
+                    logger.error('Failed to restart UI on remote controller', exc_info=True)
 
     async def update_ui_impl(self):
         config = await self.middleware.call('tn_connect.config')
@@ -139,18 +149,10 @@ class TNCACMEService(Service):
 
 
 async def check_status(middleware):
-    tnc_config = await middleware.call('tn_connect.config')
-    if tnc_config['status'] == Status.CERT_GENERATION_IN_PROGRESS.name:
-        logger.debug('Middleware started and cert generation is in progress, initiating process')
-        middleware.create_task(middleware.call('tn_connect.acme.initiate_cert_generation'))
-    elif tnc_config['status'] in (
-            Status.CERT_GENERATION_SUCCESS.name, Status.CERT_RENEWAL_SUCCESS.name,
-    ):
-        logger.debug('Middleware started and cert generation is already successful, updating UI')
-        middleware.create_task(middleware.call('tn_connect.acme.update_ui'))
-    elif tnc_config['status'] == Status.CERT_RENEWAL_IN_PROGRESS.name:
-        logger.debug('Middleware started and cert renewal is in progress, initiating process')
-        middleware.create_task(middleware.call('tn_connect.acme.renew_cert'))
+    if not await middleware.call('failover.is_single_master_node'):
+        return
+
+    await middleware.call('tn_connect.state.check')
 
 
 async def _event_system_ready(middleware, event_type, args):
