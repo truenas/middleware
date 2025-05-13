@@ -21,6 +21,7 @@ class PowerSupplyAlertClass(AlertClass):
     title = "Power Supply Error"
     text = "%(psu)s is %(state)s showing: %(errors)s"
     products = (ProductType.ENTERPRISE,)
+    proactive_support = True
 
 
 class SensorsAlertSource(AlertSource):
