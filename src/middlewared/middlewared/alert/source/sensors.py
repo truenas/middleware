@@ -63,10 +63,10 @@ class PsuAlertSource(AlertSource):
 
         for i in await self.middleware.call("ipmi.sensors.query"):
             if (
-                i["state"] != "Nominal"
-                and i["reading"] != "N/A"
-                and i["type"] == "Power Supply"
-                and i["event"]
+                i["type"] == "Power Supply" and
+                i["state"] != "Nominal" and
+                i["reading"] != "N/A" and
+                i["event"]
             ):
                 if time.monotonic() - self.last_failure > self._30mins:
                     # we assume a PSU alert that has been around longer than
@@ -109,10 +109,10 @@ class SensorsAlertSource(AlertSource):
 
         for sensor in await self.middleware.call("ipmi.sensors.query"):
             if (
-                sensor["type"] != "Power Supply"
-                and sensor["state"] != "Nominal"
-                and sensor["reading"] != "N/A"
-                and sensor["event"]
+                sensor["type"] != "Power Supply" and
+                sensor["state"] != "Nominal" and
+                sensor["reading"] != "N/A" and
+                sensor["event"]
             ):
                 reading = sensor["reading"]
                 for key in (
