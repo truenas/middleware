@@ -41,16 +41,20 @@ def test_write_role_can_write(unprivileged_user_fixture, role):
     common_checks(unprivileged_user_fixture, "smb.status", role, True, valid_role_exception=False)
 
     common_checks(
-        unprivileged_user_fixture, "service.start", role, True, method_args=["cifs"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["START", "cifs"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )
     common_checks(
-        unprivileged_user_fixture, "service.restart", role, True, method_args=["cifs"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["RESTART", "cifs"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )
     common_checks(
-        unprivileged_user_fixture, "service.reload", role, True, method_args=["cifs"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["RELOAD", "cifs"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )
     common_checks(
-        unprivileged_user_fixture, "service.stop", role, True, method_args=["cifs"], valid_role_exception=False
+        unprivileged_user_fixture, "service.control", role, True, method_args=["STOP", "cifs"],
+        method_kwargs=dict(job=True), valid_role_exception=False,
     )
 
 

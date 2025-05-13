@@ -74,10 +74,7 @@ class FailoverEventsService(Service):
 
     async def restart_service(self, service, timeout):
         logger.info('Restarting %s', service)
-        return await asyncio.wait_for(
-            self.middleware.create_task(self.middleware.call('service.restart', service, self.HA_PROPAGATE)),
-            timeout=timeout,
-        )
+        return await (await self.middleware.call('service.control', 'RESTART', service, self.HA_PROPAGATE)).wait(timeout=timeout)
 
     async def become_active_service(self, service, timeout):
         logger.info('Become active %s', service)
@@ -162,9 +159,12 @@ class FailoverEventsService(Service):
             except Exception:
                 self.logger.warning('Failed to refresh failover status on active node')
 
-    def run_call(self, method, *args):
+    def run_call(self, method, *args, job=False):
         try:
-            return self.middleware.call_sync(method, *args)
+            result = self.middleware.call_sync(method, *args)
+            if job:
+                result = result.wait_sync(raise_error=True, raise_error_forward_classes=(Exception,))
+            return result
         except IgnoreFailoverEvent:
             # `self.validate()` calls this method
             raise
@@ -509,7 +509,7 @@ class FailoverEventsService(Service):
         logger.info('Pausing failover event processing')
         self.run_call('vrrpthread.pause_events')
         logger.info('Taking ownership of all VIPs')
-        self.run_call('service.reload', 'keepalived', self.HA_PROPAGATE)
+        self.run_call('service.control', 'RELOAD', 'keepalived', self.HA_PROPAGATE, job=True)
         logger.info('Unpausing failover event processing')
         self.run_call('vrrpthread.unpause_events')
         logger.info('Done unpausing failover event processing')
@@ -732,7 +732,7 @@ class FailoverEventsService(Service):
         logger.info('Done restarting remaining services')
 
         logger.info('Restarting reporting metrics')
-        self.run_call('service.restart', 'netdata')
+        self.run_call('service.control', 'RESTART', 'netdata', job=True)
         logger.info('Done restarting reporting metrics')
 
         logger.info('Updating replication tasks')
@@ -851,7 +851,7 @@ class FailoverEventsService(Service):
         # We stop netdata before exporting pools because otherwise we might have erroneous stuff
         # getting logged and causing spam
         logger.info('Stopping reporting metrics')
-        self.run_call('service.stop', 'netdata', self.HA_PROPAGATE)
+        self.run_call('service.control', 'STOP', 'netdata', self.HA_PROPAGATE, job=True)
 
         logger.info('Blocking network traffic.')
         fw_drop_job = self.run_call('failover.firewall.drop_all')
@@ -865,7 +865,7 @@ class FailoverEventsService(Service):
         logger.info('Pausing failover event processing')
         self.run_call('vrrpthread.pause_events')
         logger.info('Transitioning all VIPs off this node')
-        self.run_call('service.stop', 'keepalived', self.HA_PROPAGATE)
+        self.run_call('service.control', 'STOP', 'keepalived', self.HA_PROPAGATE, job=True)
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.
@@ -949,14 +949,14 @@ class FailoverEventsService(Service):
         self.run_call('truecommand.stop_truecommand_service')
 
         logger.info('Stopping NFS mountd service')
-        self.run_call('service.stop', 'mountd')
+        self.run_call('service.control', 'STOP', 'mountd', job=True)
 
         # we keep SSH running on both controllers (if it's enabled by user)
         filters = [['srv_service', '=', 'ssh']]
         options = {'get': True}
         if self.run_call('datastore.query', 'services.services', filters, options)['srv_enable']:
             logger.info('Restarting SSH')
-            self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
+            self.run_call('service.control', 'RESTART', 'ssh', self.HA_PROPAGATE, job=True)
 
         if self.run_call('iscsi.global.alua_enabled'):
             if self.run_call('service.started_or_enabled', 'iscsitarget'):
@@ -967,20 +967,20 @@ class FailoverEventsService(Service):
 
                 # The most likely situation is that scst is not running
                 if self.run_call('iscsi.scst.is_kernel_module_loaded'):
-                    self.run_call('service.restart', 'iscsitarget', self.HA_PROPAGATE)
+                    self.run_call('service.control', 'RESTART', 'iscsitarget', self.HA_PROPAGATE, job=True)
                 else:
-                    self.run_call('service.start', 'iscsitarget', self.HA_PROPAGATE)
+                    self.run_call('service.control', 'START', 'iscsitarget', self.HA_PROPAGATE, job=True)
 
         if self.run_call('nvmet.global.ana_active') and self.run_call('service.started_or_enabled', 'nvmet'):
             if self.run_call('nvmet.global.running'):
                 logger.info('Reloading NVMe-oF target for ANA')
-                self.run_call('service.reload', 'nvmet', self.HA_PROPAGATE)
+                self.run_call('service.control', 'RELOAD', 'nvmet', self.HA_PROPAGATE, job=True)
             else:
                 logger.info('Starting NVMe-oF target for ANA')
-                self.run_call('service.start', 'nvmet', self.HA_PROPAGATE)
+                self.run_call('service.control', 'START', 'nvmet', self.HA_PROPAGATE, job=True)
         elif self.run_call('nvmet.global.running'):
             logger.info('Stopping NVMe-oF target')
-            self.run_call('service.stop', 'nvmet', self.HA_PROPAGATE)
+            self.run_call('service.control', 'STOP', 'nvmet', self.HA_PROPAGATE, job=True)
         else:
             logger.info('No changes required for NVMe-oF target')
 
@@ -999,7 +999,7 @@ class FailoverEventsService(Service):
                            exc_info=True)
 
         logger.info('Starting VRRP daemon')
-        self.run_call('service.start', 'keepalived', self.HA_PROPAGATE)
+        self.run_call('service.control', 'START', 'keepalived', self.HA_PROPAGATE, job=True)
         logger.info('Unpausing failover event processing')
         self.run_call('vrrpthread.unpause_events')
 
@@ -1037,7 +1037,7 @@ class FailoverEventsService(Service):
 
         logger.info('Trying to gracefully stop docker service')
         try:
-            self.run_call('service.stop', 'docker')
+            self.run_call('service.control', 'STOP', 'docker', job=True)
         except Exception:
             logger.error('Failed to stop docker service gracefully', exc_info=True)
         else:

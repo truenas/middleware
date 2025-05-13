@@ -40,13 +40,13 @@ def smb_info():
                         'guest': SHAREUSER
                     })
                     call('service.update', 'cifs', {'enable': True})
-                    call('service.start', 'cifs')
+                    call('service.control', 'START', 'cifs', job=True)
                     yield {'dataset': ds, 'share': s}
                 finally:
                     call('smb.update', {
                         'guest': 'nobody'
                     })
-                    call('service.stop', 'cifs')
+                    call('service.control', 'STOP', 'cifs', job=True)
                     call('service.update', 'cifs', {'enable': False})
 
 

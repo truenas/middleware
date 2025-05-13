@@ -496,7 +496,7 @@ class VirtGlobalService(ConfigService):
             self.logger.debug('No pool set for virtualization, skipping.')
             raise NoPoolConfigured()
         else:
-            await self.middleware.call('service.start', 'incus', {'ha_propagate': False})
+            await (await self.middleware.call('service.control', 'START', 'incus', {'ha_propagate': False})).wait(raise_error=True)
 
         # Set up the default storage pool
         for pool in config['storage_pools']:
@@ -600,7 +600,7 @@ class VirtGlobalService(ConfigService):
 
         if to_import:
             await self.recover(to_import)
-            await self.middleware.call('service.restart', 'incus', {'ha_propagate': False})
+            await (await self.middleware.call('service.control', 'RESTART', 'incus', {'ha_propagate': False})).wait(raise_error=True)
 
     @private
     @job(lock='virt_global_reset')
@@ -623,7 +623,7 @@ class VirtGlobalService(ConfigService):
             if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
                 raise CallError('Failed to stop instances')
 
-        await self.middleware.call('service.stop', 'incus', {'ha_propagate': False})
+        await (await self.middleware.call('service.control', 'STOP', 'incus', {'ha_propagate': False})).wait(raise_error=True)
         if await self.middleware.call('service.started', 'incus'):
             raise CallError('Failed to stop virtualization service')
 
@@ -641,7 +641,7 @@ class VirtGlobalService(ConfigService):
         # and we do have instances datasets that might be mounted beneath
         await run('rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
 
-        if start and not await self.middleware.call('service.start', 'incus', {'ha_propagate': False}):
+        if start and not await (await self.middleware.call('service.control', 'START', 'incus', {'ha_propagate': False})).wait(raise_error=True):
             raise CallError('Failed to start virtualization service')
 
         if not start:

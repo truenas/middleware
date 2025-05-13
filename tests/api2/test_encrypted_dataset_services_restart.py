@@ -25,9 +25,9 @@ def enable_auto_start(service_name):
 @contextlib.contextmanager
 def start_service(service_name):
     try:
-        yield call('service.start', service_name)
+        yield call('service.control', 'START', service_name, job=True)
     finally:
-        call('service.stop', service_name)
+        call('service.control', 'STOP', service_name, job=True)
 
 
 @contextlib.contextmanager
@@ -62,7 +62,7 @@ def test_service_restart_on_unlock_dataset(request):
         with start_service(registered_name) as service_started:
             assert service_started is True
 
-            call('service.stop', registered_name)
+            call('service.control', 'STOP', registered_name, job=True)
             assert call('service.started', registered_name) is False
             with enable_auto_start(registered_name):
                 with lock_dataset(ds):

@@ -23,7 +23,7 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
 
     CERT_FIELD = 'certificate'
     SERVICE = NotImplementedError
-    SERVICE_VERB = 'reload'
+    SERVICE_VERB = 'RELOAD'
 
     async def get_namespace(self):
         return self.SERVICE if self.NAMESPACE is NotImplementedError else self.NAMESPACE
@@ -37,7 +37,9 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
 
     async def redeploy(self, cert_id):
         if await self.middleware.call('service.started', self.SERVICE):
-            await self.middleware.call(f'service.{self.SERVICE_VERB}', self.SERVICE)
+            await (
+                await self.middleware.call('service.control', self.SERVICE_VERB, self.SERVICE)
+            ).wait(raise_error=True)
 
 
 class CertificateCRUDServiceAttachmentDelegate(CertificateAttachmentDelegate, ServiceChangeMixin):
