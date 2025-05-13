@@ -37,7 +37,7 @@ class PowerSupplyAlertClass(AlertClass):
     proactive_support_notify_gone = True
 
 
-class SensorsAlertSource(AlertSource):
+class PsuAlertSource(AlertSource):
     def __init__(self, middleware):
         super().__init__(middleware)
         self.last_failure = time.monotonic()
@@ -56,68 +56,104 @@ class SensorsAlertSource(AlertSource):
 
         return False
 
-    async def handle_psu_event(self, event, alerts):
-        if time.monotonic() - self.last_failure > self._30mins:
-            # we assume a PSU alert that has been around longer than
-            # 30mins is justification for opening up a proactive ticket
-            if self.incident_id is None:
-                self.incident_id = generate_token(16, url_safe=True)
-                alerts.append(
-                    Alert(
-                        PowerSupplyAlertClass,
-                        {
-                            "id": self.incident_id,
-                            "psu": event["name"],
-                            "state": event["state"],
-                            "errors": ", ".join(event["event"]),
-                        },
-                    )
-                )
-        else:
-            raise UnavailableException()
-
     async def check(self):
         alerts = []
         if not await self.should_alert():
             return alerts
 
         for i in await self.middleware.call("ipmi.sensors.query"):
-            if i["state"] != "Nominal" and i["reading"] != "N/A":
-                if i["type"] == "Power Supply" and i["event"]:
-                    await self.handle_psu_event(i, alerts)
-                elif (alert := await self.produce_sensor_alert(i)) is not None:
-                    alerts.append(alert)
-
+            if (
+                i["state"] != "Nominal"
+                and i["reading"] != "N/A"
+                and i["type"] == "Power Supply"
+                and i["event"]
+            ):
+                if time.monotonic() - self.last_failure > self._30mins:
+                    # we assume a PSU alert that has been around longer than
+                    # 30mins is justification for opening up a proactive ticket
+                    if self.incident_id is None:
+                        self.incident_id = generate_token(16, url_safe=True)
+                        alerts.append(
+                            Alert(
+                                PowerSupplyAlertClass,
+                                {
+                                    "id": self.incident_id,
+                                    "psu": i["name"],
+                                    "state": i["state"],
+                                    "errors": ", ".join(i["event"]),
+                                },
+                            )
+                        )
+                else:
+                    raise UnavailableException()
         return alerts
 
-    async def produce_sensor_alert(self, sensor):
-        reading = sensor["reading"]
-        for key in ("lower-non-recoverable", "lower-critical", "lower-non-critical"):
-            if sensor[key] != "N/A" and reading < sensor[key]:
-                relative = "below"
-                level = "recommended" if key == "lower-non-critical" else "critical"
-                return Alert(
-                    SensorAlertClass,
-                    {
-                        "name": sensor["name"],
-                        "relative": relative,
-                        "level": level,
-                        "value": reading,
-                        "event": ", ".join(sensor["event"]),
-                    },
-                )
 
-        for key in ("upper-non-recoverable", "upper-critical", "upper-non-critical"):
-            if sensor[key] != "N/A" and reading > sensor[key]:
-                relative = "above"
-                level = "recommended" if key == "upper-non-critical" else "critical"
-                return Alert(
-                    SensorAlertClass,
-                    {
-                        "name": sensor["name"],
-                        "relative": relative,
-                        "level": level,
-                        "value": reading,
-                        "event": ", ".join(sensor["event"]),
-                    },
-                )
+class SensorsAlertSource(AlertSource):
+    async def should_alert(self):
+        if (await self.middleware.call("system.dmidecode_info"))[
+            "system-product-name"
+        ].startswith("TRUENAS-R"):
+            # r-series
+            return True
+        elif await self.middleware.call("failover.hardware") == "ECHOWARP":
+            # m-series
+            return True
+
+        return False
+
+    async def check(self):
+        alerts = []
+        if not await self.should_alert():
+            return alerts
+
+        for sensor in await self.middleware.call("ipmi.sensors.query"):
+            if (
+                sensor["type"] != "Power Supply"
+                and sensor["state"] != "Nominal"
+                and sensor["reading"] != "N/A"
+                and sensor["event"]
+            ):
+                reading = sensor["reading"]
+                for key in (
+                    "lower-non-recoverable",
+                    "lower-critical",
+                    "lower-non-critical",
+                ):
+                    if sensor[key] != "N/A" and reading < sensor[key]:
+                        relative = "below"
+                        level = (
+                            "recommended" if key == "lower-non-critical" else "critical"
+                        )
+                        return Alert(
+                            SensorAlertClass,
+                            {
+                                "name": sensor["name"],
+                                "relative": relative,
+                                "level": level,
+                                "value": reading,
+                                "event": ", ".join(sensor["event"]),
+                            },
+                        )
+
+                for key in (
+                    "upper-non-recoverable",
+                    "upper-critical",
+                    "upper-non-critical",
+                ):
+                    if sensor[key] != "N/A" and reading > sensor[key]:
+                        relative = "above"
+                        level = (
+                            "recommended" if key == "upper-non-critical" else "critical"
+                        )
+                        return Alert(
+                            SensorAlertClass,
+                            {
+                                "name": sensor["name"],
+                                "relative": relative,
+                                "level": level,
+                                "value": reading,
+                                "event": ", ".join(sensor["event"]),
+                            },
+                        )
+        return alerts
