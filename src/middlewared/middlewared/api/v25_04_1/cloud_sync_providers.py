@@ -81,12 +81,6 @@ class HubicCredentialsModel(BaseModel):
     token: Secret[LongNonEmptyString]
 
 
-class MegaCredentialsModel(BaseModel):
-    type: Literal["MEGA"]
-    user: Secret[NonEmptyString]
-    pass_: Secret[NonEmptyString] = Field(alias="pass")
-
-
 class OneDriveCredentialsModel(BaseModel):
     type: Literal["ONEDRIVE"]
     client_id: Secret[str] = ""
@@ -177,7 +171,6 @@ CloudCredentialProvider = Annotated[
         GooglePhotosCredentialsModel,
         HTTPCredentialsModel,
         HubicCredentialsModel,
-        MegaCredentialsModel,
         OneDriveCredentialsModel,
         PCloudCredentialsModel,
         S3CredentialsModel,
