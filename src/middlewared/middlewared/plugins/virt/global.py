@@ -21,7 +21,7 @@ from middlewared.service_exception import CallError
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 
 from .utils import (
-    Status, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_STORAGE
+    VirtGlobalStatus, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_STORAGE
 )
 
 if TYPE_CHECKING:
@@ -250,7 +250,7 @@ class VirtGlobalService(ConfigService):
     async def check_initialized(self, config=None):
         if config is None:
             config = await self.config()
-        if config['state'] != Status.INITIALIZED.value:
+        if config['state'] != VirtGlobalStatus.INITIALIZED.value:
             raise CallError('Virtualization not initialized.')
 
     @private
@@ -292,20 +292,22 @@ class VirtGlobalService(ConfigService):
         Will create necessary storage datasets if required.
         """
         try:
-            INCUS_STORAGE.state = Status.INITIALIZING
+            INCUS_STORAGE.state = VirtGlobalStatus.INITIALIZING
             await self._setup_impl()
         except NoPoolConfigured:
-            INCUS_STORAGE.state = Status.NO_POOL
+            INCUS_STORAGE.state = VirtGlobalStatus.NO_POOL
         except LockedDataset:
-            INCUS_STORAGE.state = Status.LOCKED
+            INCUS_STORAGE.state = VirtGlobalStatus.LOCKED
         except Exception:
-            INCUS_STORAGE.state = Status.ERROR
+            INCUS_STORAGE.state = VirtGlobalStatus.ERROR
             raise
         else:
-            INCUS_STORAGE.state = Status.INITIALIZED
+            INCUS_STORAGE.state = VirtGlobalStatus.INITIALIZED
         finally:
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
-            await self.auto_start_instances()
+            if INCUS_STORAGE.state == VirtGlobalStatus.INITIALIZED:
+                # We only want to auto start instances if incus is initialized
+                await self.auto_start_instances()
 
     @private
     async def setup_storage_pool(self, pool_name):
@@ -494,7 +496,7 @@ class VirtGlobalService(ConfigService):
             self.logger.debug('No pool set for virtualization, skipping.')
             raise NoPoolConfigured()
         else:
-            await self.middleware.call('service.start', 'incus', {'ha_propagate': False})
+            await (await self.middleware.call('service.control', 'START', 'incus', {'ha_propagate': False})).wait(raise_error=True)
 
         # Set up the default storage pool
         for pool in config['storage_pools']:
@@ -598,7 +600,7 @@ class VirtGlobalService(ConfigService):
 
         if to_import:
             await self.recover(to_import)
-            await self.middleware.call('service.restart', 'incus', {'ha_propagate': False})
+            await (await self.middleware.call('service.control', 'RESTART', 'incus', {'ha_propagate': False})).wait(raise_error=True)
 
     @private
     @job(lock='virt_global_reset')
@@ -621,7 +623,7 @@ class VirtGlobalService(ConfigService):
             if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
                 raise CallError('Failed to stop instances')
 
-        await self.middleware.call('service.stop', 'incus', {'ha_propagate': False})
+        await (await self.middleware.call('service.control', 'STOP', 'incus', {'ha_propagate': False})).wait(raise_error=True)
         if await self.middleware.call('service.started', 'incus'):
             raise CallError('Failed to stop virtualization service')
 
@@ -637,9 +639,9 @@ class VirtGlobalService(ConfigService):
         # Have incus start fresh
         # Use subprocess because shutil.rmtree will traverse filesystems
         # and we do have instances datasets that might be mounted beneath
-        await run(f'rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
+        await run('rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
 
-        if start and not await self.middleware.call('service.start', 'incus', {'ha_propagate': False}):
+        if start and not await (await self.middleware.call('service.control', 'START', 'incus', {'ha_propagate': False})).wait(raise_error=True):
             raise CallError('Failed to start virtualization service')
 
         if not start:
@@ -657,6 +659,11 @@ class VirtGlobalService(ConfigService):
                 # We can remove this in FT release perhaps.
             ]
         )
+
+    @private
+    async def set_status(self, new_status):
+        INCUS_STORAGE.state = new_status
+        self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
 
 
 async def _event_system_ready(middleware: 'Middleware', event_type, args):

@@ -1,11 +1,11 @@
 import enum
 import functools
-from typing import Awaitable, Callable, TypeAlias
+from typing import Awaitable, Callable
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from .accept import validate_model
 from .inspect import model_field_is_model, model_field_is_list_of_models
-from .model_provider import ModelProvider, LazyModuleModelProvider
+from .model_provider import ModelProvider, ModelFactory
 from middlewared.utils.lang import Undefined
 
 
@@ -27,22 +27,6 @@ class APIVersionDoesNotContainModelException(Exception):
         super().__init__(f"API version {version!r} does not contain model {model_name!r}")
 
 
-ModelFactory: TypeAlias = Callable[[type[BaseModel]], type[BaseModel]]
-
-
-def _create_model(model_provider: ModelProvider, model_factory: ModelFactory, arg_model_name: str) -> type[BaseModel]:
-    """Call a model factory.
-
-    :param model_provider: An instance of `ModelProvider` that contains the model to pass to `model_factory`.
-    :param model_factory: A callable that returns the model.
-    :param arg_model_name: Name of the model to pass to `model_factory`.
-
-    :raises KeyError: `arg_model_name` is not registered with `model_provider`.
-    """
-    arg = model_provider.models[arg_model_name]
-    return model_factory(arg)
-
-
 class APIVersion:
     def __init__(self, version: str, model_provider: ModelProvider):
         """
@@ -59,9 +43,13 @@ class APIVersion:
         """Get API model by name.
 
         :param name:
-        :return: model
+        :return: The API model registered with `name`.
+        :raise APIVersionDoesNotContainModelException: `arg_model_name` not found in this API version.
         """
-        return await self.model_provider.get_model(name)
+        try:
+            return await self.model_provider.get_model(name)
+        except KeyError:
+            raise APIVersionDoesNotContainModelException(self.version, name) from None
 
     def register_model(self, model_cls: type[BaseModel], model_factory: ModelFactory, arg_model_name: str) -> None:
         """Store an API method to be retrieved later by `get_model`.
@@ -69,17 +57,8 @@ class APIVersion:
         :param model_cls: The `BaseModel` class to register.
         :param model_factory: A callable that returns the `BaseModel` when `LazyModuleModelProvider` is used.
         :param arg_model_name: Name of the model to pass to `model_factory`.
-
-        :raises KeyError: `arg_model_name` not found in this API version.
         """
-        mp = self.model_provider
-        if isinstance(mp, LazyModuleModelProvider):
-            mp.models_factories[model_cls.__name__] = functools.partial(
-                _create_model, mp, model_factory, arg_model_name
-            )
-        else:
-            # Newest version uses `ModuleModelProvider`. We can add directly to the models list.
-            mp.models[model_cls.__name__] = model_cls
+        self.model_provider.register_model(model_cls, model_factory, arg_model_name)
 
 
 class APIVersionsAdapter:
@@ -105,6 +84,8 @@ class APIVersionsAdapter:
         :param version1: original API version from which the `value` comes from
         :param version2: target API version that needs `value`
         :return: converted value
+        :raise APIVersionDoesNotExistException:
+        :raise APIVersionDoesNotContainModelException:
         """
         return (await self.adapt_model(value, model_name, version1, version2))[1]
 
@@ -114,9 +95,12 @@ class APIVersionsAdapter:
         model_name: str,
         version1: str,
         version2: str,
-    ) -> tuple[type[BaseModel], dict]:
+    ) -> tuple[type[BaseModel] | None, dict]:
         """
         Same as `adapt`, but returned value will be a tuple of `version2` model instance and converted value.
+
+        :raise APIVersionDoesNotExistException:
+        :raise APIVersionDoesNotContainModelException:
         """
         try:
             version1_index = self.versions_history.index(version1)
@@ -129,10 +113,7 @@ class APIVersionsAdapter:
             raise APIVersionDoesNotExistException(version2) from None
 
         current_version = self.versions[version1]
-        try:
-            current_version_model = await current_version.get_model(model_name)
-        except KeyError:
-            raise APIVersionDoesNotContainModelException(current_version.version, model_name)
+        current_version_model = await current_version.get_model(model_name)
 
         value_factory = functools.partial(async_validate_model, current_version_model, value)
         model = current_version_model
@@ -152,7 +133,7 @@ class APIVersionsAdapter:
             )
             try:
                 model = await new_version.get_model(model_name)
-            except KeyError:
+            except APIVersionDoesNotContainModelException:
                 model = None
 
             current_version = new_version
@@ -167,16 +148,11 @@ class APIVersionsAdapter:
         new_version: APIVersion,
         direction: Direction,
     ):
-        try:
-            current_model = await current_version.get_model(model_name)
-        except KeyError:
-            raise APIVersionDoesNotContainModelException(current_version.version, model_name) from None
-
-        try:
-            new_model = await new_version.get_model(model_name)
-        except KeyError:
-            raise APIVersionDoesNotContainModelException(new_version.version, model_name) from None
-
+        """
+        :raise APIVersionDoesNotContainModelException:
+        """
+        current_model = await current_version.get_model(model_name)
+        new_model = await new_version.get_model(model_name)
         return self._adapt_value(await value_factory(), current_model, new_model, direction)
 
     def _adapt_value(

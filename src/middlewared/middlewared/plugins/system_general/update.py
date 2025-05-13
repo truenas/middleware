@@ -227,13 +227,13 @@ class SystemGeneralService(ConfigService):
 
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
-            await self.middleware.call('service.reload', 'timeservices')
-            await self.middleware.call('service.restart', 'cron')
+            await (await self.middleware.call('service.control', 'RELOAD', 'timeservices')).wait(raise_error=True)
+            await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam_middleware')
 
-        await self.middleware.call('service.start', 'ssl')
+        await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
 
         if rollback_timeout is not None:
             self._original_datastore = original_datastore

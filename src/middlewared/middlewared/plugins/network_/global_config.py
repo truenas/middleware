@@ -165,17 +165,16 @@ class NetworkConfigurationService(ConfigService):
         for srv, enabled in data.items():
             service_name = announce_srv[srv]
             started = await self.middleware.call('service.started', service_name)
-            verb = None
 
             if enabled:
-                verb = 'restart' if started else 'start'
+                verb = 'RESTART' if started else 'START'
             else:
-                verb = 'stop' if started else None
+                verb = 'STOP' if started else None
 
             if not verb:
                 continue
 
-            await self.middleware.call(f'service.{verb}', service_name)
+            await (await self.middleware.call('service.control', verb, service_name)).wait(raise_error=True)
 
     @api_method(NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult)
     async def do_update(self, data):
@@ -240,7 +239,7 @@ class NetworkConfigurationService(ConfigService):
         service_actions = set()
         if lhost_changed:
             await self.middleware.call('etc.generate', 'hostname')
-            service_actions.add(('nscd', 'reload'))
+            service_actions.add(('nscd', 'RELOAD'))
 
         if rhost_changed:
             try:
@@ -254,7 +253,7 @@ class NetworkConfigurationService(ConfigService):
         hosts_table_changed = new_config['hosts'] != config['hosts']
         if domainname_changed or hosts_table_changed:
             await self.middleware.call('etc.generate', 'hosts')
-            service_actions.add(('nscd', 'reload'))
+            service_actions.add(('nscd', 'RELOAD'))
             if licensed:
                 try:
                     await self.middleware.call('failover.call_remote', 'etc.generate', ['hosts'])
@@ -272,7 +271,7 @@ class NetworkConfigurationService(ConfigService):
         dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
         if dnssearch_changed or dnsservers_changed:
             await self.middleware.call('dns.sync')
-            service_actions.add(('nscd', 'reload'))
+            service_actions.add(('nscd', 'RELOAD'))
             if licensed:
                 try:
                     await self.middleware.call('failover.call_remote', 'dns.sync')
@@ -295,7 +294,7 @@ class NetworkConfigurationService(ConfigService):
         # kerberized NFS needs to be restarted if these change
         if lhost_changed or vhost_changed or domainname_changed:
             if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
-                service_actions.add(('nfs', 'restart'))
+                service_actions.add(('nfs', 'RESTART'))
 
         # proxy server has changed
         if new_config['httpproxy'] != config['httpproxy']:
@@ -308,7 +307,7 @@ class NetworkConfigurationService(ConfigService):
 
             if (await self.middleware.call('docker.config'))['pool']:
                 # Docker needs to be restarted to reflect http proxy changes
-                service_actions.add(('docker', 'restart'))
+                service_actions.add(('docker', 'RESTART'))
         # allowing outbound network activity has been changed
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
@@ -319,16 +318,15 @@ class NetworkConfigurationService(ConfigService):
         if any((lhost_changed, vhost_changed)) or announce_changed:
             # lhost_changed is the local hostname and vhost_changed is the virtual hostname
             # and if either of these change then we need to toggle the service announcement
-            # daemons irregardless whether or not these were toggled on their own
+            # daemons regardless whether these were toggled on their own
             for srv, enabled in new_config['service_announcement'].items():
                 service_name = announce_srv[srv]
                 started = await self.middleware.call('service.started', service_name)
-                verb = None
 
                 if enabled:
-                    verb = 'restart' if started else 'start'
+                    verb = 'RESTART' if started else 'START'
                 else:
-                    verb = 'stop' if started else None
+                    verb = 'STOP' if started else None
 
                 if not verb:
                     continue
@@ -336,7 +334,7 @@ class NetworkConfigurationService(ConfigService):
                 service_actions.add((service_name, verb))
 
         for service, verb in service_actions:
-            await self.middleware.call(f'service.{verb}', service)
+            await (await self.middleware.call(f'service.control', verb, service)).wait(raise_error=True)
 
         await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
 

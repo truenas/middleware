@@ -136,8 +136,8 @@ class IPAJoinMixin:
         for etc_file in DSType.IPA.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        self.middleware.call_sync('service.stop', 'sssd')
-        self.middleware.call_sync('service.start', 'sssd', {'silent': False})
+        self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
         self.middleware.call_sync('kerberos.start')
 
     def _ipa_insert_keytab(self, service: ipa_constants.IpaConfigName, keytab_data: str) -> None:

@@ -101,7 +101,7 @@ class PoolService(Service):
                 if options["cascade"]:
                     await delegate.delete(attachments)
                 else:
-                    await delegate.toggle(attachments, False)
+                    await delegate.disable(attachments)
                     enable_on_import[delegate.name] = list(
                         set(enable_on_import.get(delegate.name, [])) |
                         {attachment['id'] for attachment in attachments}
@@ -181,7 +181,7 @@ class PoolService(Service):
         await self.middleware.call_hook('dataset.post_delete', pool['name'])
 
         # scrub needs to be regenerated in crontab
-        await self.middleware.call('service.restart', 'cron')
+        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
         self.middleware.send_event('pool.query', 'REMOVED', id=oid)

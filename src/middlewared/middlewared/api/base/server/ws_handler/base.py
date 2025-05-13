@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web import Request, WebSocketResponse
 
 from middlewared.utils.origin import ConnectionOrigin
 from middlewared.webui_auth import addr_in_allowlist
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class BaseWebSocketHandler:

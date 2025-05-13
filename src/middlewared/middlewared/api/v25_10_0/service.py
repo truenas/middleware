@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import Field
 
 from middlewared.api.base import BaseModel
@@ -7,7 +9,7 @@ __all__ = [
     "ServiceEntry", "ServiceReloadArgs", "ServiceReloadResult", "ServiceRestartArgs", "ServiceRestartResult",
     "ServiceStartArgs", "ServiceStartResult", "ServiceStartedArgs", "ServiceStartedResult",
     "ServiceStartedOrEnabledArgs", "ServiceStartedOrEnabledResult", "ServiceStopArgs", "ServiceStopResult",
-    "ServiceUpdateArgs", "ServiceUpdateResult",
+    "ServiceUpdateArgs", "ServiceUpdateResult", "ServiceControlArgs", "ServiceControlResult",
 ]
 
 
@@ -23,11 +25,26 @@ class ServiceOptions(BaseModel):
     ha_propagate: bool = True
     silent: bool = True
     """Return `false` instead of an error if the operation fails."""
+    timeout: int | None = 120
 
 
 class ServiceUpdate(BaseModel):
     enable: bool
     """Whether the service should start on boot."""
+
+
+class ServiceControlArgs(BaseModel):
+    verb: Literal["START", "STOP", "RESTART", "RELOAD"]
+    service: str
+    options: ServiceOptions = Field(default_factory=ServiceOptions)
+
+
+class ServiceControlResult(BaseModel):
+    result: bool
+    """
+    For "START", "RESTART", "RELOAD", it will indicate whether the service is running after performing the operation.
+    For "STOP", it will indicate whether the service was successfully stopped.
+    """
 
 
 class ServiceReloadArgs(BaseModel):

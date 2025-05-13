@@ -10,7 +10,12 @@ from middlewared.api.current import (NVMetHostCreateArgs,
                                      NVMetHostGenerateKeyArgs,
                                      NVMetHostGenerateKeyResult,
                                      NVMetHostUpdateArgs,
-                                     NVMetHostUpdateResult)
+                                     NVMetHostUpdateResult,
+                                     NVMetHostDHChapDHGroupChoicesArgs,
+                                     NVMetHostDHChapDHGroupChoicesResult,
+                                     NVMetHostDHChapHashChoicesArgs,
+                                     NVMetHostDHChapHashChoicesResult
+                                     )
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
@@ -185,3 +190,18 @@ class NVMetHostService(CRUDService):
                 f'Failed to key with exit code ({cp.returncode}): {cp.stderr.decode()}'
             )
         return key
+
+    @api_method(NVMetHostDHChapDHGroupChoicesArgs, NVMetHostDHChapDHGroupChoicesResult)
+    async def dhchap_dhgroup_choices(self):
+        """
+        Returns possible choices for `dhchap_dhgroup` attribute of `host` create and update.
+        None is an additional choice.
+        """
+        return ['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
+
+    @api_method(NVMetHostDHChapHashChoicesArgs, NVMetHostDHChapHashChoicesResult)
+    async def dhchap_hash_choices(self):
+        """
+        Returns possible choices for `dhchap_hash` attribute of `host` create and update.
+        """
+        return ['SHA-256', 'SHA-384', 'SHA-512']

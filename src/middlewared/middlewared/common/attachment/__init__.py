@@ -62,6 +62,15 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     async def stop(self, attachments):
         pass
 
+    async def disable(self, attachments):
+        """
+        Disable said items, this is used when we export pool but do not want to delete
+        related attachments
+        :param attachments: list of the items returned by `query`
+        :return: None
+        """
+        await self.toggle(attachments, False)
+
 
 class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     """
@@ -95,7 +104,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         ) or not service_obj[0]['enable'] or service_obj[0]['state'] == 'RUNNING':
             return
 
-        await self.middleware.call('service.start', self.service)
+        await (await self.middleware.call('service.control', 'START', self.service)).wait(raise_error=True)
 
     async def query(self, path, enabled, options=None):
         results = []

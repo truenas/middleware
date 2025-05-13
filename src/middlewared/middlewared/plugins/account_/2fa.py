@@ -208,7 +208,7 @@ class UserService(Service):
 
         if (await self.middleware.call('auth.twofactor.config'))['services']['ssh']:
             # This needs to be reloaded so that user's new secret can be reflected in sshd configuration
-            await self.middleware.call('service.reload', 'ssh')
+            await (await self.middleware.call('service.control', 'RELOAD', 'ssh')).wait(raise_error=True)
 
         user_entry = await self.translate_username(username)
         twofactor_config = await self.twofactor_config(username)

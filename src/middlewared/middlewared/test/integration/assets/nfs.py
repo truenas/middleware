@@ -13,11 +13,11 @@ __all__ = ["nfs_share", "nfs_server"]
 @contextlib.contextmanager
 def nfs_server():
     try:
-        res = call('service.start', 'nfs', {'silent': False})
+        res = call('service.control', 'START', 'nfs', {'silent': False})
         sleep(1)
         yield res
     finally:
-        call('service.stop', 'nfs', {'silent': False})
+        call('service.control', 'STOP', 'nfs', {'silent': False})
 
 
 @contextlib.contextmanager
@@ -25,10 +25,10 @@ def nfs_share(dataset):
     share = call("sharing.nfs.create", {
         "path": f"/mnt/{dataset}",
     })
-    assert call("service.start", "nfs")
+    assert call("service.control", "START", "nfs")
 
     try:
         yield share
     finally:
         call("sharing.nfs.delete", share["id"])
-        call("service.stop", "nfs")
+        call("service.control", "STOP", "nfs")
