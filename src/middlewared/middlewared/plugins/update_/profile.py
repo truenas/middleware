@@ -90,8 +90,8 @@ class UpdateService(Service):
         return Profile[name] >= Profile[selected_name]
 
 
-async def post_license_update(middleware, prev_product_type, *args, **kwargs):
-    if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
+async def post_license_update(middleware, prev_license, *args, **kwargs):
+    if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
         current_profile = Profile[(await middleware.call('update.config'))['profile']]
         if current_profile < Profile.CONSERVATIVE:
             await middleware.call('update.update', {'profile': Profile.CONSERVATIVE.name})
