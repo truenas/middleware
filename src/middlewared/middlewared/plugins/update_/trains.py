@@ -5,7 +5,8 @@ from aiohttp import ClientResponseError, ClientSession, ClientTimeout
 from middlewared.service import CallError, private, Service
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.utils.functools_ import cache
-from .utils import can_update, scale_update_server, SCALE_MANIFEST_FILE
+from .profile import Profile
+from .utils import scale_update_server, SCALE_MANIFEST_FILE
 
 
 class UpdateService(Service):
@@ -20,6 +21,8 @@ class UpdateService(Service):
 
     @private
     async def fetch(self, url):
+        await self.middleware.call('network.general.will_perform_activity', 'update')
+
         async with ClientSession(**self.opts) as client:
             try:
                 async with client.get(url) as resp:
@@ -28,42 +31,24 @@ class UpdateService(Service):
                 raise CallError(f'Error while fetching update manifest: {e}')
 
     @private
-    async def get_scale_update(self, train, current_version):
-        new_manifest = await self.fetch(f"{self.update_srv}/{train}/manifest.json")
-        if not can_update(current_version, new_manifest["version"]):
-            return {"status": "UNAVAILABLE"}
+    async def get_trains(self):
+        trains = await self.fetch(f"{self.update_srv}/trains.json")
 
-        return {
-            "status": "AVAILABLE",
-            "changes": [{
-                "operation": "upgrade",
-                "old": {
-                    "name": "TrueNAS",
-                    "version": current_version,
-                },
-                "new": {
-                    "name": "TrueNAS",
-                    "version": new_manifest["version"],
-                }
-            }],
-            "notice": None,
-            "notes": None,
-            "release_notes_url": await self.middleware.call("system.release_notes_url", new_manifest["version"]),
-            "changelog": new_manifest["changelog"],
-            "version": new_manifest["version"],
-            "filename": new_manifest["filename"],
-            "filesize": new_manifest["filesize"],
-            "checksum": new_manifest["checksum"],
-        }
+        current_train_name = await self.get_current_train_name(trains)
+        if current_train_name not in trains['trains']:
+            trains['trains'][current_train_name] = {'update_profile': Profile.DEVELOPER.name}
+
+        return trains
 
     @private
-    async def get_trains_data(self):
-        return {
-            "current_train": (await self.middleware.call("update.get_manifest_file"))["train"],
-            **(await self.fetch(f"{self.update_srv}/trains.json"))
-        }
+    async def get_train_manifest(self, name):
+        return await self.fetch(f"{self.update_srv}/{name}/manifest.json")
 
     @private
-    async def check_train(self, train):
-        old_vers = (await self.middleware.call("update.get_manifest_file"))["version"]
-        return await self.middleware.call("update.get_scale_update", train, old_vers)
+    async def get_current_train_name(self, trains):
+        manifest = await self.middleware.call('update.get_manifest_file')
+
+        if manifest['train'] in trains['trains_redirection']:
+            return trains['trains_redirection'][manifest['train']]
+        else:
+            return manifest['train']

@@ -173,4 +173,4 @@ async def post_system_update_hook(middleware):
 
 
 async def setup(middleware):
-    middleware.register_hook('update.post_update', post_system_update_hook, sync=True)
+    middleware.register_hook('update.post_run', post_system_update_hook, sync=True)

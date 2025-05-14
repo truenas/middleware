@@ -6,7 +6,6 @@ from middlewared.api.base import (
     excluded_field,
     ForUpdateMetaclass,
     NonEmptyString,
-    NotRequired,
 )
 
 
@@ -46,7 +45,7 @@ class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
 
 
 class FailoverUpgrade(BaseModel):
-    train: NonEmptyString = NotRequired
+    train: NonEmptyString | None = None
     resume: bool = False
     """Should be set to true if a previous call to this method returned a \
     `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed \
