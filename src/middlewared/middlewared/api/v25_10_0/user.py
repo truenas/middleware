@@ -17,6 +17,7 @@ from middlewared.api.base import (
     single_argument_args,
     single_argument_result
 )
+from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
 
 __all__ = ["UserEntry",
            "UserCreateArgs", "UserCreateResult",
@@ -31,9 +32,6 @@ __all__ = ["UserEntry",
            "UserTwofactorConfigEntry",
            "UserUnset2faSecretArgs", "UserUnset2faSecretResult",
            "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
-
-
-DEFAULT_HOME_PATH = "/var/empty"
 
 
 class UserEntry(BaseModel):

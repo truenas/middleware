@@ -636,7 +636,7 @@ class KeychainCredentialService(CRUDService):
         except MatchNotFound:
             raise CallError(f"User {data['username']} does not exist")
 
-        if user["home"].startswith("/nonexistent") or not os.path.exists(user["home"]):
+        if user["home"].startswith("/var/empty") or not os.path.exists(user["home"]):
             raise CallError(f"Home directory {user['home']} does not exist", errno.ENOENT)
 
         # Make sure SSH is enabled

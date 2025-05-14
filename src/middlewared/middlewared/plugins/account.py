@@ -71,7 +71,7 @@ from middlewared.utils.security import (
 from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
-    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
+    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
     SYNTHETIC_CONTAINER_ROOT, NO_LOGIN_SHELL, MIN_AUTO_XID
 )
@@ -479,7 +479,7 @@ class UserService(CRUDService):
             verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
             return False
 
-        if data['home'] in DEFAULT_HOME_PATHS:
+        if data['home'] == DEFAULT_HOME_PATH:
             return False
 
         if not p.exists():
@@ -683,7 +683,7 @@ class UserService(CRUDService):
 
         new_homedir = False
         home_mode = data.pop('home_mode')
-        if data['home'] and data['home'] not in DEFAULT_HOME_PATHS:
+        if data['home'] and data['home'] != DEFAULT_HOME_PATH:
             try:
                 data['home'] = self.setup_homedir(
                     data['home'],
@@ -736,7 +736,7 @@ class UserService(CRUDService):
         if data['smb']:
             self.middleware.call_sync('smb.update_passdb_user', data | {'id': pk})
 
-        if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']) and data['home'] not in DEFAULT_HOME_PATHS:
+        if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']) and data['home'] != DEFAULT_HOME_PATH:
             for f in os.listdir(SKEL_PATH):
                 if f.startswith('dot'):
                     dest_file = os.path.join(data['home'], f[3:])
@@ -846,8 +846,8 @@ class UserService(CRUDService):
             old_mode = None
 
         home = data.get('home') or user['home']
-        had_home = user['home'] not in DEFAULT_HOME_PATHS
-        has_home = home not in DEFAULT_HOME_PATHS
+        had_home = user['home'] != DEFAULT_HOME_PATH
+        has_home = home != DEFAULT_HOME_PATH
         # root user and admin users are an exception to the rule
         if data.get('sshpubkey'):
             if not (
@@ -1057,7 +1057,7 @@ class UserService(CRUDService):
                 except Exception:
                     self.logger.warning(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
-        if user['home'] and user['home'] not in DEFAULT_HOME_PATHS:
+        if user['home'] and user['home'] != DEFAULT_HOME_PATH:
             try:
                 shutil.rmtree(os.path.join(user['home'], '.ssh'))
             except Exception:
@@ -1652,7 +1652,7 @@ class UserService(CRUDService):
                     await self.middleware.call('user.translate_username', old['username'])
                 )['twofactor_auth_configured'] is False:
                     verrors.add(*error)
-            if combined['home'] in DEFAULT_HOME_PATHS or combined['shell'] == NO_LOGIN_SHELL:
+            if combined['home'] == DEFAULT_HOME_PATH or combined['shell'] == NO_LOGIN_SHELL:
                 verrors.add(
                     f'{schema}.ssh_password_enabled',
                     'Cannot be enabled without a valid home path and login shell.'

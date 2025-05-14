@@ -58,7 +58,6 @@ def test_create_account_audit():
         "username": "sergey",
         "full_name": "Sergey",
         "group_create": True,
-        "home": "/nonexistent",
         "password": "password",
     }
     try:

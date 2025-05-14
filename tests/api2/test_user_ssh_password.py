@@ -10,7 +10,6 @@ def test_user_ssh_password_enabled(ssh_password_enabled):
         "username": "test",
         "full_name": "Test",
         "group_create": True,
-        "home": f"/nonexistent",
         "password": "test1234",
         "ssh_password_enabled": ssh_password_enabled,
     }):
@@ -30,7 +29,6 @@ def group1_with_user():
             "full_name": "Test",
             "group_create": True,
             "groups": [g1["id"]],
-            "home": f"/nonexistent",
             "password": "test1234",
         }):
             yield
