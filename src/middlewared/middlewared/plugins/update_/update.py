@@ -153,4 +153,3 @@ class UpdateService(Service):
         await self.middleware.run_in_thread(self.file_impl, job, options)
         await self.middleware.call_hook('update.post_run')
         job.set_progress(100, 'Update completed')
-

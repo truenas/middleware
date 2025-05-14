@@ -22,7 +22,6 @@ class UpdateService(Service):
     async def profile_choices(self):
         profiles = {}
         is_enterprise = await self.middleware.call('system.is_enterprise')
-        current_profile = Profile[(await self.middleware.call('update.config'))['profile']]
 
         if not is_enterprise:
             profiles[Profile.DEVELOPER] = {

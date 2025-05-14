@@ -644,7 +644,6 @@ class FailoverService(ConfigService):
         else:
             updatefile = options['resume_manual']
 
-
         local_path = self.middleware.call_sync('update.get_update_location')
         updatefile_name = 'updatefile.sqsh'
         updatefile_localpath = os.path.join(local_path, updatefile_name)
