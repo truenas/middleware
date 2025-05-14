@@ -389,7 +389,7 @@ class FailoverService(ConfigService):
 
         # need to make sure the license information is updated on the standby node since
         # it's cached in memory
-        _prev = self.middleware.call_sync('system.product_type')
+        _prev = self.middleware.call_sync('system.license')
         self.middleware.call_sync(
             'failover.call_remote', 'core.call_hook', ['system.post_license_update', [_prev]]
         )

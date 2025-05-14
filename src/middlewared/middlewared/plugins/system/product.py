@@ -193,7 +193,7 @@ class SystemService(Service):
                 if not self.middleware.call_sync('system.is_ha_capable'):
                     raise ValidationError('system.license', 'This is not an HA capable system.')
 
-        prev_product_type = self.middleware.call_sync('system.product_type')
+        prev_license = self.middleware.call_sync('system.license')
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license_)
             os.fchmod(f.fileno(), LICENSE_FILE_MODE)
@@ -207,7 +207,7 @@ class SystemService(Service):
         self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
         self.middleware.call_sync('failover.configure.license', dser_license)
         self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
+            self.middleware.call_hook('system.post_license_update', prev_license=prev_license), wait=False,
         )
 
     @api_method(
@@ -225,8 +225,8 @@ class SystemService(Service):
         return False
 
 
-async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
-    if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
+async def hook_license_update(middleware, prev_license, *args, **kwargs):
+    if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
         await middleware.call('system.advanced.update', {'autotune': True})
 
 
