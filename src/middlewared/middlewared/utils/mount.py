@@ -1,3 +1,4 @@
+import contextlib
 import os
 import logging
 
@@ -60,7 +61,16 @@ def __create_tree(info, mount_id):
     return info[mount_id or root_id]
 
 
-def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None):
+def __iter_mountinfo(dev_id=None, mnt_id=None, callback_func=None, private_data=None):
+    def callback(*args, **kwargs):
+        # This should not be required but check NAS-135584
+        # Basically it seems after an upgrade for some reason "-" separator
+        # was missing in a line which resulted in this logic failing and triggering
+        # a chain of events which ended up with multiple duplicate records of a
+        # config service
+        with contextlib.suppress(IndexError):
+            return callback_func(*args, **kwargs)
+
     if dev_id:
         maj_min = f'{os.major(dev_id)}:{os.minor(dev_id)}'
     else:
@@ -126,9 +136,9 @@ def getmntinfo(dev_id=None, mnt_id=None):
     """
     info = {}
     if mnt_id:
-        __iter_mountinfo(mnt_id=mnt_id, callback=__parse_to_mnt_id, private_data=info)
+        __iter_mountinfo(mnt_id=mnt_id, callback_func=__parse_to_mnt_id, private_data=info)
     else:
-        __iter_mountinfo(dev_id=dev_id, callback=__parse_to_dev, private_data=info)
+        __iter_mountinfo(dev_id=dev_id, callback_func=__parse_to_dev, private_data=info)
 
     return info
 
@@ -139,5 +149,5 @@ def getmnttree(mount_id=None):
     filesystem specified by mnt_id. cf. documentation for getmntinfo().
     """
     info = {}
-    __iter_mountinfo(callback=__parse_to_mnt_id, private_data=info)
+    __iter_mountinfo(callback_func=__parse_to_mnt_id, private_data=info)
     return __create_tree(info, mount_id)
