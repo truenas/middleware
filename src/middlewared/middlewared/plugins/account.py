@@ -1098,7 +1098,7 @@ class UserService(CRUDService):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
 
-        `group_ids` is a list of local group IDs for the user.
+        :param group_ids: List of local group IDs for the user.
         """
         group_ids = {
             g["gid"] for g in self.middleware.call_sync(
@@ -1444,15 +1444,17 @@ class UserService(CRUDService):
                     'User namespace idmaps may not be configured for privileged accounts.'
                 )
 
-        if data.get('random_password') and data.get('password'):
-            verrors.add(
-                f'{schema}.random_password',
-                'Requesting a randomized password while simultaneously supplying '
-                'an explicit password is not permitted.'
-            )
-        elif data.get('random_password'):
-            data['password'] = generate_string(string_size=20)
-            password_changed = True
+        if data.get('random_password'):
+            if data.get('password'):
+                verrors.add(
+                    f'{schema}.random_password',
+                    'Requesting a randomized password while simultaneously supplying '
+                    'an explicit password is not permitted.'
+                )
+            else:
+                data['password'] = generate_string(string_size=20)
+                password_changed = True
+
         elif data.get('password'):
             history = old['password_history'] + [old['unixhash']] if old else None
             await self.password_security_validate(schema, verrors, data['password'], history)
@@ -1506,32 +1508,34 @@ class UserService(CRUDService):
                         errno.EEXIST,
                     )
 
-        if combined['smb'] and not await self.middleware.call('smb.is_configured'):
-            if (await self.middleware.call('systemdataset.sysdataset_path')) is None:
-                verrors.add(
-                    f'{schema}.smb',
-                    'System dataset is not mounted at expected path. This may indicate '
-                    'an underlying issue with the pool hosting the system dataset. '
-                    'SMB users may not be configured until this configuration issue is addressed.'
-                )
-            else:
-                verrors.add(
-                    f'{schema}.smb',
-                    'SMB users may not be configured while SMB service backend is unitialized.'
-                )
-
-        if combined['smb'] and combined['password_disabled']:
-            verrors.add(
-                f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
-            )
-
         stig_enabled = (await self.middleware.call('system.security.config'))['enable_gpos_stig']
-        if combined['smb'] and stig_enabled:
-            verrors.add(
-                f'{schema}.smb',
-                'SMB authentication for local user accounts is not permitted when General Purpose OS '
-                'STIG compatibility is enabled.'
-            )
+
+        if combined['smb']:
+            if not await self.middleware.call('smb.is_configured'):
+                if (await self.middleware.call('systemdataset.sysdataset_path')) is None:
+                    verrors.add(
+                        f'{schema}.smb',
+                        'System dataset is not mounted at expected path. This may indicate '
+                        'an underlying issue with the pool hosting the system dataset. '
+                        'SMB users may not be configured until this configuration issue is addressed.'
+                    )
+                else:
+                    verrors.add(
+                        f'{schema}.smb',
+                        'SMB users may not be configured while SMB service backend is unitialized.'
+                    )
+
+            if combined['password_disabled']:
+                verrors.add(
+                    f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
+                )
+
+            if stig_enabled:
+                verrors.add(
+                    f'{schema}.smb',
+                    'SMB authentication for local user accounts is not permitted when General Purpose OS '
+                    'STIG compatibility is enabled.'
+                )
 
         if old:
             is_enabled_system_account = combined['immutable'] and any([
