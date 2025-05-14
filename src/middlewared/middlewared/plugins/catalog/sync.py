@@ -23,7 +23,11 @@ class CatalogService(Service):
             try:
                 async with session.get(STATS_URL) as response:
                     response.raise_for_status()
-                    self.POPULARITY_INFO = await response.json()
+                    self.POPULARITY_INFO = {
+                        k.lower(): v for k, v in (await response.json()).items()
+                        # Making sure we have a consistent format as for trains we see captialized
+                        # entries in the file
+                    }
             except Exception as e:
                 self.logger.error('Failed to fetch popularity stats for apps: %r', e)
 
