@@ -1,25 +1,24 @@
 import pytest
+from typing import Literal
 
-from middlewared.api.current import UserCreateArgs
+from middlewared.api.current import UserCreateArgs, UserEntry
 from middlewared.plugins.account import UserService
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ValidationErrors
 
 
-@pytest.mark.parametrize('data, old_data, twofactor_enabled, twofactor_config, expected_error', [
+@pytest.mark.parametrize('method, twofactor_enabled, twofactor_config, expected_error', [
     (
-        {'ssh_password_enabled': True},
-        None,
+        'CREATE',
         False,
         {
             'services': {'ssh': False},
             'enabled': False,
         },
-        ''
+        None
     ),
     (
-        {'ssh_password_enabled': True},
-        None,
+        'CREATE',
         False,
         {
             'services': {'ssh': True},
@@ -31,8 +30,7 @@ from middlewared.service import ValidationErrors
         ' configured for this user, SSH password access can be enabled.'
     ),
     (
-        {'ssh_password_enabled': True},
-        {},
+        'UPDATE',
         False,
         {
             'services': {'ssh': True},
@@ -42,39 +40,36 @@ from middlewared.service import ValidationErrors
         ' 2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
     ),
     (
-        {'ssh_password_enabled': True},
-        {},
+        'UPDATE',
         True,
         {
             'services': {'ssh': True},
             'enabled': True,
         },
-        ''
+        None
     ),
     (
-        {'ssh_password_enabled': True},
-        {},
+        'UPDATE',
         False,
         {
             'services': {'ssh': False},
             'enabled': True,
         },
-        ''
+        None
     ),
     (
-        {'ssh_password_enabled': True},
-        None,
+        'CREATE',
         False,
         {
             'services': {'ssh': False},
             'enabled': True,
         },
-        ''
+        None
     ),
 ])
 @pytest.mark.asyncio
 async def test_use_ssh_enabled_validation(
-    data: dict, old_data: dict | None, twofactor_enabled: bool, twofactor_config: dict, expected_error: str
+    method: Literal['CREATE', 'UPDATE'], twofactor_enabled: bool, twofactor_config: dict, expected_error: str
 ):
     m = Middleware()
     m['datastore.query'] = lambda *arg: []
@@ -83,24 +78,50 @@ async def test_use_ssh_enabled_validation(
     m['user.translate_username'] = lambda *args: {'twofactor_auth_configured': twofactor_enabled}
     m['system.security.config'] = lambda *arg: {"enable_fips": False, "enable_gpos_stig": False}
 
-    data.update({
-        'smb': False,
-        'password_disabled': True
-    })
-    if old_data is not None:
-        old_data.update({
-            'username': '',
-            'id': 0
-        })
-
-    data = UserCreateArgs(user_create=data).model_dump()
+    schema_name = f'user.{method.lower()}'
+    if method == 'CREATE':
+        data = UserCreateArgs(user_create={
+            'username': 'testuser',
+            'full_name': 'testuser',
+            'group_create': True,
+            'home': '/mnt/home/dir',
+            'smb': False,
+            'password_disabled': True,
+            'ssh_password_enabled': True,
+        }).model_dump(by_alias=True)
+        old_data = None
+    else:
+        data = {'ssh_password_enabled': True}
+        old_data = UserEntry(
+            id=0,
+            uid=1,
+            username='',
+            unixhash='unixhash',
+            smbhash='smbhash',
+            home='/mnt/home/dir',
+            full_name='test user',
+            builtin=True,
+            smb=False,
+            group={},
+            password_disabled=True,
+            id_type_both=False,
+            local=True,
+            immutable=False,
+            twofactor_auth_configured=twofactor_enabled,
+            sid=None,
+            last_password_change=None,
+            password_age=None,
+            password_history=None,
+            password_change_required=False,
+            roles=[],
+            api_keys=[],
+        ).model_dump(by_alias=True)
 
     verrors = ValidationErrors()
     if expected_error:
-        with pytest.raises(ValidationErrors) as ve:
-            await UserService(m).common_validation(verrors, data, 'test_schema', [], old_data)
+        with pytest.raises(ValidationErrors, match=expected_error) as ve:
+            await UserService(m).common_validation(verrors, data, schema_name, [], old_data)
             verrors.check()
-        assert str(ve.value.errors[0]) == expected_error
     else:
-        await UserService(m).common_validation(verrors, data, 'test_schema', [], old_data)
-        assert list(verrors) == []
+        await UserService(m).common_validation(verrors, data, schema_name, [], old_data)
+        verrors.check()
