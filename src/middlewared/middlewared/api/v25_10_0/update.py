@@ -1,7 +1,7 @@
 from typing import Literal
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, single_argument_result,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString,
 )
 
 
@@ -77,7 +77,7 @@ class UpdateStatusNewVersion(BaseModel):
     "Release notes URL."
 
 
-class UpdateStatus(BaseModel):
+class UpdateStatusStatus(BaseModel):
     current_train: UpdateStatusCurrentTrain
     "Currently running system version information."
     new_version: UpdateStatusNewVersion | None
@@ -89,8 +89,7 @@ class UpdateDownloadProgress(BaseModel):
     description: LongString
 
 
-@single_argument_result
-class UpdateStatusResult(BaseModel):
+class UpdateStatus(BaseModel):
     code: Literal['NORMAL', 'ERROR', 'REBOOT_REQUIRED', 'HA_UNAVAILABLE']
     """
     Status code:
@@ -99,14 +98,18 @@ class UpdateStatusResult(BaseModel):
     * REBOOT_REQUIRED - system update was already applied, system reboot is required.
     * HA_UNAVAILABLE - HA is configured but currently unavailable.
     """
-    status: UpdateStatus | None
+    status: UpdateStatusStatus | None
     error: LongString | None
     update_download_progress: UpdateDownloadProgress | None
     "Current update download progress."
 
 
+class UpdateStatusResult(BaseModel):
+    result: UpdateStatus
+
+
 class UpdateStatusChangedEvent(BaseModel):
-    status: UpdateStatusResult.model_fields["result"].annotation
+    status: UpdateStatus
 
 
 class UpdateAvailableVersionsArgs(BaseModel):

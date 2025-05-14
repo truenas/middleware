@@ -33,9 +33,8 @@ class HasUpdateAlertSource(AlertSource):
                     profile_choices = await self.middleware.call("update.profile_choices")
                     return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlertClass, {
                         "running": (
-                            profile_choices.
-                                get(update_status["status"]["current_train"]["profile"], {}).
-                                get("name", "<Unknown>")
+                            profile_choices.get(update_status["status"]["current_train"]["profile"], {}).
+                            get("name", "<Unknown>")
                         ),
                         "selected": profile_choices.get(config["profile"], {}).get("name", "<Unknown>"),
                     })
