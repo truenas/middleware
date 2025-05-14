@@ -1,5 +1,4 @@
 import aiohttp
-import asyncio
 
 from middlewared.api import api_method
 from middlewared.api.current import CatalogSyncArgs, CatalogSyncResult
@@ -25,7 +24,7 @@ class CatalogService(Service):
                     response.raise_for_status()
                     self.POPULARITY_INFO = {
                         k.lower(): v for k, v in (await response.json()).items()
-                        # Making sure we have a consistent format as for trains we see captialized
+                        # Making sure we have a consistent format as for trains we see capitalized
                         # entries in the file
                     }
             except Exception as e:
