@@ -59,6 +59,7 @@ class CatalogService(Service):
                 'retrieve_all_trains': True,
                 'trains': [],
             })
+            await self.update_popularity_cache()
         except Exception as e:
             await self.middleware.call(
                 'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': OFFICIAL_LABEL, 'error': str(e)}
