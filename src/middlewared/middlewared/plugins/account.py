@@ -1645,8 +1645,10 @@ class UserService(CRUDService):
                     '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
                 ]
                 if old is None:
-                    error[1] += (' User will be created with SSH password access disabled and after 2FA has been '
-                                'configured for this user, SSH password access can be enabled.')
+                    error[1] += (
+                        ' User will be created with SSH password access disabled and after 2FA has been '
+                        'configured for this user, SSH password access can be enabled.'
+                    )
                     verrors.add(*error)
                 elif (
                     await self.middleware.call('user.translate_username', old['username'])
