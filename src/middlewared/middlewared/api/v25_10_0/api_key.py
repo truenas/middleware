@@ -9,6 +9,12 @@ from middlewared.api.base import (
 )
 
 
+__all__ = [
+    "ApiKeyEntry", "ApiKeyCreateArgs", "ApiKeyCreateResult", "ApiKeyUpdateArgs", "ApiKeyUpdateResult",
+    "ApiKeyDeleteArgs", "ApiKeyDeleteResult", "ApiKeyMyKeysArgs", "ApiKeyMyKeysResult",
+]
+
+
 class AllowListItem(BaseModel):
     method: HttpVerb
     resource: NonEmptyString
