@@ -133,7 +133,20 @@ class FilesystemService(Service):
 
     @filterable_api_method(private=True)
     def mount_info(self, filters, options):
-        mntinfo = getmntinfo()
+        retries = 1
+        for i in range(retries):
+            try:
+                # getmntinfo() may be weird sometimes i.e check NAS-135584 where we might have a malformed line
+                # in mountinfo
+                mntinfo = getmntinfo()
+            except Exception as e:
+                if i >= retries:
+                    raise CallError(f'Unable to retrieve mount information: {e}')
+
+                time.sleep(0.25)
+            else:
+                break
+
         return filter_list(list(mntinfo.values()), filters, options)
 
     @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'])
