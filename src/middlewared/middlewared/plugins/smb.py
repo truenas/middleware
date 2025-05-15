@@ -353,10 +353,10 @@ class SMBService(ConfigService):
         job.set_progress(70, 'Checking SMB server status.')
         if await self.middleware.call("service.started_or_enabled", "cifs"):
             job.set_progress(80, 'Restarting SMB service.')
-            await self.middleware.call("service.restart", "cifs", {"ha_propagate": False})
+            await (await self.middleware.call("service.control", "RESTART", "cifs", {"ha_propagate": False})).wait(raise_error=True)
 
         # Ensure that winbind is running once we configure SMB service
-        await self.middleware.call('service.restart', 'idmap', {'ha_propagate': False})
+        await (await self.middleware.call('service.control', 'RESTART', 'idmap', {'ha_propagate': False})).wait(raise_error=True)
 
         job.set_progress(100, 'Finished configuring SMB.')
 
@@ -803,7 +803,7 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if is_time_machine_share(data):
-            await self.middleware.call('service.reload', 'mdns', {'ha_propagate': False})
+            await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
 
         return await self.get_instance(data['id'])
 
@@ -967,7 +967,7 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if check_mdns or old['timemachine'] != new['timemachine']:
-            await self.middleware.call('service.reload', 'mdns')
+            await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
 
         return await self.get_instance(id_)
 
@@ -997,7 +997,7 @@ class SharingSMBService(SharingService):
                 self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
 
         if is_time_machine_share(share):
-            await self.middleware.call('service.reload', 'mdns', {'ha_propagate': False})
+            await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'smb')
         return result
@@ -1648,7 +1648,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
             return
 
         await self.middleware.call('etc.generate', 'smb')
-        await self.middleware.call('service.reload', 'mdns')
+        await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         return await super().is_child_of_path(resource, path, check_parent, exact_match) if resource.get(

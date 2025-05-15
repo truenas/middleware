@@ -98,6 +98,11 @@ class NFSService(Service):
             with open(f"/proc/fs/nfsd/clients/{id_}/info", "r") as f:
                 info = yaml.safe_load(f.read())
 
+                # NFS-135435: Fixup non-printable chars
+                for item in ['name', 'Implementation domain', 'Implementation name']:
+                    if raw_val := info.get(item):
+                        info[item] = "".join(c if c.isprintable() else "\uFFFD" for c in raw_val)
+
         return info
 
     @private

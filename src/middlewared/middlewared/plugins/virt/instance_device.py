@@ -15,7 +15,10 @@ from middlewared.api.current import (
     VirtInstanceBootableDiskArgs, VirtInstanceBootableDiskResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from .utils import get_max_boot_priority_device, incus_call_and_wait, incus_pool_to_storage_pool, storage_pool_to_incus_pool
+from .utils import (
+    get_max_boot_priority_device, incus_call_and_wait, incus_pool_to_storage_pool, storage_pool_to_incus_pool,
+    validate_device_name, CDROM_PREFIX, update_instance_metadata_and_qemu_cmd_on_device_change,
+)
 
 
 class VirtInstanceDeviceService(Service):
@@ -62,15 +65,23 @@ class VirtInstanceDeviceService(Service):
 
         match incus['type']:
             case 'disk':
-                device.update({
-                    'dev_type': 'DISK',
-                    'source': incus.get('source'),
-                    'storage_pool': incus_pool_to_storage_pool(incus.get('pool')),
-                    'destination': incus.get('path'),
-                    'description': f'{incus.get("source")} -> {incus.get("path")}',
-                    'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
-                    'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
-                })
+                if name.startswith(CDROM_PREFIX):
+                    device.update({
+                        'dev_type': 'CDROM',
+                        'source': incus.get('source'),
+                        'description': f'{incus.get("source")!r} CDROM device source',
+                        'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
+                    })
+                else:
+                    device.update({
+                        'dev_type': 'DISK',
+                        'source': incus.get('source'),
+                        'storage_pool': incus_pool_to_storage_pool(incus.get('pool')),
+                        'destination': incus.get('path'),
+                        'description': f'{incus.get("source")} -> {incus.get("path")}',
+                        'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
+                        'io_bus': incus['io.bus'].upper() if incus.get('io.bus') else None,
+                    })
             case 'nic':
                 device.update({
                     'dev_type': 'NIC',
@@ -195,7 +206,14 @@ class VirtInstanceDeviceService(Service):
                         new['pool'] = None
                 if device.get('io_bus'):
                     new['io.bus'] = device['io_bus'].lower()
-
+            case 'CDROM':
+                new |= {
+                    'type': 'disk',
+                    'source': device['source'],
+                    'path': None,
+                }
+                if device['boot_priority'] is not None:
+                    new['boot.priority'] = str(device['boot_priority'])
             case 'NIC':
                 new.update({
                     'type': 'nic',
@@ -266,6 +284,9 @@ class VirtInstanceDeviceService(Service):
         name = device_type.lower()
         if name == 'nic':
             name = 'eth'
+        elif name == 'cdrom':
+            name = CDROM_PREFIX
+
         i = 0
         while True:
             new_name = f'{name}{i}'
@@ -323,6 +344,16 @@ class VirtInstanceDeviceService(Service):
                         )
                         verrors.extend(verror)
                         break
+            case 'CDROM':
+                source = device['source']
+                if os.path.isabs(source) is False:
+                    verrors.add(schema, 'Source must be an absolute path')
+                if await self.middleware.run_in_thread(os.path.exists, source) is False:
+                    verrors.add(schema, 'Specified source path does not exist')
+                elif await self.middleware.run_in_thread(os.path.isfile, source) is False:
+                    verrors.add(schema, 'Specified source path is not a file')
+                if instance_type == 'CONTAINER':
+                    verrors.add(schema, 'Container instance type is not supported')
             case 'DISK':
                 source = device['source'] or ''
                 if source == '' and device['name'] != 'root':
@@ -464,71 +495,93 @@ class VirtInstanceDeviceService(Service):
         VirtInstanceDeviceAddArgs,
         VirtInstanceDeviceAddResult,
         audit='Virt: Adding device',
-        audit_extended=lambda id, device: f'{device["dev_type"]!r} to {id!r} instance',
+        audit_extended=lambda i, device: f'{device["dev_type"]!r} to {i!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
-    async def device_add(self, id, device):
+    async def device_add(self, oid, device):
         """
         Add a device to an instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance = await self.middleware.call('virt.instance.get_instance', oid, {'extra': {'raw': True}})
         data = instance['raw']
+        verrors = ValidationErrors()
+        validate_device_name(device, verrors)
         if device['name'] is None:
             device['name'] = await self.generate_device_name(data['devices'].keys(), device['dev_type'])
 
-        verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_add', verrors, id, instance['type'], instance_config=instance)
+        await self.validate_device(device, 'virt_device_add', verrors, oid, instance['type'], instance_config=instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
-        await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
+        if device['dev_type'] == 'CDROM':
+            # We want to update qemu config here and make sure we keep track of which
+            # devices we have added as cdroms here
+            data['config'].update(update_instance_metadata_and_qemu_cmd_on_device_change(
+                oid, data['config'], data['devices']
+            ))
+
+        await incus_call_and_wait(f'1.0/instances/{oid}', 'put', {'json': data})
         return True
 
     @api_method(
         VirtInstanceDeviceUpdateArgs,
         VirtInstanceDeviceUpdateResult,
         audit='Virt: Updating device',
-        audit_extended=lambda id, device: f'{device["name"]!r} of {id!r} instance',
+        audit_extended=lambda i, device: f'{device["name"]!r} of {i!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
-    async def device_update(self, id, device):
+    async def device_update(self, oid, device):
         """
         Update a device in an instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance = await self.middleware.call('virt.instance.get_instance', oid, {'extra': {'raw': True}})
         data = instance['raw']
 
-        for old in await self.device_list(id):
+        for old in await self.device_list(oid):
             if old['name'] == device['name']:
                 break
         else:
             raise CallError('Device does not exist.', errno.ENOENT)
 
         verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_update', verrors, id, instance['type'], old, instance)
+        await self.validate_device(device, 'virt_device_update', verrors, oid, instance['type'], old, instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
-        await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
+        if device['dev_type'] == 'CDROM':
+            # We want to update qemu config here and make sure we keep track of which
+            # devices we have added as cdroms here
+            data['config'].update(update_instance_metadata_and_qemu_cmd_on_device_change(
+                oid, data['config'], data['devices']
+            ))
+
+        await incus_call_and_wait(f'1.0/instances/{oid}', 'put', {'json': data})
         return True
 
     @api_method(
         VirtInstanceDeviceDeleteArgs,
         VirtInstanceDeviceDeleteResult,
         audit='Virt: Deleting device',
-        audit_extended=lambda id, device: f'{device!r} from {id!r} instance',
+        audit_extended=lambda i, device: f'{device!r} from {i!r} instance',
         roles=['VIRT_INSTANCE_DELETE']
     )
-    async def device_delete(self, id, device):
+    async def device_delete(self, oid, device):
         """
         Delete a device from an instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance = await self.middleware.call('virt.instance.get_instance', oid, {'extra': {'raw': True}})
         data = instance['raw']
         if device not in data['devices']:
             raise CallError('Device not found.', errno.ENOENT)
         data['devices'].pop(device)
-        await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
+        if device.startswith(CDROM_PREFIX):
+            # We want to update qemu config here and make sure we keep track of which
+            # devices we have added as cdroms here
+            data['config'].update(update_instance_metadata_and_qemu_cmd_on_device_change(
+                oid, data['config'], data['devices']
+            ))
+
+        await incus_call_and_wait(f'1.0/instances/{oid}', 'put', {'json': data})
         return True
 
     @api_method(
@@ -559,16 +612,25 @@ class VirtInstanceDeviceService(Service):
         if desired_disk is None:
             raise CallError(f'{disk!r} device does not exist.', errno.ENOENT)
 
-        if desired_disk['dev_type'] != 'DISK':
+        if desired_disk['dev_type'] not in ('CDROM', 'DISK'):
             raise CallError(f'{disk!r} device type is not DISK.')
 
         if max_boot_priority_device and max_boot_priority_device['name'] == disk:
             return True
 
-        return await self.device_update(id, {
-            'dev_type': 'DISK',
+        data = {
             'name': disk,
             'source': desired_disk.get('source'),
-            'io_bus': desired_disk.get('io_bus'),
             'boot_priority': max_boot_priority_device['boot_priority'] + 1 if max_boot_priority_device else 1,
-        } | ({'destination': desired_disk['destination']} if disk != 'root' else {}))
+        }
+        if desired_disk['dev_type'] == 'CDROM':
+            data |= {
+                'dev_type': 'CDROM',
+            }
+        else:
+            data |= {
+                'dev_type': 'DISK',
+                'io_bus': desired_disk.get('io_bus'),
+            } | ({'destination': desired_disk['destination']} if disk != 'root' else {})
+
+        return await self.device_update(id, data)

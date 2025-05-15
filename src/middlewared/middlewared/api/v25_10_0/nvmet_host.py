@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from pydantic import Field, Secret, model_validator
 
@@ -13,8 +13,15 @@ __all__ = [
     "NVMetHostDeleteArgs",
     "NVMetHostDeleteResult",
     "NVMetHostGenerateKeyArgs",
-    "NVMetHostGenerateKeyResult"
+    "NVMetHostGenerateKeyResult",
+    "NVMetHostDHChapDHGroupChoicesArgs",
+    "NVMetHostDHChapDHGroupChoicesResult",
+    "NVMetHostDHChapHashChoicesArgs",
+    "NVMetHostDHChapHashChoicesResult",
 ]
+
+DHChapHashType: TypeAlias = Literal['SHA-256', 'SHA-384', 'SHA-512']
+DHChapDHGroupType: TypeAlias = Literal['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
 
 
 class NVMetHostEntry(BaseModel):
@@ -33,11 +40,11 @@ class NVMetHostEntry(BaseModel):
 
     A suitable secret can be generated using `nvme gen-dhchap-key`, or by using the `nvmet.host.generate_key` API.
     """
-    dhchap_dhgroup: Literal['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT'] | None = None
+    dhchap_dhgroup: DHChapDHGroupType | None = None
     """
     If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication.
     """
-    dhchap_hash: Literal['SHA-256', 'SHA-384', 'SHA-512'] = 'SHA-256'
+    dhchap_hash: DHChapHashType = 'SHA-256'
     """
     HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected.
     """
@@ -90,7 +97,7 @@ class NVMetHostDeleteResult(BaseModel):
 
 
 class NVMetHostGenerateKeyArgs(BaseModel):
-    dhchap_hash: Literal['SHA-256', 'SHA-384', 'SHA-512'] = 'SHA-256'
+    dhchap_hash: DHChapHashType = 'SHA-256'
     """ Hash to be used with the generated key.  """
     nqn: str | None = None
     """ NQN to be used for the transformation. """
@@ -98,3 +105,19 @@ class NVMetHostGenerateKeyArgs(BaseModel):
 
 class NVMetHostGenerateKeyResult(BaseModel):
     result: str
+
+
+class NVMetHostDHChapDHGroupChoicesArgs(BaseModel):
+    pass
+
+
+class NVMetHostDHChapDHGroupChoicesResult(BaseModel):
+    result: list[DHChapDHGroupType]
+
+
+class NVMetHostDHChapHashChoicesArgs(BaseModel):
+    pass
+
+
+class NVMetHostDHChapHashChoicesResult(BaseModel):
+    result: list[DHChapHashType]

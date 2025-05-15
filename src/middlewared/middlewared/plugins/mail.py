@@ -17,7 +17,8 @@ from threading import Lock
 import html2text
 
 from middlewared.api import api_method
-from middlewared.api.current import MailEntry, MailUpdateArgs, MailUpdateResult, MailSendArgs, MailSendResult
+from middlewared.api.current import (MailEntry, MailUpdateArgs, MailUpdateResult, MailSendArgs, MailSendResult,
+                                     MailLocalAdministratorEmailArgs, MailLocalAdministratorEmailResult)
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductName, BRAND
@@ -397,7 +398,11 @@ class MailService(ConfigService):
             ["email", "!=", None]
         ])))
 
-    @private
+    @api_method(
+        MailLocalAdministratorEmailArgs,
+        MailLocalAdministratorEmailResult,
+        roles=["ALERT_READ"],
+    )
     async def local_administrator_email(self):
         emails = await self.local_administrators_emails()
         if emails:

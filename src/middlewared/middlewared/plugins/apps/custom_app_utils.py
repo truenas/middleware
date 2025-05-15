@@ -16,7 +16,12 @@ def validate_payload(data: dict, schema: str) -> dict:
         try:
             compose_config = yaml.safe_load(data['custom_compose_config_string'])
         except yaml.YAMLError:
-            verrors.add('app_create.custom_compose_config_string', 'Invalid YAML provided')
+            verrors.add(f'{schema}.custom_compose_config_string', 'Invalid YAML provided')
+        else:
+            if not isinstance(compose_config, dict):
+                verrors.add(f'{schema}.custom_compose_config_string', 'YAML must represent a dictionary/object')
+            elif 'services' not in compose_config:
+                verrors.add(f'{schema}.custom_compose_config_string', 'YAML is missing required \"services\" key')
 
     verrors.check()
 

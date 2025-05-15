@@ -338,7 +338,7 @@ def test_001_initial_config(request):
     assert sa['mdns'] is True, sa
 
     # Let's restart avahi (in case we've updated middleware)
-    call('service.restart', 'mdns')
+    call('service.control', 'RESTART', 'mdns', job=True)
     ac = mDNSAnnounceCollector(truenas_server.ip, current_hostname)
     ac.find_items()
     ac.check_present(smb=False, time_machine=False)

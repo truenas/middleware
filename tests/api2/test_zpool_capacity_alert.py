@@ -32,7 +32,7 @@ def test__emits_alert(request):
     ]):
         alerts = call("alert.run_source", "ZpoolCapacity")
         assert len(alerts) == 1
-        assert alerts[0]["klass"] == "ZpoolCapacityWarning"
+        assert alerts[0]["klass"] == "ZpoolCapacityNotice"
         assert alerts[0]["key"] == f'["{pool}"]'
         assert alerts[0]["args"] == {"volume": pool, "capacity": 85}
 
@@ -43,7 +43,7 @@ def test__does_not_flap_alert(request):
             "name": pool,
             "properties": {
                 "capacity": {
-                    "parsed": "79",
+                    "parsed": "84",
                 }
             },
         }

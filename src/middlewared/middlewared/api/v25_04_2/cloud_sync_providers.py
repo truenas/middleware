@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import AfterValidator, Discriminator, Field, Secret
 
-from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, NonEmptyString
+from middlewared.api.base import BaseModel, HttpUrl, LongNonEmptyString, match_validator, NonEmptyString, HttpsOnlyURL
 
 __all__ = ["CloudCredentialProvider"]
 
@@ -81,12 +81,6 @@ class HubicCredentialsModel(BaseModel):
     token: Secret[LongNonEmptyString]
 
 
-class MegaCredentialsModel(BaseModel):
-    type: Literal["MEGA"]
-    user: Secret[NonEmptyString]
-    pass_: Secret[NonEmptyString] = Field(alias="pass")
-
-
 class OneDriveCredentialsModel(BaseModel):
     type: Literal["ONEDRIVE"]
     client_id: Secret[str] = ""
@@ -128,6 +122,7 @@ class StorjIxCredentialsModel(BaseModel):
     type: Literal["STORJ_IX"]
     access_key_id: Secret[NonEmptyString]
     secret_access_key: Secret[NonEmptyString]
+    endpoint: HttpsOnlyURL = "https://gateway.storjshare.io/"
 
 
 class SwiftCredentialsModel(BaseModel):
@@ -177,7 +172,6 @@ CloudCredentialProvider = Annotated[
         GooglePhotosCredentialsModel,
         HTTPCredentialsModel,
         HubicCredentialsModel,
-        MegaCredentialsModel,
         OneDriveCredentialsModel,
         PCloudCredentialsModel,
         S3CredentialsModel,

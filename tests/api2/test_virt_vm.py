@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import tempfile
@@ -22,11 +23,12 @@ ISO_VOLUME_NAME = 'testiso'
 VM_NAME = 'virt-vm'
 CONTAINER_NAME = 'virt-container'
 VNC_PORT = 6900
+POOL_NAME = 'virt_test_pool'
 
 
 @pytest.fixture(scope='module')
 def virt_pool():
-    with another_pool() as pool:
+    with another_pool({'name': POOL_NAME}) as pool:
         with virt(pool) as virt_config:
             yield virt_config
 
@@ -53,7 +55,7 @@ def container(virt_pool):
     call('virt.instance.create', {
         'name': CONTAINER_NAME,
         'source_type': 'IMAGE',
-        'image': 'ubuntu/oracular/default',
+        'image': 'alpine/3.18/default',
         'instance_type': 'CONTAINER',
     }, job=True)
     call('virt.instance.stop', CONTAINER_NAME, {'force': True, 'timeout': 1}, job=True)
@@ -67,6 +69,15 @@ def container(virt_pool):
 def iso_volume(virt_pool):
     with import_iso_as_volume(ISO_VOLUME_NAME, virt_pool['pool'], 1024) as vol:
         yield vol
+
+
+@contextlib.contextmanager
+def ensure_iso_paths(iso_paths):
+    ssh(f'touch {" ".join(iso_paths)}')
+    try:
+        yield iso_paths
+    finally:
+        ssh(f'rm {" ".join(iso_paths)}')
 
 
 def test_virt_volume(virt_pool):
@@ -278,6 +289,250 @@ def test_vm_creation_with_iso_and_devices(vm, iso_volume):
             call('virt.instance.delete', virt_instance_name, job=True)
 
 
+def test_vm_cdrom_device_creation(virt_pool, vm):
+    with ensure_iso_paths((f'/mnt/{virt_pool["pool"]}/test1.iso', f'/mnt/{virt_pool["pool"]}/test2.iso')) as iso_paths:
+        with virt_device(
+            VM_NAME,
+            'ix_cdrom0', {
+                'dev_type': 'CDROM',
+                'source': iso_paths[0],
+                'boot_priority': 2,
+                'name': None
+            }
+        ):
+            with virt_device(
+                VM_NAME,
+                'ix_cdrom1', {
+                    'dev_type': 'CDROM',
+                    'source': iso_paths[1],
+                    'boot_priority': 3,
+                    'name': None
+                }
+            ):
+                instance = call('virt.instance.get_instance', vm['name'], {'extra': {'raw': True}})['raw']
+                assert instance['config']['user.ix_cdrom_devices'] == f'["{iso_paths[0]}", "{iso_paths[1]}"]'
+                assert instance['config']['raw.qemu'] == (
+                    '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                    'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+                    ' -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test2.iso,file.locking=off'
+                )
+                assert instance['config']['user.ix_old_raw_qemu_config'] == (
+                    '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                    'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+                )
+
+                assert 'ix_cdrom0' in instance['devices']
+                assert 'ix_cdrom1' in instance['devices']
+                assert instance['devices']['ix_cdrom0']['boot.priority'] == '2'
+                assert instance['devices']['ix_cdrom1']['boot.priority'] == '3'
+
+            instance = call('virt.instance.get_instance', vm['name'], {'extra': {'raw': True}})['raw']
+            assert instance['config']['user.ix_cdrom_devices'] == f'["{iso_paths[0]}"]'
+            assert instance['config']['raw.qemu'] == (
+                '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+            )
+            assert instance['config']['user.ix_old_raw_qemu_config'] == (
+                '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off '
+                '-drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test2.iso,file.locking=off'
+            )
+
+
+def test_vm_cdrom_device_deletion(virt_pool, vm):
+    with ensure_iso_paths((f'/mnt/{virt_pool["pool"]}/test1.iso', f'/mnt/{virt_pool["pool"]}/test2.iso')) as iso_paths:
+        with virt_device(
+            VM_NAME,
+            'ix_cdrom0',
+            {
+                'dev_type': 'CDROM',
+                'source': iso_paths[0],
+                'boot_priority': 2,
+                'name': None
+            }
+        ):
+            with virt_device(
+                VM_NAME,
+                'ix_cdrom1',
+                {
+                    'dev_type': 'CDROM',
+                    'source': iso_paths[1],
+                    'boot_priority': 3,
+                    'name': None
+                }
+            ):
+
+                instance = call('virt.instance.get_instance', vm['name'], {'extra': {'raw': True}})['raw']
+                assert instance['config']['user.ix_cdrom_devices'] == f'["{iso_paths[0]}", "{iso_paths[1]}"]'
+                assert instance['config']['raw.qemu'] == (
+                    '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                    'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+                    ' -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test2.iso,file.locking=off'
+                )
+                assert instance['config']['user.ix_old_raw_qemu_config'] == (
+                    '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                    'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+
+                )
+                assert 'ix_cdrom0' in instance['devices']
+                assert 'ix_cdrom1' in instance['devices']
+
+            # test second cdrom disk deletion case
+            instance = call('virt.instance.get_instance', vm['name'], {'extra': {'raw': True}})['raw']
+            assert instance['config']['user.ix_cdrom_devices'] == f'["{iso_paths[0]}"]'
+            assert instance['config']['raw.qemu'] == (
+                '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+            )
+            assert instance['config']['user.ix_old_raw_qemu_config'] == (
+                '-object secret,id=vnc0,file=/var/run/middleware/incus/passwords/virt-vm -vnc :1001,'
+                'password-secret=vnc0 -drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off '
+                '-drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test2.iso,file.locking=off'
+            )
+            assert 'ix_cdrom1' not in instance['devices']
+
+    # test first cdrom disk deletion case
+    instance = call('virt.instance.get_instance', vm['name'], {'extra': {'raw': True}})['raw']
+    assert instance['config']['user.ix_cdrom_devices'] == '[]'
+    assert 'ix_cdrom0' not in instance['devices']
+
+
+@pytest.mark.parametrize('payload,expected_error', [
+    (
+        {
+            'name': 'ix_cdrom',
+            'dev_type': 'DISK',
+            'source': None
+        },
+        'Device name must not start with \'ix_cdrom\' prefix'
+    ),
+    (
+        {
+            'name': 'cdrom',
+            'dev_type': 'CDROM',
+            'source': '/mnt/virt_test_pool/test_iso'
+        },
+        'CDROM device name must start with \'ix_cdrom\' prefix'
+    ),
+    (
+        {
+            'name': None,
+            'dev_type': 'CDROM',
+            'source': 'virt_test_pool/test_iso'
+        },
+        'Source must be an absolute path'
+    ),
+    (
+        {
+            'name': None,
+            'dev_type': 'CDROM',
+            'source': '/mnt/virt_test_pool/test_iso'
+        },
+        'Specified source path does not exist'
+    ),
+    (
+        {
+            'name': None,
+            'dev_type': 'CDROM',
+            'source': f'/mnt/{POOL_NAME}'
+        },
+        'Specified source path is not a file'
+    ),
+
+])
+def test_cdrom_device_validation(vm, payload, expected_error):
+    with pytest.raises(ClientValidationErrors) as ve:
+        call('virt.instance.device_add', VM_NAME, payload)
+
+    assert ve.value.errors[0].errmsg == expected_error
+
+
+@pytest.mark.parametrize('payload,expected_error', [
+    (
+        {
+            'name': None,
+            'dev_type': 'CDROM',
+        },
+        'Container instance type is not supported'
+    ),
+
+])
+def test_cdrom_device_name_validation_for_containers(container, payload, expected_error):
+    with ensure_iso_paths([f'/mnt/{POOL_NAME}/test_iso']) as path:
+        payload['source'] = path[0]
+        with pytest.raises(ClientValidationErrors) as ve:
+            call('virt.instance.device_add', CONTAINER_NAME, payload)
+
+    assert ve.value.errors[0].errmsg == expected_error
+
+
+def test_cdrom_device_on_fresh_instance(virt_pool):
+    with ensure_iso_paths((f'/mnt/{virt_pool["pool"]}/test1.iso',)) as iso_paths:
+        with virt_instance(
+            instance_name='test-cdrom-vm',
+            source_type=None,
+            image=None,
+            autostart=False,
+            instance_type='VM'
+        ):
+            with virt_device(
+                'test-cdrom-vm',
+                'ix_cdrom0',
+                {
+                    'dev_type': 'CDROM',
+                    'source': iso_paths[0],
+                    'name': None
+                }
+            ):
+                instance = call('virt.instance.get_instance', 'test-cdrom-vm', {'extra': {'raw': True}})['raw']
+                assert instance['config']['user.ix_cdrom_devices'] == f'["{iso_paths[0]}"]'
+                assert instance['config']['raw.qemu'] == (
+                    '-drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+                )
+                assert 'user.ix_old_raw_qemu_config' not in instance['config']
+
+
+def test_cdrom_device_vm_update(virt_pool):
+    with ensure_iso_paths((f'/mnt/{virt_pool["pool"]}/test1.iso', f'/mnt/{virt_pool["pool"]}/test2.iso')) as iso_paths:
+        payload = {
+            'dev_type': 'CDROM',
+            'source': iso_paths[0],
+            'name': None
+        }
+        with virt_instance(
+            instance_name='test-cdrom-vm',
+            source_type=None,
+            image=None,
+            autostart=False,
+            instance_type='VM'
+        ):
+            with virt_device(
+                'test-cdrom-vm',
+                'ix_cdrom0',
+                payload
+
+            ):
+                instance = call('virt.instance.get_instance', 'test-cdrom-vm', {'extra': {'raw': True}})['raw']
+                assert instance['config']['user.ix_cdrom_devices'] == f'["{iso_paths[0]}"]'
+                assert instance['config']['raw.qemu'] == (
+                    '-drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+                )
+                assert 'user.ix_old_raw_qemu_config' not in instance['config']
+
+                call('virt.instance.device_update', 'test-cdrom-vm', {
+                    **payload,
+                    'source': iso_paths[1],
+                    'name': 'ix_cdrom0'
+                })
+                instance = call('virt.instance.get_instance', 'test-cdrom-vm', {'extra': {'raw': True}})['raw']
+                assert instance['config']['user.ix_cdrom_devices'] == f'["{iso_paths[1]}"]'
+                assert instance['config']['raw.qemu'] == (
+                    '-drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test2.iso,file.locking=off'
+                )
+                assert instance['config']['user.ix_old_raw_qemu_config'] == (
+                    '-drive media=cdrom,if=ide,file=/mnt/virt_test_pool/test1.iso,file.locking=off'
+                )
+
 
 def test_vm_creation_with_volume(vm):
     virt_instance_name = 'test-volume-vm'
@@ -370,7 +625,6 @@ def test_vnc_validation_on_vm_create(virt_pool, enable_vnc, vnc_password, vnc_po
 
 
 @pytest.mark.parametrize('source,boot_priority,destination,error_msg', [
-    (ISO_VOLUME_NAME, None, None, 'Boot priority is required for ISO volumes.'),
     (ISO_VOLUME_NAME, 1, '/mnt', 'Destination is not valid for VM'),
     (ISO_VOLUME_NAME, 1, '/', 'Destination cannot be /'),
     ('some_iso', 1, None, 'No \'some_iso\' incus volume found which can be used for source'),

@@ -644,7 +644,7 @@ class KeychainCredentialService(CRUDService):
             self.middleware.call_sync("service.update", "ssh", {"enable": True})
 
         if service["state"] != "RUNNING":
-            self.middleware.call_sync("service.start", "ssh")
+            self.middleware.call_sync("service.control", "START", "ssh").wait_sync(raise_error=True)
 
             # This might be the first time of the service being enabled
             # which will then result in new host keys we need to grab

@@ -6,8 +6,8 @@ from middlewared.api.base import (
     BaseModel, EmailString, EmptyDict, ForUpdateMetaclass, Excluded, excluded_field, NotRequired, LongString
 )
 
-
-__all__ = ["MailEntry", "MailUpdateArgs", "MailUpdateResult", "MailSendArgs", "MailSendResult"]
+__all__ = ["MailEntry", "MailUpdateArgs", "MailUpdateResult", "MailSendArgs", "MailSendResult",
+           "MailLocalAdministratorEmailArgs", "MailLocalAdministratorEmailResult"]
 
 
 class MailEntryOAuth(BaseModel):
@@ -108,3 +108,11 @@ class MailSendArgs(BaseModel):
 class MailSendResult(BaseModel):
     result: bool
     """Whether the message was sent successfully."""
+
+
+class MailLocalAdministratorEmailArgs(BaseModel):
+    pass
+
+
+class MailLocalAdministratorEmailResult(BaseModel):
+    result: str | None

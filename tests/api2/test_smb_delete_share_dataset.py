@@ -27,10 +27,10 @@ def create_share_ds():
         }):
             with smb_share(os.path.join('/mnt', ds), SMB_NAME) as s:
                 try:
-                    call('service.start', 'cifs')
+                    call('service.control', 'START', 'cifs', job=True)
                     yield {'dataset': ds, 'share': s}
                 finally:
-                    call('service.stop', 'cifs')
+                    call('service.control', 'STOP', 'cifs', job=True)
 
 
 def test__smb_share_dataset_destroy():

@@ -25,8 +25,9 @@ from middlewared.utils.size import normalize_size
 
 from .utils import (
     create_vnc_password_file, get_max_boot_priority_device, get_root_device_dict, get_vnc_info_from_config,
-    get_vnc_password_file_path, incus_call, incus_call_and_wait, incus_pool_to_storage_pool,
-    root_device_pool_from_raw, Status, storage_pool_to_incus_pool, VNC_BASE_PORT,
+    VirtGlobalStatus, incus_call, incus_call_and_wait, incus_pool_to_storage_pool, root_device_pool_from_raw,
+    storage_pool_to_incus_pool, validate_device_name, generate_qemu_cmd, generate_qemu_cdrom_metadata,
+    INCUS_METADATA_CDROM_KEY,
 )
 
 
@@ -49,7 +50,7 @@ class VirtInstanceService(CRUDService):
         """
         if not options['extra'].get('skip_state'):
             config = await self.middleware.call('virt.global.config')
-            if config['state'] != Status.INITIALIZED.value:
+            if config['state'] != VirtGlobalStatus.INITIALIZED.value:
                 return []
         results = (await incus_call('1.0/instances?filter=&recursion=2', 'get'))['metadata']
         entries = []
@@ -92,6 +93,7 @@ class VirtInstanceService(CRUDService):
                 **get_vnc_info_from_config(i['config']),
                 'raw': None,  # Default required by pydantic
                 'secure_boot': None,
+                'privileged_mode': None,
                 'root_disk_size': None,
                 'root_disk_io_bus': None,
                 'storage_pool': incus_pool_to_storage_pool(root_device_pool_from_raw(i)),
@@ -102,6 +104,8 @@ class VirtInstanceService(CRUDService):
                 entry['root_disk_size'] = normalize_size(root_device.get('size'), False)
                 # If one isn't set, it defaults to virtio-scsi
                 entry['root_disk_io_bus'] = (root_device.get('io.bus') or 'virtio-scsi').upper()
+            else:
+                entry['privileged_mode'] = i['config'].get('security.privileged') == 'true'
 
             idmap = None
             if idmap_current := i['config'].get('volatile.idmap.current'):
@@ -183,8 +187,8 @@ class VirtInstanceService(CRUDService):
                 verrors.add(f'{schema_name}.cpu', 'Cannot reserve more than system cores')
 
         if old:
-            if 'secure_boot' not in new:
-                new['secure_boot'] = old['secure_boot']
+            for k in filter(lambda x: x not in new, ('secure_boot', 'privileged_mode')):
+                new[k] = old[k]
 
             enable_vnc = new.get('enable_vnc')
             if enable_vnc is False:
@@ -252,7 +256,9 @@ class VirtInstanceService(CRUDService):
                     if any(new['vnc_port'] in v for v in port_mapping.values()):
                         verrors.add(f'{schema_name}.vnc_port', 'VNC port is already in use by another virt instance')
 
-    def __data_to_config(self, instance_name: str, data: dict, raw: dict = None, instance_type=None):
+    def __data_to_config(
+        self, instance_name: str, data: dict, devices: dict, raw: dict = None, instance_type=None
+    ):
         config = {}
         if 'environment' in data:
             # If we are updating environment we need to remove current values
@@ -288,17 +294,14 @@ class VirtInstanceService(CRUDService):
                     'vnc_port': data['vnc_port'],
                     'vnc_password': data['vnc_password'],
                 }),
+                INCUS_METADATA_CDROM_KEY: generate_qemu_cdrom_metadata(devices),
             })
 
-            if data.get('enable_vnc') and data.get('vnc_port'):
-                vnc_config = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
-                if data.get('vnc_password'):
-                    vnc_config = (f'-object secret,id=vnc0,file={get_vnc_password_file_path(instance_name)} '
-                                  f'{vnc_config},password-secret=vnc0')
-
-                config['raw.qemu'] = vnc_config
-            if data.get('enable_vnc') is False:
-                config['raw.qemu'] = ''
+            config['raw.qemu'] = generate_qemu_cmd(config, instance_name)
+        else:
+            config.update({
+                'security.privileged': 'true' if data.get('privileged_mode') else 'false',
+            })
 
         return config
 
@@ -417,6 +420,7 @@ class VirtInstanceService(CRUDService):
             }
         }
         for i in data_devices:
+            validate_device_name(i, verrors)
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['name'], data['instance_type']
             )
@@ -462,7 +466,7 @@ class VirtInstanceService(CRUDService):
             await incus_call_and_wait('1.0/instances', 'post', {'json': {
                 'name': data['name'],
                 'ephemeral': False,
-                'config': self.__data_to_config(data['name'], data, instance_type=data['instance_type']),
+                'config': self.__data_to_config(data['name'], data, devices, instance_type=data['instance_type']),
                 'devices': devices,
                 'source': source,
                 'profiles': ['default'],
@@ -484,15 +488,15 @@ class VirtInstanceService(CRUDService):
         VirtInstanceUpdateArgs,
         VirtInstanceUpdateResult,
         audit='Virt: Updating',
-        audit_extended=lambda id, data=None: f'{id!r} instance'
+        audit_extended=lambda i, data=None: f'{i!r} instance'
     )
     @job(lock=lambda args: f'instance_action_{args[0]}')
-    async def do_update(self, job, id, data):
+    async def do_update(self, job, oid, data):
         """
         Update instance.
         """
         await self.middleware.call('virt.global.check_initialized')
-        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance = await self.middleware.call('virt.instance.get_instance', oid, {'extra': {'raw': True}})
 
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_update', verrors, old=instance)
@@ -520,45 +524,48 @@ class VirtInstanceService(CRUDService):
 
         verrors.check()
 
-        instance['raw']['config'].update(self.__data_to_config(id, data, instance['raw']['config'], instance['type']))
+        instance['raw']['config'].update(
+            self.__data_to_config(oid, data, instance['raw']['devices'], instance['raw']['config'], instance['type'])
+        )
         if data.get('root_disk_size') or data.get('root_disk_io_bus'):
             if (pool := root_device_pool_from_raw(instance['raw'])) is None:
-                raise CallError(f'{id}: instance does not have a configured pool')
+                raise CallError(f'{oid}: instance does not have a configured pool')
 
             root_disk_size = data.get('root_disk_size') or int(instance['root_disk_size'] / (1024 ** 3))
             io_bus = data.get('root_disk_io_bus') or instance['root_disk_io_bus']
             instance['raw']['devices']['root'] = get_root_device_dict(root_disk_size, io_bus, pool)
 
-        await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
+        await incus_call_and_wait(f'1.0/instances/{oid}', 'put', {'json': instance['raw']})
 
-        return await self.middleware.call('virt.instance.get_instance', id)
+        return await self.middleware.call('virt.instance.get_instance', oid)
 
     @api_method(
         VirtInstanceDeleteArgs,
         VirtInstanceDeleteResult,
         audit='Virt: Deleting',
-        audit_extended=lambda id: f'{id!r} instance'
+        audit_extended=lambda i: f'{i!r} instance'
     )
     @job(lock=lambda args: f'instance_action_{args[0]}')
-    async def do_delete(self, job, id):
+    async def do_delete(self, job, oid):
         """
         Delete an instance.
         """
         await self.middleware.call('virt.global.check_initialized')
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', oid)
         if instance['status'] != 'STOPPED':
             try:
-                await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+                await incus_call_and_wait(f'1.0/instances/{oid}/state', 'put', {'json': {
                     'action': 'stop',
                     'timeout': -1,
                     'force': True,
                 }})
             except CallError:
                 self.logger.error(
-                    'Failed to stop %r instance having %r status before deletion', id, instance['status'], exc_info=True
+                    'Failed to stop %r instance having %r status before deletion', oid, instance['status'],
+                    exc_info=True
                 )
 
-        await incus_call_and_wait(f'1.0/instances/{id}', 'delete')
+        await incus_call_and_wait(f'1.0/instances/{oid}', 'delete')
 
         return True
 
@@ -566,40 +573,40 @@ class VirtInstanceService(CRUDService):
         VirtInstanceStartArgs,
         VirtInstanceStartResult,
         audit='Virt: Starting',
-        audit_extended=lambda id: f'{id!r} instance',
+        audit_extended=lambda i: f'{i!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
     @job(lock=lambda args: f'instance_action_{args[0]}', logs=True)
-    async def start(self, job, id):
+    async def start(self, job, oid):
         """
         Start an instance.
         """
         await self.middleware.call('virt.global.check_initialized')
-        return await self.start_impl(job, id)
+        return await self.start_impl(job, oid)
 
     @private
-    async def start_impl(self, job, id):
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+    async def start_impl(self, job, oid):
+        instance = await self.middleware.call('virt.instance.get_instance', oid)
         if instance['status'] not in ('RUNNING', 'STOPPED'):
             raise ValidationError(
                 'virt.instance.start.id',
-                f'{id}: instance may not be started because current status is: {instance["status"]}'
+                f'{oid}: instance may not be started because current status is: {instance["status"]}'
             )
 
         # Apply any idmap changes
-        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED':
-            await self.set_account_idmaps(id)
+        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED'  and not instance['privileged_mode']:
+            await self.set_account_idmaps(oid)
 
         if instance['vnc_password']:
-            await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
+            await self.middleware.run_in_thread(create_vnc_password_file, oid, instance['vnc_password'])
 
         try:
-            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+            await incus_call_and_wait(f'1.0/instances/{oid}/state', 'put', {'json': {
                 'action': 'start',
             }})
         except CallError as e:
             log = 'lxc.log' if instance['type'] == 'CONTAINER' else 'qemu.log'
-            content = await incus_call(f'1.0/instances/{id}/logs/{log}', 'get', json=False)
+            content = await incus_call(f'1.0/instances/{oid}/logs/{log}', 'get', json=False)
             output = collections.deque(maxlen=10)  # only keep last 10 lines
             while line := await content.readline():
                 output.append(line)
@@ -619,11 +626,11 @@ class VirtInstanceService(CRUDService):
         VirtInstanceStopArgs,
         VirtInstanceStopResult,
         audit='Virt: Stopping',
-        audit_extended=lambda id, data=None: f'{id!r} instance',
+        audit_extended=lambda i, data=None: f'{i!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
     @job(lock=lambda args: f'instance_action_{args[0]}')
-    async def stop(self, job, id, data):
+    async def stop(self, job, oid, data):
         """
         Stop an instance.
 
@@ -631,7 +638,7 @@ class VirtInstanceService(CRUDService):
         """
         # Only check started because its used when tearing the service down
         await self.middleware.call('virt.global.check_started')
-        await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+        await incus_call_and_wait(f'1.0/instances/{oid}/state', 'put', {'json': {
             'action': 'stop',
             'timeout': data['timeout'],
             'force': data['force'],
@@ -643,59 +650,59 @@ class VirtInstanceService(CRUDService):
         VirtInstanceRestartArgs,
         VirtInstanceRestartResult,
         audit='Virt: Restarting',
-        audit_extended=lambda id, data=None: f'{id!r} instance',
+        audit_extended=lambda i, data=None: f'{i!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
     @job(lock=lambda args: f'instance_action_{args[0]}')
-    async def restart(self, job, id, data):
+    async def restart(self, job, oid, data):
         """
         Restart an instance.
 
         Timeout is how long it should wait for the instance to shutdown cleanly.
         """
         await self.middleware.call('virt.global.check_initialized')
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', oid)
         if instance['status'] not in ('RUNNING', 'STOPPED'):
             raise ValidationError(
-                f'virt.instance.restart.{id}',
-                f'{id}: instance may not be restarted because current status is: {instance["status"]}'
+                f'virt.instance.restart.{oid}',
+                f'{oid}: instance may not be restarted because current status is: {instance["status"]}'
             )
 
         if instance['status'] == 'RUNNING':
-            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+            await incus_call_and_wait(f'1.0/instances/{oid}/state', 'put', {'json': {
                 'action': 'stop',
                 'timeout': data['timeout'],
                 'force': data['force'],
             }})
 
         # Apply any idmap changes
-        if instance['type'] == 'CONTAINER':
-            await self.set_account_idmaps(id)
+        if instance['type'] == 'CONTAINER' and not instance['privileged_mode']:
+            await self.set_account_idmaps(oid)
 
         if instance['vnc_password']:
-            await self.middleware.run_in_thread(create_vnc_password_file, id, instance['vnc_password'])
+            await self.middleware.run_in_thread(create_vnc_password_file, oid, instance['vnc_password'])
 
-        await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+        await incus_call_and_wait(f'1.0/instances/{oid}/state', 'put', {'json': {
             'action': 'start',
         }})
 
         return True
 
     @private
-    def get_shell(self, id):
+    def get_shell(self, oid):
         """
         Method to get a valid shell to be used by default.
         """
 
         self.middleware.call_sync('virt.global.check_initialized')
-        instance = self.middleware.call_sync('virt.instance.get_instance', id)
+        instance = self.middleware.call_sync('virt.instance.get_instance', oid)
         if instance['type'] != 'CONTAINER':
             raise CallError('Only available for containers.')
         if instance['status'] != 'RUNNING':
-            raise CallError(f'{id}: container must be running. Current status is: {instance["status"]}')
+            raise CallError(f'{oid}: container must be running. Current status is: {instance["status"]}')
         config = self.middleware.call_sync('virt.global.config')
         mount_info = self.middleware.call_sync(
-            'filesystem.mount_info', [['mount_source', '=', f'{config["dataset"]}/containers/{id}']]
+            'filesystem.mount_info', [['mount_source', '=', f'{config["dataset"]}/containers/{oid}']]
         )
         if not mount_info:
             return None

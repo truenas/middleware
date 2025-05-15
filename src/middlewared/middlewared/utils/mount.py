@@ -71,20 +71,23 @@ def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None)
 
     with open('/proc/self/mountinfo') as f:
         for line in f:
-            if maj_min:
-                if line.find(maj_min) == -1:
-                    continue
+            try:
+                if maj_min:
+                    if line.find(maj_min) == -1:
+                        continue
+
+                    callback(line, private_data)
+                    break
+                elif mnt_id is not None:
+                    if not line.startswith(mount_id):
+                        continue
+
+                    callback(line, private_data)
+                    break
 
                 callback(line, private_data)
-                break
-            elif mnt_id is not None:
-                if not line.startswith(mount_id):
-                    continue
-
-                callback(line, private_data)
-                break
-
-            callback(line, private_data)
+            except Exception as e:
+                raise RuntimeError(f'Failed to parse {line!r} line: {e}')
 
 
 def getmntinfo(dev_id=None, mnt_id=None):
