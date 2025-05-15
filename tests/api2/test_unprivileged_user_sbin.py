@@ -1,7 +1,8 @@
 import pytest
 
+from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import ssh
 
 
 @pytest.fixture(scope='module')
@@ -11,6 +12,7 @@ def unprivileged_user():
         'full_name': 'Unprivileged',
         'password': 'password',
         'group_create': True,
+        'home': f'/mnt/{pool_name}',
         'ssh_password_enabled': True,
     }) as u:
         yield u

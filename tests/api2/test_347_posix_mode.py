@@ -6,6 +6,7 @@ import os
 import pytest
 import stat
 
+from auto_config import pool_name
 from functions import SSH_TEST
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.pool import dataset
@@ -59,6 +60,7 @@ def get_user():
             'username': MODE_USER,
             'full_name': MODE_USER,
             'password': MODE_PWD,
+            'home': f'/mnt/{pool_name}',
             'group_create': True,
             'shell': '/usr/bin/bash',
             'ssh_password_enabled': True,
