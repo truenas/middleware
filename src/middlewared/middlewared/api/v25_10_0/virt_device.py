@@ -126,8 +126,14 @@ class PCI(Device):
     address: NonEmptyString
 
 
+class CDROM(Device):
+    dev_type: Literal['CDROM']
+    source: NonEmptyString
+    boot_priority: int | None = Field(default=None, ge=0)
+
+
 DeviceType: TypeAlias = Annotated[
-    Disk | GPU | Proxy | TPM | USB | NIC | PCI,
+    Disk | GPU | Proxy | TPM | USB | NIC | PCI | CDROM,
     Field(discriminator='dev_type')
 ]
 

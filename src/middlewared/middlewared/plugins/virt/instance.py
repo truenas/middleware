@@ -25,8 +25,9 @@ from middlewared.utils.size import normalize_size
 
 from .utils import (
     create_vnc_password_file, get_max_boot_priority_device, get_root_device_dict, get_vnc_info_from_config,
-    get_vnc_password_file_path, incus_call, incus_call_and_wait, incus_pool_to_storage_pool,
-    root_device_pool_from_raw, VirtGlobalStatus, storage_pool_to_incus_pool, VNC_BASE_PORT,
+    VirtGlobalStatus, incus_call, incus_call_and_wait, incus_pool_to_storage_pool, root_device_pool_from_raw,
+    storage_pool_to_incus_pool, validate_device_name, generate_qemu_cmd, generate_qemu_cdrom_metadata,
+    INCUS_METADATA_CDROM_KEY,
 )
 
 
@@ -255,7 +256,9 @@ class VirtInstanceService(CRUDService):
                     if any(new['vnc_port'] in v for v in port_mapping.values()):
                         verrors.add(f'{schema_name}.vnc_port', 'VNC port is already in use by another virt instance')
 
-    def __data_to_config(self, instance_name: str, data: dict, raw: dict = None, instance_type=None):
+    def __data_to_config(
+        self, instance_name: str, data: dict, devices: dict, raw: dict = None, instance_type=None
+    ):
         config = {}
         if 'environment' in data:
             # If we are updating environment we need to remove current values
@@ -291,17 +294,10 @@ class VirtInstanceService(CRUDService):
                     'vnc_port': data['vnc_port'],
                     'vnc_password': data['vnc_password'],
                 }),
+                INCUS_METADATA_CDROM_KEY: generate_qemu_cdrom_metadata(devices),
             })
 
-            if data.get('enable_vnc') and data.get('vnc_port'):
-                vnc_config = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
-                if data.get('vnc_password'):
-                    vnc_config = (f'-object secret,id=vnc0,file={get_vnc_password_file_path(instance_name)} '
-                                  f'{vnc_config},password-secret=vnc0')
-
-                config['raw.qemu'] = vnc_config
-            if data.get('enable_vnc') is False:
-                config['raw.qemu'] = ''
+            config['raw.qemu'] = generate_qemu_cmd(config, instance_name)
         else:
             config.update({
                 'security.privileged': 'true' if data.get('privileged_mode') else 'false',
@@ -424,6 +420,7 @@ class VirtInstanceService(CRUDService):
             }
         }
         for i in data_devices:
+            validate_device_name(i, verrors)
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['name'], data['instance_type']
             )
@@ -469,7 +466,7 @@ class VirtInstanceService(CRUDService):
             await incus_call_and_wait('1.0/instances', 'post', {'json': {
                 'name': data['name'],
                 'ephemeral': False,
-                'config': self.__data_to_config(data['name'], data, instance_type=data['instance_type']),
+                'config': self.__data_to_config(data['name'], data, devices, instance_type=data['instance_type']),
                 'devices': devices,
                 'source': source,
                 'profiles': ['default'],
@@ -527,7 +524,9 @@ class VirtInstanceService(CRUDService):
 
         verrors.check()
 
-        instance['raw']['config'].update(self.__data_to_config(oid, data, instance['raw']['config'], instance['type']))
+        instance['raw']['config'].update(
+            self.__data_to_config(oid, data, instance['raw']['devices'], instance['raw']['config'], instance['type'])
+        )
         if data.get('root_disk_size') or data.get('root_disk_io_bus'):
             if (pool := root_device_pool_from_raw(instance['raw'])) is None:
                 raise CallError(f'{oid}: instance does not have a configured pool')
