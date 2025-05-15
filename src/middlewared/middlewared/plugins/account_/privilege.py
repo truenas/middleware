@@ -3,7 +3,10 @@ import errno
 import wbclient
 
 from middlewared.api import api_method
-from middlewared.api.current import *
+from middlewared.api.current import (
+    PrivilegeEntry, PrivilegeCreateArgs, PrivilegeCreateResult, PrivilegeUpdateArgs,
+    PrivilegeUpdateResult, PrivilegeDeleteArgs, PrivilegeDeleteResult
+)
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
