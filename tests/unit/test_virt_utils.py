@@ -18,11 +18,11 @@ def default_storage_pool():
 
 
 def test__init_storage_value():
-    assert storage.state is utils.Status.INITIALIZING
+    assert storage.state is utils.VirtGlobalStatus.INITIALIZING
     assert storage.default_storage_pool is None
 
 
-@pytest.mark.parametrize('status', utils.Status)
+@pytest.mark.parametrize('status', utils.VirtGlobalStatus)
 def test__setting_storage_state(status):
     storage.state = status
     assert storage.state is status
