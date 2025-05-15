@@ -122,6 +122,8 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
         rows = await self.middleware.call('datastore.query', datastore, [], options)
         if not rows:
             async with get_or_insert_lock:
+                # We do this again here to avoid TOCTOU as we don't want multiple calls inserting records
+                # and we ending up with duplicates again
                 rows = await self.middleware.call('datastore.query', datastore, [], options)
                 if not rows:
                     await self.middleware.call('datastore.insert', datastore, {})
