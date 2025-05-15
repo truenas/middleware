@@ -1,9 +1,16 @@
-from typing import Dict, Literal
+from typing import Literal
 
 from pydantic import Field
 
 from middlewared.api.base import WWPN, BaseModel, Excluded, FibreChannelPortAlias, ForUpdateMetaclass, excluded_field
 from .common import QueryArgs
+
+
+__all__ = [
+    "FCPortEntry", "FCPortCreateArgs", "FCPortCreateResult", "FCPortUpdateArgs", "FCPortUpdateResult",
+    "FCPortDeleteArgs", "FCPortDeleteResult", "FCPortChoicesArgs", "FCPortChoicesResult", "FCPortStatusArgs",
+    "FCPortStatusResult",
+]
 
 
 class FCPortEntry(BaseModel):
@@ -61,7 +68,7 @@ class FCPortChoicesArgs(BaseModel):
 
 
 class FCPortChoicesResult(BaseModel):
-    result: Dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(examples=[
+    result: dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(examples=[
         {
             'fc0': {
                 'wwpn': 'naa.2100001122334455',
