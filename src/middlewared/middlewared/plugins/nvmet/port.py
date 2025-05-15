@@ -28,8 +28,8 @@ class NVMetPortModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     nvmet_port_index = sa.Column(sa.Integer(), unique=True)
     nvmet_port_addr_trtype = sa.Column(sa.Integer())
-    # addr_trsvcid port number for IPv4 | IPv6, but string for AF_IB
-    nvmet_port_addr_trsvcid = sa.Column(sa.String(255))
+    # addr_trsvcid port number for IPv4 | IPv6, but string for AF_IB, None for FC
+    nvmet_port_addr_trsvcid = sa.Column(sa.String(255), nullable=True, default=None)
     nvmet_port_addr_traddr = sa.Column(sa.String(255))
     nvmet_port_addr_adrfam = sa.Column(sa.Integer())
     nvmet_port_inline_data_size = sa.Column(sa.Integer(), nullable=True, default=None)
@@ -265,15 +265,14 @@ class NVMetPortService(CRUDService):
         }
 
     async def __validate(self, verrors, data, schema_name, old=None):
+        filters = [
+            ['addr_trtype', '=', data['addr_trtype']],
+            ['addr_traddr', '=', data['addr_traddr']],
+        ]
+        if data['addr_trtype'] != PORT_TRTYPE.FC.api:
+            filters.append(['addr_trsvcid', '=', data['addr_trsvcid']])
         try:
-            existing = await self.middleware.call('nvmet.port.query',
-                                                  [
-                                                      ['addr_trtype', '=', data['addr_trtype']],
-                                                      ['addr_traddr', '=', data['addr_traddr']],
-                                                      ['addr_trsvcid', '=', data['addr_trsvcid']]
-                                                  ],
-                                                  {'get': True}
-                                                  )
+            existing = await self.middleware.call('nvmet.port.query', filters, {'get': True})
         except MatchNotFound:
             existing = None
 
