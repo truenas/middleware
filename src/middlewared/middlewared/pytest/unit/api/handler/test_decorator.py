@@ -4,7 +4,9 @@ from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 
 
-class MethodArgs(BaseModel):...
+class MethodArgs(BaseModel): ...
+
+
 class MethodResult(BaseModel):
     result: None
 
@@ -30,7 +32,7 @@ class MethodResult(BaseModel):
 def test_bad_api_method_args(kwargs, error):
     with pytest.raises(ValueError, match=error):
         @api_method(MethodArgs, MethodResult, **kwargs)
-        def method():...
+        def method(): ...
 
 
 @pytest.mark.parametrize("kwargs, attr_name, attr_value", [
@@ -41,6 +43,6 @@ def test_bad_api_method_args(kwargs, error):
 ])
 def test_api_method_args(kwargs, attr_name, attr_value):
     @api_method(MethodArgs, MethodResult, **kwargs)
-    def method():...
+    def method(): ...
 
     assert getattr(method, attr_name) == attr_value

@@ -1,9 +1,8 @@
 from middlewared.plugins.smb import SMBCmd
 from middlewared.plugins.kerberos import krb5ccache
 from middlewared.plugins.activedirectory_.dns import SRV
-from middlewared.service import private, job, Service
+from middlewared.service import private, Service
 from middlewared.service_exception import CallError
-from middlewared.plugins.directoryservices import DSStatus
 from middlewared.utils import run
 
 
