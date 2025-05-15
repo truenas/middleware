@@ -119,12 +119,12 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
 
     @private
     async def _get_or_insert(self, datastore, options):
-        try:
-            return await self.middleware.call('datastore.config', datastore, options)
-        except IndexError:
+        rows = await self.middleware.call('datastore.query', datastore, [], options)
+        if not rows:
             async with get_or_insert_lock:
-                try:
-                    return await self.middleware.call('datastore.config', datastore, options)
-                except IndexError:
+                rows = await self.middleware.call('datastore.query', datastore, [], options)
+                if not rows:
                     await self.middleware.call('datastore.insert', datastore, {})
                     return await self.middleware.call('datastore.config', datastore, options)
+
+        return rows[0]
