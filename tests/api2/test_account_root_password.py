@@ -43,7 +43,7 @@ def test_root_password_disabled():
                     "groups": [builtin_administrators_group_id],
                     "home": f"/mnt/{homedir}",
                     "password": "test1234",
-                }, get_instance=False):
+                }):
                     alerts = c.call("alert.list")
                     assert not any(alert["klass"] == "WebUiRootLogin" for alert in alerts), alerts
 

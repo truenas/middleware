@@ -1,6 +1,6 @@
 import os
 
-nologin = "/usr/sbin/nologin"
+from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
 
 
 def is_valid_shell(shell):
@@ -18,7 +18,7 @@ def migrate(middleware):
             if user["username"] == "root":
                 new_shell = "/usr/bin/zsh"
             else:
-                new_shell = nologin
+                new_shell = NO_LOGIN_SHELL
 
         middleware.logger.info("Updating user %r shell from %r to %r", user["username"], user["shell"], new_shell)
         middleware.call_sync(

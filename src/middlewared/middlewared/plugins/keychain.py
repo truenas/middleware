@@ -25,6 +25,7 @@ from middlewared.api.current import (
     KeychainCredentialRemoteSSHHostKeyScanArgs, KeychainCredentialRemoteSSHHostKeyScanResult,
     KeychainCredentialRemoteSSHSemiautomaticSetupArgs, KeychainCredentialRemoteSSHSemiautomaticSetupResult,
 )
+from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.schema import ValidationErrors
 from middlewared.service import CRUDService, private
@@ -597,7 +598,7 @@ class KeychainCredentialService(CRUDService):
 
             user = c.call("user.query", [["username", "=", data["username"]], ['local', '=', True]], {"get": True})
             user_update = {}
-            if user["shell"] == "/usr/sbin/nologin":
+            if user["shell"] == NO_LOGIN_SHELL:
                 user_update["shell"] = "/usr/bin/bash"
             if data["sudo"]:
                 if "ALL" not in user["sudo_commands_nopasswd"]:
@@ -635,7 +636,7 @@ class KeychainCredentialService(CRUDService):
         except MatchNotFound:
             raise CallError(f"User {data['username']} does not exist")
 
-        if user["home"].startswith("/nonexistent") or not os.path.exists(user["home"]):
+        if user["home"].startswith("/var/empty") or not os.path.exists(user["home"]):
             raise CallError(f"Home directory {user['home']} does not exist", errno.ENOENT)
 
         # Make sure SSH is enabled

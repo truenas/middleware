@@ -13,16 +13,13 @@ from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
 
 
-shell = '/usr/bin/bash'
-group = 'nogroup'
 ACLTEST_DATASET_NAME = 'acltest'
 ACLTEST_DATASET = f'{pool_name}/{ACLTEST_DATASET_NAME}'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
 
-ACLTEST_SUBDATASET = f'{pool_name}/acltest/sub1'
+ACLTEST_SUBDATASET = f'{ACLTEST_DATASET}/sub1'
 getfaclcmd = "nfs4xdr_getfacl"
 setfaclcmd = "nfs4xdr_setfacl"
-group0 = "root"
 
 ACL_USER = 'acluser'
 ACL_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
@@ -172,6 +169,7 @@ def initialize_for_acl_tests(request):
             'username': ACL_USER,
             'full_name': ACL_USER,
             'group_create': True,
+            'home': f'/mnt/{pool_name}',
             'ssh_password_enabled': True,
             'password': ACL_PWD
         }) as u:

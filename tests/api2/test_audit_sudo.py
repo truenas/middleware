@@ -6,6 +6,7 @@ import time
 
 import pytest
 
+from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.time_utils import utc_now
@@ -87,6 +88,7 @@ def initialize_for_sudo_tests(username, password, data):
         'username': username,
         'full_name': username,
         'group_create': True,
+        'home': f'/mnt/{pool_name}',
         'password': password,
         'shell': '/usr/bin/bash',
         'ssh_password_enabled': True,

@@ -41,7 +41,6 @@ def test_cant_create_user_with_cli_shell_without_privileges(group_payload):
             with user({
                 "username": "test",
                 "full_name": "Test",
-                "home": f"/nonexistent",
                 "password": "test1234",
                 "shell": "/usr/bin/cli",
                 **group_payload(g),
@@ -70,7 +69,6 @@ def test_can_create_user_with_cli_shell_with_privileges(group_payload):
             with user({
                 "username": "test",
                 "full_name": "Test",
-                "home": f"/nonexistent",
                 "password": "test1234",
                 "shell": "/usr/bin/cli",
                 **group_payload(g),
@@ -91,7 +89,6 @@ def test_cant_update_user_with_cli_shell_without_privileges(group_payload):
         with user({
             "username": "test",
             "full_name": "Test",
-            "home": f"/nonexistent",
             "password": "test1234",
             "group_create": True,
         }) as u:
@@ -123,7 +120,6 @@ def test_can_update_user_with_cli_shell_with_privileges(group_payload):
             with user({
                 "username": "test",
                 "full_name": "Test",
-                "home": f"/nonexistent",
                 "password": "test1234",
                 "group_create": True,
             }) as u:

@@ -109,7 +109,7 @@ def test_authenticated_call():
                             "username": "sergey",
                             "full_name": "Sergey",
                             "group_create": True,
-                            "home": "/nonexistent",
+                            "home": "/var/empty",
                             "password": "********",
                         }
                     ],
@@ -122,7 +122,7 @@ def test_authenticated_call():
                 "username": "sergey",
                 "full_name": "Sergey",
                 "group_create": True,
-                "home": "/nonexistent",
+                "home": "/var/empty",
                 "password": "password",
             })
             assert r.status_code == 200
