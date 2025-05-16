@@ -1034,6 +1034,169 @@ class TestNVMe(NVMeRunning):
                                                                         standby_ip,
                                                                         NVME_ALT1_TCP_PORT)
 
+    def test__verbose_subsys_query(self, fixture_port, zvol1, zvol2):
+        """
+        Test that nvmet.subsys.query gives the correct additional information
+        when options.extra.verbose is set.
+        """
+        KEYS = ['hosts', 'namespaces', 'ports']
+
+        def subsys_query():
+            return call('nvmet.subsys.query')
+
+        def subsys_verbose_query():
+            return call('nvmet.subsys.query', [], {'extra': {'verbose': True}})
+
+        def check_regular_query(count):
+            subsystems = subsys_query()
+            assert len(subsystems) == count
+            for subsys in subsystems:
+                for key in KEYS:
+                    assert key not in subsys
+            return subsystems
+
+        def check_verbose_query(count):
+            subsystems = subsys_verbose_query()
+            assert len(subsystems) == count
+            for subsys in subsystems:
+                for key in KEYS:
+                    assert key in subsys
+            return subsystems
+
+        def pick_from_list_by_id(_list, _id):
+            for item in _list:
+                if item['id'] == _id:
+                    return item
+
+        zvol1_path = f'zvol/{zvol1["name"]}'
+        zvol2_path = f'zvol/{zvol2["name"]}'
+
+        assert len(subsys_query()) == 0
+        assert len(subsys_verbose_query()) == 0
+
+        # Add subsystem
+        with nvmet_subsys(SUBSYS_NAME1) as subsys1:
+            subsys1_id = subsys1['id']
+            # with nvmet_port_subsys(subsys['id'], port['id']):
+            # with self.subsys(SUBSYS_NAME1, fixture_port) as subsys1:
+
+            check_regular_query(1)
+            subsystems = check_verbose_query(1)
+            for key in KEYS:
+                assert len(subsystems[0][key]) == 0
+
+            # Associate subsystem with port
+            with nvmet_port_subsys(subsys1_id, fixture_port['id']):
+                check_regular_query(1)
+                subsystems = check_verbose_query(1)
+                assert len(subsystems[0]['hosts']) == 0
+                assert len(subsystems[0]['namespaces']) == 0
+                assert len(subsystems[0]['ports']) == 1
+                assert subsystems[0]['ports'][0] == fixture_port['id']
+
+                # Add a host -> no change
+                with nvmet_host('nqn.host1') as host1:
+                    check_regular_query(1)
+                    subsystems = check_verbose_query(1)
+                    assert len(subsystems[0]['hosts']) == 0
+                    assert len(subsystems[0]['namespaces']) == 0
+                    assert len(subsystems[0]['ports']) == 1
+                    assert subsystems[0]['ports'][0] == fixture_port['id']
+
+                    # Associate the host -> change
+                    with nvmet_host_subsys(host1['id'], subsys1_id):
+                        check_regular_query(1)
+                        subsystems = check_verbose_query(1)
+                        assert len(subsystems[0]['hosts']) == 1
+                        assert len(subsystems[0]['namespaces']) == 0
+                        assert len(subsystems[0]['ports']) == 1
+                        assert subsystems[0]['hosts'][0] == host1['id']
+                        assert subsystems[0]['ports'][0] == fixture_port['id']
+
+                        # Create/associate another host -> change
+                        with nvmet_host('nqn.host2') as host2:
+                            with nvmet_host_subsys(host2['id'], subsys1_id):
+                                check_regular_query(1)
+                                subsystems = check_verbose_query(1)
+                                assert len(subsystems[0]['hosts']) == 2
+                                assert len(subsystems[0]['namespaces']) == 0
+                                assert len(subsystems[0]['ports']) == 1
+                                assert host1['id'] in subsystems[0]['hosts']
+                                assert host2['id'] in subsystems[0]['hosts']
+                                assert subsystems[0]['ports'][0] == fixture_port['id']
+
+                        # Back to only 1 host
+                        check_regular_query(1)
+                        subsystems = check_verbose_query(1)
+                        assert len(subsystems[0]['hosts']) == 1
+                        assert len(subsystems[0]['namespaces']) == 0
+                        assert len(subsystems[0]['ports']) == 1
+                        assert subsystems[0]['hosts'][0] == host1['id']
+                        assert subsystems[0]['ports'][0] == fixture_port['id']
+
+                        with nvmet_namespace(subsys1_id, zvol1_path) as ns1:
+                            check_regular_query(1)
+                            subsystems = check_verbose_query(1)
+                            assert len(subsystems[0]['hosts']) == 1
+                            assert len(subsystems[0]['namespaces']) == 1
+                            assert len(subsystems[0]['ports']) == 1
+                            assert subsystems[0]['hosts'][0] == host1['id']
+                            assert subsystems[0]['namespaces'][0] == ns1['id']
+                            assert subsystems[0]['ports'][0] == fixture_port['id']
+
+                            # Add subsystem
+                            with nvmet_subsys(SUBSYS_NAME2) as subsys2:
+                                subsys2_id = subsys2['id']
+                                check_regular_query(2)
+                                subsystems = check_verbose_query(2)
+                                ss1 = pick_from_list_by_id(subsystems, subsys1_id)
+                                assert len(ss1['hosts']) == 1
+                                assert len(ss1['namespaces']) == 1
+                                assert len(ss1['ports']) == 1
+                                assert ss1['hosts'][0] == host1['id']
+                                assert ss1['namespaces'][0] == ns1['id']
+                                assert ss1['ports'][0] == fixture_port['id']
+
+                                ss2 = pick_from_list_by_id(subsystems, subsys2_id)
+                                assert len(ss2['hosts']) == 0
+                                assert len(ss2['namespaces']) == 0
+                                assert len(ss2['ports']) == 0
+
+                                with nvmet_namespace(subsys2_id, zvol2_path) as ns2:
+                                    check_regular_query(2)
+                                    subsystems = check_verbose_query(2)
+                                    ss1 = pick_from_list_by_id(subsystems, subsys1_id)
+                                    assert len(ss1['hosts']) == 1
+                                    assert len(ss1['namespaces']) == 1
+                                    assert len(ss1['ports']) == 1
+                                    assert ss1['hosts'][0] == host1['id']
+                                    assert ss1['namespaces'][0] == ns1['id']
+                                    assert ss1['ports'][0] == fixture_port['id']
+
+                                    ss2 = pick_from_list_by_id(subsystems, subsys2_id)
+                                    assert len(ss2['hosts']) == 0
+                                    assert len(ss2['namespaces']) == 1
+                                    assert len(ss2['ports']) == 0
+                                    assert ss2['namespaces'][0] == ns2['id']
+
+                                # Now make a 2nd NS on the 1st subsys
+                                with nvmet_namespace(subsys1_id, zvol2_path) as ns3:
+                                    check_regular_query(2)
+                                    subsystems = check_verbose_query(2)
+                                    ss1 = pick_from_list_by_id(subsystems, subsys1_id)
+                                    assert len(ss1['hosts']) == 1
+                                    assert len(ss1['namespaces']) == 2
+                                    assert len(ss1['ports']) == 1
+                                    assert ss1['hosts'][0] == host1['id']
+                                    assert ns1['id'] in ss1['namespaces']
+                                    assert ns3['id'] in ss1['namespaces']
+                                    assert ss1['ports'][0] == fixture_port['id']
+
+                                    ss2 = pick_from_list_by_id(subsystems, subsys2_id)
+                                    assert len(ss2['hosts']) == 0
+                                    assert len(ss2['namespaces']) == 0
+                                    assert len(ss2['ports']) == 0
+
 
 class TestNVMeHostAuth(NVMeRunning):
 

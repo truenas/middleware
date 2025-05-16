@@ -16,6 +16,10 @@ from .mixin import NVMetStandbyMixin
 SERIAL_RETRIES = 10
 MAX_NQN_LEN = 223
 
+EXTENDED_CONTEXT_KEY_HOSTS = 'hosts'
+EXTENDED_CONTEXT_KEY_NAMESPACES = 'namespaces'
+EXTENDED_CONTEXT_KEY_PORTS = 'ports'
+
 
 class NVMetSubsysModel(sa.Model):
     __tablename__ = 'services_nvmet_subsys'
@@ -37,6 +41,8 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
         namespace = 'nvmet.subsys'
         datastore = 'services.nvmet_subsys'
         datastore_prefix = 'nvmet_subsys_'
+        datastore_extend_context = "nvmet.subsys.extend_context"
+        datastore_extend = "nvmet.subsys.extend"
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetSubsysEntry
@@ -157,6 +163,29 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
 
         await self._service_change('nvmet', 'reload')
         return rv
+
+    @private
+    async def extend_context(self, rows, extra):
+        if extra.get('verbose'):
+            return {
+                EXTENDED_CONTEXT_KEY_HOSTS: await self.middleware.call('nvmet.host_subsys.query'),
+                EXTENDED_CONTEXT_KEY_NAMESPACES: await self.middleware.call('nvmet.namespace.query'),
+                EXTENDED_CONTEXT_KEY_PORTS: await self.middleware.call('nvmet.port_subsys.query'),
+            }
+        return {}
+
+    @private
+    async def extend(self, data, context):
+        if context:
+            subsys_id = data['id']
+            data['hosts'] = [item['host']['id'] for item in
+                             context[EXTENDED_CONTEXT_KEY_HOSTS] if item['subsys']['id'] == subsys_id]
+            data['ports'] = [item['port']['id'] for item in
+                             context[EXTENDED_CONTEXT_KEY_PORTS] if item['subsys']['id'] == subsys_id]
+            data['namespaces'] = [item['id'] for item in
+                                  context[EXTENDED_CONTEXT_KEY_NAMESPACES] if item['subsys']['id'] == subsys_id]
+
+        return data
 
     @private
     async def subsys_serial(self, serial):
