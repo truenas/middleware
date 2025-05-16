@@ -691,7 +691,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if (
             serviceobj._config.namespace in ('zfs.resource')
             or serviceobj._config.inject_lzh
-            or hasattr(methodobj, '_inject_lzh')
+            or getattr(methodobj, '_inject_lzh', False)
         ):
             if is_coroutine:
                 raise RuntimeError("Thread local storage not valid for coroutines")
