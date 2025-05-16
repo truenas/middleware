@@ -119,12 +119,20 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
 
     @private
     async def _get_or_insert(self, datastore, options):
-        try:
-            return await self.middleware.call('datastore.config', datastore, options)
-        except IndexError:
+        rows = await self.middleware.call('datastore.query', datastore, [], options)
+        if not rows:
             async with get_or_insert_lock:
-                try:
-                    return await self.middleware.call('datastore.config', datastore, options)
-                except IndexError:
+                # We do this again here to avoid TOCTOU as we don't want multiple calls inserting records
+                # and we ending up with duplicates again
+                # Earlier we were doing try/catch on IndexError and using datastore.config directly
+                # however that can be misleading because when we do a query and we have any extend in
+                # place which raises the same IndexError or MatchNotFound, we would catch it assuming
+                # we don't have a row available whereas the row was there but the service's extend
+                # had errored out with that exception and we would misleadingly insert another duplicate
+                # record
+                rows = await self.middleware.call('datastore.query', datastore, [], options)
+                if not rows:
                     await self.middleware.call('datastore.insert', datastore, {})
                     return await self.middleware.call('datastore.config', datastore, options)
+
+        return rows[0]
