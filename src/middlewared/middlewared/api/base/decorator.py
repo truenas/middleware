@@ -34,6 +34,7 @@ def api_method(
     pass_app: bool = False,
     pass_app_require: bool = False,
     pass_app_rest: bool = False,
+    inject_lzh: bool = False,
     skip_args: int | None = None,
     removed_in: str | None = None,
 ):
@@ -67,6 +68,10 @@ def api_method(
     `authorization_required` is False API endpoint does not require authorization, but does require authentication.
     This is incompatible with `roles`. Additional review will be required in order to validate that its use complies
     with security standards.
+
+    `inject_lzh` if set to True, will inject the thread-local storage object with an open libzfs lightweight handle
+    as the first argument to the decorated method. NOTE: this is using a traditional threading.local() object and
+    not a ContextVar so the method must be a non-coroutine based method/function.
 
     `removed_in` specifies major TrueNAS version (in the format vXX.YY) which removes this API method.
     """
@@ -136,6 +141,7 @@ def api_method(
         wrapped.roles = roles or []
         wrapped._private = private
         wrapped._cli_private = cli_private
+        wrapped._inject_lzh = inject_lzh
         if removed_in is not None:
             if not MAJOR_VERSION.match(removed_in):
                 raise ValueError(

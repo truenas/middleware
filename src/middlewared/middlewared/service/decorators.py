@@ -241,6 +241,12 @@ def pass_app(*, message_id=False, require=False, rest=False):
     return wrapper
 
 
+def inject_lzh(fn):
+    """Inject thread-local storage object with lightweight
+    libzfs handle to the decorated method."""
+    fn._inject_lzh = True
+
+
 def periodic(interval, run_on_start=True):
     def wrapper(fn):
         fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
