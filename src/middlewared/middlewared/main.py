@@ -694,9 +694,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             or hasattr(methodobj, '_inject_lzh')
         ):
             if is_coroutine:
-                raise RuntimeError(
-                    "Thread local storage valid for synchronous functions only"
-                )
+                raise RuntimeError("Thread local storage not valid for coroutines")
 
             # inject the thread local storage object
             # as the 1st positional argument to the
