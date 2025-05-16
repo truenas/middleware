@@ -69,7 +69,7 @@ class AuthApiKeyPlain(BaseModel):
     mechanism: Literal[AuthMech.API_KEY_PLAIN]
     username: str
     api_key: Secret[str]
-    login_options: AuthCommonOptions = Field(default_factory=AuthCommonOptions)
+    login_options: AuthCommonOptions = AuthCommonOptions()
 
 
 class AuthLegacyUsernamePassword(BaseModel):
@@ -80,14 +80,14 @@ class AuthLegacyUsernamePassword(BaseModel):
 class AuthOTPToken(BaseModel):
     mechanism: Literal[AuthMech.OTP_TOKEN]
     otp_token: Secret[str]
-    login_options: AuthCommonOptions = Field(default_factory=AuthCommonOptions)
+    login_options: AuthCommonOptions = AuthCommonOptions()
 
 
 class AuthPasswordPlain(BaseModel):
     mechanism: Literal[AuthMech.PASSWORD_PLAIN]
     username: str
     password: Secret[str]
-    login_options: AuthCommonOptions = Field(default_factory=AuthCommonOptions)
+    login_options: AuthCommonOptions = AuthCommonOptions()
 
 
 class AuthRespAuthErr(BaseModel):
@@ -124,7 +124,7 @@ class AuthRespSuccess(BaseModel):
 class AuthTokenPlain(BaseModel):
     mechanism: Literal[AuthMech.TOKEN_PLAIN]
     token: Secret[str]
-    login_options: AuthCommonOptions = Field(default_factory=AuthCommonOptions)
+    login_options: AuthCommonOptions = AuthCommonOptions()
 
 
 class TokenParentCredentialsData(BaseModel):
