@@ -104,8 +104,9 @@ def shadow_parse_aging(
     outstr = ''
 
     # Special cases
-    if user['username'] == 'root' and user['password_disabled']:
-        # NAS-135872, NAS-135863: Prevent root account from being disabled
+    if user['password_disabled']:
+        # NAS-135872, NAS-135863: Prevent a password disabled account from being
+        # disabled due to password change requirements.
         return '::::::'
 
     # man (5) shadow "date of last password change"
