@@ -1,3 +1,5 @@
+import unittest
+
 import pytest
 
 from middlewared.api import api_method
@@ -29,7 +31,8 @@ class MethodResult(BaseModel):
         "method: Role definition is required for public API endpoints"
     )
 ])
-def test_bad_api_method_args(kwargs, error):
+@unittest.mock.patch("middlewared.api.base.decorator.check_model_module")
+def test_bad_api_method_args(check_model_module, kwargs, error):
     with pytest.raises(ValueError, match=error):
         @api_method(MethodArgs, MethodResult, **kwargs)
         def method(): ...
@@ -41,7 +44,8 @@ def test_bad_api_method_args(kwargs, error):
     ({"authorization_required": False}, "_no_authz_required", True),
     ({"authentication_required": False}, "_no_auth_required", True),
 ])
-def test_api_method_args(kwargs, attr_name, attr_value):
+@unittest.mock.patch("middlewared.api.base.decorator.check_model_module")
+def test_api_method_args(check_model_module, kwargs, attr_name, attr_value):
     @api_method(MethodArgs, MethodResult, **kwargs)
     def method(): ...
 
