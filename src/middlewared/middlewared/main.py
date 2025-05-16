@@ -29,7 +29,12 @@ from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.service.crud import real_crud_method
-from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
+from .utils.threading import (
+    set_thread_name,
+    IoThreadPoolExecutor,
+    io_thread_pool_executor,
+    thread_local_storage,
+)
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
 from .worker import main_worker, worker_init
@@ -680,6 +685,19 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if hasattr(methodobj, '_pass_app'):
             if methodobj._pass_app['message_id']:
                 args.append(message_id)
+
+        if (
+            serviceobj._config.namespace in ('zfs.resource')
+            or serviceobj._config.inject_lzh
+            or hasattr(methodobj, '_inject_lzh')
+        ):
+            # inject the thread local storage object
+            # as the 1st positional argument to the
+            # method. NOTE: if the method is decorated
+            # with @api_method decorator, the `skip_args`
+            # MUST BE SET to `skip_args=1` so validation
+            # ignores the thread local stoage object
+            args.insert(0, thread_local_storage)
 
         args.extend(params)
 
