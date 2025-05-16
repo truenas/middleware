@@ -76,14 +76,14 @@ class VirtVolumeService(CRUDService):
         ):
             # We will kick off recover here so that incus recognizes
             # this dataset as a volume already
-            await self.middleware.call('virt.global.recover', [
+            await (await self.middleware.call('virt.global.recover', [
                 {
                     'config': {'source': f'{target_pool}/.ix-virt'},
                     'description': '',
                     'name': storage_pool_to_incus_pool(target_pool),
                     'driver': 'zfs',
                 }
-            ])
+            ])).wait(raise_error=True)
             verrors.add('virt_volume_create.name', 'ZFS dataset against this volume name already exists')
 
         if target_pool not in global_config['storage_pools']:
@@ -329,7 +329,7 @@ class VirtVolumeService(CRUDService):
         # If this fails, our state cannot be cleanly rolled back.
         # admin will need to toggle virt.global enabled state
         job.set_progress(50, 'Updating backend database')
-        await self.middleware.call('virt.global.recover', recover_payload)
+        await (await self.middleware.call('virt.global.recover', recover_payload)).wait(raise_error=True)
 
         # At this point the zvols have been renamed and incus DB updated
         # but we still need to fix some volume-related metadata. The size
