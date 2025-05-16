@@ -69,11 +69,12 @@ class STIGType(enum.IntFlag):
     of our product
     """
     # https://www.stigviewer.com/stig/general_purpose_operating_system_srg/
+    NONE = 0
     GPOS = enum.auto()  # General Purpose Operating System
 
 
 def system_security_config_to_stig_type(config: dict[str, bool]) -> STIGType:
-    return STIGType.GPOS if config['enable_gpos_stig'] else 0
+    return STIGType.GPOS if config['enable_gpos_stig'] else STIGType.NONE
 
 
 def shadow_parse_aging(
