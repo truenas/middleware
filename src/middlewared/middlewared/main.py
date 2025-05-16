@@ -739,7 +739,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         else:
             executor = io_thread_pool_executor
 
-        return PreparedCall(args=args, executor=executor)
+        return PreparedCall(args=args, executor=executor, is_coroutine=is_coroutine)
 
     async def _call(self, name, serviceobj, methodobj, params, **kwargs):
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, **kwargs)
