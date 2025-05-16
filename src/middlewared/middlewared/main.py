@@ -89,6 +89,7 @@ class PreparedCall(typing.NamedTuple):
     args: list[typing.Any] | None = None
     executor: typing.Any | None = None
     job: Job | None = None
+    is_coroutine: bool = False
 
 
 class Middleware(LoadPluginsMixin, ServiceCallMixin):
@@ -686,11 +687,17 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if methodobj._pass_app['message_id']:
                 args.append(message_id)
 
+        is_coroutine = asyncio.iscoroutinefunction(methodobj)
         if (
             serviceobj._config.namespace in ('zfs.resource')
             or serviceobj._config.inject_lzh
             or hasattr(methodobj, '_inject_lzh')
         ):
+            if is_coroutine:
+                raise RuntimeError(
+                    "Thread local storage valid for synchronous functions only"
+                )
+
             # inject the thread local storage object
             # as the 1st positional argument to the
             # method. NOTE: if the method is decorated
@@ -725,7 +732,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
                 self.loop.call_soon_threadsafe(cb)
                 event.wait()
-            return PreparedCall(job=job)
+            return PreparedCall(job=job, is_coroutine=is_coroutine)
 
         if hasattr(methodobj, '_thread_pool'):
             executor = methodobj._thread_pool
@@ -742,7 +749,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if prepared_call.job:
             return prepared_call.job
 
-        if asyncio.iscoroutinefunction(methodobj):
+        if prepared_call.is_coroutine:
             self.logger.trace('Calling %r in current IO loop', name)
             return await methodobj(*prepared_call.args)
 
@@ -1041,7 +1048,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if prepared_call.job:
             return prepared_call.job
 
-        if asyncio.iscoroutinefunction(methodobj):
+        if prepared_call.is_coroutine:
             self.logger.trace('Calling %r in main IO loop', name)
             return self.run_coroutine(methodobj(*prepared_call.args))
 
