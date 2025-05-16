@@ -28,7 +28,7 @@ class NVMetPortEntry(BaseModel):
     """ Index of the port, for internal use. """
     addr_trtype: FabricTransportType
     """ Fabric transport technology name. """
-    addr_trsvcid: int | NonEmptyString
+    addr_trsvcid: int | NonEmptyString | None
     """ Transport-specific TRSVCID field.  When configured for TCP/IP or RDMA this will be the port number. """
     addr_traddr: str
     """
@@ -71,8 +71,8 @@ class NVMetPortCreateRDMATCP(NVMetPortCreateTemplate):
 
 class NVMetPortCreateFC(NVMetPortCreateTemplate):
     addr_trtype: Literal['FC']
-    addr_trsvcid: NonEmptyString
     addr_traddr: NonEmptyString
+    addr_trsvcid: Excluded = excluded_field()
 
 
 class NVMetPortCreateArgs(BaseModel):
