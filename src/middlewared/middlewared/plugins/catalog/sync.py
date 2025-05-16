@@ -1,3 +1,5 @@
+import aiohttp
+
 from middlewared.api import api_method
 from middlewared.api.current import CatalogSyncArgs, CatalogSyncResult
 from middlewared.service import job, private, Service
@@ -6,9 +8,31 @@ from .git_utils import pull_clone_repository
 from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
 
 
+STATS_URL = 'https://telemetry.sys.truenas.net/apps/truenas-apps-stats.json'
+
+
 class CatalogService(Service):
 
+    POPULARITY_INFO = {}
     SYNCED = False
+
+    @private
+    async def update_popularity_cache(self):
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            try:
+                async with session.get(STATS_URL) as response:
+                    response.raise_for_status()
+                    self.POPULARITY_INFO = {
+                        k.lower(): v for k, v in (await response.json()).items()
+                        # Making sure we have a consistent format as for trains we see capitalized
+                        # entries in the file
+                    }
+            except Exception as e:
+                self.logger.error('Failed to fetch popularity stats for apps: %r', e)
+
+    @private
+    async def popularity_cache(self):
+        return self.POPULARITY_INFO
 
     @private
     async def synced(self):
@@ -38,6 +62,7 @@ class CatalogService(Service):
                 'retrieve_all_trains': True,
                 'trains': [],
             })
+            await self.update_popularity_cache()
         except Exception as e:
             await self.middleware.call(
                 'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': OFFICIAL_LABEL, 'error': str(e)}

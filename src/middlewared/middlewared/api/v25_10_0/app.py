@@ -365,6 +365,7 @@ class AppAvailableResponse(CatalogAppInfo):
     catalog: NonEmptyString
     installed: bool
     train: NonEmptyString
+    popularity_rank: int | None
 
 
 class AppCategoriesArgs(BaseModel):
