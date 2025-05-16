@@ -5,6 +5,7 @@ def service_config(klass, config):
     namespace = namespace.lower()
 
     config_attrs = {
+        'inject_lzh': False,
         'datastore': None,
         'datastore_prefix': '',
         'datastore_extend': None,

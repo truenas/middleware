@@ -29,7 +29,12 @@ from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.service.crud import real_crud_method
-from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
+from .utils.threading import (
+    set_thread_name,
+    IoThreadPoolExecutor,
+    io_thread_pool_executor,
+    thread_local_storage,
+)
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
 from .worker import main_worker, worker_init
@@ -84,6 +89,7 @@ class PreparedCall(typing.NamedTuple):
     args: list[typing.Any] | None = None
     executor: typing.Any | None = None
     job: Job | None = None
+    is_coroutine: bool = False
 
 
 class Middleware(LoadPluginsMixin, ServiceCallMixin):
@@ -681,6 +687,23 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if methodobj._pass_app['message_id']:
                 args.append(message_id)
 
+        is_coroutine = asyncio.iscoroutinefunction(methodobj)
+        if (
+            serviceobj._config.namespace in ('zfs.resource')
+            or serviceobj._config.inject_lzh
+            or getattr(methodobj, '_inject_lzh', False)
+        ):
+            if is_coroutine:
+                raise RuntimeError("Thread local storage not valid for coroutines")
+
+            # inject the thread local storage object
+            # as the 1st positional argument to the
+            # method. NOTE: if the method is decorated
+            # with @api_method decorator, the `skip_args`
+            # MUST BE SET to `skip_args=1` so validation
+            # ignores the thread local stoage object
+            args.insert(0, thread_local_storage)
+
         args.extend(params)
 
         # If the method is marked as a @job we need to create a new
@@ -707,7 +730,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
                 self.loop.call_soon_threadsafe(cb)
                 event.wait()
-            return PreparedCall(job=job)
+            return PreparedCall(job=job, is_coroutine=is_coroutine)
 
         if hasattr(methodobj, '_thread_pool'):
             executor = methodobj._thread_pool
@@ -716,7 +739,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         else:
             executor = io_thread_pool_executor
 
-        return PreparedCall(args=args, executor=executor)
+        return PreparedCall(args=args, executor=executor, is_coroutine=is_coroutine)
 
     async def _call(self, name, serviceobj, methodobj, params, **kwargs):
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, **kwargs)
@@ -724,7 +747,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if prepared_call.job:
             return prepared_call.job
 
-        if asyncio.iscoroutinefunction(methodobj):
+        if prepared_call.is_coroutine:
             self.logger.trace('Calling %r in current IO loop', name)
             return await methodobj(*prepared_call.args)
 
@@ -1023,7 +1046,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if prepared_call.job:
             return prepared_call.job
 
-        if asyncio.iscoroutinefunction(methodobj):
+        if prepared_call.is_coroutine:
             self.logger.trace('Calling %r in main IO loop', name)
             return self.run_coroutine(methodobj(*prepared_call.args))
 
