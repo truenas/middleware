@@ -91,9 +91,42 @@ def create_old_user(name, **kwargs):
             yield c.call('user.get_instance', u['id']) | {'password': u['password']}
 
 
+@contextmanager
+def modify_root(payload: dict):
+    """ Temporarily modify root options and restore when done
+    payload: A valid 'user.update' payload
+    yield:
+        The user struct associated with root as returned by the setting
+    """
+    with Client() as c:
+        current_root_user = c.call('user.query', [['username', '=', 'root']], {'get': True})
+        root_id = current_root_user['id']
+        restore_root = {key: val for (key, val) in current_root_user.items() if key in payload.keys()}
+
+        # Process the request
+        root_update = c.call('user.update', root_id, payload)
+
+        # Let the caller do its thing
+        try:
+            yield root_update
+
+        # Restore to original
+        finally:
+            c.call('user.update', root_id, restore_root)
+
+
 @pytest.fixture(scope='function')
 def old_admin():
     with create_old_user('old_admin_user') as u:
+        with Client() as c:
+            ba_id = c.call('group.query', [['name', '=', 'builtin_administrators']], {'get': True})['id']
+            c.call('user.update', u['id'], {'groups': u['groups'] + [ba_id]})
+            yield u
+
+
+@pytest.fixture(scope='function')
+def local_full_admin():
+    with create_user('local_full_admin') as u:
         with Client() as c:
             ba_id = c.call('group.query', [['name', '=', 'builtin_administrators']], {'get': True})['id']
             c.call('user.update', u['id'], {'groups': u['groups'] + [ba_id]})
@@ -137,12 +170,13 @@ def get_shadow_entry(username):
     return {
         'name': name,
         'unixhash': pwd,
-        'lastchange': int(chg),
+        'lastchange': int(chg) if chg else None,
         'min_password_age': int(min_age) if min_age else None,
         'max_password_age': int(max_age) if max_age else None,
         'password_warn_period': int(warning) if warning else None,
         'password_inactivity_period': int(inactive) if inactive else None,
         'expiration': int(expiration) if expiration else None,
+        'raw_value': entry_str.strip(),
     }
 
 
@@ -393,6 +427,7 @@ def test__password_expiry_warning(old_admin):
         })
         assert resp['response_type'] == 'SUCCESS'
         user = c.call('user.get_instance', old_admin['id'])
+        sec = c.call('system.security.config')
         assert not user['password_change_required'], str({"user": user, "sec": sec})
 
         alerts = c.call('alert.run_source', 'SecurityLocalUserAccountExpiration')
@@ -526,3 +561,22 @@ def test_stig_min_password_age(readonly_admin):
 
         with Client() as c:
             c.call('user.update', readonly_admin['id'], {'password': 'canary'})
+
+
+def test_password_disable(local_full_admin):
+    """ Verify the user shadow entry is '<username>:*:::::::' when password is disabled """
+
+    with modify_root({'password_disabled': True}) as root_user:
+        assert root_user['password_disabled'] is True
+        shadow = get_shadow_entry('root')
+        assert shadow['raw_value'] == "root:*:::::::"
+
+    with create_user('test_user', smb=False) as u:
+        assert u['password_disabled'] is False
+        with Client() as c:
+            user_update = c.call('user.update', u['id'], {'password_disabled': True})
+            assert user_update['password_disabled'] is True
+            shadow = get_shadow_entry(u['username'])
+            assert shadow['name'] == u['username']
+            assert shadow['raw_value'] == ''.join([shadow['name'], ":*:::::::"])
+

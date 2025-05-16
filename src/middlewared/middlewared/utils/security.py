@@ -103,6 +103,12 @@ def shadow_parse_aging(
     max_age_skip_users = max_age_overrides or set()
     outstr = ''
 
+    # Special cases
+    if user['password_disabled']:
+        # NAS-135872, NAS-135863: Prevent a password disabled account from being
+        # disabled due to password change requirements.
+        return '::::::'
+
     # man (5) shadow "date of last password change"
     # Expressed as number of days since Jan 1, 1970 00:00 UTC
     # The value of zero (0) has special meaning that password change is required
