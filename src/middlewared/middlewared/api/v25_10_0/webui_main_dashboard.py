@@ -5,11 +5,14 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, NonEmptyString
 
 
+__all__ = ["WebUIMainDashboardSysInfoArgs", "WebUIMainDashboardSysInfoResult",]
+
+
 class WebUIMainDashboardSysInfoArgs(BaseModel):
     pass
 
 
-class SysInfoEntry(BaseModel):
+class RemoteInfo(BaseModel):
     platform: NonEmptyString
     version: NonEmptyString
     codename: NonEmptyString
@@ -20,8 +23,8 @@ class SysInfoEntry(BaseModel):
     datetime_: datetime = Field(alias="datetime")
 
 
-class SysInfo(SysInfoEntry):
-    remote_info: SysInfoEntry | None
+class SysInfo(RemoteInfo):
+    remote_info: RemoteInfo | None
 
 
 class WebUIMainDashboardSysInfoResult(BaseModel):

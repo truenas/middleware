@@ -1,9 +1,14 @@
 import errno
 
+from pydantic import Secret
 import pyotp
 
 from middlewared.api import api_method
-from middlewared.api.current import *
+from middlewared.api.base import BaseModel, single_argument_result
+from middlewared.api.current import (
+    UserTwofactorConfigEntry, UserUnset2faSecretArgs, UserUnset2faSecretResult,
+    UserRenew2faSecretArgs, UserRenew2faSecretResult
+)
 from middlewared.service import CallError, pass_app, private, Service
 from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user

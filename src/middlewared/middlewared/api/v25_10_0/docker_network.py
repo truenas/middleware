@@ -1,6 +1,9 @@
 from middlewared.api.base import BaseModel, NonEmptyString
 
 
+__all__ = ["DockerNetworkEntry"]
+
+
 class DockerNetworkEntry(BaseModel):
     ipam: dict | None
     labels: dict | None

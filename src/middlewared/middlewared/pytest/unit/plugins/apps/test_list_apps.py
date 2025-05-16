@@ -77,197 +77,199 @@ def common_impl(
     assert result[0]['state'] == desired_state
 
 
-@pytest.mark.parametrize('workload', [
-    {
-        'ix-actual-budget': {
-            'containers': 2,
-            'container_details': [
-                {
-                    'service_name': 'actual_budget',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'starting',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'db',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-            ],
-            'images': [
-                'actualbudget/actual-server:24.10.1',
-                'bash'
-            ]
-        }
-    },
-    {
-        'ix-actual-budget': {
-            'containers': 2,
-            'container_details': [
-                {
-                    'service_name': 'actual_budget',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'created',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'db',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-            ],
-            'images': [
-                'actualbudget/actual-server:24.10.1',
-                'bash'
-            ]
-        }
-    },
-    {
-        'ix-actual-budget': {
-            'containers': 4,
-            'container_details': [
-                {
-                    'service_name': 'actual_budget',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'running',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'redis',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'db',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'web',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-            ],
-            'images': [
-                'actualbudget/actual-server:24.10.1',
-                'bash'
-            ]
-        }
-    },
-    {
-        'ix-actual-budget': {
-            'containers': 4,
-            'container_details': [
-                {
-                    'service_name': 'actual_budget',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'running',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'redis',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'db',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'web',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'running',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-            ],
-            'images': [
-                'actualbudget/actual-server:24.10.1',
-                'bash'
-            ]
-        }
-    },
-    {
-        'ix-actual-budget': {
-            'containers': 4,
-            'container_details': [
-                {
-                    'service_name': 'actual_budget',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'exited',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'redis',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'running',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'db',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'web',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'running',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-            ],
-            'images': [
-                'actualbudget/actual-server:24.10.1',
-                'bash'
-            ]
-        }
-    },
-    {
-        'ix-actual-budget': {
-            'containers': 4,
-            'container_details': [
-                {
-                    'service_name': 'actual_budget',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'redis',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'db',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'crashed',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-                {
-                    'service_name': 'web',
-                    'image': 'actualbudget/actual-server:24.10.1',
-                    'state': 'running',
-                    'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
-                },
-            ],
-            'images': [
-                'actualbudget/actual-server:24.10.1',
-                'bash'
-            ]
-        }
-    },
-], ids=[
-    'starting-crashed', 'created-crashed', 'running-crashedx3',
-    'running-crashedx2-running', 'exited-running-crashed-running',
-    'crashedx3-running'
+@pytest.mark.parametrize(
+    'workload',
+    [
+        {
+            'ix-actual-budget': {
+                'containers': 2,
+                'container_details': [
+                    {
+                        'service_name': 'actual_budget',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'starting',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'db',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                ],
+                'images': [
+                    'actualbudget/actual-server:24.10.1',
+                    'bash'
+                ]
+            }
+        },
+        {
+            'ix-actual-budget': {
+                'containers': 2,
+                'container_details': [
+                    {
+                        'service_name': 'actual_budget',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'created',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'db',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                ],
+                'images': [
+                    'actualbudget/actual-server:24.10.1',
+                    'bash'
+                ]
+            }
+        },
+        {
+            'ix-actual-budget': {
+                'containers': 4,
+                'container_details': [
+                    {
+                        'service_name': 'actual_budget',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'running',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'redis',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'db',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'web',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                ],
+                'images': [
+                    'actualbudget/actual-server:24.10.1',
+                    'bash'
+                ]
+            }
+        },
+        {
+            'ix-actual-budget': {
+                'containers': 4,
+                'container_details': [
+                    {
+                        'service_name': 'actual_budget',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'running',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'redis',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'db',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'web',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'running',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                ],
+                'images': [
+                    'actualbudget/actual-server:24.10.1',
+                    'bash'
+                ]
+            }
+        },
+        {
+            'ix-actual-budget': {
+                'containers': 4,
+                'container_details': [
+                    {
+                        'service_name': 'actual_budget',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'exited',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'redis',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'running',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'db',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'web',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'running',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                ],
+                'images': [
+                    'actualbudget/actual-server:24.10.1',
+                    'bash'
+                ]
+            }
+        },
+        {
+            'ix-actual-budget': {
+                'containers': 4,
+                'container_details': [
+                    {
+                        'service_name': 'actual_budget',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'redis',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'db',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'crashed',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                    {
+                        'service_name': 'web',
+                        'image': 'actualbudget/actual-server:24.10.1',
+                        'state': 'running',
+                        'id': 'a30866299d667597baca8433aa51d83948075f4ae7e99d88569d6ec0bfcf89f0'
+                    },
+                ],
+                'images': [
+                    'actualbudget/actual-server:24.10.1',
+                    'bash'
+                ]
+            }
+        },
+    ],
+    ids=[
+        'starting-crashed', 'created-crashed', 'running-crashedx3', 'running-crashedx2-running',
+        'exited-running-crashed-running', 'crashedx3-running'
     ]
 )
 @unittest.mock.patch('os.scandir')

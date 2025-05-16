@@ -1,6 +1,5 @@
 import pytest
 
-from middlewared.utils import filter_list
 from middlewared.plugins.audit.utils import (
     AUDITED_SERVICES,
     parse_query_filters,
