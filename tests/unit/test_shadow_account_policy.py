@@ -563,10 +563,20 @@ def test_stig_min_password_age(readonly_admin):
             c.call('user.update', readonly_admin['id'], {'password': 'canary'})
 
 
-def test_root_password_disable(local_full_admin):
-    """ Verify the root shadow entry is 'root:*:::::::' when password is disabled """
+def test_password_disable(local_full_admin):
+    """ Verify the user shadow entry is '<username>:*:::::::' when password is disabled """
 
     with modify_root({'password_disabled': True}) as root_user:
         assert root_user['password_disabled'] is True
         shadow = get_shadow_entry('root')
         assert shadow['raw_value'] == "root:*:::::::"
+
+    with create_user('test_user', smb=False) as u:
+        assert u['password_disabled'] is False
+        with Client() as c:
+            user_update = c.call('user.update', u['id'], {'password_disabled': True})
+            assert user_update['password_disabled'] is True
+            shadow = get_shadow_entry(u['username'])
+            assert shadow['name'] == u['username']
+            assert shadow['raw_value'] == ''.join([shadow['name'], ":*:::::::"])
+
