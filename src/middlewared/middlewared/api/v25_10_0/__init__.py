@@ -41,6 +41,7 @@ from .fcport import *  # noqa
 from .filesystem import *  # noqa
 from .ftp import *  # noqa
 from .group import *  # noqa
+from .idmap import *  # noqa
 from .initshutdownscript import *  # noqa
 from .interface import *  # noqa
 from .ipmi import *  # noqa

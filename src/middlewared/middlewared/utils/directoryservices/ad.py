@@ -63,7 +63,7 @@ def get_domain_info(domain: str, retry: bool = False) -> dict:
         data = json.loads(netads.stdout.decode())
         return _normalize_dict(data)
 
-    err_msg = netads.stderr.decode().strip() 
+    err_msg = netads.stderr.decode().strip()
     if "Didn't find the ldap server!" in err_msg:
         if retry:
             # We may have stale negative lookup from misconfigured DNS

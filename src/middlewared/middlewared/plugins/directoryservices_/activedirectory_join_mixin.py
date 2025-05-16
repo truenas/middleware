@@ -20,11 +20,8 @@ from middlewared.utils.directoryservices.krb5 import (
     kerberos_ticket,
     kdc_saf_cache_get,
 )
-from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
 from middlewared.utils.directoryservices.krb5_constants import (
     krb5ccache,
-    KRB_LibDefaults,
-    PERSISTENT_KEYRING_PREFIX,
     SAMBA_KEYTAB_DIR,
 )
 from middlewared.utils.directoryservices.krb5_error import (
@@ -411,11 +408,11 @@ class ADJoinMixin:
 
         # If user has specified a hostname to use for join, then overwrite other parts of config if needed
         elif hostname != (ngc.get('hostname_virutal') or ngc['hostname_local']):
-            if ngc.get('hostname_virtual'): 
+            if ngc.get('hostname_virtual'):
                 self.middleware.call_sync('network.configuration.update', {'hostname_virtual': hostname})
             else:
                 self.middleware.call_sync('network.configuration.update', {'hostname': hostname})
-        
+
         # Update the netbiosname to something reasonably related to our hostname
         # There are probably some legacy users who have "truenas" as the name of their server
         # because that was the default netbiosname. This isn't a great choice because if another device
@@ -505,8 +502,6 @@ class ADJoinMixin:
         # Sysvol replication may not have completed (new account only exists on the DC we're
         # talking to) and so during this operation we need to hard-code which KDC we use for
         # the new kinit.
-        domain_info = self._ad_domain_info(domain)
-
         # remove admin ticket
         self.middleware.call_sync('kerberos.kdestroy')
 
@@ -519,7 +514,6 @@ class ADJoinMixin:
             job.set_progress(80, 'Waiting for active directory to replicate machine account changes.')
             self._ad_wait_kerberos_start()
         else:
-            self.middleware.call_sync('kerberos.wait_for_renewal')
             self.middleware.call_sync('etc.generate', 'kerberos')
 
         self.middleware.call_sync('service.update', 'cifs', {'enable': True})

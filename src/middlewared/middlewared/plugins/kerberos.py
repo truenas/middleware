@@ -409,7 +409,7 @@ class KerberosKeytabService(CRUDService):
                     # remove credential reference
                     await self.middleware.call('datastore.update', 'directoryservices', ds_config['id'], {
                         'cred_type': None, 'cred_krb5': None
-                    }) 
+                    })
 
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
@@ -527,11 +527,10 @@ class KerberosKeytabService(CRUDService):
             )
 
         netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
-        machine_acct = f'{netbiosname}$@{ds_config["configuration"]["domain"]}' 
+        machine_acct = f'{netbiosname}$@{ds_config["configuration"]["domain"]}'
 
         ds_cred = ds_config['credential']
-        self.logger.debug("XXX: %s", ds_cred)
-        if ds_cred['credential_type'] != 'KERBEROS_PRINCIPAL' or ds_cred['principal'] != machine_acct: 
+        if ds_cred['credential_type'] != 'KERBEROS_PRINCIPAL' or ds_cred['principal'] != machine_acct:
             krb_cred = {
                 'credential_type': 'KERBEROS_PRINCIPAL',
                 'principal': machine_acct

@@ -1,6 +1,5 @@
 import enum
 import os
-import middlewared.sqlalchemy as sa
 import struct
 
 from base64 import b64decode

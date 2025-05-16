@@ -8,7 +8,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
-from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc, get_machine_account_status
+from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
 from middlewared.utils.directoryservices.krb5 import ktutil_list_impl, kdc_saf_cache_get
 from middlewared.utils.directoryservices.constants import (
     DSCredType, DomainJoinResponse, DSStatus, DSType
@@ -627,7 +627,6 @@ class DirectoryServices(ConfigService):
 
         # We may have used our domain secrets to restore the AD machine account keytab
         if ds_type is DSType.AD and new['credential']['credential_type'] == DSCredType.KERBEROS_USER:
-            kdc_override = kdc_saf_cache_get()
             netbiosname = self.middleware.call_sync('smb.config')['netbiosname'].upper()
             principal = None
             for entry in ktutil_list_impl():
@@ -636,14 +635,14 @@ class DirectoryServices(ConfigService):
                     break
 
             if not principal:
-                self.logger.warning('%s: sAMAccountName not found in keytab file', sam_account_name)
+                self.logger.warning('%s: netbiosname not found in keytab file', netbiosname)
                 # Make a guess at principal name
                 principal = f'{netbiosname}$@{new["configuration"]["domain"]}'
 
             new['credential'] = {'credential_type': 'KERBEROS_PRINCIPAL', 'principal': principal}
             compressed = self.compress(new)
             self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
-             
+
         return self.middleware.call_sync('directoryservices.config')
 
     @private
@@ -660,11 +659,11 @@ class DirectoryServices(ConfigService):
                 dom_info['domain_controller'] = lookup_dc(ds_config['configuration']['domain'])
                 return dom_info
             case DSType.IPA.value:
-                return self.ipa_get_smb_domain_info() 
+                return self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
             case DSType.LDAP.value:
                 return None
             case _:
-                raise CallError(f'{ds_config["service_type"]}: unexpected service_type') 
+                raise CallError(f'{ds_config["service_type"]}: unexpected service_type')
 
     @private
     async def reset(self):

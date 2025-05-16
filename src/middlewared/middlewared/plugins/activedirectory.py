@@ -163,9 +163,6 @@ class ActiveDirectoryService(Service):
             out['kerberos_realm'] = r['realm']
 
         hostname = data.get('netbiosname')
-        site = data.get('site')
-        computer_account_ou = data.get('createcomputer')
-
         if not hostname and dsconfig['service_type'] == 'ACTIVEDIRECTORY':
             # keep existing hostname
             hostname = dsconfig['configuration']['hostname']
@@ -207,6 +204,7 @@ class ActiveDirectoryService(Service):
 
     @api_method(
         LegacyADLeaveArgs, LegacyADLeaveResult,
+        audit='Activedirectory Leave',
         private=True,
     )
     @job(lock="AD_start_stop")

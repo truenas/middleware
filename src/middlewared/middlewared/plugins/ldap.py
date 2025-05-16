@@ -12,8 +12,8 @@ class LegacyLDAPEntry(BaseModel):
     avoid leaking secrets and do very basic validation. """
     id: int
     hostname: list
-    basedn: str 
-    binddn: str 
+    basedn: str
+    binddn: str
     bindpw: Secret[str]
     anonbind: bool
     ssl: NonEmptyString

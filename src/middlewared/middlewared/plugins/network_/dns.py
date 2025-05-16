@@ -12,7 +12,6 @@ from middlewared.api.base import BaseModel, single_argument_args, UniqueList, IP
 from middlewared.api.current import DNSQueryItem
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
-from middlewared.utils.directoryservices.krb5 import kdc_saf_cache_get
 from middlewared.plugins.interface.netif import netif
 from middlewared.schema import IPAddr, ValidationErrors
 from middlewared.service_exception import CallError
@@ -135,11 +134,8 @@ class DNSService(Service):
 
     @api_method(DNSNsUpdateArgs, DNSNsUpdateResult, private=True)
     def nsupdate(self, data):
-        kdc_override = None
-
         if data['use_kerberos']:
             self.middleware.call_sync('kerberos.check_ticket')
-            kdc_override = kdc_saf_cache_get()
 
         with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
             ptrs = []

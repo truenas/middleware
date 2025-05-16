@@ -1,5 +1,6 @@
 import enum
 
+
 class DSStatus(enum.Enum):
     DISABLED = enum.auto()
     FAULTED = enum.auto()

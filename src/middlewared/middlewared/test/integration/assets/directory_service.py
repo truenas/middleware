@@ -58,6 +58,7 @@ try:
         FREEIPA_USERNAME,
         FREEIPA_BINDDN,
         FREEIPA_BINDPW,
+        FREEIPA_REALM,
         FREEIPA_ADMIN_USERNAME,
         FREEIPA_ADMIN_BINDDN,
         FREEIPA_ADMIN_BINDPW,
@@ -69,6 +70,7 @@ except ImportError:
     FREEIPA_USERNAME = None
     FREEIPA_BINDDN = None
     FREEIPA_BINDPW = None
+    FREEIPA_REALM = None
     FREEIPA_ADMIN_USERNAME = None
     FREEIPA_ADMIN_BINDDN = None
     FREEIPA_ADMIN_BINDPW = None
@@ -76,8 +78,6 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
-
-__all__ = ['active_directory', 'ldap', 'override_nameservers', 'ipa']
 
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
@@ -91,7 +91,7 @@ class directoryservices_user:
 
 
 @contextlib.contextmanager
-def override_nameservers(_nameserver1=ADNameServer, _nameserver2='', _nameserver3=''):
+def override_nameservers(_nameserver1='', _nameserver2='', _nameserver3=''):
     nameservers_changed = False
     net_config = call('network.configuration.config')
     nameserver1 = net_config['nameserver1']
@@ -147,11 +147,10 @@ def get_default_credential(service_type: str) -> dict:
             return {
                 'credential_type': 'LDAP_PLAIN',
                 'binddn': LDAPBINDDN,
-                'bindpw': LDAPBINDPW
+                'bindpw': LDAPBINDPASSWORD
             }
         case _:
             raise ValueError(f'{service_type}: unexpected service type')
-
 
 
 def get_directory_services_account(service_type: str) -> directoryservices_user:

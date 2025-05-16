@@ -86,11 +86,11 @@ def kinit_with_cred(
     cred_type = DSCredType(cred.get('credential_type'))
     match cred_type:
         case DSCredType.KERBEROS_PRINCIPAL:
-            if (krbcred := __get_current_cred(cred['principal'], ccache)) is None:
-                krbcred = __kinit_with_principal(cred['principal'], ccache, lifetime)
+            if not __get_current_cred(cred['principal'], ccache):
+                __kinit_with_principal(cred['principal'], ccache, lifetime)
         case DSCredType.KERBEROS_USER:
-            if (krbcred := __get_current_cred(cred['username'], ccache)) is None:
-                krbcred = __kinit_with_user(cred['username'], cred['password'], ccache, lifetime)
+            if not __get_current_cred(cred['username'], ccache):
+                __kinit_with_user(cred['username'], cred['password'], ccache, lifetime)
         case _:
             raise ValueError(f'{cred_type}: not a kerberos credential type')
 

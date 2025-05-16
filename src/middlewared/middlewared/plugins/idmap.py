@@ -1,9 +1,9 @@
-import enum
 import asyncio
 import errno
 import wbclient
 
-from middlewared.schema import accepts
+from middlewared.api import api_method
+from middlewared.api.current import IdmapCacheClearArgs, IdmapCacheClearResult
 from middlewared.service import CallError, Service, job, private, ValidationErrors, filterable_api_method
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
@@ -42,15 +42,6 @@ def clear_winbind_cache():
         return hdl.clear()
 
 
-class IdmapBackend(enum.Enum):
-    AD = 'AD'
-    AUTORID = 'AUTORID'
-    LDAP = 'LDAP'
-    RFC2307 = 'RFC2307'
-    RID = 'RID'
-    TDB = 'TDB'
-
-
 class IdmapDomainService(Service):
 
     class Config:
@@ -59,7 +50,7 @@ class IdmapDomainService(Service):
 
     @filterable_api_method(private=True)
     async def query(self, filters, options):
-        """ This is a temporary compatibiltiy method to prevent breaking the UI during transition
+        """ This is a temporary compatibility method to prevent breaking the UI during transition
         to the new directory services APIs """
         return filter_list([
             {
@@ -199,7 +190,7 @@ class IdmapDomainService(Service):
 
         return (hash_ % max_slices) * range_size + range_size
 
-    @accepts(roles=['DIRECTORY_SERVICE_WRITE'])
+    @api_method(IdmapCacheClearArgs, IdmapCacheClearResult, roles=['DIRECTORY_SERVICE_WRITE'])
     @job(lock='clear_idmap_cache', lock_queue_size=1)
     async def clear_idmap_cache(self, job):
         """
@@ -224,13 +215,10 @@ class IdmapDomainService(Service):
         if smb_started:
             await (await self.middleware.call('service.control', 'RESTART', 'cifs')).wait(raise_error=True)
 
-    @accepts(roles=['DIRECTORY_SERVICE_READ'])
+    @private
     async def backend_options(self):
-        """
-        This returns full information about idmap backend options. Not all
-        `options` are valid for every backend.
-        """
-        return {x.name: x.value for x in IdmapBackend}
+        """ legacy wrapper currently maintained to avoid breaking the UI """
+        return {'AD': 'AD', 'AUTORID': 'AUTORID', 'RID': 'RID', 'LDAP': 'LDAP', 'RFC2307': 'RFC2307'}
 
     @private
     def convert_sids(self, sidlist):

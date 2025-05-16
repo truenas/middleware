@@ -12,7 +12,6 @@ from middlewared.api.base import (
     SID,
 )
 from middlewared.utils.directoryservices.credential import DSCredType
-from middlewared.utils.directoryservices.krb5_conf import KRB5ConfSection, parse_krb_aux_params
 from middlewared.utils.lang import undefined
 from middlewared.plugins.idmap_.idmap_constants import TRUENAS_IDMAP_MAX, TRUENAS_IDMAP_DEFAULT_LOW
 
@@ -46,7 +45,7 @@ class IdmapDomainBase(BaseModel):
         if self.range_low >= self.range_high:
             raise ValueError("Low range must be less than high range")
 
-        if (self.range_high - self.range_low) < 10000: 
+        if (self.range_high - self.range_low) < 10000:
             raise ValueError("Range for domain must contain at least 10000 IDs")
 
         return self
@@ -107,7 +106,7 @@ class LDAP_Idmap(IdmapDomainBase):
     """ The LDAP backend reads and writes UID / GID mapping tables from an external LDAP server. """
     idmap_backend: Literal['LDAP']
     ldap_base_dn: LDAP_DN
-    """ Directory base suffix to use for mapping UIDs and GIDs to SIDs. """ 
+    """ Directory base suffix to use for mapping UIDs and GIDs to SIDs. """
     ldap_user_dn: LDAP_DN
     """ Defines the user DN to be used for authentication to the LDAP server. """
     ldap_user_dn_password: Secret[NonEmptyString]
@@ -115,7 +114,7 @@ class LDAP_Idmap(IdmapDomainBase):
     ldap_url: LDAP_URL
     """ LDAP server to use for the idmap entries """
     readonly: bool = False
-    """ If readonly is set to True then TrueNAS will not attempt to write new idmap entries. """ 
+    """ If readonly is set to True then TrueNAS will not attempt to write new idmap entries. """
     validate_certificates: bool = True
     """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server.
     Generally, it is a better strategy to use valid certificates or to import relevant certificates
@@ -124,7 +123,7 @@ class LDAP_Idmap(IdmapDomainBase):
 
 class RFC2307_Idmap(IdmapDomainBase):
     """ The RFC2307 backend provides a way to read ID mappings from RFC2307 attributes provided by
-    a standalone LDAP server. This backend is read only. If the target server is an Active 
+    a standalone LDAP server. This backend is read only. If the target server is an Active
     Directory domain controller, then the AD backend should be used instead. """
     idmap_backend: Literal['RFC2307']
     ldap_server: Literal["STANDALONE"]
@@ -139,8 +138,8 @@ class RFC2307_Idmap(IdmapDomainBase):
     bind_path_group: LDAP_DN
     """ The search base where group objects can be found in the LDAP server. """
     user_cn: bool = False
-    """ Query the CN attribute instead of UID attribute for the user name in LDAP. """ 
-    ldap_realm: bool = False 
+    """ Query the CN attribute instead of UID attribute for the user name in LDAP. """
+    ldap_realm: bool = False
     """ Append @realm to the CN for groups (and users if `user_cn` is specified) """
     validate_certificates: bool = True
     """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server.
@@ -169,7 +168,7 @@ class BuiltinDomainTdb(IdmapDomainBase):
     that are not explicitly mapped for a known domain. """
     range_low: IdmapId = 90000001
     """ The lowest UID or GID that the idmap backend may assign. """
-    range_high: IdmapId = 100000000 
+    range_high: IdmapId = 100000000
     """ The highest UID or GID that the idmap backend may assign. """
 
 
@@ -234,7 +233,7 @@ class ActiveDirectoryConfig(BaseModel):
     domain: NonEmptyString = Field(example='mydomain.internal')
     """ Full DNS domain name of the Active Directory Domain. This should not be a domain
     controller. """
-    idmap: PrimaryDomainIdmap | PrimaryDomainIdmapAutoRid = Field(default=PrimaryDomainIdmap()) 
+    idmap: PrimaryDomainIdmap | PrimaryDomainIdmapAutoRid = Field(default=PrimaryDomainIdmap())
     """ Configuration for how to map Active Directory accounts into accounts on the
     TrueNAS server. The exact settings required here may vary based on how other servers and
     Linux clients are configured in the domain. Defaults are reasonable for a new deployment
@@ -271,10 +270,10 @@ class ActiveDirectoryConfig(BaseModel):
                     continue
 
                 if entry['range_low'] >= entry2['range_low'] or entry['range_low'] <= entry2['range_high']:
-                    raise ValueError(f'Low range for {entry["name"]} conflicts with range for {entry2["name"]}.') 
+                    raise ValueError(f'Low range for {entry["name"]} conflicts with range for {entry2["name"]}.')
 
                 if entry['range_high'] >= entry2['range_low'] or entry['range_high'] <= entry2['range_high']:
-                    raise ValueError(f'High range for {entry["name"]} conflicts with range for {entry2["name"]}.') 
+                    raise ValueError(f'High range for {entry["name"]} conflicts with range for {entry2["name"]}.')
 
         return value
 
@@ -334,7 +333,7 @@ class LDAPConfig(BaseModel):
     """ List of LDAP server URIs to use for LDAP binds. Each server may be a DNS name or IP address and must
     be prefixed by "ldap://" or "ldaps://". """
     starttls: bool = Field(default=False)
-    """ Establish TLS by transmitting a StartTLS request to the server. """ 
+    """ Establish TLS by transmitting a StartTLS request to the server. """
     basedn: LDAP_DN = Field(example='dc=domain,dc=internal')
     """ The base DN to use when performing LDAP operations. """
     validate_certificates: bool = Field(default=True)
@@ -348,7 +347,7 @@ class LDAPConfig(BaseModel):
     """ Alternative LDAP search base configuration. These configuration options allow for specifying
     the DN in which to find user, group, and netgroup entries. If unspecified (the default) then all
     users, groups, and netgroups within the specified `basedn` will be available on TrueNAS. """
-    attribute_maps: LDAPAttributeMaps = Field(default=LDAPAttributeMaps()) 
+    attribute_maps: LDAPAttributeMaps = Field(default=LDAPAttributeMaps())
     """ Alertative LDAP attribute map configuration for LDAP implementations that are non-compliant
     with RFC2307 or RFC2307BIS. These are only required if using a non-standard LDAP implementaiton. """
     auxiliary_parameters: LongNonEmptyString | None = None
