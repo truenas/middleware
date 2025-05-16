@@ -38,8 +38,16 @@ async def test_get_or_insert(rows, new_row, should_work):
         else:
             assert response == new_row
     else:
-        query_mock = unittest.mock.Mock()
-        query_mock.side_effect = IndexError
+        query_mock = unittest.mock.Mock(side_effect=IndexError)
+        middleware['datastore.query'] = query_mock
+
+        insert_mock = unittest.mock.Mock()
+        config_mock = unittest.mock.Mock()
+        middleware['datastore.insert'] = insert_mock
+        middleware['datastore.config'] = config_mock
+
         with pytest.raises(IndexError):
-            middleware['datastore.query'] = query_mock
             await config_service_obj._get_or_insert('service.catalog', {})
+
+        insert_mock.assert_not_called()
+        config_mock.assert_not_called()
