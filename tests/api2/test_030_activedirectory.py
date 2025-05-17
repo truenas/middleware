@@ -116,7 +116,7 @@ def test_enable_leave_activedirectory():
         assert pw['local'] is False
         assert pw['source'] == 'ACTIVEDIRECTORY'
 
-        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{AD_DOMAIN}']})
+        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{domain_name}']})
         assert len(result) != 0
 
         addresses = [x['address'] for x in result]

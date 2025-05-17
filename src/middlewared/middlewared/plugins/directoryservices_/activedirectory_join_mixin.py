@@ -344,6 +344,7 @@ class ADJoinMixin:
                     if not retries or 'Server not found in Kerberos database' not in exc.errmsg:
                         raise
 
+                    self.logger.debug('Failed to perform nsupdate due to potentially slow sysvol replication. Retrying.')
                     sleep(5)
                     retries -= 1
 
