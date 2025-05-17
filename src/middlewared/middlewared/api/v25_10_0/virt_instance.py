@@ -148,6 +148,12 @@ class VirtInstanceCreateArgs(BaseModel):
     This is only valid for containers and should only be set when container instance which is to be deployed is to
     run in a privileged mode.
     '''
+    migrate_vol_as_root_disk: bool = False
+    '''
+    This should be set when source type is VOLUME and consumer does not want a redundant root disk to be created.
+    What this will essentially do is migrate the volume specified as the root disk and the volume will no longer
+    be available as a virt volume after this operation.
+    '''
 
     @model_validator(mode='after')
     def validate_attrs(self):
@@ -179,6 +185,9 @@ class VirtInstanceCreateArgs(BaseModel):
             raise ValueError('Image must be set when source type is "IMAGE"')
         elif self.source_type != 'IMAGE' and self.image:
             raise ValueError('Image must not be set when source type is not "IMAGE"')
+
+        if self.source_type != 'VOLUME' and self.migrate_vol_as_root_disk:
+            raise ValueError('migrate_vol_as_root_disk must be unset when source_type is not VOLUME')
 
         return self
 

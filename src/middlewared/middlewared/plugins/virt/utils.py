@@ -230,6 +230,14 @@ class PciEntry:
     error: str | None
 
 
+def get_virt_volume_dataset(pool_name: str, volume_name: str) -> str:
+    return f'{pool_name}/.ix-virt/custom/default_{volume_name}'
+
+
+def get_virt_root_disk_ds_for_vm_instance(pool_name: str, instance_name: str) -> str:
+    return f'{pool_name}/.ix-virt/virtual-machines/{instance_name}'
+
+
 def generate_qemu_cmd(instance_config: dict, instance_name: str) -> str:
     vnc_config = json.loads(instance_config.get('user.ix_vnc_config', '{}'))
     cdrom_config = json.loads(instance_config.get(INCUS_METADATA_CDROM_KEY, '[]'))
