@@ -419,6 +419,7 @@ class VirtInstanceService(CRUDService):
                 'type': 'disk'
             }
         }
+        virt_volumes = {v['id']: v for v in await self.middleware.call('virt.volume.query')}
         for i in data_devices:
             validate_device_name(i, verrors)
             await self.middleware.call(
@@ -428,7 +429,9 @@ class VirtInstanceService(CRUDService):
                 i['name'] = await self.middleware.call(
                     'virt.instance.generate_device_name', devices.keys(), i['dev_type']
                 )
-            devices[i['name']] = await self.middleware.call('virt.instance.device_to_incus', data['instance_type'], i)
+            devices[i['name']] = await self.middleware.call(
+                'virt.instance.device_to_incus', data['instance_type'], i, virt_volumes,
+            )
 
         if not verrors and data['devices']:
             await self.middleware.call(

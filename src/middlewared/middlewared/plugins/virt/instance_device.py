@@ -73,10 +73,16 @@ class VirtInstanceDeviceService(Service):
                         'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
                     })
                 else:
+                    source = incus.get('source')
+                    pool = incus_pool_to_storage_pool(incus.get('pool'))
+                    if source and '/' not in source:
+                        # Normalize how we report source here as we know it is a volume at this point
+                        source = f'{pool}_{source}'
+
                     device.update({
                         'dev_type': 'DISK',
-                        'source': incus.get('source'),
-                        'storage_pool': incus_pool_to_storage_pool(incus.get('pool')),
+                        'source': source,
+                        'storage_pool': pool,
                         'destination': incus.get('path'),
                         'description': f'{incus.get("source")} -> {incus.get("path")}',
                         'boot_priority': int(incus['boot.priority']) if incus.get('boot.priority') else None,
@@ -189,11 +195,24 @@ class VirtInstanceDeviceService(Service):
         return device
 
     @private
-    async def device_to_incus(self, instance_type: str, device: dict[str, Any]) -> dict[str, Any]:
+    async def device_to_incus(
+        self, instance_type: str, device: dict[str, Any], volumes: dict[str, dict] | None = None,
+    ) -> dict[str, Any]:
         new = {}
 
         match device['dev_type']:
             case 'DISK':
+                if volumes is None:
+                    volumes = {
+                        v['id']: v
+                        for v in await self.middleware.call('virt.volume.query', [['id', '=', device['source']]])
+                    }
+
+                if volume := volumes.get(device['source']):
+                    device.update({
+                        'source': volume['name'],
+                        'storage_pool': volume['storage_pool'],
+                    })
                 new |= {
                     'type': 'disk',
                     'source': device['source'],
@@ -449,7 +468,8 @@ class VirtInstanceDeviceService(Service):
 
     @private
     async def validate_disk_device_source(self, instance_name, schema, source, verrors, device_name):
-        sources_in_use = await self.get_all_disk_sources(instance_name)
+        available_volumes = set(v['name'] for v in await self.middleware.call('virt.volume.query'))
+        sources_in_use = await self.get_all_disk_sources(instance_name, available_volumes)
         if source in sources_in_use:
             verrors.add(
                 f'{schema}.source',
@@ -458,7 +478,9 @@ class VirtInstanceDeviceService(Service):
             # No point in continuing further
             return
 
-        curr_instance_device = (await self.get_all_disk_sources_of_instance(instance_name)).get(source)
+        curr_instance_device = (
+            await self.get_all_disk_sources_of_instance(instance_name, available_volumes)
+        ).get(source)
         if curr_instance_device and curr_instance_device != device_name:
             verrors.add(
                 f'{schema}.source',
@@ -466,19 +488,22 @@ class VirtInstanceDeviceService(Service):
             )
 
     @private
-    async def get_all_disk_sources(self, ignore_instance=None):
+    async def get_all_disk_sources(self, ignore_instance: str | None = None, available_volumes: set | None = None):
         instances = await self.middleware.call(
             'virt.instance.query', [['name', '!=', ignore_instance]], {'extra': {'raw': True}}
         )
         sources_in_use = {}
+        available_volumes = available_volumes or set(v['name'] for v in await self.middleware.call('virt.volume.query'))
         for instance in instances:
             for disk in filter(lambda d: d['type'] == 'disk' and d.get('source'), instance['raw']['devices'].values()):
-                sources_in_use[disk['source']] = instance['name']
+                if disk['source'] in available_volumes:
+                    disk['source'] = f'{disk.get("pool")}_{disk["source"]}'
+                sources_in_use[disk['source']] = {'instance': instance['name']}
 
         return sources_in_use
 
     @private
-    async def get_all_disk_sources_of_instance(self, instance_name):
+    async def get_all_disk_sources_of_instance(self, instance_name, available_volumes):
         instance = await self.middleware.call(
             'virt.instance.query', [['name', '=', instance_name]], {'extra': {'raw': True}}
         )
@@ -486,7 +511,7 @@ class VirtInstanceDeviceService(Service):
             return {}
 
         return {
-            disk['source']: disk_name
+            f'{disk.get("pool")}_{disk["source"]}' if disk['source'] in available_volumes else disk['source']: disk_name
             for disk_name, disk in filter(
                 lambda d: d[1]['type'] == 'disk' and d[1].get('source'),
                 instance[0]['raw']['devices'].items()
