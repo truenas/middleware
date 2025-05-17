@@ -12,7 +12,8 @@ __all__ = [
     "PoolSnapshotEntry", "PoolSnapshotCloneArgs", "PoolSnapshotCloneResult", "PoolSnapshotCreateArgs",
     "PoolSnapshotCreateResult", "PoolSnapshotDeleteArgs", "PoolSnapshotDeleteResult", "PoolSnapshotHoldArgs",
     "PoolSnapshotHoldResult", "PoolSnapshotReleaseArgs", "PoolSnapshotReleaseResult", "PoolSnapshotRollbackArgs",
-    "PoolSnapshotRollbackResult", "PoolSnapshotUpdateArgs", "PoolSnapshotUpdateResult",
+    "PoolSnapshotRollbackResult", "PoolSnapshotUpdateArgs", "PoolSnapshotUpdateResult", "PoolSnapshotRenameArgs",
+    "PoolSnapshotRenameResult",
 ]
 
 
@@ -194,3 +195,21 @@ class PoolSnapshotUpdateArgs(BaseModel):
 
 class PoolSnapshotUpdateResult(BaseModel):
     result: PoolSnapshotCreateUpdateEntry
+
+
+class PoolSnapshotRenameOptions(BaseModel):
+    new_name: NonEmptyString
+    force: bool = False
+    '''
+    No safety checks are performed when renaming ZFS resources; this may break existing usages. This should be set to
+    proceed with the renaming operation.
+    '''
+
+
+class PoolSnapshotRenameArgs(BaseModel):
+    id: NonEmptyString
+    options: PoolSnapshotRenameOptions
+
+
+class PoolSnapshotRenameResult(BaseModel):
+    result: None
