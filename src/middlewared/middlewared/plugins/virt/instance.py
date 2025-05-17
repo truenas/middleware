@@ -27,7 +27,7 @@ from .utils import (
     create_vnc_password_file, get_max_boot_priority_device, get_root_device_dict, get_vnc_info_from_config,
     VirtGlobalStatus, incus_call, incus_call_and_wait, incus_pool_to_storage_pool, root_device_pool_from_raw,
     storage_pool_to_incus_pool, validate_device_name, generate_qemu_cmd, generate_qemu_cdrom_metadata,
-    INCUS_METADATA_CDROM_KEY,
+    INCUS_METADATA_CDROM_KEY, get_virt_volume_dataset, get_virt_root_disk_ds_for_vm_instance,
 )
 
 
@@ -233,13 +233,26 @@ class VirtInstanceService(CRUDService):
                     'Invalid ISO volume selected. Please select a valid ISO volume.'
                 )
 
-            if new['source_type'] == 'VOLUME' and not await self.middleware.call(
-                'virt.volume.query', [['content_type', '=', 'BLOCK'], ['id', '=', new['volume']]]
-            ):
-                verrors.add(
-                    f'{schema_name}.volume',
-                    'Invalid Volume selected. Please select a valid Volume.'
+            if new['source_type'] == 'VOLUME':
+                volume = await self.middleware.call(
+                    'virt.volume.query', [['content_type', '=', 'BLOCK'], ['id', '=', new['volume']]]
                 )
+                if not volume:
+                    verrors.add(
+                        f'{schema_name}.volume',
+                        'Invalid Volume selected. Please select a valid Volume.'
+                    )
+
+                if new['migrate_vol_as_root_disk']:
+                    volume = volume[0]
+                    instance_pool = new['storage_pool'] or (await self.middleware.call('virt.global.config'))['pool']
+                    if volume['storage_pool'] != instance_pool:
+                        verrors.add(
+                            f'{schema_name}.migrate_vol_as_root_disk',
+                            'This can only be set when instance storage pool matches the storage pool of the volume '
+                            'specified (if no instance storage pool was specified, then the main pool specified in '
+                            'virt global configuration is used).'
+                        )
 
         if instance_type == 'VM' and new.get('enable_vnc'):
             if not new.get('vnc_port'):
@@ -394,7 +407,8 @@ class VirtInstanceService(CRUDService):
                 'boot_priority': max_boot_priority,
                 'io_bus': 'VIRTIO-SCSI',
             }
-        elif data['source_type'] == 'VOLUME':
+        elif data['source_type'] == 'VOLUME' and data['migrate_vol_as_root_disk'] is False:
+            # We do not want to add a new device when we are migrating the volume
             root_device_to_add = {
                 'name': volume,
                 'dev_type': 'DISK',
@@ -406,9 +420,10 @@ class VirtInstanceService(CRUDService):
                 'io_bus': data['root_disk_io_bus'],
             }
 
-        if root_device_to_add:
+        if root_device_to_add or data['migrate_vol_as_root_disk']:
             data['source_type'] = None
-            data_devices.append(root_device_to_add)
+            if root_device_to_add:
+                data_devices.append(root_device_to_add)
 
         devices = {
             'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus'], pool),
@@ -419,6 +434,7 @@ class VirtInstanceService(CRUDService):
                 'type': 'disk'
             }
         }
+
         for i in data_devices:
             validate_device_name(i, verrors)
             await self.middleware.call(
@@ -461,6 +477,24 @@ class VirtInstanceService(CRUDService):
                 'mode': 'pull',
                 'alias': data['image'],
             })
+
+        if data['migrate_vol_as_root_disk']:
+            # We will migrate the volume as root disk now as all relevant validation has been done
+            # and we are finally on the verge of creating the instance
+            await self.middleware.call(
+                'zfs.dataset.rename',
+                get_virt_volume_dataset(pool, volume), {
+                    'new_name': get_virt_root_disk_ds_for_vm_instance(pool, data['name'])
+                }
+            )
+            await self.middleware.call('virt.global.recover', [
+                {
+                    'config': {'source': f'{pool}/.ix-virt'},
+                    'description': '',
+                    'name': storage_pool_to_incus_pool(pool),
+                    'driver': 'zfs',
+                }
+            ])
 
         try:
             await incus_call_and_wait('1.0/instances', 'post', {'json': {
