@@ -26,14 +26,6 @@ if ha and "hostname_virtual" in os.environ:
 else:
     from auto_config import hostname
 
-try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME
-    AD_USER = fr"AD02\{ADUSERNAME.lower()}"
-except ImportError:
-    Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
-    pytestmark = pytest.mark.skip(reason=Reason)
-
-
 SMB_NAME = "TestADShare"
 
 
@@ -116,13 +108,13 @@ def test_enable_leave_activedirectory():
         assert pw['local'] is False
         assert pw['source'] == 'ACTIVEDIRECTORY'
 
-        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{AD_DOMAIN}']})
+        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{domain_name}']})
         assert len(result) != 0
 
         addresses = [x['address'] for x in result]
         assert truenas_server.ip in addresses
 
-        res = call('privilege.query', [['name', 'C=', AD_DOMAIN]], {'get': True})
+        res = call('privilege.query', [['name', 'C=', domain_name]], {'get': True})
         assert res['ds_groups'][0]['name'].endswith('domain admins')
         assert res['ds_groups'][0]['sid'].endswith('512')
         assert res['roles'][0] == 'FULL_ADMIN'
@@ -270,7 +262,7 @@ def test_account_privilege_authentication(enable_ds_auth):
         assert ngroups > 0
 
         # RID 513 is constant for "Domain Users"
-        domain_sid = call("idmap.domain_info", AD_DOMAIN.split(".")[0])['sid']
+        domain_sid = call("idmap.domain_info", short_name)[0])['sid']
         with privilege({
             "name": "AD privilege",
             "local_groups": [],
@@ -278,7 +270,7 @@ def test_account_privilege_authentication(enable_ds_auth):
             "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         }):
-            with client(auth=(f'limiteduser@{AD_DOMAIN}', ADPASSWORD)) as c:
+            with client(auth=(f'{AD_DOM2_LIMITED_USER}@{domain_name}', AD_DOM2_LIMITED_USER_PASSWORD)) as c:
                 methods = c.call("core.get_methods")
                 me = c.call("auth.me")
 

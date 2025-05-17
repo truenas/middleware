@@ -64,3 +64,6 @@ class DSCredType(enum.StrEnum):
     LDAP_PLAIN = 'LDAP_PLAIN'
     LDAP_ANONYMOUS = 'LDAP_ANONYMOUS'
     LDAP_MTLS = 'LDAP_MTLS'
+
+
+DEF_SVC_OPTS = {'silent': False, 'ha_propagate': False}

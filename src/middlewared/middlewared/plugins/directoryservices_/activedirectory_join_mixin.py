@@ -12,7 +12,7 @@ from middlewared.utils.directoryservices.ad import (
 from middlewared.utils.directoryservices.ad_constants import (
     MAX_KERBEROS_START_TRIES
 )
-from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.constants import DSType, DEF_SVC_OPTS
 from middlewared.utils.directoryservices.credential import kinit_with_cred
 from middlewared.utils.directoryservices.krb5 import (
     gss_dump_cred,
@@ -60,8 +60,7 @@ class ADJoinMixin:
         for etc_file in DSType.AD.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        self.middleware.call_sync('service.control', 'STOP', 'idmap').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'RESTART', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
 
         # Wait for winbind to come online to provide some time for sysvol replication
         self._ad_wait_wbclient()
@@ -344,6 +343,7 @@ class ADJoinMixin:
                     if not retries or 'Server not found in Kerberos database' not in exc.errmsg:
                         raise
 
+                    self.logger.debug('Failed to perform nsupdate due to potentially slow sysvol replication. Retrying.')
                     sleep(5)
                     retries -= 1
 

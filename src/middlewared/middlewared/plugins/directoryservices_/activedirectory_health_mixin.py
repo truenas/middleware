@@ -6,6 +6,7 @@ from middlewared.utils.directoryservices.ad_constants import (
     MACHINE_ACCOUNT_KT_NAME,
     MAX_SERVER_TIME_OFFSET,
 )
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
 from middlewared.utils.directoryservices.credential import kinit_with_cred
 from middlewared.utils.directoryservices.health import (
     ADHealthCheckFailReason,
@@ -104,9 +105,6 @@ class ADHealthMixin:
         )
 
         self._test_machine_account_password(domain_info['kdc_server'], machine_pass)
-
-        self.middleware.call_sync('service.control', 'STOP', 'idmap').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
         self.logger.warning('Recovered from broken or missing AD secrets file')
 
     def _recover_ad(self, error: ADHealthError) -> None:
@@ -133,8 +131,7 @@ class ADHealthMixin:
                 # not recoverable
                 raise error from None
 
-        self.middleware.call_sync('service.control', 'STOP', 'idmap').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'RESTART', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
 
     def _health_check_ad(self):
         """
@@ -220,7 +217,7 @@ class ADHealthMixin:
 
         if not self.middleware.call_sync('service.started', 'idmap'):
             try:
-                self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+                self.middleware.call_sync('service.control', 'START', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
             except CallError as e:
                 faulted_reason = str(e.errmsg)
                 raise ADHealthError(

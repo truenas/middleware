@@ -1,6 +1,7 @@
 import os
 
 from middlewared.utils.directoryservices import ipa_constants
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
 from middlewared.utils.directoryservices.health import (
     IPAHealthCheckFailReason,
     IPAHealthError
@@ -31,8 +32,8 @@ class IPAHealthMixin:
                 # not recoverable
                 raise error from None
 
-        self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
+        # The recovery steps here are node-local
+        self.middleware.call_sync('service.control', 'RESTOP', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
 
     def _health_check_ipa(self) -> None:
         """
@@ -119,7 +120,7 @@ class IPAHealthMixin:
         # it appears in our directory services summary
         if not self.middleware.call_sync('service.started', 'sssd'):
             try:
-                self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
+                self.middleware.call_sync('service.control', 'START', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
             except CallError as e:
                 self._faulted_reason = str(e)
                 raise IPAHealthError(
