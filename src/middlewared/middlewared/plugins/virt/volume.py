@@ -39,7 +39,7 @@ class VirtVolumeService(CRUDService):
 
             for storage_device in storage_devices['metadata']:
                 entries.append({
-                    'id': storage_device['name'],
+                    'id': f'{storage_pool}_{storage_device["name"]}',
                     'name': storage_device['name'],
                     'content_type': storage_device['content_type'].upper(),
                     'created_at': storage_device['created_at'],
@@ -121,7 +121,7 @@ class VirtVolumeService(CRUDService):
             return volume
 
         pool = storage_pool_to_incus_pool(volume['storage_pool'])
-        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{name}', 'patch', {
+        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{volume["name"]}', 'patch', {
             'json': {
                 'config': {
                     'size': str(data['size'] * 1024 * 1024)
@@ -145,7 +145,7 @@ class VirtVolumeService(CRUDService):
             raise CallError(f'Volume {name!r} is in use by instances: {", ".join(volume["used_by"])}')
 
         pool = storage_pool_to_incus_pool(volume['storage_pool'])
-        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{name}', 'delete')
+        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{volume["name"]}', 'delete')
         if result.get('status_code') != 200:
             raise CallError(f'Failed to delete volume: {result["error"]}')
 
