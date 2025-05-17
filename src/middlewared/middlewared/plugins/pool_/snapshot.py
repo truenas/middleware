@@ -3,9 +3,10 @@ from middlewared.api.current import (
     PoolSnapshotEntry, PoolSnapshotCloneArgs, PoolSnapshotCloneResult, PoolSnapshotCreateArgs,
     PoolSnapshotCreateResult, PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult, PoolSnapshotHoldArgs,
     PoolSnapshotHoldResult, PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, PoolSnapshotRollbackArgs,
-    PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult
+    PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult, PoolSnapshotRenameArgs,
+    PoolSnapshotRenameResult,
 )
-from middlewared.service import CRUDService, filterable_api_method
+from middlewared.service import CRUDService, filterable_api_method, ValidationError
 
 
 class PoolSnapshotService(CRUDService):
@@ -85,3 +86,23 @@ class PoolSnapshotService(CRUDService):
             recursive=options['recursive']
         )  # TODO: Events won't be sent for child snapshots in recursive delete
         return result
+
+    @api_method(
+        PoolSnapshotRenameArgs,
+        PoolSnapshotRenameResult,
+        audit='Pool snapshot rename from',
+        audit_extended=lambda id_, new_name: f'{id_!r} to {new_name!r}',
+        roles=['SNAPSHOT_WRITE']
+    )
+    async def rename(self, id_, options):
+        """
+        Rename a snapshot `id` to `new_name`
+        """
+        if not options['force']:
+            raise ValidationError(
+                'pool.snapshot.rename.force',
+                'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
+                'If you understand the risks, please set force and proceed.'
+            )
+
+        await self.middleware.call('zfs.snapshot.rename', id_, options['new_name'])
