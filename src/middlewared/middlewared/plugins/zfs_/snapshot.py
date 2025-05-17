@@ -38,7 +38,7 @@ class ZFSSnapshotService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
-    def query(self, filters=[], options={}):
+    def query(self, filters=None, options=None):
         """
         Query all ZFS Snapshots with `query-filters` and `query-options`.
 
@@ -57,6 +57,8 @@ class ZFSSnapshotService(CRUDService):
 
         """
         # Special case for faster listing of snapshot names (#53149)
+        filters = filters or []
+        options = options or {}
         filters_attrs = filter_getattrs(filters)
         extra = copy.deepcopy(options.get('extra', {}))
         min_txg = extra.get('min_txg', 0)

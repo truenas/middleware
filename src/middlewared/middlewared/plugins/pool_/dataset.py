@@ -6,12 +6,13 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetEntry, PoolDatasetCreateArgs, PoolDatasetCreateResult, PoolDatasetUpdateArgs, PoolDatasetUpdateResult,
     PoolDatasetDeleteArgs, PoolDatasetDeleteResult, PoolDatasetDestroySnapshotsArgs, PoolDatasetDestroySnapshotsResult,
-    PoolDatasetPromoteArgs, PoolDatasetPromoteResult,
+    PoolDatasetPromoteArgs, PoolDatasetPromoteResult, PoolDatasetRenameArgs, PoolDatasetRenameResult,
 )
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import (
-    CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationErrors, filterable_api_method
+    CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
+    filterable_api_method,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
@@ -920,3 +921,29 @@ class PoolDatasetService(CRUDService):
         if not dataset[0]['properties']['origin']['value']:
             raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
         return await self.middleware.call('zfs.dataset.promote', id_)
+
+    @api_method(
+        PoolDatasetRenameArgs,
+        PoolDatasetRenameResult,
+        audit='Pool dataset rename from',
+        audit_extended=lambda id_, options: f'{id_!r} to {options["new_name"]!r}',
+        roles=['DATASET_WRITE']
+    )
+    async def rename(self, id_, options):
+        """
+        Rename a pool dataset `id`.
+
+        No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
+        as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.
+
+        Proceed only if you are certain the ZFS resource is not in use and fully understand the risks.
+        Set Force to continue.
+        """
+        if not options['force']:
+            raise ValidationError(
+                'pool.dataset.rename.force',
+                'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
+                'If you understand the risks, please set force and proceed.'
+            )
+
+        return await self.middleware.call('zfs.dataset.rename', id_, options)
