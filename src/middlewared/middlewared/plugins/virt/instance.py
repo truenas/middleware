@@ -224,6 +224,11 @@ class VirtInstanceService(CRUDService):
                         'vnc_password': None,
                     })
         else:
+            if new['instance_type'] == 'VM' and await self.middleware.call(
+                'hardware.virtualization.guest_vms_supported'
+            ):
+                verrors.add(f'{schema_name}.instance_type', 'Virtualization is not supported on this system')
+
             # Creation case
             if new['source_type'] == 'ISO' and not await self.middleware.call(
                 'virt.volume.query', [['content_type', '=', 'ISO'], ['id', '=', new['iso_volume']]]
@@ -593,8 +598,14 @@ class VirtInstanceService(CRUDService):
                 f'{oid}: instance may not be started because current status is: {instance["status"]}'
             )
 
+        if instance['type'] == 'VM' and await self.middleware.call('hardware.virtualization.guest_vms_supported'):
+            raise ValidationError(
+                'virt.instance.start.id',
+                f'Cannot start {oid!r} as virtualization is not supported on this system'
+            )
+
         # Apply any idmap changes
-        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED'  and not instance['privileged_mode']:
+        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED' and not instance['privileged_mode']:
             await self.set_account_idmaps(oid)
 
         if instance['vnc_password']:
