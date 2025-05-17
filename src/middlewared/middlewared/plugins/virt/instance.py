@@ -218,6 +218,11 @@ class VirtInstanceService(CRUDService):
                         'vnc_password': None,
                     })
         else:
+            if new['instance_type'] == 'VM' and not await self.middleware.call(
+                'hardware.virtualization.guest_vms_supported'
+            ):
+                verrors.add(f'{schema_name}.instance_type', 'Virtualization is not supported on this system')
+
             # Creation case
             if new['source_type'] == 'ISO' and not await self.middleware.call(
                 'virt.volume.query', [['content_type', '=', 'ISO'], ['id', '=', new['iso_volume']]]
@@ -589,6 +594,12 @@ class VirtInstanceService(CRUDService):
             raise ValidationError(
                 'virt.instance.start.id',
                 f'{id}: instance may not be started because current status is: {instance["status"]}'
+            )
+
+        if instance['type'] == 'VM' and not await self.middleware.call('hardware.virtualization.guest_vms_supported'):
+            raise ValidationError(
+                'virt.instance.start.id',
+                f'Cannot start {oid!r} as virtualization is not supported on this system'
             )
 
         # Apply any idmap changes
