@@ -488,7 +488,7 @@ class DirectoryServices(ConfigService):
                     self.middleware.call_sync('etc.generate', etc)
 
                 svc = 'idmap' if ds_type == DSType.AD else 'sssd'
-                self.middleware.call_sync('service.restart', svc)
+                self.middleware.call_sync('service.control', 'RESTART', svc).wait_sync(raise_error=True)
 
                 # Now restart any dependent services
                 job.set_progress(description='Restarting dependent services')
@@ -550,7 +550,7 @@ class DirectoryServices(ConfigService):
                 self.middleware.call_sync('etc.generate', etc)
 
             svc = 'idmap' if ds_type == DSType.AD else 'sssd'
-            self.middleware.call_sync('service.restart', svc)
+            self.middleware.call_sync('service.control', 'RESTART', svc).wait_sync(raise_error=True)
             self.middleware.call_sync('directoryservices.restart_dependent_services')
             try:
                 # Perform a sanity check that these changes didn't totally break us.
@@ -562,7 +562,7 @@ class DirectoryServices(ConfigService):
                 for etc in ds_type.etc_files:
                     self.middleware.call_sync('etc.generate', etc)
 
-                self.middleware.call_sync('service.restart', svc)
+                self.middleware.call_sync('service.control', 'RESTART', svc).wait_sync(raise_error=True)
                 raise
 
             return self.middleware.call_sync('directoryservices.config')
@@ -730,9 +730,10 @@ class DirectoryServices(ConfigService):
             self.middleware.call_sync('etc.generate', etc_file)
 
         if ds_type is DSType.IPA:
-            self.middleware.call_sync('service.stop', 'sssd')
-            self.middleware.call_sync('service.restart', 'idmap')
+            self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
+            self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
         else:
-            self.middleware.call_sync('service.restart', 'idmap')
+            self.middleware.call_sync('service.control', 'STOP', 'idmap').wait_sync(raise_error=True)
+            self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
 
         self.middleware.call_sync('directoryservices.restart_dependent_services')
