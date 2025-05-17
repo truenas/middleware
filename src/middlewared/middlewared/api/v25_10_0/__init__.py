@@ -112,6 +112,7 @@ from .tunable import *
 from .update import *
 from .ups import *
 from .user import *
+from .virt_backup import *
 from .virt_device import *
 from .virt_global import *
 from .virt_instance import *
