@@ -89,8 +89,9 @@ def test_virt_volume(virt_pool):
 
         vol = call('virt.volume.update', vol['id'], {'size': 2048})
         assert vol['config']['size'] == 2048
+        assert vol['id'] == f'{POOL_NAME}_test_volume'
 
-    assert call('virt.volume.query', [['id', '=', vol_name]]) == []
+    assert call('virt.volume.query', [['id', '=', vol['id']]]) == []
 
 
 def test_iso_import_as_volume(virt_pool):
@@ -118,7 +119,7 @@ def test_iso_import_as_volume(virt_pool):
 def test_volume_name_validation(virt_pool, vol_name, should_work):
     if should_work:
         call('virt.volume.create', {'name': vol_name})
-        call('virt.volume.delete', vol_name)
+        call('virt.volume.delete', f'{virt_pool["pool"]}_{vol_name}')
     else:
         with pytest.raises(ClientValidationErrors):
             call('virt.volume.create', {'name': vol_name})
@@ -163,12 +164,12 @@ def test_upload_iso_file(virt_pool):
 
     wait_on_job(json.loads(response.text)['job_id'], 600)
 
-    vol = call('virt.volume.get_instance', 'test_uploaded_iso')
+    vol = call('virt.volume.get_instance', f'{POOL_NAME}_test_uploaded_iso')
     assert vol['name'] == vol_name
     assert vol['config']['size'] == 50
     assert vol['content_type'] == 'ISO'
 
-    call('virt.volume.delete', vol_name)
+    call('virt.volume.delete', f'{POOL_NAME}_test_uploaded_iso')
 
 
 def test_vm_props(vm):
@@ -227,11 +228,13 @@ def test_vm_props(vm):
 
 def test_vm_iso_volume(vm, iso_volume):
     device_name = 'iso_device'
-    with virt_device(VM_NAME, device_name, {'dev_type': 'DISK', 'source': ISO_VOLUME_NAME, 'boot_priority': 1}):
+    with virt_device(VM_NAME, device_name, {
+        'dev_type': 'DISK', 'source': f'{POOL_NAME}_{ISO_VOLUME_NAME}', 'boot_priority': 1
+    }):
         vm_devices = call('virt.instance.device_list', VM_NAME)
         assert any(device['name'] == device_name for device in vm_devices), vm_devices
 
-        iso_vol = call('virt.volume.get_instance', ISO_VOLUME_NAME)
+        iso_vol = call('virt.volume.get_instance', f'{POOL_NAME}_{ISO_VOLUME_NAME}')
         assert iso_vol['used_by'] == [VM_NAME], iso_vol
 
 
@@ -241,7 +244,7 @@ def test_vm_creation_with_iso_volume(vm, iso_volume):
         'name': virt_instance_name,
         'instance_type': 'VM',
         'source_type': 'ISO',
-        'iso_volume': ISO_VOLUME_NAME,
+        'iso_volume': f'{POOL_NAME}_{ISO_VOLUME_NAME}',
     }, job=True)
 
     try:
@@ -251,11 +254,11 @@ def test_vm_creation_with_iso_volume(vm, iso_volume):
         vm_devices = call('virt.instance.device_list', virt_instance_name)
         assert all(
             [
-                device['name'] == ISO_VOLUME_NAME and device['io_bus'] == 'VIRTIO-SCSI'
-                for device in vm_devices if device['name'] == ISO_VOLUME_NAME
+                device['name'] == f'{POOL_NAME}_{ISO_VOLUME_NAME}' and device['io_bus'] == 'VIRTIO-SCSI'
+                for device in vm_devices if device['name'] == f'{POOL_NAME}_{ISO_VOLUME_NAME}'
             ] or [False]), vm_devices
 
-        iso_vol = call('virt.volume.get_instance', ISO_VOLUME_NAME)
+        iso_vol = call('virt.volume.get_instance', f'{POOL_NAME}_{ISO_VOLUME_NAME}')
         assert iso_vol['used_by'] == [virt_instance_name], iso_vol
     finally:
         call('virt.instance.delete', virt_instance_name, job=True)
@@ -268,11 +271,11 @@ def test_vm_creation_with_iso_and_devices(vm, iso_volume):
             'name': virt_instance_name,
             'instance_type': 'VM',
             'source_type': 'ISO',
-            'iso_volume': ISO_VOLUME_NAME,
+            'iso_volume': f'{POOL_NAME}_{ISO_VOLUME_NAME}',
             'devices': [
                 {
                     'dev_type': 'DISK',
-                    'source': v['name'],
+                    'source': v['id'],
                     'boot_priority': 5
                 }
             ]
@@ -282,7 +285,9 @@ def test_vm_creation_with_iso_and_devices(vm, iso_volume):
             assert instance['root_disk_io_bus'] == 'NVME'
 
             vm_devices = call('virt.instance.device_list', virt_instance_name)
-            disk_device = next(device for device in vm_devices if device['name'] == ISO_VOLUME_NAME)
+            disk_device = next(
+                device for device in vm_devices if device['name'] == f'{POOL_NAME}_{ISO_VOLUME_NAME}'
+            )
             assert disk_device['boot_priority'] == 6, disk_device
             assert disk_device['io_bus'] is not None, disk_device
         finally:
@@ -541,7 +546,7 @@ def test_vm_creation_with_volume(vm):
             'name': virt_instance_name,
             'instance_type': 'VM',
             'source_type': 'VOLUME',
-            'volume': v['name'],
+            'volume': v['id'],
         }, job=True)
 
         try:
@@ -550,11 +555,11 @@ def test_vm_creation_with_volume(vm):
             vm_devices = call('virt.instance.device_list', virt_instance_name)
             assert all(
                 [
-                    device['name'] == v['name'] and device['io_bus'] == 'NVME'
-                    for device in vm_devices if device['name'] == v['name']
+                    device['name'] == v['id'] and device['io_bus'] == 'NVME'
+                    for device in vm_devices if device['name'] == v['id']
                 ] or [False]), vm_devices
 
-            vol = call('virt.volume.get_instance', v['name'])
+            vol = call('virt.volume.get_instance', v['id'])
             assert vol['used_by'] == [virt_instance_name], vol
         finally:
             call('virt.instance.delete', virt_instance_name, job=True)
@@ -567,11 +572,11 @@ def test_vm_creation_with_volume_and_devices(vm, iso_volume):
             'name': virt_instance_name,
             'instance_type': 'VM',
             'source_type': 'VOLUME',
-            'volume': v['name'],
+            'volume': v['id'],
             'devices': [
                 {
                     'dev_type': 'DISK',
-                    'source': ISO_VOLUME_NAME,
+                    'source': f'{POOL_NAME}_{ISO_VOLUME_NAME}',
                     'boot_priority': 5
                 }
             ]
@@ -581,7 +586,7 @@ def test_vm_creation_with_volume_and_devices(vm, iso_volume):
             assert instance['root_disk_io_bus'] == 'NVME'
 
             vm_devices = call('virt.instance.device_list', virt_instance_name)
-            disk_device = next(device for device in vm_devices if device['name'] == v['name'])
+            disk_device = next(device for device in vm_devices if device['name'] == v['id'])
             assert disk_device['boot_priority'] == 6, disk_device
             assert disk_device['io_bus'] is not None, disk_device
         finally:
@@ -625,8 +630,8 @@ def test_vnc_validation_on_vm_create(virt_pool, enable_vnc, vnc_password, vnc_po
 
 
 @pytest.mark.parametrize('source,boot_priority,destination,error_msg', [
-    (ISO_VOLUME_NAME, 1, '/mnt', 'Destination is not valid for VM'),
-    (ISO_VOLUME_NAME, 1, '/', 'Destination cannot be /'),
+    (f'{POOL_NAME}_{ISO_VOLUME_NAME}', 1, '/mnt', 'Destination is not valid for VM'),
+    (f'{POOL_NAME}_{ISO_VOLUME_NAME}', 1, '/', 'Destination cannot be /'),
     ('some_iso', 1, None, 'No \'some_iso\' incus volume found which can be used for source'),
     (None, 1, '/mnt/', 'Source is required.'),
     ('/mnt/', 1, None, 'Source must be a path starting with /dev/zvol/ for VM or a virt volume name.'),
@@ -817,11 +822,11 @@ def test_volume_choices_ixvirt():
 
         call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
 
-        with volume('vmtestzvol', 1024):
-            assert 'vmtestzvol' in call('virt.device.disk_choices')
-            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
+        with volume('vmtestzvol', 1024) as v:
+            assert v['id'] in call('virt.device.disk_choices')
+            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': v['id']}):
 
-                assert 'vmtestzvol' not in call('virt.device.disk_choices')
+                assert v['id'] not in call('virt.device.disk_choices')
 
                 # Incus leaves zvols unmounted until VM is started
                 call('virt.instance.start', instance_name)
@@ -879,13 +884,13 @@ def test_set_bootable_disk(vm, iso_volume):
         with volume('test-volume2', 1024) as vol2:
             call('virt.instance.device_add', virt_instance_name, {
                 'dev_type': 'DISK',
-                'source': vol['name'],
+                'source': vol['id'],
                 'boot_priority': 2,
                 'io_bus': 'NVME'
             })
             call('virt.instance.device_add', virt_instance_name, {
                 'dev_type': 'DISK',
-                'source': vol2['name'],
+                'source': vol2['id'],
                 'boot_priority': 1,
                 'io_bus': 'VIRTIO-SCSI'
             })
