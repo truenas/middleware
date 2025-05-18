@@ -43,7 +43,7 @@ class ADHealthMixin:
             str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
         })
         krbconf.add_realms([{
-            'realm': ds_config['kerberos_realm'] or ds_config['configuration']['domain'],
+            'realm': ds_config['kerberos_realm'] or ds_config['domain'],
             'admin_server': [],
             'kdc': [kdc],
             'kpasswd_server': [],
@@ -90,7 +90,7 @@ class ADHealthMixin:
         self.logger.warning('Attempting to recover from broken or missing AD secrets file')
         ds_config = self.middleware.call_sync('directoryservices.config')
         smb_config = self.middleware.call_sync('smb.config')
-        domain_info = get_domain_info(ds_config['configuration']['domain'])
+        domain_info = get_domain_info(ds_config['domain'])
 
         if not self.middleware.call_sync('directoryservices.secrets.restore', smb_config['netbiosname']):
             raise CallError(
@@ -148,7 +148,7 @@ class ADHealthMixin:
         # and invalid stored machine account passwords
         config = self.middleware.call_sync('directoryservices.config')
         try:
-            domain_info = get_domain_info(config['configuration']['domain'])
+            domain_info = get_domain_info(config['domain'])
         except Exception:
             domain_info = None
 

@@ -73,7 +73,7 @@ class IPAJoinMixin:
         Leave the IPA domain
         """
         ds_config = self.middleware.call_sync('directoryservices.config')
-        joined_domain = ds_config['configuration']['domain']
+        joined_domain = ds_config['domain']
         if joined_domain != domain:
             raise CallError(f'{domain}: TrueNAS is joined to {joined_domain}')
 
@@ -81,7 +81,7 @@ class IPAJoinMixin:
         self._ipa_del_spn()
 
         job.set_progress(10, 'Removing DNS entries.')
-        self.unregister_dns(ds_config['configuration']['hostname'], False)
+        self.unregister_dns(ds_config['hostname'], False)
 
         # now leave IPA
         job.set_progress(30, 'Leaving IPA domain.')
@@ -106,7 +106,7 @@ class IPAJoinMixin:
 
         job.set_progress(95, 'Removing privileges.')
         if (priv := self.middleware.call_sync('privilege.query', [
-            ['name', '=', ds_config['configuration']['domain'].upper()]
+            ['name', '=', ds_config['domain'].upper()]
         ])):
             self.middleware.call_sync('privilege.delete', priv[0]['id'])
 
@@ -156,7 +156,7 @@ class IPAJoinMixin:
 
         existing_privileges = self.middleware.call_sync(
             'privilege.query',
-            [["name", "=", ds_config['configuration']['domain'].upper()]]
+            [["name", "=", ds_config['domain'].upper()]]
         )
 
         if existing_privileges:
@@ -194,7 +194,7 @@ class IPAJoinMixin:
 
         try:
             self.middleware.call_sync('privilege.create', {
-                'name': ds_config['configuration']['domain'].upper(),
+                'name': ds_config['domain'].upper(),
                 'ds_groups': [admins_grp['gr_gid']],
                 'roles': ['FULL_ADMIN'],
                 'web_shell': True
@@ -216,7 +216,7 @@ class IPAJoinMixin:
         config information.
         """
         ds_config = self.middleware.call_sync('directoryservices.config')
-        if not ds_config['kerberos_realm'] or ds_config['configuration']['domain'] != domain:
+        if not ds_config['kerberos_realm'] or ds_config['domain'] != domain:
             return False
 
         if not self.middleware.call_sync('kerberos.keytab.query', [
@@ -420,11 +420,11 @@ class IPAJoinMixin:
 
         job.set_progress(15, 'Performing IPA join')
         resp = self._ipa_join_impl(
-            ds_config['configuration']['host'],
-            ds_config['configuration']['basedn'],
-            ds_config['configuration']['domain'],
-            ds_config['configuration']['realm'],
-            ds_config['configuration']['host']
+            ds_config['hostname'],
+            ds_config['basedn'],
+            ds_config['domain'],
+            ds_config['realm'],
+            ds_config['hostname']
         )
         # resp includes `cacert` for domain and `keytab` for our host principal to use
         # in future.
@@ -526,7 +526,7 @@ class IPAJoinMixin:
         elif not cred['name'].startswith('host/'):
             raise CallError(f'{cred}: not host principal.')
 
-        self.register_dns(ds_config['configuration']['hostname'])
+        self.register_dns(ds_config['hostname'])
         self._ipa_setup_services(job)
         job.set_progress(75, 'Activating IPA service.')
         self._ipa_activate()

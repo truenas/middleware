@@ -43,8 +43,7 @@ class DirectoryServicesModel(sa.Model):
     kerberos_realm_id = sa.Column(sa.ForeignKey('directoryservice_kerberosrealm.id', ondelete='SET NULL'),
                                   index=True, nullable=True)
 
-    # Fields used to construct `configuration` dictionary
-
+    # Fields unique to a particular directory service
     # ACTIVEDIRECTORY
     ad_hostname = sa.Column(sa.String(120), nullable=True)
     ad_domain = sa.Column(sa.String(120), nullable=True)
@@ -164,34 +163,31 @@ class DirectoryServices(ConfigService):
     async def extend_ad(self, data, config_out):
         """ Extend with AD columns if service_type is AD """
         assert data['service_type'] == 'ACTIVEDIRECTORY'
-        config_out['configuration'] = {}
         for key in AD_CONFIG_ITEMS:
             # strip off `ad_` prefix
-            config_out['configuration'][key[3:]] = data[key]
+            config_out[key[3:]] = data[key]
 
     @private
     async def extend_ipa(self, data, config_out):
         """ Extend with IPA columns if service_type is IPA """
         assert data['service_type'] == 'IPA'
-        config_out['configuration'] = {}
         for key in IPA_CONFIG_ITEMS:
             # strip off `ipa_` prefix
-            config_out['configuration'][key[4:]] = data[key]
+            config_out[key[4:]] = data[key]
 
     @private
     async def extend_ldap(self, data, config_out):
         """ Extend with LDAP columns if service_type is LDAP """
         assert data['service_type'] == 'LDAP'
-        config_out['configuration'] = {}
         for key in LDAP_CONFIG_ITEMS:
             # strip off `ldap_` prefix
-            config_out['configuration'][key[5:]] = data[key]
+            config_out[key[5:]] = data[key]
 
-        config_out['configuration'].update({'search_bases': {}, 'attribute_maps': {
+        config_out.update({'search_bases': {}, 'attribute_maps': {
             'passwd': {}, 'shadow': {}, 'group': {}, 'netgroup': {}
         }})
 
-        c = config_out['configuration']
+        c = config_out
         # Add search bases:
         for key, value in data.items():
             if key.startswith('ldap_base_'):
@@ -227,13 +223,9 @@ class DirectoryServices(ConfigService):
             case 'LDAP':
                 await self.extend_ldap(data, config)
             case _:
-                # No configured DS type so remove some irrelevant
-                # items
-                config.update({
-                    'enable': False,
-                    'credential': None,
-                    'configuration': None
-                })
+                # No known DS configured and so return the standalone stub We don't raise an exception here because
+                # this occurs in an extend method which is a generally terrible place to have errors.
+                config = {'enable': False, 'service_type': None}
 
         return config
 
@@ -268,7 +260,7 @@ class DirectoryServices(ConfigService):
     def compress_config_ad(self, data, config_out):
         for key in AD_CONFIG_ITEMS:
             # slice off "ad_"
-            config_out[key] = data['configuration'][key[3:]]
+            config_out[key] = data[key[3:]]
 
     @private
     def compress_config_ipa(self, data, config_out):
@@ -280,16 +272,16 @@ class DirectoryServices(ConfigService):
     def compress_config_ldap(self, data, config_out):
         for key in LDAP_CONFIG_ITEMS:
             # slice off "ldap_"
-            config_out[key] = data['configuration'][key[5:]]
+            config_out[key] = data[key[5:]]
 
-        for key, value in data['configuration'][LDAP_SEARCH_BASES_SCHEMA_NAME].items():
+        for key, value in data[LDAP_SEARCH_BASES_SCHEMA_NAME].items():
             config_out[f'ldap_{key}'] = value
 
         for section in (
             LDAP_PASSWD_MAP_SCHEMA_NAME, LDAP_SHADOW_MAP_SCHEMA_NAME, LDAP_GROUP_MAP_SCHEMA_NAME,
             LDAP_NETGROUP_MAP_SCHEMA_NAME
         ):
-            for key, value in data['configuration'][LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][section].items():
+            for key, value in data[LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][section].items():
                 config_out[f'ldap_{key}'] = value
 
     @private
@@ -332,15 +324,6 @@ class DirectoryServices(ConfigService):
                     f'{SCHEMA}.service_type',
                     'Service type for directory services may not be changed while '
                     'directory services are enabled'
-                )
-
-            if old['configuration'] != new['configuration']:
-                verrors.add(
-                    f'{SCHEMA}.configuration',
-                    'Permitted changes while directory services are enabled are limited '
-                    'to account caching, DNS updates, and timeouts. All other changes should '
-                    'be performed with directory services disabled and during a maintenance '
-                    'window as the changes may result in a temporary production outage.'
                 )
 
             if new['kerberos_realm'] != old['kerberos_realm']:
@@ -399,14 +382,14 @@ class DirectoryServices(ConfigService):
 
     @private
     def validate_dns(self, old, new, verrors, revert):
-        schema = f'{SCHEMA}.configuration.domain'
-        self.validate_kerberos_dns(schema, verrors, new['configuration']['domain'], new['timeout'])
+        schema = f'{SCHEMA}.domain'
+        self.validate_kerberos_dns(schema, verrors, new['domain'], new['timeout'])
 
         if new.get('force', False):
             return
 
         # Check whether forward lookup of our name works
-        dns_name = f'{new["configuration"]["hostname"]}@{new["configuration"]["domain"]}'
+        dns_name = f'{new["hostname"]}@{new["domain"]}'
         try:
             dns_addresses = set(x['address'] for x in self.middleware.call_sync('dnsclient.forward_lookup', {
                 'names': [dns_name],
@@ -420,8 +403,8 @@ class DirectoryServices(ConfigService):
         ips_in_use = set(self.middleware.call_sync('directoryservices.bindip_choices'))
         if not dns_addresses & ips_in_use:
             verrors.add(
-                f'{SCHEMA}.configuration.hostname',
-                f'{new["configuration"]["hostname"]}: hostname appears to be in use by another server '
+                f'{SCHEMA}.hostname',
+                f'{new["hostname"]}: hostname appears to be in use by another server '
                 'in the domain. Further investigation and correction of DNS entries may be requred.'
             )
 
@@ -598,7 +581,7 @@ class DirectoryServices(ConfigService):
                 self.middleware.call_sync(
                     'directoryservices.connection.grant_privileges',
                     ds_type.value,
-                    new['configuration']['domain']
+                    new['domain']
                 )
             except Exception:
                 self.logger.warning('Failed to automatically grant privileges to domain administrators.', exc_info=True)
@@ -606,9 +589,9 @@ class DirectoryServices(ConfigService):
         # When IPA support was first added to TrueNAS we did not persistently store
         # IPA SMB domain information persistently. This means we may need to update the IPA domain
         # information.
-        if ds_type is DSType.IPA and new['configuration']['smb_domain'] is None:
+        if ds_type is DSType.IPA and new['smb_domain'] is None:
             if (smb_domain := self.middleware.call_sync('ipa_get_smb_domain_info')) is not None:
-                new['configuration']['smb_domain'] = {
+                new['smb_domain'] = {
                     'name': smb_domain['netbios_name'],
                     'range_low': smb_domain['range_id_min'],
                     'range_high': smb_domain['range_id_max'],
@@ -637,7 +620,7 @@ class DirectoryServices(ConfigService):
             if not principal:
                 self.logger.warning('%s: netbiosname not found in keytab file', netbiosname)
                 # Make a guess at principal name
-                principal = f'{netbiosname}$@{new["configuration"]["domain"]}'
+                principal = f'{netbiosname}$@{new["domain"]}'
 
             new['credential'] = {'credential_type': 'KERBEROS_PRINCIPAL', 'principal': principal}
             compressed = self.compress(new)
@@ -655,8 +638,8 @@ class DirectoryServices(ConfigService):
 
         match ds_config['service_type']:
             case DSType.AD.value:
-                dom_info = get_domain_info(ds_config['configuration']['domain'])
-                dom_info['domain_controller'] = lookup_dc(ds_config['configuration']['domain'])
+                dom_info = get_domain_info(ds_config['domain'])
+                dom_info['domain_controller'] = lookup_dc(ds_config['domain'])
                 return dom_info
             case DSType.IPA.value:
                 return self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')

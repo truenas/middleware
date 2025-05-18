@@ -26,13 +26,6 @@ if ha and "hostname_virtual" in os.environ:
 else:
     from auto_config import hostname
 
-try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME
-    AD_USER = fr"AD02\{ADUSERNAME.lower()}"
-except ImportError:
-    Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
-    pytestmark = pytest.mark.skip(reason=Reason)
-
 
 SMB_NAME = "TestADShare"
 
@@ -270,7 +263,7 @@ def test_account_privilege_authentication(enable_ds_auth):
         assert ngroups > 0
 
         # RID 513 is constant for "Domain Users"
-        domain_sid = call("idmap.domain_info", AD_DOMAIN.split(".")[0])['sid']
+        domain_sid = call("idmap.domain_info", short_name)['sid']
         with privilege({
             "name": "AD privilege",
             "local_groups": [],
@@ -278,7 +271,7 @@ def test_account_privilege_authentication(enable_ds_auth):
             "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         }):
-            with client(auth=(f'limiteduser@{AD_DOMAIN}', ADPASSWORD)) as c:
+            with client(auth=(f'limiteduser@{AD_DOMAIN}', AD_DOM2_LIMITED_USER_PASSWORD)) as c:
                 methods = c.call("core.get_methods")
                 me = c.call("auth.me")
 

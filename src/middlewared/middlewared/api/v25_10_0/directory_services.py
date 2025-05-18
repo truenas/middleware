@@ -42,12 +42,11 @@ class DirectoryServicesStatusResult(BaseModel):
     dstype: DSType | None = Field(alias='type')
     """ The type of enabled directory service. """
     status: DSStatus | None = None
-    """ The status of the directory service as of the last health check. The status
-    will be None if directory services are disabled. """
+    """ The status of the directory service as of the last health check. The status will be None if directory services
+    are disabled. """
     status_msg: str | None = None
-    """ This field is populated with the reason why the directory service is in a
-    faulted state if a periodic health check failed. If the directory service is not
-    faulted then it will be None. """
+    """ This field is populated with the reason why the directory service is in a faulted state if a periodic health
+    check failed. If the directory service is not faulted then it will be None. """
 
 
 class DirectoryServicesCacheRefreshArgs(BaseModel):
@@ -62,9 +61,8 @@ class DirectoryServicesCacheRefreshResult(BaseModel):
 
 class IdmapDomainBase(BaseModel):
     name: NetbiosDomain | None = Field(default=None, example='IXDOM')
-    """ short-form name for the trusted domain. This should match the NetBIOS
-    domain name for active directory domains. May be None if the domain configuration
-    is for base idmap for Active Directory configuration. """
+    """ short-form name for the trusted domain. This should match the NetBIOS domain name for active directory domains.
+    May be None if the domain configuration is for base idmap for Active Directory configuration. """
     range_low: IdmapId = 100000001
     """ The lowest UID or GID that the idmap backend may assign. """
     range_high: IdmapId = 200000000
@@ -82,10 +80,9 @@ class IdmapDomainBase(BaseModel):
 
 
 class IPA_SMBDomain(IdmapDomainBase):
-    """ This is a special idmap backend for when TrueNAS is joined to an IPA domain.
-    The configuration information is provided by the remote IPA server and auto-detected
-    during the IPA domain join process. This information is based on the IPA server's
-    response to service_add_smb command.
+    """ This is a special idmap backend for when TrueNAS is joined to an IPA domain. The configuration information is
+    provided by the remote IPA server and auto-detected during the IPA domain join process. This information is based
+    on the IPA server's response to service_add_smb command.
     """
     idmap_backend: Literal['SSS']
     domain_name: NonEmptyString | None = Field(default=None, example='IXDOM.INTERNAL')
@@ -96,25 +93,21 @@ class IPA_SMBDomain(IdmapDomainBase):
 
 
 class AD_Idmap(IdmapDomainBase):
-    """ The AD backend reads UID and GID mappings from an Active Directory server that
-    uses pre-existing RFC2307 / SFU schema extensions. Mappings must be provided in advance
-    by the dministrator by adding the uidNumber attributes for users and gidNumber attributes
-    for groups in Active Directory. """
+    """ The AD backend reads UID and GID mappings from an Active Directory server that uses pre-existing RFC2307 / SFU
+    schema extensions. Mappings must be provided in advance by the dministrator by adding the uidNumber attributes for
+    users and gidNumber attributes for groups in Active Directory. """
     idmap_backend: Literal['AD']
     schema_mode: Literal['RFC2307', 'SFU', 'SFU20']
-    """ The schema mode that the idmap backend should use when querying Active Directory
-    for user and group information. The RFC2307 schema was used in Windows Server 2003 R2 and
-    newer. The Services for Unix (SFU) schema was used for versions prior to Windows Server 2003
-    R2."""
+    """ The schema mode that the idmap backend should use when querying Active Directory for user and group
+    information. The RFC2307 schema was used in Windows Server 2003 R2 and newer. The Services for Unix (SFU) schema
+    was used for versions prior to Windows Server 2003 R2."""
     unix_primary_group: bool = False
-    """ Defines whether the user's primary group is fetched from the SFU attributes or the
-    Active Directory primary group. If True, the primary group membership is fetched
-    based on the gidNumber LDAP attribute, if set to False the primary group membership is
-    calculated via the primaryGroupID LDAP attribute. """
+    """ Defines whether the user's primary group is fetched from the SFU attributes or the Active Directory primary
+    group. If True, the primary group membership is fetched based on the gidNumber LDAP attribute, if set to False the
+    primary group membership is calculated via the primaryGroupID LDAP attribute. """
     unix_nss_info: bool = False
-    """ If set to True the login shell and home directory will be retrieved from the LDAP attributes.
-    If set to False or if the Active Directory LDAP entry lacks SFU attribute, then the homedir
-    will default to `/var/empty`. """
+    """ If set to True the login shell and home directory will be retrieved from the LDAP attributes. If set to False
+    or if the Active Directory LDAP entry lacks SFU attribute, then the homedir will default to `/var/empty`. """
 
 
 class Autorid_Idmap(IdmapDomainBase):
@@ -123,11 +116,10 @@ class Autorid_Idmap(IdmapDomainBase):
     used for each domain in the forest. """
     idmap_backend: Literal['AUTORID']
     rangesize: int = Field(default=100000, ge=10000, le=1000000000)
-    """ Defines the number of uids / gids available per domain range. SIDs with RIDs larger than
-    this value will be mapped into extension ranges depending on the number of available ranges."""
+    """ Defines the number of uids / gids available per domain range. SIDs with RIDs larger than this value will be
+    mapped into extension ranges depending on the number of available ranges."""
     readonly: bool = False
-    """ Turn the module into read-only mode. No new ranges or mappings will be created in the
-    idmap pool. """
+    """ Turn the module into read-only mode. No new ranges or mappings will be created in the idmap pool. """
     ignore_builtin: bool = False
     """ Ignore any mapping requests for the BUILTIN domain. """
 
@@ -146,15 +138,15 @@ class LDAP_Idmap(IdmapDomainBase):
     readonly: bool = False
     """ If readonly is set to True then TrueNAS will not attempt to write new idmap entries. """
     validate_certificates: bool = True
-    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server.
-    Generally, it is a better strategy to use valid certificates or to import relevant certificates
-    into the certificate trusted store in TrueNAS. """
+    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server. Generally, it is a
+    better strategy to use valid certificates or to import relevant certificates into the certificate trusted store in
+    TrueNAS. """
 
 
 class RFC2307_Idmap(IdmapDomainBase):
-    """ The RFC2307 backend provides a way to read ID mappings from RFC2307 attributes provided by
-    a standalone LDAP server. This backend is read only. If the target server is an Active
-    Directory domain controller, then the AD backend should be used instead. """
+    """ The RFC2307 backend provides a way to read ID mappings from RFC2307 attributes provided by a standalone LDAP
+    server. This backend is read only. If the target server is an Active Directory domain controller, then the AD
+    backend should be used instead. """
     idmap_backend: Literal['RFC2307']
     ldap_server: Literal["STANDALONE"]
     ldap_url: LDAP_URL
@@ -172,37 +164,36 @@ class RFC2307_Idmap(IdmapDomainBase):
     ldap_realm: bool = False
     """ Append @realm to the CN for groups (and users if `user_cn` is specified) """
     validate_certificates: bool = True
-    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server.
-    Generally, it is a better strategy to use valid certificates or to import relevant certificates
-    into the certificate trusted store in TrueNAS. """
+    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server. Generally, it is a
+    better strategy to use valid certificates or to import relevant certificates into the certificate trusted store in
+    TrueNAS. """
 
 
 class RID_Idmap(IdmapDomainBase):
-    """ The RID backend provides an algorithmic mapping scheme to map UIDs and GIDs to SIDs.
-    The UID or GID is determined by taking the RID value from the Windows Account SID and
-    adding it to the base value specified by `range_low`. RID values in an Active Directory
-    domain can large, especially as the domain ages, and so administrators should configure
-    a range large enough to accomodate the current RID values being assigned by the RID master.
-    One way to do this is to look review the RID assigned to a recently created account in
-    Active Directory. If the RID is 500000, then the range specified for this backend must
-    contain at least 500000 unix IDs (for example 1000000 - 2000000). """
+    """ The RID backend provides an algorithmic mapping scheme to map UIDs and GIDs to SIDs. The UID or GID is
+    determined by taking the RID value from the Windows Account SID and adding it to the base value specified by
+    `range_low`. RID values in an Active Directory domain can large, especially as the domain ages, and so
+    administrators should configure a range large enough to accomodate the current RID values being assigned by the RID
+    master. One way to do this is to look review the RID assigned to a recently created account in Active Directory. If
+    the RID is 500000, then the range specified for this backend must contain at least 500000 unix IDs (for example
+    1000000 - 2000000). """
     idmap_backend: Literal['RID']
     sssd_compat: bool = False
-    """ Generate an idmap low range based on the algorithm used by SSSD to allocate IDs.
-    This is sufficient if the domain is configured in such a way that it only consumes a
+    """ Generate an idmap low range based on the algorithm used by SSSD to allocate IDs. This is sufficient if the
+    domain is configured in such a way that it only consumes a
     single SSSD idmap slice."""
 
 
 class BuiltinDomainTdb(IdmapDomainBase):
-    """ Idmap ranges and information for BUILTIN, system accounts, and other accounts
-    that are not explicitly mapped for a known domain. """
+    """ Idmap ranges and information for BUILTIN, system accounts, and other accounts that are not explicitly mapped
+    for a known domain. """
     range_low: IdmapId = 90000001
     """ The lowest UID or GID that the idmap backend may assign. """
     range_high: IdmapId = 100000000
     """ The highest UID or GID that the idmap backend may assign. """
 
 
-PrimaryIdmap = Annotated[
+DomainIdmap = Annotated[
     AD_Idmap | LDAP_Idmap | RFC2307_Idmap | RID_Idmap,
     Field(discriminator='idmap_backend', default=RID_Idmap(idmap_backend='RID'))
 ]
@@ -210,31 +201,17 @@ PrimaryIdmap = Annotated[
 
 class PrimaryDomainIdmap(BaseModel):
     builtin: BuiltinDomainTdb = Field(default=BuiltinDomainTdb())
-    """ uid/gid range configuration for automatically-generated accounts that are
-    associated with well-known and builtin accounts on Windows servers. """
-    idmap_domain: PrimaryIdmap
-    """ Configuration for how accounts in the domain to which TrueNAS is joined are mapped into
-    Unix uids and gids on the TrueNAS server. The majority of TrueNAS deployments use the RID
-    backend which algorithmically assigns uids and gids based on the active directory account
-    SID. Another common configuration is the `AD` backend which reads pre-defined active
-    directory LDAP schema attributes that assign explicit uid and gid numbers to accounts."""
+    """ uid/gid range configuration for automatically-generated accounts that are associated with well-known and
+    builtin accounts on Windows servers. """
+    idmap_domain: DomainIdmap
+    """ Configuration for how accounts in the domain to which TrueNAS is joined are mapped into Unix uids and gids on
+    the TrueNAS server. The majority of TrueNAS deployments use the RID backend which algorithmically assigns uids and
+    gids based on the active directory account SID. Another common configuration is the `AD` backend which reads
+    pre-defined active directory LDAP schema attributes that assign explicit uid and gid numbers to accounts."""
 
 
 class PrimaryDomainIdmapAutoRid(BaseModel):
     idmap_domain: Autorid_Idmap
-
-
-class KerberosConfiguration(BaseModel):
-    realm: int | None = None
-    """ Primary key of kerberos realm to use for authentication to the specified directory
-    service. If None, then kerberos will not be used for binding to the configured directory
-    service. When initially joining an Active Directory or IPA domain, the realm will be
-    automatically detected and configured if the realm is not specified. """
-    principal: NonEmptyString | None = None
-    """ The kerberos principal to use for authentication to the specified directory service.
-    If this is None, then TrueNAS will attempt to obtain a kerberos ticket using credentials
-    specified in the payload. This will be automatically set while joining an Active Directory
-    or IPA domain. """
 
 
 class CredKRBPrincipal(BaseModel):
@@ -247,8 +224,8 @@ class CredKRBPrincipal(BaseModel):
 class CredKRBUser(BaseModel):
     credential_type: Literal[DSCredType.KERBEROS_USER]
     username: NonEmptyString
-    """ Username of the account to use to create a kerberos ticket for authentication to
-    directory services. This account must exist on the domain controller. """
+    """ Username of the account to use to create a kerberos ticket for authentication to directory services. This
+    account must exist on the domain controller. """
     password: Secret[NonEmptyString]
     """ The password for the user account that will obtain the kerberos ticket. """
 
@@ -270,39 +247,109 @@ class CredLDAPMTLS(BaseModel):
     remote LDAP server. """
 
 
-DSCred = Annotated[
+AD_IPA_Cred = Annotated[CredKRBUser | CredKRBPrincipal, Field(discriminator='credential_type')]
+
+
+LDAP_Cred = Annotated[
     CredKRBUser | CredKRBPrincipal | CredLDAPPlain | CredLDAPAnonymous | CredLDAPMTLS,
     Field(discriminator='credential_type')
 ]
 
 
-class ActiveDirectoryConfig(BaseModel):
+class DirectoryServiceBase(BaseModel):
+    id: int
+    enable: bool
+    """ Enable the directory service. If TrueNAS has never joined the specified domain, then setting this to True will
+    cause TrueNAS to attempt to join the domain. Note that the domain join process for Active Directory and IPA will
+    make changes to the domain such as creating a new computer account for the TrueNAS server and creating DNS records
+    for TrueNAS. """
+    enable_account_cache: bool = Field(default=True)
+    """ Enable backend caching for user and group lists. If enabled, then directory services users and groups will be
+    presented as choices in the UI dropdowns and in API responses for user and group queries. This also controls
+    whether users and groups will appear in `getent` results. In some edge cases this may be disabled in order to
+    reduce load on the directory server. """
+    timeout: int = Field(default=10, ge=5, le=40)
+    """ The timeout value for DNS queries that are performed as part of the join process and NETWORK_TIMEOUT for LDAP
+    requests. """
+    kerberos_realm: NonEmptyString | None = Field(default=None)
+    """ Name of kerberos realm to use for authentication to the specified directory service. If None, then kerberos
+    will not be used for binding to the configured directory service. When initially joining an Active Directory or IPA
+    domain, the realm will be automatically detected and configured if the realm is not specified. """
+
+
+class ActiveDirectoryConfig(DirectoryServiceBase):
+    """ Join the TrueNAS server to an existing Active Directory domain. """
+    service_type: Literal['ACTIVEDIRECTORY']
+    credential: AD_IPA_CRED | None = Field(example=[
+        {
+            'credential_type': 'KERBEROS_USER',
+            'username': 'truenas_user',
+            'password': 'Canary'
+        },
+        {
+            'credential_type': 'KERBEROS_PRINCIPAL',
+            'principal': 'truenas$@LDAP01.INTERNAL'
+        }
+    ])
+    """ Credential to use for joining and connecting to the Active Directory domain. A KERBEROS_USER credential must be
+    used to initially join the Active Directory domain, which will then be replaced by a KERBEROS_PRINCIPAL credential
+    for the TrueNAS server's active directory computer account after the domain join completes. """
     hostname: NonEmptyString = Field(example='truenasnyc')
     """ Hostname of TrueNAS server to register in active directory. """
     domain: NonEmptyString = Field(example='mydomain.internal')
-    """ Full DNS domain name of the Active Directory Domain. This should not be a domain
-    controller. """
-    idmap: PrimaryDomainIdmap | PrimaryDomainIdmapAutoRid = Field(default=PrimaryDomainIdmap())
-    """ Configuration for how to map Active Directory accounts into accounts on the
-    TrueNAS server. The exact settings required here may vary based on how other servers and
-    Linux clients are configured in the domain. Defaults are reasonable for a new deployment
-    without existing support for unix-like operating systems. """
-    site: NonEmptyString | None = Field(default=None)
-    """ The Active Directory site in which the TrueNAS server is located. This will be auto
-    detected during the domain join process. """
+    """ Full DNS domain name of the Active Directory Domain. This should not be a domain controller. """
+    enable_dns_updates: bool = Field(default=True)
+    """ Enable automatic DNS updates for the TrueNAS server in the domain via nsupdate and gssapi / TSIG. """
+    idmap: PrimaryDomainIdmap | PrimaryDomainIdmapAutoRid = Field(default=PrimaryDomainIdmap(), example=[
+        {
+            'builtin': {'range_low': 90000001, 'range_high': 100000000},
+            'idmap_domain': {
+                'name': 'MYDOMAIN',
+                'idmap_backend': 'RID',
+                'range_low': 100000001,
+                'range_high': 200000000,
+            },
+        },
+        {
+            'idmap_domain': {
+                'name': 'MYDOMAIN',
+                'idmap_backend': 'AUTORID',
+                'range_low': 90000001,
+                'range_high': 2000000000
+            }
+        }
+    ])
+    """ Configuration for how to map Active Directory accounts into accounts on the TrueNAS server. The exact settings
+    required here may vary based on how other servers and Linux clients are configured in the domain. Defaults are
+    reasonable for a new deployment without existing support for unix-like operating systems. """
+    site: NonEmptyString | None = Field(default=None, example='CORP-NYC')
+    """ The Active Directory site in which the TrueNAS server is located. This will be auto detected during the domain
+    join process. """
     computer_account_ou: NonEmptyString | None = Field(default=None, example='TRUENAS_SERVERS/NYC')
-    """ Override for the default organizational unit (OU) in which to create the TrueNAS
-    computer account during the domain join. This may be used to specify a custom location
-    for TrueNAS computer accounts. """
+    """ Override for the default organizational unit (OU) in which to create the TrueNAS computer account during the
+    domain join. This may be used to specify a custom location for TrueNAS computer accounts. """
     use_default_domain: bool = Field(default=False)
-    """ Controls whether domain users and groups have a prefix prepended to the user account.
-    If this is enabled, then Active Directory users will appear as "administrator" instead of
-    "EXAMPLE\\administrator". In most circumstances this should be disabled as collisions
-    between active directory and local user account names can result in undefined behavior. """
+    """ Controls whether domain users and groups have a prefix prepended to the user account.  If this is enabled, then
+    Active Directory users will appear as "administrator" instead of "EXAMPLE\\administrator". In most circumstances
+    this should be disabled as collisions between active directory and local user account names can result in undefined
+    behavior. """
     enable_trusted_domains: bool = Field(default=False)
-    """ Enable support for trusted domains. If True, then separate trusted domain
-    configuration must be set for all trusted domains. """
-    trusted_domains: list[AD_Idmap | LDAP_Idmap | RFC2307_Idmap | RID_Idmap] = []
+    """ Enable support for trusted domains. If True, then separate trusted domain configuration must be set for all
+    trusted domains. """
+    trusted_domains: list[DomainIdmap] = Field(default=[], example=[
+        {
+            'name': 'BROOK',
+            'idmap_backend': 'RID',
+            'range_low': 200000001,
+            'range_high': 300000000
+        },
+        {
+            'name': 'DARVO',
+            'idmap_backend': 'RID',
+            'range_low': 300000001,
+            'range_high': 400000000
+        }
+    ])
     """ Configuration for trusted domains. """
 
     @field_validator('trusted_domains')
@@ -377,7 +424,38 @@ class LDAPAttributeMaps(BaseModel):
     netgroup: LDAPMapNetgroup = Field(default=LDAPMapNetgroup())
 
 
-class LDAPConfig(BaseModel):
+class LDAPConfig(DirectoryServiceBase):
+    """ Bind the TrueNAS server to an existing LDAP server and use it as an account source.
+    The TrueNAS defaults expect an OpenLDAP server, but other types of LDAP servers (excluding Active
+    Directory) are possible as bind targets. """
+    service_type: Literal['LDAP']
+    credential: LDAP_CRED | None = Field(example=[
+        {
+            'credential_type': 'LDAP_PLAIN',
+            'binddn': 'uid=truenasserver,ou=Users,dc=ldap01,dc=internal',
+            'bindpw': 'Canary'
+        },
+        {
+            'credential_type': 'LDAP_ANONYMOUS'
+        },
+        {
+            'credential_type': 'LDAP_MTLS',
+            'client_certificate': 'ldap01_client_cert'
+        },
+        {
+            'credential_type': 'KERBEROS_USER',
+            'username': 'truenas_user',
+            'password': 'Canary'
+        },
+        {
+            'credential_type': 'KERBEROS_PRINCIPAL',
+            'principal': 'truenas@LDAP01.INTERNAL'
+        }
+    ])
+    """ Credential to use for binding to the specified LDAP server_urls. The available authentication mechanisms
+    depend on the how the remote LDAP servers are configured.  If kerberos credential types are selected then GSSAPI
+    binds will be performed in lieu of plain ldap binds. KERBEROS_PRINCIPAL and LDAP_MTLS authentication are
+    preferred to improve server authentication security. """
     server_urls: list[LDAP_URL] = Field(example=['ldaps://myldap.domain.internal'])
     """ List of LDAP server URIs to use for LDAP binds. Each server may be a DNS name or IP address and must
     be prefixed by "ldap://" or "ldaps://". """
@@ -386,28 +464,44 @@ class LDAPConfig(BaseModel):
     basedn: LDAP_DN = Field(example='dc=domain,dc=internal')
     """ The base DN to use when performing LDAP operations. """
     validate_certificates: bool = Field(default=True)
-    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server.
-    Generally, it is a better strategy to use valid certificates or to import relevant certificates
-    into the certificate trusted store in TrueNAS. """
+    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server. Generally, it is a
+    better strategy to use valid certificates or to import relevant certificates into the certificate trusted store in
+    TrueNAS. """
     ldap_schema: Literal['RFC2307', 'RFC2307BIS'] = Field(default='RFC2307', alias='schema')
-    """ The LDAP attribute schema type used by the remote LDAP server. The RFC2307 schema is used by
-    most LDAP servers. """
+    """ The LDAP attribute schema type used by the remote LDAP server. The RFC2307 schema is used by most LDAP
+    servers. """
     search_bases: LDAPSearchBases = Field(default=LDAPSearchBases())
-    """ Alternative LDAP search base configuration. These configuration options allow for specifying
-    the DN in which to find user, group, and netgroup entries. If unspecified (the default) then all
-    users, groups, and netgroups within the specified `basedn` will be available on TrueNAS. """
+    """ Alternative LDAP search base configuration. These configuration options allow for specifying the DN in which to
+    find user, group, and netgroup entries. If unspecified (the default) then all users, groups, and netgroups within
+    the specified `basedn` will be available on TrueNAS.These are only required if using a non-standard LDAP schema. """
     attribute_maps: LDAPAttributeMaps = Field(default=LDAPAttributeMaps())
-    """ Alertative LDAP attribute map configuration for LDAP implementations that are non-compliant
-    with RFC2307 or RFC2307BIS. These are only required if using a non-standard LDAP implementaiton. """
+    """ Alertative LDAP attribute map configuration for LDAP implementations that are non-compliant with RFC2307 or
+    RFC2307BIS. These are only required if using a non-standard LDAP schema. """
     auxiliary_parameters: LongNonEmptyString | None = None
-    """ Additional parameters that may be inserted into the SSSD running configuration. These are not
-    validated and may result in production outages on application or on upgrade. """
+    """ Additional parameters that may be inserted into the SSSD running configuration. These are not validated and may
+    result in production outages on application or on upgrade. """
 
 
-class IPAConfig(BaseModel):
+class IPAConfig(DirectoryServiceBase):
+    """ Join the the TrueNAS server to an existing FreeIPA domain. """
+    service_type: Literal['IPA']
+    credential: AD_IPA_CRED | None = Field(example=[
+        {
+            'credential_type': 'KERBEROS_USER',
+            'username': 'truenas_user',
+            'password': 'Canary'
+        },
+        {
+            'credential_type': 'KERBEROS_PRINCIPAL',
+            'principal': 'host/truenas@LDAP01.INTERNAL'
+        }
+    ])
+    """ Credential to use for joining and connecting to the FreeIPA domain. A KERBEROS_USER credential must be used to
+    initially join the FreeIPA domain, which will then be replaced by a KERBEROS_PRINCIPAL credential for the TrueNAS
+    server's FreeIPA computer account after the domain join completes. """
     target_server: NonEmptyString = Field(example='ipa.example.internal')
-    """ The hostname of the IPA server to use when constructing URLs during IPA operations when
-    joining or leaving the IPA domain. """
+    """ The hostname of the IPA server to use when constructing URLs during IPA operations when joining or leaving the
+    IPA domain. """
     hostname: NonEmptyString = Field(example='truenasnyc')
     """ Hostname of TrueNAS server to register in IPA during the join process. """
     domain: NonEmptyString = Field(example='example.internal')
@@ -415,125 +509,59 @@ class IPAConfig(BaseModel):
     basedn: LDAP_DN = Field(example='dc=example,dc=internal')
     """ The base DN to use when performing LDAP operations. """
     smb_domain: IPA_SMBDomain | None = Field(default=None)
-    """ Configuration for IPA SMB domain. Not all IPA domains will have SMB schema changes
-    present. """
+    """ Configuration for IPA SMB domain. Not all IPA domains will have SMB schema changes present. """
     validate_certificates: bool = Field(default=True)
-    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server.
-    Generally, it is a better strategy to use valid certificates or to import relevant certificates
-    into the certificate trusted store in TrueNAS. """
-
-
-class DirectoryServicesEntry(BaseModel):
-    id: int
-    service_type: Literal['ACTIVEDIRECTORY', 'IPA', 'LDAP'] | None
-    """ The pre-existing directory service type to which to bind TrueNAS. ACTIVEDIRECTORY should
-    be selected when joining TrueNAS to an Active Directory domain, IPA should be selected when
-    joining TrueNAS to a FreeIPA domain, and LDAP should be selected when joining to one or more
-    OpenLDAP compatible servers."""
-    credential: DSCred | None
-    """ Credential to use for binding to the specified directory service. Kerberos credentials
-    are required for Active Directory or IPA domains. There is more variety of potential
-    authentication methods for generic LDAP environments, but the available authentication
-    mechanisms depend on the how the remote LDAP server is configured.  If kerberos credential
-    types are selected for the LDAP service type then GSSAPI binds will be performed in lieu of
-    plain LDAP binds. """
-    enable: bool
-    """ Enable the directory service. If TrueNAS has never joined the specified domain, then
-    setting this to True will cause TrueNAS to attempt to join the domain. Note that the domain
-    join process for Active Directory and IPA will make changes to the domain such as creating
-    a new computer account for the TrueNAS server and creating DNS records for TrueNAS. """
-    enable_account_cache: bool = Field(default=True)
-    """ Enable backend caching for user and group lists. If enabled, then directory services
-    users and groups will be presented as choices in the UI dropdowns and in API responses
-    for user and group queries. This also controls whether users and groups will appear in
-    `getent` results. In some edge cases this may be disabled in order to reduce load on the
-    directory server. """
+    """ If set to False TrueNAS will not validate certificates presented by the remote LDAP server. Generally, it is a
+    better strategy to use valid certificates or to import relevant certificates into the certificate trusted store in
+    TrueNAS. """
     enable_dns_updates: bool = Field(default=True)
-    """ Enable automatic DNS updates for the TrueNAS server in the domain via nsupdate and
-    gssapi / TSIG. """
-    timeout: int = Field(default=10, ge=5, le=40)
-    """ The timeout value for DNS queries that are performed as part of the join process and
-    NETWORK_TIMEOUT for LDAP requests. """
-    kerberos_realm: NonEmptyString | None = Field(default=None)
-    """ Name of kerberos realm to use for authentication to the specified directory
-    service. If None, then kerberos will not be used for binding to the configured directory
-    service. When initially joining an Active Directory or IPA domain, the realm will be
-    automatically detected and configured if the realm is not specified. """
-    configuration: ActiveDirectoryConfig | IPAConfig | LDAPConfig | None = Field(default=None)
+    """ Enable automatic DNS updates for the TrueNAS server in the domain via nsupdate and gssapi / TSIG. """
+
+
+class StandaloneConfig(BaseModel):
+    """ The TrueNAS server has no directory services configuration. """
+    id: int
+    service_type: Literal[None]
+    enable: bool
+    """ The enable field exists for standalone directory services configuration solely for the purpose of providing
+    consistent field availabilty for API consumers. The configuration may never be explicitly enabled. """
+
+
+DirectoryServicesEntry = Annotated[
+    ActiveDirectoryConfig | IPAConfig | LDAPConfig | StandaloneConfig,
+    Field(discriminator='service_type')
+]
 
 
 @single_argument_args('directoryservices_update')
 class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMetaclass):
-    """ Update the directory services configuration with the specified payload.
-    If service_type is set to None and enable is False, then the all existing directory
-    service configuration will be cleared.
+    """ Update the directory services configuration with the specified payload. If service_type is set to None and
+    enable is False, then the all existing directory service configuration will be cleared.
+
 
     Note about domain joins:
-    IPA and Active Directory directory service types perform a join operation the
-    first time they are enabled, which results in the creation of a domain account for
-    the TrueNAS server. This account's credentials, which are in the form of a machine
-    account keytab, will be used for all further domain-related operations.
+   
+    IPA and Active Directory directory service types perform a join operation the first time they are enabled, which
+    results in the creation of a domain account for the TrueNAS server. This account's credentials, which are in the
+    form of a machine account keytab, will be used for all further domain-related operations.
     """
     id: Excluded = excluded_field()
     force: bool = Field(default=False)
-    """ Bypass validation for whether a server with this hostname and netbios name is
-    already registered in an IPA or Active Directory domain. This may be used, for example,
-    to replace an existing sever with a TrueNAS server. The force parameter should not be used
-    indiscriminately as doing so may result in production outages for any client using an
-    existing server that conflicts with this TrueNAS server when TrueNAS overwrites the
-    existing account. """
-
-    def __check_configuration_type(self, service_type, configuration):
-        match service_type:
-            case 'ACTIVEDIRECTORY':
-                if not isinstance(configuration, ActiveDirectoryConfig):
-                    raise ValueError('Active Directory configuration is required')
-            case 'IPA':
-                if not isinstance(configuration, IPAConfig):
-                    raise ValueError('IPA configuration is required')
-
-            case 'LDAP':
-                if not isinstance(configuration, LDAPConfig):
-                    raise ValueError('LDAP configuration is required')
-
-            case None:
-                if configuration is not None:
-                    raise ValueError('configuration must be set to None when setting service type to None')
-            case _:
-                raise ValueError(f'{service_type}: unexpected service_type')
-
-    def __check_credential_type(self, service_type, credential_type, has_realm):
-        match service_type:
-            case 'LDAP':
-                if credential_type.startswith('KERBEROS') and not has_realm:
-                    raise ValueError(
-                        'Kerberos realm is required for using kerberos credentials with a plain LDAP server'
-                    )
-
-            case _:
-                if credential_type.startswith('LDAP'):
-                    raise ValueError('LDAP authentication methods are only supported for the LDAP service type.')
+    """ Bypass validation for whether a server with this hostname and netbios name is already registered in an IPA or
+    Active Directory domain. This may be used, for example, to replace an existing sever with a TrueNAS server. The
+    force parameter should not be used indiscriminately as doing so may result in production outages for any client
+    using an existing server that conflicts with this TrueNAS server when TrueNAS overwrites the existing account. """
 
     @model_validator(mode='after')
     def validate_ds(self):
         if self.service_type == undefined and self.enable is not False:
             raise ValueError('service_type is required in update payloads')
 
-        if self.enable is True and self.service_type is not None:
-            if self.configuration in (None, undefined):
-                raise ValueError('Explicit configuration is required when service_type is specified')
-
-            if self.credential in (None, undefined):
-                raise ValueError('Explicit credential configuration is required when service_type is specified')
-
-            self.__check_credential_type(
-                self.service_type,
-                self.credential.credential_type,
-                self.kerberos_realm is not None
-            )
-
         if self.enable is True:
-            self.__check_configuration_type(self.service_type, self.configuration)
+            if self.service_type is None:
+                raise ValueError('Standalone configuration may not be explicitly enabled.')
+            elif self.credential in (None, undefined):
+                raise ValueError('Explicit credential configuration is required when service_type is specified')
 
         return self
 

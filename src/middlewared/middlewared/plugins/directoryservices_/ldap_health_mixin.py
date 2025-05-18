@@ -40,7 +40,7 @@ class LDAPHealthMixin:
         ldap_config = dsconfig_to_ldap_client_config(data)
         return LdapClient.search(
             ldap_config,
-            dn or data['configuration']['basedn'],
+            dn or data['basedn'],
             ldap.SCOPE_BASE if scope_base else ldap.SCOPE_SUBTREE,
             '(objectclass=*)'
         )

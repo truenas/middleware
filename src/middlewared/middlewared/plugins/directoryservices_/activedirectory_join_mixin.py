@@ -208,7 +208,7 @@ class ADJoinMixin:
             self.logger.debug('Failed to remove stale secrets', exc_info=True)
 
         if ds_config['enable_dns_updates']:
-            dns_name = f'{ds_config["configuration"]["hostname"]}.{ds_config["configuration"]["domain"]}'
+            dns_name = f'{ds_config["hostname"]}.{ds_config["domain"]}'
             job.set_progress(description='Unregistering from active directory DNS')
             try:
                 self.unregister_dns(dns_name, True, kdc_saf_cache_get())
@@ -316,15 +316,15 @@ class ADJoinMixin:
             )
 
     def _ad_remove_privileges(self, ds_config: dict) -> None:
-        priv = self.middleware.call_sync('privilege.query', [['name', '=', ds_config['configuration']['domain']]])
+        priv = self.middleware.call_sync('privilege.query', [['name', '=', ds_config['domain']]])
         if not priv:
             return
 
         self.middleware.call('privilege.delete', priv[0]['id'])
 
     def _ad_post_join_actions(self, job: Job, conf: dict):
-        domain = conf['configuration']['domain']
-        hostname = conf['configuration']['hostname']
+        domain = conf['domain']
+        hostname = conf['hostname']
 
         self._ad_set_spn(hostname, domain)
         # The password in secrets.tdb has been replaced so make
@@ -357,9 +357,9 @@ class ADJoinMixin:
         If post-join operations fail, then we attempt to roll back changes on
         the DC.
         """
-        domain = conf['configuration']['domain']
-        hostname = conf['configuration']['hostname']
-        computer_account_ou = conf['configuration']['computer_account_ou']
+        domain = conf['domain']
+        hostname = conf['hostname']
+        computer_account_ou = conf['computer_account_ou']
         cmd = [
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
@@ -402,8 +402,8 @@ class ADJoinMixin:
     @kerberos_ticket
     def _ad_join(self, job: Job, ds_config: dict):
         assert ds_config['service_type'] == 'ACTIVEDIRECTORY', 'Unexpected service configuration'
-        domain = ds_config['configuration']['domain']
-        hostname = ds_config['configuration']['hostname']
+        domain = ds_config['domain']
+        hostname = ds_config['hostname']
         realm_id = None
 
         if (failover_status := self.middleware.call_sync('failover.status')) not in ('MASTER', 'SINGLE'):
@@ -440,7 +440,7 @@ class ADJoinMixin:
             validate_netbios_name(smb['netbiosname'])
             self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_netbiosname': smb['netbiosname']})
 
-        ds_config['configuration']['hostname'] = hostname
+        ds_config['hostname'] = hostname
         workgroup = smb['workgroup']
 
         dc_info = self._ad_lookup_dc(domain)
@@ -480,7 +480,7 @@ class ADJoinMixin:
                 )
 
         job.set_progress(20, 'Detecting Active Directory Site.')
-        site = ds_config['configuration']['site'] or dc_info['client_site_name']
+        site = ds_config['site'] or dc_info['client_site_name']
 
         job.set_progress(30, 'Detecting Active Directory NetBIOS Domain Name.')
         if workgroup != dc_info['pre-win2k_domain']:
