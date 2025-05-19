@@ -262,7 +262,7 @@ def test_account_privilege_authentication(enable_ds_auth):
         assert ngroups > 0
 
         # RID 513 is constant for "Domain Users"
-        domain_sid = call("idmap.domain_info", short_name)[0])['sid']
+        domain_sid = call("idmap.domain_info", short_name)['sid']
         with privilege({
             "name": "AD privilege",
             "local_groups": [],
