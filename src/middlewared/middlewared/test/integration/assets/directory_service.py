@@ -215,10 +215,7 @@ def get_default_configuration(service_type: str) -> dict:
 def directoryservice(
     service_type: str, *,
     credential: dict | None = None,
-    account_cache: bool = True,
-    dns_updates: bool = True,
     timeout: int = 10,
-    kerberos_realm: str | None = None,
     configuration=None,
     reset_config=True
 ):
@@ -241,12 +238,8 @@ def directoryservice(
                 'service_type': service_type,
                 'enable': True,
                 'credential': credential,
-                'enable_account_cache': account_cache,
-                'enable_dns_updates': dns_updates,
                 'timeout': timeout,
-                'kerberos_realm': kerberos_realm,
-                'configuration': defaults
-            }, job=True)
+            } | defaults, job=True)
         except Exception:
             call('directoryservices.reset')
             # This may be a test of validation errors
