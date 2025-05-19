@@ -81,7 +81,7 @@ def test_enable_leave_activedirectory():
     short_name = None
 
     with directoryservice('ACTIVEDIRECTORY', timeout=15) as ad:
-        domain_name = ad['config']['configuration']['domain']
+        domain_name = ad['config']['domain']
         domain_info = ad['domain_info']
         short_name = domain_info['domain_controller']['pre-win2k_domain']
 
@@ -115,7 +115,7 @@ def test_enable_leave_activedirectory():
         addresses = [x['address'] for x in result]
         assert truenas_server.ip in addresses
 
-        res = call('privilege.query', [['name', 'C=', AD_DOMAIN]], {'get': True})
+        res = call('privilege.query', [['name', 'C=', domain_name]], {'get': True})
         assert res['ds_groups'][0]['name'].endswith('domain admins')
         assert res['ds_groups'][0]['sid'].endswith('512')
         assert res['roles'][0] == 'FULL_ADMIN'
@@ -253,7 +253,7 @@ def test_account_privilege_authentication(enable_ds_auth):
     reset_systemd_svcs('winbind')
 
     with directoryservice('ACTIVEDIRECTORY') as ds:
-        domain_name = ds['config']['configuration']['domain']
+        domain_name = ds['config']['domain']
         domain_info = ad['domain_info']
         short_name = domain_info['domain_controller']['pre-win2k_domain']
 
@@ -271,7 +271,7 @@ def test_account_privilege_authentication(enable_ds_auth):
             "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         }):
-            with client(auth=(f'limiteduser@{AD_DOMAIN}', AD_DOM2_LIMITED_USER_PASSWORD)) as c:
+            with client(auth=(f'limiteduser@{domain_name}', AD_DOM2_LIMITED_USER_PASSWORD)) as c:
                 methods = c.call("core.get_methods")
                 me = c.call("auth.me")
 
