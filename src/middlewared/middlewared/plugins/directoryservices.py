@@ -123,12 +123,6 @@ class DirectoryServices(Service):
         config_job = self.middleware.call_sync('smb.configure')
         config_job.wait_sync(raise_error=True)
 
-        failover_status = self.middleware.call_sync('failover.status')
-        if failover_status not in ('SINGLE', 'MASTER'):
-            self.logger.debug('%s: skipping directory service setup due to failover status', failover_status)
-            job.set_progress(100, f'{failover_status}: skipping directory service setup due to failover status')
-            return
-
         # Recover is called here because it short-circuits if health check
         # shows we're healthy. If we can't recover due to things being irreparably
         # broken then this will raise an exception.
@@ -138,9 +132,14 @@ class DirectoryServices(Service):
 
         # nsswitch.conf needs to be updated
         self.middleware.call_sync('etc.generate', 'nss')
-        job.set_progress(10, 'Refreshing cache'),
-        cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
-        cache_refresh.wait_sync()
+
+        # The UI / API user cache isn't required for standby controller. This means we can avoid unnecessary
+        # load on remote servers.
+        failover_status = self.middleware.call_sync('failover.status')
+        if failover_status in ('SINGLE', 'MASTER'):
+            job.set_progress(10, 'Refreshing cache'),
+            cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
+            cache_refresh.wait_sync()
 
         job.set_progress(75, 'Restarting dependent services')
         self.restart_dependent_services()
