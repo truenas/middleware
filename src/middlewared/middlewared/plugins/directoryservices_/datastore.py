@@ -9,7 +9,7 @@ from middlewared.api.current import (
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
-from middlewared.utils.directoryservices.krb5 import ktutil_list_impl, kdc_saf_cache_get
+from middlewared.utils.directoryservices.krb5 import ktutil_list_impl
 from middlewared.utils.directoryservices.constants import (
     DSCredType, DomainJoinResponse, DSStatus, DSType, DEF_SVC_OPTS
 )

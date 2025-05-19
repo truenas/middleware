@@ -2,9 +2,9 @@ import enum
 
 
 class DSStatus(enum.StrEnum):
-    DISABLED = 'DISABLED' 
-    FAULTED = 'FAULTED' 
-    LEAVING = 'LEAVING' 
+    DISABLED = 'DISABLED'
+    FAULTED = 'FAULTED'
+    LEAVING = 'LEAVING'
     JOINING = 'JOINING'
     HEALTHY = 'HEALTHY'
 
