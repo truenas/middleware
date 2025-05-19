@@ -166,6 +166,8 @@ class KerberosService(ConfigService):
         except asyncio.TimeoutError:
             raise CallError(f'Timed out hung kinit after [{kinit_timeout}] seconds')
 
+
+        await self.middleware.call('kerberos.wait_for_renewal')
         return cred
 
     @private
