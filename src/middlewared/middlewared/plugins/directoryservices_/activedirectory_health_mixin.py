@@ -35,7 +35,8 @@ class ADHealthMixin:
         ds_config = self.middleware.call_sync('directoryservices.config')
         netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
 
-        # Write temporary krb5.conf targeting kdc
+        # Write temporary krb5.conf targeting kdc. Since this is a health check we
+        # don't want to introduce a server affinity
         krbconf = KRB5Conf()
         krbconf.add_libdefaults({
             str(KRB_LibDefaults.DEFAULT_REALM): ds_config['kerberos_realm'],

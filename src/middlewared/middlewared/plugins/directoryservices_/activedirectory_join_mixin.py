@@ -318,6 +318,7 @@ class ADJoinMixin:
         dom = ds_config['configuration']['domain'].upper()
         priv = self.middleware.call_sync('privilege.query', [['name', '=', dom]])
         if not priv:
+            self.logger.debug("No privilege found for %s", dom)
             return
 
         self.middleware.call('privilege.delete', priv[0]['id'])

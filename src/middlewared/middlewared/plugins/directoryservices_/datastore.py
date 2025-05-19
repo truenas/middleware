@@ -728,6 +728,7 @@ class DirectoryServices(ConfigService):
             job.wrap_sync(self.middleware.call_sync('directoryservices.connection.leave_domain'))
         except Exception:
             # Make sure we nuke our kerberos ticket
+            self.logger.warning('Failed to cleanly leave domain', exc_info=True)
             self.__revert_changes(revert)
             raise
 

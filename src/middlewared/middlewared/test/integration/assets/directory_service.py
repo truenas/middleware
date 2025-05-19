@@ -187,7 +187,7 @@ def get_directory_services_account(service_type: str) -> directoryservices_user:
             break
         except Exception as exc:
             if not retries:
-                fail(f'Failed to get directory services user: {exc}')
+                raise
 
             sleep(1)
             retries -= 1
@@ -261,8 +261,8 @@ def directoryservice(
             # This may be a test of validation errors
             raise
 
-        ds_acct = get_directory_services_account(service_type)
         try:
+            ds_acct = get_directory_services_account(service_type)
             domain_info = call('directoryservices.domain_info')
             yield {'config': config, 'account': ds_acct, 'domain_info': domain_info}
         finally:
