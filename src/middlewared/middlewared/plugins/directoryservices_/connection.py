@@ -8,6 +8,7 @@ from middlewared.service import job, Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DomainJoinResponse, DSType
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket
+from time import sleep
 from os import curdir as dot
 
 
@@ -76,6 +77,38 @@ class DomainConnection(
 
         return payload
 
+    def __entry_exists(self, nameserver, fqdn):
+        try:
+            self.middleware.call_sync('dnsclient.forwardlookup', {
+                'names': [fqdn],
+                'dns_client_options': {'nameservers': [nameserver]}
+            })
+            return True
+        except dns.resolver.NSDOMAIN:
+            return False
+        except Exception:
+            self.logger.debug('%s: forward lookup of host through nameserver [%s] failed unexpectedly.',
+                              fqdn, nameserver, exc_info=True)
+            return False
+
+    def __wait_dns_change(self, fqdn: str, expectation: bool) -> None:
+        """ nsupdate changes may take time to propagate. """
+        for entry in self.middleware.call_sync('dns.query'):
+            retries = 5
+            while retries:
+                if not retries:
+                    self.logger.debug('Exhausted retry attempts waiting for DNS changes to %s to propagate',
+                                      entry['nameserver'])
+                    # nothing to do, break out of loop
+                    break
+
+                if self.__entry_exists(entry['nameserver'], fqdn) is expectation:
+                    break
+
+                self.logger.debug('%s: waiting for changes to propagate to nameserver.', entry['nameserver'])
+                retries -= 1
+                sleep(1)
+
     @kerberos_ticket
     def register_dns(self, fqdn: str, do_ptr: bool = False, nameserver_override: str | None = None):
         """
@@ -125,6 +158,7 @@ class DomainConnection(
 
         payload = self._create_nsupdate_payload(fqdn, 'ADD', do_ptr)
         self.middleware.call_sync('dns.nsupdate', {'ops': payload, 'nameserver_override': nameserver_override})
+        self.__wait_dns_change(fqdn, True)
 
     @kerberos_ticket
     def unregister_dns(self, fqdn: str, do_ptr: bool = False, nameserver_override: str | None = None):
@@ -152,6 +186,7 @@ class DomainConnection(
 
         payload = self._create_nsupdate_payload(fqdn, 'DELETE', do_ptr)
         self.middleware.call_sync('dns.nsupdate', {'ops': payload, 'nameserver_override': nameserver_override})
+        self.__wait_dns_change(fqdn, False)
 
     @kerberos_ticket
     def _test_is_joined(self, ds_type: DSType, domain: str) -> bool:
