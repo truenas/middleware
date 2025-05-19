@@ -743,6 +743,6 @@ class DirectoryServices(ConfigService):
             self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
         else:
             # Clearing the idmap cache also restarts winbindd
-            self.middleware.call_sync('idmap.clear_idmap_cache')
+            self.middleware.call_sync('idmap.clear_idmap_cache').wait(raise_error=True)
 
         self.middleware.call_sync('directoryservices.restart_dependent_services')
