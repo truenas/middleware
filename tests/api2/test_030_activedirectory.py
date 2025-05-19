@@ -108,7 +108,16 @@ def test_enable_leave_activedirectory():
         assert pw['local'] is False
         assert pw['source'] == 'ACTIVEDIRECTORY'
 
-        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{domain_name}']})
+        # DNS updates may not propagate to all nameservers in a timely manner, hence retry a few times.
+        retries = 10
+        while retries:
+            result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{domain_name}']})
+            if result:
+                break
+
+            retries -= 1
+            sleep(1)
+
         assert len(result) != 0
 
         addresses = [x['address'] for x in result]
