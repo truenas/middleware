@@ -9,7 +9,7 @@ sys.path.append(apifolder)
 from functions import SSH_TEST
 from auto_config import password, user
 from middlewared.service_exception import CallError
-from middlewared.test.integration.assets.directory_service import directory_service 
+from middlewared.test.integration.assets.directory_service import directoryservice 
 from middlewared.test.integration.utils import call
 
 
@@ -18,7 +18,7 @@ WINBIND_SEPARATOR = "\\"
 
 @pytest.fixture(scope="module")
 def do_ad_connection(request):
-    with directoryservices('ACTIVEDIRECTORY') as ad:
+    with directoryservice('ACTIVEDIRECTORY') as ad:
         # make sure we are extra sure cache fill complete
         cache_fill_job = call(
             'core.get_jobs',
