@@ -187,7 +187,8 @@ def get_directory_services_account(service_type: str) -> directoryservices_user:
             break
         except Exception as exc:
             if not retries:
-                raise
+                fail(str(exc))
+                #raise
 
             sleep(1)
             retries -= 1

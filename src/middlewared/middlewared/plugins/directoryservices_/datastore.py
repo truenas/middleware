@@ -703,6 +703,7 @@ class DirectoryServices(ConfigService):
     )
     @job(lock='directoryservices_change')
     def leave(self, job, cred):
+        self.logger.debug("XXX leaving")
         revert = []
         verrors = ValidationErrors()
 
