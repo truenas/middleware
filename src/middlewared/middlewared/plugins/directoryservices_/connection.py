@@ -1,3 +1,4 @@
+import dns
 import ipaddress
 
 from .activedirectory_join_mixin import ADJoinMixin
