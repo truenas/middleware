@@ -324,6 +324,7 @@ class DomainConnection(
 
         # Only make actual attempt to leave the domain if we have a valid join
         if self._test_is_joined(ds_type, domain):
+            self.logger.debug("XXX: leaving domain")
             do_leave_fn(job, ds_config)
         else:
             self.logger.warning(

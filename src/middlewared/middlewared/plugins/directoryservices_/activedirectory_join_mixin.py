@@ -321,6 +321,7 @@ class ADJoinMixin:
             self.logger.debug("No privilege found for %s", dom)
             return
 
+        self.logger.debug("XXX: remove privilege")
         self.middleware.call('privilege.delete', priv[0]['id'])
 
     def _ad_post_join_actions(self, job: Job, conf: dict):
@@ -338,7 +339,6 @@ class ADJoinMixin:
             while True:
                 try:
                     self.register_dns(conf['dns_name'], True, kdc_saf_cache_get())
-                    self.logger.debug("XXX: success")
                     break
                 except CallError as exc:
                     # Testing with domains with multiple DCs / nameservers indicated that
