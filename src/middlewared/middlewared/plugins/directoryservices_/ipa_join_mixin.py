@@ -148,14 +148,12 @@ class IPAJoinMixin:
             }
         })
 
-    def _ipa_grant_privileges(self) -> None:
+    def _ipa_grant_privileges(self, domain: str) -> None:
         """ Grant domain admins ability to manage TrueNAS """
-
-        ds_config = self.middleware.call_sync('directoryservices.config')
 
         existing_privileges = self.middleware.call_sync(
             'privilege.query',
-            [["name", "=", ds_config['configuration']['domain'].upper()]]
+            [["name", "=", domain.upper()]]
         )
 
         if existing_privileges:
@@ -193,7 +191,7 @@ class IPAJoinMixin:
 
         try:
             self.middleware.call_sync('privilege.create', {
-                'name': ds_config['configuration']['domain'].upper(),
+                'name': domain.upper(),
                 'ds_groups': [admins_grp['gr_gid']],
                 'roles': ['FULL_ADMIN'],
                 'web_shell': True

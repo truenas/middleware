@@ -245,9 +245,9 @@ class DomainConnection(
 
         match ds_type:
             case DSType.AD:
-                self._ad_grant_privileges()
+                self._ad_grant_privileges(domain)
             case DSType.IPA:
-                self._ipa_grant_privileges()
+                self._ipa_grant_privileges(domain)
             case _:
                 raise ValueError(f'{ds_type}: unexpected directory sevice type')
 

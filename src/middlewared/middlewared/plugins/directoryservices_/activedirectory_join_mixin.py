@@ -286,14 +286,14 @@ class ADJoinMixin:
             f'Please review logs at {log_path} and file a bug report.'
         )
 
-    def _ad_grant_privileges(self) -> None:
+    def _ad_grant_privileges(self, domain: str) -> None:
         """ Grant domain admins ability to manage TrueNAS """
 
         dom = wbclient.Ctx().domain()
 
         existing_privileges = self.middleware.call_sync(
             'privilege.query',
-            [["name", "=", dom.dns_name.upper()]]
+            [["name", "=", domain.upper()]]
         )
 
         if existing_privileges:
@@ -301,7 +301,7 @@ class ADJoinMixin:
 
         try:
             self.middleware.call_sync('privilege.create', {
-                'name': dom.dns_name.upper(),
+                'name': domain.upper(),
                 'ds_groups': [f'{dom.sid}-512'],
                 'roles': ['FULL_ADMIN'],
                 'web_shell': True
