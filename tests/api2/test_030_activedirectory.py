@@ -322,7 +322,7 @@ def test_account_privilege_authentication(enable_ds_auth):
 
             # Alternative formatting for user name <DOMAIN>\<username>.
             # this should also work for auth
-            with client(auth=(ds['acccount'].user_obj['pw_name'], ds['account'].password)) as c:
+            with client(auth=(ds['account'].user_obj['pw_name'], ds['account'].password)) as c:
                 methods = c.call("core.get_methods")
 
             assert "pool.create" in methods

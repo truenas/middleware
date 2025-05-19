@@ -109,7 +109,7 @@ def do_ad_connection():
 
 
 def test_kerberos_keytab_and_realm(do_ad_connection):
-    domain_name = ds['config']['configuration']['domain']
+    domain_name = do_ad_connection['config']['configuration']['domain']
 
     def krb5conf_parser(krb5conf_lines, idx, entry, state):
         if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":

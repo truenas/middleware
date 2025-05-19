@@ -50,7 +50,7 @@ def get_ad_user_and_group(do_ad_connection):
     WORKGROUP = domain_info['domain_controller']['pre-win2k_domain']
 
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
-    ad_user = ad_connection['account'].user_obj['pw_name']
+    ad_user = do_ad_connection['account'].user_obj['pw_name']
     ad_group = f'{domain_prefix}domain users'
 
     user = call(
