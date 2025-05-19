@@ -734,6 +734,9 @@ class DirectoryServices(ConfigService):
             raise
 
         self.logger.debug('XXX: left domain')
+        privileges = self.middleware.call_sync('privilege.query')
+        self.logger.debug('XXX: privileges: %s', privileges)
+
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
         job.set_progress(description='Restarting services')
         self.middleware.call_sync('kerberos.stop')
@@ -749,3 +752,4 @@ class DirectoryServices(ConfigService):
             self.middleware.call_sync('idmap.clear_idmap_cache').wait(raise_error=True)
 
         self.middleware.call_sync('directoryservices.restart_dependent_services')
+        job.set_progress(description=f'Successfully left {ds_config["configuration"]["domain"]}')

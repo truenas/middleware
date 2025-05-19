@@ -229,6 +229,8 @@ class ADJoinMixin:
             if realm:
                 self.middleware.call_sync('datastore.delete', 'directoryservice.kerberosrealm', realm[0]['id'])
 
+        job.set_progress(description='Completed active directory leave.')
+
     @kerberos_ticket
     def _ad_set_spn(self, hostname, domainname):
         def setspn(spn):
