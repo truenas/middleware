@@ -315,7 +315,8 @@ class ADJoinMixin:
             )
 
     def _ad_remove_privileges(self, ds_config: dict) -> None:
-        priv = self.middleware.call_sync('privilege.query', [['name', '=', ds_config['configuration']['domain']]])
+        dom = ds_config['configuration']['domain'].upper()
+        priv = self.middleware.call_sync('privilege.query', [['name', '=', dom]])
         if not priv:
             return
 
