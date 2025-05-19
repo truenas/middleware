@@ -321,7 +321,7 @@ class ADJoinMixin:
             self.logger.debug("No privilege found for %s", dom)
             return
 
-        self.logger.debug("XXX: remove privilege")
+        self.logger.debug("XXX: remove privilege: %d", priv[0]['id'])
         self.middleware.call('privilege.delete', priv[0]['id'])
 
     def _ad_post_join_actions(self, job: Job, conf: dict):

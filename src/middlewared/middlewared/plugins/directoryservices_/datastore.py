@@ -733,6 +733,7 @@ class DirectoryServices(ConfigService):
             self.__revert_changes(revert)
             raise
 
+        self.logger.debug('XXX: left domain')
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
         job.set_progress(description='Restarting services')
         self.middleware.call_sync('kerberos.stop')
