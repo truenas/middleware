@@ -46,7 +46,7 @@ def do_ad_connection(request):
 
 
 def get_ad_user_and_group(ad_connection):
-    domain_info = ad_connection['domain_info']
+    domain_info = ad['domain_info']
     WORKGROUP = domain_info['domain_controller']['pre-win2k_domain']
 
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
