@@ -241,6 +241,12 @@ def pass_app(*, message_id=False, require=False, rest=False):
     return wrapper
 
 
+def pass_thread_local_storage(fn):
+    """Pass a thread-local storage object as a parameter to the method."""
+    fn._pass_thread_local_storage = True
+    return fn
+
+
 def periodic(interval, run_on_start=True):
     def wrapper(fn):
         fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
