@@ -106,6 +106,7 @@ DATSTORE_CONFIG_ITEMS = frozenset([
     'timeout',
 ])
 
+# keys that are unique to particular directory services and presented in `configuration`
 AD_CONFIG_ITEMS = frozenset([
     'ad_hostname', 'ad_domain', 'ad_idmap', 'ad_site', 'ad_computer_account_ou',
     'ad_use_default_domain', 'ad_enable_trusted_domains', 'ad_trusted_domains',
@@ -128,7 +129,7 @@ NULL_CREDENTIAL = {
 }
 
 SCHEMA = 'directoryservices.update'
-KRB_SRV = '_kerberos._tcp.'
+KRB_SRV = '_kerberos._tcp.'  # SRV for kerberos for DNS queries to check our nameservers
 
 
 class DirectoryServices(ConfigService):
@@ -192,7 +193,7 @@ class DirectoryServices(ConfigService):
         }})
 
         c = config_out['configuration']
-        # Add search bases:
+        # Add search bases and attribute maps:
         for key, value in data.items():
             if key.startswith('ldap_base_'):
                 c[LDAP_SEARCH_BASES_SCHEMA_NAME][key[len('ldap_base_'):]] = value
@@ -227,8 +228,9 @@ class DirectoryServices(ConfigService):
             case 'LDAP':
                 await self.extend_ldap(data, config)
             case _:
-                # No configured DS type so remove some irrelevant
-                # items
+                # No configured DS type so remove some irrelevant items. We're trying to
+                # avoid raising errors in the config method if for some reason there's a
+                # garbage value in the database.
                 config.update({
                     'enable': False,
                     'credential': None,
@@ -239,6 +241,7 @@ class DirectoryServices(ConfigService):
 
     @private
     def compress_cred(self, data, config_out):
+        """ This method converts the `credential` dictionary into relevant database columns. """
         datastore_cred = NULL_CREDENTIAL.copy()
 
         if data['credential'] is None:
@@ -308,7 +311,10 @@ class DirectoryServices(ConfigService):
 
     @private
     def compress(self, data):
+        # first compress the common configuration items
         config = {key: data[key] for key in DATSTORE_CONFIG_ITEMS}
+
+        # we extend the kerberos realm to just its name, but we insert the pk into the database
         if data['kerberos_realm']:
             config['kerberos_realm'] = self.middleware.call_sync(
                 'kerberos.realm.query',
@@ -316,9 +322,10 @@ class DirectoryServices(ConfigService):
                 {'get': True}
             )['id']
 
+        # the `credential` and `configuration` keys in extended data are dictionaries that need
+        # to be compressed back down to their constituent database columns.
         self.compress_cred(data, config)
         self.compress_service_config(data, config)
-        self.logger.debug("XXX: compressed: %s", config)
         return config
 
     @private
@@ -337,10 +344,9 @@ class DirectoryServices(ConfigService):
             if old['configuration'] != new['configuration']:
                 verrors.add(
                     f'{SCHEMA}.configuration',
-                    'Permitted changes while directory services are enabled are limited '
-                    'to account caching, DNS updates, and timeouts. All other changes should '
-                    'be performed with directory services disabled and during a maintenance '
-                    'window as the changes may result in a temporary production outage.'
+                    'Permitted changes while directory services are enabled are limited to account caching, DNS '
+                    'updates, and timeouts. All other changes should be performed with directory services disabled and '
+                    'during a maintenance window as the changes may result in a temporary production outage.'
                 )
 
             if new['kerberos_realm'] != old['kerberos_realm']:
@@ -373,7 +379,9 @@ class DirectoryServices(ConfigService):
 
     @private
     def validate_kerberos_dns(self, schema, verrors, domain, lifetime=10):
-        """ verify minimally that we can resolve kerberos SRV for the domain through all nameservers """
+        """ verify minimally that we can resolve kerberos SRV for the domain through all nameservers. This is
+        important because kerberos by default will try to resolve hostnames and realms through DNS. If a non-domain
+        nameserver is present, then it can cause an unexpected production outage."""
         for entry in self.middleware.call_sync('dns.query'):
             record = f'{KRB_SRV}{domain}.'
             try:
@@ -399,6 +407,8 @@ class DirectoryServices(ConfigService):
 
     @private
     def validate_dns(self, old, new, verrors, revert):
+        """ Check whether nameservers are correct and check whether our proposed hostname is currently in-use
+        by another server. The latter check may be skipped if `force` is specified. """
         schema = f'{SCHEMA}.configuration.domain'
         self.validate_kerberos_dns(schema, verrors, new['configuration']['domain'], new['timeout'])
 

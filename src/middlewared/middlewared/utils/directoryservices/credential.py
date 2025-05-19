@@ -139,7 +139,7 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
 
         case DSType.IPA:
             if not kdc:
-                kdc.append(new['configuration']['host'])
+                kdc.append(new['configuration']['target_server'])
 
             if not realm:
                 realm = new['configuration']['domain']

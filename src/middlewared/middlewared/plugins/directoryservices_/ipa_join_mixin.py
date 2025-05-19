@@ -419,11 +419,11 @@ class IPAJoinMixin:
 
         job.set_progress(15, 'Performing IPA join')
         resp = self._ipa_join_impl(
-            ds_config['configuration']['host'],
+            ds_config['configuration']['hostname'],
             ds_config['configuration']['basedn'],
             ds_config['configuration']['domain'],
             ds_config['configuration']['realm'],
-            ds_config['configuration']['host']
+            ds_config['configuration']['target_server']
         )
         # resp includes `cacert` for domain and `keytab` for our host principal to use
         # in future.
