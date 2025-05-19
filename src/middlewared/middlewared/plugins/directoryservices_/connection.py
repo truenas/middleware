@@ -80,7 +80,7 @@ class DomainConnection(
 
     def __entry_exists(self, nameserver, fqdn):
         try:
-            self.middleware.call_sync('dnsclient.forwardlookup', {
+            self.middleware.call_sync('dnsclient.forward_lookup', {
                 'names': [fqdn],
                 'dns_client_options': {'nameservers': [nameserver]}
             })
