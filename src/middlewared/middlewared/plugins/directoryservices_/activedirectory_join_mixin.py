@@ -336,6 +336,7 @@ class ADJoinMixin:
             while True:
                 try:
                     self.register_dns(conf['dns_name'], True, kdc_saf_cache_get())
+                    self.logger.debug("XXX: success")
                     break
                 except CallError as exc:
                     # Testing with domains with multiple DCs / nameservers indicated that

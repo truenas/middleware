@@ -253,7 +253,7 @@ def test_account_privilege_authentication(enable_ds_auth):
 
     with directoryservice('ACTIVEDIRECTORY') as ds:
         domain_name = ds['config']['configuration']['domain']
-        domain_info = ad['domain_info']
+        domain_info = ds['domain_info']
         short_name = domain_info['domain_controller']['pre-win2k_domain']
 
         nusers = call("user.query", [["local", "=", False]], {"count": True})

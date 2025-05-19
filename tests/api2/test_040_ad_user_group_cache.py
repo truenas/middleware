@@ -45,8 +45,8 @@ def do_ad_connection(request):
         yield ad | {'users': set_users, 'groups': set_groups}
 
 
-def get_ad_user_and_group(ad_connection):
-    domain_info = ad['domain_info']
+def get_ad_user_and_group(do_ad_connection):
+    domain_info = do_ad_connection['domain_info']
     WORKGROUP = domain_info['domain_controller']['pre-win2k_domain']
 
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
