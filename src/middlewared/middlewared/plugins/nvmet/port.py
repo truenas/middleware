@@ -15,7 +15,7 @@ from middlewared.api.current import (NVMetPortCreateArgs,
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import MatchNotFound, ValidationErrors
-from .constants import PORT_ADDR_FAMILY, PORT_TRTYPE, similar_ports
+from .constants import PORT_ADDR_FAMILY, PORT_DATASTORE_EXTEND, PORT_DATASTORE_PREFIX, PORT_TRTYPE, similar_ports
 
 
 def _port_summary(data):
@@ -43,8 +43,8 @@ class NVMetPortService(CRUDService):
     class Config:
         namespace = 'nvmet.port'
         datastore = 'services.nvmet_port'
-        datastore_prefix = 'nvmet_port_'
-        datastore_extend = 'nvmet.port.extend'
+        datastore_prefix = PORT_DATASTORE_PREFIX
+        datastore_extend = PORT_DATASTORE_EXTEND
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetPortEntry
@@ -117,8 +117,8 @@ class NVMetPortService(CRUDService):
         audit_callback(_port_summary(port))
 
         verrors = ValidationErrors()
-        port_subsys_ids = {x['id']: x['subsys']['nvmet_subsys_name'] for x in
-                           await self.middleware.call('nvmet.port_subsys.query', [['port_id', '=', id_]])}
+        port_subsys_ids = {x['id']: x['subsys']['name'] for x in
+                           await self.middleware.call('nvmet.port_subsys.query', [['port.id', '=', id_]])}
         if port_subsys_ids:
             if force:
                 await self.middleware.call('nvmet.port_subsys.delete_ids', list(port_subsys_ids))
@@ -183,7 +183,7 @@ class NVMetPortService(CRUDService):
                                                                       {'select': ['id']})]
 
         if await self.middleware.call('nvmet.port_subsys.query',
-                                      [['port_id', 'in', port_ids]],
+                                      [['port.id', 'in', port_ids]],
                                       {'count': True}):
             return True
         return False
@@ -227,7 +227,7 @@ class NVMetPortService(CRUDService):
                             # to non_ana_port_ids
                             delta = {ps['port']['id'] for ps in
                                      await self.middleware.call('nvmet.port_subsys.query',
-                                                                [['subsys_id', '=', subsys_id]])}
+                                                                [['subsys.id', '=', subsys_id]])}
                             non_ana_port_ids = non_ana_port_ids | delta
                 else:
                     for subsys_id, subsys in subsystems.items():
@@ -236,7 +236,7 @@ class NVMetPortService(CRUDService):
                             # to ana_port_ids
                             delta = {ps['port']['id'] for ps in
                                      await self.middleware.call('nvmet.port_subsys.query',
-                                                                [['subsys_id', '=', subsys_id]])}
+                                                                [['subsys.id', '=', subsys_id]])}
                             ana_port_ids = ana_port_ids | delta
 
         # Calculate referrals
@@ -292,7 +292,7 @@ class NVMetPortService(CRUDService):
             # If subsystems are attached and service running then can only change
             # items if disabled.  Except enabled flag.
             if await self.middleware.call('nvmet.port_subsys.query',
-                                          [['port_id', '=', old['id']]],
+                                          [['port.id', '=', old['id']]],
                                           {'count': True}):
                 # Have some subsystems attached to the port
                 if old['enabled'] and await self.middleware.call('nvmet.global.running'):

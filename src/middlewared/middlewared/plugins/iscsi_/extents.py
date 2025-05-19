@@ -374,7 +374,7 @@ class iSCSITargetExtentService(SharingService):
             if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', disk]]):
                 ns = namespaces[0]
                 verrors.add(f'{schema_name}.disk',
-                            f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["nvmet_subsys_name"]} NSID {ns["nsid"]}')
+                            f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
                 raise verrors
 
             device = os.path.join('/dev', disk)

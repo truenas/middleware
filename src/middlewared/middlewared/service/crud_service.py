@@ -432,3 +432,22 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                 }, **data)
 
         return dependencies
+
+    @private
+    async def process_data(self, data, prefix, extend=None, context=None):
+        """
+        Helper function for processing data returned by query of a foreign key.
+        """
+        result = {}
+        prefix_len = len(prefix)
+        for k, v in data.items():
+            if k.startswith(prefix):
+                k = k[prefix_len:]
+            result[k] = v
+        if extend:
+            # Some extend methods require a context, some don't allow one.
+            if context is not None:
+                result = await self.middleware.call(extend, result, context)
+            else:
+                result = await self.middleware.call(extend, result)
+        return result

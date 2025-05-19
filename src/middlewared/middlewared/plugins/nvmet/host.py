@@ -6,20 +6,19 @@ from middlewared.api.current import (NVMetHostCreateArgs,
                                      NVMetHostCreateResult,
                                      NVMetHostDeleteArgs,
                                      NVMetHostDeleteResult,
+                                     NVMetHostDHChapDHGroupChoicesArgs,
+                                     NVMetHostDHChapDHGroupChoicesResult,
+                                     NVMetHostDHChapHashChoicesArgs,
+                                     NVMetHostDHChapHashChoicesResult,
                                      NVMetHostEntry,
                                      NVMetHostGenerateKeyArgs,
                                      NVMetHostGenerateKeyResult,
                                      NVMetHostUpdateArgs,
-                                     NVMetHostUpdateResult,
-                                     NVMetHostDHChapDHGroupChoicesArgs,
-                                     NVMetHostDHChapDHGroupChoicesResult,
-                                     NVMetHostDHChapHashChoicesArgs,
-                                     NVMetHostDHChapHashChoicesResult
-                                     )
+                                     NVMetHostUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
-from .constants import DHCHAP_DHGROUP, DHCHAP_HASH
+from .constants import DHCHAP_DHGROUP, DHCHAP_HASH, HOST_DATASTORE_EXTEND, HOST_DATASTORE_PREFIX
 
 
 class NVMetHostModel(sa.Model):
@@ -38,8 +37,8 @@ class NVMetHostService(CRUDService):
     class Config:
         namespace = 'nvmet.host'
         datastore = 'services.nvmet_host'
-        datastore_prefix = 'nvmet_host_'
-        datastore_extend = 'nvmet.host.extend'
+        datastore_prefix = HOST_DATASTORE_PREFIX
+        datastore_extend = HOST_DATASTORE_EXTEND
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetHostEntry
@@ -111,8 +110,8 @@ class NVMetHostService(CRUDService):
         host = await self.get_instance(id_)
         audit_callback(host['hostnqn'])
 
-        host_subsys_ids = {x['id']: x['subsys']['nvmet_subsys_name'] for x in
-                           await self.middleware.call('nvmet.host_subsys.query', [['host_id', '=', id_]])}
+        host_subsys_ids = {x['id']: x['subsys']['name'] for x in
+                           await self.middleware.call('nvmet.host_subsys.query', [['host.id', '=', id_]])}
         if host_subsys_ids:
             if force:
                 await self.middleware.call('nvmet.host_subsys.delete_ids', list(host_subsys_ids))

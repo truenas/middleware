@@ -9,7 +9,10 @@ from middlewared.api.current import (NVMetPortSubsysCreateArgs,
                                      NVMetPortSubsysUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
-from .constants import PORT_TRTYPE
+from .constants import (PORT_DATASTORE_EXTEND,
+                        PORT_DATASTORE_PREFIX,
+                        SUBSYS_DATASTORE_EXTEND,
+                        SUBSYS_DATASTORE_PREFIX)
 from .mixin import NVMetStandbyMixin
 
 
@@ -27,6 +30,7 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
         namespace = 'nvmet.port_subsys'
         datastore = 'services.nvmet_port_subsys'
         datastore_prefix = 'nvmet_port_subsys_'
+        datastore_extend = 'nvmet.port_subsys.extend'
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetPortSubsysEntry
@@ -149,6 +153,18 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
 
     def __audit_summary(self, data):
         port = data['port']
-        transport = PORT_TRTYPE.by_db(port['nvmet_port_addr_trtype']).api
-        port_summary = (f'{transport}:{port["nvmet_port_addr_traddr"]}:{port["nvmet_port_addr_trsvcid"]}')
-        return f'{port_summary}/{data["subsys"]["nvmet_subsys_name"]}'
+        port_summary = (f'{port["addr_trtype"]}:{port["addr_traddr"]}:{port["addr_trsvcid"]}')
+        return f'{port_summary}/{data["subsys"]["name"]}'
+
+    @private
+    async def extend(self, data):
+        if port_data := data.pop('port', {}):
+            data['port'] = await self.process_data(port_data,
+                                                   PORT_DATASTORE_PREFIX,
+                                                   PORT_DATASTORE_EXTEND)
+        if subsys_data := data.pop('subsys', {}):
+            data['subsys'] = await self.process_data(subsys_data,
+                                                     SUBSYS_DATASTORE_PREFIX,
+                                                     SUBSYS_DATASTORE_EXTEND,
+                                                     {})
+        return data
