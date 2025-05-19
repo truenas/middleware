@@ -85,7 +85,7 @@ class DomainConnection(
                 'dns_client_options': {'nameservers': [nameserver]}
             })
             return True
-        except dns.resolver.NSDOMAIN:
+        except dns.resolver.NXDOMAIN:
             return False
         except Exception:
             self.logger.debug('%s: forward lookup of host through nameserver [%s] failed unexpectedly.',
