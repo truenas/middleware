@@ -613,11 +613,10 @@ class DirectoryServices(ConfigService):
             except Exception:
                 self.logger.warning('Failed to automatically grant privileges to domain administrators.', exc_info=True)
 
-        # When IPA support was first added to TrueNAS we did not persistently store
-        # IPA SMB domain information persistently. This means we may need to update the IPA domain
-        # information.
+        # When IPA support was first added to TrueNAS we did not persistently store IPA SMB domain information
+        # persistently. This means we may need to update the IPA domain information.
         if ds_type is DSType.IPA and new['configuration']['smb_domain'] is None:
-            if (smb_domain := self.middleware.call_sync('ipa_get_smb_domain_info')) is not None:
+            if (smb_domain := self.domain_info()) is not None:
                 new['configuration']['smb_domain'] = {
                     'name': smb_domain['netbios_name'],
                     'range_low': smb_domain['range_id_min'],
