@@ -34,6 +34,7 @@ def api_method(
     pass_app: bool = False,
     pass_app_require: bool = False,
     pass_app_rest: bool = False,
+    pass_thread_local_storage: bool = False,
     skip_args: int | None = None,
     removed_in: str | None = None,
 ):
@@ -68,6 +69,10 @@ def api_method(
     This is incompatible with `roles`. Additional review will be required in order to validate that its use complies
     with security standards.
 
+    `pass_thread_local_storage` if set to True, will inject a thread-local storage object as an argument to the
+    decorated method. NOTE: this is using a traditional threading.local() object and not a ContextVar so the
+    method must be a non-coroutine based method/function.
+
     `removed_in` specifies major TrueNAS version (in the format vXX.YY) which removes this API method.
     """
     if list(returns.model_fields.keys()) != ["result"]:
@@ -90,6 +95,9 @@ def api_method(
         args_index = calculate_args_index(func, audit_callback)
 
         if asyncio.iscoroutinefunction(func):
+            if pass_thread_local_storage:
+                raise ValueError('pass_thread_local_storage invalid for coroutines')
+
             @functools.wraps(func)
             async def wrapped(*args):
                 args = list(args[:args_index]) + accept_params(accepts, args[args_index:])
@@ -136,6 +144,7 @@ def api_method(
         wrapped.roles = roles or []
         wrapped._private = private
         wrapped._cli_private = cli_private
+        wrapped._pass_thread_local_storage = pass_thread_local_storage
         if removed_in is not None:
             if not MAJOR_VERSION.match(removed_in):
                 raise ValueError(
