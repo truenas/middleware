@@ -712,13 +712,13 @@ class DirectoryServices(ConfigService):
             raise CallError('Directory service must be enabled and healthy prior to leaving domain.')
 
         # overwrite cred with admin-provided one. We need elevated permissions to do this
-        self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         ds_config['credential'] = cred['credential']
 
         ds_type = DSType(ds_config['service_type'])
         if ds_type not in (DSType.IPA, DSType.AD):
             raise CallError('Directory service type does not support leave operations')
 
+        self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
         if verrors:
             self.__revert_changes(revert)
