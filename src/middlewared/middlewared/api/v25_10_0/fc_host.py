@@ -3,6 +3,12 @@ from typing import Literal
 from middlewared.api.base import WWPN, BaseModel, Excluded, FibreChannelHostAlias, ForUpdateMetaclass, excluded_field
 
 
+__all__ = [
+    "FCHostEntry", "FCHostCreateArgs", "FCHostCreateResult", "FCHostUpdateArgs", "FCHostUpdateResult",
+    "FCHostDeleteArgs", "FCHostDeleteResult",
+]
+
+
 class FCHostEntry(BaseModel):
     id: int
     alias: FibreChannelHostAlias

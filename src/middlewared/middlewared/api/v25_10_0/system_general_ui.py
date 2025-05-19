@@ -1,6 +1,15 @@
 from middlewared.api.base import BaseModel
 
-from pydantic import Field
+from pydantic import NonNegativeInt
+
+
+__all__ = [
+    "SystemGeneralUIAddressChoicesArgs", "SystemGeneralUIAddressChoicesResult",
+    "SystemGeneralUICertificateChoicesArgs", "SystemGeneralUICertificateChoicesResult",
+    "SystemGeneralUIHTTPSProtocolChoicesArgs", "SystemGeneralUIHTTPSProtocolChoicesResult",
+    "SystemGeneralUILocalURLArgs", "SystemGeneralUILocalURLResult", "SystemGeneralUIRestartArgs",
+    "SystemGeneralUIRestartResult", "SystemGeneralUIV6AddressChoicesArgs", "SystemGeneralUIV6AddressChoicesResult",
+]
 
 
 class SystemGeneralUIAddressChoicesArgs(BaseModel):
@@ -36,7 +45,7 @@ class SystemGeneralUILocalURLResult(BaseModel):
 
 
 class SystemGeneralUIRestartArgs(BaseModel):
-    delay: int = Field(ge=0, default=3)
+    delay: NonNegativeInt = 3
     """How long to wait before the UI is restarted"""
 
 

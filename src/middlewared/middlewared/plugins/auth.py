@@ -8,9 +8,11 @@ import time
 from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
-    AuthLoginArgs, AuthLegacyApiKeyLoginArgs, AuthLegacyTokenLoginArgs,
-    AuthLoginResult,
-    AuthLoginExArgs, AuthLoginExContinueArgs, AuthLoginExResult,
+    AuthLoginArgs, AuthLoginResult,
+    AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult,
+    AuthLoginWithTokenArgs, AuthLoginWithTokenResult,
+    AuthLoginExArgs, AuthLoginExResult,
+    AuthLoginExContinueArgs, AuthLoginExContinueResult,
     AuthMeArgs, AuthMeResult,
     AuthMechChoicesArgs, AuthMechChoicesResult,
     AuthSessionEntry,
@@ -623,7 +625,7 @@ class AuthService(Service):
         return [mech.name for mech in aal.mechanisms]
 
     @cli_private
-    @api_method(AuthLoginExContinueArgs, AuthLoginExResult, authentication_required=False)
+    @api_method(AuthLoginExContinueArgs, AuthLoginExContinueResult, authentication_required=False)
     @pass_app()
     async def login_ex_continue(self, app, data):
         """
@@ -1120,7 +1122,7 @@ class AuthService(Service):
         return resp | {'otp_required': otp_required, 'otpw_used': otpw_used}
 
     @cli_private
-    @api_method(AuthLegacyApiKeyLoginArgs, AuthLoginResult, authentication_required=False)
+    @api_method(AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult, authentication_required=False)
     @pass_app()
     async def login_with_api_key(self, app, api_key):
         """
@@ -1156,7 +1158,7 @@ class AuthService(Service):
         return resp['response_type'] == AuthResp.SUCCESS
 
     @cli_private
-    @api_method(AuthLegacyTokenLoginArgs, AuthLoginResult, authentication_required=False)
+    @api_method(AuthLoginWithTokenArgs, AuthLoginWithTokenResult, authentication_required=False)
     @pass_app()
     async def login_with_token(self, app, token_str):
         """

@@ -10,6 +10,15 @@ from middlewared.api.base import (
 )
 
 
+__all__ = [
+    "FailoverEntry", "FailoverBecomePassiveArgs", "FailoverBecomePassiveResult", "FailoverGetIpsArgs",
+    "FailoverGetIpsResult", "FailoverLicensedArgs", "FailoverLicensedResult", "FailoverNodeArgs", "FailoverNodeResult",
+    "FailoverStatusArgs", "FailoverStatusResult", "FailoverSyncFromPeerArgs", "FailoverSyncFromPeerResult",
+    "FailoverSyncToPeerArgs", "FailoverSyncToPeerResult", "FailoverUpdateArgs", "FailoverUpdateResult",
+    "FailoverUpgradeArgs", "FailoverUpgradeResult",
+]
+
+
 class FailoverEntry(BaseModel):
     id: int
     disabled: bool

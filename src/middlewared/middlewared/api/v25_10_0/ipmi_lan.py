@@ -52,8 +52,7 @@ class IPMILanUpdateOptionsDHCP(BaseModel):
                 min_length=8,
                 max_length=16,
             ))
-        ]
-        | None
+        ] | None
     ] = None
     """The password to be applied. Must be between 8 and 16 characters long and
     contain only ascii upper,lower, 0-9, and special characters."""

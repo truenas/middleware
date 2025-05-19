@@ -3,6 +3,13 @@ from datetime import datetime
 from middlewared.api.base import BaseModel, single_argument_args, NonEmptyString
 
 
+__all__ = [
+    "BootEnvironmentEntry", "BootEnvironmentActivateArgs", "BootEnvironmentActivateResult", "BootEnvironmentCloneArgs",
+    "BootEnvironmentCloneResult", "BootEnvironmentDestroyArgs", "BootEnvironmentDestroyResult",
+    "BootEnvironmentKeepArgs", "BootEnvironmentKeepResult",
+]
+
+
 class BootEnvironmentEntry(BaseModel):
     id: NonEmptyString
     """The name of the boot environment referenced by the boot environment tool."""

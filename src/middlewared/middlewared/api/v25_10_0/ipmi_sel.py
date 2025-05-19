@@ -1,19 +1,20 @@
 from middlewared.api.base import BaseModel
 
 
-class IPMISELClearArgs(BaseModel):
-    pass
+__all__ = ["IPMISELElistEntry", "IPMISELClearArgs", "IPMISELClearResult", "IPMISELInfoArgs", "IPMISELInfoResult",]
 
 
-class IPMISELClearResult(BaseModel):
-    result: None
+class IPMISELElistEntry(BaseModel):
+    id: str
+    date: str
+    time: str
+    name: str
+    type: str
+    event_direction: str
+    event: str
 
 
-class IPMISELInfoArgs(BaseModel):
-    pass
-
-
-class IPMISELInfoEntry(BaseModel):
+class IPMISELInfo(BaseModel):
     sel_version: str
     number_of_log_entries: str
     free_space_remaining: str
@@ -30,15 +31,17 @@ class IPMISELInfoEntry(BaseModel):
     maximum_record_size: str
 
 
+class IPMISELClearArgs(BaseModel):
+    pass
+
+
+class IPMISELClearResult(BaseModel):
+    result: None
+
+
+class IPMISELInfoArgs(BaseModel):
+    pass
+
+
 class IPMISELInfoResult(BaseModel):
-    result: IPMISELInfoEntry | dict
-
-
-class IPMISELElistEntry(BaseModel):
-    id: str
-    date: str
-    time: str
-    name: str
-    type: str
-    event_direction: str
-    event: str
+    result: IPMISELInfo | dict

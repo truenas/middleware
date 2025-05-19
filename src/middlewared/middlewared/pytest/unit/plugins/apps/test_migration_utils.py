@@ -253,7 +253,7 @@ def test_get_migration_scripts(mock_access, mock_join, mock_open, app_name, curr
         f'/mnt/.ix-apps/app_configs/plex/versions/{target_version}',
         '/path/to/migration.yaml',
         *migration_file_paths,
-        ]
+    ]
     mock_access.return_value = True
     result = get_migration_scripts(app_name, current_version, target_version)
     assert result == expected

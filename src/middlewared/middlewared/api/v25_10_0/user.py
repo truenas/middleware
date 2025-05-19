@@ -24,7 +24,7 @@ __all__ = ["UserEntry",
            "UserUpdateArgs", "UserUpdateResult",
            "UserDeleteArgs", "UserDeleteResult",
            "UserShellChoicesArgs", "UserShellChoicesResult",
-           "UserGetUserObjArgs", "UserGetUserObjResult",
+           "UserGetUserObjArgs", "UserGetUserObjResult", "UserGetUserObj",
            "UserGetNextUidArgs", "UserGetNextUidResult",
            "UserHasLocalAdministratorSetUpArgs", "UserHasLocalAdministratorSetUpResult",
            "UserSetupLocalAdministratorArgs", "UserSetupLocalAdministratorResult",
@@ -131,6 +131,32 @@ class UserCreate(UserEntry):
     "Generate a random 20 character password for the user"
 
 
+class UserGetUserObj(BaseModel):
+    pw_name: str
+    "name of the user"
+    pw_gecos: str
+    "full username or comment field"
+    pw_dir: str
+    "user home directory"
+    pw_shell: str
+    "user command line interpreter"
+    pw_uid: int
+    "numerical user id of the user"
+    pw_gid: int
+    "numerical group id for the user's primary group"
+    grouplist: list[int] | None
+    """
+    optional list of group ids for groups of which this account is a member. If `get_groups` is not specified,
+    this value will be null.
+    """
+    sid: str | None
+    "optional SID value for the account that is present if `sid_info` is specified in payload."
+    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
+    "the source for the user account."
+    local: bool
+    "boolean value indicating whether the account is local to TrueNAS or provided by a directory service."
+
+
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
     uid: Excluded = excluded_field()
     group_create: Excluded = excluded_field()
@@ -195,31 +221,8 @@ class UserGetUserObjArgs(BaseModel):
     "retrieve SID and domain information for the user."
 
 
-@single_argument_result
 class UserGetUserObjResult(BaseModel):
-    pw_name: str
-    "name of the user"
-    pw_gecos: str
-    "full username or comment field"
-    pw_dir: str
-    "user home directory"
-    pw_shell: str
-    "user command line interpreter"
-    pw_uid: int
-    "numerical user id of the user"
-    pw_gid: int
-    "numerical group id for the user's primary group"
-    grouplist: list[int] | None
-    """
-    optional list of group ids for groups of which this account is a member. If `get_groups` is not specified,
-    this value will be null.
-    """
-    sid: str | None
-    "optional SID value for the account that is present if `sid_info` is specified in payload."
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
-    "the source for the user account."
-    local: bool
-    "boolean value indicating whether the account is local to TrueNAS or provided by a directory service."
+    result: UserGetUserObj
 
 
 class UserGetNextUidArgs(BaseModel):

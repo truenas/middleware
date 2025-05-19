@@ -1070,7 +1070,7 @@ class AlertServiceService(CRUDService):
         if factory is None:
             verrors.add(f"{schema_name}.type", "This field has invalid value")
             raise verrors
-        
+
         levels = AlertLevel.__members__
         if service["level"] not in levels:
             verrors.add(f"{schema_name}.level", f"Level must be one of {list(levels)}")

@@ -1,6 +1,9 @@
 from middlewared.api.base import BaseModel
 
 
+__all__ = ["WebUIEnclosureDashboardArgs", "WebUIEnclosureDashboardResult",]
+
+
 class WebUIEnclosureDashboardArgs(BaseModel):
     pass
 

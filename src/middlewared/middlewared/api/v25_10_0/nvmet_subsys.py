@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 from pydantic import Field
 
@@ -40,11 +40,32 @@ class NVMetSubsysEntry(BaseModel):
 
     If `null` then the global `ana` setting will take effect.
     """
+    hosts: Optional[list[int]] = []
+    """
+    List of host ids which have access to this subsystem.
+
+    Only populated on query if `extra.options.verbose` is set.
+    """
+    namespaces: Optional[list[int]] = []
+    """
+    List of namespaces ids in this subsystem.
+
+    Only populated on query if `extra.options.verbose` is set.
+    """
+    ports: Optional[list[int]] = []
+    """
+    List of ports ids on which this subsystem is available.
+
+    Only populated on query if `extra.options.verbose` is set.
+    """
 
 
 class NVMetSubsysCreate(NVMetSubsysEntry):
     id: Excluded = excluded_field()
     serial: Excluded = excluded_field()
+    hosts: Excluded = excluded_field()
+    namespaces: Excluded = excluded_field()
+    ports: Excluded = excluded_field()
 
 
 class NVMetSubsysCreateArgs(BaseModel):
