@@ -189,7 +189,7 @@ class DNSService(Service):
                 if data['nameserver_override']:
                     ds = self.middleware.call_sync('directoryservices.config')
                     if ds['service_type'] in ('ACTIVEDIRECTORY', 'IPA'):
-                        tmp_resolvconf.write(f'domain {ds["configuration"]["domain"]}\n'.encode())
+                        tmp_resolvconf.write(f'domain {ds["domain"]}\n'.encode())
 
                     tmp_resolvconf.write(f'nameserver {data["nameserver_override"]}\n'.encode())
                     tmp_resolvconf.flush()

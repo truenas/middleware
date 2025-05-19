@@ -11,7 +11,7 @@
 
     match ds_config['service_type']:
         case DSType.AD.value:
-            idmap = ds_config['configuration']['idmap']['idmap_domain']
+            idmap = ds_config['idmap']['idmap_domain']
             if idmap['idmap_backend'] not in ('LDAP', 'RFC2307'):
                 raise FileShouldNotExist
 
@@ -23,12 +23,12 @@
                 'bindpw': idmap['ldap_user_dn_password']
             }
         case DSType.LDAP.value:
-            uri = ' '.join(ds_config['configuration']['server_urls'])
-            basedn = ds_config['configuration']['basedn']
+            uri = ' '.join(ds_config['server_urls'])
+            basedn = ds_config['basedn']
 
         case DSType.IPA.value:
-            uri = f'ldaps://{ds_config["configuration"]["target_server"]}'
-            basedn = ds_config['configuration']['basedn']
+            uri = f'ldaps://{ds_config["target_server"]}'
+            basedn = ds_config['basedn']
 
         case _:
             middleware.logger.error('%s: unexpected service type', ds_config['service_type'])

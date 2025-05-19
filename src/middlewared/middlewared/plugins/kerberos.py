@@ -527,7 +527,7 @@ class KerberosKeytabService(CRUDService):
             )
 
         netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
-        machine_acct = f'{netbiosname}$@{ds_config["configuration"]["domain"]}'
+        machine_acct = f'{netbiosname}$@{ds_config["domain"]}'
 
         ds_cred = ds_config['credential']
         if ds_cred['credential_type'] != 'KERBEROS_PRINCIPAL' or ds_cred['principal'] != machine_acct:

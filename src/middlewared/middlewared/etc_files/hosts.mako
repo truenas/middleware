@@ -6,8 +6,8 @@
 	hostname = network_config['hostname_local']
 	domain_name = network_config['domain']
         if ds_config['enable'] and ds_config['service_type'] in ('ACTIVEDIRECTORY', 'IPA'):
-            hostname = ds_config['configuration']['hostname'].lower()
-            domain_name = ds_config['configuration']['domain'].lower()
+            hostname = ds_config['hostname'].lower()
+            domain_name = ds_config['domain'].lower()
 %>
 127.0.0.1	${hostname}.${domain_name} ${hostname}
 127.0.0.1	localhost

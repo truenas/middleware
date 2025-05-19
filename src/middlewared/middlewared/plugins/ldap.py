@@ -118,22 +118,22 @@ class LDAPService(Service):
                 pass
 
         hostnames = []
-        for host in data['configuration']['server_urls']:
+        for host in data['server_urls']:
             # All URLs start with ldap:// or ldaps://
             hostnames.append(host.split('://', 1)[1])
 
         out['hostname'] = hostnames
-        out['uri_list'] = data['configuration']['server_urls']
-        if data['configuration']['starttls']:
+        out['uri_list'] = data['server_urls']
+        if data['starttls']:
             out['ssl'] = 'START_TLS'
-        elif not any([host.startswith('ldaps://') for host in data['configuration']['server_urls']]):
+        elif not any([host.startswith('ldaps://') for host in data['server_urls']]):
             # No ldaps and no startls means SSL is off
             out['ssl'] = 'OFF'
 
-        out['validate_certificates'] = data['configuration']['validate_certificates']
-        out['search_bases'] = data['configuration']['search_bases']
-        out['attribute_maps'] = data['configuration']['attribute_maps']
-        out['basedn'] = data['configuration']['basedn']
+        out['validate_certificates'] = data['validate_certificates']
+        out['search_bases'] = data['search_bases']
+        out['attribute_maps'] = data['attribute_maps']
+        out['basedn'] = data['basedn']
         return out
 
     async def ldapconfig_to_dsconfig(self, data):
@@ -145,7 +145,6 @@ class LDAPService(Service):
             'enable_dns_updates': False,
             'timeout': data['dns_timeout'],
             'kerberos_realm': None,
-            'configuration': None,
         }
 
         if data['kerberos_principal']:
@@ -181,14 +180,14 @@ class LDAPService(Service):
         prefix = 'ldaps://' if data['ssl'] == 'ON' else 'ldap://'
         server_urls = [f'{prefix}{srv}' for srv in data['hostname']]
 
-        out['configuration'] = {
+        out.update({
             'server_urls': server_urls,
             'starttls': starttls,
             'basedn': data['basedn'],
             'validate_certificates': data['validate_certificates'],
             'schema': data['schema'],
             'auxiliary_parameters': data['auxiliary_parameters'],
-        }
+        })
 
         return out
 

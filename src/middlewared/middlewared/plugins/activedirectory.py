@@ -114,12 +114,12 @@ class ActiveDirectoryService(Service):
         if data['credential']['credential_type'] == 'KERBEROS_PRINCIPAL':
             out['kerberos_principal'] = data['credential']['principal']
 
-        out['createcomputer'] = data['configuration']['computer_account_ou']
-        out['use_default_domain'] = data['configuration']['use_default_domain']
-        out['allow_trusted_doms'] = data['configuration']['enable_trusted_domains']
+        out['createcomputer'] = data['computer_account_ou']
+        out['use_default_domain'] = data['use_default_domain']
+        out['allow_trusted_doms'] = data['enable_trusted_domains']
         out['allow_dns_updates'] = data['enable_dns_updates']
-        out['site'] = data['configuration']['site']
-        out['domainname'] = data['configuration']['domain']
+        out['site'] = data['site']
+        out['domainname'] = data['domain']
         return out
 
     async def adconfig_to_dsconfig(self, data):
@@ -143,7 +143,6 @@ class ActiveDirectoryService(Service):
             'enable_dns_updates': data.get('allow_dns_updates', True),
             'timeout': data.get('timeout', 10),
             'kerberos_realm': dsconfig['kerberos_realm'],
-            'configuration': None,
         }
 
         if data.get('kerberos_principal'):
@@ -165,9 +164,9 @@ class ActiveDirectoryService(Service):
         hostname = data.get('netbiosname')
         if not hostname and dsconfig['service_type'] == 'ACTIVEDIRECTORY':
             # keep existing hostname
-            hostname = dsconfig['configuration']['hostname']
+            hostname = dsconfig['hostname']
 
-        out['configuration'] = {
+        out.update({
             'hostname': hostname,
             'domain': data['domainname'],
             'enable_trusted_domains': False,
@@ -175,10 +174,10 @@ class ActiveDirectoryService(Service):
             'use_default_domain': data.get('use_default_domain', False),
             'computer_account_ou': data.get('createcomputer'),
             'site': data.get('site'),
-        }
+        })
 
         if dsconfig['service_type'] == 'ACTIVEDIRECTORY':
-            out['configuration']['idmap'] = dsconfig['configuration']['idmap']
+            out['idmap'] = dsconfig['idmap']
 
         return out
 

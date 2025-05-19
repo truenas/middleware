@@ -9,8 +9,8 @@
     if ds_type == DSType.LDAP.value:
         kerberos_realm = None
         aux = []
-        map_params = utils.attribute_maps_data_to_params(ds_config['configuration']['attribute_maps'])
-        search_params = utils.search_base_data_to_params(ds_config['configuration']['search_bases'])
+        map_params = utils.attribute_maps_data_to_params(ds_config['attribute_maps'])
+        search_params = utils.search_base_data_to_params(ds_config['search_bases'])
         min_uid = 1000
         kerberos_realm = None
         certpath = None
@@ -26,7 +26,7 @@
                 keypath = cert['privatekey_path']
 
         domain = ds_config['kerberos_realm'] or 'LDAP'
-        for param in (ds_config['configuration']['auxiliary_parameters'] or '').splitlines():
+        for param in (ds_config['auxiliary_parameters'] or '').splitlines():
             param = param.strip()
             if not param.startswith('nss_min_uid'):
                 aux.append(param)
@@ -49,9 +49,9 @@ config_file_version = 2
 [domain/${domain}]
 id_provider = ldap
 auth_provider = ldap
-ldap_uri = ${','.join(ds_config['configuration']['server_urls'])}
-ldap_search_base = ${ds_config['configuration']['basedn']}
-% if ds_config['configuration']['starttls']:
+ldap_uri = ${','.join(ds_config['server_urls'])}
+ldap_search_base = ${ds_config['basedn']}
+% if ds_config['starttls']:
 ldap_id_use_start_tls =  true
 % endif
 ldap_tls_cacert = /etc/ssl/certs/ca-certificates.crt
@@ -59,7 +59,7 @@ ldap_tls_cacert = /etc/ssl/certs/ca-certificates.crt
 ldap_tls_cert = ${certpath}
 ldap_tls_key = ${keypath}
 % endif
-ldap_tls_reqcert = ${'demand' if ds_config['configuration']['validate_certificates'] else 'allow'}
+ldap_tls_reqcert = ${'demand' if ds_config['validate_certificates'] else 'allow'}
 % if ds_config['credential']['credential_type'] == 'LDAP_PLAIN':
 ldap_default_bind_dn = ${ds_config['credential']['binddn']}
 ldap_default_authtok = ${ds_config['credential']['bindpw']}
@@ -73,7 +73,7 @@ ldap_sasl_authid = ${ds_config['credential']['principal']}
 % endif
 % endif
 timeout = ${ds_config['timeout']}
-ldap_schema = ${ds_config['configuration']['schema'].lower()}
+ldap_schema = ${ds_config['schema'].lower()}
 min_id = ${min_uid}
 ${'\n    '.join(search_params)}
 ${'\n    '.join(map_params)}
@@ -82,14 +82,14 @@ ${'\n    '.join(aux)}
 % endif
 % elif ds_type == DSType.IPA.value:
 [sssd]
-domains = ${ds_config['configuration']['domain']}
+domains = ${ds_config['domain']}
 services = nss, pam
 
-[domain/${ds_config['configuration']['domain']}]
+[domain/${ds_config['domain']}]
 id_provider = ipa
-ipa_server = _srv_, ${ds_config['configuration']['target_server']}
-ipa_domain = ${ds_config['configuration']['domain']}
-ipa_hostname = ${ds_config['configuration']['hostname']}
+ipa_server = _srv_, ${ds_config['target_server']}
+ipa_domain = ${ds_config['domain']}
+ipa_hostname = ${ds_config['hostname']}
 auth_provider = ipa
 access_provider = ipa
 cache_credentials = True

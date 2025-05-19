@@ -114,16 +114,16 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
     match ds_type:
         case DSType.AD:
             # Force domain to upper case
-            new['configuration']['domain'] = new['configuration']['domain'].upper()
+            new['domain'] = new['domain'].upper()
             try:
-                domain_info = get_domain_info(new['configuration']['domain'], retry=True)
+                domain_info = get_domain_info(new['domain'], retry=True)
             except CallError as e:
-                verrors.add(f'{schema}.configuration.domain', e.errmsg)
+                verrors.add(f'{schema}.domain', e.errmsg)
                 return False
 
             if abs(domain_info['server_time_offset']) > MAX_TIME_OFFSET:
                 verrors.add(
-                    f'{schema}.configuration.domain',
+                    f'{schema}.domain',
                     'Time offset from the domain controller exceeds the maximum permitted value.'
                 )
                 return False
@@ -132,17 +132,17 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
                 kdc.append(domain_info['kdc_server'])
 
             if not realm:
-                realm = new['configuration']['domain']
+                realm = new['domain']
 
-            new['configuration']['idmap']['idmap_domain']['name'] = domain_info['workgroup']
+            new['idmap']['idmap_domain']['name'] = domain_info['workgroup']
             new['kerberos_realm'] = realm
 
         case DSType.IPA:
             if not kdc:
-                kdc.append(new['configuration']['host'])
+                kdc.append(new['target_server'])
 
             if not realm:
-                realm = new['configuration']['domain']
+                realm = new['domain']
 
             aux.append('udp_preference_limit=0')
 
@@ -303,16 +303,16 @@ def dsconfig_to_ldap_client_config(data: dict) -> dict:
     match data['service_type']:
         case DSType.IPA.value:
             if data['credential']['credential_type'].startswith('KERBEROS'):
-                out['server_urls'] = [f'ldap://{data["configuration"]["target_server"]}']
+                out['server_urls'] = [f'ldap://{data["target_server"]}']
             else:
-                out['server_urls'] = [f'ldaps://{data["configuration"]["target_server"]}']
-            out['basedn'] = data['configuration']['basedn']
-            out['validate_certifcates'] = data['configuration']['validate_certificates']
+                out['server_urls'] = [f'ldaps://{data["target_server"]}']
+            out['basedn'] = data['basedn']
+            out['validate_certifcates'] = data['validate_certificates']
         case DSType.LDAP.value:
-            out['server_urls'] = data['configuration']['server_urls']
-            out['basedn'] = data['configuration']['basedn']
-            out['validate_certifcates'] = data['configuration']['validate_certificates']
-            out['starttls'] = data['configuration']['starttls']
+            out['server_urls'] = data['server_urls']
+            out['basedn'] = data['basedn']
+            out['validate_certifcates'] = data['validate_certificates']
+            out['starttls'] = data['starttls']
         case _:
             raise CallError('LDAP client not supported for service type')
 
@@ -327,7 +327,7 @@ def validate_ldap_credential(schema, new, verrors, revert):
         # Use supplied credentials to connect to rootdse
         root = LdapClient.search(ldap_config, '', ldap.SCOPE_BASE, '(objectclass=*)')
     except ldap.CONFIDENTIALITY_REQUIRED:
-        verrors.add(f'{schema}.configuration.{host_field}', 'LDAP server requires encrypted transport.')
+        verrors.add(f'{schema}.{host_field}', 'LDAP server requires encrypted transport.')
     except ldap.INVALID_CREDENTIALS:
         verrors.add(
             f'{schema}.credential.credential_type',
@@ -350,7 +350,7 @@ def validate_ldap_credential(schema, new, verrors, revert):
         # SSL libraries here don't do us a lot of favors. If the certificate is invald or
         # self-signed LDAPS connections will fail with SERVER_DOWN.
         verrors.add(
-            f'{schema}.configuration.{host_field}',
+            f'{schema}.{host_field}',
             'Unable to contact the remote LDAP server. This may occur if the remote server '
             'is unresolvable, unresponsive or if there is a lower level cryptographic '
             'error such as a certificate validation failure.'

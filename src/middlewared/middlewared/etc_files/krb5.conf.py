@@ -45,14 +45,14 @@ def generate_krb5_conf(
             if not default_realm:
                 logger.error(
                     '%s: no realm configuration found for domain. Attempting to recover.',
-                    ds_config['configuration']['domain']
+                    ds_config['domain']
                 )
 
                 # Try looking up again by domain
-                default_realm = filter_list(realms, [['realm', '=', ds_config['configuration']['domain']]])
+                default_realm = filter_list(realms, [['realm', '=', ds_config['domain']]])
                 if not default_realm:
                     # Try to recover by creating a realm stub
-                    if not ds_config['configuration']['domainname']:
+                    if not ds_config['domain']:
                         # We have an invalid directory services configuration (no domain, no realm)
                         # log an error message and prevent kerberos config generation
 
@@ -63,7 +63,7 @@ def generate_krb5_conf(
 
                     realm_id = middleware.call_sync(
                         'datastore.insert', 'directoryservice.kerberosrealm',
-                        {'krb_realm': ds_config['configuration']['domainname']}
+                        {'krb_realm': ds_config['domain']}
                     )
 
                     default_realm = middleware.call_sync('kerberos.realm.get_instance', realm_id)['realm']
