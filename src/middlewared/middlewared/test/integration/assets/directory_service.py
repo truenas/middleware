@@ -6,6 +6,7 @@ import sys
 
 from dataclasses import dataclass
 from middlewared.test.integration.utils import call, fail
+from time import sleep
 
 __all__ = [
     'directoryservice', 'override_nameservers', 'get_nameservers', 'get_directory_services_account',
@@ -178,10 +179,18 @@ def get_directory_services_account(service_type: str) -> directoryservices_user:
         case _:
             fail(f'{service_type}: unexpected service type')
 
-    try:
-        user_obj = call('user.get_user_obj', {'username': get_user, 'sid_info': sid_info})
-    except Exception as exc:
-        fail(f'Failed to get directory services user: {exc}')
+    # It may take a little while for nss module to settle down after joining domain
+    retries = 5
+    while True:
+        try:
+            user_obj = call('user.get_user_obj', {'username': get_user, 'sid_info': sid_info})
+            break
+        except Exception as exc:
+            if not retries:
+                fail(f'Failed to get directory services user: {exc}')
+
+            sleep(1)
+            retries -= 1
 
     return directoryservices_user(username, password, user_obj)
 
