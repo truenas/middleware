@@ -718,6 +718,8 @@ class DirectoryServices(ConfigService):
         if ds_type not in (DSType.IPA, DSType.AD):
             raise CallError('Directory service type does not support leave operations')
 
+        # Set our directory services health state to LEAVING so that automatic health checks are disabled
+        # and we don't try to recover while leaving the domain.
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
         if verrors:
@@ -732,6 +734,7 @@ class DirectoryServices(ConfigService):
             # Make sure we nuke our kerberos ticket
             self.logger.warning('Failed to cleanly leave domain', exc_info=True)
             self.__revert_changes(revert)
+            self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.FAULTED.name)
             raise
 
         self.logger.debug('XXX: left domain')
