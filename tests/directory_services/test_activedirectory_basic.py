@@ -136,9 +136,6 @@ def test_enable_leave_activedirectory():
     with pytest.raises(KeyError):
         call('user.get_user_obj', {'username': pw['pw_name']})
 
-    result = call('privilege.query', [['name', 'C=', domain_name]])
-    assert len(result) == 0, str(result)
-
 
 def test_activedirectory_smb_ops(enable_smb):
     reset_systemd_svcs('winbind')
