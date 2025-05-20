@@ -89,6 +89,9 @@ def api_method(
                 'require': pass_app_require,
                 'rest': pass_app_rest,
             }
+        if pass_thread_local_storage:
+            func._pass_thread_local_storage = True
+
         if skip_args is not None:
             func._skip_arg = skip_args
 
@@ -144,7 +147,6 @@ def api_method(
         wrapped.roles = roles or []
         wrapped._private = private
         wrapped._cli_private = cli_private
-        wrapped._pass_thread_local_storage = pass_thread_local_storage
         if removed_in is not None:
             if not MAJOR_VERSION.match(removed_in):
                 raise ValueError(

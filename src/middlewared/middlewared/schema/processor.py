@@ -202,6 +202,8 @@ def calculate_args_index(f, audit_callback):
         args_index += 1
         if f._pass_app['message_id']:
             args_index += 1
+    if hasattr(f, '_pass_thread_local_storage'):
+        args_index += 1
     if audit_callback:
         args_index += 1
     if hasattr(f, '_job'):

@@ -681,7 +681,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             args.append(app)
 
         is_coroutine = asyncio.iscoroutinefunction(methodobj)
-        if serviceobj._config.pass_thread_local_storage or getattr(methodobj, '_pass_thread_local_storage', False):
+        if hasattr(methodobj, '_pass_thread_local_storage'):
             if is_coroutine:
                 raise RuntimeError("Thread local storage is invalid for coroutines")
             args.append(thread_local_storage)
