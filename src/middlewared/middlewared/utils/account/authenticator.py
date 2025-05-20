@@ -399,17 +399,6 @@ class UserPamAuthenticator(pam.PamAuthenticator):
                         if resp:
                             code, reason = resp
 
-                match code:
-                    case pam.PAM_AUTH_ERR:
-                        # pam_unix will fail with PAM_AUTH_ERR for expired passwords due to password aging
-                        # If password is expired, convert to PAM_EXPIRED
-                        if any([msg.startswith('Your account has expired') for msg in self.messages]):
-                            code = pam.PAM_ACCT_EXPIRED
-                            reason = 'Account expired due to aging rules'
-
-                    case _:
-                        pass
-
             if code == pam.PAM_SUCCESS:
                 # pam_acct_mgmt(3) determines whether the user's account is valid. This
                 # includes things like account expiration and access restrictions. Failure
@@ -418,6 +407,17 @@ class UserPamAuthenticator(pam.PamAuthenticator):
                 code = self.pam_acct_mgmt(self.handle, 0)
                 if code != pam.PAM_SUCCESS:
                     reason = self.pam_strerror(self.handle, code).decode()
+                    match code:
+                        case pam.PAM_AUTH_ERR:
+                            # pam_unix will fail with PAM_AUTH_ERR for expired passwords due to password aging
+                            # If password is expired, convert to PAM_EXPIRED
+                            pam_messages = self.truenas_state.libpam_state.messages
+                            if any([msg.startswith('Your account has expired') for msg in pam_messages]):
+                                code = pam.PAM_ACCT_EXPIRED
+                                reason = 'Account expired due to aging rules'
+
+                        case _:
+                            pass
 
             if code == pam.PAM_SUCCESS:
                 self.truenas_state.stage = TrueNASAuthenticatorStage.LOGIN

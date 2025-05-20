@@ -42,6 +42,21 @@ STIG_DEFAULT_SEC = {
 
 
 @pytest.fixture(scope='module')
+def default_security_policy():
+    """ Start with default security settings and
+        restore default security settings on exit """
+    try:
+        # Start with default security settings
+        with Client() as c:
+            c.call('system.security.update', DEFAULT_SEC)
+        yield
+    finally:
+        # Restore default security settings
+        with Client() as c:
+            c.call('system.security.update', DEFAULT_SEC)
+
+
+@pytest.fixture(scope='module')
 def set_fips_available():
     with Client() as c:
         c.call('test.set_mock', 'system.security.info.fips_available', None, {'return_value': True})
@@ -200,7 +215,7 @@ def password_history():
             }, job=True)
 
 
-def test__new_user_password_change_date():
+def test__new_user_password_change_date(default_security_policy):
     """ This test covers basic shadow file fields and verifies that they are written correctly """
     with create_user('test_user') as u:
         shadow = get_shadow_entry(u['username'])
@@ -210,7 +225,7 @@ def test__new_user_password_change_date():
         assert shadow['expiration'] is None
 
 
-def test__update_user_password():
+def test__update_user_password(default_security_policy):
     """ This test verifies that updating password changes the last change date for the shadow file """
     with create_old_user('test_user') as u:
         shadow = get_shadow_entry(u['username'])
@@ -417,7 +432,7 @@ def test__password_expired(old_admin):
             assert resp['response_type'] == 'EXPIRED'
 
 
-def test__password_expiry_warning(old_admin):
+def test__password_expiry_warning(old_admin, set_fips_available):
     """ Verify that account attributes show PASSWORD_CHANGE_REQUIRED """
     with Client('ws://127.0.0.1/api/current') as c:
         resp = c.call('auth.login_ex', {
@@ -464,7 +479,11 @@ def test__password_expiry_warning(old_admin):
             assert 'PASSWORD_CHANGE_REQUIRED' not in me['account_attributes']
 
             alerts = c.call('alert.run_source', 'SecurityLocalUserAccountExpiration')
-            assert not any([alert['klass'] == 'LocalAccountExpiring' for alert in alerts]), str(alerts)
+            assert not any(
+                [(
+                    alert['klass'] == 'LocalAccountExpiring' and old_admin['username'] in alert['args']
+                ) for alert in alerts]
+            ), str(alerts)
 
 
 def test__password_length(old_admin):
@@ -579,4 +598,3 @@ def test_password_disable(local_full_admin):
             shadow = get_shadow_entry(u['username'])
             assert shadow['name'] == u['username']
             assert shadow['raw_value'] == ''.join([shadow['name'], ":*:::::::"])
-
