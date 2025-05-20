@@ -3,26 +3,30 @@ __all__ = ["get_json_schema"]
 
 def get_json_schema(model):
     schema = model.model_json_schema()
-    schema = replace_refs(schema, schema.get("$defs", {}))
+    schema = clean_schema(schema, schema.get("$defs", {}))
     schema = add_attrs(schema)
 
     return [schema["properties"][name] for name in model.schema_model_fields()]
 
 
-def replace_refs(data, defs=None):
+def clean_schema(schema: dict, defs: dict | None = None) -> dict:
+    return _clean_field_descriptions(_replace_refs(schema, defs))
+
+
+def _replace_refs(data, defs=None):
     if isinstance(data, dict):
         if "$ref" in data:
             ref = data.pop("$ref")
             data = {**defs[ref.removeprefix("#/$defs/")], **data}
 
-        return {k: replace_refs(v, defs) for k, v in data.items()}
+        return {k: _replace_refs(v, defs) for k, v in data.items()}
     elif isinstance(data, list):
-        return [replace_refs(v, defs) for v in data]
+        return [_replace_refs(v, defs) for v in data]
     else:
         return data
 
 
-def clean_field_descriptions(schema: dict) -> dict:
+def _clean_field_descriptions(schema: dict) -> dict:
     """Remove single newlines from field descriptions and replace double newlines with single newlines.
 
     Solves the issue of docstring field descriptions that wrap to the next line having an unwanted newline
