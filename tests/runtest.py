@@ -331,16 +331,6 @@ else:
 
 proc_returncode = call(pytest_command)
 
-# get useful logs
-logs_list = [
-    "/var/log/daemon.log",
-    "/var/log/debug",
-    "/var/log/middlewared.log",
-    "/var/log/messages",
-    "/var/log/syslog",
-]
-
-
 def get_cmd_result(cmd: str, target_file: str, target_ip: str):
     try:
         results = SSH_TEST(cmd, 'root', 'testing', target_ip)
