@@ -340,19 +340,29 @@ logs_list = [
     "/var/log/syslog",
 ]
 
-get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
 
-# get dmesg and put it in artifacts
-results = SSH_TEST('dmesg', 'root', 'testing', ip)
-dmsg = open(f'{artifacts}/dmesg', 'w')
-dmsg.writelines(results['output'])
-dmsg.close()
+def get_cmd_result(cmd: str, target_file: str, target_ip: str):
+    try:
+        results = SSH_TEST(cmd, 'root', 'testing', target_ip)
+    except Exception as exc:
+        with open(f'{target_file}.error.txt', 'w') as f:
+            f.write(f'{target_ip}: command [{cmd}] failed: {exc}\n')
+            f.flush()
+    else:
+        with open(target_file, 'w') as f:
+            f.writelines(results['output'])
 
-# get core.get_jobs and put it in artifacts
-results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
-core_get_jobs = open(f'{artifacts}/core.get_jobs', 'w')
-core_get_jobs.writelines(results['output'])
-core_get_jobs.close()
+if ha:
+    get_folder('/var/log', f'{artifacts}/log_nodea', 'root', 'testing', ip)
+    get_folder('/var/log', f'{artifacts}/log_nodeb', 'root', 'testing', ip2)
+    get_cmd_result('midclt call core.get_jobs | jq .', 'f{artifacts}/core.get_jobs_nodea.json', ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', 'f{artifacts}/core.get_jobs_nodeb.json', ip2)
+    get_cmd_result('dmesg', 'f{artifacts}/dmesg_nodea.json', ip)
+    get_cmd_result('dmesg', 'f{artifacts}/dmesg_nodeb.json', ip2)
+else:
+    get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', 'f{artifacts}/core.get_jobs.json', ip)
+    get_cmd_result('dmesg', 'f{artifacts}/dmesg.json', ip)
 
 if returncode:
     exit(proc_returncode)
