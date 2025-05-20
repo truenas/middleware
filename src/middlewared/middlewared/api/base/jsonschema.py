@@ -35,9 +35,9 @@ def _clean_field_descriptions(schema: dict) -> dict:
     :param field_schema: `model.model_json_schema()`
     """
     for field_schema in schema["properties"].values():
-        if description := field_schema.get("description"):
+        if descr := field_schema.get("description"):
             NEWLINE = "$placeholder$"
-            field_schema["description"] = description.replace("\n\n", NEWLINE).replace("\n", "").replace(NEWLINE, "\n")
+            field_schema["description"] = descr.replace("\n\n", NEWLINE).replace("\n", " ").replace(NEWLINE, "\n")
 
     return schema
 
