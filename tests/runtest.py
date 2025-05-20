@@ -50,6 +50,7 @@ Optional option
     --ha_license                - The base64 encoded string of an HA license
     --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
     --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
+    --test_dir <api2>           - Name of the tests directory from which to run tests
     """ % argv[0]
 
 # if have no argument stop
@@ -72,6 +73,7 @@ option_list = [
     "returncode",
     "isns_ip=",
     "pool=",
+    "test_dir=",
     "tests=",
     "ha_license=",
     "hostname=",
@@ -96,6 +98,7 @@ exitfirst = ''
 returncode = False
 callargs = []
 tests = []
+test_dir = 'api2'
 ip2 = vip = ''
 netmask = None
 gateway = None
@@ -142,6 +145,8 @@ for output, arg in myopts:
         callargs.append('-s')
     elif output == '--tests':
         tests.extend(arg.split(','))
+    elif output == '--test_dir':
+        test_dir = arg
     elif output == '--ha_license':
         ha_license = arg
     elif output == '--show_locals':
@@ -304,8 +309,8 @@ if testexpr:
     pytest_command.extend(['-k', testexpr])
 
 def parse_test_name(test):
-    test = test.removeprefix("api2/")
-    test = test.removeprefix("api2.")
+    test = test.removeprefix(f"{test_dir}/")
+    test = test.removeprefix(f"{test_dir}.")
     if ".py" not in test and test.count(".") == 1:
         # Test name from Jenkins
         filename, testname = test.split(".")
@@ -317,7 +322,7 @@ def parse_test_name_prefix_dir(test_name):
     if name.startswith('/'):
         return name
     else:
-        return f"api2/{name}"
+        return f"{test_dir}/{name}"
 
 if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
