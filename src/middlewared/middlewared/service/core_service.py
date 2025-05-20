@@ -405,8 +405,6 @@ class CoreService(Service):
                     ),
                     'filterable_schema': filterable_schema,
                     'pass_application': hasattr(method, '_pass_app'),
-                    'extra_methods': method._rest_api_metadata['extra_methods'] if hasattr(
-                        method, '_rest_api_metadata') else None,
                     'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
                     'job': hasattr(method, '_job'),
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],

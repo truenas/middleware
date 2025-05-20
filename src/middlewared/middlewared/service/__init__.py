@@ -8,8 +8,8 @@ from .compound_service import CompoundService # noqa
 from .config_service import ConfigService # noqa
 from .crud_service import CRUDService # noqa
 from .decorators import ( # noqa
-    cli_private, filterable, filterable_returns, item_method, job, lock, no_auth_required,
-    no_authz_required, pass_app, periodic, private, rest_api_metadata, skip_arg, threaded,
+    cli_private, filterable, item_method, job, no_auth_required,
+    no_authz_required, pass_app, periodic, private,
     filterable_api_method
 )
 from .service import Service # noqa
