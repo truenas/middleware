@@ -22,6 +22,7 @@ from middlewared.utils.directoryservices.krb5 import (
 )
 from middlewared.utils.directoryservices.krb5_constants import (
     krb5ccache,
+    KRB_Keytab,
     SAMBA_KEYTAB_DIR,
 )
 from middlewared.utils.directoryservices.krb5_error import (
@@ -175,13 +176,6 @@ class ADJoinMixin:
     def _ad_leave(self, job: Job, ds_config: dict):
         """ Delete our computer object from active directory """
 
-        # remove privileges
-        job.set_progress(description='Removing local domain admin privilege from TrueNAS')
-        try:
-            self._ad_remove_privileges(ds_config)
-        except Exception:
-            self.logger.warning('Failed to remove domain admins privilege')
-
         # remove all samba keytabs
         for file in os.listdir(SAMBA_KEYTAB_DIR):
             os.unlink(os.path.join(SAMBA_KEYTAB_DIR, file))
@@ -210,7 +204,7 @@ class ADJoinMixin:
             dns_name = f'{ds_config["configuration"]["hostname"]}.{ds_config["configuration"]["domain"]}'
             job.set_progress(description='Unregistering from active directory DNS')
             try:
-                self.unregister_dns(dns_name, True, kdc_saf_cache_get())
+                self.unregister_dns(dns_name, True)
             except Exception:
                 # We're committed now and so we need to finish up our local reconfiguration
                 self.logger.warning('Failed to unregister from active directory DNS. Manual cleanup required', exc_info=True)
@@ -228,6 +222,11 @@ class ADJoinMixin:
             realm = self.middleware.call_sync('kerberos.realm.query', [['realm', '=', ds_config['kerberos_realm']]])
             if realm:
                 self.middleware.call_sync('datastore.delete', 'directoryservice.kerberosrealm', realm[0]['id'])
+
+        try:
+            os.unlink(KRB_Keytab.SYSTEM.value)
+        except Exception:
+            pass
 
         job.set_progress(description='Completed active directory leave.')
 
@@ -316,15 +315,6 @@ class ADJoinMixin:
                 'TrueNAS API.', exc_info=True
             )
 
-    def _ad_remove_privileges(self, ds_config: dict) -> None:
-        dom = ds_config['configuration']['domain'].upper()
-        priv = self.middleware.call_sync('privilege.query', [['name', '=', dom]])
-        if not priv:
-            self.logger.debug("No privilege found for %s", dom)
-            return
-
-        self.middleware.call_sync('privilege.delete', priv[0]['id'])
-
     def _ad_post_join_actions(self, job: Job, conf: dict):
         domain = conf['configuration']['domain']
         hostname = conf['configuration']['hostname']
@@ -339,7 +329,7 @@ class ADJoinMixin:
             retries = 10
             while True:
                 try:
-                    self.register_dns(conf['dns_name'], True, kdc_saf_cache_get())
+                    self.register_dns(conf['dns_name'], True)
                     break
                 except CallError as exc:
                     # Testing with domains with multiple DCs / nameservers indicated that

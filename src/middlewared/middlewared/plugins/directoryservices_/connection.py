@@ -95,7 +95,7 @@ class DomainConnection(
     def __wait_dns_change(self, fqdn: str, expectation: bool) -> None:
         """ nsupdate changes may take time to propagate. """
         for entry in self.middleware.call_sync('dns.query'):
-            retries = 120
+            retries = 30 
             while retries:
                 if not retries:
                     self.logger.debug('Exhausted retry attempts waiting for DNS changes to %s to propagate',
