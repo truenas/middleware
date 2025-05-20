@@ -120,7 +120,7 @@ async def test_use_ssh_enabled_validation(
 
     verrors = ValidationErrors()
     if expected_error:
-        with pytest.raises(ValidationErrors, match=expected_error) as ve:
+        with pytest.raises(ValidationErrors, match=expected_error):
             await user_service.common_validation(verrors, data, schema_name, [], old_data)
             verrors.check()
     else:
