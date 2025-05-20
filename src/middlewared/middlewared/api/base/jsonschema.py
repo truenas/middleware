@@ -22,6 +22,22 @@ def replace_refs(data, defs=None):
         return data
 
 
+def clean_field_descriptions(schema: dict) -> dict:
+    """Remove single newlines from field descriptions and replace double newlines with single newlines.
+
+    Solves the issue of docstring field descriptions that wrap to the next line having an unwanted newline
+    character when rendered in the docs.
+
+    :param field_schema: `model.model_json_schema()`
+    """
+    for field_schema in schema["properties"].values():
+        if description := field_schema.get("description"):
+            NEWLINE = "$placeholder$"
+            field_schema["description"] = description.replace("\n\n", NEWLINE).replace("\n", "").replace(NEWLINE, "\n")
+
+    return schema
+
+
 def add_attrs(schema):
     # FIXME: This is only here for backwards compatibility and should be removed eventually
     if isinstance(schema, dict):
