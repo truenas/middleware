@@ -2,13 +2,12 @@ import asyncio
 import threading
 
 from collections import defaultdict, namedtuple
-from functools import wraps
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import query_result
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, GenericQueryResult
-from middlewared.schema import accepts, Int, List, OROperator, Ref, returns
+from middlewared.schema import accepts, Ref
 
 
 LOCKS = defaultdict(asyncio.Lock)
@@ -36,21 +35,6 @@ def filterable(fn=None, /, *, roles=None):
 
     # We're called as @filterable without parens.
     return filterable_internal(fn)
-
-
-def filterable_returns(schema):
-    def filterable_internal(fn):
-        operator = OROperator(
-            Int('count'),
-            schema,
-            List('query_result', items=[schema.copy()]),
-            name='filterable_result',
-        )
-        fn._filterable_schema = operator
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable_schema = operator
-        return returns(operator)(fn)
-    return filterable_internal
 
 
 def filterable_api_method(
@@ -195,28 +179,6 @@ def job(
     return check_job
 
 
-def lock(lock_str):
-    def lock_fn(fn):
-        if asyncio.iscoroutinefunction(fn):
-            f_lock = LOCKS[lock_str]
-
-            @wraps(fn)
-            async def l_fn(*args, **kwargs):
-                async with f_lock:
-                    return await fn(*args, **kwargs)
-        else:
-            f_lock = THREADING_LOCKS[lock_str]
-
-            @wraps(fn)
-            def l_fn(*args, **kwargs):
-                with f_lock:
-                    return fn(*args, **kwargs)
-
-        return l_fn
-
-    return lock_fn
-
-
 def no_auth_required(fn):
     """Authentication is not required to use the given method."""
     fn._no_auth_required = True
@@ -259,35 +221,3 @@ def private(fn):
     """Do not expose method in public API"""
     fn._private = True
     return fn
-
-
-def rest_api_metadata(extra_methods=None):
-    """
-    Allow having endpoints specify explicit rest methods.
-
-    Explicit methods should be a list which specifies what methods the function should be available
-    at other then the default one it is already going to be. This is useful when we want to maintain
-    backwards compatibility with endpoints which were not expecting payload before but are now and users
-    still would like to consume them with previous method which would be GET whereas it's POST now.
-    """
-    def wrapper(fn):
-        fn._rest_api_metadata = {
-            'extra_methods': extra_methods,
-        }
-        return fn
-    return wrapper
-
-
-def skip_arg(count=0):
-    """Skip "count" arguments when validating accepts"""
-    def wrap(fn):
-        fn._skip_arg = count
-        return fn
-    return wrap
-
-
-def threaded(pool):
-    def m(fn):
-        fn._thread_pool = pool
-        return fn
-    return m
