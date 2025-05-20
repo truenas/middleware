@@ -341,18 +341,19 @@ def get_cmd_result(cmd: str, target_file: str, target_ip: str):
     else:
         with open(target_file, 'w') as f:
             f.writelines(results['output'])
+            f.flush()
 
 if ha:
     get_folder('/var/log', f'{artifacts}/log_nodea', 'root', 'testing', ip)
     get_folder('/var/log', f'{artifacts}/log_nodeb', 'root', 'testing', ip2)
-    get_cmd_result('midclt call core.get_jobs | jq .', 'f{artifacts}/core.get_jobs_nodea.json', ip)
-    get_cmd_result('midclt call core.get_jobs | jq .', 'f{artifacts}/core.get_jobs_nodeb.json', ip2)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodea.json', ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodeb.json', ip2)
     get_cmd_result('dmesg', 'f{artifacts}/dmesg_nodea.json', ip)
     get_cmd_result('dmesg', 'f{artifacts}/dmesg_nodeb.json', ip2)
 else:
     get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
-    get_cmd_result('midclt call core.get_jobs | jq .', 'f{artifacts}/core.get_jobs.json', ip)
-    get_cmd_result('dmesg', 'f{artifacts}/dmesg.json', ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs.json', ip)
+    get_cmd_result('dmesg', f'{artifacts}/dmesg.json', ip)
 
 if returncode:
     exit(proc_returncode)
