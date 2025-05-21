@@ -9,7 +9,12 @@ def get_json_schema(model):
     return [schema["properties"][name] for name in model.schema_model_fields()]
 
 
-def replace_refs(data, defs=None):
+def replace_refs(data, defs: dict | None = None):
+    """Recursively replace all refs in the given schema with their respective definitions.
+
+    :param data: JSON schema. Contents are not preserved.
+    :return: The new JSON schema with refs replaced by their definitions.
+    """
     if isinstance(data, dict):
         defs = data.pop("$defs", defs)
         if "$ref" in data:
