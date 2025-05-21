@@ -15,7 +15,7 @@ from middlewared.api.current import (NVMetPortCreateArgs,
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import MatchNotFound, ValidationErrors
-from .constants import PORT_ADDR_FAMILY, PORT_DATASTORE_EXTEND, PORT_DATASTORE_PREFIX, PORT_TRTYPE, similar_ports
+from .constants import PORT_ADDR_FAMILY, PORT_TRTYPE, similar_ports
 
 
 def _port_summary(data):
@@ -43,8 +43,8 @@ class NVMetPortService(CRUDService):
     class Config:
         namespace = 'nvmet.port'
         datastore = 'services.nvmet_port'
-        datastore_prefix = PORT_DATASTORE_PREFIX
-        datastore_extend = PORT_DATASTORE_EXTEND
+        datastore_prefix = 'nvmet_port_'
+        datastore_extend = 'nvmet.port.extend'
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetPortEntry

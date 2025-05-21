@@ -11,7 +11,6 @@ from middlewared.api.current import (NVMetSubsysCreateArgs,
                                      NVMetSubsysUpdateArgs,
                                      NVMetSubsysUpdateResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
-from .constants import SUBSYS_DATASTORE_EXTEND, SUBSYS_DATASTORE_PREFIX
 from .mixin import NVMetStandbyMixin
 
 SERIAL_RETRIES = 10
@@ -41,9 +40,9 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
     class Config:
         namespace = 'nvmet.subsys'
         datastore = 'services.nvmet_subsys'
-        datastore_prefix = SUBSYS_DATASTORE_PREFIX
+        datastore_prefix = 'nvmet_subsys_'
         datastore_extend_context = "nvmet.subsys.extend_context"
-        datastore_extend = SUBSYS_DATASTORE_EXTEND
+        datastore_extend = "nvmet.subsys.extend"
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetSubsysEntry

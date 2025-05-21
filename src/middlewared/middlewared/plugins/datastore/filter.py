@@ -47,6 +47,9 @@ class FilterMixin(SchemaMixin):
                 if '__' in name:
                     fk, name = name.split('__', 1)
                     col = self._get_col(aliases[list(self._get_col(table, fk, prefix).foreign_keys)[0]], name, '')
+                elif '.' in name:
+                    fk, name = name.split('.', 1)
+                    col = self._get_col(aliases[list(self._get_col(table, fk, prefix).foreign_keys)[0]], name, '')
                 else:
                     col = self._get_col(table, name, prefix)
 

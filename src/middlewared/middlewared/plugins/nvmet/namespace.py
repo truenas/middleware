@@ -20,7 +20,6 @@ from .constants import NAMESPACE_DEVICE_TYPE
 from .kernel import lock_namespace as kernel_lock_namespace
 from .kernel import unlock_namespace as kernel_unlock_namespace
 from .kernel import resize_namespace as kernel_resize_namespace
-from .constants import SUBSYS_DATASTORE_EXTEND, SUBSYS_DATASTORE_PREFIX
 
 UUID_GENERATE_RETRIES = 10
 NSID_SEARCH_RANGE = 0xFFFF  # This is much less than NSID, but good enough for practical purposes.
@@ -68,6 +67,7 @@ class NVMetNamespaceService(SharingService):
         datastore = 'services.nvmet_namespace'
         datastore_prefix = 'nvmet_namespace_'
         datastore_extend = 'nvmet.namespace.extend'
+        datastore_extend_fk = ['subsys']
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetNamespaceEntry
@@ -159,11 +159,6 @@ class NVMetNamespaceService(SharingService):
     @private
     async def extend(self, data):
         data['device_type'] = NAMESPACE_DEVICE_TYPE.by_db(data['device_type']).api
-        if subsys_data := data.pop('subsys', {}):
-            data['subsys'] = await self.process_data(subsys_data,
-                                                     SUBSYS_DATASTORE_PREFIX,
-                                                     SUBSYS_DATASTORE_EXTEND,
-                                                     {})
         return data
 
     @private

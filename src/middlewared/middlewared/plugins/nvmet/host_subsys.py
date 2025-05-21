@@ -9,7 +9,6 @@ from middlewared.api.current import (NVMetHostSubsysCreateArgs,
                                      NVMetHostSubsysUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
-from .constants import HOST_DATASTORE_EXTEND, HOST_DATASTORE_PREFIX, SUBSYS_DATASTORE_EXTEND, SUBSYS_DATASTORE_PREFIX
 
 
 class NVMetHostSubsysModel(sa.Model):
@@ -26,7 +25,7 @@ class NVMetHostSubsysService(CRUDService):
         namespace = 'nvmet.host_subsys'
         datastore = 'services.nvmet_host_subsys'
         datastore_prefix = 'nvmet_host_subsys_'
-        datastore_extend = 'nvmet.host_subsys.extend'
+        datastore_extend_fk = ['host', 'subsys']
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetHostSubsysEntry
@@ -146,16 +145,3 @@ class NVMetHostSubsysService(CRUDService):
 
     def __audit_summary(self, data):
         return f'{data["host"]["hostnqn"]}/{data["subsys"]["name"]}'
-
-    @private
-    async def extend(self, data):
-        if host_data := data.pop('host', {}):
-            data['host'] = await self.process_data(host_data,
-                                                   HOST_DATASTORE_PREFIX,
-                                                   HOST_DATASTORE_EXTEND)
-        if subsys_data := data.pop('subsys', {}):
-            data['subsys'] = await self.process_data(subsys_data,
-                                                     SUBSYS_DATASTORE_PREFIX,
-                                                     SUBSYS_DATASTORE_EXTEND,
-                                                     {})
-        return data

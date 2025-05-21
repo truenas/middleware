@@ -9,13 +9,6 @@ NVMET_SERVICE_NAME = 'nvmet'
 
 NVMET_MAX_NSID = 0xFFFFFFFE
 
-HOST_DATASTORE_PREFIX = 'nvmet_host_'
-HOST_DATASTORE_EXTEND = 'nvmet.host.extend'
-SUBSYS_DATASTORE_PREFIX = 'nvmet_subsys_'
-SUBSYS_DATASTORE_EXTEND = 'nvmet.subsys.extend'
-PORT_DATASTORE_PREFIX = 'nvmet_port_'
-PORT_DATASTORE_EXTEND = 'nvmet.port.extend'
-
 
 class ApiMapper(enum.Enum):
 

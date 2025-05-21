@@ -18,7 +18,7 @@ from middlewared.api.current import (NVMetHostCreateArgs,
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
-from .constants import DHCHAP_DHGROUP, DHCHAP_HASH, HOST_DATASTORE_EXTEND, HOST_DATASTORE_PREFIX
+from .constants import DHCHAP_DHGROUP, DHCHAP_HASH
 
 
 class NVMetHostModel(sa.Model):
@@ -37,8 +37,8 @@ class NVMetHostService(CRUDService):
     class Config:
         namespace = 'nvmet.host'
         datastore = 'services.nvmet_host'
-        datastore_prefix = HOST_DATASTORE_PREFIX
-        datastore_extend = HOST_DATASTORE_EXTEND
+        datastore_prefix = 'nvmet_host_'
+        datastore_extend = 'nvmet.host.extend'
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetHostEntry
