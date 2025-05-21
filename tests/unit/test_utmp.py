@@ -9,7 +9,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, UTC
 from middlewared.utils.account import utmp, authenticator, faillock
-from middlewared.utils.auth import AUID_UNSET
+from middlewared.utils.auth import AUID_UNSET, OTPW_MANAGER
 from middlewared.utils.origin import ConnectionOrigin
 from time import sleep
 from truenas_api_client import Client
@@ -343,3 +343,22 @@ def test__session_login_fail_unlock_time(fake_session_id, admin_user, pam_stig):
     pam_hdl = authenticator.UserPamAuthenticator()
     resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v4_origin)
     assert resp.code == pam.PAM_SUCCESS
+
+
+def test__otpw_login_admin_otp(fake_session_id, admin_user):
+    # When an admin user generates an OTPW for an account we set a special account flag
+    password = OTPW_MANAGER.generate_for_uid(admin_user['uid'], True)
+    pam_hdl = authenticator.UserPamAuthenticator()
+    resp = pam_hdl.authenticate(admin_user['username'], password, v4_origin)
+    assert resp.code == pam.PAM_SUCCESS
+    assert authenticator.AccountFlag.OTPW in resp.user_info['account_attributes']
+    assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED in resp.user_info['account_attributes']
+
+
+def test__otpw_login_nonadmin_otp(fake_session_id, admin_user):
+    password = OTPW_MANAGER.generate_for_uid(admin_user['uid'])
+    pam_hdl = authenticator.UserPamAuthenticator()
+    resp = pam_hdl.authenticate(admin_user['username'], password, v4_origin)
+    assert resp.code == pam.PAM_SUCCESS
+    assert authenticator.AccountFlag.OTPW in resp.user_info['account_attributes']
+    assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED not in resp.user_info['account_attributes']

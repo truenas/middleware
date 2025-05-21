@@ -1,6 +1,6 @@
 import enum
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from random import uniform
 from time import monotonic
 from .crypto import generate_string, sha512_crypt, check_unixhash
@@ -113,7 +113,7 @@ AA_LEVEL3 = AuthenticatorAssuranceLevel(
 CURRENT_AAL = ServerAAL(AA_LEVEL1)
 
 
-class OTPWResponse(enum.StrEnum):
+class OTPWResponseCode(enum.StrEnum):
     SUCCESS = 'SUCCESS'
     EXPIRED = 'EXPIRED'
     NO_KEY = 'NO_KEY'
@@ -128,6 +128,13 @@ class UserOnetimePassword:
     expires: int  # expiration time (monotonic)
     keyhash: str  # hash of onetime password
     used: bool = False  # whether password has been used for authentication
+    password_set_override: bool = False  # whether we should allow override of password aging
+
+
+@dataclass(slots=True)
+class OTPWResponse:
+    code: OTPWResponseCode
+    data: dict | None = None  # asdict output of onetime password (if SUCCESS)
 
 
 class OnetimePasswordManager:
@@ -141,7 +148,7 @@ class OnetimePasswordManager:
     lock = threading.Lock()
     cnt = 0
 
-    def generate_for_uid(self, uid: int) -> str:
+    def generate_for_uid(self, uid: int, admin_generated: bool = False) -> str:
         """
         Generate a passkey for the given UID.
 
@@ -154,7 +161,12 @@ class OnetimePasswordManager:
             keyhash = sha512_crypt(human_friendly)
             expires = monotonic() + 86400
 
-            entry = UserOnetimePassword(uid=uid, expires=expires, keyhash=keyhash)
+            entry = UserOnetimePassword(
+                uid=uid,
+                expires=expires,
+                keyhash=keyhash,
+                password_set_override=admin_generated
+            )
             self.cnt += 1
             self.otpasswd[str(self.cnt)] = entry
             return f'{self.cnt}_{human_friendly}'
@@ -164,27 +176,27 @@ class OnetimePasswordManager:
         try:
             idx, passwd = plaintext.split('_')
         except Exception:
-            return OTPWResponse.NO_KEY
+            return OTPWResponse(OTPWResponseCode.NO_KEY)
 
         if (entry := self.otpasswd.get(idx)) is None:
-            return OTPWResponse.NO_KEY
+            return OTPWResponse(OTPWResponseCode.NO_KEY)
 
         with self.lock:
             if entry.uid != uid:
-                return OTPWResponse.WRONG_USER
+                return OTPWResponse(OTPWResponseCode.WRONG_USER)
 
             if entry.used:
-                return OTPWResponse.ALREADY_USED
+                return OTPWResponse(OTPWResponseCode.ALREADY_USED)
 
             if monotonic() > entry.expires:
-                return OTPWResponse.EXPIRED
+                return OTPWResponse(OTPWResponseCode.EXPIRED)
 
             if not check_unixhash(passwd, entry.keyhash):
-                return OTPWResponse.BAD_PASSKEY
+                return OTPWResponse(OTPWResponseCode.BAD_PASSKEY)
 
             entry.used = True
 
-            return OTPWResponse.SUCCESS
+            return OTPWResponse(OTPWResponseCode.SUCCESS, asdict(entry))
 
 
 OTPW_MANAGER = OnetimePasswordManager()

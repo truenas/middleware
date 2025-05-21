@@ -338,12 +338,19 @@ class AuthService(Service):
         roles=['ACCOUNT_WRITE'],
         audit='Generate onetime password for user'
     )
-    def generate_onetime_password(self, data):
+    @pass_app(require=True)
+    def generate_onetime_password(self, app, data):
         """
         Generate a password for the specified username that may be used only a single time to authenticate
         to TrueNAS. This may be used by server administrators to allow users authenticate and then set
         a proper password and two-factor authentication token.
         """
+        if app.authenticated_credentials.is_user_session:
+            account_admin = app.authenticated_credentials.has_role('ACCOUNT_WRITE')
+        else:
+            # credentials that aren't associated with user sessions are root-equivalent
+            account_admin = True
+
         username = data['username']
         user_data = self.middleware.call_sync('user.query', [['username', '=', username]])
         if not user_data:
@@ -365,8 +372,7 @@ class AuthService(Service):
 
         verrors.check()
 
-        passwd = OTPW_MANAGER.generate_for_uid(user_data[0]['uid'])
-        return passwd
+        return OTPW_MANAGER.generate_for_uid(user_data[0]['uid'], account_admin)
 
     @api_method(
         AuthGenerateTokenArgs, AuthGenerateTokenResult,

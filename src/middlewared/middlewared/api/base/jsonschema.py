@@ -13,8 +13,14 @@ def clean_schema(schema: dict, defs: dict | None = None) -> dict:
     return _clean_field_descriptions(_replace_refs(schema, defs))
 
 
-def _replace_refs(data, defs=None):
+def _replace_refs(data, defs: dict | None = None):
+    """Recursively replace all refs in the given schema with their respective definitions.
+
+    :param data: JSON schema. Contents are not preserved.
+    :return: The new JSON schema with refs replaced by their definitions.
+    """
     if isinstance(data, dict):
+        defs = data.pop("$defs", defs)
         if "$ref" in data:
             ref = data.pop("$ref")
             data = {**defs[ref.removeprefix("#/$defs/")], **data}

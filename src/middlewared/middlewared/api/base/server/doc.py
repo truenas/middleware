@@ -93,10 +93,10 @@ class APIDumper:
 
     def _dump_method_schemas(self, method: Method):
         accepts_json_schema = method.methodobj.new_style_accepts.model_json_schema()
-        accepts_json_schema = clean_schema(accepts_json_schema, accepts_json_schema.get("$defs", {}))
+        accepts_json_schema = clean_schema(accepts_json_schema)
 
         returns_json_schema = method.methodobj.new_style_returns.model_json_schema(mode="serialization")
-        returns_json_schema = clean_schema(returns_json_schema, returns_json_schema.get("$defs", {}))
+        returns_json_schema = clean_schema(returns_json_schema)
 
         return {
             "type": "object",
@@ -144,7 +144,7 @@ class APIDumper:
         properties = {}
         for name, model in event.event["models"].items():
             schema = model.model_json_schema()
-            schema = clean_schema(schema, schema.get("$defs", {}))
+            schema = clean_schema(schema)
             properties[name] = schema
 
         return {
