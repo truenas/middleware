@@ -561,7 +561,6 @@ def test__stig_password_policy(config, update_account_policy, error):
 def test_stig_min_password_age(readonly_admin):
     with security_config(min_password_age=3) as config:
         assert config['min_password_age'] == 3
-
         with Client() as c2:
             resp = c2.call('auth.login_ex', {
                 'mechanism': 'PASSWORD_PLAIN',
@@ -577,6 +576,20 @@ def test_stig_min_password_age(readonly_admin):
                     'old_password': readonly_admin['password'],
                     'new_password': 'canary'
                 })
+
+        with Client() as c:
+            otpw = c.call('auth.generate_onetime_password', {'username': readonly_admin['username']})
+
+        with Client() as c2:
+            resp = c2.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': readonly_admin['username'],
+                'password': otpw
+            })
+            assert resp['response_type'] == 'SUCCESS'
+            assert resp['user_info']['pw_name'] == readonly_admin['username']
+            assert 'PASSWORD_CHANGE_REQUIRED' in resp['user_info']['account_attributes']
+            c2.call('user.set_password', {'username': readonly_admin['username'], 'new_password': 'canary2'})
 
         with Client() as c:
             c.call('user.update', readonly_admin['id'], {'password': 'canary'})
