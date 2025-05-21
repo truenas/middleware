@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime, UTC
 from ipaddress import ip_address
 from middlewared.plugins.account_.constants import ADMIN_UID
-from middlewared.utils.auth import OTPW_MANAGER, OTPWResponse
+from middlewared.utils.auth import OTPW_MANAGER, OTPWResponseCode
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.health import DSHealthObj
 from middlewared.utils.nss.nss_common import NssModule
@@ -79,6 +79,7 @@ class AccountFlag(enum.StrEnum):
     TWOFACTOR = '2FA'  # Account requires 2FA (NOTE: PAM currently isn't evaluating second factor)
     API_KEY = 'API_KEY'  # Account authenticated by API key
     OTPW = 'OTPW'  # Account authenticated by a single-use password
+    PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED'  # Password change for account is required
 
 
 class MiddlewareTTYName(enum.StrEnum):
@@ -330,20 +331,23 @@ class UserPamAuthenticator(pam.PamAuthenticator):
             return
 
         otpw_resp = OTPW_MANAGER.authenticate(passwd_entry['pw_uid'], password)
-        match otpw_resp:
-            case OTPWResponse.SUCCESS:
+        match otpw_resp.code:
+            case OTPWResponseCode.SUCCESS:
                 self.truenas_state.passwd['account_attributes'].append(AccountFlag.OTPW)
+                if otpw_resp.data['password_set_override']:
+                    self.truenas_state.passwd['account_attributes'].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
+
                 code = pam.PAM_SUCCESS
                 reason = None
-            case OTPWResponse.EXPIRED:
+            case OTPWResponseCode.EXPIRED:
                 code = pam.PAM_CRED_EXPIRED
                 reason = 'Onetime password is expired'
-            case OTPWResponse.NO_KEY:
+            case OTPWResponseCode.NO_KEY:
                 # Indicate to caller to send original PAM response
                 return
             case _:
                 code = pam.PAM_AUTH_ERR
-                reason = f'Onetime password authentication failed: {otpw_resp}'
+                reason = f'Onetime password authentication failed: {otpw_resp.code}'
 
         return code, reason
 
