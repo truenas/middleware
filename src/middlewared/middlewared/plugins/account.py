@@ -52,7 +52,7 @@ from middlewared.service import CallError, CRUDService, ValidationErrors, pass_a
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.account.authenticator import UserPamAuthenticator
+from middlewared.utils.account.authenticator import UserPamAuthenticator, AccountFlag
 from middlewared.utils.account.faillock import tally_locked_users, reset_tally
 from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_string, check_unixhash
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
@@ -1737,11 +1737,16 @@ class UserService(CRUDService):
         is_full_admin = credential_has_full_admin(app.authenticated_credentials)
         is_otp_login = False
         authenticated_user = None
+        password_aging_override = is_full_admin
 
         if app.authenticated_credentials.is_user_session:
             authenticated_user = app.authenticated_credentials.user['username']
-            if 'OTPW' in app.authenticated_credentials.user['account_attributes']:
+            if AccountFlag.OTPW in app.authenticated_credentials.user['account_attributes']:
                 is_otp_login = True
+
+            if not password_aging_override:
+                if AccountFlag.PASSWORD_CHANGE_REQUIRED in app.authenticated_credentials.user['account_attributes']:
+                    password_aging_override = True
 
         username = data['username']
         password = data['new_password']
@@ -1803,7 +1808,7 @@ class UserService(CRUDService):
 
         verrors.check()
 
-        if min_password_age and entry['password_age'] < min_password_age:
+        if not password_aging_override and min_password_age and entry['password_age'] < min_password_age:
             verrors.add(
                 'user.set_password.username',
                 f'{username}: password changed too recently. Minimum password age is: {min_password_age}'
