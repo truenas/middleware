@@ -26,7 +26,7 @@ def app_has_write_privilege_for_service(
     if credential_has_full_admin(app.authenticated_credentials):
         return True
 
-    if app.authenticated_credentials.has_role('SERVICES_WRITE'):
+    if app.authenticated_credentials.has_role('SERVICE_WRITE'):
         return True
 
     try:
