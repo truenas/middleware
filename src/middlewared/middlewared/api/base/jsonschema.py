@@ -3,7 +3,7 @@ __all__ = ["get_json_schema"]
 
 def get_json_schema(model):
     schema = model.model_json_schema()
-    schema = replace_refs(schema, schema.get("$defs", {}))
+    schema = replace_refs(schema)
     schema = add_attrs(schema)
 
     return [schema["properties"][name] for name in model.schema_model_fields()]
@@ -11,6 +11,7 @@ def get_json_schema(model):
 
 def replace_refs(data, defs=None):
     if isinstance(data, dict):
+        defs = data.pop("$defs", defs)
         if "$ref" in data:
             ref = data.pop("$ref")
             data = {**defs[ref.removeprefix("#/$defs/")], **data}
