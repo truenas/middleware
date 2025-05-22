@@ -92,7 +92,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         extend_fk = options.get('extend_fk')
         fk_attrs = {}
         aliases = {}
-        if options['count']:
+        if options['count'] and not self._filters_contains_foreign_key(filters):
             qs = select([func.count(self._get_pk(table))])
         else:
             columns = list(table.c)
@@ -109,7 +109,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     columns.extend(list(alias.c))
                     from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
 
-            qs = select(columns).select_from(from_)
+            if options['count']:
+                qs = select([func.count(self._get_pk(table))]).select_from(from_)
+            else:
+                qs = select(columns).select_from(from_)
 
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix, aliases)))

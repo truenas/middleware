@@ -857,6 +857,41 @@ class LinkedFromModel(Model):
     pytest.param(
         {},
         [],
+        {'prefix': 'linkedfrom_', 'count': True},
+        2,
+        id='extend_pk NOT supplied, no filter, no extend, count(2)'),
+
+    pytest.param(
+        {},
+        [['id', '=', 2]],
+        {'prefix': 'linkedfrom_', 'count': True},
+        1,
+        id='extend_pk NOT supplied, filter, no extend, count(1)'),
+
+    pytest.param(
+        {},
+        [['id', '=', 525600]],
+        {'prefix': 'linkedfrom_', 'count': True},
+        0,
+        id='extend_pk NOT supplied, filter, no extend, count(0)'),
+
+    pytest.param(
+        {},
+        [['linkedto_id', '=', 3]],
+        {'prefix': 'linkedfrom_', 'count': True},
+        1,
+        id='extend_pk NOT supplied, filter(underscore), no extend, count(1)'),
+
+    pytest.param(
+        {},
+        [['linkedto_id', '=', 525600]],
+        {'prefix': 'linkedfrom_', 'count': True},
+        0,
+        id='extend_pk NOT supplied, filter(underscore), no extend, count(0)'),
+
+    pytest.param(
+        {},
+        [],
         {'prefix': 'linkedfrom_', 'extend': 'fake.extend.triple_value'},
         [{'id': 1,
           'linkedto': {'id': 2, 'linkedto_value': 42},
@@ -931,6 +966,70 @@ class LinkedFromModel(Model):
           'linkedto': {'id': 2, 'value': 84},
           'value': 426}],
         id='extend_pk supplied, filter (period), extend (twice)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        2,
+        id='extend_pk supplied, no filter, extend, count(2)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['id', '=', 2]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        1,
+        id='extend_pk supplied, filter, extend, count(1)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['id', '=', 525600]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        0,
+        id='extend_pk supplied, filter, extend, count(0)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto_id', '=', 3]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        1,
+        id='extend_pk supplied, filter(underscore), extend, count(1)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto_id', '=', 525600]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        0,
+        id='extend_pk supplied, filter(underscore), extend, count(0)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto__id', '=', 3]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        1,
+        id='extend_pk supplied, filter(double underscore), extend, count(1)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto__id', '=', 525600]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        0,
+        id='extend_pk supplied, filter(double underscore), extend, count(0)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto.id', '=', 3]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        1,
+        id='extend_pk supplied, filter(period), extend, count(1)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto.id', '=', 525600]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'count': True},
+        0,
+        id='extend_pk supplied, filter(period), extend, count(0)'),
+
 ])
 @pytest.mark.asyncio
 async def test__extend_fk(extend_fk_attrs, filter, options, expected_result):
