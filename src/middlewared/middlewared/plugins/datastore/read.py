@@ -37,7 +37,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             Bool('relationships', default=True),
             Str('extend', default=None, null=True),
             Str('extend_context', default=None, null=True),
-            List('extend_fk', default=None, null=True),
+            List('extend_fk', default=[], null=True),
             Str('prefix', default=None, null=True),
             Dict('extra', additional_attrs=True),
             List('order_by'),
