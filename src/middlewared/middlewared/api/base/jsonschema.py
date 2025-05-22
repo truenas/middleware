@@ -3,7 +3,7 @@ if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
 
 
-PartialSchema = TypeVar("PartialSchema")
+_PartialSchema = TypeVar("_PartialSchema")
 
 
 def get_json_schema(model: type["BaseModel"]) -> list:
@@ -28,7 +28,7 @@ def clean_schema(schema: dict) -> dict:
     return schema
 
 
-def _replace_refs(data: PartialSchema, defs: dict | None = None) -> PartialSchema:
+def _replace_refs(data: _PartialSchema, defs: dict | None = None) -> _PartialSchema:
     """Recursively replace all refs in the given schema with their respective definitions.
 
     :param data: JSON schema. Contents are not preserved.
@@ -58,12 +58,14 @@ def _clean_descriptions(schema: dict) -> None:
     for field_schema in schema["properties"].values():
         if descr := field_schema.get("description"):
             NEWLINE = "$placeholder$"
-            field_schema["description"] = descr.replace("\n\n", NEWLINE).replace("\n", " ").replace(NEWLINE, "\n")
+            field_schema["description"] = (
+                descr.replace("\n\n", NEWLINE).replace("\n", " ").replace(NEWLINE, "\n").strip()
+            )
         if "properties" in field_schema:
             _clean_descriptions(field_schema)
 
 
-def _add_attrs(schema: PartialSchema) -> PartialSchema:
+def _add_attrs(schema: _PartialSchema) -> _PartialSchema:
     # FIXME: This is only here for backwards compatibility and should be removed eventually
     if isinstance(schema, dict):
         if schema.get("type") == "object" and isinstance(schema.get("properties"), dict):
