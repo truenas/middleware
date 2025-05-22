@@ -57,7 +57,7 @@ class LegacyAPIMethod(Method):
 
             # The legacy API does not contain signature definition for this method, which means it didn't exist
             # when that API was released.
-            raise MethodNotFoundError(*self.name.rsplit(".", 1))
+            raise MethodNotFoundError(*reversed(self.name.rsplit(".", 1)))
 
         params_dict = model_dict_from_list(legacy_accepts_model, params)
 
