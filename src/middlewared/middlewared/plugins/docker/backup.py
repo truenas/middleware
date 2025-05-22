@@ -36,6 +36,8 @@ class DockerService(Service):
     def backup(self, job, backup_name):
         """
         Create a backup of existing apps.
+
+        This creates a backup of existing apps on the same pool in which docker is initialized.
         """
         self.middleware.call_sync('docker.state.validate')
         docker_config = self.middleware.call_sync('docker.config')
