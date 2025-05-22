@@ -106,6 +106,13 @@ class SystemSecurityService(ConfigService):
                 'enabling General Purpose OS STIG compatibility mode.'
             )
 
+        if two_factor['services']['ssh'] is False:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Two factor authentication for SSH access must be enabled before '
+                'enabling General Purpose OS STIG compatibility mode.'
+            )
+
         tc_config = await self.middleware.call('truecommand.config')
         if tc_config['enabled']:
             raise ValidationError(
