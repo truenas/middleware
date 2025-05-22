@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import cache
 import re
 
 from sqlalchemy import and_, func, select
@@ -100,13 +101,10 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 aliases = self._get_queryset_joins(table)
                 for foreign_key, alias in aliases.items():
                     if extend_fk and foreign_key.parent.name.endswith('_id'):
-                        # Strip off the trailing '_id'
-                        fk = foreign_key.parent.name[:-3]
-                        # Strip off the prefix
-                        if fk.startswith(prefix):
-                            fk = fk[len(prefix):]
+                        fk = foreign_key.parent.name.removeprefix(prefix).removesuffix("_id")
                         if fk in extend_fk:
-                            if _attrs := await self._get_service_config_attrs(foreign_key.column.table.name):
+                            if _attrs := await self.middleware.call('datastore.get_service_config_attrs',
+                                                                    foreign_key.column.table.name):
                                 fk_attrs[fk] = _attrs
                     columns.extend(list(alias.c))
                     from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
@@ -331,12 +329,8 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         return relationships
 
-    async def _get_service_config_attrs(self, flat_table_name: str) -> dict:
-        cache_key = f'config_attrs_{flat_table_name}'
-        try:
-            return await self.middleware.call('cache.get', cache_key)
-        except KeyError:
-            pass
+    @cache
+    def get_service_config_attrs(self, flat_table_name: str) -> dict:
         result = {}
         for service_name, service_obj in self.middleware.get_services().items():
             if service_obj._config and hasattr(service_obj._config, 'datastore'):
@@ -346,6 +340,5 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                         for attr in ['prefix', 'extend', 'extend_context']:
                             key = f'datastore_{attr}'
                             result[attr] = getattr(service_obj._config, key, None)
-                        await self.middleware.call('cache.put', cache_key, result)
                         return result
         return result

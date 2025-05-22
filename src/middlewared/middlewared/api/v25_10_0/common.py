@@ -30,7 +30,7 @@ class QueryOptions(BaseModel):
     are covered in the "Query methods" section of the TrueNAS API documentation. """
     relationships: bool = True
     extend: str | None = None
-    extend_fk: list[str] | None = None
+    extend_fk: list[str] = []
     extend_context: str | None = None
     prefix: str | None = None
     extra: dict = {}

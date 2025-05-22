@@ -24,7 +24,7 @@ Model = declarative_base()
 
 
 @asynccontextmanager
-async def datastore_test():
+async def datastore_test(mocked_calls={}):
     m = Middleware()
     with patch("middlewared.plugins.datastore.connection.FREENAS_DATABASE", ":memory:"):
         with patch("middlewared.plugins.datastore.schema.Model", Model):
@@ -51,6 +51,9 @@ async def datastore_test():
                 m["datastore.insert"] = ds.insert
                 m["datastore.update"] = ds.update
                 m["datastore.delete"] = ds.delete
+
+                for call_name, call_func in mocked_calls.items():
+                    m[call_name] = call_func
 
                 yield ds
 
@@ -462,6 +465,7 @@ async def test__encrypted_json_load(id_, json_dict, json_list, json_dict_result,
             row = await ds.query("test.encryptedjson", [["id", "=", id_]], {"get": True})
             assert row["json_dict"] == json_dict_result and row["json_list"] == json_list_result
 
+
 @pytest.mark.asyncio
 async def test__encrypted_json_save():
     async with datastore_test() as ds:
@@ -820,3 +824,135 @@ async def test__null_order_by(order_by, result):
         await ds.insert("test.null", {"value": 1})
 
         assert [row["id"] for row in await ds.query("test.null", [], {"order_by": order_by})] == result
+
+
+class LinkedToModel(Model):
+    __tablename__ = 'test_linkedto'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    linkedto_value = sa.Column(sa.Integer())
+
+
+class LinkedFromModel(Model):
+    __tablename__ = 'test_linkedfrom'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    linkedfrom_linkedto_id = sa.Column(sa.ForeignKey('test_linkedto.id'), index=True)
+    linkedfrom_value = sa.Column(sa.Integer())
+
+
+@pytest.mark.parametrize("extend_fk_attrs, filter, options, expected_result", [
+    pytest.param(
+        {},
+        [],
+        {'prefix': 'linkedfrom_'},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'linkedto_value': 42},
+          'value': 142},
+         {'id': 2,
+          'linkedto': {'id': 3, 'linkedto_value': 43},
+          'value': 143}],
+        id='extend_pk NOT supplied, no filter, no extend'),
+
+    pytest.param(
+        {},
+        [],
+        {'prefix': 'linkedfrom_', 'extend': 'fake.extend.triple_value'},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'linkedto_value': 42},
+          'value': 426},
+         {'id': 2,
+          'linkedto': {'id': 3, 'linkedto_value': 43},
+          'value': 429}],
+        id='extend_pk NOT supplied, no filter, extend(from)'),
+
+    pytest.param(
+        {},
+        [['linkedto_id', '=', 3]],
+        {'prefix': 'linkedfrom_', 'extend': 'fake.extend.triple_value'},
+        [{'id': 2,
+          'linkedto': {'id': 3, 'linkedto_value': 43},
+          'value': 429}],
+        id='extend_pk NOT supplied, filter, extend(from)'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
+        [],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'value': 42},
+          'value': 142},
+         {'id': 2,
+          'linkedto': {'id': 3, 'value': 43},
+          'value': 143}],
+        id='extend_pk supplied, no filter, no extend'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
+        [['linkedto_id', '=', 2]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'value': 42},
+          'value': 142}],
+        id='extend_pk supplied, filter (underscore), no extend'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
+        [['linkedto__id', '=', 2]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'value': 42},
+          'value': 142}],
+        id='extend_pk supplied, filter (double underscore), no extend'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': None, 'extend_context': None},
+        [['linkedto.id', '=', 2]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'value': 42},
+          'value': 142}],
+        id='extend_pk supplied, filter (period), no extend'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto.id', '=', 2]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto']},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'value': 84},
+          'value': 142}],
+        id='extend_pk supplied, filter (period), extend'),
+
+    pytest.param(
+        {'prefix': 'linkedto_', 'extend': 'fake.extend.double_value', 'extend_context': None},
+        [['linkedto.id', '=', 2]],
+        {'prefix': 'linkedfrom_', 'extend_fk': ['linkedto'], 'extend': 'fake.extend.triple_value'},
+        [{'id': 1,
+          'linkedto': {'id': 2, 'value': 84},
+          'value': 426}],
+        id='extend_pk supplied, filter (period), extend (twice)'),
+])
+@pytest.mark.asyncio
+async def test__extend_fk(extend_fk_attrs, filter, options, expected_result):
+    def multiply(times):
+        def by(data):
+            if curval := data.get('value', None):
+                if isinstance(curval, int):
+                    data['value'] = curval * times
+            return data
+        return by
+
+    mocked_calls = {
+        'datastore.get_service_config_attrs': lambda ftn: extend_fk_attrs,
+        'fake.extend.double_value': multiply(2),
+        'fake.extend.triple_value': multiply(3),
+    }
+    async with datastore_test(mocked_calls) as ds:
+        await ds.insert("test.linkedto", {"linkedto_value": 1})
+        await ds.insert("test.linkedto", {"linkedto_value": 42})
+        await ds.insert("test.linkedto", {"linkedto_value": 43})
+        await ds.insert("test.linkedfrom", {"linkedfrom_value": 142, "linkedfrom_linkedto_id": 2})
+        await ds.insert("test.linkedfrom", {"linkedfrom_value": 143, "linkedfrom_linkedto_id": 3})
+
+        query_result = await ds.query("test.linkedfrom", filter, options)
+        assert query_result == expected_result
