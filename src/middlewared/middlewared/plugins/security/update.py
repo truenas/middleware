@@ -1,4 +1,4 @@
-import middlewared.sqlalchemy as sa
+import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -7,6 +7,7 @@ from middlewared.api.current import (
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.service import ConfigService, ValidationError, job, private
+import middlewared.sqlalchemy as sa
 from middlewared.utils.io import set_io_uring_enabled
 from middlewared.utils.security import (
     GPOS_STIG_MIN_PASSWORD_AGE,
@@ -53,7 +54,7 @@ class SystemSecurityService(ConfigService):
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
         if reason.name in remote_reboot_reasons:
-            # This means the we're toggling a change in security settings but other node is
+            # This means that we're toggling a change in security settings but other node is
             # already pending a reboot, which means the user has toggled changes twice and
             # somehow the other node didn't reboot (even though this should be automatic).
             # This is an edge case and means someone or something is doing things behind our backs
@@ -374,6 +375,27 @@ class SystemSecurityService(ConfigService):
 
         return await self.config()
 
+    @private
+    def configure_fips(self, database_path=None):
+        args = ['configure_fips']
+        if database_path is not None:
+            args.append(database_path)
+
+        try:
+            p = subprocess.run(args, capture_output=True, check=True, encoding='utf-8', errors='ignore')
+            output = p.stderr.strip()
+            if output:
+                self.logger.error('configure_fips output:\n%s', output)
+        except subprocess.CalledProcessError as e:
+            self.logger.error('configure_fips error:\n%s', e.stderr)
+            raise
+
+
+async def on_config_upload(middleware, path):
+    await middleware.call('system.security.configure_fips', path)
+
 
 async def setup(middleware):
+    middleware.register_hook('config.on_upload', on_config_upload, sync=True)
+
     await middleware.call('system.security.configure_stig')
