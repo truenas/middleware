@@ -57,13 +57,15 @@ def _clean_descriptions(schema: dict) -> None:
     :param schema: JSON schema with all references replaced by their definitions.
     """
     for field_schema in schema["properties"].values():
-        if descr := field_schema.get("description"):
+        if description := field_schema.get("description"):
             NEWLINE = "$placeholder$"
             field_schema["description"] = (
-                descr.replace("\n\n", NEWLINE).replace("\n", " ").replace(NEWLINE, "\n").strip()
+                description.replace("\n\n", NEWLINE).replace("\n", " ").replace(NEWLINE, "\n").strip()
             )
         if "properties" in field_schema:
             _clean_descriptions(field_schema)
+        elif "items" in field_schema:
+            _clean_descriptions(field_schema["items"])
 
 
 def _add_attrs(schema: _PartialSchema) -> _PartialSchema:
