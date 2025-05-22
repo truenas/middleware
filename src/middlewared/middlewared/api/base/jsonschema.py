@@ -1,4 +1,5 @@
 from typing import TypeVar, TYPE_CHECKING
+
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
 

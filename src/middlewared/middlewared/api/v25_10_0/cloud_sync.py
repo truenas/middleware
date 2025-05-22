@@ -67,7 +67,7 @@ class CloudSyncEntry(BaseCloudEntry):
 class CloudSyncCreate(CloudSyncEntry):
     id: Excluded = excluded_field()
     credentials: int
-    "ID of the cloud credential"
+    """ID of the cloud credential."""
     job: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
@@ -195,10 +195,10 @@ class CloudSyncProvider(BaseModel):
     title: str
     credentials_oauth: str | None
     buckets: bool
-    "set to `true if provider supports buckets"
+    """Set to `true` if provider supports buckets."""
     bucket_title: str | None
     task_schema: list[dict]
-    "JSON schema for task attributes"
+    """JSON schema for task attributes."""
 
 
 @single_argument_args("onedrive_list_drives")

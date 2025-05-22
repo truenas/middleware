@@ -98,10 +98,14 @@ class AppCreateArgs(BaseModel):
     app_name: str = Field(pattern=r'^[a-z]([-a-z0-9]*[a-z0-9])?$', min_length=1, max_length=40)
     '''
     Application name must have the following:
-    1) Lowercase alphanumeric characters can be specified
-    2) Name must start with an alphabetic character and can end with alphanumeric character
-    3) Hyphen '-' is allowed but not as the first or last character
-    e.g abc123, abc, abcd-1232
+
+    1) Lowercase alphanumeric characters can be specified.
+
+    2) Name must start with an alphabetic character and end with an alphanumeric character.
+
+    3) Hyphen '-' is allowed but not as the first or last character.
+
+    e.g. abc123, abc, abcd-1232
     '''
     train: NonEmptyString = 'stable'
     version: NonEmptyString = 'latest'

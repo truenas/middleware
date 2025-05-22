@@ -35,14 +35,14 @@ class IscsiTargetParameters(BaseModel):
 
 class IscsiTargetEntry(BaseModel):
     id: int
-    name: Annotated[NonEmptyString,
-                    AfterValidator(
-                        match_validator(
-                            RE_TARGET_NAME,
-                            "Name can only contain lowercase alphanumeric charactersplus dot (.), dash (-), and colon (:)",
-                        )
-                    ),
-                    StringConstraints(max_length=120)]
+    name: Annotated[
+        NonEmptyString,
+        AfterValidator(match_validator(
+            RE_TARGET_NAME,
+            "Name can only contain lowercase alphanumeric charactersplus dot (.), dash (-), and colon (:)",
+        )),
+        StringConstraints(max_length=120)
+    ]
     alias: str | None = None
     mode: Literal['ISCSI', 'FC', 'BOTH'] = 'ISCSI'
     groups: list[IscsiGroup] = []

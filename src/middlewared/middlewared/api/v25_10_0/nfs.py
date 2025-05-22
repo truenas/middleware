@@ -9,7 +9,6 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     single_argument_args,
-    single_argument_result,
     TcpPort,
     exclude_tcp_ports,
 )
@@ -108,7 +107,7 @@ class NfsBindipChoicesArgs(BaseModel):
 
 
 class NfsBindipChoicesResult(BaseModel):
-    """Return a dictionary of IP addresses"""
+    """Return a dictionary of IP addresses."""
 
     result: dict[str, str]
 
@@ -133,12 +132,12 @@ class NfsShareEntry(BaseModel):
         list[NonEmptyString], Field(max_length=MAX_NUM_NFS_NETWORKS)
     ] = []
     """ List of authorized networks that are allowed to access the share having format
-        "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed.
-        Maximum number of entries: 42 """
+    "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed.
+    Maximum number of entries: 42 """
     hosts: Annotated[list[NonEmptyString], Field(max_length=MAX_NUM_NFS_HOSTS)] = []
-    """ list of IP's/hostnames which are allowed to access the share.  No quotes or spaces are allowed.
-        Each entry must be unique. If empty, all IP's/hostnames are allowed.
-        Maximum number of entries: 42 """
+    """ List of IP's/hostnames which are allowed to access the share.  No quotes or spaces are allowed.
+    Each entry must be unique. If empty, all IP's/hostnames are allowed.
+    Maximum number of entries: 42 """
     ro: bool = False
     """ Export the share as read only. """
     maproot_user: str | None = None

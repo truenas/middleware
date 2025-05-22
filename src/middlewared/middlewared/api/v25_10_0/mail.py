@@ -59,10 +59,15 @@ class MailSendMessage(BaseModel):
     """Time limit for connecting to the SMTP server in seconds."""
     attachments: bool = False
     """If set to true, an array compromised of the following object is required via HTTP upload:
+
         - headers (array)
+
             - name (string)
+
             - value (string)
+
             - params (object)
+
         - content (string)
 
         ```[

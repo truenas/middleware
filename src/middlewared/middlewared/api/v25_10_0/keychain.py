@@ -1,7 +1,7 @@
 import abc
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
-from pydantic import Discriminator, Secret
+from pydantic import Secret, Field
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
                                   NonEmptyString, single_argument_args, single_argument_result)
@@ -72,7 +72,10 @@ class KeychainCredentialUpdateSSHCredentialsEntry(
     type: Excluded = excluded_field()
 
 
-KeychainCredentialCreate = KeychainCredentialCreateSSHKeyPairEntry | KeychainCredentialCreateSSHCredentialsEntry
+KeychainCredentialCreate = Annotated[
+    KeychainCredentialCreateSSHKeyPairEntry | KeychainCredentialCreateSSHCredentialsEntry,
+    Field(discriminator="type")
+]
 KeychainCredentialUpdate = KeychainCredentialUpdateSSHKeyPairEntry | KeychainCredentialUpdateSSHCredentialsEntry
 
 
@@ -81,7 +84,7 @@ class KeychainCredentialCreateArgs(BaseModel):
 
 
 class KeychainCredentialCreateResult(BaseModel):
-    result: SSHKeyPairEntry | SSHCredentialsEntry
+    result: SSHKeyPairEntry | SSHCredentialsEntry = Field(discriminator="type")
 
 
 class KeychainCredentialUpdateArgs(BaseModel):
@@ -90,7 +93,7 @@ class KeychainCredentialUpdateArgs(BaseModel):
 
 
 class KeychainCredentialUpdateResult(BaseModel):
-    result: SSHKeyPairEntry | SSHCredentialsEntry
+    result: SSHKeyPairEntry | SSHCredentialsEntry = Field(discriminator="type")
 
 
 class KeychainCredentialDeleteOptions(BaseModel):
@@ -183,8 +186,8 @@ class SetupSSHConnectionManualSetup(SSHCredentials):
 
 class SetupSSHConnectionManual(BaseModel):
     private_key: Annotated[
-        Union[KeychainCredentialSetupSSHConnectionKeyNew, KeychainCredentialSetupSSHConnectionKeyExisting],
-        Discriminator("generate_key"),
+        KeychainCredentialSetupSSHConnectionKeyNew | KeychainCredentialSetupSSHConnectionKeyExisting,
+        Field(discriminator="generate_key")
     ]
     connection_name: NonEmptyString
     setup_type: Literal["MANUAL"] = "MANUAL"
@@ -198,10 +201,7 @@ class SetupSSHConnectionSemiautomatic(SetupSSHConnectionManual):
 
 
 class KeychainCredentialSetupSSHConnectionArgs(BaseModel):
-    options: Annotated[
-        Union[SetupSSHConnectionManual, SetupSSHConnectionSemiautomatic],
-        Discriminator("setup_type"),
-    ]
+    options: SetupSSHConnectionManual | SetupSSHConnectionSemiautomatic = Field(discriminator="setup_type")
 
 
 class KeychainCredentialSetupSSHConnectionResult(BaseModel):

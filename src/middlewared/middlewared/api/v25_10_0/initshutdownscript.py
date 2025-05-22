@@ -21,7 +21,9 @@ class InitShutdownScriptCreate(BaseModel):
     when: Literal["PREINIT", "POSTINIT", "SHUTDOWN"]
     """
     "PREINIT": Early in the boot process before all services have started.
+
     "POSTINIT": Late in the boot process when most services have started.
+
     "SHUTDOWN": On shutdown.
     """
     enabled: bool = True

@@ -73,7 +73,7 @@ class KerberosRealmEntry(BaseModel):
     """
     kpasswd_server: list[NonEmptyString] = []
     """
-    list of kerberos kpasswd servers. If the list is empty then DNS will be used
+    List of kerberos kpasswd servers. If the list is empty then DNS will be used
     to look them up if needed.
     """
 

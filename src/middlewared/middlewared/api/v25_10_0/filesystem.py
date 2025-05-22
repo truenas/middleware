@@ -36,7 +36,7 @@ UNSET_ENTRY = frozenset([ACL_UNDEFINED_ID, None])
 class FilesystemRecursionOptions(BaseModel):
     recursive: bool = False
     traverse: bool = False
-    "If set do not limit to single dataset / filesystem."
+    """If set do not limit to single dataset / filesystem."""
 
 
 class FilesystemChownOptions(FilesystemRecursionOptions):
@@ -138,7 +138,7 @@ class FilesystemDirEntry(BaseModel):
     path: NonEmptyString
     """ Entry's full path. """
     realpath: NonEmptyString
-    """ Canonical path of the entry, eliminating any symbolic links"""
+    """ Canonical path of the entry, eliminating any symbolic links."""
     type: FileType
     size: int
     """ Size in bytes of a plain file. This corresonds with stx_size. """
@@ -194,7 +194,7 @@ class FilesystemMkdirResult(BaseModel):
 
 class FilesystemStatData(BaseModel):
     realpath: NonEmptyString
-    """ Canonical path of the entry, eliminating any symbolic links"""
+    """ Canonical path of the entry, eliminating any symbolic links."""
     type: FileType
     size: int
     """ Size in bytes of a plain file. This corresonds with stx_size. """
