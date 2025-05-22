@@ -64,6 +64,12 @@ def enterprise_product(restore_after_stig):
             yield
 
 
+@pytest.fixture(scope='function')
+def two_factor_enabled_without_SSH():
+    with enabled_twofactor_auth() as two_factor_config:
+        yield two_factor_config
+
+
 @pytest.fixture(scope='module')
 def two_factor_enabled():
     with enabled_twofactor_auth(ssh=True) as two_factor_config:
@@ -168,8 +174,9 @@ def setup_stig(full_admin_w_2fa_builtin_admin):
                     }
                 finally:
                     # Restore default security, user and network settings
+                    # FIPS is mocked
                     c.call('system.security.update', {
-                        'enable_fips': False, 'enable_gpos_stig': False,
+                        'enable_gpos_stig': False,
                         'min_password_age': None, 'max_password_age': None,
                         'password_complexity_ruleset': None, 'min_password_length': None,
                         'password_history_length': None
@@ -198,6 +205,11 @@ def test_nofips_fail(enterprise_product):
 
 def test_no_twofactor_fail(enterprise_product):
     with pytest.raises(ValidationErrors, match='Two factor authentication must be globally enabled.'):
+        call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
+
+
+def test_no_ssh_twofactor_fail(enterprise_product, two_factor_enabled_without_SSH):
+    with pytest.raises(ValidationErrors, match='Two factor authentication for SSH access must be enabled'):
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
@@ -383,6 +395,5 @@ class TestNotAuthorizedOps:
     ])
     def test_stig_prevent_operation(self, stig_admin, cmd, args, is_job):
         ''' Wnen in GPOS STIG mode enabling TrueCommand is not authorized '''
-
         with pytest.raises(CallError, match='Not authorized'):
             stig_admin.call(cmd, args, job=is_job)
