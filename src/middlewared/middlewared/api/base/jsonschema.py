@@ -9,13 +9,23 @@ PartialSchema = TypeVar("PartialSchema")
 def get_json_schema(model: type["BaseModel"]) -> list:
     schema = model.model_json_schema()
     schema = clean_schema(schema)
-    schema = add_attrs(schema)
+    schema = _add_attrs(schema)
 
     return [schema["properties"][name] for name in model.schema_model_fields()]
 
 
 def clean_schema(schema: dict) -> dict:
-    return _clean_field_descriptions(_replace_refs(schema))
+    """Prepare JSON schema for parsing.
+
+    Replace references with their definitions, remove single newlines from field descriptions, and replace double
+    newlines with single newlines.
+
+    :param field_schema: A JSON schema like the return of `model.model_json_schema()`.
+    :return: The cleaned JSON schema.
+    """
+    schema = _replace_refs(schema)
+    _clean_descriptions(schema)
+    return schema
 
 
 def _replace_refs(data: PartialSchema, defs: dict | None = None) -> PartialSchema:
@@ -37,23 +47,23 @@ def _replace_refs(data: PartialSchema, defs: dict | None = None) -> PartialSchem
         return data
 
 
-def _clean_field_descriptions(schema: dict) -> dict:
-    """Remove single newlines from field descriptions and replace double newlines with single newlines.
+def _clean_descriptions(schema: dict) -> None:
+    """Recursively remove single newlines and replace double newlines with single newlines.
 
     Solves the issue of docstring field descriptions that wrap to the next line having an unwanted newline
     character when rendered in the docs.
 
-    :param field_schema: `model.model_json_schema()`
+    :param schema: JSON schema with all references replaced by their definitions.
     """
     for field_schema in schema["properties"].values():
         if descr := field_schema.get("description"):
             NEWLINE = "$placeholder$"
             field_schema["description"] = descr.replace("\n\n", NEWLINE).replace("\n", " ").replace(NEWLINE, "\n")
+        if "properties" in field_schema:
+            _clean_descriptions(field_schema)
 
-    return schema
 
-
-def add_attrs(schema: PartialSchema) -> PartialSchema:
+def _add_attrs(schema: PartialSchema) -> PartialSchema:
     # FIXME: This is only here for backwards compatibility and should be removed eventually
     if isinstance(schema, dict):
         if schema.get("type") == "object" and isinstance(schema.get("properties"), dict):
@@ -74,8 +84,8 @@ def add_attrs(schema: PartialSchema) -> PartialSchema:
         if schema.get("type") == "array" and "items" in schema and not isinstance(schema["items"], list):
             schema["items"] = [schema["items"]]  # FIXME: Non-standard compliant
 
-        return {k: add_attrs(v) for k, v in schema.items()}
+        return {k: _add_attrs(v) for k, v in schema.items()}
     elif isinstance(schema, list):
-        return [add_attrs(s) for s in schema]
+        return [_add_attrs(s) for s in schema]
     else:
         return schema
