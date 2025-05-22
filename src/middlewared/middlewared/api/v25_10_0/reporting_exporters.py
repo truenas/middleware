@@ -75,9 +75,9 @@ class ReportingExporterSchemasArgs(BaseModel):
 
 
 class ReportingExporterAttributeSchema(BaseModel):
-    _name_: str
+    name: str = Field(alias='_name_')
     title: str
-    _required_: bool
+    required: bool = Field(alias='_required_')
 
     model_config = ConfigDict(extra='allow')
 
