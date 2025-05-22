@@ -1,19 +1,24 @@
-__all__ = ["get_json_schema"]
+from typing import TypeVar, TYPE_CHECKING
+if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
 
 
-def get_json_schema(model):
+PartialSchema = TypeVar("PartialSchema")
+
+
+def get_json_schema(model: type["BaseModel"]) -> list:
     schema = model.model_json_schema()
-    schema = clean_schema(schema, schema.get("$defs", {}))
+    schema = clean_schema(schema)
     schema = add_attrs(schema)
 
     return [schema["properties"][name] for name in model.schema_model_fields()]
 
 
-def clean_schema(schema: dict, defs: dict | None = None) -> dict:
-    return _clean_field_descriptions(_replace_refs(schema, defs))
+def clean_schema(schema: dict) -> dict:
+    return _clean_field_descriptions(_replace_refs(schema))
 
 
-def _replace_refs(data, defs: dict | None = None):
+def _replace_refs(data: PartialSchema, defs: dict | None = None) -> PartialSchema:
     """Recursively replace all refs in the given schema with their respective definitions.
 
     :param data: JSON schema. Contents are not preserved.
@@ -48,7 +53,7 @@ def _clean_field_descriptions(schema: dict) -> dict:
     return schema
 
 
-def add_attrs(schema):
+def add_attrs(schema: PartialSchema) -> PartialSchema:
     # FIXME: This is only here for backwards compatibility and should be removed eventually
     if isinstance(schema, dict):
         if schema.get("type") == "object" and isinstance(schema.get("properties"), dict):
@@ -62,7 +67,8 @@ def add_attrs(schema):
                         "_name_": k,
                         "_required_": k in schema.get("required", [])
                     }
-                    for k, v in schema["properties"].items()},
+                    for k, v in schema["properties"].items()
+                },
             }
 
         if schema.get("type") == "array" and "items" in schema and not isinstance(schema["items"], list):
