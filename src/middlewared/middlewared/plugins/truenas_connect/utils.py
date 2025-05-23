@@ -24,7 +24,7 @@ def get_unset_payload() -> dict:
     }
 
 
-def calculate_sleep(failure_dt_str: str | None) -> int | None:
+def calculate_sleep(failure_dt_str: str | None, base_sleep: int | None = None) -> int | None:
     """
     Calculates the number of seconds to sleep before the next retry.
 
@@ -42,7 +42,7 @@ def calculate_sleep(failure_dt_str: str | None) -> int | None:
         If the calculated sleep time is 0 or negative (i.e. we’re past the scheduled time),
         returns None (meaning no sleep is needed; try immediately).
     """
-    base_sleep = HEARTBEAT_INTERVAL
+    base_sleep = base_sleep or HEARTBEAT_INTERVAL
 
     # If no failure datetime is provided, return base_sleep.
     if not failure_dt_str:
