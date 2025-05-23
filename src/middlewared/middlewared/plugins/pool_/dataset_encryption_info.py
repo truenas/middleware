@@ -226,7 +226,13 @@ class PoolDatasetService(Service):
         """
         # WARNING: _EXTREMELY_ hot code path. Do not add more
         # things here unless you fully understand the side-effects.
-        for i in get_dataset_parents(path.removeprefix('/mnt/')):
+        if path.startswith('/dev/zvol/'):
+            # 10 comes from len("/dev/zvol/")
+            path = path[10:].replace('+', ' ')
+        else:
+            path = path.removeprefix('/mnt/')
+
+        for i in get_dataset_parents(path):
             try:
                 crypto = tls.lzh.open_resource(name=i).crypto()
                 if crypto and not crypto.info().key_is_loaded:
