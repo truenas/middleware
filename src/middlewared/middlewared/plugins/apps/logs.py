@@ -8,6 +8,7 @@ from middlewared.schema import Dict, Int, Str
 from middlewared.service import CallError
 from middlewared.validators import Range
 
+from .compose_utils import compose_action
 from .ix_apps.utils import AppState
 from .ix_apps.docker.utils import get_docker_client
 
@@ -51,26 +52,46 @@ class AppContainerLogsFollowTailEventSource(EventSource):
         tail_lines = self.arg['tail_lines'] or 'all'
 
         self.validate_log_args(app_name, container_id)
-        with get_docker_client() as docker_client:
-            try:
-                container = docker_client.containers.get(container_id)
-            except docker.errors.NotFound:
-                raise CallError(f'Container "{container_id}" not found')
 
-            self.logs_stream = container.logs(stream=True, follow=True, timestamps=True, tail=tail_lines)
+        app = self.middleware.call_sync('app.get_instance', app_name)
+        service_name = None
+        tty = False
+        for container in app['active_workloads']['container_details']:
+            if container['id'] == container_id:
+                service_name = container['service_name']
+                tty = container['tty']
+                break
+        else:
+            raise CallError(f'Container "{container_id}" not found in app "{app_name}"')
 
-            for log_entry in map(bytes.decode, self.logs_stream):
-                # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
-                # separately so UI can highlight the timestamp giving us a cleaner view of the logs
-                timestamp = log_entry.split(maxsplit=1)[0].strip()
+        if tty:
+            # run docker compose -p <project_name> logs --tail <tail_lines> <service_name>
+            # https://github.com/docker/docker-py/issues/1394
+            self.logs_stream = compose_action(app_name, app['version'], 'logs', service_name=service_name, tail_lines=tail_lines)
+        else:
+            with get_docker_client() as docker_client:
                 try:
-                    timestamp = str(parse(timestamp))
-                except (TypeError, ParserError):
-                    timestamp = None
-                else:
-                    log_entry = log_entry.split(maxsplit=1)[-1].lstrip()
+                    container = docker_client.containers.get(container_id)
+                except docker.errors.NotFound:
+                    raise CallError(f'Container "{container_id}" not found')
 
-                self.send_event('ADDED', fields={'data': log_entry, 'timestamp': timestamp})
+                self.logs_stream = container.logs(stream=True, follow=True, timestamps=True, tail=tail_lines)
+
+        if self.logs_stream is None:
+            raise CallError('Failed to retrieve logs')
+
+        for log_entry in map(bytes.decode, self.logs_stream):
+            # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
+            # separately so UI can highlight the timestamp giving us a cleaner view of the logs
+            timestamp = log_entry.split(maxsplit=1)[0].strip()
+            try:
+                timestamp = str(parse(timestamp))
+            except (TypeError, ParserError):
+                timestamp = None
+            else:
+                log_entry = log_entry.split(maxsplit=1)[-1].lstrip()
+
+            self.send_event('ADDED', fields={'data': log_entry, 'timestamp': timestamp})
 
     async def cancel(self):
         await super().cancel()

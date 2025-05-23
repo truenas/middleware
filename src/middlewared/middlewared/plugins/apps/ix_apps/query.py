@@ -238,6 +238,7 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
         workloads['container_details'].append({
             'service_name': service_name,
             'image': container['Config']['Image'],
+            'tty': container['Config']['Tty'],
             'port_config': container_ports_config,
             'state': state,
             'volume_mounts': [v.__dict__ for v in volume_mounts],

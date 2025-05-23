@@ -14,7 +14,8 @@ logger = logging.getLogger('app_lifecycle')
 def compose_action(
     app_name: str, app_version: str, action: typing.Literal['up', 'down', 'pull'], *,
     force_recreate: bool = False, remove_orphans: bool = False, remove_images: bool = False,
-    remove_volumes: bool = False, pull_images: bool = False,
+    remove_volumes: bool = False, pull_images: bool = False, tail_lines: int | None = None,
+    service_name: str | None = None,
 ):
     compose_files = list(itertools.chain(
         *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
@@ -47,6 +48,12 @@ def compose_action(
             args.append('-v')
     elif action == 'pull':
         args.extend(['--policy', 'always'])
+    elif action == 'logs':
+        # TODO: Return result as a stream in this action
+        args.extend(['--no-color', '--timestamps', '--no-log-prefix'])
+        if tail_lines:
+            args.extend(['--tail', str(tail_lines)])
+        args.append(service_name)
     else:
         raise CallError(f'Invalid action {action!r} for app {app_name!r}')
 
