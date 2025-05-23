@@ -45,7 +45,7 @@
         return cml
 
     targets = render_ctx['iscsi.target.query']
-    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]], {'extra': {'use_cached_locked_datasets': False}})}
+    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
     portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
     initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
     fcports_by_target_id = {d['target']['id']: d for d in render_ctx['fcport.query']}

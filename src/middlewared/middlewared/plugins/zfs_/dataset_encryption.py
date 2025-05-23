@@ -3,7 +3,6 @@ import libzfs
 from middlewared.service import CallError, job, Service
 from middlewared.utils import filter_list
 
-from .dataset_utils import flatten_datasets
 from .utils import unlocked_zvols_fast, zvol_path_to_name
 
 
@@ -68,45 +67,6 @@ class ZFSDatasetService(Service):
 
         zvol_list = list(unlocked_zvols_fast(additional_information, data).values())
         return filter_list(zvol_list, filters, options)
-
-    def locked_datasets(self, names=None):
-        query_filters = []
-        if names is not None:
-            names_optimized = []
-            for name in sorted(names, key=len):
-                if not any(name.startswith(f'{existing_name}/') for existing_name in names_optimized):
-                    names_optimized.append(name)
-
-            query_filters.append(['id', 'in', names_optimized])
-
-        result = flatten_datasets(self.middleware.call_sync('zfs.dataset.query', query_filters, {
-            'extra': {
-                'flat': False,  # So child datasets are also queried
-                'properties': ['encryption', 'keystatus', 'mountpoint']
-            },
-        }))
-
-        post_filters = [['encrypted', '=', True]]
-
-        try:
-            about_to_lock_dataset = self.middleware.call_sync('cache.get', 'about_to_lock_dataset')
-        except KeyError:
-            about_to_lock_dataset = None
-
-        post_filters.append([
-            'OR', [['key_loaded', '=', False]] + (
-                [['id', '=', about_to_lock_dataset], ['id', '^', f'{about_to_lock_dataset}/']]
-                if about_to_lock_dataset else []
-            )
-        ])
-
-        return [
-            {
-                'id': dataset['id'],
-                'mountpoint': dataset['properties'].get('mountpoint', {}).get('value'),
-            }
-            for dataset in filter_list(result, post_filters)
-        ]
 
     def common_load_dataset_checks(self, id_, ds):
         self.common_encryption_checks(id_, ds)
