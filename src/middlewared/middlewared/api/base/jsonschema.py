@@ -64,8 +64,8 @@ def _clean_descriptions(schema: dict) -> None:
             )
         if "properties" in field_schema:
             _clean_descriptions(field_schema)
-        elif "items" in field_schema:
-            _clean_descriptions(field_schema["items"])
+        elif (field_items := field_schema.get("items")) and "properties" in field_items:
+            _clean_descriptions(field_items)
 
 
 def _add_attrs(schema: _PartialSchema) -> _PartialSchema:
