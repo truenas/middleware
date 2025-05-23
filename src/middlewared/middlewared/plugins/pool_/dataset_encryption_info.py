@@ -209,7 +209,22 @@ class PoolDatasetService(Service):
     @private
     @pass_thread_local_storage
     def path_in_locked_datasets(self, tls, path):
-        # WARNING: _EXTREMELY_ hot code-path. So do not add more
+        """
+        This method checks whether any parent components of
+        a given path are locked. It returns True if a locked
+        component is found, otherwise False.
+
+        Parameters:
+            path (str): The filesystem path to be checked.
+
+        Returns:
+            bool: True if any parent component of the path
+                is locked, False otherwise.
+
+        Raises:
+            ZFSException/Exception: If an unexpected error occurs
+        """
+        # WARNING: _EXTREMELY_ hot code path. Do not add more
         # things here unless you fully understand the side-effects.
         for i in get_dataset_parents(path.removeprefix('/mnt/')):
             try:

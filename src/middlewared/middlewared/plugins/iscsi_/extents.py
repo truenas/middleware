@@ -67,13 +67,11 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     async def sharing_task_determine_locked(self, data):
-        """
-        The parent dataset of a zvol may also be locked, which renders
-        the zvol inaccessible as well, and so we need to continue to the
-        common check for whether the path is in the locked datasets.
-        """
-        path = await self.get_path_field(data)
-        return await self.middleware.call('pool.dataset.path_in_locked_datasets', path)
+        """Determine if this extent is in a locked path"""
+        return await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets',
+            await self.get_path_field(data)
+        )
 
     @api_method(
         IscsiExtentCreateArgs,
