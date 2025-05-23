@@ -1,18 +1,14 @@
 import pytest
 
-from middlewared.test.integration.assets.directory_service import ldap, LDAPUSER, LDAPPASSWORD
+from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
 
-pytestmark = [
-    pytest.mark.skipif(not LDAPUSER, reason='Missing LDAP configuration'),
-]
-
 
 @pytest.fixture(scope="module")
 def do_ldap_connection(request):
-    with ldap() as ldap_conn:
+    with directoryservice('LDAP') as ldap_conn:
         with product_type():
             yield ldap_conn
 
@@ -59,16 +55,20 @@ def test_account_privilege_authentication(do_ldap_connection):
 
     call("system.general.update", {"ds_auth": True})
     try:
-        group = call("user.get_user_obj", {"username": LDAPUSER})
-        assert group["source"] == "LDAP"
+        account = do_ldap_connection["account"]
+        call("directoryservices.health.check")
+
+        group = call("group.query", [["gid", "=", account.user_obj["pw_gid"]]])
+        assert group, f'{account.user_obj["pw_gid"]}: lookup of group id failed'
+        assert group[0]["local"] is False
         with privilege({
             "name": "LDAP privilege",
             "local_groups": [],
-            "ds_groups": [group["pw_gid"]],
+            "ds_groups": [group[0]["gid"]],
             "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         }):
-            with client(auth=(LDAPUSER, LDAPPASSWORD)) as c:
+            with client(auth=(account.username, account.password)) as c:
                 methods = c.call("core.get_methods")
                 me = c.call("auth.me")
 

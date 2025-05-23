@@ -4,15 +4,15 @@ from middlewared.utils.directoryservices.constants import DSType
 
 
 def render(service, middleware, render_ctx):
-
-    if render_ctx['directoryservices.status']['type'] != DSType.IPA.value:
+    ds = render_ctx['directoryservices.config']
+    if ds['service_type'] != DSType.IPA.value:
         raise FileShouldNotExist()
 
-    conf = middleware.call_sync('ldap.ipa_config')
+    host = f'{ds["configuration"]["hostname"]}.{ds["configuration"]["domain"]}'.lower()
     return generate_ipa_default_config(
-        conf['host'],
-        conf['basedn'],
-        conf['domain'],
-        conf['realm'],
-        conf['target_server']
+        host,
+        ds['configuration']['basedn'],
+        ds['configuration']['domain'].lower(),
+        ds['kerberos_realm'],
+        ds['configuration']['target_server']
     )

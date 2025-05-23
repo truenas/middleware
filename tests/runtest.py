@@ -50,6 +50,7 @@ Optional option
     --ha_license                - The base64 encoded string of an HA license
     --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
     --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
+    --test_dir <api2>           - Name of the tests directory from which to run tests
     """ % argv[0]
 
 # if have no argument stop
@@ -72,6 +73,7 @@ option_list = [
     "returncode",
     "isns_ip=",
     "pool=",
+    "test_dir=",
     "tests=",
     "ha_license=",
     "hostname=",
@@ -96,6 +98,7 @@ exitfirst = ''
 returncode = False
 callargs = []
 tests = []
+test_dir = 'api2'
 ip2 = vip = ''
 netmask = None
 gateway = None
@@ -142,6 +145,8 @@ for output, arg in myopts:
         callargs.append('-s')
     elif output == '--tests':
         tests.extend(arg.split(','))
+    elif output == '--test_dir':
+        test_dir = arg
     elif output == '--ha_license':
         ha_license = arg
     elif output == '--show_locals':
@@ -304,8 +309,8 @@ if testexpr:
     pytest_command.extend(['-k', testexpr])
 
 def parse_test_name(test):
-    test = test.removeprefix("api2/")
-    test = test.removeprefix("api2.")
+    test = test.removeprefix(f"{test_dir}/")
+    test = test.removeprefix(f"{test_dir}.")
     if ".py" not in test and test.count(".") == 1:
         # Test name from Jenkins
         filename, testname = test.split(".")
@@ -317,7 +322,7 @@ def parse_test_name_prefix_dir(test_name):
     if name.startswith('/'):
         return name
     else:
-        return f"api2/{name}"
+        return f"{test_dir}/{name}"
 
 if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
@@ -326,28 +331,29 @@ else:
 
 proc_returncode = call(pytest_command)
 
-# get useful logs
-logs_list = [
-    "/var/log/daemon.log",
-    "/var/log/debug",
-    "/var/log/middlewared.log",
-    "/var/log/messages",
-    "/var/log/syslog",
-]
+def get_cmd_result(cmd: str, target_file: str, target_ip: str):
+    try:
+        results = SSH_TEST(cmd, 'root', 'testing', target_ip)
+    except Exception as exc:
+        with open(f'{target_file}.error.txt', 'w') as f:
+            f.write(f'{target_ip}: command [{cmd}] failed: {exc}\n')
+            f.flush()
+    else:
+        with open(target_file, 'w') as f:
+            f.writelines(results['stdout'])
+            f.flush()
 
-get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
-
-# get dmesg and put it in artifacts
-results = SSH_TEST('dmesg', 'root', 'testing', ip)
-dmsg = open(f'{artifacts}/dmesg', 'w')
-dmsg.writelines(results['output'])
-dmsg.close()
-
-# get core.get_jobs and put it in artifacts
-results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
-core_get_jobs = open(f'{artifacts}/core.get_jobs', 'w')
-core_get_jobs.writelines(results['output'])
-core_get_jobs.close()
+if ha:
+    get_folder('/var/log', f'{artifacts}/log_nodea', 'root', 'testing', ip)
+    get_folder('/var/log', f'{artifacts}/log_nodeb', 'root', 'testing', ip2)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodea.json', ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs_nodeb.json', ip2)
+    get_cmd_result('dmesg', f'{artifacts}/dmesg_nodea.json', ip)
+    get_cmd_result('dmesg', f'{artifacts}/dmesg_nodeb.json', ip2)
+else:
+    get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
+    get_cmd_result('midclt call core.get_jobs | jq .', f'{artifacts}/core.get_jobs.json', ip)
+    get_cmd_result('dmesg', f'{artifacts}/dmesg.json', ip)
 
 if returncode:
     exit(proc_returncode)
