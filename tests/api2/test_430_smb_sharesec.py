@@ -171,3 +171,27 @@ def test_toggle_share_and_verify_acl_preserved(setup_smb_share, sharesec_user):
     acl = call('sharing.smb.getacl', {'share_name': 'my_sharesec2'})
     assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
     assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
+
+
+def test_removed_user(setup_smb_share):
+    with create_user({
+        'username': 'delme',
+        'full_name': 'delme',
+        'smb': True,
+        'group_create': True,
+        'password': 'test1234',
+    }) as u:
+        sid = u['sid']
+        call('sharing.smb.setacl', {
+            'share_name': setup_smb_share['name'],
+            'share_acl': [{
+                'ae_who_sid': u['sid'],
+                'ae_perm': 'FULL',
+                'ae_type': 'ALLOWED'
+            }]
+        })
+
+    acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+    assert acl['share_acl'][0]['ae_who_sid'] == sid
+    assert acl['share_acl'][0]['ae_who_id'] is None
+    assert acl['share_acl'][0]['ae_who_str'] is None
