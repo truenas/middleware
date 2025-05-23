@@ -6,16 +6,15 @@ from middlewared.api.current import (NVMetHostCreateArgs,
                                      NVMetHostCreateResult,
                                      NVMetHostDeleteArgs,
                                      NVMetHostDeleteResult,
+                                     NVMetHostDHChapDHGroupChoicesArgs,
+                                     NVMetHostDHChapDHGroupChoicesResult,
+                                     NVMetHostDHChapHashChoicesArgs,
+                                     NVMetHostDHChapHashChoicesResult,
                                      NVMetHostEntry,
                                      NVMetHostGenerateKeyArgs,
                                      NVMetHostGenerateKeyResult,
                                      NVMetHostUpdateArgs,
-                                     NVMetHostUpdateResult,
-                                     NVMetHostDHChapDHGroupChoicesArgs,
-                                     NVMetHostDHChapDHGroupChoicesResult,
-                                     NVMetHostDHChapHashChoicesArgs,
-                                     NVMetHostDHChapHashChoicesResult
-                                     )
+                                     NVMetHostUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
@@ -111,8 +110,8 @@ class NVMetHostService(CRUDService):
         host = await self.get_instance(id_)
         audit_callback(host['hostnqn'])
 
-        host_subsys_ids = {x['id']: x['subsys']['nvmet_subsys_name'] for x in
-                           await self.middleware.call('nvmet.host_subsys.query', [['host_id', '=', id_]])}
+        host_subsys_ids = {x['id']: x['subsys']['name'] for x in
+                           await self.middleware.call('nvmet.host_subsys.query', [['host.id', '=', id_]])}
         if host_subsys_ids:
             if force:
                 await self.middleware.call('nvmet.host_subsys.delete_ids', list(host_subsys_ids))

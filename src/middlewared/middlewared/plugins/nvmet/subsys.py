@@ -139,7 +139,7 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
                                 f'Subsystem {subsys["name"]} contains {count} namespaces: {",".join(names)}{postfix}')
 
         port_subsys_ids = [x['id'] for x in await self.middleware.call('nvmet.port_subsys.query',
-                                                                       [['subsys_id', '=', id_]],
+                                                                       [['subsys.id', '=', id_]],
                                                                        {'select': ['id']})]
         if port_subsys_ids:
             if force:
@@ -153,7 +153,7 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
 
         # We will allow a subsys to be deleted, even if it currently has allowed_hosts configured
         host_subsys_ids = [x['id'] for x in await self.middleware.call('nvmet.host_subsys.query',
-                                                                       [['subsys_id', '=', id_]],
+                                                                       [['subsys.id', '=', id_]],
                                                                        {'select': ['id']})]
         if host_subsys_ids:
             await self.middleware.call('nvmet.host_subsys.delete_ids', host_subsys_ids)

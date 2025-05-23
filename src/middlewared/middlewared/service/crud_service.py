@@ -220,6 +220,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         options = options or {}
         options['extend'] = self._config.datastore_extend
         options['extend_context'] = self._config.datastore_extend_context
+        options['extend_fk'] = self._config.datastore_extend_fk
         options['prefix'] = self._config.datastore_prefix
         return options
 

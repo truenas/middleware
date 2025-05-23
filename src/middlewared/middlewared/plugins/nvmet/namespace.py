@@ -67,6 +67,7 @@ class NVMetNamespaceService(SharingService):
         datastore = 'services.nvmet_namespace'
         datastore_prefix = 'nvmet_namespace_'
         datastore_extend = 'nvmet.namespace.extend'
+        datastore_extend_fk = ['subsys']
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetNamespaceEntry
@@ -267,7 +268,7 @@ class NVMetNamespaceService(SharingService):
             _filter.append(('id', '!=', old['id']))
         existing = await self.query(_filter, {'force_sql_filters': True})
         if existing:
-            existing_name = existing[0]['subsys']['nvmet_subsys_name']
+            existing_name = existing[0]['subsys']['name']
             verrors.add(f'{schema_name}.device_path',
                         f"This device_path already used by subsystem: {existing_name}")
         # Next check iscsi.extent
@@ -313,7 +314,7 @@ class NVMetNamespaceService(SharingService):
         raise CallError(f'Failed to generate a {key} for subsystem')
 
     def __audit_summary(self, data):
-        return f'{data["subsys"]["nvmet_subsys_name"]}/{data["nsid"]}'
+        return f'{data["subsys"]["name"]}/{data["nsid"]}'
 
     async def __get_next_nsid(self, subsys_id):
         existing = {ns['nsid'] for ns in await self.middleware.call(f'{self._config.namespace}.query',
