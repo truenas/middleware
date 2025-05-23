@@ -39,7 +39,7 @@ class DockerSetupService(Service):
         for i in (config['dataset'], config['pool']):
             if await self.middleware.call('pool.dataset.path_in_locked_datasets', i):
                 raise CallError(
-                    f'Can not start docker because {i!r} is located in a locked dataset.',
+                    f'Cannot start docker because {i!r} is located in a locked dataset.',
                     errno=CallError.EDATASETISLOCKED,
                 )
 
