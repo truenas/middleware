@@ -594,7 +594,7 @@ class VirtInstanceService(CRUDService):
             )
 
         # Apply any idmap changes
-        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED'  and not instance['privileged_mode']:
+        if instance['type'] == 'CONTAINER' and instance['status'] == 'STOPPED' and not instance['privileged_mode']:
             await self.set_account_idmaps(oid)
 
         if instance['vnc_password']:
