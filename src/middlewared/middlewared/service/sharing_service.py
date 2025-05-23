@@ -21,11 +21,6 @@ class SharingTaskService(CRUDService):
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
-        if extra.get('use_cached_locked_datasets', True):
-            locked_ds_endpoint = 'pool.dataset.locked_datasets_cached'
-        else:
-            locked_ds_endpoint = 'zfs.dataset.locked_datasets'
-
         if extra.get('select'):
             select_fields = []
             for entry in extra['select']:
@@ -38,15 +33,13 @@ class SharingTaskService(CRUDService):
             if self.locked_field not in select_fields:
                 extra['retrieve_locked_info'] = False
 
+        se = None
+        if self._config.datastore_extend_context:
+            se = await self.middleware.call(self._config.datastore_extend_context, rows, extra)
+
         return {
-            'locked_datasets': await self.middleware.call(
-                locked_ds_endpoint
-            ) if extra.get('retrieve_locked_info', True) else [],
-            'service_extend': (
-                await self.middleware.call(self._config.datastore_extend_context, rows, extra)
-                if self._config.datastore_extend_context else None
-            ),
-            'retrieve_locked_info': extra.get('retrieve_locked_info', True),
+            'service_extend': se,
+            'retrieve_locked_info': extra.get('retrieve_locked_info', True)
         }
 
     @private
@@ -94,13 +87,13 @@ class SharingTaskService(CRUDService):
         return verrors
 
     @private
-    async def sharing_task_determine_locked(self, data, locked_datasets):
+    async def sharing_task_determine_locked(self, data):
         path = await self.get_path_field(data)
         if path_location(path) is not FSLocation.LOCAL:
             return False
 
         return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', path, locked_datasets
+            'pool.dataset.path_in_locked_datasets', path
         )
 
     @private
@@ -112,7 +105,7 @@ class SharingTaskService(CRUDService):
 
         if context['retrieve_locked_info']:
             data[self.locked_field] = await self.middleware.call(
-                f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
+                f'{self._config.namespace}.sharing_task_determine_locked', data
             )
         else:
             data[self.locked_field] = None

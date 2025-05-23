@@ -397,7 +397,6 @@ class SystemDatasetService(ConfigService):
 
         corepath = f'{SYSDATASET_PATH}/cores'
         if os.path.exists(corepath):
-
             if self.middleware.call_sync('keyvalue.get', 'run_migration', False):
                 try:
                     cores = Path(corepath)

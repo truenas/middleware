@@ -9,7 +9,6 @@ from middlewared.api.current import (NVMetPortSubsysCreateArgs,
                                      NVMetPortSubsysUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
-from .constants import PORT_TRTYPE
 from .mixin import NVMetStandbyMixin
 
 
@@ -27,6 +26,7 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
         namespace = 'nvmet.port_subsys'
         datastore = 'services.nvmet_port_subsys'
         datastore_prefix = 'nvmet_port_subsys_'
+        datastore_extend_fk = ['port', 'subsys']
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetPortSubsysEntry
@@ -149,6 +149,5 @@ class NVMetPortSubsysService(CRUDService, NVMetStandbyMixin):
 
     def __audit_summary(self, data):
         port = data['port']
-        transport = PORT_TRTYPE.by_db(port['nvmet_port_addr_trtype']).api
-        port_summary = (f'{transport}:{port["nvmet_port_addr_traddr"]}:{port["nvmet_port_addr_trsvcid"]}')
-        return f'{port_summary}/{data["subsys"]["nvmet_subsys_name"]}'
+        port_summary = (f'{port["addr_trtype"]}:{port["addr_traddr"]}:{port["addr_trsvcid"]}')
+        return f'{port_summary}/{data["subsys"]["name"]}'

@@ -66,20 +66,12 @@ class iSCSITargetExtentService(SharingService):
         entry = IscsiExtentEntry
 
     @private
-    async def sharing_task_determine_locked(self, data, locked_datasets):
-        """
-        `mountpoint` attribute of zvol will be unpopulated and so we
-        first try direct comparison between the two strings.
-
-        The parent dataset of a zvol may also be locked, which renders
-        the zvol inaccessible as well, and so we need to continue to the
-        common check for whether the path is in the locked datasets.
-        """
-        path = await self.get_path_field(data)
-        if data['type'] == 'DISK' and any(path == os.path.join('/mnt', d['id']) for d in locked_datasets):
-            return True
-
-        return await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets)
+    async def sharing_task_determine_locked(self, data):
+        """Determine if this extent is in a locked path"""
+        return await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets',
+            await self.get_path_field(data)
+        )
 
     @api_method(
         IscsiExtentCreateArgs,
@@ -374,7 +366,7 @@ class iSCSITargetExtentService(SharingService):
             if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', disk]]):
                 ns = namespaces[0]
                 verrors.add(f'{schema_name}.disk',
-                            f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["nvmet_subsys_name"]} NSID {ns["nsid"]}')
+                            f'Disk currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
                 raise verrors
 
             device = os.path.join('/dev', disk)

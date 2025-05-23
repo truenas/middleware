@@ -135,7 +135,6 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def initialize_zfs_keys(self, connection_success):
-        locked_datasets = [ds['id'] for ds in self.middleware.call_sync('zfs.dataset.locked_datasets')]
         for ds in self.middleware.call_sync('datastore.query', 'storage.encrypteddataset',):
             if ds['encryption_key']:
                 self.zfs_keys[ds['name']] = ds['encryption_key']
@@ -147,8 +146,9 @@ class KMIPService(Service, KMIPServerMixin):
                     self.middleware.logger.debug(f'Failed to retrieve key for {ds["name"]}')
                 else:
                     self.zfs_keys[ds['name']] = key
-            if ds['name'] in self.zfs_keys and ds['name'] in locked_datasets:
-                self.middleware.call_sync('pool.dataset.unlock', ds['name'])
+            if ds['name'] in self.zfs_keys:
+                if self.middleware.call_sync('pool.dataset.path_in_locked_datasets', ds['name']):
+                    self.middleware.call_sync('pool.dataset.unlock', ds['name'])
 
     @private
     async def retrieve_zfs_keys(self):

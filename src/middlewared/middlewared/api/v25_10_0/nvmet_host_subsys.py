@@ -1,6 +1,8 @@
 from typing import Literal
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
+from .nvmet_host import NVMetHostEntry
+from .nvmet_subsys import NVMetSubsysEntry
 
 __all__ = [
     "NVMetHostSubsysEntry",
@@ -15,8 +17,8 @@ __all__ = [
 
 class NVMetHostSubsysEntry(BaseModel):
     id: int
-    host: dict | None
-    subsys: dict | None
+    host: NVMetHostEntry
+    subsys: NVMetSubsysEntry
 
 
 class NVMetHostSubsysCreate(BaseModel):

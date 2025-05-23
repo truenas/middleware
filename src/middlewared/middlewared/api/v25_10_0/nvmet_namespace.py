@@ -3,6 +3,7 @@ from typing import Annotated, Literal, TypeAlias
 from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from .nvmet_subsys import NVMetSubsysEntry
 
 __all__ = [
     "NVMetNamespaceEntry",
@@ -27,7 +28,7 @@ class NVMetNamespaceEntry(BaseModel):
 
     If not supplied during `namespace` creation then the next available NSID will be used.
     """
-    subsys: dict | None
+    subsys: NVMetSubsysEntry
     device_type: DeviceType
     """ Type of device (or file) used to implement the namespace. """
     device_path: str

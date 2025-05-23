@@ -106,6 +106,7 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
         options = {}
         options['extend'] = self._config.datastore_extend
         options['extend_context'] = self._config.datastore_extend_context
+        options['extend_fk'] = self._config.datastore_extend_fk
         options['prefix'] = self._config.datastore_prefix
         return await self._get_or_insert(self._config.datastore, options)
 

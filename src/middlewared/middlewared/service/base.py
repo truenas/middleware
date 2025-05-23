@@ -8,6 +8,7 @@ def service_config(klass, config):
         'datastore': None,
         'datastore_prefix': '',
         'datastore_extend': None,
+        'datastore_extend_fk': None,
         'datastore_extend_context': None,
         'datastore_primary_key': 'id',
         'datastore_primary_key_type': 'integer',
@@ -55,6 +56,7 @@ class ServiceBase(type):
     Currently the following options are allowed:
       - datastore: name of the datastore mainly used in the service
       - datastore_extend: datastore `extend` option used in common `query` method
+      - datastore_extend_fk: datastore `extend_fk` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
       - service: system service `name` option used by `SystemServiceService`
       - service_verb: verb to be used on update (default to `reload`)

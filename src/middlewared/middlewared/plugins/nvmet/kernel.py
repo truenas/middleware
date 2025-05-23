@@ -422,7 +422,7 @@ class NvmetNamespaceConfig(NvmetConfig):
         for entry in render_ctx[self.query]:
             subsys = entry['subsys']
             subsys_id = subsys['id']
-            subsys_to_subnqn[subsys_id] = subsys['nvmet_subsys_subnqn']
+            subsys_to_subnqn[subsys_id] = subsys['subnqn']
             subsys_to_ns[subsys_id][str(entry['nsid'])] = entry
 
         # We could have additional subsystems that no longer
@@ -486,8 +486,8 @@ class NvmetNamespaceConfig(NvmetConfig):
         # Is ANA active for this namespace (subsystem)
         if render_ctx['nvmet.global.ana_active']:
             # Maybe ANA applies to this namespace
-            if isinstance(nvmet_subsys_ana := attrs['subsys']['nvmet_subsys_ana'], bool):
-                do_ana = nvmet_subsys_ana
+            if isinstance(subsys_ana := attrs['subsys']['ana'], bool):
+                do_ana = subsys_ana
             else:
                 do_ana = bool(render_ctx['nvmet.global.ana_enabled'])
 
@@ -571,9 +571,9 @@ class NvmetHostSubsysConfig(NvmetLinkConfig):
     query = 'nvmet.host_subsys.query'
     src_parentdir = 'subsystems'
     src_subdir = 'allowed_hosts'
-    src_query_keys = ['subsys', 'nvmet_subsys_subnqn']
+    src_query_keys = ['subsys', 'subnqn']
     dst_dir = 'hosts'
-    dst_query_keys = ['host', 'nvmet_host_hostnqn']
+    dst_query_keys = ['host', 'hostnqn']
 
     def src_dir_name(self, entry, render_ctx: dict):
         return f'{entry[self.src_query_keys[0]][self.src_query_keys[1]]}'
@@ -586,9 +586,9 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
     query = 'nvmet.port_subsys.query'
     src_parentdir = 'ports'
     src_subdir = 'subsystems'
-    src_query_keys = ['port', 'nvmet_port_index']
+    src_query_keys = ['port', 'index']
     dst_dir = 'subsystems'
-    dst_query_keys = ['subsys', 'nvmet_subsys_subnqn']
+    dst_query_keys = ['subsys', 'subnqn']
 
     def src_dir_name(self, entry, render_ctx: dict):
         # Because we have elected to support overriding the global ANA
@@ -600,7 +600,7 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
         # a link to the VIP port.
         raw_index = entry[self.src_query_keys[0]][self.src_query_keys[1]]
         # Now check whether ANA is playing a part.
-        match entry['subsys']['nvmet_subsys_ana']:
+        match entry['subsys']['ana']:
             case True:
                 index = raw_index + ANA_PORT_INDEX_OFFSET
             case False:
@@ -620,7 +620,7 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
         return f'{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}'
 
     def create_links(self, entry: dict):
-        return entry['port']['nvmet_port_enabled']
+        return entry['port']['enabled']
 
 
 def write_config(config):
@@ -674,19 +674,19 @@ def _set_namespace_enable(subnqn, nsnum, value):
 
 
 def lock_namespace(data):
-    _set_namespace_enable(data['subsys']['nvmet_subsys_subnqn'], data['nsid'], 0)
+    _set_namespace_enable(data['subsys']['subnqn'], data['nsid'], 0)
 
 
 def unlock_namespace(data):
-    _set_namespace_field(data['subsys']['nvmet_subsys_subnqn'],
+    _set_namespace_field(data['subsys']['subnqn'],
                          data['nsid'],
                          'device_path',
                          _map_device_path(data['device_type'], data['device_path']))
-    _set_namespace_enable(data['subsys']['nvmet_subsys_subnqn'], data['nsid'], 1)
+    _set_namespace_enable(data['subsys']['subnqn'], data['nsid'], 1)
 
 
 def resize_namespace(data):
-    _set_namespace_field(data['subsys']['nvmet_subsys_subnqn'],
+    _set_namespace_field(data['subsys']['subnqn'],
                          data['nsid'],
                          'revalidate_size',
                          1)

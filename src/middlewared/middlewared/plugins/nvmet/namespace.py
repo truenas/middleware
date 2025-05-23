@@ -67,6 +67,7 @@ class NVMetNamespaceService(SharingService):
         datastore = 'services.nvmet_namespace'
         datastore_prefix = 'nvmet_namespace_'
         datastore_extend = 'nvmet.namespace.extend'
+        datastore_extend_fk = ['subsys']
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetNamespaceEntry
@@ -267,7 +268,7 @@ class NVMetNamespaceService(SharingService):
             _filter.append(('id', '!=', old['id']))
         existing = await self.query(_filter, {'force_sql_filters': True})
         if existing:
-            existing_name = existing[0]['subsys']['nvmet_subsys_name']
+            existing_name = existing[0]['subsys']['name']
             verrors.add(f'{schema_name}.device_path',
                         f"This device_path already used by subsystem: {existing_name}")
         # Next check iscsi.extent
@@ -313,7 +314,7 @@ class NVMetNamespaceService(SharingService):
         raise CallError(f'Failed to generate a {key} for subsystem')
 
     def __audit_summary(self, data):
-        return f'{data["subsys"]["nvmet_subsys_name"]}/{data["nsid"]}'
+        return f'{data["subsys"]["name"]}/{data["nsid"]}'
 
     async def __get_next_nsid(self, subsys_id):
         existing = {ns['nsid'] for ns in await self.middleware.call(f'{self._config.namespace}.query',
@@ -354,17 +355,9 @@ class NVMetNamespaceService(SharingService):
                 await self.middleware.run_in_thread(kernel_resize_namespace, data)
 
     @private
-    async def sharing_task_determine_locked(self, data, locked_datasets):
-        """
-        `mountpoint` attribute of zvol will be unpopulated and so we
-        first try direct comparison between the two strings.
-
-        The parent dataset of a zvol may also be locked, which renders
-        the zvol inaccessible as well, and so we need to continue to the
-        common check for whether the path is in the locked datasets.
-        """
-        path = await self.get_path_field(data)
-        if data['device_type'] == 'ZVOL' and any(path == os.path.join('/mnt', d['id']) for d in locked_datasets):
-            return True
-
-        return await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets)
+    async def sharing_task_determine_locked(self, data):
+        """Determine if this namespace is in a locked path"""
+        return await self.middleware.call(
+            'pool.dataset.path_in_locked_datasets',
+            await self.get_path_field(data)
+        )

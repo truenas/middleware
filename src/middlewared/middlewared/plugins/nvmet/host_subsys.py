@@ -25,6 +25,7 @@ class NVMetHostSubsysService(CRUDService):
         namespace = 'nvmet.host_subsys'
         datastore = 'services.nvmet_host_subsys'
         datastore_prefix = 'nvmet_host_subsys_'
+        datastore_extend_fk = ['host', 'subsys']
         cli_private = True
         role_prefix = 'SHARING_NVME_TARGET'
         entry = NVMetHostSubsysEntry
@@ -143,4 +144,4 @@ class NVMetHostSubsysService(CRUDService):
                         f"This record already exists (Host ID: {host_id}/Subsystem ID: {subsys_id})")
 
     def __audit_summary(self, data):
-        return f'{data["host"]["nvmet_host_hostnqn"]}/{data["subsys"]["nvmet_subsys_name"]}'
+        return f'{data["host"]["hostnqn"]}/{data["subsys"]["name"]}'

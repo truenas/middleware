@@ -22,6 +22,16 @@ def nin(col, value):
 
 
 class FilterMixin(SchemaMixin):
+    def _filters_contains_foreign_key(self, filters):
+        for f in filters:
+            if not isinstance(f, (list, tuple)):
+                raise ValueError('Filter must be a list or tuple: {0}'.format(f))
+            if len(f) == 3:
+                name, _, _ = f
+                if any((x in name for x in ['__', '.'])):
+                    return True
+        return False
+
     def _filters_to_queryset(self, filters, table, prefix, aliases):
         opmap = {
             '=': operator.eq,
@@ -44,8 +54,8 @@ class FilterMixin(SchemaMixin):
             if len(f) == 3:
                 name, op, value = f
 
-                if '__' in name:
-                    fk, name = name.split('__', 1)
+                if matched := next((x for x in ['__', '.'] if x in name), False):
+                    fk, name = name.split(matched, 1)
                     col = self._get_col(aliases[list(self._get_col(table, fk, prefix).foreign_keys)[0]], name, '')
                 else:
                     col = self._get_col(table, name, prefix)

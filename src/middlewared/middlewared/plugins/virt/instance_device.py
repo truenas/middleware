@@ -28,11 +28,11 @@ class VirtInstanceDeviceService(Service):
         cli_namespace = 'virt.instance'
 
     @api_method(VirtInstanceDeviceListArgs, VirtInstanceDeviceListResult, roles=['VIRT_INSTANCE_READ'])
-    async def device_list(self, id):
+    async def device_list(self, id_):
         """
         List all devices associated to an instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance = await self.middleware.call('virt.instance.get_instance', id_, {'extra': {'raw': True}})
         instance_profiles = instance['raw']['profiles']
         raw_devices = {}
 
@@ -121,7 +121,9 @@ class VirtInstanceDeviceService(Service):
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
 
-                device['description'] = f'{device["source_proto"]}/{device["source_port"]} -> {device["dest_proto"]}/{device["dest_port"]}'
+                a = f'{device["source_proto"]}/{device["source_port"]}'
+                b = f'{device["dest_proto"]}/{device["dest_port"]}'
+                device['description'] = f'{a} -> {b}'
             case 'tpm':
                 device['dev_type'] = 'TPM'
                 device['path'] = incus.get('path')
@@ -201,7 +203,7 @@ class VirtInstanceDeviceService(Service):
                     new['boot.priority'] = str(device['boot_priority'])
                 if new['source'] and '/' not in new['source']:
                     if zpool := device.get('storage_pool'):
-                        new['pool'] = storage_pool_to_incus_pool(device.get('storage_pool'))
+                        new['pool'] = storage_pool_to_incus_pool(zpool)
                     else:
                         new['pool'] = None
                 if device.get('io_bus'):
@@ -588,20 +590,20 @@ class VirtInstanceDeviceService(Service):
         VirtInstanceBootableDiskArgs,
         VirtInstanceBootableDiskResult,
         audit='Virt: Choosing',
-        audit_extended=lambda id, disk: f'{disk!r} as bootable disk for {id!r} instance',
+        audit_extended=lambda id_, disk: f'{disk!r} as bootable disk for {id_!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
     )
-    async def set_bootable_disk(self, id, disk):
+    async def set_bootable_disk(self, id_, disk):
         """
-        Specify `disk` to boot `id` virt instance OS from.
+        Specify `disk` to boot `id_` virt instance OS from.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        instance = await self.middleware.call('virt.instance.get_instance', id_, {'extra': {'raw': True}})
         if instance['type'] != 'VM':
             raise CallError('Setting disk to boot from is only valid for VM instances.')
         if disk == 'root' and instance['status'] != 'STOPPED':
             raise CallError('Instance must be stopped before updating it\'s root disk configuration.')
 
-        device_list = await self.device_list(id)
+        device_list = await self.device_list(id_)
         desired_disk = None
 
         max_boot_priority_device = get_max_boot_priority_device(device_list)
@@ -624,13 +626,11 @@ class VirtInstanceDeviceService(Service):
             'boot_priority': max_boot_priority_device['boot_priority'] + 1 if max_boot_priority_device else 1,
         }
         if desired_disk['dev_type'] == 'CDROM':
-            data |= {
-                'dev_type': 'CDROM',
-            }
+            data |= {'dev_type': 'CDROM'}
         else:
             data |= {
                 'dev_type': 'DISK',
                 'io_bus': desired_disk.get('io_bus'),
             } | ({'destination': desired_disk['destination']} if disk != 'root' else {})
 
-        return await self.device_update(id, data)
+        return await self.device_update(id_, data)

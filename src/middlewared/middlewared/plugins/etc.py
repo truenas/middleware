@@ -167,10 +167,7 @@ class EtcService(Service):
             'ctx': [
                 {
                     'method': 'sharing.nfs.query',
-                    'args': [
-                        [('enabled', '=', True), ('locked', '=', False)],
-                        {'extra': {'use_cached_locked_datasets': False}}
-                    ],
+                    'args': [[('enabled', '=', True), ('locked', '=', False)]],
                 },
                 {'method': 'nfs.config'},
             ],

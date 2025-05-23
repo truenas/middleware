@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import cache
 import re
 
 from sqlalchemy import and_, func, select
@@ -36,6 +37,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             Bool('relationships', default=True),
             Str('extend', default=None, null=True),
             Str('extend_context', default=None, null=True),
+            List('extend_fk', default=[], null=True),
             Str('prefix', default=None, null=True),
             Dict('extra', additional_attrs=True),
             List('order_by'),
@@ -86,8 +88,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         # which might happen with "prefix"
         options = options.copy()
 
+        prefix = options['prefix']
+        extend_fk = options.get('extend_fk')
+        fk_attrs = {}
         aliases = {}
-        if options['count']:
+        if options['count'] and not self._filters_contains_foreign_key(filters):
             qs = select([func.count(self._get_pk(table))])
         else:
             columns = list(table.c)
@@ -95,12 +100,19 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             if options['relationships']:
                 aliases = self._get_queryset_joins(table)
                 for foreign_key, alias in aliases.items():
+                    if extend_fk and foreign_key.parent.name.endswith('_id'):
+                        fk = foreign_key.parent.name.removeprefix(prefix).removesuffix("_id")
+                        if fk in extend_fk:
+                            if _attrs := await self.middleware.call('datastore.get_service_config_attrs',
+                                                                    foreign_key.column.table.name):
+                                fk_attrs[fk] = _attrs
                     columns.extend(list(alias.c))
                     from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
 
-            qs = select(columns).select_from(from_)
-
-        prefix = options['prefix']
+            if options['count']:
+                qs = select([func.count(self._get_pk(table))]).select_from(from_)
+            else:
+                qs = select(columns).select_from(from_)
 
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix, aliases)))
@@ -147,7 +159,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         result = await self._queryset_serialize(
             result,
             table, aliases, relationships, options['extend'], options['extend_context'], options['prefix'],
-            options['select'], options['extra'],
+            options['select'], options['extra'], fk_attrs,
         )
 
         if options['get']:
@@ -189,27 +201,50 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         return result
 
     async def _queryset_serialize(
-        self, qs, table, aliases, relationships, extend, extend_context, field_prefix, select, extra_options,
+        self, qs, table, aliases, relationships, extend, extend_context, field_prefix, select, extra_options, fk_attrs,
     ):
         rows = []
         for i, row in enumerate(qs):
-            rows.append(self._serialize(row, table, aliases, relationships[i], field_prefix))
+            rows.append(self._serialize(row, table, aliases, relationships[i], field_prefix, fk_attrs))
 
         if extend_context:
             extend_context_value = await self.middleware.call(extend_context, rows, extra_options)
         else:
             extend_context_value = None
 
-        return [
+        result = [
             await self._extend(data, extend, extend_context, extend_context_value, select)
             for data in rows
         ]
 
-    def _serialize(self, obj, table, aliases, relationships, field_prefix):
+        for fk, attrs in fk_attrs.items():
+            if not attrs['extend']:
+                continue
+            if attrs['extend_context']:
+                extend_context_value = await self.middleware.call(attrs['extend_context'], rows, extra_options)
+            else:
+                extend_context_value = None
+            for row in result:
+                if fk in row:
+                    row[fk] = await self._extend(row[fk],
+                                                 attrs['extend'],
+                                                 attrs['extend_context'],
+                                                 extend_context_value,
+                                                 {})
+        return result
+
+    def _serialize(self, obj, table, aliases, relationships, field_prefix, fk_attrs):
         data = self._serialize_row(obj, table, aliases)
         data.update(relationships)
 
-        return {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
+        result = {self._strip_prefix(k, field_prefix): v for k, v in data.items()}
+        # Check for nested data as a result of foreign keys
+        for fk, attrs in fk_attrs.items():
+            if not attrs['prefix']:
+                continue
+            if fk in result and isinstance(result[fk], dict):
+                result[fk] = {self._strip_prefix(k, attrs['prefix']): v for k, v in result[fk].items()}
+        return result
 
     async def _extend(self, data, extend, extend_context, extend_context_value, select):
         if extend:
@@ -296,3 +331,17 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     ]
 
         return relationships
+
+    @cache
+    def get_service_config_attrs(self, flat_table_name: str) -> dict:
+        result = {}
+        for service_name, service_obj in self.middleware.get_services().items():
+            if service_obj._config and hasattr(service_obj._config, 'datastore'):
+                if service_obj._config.datastore:
+                    ds = service_obj._config.datastore.replace('.', '_').lower()
+                    if ds == flat_table_name:
+                        for attr in ['prefix', 'extend', 'extend_context']:
+                            key = f'datastore_{attr}'
+                            result[attr] = getattr(service_obj._config, key, None)
+                        return result
+        return result
