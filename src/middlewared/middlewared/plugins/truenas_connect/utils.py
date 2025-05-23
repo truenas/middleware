@@ -24,26 +24,33 @@ def get_unset_payload() -> dict:
     }
 
 
-def calculate_sleep(failure_dt_str: str | None, base_sleep: int | None = None) -> int | None:
+def calculate_sleep(failure_dt_str: str | None, base_sleep: int = 60) -> int | None:
     """
     Calculates the number of seconds to sleep before the next retry.
 
     Behavior:
-      - If no failure datetime is provided, returns 5 seconds.
+      - If no failure datetime is provided, returns base_sleep (default 60 seconds).
       - If the provided datetime is in the future, returns None.
       - If more than 48 hours have elapsed since the failure datetime, returns None.
       - Otherwise, uses an exponential backoff schedule:
-          * First 3 attempts use a sleep time of 5 seconds.
-          * Next 3 attempts use a sleep time of 10 seconds.
-          * Next 3 attempts use a sleep time of 20 seconds, and so on.
+          * First 3 attempts use a sleep time of base_sleep seconds.
+          * Next 3 attempts use a sleep time of base_sleep × 2 seconds.
+          * Next 3 attempts use a sleep time of base_sleep × 4 seconds, and so on.
 
         Within each group, the next attempt is scheduled exactly
         at group_interval seconds after the previous attempt.
-        If the calculated sleep time is 0 or negative (i.e. we’re past the scheduled time),
+        If the calculated sleep time is 0 or negative (i.e. we're past the scheduled time),
         returns None (meaning no sleep is needed; try immediately).
-    """
-    base_sleep = base_sleep or HEARTBEAT_INTERVAL
 
+    Args:
+        failure_dt_str: ISO format datetime string of when the first failure occurred.
+                       Used to calculate elapsed time and determine the appropriate retry
+                       group and sleep interval. If None, returns base_sleep immediately.
+        base_sleep: Base interval in seconds for the exponential backoff calculation.
+                   Each retry group uses base_sleep × 2^group_number as the sleep interval.
+                   Defaults to 60 seconds if not provided. Higher values result in more
+                   conservative retry schedules with longer delays between attempts.
+    """
     # If no failure datetime is provided, return base_sleep.
     if not failure_dt_str:
         return base_sleep
