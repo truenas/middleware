@@ -29,23 +29,23 @@ class CloudBackupEntry(BaseCloudEntry):
     """How many of the most recent backup snapshots to keep after each backup"""
     transfer_setting: Literal["DEFAULT", "PERFORMANCE", "FAST_STORAGE"] = "DEFAULT"
     """
-    DEFAULT:
+    * DEFAULT:
 
-    - pack size given by `$RESTIC_PACK_SIZE` (default 16 MiB)
+        * pack size given by `$RESTIC_PACK_SIZE` (default 16 MiB)
 
-    - read concurrency given by `$RESTIC_READ_CONCURRENCY` (default 2 files)
+        * read concurrency given by `$RESTIC_READ_CONCURRENCY` (default 2 files)
 
-    PERFORMANCE:
+    * PERFORMANCE:
 
-    - pack size = 29 MiB
+        * pack size = 29 MiB
 
-    - read concurrency given by `$RESTIC_READ_CONCURRENCY` (default 2 files)
+        * read concurrency given by `$RESTIC_READ_CONCURRENCY` (default 2 files)
 
-    FAST_STORAGE:
+    * FAST_STORAGE:
 
-    - pack size = 58 MiB
+        * pack size = 58 MiB
 
-    - read concurrency = 100 files
+        * read concurrency = 100 files
     """
     absolute_paths: bool = False
     """Whether to preserve absolute paths in each backup (cannot be set when `snapshot=True`)"""

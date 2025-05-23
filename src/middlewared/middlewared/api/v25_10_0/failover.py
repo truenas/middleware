@@ -32,8 +32,7 @@ class FailoverEntry(BaseModel):
     HA is enabled and working appropriately. The default time to wait is
     2 seconds.
 
-    **NOTE**
-        This setting does NOT effect the `disabled` or `master` parameters."""
+    **NOTE**: This setting does NOT effect the `disabled` or `master` parameters."""
 
 
 class FailoverSyncToPeer(BaseModel):

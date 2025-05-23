@@ -60,34 +60,36 @@ class MailSendMessage(BaseModel):
     attachments: bool = False
     """If set to true, an array compromised of the following object is required via HTTP upload:
 
-        - headers (array)
+    * headers *(array)*
 
-            - name (string)
+        * name *(string)*
 
-            - value (string)
+        * value *(string)*
 
-            - params (object)
+        * params *(object)*
 
-        - content (string)
+    * content *(string)*
 
-        ```[
-         {
-          "headers": [
-           {
-            "name": "Content-Transfer-Encoding",
-            "value": "base64"
-           },
-           {
-            "name": "Content-Type",
-            "value": "application/octet-stream",
-            "params": {
-             "name": "test.txt"
-            }
-           }
-          ],
-          "content": "dGVzdAo="
-         }
-        ]```
+    .. code-block:: JSON
+
+        [
+          {
+            "headers": [
+              {
+                "name": "Content-Transfer-Encoding",
+                "value": "base64"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/octet-stream",
+                "params": {
+                  "name": "test.txt"
+                }
+              }
+            ],
+            "content": "dGVzdAo="
+          }
+        ]
     """
     queue: bool = True
     """Whether to queue the message to be sent later if it fails to send."""

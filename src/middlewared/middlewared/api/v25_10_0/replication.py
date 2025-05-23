@@ -43,14 +43,14 @@ class ReplicationEntry(BaseModel):
     """
     Method of snapshots transfer.
 
-      * `SSH` transfers snapshots via SSH connection. This method is supported everywhere but does not achieve
-        great performance.
+    * `SSH` transfers snapshots via SSH connection. This method is supported everywhere but does not achieve
+      great performance.
 
-      * `SSH+NETCAT` uses unencrypted connection for data transfer. This can only be used in trusted networks
-        and requires a port (specified by range from `netcat_active_side_port_min` to `netcat_active_side_port_max`)
-        to be open on `netcat_active_side`.
+    * `SSH+NETCAT` uses unencrypted connection for data transfer. This can only be used in trusted networks
+      and requires a port (specified by range from `netcat_active_side_port_min` to `netcat_active_side_port_max`)
+      to be open on `netcat_active_side`.
 
-      * `LOCAL` replicates to or from localhost.
+    * `LOCAL` replicates to or from localhost.
     """
     ssh_credentials: KeychainCredentialEntry | None = None
     """Keychain Credential of type `SSH_CREDENTIALS`."""
@@ -104,11 +104,11 @@ class ReplicationEntry(BaseModel):
     """
     Control destination datasets readonly property:
 
-      * `SET` will set all destination datasets to readonly=on after finishing the replication.
-    
-      * `REQUIRE` will require all existing destination datasets to have readonly=on property.
+    * `SET` will set all destination datasets to readonly=on after finishing the replication.
 
-      * `IGNORE` will avoid this kind of behavior.
+    * `REQUIRE` will require all existing destination datasets to have readonly=on property.
+
+    * `IGNORE` will avoid this kind of behavior.
     """
     hold_pending_snapshots: bool = False
     """Prevent source snapshots from being deleted by retention of replication fails for some reason."""
@@ -116,11 +116,11 @@ class ReplicationEntry(BaseModel):
     """
     Specify how to delete old snapshots on target side:
 
-      * `SOURCE` deletes snapshots that are absent on source side.
+    * `SOURCE` deletes snapshots that are absent on source side.
 
-      * `CUSTOM` deletes snapshots that are older than `lifetime_value` and `lifetime_unit`.
+    * `CUSTOM` deletes snapshots that are older than `lifetime_value` and `lifetime_unit`.
 
-      * `NONE` does not delete any snapshots.
+    * `NONE` does not delete any snapshots.
     """
     lifetime_value: int | None = Field(default=None, ge=1)
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] | None = None
