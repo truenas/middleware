@@ -138,7 +138,6 @@ class VirtGlobalService(ConfigService):
 
         new = old.copy()
         new.update(data)
-        new_storage_pools = set(new['storage_pools']) - set(old['storage_pools'])
         removed_storage_pools = set(old['storage_pools']) - set(new['storage_pools'])
 
         verrors = ValidationErrors()
@@ -496,7 +495,11 @@ class VirtGlobalService(ConfigService):
             self.logger.debug('No pool set for virtualization, skipping.')
             raise NoPoolConfigured()
         else:
-            await (await self.middleware.call('service.control', 'START', 'incus', {'ha_propagate': False})).wait(raise_error=True)
+            await (
+                await self.middleware.call(
+                    'service.control', 'START', 'incus', {'ha_propagate': False}
+                )
+            ).wait(raise_error=True)
 
         # Set up the default storage pool
         for pool in config['storage_pools']:
@@ -600,7 +603,11 @@ class VirtGlobalService(ConfigService):
 
         if to_import:
             await self.recover(to_import)
-            await (await self.middleware.call('service.control', 'RESTART', 'incus', {'ha_propagate': False})).wait(raise_error=True)
+            await (
+                await self.middleware.call(
+                    'service.control', 'RESTART', 'incus', {'ha_propagate': False}
+                )
+            ).wait(raise_error=True)
 
     @private
     @job(lock='virt_global_reset')
@@ -623,7 +630,11 @@ class VirtGlobalService(ConfigService):
             if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
                 raise CallError('Failed to stop instances')
 
-        await (await self.middleware.call('service.control', 'STOP', 'incus', {'ha_propagate': False})).wait(raise_error=True)
+        await (
+            await self.middleware.call(
+                'service.control', 'STOP', 'incus', {'ha_propagate': False}
+            )
+        ).wait(raise_error=True)
         if await self.middleware.call('service.started', 'incus'):
             raise CallError('Failed to stop virtualization service')
 
@@ -641,7 +652,11 @@ class VirtGlobalService(ConfigService):
         # and we do have instances datasets that might be mounted beneath
         await run('rm -rf --one-file-system /var/lib/incus/*', shell=True, check=True)
 
-        if start and not await (await self.middleware.call('service.control', 'START', 'incus', {'ha_propagate': False})).wait(raise_error=True):
+        if start and not await (
+            await self.middleware.call(
+                'service.control', 'START', 'incus', {'ha_propagate': False}
+            )
+        ).wait(raise_error=True):
             raise CallError('Failed to start virtualization service')
 
         if not start:

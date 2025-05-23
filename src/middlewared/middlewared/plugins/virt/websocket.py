@@ -86,18 +86,18 @@ class IncusWS(object, metaclass=Singleton):
                                         id=data['metadata']['context']['instance'],
                                     )
 
-    async def wait(self, id: str, callback: Callable[[str], None]):
+    async def wait(self, id_: str, callback: Callable[[str], None]):
         event = asyncio.Event()
-        self._waiters[id].append(event)
+        self._waiters[id_].append(event)
 
         try:
             while True:
-                if not self._incoming[id]:
+                if not self._incoming[id_]:
                     await event.wait()
                 event.clear()
 
-                for i in list(self._incoming[id]):
-                    self._incoming[id].remove(i)
+                for i in list(self._incoming[id_]):
+                    self._incoming[id_].remove(i)
                     if (result := await callback(i)) is None:
                         continue
                     status, data = result
@@ -111,7 +111,7 @@ class IncusWS(object, metaclass=Singleton):
                         case _:
                             raise CallError(f'Unknown status: {status}')
         finally:
-            self._waiters[id].remove(event)
+            self._waiters[id_].remove(event)
 
     async def start(self):
         if not self._task:
