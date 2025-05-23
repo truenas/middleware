@@ -6,7 +6,7 @@ import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import (
-    CallError, CRUDService, job, private, ValidationErrors, filterable, filterable_api_method
+    CallError, CRUDService, job, private, ValidationError, ValidationErrors, filterable, filterable_api_method
 )
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
@@ -959,7 +959,7 @@ class IdmapDomainService(CRUDService):
         for sid in sidlist:
             try:
                 entry = self.__local_sid_to_entry(server_sid, netbiosname, sid, client.separator)
-            except (KeyError, ValidationErrors):
+            except (KeyError, ValidationError):
                 # This is a Unix SID or a local SID, but account doesn't exist
                 unmapped.update({sid: sid})
                 continue
