@@ -84,7 +84,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                 else:
                     last_failure = tnc_config['last_heartbeat_failure_datetime']
 
-                sleep_secs = calculate_sleep(last_failure)
+                sleep_secs = calculate_sleep(last_failure, HEARTBEAT_INTERVAL)
                 if sleep_secs is None:
                     # This means that either we have a time mismatch or it's been 48 hours and we have
                     # not been able to establish contact with TNC, so an alert should be raised
