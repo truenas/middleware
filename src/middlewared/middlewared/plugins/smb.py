@@ -1610,12 +1610,13 @@ async def pool_post_import(middleware, pool):
         return
 
     path = f'/mnt/{pool["name"]}'
-    if await middleware.call('sharing.smb.query', [
-        ('OR', [
+    if await middleware.call(
+        'sharing.smb.query',
+        [('OR', [
             ('path', '=', path),
             ('path', '^', f'{path}/'),
-        ])
-    ], {'extra': {'use_cached_locked_datasets': False}}):
+        ])]
+    ):
         await middleware.call('smb.disable_acl_if_trivial')
         await middleware.call('etc.generate', 'smb')
 

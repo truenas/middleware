@@ -14,8 +14,16 @@ from middlewared.api.current import (
     PoolDatasetExportKeyArgs, PoolDatasetExportKeyResult
 )
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
+from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils import filter_list
-from middlewared.utils.path import is_child_realpath
+from middlewared.plugins.pool_.utils import get_dataset_parents
+try:
+    from truenas_pylibzfs import ZFSError, ZFSException
+except ImportError:
+    # github CI crashes without this because the
+    # image on github doesn't have ZFS installed
+    # so it's safe to ignore it
+    ZFSError = ZFSException = None
 
 from .utils import DATASET_DATABASE_MODEL_NAME, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
@@ -24,17 +32,6 @@ class PoolDatasetService(Service):
 
     class Config:
         namespace = 'pool.dataset'
-
-    @private
-    async def locked_datasets_cached(self):
-        try:
-            return await self.middleware.call('cache.get', 'zfs_locked_datasets')
-        except KeyError:
-            locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets')
-            if await self.middleware.call('system.ready'):
-                # Only cache if the system is ready
-                await self.middleware.call('cache.put', 'zfs_locked_datasets', locked_datasets, 20)
-            return locked_datasets
 
     @api_method(PoolDatasetEncryptionSummaryArgs, PoolDatasetEncryptionSummaryResult, roles=['DATASET_READ'])
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
@@ -210,10 +207,21 @@ class PoolDatasetService(Service):
         self.middleware.call_sync('pool.dataset.delete_encrypted_datasets_from_db', [['name', 'in', to_remove]])
 
     @private
-    def path_in_locked_datasets(self, path, locked_datasets=None):
-        if locked_datasets is None:
-            locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
-        return any(is_child_realpath(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
+    @pass_thread_local_storage
+    def path_in_locked_datasets(self, tls, path):
+        # WARNING: _EXTREMELY_ hot code-path. So do not add more
+        # things here unless you fully understand the side-effects.
+        for i in get_dataset_parents(path.removeprefix('/mnt/')):
+            try:
+                crypto = tls.lzh.open_resource(name=i).crypto()
+                if crypto and not crypto.info().key_is_loaded:
+                    return True
+            except ZFSException as e:
+                if ZFSError(e.code) == ZFSError.EZFS_NOENT:
+                    continue
+                else:
+                    raise
+        return False
 
     @private
     def query_encrypted_roots_keys(self, filters):

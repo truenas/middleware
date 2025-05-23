@@ -96,10 +96,4 @@ def test_service_encrypted_dataset_retrieve_info_with_cache(
             assert call(
                 f'{namespace}.get_instance', share['id'], {'extra': {'retrieve_locked_info': False}}
             ).get('locked') is None
-            cached_locked_value = call(
-                f'{namespace}.get_instance', share['id'], {'extra': {'use_cached_locked_datasets': True}}
-            )
-            locked_value = call(
-                f'{namespace}.get_instance', share['id'], {'extra': {'use_cached_locked_datasets': False}}
-            )
-            assert cached_locked_value == locked_value
+            assert call(f'{namespace}.get_instance', share['id']).get('locked') is True

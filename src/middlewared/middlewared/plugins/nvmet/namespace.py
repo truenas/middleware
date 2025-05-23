@@ -355,17 +355,11 @@ class NVMetNamespaceService(SharingService):
                 await self.middleware.run_in_thread(kernel_resize_namespace, data)
 
     @private
-    async def sharing_task_determine_locked(self, data, locked_datasets):
+    async def sharing_task_determine_locked(self, data):
         """
-        `mountpoint` attribute of zvol will be unpopulated and so we
-        first try direct comparison between the two strings.
-
         The parent dataset of a zvol may also be locked, which renders
         the zvol inaccessible as well, and so we need to continue to the
         common check for whether the path is in the locked datasets.
         """
         path = await self.get_path_field(data)
-        if data['device_type'] == 'ZVOL' and any(path == os.path.join('/mnt', d['id']) for d in locked_datasets):
-            return True
-
-        return await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets)
+        return await self.middleware.call('pool.dataset.path_in_locked_datasets', path)

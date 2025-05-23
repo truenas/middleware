@@ -36,19 +36,12 @@ class DockerSetupService(Service):
 
         await self.create_update_docker_datasets(config['dataset'])
 
-        locked_datasets = [
-            d['id'] for d in filter(
-                lambda d: d['mountpoint'], await self.middleware.call('zfs.dataset.locked_datasets')
-            )
-            if d['mountpoint'].startswith(f'{config["dataset"]}/') or d['mountpoint'] in (
-                f'/mnt/{k}' for k in (config['dataset'], config['pool'])
-            )
-        ]
-        if locked_datasets:
-            raise CallError(
-                f'Please unlock following dataset(s) before starting docker: {", ".join(locked_datasets)}',
-                errno=CallError.EDATASETISLOCKED,
-            )
+        for i in (config['dataset'], config['pool']):
+            if await self.middleware.call('pool.dataset.path_in_locked_datasets', i):
+                raise CallError(
+                    f'Can not start docker because {i!r} is located in a locked dataset.',
+                    errno=CallError.EDATASETISLOCKED,
+                )
 
         # What we want to validate now is that the interface on default route is up and running
         # This is problematic for bridge interfaces which can or cannot come up in time
