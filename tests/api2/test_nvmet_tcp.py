@@ -1197,6 +1197,34 @@ class TestNVMe(NVMeRunning):
                                     assert len(ss2['namespaces']) == 0
                                     assert len(ss2['ports']) == 0
 
+    def test__port_validation(self, fixture_port):
+        # Create -> duplicate
+        with assert_validation_errors('nvmet_port_create.addr_traddr',
+                                      'There already is a port using the same transport and address'):
+            with nvmet_port(truenas_server.ip):
+                pass
+
+        # Update
+        with nvmet_port(truenas_server.ip, 4444) as port2:
+            with assert_validation_errors('nvmet_port_update.addr_traddr',
+                                          'There already is a port using the same transport and address'):
+                call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4420})
+
+            call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4421})
+
+            # Associate port with subsys
+            with nvmet_subsys(SUBSYS_NAME1) as subsys:
+                with nvmet_port_subsys(subsys['id'], port2['id']):
+                    with assert_validation_errors('nvmet_port_update.addr_trsvcid',
+                                                  'Cannot change addr_trsvcid on an active port.  Disable first to allow change.'):
+                        call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4422})
+
+                call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4422})
+
+            with assert_validation_errors('nvmet_port_update.addr_trtype',
+                                          'This platform cannot support NVMe-oF(RDMA) or is missing an RDMA capable NIC.'):
+                call('nvmet.port.update', port2['id'], {'addr_trtype': 'RDMA'})
+
 
 class TestNVMeHostAuth(NVMeRunning):
 
