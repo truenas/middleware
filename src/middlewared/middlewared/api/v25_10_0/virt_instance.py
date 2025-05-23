@@ -92,7 +92,7 @@ class VirtInstanceEntry(BaseModel):
     root_disk_size: int | None
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None]
     storage_pool: NonEmptyString
-    "Storage pool in which the root of the instance is located."
+    """Storage pool in which the root of the instance is located."""
 
 
 def validate_memory(value: int) -> int:
@@ -195,7 +195,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     vnc_port: int | None = Field(ge=5900, le=65535)
     enable_vnc: bool
     vnc_password: Secret[NonEmptyString | None]
-    '''Setting vnc_password to null will unset VNC password'''
+    '''Setting vnc_password to null will unset VNC password.'''
     secure_boot: bool
     root_disk_size: int | None = Field(ge=5, default=None)
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None] = None

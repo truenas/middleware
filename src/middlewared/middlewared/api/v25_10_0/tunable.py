@@ -13,10 +13,12 @@ class TunableCreate(BaseModel):
     type: Literal['SYSCTL', 'UDEV', 'ZFS'] = 'SYSCTL'
     """
     - `SYSCTL`: `var` is a sysctl name (e.g. `kernel.watchdog`) and `value` is its corresponding value (e.g. `0`).
+
     - `UDEV`: `var` is a udev rules file name (e.g. `10-disable-usb`, `.rules` suffix will be appended automatically)
-        and `value` is its contents (e.g. `BUS=="usb", OPTIONS+="ignore_device"`).
+      and `value` is its contents (e.g. `BUS=="usb", OPTIONS+="ignore_device"`).
+
     - `ZFS`: `var` is a ZFS kernel module parameter name (e.g. `zfs_dirty_data_max_max`) and `value` is its value (e.g.
-        `783091712`).
+      `783091712`).
     """
     var: str
     value: str

@@ -69,7 +69,9 @@ class UpdateStatusUnavailable(BaseModel):
     status: Literal["REBOOT_REQUIRED", "HA_UNAVAILABLE", "UNAVAILABLE"]
     """
     `REBOOT_REQUIRED`: An update has already been applied.
+
     `UNAVAILABLE`: No update available.
+
     `HA_UNAVAILABLE`: HA is non-functional.
     """
 

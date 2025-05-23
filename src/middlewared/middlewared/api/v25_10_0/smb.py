@@ -68,7 +68,7 @@ class SMBShareAclEntry(BaseModel):
     ae_who_id: SMBShareAclEntryWhoId | None = None
     """ Unix ID of the principal to whom ACL entry applies. """
     ae_who_str: NonEmptyString | None = None
-    """ User or group name of the principal to whom the ACL entry applies """
+    """ User or group name of the principal to whom the ACL entry applies. """
 
     @model_validator(mode='after')
     def check_ae_who(self) -> Self:
@@ -85,7 +85,7 @@ class SMBShareAcl(BaseModel):
     share_name: NonEmptyString
     """ Name of the SMB share. """
     share_acl: list[SMBShareAclEntry] = [SMBShareAclEntry(ae_who_sid='S-1-1-0', ae_perm='FULL', ae_type='ALLOWED')]
-    """ List of SMB share ACL entries """
+    """ List of SMB share ACL entries. """
 
 
 @single_argument_args('smb_setacl')
@@ -112,7 +112,7 @@ SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
 class SmbServiceEntry(BaseModel):
     id: int
     netbiosname: NetbiosName
-    """ Netbios name of this server """
+    """ Netbios name of this server. """
     netbiosalias: list[NetbiosName]
     """ Alternative netbios names of the server that will be announced via
     netbios nameserver and registered in active directory when joined."""
@@ -122,7 +122,7 @@ class SmbServiceEntry(BaseModel):
     description: str
     """ Description of SMB server. May appear to clients during some operations. """
     enable_smb1: bool
-    """ Enable SMB1 support for server. WARNING: using SMB1 protocol is not recommended """
+    """ Enable SMB1 support for server. WARNING: Using SMB1 protocol is not recommended. """
     unixcharset: SMBCharsetType
     """ Select characterset for file names on local filesystem. This should only be used
     in cases where system administrator knows that the filenames are not UTF-8."""
@@ -150,7 +150,7 @@ class SmbServiceEntry(BaseModel):
     bindip: list[IPvAnyInterface]
     server_sid: SID | None
     """ Universally-unique identifier for this particular SMB server that serves as domain SID
-    for all local SMB user and group accounts """
+    for all local SMB user and group accounts. """
     smb_options: str
     """ Additional unvalidated and unsupported configuration options for the SMB server.
     WARNING: using smb_options may produce unexpected server behavior. """

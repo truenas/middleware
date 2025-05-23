@@ -44,7 +44,7 @@ class UserEntry(BaseModel):
     smbhash: Secret[str | None]
     home: NonEmptyString = DEFAULT_HOME_PATH
     shell: NonEmptyString = "/usr/bin/zsh"
-    "Available choices can be retrieved with `user.shell_choices`."
+    """Available choices can be retrieved with `user.shell_choices`."""
     full_name: str
     builtin: bool
     smb: bool = True
@@ -63,7 +63,7 @@ class UserEntry(BaseModel):
     the `builtin_users` group."""
     password_disabled: bool = False
     ssh_password_enabled: bool = False
-    "Required if `password_disabled` is false."
+    """Required if `password_disabled` is false."""
     sshpubkey: LongString | None = None
     locked: bool = False
     sudo_commands: list[NonEmptyString] = Field(default_factory=list)
@@ -75,16 +75,16 @@ class UserEntry(BaseModel):
     twofactor_auth_configured: bool
     sid: str | None
     last_password_change: datetime | None
-    "The date of the last password change for local user accounts."
+    """The date of the last password change for local user accounts."""
     password_age: int | None
-    "The age in days of the password for local user accounts."
+    """The age in days of the password for local user accounts."""
     password_history: Secret[list | None]
     """
     This contains hashes of the ten most recent passwords used by local user accounts, and is
     for enforcing password history requirements as defined in system.security.
     """
     password_change_required: bool
-    "Password change for local user account is required on next login."
+    """Password change for local user account is required on next login."""
     roles: list[str]
     api_keys: list[int]
 
@@ -113,7 +113,7 @@ class UserCreate(UserEntry):
     password_change_required: Excluded = excluded_field()
 
     uid: LocalUID | None = None
-    "UNIX UID. If not provided, it is automatically filled with the next one available."
+    """UNIX UID. If not provided, it is automatically filled with the next one available."""
     username: LocalUsername
     """
     String used to uniquely identify the user on the server. In order to be portable across
@@ -125,38 +125,38 @@ class UserCreate(UserEntry):
 
     group_create: bool = False
     group: int | None = None
-    "Required if `group_create` is `false`."
+    """Required if `group_create` is `false`."""
     home_create: bool = False
     home_mode: str = "700"
     password: Secret[NonEmptyString | None] = None
     random_password: bool = False
-    "Generate a random 20 character password for the user"
+    """Generate a random 20 character password for the user."""
 
 
 class UserGetUserObj(BaseModel):
     pw_name: str
-    "name of the user"
+    """Name of the user."""
     pw_gecos: str
-    "full username or comment field"
+    """Full username or comment field."""
     pw_dir: str
-    "user home directory"
+    """User home directory."""
     pw_shell: str
-    "user command line interpreter"
+    """User command line interpreter."""
     pw_uid: int
-    "numerical user id of the user"
+    """Numerical user ID of the user."""
     pw_gid: int
-    "numerical group id for the user's primary group"
+    """Numerical group ID for the user's primary group."""
     grouplist: list[int] | None
     """
-    optional list of group ids for groups of which this account is a member. If `get_groups` is not specified,
+    Optional list of group IDs for groups of which this account is a member. If `get_groups` is not specified,
     this value will be null.
     """
     sid: str | None
-    "optional SID value for the account that is present if `sid_info` is specified in payload."
+    """Optional SID value for the account that is present if `sid_info` is specified in payload."""
     source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
-    "the source for the user account."
+    """The source for the user account."""
     local: bool
-    "boolean value indicating whether the account is local to TrueNAS or provided by a directory service."
+    """The account is local to TrueNAS or provided by a directory service."""
 
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
@@ -183,7 +183,7 @@ class UserUpdateResult(BaseModel):
 
 class UserDeleteOptions(BaseModel):
     delete_group: bool = True
-    "Deletes the user primary group if it is not being used by any other user."
+    """Delete the user primary group if it is not being used by any other user."""
 
 
 class UserDeleteArgs(BaseModel):
@@ -218,9 +218,9 @@ class UserGetUserObjArgs(BaseModel):
     username: str | None = None
     uid: int | None = None
     get_groups: bool = False
-    "retrieve group list for the specified user."
+    """Retrieve group list for the specified user."""
     sid_info: bool = False
-    "retrieve SID and domain information for the user."
+    """Retrieve SID and domain information for the user."""
 
 
 class UserGetUserObjResult(BaseModel):
@@ -289,9 +289,9 @@ class UserUnset2faSecretResult(BaseModel):
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
     otp_digits: int = Field(ge=6, le=8)
-    "Represents number of allowed digits in the OTP"
+    """Represents number of allowed digits in the OTP."""
     interval: int = Field(ge=5)
-    "Time duration in seconds specifying OTP expiration time from its creation time"
+    """Time duration in seconds specifying OTP expiration time from its creation time."""
 
 
 class UserRenew2faSecretArgs(BaseModel):
