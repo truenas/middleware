@@ -280,14 +280,14 @@ class NVMetPortService(CRUDService):
             # Create
             # Ensure that we're not duplicating an existing entry
             if existing:
-                verrors.add(schema_name,
-                            f'Port #{existing["index"]} uses the same transport/address')
+                verrors.add(f'{schema_name}.addr_traddr',
+                            'There already is a port using the same transport and address')
         else:
             # Update.
             # Ensure that we're not duplicating an existing entry
             if existing and data['id'] != existing['id']:
-                verrors.add(schema_name,
-                            f'Port #{existing["index"]} uses the same transport/address')
+                verrors.add(f'{schema_name}.addr_traddr',
+                            'There already is a port using the same transport and address')
 
             # If subsystems are attached and service running then can only change
             # items if disabled.  Except enabled flag.
@@ -303,13 +303,13 @@ class NVMetPortService(CRUDService):
                             continue
                         if data[key] == oldvalue:
                             continue
-                        verrors.add(schema_name,
+                        verrors.add(f'{schema_name}.{key}',
                                     f'Cannot change {key} on an active port.  Disable first to allow change.')
 
         if data.get('addr_trtype') == 'RDMA':
             available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
             if RDMAprotocols.NVMET.value not in available_rdma_protocols:
-                verrors.add(schema_name,
+                verrors.add(f'{schema_name}.addr_trtype',
                             "This platform cannot support NVMe-oF(RDMA) or is missing an RDMA capable NIC.")
 
     @api_method(NVMetPortTransportAddressChoicesArgs, NVMetPortTransportAddressChoicesResult)
