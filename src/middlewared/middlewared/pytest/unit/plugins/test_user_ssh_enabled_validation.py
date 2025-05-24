@@ -1,130 +1,128 @@
 import pytest
+from typing import Literal
 
+from middlewared.api.current import UserCreateArgs, UserEntry
 from middlewared.plugins.account import UserService
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ValidationErrors
 
 
-@pytest.mark.parametrize('data,old_data,twofactor_enabled,twofactor_config,expected_error', [
+@pytest.mark.parametrize('method, twofactor_enabled, twofactor_config, expected_error', [
     (
-        {
-            'ssh_password_enabled': True
-        },
-        None,
+        'create',
         False,
         {
-            'services': {
-                'ssh': False
-            },
+            'services': {'ssh': False},
             'enabled': False,
         },
-        ''
+        None
     ),
     (
-        {
-            'ssh_password_enabled': True
-        },
-        None,
+        'create',
         False,
         {
-            'services': {
-                'ssh': True
-            },
+            'services': {'ssh': False},
             'enabled': True,
         },
-        '[EINVAL] test_schema.ssh_password_enabled:'
-        ' 2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
+        None
+    ),
+    (
+        'create',
+        False,
+        {
+            'services': {'ssh': True},
+            'enabled': True,
+        },
+        '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
         ' User will be created with SSH password access disabled and after 2FA has been'
         ' configured for this user, SSH password access can be enabled.'
     ),
     (
-        {
-            'ssh_password_enabled': True
-        },
-        {},
+        'update',
         False,
         {
-            'services': {
-                'ssh': True
-            },
+            'services': {'ssh': False},
             'enabled': True,
         },
-        '[EINVAL] test_schema.ssh_password_enabled:'
-        ' 2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
+        None
     ),
     (
+        'update',
+        False,
         {
-            'ssh_password_enabled': True
+            'services': {'ssh': True},
+            'enabled': True,
         },
-        {},
+        '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
+    ),
+    (
+        'update',
         True,
         {
-            'services': {
-                'ssh': True
-            },
+            'services': {'ssh': True},
             'enabled': True,
         },
-        ''
+        None
     ),
-    (
-        {
-            'ssh_password_enabled': True
-        },
-        {},
-        False,
-        {
-            'services': {
-                'ssh': False
-            },
-            'enabled': True,
-        },
-        ''
-    ),
-    (
-        {
-            'ssh_password_enabled': True
-        },
-        None,
-        False,
-        {
-            'services': {
-                'ssh': False
-            },
-            'enabled': True,
-        },
-        ''
-    ),
-
 ])
 @pytest.mark.asyncio
-async def test_use_ssh_enabled_validation(data, old_data, twofactor_enabled, twofactor_config, expected_error):
+async def test_use_ssh_enabled_validation(
+    method: Literal['create', 'update'], twofactor_enabled: bool, twofactor_config: dict, expected_error: str
+):
     m = Middleware()
-    m['datastore.query'] = lambda *arg: []
-    m['smb.is_configured'] = lambda *arg: False
-    m['auth.twofactor.config'] = lambda *arg: twofactor_config
+    m['datastore.query'] = lambda name, *args: [{'vol_name': 'home'}] if name == 'storage.volume' else []
+    m['smb.is_configured'] = lambda *args: False
+    m['auth.twofactor.config'] = lambda *args: twofactor_config
+    m['user.shell_choices'] = lambda *args: {'/usr/bin/zsh': 'zsh'}
     m['user.translate_username'] = lambda *args: {'twofactor_auth_configured': twofactor_enabled}
-    m['system.security.config'] = lambda *arg: {"enable_fips": False, "enable_gpos_stig": False}
-    data['smb'] = False
-    data['immutable'] = False
-    data.update(
-        {
+    m['system.security.config'] = lambda *args: {'enable_fips': False, 'enable_gpos_stig': False}
+    user_service = UserService(m)
+    user_service.validate_homedir_path = lambda *args: True
+
+    schema_name = f'user.{method}'
+    if method == 'create':
+        data = UserCreateArgs(user_create={
+            'username': 'testuser',
+            'full_name': 'testuser',
+            'group_create': True,
+            'home': '/mnt/home/dir',
             'smb': False,
-            'password_disabled': True
-        }
-    )
-    if old_data is not None:
-        old_data.update(
-            {
-                'username': '',
-                'id': 0
-            }
-        )
+            'password_disabled': True,
+            'ssh_password_enabled': True,
+        }).model_dump(by_alias=True, context={'expose_secrets': True})['user_create']
+        old_data = None
+    else:
+        data = {'ssh_password_enabled': True}
+        old_data = UserEntry(
+            id=0,
+            uid=1,
+            username='testuser',
+            unixhash='unixhash',
+            smbhash='smbhash',
+            home='/mnt/home/dir',
+            full_name='testuser',
+            builtin=True,
+            smb=False,
+            group={},
+            password_disabled=True,
+            id_type_both=False,
+            local=True,
+            immutable=False,
+            twofactor_auth_configured=twofactor_enabled,
+            sid=None,
+            last_password_change=None,
+            password_age=None,
+            password_history=None,
+            password_change_required=False,
+            roles=[],
+            api_keys=[],
+        ).model_dump(by_alias=True, context={'expose_secrets': True})
+
     verrors = ValidationErrors()
     if expected_error:
-        with pytest.raises(ValidationErrors) as ve:
-            await UserService(m).common_validation(verrors, data, 'test_schema', [], old_data,)
+        with pytest.raises(ValidationErrors, match=expected_error):
+            await user_service.common_validation(verrors, data, schema_name, [], old_data)
             verrors.check()
-        assert str(ve.value.errors[0]) == expected_error
     else:
-        await UserService(m).common_validation(verrors, data, 'test_schema', [], old_data, )
-        assert list(verrors) == []
+        await user_service.common_validation(verrors, data, schema_name, [], old_data)
+        verrors.check()
