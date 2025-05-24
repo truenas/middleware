@@ -1,20 +1,10 @@
 import boto3
 
 from middlewared.alert.base import ThreadedAlertService
-from middlewared.schema import Dict, Password, Str
 
 
 class AWSSNSAlertService(ThreadedAlertService):
     title = "AWS SNS"
-
-    schema = Dict(
-        "awssns_attributes",
-        Str("region", required=True, empty=False),
-        Str("topic_arn", required=True, empty=False),
-        Str("aws_access_key_id", required=True, empty=False),
-        Password("aws_secret_access_key", required=True, empty=False),
-        strict=True,
-    )
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
         client = boto3.client(

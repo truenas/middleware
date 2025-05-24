@@ -2,19 +2,11 @@ import json
 import requests
 
 from middlewared.alert.base import ProThreadedAlertService
-from middlewared.schema import Dict, Str
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class VictorOpsAlertService(ProThreadedAlertService):
     title = "VictorOps"
-
-    schema = Dict(
-        "victorops_attributes",
-        Str("api_key", required=True, empty=False),
-        Str("routing_key", required=True, empty=False),
-        strict=True,
-    )
 
     def create_alert(self, alert):
         r = requests.post(

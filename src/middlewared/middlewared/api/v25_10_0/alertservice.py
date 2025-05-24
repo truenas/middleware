@@ -1,4 +1,5 @@
 from middlewared.api.base import BaseModel, NonEmptyString
+from .alertservice_attributes import AlertServiceAttributes
 
 
 __all__ = [
@@ -10,10 +11,19 @@ __all__ = [
 
 class AlertServiceCreate(BaseModel):
     name: NonEmptyString
-    type: str
-    attributes: dict
+    attributes: AlertServiceAttributes
     level: str
     enabled: bool = True
+
+    @classmethod
+    def from_previous(cls, value):
+        value["attributes"]["type"] = value.pop("type")
+        return value
+
+    @classmethod
+    def to_previous(cls, value):
+        value["type"] = value["attributes"].pop("type")
+        return value
 
 
 class AlertServiceEntry(AlertServiceCreate):

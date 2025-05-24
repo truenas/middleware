@@ -2,30 +2,10 @@ import pysnmp.hlapi
 import pysnmp.smi
 
 from middlewared.alert.base import ThreadedAlertService
-from middlewared.schema import Bool, Dict, Int, Str
 
 
 class SNMPTrapAlertService(ThreadedAlertService):
     title = "SNMP Trap"
-
-    schema = Dict(
-        "snmp_attributes",
-        Str("host", required=True),
-        Int("port", required=True),
-        Bool("v3", required=True),
-        # v1/v2
-        Str("community", null=True, default=None, empty=False),
-        # v3
-        Str("v3_username", null=True, default=None, empty=False),
-        Str("v3_authkey", null=True, default=None),
-        Str("v3_privkey", null=True, default=None),
-        Str("v3_authprotocol", enum=[None, "MD5", "SHA", "128SHA224", "192SHA256", "256SHA384", "384SHA512"],
-            null=True, default=None),
-        Str("v3_privprotocol", enum=[None, "DES", "3DESEDE", "AESCFB128", "AESCFB192", "AESCFB256",
-                                     "AESBLUMENTHALCFB192", "AESBLUMENTHALCFB256"],
-            null=True, default=None),
-        strict=True,
-    )
 
     def __init__(self, middleware, attributes):
         super().__init__(middleware, attributes)

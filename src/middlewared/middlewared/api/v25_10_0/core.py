@@ -228,8 +228,9 @@ class CoreSetOptionsArgs(BaseModel):
 class CoreSetOptionsResult(BaseModel):
     result: CoreOptions
 
+    @classmethod
     def to_previous(cls, value):
-        return None
+        return {"result": None}
 
 
 class CoreSubscribeArgs(BaseModel):
