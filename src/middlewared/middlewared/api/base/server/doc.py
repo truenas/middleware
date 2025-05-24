@@ -4,7 +4,7 @@ import re
 from pydantic import BaseModel
 
 from middlewared.role import RoleManager
-from ..jsonschema import replace_refs
+from ..jsonschema import clean_schema
 from .api import API
 from .event import Event
 from .method import Method
@@ -93,10 +93,10 @@ class APIDumper:
 
     def _dump_method_schemas(self, method: Method):
         accepts_json_schema = method.methodobj.new_style_accepts.model_json_schema()
-        accepts_json_schema = replace_refs(accepts_json_schema)
+        accepts_json_schema = clean_schema(accepts_json_schema)
 
         returns_json_schema = method.methodobj.new_style_returns.model_json_schema(mode="serialization")
-        returns_json_schema = replace_refs(returns_json_schema)
+        returns_json_schema = clean_schema(returns_json_schema)
 
         return {
             "type": "object",
@@ -144,7 +144,7 @@ class APIDumper:
         properties = {}
         for name, model in event.event["models"].items():
             schema = model.model_json_schema()
-            schema = replace_refs(schema)
+            schema = clean_schema(schema)
             properties[name] = schema
 
         return {
