@@ -51,7 +51,7 @@ def construct_schema(
 
 
 
-def generate_pydantic_model(dict_attrs: list[dict], model_name: str, update: bool) -> Type[BaseModel]:
+def generate_pydantic_model(dict_attrs: list[dict], model_name: str) -> Type[BaseModel]:
     """
     Generate a Pydantic model from a list of dictionary attributes.
     """
@@ -60,7 +60,7 @@ def generate_pydantic_model(dict_attrs: list[dict], model_name: str, update: boo
     for attr in dict_attrs:
         var_name = attr['variable']
         schema_def = attr['schema']
-        field_type, field_info, nested_model = process_schema_field(schema_def, f'{model_name}_{var_name}', update)
+        field_type, field_info, nested_model = process_schema_field(schema_def, f'{model_name}_{var_name}')
         if nested_model:
             nested_models[var_name] = nested_model
         fields[var_name] = (field_type, field_info)
@@ -78,7 +78,7 @@ def generate_pydantic_model(dict_attrs: list[dict], model_name: str, update: boo
     return model
 
 
-def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tuple[
+def process_schema_field(schema_def: dict, model_name: str) -> tuple[
     Type, Field, Type[BaseModel] | None
 ]:
     """
@@ -96,7 +96,7 @@ def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tup
         field_type = bool
     elif schema_type == 'dict':
         if dict_attrs := schema_def.get('attrs', []):
-            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name, update)
+            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name)
         else:
             # We have a generic dict type without specific attributes
             field_type = dict
@@ -105,7 +105,7 @@ def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tup
         if list_items := schema_def.get('items', []):
             for item in list_items:
                 item_type, item_info, _ = process_schema_field(
-                    item['schema'], f'{model_name}_{item["variable"]}', update,
+                    item['schema'], f'{model_name}_{item["variable"]}',
                 )
                 annotated_items.append(Annotated[item_type, item_info])
 
@@ -118,8 +118,8 @@ def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tup
 
     assert field_type is not None
 
-    if update or schema_def.get('required', False):
-        # If this is a patch case of the attr is not required, we can use NotRequired
+    if not schema_def.get('required', False):
+        # If the attr is not required, we use NotRequired
         field_type |= NotRequired
 
     if schema_def.get('null', False):
