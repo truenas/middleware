@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Annotated, Type, Union
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, Secret
 
@@ -97,6 +97,19 @@ def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tup
         else:
             # We have a generic dict type without specific attributes
             field_type = dict
+    elif schema_type == 'list':
+        annotated_items = []
+        if list_items := schema_def.get('items', []):
+            for item in list_items:
+                item_type, item_info, _ = process_schema_field(
+                    item['schema'], f'{model_name}_{item["variable"]}', update,
+                )
+                annotated_items.append(Annotated[item_type, item_info])
+
+            field_type = list[Union[*annotated_items]]
+        else:
+            # We have a generic list type without specific items
+            field_type = list
     else:
         raise ValueError(f'Unsupported schema type: {schema_type!r}')
 
