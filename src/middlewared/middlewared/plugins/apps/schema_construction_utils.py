@@ -91,6 +91,12 @@ def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tup
         # We can probably have more complex logic here for string types
     elif schema_type == 'boolean':
         field_type = bool
+    elif schema_type == 'dict':
+        if dict_attrs := schema_def.get('attrs', []):
+            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name, update)
+        else:
+            # We have a generic dict type without specific attributes
+            field_type = dict
     else:
         raise ValueError(f'Unsupported schema type: {schema_type!r}')
 
