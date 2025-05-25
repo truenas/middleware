@@ -1,6 +1,7 @@
+import os
 from typing import Annotated, Literal
 
-from pydantic import AnyUrl, ConfigDict, IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer
+from pydantic import AfterValidator, AnyUrl, ConfigDict, IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer
 
 from middlewared.api.base import BaseModel as PydanticBaseModel
 
@@ -15,6 +16,21 @@ class BaseModel(PydanticBaseModel):
         strict=False,
     )
 
+
+def _validate_absolute_path(value: str) -> str:
+    if value == '':
+        return value
+
+    if not os.path.isabs(value):
+        raise ValueError('Path must be absolute')
+
+    return os.path.normpath(value.rstrip('/'))
+
+
+AbsolutePath = Annotated[
+    Literal[''] | str,
+    AfterValidator(_validate_absolute_path),
+]
 IPvAnyAddress = Annotated[
     Literal[''] | PydanticIPvAnyAddress,
     PlainSerializer(lambda x: str(x), return_type=str),
