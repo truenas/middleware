@@ -5,7 +5,7 @@ from middlewared.api.base import LongString, NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 
-from .pydantic_utils import BaseModel, IPvAnyAddress, URI
+from .pydantic_utils import AbsolutePath, BaseModel, IPvAnyAddress, URI
 
 
 NOT_PROVIDED = object()
@@ -99,6 +99,8 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
         field_type = IPvAnyAddress
     elif schema_type == 'uri':
         field_type = URI
+    elif schema_type == 'path':
+        field_type = AbsolutePath
     elif schema_type == 'dict':
         if dict_attrs := schema_def.get('attrs', []):
             field_type = nested_model = generate_pydantic_model(dict_attrs, model_name)
