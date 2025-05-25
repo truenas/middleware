@@ -1,7 +1,10 @@
 import os
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, AnyUrl, ConfigDict, IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer
+from pydantic import (
+    AfterValidator, AnyUrl, ConfigDict, DirectoryPath, FilePath,
+    IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer,
+)
 
 from middlewared.api.base import BaseModel as PydanticBaseModel
 
@@ -30,6 +33,10 @@ def _validate_absolute_path(value: str) -> str:
 AbsolutePath = Annotated[
     Literal[''] | str,
     AfterValidator(_validate_absolute_path),
+]
+HostPath = Annotated[
+    Literal[''] | FilePath | DirectoryPath,
+    PlainSerializer(lambda x: str(x), return_type=str)
 ]
 IPvAnyAddress = Annotated[
     Literal[''] | PydanticIPvAnyAddress,
