@@ -3,6 +3,8 @@ from typing import Annotated, Type, Union
 from pydantic import ConfigDict, create_model, Field, Secret
 
 from middlewared.api.base import BaseModel as PydanticBaseModel, LongString, NotRequired
+from middlewared.api.base.handler.accept import validate_model
+from middlewared.service_exception import ValidationErrors
 
 
 NOT_PROVIDED = object()
@@ -48,7 +50,19 @@ def construct_schema(
 ) -> dict:
     schema_name = f'app_{"update" if update else "create"}'
     model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, update)
+    verrors = ValidationErrors()
+    try:
+        # Validate the new values against the generated model
+        new_values = validate_model(model, new_values, exclude_unset=True, expose_secrets=False)
+    except ValidationErrors as e:
+        verrors.add_child('values', e)
 
+    return {
+        'verrors': verrors,
+        'new_values': new_values,
+        'model': model,
+        'schema_name': schema_name,
+    }
 
 
 def generate_pydantic_model(dict_attrs: list[dict], model_name: str) -> Type[BaseModel]:
