@@ -1,22 +1,21 @@
 from typing import Annotated, Type, Union
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, Secret
+from pydantic import ConfigDict, create_model, Field, Secret
 
-from middlewared.api.base import LongString
-from middlewared.api.base.model import _BaseModelMetaclass, NotRequired
+from middlewared.api.base import BaseModel as PydanticBaseModel, LongString, NotRequired
 
 
 NOT_PROVIDED = object()
 
 
-class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
+class BaseModel(PydanticBaseModel):
     """
-    Base model that allows extra fields by default.
+    Base model that allows extra fields by default and have strict=False because we want maximum compatibility
+    with existing implementation we have where the schema was loose enough to be catered to.
     """
     model_config = ConfigDict(
         extra='allow',
-        str_max_length=1024,
-        use_attribute_docstrings=True,
+        strict=False,
     )
 
 
