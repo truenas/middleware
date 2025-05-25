@@ -49,7 +49,7 @@ def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: dict | object = NOT_PROVIDED
 ) -> dict:
     schema_name = f'app_{"update" if update else "create"}'
-    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, update)
+    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name)
     verrors = ValidationErrors()
     try:
         # Validate the new values against the generated model
