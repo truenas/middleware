@@ -1,7 +1,8 @@
 from typing import Annotated, Literal, Type, Union
 
-from pydantic import ConfigDict, create_model, Field, IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer, Secret
-
+from pydantic import (
+    AnyUrl, ConfigDict, create_model, Field, IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer, Secret,
+)
 from middlewared.api.base import BaseModel as PydanticBaseModel, LongString, NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
@@ -9,9 +10,13 @@ from middlewared.service_exception import ValidationErrors
 
 IPvAnyAddress = Annotated[
     Literal[''] | PydanticIPvAnyAddress,
-    PlainSerializer(lambda x: str(x), return_type=str)
+    PlainSerializer(lambda x: str(x), return_type=str),
 ]
 NOT_PROVIDED = object()
+URI = Annotated[
+    Literal[''] | AnyUrl,
+    PlainSerializer(lambda x: str(x), return_type=str),
+]
 
 
 class BaseModel(PydanticBaseModel):
@@ -30,11 +35,9 @@ class BaseModel(PydanticBaseModel):
 # A field which once set is immutable and cannot be changed.
 # 2) editable toggle fields - we have usage in lyrion-music-server app
 # A field which has a default value and that is enforced and cannot be set by the user.
-# 3) uri type
 # 4) hostpath type
 # 5) path type
 # 6) empty attribute should be supported in fields
-# 7) private attr should be supported
 # 8) subquestions need to be supported
 # 9) show_subquestions_if - this is used in the apps schema to show subquestions based on a field value
 # 10) show_if - this is used in the apps schema to show a field based on a field value
@@ -113,6 +116,8 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
         field_type = bool
     elif schema_type == 'ipaddr':
         field_type = IPvAnyAddress
+    elif schema_type == 'uri':
+        field_type = URI
     elif schema_type == 'dict':
         if dict_attrs := schema_def.get('attrs', []):
             field_type = nested_model = generate_pydantic_model(dict_attrs, model_name)
