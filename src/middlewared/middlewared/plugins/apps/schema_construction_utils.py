@@ -31,6 +31,9 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
 # 6) path type
 # 7) empty attribute should be supported in fields
 # 8) private attr should be supported
+# 9) subquestions need to be supported
+# 10) show_subquestions_if - this is used in the apps schema to show subquestions based on a field value
+# 11) show_if - this is used in the apps schema to show a field based on a field value
 
 
 # Functionality to remove (these are not being used and we should remove them to reduce complexity)
