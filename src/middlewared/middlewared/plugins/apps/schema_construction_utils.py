@@ -129,6 +129,17 @@ def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tup
         # If the field is private, we can use Secret type
         field_type = Secret[field_type]
 
+    if schema_ref := schema_def.get('$ref', []):
+        # We can consume it under metadata later when we normalize/validate values
+        # https://peps.python.org/pep-0593/?utm_source=chatgpt.com#rationale
+        # Usage:
+        # class A(BaseModel):
+        #   f1 = Annotated[int, [{'my_dict': 1}]]
+        # o = A(f1=1)
+        # f = o.model_fields['f1']
+        # f.metadata will show -> [[{'my_dict': 1}]]
+        field_type = Annotated[field_type, schema_ref]
+
     return field_type, field_info, nested_model
 
 
