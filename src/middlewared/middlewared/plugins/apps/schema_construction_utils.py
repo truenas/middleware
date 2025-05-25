@@ -44,11 +44,12 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
 # 5)
 
 
-def construct_schema(variable_details: dict, update: bool, existing: dict | object = NOT_PROVIDED):
-    schema_def = variable_details['schema']
-    cur_val = existing.get(variable_details['variable'], NOT_PROVIDED) if isinstance(existing, dict) else NOT_PROVIDED
-    if schema_def['type'] not in ('dict', 'list'):
-        pass
+def construct_schema(
+    item_version_details: dict, new_values: dict, update: bool, old_values: dict | object = NOT_PROVIDED
+) -> dict:
+    schema_name = f'app_{"update" if update else "create"}'
+    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, update)
+
 
 
 def generate_pydantic_model(dict_attrs: list[dict], model_name: str, update: bool) -> Type[BaseModel]:
