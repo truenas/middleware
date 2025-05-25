@@ -5,7 +5,7 @@ from middlewared.api.base import LongString, NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 
-from .pydantic_utils import AbsolutePath, BaseModel, IPvAnyAddress, URI
+from .pydantic_utils import AbsolutePath, BaseModel, HostPath, IPvAnyAddress, URI
 
 
 NOT_PROVIDED = object()
@@ -16,12 +16,10 @@ NOT_PROVIDED = object()
 # A field which once set is immutable and cannot be changed.
 # 2) editable toggle fields - we have usage in lyrion-music-server app
 # A field which has a default value and that is enforced and cannot be set by the user.
-# 4) hostpath type
-# 5) path type
-# 6) empty attribute should be supported in fields
-# 8) subquestions need to be supported
-# 9) show_subquestions_if - this is used in the apps schema to show subquestions based on a field value
-# 10) show_if - this is used in the apps schema to show a field based on a field value
+# 3) empty attribute should be supported in fields
+# 4) subquestions need to be supported
+# 5) show_subquestions_if - this is used in the apps schema to show subquestions based on a field value
+# 6) show_if - this is used in the apps schema to show a field based on a field value
 
 
 # Functionality to remove (these are not being used and we should remove them to reduce complexity)
@@ -99,6 +97,8 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
         field_type = IPvAnyAddress
     elif schema_type == 'uri':
         field_type = URI
+    elif schema_type == 'hostpath':
+        field_type = HostPath
     elif schema_type == 'path':
         field_type = AbsolutePath
     elif schema_type == 'dict':
