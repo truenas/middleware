@@ -1,33 +1,14 @@
-from typing import Annotated, Literal, Type, Union
+from typing import Annotated, Type, Union
 
-from pydantic import (
-    AnyUrl, ConfigDict, create_model, Field, IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer, Secret,
-)
-from middlewared.api.base import BaseModel as PydanticBaseModel, LongString, NotRequired
+from pydantic import create_model, Field, Secret
+from middlewared.api.base import LongString, NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 
+from .pydantic_utils import BaseModel, IPvAnyAddress, URI
 
-IPvAnyAddress = Annotated[
-    Literal[''] | PydanticIPvAnyAddress,
-    PlainSerializer(lambda x: str(x), return_type=str),
-]
+
 NOT_PROVIDED = object()
-URI = Annotated[
-    Literal[''] | AnyUrl,
-    PlainSerializer(lambda x: str(x), return_type=str),
-]
-
-
-class BaseModel(PydanticBaseModel):
-    """
-    Base model that allows extra fields by default and have strict=False because we want maximum compatibility
-    with existing implementation we have where the schema was loose enough to be catered to.
-    """
-    model_config = ConfigDict(
-        extra='allow',
-        strict=False,
-    )
 
 
 # Functionality we are concerned about which we would like to port over
