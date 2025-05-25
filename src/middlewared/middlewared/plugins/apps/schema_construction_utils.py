@@ -1,0 +1,141 @@
+from typing import Type
+
+from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, Secret
+
+from middlewared.api.base import LongString
+from middlewared.api.base.model import _BaseModelMetaclass, NotRequired
+
+
+NOT_PROVIDED = object()
+
+
+class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
+    """
+    Base model that allows extra fields by default.
+    """
+    model_config = ConfigDict(
+        extra='allow',
+        str_max_length=1024,
+        use_attribute_docstrings=True,
+    )
+
+
+# Functionality we are concerned about which we would like to port over
+# 1) immutable fields - lots of usages
+# A field which once set is immutable and cannot be changed.
+# 2) editable toggle fields - we have usage in lyrion-music-server app
+# A field which has a default value and that is enforced and cannot be set by the user.
+# 3) ipaddr type
+# 4) uri type
+# 5) hostpath type
+# 6) path type
+# 7) empty attribute should be supported in fields
+# 8) private attr should be supported
+
+
+# Functionality to remove (these are not being used and we should remove them to reduce complexity)
+# 1) Cron type
+# 2) hostpathdirectory type
+# 3) hostpathfile type
+# 4) additional_attrs field attr is not being used
+# 5)
+
+
+def construct_schema(variable_details: dict, update: bool, existing: dict | object = NOT_PROVIDED):
+    schema_def = variable_details['schema']
+    cur_val = existing.get(variable_details['variable'], NOT_PROVIDED) if isinstance(existing, dict) else NOT_PROVIDED
+    if schema_def['type'] not in ('dict', 'list'):
+        pass
+
+
+def generate_pydantic_model(dict_attrs: list[dict], model_name: str, update: bool) -> Type[BaseModel]:
+    """
+    Generate a Pydantic model from a list of dictionary attributes.
+    """
+    fields = {}
+    nested_models = {}
+    for attr in dict_attrs:
+        var_name = attr['variable']
+        schema_def = attr['schema']
+        field_type, field_info, nested_model = process_schema_field(schema_def, f'{model_name}_{var_name}', update)
+        if nested_model:
+            nested_models[var_name] = nested_model
+        fields[var_name] = (field_type, field_info)
+
+    # Create the model dynamically
+    model = create_model(model_name, __base__=BaseModel, **fields)
+
+    # Store nested models and schema info as class attributes for reference
+    for nested_name, nested_model in nested_models.items():
+        setattr(model, f'__{nested_name}_model', nested_model)
+
+    # Store the original schema for validation purposes
+    setattr(model, '__schema_attrs__', dict_attrs)
+
+    return model
+
+
+def process_schema_field(schema_def: dict, model_name: str, update: bool) -> tuple[
+    Type, Field, Type[BaseModel] | None
+]:
+    """
+    Process a schema field type / field information and any nested model if applicable which was generated.
+    """
+    schema_type = schema_def['type']
+    field_type = nested_model = None
+    field_info = create_field_info_from_schema(schema_def)
+    if schema_type == 'int':
+        field_type = int
+    elif schema_type in ('string', 'text'):
+        field_type = str if schema_type == 'string' else LongString
+        # We can probably have more complex logic here for string types
+    elif schema_type == 'boolean':
+        field_type = bool
+    else:
+        raise ValueError(f'Unsupported schema type: {schema_type!r}')
+
+    assert field_type is not None
+
+    if update or schema_def.get('required', False):
+        # If this is a patch case of the attr is not required, we can use NotRequired
+        field_type |= NotRequired
+
+    if schema_def.get('null', False):
+        field_type |= None
+
+    if schema_def.get('private', False):
+        # If the field is private, we can use Secret type
+        field_type = Secret[field_type]
+
+    return field_type, field_info, nested_model
+
+
+def create_field_info_from_schema(schema_def: dict) -> Field:
+    """
+    Create Pydantic Field info from schema definition.
+    """
+    field_kwargs = {}
+
+    if 'description' in schema_def:
+        field_kwargs['description'] = schema_def['description']
+
+    if 'title' in schema_def:
+        field_kwargs['title'] = schema_def['title']
+
+    if 'default' in schema_def:
+        field_kwargs['default'] = schema_def['default']
+    elif not schema_def.get('required', False):
+        # This case shouldn't happen since we filter out non-required fields without defaults
+        field_kwargs['default'] = None
+
+    # Add validation constraints
+    if 'min' in schema_def:
+        field_kwargs['ge'] = schema_def['min']
+    if 'max' in schema_def:
+        field_kwargs['le'] = schema_def['max']
+    if 'min_length' in schema_def:
+        field_kwargs['min_length'] = schema_def['min_length']
+    if 'max_length' in schema_def:
+        field_kwargs['max_length'] = schema_def['max_length']
+
+    return Field(**field_kwargs)
