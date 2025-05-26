@@ -71,7 +71,7 @@ class VirtDeviceService(Service):
 
         out = {}
         for incus_vol in await self.middleware.call('virt.volume.query', incus_vol_filter):
-            out[incus_vol['name']] = incus_vol['name']
+            out[incus_vol['id']] = incus_vol['id']
 
         for zvol in await self.middleware.call(
             'zfs.dataset.unlocked_zvols_fast', [

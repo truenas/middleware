@@ -80,7 +80,7 @@ def test_add_volume_second_pool(virt_two_pools):
     VOLNAME = 'test-vol-pool2'
 
     with volume(VOLNAME, 1024, pool['name']):
-        vol = call('virt.volume.get_instance', VOLNAME)
+        vol = call('virt.volume.get_instance', f'{pool["name"]}_{VOLNAME}')
         assert vol['storage_pool'] == pool['name']
 
 
@@ -98,10 +98,10 @@ def test_virt_device_second_pool(virt_two_pools):
 
         call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
 
-        with volume('vmtestzvol', 1024, pool['name']):
-            assert 'vmtestzvol' in call('virt.device.disk_choices')
+        with volume('vmtestzvol', 1024, pool['name']) as v:
+            assert v['id'] in call('virt.device.disk_choices')
 
-            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
+            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': v['id']}):
                 devices = call('virt.instance.device_list', instance_name)
                 root_pool = None
                 test_disk_pool = None
@@ -110,7 +110,7 @@ def test_virt_device_second_pool(virt_two_pools):
                     if device['name'] == 'root':
                         root_pool = device['storage_pool']
 
-                    elif device.get('source') == 'vmtestzvol':
+                    elif device.get('source') == v['id']:
                         test_disk_pool = device['storage_pool']
 
                 assert root_pool == pool['name']
@@ -135,10 +135,10 @@ def test_virt_span_two_pools(virt_two_pools):
         call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
 
         # create volume on other pool and attach to VM as disk
-        with volume('vmtestzvol', 1024, config['pool']):
-            assert 'vmtestzvol' in call('virt.device.disk_choices')
+        with volume('vmtestzvol', 1024, config['pool']) as v:
+            assert v['id'] in call('virt.device.disk_choices')
 
-            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
+            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': v['id']}):
                 devices = call('virt.instance.device_list', instance_name)
                 root_pool = None
                 test_disk_pool = None
@@ -147,7 +147,7 @@ def test_virt_span_two_pools(virt_two_pools):
                     if device['name'] == 'root':
                         root_pool = device['storage_pool']
 
-                    elif device.get('source') == 'vmtestzvol':
+                    elif device.get('source') == v['id']:
                         test_disk_pool = device['storage_pool']
 
                 assert root_pool == pool['name']
@@ -156,7 +156,7 @@ def test_virt_span_two_pools(virt_two_pools):
 
 def check_volumes(volumes):
     for spec in volumes:
-        vol = call('virt.volume.get_instance', spec['name'])
+        vol = call('virt.volume.get_instance', f'{spec["pool"]}_{spec["name"]}')
         assert vol['storage_pool'] == spec['pool'], str(vol)
         assert vol['type'] == 'custom', str(vol)
         assert vol['content_type'] == 'BLOCK', str(vol)
@@ -181,12 +181,12 @@ def test_virt_import_zvol_two_pools_rename(virt_two_pools):
                 ])
             finally:
                 try:
-                    call('virt.volume.delete', 'vol1')
+                    call('virt.volume.delete', f'{config["pool"]}_vol1')
                 except InstanceNotFound:
                     pass
 
                 try:
-                    call('virt.volume.delete', 'vol2')
+                    call('virt.volume.delete', f'{pool["name"]}_vol2')
                 except InstanceNotFound:
                     pass
 
@@ -214,11 +214,11 @@ def test_virt_import_zvol_two_pools_clone(virt_two_pools):
                 ])
             finally:
                 try:
-                    call('virt.volume.delete', 'vol1')
+                    call('virt.volume.delete', f'{config["pool"]}_vol1')
                 except InstanceNotFound:
                     pass
 
                 try:
-                    call('virt.volume.delete', 'vol2')
+                    call('virt.volume.delete', f'{pool["name"]}_vol2')
                 except InstanceNotFound:
                     pass

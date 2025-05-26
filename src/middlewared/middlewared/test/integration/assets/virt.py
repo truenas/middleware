@@ -28,7 +28,7 @@ def import_iso_as_volume(volume_name: str, pool_name: str, size: int):
         yield call('virt.volume.import_iso', {'name': volume_name, 'iso_location': iso_path}, job=True)
     finally:
         ssh(f'rm {iso_path}')
-        call('virt.volume.delete', volume_name)
+        call('virt.volume.delete', f'{pool_name}_{volume_name}')
 
 
 @contextlib.contextmanager
@@ -42,7 +42,7 @@ def volume(volume_name: str, size: int, storage_pool: str | None = None):
     try:
         yield vol
     finally:
-        call('virt.volume.delete', volume_name)
+        call('virt.volume.delete', vol['id'])
 
 
 @contextlib.contextmanager
