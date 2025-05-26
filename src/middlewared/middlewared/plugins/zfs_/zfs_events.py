@@ -8,6 +8,7 @@ from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
 from middlewared.utils.threading import start_daemon_thread
+from middlewared.utils.zfs import query_imported_fast_impl
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 
@@ -206,6 +207,20 @@ async def zfs_events(middleware, data):
             await middleware.call_hook('dataset.post_delete', data['history_dsname'])
 
 
+async def remove_outdated_alerts_on_boot(middleware, data):
+    if data is None:  # Called by `pool.import_on_boot`
+        pools = {pool['name'] for pool in (await middleware.run_in_thread(query_imported_fast_impl)).values()}
+
+        for alert in await middleware.call('alert.list'):
+            if alert['klass'] == 'PoolUpgraded':
+                if alert['args'] not in pools:
+                    await middleware.call('alert.oneshot_delete', 'PoolUpgraded', alert['args'])
+
+            if alert['klass'] == 'PoolUSBDisks':
+                if alert['args']['pool'] not in pools:
+                    await middleware.call('alert.oneshot_delete', 'PoolUSBDisks', alert['args']['pool'])
+
+
 async def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.', roles=['POOL_SCRUB_READ'])
     middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
@@ -217,3 +232,5 @@ async def setup(middleware):
     for i in POOL_ALERTS:
         await middleware.call('alert.oneshot_delete', i, pool_name)
         await middleware.call('alert.oneshot_create', i, args)
+
+    middleware.register_hook('pool.post_import', remove_outdated_alerts_on_boot)
