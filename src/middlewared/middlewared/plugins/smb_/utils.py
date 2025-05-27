@@ -1,4 +1,4 @@
-from .constants import SMBSharePreset
+from middlewared.utils.smb import SMBSharePurpose
 from secrets import randbits
 
 
@@ -59,29 +59,21 @@ def auxsmbconf_dict(aux, direction="TO"):
             raise ValueError(f'{direction}: unexpected conversion direction')
 
 
-def apply_presets(data_in):
-    """
-    Apply settings from presets. Only include auxiliary parameters
-    from preset if user-defined aux parameters already exist. In this
-    case user-defined takes precedence.
-    """
-    data = data_in.copy()
-    params = (SMBSharePreset[data["purpose"]].value)["params"].copy()
-    if data.get('home'):
-        params.pop('path_suffix', None)
-
-    aux = params.pop("auxsmbconf")
-    data.update(params)
-    if data["auxsmbconf"]:
-        preset_aux = auxsmbconf_dict(aux, direction="TO")
-        data_aux = auxsmbconf_dict(data["auxsmbconf"], direction="TO")
-        preset_aux.update(data_aux)
-        data["auxsmbconf"] = auxsmbconf_dict(preset_aux, direction="FROM")
-
-    return data
+def is_time_machine_share(data: dict) -> bool:
+    match data['purpose']:
+        case SMBSharePurpose.TIMEMACHINE_SHARE:
+            return True
+        case SMBSharePurpose.LEGACY_SHARE | SMBSharePurpose.NO_PRESET:
+            return data['options']['timemachine']
+        case _:
+            return False
 
 
-def is_time_machine_share(share):
-    return share.get('timemachine', False) or share.get('purpose') in [
-        SMBSharePreset.TIMEMACHINE.name, SMBSharePreset.ENHANCED_TIMEMACHINE.name
-    ]
+def get_share_name(data: dict) -> str:
+    if data['purpose'] not in SMBSharePurpose.LEGACY_SHARE | SMBSharePurpose.NO_PRESET:
+        return data['name']
+
+    if data['options'].get('home'):
+        return 'homes'
+
+    return data['name']

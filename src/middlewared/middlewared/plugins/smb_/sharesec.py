@@ -82,7 +82,7 @@ class ShareSec(Service):
 
         """
         if share_name.upper() == 'HOMES':
-            share_filter = [['home', '=', True]]
+            share_filter = [['options.home', '=', True]]
         else:
             share_filter = [['name', 'C=', share_name]]
 
@@ -124,7 +124,7 @@ class ShareSec(Service):
         `ae_type` can be ALLOWED or DENIED.
         """
         if data['share_name'].upper() == 'HOMES':
-            share_filter = [['home', '=', True]]
+            share_filter = [['options.home', '=', True]]
         else:
             share_filter = [['name', 'C=', data['share_name']]]
 
