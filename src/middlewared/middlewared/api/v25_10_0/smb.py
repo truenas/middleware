@@ -232,7 +232,7 @@ class SmbAuditConfig(BaseModel):
     in the SMB service configuration."""
     watch_list: list[NonEmptyString] = Field(default=[])
     """ Only audit the listed group acounts. If the list is empty, all groups will be audited. """
-    ignore_list: list[NonEmptyString]
+    ignore_list: list[NonEmptyString= Field(default=[])
     """ List of groups that will not be audited. """
 
 
