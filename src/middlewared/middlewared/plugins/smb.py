@@ -657,10 +657,10 @@ class SharingSMBModel(sa.Model):
     cifs_share_acl = sa.Column(sa.Text())
     cifs_afp = sa.Column(sa.Boolean())
     cifs_audit = sa.Column(sa.JSON(dict), default=SMB_AUDIT_DEFAULTS)
-    cifs_auto_quota = sa.Column(sa.Int())
+    cifs_auto_quota = sa.Column(sa.Integer())
     cifs_auto_snapshot = sa.Column(sa.Boolean())
     cifs_auto_dataset_creation = sa.Column(sa.Boolean())
-    cifs_worm_grace_period = sa.Column(sa.Int())
+    cifs_worm_grace_period = sa.Column(sa.Integer())
 
 
 class SharingSMBService(SharingService):
