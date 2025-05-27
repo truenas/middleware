@@ -666,7 +666,6 @@ class SharingSMBModel(sa.Model):
 class SharingSMBService(SharingService):
 
     share_task_type = 'SMB'
-    path_field = 'path_local'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
 
     class Config:
@@ -698,7 +697,6 @@ class SharingSMBService(SharingService):
                     'to users with full administrative privileges.'
                 )
 
-        await self.add_path_local(data)
         await self.validate(data, 'sharingsmb_create', verrors)
         await self.legacy_afp_check(data, 'sharingsmb_create', verrors)
 
@@ -794,7 +792,6 @@ class SharingSMBService(SharingService):
         oldname = get_share_name(old)
         newname = get_share_name(new)
 
-        await self.add_path_local(new)
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
@@ -1110,14 +1107,6 @@ class SharingSMBService(SharingService):
         current_acltype = get_acl_type(this_mnt['super_opts'])
         for child in this_mnt['children']:
             validate_child(child)
-
-    @private
-    async def get_path_field(self, data):
-        if self.path_field in data:
-            return data[self.path_field]
-
-        resolved = await self.add_path_local({'path': data['path']})
-        return resolved[self.path_field]
 
     @private
     async def validate_external_path(self, verrors, name, path):
