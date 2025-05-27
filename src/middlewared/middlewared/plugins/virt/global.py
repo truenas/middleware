@@ -1,7 +1,9 @@
 import asyncio
 import errno
+import re
 import shutil
 import subprocess
+import uuid
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
@@ -28,10 +30,10 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-INCUS_BRIDGE = 'incusbr0'
-
 BRIDGE_AUTO = '[AUTO]'
+INCUS_BRIDGE = 'incusbr0'
 POOL_DISABLED = '[DISABLED]'
+RE_FAILED_INSTANCE = re.compile(r'Failed creating instance "(.*)" record')
 
 
 class NoPoolConfigured(Exception):
@@ -409,7 +411,8 @@ class VirtGlobalService(ConfigService):
         return out
 
     @private
-    async def recover(self, to_import):
+    @job(lock='virt_global_recover')
+    async def recover(self, job, to_import):
         """
         Call into incus's private API to initiate a recovery action.
         This is roughly equivalent to running the command "incus admin recover", and is performed
@@ -437,13 +440,124 @@ class VirtGlobalService(ConfigService):
 
         elif result.get('status') == 'Success':
             if result['metadata']['DependencyErrors']:
-                raise CallError('Missing depedencies: ' + ', '.join(result['metadata']['DependencyErrors']))
+                raise CallError('Missing dependencies: ' + ', '.join(result['metadata']['DependencyErrors']))
 
-            result = await incus_call('internal/recover/import', 'post', {'json': payload})
-            if result.get('status') != 'Success':
-                raise CallError(result.get('error'))
+            await self.recover_import_impl(payload, result)
         else:
             raise CallError('Internal storage validation failed')
+
+    @private
+    async def recover_import_impl(self, payload, result):
+        identified_instances = {
+            i['name']: i for i in (result['metadata'].get('UnknownVolumes', []) or [])
+            if all(k in i for k in ('name', 'pool', 'type'))
+        }
+        attempted_recovered_instances = set()
+        moved_instances = set()
+        misconfigured_parent_datasets = set()
+        while True:
+            result = await incus_call('internal/recover/import', 'post', {'json': payload})
+            if result.get('status') == 'Success':
+                # If we succeeded, great - let's break the loop
+                break
+
+            # How this will work is the following:
+            # Basically we want to identify those instances which have attachments which no longer exists
+            # Incus refuses to start in this case so we want to attempt to recover and then move such
+            # instances in their respective storage pools under a new dataset
+            # i.e tank/.ix-virt/misconfigured_containers
+            # This way incus won't attempt to recover them as it will fail hard when it tries
+            #
+            # There is another problem here that for example you have 2 or more such instances which are
+            # problematic, incus wont' give you their names at once - rather it will raise an error
+            # as soon as it goes over the first one so we need to do this in a loop
+            #
+            # To conclude what will happen here is that
+            # failed_instance -> attempt recovery -> try recover/import again -> still fails then move
+            instance_name = RE_FAILED_INSTANCE.findall(result.get('error', ''))
+            if not instance_name:
+                # This is the case where in the error we were not able to identify any instance
+                raise CallError(result.get('error'))
+
+            instance_name = instance_name[0]
+            # If we have already attempted to move such instances and we see an error again about them
+            # by incus, let's fail hard as this will be a vicious loop otherwise and something else
+            # is wrong. This should not happen as incus won't even recognize such instances at all now
+            # because they don't exist where it looks for them, but better safe then sorry
+            # However if earlier when the validation call ran, it identified instances which it was to
+            # recover, if we don't find the instance there - we still fail hard
+            if instance_name in moved_instances or instance_name not in identified_instances:
+                # We do not want a vicious infinite loop here
+                raise CallError(f'Failed to recover {instance_name!r} instance: {result["error"]}')
+
+            instance = identified_instances[instance_name]
+            if instance_name not in attempted_recovered_instances:
+                # We will attempt recovery here before trying to move it
+                self.logger.debug('Attempting recovery of %r instance', instance_name)
+                try:
+                    await self.middleware.call('virt.recover.instance', instance)
+                except CallError as e:
+                    self.logger.error(e, exc_info=True)
+                finally:
+                    attempted_recovered_instances.add(instance_name)
+
+                continue
+
+            moved_instances.add(instance_name)
+            # instance type ds_name
+            instance_type_ds = 'containers' if instance['type'] == 'container' else 'virtual-machines'
+            # This is the incus instance dataset which we want to move
+            instance_ds = f'{instance["pool"]}/.ix-virt/{instance_type_ds}/{instance_name}'
+            # This is the parent dataset under which we are going to move this misconfigured instance
+            new_ds_parent = f'{instance["pool"]}/.ix-virt/misconfigured_{instance_type_ds}'
+            # This is the new dataset name/path of the misconfigured incus instance dataset
+            new_ds = f'{new_ds_parent}/{instance_name}'
+
+            # Before we move forward now, we would like to make sure new_ds_parent actually exists
+            # Also to avoid repeated calls for example for the case where a lot of instances are in
+            # a singe storage pool, we keep a local cache and check if it already exists or if it
+            # needs to be created
+            if new_ds_parent not in misconfigured_parent_datasets and not await self.middleware.call(
+                'zfs.dataset.query', [['id', '=', new_ds_parent]], {'extra': {
+                    'retrieve_properties': False,
+                    'retrieve_children': False,
+                }}
+            ):
+                await self.middleware.call(
+                    'zfs.dataset.create', {'name': new_ds_parent, 'type': 'FILESYSTEM'}
+                )
+
+            # Caching this now to avoid querying zfs again if this parent ds exists or not
+            misconfigured_parent_datasets.add(new_ds_parent)
+
+            # Okay now we might have to rename new_ds because an instance with the same name might
+            # exist there
+            for i in range(1, 5):
+                if await self.middleware.call(
+                    'zfs.dataset.query', [['id', '=', new_ds]], {'extra': {
+                        'retrieve_properties': False,
+                        'retrieve_children': False,
+                    }}
+                ):
+                    new_ds = f'{new_ds}_{i}'
+                else:
+                    # We found a name which hasn't been used
+                    break
+            else:
+                # We will get here if we were not able to find a dataset even after above iterations
+                # Let's just add a uuid suffix then
+                new_ds = f'{new_ds}_{str(uuid.uuid4()).split("-")[-1]}'
+
+            self.logger.error(
+                'Could not recover %r instance because of %r, renaming %r to %r',
+                instance_name, result['error'], instance_ds, new_ds
+            )
+            await self.middleware.call('zfs.dataset.rename', instance_ds, {'new_name': new_ds})
+            # For VMs we want move the .block dataset as well
+            if instance['type'] != 'container':
+                await self.middleware.call(
+                    'zfs.dataset.rename', f'{instance_ds}.block', {'new_name': f'{new_ds}.block'}
+                )
 
     @private
     async def remove_storage_pool(self, pool_name):
@@ -602,12 +716,10 @@ class VirtGlobalService(ConfigService):
             raise CallError(result.get('error'))
 
         if to_import:
-            await self.recover(to_import)
-            await (
-                await self.middleware.call(
-                    'service.control', 'RESTART', 'incus', {'ha_propagate': False}
-                )
-            ).wait(raise_error=True)
+            await (await self.middleware.call('virt.global.recover', to_import)).wait(raise_error=True)
+            await (await self.middleware.call(
+                'service.control', 'RESTART', 'incus', {'ha_propagate': False}
+            )).wait(raise_error=True)
 
     @private
     @job(lock='virt_global_reset')
