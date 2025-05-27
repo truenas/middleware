@@ -186,6 +186,7 @@ def test_005_test_map_modify(request):
     path = f'/mnt/{pool_name}/{ds}'
     with create_dataset(f'{pool_name}/{ds}', {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}, None, '777'):
         with smb_share(path, "MAP_MODIFY"):
+            sleep(5)
             sd = get_windows_sd("MAP_MODIFY", "SMB")
             dacl = sd['dacl']
             assert dacl[0]['access_mask']['standard'] == 'FULL', str(dacl[0])

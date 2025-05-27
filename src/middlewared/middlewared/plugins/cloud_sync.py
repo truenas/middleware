@@ -647,7 +647,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
     share_task_type = 'CloudSync'
-    allowed_path_types = [FSLocation.CLUSTER, FSLocation.LOCAL]
+    allowed_path_types = [FSLocation.LOCAL]
     task_state_methods = ['cloudsync.sync', 'cloudsync.restore']
 
     class Config:

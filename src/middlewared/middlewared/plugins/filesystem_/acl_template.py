@@ -8,7 +8,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service import private
-from middlewared.plugins.smb import SMBBuiltin
+from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,

@@ -193,9 +193,12 @@ class NetworkConfigurationService(ConfigService):
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
-        filters = [('timemachine', '=', True), ('enabled', '=', True)]
+        filters = [
+            ["OR", [('options.timemachine', '=', True), ('purpose', '=', 'TIMEMACHINE_SHARE')]],
+            ['enabled', '=', True]
+        ]
         if not new_config['service_announcement']['mdns'] and await self.middleware.call(
-            'sharing.smb.query', filters, {'select': ['enabled', 'timemachine']}
+            'sharing.smb.query', filters, {'select': ['enabled', 'timemachine', 'purpose']}
         ):
             verrors.add(
                 'global_configuration_update.service_announcement.mdns',
@@ -334,7 +337,7 @@ class NetworkConfigurationService(ConfigService):
                 service_actions.add((service_name, verb))
 
         for service, verb in service_actions:
-            await (await self.middleware.call(f'service.control', verb, service)).wait(raise_error=True)
+            await (await self.middleware.call('service.control', verb, service)).wait(raise_error=True)
 
         await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
 

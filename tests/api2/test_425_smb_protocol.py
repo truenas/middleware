@@ -92,7 +92,8 @@ def initialize_for_smb_tests(request):
         }) as u:
             try:
                 with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
-                    'auxsmbconf': 'zfs_core:base_user_quota = 1G'
+                    'purpose': 'LEGACY_SHARE',
+                    'options': {'auxsmbconf': 'zfs_core:base_user_quota = 1G'}
                 }) as s:
                     try:
                         call('service.control', 'START', 'cifs', job=True)
@@ -545,7 +546,8 @@ def test_090_test_auto_smb_quota(request, proto):
 def test_091_remove_auto_quota_param(request):
     depends(request, ["SMB_SHARE_CREATED"])
     call('sharing.smb.update', TEST_DATA['share']['id'], {
-        'auxsmbconf': ''
+        'purpose': 'LEGACY_SHARE',
+        'options': {'auxsmbconf': ''}
     })
 
 
@@ -626,7 +628,8 @@ def test_140_enable_aapl(request):
     depends(request, ["SMB_SHARE_CREATED"])
     call('smb.update', {'aapl_extensions': True})
     call('sharing.smb.update', TEST_DATA['share']['id'], {
-        'afp': True,
+        'purpose': 'LEGACY_SHARE',
+        'options': {'afp': True},
     })
 
 
@@ -737,7 +740,10 @@ def test_155_ssh_read_afp_xattr(request, xat):
 
 
 def test_175_check_external_path(request):
-    with smb_share(f'EXTERNAL:{truenas_server.ip}\\{SMB_NAME}', 'EXTERNAL'):
+    with smb_share('EXTERNAL', 'EXTERNAL', {
+        'purpose': 'EXTERNAL_SHARE',
+        'options': {'remote_path': [f'{truenas_server.ip}\\{SMB_NAME}']}
+    }):
         with smb_connection(
             share=SMB_NAME,
             username=SMB_USER,
@@ -760,7 +766,7 @@ def test_175_check_external_path(request):
 def test_176_check_dataset_auto_create(request):
     with dataset('smb_proto_nested_datasets', data={'share_type': 'SMB'}) as ds:
         ds_mp = os.path.join('/mnt', ds)
-        with smb_share(ds_mp, 'DATASETS', {'purpose': 'PRIVATE_DATASETS'}):
+        with smb_share(ds_mp, 'DATASETS', {'purpose': 'PRIVATE_DATASETS_SHARE'}):
             with smb_connection(
                 share='DATASETS',
                 username=SMB_USER,

@@ -1,6 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
-from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
+from middlewared.utils.path import FSLocation, path_location
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
@@ -43,10 +43,6 @@ class SharingTaskService(CRUDService):
         }
 
     @private
-    async def validate_cluster_path(self, verrors, name, volname, path):
-        verrors.add(name, 'cluster volume is not mounted.')
-
-    @private
     async def validate_external_path(self, verrors, name, path):
         # Services with external paths must implement their own
         # validation here because we can't predict what is required.
@@ -71,11 +67,8 @@ class SharingTaskService(CRUDService):
         if loc not in self.allowed_path_types:
             verrors.add(name, f'{loc.name}: path type is not allowed.')
 
-        elif loc is FSLocation.CLUSTER:
-            verrors.add(name, f'{path}: path within cluster volume must be specified.')
-
         elif loc is FSLocation.EXTERNAL:
-            await self.validate_external_path(verrors, name, strip_location_prefix(path))
+            await self.validate_external_path(verrors, name, path)
 
         elif loc is FSLocation.LOCAL:
             await self.validate_local_path(verrors, name, path)

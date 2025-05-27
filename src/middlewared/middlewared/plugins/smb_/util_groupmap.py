@@ -53,6 +53,7 @@ import enum
 from base64 import b64decode, b64encode
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
+from socket import htonl, ntohl
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.utils import filter_list
 from middlewared.utils.sid import (
@@ -66,7 +67,6 @@ from middlewared.utils.tdb import (
     TDBOptions,
     TDBPathType,
 )
-from socket import htonl, ntohl
 
 UNIX_GROUP_KEY_PREFIX = 'UNIXGROUP/'
 MEMBEROF_PREFIX = 'MEMBEROF/'

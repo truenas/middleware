@@ -1,4 +1,5 @@
 import enum
+from unicodedata import category
 
 
 class SMBUnixCharset(enum.StrEnum):
@@ -89,3 +90,63 @@ class SMBUnixCharset(enum.StrEnum):
     UTF_16 = 'UTF_16'
     UTF_16_BE = 'UTF_16_BE'
     UTF_16_LE = 'UTF_16_LE'
+
+
+class SMBSharePurpose(enum.StrEnum):
+    DEFAULT_SHARE = 'DEFAULT_SHARE'
+    LEGACY_SHARE = 'LEGACY_SHARE'
+    TIMEMACHINE_SHARE = 'TIMEMACHINE_SHARE'
+    MULTIPROTOCOL_SHARE = 'MULTIPROTOCOL_SHARE'
+    PRIVATE_DATASETS_SHARE = 'PRIVATE_DATASETS_SHARE'
+    EXTERNAL_SHARE = 'EXTERNAL_SHARE'
+    TIME_LOCKED_SHARE = 'TIME_LOCKED_SHARE'
+
+
+INVALID_SHARE_NAME_CHARACTERS = frozenset({
+    '%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'
+})
+RESERVED_SHARE_NAMES = frozenset({'global', 'printers', 'homes', 'admin$', 'ipc$'})
+SUPPORTED_SMB_VARIABLES = frozenset({'U', 'u', 'G'})  # see man 5 smb.conf "VARIABLE SUBSTITUTIONS"
+
+
+def validate_smb_share_name(name: str) -> str:
+    # Standards for SMB share name are defined in MS-FSCC 2.1.6
+    # We are slighly more strict in that blacklist all unicode control characters
+
+    if not isinstance(name, str):
+        raise ValueError(f'{name}: not a string')
+
+    if not len(name):
+        raise ValueError('Share name must contain at least one character')
+
+    if len(name) > 80:
+        raise ValueError(f'{name}: share name must not exceed 80 characters in length')
+
+    if name.lower() in RESERVED_SHARE_NAMES:
+        raise ValueError(f'{name}: share name is reserved.')
+
+    if invalid_characters := (INVALID_SHARE_NAME_CHARACTERS & set(name)):
+        raise ValueError(f'{name}: share name contains the following invalid characters: {", ".join(invalid_characters)}')
+
+    if any(category(char) == 'Cc' for char in name):
+        raise ValueError(f'{name}: share name contains unicode control characters')
+
+    return name
+
+
+def validate_smb_path_suffix(suffix: str) -> str:
+    if not suffix:
+        raise ValueError('Invalid path schema')
+
+    components = suffix.split('/')
+    if len(components) > 2:
+        raise ValueError('Naming schema may not contain more than two components.')
+
+    for component in components:
+        if '%' not in component:
+            continue
+
+        if component.split('%')[1][:1] not in SUPPORTED_SMB_VARIABLES:
+            raise ValueError(f'{component}: not a supported naming schema component')
+
+    return suffix

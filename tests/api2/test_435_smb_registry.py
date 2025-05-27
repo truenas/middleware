@@ -11,12 +11,11 @@ DATASET_NAME = 'smb-reg'
 SHARES = [f'REGISTRYTEST_{i}' for i in range(0, 5)]
 PRESETS = [
     "DEFAULT_SHARE",
-    "ENHANCED_TIMEMACHINE",
-    "MULTI_PROTOCOL_NFS",
-    "PRIVATE_DATASETS",
-    "WORM_DROPBOX"
+    "TIMEMACHINE_SHARE",
+    "MULTIPROTOCOL_SHARE",
+    "PRIVATE_DATASETS_SHARE",
+    "TIME_LOCKED_SHARE",
 ]
-DETECTED_PRESETS = None
 
 """
 Note: following sample auxiliary parameters and comments were
@@ -81,7 +80,6 @@ def setup_smb_shares(mountpoint):
         new_share = call('sharing.smb.create', {
             'comment': 'My Test SMB Share',
             'name': share,
-            'home': False,
             'path': share_path,
         })
         SHARE_DICT[share] = new_share['id']
@@ -108,11 +106,6 @@ def setup_for_tests():
 
         with setup_smb_shares(smb_registry_mp) as shares:
             yield (smb_registry_mp, ds, shares)
-
-
-@pytest.fixture(scope='module')
-def share_presets():
-    yield call('sharing.smb.presets')
 
 
 def test__setup_for_tests(setup_for_tests):
@@ -157,39 +150,22 @@ def check_aux_param(param, share, expected, fruit_enable=False):
 
 
 @pytest.mark.parametrize('preset', PRESETS)
-def test__test_presets(setup_for_tests, share_presets, preset):
-    """
-    This test iterates through SMB share presets,
+def test__test_presets(setup_for_tests, preset):
+    """ This test iterates through SMB share presets,
     applies them to a single share, and then validates
-    that the preset was applied correctly.
-
-    In case of bool in API, simple check that appropriate
-    value is set in return from sharing.smb.update will
-    be sufficient. In case of auxiliary parameters, we
-    need to be a bit more thorough. The preset will not
-    be reflected in returned auxsmbconf and so we'll need
-    to directly reach out and run smb.getparm.
-    """
+    that the preset was applied correctly.  """
     mp, ds, SHARE_DICT = setup_for_tests
     if 'TIMEMACHINE' in preset:
         call('smb.update', {'aapl_extensions': True})
     elif preset == 'MULTI_PROTOCOL_NFS':
-        call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {'purpose': 'NO_PRESET', 'timemachine': False})
+        call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {'purpose': 'LEGACY_SHARE'})
         call('smb.update', {'aapl_extensions': False})
 
-    to_test = share_presets[preset]['params']
-    to_test_aux = to_test['auxsmbconf']
     new_conf = call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {
         'purpose': preset
     })
-    for entry in to_test_aux.splitlines():
-        aux, val = entry.split('=', 1)
-        check_aux_param(aux.strip(), new_conf['name'], val.strip())
 
-    for k in to_test.keys():
-        if k == "auxsmbconf":
-            continue
-        assert to_test[k] == new_conf[k]
+    assert new_conf['purpose'] == preset
 
 
 def test__reset_smb(setup_for_tests):
@@ -198,10 +174,7 @@ def test__reset_smb(setup_for_tests):
     a MacOS-style SMB server (fruit).
     """
     mp, ds, SHARE_DICT = setup_for_tests
-    call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {
-        "purpose": "NO_PRESET",
-        "timemachine": False
-    })
+    call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {"purpose": "LEGACY_SHARE"})
     call('smb.update', {'aapl_extensions': False})
 
 
@@ -210,11 +183,12 @@ def test__test_aux_param_on_update(setup_for_tests):
     share_id = SHARE_DICT['REGISTRYTEST_0']
     share = call('sharing.smb.query', [['id', '=', share_id]], {'get': True})
 
-    old_aux = share['auxsmbconf']
+    old_aux = share['options']['auxsmbconf']
     results = call('sharing.smb.update', share_id, {
-        'auxsmbconf': '\n'.join(SAMPLE_AUX)
+        'purpose': 'LEGACY_SHARE',
+        'options': {'auxsmbconf': '\n'.join(SAMPLE_AUX)}
     })
-    new_aux = results['auxsmbconf']
+    new_aux = results['options']['auxsmbconf']
     new_name = results['name']
     ncomments_sent = 0
     ncomments_recv = 0
@@ -267,32 +241,21 @@ def setup_aapl_extensions(newvalue):
 
 
 @pytest.fixture(scope='function')
-def setup_tm_share(setup_for_tests):
+def setup_legacy_share(setup_for_tests):
     share_name = 'AUX_CREATE'
     path = os.path.join(setup_for_tests[0], share_name)
-    with setup_aapl_extensions(True):
-        with create_smb_share(path, share_name, True, {
-            "home": False,
-            "purpose": "ENHANCED_TIMEMACHINE",
-            "auxsmbconf": '\n'.join(SAMPLE_AUX)
-        }) as s:
-            yield s
+    with create_smb_share(path, share_name, True, {
+        "purpose": "LEGACY_SHARE",
+        "options": {"auxsmbconf": '\n'.join(SAMPLE_AUX)}
+    }) as s:
+        yield s
 
 
-def test__test_aux_param_on_create(share_presets, setup_tm_share):
-    share = setup_tm_share
-    new_aux = share['auxsmbconf']
-    pre_aux = share_presets["ENHANCED_TIMEMACHINE"]["params"]["auxsmbconf"]
+def test__test_aux_param_on_create(setup_legacy_share):
+    share = setup_legacy_share
+    new_aux = share['options']['auxsmbconf']
     ncomments_sent = 0
     ncomments_recv = 0
-
-    for entry in pre_aux.splitlines():
-        """
-        Verify that aux params from preset were applied
-        successfully to the running configuration.
-        """
-        aux, val = entry.split('=', 1)
-        check_aux_param(aux.strip(), share['name'], val.strip())
 
     for entry in new_aux.splitlines():
         """
@@ -346,8 +309,8 @@ def test__create_homes_share(setup_for_tests):
     new_share = call('sharing.smb.create', {
         "comment": "My Test SMB Share",
         "path": home_path,
-        "home": True,
-        "purpose": "NO_PRESET",
+        "purpose": "LEGACY_SHARE",
+        "options": {"home": True},
         "name": 'HOME_SHARE',
     })
     share_dict['HOME'] = new_share['id']
@@ -359,11 +322,11 @@ def test__create_homes_share(setup_for_tests):
 def test__toggle_homes_share(setup_for_tests):
     mp, ds, share_dict = setup_for_tests
     try:
-        call('sharing.smb.update', share_dict['HOME'], {'home': False})
+        call('sharing.smb.update', share_dict['HOME'], {'purpose': 'LEGACY_SHARE', 'options': {'home': False}})
         reg_shares = call('sharing.smb.smbconf_list_shares')
         assert not any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
     finally:
-        call('sharing.smb.update', share_dict['HOME'], {'home': True})
+        call('sharing.smb.update', share_dict['HOME'], {'purpose': 'LEGACY_SHARE', 'options': {'home': True}})
 
     reg_shares = call('sharing.smb.smbconf_list_shares')
     assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
@@ -380,9 +343,14 @@ def test__test_smb_options():
 def test__test_invalid_share_aux_param_create(setup_for_tests):
     init_share_count = call('sharing.smb.query', [], {'count': True})
     with pytest.raises(ValidationError) as ve:
-        call('sharing.smb.create', {'name': 'FAIL', 'path': setup_for_tests[0], 'auxsmbconf': 'oplocks = canary'})
+        call('sharing.smb.create', {
+            'name': 'FAIL',
+            'path': setup_for_tests[0],
+            'purpose': 'LEGACY_SHARE',
+            'options': {'auxsmbconf': 'oplocks = canary'}
+        })
 
-    assert ve.value.attribute == 'sharingsmb_create.auxsmbconf'
+    assert ve.value.attribute == 'sharingsmb_create.options.auxsmbconf'
 
     assert init_share_count == call('sharing.smb.query', [], {'count': True})
 
@@ -392,8 +360,11 @@ def test__test_invalid_share_aux_param_update(setup_for_tests):
 
     try:
         with pytest.raises(ValidationError) as ve:
-            call('sharing.smb.update', this_share['id'], {'auxsmbconf': 'oplocks = canary'})
+            call('sharing.smb.update', this_share['id'], {
+                'purpose': 'LEGACY_SHARE',
+                'options': {'auxsmbconf': 'oplocks = canary'}
+            })
     finally:
         call('sharing.smb.delete', this_share['id'])
 
-    assert ve.value.attribute == 'sharingsmb_update.auxsmbconf'
+    assert ve.value.attribute == 'sharingsmb_update.options.auxsmbconf'
