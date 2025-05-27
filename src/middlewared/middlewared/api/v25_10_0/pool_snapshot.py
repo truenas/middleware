@@ -111,8 +111,8 @@ class PoolSnapshotRollbackOptions(BaseModel):
     force: bool = False
     """Force unmount of any clones."""
     recursive_rollback: bool = False
-    """Do a complete recursive rollback of each child snapshot for `id`. If any child does not have specified snapshot,
-    this operation will fail."""
+    """Do a complete recursive rollback of each child snapshot for `id`. If any child does not have specified \
+    snapshot, this operation will fail."""
 
 
 class PoolSnapshotUserPropertyUpdate(BaseModel):

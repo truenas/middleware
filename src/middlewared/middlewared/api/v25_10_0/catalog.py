@@ -88,7 +88,7 @@ class CatalogAppInfo(BaseModel):
     sources: list[str]
     """List of source URLs."""
     icon_url: str | None = None
-    """URL of the app icon"""
+    """URL of the app icon."""
 
     # We do this because if we change anything in catalog.json, even older releases will
     # get this new field and different roles will start breaking due to this

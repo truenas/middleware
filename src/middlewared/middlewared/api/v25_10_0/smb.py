@@ -68,7 +68,7 @@ class SMBShareAclEntry(BaseModel):
     ae_who_id: SMBShareAclEntryWhoId | None = None
     """ Unix ID of the principal to whom ACL entry applies. """
     ae_who_str: NonEmptyString | None = None
-    """ User or group name of the principal to whom the ACL entry applies """
+    """ User or group name of the principal to whom the ACL entry applies. """
 
     @model_validator(mode='after')
     def check_ae_who(self) -> Self:
@@ -85,7 +85,7 @@ class SMBShareAcl(BaseModel):
     share_name: NonEmptyString
     """ Name of the SMB share. """
     share_acl: list[SMBShareAclEntry] = [SMBShareAclEntry(ae_who_sid='S-1-1-0', ae_perm='FULL', ae_type='ALLOWED')]
-    """ List of SMB share ACL entries """
+    """ List of SMB share ACL entries. """
 
 
 @single_argument_args('smb_setacl')
@@ -112,28 +112,28 @@ SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
 class SmbServiceEntry(BaseModel):
     id: int
     netbiosname: NetbiosName
-    """ Netbios name of this server """
+    """ Netbios name of this server. """
     netbiosalias: list[NetbiosName]
-    """ Alternative netbios names of the server that will be announced via
+    """ Alternative netbios names of the server that will be announced via \
     netbios nameserver and registered in active directory when joined."""
     workgroup: NetbiosDomain
-    """ Workgroup. When joined to active directory, this will be automatically
+    """ Workgroup. When joined to active directory, this will be automatically \
     reconfigured to match the netbios domain of the AD domain. """
     description: str
     """ Description of SMB server. May appear to clients during some operations. """
     enable_smb1: bool
     """ Enable SMB1 support for server. WARNING: using SMB1 protocol is not recommended """
     unixcharset: SMBCharsetType
-    """ Select characterset for file names on local filesystem. This should only be used
+    """ Select characterset for file names on local filesystem. This should only be used \
     in cases where system administrator knows that the filenames are not UTF-8."""
     localmaster: bool
     syslog: bool
-    """ Send log messages to syslog. This should be enabled if system administrator
-    wishes for SMB server error logs to be included in information sent to remote syslog
+    """ Send log messages to syslog. This should be enabled if system administrator \
+    wishes for SMB server error logs to be included in information sent to remote syslog \
     server if this is globally configured for TrueNAS."""
     aapl_extensions: bool
-    """ Enable support for SMB2/3 AAPL protocol extensions. This changes the TrueNAS server
-    so that it is advertised as supporting Apple protocol extensions as a MacOS server, and
+    """ Enable support for SMB2/3 AAPL protocol extensions. This changes the TrueNAS server \
+    so that it is advertised as supporting Apple protocol extensions as a MacOS server, and \
     is required for Time Machine support. """
     admin_group: str | None
     """ The selected group will have full administrator privileges on TrueNAS over SMB protocol. """
@@ -143,19 +143,19 @@ class SmbServiceEntry(BaseModel):
     dirmask: UnixPerm | Literal['DEFAULT']
     """ smb.conf directory mask. DEFAULT applies current server default which is 775. """
     ntlmv1_auth: bool
-    """ Enable legacy and very insecure NTLMv1 authentication. This should never be done except
+    """ Enable legacy and very insecure NTLMv1 authentication. This should never be done except \
     in extreme edge cases and may be against regulations in non-home environments. """
     multichannel: bool
     encryption: SMBEncryption
     bindip: list[IPvAnyInterface]
     server_sid: SID | None
-    """ Universally-unique identifier for this particular SMB server that serves as domain SID
+    """ Universally-unique identifier for this particular SMB server that serves as domain SID \
     for all local SMB user and group accounts """
     smb_options: str
     """ Additional unvalidated and unsupported configuration options for the SMB server.
-    WARNING: using smb_options may produce unexpected server behavior. """
+    WARNING: Using `smb_options` may produce unexpected server behavior. """
     debug: bool
-    """ Set SMB log levels to debug. This should only be used when troubleshooting a specific SMB
+    """ Set SMB log levels to debug. This should only be used when troubleshooting a specific SMB \
     issue and should not be used in production environments. """
 
     @field_validator('bindip')

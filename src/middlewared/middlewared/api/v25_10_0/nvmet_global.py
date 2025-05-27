@@ -21,18 +21,15 @@ class NVMetGlobalEntry(BaseModel):
     Modifying this value will *not* change the subnqn of any existing subsystems.
     """
     kernel: bool
-    """
-    Select the NVMe-oF backend.
-    """
+    """Select the NVMe-oF backend."""
     ana: bool
-    """
-    Asymmetric Namespace Access (ANA) enabled.
-    """
+    """Asymmetric Namespace Access (ANA) enabled."""
     rdma: bool
     """
     RDMA is enabled for NVMe-oF.
 
-    Enabling is limited to TrueNAS Enterprise-licensed systems and requires the system and network environment have Remote Direct Memory Access (RDMA)-capable hardware.
+    Enabling is limited to TrueNAS Enterprise-licensed systems and requires the system and network environment have \
+    Remote Direct Memory Access (RDMA)-capable hardware.
 
     Once enabled one or more `ports` may be configured with RDMA selected as the transport. See `nvmet.port.create`.
     """

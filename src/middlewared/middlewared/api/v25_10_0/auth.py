@@ -229,7 +229,7 @@ class AuthSessionLogoutResult(BaseModel):
 
 
 class AuthSetAttributeArgs(BaseModel):
-    """WebUI attributes"""
+    """WebUI attributes."""
     key: str
     value: Any
 

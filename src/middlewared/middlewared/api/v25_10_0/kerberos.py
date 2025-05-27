@@ -26,16 +26,16 @@ class KerberosEntry(BaseModel):
     id: int
     appdefaults_aux: str
     """
-    Advanced field for manually setting additional parameters inside the
-    appdefaults section of the krb5.conf file. These are generally not required
-    as the required krb5.conf settings are automatically detected and set
+    Advanced field for manually setting additional parameters inside the \
+    appdefaults section of the krb5.conf file. These are generally not required \
+    as the required krb5.conf settings are automatically detected and set \
     for the environment. See manpage for MIT krb5.conf.
     """
     libdefaults_aux: str
     """
-    Advanced field for manually setting additional parameters inside the
-    libdefaults section of the krb5.conf file. These are generally not required
-    as the required krb5.conf settings are automatically detected and set
+    Advanced field for manually setting additional parameters inside the \
+    libdefaults section of the krb5.conf file. These are generally not required \
+    as the required krb5.conf settings are automatically detected and set \
     for the environment. See manpage for MIT krb5.conf.
     """
 
@@ -56,24 +56,24 @@ class KerberosRealmEntry(BaseModel):
     id: int
     realm: NonEmptyString
     """
-    Kerberos realm name. This is external to TrueNAS and is case-sensitive.
+    Kerberos realm name. This is external to TrueNAS and is case-sensitive. \
     The general convention for kerberos realms is that they are upper-case.
     """
     kdc: list[NonEmptyString] = []
     """
-    List of kerberos domain controllers. If the list is empty then the kerberos
-    libraries will use DNS to look up KDCs. In some situations this is undesirable
-    as kerberos libraries are, for intance, not active directory site aware and so
+    List of kerberos domain controllers. If the list is empty then the kerberos \
+    libraries will use DNS to look up KDCs. In some situations this is undesirable \
+    as kerberos libraries are, for intance, not active directory site aware and so \
     may be suboptimal.
     """
     admin_server: list[NonEmptyString] = []
     """
-    List of kerberos admin servers. If the list is empty then the kerberos
+    List of kerberos admin servers. If the list is empty then the kerberos \
     libraries will use DNS to look them up.
     """
     kpasswd_server: list[NonEmptyString] = []
     """
-    list of kerberos kpasswd servers. If the list is empty then DNS will be used
+    List of kerberos kpasswd servers. If the list is empty then DNS will be used \
     to look them up if needed.
     """
 
@@ -82,8 +82,8 @@ class KerberosKeytabEntry(BaseModel):
     id: int
     name: NonEmptyString
     """
-    Name of the kerberos keytab entry. This is an identifier for the keytab and not
-    the name of the keytab file. Some names are used for internal purposes such
+    Name of the kerberos keytab entry. This is an identifier for the keytab and not \
+    the name of the keytab file. Some names are used for internal purposes such \
     as AD_MACHINE_ACCOUNT and IPA_MACHINE_ACCOUNT.
     """
     file: Secret[LongNonEmptyString | None]

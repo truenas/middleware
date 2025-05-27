@@ -36,18 +36,15 @@ class NVMetHostEntry(BaseModel):
     """
     dhchap_ctrl_key: Secret[NonEmptyString | None] = None
     """
-    If set, the secret that this TrueNAS will present to the host when the host is connecting (Bi-Directional Authentication).
+    If set, the secret that this TrueNAS will present to the host when the host is connecting (Bi-Directional \
+    Authentication).
 
     A suitable secret can be generated using `nvme gen-dhchap-key`, or by using the `nvmet.host.generate_key` API.
     """
     dhchap_dhgroup: DHChapDHGroupType | None = None
-    """
-    If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication.
-    """
+    """If selected, the DH (Diffie-Hellman) key exchange built on top of CHAP to be used for authentication."""
     dhchap_hash: DHChapHashType = 'SHA-256'
-    """
-    HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected.
-    """
+    """HMAC (Hashed Message Authentication Code) to be used in conjunction if a `dhchap_dhgroup` is selected."""
 
 
 class NVMetHostCreate(NVMetHostEntry):
@@ -84,7 +81,7 @@ class NVMetHostUpdateResult(BaseModel):
 
 class NVMetHostDeleteOptions(BaseModel):
     force: bool = False
-    """ Optional `boolean` to force host deletion, even if currently associated with one or more subsystems. """
+    """ Force host deletion, even if currently associated with one or more subsystems. """
 
 
 class NVMetHostDeleteArgs(BaseModel):

@@ -12,7 +12,7 @@ __all__ = [
 
 class ServiceAnnouncement(BaseModel):
     netbios: bool = NotRequired
-    """Enable the NetBIOS name server (NBNS) which starts concurrently with the SMB service. SMB clients will only
+    """Enable the NetBIOS name server (NBNS) which starts concurrently with the SMB service. SMB clients will only \
     perform NBNS lookups if SMB1 is enabled. NBNS may be required for legacy SMB clients."""
     mdns: bool = NotRequired
     """Enable multicast DNS service announcements for enabled services."""

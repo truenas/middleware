@@ -38,7 +38,7 @@ class CoreGetServicesResult(BaseModel):
 
 class CoreGetMethodsArgs(BaseModel):
     service: str | None = None
-    "Filters the result for a single service."
+    """Filters the result for a single service."""
     target: Literal['WS', 'CLI', 'REST'] = 'WS'
 
 
@@ -169,14 +169,14 @@ class CoreDownloadArgs(BaseModel):
     args: list
     filename: str
     buffered: bool = False
-    "Non-`buffered` downloads will allow job to write to pipe as soon as download URL is requested, job will stay "
-    "blocked meanwhile. `buffered` downloads must wait for job to complete before requesting download URL, job's "
-    "pipe output will be buffered to ramfs."
+    """Non-`buffered` downloads will allow job to write to pipe as soon as download URL is requested, job will stay \
+    blocked meanwhile. `buffered` downloads must wait for job to complete before requesting download URL, job's \
+    pipe output will be buffered to ramfs."""
 
 
 class CoreDownloadResult(BaseModel):
     result: tuple[int, str]
-    "Job id and the URL for download."
+    """Job ID and the URL for download."""
 
 
 @single_argument_args("options")
@@ -194,7 +194,7 @@ class CoreBulkArgs(BaseModel):
     method: str
     params: list[list]
     description: str | None = None
-    "Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\")"
+    """Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\")."""
 
 
 class CoreBulkResultItem(BaseModel):
