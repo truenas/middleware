@@ -34,4 +34,4 @@ class RdmaCapableProtocolsArgs(BaseModel):
 
 
 class RdmaCapableProtocolsResult(BaseModel):
-    result: list[Literal["ISER", "NFS"]]
+    result: list[Literal["ISER", "NFS", "NVMET"]]
