@@ -71,9 +71,9 @@ from middlewared.utils.security import (
 from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
-    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS,
+    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH,
     USERNS_IDMAP_DIRECT, USERNS_IDMAP_NONE, ALLOWED_BUILTIN_GIDS,
-    SYNTHETIC_CONTAINER_ROOT, MIN_AUTO_XID,
+    SYNTHETIC_CONTAINER_ROOT, NO_LOGIN_SHELL, MIN_AUTO_XID
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -479,7 +479,7 @@ class UserService(CRUDService):
             verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
             return False
 
-        if data['home'] in DEFAULT_HOME_PATHS:
+        if data['home'] == DEFAULT_HOME_PATH:
             return False
 
         if not p.exists():
@@ -616,9 +616,9 @@ class UserService(CRUDService):
         verrors = ValidationErrors()
 
         if (
-            not data.get('group') and not data.get('group_create')
+            not data['group'] and not data['group_create']
         ) or (
-            data.get('group') is not None and data.get('group_create')
+            data['group'] is not None and data['group_create']
         ):
             verrors.add(
                 'user_create.group',
@@ -628,14 +628,13 @@ class UserService(CRUDService):
             )
 
         group_ids = []
-        if data.get('group'):
+        if data['group']:
             group_ids.append(data['group'])
-        if data.get('groups'):
-            group_ids.extend(data['groups'])
+        group_ids.extend(data['groups'])
 
         self.middleware.call_sync('user.common_validation', verrors, data, 'user_create', group_ids)
 
-        if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
+        if data['sshpubkey'] and not data['home'].startswith('/mnt'):
             verrors.add(
                 'user_create.sshpubkey',
                 'The home directory is not writable. Leave this field blank.'
@@ -679,12 +678,12 @@ class UserService(CRUDService):
                 'group.query', [('group', '=', 'builtin_users'), ('local', '=', True)], {'get': True},
             ))['id'])
 
-        if data.get('uid') is None:
+        if data['uid'] is None:
             data['uid'] = self.get_next_uid()
 
         new_homedir = False
         home_mode = data.pop('home_mode')
-        if data['home'] and data['home'] not in DEFAULT_HOME_PATHS:
+        if data['home'] and data['home'] != DEFAULT_HOME_PATH:
             try:
                 data['home'] = self.setup_homedir(
                     data['home'],
@@ -737,7 +736,7 @@ class UserService(CRUDService):
         if data['smb']:
             self.middleware.call_sync('smb.update_passdb_user', data | {'id': pk})
 
-        if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']) and data['home'] not in DEFAULT_HOME_PATHS:
+        if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']) and data['home'] != DEFAULT_HOME_PATH:
             for f in os.listdir(SKEL_PATH):
                 if f.startswith('dot'):
                     dest_file = os.path.join(data['home'], f[3:])
@@ -847,8 +846,8 @@ class UserService(CRUDService):
             old_mode = None
 
         home = data.get('home') or user['home']
-        had_home = user['home'] not in DEFAULT_HOME_PATHS
-        has_home = home not in DEFAULT_HOME_PATHS
+        had_home = user['home'] != DEFAULT_HOME_PATH
+        has_home = home != DEFAULT_HOME_PATH
         # root user and admin users are an exception to the rule
         if data.get('sshpubkey'):
             if not (
@@ -1058,7 +1057,7 @@ class UserService(CRUDService):
                 except Exception:
                     self.logger.warning(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
-        if user['home'] and user['home'] not in DEFAULT_HOME_PATHS:
+        if user['home'] and user['home'] != DEFAULT_HOME_PATH:
             try:
                 shutil.rmtree(os.path.join(user['home'], '.ssh'))
             except Exception:
@@ -1099,7 +1098,7 @@ class UserService(CRUDService):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
 
-        `group_ids` is a list of local group IDs for the user.
+        :param group_ids: List of local group IDs for the user.
         """
         group_ids = {
             g["gid"] for g in self.middleware.call_sync(
@@ -1111,7 +1110,7 @@ class UserService(CRUDService):
         }
 
         shells = {
-            '/usr/sbin/nologin': 'nologin',
+            NO_LOGIN_SHELL: 'nologin',
         }
         if self.middleware.call_sync('privilege.privileges_for_groups', 'local_groups', group_ids):
             shells.update(**{
@@ -1420,7 +1419,9 @@ class UserService(CRUDService):
                     )
 
     @private
-    async def common_validation(self, verrors, data, schema, group_ids, old=None):
+    async def common_validation(
+        self, verrors: ValidationErrors, data: dict, schema: str, group_ids: list[int], old: dict | None = None
+    ) -> None:
         exclude_filter = [('id', '!=', old['id'])] if old else []
         combined = data if not old else old | data
         password_changed = False
@@ -1443,15 +1444,17 @@ class UserService(CRUDService):
                     'User namespace idmaps may not be configured for privileged accounts.'
                 )
 
-        if data.get('random_password') and data.get('password'):
-            verrors.add(
-                f'{schema}.random_password',
-                'Requesting a randomized password while simultaneously supplying '
-                'an explicit password is not permitted.'
-            )
-        elif data.get('random_password'):
-            data['password'] = generate_string(string_size=20)
-            password_changed = True
+        if data.get('random_password'):
+            if data.get('password'):
+                verrors.add(
+                    f'{schema}.random_password',
+                    'Requesting a randomized password while simultaneously supplying '
+                    'an explicit password is not permitted.'
+                )
+            else:
+                data['password'] = generate_string(string_size=20)
+                password_changed = True
+
         elif data.get('password'):
             history = old['password_history'] + [old['unixhash']] if old else None
             await self.password_security_validate(schema, verrors, data['password'], history)
@@ -1505,32 +1508,34 @@ class UserService(CRUDService):
                         errno.EEXIST,
                     )
 
-        if combined['smb'] and not await self.middleware.call('smb.is_configured'):
-            if (await self.middleware.call('systemdataset.sysdataset_path')) is None:
-                verrors.add(
-                    f'{schema}.smb',
-                    'System dataset is not mounted at expected path. This may indicate '
-                    'an underlying issue with the pool hosting the system dataset. '
-                    'SMB users may not be configured until this configuration issue is addressed.'
-                )
-            else:
-                verrors.add(
-                    f'{schema}.smb',
-                    'SMB users may not be configured while SMB service backend is unitialized.'
-                )
-
-        if combined['smb'] and combined['password_disabled']:
-            verrors.add(
-                f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
-            )
-
         stig_enabled = (await self.middleware.call('system.security.config'))['enable_gpos_stig']
-        if combined['smb'] and stig_enabled:
-            verrors.add(
-                f'{schema}.smb',
-                'SMB authentication for local user accounts is not permitted when General Purpose OS '
-                'STIG compatibility is enabled.'
-            )
+
+        if combined['smb']:
+            if not await self.middleware.call('smb.is_configured'):
+                if (await self.middleware.call('systemdataset.sysdataset_path')) is None:
+                    verrors.add(
+                        f'{schema}.smb',
+                        'System dataset is not mounted at expected path. This may indicate '
+                        'an underlying issue with the pool hosting the system dataset. '
+                        'SMB users may not be configured until this configuration issue is addressed.'
+                    )
+                else:
+                    verrors.add(
+                        f'{schema}.smb',
+                        'SMB users may not be configured while SMB service backend is unitialized.'
+                    )
+
+            if combined['password_disabled']:
+                verrors.add(
+                    f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
+                )
+
+            if stig_enabled:
+                verrors.add(
+                    f'{schema}.smb',
+                    'SMB authentication for local user accounts is not permitted when General Purpose OS '
+                    'STIG compatibility is enabled.'
+                )
 
         if old:
             is_enabled_system_account = combined['immutable'] and any([
@@ -1557,6 +1562,8 @@ class UserService(CRUDService):
         if 'home' in data:
             if await self.middleware.run_in_thread(self.validate_homedir_path, verrors, schema, data, users):
                 await check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
+            elif combined['ssh_password_enabled']:
+                verrors.add(f'{schema}.home', 'SSH password login requires a valid home path.')
 
         if 'home_mode' in data:
             try:
@@ -1608,22 +1615,15 @@ class UserService(CRUDService):
                         f'{entry["bsdgrp_group"]}: membership of this builtin group may not be altered.'
                     )
 
-        if 'full_name' in data and ':' in data['full_name']:
-            verrors.add(
-                f'{schema}.full_name',
-                'The ":" character is not allowed in a "Full Name".'
-            )
+        if 'full_name' in data:
+            for illegal_char in filter(lambda c: c in data['full_name'], (':', '\n')):
+                verrors.add(f'{schema}.full_name', f'The {illegal_char!r} character is not allowed.')
 
-        if 'full_name' in data and '\n' in data['full_name']:
-            verrors.add(
-                f'{schema}.full_name',
-                'The "\\n" character is not allowed in a "Full Name".'
-            )
-
-        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', group_ids):
-            verrors.add(
-                f'{schema}.shell', 'Please select a valid shell.'
-            )
+        if 'shell' in data:
+            if data['shell'] not in await self.middleware.call('user.shell_choices', group_ids):
+                verrors.add(f'{schema}.shell', 'Please select a valid shell.')
+            elif combined['ssh_password_enabled'] and data['shell'] == NO_LOGIN_SHELL:
+                verrors.add(f'{schema}.shell', 'SSH password login requires a login shell.')
 
         if 'sudo_commands' in data:
             verrors.add_child(
@@ -1637,24 +1637,28 @@ class UserService(CRUDService):
                 await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands_nopasswd']),
             )
 
-        two_factor_config = await self.middleware.call('auth.twofactor.config')
-        if (
-            data.get(
-                'ssh_password_enabled', False
-            ) and two_factor_config['enabled'] and two_factor_config['services']['ssh']
-        ):
-            error = [
-                f'{schema}.ssh_password_enabled',
-                '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
-            ]
-            if old is None:
-                error[1] += (' User will be created with SSH password access disabled and after 2FA has been '
-                             'configured for this user, SSH password access can be enabled.')
-                verrors.add(*error)
-            elif (
-                await self.middleware.call('user.translate_username', old['username'])
-            )['twofactor_auth_configured'] is False:
-                verrors.add(*error)
+        if data.get('ssh_password_enabled'):
+            two_factor_config = await self.middleware.call('auth.twofactor.config')
+            if two_factor_config['enabled'] and two_factor_config['services']['ssh']:
+                error = [
+                    f'{schema}.ssh_password_enabled',
+                    '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
+                ]
+                if old is None:
+                    error[1] += (
+                        ' User will be created with SSH password access disabled and after 2FA has been '
+                        'configured for this user, SSH password access can be enabled.'
+                    )
+                    verrors.add(*error)
+                elif (
+                    await self.middleware.call('user.translate_username', old['username'])
+                )['twofactor_auth_configured'] is False:
+                    verrors.add(*error)
+            if combined['home'] == DEFAULT_HOME_PATH or combined['shell'] == NO_LOGIN_SHELL:
+                verrors.add(
+                    f'{schema}.ssh_password_enabled',
+                    'Cannot be enabled without a valid home path and login shell.'
+                )
 
     def __set_password(self, data):
         if 'password' not in data:

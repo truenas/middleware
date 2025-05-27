@@ -67,7 +67,7 @@ def smb_user():
         'group_create': True,
         'password': SMB_PASSWORD,
         'smb': True
-    }, get_instance=True) as u:
+    }) as u:
         yield u
 
 

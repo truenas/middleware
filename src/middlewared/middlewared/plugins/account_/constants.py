@@ -9,11 +9,10 @@ SKEL_PATH = '/etc/skel/'  # TODO evaluate whether this is still needed
 # 2) PAM checks for home directory existence
 # And so this default has been deprecated in favor of using /var/empty
 # which is an empty and immutable directory.
-LEGACY_DEFAULT_HOME_PATH = '/nonexistent'
 DEFAULT_HOME_PATH = '/var/empty'
-DEFAULT_HOME_PATHS = (DEFAULT_HOME_PATH, LEGACY_DEFAULT_HOME_PATH)
 MIDDLEWARE_PAM_SERVICE = '/etc/pam.d/middleware'
 MIDDLEWARE_PAM_API_KEY_SERVICE = '/etc/pam.d/middleware-api-key'
+NO_LOGIN_SHELL = '/usr/sbin/nologin'
 
 USERNS_IDMAP_DIRECT = -1
 USERNS_IDMAP_NONE = 0
@@ -40,7 +39,7 @@ SYNTHETIC_CONTAINER_ROOT = {
     'pw_gid': 2147000001,
     'pw_gecos': 'Unprivileged root user for containers',
     'pw_dir': '/var/empty',
-    'pw_shell': '/usr/sbin/nologin',
+    'pw_shell': NO_LOGIN_SHELL,
     'grouplist': None,
     'sid': None,
     'source': 'LOCAL',

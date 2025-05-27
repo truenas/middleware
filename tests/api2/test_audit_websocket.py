@@ -214,7 +214,6 @@ def test_valid_call():
                         "username": "sergey",
                         "full_name": "Sergey",
                         "group_create": True,
-                        "home": "/nonexistent",
                         "password": "********",
                         "home_create": True,
                     }
@@ -229,7 +228,6 @@ def test_valid_call():
             "username": "sergey",
             "full_name": "Sergey",
             "group_create": True,
-            "home": "/nonexistent",
             "password": "password",
         }):
             pass
