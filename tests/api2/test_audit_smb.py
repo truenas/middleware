@@ -48,6 +48,8 @@ def test_smb_share_audit(smb_audit_dataset):
         payload = {
             "comment": "My Test Share",
             "path": smb_share_path,
+            "options": {},
+            "purpose": "DEFAULT_SHARE",
             "name": "audit_share"
         }
         with expect_audit_method_calls([{
@@ -59,7 +61,8 @@ def test_smb_share_audit(smb_audit_dataset):
 
         # UPDATE
         payload = {
-            "ro": True 
+            "purpose": "DEFAULT_SHARE",
+            "options": {"aapl_name_mangling": True}
         }
         with expect_audit_method_calls([{
             'method': 'sharing.smb.update',

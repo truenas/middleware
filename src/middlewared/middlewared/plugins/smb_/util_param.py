@@ -35,22 +35,28 @@ AUX_PARAM_BLACKLIST = frozenset([
 
 
 def smbconf_getparm_lpctx(parm, section):
+    """ Retrieve a SMB configuration option from the specified smb.conf section """
     with LP_CTX_LOCK:
-        LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.platform())
-        shares = set([s.casefold() for s in LP_CTX.services()])
+        lp_ctx = param.LoadParm(SMBPath.GLOBALCONF.path)
+        shares = set(s.casefold() for s in lp_ctx.services())
         if section.upper() != 'GLOBAL' and section.casefold() not in shares:
-            raise CallError(f'{section}: share does not exist in running configuration', errno.ENOENT)
+            raise CallError(
+                f'{section}: share does not exist in running configuration',
+                errno.ENOENT
+            )
 
-        return LP_CTX.get(parm, section)
+        return lp_ctx.get(parm, section)
 
 
 def smbconf_list_shares() -> list[str]:
+    """ List all shares in the running SMB configuration """
     with LP_CTX_LOCK:
-        LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.platform())
-        return LP_CTX.services()
+        lp_ctx = param.LoadParm(SMBPath.GLOBALCONF.path)
+        return lp_ctx.services()
 
 
 def smbconf_getparm(parm, section='GLOBAL'):
+    """ Wrapper to get configuration from the running loadparm context. """
     return smbconf_getparm_lpctx(parm, section)
 
 
@@ -62,7 +68,7 @@ def lpctx_validate_parm(parm, value, section):
     WARNING: lib/param doesn't validate params containing a colon
     """
     with LP_CTX_LOCK:
-        testconf = param.LoadParm(SMBPath.STUBCONF.platform())
+        testconf = param.LoadParm(SMBPath.STUBCONF.path)
         if section == 'GLOBAL':
             # Using param.set allows validation of parameter contents
             # which helps avoid certain types of foot-shooting
@@ -81,4 +87,4 @@ def smbconf_sanity_check() -> None:
     """
 
     with LP_CTX_LOCK:
-        param.LoadParm(SMBPath.GLOBALCONF.platform())
+        param.LoadParm(SMBPath.GLOBALCONF.path)

@@ -1,6 +1,6 @@
 import os
-import tdb
 import struct
+import tdb
 
 from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
@@ -40,7 +40,7 @@ MAPPED_WELL_KNOWN_SIDS_CNT = len([s for s in WellKnownSid if s.valid_for_mapping
 # exceed the space we've reserved in tdb file for them.
 assert MAPPED_WELL_KNOWN_SIDS_CNT + len(WINBINDD_AUTO_ALLOCATED) < WINBINDD_WELL_KNOWN_PADDING
 
-WINBIND_IDMAP_CACHE = f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb'
+WINBIND_IDMAP_CACHE = f'{SMBPath.CACHE_DIR.path}/winbindd_cache.tdb'
 WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 
 
@@ -186,7 +186,7 @@ class SMBService(Service):
 
     @private
     def initialize_idmap_tdb(self, low_range):
-        tdb_path = f'{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb'
+        tdb_path = f'{SMBPath.STATEDIR.path}/winbindd_idmap.tdb'
         tdb_flags = tdb.DEFAULT
         open_flags = os.O_CREAT | os.O_RDWR
 
@@ -234,7 +234,7 @@ class SMBService(Service):
         builtins = self.middleware.call_sync('idmap.builtins')
 
         try:
-            tdb_handle = tdb.open(f"{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb")
+            tdb_handle = tdb.open(f"{SMBPath.STATEDIR.path}/winbindd_idmap.tdb")
         except FileNotFoundError:
             tdb_handle = self.initialize_idmap_tdb(low_range)
             if not tdb_handle:
@@ -286,9 +286,6 @@ class SMBService(Service):
 
         finally:
             tdb_handle.close()
-
-        if must_reload:
-            self.middleware.call_sync('idmap.snapshot_samba4_dataset')
 
         return must_reload
 
@@ -425,7 +422,7 @@ class SMBService(Service):
 
     @private
     @job(lock="groupmap_sync", lock_queue_size=1)
-    def synchronize_group_mappings(self, job, bypass_sentinel_check=False):
+    def synchronize_group_mappings(self, group_job, bypass_sentinel_check=False):
         """
         This method does the following:
         1) ensures that group_mapping.tdb has all required groupmap entries
@@ -471,7 +468,7 @@ class SMBService(Service):
                 delete_groupmap_entry(
                     GroupmapFile.DEFAULT,
                     GroupmapEntryType.GROUP_MAPPING,
-                    sid=entry['sid'],
+                    entry_sid=entry['sid'],
                 )
             except Exception:
                 self.logger.warning('%s: failed to remove group mapping', entry['sid'], exc_info=True)
@@ -526,19 +523,19 @@ class SMBService(Service):
 
         for share in self.middleware.call_sync('sharing.smb.query'):
             acl = self.middleware.call_sync('smb.sharesec.getacl', share['name'])['share_acl']
-            acl_sids = set([ace['ae_who_sid'] for ace in acl])
+            acl_sids = set(ace['ae_who_sid'] for ace in acl)
 
             if not set_reject_sids & acl_sids:
                 # the share ACL does not use any of the affected SIDs.
                 continue
 
-            for idx, ace in enumerate(acl):
+            for ace in acl:
                 if (entry := rejects.get(ace['ae_who_sid'])) is None:
                     continue
 
                 if entry['new_sid'] is None:
                     self.logger.warning(
-                        'Share ACL entry [%d] references SID [%s] which at one point mapped to '
+                        'Share ACL entry [%s] references SID [%s] which at one point mapped to '
                         'a local group with gid [%d] that no longer exists.',
                         share['name'], ace['ae_who_sid'], entry['gid']
                     )

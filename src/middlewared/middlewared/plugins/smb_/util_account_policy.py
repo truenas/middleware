@@ -1,6 +1,6 @@
 import enum
-import subprocess
 
+from subprocess import run
 from .constants import SMBCmd
 
 
@@ -24,7 +24,7 @@ class SMBAccountPolicy(enum.StrEnum):
 
 
 def get_account_policy(policy: SMBAccountPolicy) -> int:
-    rv = subprocess.run([SMBCmd.PDBEDIT.value, '-P', str(policy)], capture_output=True)
+    rv = run([SMBCmd.PDBEDIT.value, '-P', str(policy)], capture_output=True, check=False)
     if rv.returncode:
         raise RuntimeError(f'{policy}: Failed to get account policy: {rv.stderr.decode()}')
 
@@ -33,7 +33,7 @@ def get_account_policy(policy: SMBAccountPolicy) -> int:
 
 
 def set_account_policy(policy: SMBAccountPolicy, value: int) -> None:
-    rv = subprocess.run([SMBCmd.PDBEDIT.value, '-P', str(policy), '-C', str(value)], capture_output=True)
+    rv = run([SMBCmd.PDBEDIT.value, '-P', str(policy), '-C', str(value)], capture_output=True, check=False)
     if rv.returncode:
         raise RuntimeError(f'Failed to set {policy} to {value}: {rv.stderr.decode()}')
 
