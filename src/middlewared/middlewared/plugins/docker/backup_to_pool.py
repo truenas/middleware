@@ -2,7 +2,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, job, private, Service, ValidationErrors
 
 from .utils import applications_ds_name
 
@@ -26,10 +26,26 @@ class DockerService(Service):
         This creates a backup of existing apps on the `target_pool` specified. If this is executed multiple times,
         in the next iteration it will incrementally backup the apps that have changed since the last backup.
         """
+        verrors = ValidationErrors()
         docker_config = await self.middleware.call('docker.config')
         if docker_config['pool'] is None:
-            raise CallError('Docker is not configured', errno=errno.EINVAL)
+            verrors.add('pool', 'Docker is not configured to use a pool')
 
+        if target_pool == docker_config['pool']:
+            verrors.add('target_pool', 'Target pool cannot be the same as the current Docker pool')
+
+        target_root_ds = await self.middleware.call('pool.dataset.query', [['id', '=', target_pool]], {
+            'extra': {
+                'retrieve_children': False,
+                'properties': ['encryption', 'keystatus', 'mountpoint', 'keyformat', 'encryptionroot'],
+            }
+        })
+        if not target_root_ds:
+            verrors.add('target_pool', 'Target pool does not exist')
+
+        # FIXME: See if we want to allow replicating to encrypted pool
+
+        verrors.check()
         # TODO: See how locking plays a role here
         if not await self.middleware.call('pool.query', [['name', '=', target_pool]]):
             raise CallError(f'{target_pool!r} pool does not exist', errno=errno.ENOENT)
