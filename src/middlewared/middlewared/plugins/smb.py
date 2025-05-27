@@ -56,6 +56,9 @@ from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose
 from middlewared.utils.tdb import TDBError
 
 
+BASE_SHARE_PARAMS = frozenset(['enabled', 'comment', 'ro', 'browsable', 'abe', 'aapl_name_mangling', 'audit',])
+
+
 class SMBModel(sa.Model):
     __tablename__ = 'services_cifs'
 
@@ -654,6 +657,10 @@ class SharingSMBModel(sa.Model):
     cifs_share_acl = sa.Column(sa.Text())
     cifs_afp = sa.Column(sa.Boolean())
     cifs_audit = sa.Column(sa.JSON(dict), default=SMB_AUDIT_DEFAULTS)
+    cifs_auto_quota = sa.Column(sa.Int())
+    cifs_auto_snapshot = sa.Column(sa.Boolean())
+    cifs_auto_dataset_creation = sa.Column(sa.Boolean())
+    cifs_worm_grace_period = sa.Column(sa.Int())
 
 
 class SharingSMBService(SharingService):
@@ -1266,39 +1273,76 @@ class SharingSMBService(SharingService):
         )
 
     @private
-    async def add_path_local(self, data):
-        data['path_local'] = data['path']
-        return data
-
-    @private
     async def extend(self, data):
-        data['hostsallow'] = data['hostsallow'].split()
-        data['hostsdeny'] = data['hostsdeny'].split()
-        if data['fsrvp']:
-            data['shadowcopy'] = True
+        out = {}
+        for key in BASE_SHARE_PARAMS:
+            out[key] = data.pop(param)
 
-        if 'share_acl' in data:
-            data.pop('share_acl')
+        out['options'] = {}
+
+        match data['purpose']:
+            case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE:
+                pass
+            case SMBSharePurpose.TIMEMACHINE:
+                out['options'] = {
+                    'auto_snapshot': data['auto_snapshot'], 
+                    'auto_dataset_creation': data['auto_dataset_creation'],
+                    'dataset_naming_schema': data['path_suffix'] or None
+                }
+
+            case SMBSharePurpose.WORM_SHARE:
+                out['options'] = {
+                    'grace_period': data['worm_grace_period'],
+                }
+            case SMBSharePurpose.PRIVATE_DATASET_SHARE:
+                out['options'] = {
+                    'dataset_naming_schema': data['path_suffix'] or None,
+                    'auto_quota': data['auto_quota']
+                }
+            case SMBSharePurpose.EXTERNAL_SHARE:
+                if out['path'].startswith('EXTERNAL:'):
+                    remote_path = out['path'][len('EXTERNAL:'):].split(',')
+                else:
+                    remote_path = None
+
+                out['options'] = {
+                    'remote_path': remote_path, 
+                }
+                out['path'] = 'EXTERNAL'
+            case SMBSharePurpose.LEGACY_SHARE | SMBSharePurpose.NO_PRESET:
+                # catchall for all of old options
+                data.pop('share_acl', None)
+                data['hostsallow'] = data['hostsallow'].split()
+                data['hostsdeny'] = data['hostsdeny'].split()
+                out['options'] = data
 
         for key, val in [('enable', False), ('watch_list', []), ('ignore_list', [])]:
-            if key not in data['audit']:
-                data['audit'][key] = val
+            if key not in out['audit']:
+                out['audit'][key] = val
 
-        if data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
-            # backstop to ensure all checks for time machine being enabled succeed
-            data['timemachine'] = True
-
-        return await self.add_path_local(data)
+        return out
 
     @private
     async def compress(self, data_in):
-        original_aux = data_in['auxsmbconf']
-        data['hostsallow'] = ' '.join(data['hostsallow'])
-        data['hostsdeny'] = ' '.join(data['hostsdeny'])
-        data.pop(self.locked_field, None)
-        data.pop('path_local', None)
-        data['auxsmbconf'] = original_aux
+        data = data_in.copy()
+        opts = data.pop('options', {})
 
+        if 'dataset_naming_context' in opts:
+            data['path_suffix'] = opts.pop('dataset_naming_context', None)
+
+        match data['purpose']:
+            case SMBSharePurpose.LEGACY_SHARE | SMBSharePurpose.NO_PRESET:
+                data['hostsallow'] = ' '.join(opts.pop('hostsallow', []))
+                data['hostsdeny'] = ' '.join(opts.pop('hostsdeny', []))
+            case SMBSharePurpose.WORM_SHARE:
+                data['worm_grace_period'] = opts.pop('grace_period', 900)
+            case SMBSharePurpose.EXTERNAL_SHARE:
+                data['path'] = f'EXTERNAL:{",".join(opts.pop("remote_path", []))}'
+            case _:
+                pass
+
+        data.pop(self.locked_field, None)
+        data.update(opts)
         return data
 
     @api_method(SmbSharePresetsArgs, SmbSharePresetsResult, roles=['SHARING_SMB_READ'])
