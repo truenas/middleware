@@ -3,9 +3,10 @@ from middlewared.api.current import (
     PoolSnapshotEntry, PoolSnapshotCloneArgs, PoolSnapshotCloneResult, PoolSnapshotCreateArgs,
     PoolSnapshotCreateResult, PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult, PoolSnapshotHoldArgs,
     PoolSnapshotHoldResult, PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, PoolSnapshotRollbackArgs,
-    PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult
+    PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult, PoolSnapshotRenameArgs,
+    PoolSnapshotRenameResult,
 )
-from middlewared.service import CRUDService, filterable_api_method
+from middlewared.service import CRUDService, filterable_api_method, ValidationError, ValidationErrors
 
 
 class PoolSnapshotService(CRUDService):
@@ -85,3 +86,39 @@ class PoolSnapshotService(CRUDService):
             recursive=options['recursive']
         )  # TODO: Events won't be sent for child snapshots in recursive delete
         return result
+
+    @api_method(
+        PoolSnapshotRenameArgs,
+        PoolSnapshotRenameResult,
+        audit='Pool snapshot rename from',
+        audit_extended=lambda id_, new_name: f'{id_!r} to {new_name!r}',
+        roles=['SNAPSHOT_WRITE']
+    )
+    async def rename(self, id_, options):
+        """
+        Rename a snapshot `id` to `new_name`.
+
+        No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
+        as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.
+
+        Proceed only if you are certain the ZFS resource is not in use and fully understand the risks.
+        Set Force to continue.
+        """
+        if not options['force']:
+            raise ValidationError(
+                'pool.snapshot.rename.force',
+                'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
+                'If you understand the risks, please set force and proceed.'
+            )
+
+        verrors = ValidationErrors()
+        new_name = options['new_name']
+        if new_name.split('@')[0] != id_.split('@')[0]:
+            verrors.add(
+                'pool.snapshot.rename.new_name',
+                'Old and new snapshot must be part of the same ZFS dataset'
+            )
+
+        verrors.check()
+
+        await self.middleware.call('zfs.snapshot.rename', id_, new_name)

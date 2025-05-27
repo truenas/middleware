@@ -2,18 +2,26 @@ from abc import ABC
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, AfterValidator
+from pydantic import BeforeValidator, Field, AfterValidator
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 from middlewared.api.base import BaseModel, single_argument_args, NonEmptyString, NotRequired, Excluded, excluded_field
+from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 
 
 __all__ = [
     "PoolSnapshotEntry", "PoolSnapshotCloneArgs", "PoolSnapshotCloneResult", "PoolSnapshotCreateArgs",
     "PoolSnapshotCreateResult", "PoolSnapshotDeleteArgs", "PoolSnapshotDeleteResult", "PoolSnapshotHoldArgs",
     "PoolSnapshotHoldResult", "PoolSnapshotReleaseArgs", "PoolSnapshotReleaseResult", "PoolSnapshotRollbackArgs",
-    "PoolSnapshotRollbackResult", "PoolSnapshotUpdateArgs", "PoolSnapshotUpdateResult",
+    "PoolSnapshotRollbackResult", "PoolSnapshotUpdateArgs", "PoolSnapshotUpdateResult", "PoolSnapshotRenameArgs",
+    "PoolSnapshotRenameResult",
 ]
+
+
+def _validate_snapshot_name(v: str) -> str:
+    if not validate_snapshot_name(v):
+        raise ValueError('Please provide a valid snapshot name according to ZFS standards i.e <dataset>@<snapshot>')
+    return v
 
 
 def validate_snapshot_naming_schema_and_return(value: NonEmptyString):
@@ -22,6 +30,10 @@ def validate_snapshot_naming_schema_and_return(value: NonEmptyString):
 
 
 ReplicationSnapshotNamingSchema = Annotated[NonEmptyString, AfterValidator(validate_snapshot_naming_schema_and_return)]
+SNAPSHOT_NAME = Annotated[
+    NonEmptyString,
+    BeforeValidator(_validate_snapshot_name),
+]
 UserPropertyKey = Annotated[str, Field(pattern=r'.*:.*')]
 
 
@@ -194,3 +206,23 @@ class PoolSnapshotUpdateArgs(BaseModel):
 
 class PoolSnapshotUpdateResult(BaseModel):
     result: PoolSnapshotCreateUpdateEntry
+
+
+class PoolSnapshotRenameOptions(BaseModel):
+    new_name: SNAPSHOT_NAME
+    force: bool = False
+    '''
+    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt
+    SMB shares, iSCSI targets, snapshots, replication, and other services.
+
+    Set Force only if you understand and accept the risks.
+    '''
+
+
+class PoolSnapshotRenameArgs(BaseModel):
+    id: NonEmptyString
+    options: PoolSnapshotRenameOptions
+
+
+class PoolSnapshotRenameResult(BaseModel):
+    result: None

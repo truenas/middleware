@@ -19,7 +19,7 @@ def full_admin_user():
         'group_create': True,
         'email': NONMAIL_ADDR,
         'password': PASSWD
-    }, get_instance=False):
+    }):
         with user({
             'username': MAILUSER,
             'full_name': MAILUSER,
@@ -27,7 +27,7 @@ def full_admin_user():
             'email': MAILADDR,
             'group': ba_id,
             'password': PASSWD
-        }, get_instance=True) as u:
+        }) as u:
             yield u
 
 

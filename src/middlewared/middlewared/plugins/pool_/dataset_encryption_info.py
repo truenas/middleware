@@ -210,16 +210,17 @@ class PoolDatasetService(Service):
     @pass_thread_local_storage
     def path_in_locked_datasets(self, tls, path):
         """
-        This method checks whether any parent components of
-        a given path are locked. It returns True if a locked
-        component is found, otherwise False.
+        This method checks whether the path or any
+        parent components of said path are locked.
+        It returns True if a locked component is
+        found, otherwise False.
 
         Parameters:
             path (str): The filesystem path to be checked.
 
         Returns:
-            bool: True if any parent component of the path
-                is locked, False otherwise.
+            bool: True if the path or any parent component
+                of the path is locked, False otherwise.
 
         Raises:
             ZFSException/Exception: If an unexpected error occurs
@@ -232,7 +233,7 @@ class PoolDatasetService(Service):
         else:
             path = path.removeprefix('/mnt/')
 
-        for i in get_dataset_parents(path):
+        for i in [path.removesuffix('/')] + get_dataset_parents(path):
             try:
                 crypto = tls.lzh.open_resource(name=i).crypto()
                 if crypto and not crypto.info().key_is_loaded:

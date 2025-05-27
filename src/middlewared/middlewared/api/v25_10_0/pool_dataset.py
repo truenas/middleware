@@ -1,11 +1,13 @@
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import Field, Secret
+from pydantic import BeforeValidator, Field, Secret
 
 from middlewared.api.base import (
     BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result, ForUpdateMetaclass, Excluded,
     excluded_field
 )
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
+
 from .common import QueryFilters, QueryOptions
 from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 
@@ -27,11 +29,21 @@ __all__ = [
     "PoolDatasetSetQuotaResult", "PoolDatasetRecordSizeChoicesArgs", "PoolDatasetRecordSizeChoicesResult",
     "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
     "PoolDatasetDestroySnapshotsArgs", "PoolDatasetDestroySnapshotsResult", "PoolDatasetPromoteArgs",
-    "PoolDatasetPromoteResult",
+    "PoolDatasetPromoteResult", "PoolDatasetRenameArgs", "PoolDatasetRenameResult",
 ]
 
 
+def _validate_dataset_name(v: str) -> str:
+    if not validate_dataset_name(v):
+        raise ValueError('Please provide a valid dataset name according to ZFS standards')
+    return v
+
+
 ZFS_MAX_DATASET_NAME_LEN = 200  # It's really 256, but we should leave some space for snapshot names
+DATASET_NAME = Annotated[
+    NonEmptyString,
+    BeforeValidator(_validate_dataset_name),
+]
 
 
 class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
@@ -111,7 +123,7 @@ class PoolDatasetCreateUserProperty(BaseModel):
 
 
 class PoolDatasetCreate(BaseModel):
-    name: Annotated[str, Field(max_length=ZFS_MAX_DATASET_NAME_LEN)]
+    name: DATASET_NAME
     comments: str = "INHERIT"
     sync: Literal["STANDARD", "ALWAYS", "DISABLED", "INHERIT"] = "INHERIT"
     snapdev: Literal["HIDDEN", "VISIBLE", "INHERIT"] = NotRequired
@@ -580,3 +592,24 @@ class PoolDatasetUpdateArgs(BaseModel):
 
 class PoolDatasetUpdateResult(BaseModel):
     result: PoolDatasetEntry
+
+
+class PoolDatasetRenameOptions(BaseModel):
+    new_name: DATASET_NAME
+    recursive: bool = False
+    force: bool = False
+    '''
+    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt
+    SMB shares, iSCSI targets, snapshots, replication, and other services.
+
+    Set Force only if you understand and accept the risks.
+    '''
+
+
+class PoolDatasetRenameArgs(BaseModel):
+    id: NonEmptyString
+    data: PoolDatasetRenameOptions
+
+
+class PoolDatasetRenameResult(BaseModel):
+    result: None

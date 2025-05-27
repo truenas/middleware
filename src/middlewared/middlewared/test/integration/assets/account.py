@@ -3,26 +3,24 @@ import random
 import string
 import types
 
+import pytest
+
 from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 
 @contextlib.contextmanager
-def user(data, *, get_instance=True):
-    data.setdefault('home_create', True)  # create user homedir by default
+def user(data):
+    data.setdefault("home_create", True)  # create user homedir by default
 
     user = call("user.create", data)
     pk = user['id']
 
     try:
-        value = None
-
-        if get_instance:
-            value = user
-
-        yield value
+        yield user
     finally:
         try:
             call("user.delete", pk)
@@ -102,3 +100,41 @@ def root_with_password_disabled():
             # Restore root access on test failure
             c.call("datastore.update", "account.bsdusers", root_id, root_backup)
             c.call("etc.generate", "user")
+
+
+@pytest.fixture(scope="module")
+def test_user():
+    with user({
+        "username": "testuser",
+        "full_name": "testuser",
+        "group_create": True,
+        "password": "canary",
+    }) as entry:
+        yield entry
+
+
+@contextlib.contextmanager
+def temporary_update(user: dict, data: dict, with_audit: bool = False):
+    """Perform a call to user.update and roll it back on teardown.
+
+    Assume keys in `data` are a subset of the keys in `user`.
+
+    :param user: The user entry to update.
+    :param data: Fields to update with their new values.
+    :param with_audit: Verify the audit logs after the first user.update call.
+    """
+    try:
+        if with_audit:
+            with expect_audit_method_calls([{
+                "method": "user.update",
+                "params": [user["id"], data],
+                "description": f"Update user {user['username']}",
+            }]):
+                updated_user = call("user.update", user["id"], data)
+        else:
+            updated_user = call("user.update", user["id"], data)
+
+        yield updated_user
+
+    finally:
+        call("user.update", user["id"], {k: user[k] for k in data.keys() if k in user})

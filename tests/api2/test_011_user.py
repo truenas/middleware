@@ -645,7 +645,7 @@ def test_058_create_new_user_knownfails(request):
 
         with pytest.raises(ValidationErrors):
             # Attempting to put homedir in subdirectory of existing homedir
-            # should also rase validation error
+            # should also raise validation error
             user2.update({'home_create': True})
             call('user.create', user2)
 

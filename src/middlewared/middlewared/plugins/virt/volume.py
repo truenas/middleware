@@ -39,7 +39,7 @@ class VirtVolumeService(CRUDService):
 
             for storage_device in storage_devices['metadata']:
                 entries.append({
-                    'id': storage_device['name'],
+                    'id': f'{storage_pool}_{storage_device["name"]}',
                     'name': storage_device['name'],
                     'content_type': storage_device['content_type'].upper(),
                     'created_at': storage_device['created_at'],
@@ -76,14 +76,14 @@ class VirtVolumeService(CRUDService):
         ):
             # We will kick off recover here so that incus recognizes
             # this dataset as a volume already
-            await self.middleware.call('virt.global.recover', [
+            await (await self.middleware.call('virt.global.recover', [
                 {
                     'config': {'source': f'{target_pool}/.ix-virt'},
                     'description': '',
                     'name': storage_pool_to_incus_pool(target_pool),
                     'driver': 'zfs',
                 }
-            ])
+            ])).wait(raise_error=True)
             verrors.add('virt_volume_create.name', 'ZFS dataset against this volume name already exists')
 
         if target_pool not in global_config['storage_pools']:
@@ -107,7 +107,7 @@ class VirtVolumeService(CRUDService):
         if result.get('error') != '':
             raise CallError(f'Failed to create volume: {result["error"]}')
 
-        return await self.get_instance(data['name'])
+        return await self.get_instance(f'{target_pool}_{data["name"]}')
 
     @api_method(
         VirtVolumeUpdateArgs,
@@ -121,7 +121,7 @@ class VirtVolumeService(CRUDService):
             return volume
 
         pool = storage_pool_to_incus_pool(volume['storage_pool'])
-        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{name}', 'patch', {
+        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{volume["name"]}', 'patch', {
             'json': {
                 'config': {
                     'size': str(data['size'] * 1024 * 1024)
@@ -145,7 +145,7 @@ class VirtVolumeService(CRUDService):
             raise CallError(f'Volume {name!r} is in use by instances: {", ".join(volume["used_by"])}')
 
         pool = storage_pool_to_incus_pool(volume['storage_pool'])
-        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{name}', 'delete')
+        result = await incus_call(f'1.0/storage-pools/{pool}/volumes/custom/{volume["name"]}', 'delete')
         if result.get('status_code') != 200:
             raise CallError(f'Failed to delete volume: {result["error"]}')
 
@@ -162,11 +162,11 @@ class VirtVolumeService(CRUDService):
     async def import_iso(self, job, data):
         await self.middleware.call('virt.global.check_initialized')
         global_config = await self.middleware.call('virt.global.config')
-        target_pool = global_config['pool'] if not data['storage_pool'] else data['storage_pool']
-        if target_pool not in global_config['storage_pools']:
+        target_pool_ = global_config['pool'] if not data['storage_pool'] else data['storage_pool']
+        if target_pool_ not in global_config['storage_pools']:
             raise CallError('Not a valid storage pool')
 
-        target_pool = storage_pool_to_incus_pool(target_pool)
+        target_pool = storage_pool_to_incus_pool(target_pool_)
 
         if data['upload_iso']:
             job.check_pipe('input')
@@ -216,7 +216,7 @@ class VirtVolumeService(CRUDService):
         await incus_wait(response)
 
         job.set_progress(95, 'ISO successfully imported as incus volume')
-        return await self.get_instance(data['name'])
+        return await self.get_instance(f'{target_pool_}_{data["name"]}')
 
     @api_method(
         VirtVolumeImportZvolArgs,
@@ -329,7 +329,7 @@ class VirtVolumeService(CRUDService):
         # If this fails, our state cannot be cleanly rolled back.
         # admin will need to toggle virt.global enabled state
         job.set_progress(50, 'Updating backend database')
-        await self.middleware.call('virt.global.recover', recover_payload)
+        await (await self.middleware.call('virt.global.recover', recover_payload)).wait(raise_error=True)
 
         # At this point the zvols have been renamed and incus DB updated
         # but we still need to fix some volume-related metadata. The size
