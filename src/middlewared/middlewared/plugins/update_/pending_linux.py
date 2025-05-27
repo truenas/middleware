@@ -1,14 +1,9 @@
-# -*- coding=utf-8 -*-
 import json
 import os
-import subprocess
 
 from middlewared.service import private, Service
-
-from .utils import SCALE_MANIFEST_FILE, DOWNLOAD_UPDATE_FILE
+from .utils import can_update, SCALE_MANIFEST_FILE, DOWNLOAD_UPDATE_FILE
 from .utils_linux import mount_update
-
-run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
 
 
 class UpdateService(Service):
@@ -28,16 +23,18 @@ class UpdateService(Service):
             self.middleware.logger.error("Failed reading update", exc_info=True)
             return []
 
-        return [
-            {
-                "operation": "upgrade",
-                "old": {
-                    "name": "TrueNAS",
-                    "version": old_manifest["version"],
-                },
-                "new": {
-                    "name": "TrueNAS",
-                    "version": new_manifest["version"],
+        if can_update(old_manifest["version"], new_manifest["version"]):
+            return [
+                {
+                    "operation": "upgrade",
+                    "old": {
+                        "name": "TrueNAS",
+                        "version": old_manifest["version"],
+                    },
+                    "new": {
+                        "name": "TrueNAS",
+                        "version": new_manifest["version"],
+                    }
                 }
-            }
-        ]
+            ]
+        return []
