@@ -114,6 +114,3 @@ class ServiceUpdateArgs(BaseModel):
 class ServiceUpdateResult(BaseModel):
     result: int
     """The service ID."""
-
-
-

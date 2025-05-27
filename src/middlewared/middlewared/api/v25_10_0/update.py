@@ -88,7 +88,7 @@ class UpdateUpdate(BaseModel):
     reboot: bool = False
 
 
-###################   Args and Result models   #####################
+# ---------------   Args and Result models   ----------------- #
 
 
 class UpdateCheckAvailableArgs(BaseModel):

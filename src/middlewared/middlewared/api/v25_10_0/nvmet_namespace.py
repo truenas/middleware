@@ -36,7 +36,7 @@ class NVMetNamespaceEntry(BaseModel):
     Path to the device or file being used to implement the namespace.
 
     When `device_type` is:
-    
+
     * "ZVOL": `device_path` is e.g. "zvol/poolname/zvolname"
     * "FILE": `device_path` is e.g. "/mnt/poolmnt/path/to/file". The file will be created if necessary.
     """

@@ -272,7 +272,7 @@ class PoolUpdate(PoolCreate, metaclass=ForUpdateMetaclass):
     topology: PoolUpdateTopology
 
 
-######################   Args and Results   ######################
+# -----------------   Args and Results   -------------------- #
 
 
 @single_argument_args("options")

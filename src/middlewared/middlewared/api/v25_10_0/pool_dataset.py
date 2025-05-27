@@ -351,7 +351,7 @@ class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, me
     user_properties_update: list[PoolDatasetUpdateUserProperty]
 
 
-##############################   Args and Results   #############################################
+# --------------------   Args and Results   ------------------------ #
 
 
 class PoolDatasetAttachmentsArgs(BaseModel):

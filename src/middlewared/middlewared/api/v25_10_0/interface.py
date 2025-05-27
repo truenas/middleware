@@ -185,7 +185,7 @@ class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
 
 
-#####################   Args and Results   #####################
+# -------------------   Args and Results   ------------------- #
 
 
 class InterfaceBridgeMembersChoicesArgs(BaseModel):

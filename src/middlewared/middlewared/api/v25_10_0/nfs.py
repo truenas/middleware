@@ -9,7 +9,6 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     single_argument_args,
-    single_argument_result,
     TcpPort,
     exclude_tcp_ports,
 )
