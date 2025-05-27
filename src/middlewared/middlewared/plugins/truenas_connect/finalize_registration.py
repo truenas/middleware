@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 
 import jwt
@@ -8,7 +9,7 @@ from truenas_connect_utils.urls import get_registration_finalization_uri
 from middlewared.service import job, Service
 
 from .mixin import TNCAPIMixin
-from .utils import CLAIM_TOKEN_CACHE_KEY
+from .utils import calculate_sleep, CLAIM_TOKEN_CACHE_KEY
 
 
 logger = logging.getLogger('truenas_connect')
@@ -16,7 +17,7 @@ logger = logging.getLogger('truenas_connect')
 
 class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
 
-    POLLING_GAP_MINUTES = 1
+    BACKOFF_BASE_SLEEP = 5
 
     class Config:
         namespace = 'tn_connect.finalize'
@@ -30,6 +31,7 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
     @job(lock='tnc_finalize_registration')
     async def registration(self, job):
         logger.debug('Starting TNC registration finalization')
+        start_time = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
         config = await self.middleware.call('tn_connect.config')
         system_id = await self.middleware.call('system.global.id')
         try_num = 1
@@ -95,7 +97,9 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
             else:
                 logger.debug('TNC registration has not been finalized yet: %r', status['error'])
 
-            await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
+            sleep_secs = calculate_sleep(start_time, self.BACKOFF_BASE_SLEEP)
+            logger.debug('Waiting for %r seconds before attempting to finalize registration', sleep_secs)
+            await asyncio.sleep(sleep_secs)
             config = await self.middleware.call('tn_connect.config')
 
     async def poll_once(self, claim_token, system_id, tnc_config):
