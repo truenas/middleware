@@ -1307,7 +1307,7 @@ class SharingSMBService(SharingService):
         Retrieve pre-defined configuration sets for specific use-cases. These parameter
         combinations are often non-obvious, but beneficial in these scenarios.
         """
-        return {x.name: x.value for x in SMBSharePurpose}
+        return {x.name: {'verbose_name': x.value} for x in SMBSharePurpose}
 
     @api_method(
         SetSmbAclArgs, SetSmbAclResult,
