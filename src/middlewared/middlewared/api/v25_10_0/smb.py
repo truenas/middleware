@@ -476,7 +476,7 @@ class SmbShareEntry(BaseModel):
         {'enable': True, 'watch_list': ['interns'], 'ignore_list': []},
         {'enable': True, 'watch_list': [], 'ignore_list': ['automation']}
     ])
-    options: SmbShareOptions | None = Field(examples=[
+    options: SmbShareOptions | None = Field(default=None, examples=[
         {'auto_snapshot': True,},
         {'auto_quota': 100},
     ])
