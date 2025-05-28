@@ -22,23 +22,23 @@ __all__ = [
 class FailoverEntry(BaseModel):
     id: int
     disabled: bool
-    """When true HA will be administratively disabled."""
+    """When true, HA will be administratively disabled."""
     master: bool
-    """Marks the particular node in the chassis as the master node.
+    """Marks the particular node in the chassis as the master node. \
     The standby node will have the opposite value."""
     timeout: int
-    """The time to WAIT (in seconds) until a failover occurs when a network
-    event occurs on an interface that is marked critical for failover AND
-    HA is enabled and working appropriately. The default time to wait is
+    """The time to WAIT (in seconds) until a failover occurs when a network \
+    event occurs on an interface that is marked critical for failover AND \
+    HA is enabled and working appropriately. The default time to wait is \
     2 seconds.
 
-    **NOTE**
-        This setting does NOT effect the `disabled` or `master` parameters."""
+    **NOTE: This setting does NOT effect the `disabled` or `master` parameters.**
+    """
 
 
 class FailoverSyncToPeer(BaseModel):
     reboot: bool = False
-    """If set to True, will reboot the other controller."""
+    """Reboot the other controller."""
 
 
 class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
@@ -48,10 +48,10 @@ class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
 class FailoverUpgrade(BaseModel):
     train: NonEmptyString = NotRequired
     resume: bool = False
-    """Should be set to true if a previous call to this method returned a
-    `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed
-    with a warning and that warning is accepted. In that case, you also have
-    to set `resume_manual` to `true` if a previous call to this method was
+    """Should be set to true if a previous call to this method returned a \
+    `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed \
+    with a warning and that warning is accepted. In that case, you also have \
+    to set `resume_manual` to `true` if a previous call to this method was \
     performed using update file upload."""
     resume_manual: bool = False
 

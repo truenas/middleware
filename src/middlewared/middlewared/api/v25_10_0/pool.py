@@ -120,8 +120,8 @@ class PoolAttachment(BaseModel):
 
 
 class PoolCreateEncryptionOptions(BaseModel):
-    """Keys are stored by the system for automatic locking/unlocking on import/export of encrypted datasets. If that is
-    not desired, dataset should be created with a passphrase as a key."""
+    """Keys are stored by the system for automatic locking/unlocking on import/export of encrypted datasets. If that \
+    is not desired, dataset should be created with a passphrase as a key."""
     generate_key: bool = False
     """Automatically generate the key to be used for dataset encryption."""
     pbkdf2iters: int = Field(ge=100000, default=350000)
@@ -190,9 +190,9 @@ class PoolCreate(BaseModel):
     dedup_table_quota: Literal["AUTO", "CUSTOM", None] = "AUTO"
     dedup_table_quota_value: PositiveInt | None = None
     deduplication: Literal["ON", "VERIFY", "OFF", None] = None
-    """Make sure no block of data is duplicated in the pool. If set to `VERIFY` and two blocks have similar signatures,
-    byte-to-byte comparison is performed to ensure that the blcoks are identical. This should be used in special
-    circumstances as it carries a significant overhead."""
+    """Make sure no block of data is duplicated in the pool. If set to `VERIFY` and two blocks have similar \
+    signatures, byte-to-byte comparison is performed to ensure that the blcoks are identical. This should be used in \
+    special circumstances as it carries a significant overhead."""
     checksum: Literal[
         "ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3", None
     ] = None
@@ -272,7 +272,7 @@ class PoolUpdate(PoolCreate, metaclass=ForUpdateMetaclass):
     topology: PoolUpdateTopology
 
 
-######################   Args and Results   ######################
+# -----------------   Args and Results   -------------------- #
 
 
 @single_argument_args("options")

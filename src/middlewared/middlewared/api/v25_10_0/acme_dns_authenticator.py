@@ -44,11 +44,11 @@ class TrueNASConnectSchemaArgs(TrueNASConnectSchema):
 class CloudFlareSchema(BaseModel):
     authenticator: Literal['cloudflare']
     cloudflare_email: NonEmptyString | None = None
-    """Cloudflare Email"""
+    """Cloudflare Email."""
     api_key: Secret[NonEmptyString | None] = None
-    """API Key"""
+    """API Key."""
     api_token: Secret[NonEmptyString | None] = None
-    """API Token"""
+    """API Token."""
 
 
 @single_argument_args('attributes')
@@ -59,7 +59,7 @@ class CloudFlareSchemaArgs(CloudFlareSchema):
 class DigitalOceanSchema(BaseModel):
     authenticator: Literal['digitalocean']
     digitalocean_token: Secret[NonEmptyString]
-    """DigitalOcean Token"""
+    """DigitalOcean Token."""
 
 
 @single_argument_args('attributes')
@@ -70,13 +70,13 @@ class DigitalOceanSchemaArgs(DigitalOceanSchema):
 class OVHSchema(BaseModel):
     authenticator: Literal['OVH']
     application_key: NonEmptyString
-    """OVH Application Key"""
+    """OVH Application Key."""
     application_secret: NonEmptyString
-    """OVH Application Secret"""
+    """OVH Application Secret."""
     consumer_key: NonEmptyString
-    """OVH Consumer Key"""
+    """OVH Consumer Key."""
     endpoint: Literal[tuple(ENDPOINTS.keys())]
-    """OVH Endpoint"""
+    """OVH Endpoint."""
 
 
 @single_argument_args('attributes')
@@ -87,9 +87,9 @@ class OVHSchemaArgs(OVHSchema):
 class Route53Schema(BaseModel):
     authenticator: Literal['route53']
     access_key_id: NonEmptyString
-    """AWS Access Key ID"""
+    """AWS Access Key ID."""
     secret_access_key: NonEmptyString
-    """AWS Secret Access Key"""
+    """AWS Secret Access Key."""
 
 
 @single_argument_args('attributes')
@@ -100,13 +100,13 @@ class Route53SchemaArgs(Route53Schema):
 class ShellSchema(BaseModel):
     authenticator: Literal['shell']
     script: FilePathStr
-    """Authentication Script"""
+    """Authentication Script."""
     user: NonEmptyString = 'nobody'
-    """Running user"""
+    """Running user."""
     timeout: int = Field(ge=5, default=60)
-    """Script Timeout"""
+    """Script Timeout."""
     delay: int = Field(ge=10, default=60)
-    """Propagation delay"""
+    """Propagation delay."""
 
 
 @single_argument_args('attributes')

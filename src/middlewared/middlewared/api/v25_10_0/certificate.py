@@ -148,26 +148,18 @@ class CertificateCreateArgs(BaseModel):
     cert_extensions: CertificateExtensions = Field(default_factory=CertificateExtensions)
     # ACME related fields
     acme_directory_uri: NonEmptyString | None = None
-    '''
-    ACME directory URI to be used for ACME certificate creation.
-    '''
+    """ACME directory URI to be used for ACME certificate creation."""
     csr_id: int | None = None
-    '''
-    CSR to be used for ACME certificate creation.
-    '''
+    """CSR to be used for ACME certificate creation."""
     tos: bool | None = None
-    '''
-    Set this when creating an ACME certificate to accept terms of service of the ACME service.
-    '''
+    """Set this when creating an ACME certificate to accept terms of service of the ACME service."""
     dns_mapping: dict[str, int] = Field(default_factory=dict)
-    '''
-    A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the CSR.
-    '''
+    """A mapping of domain to ACME DNS Authenticator ID for each domain listed in SAN or common name of the CSR."""
     renew_days: int = Field(ge=1, le=30, default=10)
-    '''
-    Number of days before the certificate expiration date to attempt certificate renewal. If certificate renewal fails,
-    renewal will be reattempted every day until expiration.
-    '''
+    """
+    Number of days before the certificate expiration date to attempt certificate renewal. If certificate renewal \
+    fails, renewal will be reattempted every day until expiration.
+    """
 
 
 class CertificateCreateResult(BaseModel):

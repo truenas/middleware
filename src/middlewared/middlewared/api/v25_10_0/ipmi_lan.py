@@ -54,12 +54,12 @@ class IPMILanUpdateOptionsDHCP(BaseModel):
             ))
         ] | None
     ] = None
-    """The password to be applied. Must be between 8 and 16 characters long and
+    """The password to be applied. Must be between 8 and 16 characters long and \
     contain only ascii upper,lower, 0-9, and special characters."""
     vlan: Annotated[int, Field(ge=0, le=4096)] | None = None
     """The vlan tag number. A null value disables tagging."""
     apply_remote: bool = False
-    """If on an HA system, and this field is set to True,
+    """If on an HA system, and this field is set to True, \
     the settings will be sent to the remote controller."""
 
 

@@ -117,8 +117,8 @@ class InterfaceCommitOptions(BaseModel):
     rollback: bool = True
     """Roll back changes in case they fail to apply."""
     checkin_timeout: int = 60
-    """Number of seconds to wait for the checkin call to acknowledge the interface changes happened as planned from the
-    user. If checkin does not happen within this period of time, the changes will get reverted."""
+    """Number of seconds to wait for the checkin call to acknowledge the interface changes happened as planned from \
+    the user. If checkin does not happen within this period of time, the changes will get reverted."""
 
 
 class InterfaceCreateFailoverAlias(BaseModel):
@@ -185,7 +185,7 @@ class InterfaceUpdate(InterfaceCreate, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
 
 
-#####################   Args and Results   #####################
+# -------------------   Args and Results   ------------------- #
 
 
 class InterfaceBridgeMembersChoicesArgs(BaseModel):

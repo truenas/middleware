@@ -52,43 +52,43 @@ class Maintainer(BaseModel):
 
 class CatalogAppInfo(BaseModel):
     app_readme: LongString | None
-    '''HTML content of the app README.'''
+    """HTML content of the app README."""
     categories: list[str]
-    '''List of categories for the app.'''
+    """List of categories for the app."""
     description: str
-    '''Short description of the app.'''
+    """Short description of the app."""
     healthy: bool
-    '''Health status of the app.'''
+    """Health status of the app."""
     healthy_error: str | None = None
-    '''Error if app is not healthy.'''
+    """Error if app is not healthy."""
     home: str
-    '''Homepage URL of the app.'''
+    """Homepage URL of the app."""
     location: str
-    '''Local path to the app's location.'''
+    """Local path to the app's location."""
     latest_version: str | None
-    '''Latest available app version.'''
+    """Latest available app version."""
     latest_app_version: str | None
-    '''Latest available app version in repository.'''
+    """Latest available app version in repository."""
     latest_human_version: str | None
-    '''Human-readable version of the app.'''
+    """Human-readable version of the app."""
     last_update: datetime | None
-    '''Timestamp of the last update in ISO format.'''
+    """Timestamp of the last update in ISO format."""
     name: str
-    '''Name of the app.'''
+    """Name of the app."""
     recommended: bool
-    '''Indicates if the app is recommended.'''
+    """Indicates if the app is recommended."""
     title: str
-    '''Title of the app.'''
+    """Title of the app."""
     maintainers: list[Maintainer]
-    '''List of app maintainers.'''
+    """List of app maintainers."""
     tags: list[str]
-    '''Tags associated with the app.'''
+    """Tags associated with the app."""
     screenshots: list[str]
-    '''List of screenshot URLs.'''
+    """List of screenshot URLs."""
     sources: list[str]
-    '''List of source URLs.'''
+    """List of source URLs."""
     icon_url: str | None = None
-    '''URL of the app icon'''
+    """URL of the app icon."""
 
     # We do this because if we change anything in catalog.json, even older releases will
     # get this new field and different roles will start breaking due to this

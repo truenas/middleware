@@ -59,33 +59,38 @@ class MailSendMessage(BaseModel):
     """Time limit for connecting to the SMTP server in seconds."""
     attachments: bool = False
     """If set to true, an array compromised of the following object is required via HTTP upload:
-        - headers (array)
-            - name (string)
-            - value (string)
-            - params (object)
-        - content (string)
 
-        ```[
-         {
-          "headers": [
-           {
-            "name": "Content-Transfer-Encoding",
-            "value": "base64"
-           },
-           {
-            "name": "Content-Type",
-            "value": "application/octet-stream",
-            "params": {
-             "name": "test.txt"
-            }
-           }
-          ],
-          "content": "dGVzdAo="
-         }
-        ]```
+    * headers *(array)*
+
+        * name *(string)*
+        * value *(string)*
+        * params *(object)*
+
+    * content *(string)*
+
+    .. code-block:: json
+
+        [
+          {
+            "headers": [
+              {
+                "name": "Content-Transfer-Encoding",
+                "value": "base64"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/octet-stream",
+                "params": {
+                  "name": "test.txt"
+                }
+              }
+            ],
+            "content": "dGVzdAo="
+          }
+        ]
     """
     queue: bool = True
-    """Whether to queue the message to be sent later if it fails to send."""
+    """Queue the message to be sent later if it fails to send."""
     extra_headers: dict = NotRequired
     """Any additional headers to include in the email message."""
 
@@ -107,7 +112,7 @@ class MailSendArgs(BaseModel):
 
 class MailSendResult(BaseModel):
     result: bool
-    """Whether the message was sent successfully."""
+    """The message was sent successfully."""
 
 
 class MailLocalAdministratorEmailArgs(BaseModel):

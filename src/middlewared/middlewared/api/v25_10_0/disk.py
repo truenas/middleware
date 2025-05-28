@@ -57,15 +57,15 @@ class DiskEntry(BaseModel):
 
 class DiskDetails(BaseModel):
     join_partitions: bool = False
-    """When True will return all partitions currently
-    written to disk.
+    """Return all partitions currently written to disk.
 
-    NOTE: this is an expensive operation."""
+    **NOTE: This is an expensive operation.**
+    """
     type: Literal["USED", "UNUSED", "BOTH"] = "BOTH"
     """
-    If `USED`, only disks that are IN USE will be returned.
-    If `UNUSED`, only disks that are NOT IN USE are returned.
-    If `BOTH`, used and unused disks will be returned.
+    * `USED`: Only disks that are IN USE will be returned.
+    * `UNUSED`: Only disks that are NOT IN USE are returned.
+    * `BOTH`: Used and unused disks will be returned.
     """
 
 
@@ -95,10 +95,10 @@ class DiskDetailsResult(BaseModel):
 
 class DiskGetUsedArgs(BaseModel):
     join_partitions: bool = False
-    """When True will return all partitions currently
-    written to disk.
+    """Return all partitions currently written to disk.
 
-    NOTE: this is an expensive operation."""
+    **NOTE: this is an expensive operation.**
+    """
 
 
 class DiskGetUsedResult(BaseModel):
@@ -107,12 +107,11 @@ class DiskGetUsedResult(BaseModel):
 
 class DiskTemperaturesArgs(BaseModel):
     name: list[str] = Field(default_factory=list)
-    """List of names of disks to retrieve temperature
-    information. Name should be in the form of "sda",
-    "nvme0n1", etc"""
+    """
+    List of names of disks to retrieve temperature information. Name should be in the form of "sda", "nvme0n1", etc.
+    """
     include_thresholds: bool = False
-    """If true, will include the temperature thresholds
-    as reported by the disk (i.e. the critical temp)"""
+    """Include the temperature thresholds as reported by the disk (i.e. the critical temp)."""
 
 
 class DiskTemperaturesResult(BaseModel):
@@ -153,16 +152,15 @@ class DiskUpdateResult(BaseModel):
 
 class DiskWipeArgs(BaseModel):
     dev: NonEmptyString
-    """The device to perform the disk wipe operation on.
-    May be passed as /dev/sda or just sda."""
+    """The device to perform the disk wipe operation on. May be passed as /dev/sda or just sda."""
     mode: Literal["QUICK", "FULL", "FULL_RANDOM"]
     """
-    QUICK: write zeros to the first and last 32MB of device
-    FULL: write whole disk with zero's
-    FULL_RANDOM: write whole disk with random bytes
+    * QUICK: Write zeros to the first and last 32MB of device.
+    * FULL: Write whole disk with zeros.
+    * FULL_RANDOM: Write whole disk with random bytes.
     """
     synccache: bool = True
-    """If True, will synchronize the device with the database"""
+    """Synchronize the device with the database."""
 
 
 class DiskWipeResult(BaseModel):

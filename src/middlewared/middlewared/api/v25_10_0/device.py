@@ -47,7 +47,7 @@ class DeviceGetInfoDisk(BaseModel):
     get_partitions: bool = False
     """
     If set, query partition information for the disks.
-    NOTE: This can be expensive on systems with a large number of disks present.
+    **NOTE: This can be expensive on systems with a large number of disks present.**
     """
     serials_only: bool = False
     """If set, query _ONLY_ serial information for the disks (overrides `get_partitions`)."""

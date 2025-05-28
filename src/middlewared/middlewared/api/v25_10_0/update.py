@@ -20,8 +20,8 @@ class UpdateCheckAvailable(BaseModel):
 
 class UpdateFile(BaseModel):
     resume: bool = False
-    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning
-    that an upgrade can be performed with a warning and that warning is accepted. In that case, re-uploading the file
+    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning \
+    that an upgrade can be performed with a warning and that warning is accepted. In that case, re-uploading the file \
     is not necessary."""
     destination: str | None = None
     """Create a temporary location by default."""
@@ -30,10 +30,10 @@ class UpdateFile(BaseModel):
 class UpdateManual(BaseModel):
     dataset_name: str | None = None
     resume: bool = False
-    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning
+    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning \
     that an upgrade can be performed with a warning and that warning is accepted."""
     cleanup: bool = True
-    """If set to `false`, the manual update file won't be removed on update success and newly created BE won't be
+    """If set to `false`, the manual update file won't be removed on update success and newly created BE won't be \
     removed on update failure (useful for debugging purposes)."""
 
 
@@ -68,9 +68,9 @@ class UpdateStatusAvailable(BaseModel):
 class UpdateStatusUnavailable(BaseModel):
     status: Literal["REBOOT_REQUIRED", "HA_UNAVAILABLE", "UNAVAILABLE"]
     """
-    `REBOOT_REQUIRED`: An update has already been applied.
-    `UNAVAILABLE`: No update available.
-    `HA_UNAVAILABLE`: HA is non-functional.
+    * `REBOOT_REQUIRED`: An update has already been applied.
+    * `UNAVAILABLE`: No update available.
+    * `HA_UNAVAILABLE`: HA is non-functional.
     """
 
 
@@ -81,14 +81,14 @@ class UpdateTrain(BaseModel):
 class UpdateUpdate(BaseModel):
     dataset_name: str | None = None
     resume: bool = False
-    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning
-    that an upgrade can be performed with a warning and that warning is accepted. In that case, update process will be
-    continued using an already downloaded file without performing any extra checks."""
+    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning \
+    that an upgrade can be performed with a warning and that warning is accepted. In that case, update process will \
+    be continued using an already downloaded file without performing any extra checks."""
     train: str | None = None
     reboot: bool = False
 
 
-###################   Args and Result models   #####################
+# ---------------   Args and Result models   ----------------- #
 
 
 class UpdateCheckAvailableArgs(BaseModel):

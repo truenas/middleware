@@ -16,7 +16,7 @@ __all__ = [
 class ReplicationConfigEntry(BaseModel):
     id: int
     max_parallel_replication_tasks: int = Field(ge=1)
-    "A maximum number of parallel replication tasks running."
+    """A maximum number of parallel replication tasks running."""
 
 
 @single_argument_args("replication_config_update")
