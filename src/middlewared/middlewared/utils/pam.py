@@ -321,7 +321,7 @@ FAILLOCK_AUTH_FAIL = PAMLine(
 
 FAILLOCK_AUTH_SUCC = PAMLine(
     pam_service=PAMService.AUTH,
-    pam_control=PAMSimpleControl.SUFFICIENT,
+    pam_control=PAMSimpleControl.REQUIRED,
     pam_module=PAMModule.FAILLOCK,
     pam_module_args=(
         'authsucc',
