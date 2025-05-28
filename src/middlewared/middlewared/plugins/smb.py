@@ -1272,7 +1272,7 @@ class SharingSMBService(SharingService):
         match data['purpose']:
             case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE:
                 pass
-            case SMBSharePurpose.TIMEMACHINE:
+            case SMBSharePurpose.TIMEMACHINE_SHARE:
                 out['options'] = {
                     'auto_snapshot': data['auto_snapshot'], 
                     'auto_dataset_creation': data['auto_dataset_creation'],

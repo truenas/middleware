@@ -120,7 +120,7 @@ def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict
             elif share_config['options']['path_suffix']:
                 path_suffix = share_config['options']['path_suffix']
 
-        case SMBSharePurpose.TIMEMACHINE:
+        case SMBSharePurpose.TIMEMACHINE_SHARE:
             if share_config['options']['auto_dataset_creation']:
                 path_suffix = share_config['options']['dataset_naming_schema'] or default_path_suffix
 

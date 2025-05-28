@@ -79,7 +79,6 @@ class ShareSec(Service):
         """
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
         ACLs which can be viewed by calling `filesystem.getacl`.
-
         """
         if share_name.upper() == 'HOMES':
             share_filter = [['options.home', '=', True]]

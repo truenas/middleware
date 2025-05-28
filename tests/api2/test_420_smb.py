@@ -33,7 +33,7 @@ def smb_info():
             'password': PASSWD
         }, get_instance=False):
             with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
-                'purpose': 'NO_PRESET',
+                'purpose': 'LEGACY_SHARE',
             }) as s:
                 try:
                     call('smb.update', {
@@ -53,11 +53,11 @@ def smb_info():
 @pytest.fixture(scope='function')
 def enable_guest(smb_info):
     smb_id = smb_info['share']['id']
-    call('sharing.smb.update', smb_id, {'guestok': True})
+    call('sharing.smb.update', smb_id, {'options': {'guestok': True}})
     try:
         yield
     finally:
-        call('sharing.smb.update', smb_id, {'guestok': False})
+        call('sharing.smb.update', smb_id, {'options': {'guestok': False}})
 
 
 @pytest.fixture(scope='function')
@@ -85,12 +85,12 @@ def enable_smb1():
 @pytest.fixture(scope='function')
 def enable_recycle_bin(smb_info):
     smb_id = smb_info['share']['id']
-    call('sharing.smb.update', smb_id, {'recyclebin': True})
+    call('sharing.smb.update', smb_id, {'options': {'recyclebin': True}})
 
     try:
         yield
     finally:
-        call('sharing.smb.update', smb_id, {'recyclebin': False})
+        call('sharing.smb.update', smb_id, {'options': {'recyclebin': False}})
 
 
 @pytest.mark.parametrize('proto,runas', [
@@ -133,25 +133,25 @@ def test__basic_smb_ops(enable_smb1, enable_guest, proto, runas):
 def test__change_sharing_smd_home_to_true(smb_info):
     reset_systemd_svcs('smbd')
     smb_id = smb_info['share']['id']
-    share = call('sharing.smb.update', smb_id, {'home': True})
+    share = call('sharing.smb.update', smb_id, {'options': {'home': True}})
     try:
         share_path = call('smb.getparm', 'path', 'homes')
-        assert share_path == f'{share["path_local"]}/%U'
+        assert share_path == f'{share["path"]}/%U'
     finally:
-        new_info = call('sharing.smb.update', smb_id, {'home': False})
+        new_info = call('sharing.smb.update', smb_id, {'options': {'home': False}})
 
     share_path = call('smb.getparm', 'path', new_info['name'])
-    assert share_path == share['path_local']
+    assert share_path == share['path']
     obey_pam_restrictions = call('smb.getparm', 'obey pam restrictions', 'GLOBAL')
     assert obey_pam_restrictions is False
 
 
 def test__change_timemachine_to_true(enable_aapl, smb_info):
     smb_id = smb_info['share']['id']
-    call('sharing.smb.update', smb_id, {'timemachine': True})
+    call('sharing.smb.update', smb_id, {'purpose': 'TIMEMACHINE_SHARE', 'options': {}})
     try:
         share_info = call('sharing.smb.query', [['id', '=', smb_id]], {'get': True})
-        assert share_info['timemachine'] is True
+        assert share_info['purpose'] == 'TIMEMACHINE_SHARE' 
 
         enabled = call('smb.getparm', 'fruit:time machine', share_info['name'])
         assert enabled == 'True'
@@ -159,7 +159,7 @@ def test__change_timemachine_to_true(enable_aapl, smb_info):
         vfs_obj = call('smb.getparm', 'vfs objects', share_info['name'])
         assert 'fruit' in vfs_obj
     finally:
-        call('sharing.smb.update', smb_id, {'timemachine': False})
+        call('sharing.smb.update', smb_id, {'purpose': 'DEFAULT_SHARE'})
 
 
 def do_recycle_ops(c, has_subds=False):
@@ -224,8 +224,8 @@ def test__recyclebin_functional_test_subdir(smb_info, smb_config):
     with create_dataset(tmp_ds, {'share_type': 'SMB'}):
         ssh(f'mkdir {tmp_ds_path}')
         with smb_share(tmp_ds_path, tmp_share_name, {
-            'purpose': 'NO_PRESET',
-            'recyclebin': True
+            'purpose': 'LEGACY_SHARE',
+            'options': {'recyclebin': True},
         } | smb_config['share']):
             with smb_connection(
                 share=tmp_share_name,
@@ -244,8 +244,8 @@ def test__recyclebin_functional_test_subdir(smb_info, smb_config):
         ]
         ssh(';'.join(ops))
         with smb_share(tmp_ds_path, tmp_share_name, {
-            'purpose': 'NO_PRESET',
-            'recyclebin': True
+            'purpose': 'LEGACY_SHARE',
+            'options': {'recyclebin': True},
         } | smb_config['share']):
             with smb_connection(
                 share=tmp_share_name,
@@ -371,8 +371,8 @@ def test__audit_log(request):
 
     with make_dataset('smb-audit', data={'share_type': 'SMB'}) as ds:
         with smb_share(os.path.join('/mnt', ds), 'SMB_AUDIT', {
-            'purpose': 'NO_PRESET',
-            'guestok': True,
+            'purpose': 'LEGACY_SHARE',
+            'options': {'guestok': True},
             'audit': {'enable': True}
         }) as s:
             events = do_audit_ops(s['name'])
