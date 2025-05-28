@@ -211,6 +211,7 @@ class EtcService(Service):
             'entries': [
                 {'type': 'mako', 'path': 'pam.d/common-account'},
                 {'type': 'mako', 'path': 'pam.d/common-auth'},
+                {'type': 'mako', 'path': 'pam.d/common-auth-unix'},
                 {'type': 'mako', 'path': 'pam.d/common-password'},
                 {'type': 'mako', 'path': 'pam.d/common-session-noninteractive'},
                 {'type': 'mako', 'path': 'pam.d/common-session'},
