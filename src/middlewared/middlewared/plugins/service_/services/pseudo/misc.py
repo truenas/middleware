@@ -229,3 +229,10 @@ class NVMETargetService(PseudoServiceBase):
 
     async def failure_logs(self):
         return None
+
+
+class NVMfService(SimpleService):
+    name = "nvmf"
+    reloadable = True
+    etc = ["nvmet"]
+    systemd_unit = "ix-nvmf"
