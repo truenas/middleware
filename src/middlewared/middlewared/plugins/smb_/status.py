@@ -1,21 +1,24 @@
+import enum
+import json
+import subprocess
+
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SmbStatusArgs, SmbStatusResult,
+)
+
 from middlewared.schema import Bool, Dict, Ref, Str
 from middlewared.service import Service, accepts
 from middlewared.plugins.smb import SMBCmd
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
-import enum
-import json
-import subprocess
-
 
 class InfoLevel(enum.Enum):
-    AUTH_LOG = 'l'
     ALL = ''
     SESSIONS = 'p'
     SHARES = 'S'
     LOCKS = 'L'
-    BYTERANGE = 'B'
     NOTIFICATIONS = 'N'
 
 
@@ -25,19 +28,7 @@ class SMBService(Service):
         service = 'cifs'
         service_verb = 'restart'
 
-    @accepts(
-        Str('info_level', enum=[x.name for x in InfoLevel], default=InfoLevel.ALL.name),
-        Ref('query-filters'),
-        Ref('query-options'),
-        Dict(
-            'status_options',
-            Bool('verbose', default=True),
-            Bool('fast', default=False),
-            Str('restrict_user', default=''),
-            Str('restrict_session', default=''),
-            Bool('resolve_uids', default=True),
-        ), roles=['SHARING_SMB_WRITE', 'READONLY_ADMIN']
-    )
+    @api_method(SmbStatusArgs, SmbStatusResult, roles=['SHARING_SMB_WRITE', 'READONLY_ADMIN'])
     def status(self, info_level, filters, options, status_options):
         """
         Returns SMB server status (sessions, open files, locks, notifications).
@@ -58,12 +49,6 @@ class SMBService(Service):
         this information level will be removed in a future version.
         """
         lvl = InfoLevel[info_level]
-        if lvl == InfoLevel.AUTH_LOG:
-            return self.middleware.call_sync('audit.query', {
-                'services': ['SMB'],
-                'query-filters': filters + [['event', '=', 'AUTHENTICATION']],
-                'query-options': options
-            })
 
         """
         Apply some optimizations for case where filter is only asking
