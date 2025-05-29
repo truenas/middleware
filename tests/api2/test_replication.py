@@ -241,3 +241,26 @@ def test_run_onetime__exclude_mountpoint_property(exclude_mountpoint_property):
                     assert mountpoint == "legacy"
             finally:
                 ssh(f"zfs destroy -r {pool}/dst", check=False)
+
+
+def test_run_onetime__no_mount():
+    with dataset("src") as src:
+        ssh(f"zfs snapshot -r {src}@2022-01-01-00-00-00")
+
+        try:
+            call("replication.run_onetime", {
+                "direction": "PUSH",
+                "transport": "LOCAL",
+                "source_datasets": [src],
+                "target_dataset": f"{pool}/dst",
+                "recursive": True,
+                "also_include_naming_schema": ["%Y-%m-%d-%H-%M-%S"],
+                "retention_policy": "SOURCE",
+                "replicate": True,
+                "readonly": "IGNORE",
+                "mount": False,
+            }, job=True)
+
+            assert ssh(f"zfs get -H -o value mounted {pool}/dst").strip() == "no"
+        finally:
+            ssh(f"zfs destroy -r {pool}/dst", check=False)
