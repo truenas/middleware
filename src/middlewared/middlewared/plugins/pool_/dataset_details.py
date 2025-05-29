@@ -6,9 +6,11 @@ from middlewared.api.current import (
     PoolDatasetDetailsArgs,
     PoolDatasetDetailsResults,
 )
-from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import Service, private
 from middlewared.utils.mount import getmntinfo
+
+from .dataset_details_utils import CallbackState, details_callback
 
 
 class PoolDatasetService(Service):
@@ -16,70 +18,27 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @private
-    def build_filters_and_options(self):
-        options = {
-            'extra': {
-                'retrieve_user_props': True,
-                'flat': True,
-                'order_by': 'name',
-                'properties': [
-                    'used',
-                    'available',
-                    'usedbysnapshots',
-                    'usedbydataset',
-                    'usedbychildren',
-                    'refquota',
-                    'origin',
-                    TNUserProp.REFQUOTA_CRIT.value,
-                    TNUserProp.REFQUOTA_WARN.value,
-                    'quota',
-                    TNUserProp.QUOTA_CRIT.value,
-                    TNUserProp.QUOTA_WARN.value,
-                    'refreservation',
-                    'reservation',
-                    'mountpoint',
-                    'encryption',
-                    'encryptionroot',
-                    'keyformat',
-                    'keystatus',
-                    'volsize',
-                    'sync',
-                    'compression',
-                    'compressratio',
-                    'dedup',
-                ],
-                'snapshots_count': True,
-            }
-        }
-        # FIXME: this is querying boot-pool datasets
-        # because of how bad our pool.dataset.query API
-        # is designed. If boot pool has a few old BE's,
-        # then this endpoint slows down exponentially
-        # which makes sense, because we have like 10/11
-        # datasets on the boot drive. So multiply that
-        # value by number of BEs and you're asking ZFS
-        # for a bunch of unnecessary data.
-        # valid_pools = list()
-        # for i in query_imported_fast_impl().values():
-        #    if i['name'] not in BOOT_POOL_NAME_VALID:
-        #        valid_pools.append(i['name'])
-        return [], options
-
-    @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResults, roles=['DATASET_READ'])
-    def details(self):
+    @api_method(
+        PoolDatasetDetailsArgs,
+        PoolDatasetDetailsResults,
+        pass_thread_local_storage=True,
+        roles=['DATASET_READ']
+    )
+    def details(self, tls):
         """
         Retrieve all dataset(s) details outlining any
         services/tasks which might be consuming them.
         """
-        filters, options = self.build_filters_and_options()
-        datasets = self.middleware.call_sync('pool.dataset.query', filters, options)
+        state = CallbackState()
+        tls.lzh.iter_root_filesystems(
+            callback=details_callback,
+            state=state,
+        )
         mnt_info = getmntinfo()
         info = self.build_details(mnt_info)
-        for dataset in datasets:
+        for dataset in state.results:
             self.collapse_datasets(dataset, info, mnt_info)
-
-        return datasets
+        return state.results
 
     @private
     def normalize_dataset(self, dataset, info, mnt_info):
