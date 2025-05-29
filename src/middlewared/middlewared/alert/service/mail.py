@@ -1,15 +1,8 @@
 from middlewared.alert.base import AlertService
-from middlewared.schema import Dict, Str
 
 
 class MailAlertService(AlertService):
     title = "Email"
-
-    schema = Dict(
-        "mail_attributes",
-        Str("email", default=""),
-        strict=True,
-    )
 
     html = True
 

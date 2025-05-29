@@ -4,19 +4,11 @@ import html2text
 import requests
 
 from middlewared.alert.base import ProThreadedAlertService, ellipsis
-from middlewared.schema import Dict, Str
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
 class PagerDutyAlertService(ProThreadedAlertService):
     title = "PagerDuty"
-
-    schema = Dict(
-        "pagerduty_attributes",
-        Str("service_key", required=True, empty=False),
-        Str("client_name", required=True, empty=False),
-        strict=True,
-    )
 
     def create_alert(self, alert):
         r = requests.post(
