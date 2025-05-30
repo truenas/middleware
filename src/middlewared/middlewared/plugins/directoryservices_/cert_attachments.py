@@ -21,7 +21,7 @@ class DSCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
         return cert_id == ds_config['cred_ldap_mtls_cert_id']
 
-    async def redelpoy(self, cert_id):
+    async def redeploy(self, cert_id):
         await self.middleware.call('directoryservices.health.recover')
 
 
