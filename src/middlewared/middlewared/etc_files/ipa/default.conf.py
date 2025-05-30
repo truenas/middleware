@@ -11,9 +11,9 @@ def render(service, middleware, render_ctx):
 
     ipa_config = ds['configuration']
     return generate_ipa_default_config(
-        ds_config_to_fqdn(render_ctx['directoryservices.config']),
+        ds_config_to_fqdn(ds['directoryservices.config']),
         ipa_config['basedn'],
         ipa_config['domain'].lower(),
-        ipa_config['kerberos_realm'],
+        ds['kerberos_realm'],
         ipa_config['target_server']
     )
