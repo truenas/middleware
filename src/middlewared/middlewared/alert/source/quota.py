@@ -2,13 +2,9 @@ from datetime import timedelta
 import logging
 import os
 
-try:
-    from bsd import getmntinfo
-except ImportError:
-    getmntinfo = None
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils.mount import getmntinfo
 from middlewared.utils.size import format_size
 from middlewared.plugins.zfs_.utils import TNUserProp
 
@@ -35,18 +31,18 @@ class QuotaAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
 
-        datasets = self.middleware.call_sync("zfs.dataset.query_for_quota_alert")
+        datasets = self.middleware.call_sync("pool.dataset.query_for_quota_alert")
 
         pool_sizes = {}
         for d in datasets:
             d["name"] = d["name"]["rawvalue"]
 
             if "/" not in d["name"]:
-                pool_sizes[d["name"]] = int(d["available"]["rawvalue"]) + int(d["used"]["rawvalue"])
+                pool_sizes[d["name"]] = d["available"]["parsed"] + d["used"]["parsed"]
 
             for k, default in TNUserProp.quotas():
                 try:
-                    d[k] = int(d[k]["rawvalue"])
+                    d[k] = int(d[k]["value"])
                 except (KeyError, ValueError):
                     d[k] = default
 
@@ -54,8 +50,9 @@ class QuotaAlertSource(ThreadedAlertSource):
         # for every dataset that could be potentially be out of quota...
         hostname = self.middleware.call_sync("system.hostname")
         datasets = sorted(datasets, key=lambda ds: ds["name"])
+        mntinfo = getmntinfo()
         for dataset in datasets:
-            for quota_property in ["quota", "refquota"]:
+            for quota_property in ("quota", "refquota"):
                 warn_prop = TNUserProp[f"{quota_property.upper()}_WARN"]
                 crit_prop = TNUserProp[f"{quota_property.upper()}_CRIT"]
                 try:
@@ -69,10 +66,11 @@ class QuotaAlertSource(ThreadedAlertSource):
                 if quota_property == "quota":
                     # We can't use "used" property since it includes refreservation
 
-                    # But if "refquota" is smaller than "quota", then "available" will be reported with regards to
-                    # that smaller value, and we will get false positive
+                    # But if "refquota" is smaller than "quota", then "available"
+                    # will be reported with regards to that smaller value, and we
+                    # will get false positive
                     try:
-                        refquota_value = int(dataset["refquota"]["rawvalue"])
+                        refquota_value = dataset["refquota"]["value"]
                     except (AttributeError, KeyError, ValueError):
                         continue
                     else:
@@ -84,14 +82,11 @@ class QuotaAlertSource(ThreadedAlertSource):
                     if quota_value > pool_sizes[dataset["name"].split("/")[0]]:
                         continue
 
-                    used = quota_value - int(dataset["available"]["rawvalue"])
+                    used = quota_value - dataset["available"]["parsed"]
                 elif quota_property == "refquota":
-                    used = int(dataset["usedbydataset"]["rawvalue"])
-                else:
-                    raise RuntimeError()
+                    used = dataset["usedbydataset"]["parsed"]
 
                 used_fraction = 100 * used / quota_value
-
                 critical_threshold = dataset[crit_prop.value]
                 warning_threshold = dataset[warn_prop.value]
                 if critical_threshold != 0 and used_fraction >= critical_threshold:
@@ -111,12 +106,10 @@ class QuotaAlertSource(ThreadedAlertSource):
                 }
 
                 mail = None
-                owner = self._get_owner(dataset)
+                owner = self._get_owner(dataset, mntinfo)
                 if owner != 0:
                     try:
-                        self.middleware.call_sync(
-                            'user.get_user_obj', {'uid': owner}
-                        )
+                        self.middleware.call_sync('user.get_user_obj', {'uid': owner})
                     except KeyError:
                         to = None
                         logger.debug("Unable to query user with uid %r", owner)
@@ -148,16 +141,16 @@ class QuotaAlertSource(ThreadedAlertSource):
 
         return alerts
 
-    def _get_owner(self, dataset):
+    def _get_owner(self, dataset, mntinfo):
         mountpoint = None
-        if dataset["mounted"]["value"] == "yes":
-            if dataset["mountpoint"]["value"] == "legacy":
-                for m in (getmntinfo() if getmntinfo else []):
-                    if m.source == dataset["name"]:
-                        mountpoint = m.dest
+        if dataset["mounted"]["rawvalue"] == "yes":
+            if dataset["mountpoint"]["rawvalue"] == "legacy":
+                for v in mntinfo.values():
+                    if v["mount_source"] == dataset["name"]["rawvalue"]:
+                        mountpoint = v["mountpoint"]
                         break
             else:
-                mountpoint = dataset["mountpoint"]["value"]
+                mountpoint = dataset["mountpoint"]["rawvalue"]
         if mountpoint is None:
             logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root", dataset["name"])
             uid = 0
@@ -169,5 +162,4 @@ class QuotaAlertSource(ThreadedAlertSource):
                 uid = 0
             else:
                 uid = stat_info.st_uid
-
         return uid

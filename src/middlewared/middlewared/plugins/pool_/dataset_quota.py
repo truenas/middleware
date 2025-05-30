@@ -5,6 +5,7 @@ from middlewared.api.current import (
     PoolDatasetSetQuotaArgs,
     PoolDatasetSetQuotaResult
 )
+from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service import private, Service
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import ValidationError
@@ -44,10 +45,77 @@ def quota_cb(quota, state):
     })
 
 
+def quota_alert_cb(hdl, state):
+    if hdl.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME:
+        return True
+
+    info = hdl.asdict(
+        properties={
+            truenas_pylibzfs.ZFSProperty.USED,
+            truenas_pylibzfs.ZFSProperty.USEDDS,
+            truenas_pylibzfs.ZFSProperty.QUOTA,
+            truenas_pylibzfs.ZFSProperty.REFQUOTA,
+            truenas_pylibzfs.ZFSProperty.AVAILABLE,
+            truenas_pylibzfs.ZFSProperty.MOUNTED,
+            truenas_pylibzfs.ZFSProperty.MOUNTPOINT,
+        },
+        get_user_properties=True,
+        get_source=True,
+    )
+    normalized_entry = {
+        "name": {
+            "pasred": hdl.name,
+            "rawvalue": hdl.name,
+            "value": hdl.name,
+            "source": "NONE",
+            "source_info": None,
+        }
+    }
+    for i in (
+        TNUserProp.QUOTA_WARN.value,
+        TNUserProp.QUOTA_CRIT.value,
+        TNUserProp.REFQUOTA_WARN.value,
+        TNUserProp.REFQUOTA_CRIT.value,
+    ):
+        if val := info['user_properties'].get(i, None):
+            normalized_entry.update({
+                i: {
+                    "parsed": val,
+                    "rawvalue": val,
+                    "value": val,
+                    "source": "LOCAL",
+                    "source_info": None,
+                }
+            })
+    for zfs_prop_name, vdict in info['properties'].items():
+        normalized_entry.update({
+            zfs_prop_name: {
+                "parsed": vdict["value"],
+                "rawvalue": vdict["raw"],
+                "value": vdict["raw"].upper(),
+                "source": truenas_pylibzfs.PropertySource(vdict["source"]["type"]).name,
+                "source_info": vdict["source"]["value"],
+            }
+        })
+    state.append(normalized_entry)
+    hdl.iter_filesystems(callback=quota_alert_cb, state=state, fast=True)
+    return True
+
+
 class PoolDatasetService(Service):
 
     class Config:
         namespace = 'pool.dataset'
+
+    @private
+    @pass_thread_local_storage
+    def query_for_quota_alert(self, tls):
+        """Called, at time of writing, exclusively
+        by our alert system to inform users of quota
+        thresholds."""
+        state = list()
+        tls.lzh.iter_root_filesystems(callback=quota_alert_cb, state=state)
+        return state
 
     @pass_thread_local_storage
     @private
