@@ -4,7 +4,7 @@
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.utils.directoryservices import ldap_constants as constants
     from middlewared.utils.directoryservices import ldap_utils as utils
-    from middlewared.utils.directoryservices.constants import DSType
+    from middlewared.utils.directoryservices.constants import DSCredType, DSType
 
     ds_type = middleware.call_sync('directoryservices.status')['type']
     ds_config = middleware.call_sync('directoryservices.config')
@@ -15,7 +15,7 @@
         search_params = utils.search_base_data_to_params(ds_config['configuration']['search_bases'])
         min_uid = 1000
         certpath = None
-        if ds_config['credential']['credential_type'] == 'LDAP_MTLS':
+        if ds_config['credential']['credential_type'] == DSCredType.LDAP_MTLS:
             try:
                 cert = middleware.call_sync('certificate.query', [
                     ('cert_name', '=', ds_config['credential']['client_certificate'])
@@ -67,7 +67,7 @@ ldap_tls_cert = ${certpath}
 ldap_tls_key = ${keypath}
 % endif
 ldap_tls_reqcert = ${'demand' if ds_config['configuration']['validate_certificates'] else 'allow'}
-% if ds_config['credential']['credential_type'] == 'LDAP_PLAIN':
+% if ds_config['credential']['credential_type'] == DSCredType.LDAP_PLAIN:
 ldap_default_bind_dn = ${ds_config['credential']['binddn']}
 ldap_default_authtok = ${ds_config['credential']['bindpw']}
 % endif
@@ -75,7 +75,7 @@ enumerate = ${ds_config['enable_account_cache']}
 % if kerberos_realm:
 ldap_sasl_mech = GSSAPI
 ldap_sasl_realm = ${kerberos_realm}
-% if ds_config['credential']['credential_type'] == 'KERBEROS_PRINCIPAL':
+% if ds_config['credential']['credential_type'] == DSCredType.KERBEROS_PRINCIPAL:
 ldap_sasl_authid = ${ds_config['credential']['principal']}
 % endif
 % endif
