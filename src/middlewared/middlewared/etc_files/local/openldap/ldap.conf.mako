@@ -1,6 +1,6 @@
 <%
     from middlewared.plugins.etc import FileShouldNotExist
-    from middlewared.utils.directoryservices.constants import DSType
+    from middlewared.utils.directoryservices.constants import DSCredType, DSType
 
     ds_config = middleware.call_sync('directoryservices.config')
     if not ds_config['enable']:
@@ -18,7 +18,7 @@
             uri = idmap['ldap_url']
             basedn = idmap['ldap_base_dn']
             credential = {
-                'credential_type': 'LDAP_PLAIN',
+                'credential_type': DSCredType.LDAP_PLAIN,
                 'binddn': idmap['ldap_user_dn'],
                 'bindpw': idmap['ldap_user_dn_password']
             }
@@ -41,8 +41,8 @@
         middleware.logger.error('Directory serivce does not have a configured LDAP URI')
         raise FileShouldNotExist
 
-    if credential['credential_type'] == 'LDAP_MTLS':
-        cert = middlware.call_sync('certificate.query', [['cert_name', '=', credential['client_certificate']]], {'get': True})
+    if credential['credential_type'] == DSCredType.LDAP_MTLS:
+        cert = middleware.call_sync('certificate.query', [['cert_name', '=', credential['client_certificate']]], {'get': True})
         tls_certfile = cert['certificate_path']
         tls_keyfile = cert['privatekey_path']
 
@@ -52,7 +52,7 @@ BASE ${basedn}
 NETWORK_TIMEOUT ${ds_config['timeout']}
 TIMEOUT ${ds_config['timeout']}
 TLS_CACERT /etc/ssl/certs/ca-certificates.crt
-% if credential['credential_type'] == 'LDAP_MTLS':
+% if credential['credential_type'] == DSCredType.LDAP_MTLS:
 TLS_CERT ${tls_certfile}
 TLS_KEY ${tls_keyfile}
 SASL_MECH EXTERNAL
@@ -61,6 +61,6 @@ TLS_REQCERT ${'demand' if tls_reqcert else 'allow'}
 % if credential['credential_type'].startswith('KERBEROS'):
 SASL_MECH GSSAPI
 SASL_REALM ${ds_config['kerberos_realm']}
-% elif credential['credential_type'] == 'LDAP_PLAIN':
+% elif credential['credential_type'] == DSCredType.LDAP_PLAIN:
 BINDDN ${credential['binddn']}
 % endif
