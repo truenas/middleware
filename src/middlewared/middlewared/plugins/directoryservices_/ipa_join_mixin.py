@@ -10,6 +10,7 @@ from middlewared.utils.directoryservices import (
     ipa, ipa_constants
 )
 from middlewared.utils.directoryservices.constants import DSType, DEF_SVC_OPTS
+from middlewared.utils.directoryservices.ipa import ipa_config_to_ipa_hostname
 from middlewared.utils.directoryservices.ipactl_constants import (
     ExitCode,
     IpaOperation,
@@ -82,8 +83,7 @@ class IPAJoinMixin:
         self._ipa_del_spn()
 
         job.set_progress(description='Removing DNS entries.')
-        host = f'{ds_config["configuration"]["hostname"]}.{ds_config["configuration"]["domain"]}'
-        self.unregister_dns(host, False)
+        self.unregister_dns(ipa_config_to_ipa_hostname(ds_config['configuration']), False)
 
         # now leave IPA
         job.set_progress(description='Leaving IPA domain.')
@@ -410,7 +410,7 @@ class IPAJoinMixin:
         """
         self.__ipa_smb_domain = undefined
 
-        host = f'{ds_config["configuration"]["hostname"]}.{ds_config["configuration"]["domain"]}'
+        host = ipa_config_to_ipa_hostname(ds_config['configuration'])
         job.set_progress(description='Performing IPA join')
         resp = self._ipa_join_impl(
             host.lower(),
@@ -442,7 +442,6 @@ class IPAJoinMixin:
             f.flush()
             krb_principal = ktutil_list_impl(f.name)[0]['principal']
 
-        self.logger.debug("XXX: principal: %s, realm: %s", krb_principal, ds_config['kerberos_realm'])
         # Update directory services config to use keytab
         self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], {
             'cred_type': 'KERBEROS_PRINCIPAL',
@@ -526,7 +525,7 @@ class IPAJoinMixin:
         elif not cred['name'].startswith('host/'):
             raise CallError(f'{cred}: not host principal.')
 
-        self.register_dns(f'{ds_config["configuration"]["hostname"]}.{ds_config["configuration"]["domain"]}')
+        self.register_dns(ipa_config_to_ipa_hostname(ds_config['configuration']))
         self._ipa_setup_services(job)
         job.set_progress(description='Activating IPA service.')
         self._ipa_activate()

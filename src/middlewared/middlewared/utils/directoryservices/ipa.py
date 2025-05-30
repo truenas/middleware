@@ -70,9 +70,7 @@ def write_ipa_default_config(
     realm: str,
     server: str
 ) -> None:
-    """
-    Write the freeipa default.conf file based on the specified arguments
-    """
+    """ Write the freeipa default.conf file based on the specified arguments """
     config = generate_ipa_default_config(host, basedn, domain, realm, server)
     return _write_ipa_file(IPAPath.DEFAULTCONF, config)
 
@@ -82,7 +80,7 @@ def write_ipa_cacert(cacert_bytes):
 
 
 def ldap_dn_to_realm(ldap_dn: str) -> str:
-    """Extract a hypothetical kerberos realm from DC components of LDAP DN."""
+    """ Extract a hypothetical kerberos realm from DC components of LDAP DN. """
     realm_parts = []
     for component in ldap_dn.split(','):
         if not (parts := component.split('dc=')):
@@ -91,3 +89,8 @@ def ldap_dn_to_realm(ldap_dn: str) -> str:
         realm_parts.append(parts[1].strip())
 
     return '.'.join(realm_parts)
+
+def ipa_config_to_ipa_hostname(config: dict) -> str:
+    """ Convert the `configuration` field from directoryservices.config to the
+    `host` field for SSSD and IPA configuration (and DNS registration). """
+    return f'{config["hostname"]}.{config["domain"]}'.lower()
