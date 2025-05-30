@@ -12,6 +12,7 @@ from middlewared.utils.directoryservices.ad import (
 from middlewared.utils.directoryservices.ad_constants import (
     MAX_KERBEROS_START_TRIES
 )
+from middlewared.utils.directoryservices.common import ds_config_to_fqdn
 from middlewared.utils.directoryservices.constants import DSCredType, DSType, DEF_SVC_OPTS
 from middlewared.utils.directoryservices.credential import kinit_with_cred
 from middlewared.utils.directoryservices.krb5 import (
@@ -224,10 +225,9 @@ class ADJoinMixin:
             self.logger.debug('Failed to remove stale secrets', exc_info=True)
 
         if ds_config['enable_dns_updates']:
-            dns_name = f'{ds_config["configuration"]["hostname"]}.{ds_config["configuration"]["domain"]}'
             job.set_progress(description='Unregistering from active directory DNS')
             try:
-                self.unregister_dns(dns_name, True)
+                self.unregister_dns(ds_config_to_fqdn(ds_config), True)
             except Exception:
                 # We're committed now and so we need to finish up our local reconfiguration
                 self.logger.warning('Failed to unregister from active directory DNS. Manual cleanup required', exc_info=True)
@@ -489,7 +489,7 @@ class ADJoinMixin:
 
         # Update datastore with credential information. We do this before the
         # actual join so that correct kerberos information gets inserted into SMB config
-        dns_name = f'{hostname}.{domain}.'
+        dns_name = ds_config_to_fqdn(ds_config) + '.'
         machine_acct = f'{smb["netbiosname"].upper()}$@{domain}'
         krb_cred = {'credential_type': DSCredType.KERBEROS_PRINCIPAL, 'principal': machine_acct}
         self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], {

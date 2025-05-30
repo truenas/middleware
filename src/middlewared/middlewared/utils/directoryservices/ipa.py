@@ -89,8 +89,3 @@ def ldap_dn_to_realm(ldap_dn: str) -> str:
         realm_parts.append(parts[1].strip())
 
     return '.'.join(realm_parts)
-
-def ipa_config_to_ipa_hostname(config: dict) -> str:
-    """ Convert the `configuration` field from directoryservices.config to the
-    `host` field for SSSD and IPA configuration (and DNS registration). """
-    return f'{config["hostname"]}.{config["domain"]}'.lower()

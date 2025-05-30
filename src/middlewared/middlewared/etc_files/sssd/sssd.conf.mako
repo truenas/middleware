@@ -4,8 +4,8 @@
     from middlewared.plugins.etc import FileShouldNotExist
     from middlewared.utils.directoryservices import ldap_constants as constants
     from middlewared.utils.directoryservices import ldap_utils as utils
+    from middlewared.utils.directoryservices.common import ds_config_to_fqdn
     from middlewared.utils.directoryservices.constants import DSCredType, DSType
-    from middlewared.utils.directoryservices.ipa import ipa_config_to_ipa_hostname
 
     ds_type = middleware.call_sync('directoryservices.status')['type']
     ds_config = middleware.call_sync('directoryservices.config')
@@ -39,7 +39,7 @@
                     pass
 
     elif ds_type == DSType.IPA.value:
-        ipa_hostname = ipa_config_to_ipa_hostname(ds_config['configuration'])
+        ipa_hostname = ds_config_to_fqdn(ds_config)
 
     else:
         raise FileShouldNotExist

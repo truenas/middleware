@@ -1,7 +1,6 @@
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils.directoryservices.ipa import (
-    generate_ipa_default_config, ipa_config_to_ipa_hostname
-)
+from middlewared.utils.directoryservices.ipa import generate_ipa_default_config
+from middlewared.utils.directoryservices.common import ds_config_to_fqdn
 from middlewared.utils.directoryservices.constants import DSType
 
 
@@ -12,7 +11,7 @@ def render(service, middleware, render_ctx):
 
     ipa_config = ds['configuration']
     return generate_ipa_default_config(
-        ipa_config_to_ipa_hostname(ipa_config),
+        ds_config_to_fqdn(render_ctx['directoryservices.config']),
         ipa_config['basedn'],
         ipa_config['domain'].lower(),
         ipa_config['kerberos_realm'],

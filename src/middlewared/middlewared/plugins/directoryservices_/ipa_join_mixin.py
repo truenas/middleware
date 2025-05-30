@@ -9,8 +9,8 @@ from middlewared.job import Job
 from middlewared.utils.directoryservices import (
     ipa, ipa_constants
 )
+from middlewared.utils.directoryservices.common import ds_config_to_fqdn
 from middlewared.utils.directoryservices.constants import DSType, DEF_SVC_OPTS
-from middlewared.utils.directoryservices.ipa import ipa_config_to_ipa_hostname
 from middlewared.utils.directoryservices.ipactl_constants import (
     ExitCode,
     IpaOperation,
@@ -83,7 +83,7 @@ class IPAJoinMixin:
         self._ipa_del_spn()
 
         job.set_progress(description='Removing DNS entries.')
-        self.unregister_dns(ipa_config_to_ipa_hostname(ds_config['configuration']), False)
+        self.unregister_dns(ds_config_to_fqdn(ds_config), False)
 
         # now leave IPA
         job.set_progress(description='Leaving IPA domain.')
@@ -410,10 +410,10 @@ class IPAJoinMixin:
         """
         self.__ipa_smb_domain = undefined
 
-        host = ipa_config_to_ipa_hostname(ds_config['configuration'])
+        host = ds_config_to_fqdn(ds_config)
         job.set_progress(description='Performing IPA join')
         resp = self._ipa_join_impl(
-            host.lower(),
+            host,
             ds_config['configuration']['basedn'],
             ds_config['configuration']['domain'].lower(),
             ds_config['kerberos_realm'] or ds_config['configuration']['domain'].upper(),
@@ -525,7 +525,7 @@ class IPAJoinMixin:
         elif not cred['name'].startswith('host/'):
             raise CallError(f'{cred}: not host principal.')
 
-        self.register_dns(ipa_config_to_ipa_hostname(ds_config['configuration']))
+        self.register_dns(ds_config_to_fqdn(ds_config))
         self._ipa_setup_services(job)
         job.set_progress(description='Activating IPA service.')
         self._ipa_activate()
