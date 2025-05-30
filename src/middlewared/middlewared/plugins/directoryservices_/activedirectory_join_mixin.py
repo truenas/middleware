@@ -12,7 +12,7 @@ from middlewared.utils.directoryservices.ad import (
 from middlewared.utils.directoryservices.ad_constants import (
     MAX_KERBEROS_START_TRIES
 )
-from middlewared.utils.directoryservices.constants import DSType, DEF_SVC_OPTS
+from middlewared.utils.directoryservices.constants import DSCredType, DSType, DEF_SVC_OPTS
 from middlewared.utils.directoryservices.credential import kinit_with_cred
 from middlewared.utils.directoryservices.krb5 import (
     gss_dump_cred,
@@ -45,7 +45,7 @@ class ADJoinMixin:
             return False
 
         cred_info = gss_dump_cred(cred)
-        return cred_info['name_type'] == 'KERBEROS_PRINCIPAL'
+        return cred_info['name_type'] == DSCredType.KERBEROS_PRINCIPAL
 
     def _saf_kdc_name(self) -> str | None:
         if (kdc_override := kdc_saf_cache_get()) is None:
@@ -53,7 +53,7 @@ class ADJoinMixin:
 
         if ptr := self.middleware.call_sync('dnsclient.reverse_lookup', {'addresses': [kdc_override]}):
             # strip trailing period because of unexpected interaction with libads
-            return ptr[0]['target'][:-1]
+            return ptr[0]['target'].removesuffix('.')
 
         return None
 
@@ -491,9 +491,9 @@ class ADJoinMixin:
         # actual join so that correct kerberos information gets inserted into SMB config
         dns_name = f'{hostname}.{domain}.'
         machine_acct = f'{smb["netbiosname"].upper()}$@{domain}'
-        krb_cred = {'credential_type': 'KERBEROS_PRINCIPAL', 'principal': machine_acct}
+        krb_cred = {'credential_type': DSCredType.KERBEROS_PRINCIPAL, 'principal': machine_acct}
         self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], {
-            'cred_type': 'KERBEROS_PRINCIPAL',
+            'cred_type': DSCredType.KERBEROS_PRINCIPAL,
             'cred_krb5': krb_cred,
             'ad_site': site,
             'kerberos_realm_id': realm_id
