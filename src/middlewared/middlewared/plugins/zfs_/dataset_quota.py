@@ -1,5 +1,3 @@
-import libzfs
-
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service import Service
 
@@ -34,19 +32,3 @@ class ZFSDatasetService(Service):
             {k: v for k, v in i['properties'].items() if k in options['extra']['properties']}
             for i in self.middleware.call_sync('zfs.dataset.query', [], options)
         ]
-
-    def set_quota(self, ds, quotas):
-        properties = {}
-        for quota in quotas:
-            for xid, quota_info in quota.items():
-                quota_type = quota_info['quota_type'].lower()
-                quota_value = {'value': quota_info['quota_value']}
-                if quota_type == 'dataset':
-                    properties[xid] = quota_value
-                else:
-                    properties[f'{quota_type}quota@{xid}'] = quota_value
-
-        if properties:
-            with libzfs.ZFS() as zfs:
-                dataset = zfs.get_dataset(ds)
-                dataset.update_properties(properties)

@@ -1,8 +1,11 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolDatasetGetQuotaArgs, PoolDatasetGetQuotaResult, PoolDatasetSetQuotaArgs, PoolDatasetSetQuotaResult
+    PoolDatasetGetQuotaArgs,
+    PoolDatasetGetQuotaResult,
+    PoolDatasetSetQuotaArgs,
+    PoolDatasetSetQuotaResult
 )
-from middlewared.service import item_method, private, Service, ValidationErrors
+from middlewared.service import private, Service
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import ValidationError
 from middlewared.utils import filter_list
@@ -16,25 +19,21 @@ def quota_cb(quota, state):
     if quota.quota_type in (
         truenas_pylibzfs.ZFSUserQuota.USER_USED,
         truenas_pylibzfs.ZFSUserQuota.GROUP_USED,
-        truenas_pylibzfs.ZFSUserQuota.PROJECT_USED,
     ):
         value_key = 'used_bytes'
     elif quota.quota_type in (
         truenas_pylibzfs.ZFSUserQuota.USEROBJ_USED,
         truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_USED,
-        truenas_pylibzfs.ZFSUserQuota.PROJECTOBJ_USED,
     ):
         value_key = 'obj_used'
     elif quota.quota_type in (
         truenas_pylibzfs.ZFSUserQuota.USER_QUOTA,
         truenas_pylibzfs.ZFSUserQuota.GROUP_QUOTA,
-        truenas_pylibzfs.ZFSUserQuota.PROJECT_QUOTA,
     ):
         value_key = 'quota'
     elif quota.quota_type in (
         truenas_pylibzfs.ZFSUserQuota.USEROBJ_QUOTA,
         truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_QUOTA,
-        truenas_pylibzfs.ZFSUserQuota.PROJECTOBJ_QUOTA,
     ):
         value_key = 'obj_quota'
 
@@ -72,7 +71,7 @@ class PoolDatasetService(Service):
                     'refquota': info['properties']['refquota']['value'],
                     'used_bytes': info['properties']['used']['value'],
                 }]
-            case 'USER' | 'GROUP' | 'PROJECT':
+            case 'USER' | 'GROUP':
                 state = {'qt': quota_type, 'quotas': list()}
                 for qt in (
                     getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}_USED'),
@@ -81,9 +80,6 @@ class PoolDatasetService(Service):
                     getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}OBJ_QUOTA'),
                 ):
                     rsrc.iter_userspace(callback=quota_cb, quota_type=qt, state=state)
-
-                if quota_type == 'PROJECT':
-                    return state['quotas']
 
                 qtl = quota_type.lower()
                 for i in state['quotas']:
@@ -114,51 +110,80 @@ class PoolDatasetService(Service):
         )
         return filter_list(quota_list, filters, options)
 
-    @api_method(PoolDatasetSetQuotaArgs, PoolDatasetSetQuotaResult, roles=['DATASET_WRITE'])
-    @item_method
+    @pass_thread_local_storage
+    @private
+    def set_quota_impl(self, tls, ds, inquotas):
+        ds_quotas, quotas = dict(), list()
+        for i in inquotas:
+            if i['quota_type'] == 'DATASET':
+                ds_quotas[truenas_pylibzfs.ZFSProperty[i['id']]] = i['quota_value']
+            else:
+                quotas.append(
+                    {
+                        'xid': i['id'],
+                        'quota_type': truenas_pylibzfs.ZFSUserQuota[i['quota_type']],
+                        'value': i['quota_value']
+                    }
+                )
+
+        rsrc = tls.lzh.open_resource(name=ds)
+        if ds_quotas:
+            rsrc.set_properties(properties=ds_quotas)
+        if quotas:
+            rsrc.set_quotas(quotas=quotas)
+
+    @api_method(
+        PoolDatasetSetQuotaArgs,
+        PoolDatasetSetQuotaResult,
+        roles=['DATASET_WRITE']
+    )
     async def set_quota(self, ds, data):
         """
         Allow users to set multiple quotas simultaneously by submitting a list of quotas.
         """
-        verrors = ValidationErrors()
         quotas = []
-        ignore = ('PROJECT', 'PROJECTOBJ')  # TODO: not implemented
-        for i, q in filter(lambda x: x[1]['quota_type'] not in ignore, enumerate(data)):
+        for i, q in enumerate(data):
             quota_type = q['quota_type'].lower()
             if q['quota_type'] == 'DATASET':
                 if q['id'] not in ('QUOTA', 'REFQUOTA'):
-                    verrors.add(f'quotas.{i}.id', 'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"')
+                    raise ValidationError(
+                        f'quotas.{i}.id',
+                        'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
+                    )
                 else:
                     xid = q['id'].lower()
                     if any((i.get(xid, False) for i in quotas)):
-                        verrors.add(
+                        raise ValidationError(
                             f'quotas.{i}.id',
                             f'Setting multiple values for {xid} for quota_type DATASET is not permitted'
                         )
             else:
-                if not q['quota_value']:
-                    q['quota_value'] = 'none'
+                if q['quota_value'] == 0:
+                    # value of 0 means remove
+                    q['quota_value'] = None
 
                 xid = None
                 id_type = 'user' if quota_type.startswith('user') else 'group'
                 if not q['id'].isdigit():
                     try:
-                        xid_obj = await self.middleware.call(f'{id_type}.get_{id_type}_obj',
-                                                             {f'{id_type}name': q['id']})
-                        xid = xid_obj['pw_uid'] if id_type == 'user' else xid_obj['gr_gid']
+                        xid = (await self.middleware.call(
+                            f'{id_type}.get_{id_type}_obj',
+                            {f'{id_type}name': q['id']}
+                        ))['pw_uid' if id_type == 'user' else 'gr_gid']
                     except Exception:
                         self.logger.debug('Failed to convert %s [%s] to id.', id_type, q['id'], exc_info=True)
-                        verrors.add(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')
+                        raise ValidationError(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')
                 else:
                     xid = int(q['id'])
 
                 if xid == 0:
-                    verrors.add(
-                        f'quotas.{i}.id', f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted'
+                    raise ValidationError(
+                        f'quotas.{i}.id',
+                        f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted'
                     )
+                q['id'] = xid
 
-            quotas.append({xid: q})
+            quotas.append(q)
 
-        verrors.check()
         if quotas:
-            await self.middleware.call('zfs.dataset.set_quota', ds, quotas)
+            await self.middleware.call('pool.dataset.set_quota_impl', ds, quotas)
