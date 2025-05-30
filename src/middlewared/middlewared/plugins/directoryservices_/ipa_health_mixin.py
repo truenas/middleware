@@ -1,11 +1,14 @@
+import ldap
 import os
 
 from middlewared.utils.directoryservices import ipa_constants
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
+from middlewared.utils.directoryservices.credential import dsconfig_to_ldap_client_config
 from middlewared.utils.directoryservices.health import (
     IPAHealthCheckFailReason,
     IPAHealthError
 )
+from middlewared.utils.directoryservices.ldap_client import LdapClient
 from middlewared.service_exception import CallError
 
 
@@ -15,6 +18,13 @@ class IPAHealthMixin:
 
     def _recover_ldap_config(self) -> list[dict]:
         return self.middleware.call_sync('etc.generate', 'ldap')
+
+    def _ipa_get_root_dse(self, data: dict) -> dict:
+        """
+        Use directory service config to retrieve root DSE of an LDAP server
+        """
+        ldap_config = dsconfig_to_ldap_client_config(data)
+        return LdapClient.search(ldap_config, '', ldap.SCOPE_BASE, '(objectclass=*)')
 
     def _recover_ipa(self, error: IPAHealthError) -> None:
         """
@@ -104,7 +114,7 @@ class IPAHealthMixin:
         # ldaps. This is simple query for root DSE to detect whether LDAP
         # connection is profoundly broken.
         try:
-            self._ldap_get_root_dse(config)
+            self._ipa_get_root_dse(config)
         except Exception as e:
             self._faulted_reason = str(e)
             raise IPAHealthError(
