@@ -130,10 +130,6 @@ class DirectoryServices(Service):
     @private
     @job(lock='ds_init', lock_queue_size=1)
     def setup(self, job):
-        # ensure SSSD directories exist
-        os.makedirs('/var/run/sssd-cache/mc', mode=0o755, exist_ok=True)
-        os.makedirs('/var/run/sssd-cache/db', mode=0o755, exist_ok=True)
-
         # ensure that samba is properly configured
         config_job = self.middleware.call_sync('smb.configure')
         config_job.wait_sync(raise_error=True)
