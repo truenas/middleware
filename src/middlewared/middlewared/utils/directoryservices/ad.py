@@ -7,7 +7,7 @@ from .ad_constants import (
     ADEncryptionTypes
 )
 from middlewared.plugins.smb_.constants import SMBCmd
-from middlewared.plugins.idmap_ import util_gencache
+from middlewared.utils import util_gencache
 from middlewared.service_exception import CallError
 
 

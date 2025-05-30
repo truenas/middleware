@@ -3,7 +3,7 @@ import wbclient
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.tdb import TDBError
-from .util_gencache import (
+from middlewared.utils.util_gencache import (
     IDMAPCacheType,
     fetch_gencache_entry,
     remove_gencache_entry,
