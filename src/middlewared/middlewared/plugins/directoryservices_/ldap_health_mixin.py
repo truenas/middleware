@@ -1,6 +1,6 @@
 import ldap
 
-from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS, DSType
 from middlewared.utils.directoryservices.credential import dsconfig_to_ldap_client_config
 from middlewared.utils.directoryservices.health import (
     LDAPHealthCheckFailReason,
@@ -34,7 +34,7 @@ class LDAPHealthMixin:
         This is available for development and debug purposes.
         """
         data = self.middleware.call_sync('directoryservices.config')
-        if data['service_type'] not in ('LDAP', 'IPA'):
+        if data['service_type'] not in (DSType.LDAP.value, DSType.IPA.value):
             raise CallError('Method not available for directory services type')
 
         ldap_config = dsconfig_to_ldap_client_config(data)
