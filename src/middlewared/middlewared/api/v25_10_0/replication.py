@@ -192,6 +192,8 @@ class ReplicationRunOnetimeArgs(ReplicationCreate):
     exclude_mountpoint_property: bool = True
     only_from_scratch: bool = False
     "If `true` then replication will fail if target dataset already exists"
+    mount: bool = True
+    "Mount destination file system"
 
 
 class ReplicationRunOnetimeResult(BaseModel):
