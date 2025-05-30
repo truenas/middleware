@@ -418,7 +418,7 @@ class ADJoinMixin:
             hostname = ngc.get('hostname_virtual') or ngc['hostname_local']
 
         # If user has specified a hostname to use for join, then overwrite other parts of config if needed
-        elif hostname != (ngc.get('hostname_virutal') or ngc['hostname_local']):
+        elif hostname != (ngc.get('hostname_virtual') or ngc['hostname_local']):
             if ngc.get('hostname_virtual'):
                 self.middleware.call_sync('network.configuration.update', {'hostname_virtual': hostname})
             else:
