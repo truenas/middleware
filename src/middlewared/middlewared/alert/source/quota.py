@@ -42,7 +42,7 @@ class QuotaAlertSource(ThreadedAlertSource):
 
             for k, default in TNUserProp.quotas():
                 try:
-                    d[k] = int(d[k]["value"])
+                    d[k] = int(d[k]["rawvalue"])
                 except (KeyError, ValueError):
                     d[k] = default
 
@@ -70,7 +70,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                     # will be reported with regards to that smaller value, and we
                     # will get false positive
                     try:
-                        refquota_value = dataset["refquota"]["value"]
+                        refquota_value = dataset["refquota"]["parsed"]
                     except (AttributeError, KeyError, ValueError):
                         continue
                     else:

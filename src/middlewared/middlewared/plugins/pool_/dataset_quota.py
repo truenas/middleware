@@ -43,6 +43,7 @@ def quota_cb(quota, state):
         'id': quota.xid,
         value_key: quota.value,
     })
+    return True
 
 
 def quota_alert_cb(hdl, state):
@@ -60,15 +61,12 @@ def quota_alert_cb(hdl, state):
             truenas_pylibzfs.ZFSProperty.MOUNTPOINT,
         },
         get_user_properties=True,
-        get_source=True,
     )
     normalized_entry = {
         "name": {
             "pasred": hdl.name,
             "rawvalue": hdl.name,
             "value": hdl.name,
-            "source": "NONE",
-            "source_info": None,
         }
     }
     for i in (
@@ -83,8 +81,6 @@ def quota_alert_cb(hdl, state):
                     "parsed": val,
                     "rawvalue": val,
                     "value": val,
-                    "source": "LOCAL",
-                    "source_info": None,
                 }
             })
     for zfs_prop_name, vdict in info['properties'].items():
@@ -93,8 +89,6 @@ def quota_alert_cb(hdl, state):
                 "parsed": vdict["value"],
                 "rawvalue": vdict["raw"],
                 "value": vdict["raw"].upper(),
-                "source": truenas_pylibzfs.PropertySource(vdict["source"]["type"]).name,
-                "source_info": vdict["source"]["value"],
             }
         })
     state.append(normalized_entry)
@@ -155,6 +149,7 @@ class PoolDatasetService(Service):
                     i['name'] = self.middleware.call_sync(
                         f'{qtl}.get_{qtl}_obj', {f'{qtl[0]}id': i['id']}
                     )['pw_name' if qtl == 'user' else 'gr_name']
+                return state['quotas']
             case _:
                 raise ValidationError(
                     'pool.dataset.get_quota', f'Invalid quota type: {quota_type!r}'
