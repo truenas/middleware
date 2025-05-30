@@ -415,7 +415,7 @@ class ADJoinMixin:
 
         # Make some reasonable hostname guesses if user hasn't done override
         if not hostname:
-            hostname = ngc.get('hostname_virutal') or ngc['hostname_local']
+            hostname = ngc.get('hostname_virtual') or ngc['hostname_local']
 
         # If user has specified a hostname to use for join, then overwrite other parts of config if needed
         elif hostname != (ngc.get('hostname_virutal') or ngc['hostname_local']):
@@ -469,7 +469,7 @@ class ADJoinMixin:
         else:
             try:
                 realm_id = self.middleware.call_sync('kerberos.realm.query', [
-                    ['realm', '=', ds_config['kerberos_realm']]
+                    ['realm', '=', ds_config['kerberos_realm'].upper()]
                 ], {'get': True})['id']
             except MatchNotFound:
                 realm_id = self.middleware.call_sync(
