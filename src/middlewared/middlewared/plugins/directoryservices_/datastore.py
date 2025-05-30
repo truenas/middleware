@@ -144,17 +144,17 @@ class DirectoryServices(ConfigService):
         """ Convert stored datastore credential information into expected dict
         for API response """
         match data['cred_type']:
-            case 'KERBEROS_USER' | 'KERBEROS_PRINCIPAL':
+            case DSCredType.KERBEROS_USER | DSCredType.KERBEROS_PRINCIPAL:
                 config_out['credential'] = data['cred_krb5']
-            case 'LDAP_PLAIN':
+            case DSCredType.LDAP_PLAIN:
                 config_out['credential'] = data['cred_ldap_plain']
-            case 'LDAP_ANONYMOUS':
+            case DSCredType.LDAP_ANONYMOUS:
                 config_out['credential'] = {
-                    'credential_type': 'LDAP_ANONYMOUS'
+                    'credential_type': DSCredType.LDAP_ANONYMOUS
                 }
-            case 'LDAP_MTLS':
+            case DSCredType.LDAP_MTLS:
                 config_out['credential'] = {
-                    'credential_type': 'LDAP_MTLS',
+                    'credential_type': DSCredType.LDAP_MTLS,
                     'client_certificate': data['cred_ldap_mtls_cert']['cert_name']
                 }
             case _:
@@ -163,7 +163,7 @@ class DirectoryServices(ConfigService):
     @private
     async def extend_ad(self, data, config_out):
         """ Extend with AD columns if service_type is AD """
-        assert data['service_type'] == 'ACTIVEDIRECTORY'
+        assert data['service_type'] == DSType.AD.value
         config_out['configuration'] = {}
         for key in AD_CONFIG_ITEMS:
             # strip off `ad_` prefix
@@ -172,7 +172,7 @@ class DirectoryServices(ConfigService):
     @private
     async def extend_ipa(self, data, config_out):
         """ Extend with IPA columns if service_type is IPA """
-        assert data['service_type'] == 'IPA'
+        assert data['service_type'] == DSType.IPA.value
         config_out['configuration'] = {}
         for key in IPA_CONFIG_ITEMS:
             # strip off `ipa_` prefix
@@ -181,7 +181,7 @@ class DirectoryServices(ConfigService):
     @private
     async def extend_ldap(self, data, config_out):
         """ Extend with LDAP columns if service_type is LDAP """
-        assert data['service_type'] == 'LDAP'
+        assert data['service_type'] == DSType.LDAP.value
         config_out['configuration'] = {}
         for key in LDAP_CONFIG_ITEMS:
             # strip off `ldap_` prefix
@@ -220,11 +220,11 @@ class DirectoryServices(ConfigService):
         await self.extend_cred(data, config)
 
         match data['service_type']:
-            case 'ACTIVEDIRECTORY':
+            case DSType.AD.value:
                 await self.extend_ad(data, config)
-            case 'IPA':
+            case DSType.IPA.value:
                 await self.extend_ipa(data, config)
-            case 'LDAP':
+            case DSType.LDAP.value:
                 await self.extend_ldap(data, config)
             case _:
                 # No configured DS type so remove some irrelevant items. We're trying to
@@ -250,13 +250,13 @@ class DirectoryServices(ConfigService):
         datastore_cred['cred_type'] = data['credential']['credential_type']
 
         match data['credential']['credential_type']:
-            case 'KERBEROS_USER' | 'KERBEROS_PRINCIPAL':
+            case DSCredType.KERBEROS_USER | DSCredType.KERBEROS_PRINCIPAL:
                 datastore_cred['cred_krb5'] = data['credential']
-            case 'LDAP_PLAIN':
+            case DSCredType.LDAP_PLAIN:
                 datastore_cred['cred_ldap_plain'] = data['credential']
-            case 'LDAP_ANONYMOUS':
+            case DSCredType.LDAP_ANONYMOUS:
                 pass
-            case 'LDAP_MTLS':
+            case DSCredType.LDAP_MTLS:
                 cert_id = self.middleware.call('certificate.query', [
                     ['cert_name', '=', data['credential']['client_certificate']]
                 ], {'get': True})
@@ -297,11 +297,11 @@ class DirectoryServices(ConfigService):
     @private
     def compress_service_config(self, data, config_out):
         match data['service_type']:
-            case 'ACTIVEDIRECTORY':
+            case DSType.AD.value:
                 self.compress_config_ad(data, config_out)
-            case 'IPA':
+            case DSType.IPA.value:
                 self.compress_config_ipa(data, config_out)
-            case 'LDAP':
+            case DSType.LDAP.value:
                 self.compress_config_ldap(data, config_out)
             case None:
                 pass
@@ -513,11 +513,11 @@ class DirectoryServices(ConfigService):
         verrors.check()
 
         match new['service_type']:
-            case 'ACTIVEDIRECTORY':
+            case DSType.AD.value:
                 self.validate_dns(old, new, verrors, revert)
-            case 'IPA':
+            case DSType.IPA.value:
                 self.validate_ipa(old, new, verrors, revert)
-            case 'LDAP':
+            case DSType.LDAP.value:
                 # pre-validated when we call validate_credential() above
                 pass
             case None:
@@ -649,7 +649,7 @@ class DirectoryServices(ConfigService):
                 # Make a guess at principal name
                 principal = f'{netbiosname}$@{new["configuration"]["domain"]}'
 
-            new['credential'] = {'credential_type': 'KERBEROS_PRINCIPAL', 'principal': principal}
+            new['credential'] = {'credential_type': DSCredType.KERBEROS_PRINCIPAL, 'principal': principal}
             compressed = self.compress(new)
             self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
 
