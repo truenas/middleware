@@ -84,6 +84,11 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                     f'{schema_name}.ana',
                     'This platform does not support Asymmetric Namespace Access(ANA).'
                 )
+        if old['kernel'] != data['kernel'] and await self.running():
+            verrors.add(
+                f'{schema_name}.kernel',
+                'Cannot switch nvmet backend while the service is running.'
+            )
 
     @api_method(
         NVMetGlobalAnaEnabledArgs,
