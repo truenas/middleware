@@ -1,5 +1,6 @@
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.credential import DSCredType
+from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
 
 
@@ -13,8 +14,17 @@ class DSCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
             return False
 
         # currently certs only used by mtls auth for LDAP
-        if ds_config['service_type'] != DSType.LDAP.value:
-            return False
+        match ds_config['service_type']:
+            case DSType.IPA.value:
+                # IPA bind may rely on the presence of the IPA server's cacert
+                cert_name = (await self.middleware.call('certificate.get_instance', cert_id))['cert_name']
+                return cert_name == IpaConfigName.IPA_CACERT
+            case DSType.LDAP.value:
+                # Check is below
+                pass
+            case _:
+                # AD does not currently have any cert dependencies
+                return False
 
         if ds_config['cred_type'] != DSCredType.LDAP_MTLS:
             return False
