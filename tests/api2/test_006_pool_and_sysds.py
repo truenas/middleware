@@ -4,8 +4,6 @@ import pytest
 from pytest_dependency import depends
 
 from auto_config import ha, pool_name
-from truenas_api_client import ValidationErrors
-from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import call, fail
 from middlewared.test.integration.utils.client import client
 
@@ -74,17 +72,6 @@ def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
     sysds = ws_client.call('systemdataset.config')
     assert bp_name == sysds['pool']
     assert bp_basename == sysds['basename']
-
-
-def test_activedirectory_requires_pool(request):
-    depends(request, ['SYSDS'])
-    with pytest.raises(ValidationErrors) as ve:
-        with active_directory():
-            pass
-
-    assert ve.value.errors[0].errmsg.startswith(
-        'Active Directory service may not be enabled before data pool is created'
-    )
 
 
 def test_002_create_permanent_zpool(request, ws_client):

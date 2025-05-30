@@ -270,7 +270,8 @@ AD_SESSION = PAMConfLines(
         PAMLine(
             pam_service=PAMService.SESSION,
             pam_control=PAMSimpleControl.OPTIONAL,
-            pam_module=PAMModule.WINBIND
+            pam_module=PAMModule.WINBIND,
+            pam_module_args=('mkhomedir',)
         ),
     )
 )

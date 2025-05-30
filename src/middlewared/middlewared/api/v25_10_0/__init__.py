@@ -25,6 +25,7 @@ from .cronjob import *
 from .crypto_cert_info import *
 from .crypto_cert_profiles import *
 from .device import *
+from .directory_services import *
 from .disk import *
 from .dns import *
 from .docker import *
@@ -40,6 +41,7 @@ from .fcport import *
 from .filesystem import *
 from .ftp import *
 from .group import *
+from .idmap import *
 from .initshutdownscript import *
 from .interface import *
 from .ipmi import *

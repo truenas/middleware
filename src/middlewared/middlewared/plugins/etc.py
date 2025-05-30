@@ -124,7 +124,7 @@ class EtcService(Service):
         ],
         'ipa': {
             'ctx': [
-                {'method': 'directoryservices.status'}
+                {'method': 'directoryservices.config'}
             ],
             'entries': [
                 {'type': 'py', 'path': 'ipa/default.conf'},
@@ -364,8 +364,6 @@ class EtcService(Service):
         'ssh': {
             "ctx": [
                 {'method': 'ssh.config'},
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
                 {'method': 'auth.twofactor.config'},
                 {'method': 'interface.query'},
                 {'method': 'system.advanced.login_banner'},

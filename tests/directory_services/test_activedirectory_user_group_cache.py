@@ -2,15 +2,9 @@
 
 import errno
 import pytest
-import sys
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import SSH_TEST
-from auto_config import password, user
 from middlewared.service_exception import CallError
-from middlewared.test.integration.assets.directory_service import active_directory
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.directory_service import directoryservice
+from middlewared.test.integration.utils import call, ssh
 
 
 WINBIND_SEPARATOR = "\\"
@@ -18,7 +12,7 @@ WINBIND_SEPARATOR = "\\"
 
 @pytest.fixture(scope="module")
 def do_ad_connection(request):
-    with active_directory() as ad:
+    with directoryservice('ACTIVEDIRECTORY') as ad:
         # make sure we are extra sure cache fill complete
         cache_fill_job = call(
             'core.get_jobs',
@@ -45,11 +39,12 @@ def do_ad_connection(request):
         yield ad | {'users': set_users, 'groups': set_groups}
 
 
-def get_ad_user_and_group(ad_connection):
-    WORKGROUP = ad_connection['dc_info']['Pre-Win2k Domain']
+def get_ad_user_and_group(do_ad_connection):
+    domain_info = do_ad_connection['domain_info']
+    WORKGROUP = domain_info['domain_controller']['pre-win2k_domain']
 
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
-    ad_user = ad_connection['user_obj']['pw_name']
+    ad_user = do_ad_connection['account'].user_obj['pw_name']
     ad_group = f'{domain_prefix}domain users'
 
     user = call(
@@ -71,7 +66,7 @@ def test_check_for_ad_users(do_ad_connection):
     we get through user.query
     """
     cmd = "wbinfo -u"
-    results = SSH_TEST(cmd, user, password)
+    results = ssh(cmd, complete_response=True)
     assert results['result'], str(results['output'])
     wbinfo_entries = set(results['stdout'].splitlines())
 
@@ -84,7 +79,7 @@ def test_check_for_ad_groups(do_ad_connection):
     we get through group.query
     """
     cmd = "wbinfo -g"
-    results = SSH_TEST(cmd, user, password)
+    results = ssh(cmd, complete_response=True)
     assert results['result'], str(results['output'])
     wbinfo_entries = set(results['stdout'].splitlines())
 
@@ -101,9 +96,7 @@ def test_check_directoryservices_cache_refresh(do_ad_connection):
     """
 
     # Cache resides in tdb files. Remove the files to clear cache.
-    cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'] is True, results['output']
+    ssh('rm -f /root/tdb/persistent/*')
 
     # directoryservices.cache_refresh job causes us to rebuild / refresh LDAP / AD users.
     call('directoryservices.cache.refresh_impl', job=True)
@@ -132,10 +125,7 @@ def test_check_lazy_initialization_of_users_and_groups_by_name(do_ad_connection)
     by id or by name and so they are tested separately.
     """
 
-    cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'] is True, results['output']
-
+    ssh('rm -f /root/tdb/persistent/*')
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
 
     assert ad_user['id_type_both'] is True
@@ -169,15 +159,9 @@ def test_check_lazy_initialization_of_users_and_groups_by_id(do_ad_connection):
     """
 
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
-
-    cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'] is True, results['output']
-
+    ssh('rm -f /root/tdb/persistent/*')
     call('user.query', [['uid', '=', ad_user['uid']]], {'get': True})
-
     call('group.query', [['gid', '=', ad_group['gid']]], {'get': True})
-
     cache_names = set([x['username'] for x in call(
         'user.query', [['local', '=', False]],
     )])
@@ -190,12 +174,13 @@ def test_check_lazy_initialization_of_users_and_groups_by_id(do_ad_connection):
 
     assert cache_names == {ad_group['name']}
 
+
 @pytest.mark.parametrize('op_type', ('UPDATE', 'DELETE'))
 def test_update_delete_failures(do_ad_connection, op_type):
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
 
     for acct, prefix in ((ad_user, 'user'), (ad_group, 'group')):
-        with pytest.raises(CallError) as ce:
+        with pytest.raises(CallError, match='the identity provider') as ce:
             if op_type == 'UPDATE':
                 call(f'{prefix}.update', acct['id'], {'smb': False})
             else:

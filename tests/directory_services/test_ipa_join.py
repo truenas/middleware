@@ -1,7 +1,6 @@
 import pytest
 
-from contextlib import contextmanager
-from middlewared.test.integration.assets.directory_service import ipa, FREEIPA_ADMIN_BINDPW
+from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
@@ -10,7 +9,7 @@ from truenas_api_client import ClientException
 
 @pytest.fixture(scope="module")
 def do_freeipa_connection():
-    with ipa() as config:
+    with directoryservice('IPA') as config:
         yield config
 
 
@@ -32,52 +31,19 @@ def enable_ds_auth(override_product):
         call('system.general.update', {'ds_auth': False})
 
 
-@contextmanager
-def switch_to_legacy_bind():
-    kt_id = call('kerberos.keytab.query', [['name', '=', 'IPA_MACHINE_ACCOUNT']], {'get': True})['id']
-    call('kerberos.keytab.update', kt_id, {'name': 'TMP_IPA_MACHINE_ACCOUNT'})
-
-    try:
-        yield
-    finally:
-        call('kerberos.keytab.update', kt_id, {'name': 'IPA_MACHINE_ACCOUNT'})
-
-
-@contextmanager
-def toggle_ldap(ldap_conf, enable):
-    payload = {
-        'hostname': ldap_conf['hostname'],
-        'validate_certificates': ldap_conf['validate_certificates'],
-        'enable': enable
-    }
-
-    call('ldap.update', payload, job=True)
-
-    try:
-        yield
-    finally:
-        payload['enable'] = not enable
-        call('ldap.update', payload, job=True)
-
-
 def test_setup_and_enabling_freeipa(do_freeipa_connection):
-    config = do_freeipa_connection
+    config = do_freeipa_connection['config']
 
     ds = call('directoryservices.status')
     assert ds['type'] == 'IPA'
     assert ds['status'] == 'HEALTHY'
 
-    alerts = [alert['klass'] for alert in call('alert.list')]
-
-    # There's a one-shot alert that gets fired if we are an IPA domain
-    # connected via legacy mechanism.
-    assert 'IPALegacyConfiguration' not in alerts
-
     assert config['kerberos_realm'], str(config)
-    assert config['kerberos_principal'], str(config)
+    assert config['credential']['credential_type'] == 'KERBEROS_PRINCIPAL'
+    assert config['credential']['principal'], str(config)
 
     # our kerberos principal should be the host one (not SMB or NFS)
-    assert config['kerberos_principal'].startswith('host/')
+    assert config['credential']['principal'].startswith('host/')
 
 
 def test_accounts_cache(do_freeipa_connection):
@@ -98,10 +64,12 @@ def test_keytabs_exist(do_freeipa_connection, keytab_name):
 
 
 def test_check_kerberos_ticket(do_freeipa_connection):
+    config = do_freeipa_connection['config']
+    assert config['credential']['credential_type'] == 'KERBEROS_PRINCIPAL'
     tkt = call('kerberos.check_ticket')
 
     assert tkt['name_type'] == 'KERBEROS_PRINCIPAL'
-    assert tkt['name'].startswith(do_freeipa_connection['kerberos_principal'])
+    assert tkt['name'].startswith(config['credential']['principal'])
 
 
 def test_certificate(do_freeipa_connection):
@@ -117,12 +85,13 @@ def test_smb_keytab_exists(do_freeipa_connection):
 
 
 def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
-    ipa_config = call('ldap.ipa_config')
+    ipa_config = do_freeipa_connection['config']
+    account = do_freeipa_connection['account']
 
     priv_names = [priv['name'] for priv in call('privilege.query')]
-    assert ipa_config['domain'].upper() in priv_names
+    assert ipa_config['configuration']['domain'].upper() in priv_names
 
-    priv = call('privilege.query', [['name', '=', ipa_config['domain'].upper()]], {'get': True})
+    priv = call('privilege.query', [['name', '=', ipa_config['configuration']['domain'].upper()]], {'get': True})
     admins_grp = call('group.get_group_obj', {'groupname': 'admins', 'sid_info': True})
 
     assert len(priv['ds_groups']) == 1
@@ -131,7 +100,7 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
 
     assert priv['roles'] == ['FULL_ADMIN']
 
-    with client(auth=('ipaadmin', FREEIPA_ADMIN_BINDPW)) as c:
+    with client(auth=(account.username, account.password)) as c:
         me = c.call('auth.me')
 
         assert 'DIRECTORY_SERVICE' in me['account_attributes']
@@ -140,9 +109,10 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
 
 
 def test_dns_resolution(do_freeipa_connection):
-    ipa_config = do_freeipa_connection['ipa_config']
+    ipa_config = do_freeipa_connection['config']['configuration']
+    fqdn = f'{ipa_config["hostname"]}.{ipa_config["domain"]}'
 
-    addresses = call('dnsclient.forward_lookup', {'names': [ipa_config['host']]})
+    addresses = call('dnsclient.forward_lookup', {'names': [fqdn]})
     assert len(addresses) != 0
 
 
@@ -155,20 +125,3 @@ def test_ipa_config_recover(do_freeipa_connection):
     call('directoryservices.health.recover')
     st = call('directoryservices.status')
     assert st['status'] == 'HEALTHY'
-
-
-def test_ldap_bind_legacy_kerberos_principal(do_freeipa_connection):
-    """
-    Do proper IPA join to get kerberos principal,
-    Disable LDAP
-    Rename keytab entry so that we switch to legacy bind type
-    Re-enable LDAP and verify dstype is LDAP and not IPA
-    Then roll back changes so that we can cleanly leave the IPA domain
-    """
-    config = do_freeipa_connection
-    with toggle_ldap(config, False):
-        with switch_to_legacy_bind():
-            with toggle_ldap(config, True):
-                ds = call('directoryservices.status')
-                assert ds['type'] == 'LDAP'
-                assert ds['status'] == 'HEALTHY'
