@@ -28,7 +28,7 @@ class DomainHealth(
         cli_private = True
         private = True
 
-    def _get_enabled_ds(self):
+    def _get_enabled_ds(self) -> DSType | None:
         server_type = self.middleware.call_sync('directoryservices.config')['service_type']
         if server_type is None:
             return None
@@ -96,6 +96,9 @@ class DomainHealth(
         try:
             match enabled_ds:
                 case DSType.AD:
+                    # Check for AD health before kerberos. This is because there are some
+                    # kerberos-related errors that have a root cause in the AD configuration
+                    # and are recoverable.
                     self._health_check_ad()
                     self._health_check_krb5()
                 case DSType.IPA:
