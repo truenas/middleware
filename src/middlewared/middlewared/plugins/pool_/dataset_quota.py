@@ -2,8 +2,47 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetGetQuotaArgs, PoolDatasetGetQuotaResult, PoolDatasetSetQuotaArgs, PoolDatasetSetQuotaResult
 )
-from middlewared.service import item_method, Service, ValidationErrors
+from middlewared.service import item_method, private, Service, ValidationErrors
+from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.service_exception import ValidationError
 from middlewared.utils import filter_list
+
+try:
+    import truenas_pylibzfs
+except ImportError:
+    truenas_pylibzfs = None
+
+def quota_cb(quota, state):
+    if quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USER_USED,
+        truenas_pylibzfs.ZFSUserQuota.GROUP_USED,
+        truenas_pylibzfs.ZFSUserQuota.PROJECT_USED,
+    ):
+        value_key = 'used_bytes'
+    elif quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USEROBJ_USED,
+        truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_USED,
+        truenas_pylibzfs.ZFSUserQuota.PROJECTOBJ_USED,
+    ):
+        value_key = 'obj_used'
+    elif quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USER_QUOTA,
+        truenas_pylibzfs.ZFSUserQuota.GROUP_QUOTA,
+        truenas_pylibzfs.ZFSUserQuota.PROJECT_QUOTA,
+    ):
+        value_key = 'quota'
+    elif quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USEROBJ_QUOTA,
+        truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_QUOTA,
+        truenas_pylibzfs.ZFSUserQuota.PROJECTOBJ_QUOTA,
+    ):
+        value_key = 'obj_quota'
+
+    state['quotas'].append({
+        'quota_type': state['qt'],
+        'id': quota.xid,
+        value_key: quota.value,
+    })
 
 
 class PoolDatasetService(Service):
@@ -11,9 +50,57 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    # TODO: Document this please
-    @api_method(PoolDatasetGetQuotaArgs, PoolDatasetGetQuotaResult, roles=['DATASET_READ'])
-    @item_method
+    @pass_thread_local_storage
+    @private
+    def get_quota_impl(self, tls, ds, quota_type):
+        rsrc = tls.lzh.open_resource(name=ds)
+        quota_type = quota_type.upper()
+        match quota_type:
+            case 'DATASET':
+                info = rsrc.asdict(
+                    properties={
+                        truenas_pylibzfs.ZFSProperty.QUOTA,
+                        truenas_pylibzfs.ZFSProperty.REFQUOTA,
+                        truenas_pylibzfs.ZFSProperty.USED,
+                    }
+                )
+                return [{
+                    'quota_type': quota_type,
+                    'id': rsrc.name,
+                    'name': rsrc.name,
+                    'quota': info['properties']['quota']['value'],
+                    'refquota': info['properties']['refquota']['value'],
+                    'used_bytes': info['properties']['used']['value'],
+                }]
+            case 'USER' | 'GROUP' | 'PROJECT':
+                state = {'qt': quota_type, 'quotas': list()}
+                for qt in (
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}_USED'),
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}OBJ_USED'),
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}_QUOTA'),
+                    getattr(truenas_pylibzfs.ZFSUserQuota, f'{quota_type}OBJ_QUOTA'),
+                ):
+                    rsrc.iter_userspace(callback=quota_cb, quota_type=qt, state=state)
+
+                if quota_type == 'PROJECT':
+                    return state['quotas']
+
+                qtl = quota_type.lower()
+                for i in state['quotas']:
+                    # resolve uid/gid to name
+                    i['name'] = self.middleware.call_sync(
+                        f'{qtl}.get_{qtl}_obj', {f'{qtl[0]}id': i['id']}
+                    )['pw_name' if qtl == 'user' else 'gr_name']
+            case _:
+                raise ValidationError(
+                    'pool.dataset.get_quota', f'Invalid quota type: {quota_type!r}'
+                )
+
+    @api_method(
+        PoolDatasetGetQuotaArgs,
+        PoolDatasetGetQuotaResult,
+        roles=['DATASET_READ']
+    )
     async def get_quota(self, ds, quota_type, filters, options):
         """
         Return a list of the specified `quota_type` of quotas on the ZFS dataset `ds`.
@@ -22,9 +109,8 @@ class PoolDatasetService(Service):
         Note: SMB client requests to set a quota granting no space will result
         in an on-disk quota of 1 KiB.
         """
-        dataset = (await self.middleware.call('pool.dataset.get_instance_quick', ds))['name']
         quota_list = await self.middleware.call(
-            'zfs.dataset.get_quota', dataset, quota_type.lower()
+            'pool.dataset.get_quota_impl', ds, quota_type
         )
         return filter_list(quota_list, filters, options)
 
