@@ -56,5 +56,8 @@ def test_docker_incremental_backup(docker_pool, target_pool):
 
 
 def test_docker_on_replica_pool(docker_pool, target_pool):
-    call('docker.update', {'pool': TARGET_POOL_NAME}, job=True)
-    assert call('app.get_instance', APP2_NAME)['name'] == APP2_NAME
+    try:
+        call('docker.update', {'pool': TARGET_POOL_NAME}, job=True)
+        assert call('app.get_instance', APP2_NAME)['name'] == APP2_NAME
+    finally:
+        call('docker.update', {'pool': None}, job=True)
