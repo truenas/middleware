@@ -1,8 +1,6 @@
-import errno
-
 from middlewared.api import api_method
 from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult
-from middlewared.service import CallError, job, private, Service, ValidationErrors
+from middlewared.service import job, private, Service, ValidationErrors
 
 from .utils import applications_ds_name
 
@@ -46,22 +44,24 @@ class DockerService(Service):
         # FIXME: See if we want to allow replicating to encrypted pool
 
         verrors.check()
-        # TODO: See how locking plays a role here
-        if not await self.middleware.call('pool.query', [['name', '=', target_pool]]):
-            raise CallError(f'{target_pool!r} pool does not exist', errno=errno.ENOENT)
 
-        job.set_progress(10, 'Initial validation has been completed')
+        job.set_progress(10, 'Initial validation has been completed, stopping docker service')
         await self.middleware.call('service.stop', 'docker')
-        job.set_progress(20, 'Docker service has been stopped')
+        job.set_progress(30, 'Incrementally replicating apps dataset')
 
         try:
             await self.incrementally_replicate_apps_dataset(docker_config['pool'], target_pool)
+        except Exception:
+            job.set_progress(90, 'Failed to incrementally replicate apps dataset')
+            raise
+        else:
+            job.set_progress(100, 'Successfully incrementally replicated apps dataset')
         finally:
             self.middleware.call_sync('service.start', 'docker')
 
     @private
     async def incrementally_replicate_apps_dataset(self, source_pool, target_pool):
-        schema = f'ix-apps-{source_pool}-backup-%Y-%m-%d_%H-%M'
+        schema = f'ix-apps-{source_pool}-to-{target_pool}-backup-%Y-%m-%d_%H-%M'
         await self.middleware.call(
             'zfs.snapshot.create', {
                 'dataset': applications_ds_name(source_pool),
@@ -83,8 +83,7 @@ class DockerService(Service):
                 'replicate': True,
                 'readonly': 'IGNORE',
                 'exclude_mountpoint_property': False,
+                'mount': False,
             }
         )
-        await replication_job.wait()
-        if replication_job.error:
-            raise CallError(f'Failed to replicate {old_ds} to {new_ds}: {replication_job.error}')
+        await replication_job.wait(raise_error=True)
