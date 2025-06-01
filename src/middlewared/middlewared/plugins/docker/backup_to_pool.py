@@ -57,7 +57,7 @@ class DockerService(Service):
         else:
             job.set_progress(100, 'Successfully incrementally replicated apps dataset')
         finally:
-            self.middleware.call_sync('service.start', 'docker')
+            await self.middleware.call('service.start', 'docker')
 
     @private
     async def incrementally_replicate_apps_dataset(self, source_pool, target_pool):
