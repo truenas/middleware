@@ -72,7 +72,7 @@ class UpdateService(Service):
             }
             profiles[Profile.MISSION_CRITICAL] = {
                 'name': 'Mission Critical',
-                'footnote': '(Default)',
+                'footnote': '',
                 'description': (
                     'Mature software that enables 24×7 operations with high availability for a very clearly defined '
                     'use case. Software updates are very infrequent and based on need.'
