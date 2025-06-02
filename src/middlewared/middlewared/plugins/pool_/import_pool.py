@@ -6,7 +6,6 @@ import subprocess
 from middlewared.api import api_method
 from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
 
 from .utils import ZPOOL_CACHE_FILE
