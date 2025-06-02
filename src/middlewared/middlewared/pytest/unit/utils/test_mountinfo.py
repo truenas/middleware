@@ -1,5 +1,5 @@
 import pytest
-from middlewared.utils.mount import __parse_to_dev, __parse_to_mnt_id, __create_tree
+from middlewared.utils.mount import __mntent_dict, __parse_to_dev, __parse_to_mnt_id, __create_tree
 
 
 fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw
@@ -175,3 +175,9 @@ def test__mountinfo_tree_miss():
 
     with pytest.raises(KeyError) as e:
         root = __create_tree(data, 8675309)
+
+
+def test__mountinfo_missing_optional_fields():
+    line = r'282 213 0:47 / / rw,relatime - overlay overlay rw,lowerdir=/var/lib/docker/overlay2/l/5L3KSV23NGJN7OAT6JAPAPESIH:/var/lib/docker/overlay2/l/TDVGJBW7AOL4CADLI72HXRISIC,upperdir=/var/lib/docker/overlay2/3815fd731d8026048c8097461cb66cc11b1390337a3447315fd1c8e402f2c4a4/diff,workdir=/var/lib/docker/overlay2/3815fd731d8026048c8097461cb66cc11b1390337a3447315fd1c8e402f2c4a4/work,nouserxattr'  # noqa
+    # Verify that this does not raise an index erro due to missing optional fields
+    __mntent_dict(line)
