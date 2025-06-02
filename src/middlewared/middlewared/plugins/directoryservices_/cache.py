@@ -128,9 +128,9 @@ class DSCache(Service):
                         who = {'uid': data.get('id')}
 
                     pwdobj = self.middleware.call_sync('user.get_user_obj', {
-                        'get_groups': False, 'sid_info': True
+                        'get_groups': False, 'sid_info': options['smb']
                     } | who)
-                    if pwdobj['sid'] is None:
+                    if options['smb'] and pwdobj['sid'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
@@ -144,8 +144,8 @@ class DSCache(Service):
                     else:
                         who = {'gid': data.get('id')}
 
-                    grpobj = self.middleware.call_sync('group.get_group_obj', {'sid_info': True} | who)
-                    if grpobj['sid'] is None:
+                    grpobj = self.middleware.call_sync('group.get_group_obj', {'sid_info': options['smb']} | who)
+                    if options['smb'] and grpobj['sid'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
@@ -193,7 +193,7 @@ class DSCache(Service):
             entry = self._retrieve({
                 'idtype': id_type,
                 key: filters[0][2],
-            }, {'smb': True})
+            }, {'smb': ds['type'] in (DSType.AD.value, DSType.IPA.value)})
 
             return [entry] if entry else []
 

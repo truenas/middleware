@@ -2,6 +2,7 @@ import enum
 
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
+MAX_TIME_OFFSET = 180
 KRB_TKT_CHECK_INTERVAL = 1800
 PERSISTENT_KEYRING_PREFIX = 'KEYRING:persistent:'
 SAMBA_KEYTAB_DIR = '/etc/samba/kerberos'

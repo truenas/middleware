@@ -1,25 +1,14 @@
-import os
-import sys
-
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import SSH_TEST
-from auto_config import hostname, password, user
 from contextlib import contextmanager
 from base64 import b64decode
 from protocols import nfs_share
 from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.utils import call
-from middlewared.test.integration.assets.directory_service import active_directory
+from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.assets.directory_service import directoryservice
 
-try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, AD_COMPUTER_OU
-except ImportError:
-    pytestmark = pytest.mark.skip(reason='Missing AD configuration')
 
 SAMPLE_KEYTAB = "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"  # noqa
 
@@ -61,16 +50,14 @@ def regenerate_exports():
 
 def check_export_sec(expected):
     regenerate_exports()
-    results = SSH_TEST('cat /etc/exports', user, password)
-    assert results['result'] is True, results['stderr']
+    results = ssh('cat /etc/exports', complete_response=True)
     exports_config = results['stdout'].strip()
     sec = get_export_sec(exports_config)
     assert sec == expected, exports_config
 
 
 def parse_krb5_conf(fn, split=None, state=None):
-    results = SSH_TEST('cat /etc/krb5.conf', user, password)
-    assert results['result'] is True, results['output']
+    results = ssh('cat /etc/krb5.conf', complete_response=True)
 
     if split:
         krb5conf_lines = results['stdout'].split(split)
@@ -107,18 +94,13 @@ def add_kerberos_realm(realm_name):
 
 
 @pytest.fixture(scope="function")
-def do_ad_connection(request):
-    with active_directory(
-        AD_DOMAIN,
-        ADUSERNAME,
-        ADPASSWORD,
-        netbiosname=hostname,
-        createcomputer=AD_COMPUTER_OU,
-    ) as ad:
-        yield (request, ad)
+def do_ad_connection():
+    with directoryservice('ACTIVEDIRECTORY', retrieve_user=False) as ad:
+        yield ad
 
 
 def test_kerberos_keytab_and_realm(do_ad_connection):
+    domain_name = do_ad_connection['config']['configuration']['domain']
 
     def krb5conf_parser(krb5conf_lines, idx, entry, state):
         if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":
@@ -180,7 +162,7 @@ def test_kerberos_keytab_and_realm(do_ad_connection):
     AD Join should automatically add a kerberos realm
     for the AD domain.
     """
-    call('kerberos.realm.query', [['realm', '=', AD_DOMAIN.upper()]], {'get': True})
+    call('kerberos.realm.query', [['realm', '=', domain_name]], {'get': True})
 
     with add_kerberos_realm(SAMPLEDOM_NAME) as new_realm:
         payload = SAMPLEDOM_REALM.copy()
@@ -332,7 +314,8 @@ def test_verify_nfs_krb_disabled():
 
 def test_kerberos_ticket_management(do_ad_connection):
     klist_out = call('kerberos.klist')
-    assert klist_out['default_principal'].startswith(hostname.upper()), str(klist_out)
+    netbiosname = call('smb.config')['netbiosname']
+    assert klist_out['default_principal'].startswith(netbiosname.upper()), str(klist_out)
     assert klist_out['ticket_cache']['type'] == 'KEYRING'
     assert klist_out['ticket_cache']['name'].startswith('persistent:0')
     assert len(klist_out['tickets']) != 0

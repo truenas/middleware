@@ -2,15 +2,15 @@ import errno
 import pytest
 
 from middlewared.service_exception import CallError
-from middlewared.test.integration.assets.directory_service import ipa
+from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.utils import call
 
 
 @pytest.fixture(scope="module")
 def ipa_config():
     """ join then leave IPA domain so that we can evaluate server after leaving the IPA domain """
-    with ipa() as config:
-        ipa_config = config['ipa_config']
+    with directoryservice('IPA') as config:
+        ipa_config = config
 
     yield ipa_config
 
@@ -57,7 +57,8 @@ def test_smb_keytab_does_not_exist(ipa_config):
 
 
 def test_no_admin_privilege(ipa_config):
-    priv = call('privilege.query', [['name', '=', ipa_config['domain'].upper()]])
+    configuration = ipa_config['config']['configuration']
+    priv = call('privilege.query', [['name', '=', configuration['domain'].upper()]])
     assert priv == []
 
 

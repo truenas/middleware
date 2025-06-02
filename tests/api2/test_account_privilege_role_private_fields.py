@@ -77,28 +77,6 @@ def dns_authenticator():
 
 
 @contextlib.contextmanager
-def idmap():
-    with row(
-        "directoryservice.idmap_domain",
-        {
-            "name": "test",
-            "dns_domain_name": "test",
-            "range_low": 1000,
-            "range_high": 1001,
-            "idmap_backend": "LDAP",
-            "options": {
-                "ldap_base_dn": "cn=BASEDN",
-                "ldap_user_dn": "cn=USERDN",
-                "ldap_url": "ldap://127.0.0.1",
-                "ldap_user_dn_password": "password"
-            },
-        },
-        {"prefix": "idmap_domain_"},
-    ) as id:
-        yield id
-
-
-@contextlib.contextmanager
 def iscsi_auth():
     auth = call("iscsi.auth.create", {
         "tag": 1,
@@ -138,7 +116,6 @@ def vmware():
     ("cloudsync.credentials", cloudsync_credential, {}, ["provider.pass"]),
     ("cloudsync", cloudsync, {}, ["credentials.provider.pass", "encryption_password"]),
     ("disk", disk, {"extra": {"passwords": True}}, ["passwd"]),
-    ("idmap", idmap, {}, ["options.ldap_user_dn_password"]),
     ("iscsi.auth", iscsi_auth, {}, ["secret", "peersecret"]),
     ("keychaincredential", keychaincredential, {}, ["attributes"]),
     ("user", 1, {}, ["unixhash", "smbhash"]),
@@ -167,7 +144,6 @@ def test_crud(readonly_client, how, service, id, options, redacted_fields):
 
 @pytest.mark.parametrize("service,redacted_fields", (
     ("system.general", ["ui_certificate"]),
-    ("ldap", ["bindpw"]),
     ("mail", ["pass", "oauth"]),
     ("snmp", ["v3_password", "v3_privpassphrase"]),
     ("truecommand", ["api_key"]),
