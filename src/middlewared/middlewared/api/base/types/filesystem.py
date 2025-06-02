@@ -1,8 +1,11 @@
+import os
+
 from typing import Annotated
 
 from pydantic.functional_validators import AfterValidator
+from .string import NonEmptyString
 
-__all__ = ["UnixPerm"]
+__all__ = ["UnixPerm", "NormalPath"]
 
 
 def validate_unix_perm(value: str) -> str:
@@ -17,4 +20,9 @@ def validate_unix_perm(value: str) -> str:
     return value
 
 
+def normalize_path(value) -> str:
+    return os.path.normpath(value)
+
+
 UnixPerm = Annotated[str, AfterValidator(validate_unix_perm)]
+NormalPath = Annotated[NonEmptyString, AfterValidator(normalize_path)]
