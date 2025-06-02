@@ -55,7 +55,7 @@ def test_docker_incremental_backup(docker_pool, target_pool):
     assert call('zfs.dataset.query', [['id', 'rin', f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP2_NAME}']]) != []
 
 
-def test_docker_on_replica_pool(docker_pool, target_pool):
+def test_docker_on_replicated_pool(docker_pool, target_pool):
     try:
         call('docker.update', {'pool': TARGET_POOL_NAME}, job=True)
         assert call('app.get_instance', APP2_NAME)['name'] == APP2_NAME

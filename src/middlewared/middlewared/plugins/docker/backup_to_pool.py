@@ -40,8 +40,12 @@ class DockerService(Service):
         })
         if not target_root_ds:
             verrors.add('target_pool', 'Target pool does not exist')
-
-        # FIXME: See if we want to allow replicating to encrypted pool
+        elif target_root_ds[0]['encrypted']:
+            # This is not allowed because destination root if encrypted means that docker datasets would be
+            # not encrypted and by design we don't allow this to happen to keep it simple / straight forward.
+            # https://github.com/truenas/zettarepl/blob/52d3b7a00fa4630c3428ae4e70bc33cf41a6d768/zettarepl/
+            # replication/run.py#L319
+            verrors.add('target_pool', f'Backup to an encrypted pool {target_pool!r} is not allowed')
 
         verrors.check()
 
@@ -61,7 +65,7 @@ class DockerService(Service):
 
     @private
     async def incrementally_replicate_apps_dataset(self, source_pool, target_pool):
-        schema = f'ix-apps-{source_pool}-to-{target_pool}-backup-%Y-%m-%d_%H-%M'
+        schema = f'ix-apps-{source_pool}-to-{target_pool}-backup-%Y-%m-%d_%H-%M-%S'
         await self.middleware.call(
             'zfs.snapshot.create', {
                 'dataset': applications_ds_name(source_pool),
