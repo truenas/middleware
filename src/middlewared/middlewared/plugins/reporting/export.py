@@ -7,7 +7,6 @@ from middlewared.api.current import (
     ReportingExporterUpdateResult, ReportingExporterDeleteArgs, ReportingExporterDeleteResult,
     ReportingExporterSchemasArgs, ReportingExporterSchemasResult,
 )
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str, returns
 from middlewared.service import CRUDService, private, ValidationErrors
 
 from .exporters.factory import export_factory
