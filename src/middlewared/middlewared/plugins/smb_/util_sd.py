@@ -7,7 +7,7 @@ from middlewared.api import api_method
 from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 from middlewared.service import private, CallError, Service
 from middlewared.plugins.smb import SMBCmd
-from pydantic import Secret
+from pydantic import Field, Secret
 from typing import Literal
 
 
