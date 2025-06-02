@@ -1,4 +1,5 @@
 from middlewared.api.base import BaseModel, NonEmptyString
+from .alert import AlertLevel
 from .alertservice_attributes import AlertServiceAttributes
 
 
@@ -12,7 +13,7 @@ __all__ = [
 class AlertServiceCreate(BaseModel):
     name: NonEmptyString
     attributes: AlertServiceAttributes
-    level: str
+    level: AlertLevel
     enabled: bool = True
 
     @classmethod

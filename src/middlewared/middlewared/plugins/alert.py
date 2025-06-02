@@ -40,14 +40,12 @@ from middlewared.api.current import (
     AlertServiceDeleteResult, AlertServiceTestArgs, AlertServiceTestResult, AlertServiceEntry, AlertListAddedEvent,
     AlertListChangedEvent, AlertListRemovedEvent,
 )
-from middlewared.schema import Bool, Str
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
 )
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.validators import validate_schema
 from middlewared.utils import bisect
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
@@ -1217,17 +1215,9 @@ class AlertClassesService(ConfigService):
         for k, v in new["classes"].items():
             if k not in AlertClass.class_by_name:
                 verrors.add(f"alert_class_update.classes.{k}", "This alert class does not exist")
+                continue
 
-            verrors.add_child(
-                f"alert_class_update.classes.{k}",
-                validate_schema([
-                    Str("level", enum=list(AlertLevel.__members__)),
-                    Str("policy", enum=POLICIES),
-                    Bool("proactive_support"),
-                ], v),
-            )
-
-            if "proactive_support" in v and not AlertClass.class_by_name[k].proactive_support:
+            if not AlertClass.class_by_name[k].proactive_support and v["proactive_support"]:
                 verrors.add(
                     f"alert_class_update.classes.{k}.proactive_support",
                     "Proactive support is not supported by this alert class",
