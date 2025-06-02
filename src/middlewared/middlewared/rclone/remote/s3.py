@@ -1,10 +1,7 @@
-import textwrap
-
 import boto3
 from botocore.client import Config
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Str
 from middlewared.utils.lang import undefined
 
 
@@ -18,13 +15,7 @@ class S3RcloneRemote(BaseRcloneRemote):
 
     rclone_type = "s3"
 
-    task_schema = [
-        Str("region", title="Region", default=""),
-        Str("encryption", title="Server-Side Encryption", enum=[None, "AES256"], default=None, null=True),
-        Str("storage_class", title="The storage class to use", enum=["", "STANDARD", "REDUCED_REDUNDANCY",
-                                                                     "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING",
-                                                                     "GLACIER", "GLACIER_IR", "DEEP_ARCHIVE"]),
-    ]
+    task_attributes = ["region", "encryption", "storage_class"]
 
     def _get_client(self, credentials):
         config = None

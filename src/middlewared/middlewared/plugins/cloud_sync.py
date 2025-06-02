@@ -1033,10 +1033,9 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                     "bucket_title": provider.bucket_title,
                     "task_schema": [
                         {
-                            "property": field.name,
-                            "schema": field.to_json_schema()
+                            "property": attribute,
                         }
-                        for field in provider.task_schema + self._common_task_schema(provider)
+                        for attribute in await self.middleware.call("cloudsync.task_attributes", provider)
                     ],
                 }
                 for provider in REMOTES.values()

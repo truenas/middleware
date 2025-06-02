@@ -12,9 +12,10 @@ from middlewared.api.base import (
     single_argument_args,
     TimeString,
 )
-from .cloud import BaseCloudEntry
+from .cloud import BaseCloudEntry, CloudTaskAttributes
 
 __all__ = [
+    "CloudTaskAttributes",
     "CloudSyncEntry",
     "CloudSyncCreateArgs",
     "CloudSyncCreateResult",
@@ -140,7 +141,7 @@ class CloudSyncListDirectoryArgs(BaseModel):
     filename_encryption: bool = False
     encryption_password: Secret[str] = ""
     encryption_salt: Secret[str] = ""
-    attributes: dict
+    attributes: CloudTaskAttributes
     args: str = ""
 
 
@@ -197,8 +198,12 @@ class CloudSyncProvider(BaseModel):
     buckets: bool
     "set to `true if provider supports buckets"
     bucket_title: str | None
-    task_schema: list[dict]
+    task_schema: list["CloudSyncProviderTaskSchemaItem"]
     "JSON schema for task attributes"
+
+
+class CloudSyncProviderTaskSchemaItem(BaseModel):
+    property: str
 
 
 @single_argument_args("onedrive_list_drives")

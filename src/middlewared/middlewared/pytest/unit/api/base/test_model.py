@@ -2,8 +2,8 @@ from pydantic import Field
 import pytest
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args,
-                                  single_argument_result)
-from middlewared.api.base.handler.accept import accept_params
+                                  single_argument_result, model_subset)
+from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.api.base.handler.result import serialize_result
 from middlewared.api.v25_04_0.pool_snapshottask import PoolSnapshotTaskCron
 from middlewared.service_exception import ValidationErrors
@@ -94,3 +94,20 @@ def test_update_with_alias():
         data: UpdateObjectWithAlias
 
     assert accept_params(UpdateWithAliasArgs, [1, {"pass": "1"}]) == [1, {"pass": "1"}]
+
+
+class ModelSubsetTest(BaseModel, metaclass=ForUpdateMetaclass):
+    b2_chunk_size: int = Field(alias="chunk_size", default=10)
+    dropbox_chunk_size: int = Field(alias="chunk_size", default=20)
+    fast_list: bool = False
+
+
+@pytest.mark.parametrize("fields,data,result", [
+    (["b2_chunk_size"], {}, {"chunk_size": 10}),
+    (["dropbox_chunk_size"], {}, {"chunk_size": 20}),
+    (["dropbox_chunk_size"], {"chunk_size": 25}, {"chunk_size": 25}),
+    (["fast_list"], {}, {"fast_list": False}),
+    (["fast_list"], {"fast_list": True}, {"fast_list": True}),
+])
+def test_model_subset(fields, data, result):
+    assert validate_model(model_subset(ModelSubsetTest, fields), data) == result
