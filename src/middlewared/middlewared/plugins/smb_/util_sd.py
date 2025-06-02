@@ -3,9 +3,31 @@ import enum
 import json
 import subprocess
 
-from middlewared.schema import Bool, Dict, Password, Str, accepts
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 from middlewared.service import private, CallError, Service
 from middlewared.plugins.smb import SMBCmd
+from pydantic import Secret
+from typing import Literal
+
+
+class GetRemoteAclOpts(BaseModel):
+    use_kerberos: bool = False
+    output_format: Literal['SMB', 'LOCAL'] = 'SMB'
+
+
+@single_argument_args('get_remote_acl')
+class GetRemoteAclArgs(BaseModel):
+    server: NonEmptyString
+    share: NonEmptyString
+    username: NonEmptyString
+    password: Secret[NonEmptyString]
+    path: NonEmptyString = '\\'
+    options: GetRemoteAclOpts = Field(default_factory=GetRemoteAclOpts)
+
+
+class GetRemoteAclResult(BaseModel):
+    result: dict
 
 
 class ACLType(enum.Enum):
@@ -145,22 +167,7 @@ class SMBService(Service):
         service = 'cifs'
         service_verb = 'restart'
 
-    @private
-    @accepts(
-        Dict(
-            'get_remote_acl',
-            Str('server', required=True),
-            Str('share', required=True),
-            Str('path', default='\\'),
-            Str('username', required=True),
-            Password('password', required=True),
-            Dict(
-                'options',
-                Bool('use_kerberos', default=False),
-                Str('output_format', enum=['SMB', 'LOCAL'], default='SMB'),
-            )
-        )
-    )
+    @api_method(GetRemoteAclArgs, GetRemoteAclResult, private=True)
     def get_remote_acl(self, data):
         """
         Retrieves an ACL from a remote SMB server.
