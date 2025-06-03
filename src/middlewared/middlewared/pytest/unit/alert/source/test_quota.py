@@ -8,14 +8,14 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 
 DEFAULT_QUOTA_THRESHOLDS = {k: v for k, v in TNUserProp.quotas()}
 FAUX_POOL = "tank"
-FAUX_POOL_USED = 9881780224
+FAUX_POOL_TOTAL = 9881780224
 FAUX_DS = f"{FAUX_POOL}/share/HR"
 
 
 @pytest.mark.parametrize("dataset_query,alerts", [
     (
         {
-            "pools": {FAUX_POOL: FAUX_POOL_USED},
+            "pools": {FAUX_POOL: FAUX_POOL_TOTAL},
             "datasets": {
                 FAUX_DS: {
                     "pool": FAUX_POOL,
@@ -33,7 +33,7 @@ FAUX_DS = f"{FAUX_POOL}/share/HR"
     ),
     (
         {
-            "pools": {FAUX_POOL: FAUX_POOL_USED},
+            "pools": {FAUX_POOL: FAUX_POOL_TOTAL},
             "datasets": {
                 FAUX_DS: {
                     "pool": FAUX_POOL,
