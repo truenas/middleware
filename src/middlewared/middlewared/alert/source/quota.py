@@ -1,4 +1,4 @@
-from datetime import timedelta
+import datetime
 import logging
 import os
 
@@ -26,7 +26,7 @@ class QuotaCriticalAlertClass(AlertClass):
 
 
 class QuotaAlertSource(ThreadedAlertSource):
-    schedule = IntervalSchedule(timedelta(minutes=5))
+    schedule = IntervalSchedule(datetime.timedelta(hours=1))
     run_on_backup_node = False
 
     def check_sync(self):
