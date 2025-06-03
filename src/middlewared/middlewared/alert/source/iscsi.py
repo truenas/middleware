@@ -51,3 +51,57 @@ class ISCSIPortalIPAlertSource(AlertSource):
 
         if ips:
             return Alert(ISCSIPortalIPAlertClass, ', '.join(ips))
+
+
+class ISCSIAuthSecretInvalidCharAlertClass(AlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = 'iSCSI Authorized Access has an invalid character'
+    text = 'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r has a %(field)s containing the invalid character: %(char)r.'
+
+
+class ISCSIAuthSecretWhitespaceAlertClass(AlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.WARNING
+    title = 'iSCSI Authorized Access has leading or trailing whitespace'
+    text = 'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r has a %(field)s containing leading or trailing whitespace.'
+
+
+class ISCSIAuthSecretAlertSource(AlertSource):
+    schedule = IntervalSchedule(timedelta(hours=24))
+    run_on_backup_node = False
+    INVALID_CHARS = '#'
+
+    async def check(self):
+        alerts = []
+
+        private_to_public = {
+            'user': 'User',
+            'secret': 'Secret',
+            'peeruser': 'Peer User',
+            'peersecret': 'Peer Secret'
+        }
+
+        auths = await self.middleware.call('iscsi.auth.query')
+        for auth in auths:
+            for userfield, secretfield in [('user', 'secret'),
+                                           ('peeruser', 'peersecret')]:
+                if auth[userfield] and auth[secretfield]:
+                    for char in self.INVALID_CHARS:
+                        if char in auth[secretfield]:
+                            alerts.append(Alert(ISCSIAuthSecretInvalidCharAlertClass,
+                                                {'field': private_to_public[secretfield],
+                                                 'tag': auth['tag'],
+                                                 'userfield': private_to_public[userfield],
+                                                 'user': auth[userfield],
+                                                 'char': char
+                                                 }, key=auth['id']))
+                    if auth[secretfield] != auth[secretfield].strip():
+                        alerts.append(Alert(ISCSIAuthSecretWhitespaceAlertClass,
+                                            {'field': private_to_public[secretfield],
+                                             'tag': auth['tag'],
+                                             'userfield': private_to_public[userfield],
+                                             'user': auth[userfield],
+                                             }, key=auth['id']))
+
+        return alerts

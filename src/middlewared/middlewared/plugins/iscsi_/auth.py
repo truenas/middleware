@@ -94,6 +94,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
 
         await self.middleware.call('iscsi.auth.recalc_mutual_chap_alert', orig_peerusers)
+
+        # We might have cleared some junk
+        await self.middleware.call('alert.alert_source_clear_run', 'ISCSIAuthSecret')
+
         await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
@@ -119,6 +123,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
         if orig_peerusers:
             await self.middleware.call('iscsi.auth.recalc_mutual_chap_alert', orig_peerusers)
+
+        # We might have cleared some junk
+        await self.middleware.call('alert.alert_source_clear_run', 'ISCSIAuthSecret')
+
         await self._service_change('iscsitarget', 'reload')
 
         return result
