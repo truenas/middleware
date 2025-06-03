@@ -27,6 +27,7 @@ class QuotaCriticalAlertClass(AlertClass):
 
 class QuotaAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
+    run_on_backup_node = False
 
     def check_sync(self):
         alerts = []
