@@ -160,8 +160,8 @@ class FCPortService(CRUDService):
             sessions_path = qla_target_path / wwn_as_colon_hex(naa) / 'sessions'
             sessions = []
             try:
-                with os.scandir(sessions_path) as iter:
-                    for entry in iter:
+                with os.scandir(sessions_path) as iterator:
+                    for entry in iterator:
                         if not entry.is_dir():
                             continue
                         if with_lun_access:

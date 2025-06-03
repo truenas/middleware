@@ -267,7 +267,7 @@ class RDMAInterfaceService(CRUDService):
                 return False
         return True
 
-    async def internal_interfaces(self, all=False):
+    async def internal_interfaces(self, get_all=False):
         # We must fetch all link choices.  If we did not there would
         # be a circular call chain between interface and rdma
         links = await self.middleware.call('rdma._get_link_choices')
@@ -275,7 +275,7 @@ class RDMAInterfaceService(CRUDService):
         for link in links:
             ifname_to_netdev[link['rdma']] = link['netdev']
 
-        if all:
+        if get_all:
             # Treat all RDMA interfaces as internal
             return list(ifname_to_netdev.values())
         else:

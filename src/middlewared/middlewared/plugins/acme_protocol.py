@@ -57,7 +57,6 @@ class ACMERegistrationCreateResult(BaseModel):
     result: ACMERegistrationEntry
 
 
-
 class ACMERegistrationModel(sa.Model):
     __tablename__ = 'system_acmeregistration'
 
