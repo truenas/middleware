@@ -31,7 +31,6 @@ class FCPortModel(sa.Model):
 class FCPortService(CRUDService):
 
     class Config:
-        private = True
         namespace = "fcport"
         datastore = "services.fibrechanneltotarget"
         datastore_prefix = 'fc_'
