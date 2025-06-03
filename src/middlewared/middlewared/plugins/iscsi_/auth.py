@@ -7,6 +7,9 @@ from middlewared.service import CallError, CRUDService, ValidationErrors, privat
 from .utils import IscsiAuthType
 
 
+INVALID_CHARACTERS = '#'
+
+
 def _auth_summary(data):
     user = data.get('user', '')
     tag = data.get('tag', '')
@@ -148,6 +151,24 @@ class iSCSITargetAuthCredentialService(CRUDService):
         return {'in_use': bool(usages), 'usages': '\n'.join(usages)}
 
     @private
+    def _validate_secret(self, secret, fieldname, title, schema_name, verrors):
+        if len(secret) < 12 or len(secret) > 16:
+            verrors.add(
+                f'{schema_name}.{fieldname}',
+                f'{title} must be between 12 and 16 characters.'
+            )
+        if secret != secret.strip():
+            verrors.add(
+                f'{schema_name}.{fieldname}',
+                f'{title} contains leading or trailing space.'
+            )
+        if bad_chars := [ch for ch in INVALID_CHARACTERS if ch in secret]:
+            verrors.add(
+                f'{schema_name}.{fieldname}',
+                f'{title} contains invalid characters: {",".join(bad_chars)}'
+            )
+
+    @private
     async def validate(self, data, schema_name, verrors, discovery_auth_mutual_chap_count):
         secret = data.get('secret')
         peer_secret = data.get('peersecret')
@@ -160,11 +181,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
                 'The peer user is required if you set a peer secret.'
             )
 
-        if len(secret) < 12 or len(secret) > 16:
-            verrors.add(
-                f'{schema_name}.secret',
-                'Secret must be between 12 and 16 characters.'
-            )
+        self._validate_secret(secret, 'secret', 'Secret', schema_name, verrors)
 
         if peer_user:
             if not peer_secret:
@@ -177,12 +194,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
                     f'{schema_name}.peersecret',
                     'The peer secret cannot be the same as user secret.'
                 )
-            elif peer_secret:
-                if len(peer_secret) < 12 or len(peer_secret) > 16:
-                    verrors.add(
-                        f'{schema_name}.peersecret',
-                        'Peer Secret must be between 12 and 16 characters.'
-                    )
+            else:
+                self._validate_secret(peer_secret, 'peersecret', 'Peer Secret', schema_name, verrors)
             if discovery_auth == IscsiAuthType.CHAP_MUTUAL and discovery_auth_mutual_chap_count:
                 verrors.add(
                     f'{schema_name}.discovery_auth',
