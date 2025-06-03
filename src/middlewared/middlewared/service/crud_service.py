@@ -70,8 +70,11 @@ class CRUDServiceMetabase(ServiceBase):
         private = config.private
         cli_private = config.cli_private
 
-        if not private and not config.role_prefix:
-            raise ValueError(f'{config.namespace}: public CRUDService must have role_prefix defined')
+        if not private:
+            if not config.role_prefix:
+                raise ValueError(f'{config.namespace}: public CRUDService must have role_prefix defined')
+            if not config.entry:
+                raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
 
         if entry is not None:
             # FIXME: This is to prevent `Method cloudsync.credentials.ENTRY is public but has no @accepts()`, remove
