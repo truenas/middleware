@@ -33,7 +33,7 @@ from middlewared.api.current import (
     AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
 )
 from middlewared.plugins.zfs_.utils import TNUserProp
-from middlewared.service import filterable, job, private, ConfigService
+from middlewared.service import filterable_api_method, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
@@ -488,8 +488,7 @@ class AuditService(ConfigService):
         except Exception:
             self.logger.error('Error detected in truenas_verify setup.', exc_info=True)
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     async def json_schemas(self, filters, options):
         return filter_list(
             AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS + AUDIT_EVENT_SUDO_JSON_SCHEMAS,
