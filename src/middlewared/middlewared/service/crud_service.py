@@ -73,8 +73,9 @@ class CRUDServiceMetabase(ServiceBase):
         if not private:
             if not config.role_prefix:
                 raise ValueError(f'{config.namespace}: public CRUDService must have role_prefix defined')
-            if not config.entry:
-                raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
+            # TODO: Enforce after SMB gets converted
+            # if not config.entry:
+            #     raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
 
         if entry is not None:
             # FIXME: This is to prevent `Method cloudsync.credentials.ENTRY is public but has no @accepts()`, remove
