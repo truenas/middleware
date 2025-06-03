@@ -69,7 +69,7 @@ Roles for methods that are decorated with `@filterable_api_method` may be specif
 
 .. code-block:: python
 
-   @filterable_api_method(MethodArgs, MethodResult, roles=['REPORTING_READ'])
+   @filterable_api_method(item=ItemEntry, roles=['REPORTING_READ'])
 
 Subscribable event roles
 ========================
