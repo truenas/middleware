@@ -4,41 +4,59 @@ import pytest
 
 from middlewared.alert.base import Alert
 from middlewared.alert.source.quota import QuotaCriticalAlertClass, QuotaAlertSource
+from middlewared.plugins.zfs_.utils import TNUserProp
+
+DEFAULT_QUOTA_THRESHOLDS = {k: v for k, v in TNUserProp.quotas()}
+FAUX_POOL = "tank"
+FAUX_POOL_TOTAL = 9881780224
+FAUX_DS = f"{FAUX_POOL}/share/HR"
 
 
 @pytest.mark.parametrize("dataset_query,alerts", [
-    # 10 MB quota, 10 MB reserved, a few kilobytes used
     (
-        [
-            {
-                "name": {"rawvalue": "Volume_1/Hard_Drives/Bill_HDD"},
-                "used": {"rawvalue": "10485760"},
-                "quota": {"rawvalue": "10485760"},
-                "available": {"rawvalue": "10395648"},
-            },
-        ],
+        {
+            "pools": {FAUX_POOL: FAUX_POOL_TOTAL},
+            "datasets": {
+                FAUX_DS: {
+                    "pool": FAUX_POOL,
+                    "properties": {
+                        "used": {"value": 10485760},
+                        "quota": {"value": 10485760},
+                        "refquota": {"value": 0},
+                        "available": {"value": 10395648},
+                    },
+                    "user_properties": DEFAULT_QUOTA_THRESHOLDS
+                }
+            }
+        },
         []
     ),
-    # Refquota
     (
-        [
-            {
-                "name": {"rawvalue": "Volume_1/Hard_Drives/Bill_HDD"},
-                "usedbydataset": {"rawvalue": "10000000"},
-                "refquota": {"rawvalue": "10485760"},
-            },
-        ],
+        {
+            "pools": {FAUX_POOL: FAUX_POOL_TOTAL},
+            "datasets": {
+                FAUX_DS: {
+                    "pool": FAUX_POOL,
+                    "properties": {
+                        "usedbydataset": {"value": 10000000},
+                        "refquota": {"value": 10485760},
+                        "quota": {"value": 0},
+                    },
+                    "user_properties": DEFAULT_QUOTA_THRESHOLDS
+                }
+            }
+        },
         [
             Alert(
                 QuotaCriticalAlertClass,
                 args={
                     "name": "Refquota",
-                    "dataset": "Volume_1/Hard_Drives/Bill_HDD",
+                    "dataset": FAUX_DS,
                     "used_fraction": 95.367431640625,
                     "used": "9.54 MiB",
                     "quota_value": "10 MiB",
                 },
-                key=["Volume_1/Hard_Drives/Bill_HDD", "refquota"],
+                key=[FAUX_DS, "refquota"],
                 mail=None,
             )
         ]
