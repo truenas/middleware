@@ -1,4 +1,3 @@
-import os
 import pathlib
 
 from middlewared.api import api_method
