@@ -67,7 +67,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                         continue
 
                     if quota_value > rv["pools"][info["pool"]]:
-                        # Quota larger than pool available size will never
+                        # Quota larger than zpool's total size will never
                         # be exceeded but will break our logic
                         continue
 
