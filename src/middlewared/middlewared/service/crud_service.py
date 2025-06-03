@@ -68,6 +68,7 @@ class CRUDServiceMetabase(ServiceBase):
         config = klass._config
         entry = config.entry
         private = config.private
+        cli_private = config.cli_private
 
         if not private and not config.role_prefix:
             raise ValueError(f'{config.namespace}: public CRUDService must have role_prefix defined')
@@ -83,7 +84,7 @@ class CRUDServiceMetabase(ServiceBase):
                 not hasattr(klass.query, '_filterable') or klass.query._filterable is False
             ):
                 # No need to inject api method if filterable has been explicitly specified
-                klass.query = api_method(QueryArgs, query_result_model, private=private)(
+                klass.query = api_method(QueryArgs, query_result_model, private=private, cli_private=cli_private)(
                     klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
                 )
             else:
@@ -95,14 +96,11 @@ class CRUDServiceMetabase(ServiceBase):
                     )
 
             # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
-            get_instance_args_model = get_instance_args(
-                entry,
-                primary_key=config.datastore_primary_key
-            )
+            get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)
             get_instance_result_model = get_instance_result(entry)
-            klass.get_instance = api_method(get_instance_args_model,
-                                            get_instance_result_model,
-                                            private=private)(klass.get_instance.wraps)
+            klass.get_instance = api_method(
+                get_instance_args_model, get_instance_result_model, private=private, cli_private=cli_private
+            )(klass.get_instance.wraps)
 
             klass._register_models = [
                 (query_result_model, query_result, entry.__name__),
