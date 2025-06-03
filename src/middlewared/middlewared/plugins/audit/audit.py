@@ -37,6 +37,7 @@ from middlewared.service import filterable_api_method, job, private, ConfigServi
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
+from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.functools_ import cache
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
@@ -71,8 +72,8 @@ class AuditService(ConfigService):
     @private
     @cache
     def audit_dataset_name(self):
-        audit_dev = os.stat(AUDIT_DATASET_PATH).st_dev
-        return getmntinfo(audit_dev)[audit_dev]['mount_source']
+        audit_mnt_id = statx(AUDIT_DATASET_PATH).stx_mnt_id
+        return getmntinfo(mnt_id=audit_mnt_id)[audit_mnt_id]['mount_source']
 
     @private
     def get_audit_dataset(self):
