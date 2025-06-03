@@ -775,7 +775,6 @@ def test__mutual_chap(iscsi_running):
                  id='Bad character in peersecret'),
 ])
 def test__auth_secret(data, valid, attr, message):
-    # print(data, valid, attr, message)
     if valid:
         with iscsi_auth_data(data):
             pass
