@@ -1,14 +1,29 @@
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import UpdateStatusArgs, UpdateStatusResult, UpdateStatusChangedEvent
 from middlewared.service import private, Service
 
 
 class UpdateService(Service):
 
+    class Config:
+        events = [
+            Event(
+                name='update.status',
+                description='Updated on update status changes.',
+                roles=['SYSTEM_UPDATE_READ'],
+                models={
+                    'CHANGED': UpdateStatusChangedEvent,
+                },
+            ),
+        ]
+
     update_download_progress = None
 
     @api_method(UpdateStatusArgs, UpdateStatusResult, roles=['SYSTEM_UPDATE_READ'])
     async def status(self):
+        """
+        Update status.
+        """
         try:
             applied = await self.middleware.call('cache.get', 'update.applied')
         except KeyError:
@@ -88,14 +103,3 @@ class UpdateService(Service):
             **update_status,
             'update_download_progress': progress,
         })
-
-
-async def setup(middleware):
-    middleware.event_register(
-        'update.status',
-        'Updated on update status changes.',
-        roles=['SYSTEM_UPDATE_READ'],
-        models={
-            'CHANGED': UpdateStatusChangedEvent,
-        },
-    )

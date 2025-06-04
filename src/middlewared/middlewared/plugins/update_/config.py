@@ -23,6 +23,9 @@ class UpdateService(ConfigService):
 
     @api_method(UpdateUpdateArgs, UpdateUpdateResult)
     async def do_update(self, data):
+        """
+        Update update configuration.
+        """
         old = await self.config()
 
         new = old.copy()
@@ -37,7 +40,13 @@ class UpdateService(ConfigService):
 
         verrors.check()
 
-        await self.middleware.call('datastore.update', 'system.update', old['id'], new, {'prefix': 'upd_'})
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            old['id'],
+            new,
+            {'prefix': self._config.datastore_prefix},
+        )
 
         if new['autocheck'] != old['autocheck']:
             await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
