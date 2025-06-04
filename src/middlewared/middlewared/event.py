@@ -1,11 +1,12 @@
 import asyncio
-import contextlib
 import json
 import threading
 import typing
 
+from middlewared.api.base.handler.accept import validate_model
 from middlewared.role import RoleManager
-from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
+from middlewared.schema import Any
+from middlewared.service import ValidationErrors
 
 
 class Events:
@@ -50,28 +51,10 @@ class Events:
             yield k, self.get_event(k)
 
 
-class EventSourceMetabase(type):
-
-    def __new__(cls, name, bases, attrs):
-        klass = super().__new__(cls, name, bases, attrs)
-        if name == 'EventSource' and bases == ():
-            return klass
-
-        for i in (('ACCEPTS', name.lower()), ('RETURNS', f'{name.lower()}_returns')):
-            doc_type = getattr(klass, i[0])
-            if doc_type == NotImplementedError:
-                doc_type = Any(null=True)
-            if not doc_type.name:
-                doc_type.name = i[1]
-            setattr(klass, i[0], [doc_type])
-
-        return klass
-
-
-class EventSource(metaclass=EventSourceMetabase):
-
-    ACCEPTS = NotImplementedError
-    RETURNS = NotImplementedError
+class EventSource:
+    args = None
+    event = None
+    roles = []
 
     def __init__(self, middleware, name, arg, send_event, unsubscribe_all):
         self.middleware = middleware
@@ -86,15 +69,17 @@ class EventSource(metaclass=EventSourceMetabase):
         self.send_event_internal(event_type, **kwargs)
 
     async def validate_arg(self):
-        verrors = ValidationErrors()
-        try:
-            with contextlib.suppress(json.JSONDecodeError):
-                self.arg = json.loads(self.arg)
-        except TypeError:
-            self.arg = self.ACCEPTS[0].default
+        if self.arg is None:
+            data = {}
+        else:
+            try:
+                data = json.loads(self.arg)
+            except ValueError as e:
+                verrors = ValidationErrors()
+                verrors.add("", str(e))
+                raise verrors
 
-        self.arg = clean_and_validate_arg(verrors, self.ACCEPTS[0], self.arg)
-        verrors.check()
+        self.arg = validate_model(self.args, data)
 
     async def process(self):
         error = None

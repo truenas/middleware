@@ -86,13 +86,13 @@ class EventSourceManager:
         else:
             return f'{name}:{arg}'
 
-    def register(self, name, event_source, roles):
+    def register(self, name, event_source):
         if not issubclass(event_source, EventSource):
             raise RuntimeError(f"{event_source} is not EventSource subclass")
 
         self.event_sources[name] = event_source
 
-        self.middleware.role_manager.register_event(name, roles)
+        self.middleware.role_manager.register_event(name, event_source.roles)
 
     async def subscribe(self, subscriber, ident, name, arg):
         if ident in self.idents:
