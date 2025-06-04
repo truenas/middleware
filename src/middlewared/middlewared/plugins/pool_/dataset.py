@@ -208,7 +208,7 @@ class PoolDatasetService(CRUDService):
             # changes to the root dataset (zpool)
             parent_name = data['name']
         else:
-            parent_name = parents[-1]
+            parent_name = parents[0]
 
         if not parent:
             parent = await self.middleware.call(
