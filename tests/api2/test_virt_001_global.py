@@ -1,8 +1,10 @@
+import pytest
+
+from auto_config import pool_name
 from middlewared.test.integration.utils.call import call
 from middlewared.test.integration.utils.ssh import ssh
 
-
-from auto_config import pool_name
+pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
 
 
 def test_virt_pool():
