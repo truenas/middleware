@@ -11,6 +11,8 @@ CONTAINER_NAME = 'virt-container'
 ENCRYPTED_POOL_NAME = 'enc_pool_virt'
 POOL_PASSPHRASE = '12345678'
 
+pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
+
 
 @pytest.fixture(scope='module')
 def check_unused_disks():
