@@ -32,6 +32,23 @@ class UpdateService(Service):
 
     @private
     async def get_trains(self):
+        """
+        Returns an ordered list of currently available trains in the following format:
+
+        ```
+            {
+                "trains": {
+                    "TrueNAS-SCALE-Fangtooth": {
+                        "description": "TrueNAS SCALE Fangtooth 25.04 [release]",
+                        "update_profile": "GENERAL"
+                    }
+                },
+                "trains_redirection": {
+                    "TrueNAS-SCALE-Fangtooth-RC": "TrueNAS-SCALE-Fangtooth",
+                }
+            }
+        ```
+        """
         trains = await self.fetch(f"{self.update_srv}/trains.json")
 
         current_train_name = await self.get_current_train_name(trains)

@@ -20,6 +20,9 @@ class UpdateService(Service):
 
     @api_method(UpdateProfileChoicesArgs, UpdateProfileChoicesResult, roles=['SYSTEM_UPDATE_READ'])
     async def profile_choices(self):
+        """
+        `profile` choices for configuration update.
+        """
         profiles = {}
         is_enterprise = await self.middleware.call('system.is_enterprise')
 
@@ -79,8 +82,9 @@ class UpdateService(Service):
                 ),
             }
 
+        current_profile = Profile[(await self.middleware.call('update.get_manifest_file'))['update_profile']]
         for profile, data in profiles.items():
-            data['available'] = True
+            data['available'] = profile <= current_profile
 
         return {k.name: v for k, v in profiles.items()}
 
