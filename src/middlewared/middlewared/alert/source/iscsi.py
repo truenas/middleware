@@ -84,12 +84,27 @@ class ISCSIAuthSecretAlertSource(AlertSource):
 
         auths = await self.middleware.call('iscsi.auth.query')
         for auth in auths:
-            for userfield, secretfield in [('user', 'secret'),
+            for userfield, secretfield in (
+                ('user', 'secret'),
+                ('peeruser', 'peersecret')
+            ):
                                            ('peeruser', 'peersecret')]:
                 if auth[userfield] and auth[secretfield]:
                     for char in self.INVALID_CHARS:
                         if char in auth[secretfield]:
-                            alerts.append(Alert(ISCSIAuthSecretInvalidCharAlertClass,
+                            alerts.append(
+                                Alert(
+                                    ISCSIAuthSecretInvalidCharAlertClass,
+                                    {
+                                        'field': private_to_public[secretfield],
+                                        'tag': auth['tag'],
+                                        'userfield': private_to_public[userfield],
+                                        'user': auth[userfield],
+                                        'char': char,
+                                    },
+                                    key=auth['id'],
+                                )
+                            )
                                                 {'field': private_to_public[secretfield],
                                                  'tag': auth['tag'],
                                                  'userfield': private_to_public[userfield],
