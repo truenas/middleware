@@ -1,3 +1,8 @@
+import errno
+import os
+import pathlib
+import shutil
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     UpdateFileArgs, UpdateFileResult,
@@ -6,11 +11,6 @@ from middlewared.api.current import (
 )
 from middlewared.service import job, private, CallError, Service, pass_app
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
-
-import errno
-import os
-import shutil
-import pathlib
 
 SYSTEM_UPGRADE_REBOOT_REASON = 'System upgrade'
 
@@ -80,10 +80,8 @@ class UpdateService(Service):
 
             job.set_progress(95, 'Cleaning up')
         finally:
-            if options['cleanup']:
-                if unlink_file:
-                    if os.path.exists(path):
-                        os.unlink(path)
+            if options['cleanup'] and unlink_file and os.path.exists(path):
+                os.unlink(path)
 
         if path.startswith(UPLOAD_LOCATION):
             self.middleware.call_sync('update.destroy_upload_location')

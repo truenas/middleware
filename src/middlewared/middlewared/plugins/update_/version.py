@@ -14,6 +14,9 @@ class UpdateService(Service):
         roles=['SYSTEM_UPDATE_READ'],
     )
     async def available_versions(self):
+        """
+        TrueNAS versions available for update.
+        """
         trains = await self.middleware.call('update.get_trains')
 
         current_train_name = await self.middleware.call('update.get_current_train_name', trains)
