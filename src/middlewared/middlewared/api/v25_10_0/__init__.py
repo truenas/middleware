@@ -1,6 +1,5 @@
 from .acl import *
 from .acme_dns_authenticator import *
-from .acme_registration import *
 from .alert import *
 from .alertservice import *
 from .api_key import *
@@ -80,7 +79,6 @@ from .pool_snapshot_count import *
 from .pool_snapshottask import *
 from .privilege import *
 from .rdma import *
-from .rdma_interface import *
 from .replication import *
 from .replication_config import *
 from .replication_crud import *
