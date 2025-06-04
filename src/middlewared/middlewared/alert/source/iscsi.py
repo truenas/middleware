@@ -1,7 +1,8 @@
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.plugins.iscsi_.auth import INVALID_CHARACTERS
 
 
 class ISCSIPortalIPAlertClass(AlertClass):
@@ -70,7 +71,6 @@ class ISCSIAuthSecretWhitespaceAlertClass(AlertClass):
 class ISCSIAuthSecretAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=24))
     run_on_backup_node = False
-    INVALID_CHARS = '#'
 
     async def check(self):
         alerts = []
@@ -88,9 +88,8 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                 ('user', 'secret'),
                 ('peeruser', 'peersecret')
             ):
-                                           ('peeruser', 'peersecret')]:
                 if auth[userfield] and auth[secretfield]:
-                    for char in self.INVALID_CHARS:
+                    for char in INVALID_CHARACTERS:
                         if char in auth[secretfield]:
                             alerts.append(
                                 Alert(
@@ -105,18 +104,18 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                                     key=auth['id'],
                                 )
                             )
-                                                {'field': private_to_public[secretfield],
-                                                 'tag': auth['tag'],
-                                                 'userfield': private_to_public[userfield],
-                                                 'user': auth[userfield],
-                                                 'char': char
-                                                 }, key=auth['id']))
                     if auth[secretfield] != auth[secretfield].strip():
-                        alerts.append(Alert(ISCSIAuthSecretWhitespaceAlertClass,
-                                            {'field': private_to_public[secretfield],
-                                             'tag': auth['tag'],
-                                             'userfield': private_to_public[userfield],
-                                             'user': auth[userfield],
-                                             }, key=auth['id']))
+                        alerts.append(
+                            Alert(
+                                ISCSIAuthSecretWhitespaceAlertClass,
+                                {
+                                    'field': private_to_public[secretfield],
+                                    'tag': auth['tag'],
+                                    'userfield': private_to_public[userfield],
+                                    'user': auth[userfield],
+                                },
+                                key=auth['id']
+                            )
+                        )
 
         return alerts
