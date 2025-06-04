@@ -92,7 +92,7 @@ class LDAPService(Service):
             return out
 
         if data['kerberos_realm']:
-            realm_id = (await self.middleware.call('kerberos.realm.query' [
+            realm_id = (await self.middleware.call('kerberos.realm.query', [
                 ['realm', '=', data['kerberos_realm']],
             ], {'get': True}))['id']
             out['kerberos_realm'] = realm_id
