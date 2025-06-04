@@ -5,7 +5,7 @@ import pytest
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, pool
 
 
 def test_create_dataset_nonexistent_pool():
@@ -15,6 +15,16 @@ def test_create_dataset_nonexistent_pool():
         match=escape(f"[EINVAL] pool_dataset_create.name: zpool ({bad}) does not exist.\n")
     ):
         with dataset("zz", pool=bad):
+            pass
+
+
+def test_create_dataset_nonexistent_parent_ds():
+    bad = "zz"
+    with pytest.raises(
+        ValidationErrors,
+        match=escape(f"[EINVAL] pool_dataset_create.name: Parent dataset ({pool}/{bad}) does not exist.\n")
+    ):
+        with dataset(f"{bad}/bleh"):
             pass
 
 
