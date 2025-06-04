@@ -18,7 +18,8 @@ __all__ = [
     'AppIPChoicesArgs', 'AppIPChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
     'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
-    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult',
+    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
+    'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
 ]
 
 
@@ -383,3 +384,52 @@ class AppSimilarArgs(BaseModel):
 
 class AppSimilarResult(BaseModel):
     result: list[AppAvailableResponse]
+
+
+class AppContainerLogsFollowTailEventSourceArgs(BaseModel):
+    tail_lines: int | None = Field(default=500, ge=1)
+    app_name: str
+    container_id: str
+
+
+@single_argument_result
+class AppContainerLogsFollowTailEventSourceEvent(BaseModel):
+    data: str
+    timestamp: str | None
+
+
+class AppStatsEventSourceArgs(BaseModel):
+    interval: int = Field(default=2, ge=2)
+
+
+class AppStatsEventSourceEvent(BaseModel):
+    result: list["AppStatsEventSourceEventItem"]
+
+
+class AppStatsEventSourceEventItem(BaseModel):
+    app_name: str
+    cpu_usage: int
+    """Percentage of cpu used by an app."""
+    memory: int
+    """Current memory (in bytes) used by an app."""
+    networks: list["AppStatsEventSourceEventItemNetwork"]
+    blkio: "AppStatsEventSourceEventItemBlkio"
+
+
+class AppStatsEventSourceEventItemNetwork(BaseModel):
+    interface_name: str
+    """Name of the interface used by the app."""
+    rx_bytes: int
+    """Received bytes/s by an interface."""
+    tx_bytes: int
+    """Transmitted bytes/s by an interface."""
+
+
+class AppStatsEventSourceEventItemBlkio(BaseModel):
+    read: int
+    """Blkio read bytes."""
+    write: int
+    """Blkio write bytes."""
+
+
+AppStatsEventSourceEvent.model_rebuild()
