@@ -26,6 +26,7 @@ from pytest_dependency import depends
 
 from middlewared.service_exception import CallError, InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
+from middlewared.test.integration.assets.iscsi import iscsi_auth as iscsi_auth_data
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
@@ -705,6 +706,82 @@ def test__mutual_chap(iscsi_running):
                                 # Finally ensure we can connect with the right Mutual CHAP creds
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
                                     _verify_inquiry(s)
+
+
+@pytest.mark.parametrize('data, valid, attr, message', [
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12'},
+                 True, None, None,
+                 id='Valid user/secret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'test secret12'},
+                 True, None, None,
+                 id='Valid user/secret with space'),
+    pytest.param({'tag': 1, 'user': 'testuser1'},
+                 False, 'data.secret', 'Field required',
+                 id='No secret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': ''},
+                 False, 'iscsi_auth_create.secret', 'Secret must be between 12 and 16 characters.',
+                 id='Empty secret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'short'},
+                 False, 'iscsi_auth_create.secret', 'Secret must be between 12 and 16 characters.',
+                 id='Short secret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'averylongsecretcausesproblems'},
+                 False, 'iscsi_auth_create.secret', 'Secret must be between 12 and 16 characters.',
+                 id='Long secret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': ' testpassword12'},
+                 False, 'iscsi_auth_create.secret', 'Secret contains leading or trailing space.',
+                 id='Leading space in secret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testpassword12 '},
+                 False, 'iscsi_auth_create.secret', 'Secret contains leading or trailing space.',
+                 id='Trailing space in secret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': '#testpassword12'},
+                 False, 'iscsi_auth_create.secret', 'Secret contains invalid characters: #',
+                 id='Bad character in secret'),
+    # Peer
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': 'test secret!!'},
+                 True, None, None,
+                 id='Valid peeruser/peersecret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': 'test secret12'},
+                 True, None, None,
+                 id='Valid peeruser/peersecret with space'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2'},
+                 False, 'iscsi_auth_create.peersecret', 'The peer secret is required if you set a peer user.',
+                 id='No peersecret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': ''},
+                 False, 'iscsi_auth_create.peersecret', 'The peer secret is required if you set a peer user.',
+                 id='Empty peersecret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': 'short'},
+                 False, 'iscsi_auth_create.peersecret', 'Peer Secret must be between 12 and 16 characters.',
+                 id='Short peersecret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': 'averylongsecretcausesproblems'},
+                 False, 'iscsi_auth_create.peersecret', 'Peer Secret must be between 12 and 16 characters.',
+                 id='Long peersecret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': ' testpassword12'},
+                 False, 'iscsi_auth_create.peersecret', 'Peer Secret contains leading or trailing space.',
+                 id='Leading space in peersecret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': 'testpassword12 '},
+                 False, 'iscsi_auth_create.peersecret', 'Peer Secret contains leading or trailing space.',
+                 id='Trailing space in peersecret'),
+    pytest.param({'tag': 1, 'user': 'testuser1', 'secret': 'testsecret12',
+                  'peeruser': 'testuser2', 'peersecret': '#testpassword12'},
+                 False, 'iscsi_auth_create.peersecret', 'Peer Secret contains invalid characters: #',
+                 id='Bad character in peersecret'),
+])
+def test__auth_secret(data, valid, attr, message):
+    if valid:
+        with iscsi_auth_data(data):
+            pass
+    else:
+        with assert_validation_errors(attr, message):
+            with iscsi_auth_data(data):
+                pass
 
 
 def _assert_auth(auth, tag, user, secret, peeruser, peersecret, discovery_auth):
