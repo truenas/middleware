@@ -58,14 +58,20 @@ class ISCSIAuthSecretInvalidCharAlertClass(AlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = 'iSCSI Authorized Access has an invalid character'
-    text = 'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r has a %(field)s containing the invalid character: %(char)r.'
+    text = (
+        'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
+        'has a %(field)s containing the invalid character: %(char)r.'
+    )
 
 
 class ISCSIAuthSecretWhitespaceAlertClass(AlertClass):
     category = AlertCategory.SHARING
     level = AlertLevel.WARNING
     title = 'iSCSI Authorized Access has leading or trailing whitespace'
-    text = 'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r has a %(field)s containing leading or trailing whitespace.'
+    text = (
+        'The iSCSI Authorized Access with Group ID %(tag)d and %(userfield)s %(user)r '
+        'has a %(field)s containing leading or trailing whitespace.'
+    )
 
 
 class ISCSIAuthSecretAlertSource(AlertSource):
