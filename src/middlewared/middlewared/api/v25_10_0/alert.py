@@ -103,7 +103,7 @@ class AlertRestoreResult(BaseModel):
 
 
 class AlertClassesUpdateArgs(BaseModel):
-    data: AlertClassesUpdate
+    alert_class_update: AlertClassesUpdate
 
 
 class AlertClassesUpdateResult(BaseModel):
