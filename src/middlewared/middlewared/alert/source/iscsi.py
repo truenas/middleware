@@ -101,7 +101,6 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                                         'user': auth[userfield],
                                         'char': char,
                                     },
-                                    key=auth['id'],
                                 )
                             )
                     if auth[secretfield] != auth[secretfield].strip():
@@ -114,7 +113,6 @@ class ISCSIAuthSecretAlertSource(AlertSource):
                                     'userfield': private_to_public[userfield],
                                     'user': auth[userfield],
                                 },
-                                key=auth['id']
                             )
                         )
 
