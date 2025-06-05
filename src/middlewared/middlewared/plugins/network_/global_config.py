@@ -212,14 +212,28 @@ class NetworkConfigurationService(ConfigService):
             rhost_changed = config['hostname'] != new_config['hostname']
 
         vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
-        if vhost_changed:
+        if vhost_changed or lhost_changed or rhost_changed:
+            if vhost_changed:
+                schema = 'global_configuration_update.hostname_virtual'
+            else:
+                if this_node == 'B':
+                    if lhost_changed:
+                        schema = 'global_configuration_update.hostname_b'
+                    else:
+                        schema = 'global_configuration_update.hostname'
+                else:
+                    if lhost_changed:
+                        schema = 'global_configuration_update.hostname'
+                    else:
+                        schema = 'global_configuration_update.hostname_b'
+
             ds = await self.middleware.call('directoryservices.status')
-            if ds['type'] in (DSType.AD.value, DSType.IPA.value):
+            if ds['type'] in (DSType.AD.value, DSType.IPA.value) and ds['status'] != 'JOINING':
                 verrors.add(
-                    'global_configuration_update.hostname_virtual',
-                    'This parameter may not be changed after joining a directory service. '
-                    'If it must be changed, the proper procedure is to cleanly leave the domain '
-                    'and then alter the parameter before re-joining the domain.'
+                    schema,
+                    'You cannot change this parameter after TrueNAS joins a domain. '
+                    'To change it, first leave the domain cleanly. '
+                    'Then change the parameter and rejoin the domain.'
                 )
 
         verrors.check()
