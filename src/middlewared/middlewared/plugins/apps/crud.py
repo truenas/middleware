@@ -263,6 +263,14 @@ class AppService(CRUDService):
         job.set_progress(60, 'Configuration updated')
         self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=self.get_instance__sync(app_name))
         if trigger_compose:
+            # When we run the 'up' action, with force_recreate=True, we also run 'down' action internally first.
+            # In case the 'up' actin fails, the app remains in a stopped state, which user thinks its "broken".
+            # So we will first try to pull the images and if that succeeds, we will then run the 'up' action
+            # with force_recreate=True, so that the app is recreated with the new configuration.
+            # If the 'pull' action fails, we will not run the 'up' action and the app will remain in the state it was.
+            job.set_progress(65, 'Pulling app images')
+            compose_action(app_name, app['version'], 'pull')
+            # Assuming the pull action didn't raise, we can proceed with the 'up' action
             job.set_progress(70, 'Updating docker resources')
             compose_action(app_name, app['version'], 'up', force_recreate=True, remove_orphans=True)
 

@@ -14,7 +14,7 @@ logger = logging.getLogger('app_lifecycle')
 def compose_action(
     app_name: str, app_version: str, action: typing.Literal['up', 'down', 'pull'], *,
     force_recreate: bool = False, remove_orphans: bool = False, remove_images: bool = False,
-    remove_volumes: bool = False, pull_images: bool = False,
+    remove_volumes: bool = False, pull_images: bool = False, force_pull: bool = False,
 ):
     compose_files = list(itertools.chain(
         *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
@@ -46,7 +46,8 @@ def compose_action(
         if remove_volumes:
             args.append('-v')
     elif action == 'pull':
-        args.extend(['--policy', 'always'])
+        if force_pull:
+            args.extend(['--policy', 'always'])
     else:
         raise CallError(f'Invalid action {action!r} for app {app_name!r}')
 
