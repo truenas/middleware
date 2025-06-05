@@ -32,28 +32,32 @@ class ConfigServiceMetabase(ServiceBase):
         ):
             return klass
 
-        namespace = klass._config.namespace.replace('.', '_')
+        config = klass._config
+        entry = config.entry
+        namespace = config.namespace.replace('.', '_')
         config_entry_key = f'{namespace}_entry'
         config_model_name = f'{namespace.capitalize()}Config'
 
-        if not klass._config.private and not klass._config.role_prefix:
-            raise ValueError(f'{klass._config.namespace}: public ConfigService must have role_prefix defined')
+        if not config.private and not config.role_prefix:
+            raise ValueError(f'{config.namespace}: public ConfigService must have role_prefix defined')
 
-        if klass._config.entry is not None and not hasattr(klass.config, 'new_style_accepts'):
+        if entry is not None and not hasattr(klass.config, 'new_style_accepts'):
             klass.ENTRY = None
             result_model = create_model(
-                klass._config.entry.__name__.removesuffix('Entry') + 'ConfigResult',
+                entry.__name__.removesuffix('Entry') + 'ConfigResult',
                 __base__=(BaseModel,),
-                __module__=klass._config.entry.__module__,
-                result=Annotated[klass._config.entry, Field()]
+                __module__=entry.__module__,
+                result=Annotated[entry, Field()]
             )
             klass.config = api_method(
                 create_model(
                     config_model_name,
                     __base__=(BaseModel,),
-                    __module__=klass._config.entry.__module__,
+                    __module__=entry.__module__,
                 ),
-                result_model
+                result_model,
+                private=config.private,
+                cli_private=config.cli_private,
             )(klass.config)
         else:
             if klass.ENTRY == NotImplementedError:
@@ -68,7 +72,7 @@ class ConfigServiceMetabase(ServiceBase):
 
         if hasattr(klass, 'do_update'):
             # We are not going to dynamically update do_update method with new api style
-            if klass._config.entry:
+            if entry:
                 # We are not going to patch do_update with old accepts/returns if entry is already defined
                 return klass
 
@@ -83,7 +87,7 @@ class ConfigServiceMetabase(ServiceBase):
                 schema = [patch_entry]
                 if m_name == 'accepts':
                     patch_entry.patches.append(('rm', {
-                        'name': klass._config.datastore_primary_key,
+                        'name': config.datastore_primary_key,
                         'safe_delete': True,
                     }))
                     patch_entry.patches.append(('attr', {'update': True}))
