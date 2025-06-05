@@ -138,6 +138,7 @@ class ZFSSnapshot(CRUDService):
         Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
         Bool('recursive', default=False),
         List('exclude', items=[Str('dataset')]),
+        Bool('suspend_vms', default=False),
         Bool('vmware_sync', default=False),
         Dict('properties', additional_attrs=True),
     ))
@@ -181,6 +182,11 @@ class ZFSSnapshot(CRUDService):
         if data['vmware_sync']:
             vmware_context = self.middleware.call_sync('vmware.snapshot_begin', dataset, recursive)
 
+        affected_vms = {}
+        if data['suspend_vms']:
+            if affected_vms := self.middleware.call_sync('vm.query_snapshot_begin', dataset, recursive):
+                self.middleware.call_sync('vm.suspend_vms', list(affected_vms))
+
         try:
             if not exclude:
                 with libzfs.ZFS() as zfs:
@@ -204,6 +210,8 @@ class ZFSSnapshot(CRUDService):
             self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=instance['id'], fields=instance)
             return instance
         finally:
+            if affected_vms:
+                self.middleware.call_sync('vm.resume_suspended_vms', list(affected_vms))
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 

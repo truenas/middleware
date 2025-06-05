@@ -372,6 +372,12 @@ class EtcService(Service):
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/ix-truecommand.conf'},
         ],
+        'libvirt': [
+            {'type': 'py', 'path': 'libvirt', 'checkpoint': None},
+        ],
+        'libvirt_guests': [
+            {'type': 'mako', 'path': 'default/libvirt-guests', 'checkpoint': None},
+        ],
         'subids': [
             {'type': 'mako', 'path': 'subuid', 'checkpoint': None},
             {'type': 'mako', 'path': 'subgid', 'checkpoint': None},
