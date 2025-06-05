@@ -142,7 +142,7 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
                 kdc.append(new['configuration']['target_server'])
 
             if not realm:
-                realm = new['configuration']['domain']
+                realm = new['configuration']['domain'].upper()
 
             aux.append('udp_preference_limit=0')
 
