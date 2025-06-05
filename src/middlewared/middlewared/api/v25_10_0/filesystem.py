@@ -3,6 +3,7 @@ from middlewared.api.base import (
     NonEmptyString,
     UnixPerm,
     single_argument_args,
+    single_argument_result,
     query_result
 )
 from pydantic import Field, model_validator
@@ -27,6 +28,7 @@ __all__ = [
     'FilesystemGetZfsAttrsArgs', 'FilesystemGetZfsAttrsResult',
     'FilesystemGetFileArgs', 'FilesystemGetFileResult',
     'FilesystemPutFileArgs', 'FilesystemPutFileResult',
+    'FileFollowTailEventSourceArgs', 'FileFollowTailEventSourceEvent',
 ]
 
 
@@ -367,3 +369,12 @@ class FilesystemPutFileArgs(BaseModel):
 
 class FilesystemPutFileResult(BaseModel):
     result: Literal[True]
+
+
+class FileFollowTailEventSourceArgs(BaseModel):
+    path: str
+
+
+@single_argument_result
+class FileFollowTailEventSourceEvent(BaseModel):
+    data: str

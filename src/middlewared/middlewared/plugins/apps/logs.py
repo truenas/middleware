@@ -3,10 +3,11 @@ import errno
 import docker.errors
 from dateutil.parser import parse, ParserError
 
+from middlewared.api.current import (
+    AppContainerLogsFollowTailEventSourceArgs, AppContainerLogsFollowTailEventSourceEvent,
+)
 from middlewared.event import EventSource
-from middlewared.schema import Dict, Int, Str
-from middlewared.service import CallError
-from middlewared.validators import Range
+from middlewared.service import CallError, Service
 
 from .ix_apps.utils import AppState
 from .ix_apps.docker.utils import get_docker_client
@@ -23,15 +24,9 @@ class AppContainerLogsFollowTailEventSource(EventSource):
     `tail_lines` is an option to select how many lines of logs to retrieve for the said container. It
     defaults to 500. If set to `null`, it will retrieve complete logs of the container.
     """
-    ACCEPTS = Dict(
-        Int('tail_lines', default=500, validators=[Range(min_=1)], null=True),
-        Str('app_name', required=True),
-        Str('container_id', required=True),
-    )
-    RETURNS = Dict(
-        Str('data', required=True),
-        Str('timestamp', required=True, null=True)
-    )
+    args = AppContainerLogsFollowTailEventSourceArgs
+    event = AppContainerLogsFollowTailEventSourceEvent
+    roles = ['APPS_READ']
 
     def __init__(self, *args, **kwargs):
         super(AppContainerLogsFollowTailEventSource, self).__init__(*args, **kwargs)
@@ -81,7 +76,9 @@ class AppContainerLogsFollowTailEventSource(EventSource):
         self.logs_stream = None
 
 
-def setup(middleware):
-    middleware.register_event_source(
-        'app.container_log_follow', AppContainerLogsFollowTailEventSource, roles=['APPS_READ']
-    )
+class AppService(Service):
+
+    class Config:
+        event_sources = {
+            'app.container_log_follow': AppContainerLogsFollowTailEventSource,
+        }

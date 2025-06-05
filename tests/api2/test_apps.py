@@ -190,7 +190,11 @@ def test_update_app(docker_pool):
     values = {
         'values': {
             'network': {
-                'web_port': 32000
+                'web_port': {
+                    'bind_mode': 'published',
+                    'host_ips': [],
+                    'port_number': 32000
+                }
             },
             'resources': {
                 'limits': {

@@ -9,11 +9,10 @@
 @include common-auth
 %else:
 ${'\n'.join(line.as_conf() for line in STANDALONE_AUTH.primary)}
+@include common-auth-unix
 %if render_ctx['system.security.config']['enable_gpos_stig']:
-${FAILLOCK_AUTH_FAIL.as_conf()}
 ${FAILLOCK_AUTH_SUCC.as_conf()}
 %endif
-@include common-auth-unix
 %endif
 @include common-account
 password	required	pam_deny.so

@@ -51,28 +51,25 @@ The common practice is to define the corresponding roles like this:
         ...
     }
 
-@accepts decorator
+@api_method decorator
 ==================
 
-Roles for an arbitrary method can be specified using `roles` parameter of the `@accepts` decorator:
+Roles for an arbitrary method can be specified using `roles` parameter of the `@api_method` decorator:
 
 .. code-block:: python
 
-    @accepts(
-        Int("id"),
-        roles=["TASK_RUN"],
-    )
+    @api_method(MethodArgs, MethodResult, roles=["TASK_RUN"])
 
 When multiple roles are specified, each of them will have access to the decorated method (without requiring others).
 
-@filterable decorator
+@filterable_api_method decorator
 =====================
 
-Roles for methods that are decorated with `@filterable` may be specified using the `roles` parameter:
+Roles for methods that are decorated with `@filterable_api_method` may be specified using the `roles` parameter:
 
 .. code-block:: python
 
-   @filterable(roles=['REPORTING_READ'])
+   @filterable_api_method(item=ItemEntry, roles=['REPORTING_READ'])
 
 Subscribable event roles
 ========================

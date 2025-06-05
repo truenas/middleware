@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 from .base import ServiceBase
 
 
-class Service(object, metaclass=ServiceBase):
+class Service(metaclass=ServiceBase):
     """
     Generic service abstract class
 
@@ -25,3 +25,6 @@ class Service(object, metaclass=ServiceBase):
                 models=event.models,
                 roles=event.roles,
             )
+
+        for name, klass in self._config.event_sources.items():
+            self.middleware.event_source_manager.register(name, klass)

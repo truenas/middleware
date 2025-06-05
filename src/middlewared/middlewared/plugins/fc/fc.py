@@ -6,7 +6,7 @@ from pathlib import Path
 
 from middlewared.api import api_method
 from middlewared.api.current import FCCapableArgs, FCCapableResult
-from middlewared.service import Service, filterable
+from middlewared.service import Service, filterable_api_method
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from .utils import dmi_pci_slot_info
@@ -61,7 +61,7 @@ class FCService(Service):
             return True
         return False
 
-    @filterable
+    @filterable_api_method(private=True)
     def fc_hosts(self, filters, options):
         result = []
         if self.middleware.call_sync('fc.capable'):

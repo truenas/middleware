@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, TypeAlias
 
 from pydantic import Field
 
@@ -10,8 +10,10 @@ __all__ = [
     'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',
     'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
     'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
-    'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent',
+    'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent', 'AlertLevel',
 ]
+
+AlertLevel: TypeAlias = Literal['INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY']
 
 
 class Alert(BaseModel):
@@ -45,9 +47,15 @@ class AlertCategory(BaseModel):
     classes: list[AlertCategoryClass]
 
 
+class AlertClassConfiguration(BaseModel):
+    level: AlertLevel
+    policy: Literal['IMMEDIATELY', 'HOURLY', 'DAILY', 'NEVER']
+    proactive_support: bool = False
+
+
 class AlertClassesEntry(BaseModel):
     id: int
-    classes: dict
+    classes: dict[str, AlertClassConfiguration]
 
 
 class AlertClassesUpdate(AlertClassesEntry, metaclass=ForUpdateMetaclass):
@@ -95,7 +103,7 @@ class AlertRestoreResult(BaseModel):
 
 
 class AlertClassesUpdateArgs(BaseModel):
-    data: AlertClassesUpdate
+    alert_class_update: AlertClassesUpdate
 
 
 class AlertClassesUpdateResult(BaseModel):

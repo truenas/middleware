@@ -3,22 +3,58 @@ import josepy as jose
 import json
 import requests
 
+from acme import client, messages
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel, LongString, single_argument_args
 from middlewared.api.current import (
-    ACMERegistrationCreateArgs, ACMERegistrationCreateResult, ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
-    ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult, ACMEDNSAuthenticatorUpdateArgs,
-    ACMEDNSAuthenticatorUpdateResult, ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult,
+    ACMEDNSAuthenticatorEntry, ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult,
+    ACMEDNSAuthenticatorUpdateArgs, ACMEDNSAuthenticatorUpdateResult, ACMEDNSAuthenticatorDeleteArgs,
+    ACMEDNSAuthenticatorDeleteResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
 
-from acme import client, messages
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
-
 
 # TODO: See what can be done to respect rate limits
+
+
+class JWKCreate(BaseModel):
+    key_size: int = 2048
+    public_exponent: int = 65537
+
+
+class ACMERegistrationBody(BaseModel):
+    id: int
+    contact: str
+    status: str
+    key: LongString
+
+
+class ACMERegistrationEntry(BaseModel):
+    id: int
+    uri: str
+    directory: str
+    tos: str
+    new_account_uri: str
+    new_nonce_uri: str
+    new_order_uri: str
+    revoke_cert_uri: str
+    body: ACMERegistrationBody
+
+
+@single_argument_args('acme_registration_create')
+class ACMERegistrationCreateArgs(BaseModel):
+    tos: bool = False
+    JWK_create: JWKCreate = JWKCreate()
+    acme_directory_uri: str
+
+
+class ACMERegistrationCreateResult(BaseModel):
+    result: ACMERegistrationEntry
 
 
 class ACMERegistrationModel(sa.Model):
@@ -77,7 +113,7 @@ class ACMERegistrationService(CRUDService):
         except (requests.ConnectionError, requests.Timeout, json.JSONDecodeError, KeyError) as e:
             raise CallError(f'Unable to retrieve directory : {e}')
 
-    @api_method(ACMERegistrationCreateArgs, ACMERegistrationCreateResult)
+    @api_method(ACMERegistrationCreateArgs, ACMERegistrationCreateResult, private=True)
     def do_create(self, data):
         """
         Register with ACME Server

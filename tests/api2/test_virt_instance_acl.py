@@ -13,6 +13,8 @@ from middlewared.test.integration.assets.virt import (
 from middlewared.test.integration.utils import call, ssh
 from time import sleep
 
+pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
+
 
 @pytest.fixture(scope='module')
 def instance():

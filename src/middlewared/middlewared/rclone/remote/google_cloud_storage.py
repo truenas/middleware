@@ -1,8 +1,6 @@
 import json
-import textwrap
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Bool
 
 
 class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
@@ -15,12 +13,7 @@ class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "google cloud storage"
 
-    task_schema = [
-        Bool("bucket_policy_only", title="Bucket Policy Only", description=textwrap.dedent("""\
-            Access checks should use bucket-level IAM policies.
-            If you want to upload objects to a bucket with Bucket Policy Only set then you will need to set this.
-        """), default=False),
-    ]
+    task_attributes = ["bucket_policy_only"]
 
     async def get_credentials_extra(self, credentials):
         return dict(

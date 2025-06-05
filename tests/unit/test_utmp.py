@@ -48,10 +48,16 @@ def pam_stig():
         c.call('datastore.update', 'system.security', 1, {'enable_gpos_stig': True})
         c.call('etc.generate', 'pam')
         c.call('etc.generate', 'pam_middleware')
+        c.call('auth.twofactor.update', {'enabled': True, 'services': {'ssh': True}})
+        c.call('etc.generate', 'ssh')
         try:
             yield c
         finally:
             c.call('datastore.update', 'system.security', 1, {'enable_gpos_stig': False})
+            c.call('etc.generate', 'pam')
+            c.call('etc.generate', 'pam_middleware')
+            c.call('auth.twofactor.update', {'enabled': False, 'services': {'ssh': False}})
+            c.call('etc.generate', 'ssh')
 
 
 @contextmanager
@@ -330,14 +336,17 @@ def test__session_login_fail_unlock_time(fake_session_id, admin_user, pam_stig):
     assert resp.code == pam.PAM_PERM_DENIED
 
     # rewrite pam middleware file so that we don't have to wait 15 minutes
-    fd = os.open('/etc/pam.d/middleware', os.O_RDWR)
-    try:
-        data = os.pread(fd, os.fstat(fd).st_size, 0)
-        data = data.replace(f'unlock_time={faillock.UNLOCK_TIME}'.encode(), b'unlock_time=5')
-        os.pwrite(fd, data, 0)
-        os.fsync(fd)
-    finally:
-        os.close(fd)
+    for path in ('/etc/pam.d/middleware', '/etc/pam.d/common-auth-unix'):
+        fd = os.open(path, os.O_RDWR)
+        try:
+            data = os.pread(fd, os.fstat(fd).st_size, 0)
+            data = data.replace(f'unlock_time={faillock.UNLOCK_TIME}'.encode(), b'unlock_time=5')
+        finally:
+            os.close(fd)
+
+        with open(path, 'wb') as f:
+            f.write(data)
+            f.flush()
 
     sleep(5)
     pam_hdl = authenticator.UserPamAuthenticator()
@@ -362,3 +371,19 @@ def test__otpw_login_nonadmin_otp(fake_session_id, admin_user):
     assert resp.code == pam.PAM_SUCCESS
     assert authenticator.AccountFlag.OTPW in resp.user_info['account_attributes']
     assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED not in resp.user_info['account_attributes']
+
+
+def test__pam_oath(admin_user, pam_stig):
+    # Set a twofactor secret. We don't actually need to know it since we're checking for change in
+    # PAM conversation
+    with Client() as c2:
+        c2.call('user.renew_2fa_secret', admin_user['username'], {})
+
+    p = pam.pam()
+    ok = p.authenticate(admin_user['username'], admin_user['password'], service='sshd')
+    # python pam can't handle a proper PAM conversation and so fails, but it's sufficient
+    # to validate we're getting prompted for OTP to cover NAS-136065
+    assert not ok
+    assert len(p.messages) == 2
+
+    assert 'One-time password (OATH)' in p.messages[1]

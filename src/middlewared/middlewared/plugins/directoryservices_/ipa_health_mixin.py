@@ -1,14 +1,14 @@
 import ldap
 import os
 
-from middlewared.utils.directoryservices import (
-    ipa_constants, ldap_utils
-)
+from middlewared.utils.directoryservices import ipa_constants
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
+from middlewared.utils.directoryservices.credential import dsconfig_to_ldap_client_config
 from middlewared.utils.directoryservices.health import (
     IPAHealthCheckFailReason,
     IPAHealthError
 )
-from middlewared.plugins.ldap_.ldap_client import LdapClient
+from middlewared.utils.directoryservices.ldap_client import LdapClient
 from middlewared.service_exception import CallError
 
 
@@ -18,6 +18,13 @@ class IPAHealthMixin:
 
     def _recover_ldap_config(self) -> list[dict]:
         return self.middleware.call_sync('etc.generate', 'ldap')
+
+    def _ipa_get_root_dse(self, data: dict) -> dict:
+        """
+        Use directory service config to retrieve root DSE of an LDAP server
+        """
+        ldap_config = dsconfig_to_ldap_client_config(data)
+        return LdapClient.search(ldap_config, '', ldap.SCOPE_BASE, '(objectclass=*)')
 
     def _recover_ipa(self, error: IPAHealthError) -> None:
         """
@@ -35,8 +42,8 @@ class IPAHealthMixin:
                 # not recoverable
                 raise error from None
 
-        self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
+        # The recovery steps here are node-local
+        self.middleware.call_sync('service.control', 'RESTART', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
 
     def _health_check_ipa(self) -> None:
         """
@@ -97,7 +104,7 @@ class IPAHealthMixin:
                 self._faulted_reason
             )
 
-        config = self.middleware.call_sync('ldap.config')
+        config = self.middleware.call_sync('directoryservices.config')
 
         # By this point we know kerberos should be healthy and we should
         # have ticket. Verify we can use our kerberos ticket to access the
@@ -106,20 +113,8 @@ class IPAHealthMixin:
         # We're peforming GSSAPI bind with SEAL set so don't bother with
         # ldaps. This is simple query for root DSE to detect whether LDAP
         # connection is profoundly broken.
-        uris = ldap_utils.hostnames_to_uris(config['hostname'], False)
         try:
-            LdapClient.search({
-                'uri_list': uris,
-                'bind_type': 'GSSAPI',
-                'options': {
-                    'timeout': config['timeout'],
-                    'dns_timeout': config['dns_timeout'],
-                },
-                'security': {
-                    'ssl': 'OFF',
-                    'sasl': 'SEAL'
-                }
-            }, '', ldap.SCOPE_BASE, '(objectclass=*)')
+            self._ipa_get_root_dse(config)
         except Exception as e:
             self._faulted_reason = str(e)
             raise IPAHealthError(
@@ -135,7 +130,7 @@ class IPAHealthMixin:
         # it appears in our directory services summary
         if not self.middleware.call_sync('service.started', 'sssd'):
             try:
-                self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
+                self.middleware.call_sync('service.control', 'START', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
             except CallError as e:
                 self._faulted_reason = str(e)
                 raise IPAHealthError(

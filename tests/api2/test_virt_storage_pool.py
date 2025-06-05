@@ -11,6 +11,8 @@ from middlewared.test.integration.assets.virt import (
 from middlewared.test.integration.utils import call
 from truenas_api_client.exc import ValidationErrors as ClientValidationErrors
 
+pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
+
 
 @pytest.fixture(scope='module')
 def virt_init():

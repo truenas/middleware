@@ -226,8 +226,10 @@ class CoreService(Service):
             else:
                 _typ = 'service'
 
-            config = {k: v for k, v in list(v._config.__dict__.items())
-                      if not (k in ['entry', 'events', 'process_pool', 'thread_pool'] or k.startswith('_'))}
+            config = {
+                k: v for k, v in list(v._config.__dict__.items())
+                if not (k in ['entry', 'events', 'event_sources', 'process_pool', 'thread_pool'] or k.startswith('_'))
+            }
             if config['cli_description'] is None:
                 if v.__doc__:
                     config['cli_description'] = inspect.getdoc(v).split("\n")[0].strip()

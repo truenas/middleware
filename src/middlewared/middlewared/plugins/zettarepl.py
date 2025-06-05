@@ -735,6 +735,7 @@ class ZettareplService(Service):
             "allow-from-scratch": replication_task["allow_from_scratch"],
             "only-from-scratch": replication_task.get("only_from_scratch", False),
             "readonly": replication_task["readonly"].lower(),
+            "mount": replication_task.get("mount", True),
             "hold-pending-snapshots": replication_task["hold_pending_snapshots"],
             "retention-policy": replication_task["retention_policy"].lower(),
             "large-block": replication_task["large_block"],

@@ -16,6 +16,7 @@ __all__ = [
     'VirtInstanceImageChoicesResult', 'VirtInstanceDeviceListArgs', 'VirtInstanceDeviceListResult',
     'VirtInstanceDeviceAddArgs', 'VirtInstanceDeviceAddResult', 'VirtInstanceDeviceUpdateArgs',
     'VirtInstanceDeviceUpdateResult', 'VirtInstanceDeviceDeleteArgs', 'VirtInstanceDeviceDeleteResult',
+    'VirtInstancesMetricsEventSourceArgs', 'VirtInstancesMetricsEventSourceEvent',
 ]
 
 
@@ -315,3 +316,11 @@ class VirtInstanceDeviceDeleteArgs(BaseModel):
 
 class VirtInstanceDeviceDeleteResult(BaseModel):
     result: Literal[True]
+
+
+class VirtInstancesMetricsEventSourceArgs(BaseModel):
+    interval: int = Field(default=2, ge=2)
+
+
+class VirtInstancesMetricsEventSourceEvent(BaseModel):
+    result: dict

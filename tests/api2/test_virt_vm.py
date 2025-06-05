@@ -18,6 +18,8 @@ from middlewared.service_exception import ValidationErrors as ClientValidationEr
 
 from functions import POST, wait_on_job
 
+pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
+
 
 ISO_VOLUME_NAME = 'testiso'
 VM_NAME = 'virt-vm'

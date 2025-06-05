@@ -1,5 +1,5 @@
 import pytest
-from middlewared.utils.mount import __parse_to_dev, __parse_to_mnt_id, __create_tree
+from middlewared.utils.mount import __mntent_dict, __parse_to_mnt_id, __create_tree
 
 
 fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw
@@ -73,9 +73,9 @@ fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - 
 def test__mntinfo_spaces():
     line = r'474 467 0:77 / /mnt/tank\040space\040/Dataset\040With\040a\040space rw,noatime shared:265 - zfs tank\040space\040/Dataset\040With\040a\040space rw,xattr,posixacl'
     data = {}
-    __parse_to_dev(line, data)
-    assert 77 in data
-    mntent = data[77]
+    __parse_to_mnt_id(line, data)
+    assert 474 in data
+    mntent = data[474]
     assert mntent['mount_id'] == 474
     assert mntent['parent_id'] == 467
     assert mntent['device_id'] == {'major': 0, 'minor': 77, 'dev_t': 77}
@@ -98,7 +98,7 @@ def test__getmntinfo():
 
     for line in fake_mntinfo.splitlines():
         data = {}
-        __parse_to_dev(line, data)
+        __parse_to_mnt_id(line, data)
 
         mnt_data = list(data.values())[0]
         assert __rebuild_device_info(mnt_data) in line
@@ -113,26 +113,26 @@ def test__getmntinfo():
 def test__atime_and_casesentivity_in_mntinfo():
     line = r'7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive'
     data = {}
-    __parse_to_dev(line, data)
-    assert 3145965 in data
-    mntent = data[3145965]
+    __parse_to_mnt_id(line, data)
+    assert 7460 in data
+    mntent = data[7460]
     assert 'NOATIME' in mntent['mount_opts']
     assert 'CASESENSITIVE' in mntent['super_opts']
 
     line = r'8069 306 0:1214 / /mnt/zz/mixy rw,noatime shared:4507 - zfs zz/mixy rw,xattr,posixacl,casemixed'
     data = {}
-    __parse_to_dev(line, data)
-    assert 4194494 in data
-    mntent = data[4194494]
+    __parse_to_mnt_id(line, data)
+    assert 8069 in data
+    mntent = data[8069]
     assert 'CASEMIXED' in mntent['super_opts']
 
 
 def test__readonly_in_mntinfo():
     line = r'537 327 0:75 / /mnt/dozer/TESTFUN/mp29-nfs0016K ro shared:301 - zfs dozer/TESTFUN/mp29-nfs0016K ro,xattr,posixacl,casesensitive'
     data = {}
-    __parse_to_dev(line, data)
-    assert 75 in data
-    assert 'RO' in data[75]['mount_opts']
+    __parse_to_mnt_id(line, data)
+    assert 537 in data
+    assert 'RO' in data[537]['mount_opts']
 
 
 def test__mount_id_key():
@@ -175,3 +175,9 @@ def test__mountinfo_tree_miss():
 
     with pytest.raises(KeyError) as e:
         root = __create_tree(data, 8675309)
+
+
+def test__mountinfo_missing_optional_fields():
+    line = r'282 213 0:47 / / rw,relatime - overlay overlay rw,lowerdir=/var/lib/docker/overlay2/l/5L3KSV23NGJN7OAT6JAPAPESIH:/var/lib/docker/overlay2/l/TDVGJBW7AOL4CADLI72HXRISIC,upperdir=/var/lib/docker/overlay2/3815fd731d8026048c8097461cb66cc11b1390337a3447315fd1c8e402f2c4a4/diff,workdir=/var/lib/docker/overlay2/3815fd731d8026048c8097461cb66cc11b1390337a3447315fd1c8e402f2c4a4/work,nouserxattr'  # noqa
+    # Verify that this does not raise an index erro due to missing optional fields
+    __mntent_dict(line)

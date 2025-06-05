@@ -17,7 +17,7 @@ class BaseRcloneRemote:
     credentials_oauth_name = None
     refresh_credentials = []
 
-    task_schema = []
+    task_attributes = []
 
     extra_methods = []
 

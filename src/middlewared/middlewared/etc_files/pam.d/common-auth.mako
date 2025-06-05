@@ -26,17 +26,16 @@
             raise TypeError(f'{dstype}: unknown DSType')
 %>\
 
-%if render_ctx['system.security.config']['enable_gpos_stig']:
+% if render_ctx['system.security.config']['enable_gpos_stig']:
 auth	optional	pam_faildelay.so	delay=4000000
-%endif
+% endif
 % if conf.primary:
 ${'\n'.join(line.as_conf() for line in conf.primary)}
 % endif
-%if render_ctx['system.security.config']['enable_gpos_stig']:
-${FAILLOCK_AUTH_FAIL.as_conf()}
+@include common-auth-unix
+% if render_ctx['system.security.config']['enable_gpos_stig']:
 ${FAILLOCK_AUTH_SUCC.as_conf()}
 % endif
-@include common-auth-unix
 % if conf.secondary:
 ${'\n'.join(line.as_conf() for line in conf.secondary)}
 % endif

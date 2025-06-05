@@ -6,7 +6,6 @@ from .activedirectory_health_mixin import ADHealthMixin
 from .ipa_health_mixin import IPAHealthMixin
 from .kerberos_health_mixin import KerberosHealthMixin
 from .ldap_health_mixin import LDAPHealthMixin
-from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
 from middlewared.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
@@ -29,24 +28,12 @@ class DomainHealth(
         cli_private = True
         private = True
 
-    def _get_enabled_ds(self):
-        ad = self.middleware.call_sync('datastore.config', 'directoryservice.activedirectory')
-        if ad['ad_enable']:
-            return DSType.AD
-
-        ldap = self.middleware.call_sync('datastore.config', 'directoryservice.ldap')
-        if ldap['ldap_enable'] is False:
+    def _get_enabled_ds(self) -> DSType | None:
+        server_type = self.middleware.call_sync('directoryservices.config')['service_type']
+        if server_type is None:
             return None
 
-        # For now we are handling the IPA join as a layer on top of LDAP
-        # plugin.
-        if ldap['ldap_server_type'] == SERVER_TYPE_FREEIPA:
-            # there is no way to become healthy for IPA join without a host
-            # keytab and so we'll try to fall through to a regular LDAP bind
-            if self.middleware.call_sync('ldap.has_ipa_host_keytab'):
-                return DSType.IPA
-
-        return DSType.LDAP
+        return DSType(server_type)
 
     def _perm_check(
         self,
@@ -109,8 +96,11 @@ class DomainHealth(
         try:
             match enabled_ds:
                 case DSType.AD:
-                    self._health_check_krb5()
+                    # Check for AD health before kerberos. This is because there are some
+                    # kerberos-related errors that have a root cause in the AD configuration
+                    # and are recoverable.
                     self._health_check_ad()
+                    self._health_check_krb5()
                 case DSType.IPA:
                     self._health_check_krb5()
                     self._health_check_ipa()
@@ -122,6 +112,7 @@ class DomainHealth(
             # Update our stored status to reflect reason for it being faulted
             # then re-raise
             DSHealthObj.update(enabled_ds, DSStatus.FAULTED, e.errmsg)
+            self.middleware.send_event('directoryservices.status', 'CHANGED', fields=DSHealthObj.dump())
             raise
         except Exception:
             # Not a health related exception and so simply log it to prevent accidentally
@@ -129,6 +120,10 @@ class DomainHealth(
             self.logger.error('Unexpected error while checking directory service health', exc_info=True)
 
         DSHealthObj.update(enabled_ds, DSStatus.HEALTHY, None)
+        if initial_status != DSStatus.HEALTHY:
+            # We've recovered since last status check
+            self.middleware.send_event('directoryservices.status', 'CHANGED', fields=DSHealthObj.dump())
+
         return True
 
     def recover(self, attempts=0, last_reason=None) -> None:

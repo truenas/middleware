@@ -124,7 +124,7 @@ class EtcService(Service):
         ],
         'ipa': {
             'ctx': [
-                {'method': 'directoryservices.status'}
+                {'method': 'directoryservices.config'}
             ],
             'entries': [
                 {'type': 'py', 'path': 'ipa/default.conf'},
@@ -211,6 +211,7 @@ class EtcService(Service):
             'entries': [
                 {'type': 'mako', 'path': 'pam.d/common-account'},
                 {'type': 'mako', 'path': 'pam.d/common-auth'},
+                {'type': 'mako', 'path': 'pam.d/common-auth-unix'},
                 {'type': 'mako', 'path': 'pam.d/common-password'},
                 {'type': 'mako', 'path': 'pam.d/common-session-noninteractive'},
                 {'type': 'mako', 'path': 'pam.d/common-session'},
@@ -236,7 +237,8 @@ class EtcService(Service):
             'ctx': [
                 {'method': 'ftp.config'},
                 {'method': 'user.query', 'args': [[["builtin", "=", True], ["username", "!=", "ftp"]]]},
-                {'method': 'network.configuration.config'}
+                {'method': 'network.configuration.config'},
+                {'method': 'directoryservices.config'}
             ],
             'entries': [
                 {'type': 'mako', 'path': 'proftpd/proftpd.conf'},
@@ -363,8 +365,6 @@ class EtcService(Service):
         'ssh': {
             "ctx": [
                 {'method': 'ssh.config'},
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
                 {'method': 'auth.twofactor.config'},
                 {'method': 'interface.query'},
                 {'method': 'system.advanced.login_banner'},

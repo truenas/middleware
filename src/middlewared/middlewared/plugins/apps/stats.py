@@ -1,51 +1,22 @@
 import time
 
+from middlewared.api.current import AppStatsEventSourceArgs, AppStatsEventSourceEvent
 from middlewared.event import EventSource
 from middlewared.plugins.docker.state_utils import Status
-from middlewared.schema import Dict, Int, Str, List
-from middlewared.service import CallError
-from middlewared.validators import Range
+from middlewared.service import CallError, Service
 
 from .ix_apps.docker.stats import list_resources_stats_by_project
 from .stats_util import normalize_projects_stats
 
 
 class AppStatsEventSource(EventSource):
-
     """
     Retrieve statistics of apps.
     """
 
-    ACCEPTS = Dict(
-        Int('interval', default=2, validators=[Range(min_=2)]),
-    )
-    RETURNS = List(
-        'apps_stats',
-        items=[
-            Dict(
-                'stats',
-                Str('app_name'),
-                Int('cpu_usage', description='Percentage of cpu used by an app'),
-                Int('memory', description='Current memory(in bytes) used by an app'),
-                List(
-                    'networks',
-                    items=[
-                        Dict(
-                            'interface_stats',
-                            Str('interface_name', description='Name of the interface use by the app'),
-                            Int('rx_bytes', description='Received bytes/s by an interface'),
-                            Int('tx_bytes', description='Transmitted bytes/s by an interface')
-                        ),
-                    ]
-                ),
-                Dict(
-                    'blkio',
-                    Int('read', description='Blkio read bytes'),
-                    Int('write', description='Blkio write bytes')
-                )
-            )
-        ]
-    )
+    args = AppStatsEventSourceArgs
+    event = AppStatsEventSourceEvent
+    roles = ['APPS_READ']
 
     def run_sync(self):
         if not self.middleware.call_sync('docker.state.validate', False):
@@ -70,5 +41,9 @@ class AppStatsEventSource(EventSource):
                 raise
 
 
-def setup(middleware):
-    middleware.register_event_source('app.stats', AppStatsEventSource, roles=['APPS_READ'])
+class AppService(Service):
+
+    class Config:
+        event_sources = {
+            'app.stats': AppStatsEventSource,
+        }

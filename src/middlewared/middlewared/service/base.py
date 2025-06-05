@@ -16,6 +16,7 @@ def service_config(klass, config):
         'event_register': True,
         'event_send': True,
         'events': [],
+        'event_sources': {},
         'service': None,
         'service_verb': 'reload',
         'service_verb_sync': True,

@@ -33,10 +33,11 @@ from middlewared.api.current import (
     AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
 )
 from middlewared.plugins.zfs_.utils import TNUserProp
-from middlewared.service import filterable, job, private, ConfigService
+from middlewared.service import filterable_api_method, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
+from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.functools_ import cache
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
@@ -71,8 +72,8 @@ class AuditService(ConfigService):
     @private
     @cache
     def audit_dataset_name(self):
-        audit_dev = os.stat(AUDIT_DATASET_PATH).st_dev
-        return getmntinfo(audit_dev)[audit_dev]['mount_source']
+        audit_mnt_id = statx(AUDIT_DATASET_PATH).stx_mnt_id
+        return getmntinfo(mnt_id=audit_mnt_id)[audit_mnt_id]['mount_source']
 
     @private
     def get_audit_dataset(self):
@@ -488,8 +489,7 @@ class AuditService(ConfigService):
         except Exception:
             self.logger.error('Error detected in truenas_verify setup.', exc_info=True)
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     async def json_schemas(self, filters, options):
         return filter_list(
             AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS + AUDIT_EVENT_SUDO_JSON_SCHEMAS,

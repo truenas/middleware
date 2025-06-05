@@ -8,7 +8,7 @@ __all__ = ["getmntinfo", "getmnttree"]
 
 def __mntent_dict(line):
     mnt_id, parent_id, maj_min, root, mp, opts, extra = line.split(" ", 6)
-    fstype, mnt_src, super_opts = extra.split(' - ')[1].split()
+    fstype, mnt_src, super_opts = extra.strip().split('- ')[1].split()
 
     major, minor = maj_min.split(':')
     devid = os.makedev(int(major), int(minor))
@@ -28,11 +28,6 @@ def __mntent_dict(line):
         'mount_source': mnt_src.replace('\\040', ' '),
         'super_opts': super_opts.upper().split(','),
     }
-
-
-def __parse_to_dev(line, out_dict):
-    entry = __mntent_dict(line)
-    out_dict.update({entry['device_id']['dev_t']: entry})
 
 
 def __parse_to_mnt_id(line, out_dict):
@@ -90,14 +85,10 @@ def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None)
                 raise RuntimeError(f'Failed to parse {line!r} line: {e}')
 
 
-def getmntinfo(dev_id=None, mnt_id=None):
+def getmntinfo(mnt_id=None):
     """
     Get mount information. Takes the following arguments for faster lookup of
     information for a mounted filesystem.
-
-    `dev_id` - the device ID of the mounted filesystem of interest. This will
-    uniquely identify the filesystem, but not uniquely identify the mount point.
-    If specified results are a dictionary indexed by dev_t.
 
     `mnt_id` - specify the unique ID for the mount. This is unique only for the
     lifetime of the mount. statx() may be used to retrieve the mnt_id for a given
@@ -128,11 +119,7 @@ def getmntinfo(dev_id=None, mnt_id=None):
     `super_opts` - per-superblock options (see mount(2)).
     """
     info = {}
-    if mnt_id:
-        __iter_mountinfo(mnt_id=mnt_id, callback=__parse_to_mnt_id, private_data=info)
-    else:
-        __iter_mountinfo(dev_id=dev_id, callback=__parse_to_dev, private_data=info)
-
+    __iter_mountinfo(mnt_id=mnt_id, callback=__parse_to_mnt_id, private_data=info)
     return info
 
 
