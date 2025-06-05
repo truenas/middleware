@@ -60,6 +60,13 @@ class NetworkVlanModel(Model):
     vlan_pint = sa.Column(sa.String(300))
 
 
+class VMDeviceModel(Model):
+    __tablename__ = 'vm_device'
+
+    id = sa.Column(sa.Integer(), primary_key=True)  # noqa
+    attributes = sa.Column(sa.JSON())
+
+
 @pytest.mark.parametrize("before,after", [
     # BSD -> Linux interface rename
     (
@@ -69,6 +76,7 @@ class NetworkVlanModel(Model):
             "bridge": {"bridge6": ["em0", "em1"]},
             "lagg": {"lagg7": ["em1", "em0"]},
             "vlan": {"vlan8": "em1"},
+            "vm": ["em1"],
         },
         {
             "hw": {"eth0": "08:00:27:1e:9f:d3", "eth1": "08:00:27:1e:9f:d4"},
@@ -76,6 +84,7 @@ class NetworkVlanModel(Model):
             "bridge": {"br6": ["eth0", "eth1"]},
             "lagg": {"bond7": ["eth1", "eth0"]},
             "vlan": {"vlan8": "eth1"},
+            "vm": ["eth1"],
         },
     ),
     # Interfaces swapped names
@@ -114,6 +123,7 @@ class NetworkVlanModel(Model):
             "bridge": {"br0": ["eth0", "eth1"]},
             "lagg": {"bond0": ["eth0", "eth1"]},
             "vlan": {"vlan0": "eth1"},
+            "vm": ["eth1"],
         },
         {
             "interface.query": {"eth0": "08:00:27:1e:9f:d3"},
@@ -122,6 +132,7 @@ class NetworkVlanModel(Model):
             "bridge": {"br0": ["eth0", "eth1"]},
             "lagg": {"bond0": ["eth0", "eth1"]},
             "vlan": {"vlan0": "eth1"},
+            "vm": ["eth1"],
         },
     ),
     # New interface
@@ -132,6 +143,7 @@ class NetworkVlanModel(Model):
             "bridge": {"br0": ["eth0", "eth1"]},
             "lagg": {"bond0": ["eth0", "eth1"]},
             "vlan": {"vlan0": "eth1"},
+            "vm": ["eth1"],
         },
         {
             "interface.query": {"eth0": "08:00:27:1e:9f:d3", "eth1": "08:00:27:1e:9f:d4"},
@@ -140,6 +152,7 @@ class NetworkVlanModel(Model):
             "bridge": {"br0": ["eth0", "eth1"]},
             "lagg": {"bond0": ["eth0", "eth1"]},
             "vlan": {"vlan0": "eth1"},
+            "vm": ["eth1"],
         },
     ),
     # Duplicate addresses
@@ -198,6 +211,14 @@ async def test__interface_link_address_setup(before, after):
                 "vint": vint,
                 "pint": pint,
             }, {"prefix": "vlan_"})
+
+        for interface in before.get("vm", []):
+            id_ = await ds.insert("vm.device", {
+                "attributes": {"nic_attach": interface, "dtype": "NIC"},
+            })
+            ds.middleware["vm.device.query"] = lambda *args: [
+                {'id': id_, "attributes": {"nic_attach": interface, "dtype": "NIC"}}
+            ]
 
         ds.middleware["interface.query"] = AsyncMock(return_value=[
             {
@@ -273,4 +294,12 @@ async def test__interface_link_address_setup(before, after):
                 "pint": pint,
             }
             for vint, pint in after.get("vlan", {}).items()
+        ]
+
+        assert await ds.query("vm.device") == [
+            {
+                "id": ANY,
+                "attributes": {"nic_attach": interface, "dtype": "NIC"},
+            }
+            for interface in after.get("vm", [])
         ]

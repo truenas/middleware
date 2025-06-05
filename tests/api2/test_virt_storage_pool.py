@@ -62,7 +62,7 @@ def test_add_instance_second_pool(virt_two_pools):
         assert dsa[0]['type'] == 'Virtualization'
         assert dsa[0]['attachments'] == ['inst-second-pool']
 
-        with pytest.raises(ClientValidationErrors, match='pool to be removed is used by the following assets'):
+        with pytest.raises(ClientValidationErrors, match='Virt-Instances: inst-second-pool'):
 
             # Trying to remove pool holding instances should fail
             call('virt.global.update', {'storage_pools': [config['pool']]}, job=True)
@@ -84,112 +84,6 @@ def test_add_volume_second_pool(virt_two_pools):
 
         # Simply creating a volume handled by incus should not create a pool attachment
         assert call('pool.dataset.attachments', pool['name']) == []
-
-
-def test_virt_device_second_pool(virt_two_pools):
-    pool, config = virt_two_pools
-
-    # Make sure we're in a clean state
-    assert call('pool.dataset.attachments', pool['name']) == []
-
-    with virt_instance(
-        'inst-second-pool',
-        storage_pool=pool['name'],
-        instance_type='VM'
-    ) as instance:
-        instance_name = instance['name']
-
-        assert instance['storage_pool'] == pool['name']
-
-        # Make sure that VMs also generate attachments properly
-        dsa = call('pool.dataset.attachments', pool['name'])
-        assert len(dsa) == 1
-
-        assert dsa[0]['type'] == 'Virtualization'
-        assert dsa[0]['attachments'] == ['inst-second-pool']
-
-        call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
-
-        with volume('vmtestzvol', 1024, pool['name']):
-            assert 'vmtestzvol' in call('virt.device.disk_choices')
-
-            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
-                devices = call('virt.instance.device_list', instance_name)
-                root_pool = None
-                test_disk_pool = None
-
-                for device in devices:
-                    if device['name'] == 'root':
-                        root_pool = device['storage_pool']
-
-                    elif device.get('source') == 'vmtestzvol':
-                        test_disk_pool = device['storage_pool']
-
-                assert root_pool == pool['name']
-                assert test_disk_pool == pool['name']
-
-
-def test_virt_span_two_pools(virt_two_pools):
-    pool, config = virt_two_pools
-
-    # Make sure we're in a clean state
-    assert call('pool.dataset.attachments', pool['name']) == []
-    assert call('pool.dataset.attachments', config['pool']) == []
-
-    # Sanity check that we're properly testing both pools
-    assert pool['name'] != config['pool']
-
-    with virt_instance(
-        'inst-second-pool',
-        storage_pool=pool['name'],
-        instance_type='VM'
-    ) as instance:
-        instance_name = instance['name']
-
-        assert instance['storage_pool'] == pool['name']
-
-        # Make sure that VMs also generate attachments properly
-        dsa = call('pool.dataset.attachments', pool['name'])
-        assert len(dsa) == 1
-
-        assert dsa[0]['type'] == 'Virtualization'
-        assert dsa[0]['attachments'] == ['inst-second-pool']
-
-        # Make sure VM is not attached to the other pool
-        assert call('pool.dataset.attachments', config['pool']) == []
-
-        call('virt.instance.stop', instance_name, {'force': True, 'timeout': 1}, job=True)
-
-        # create volume on other pool and attach to VM as disk
-        with volume('vmtestzvol', 1024, config['pool']):
-            assert 'vmtestzvol' in call('virt.device.disk_choices')
-
-            with virt_device(instance_name, 'test_disk', {'dev_type': 'DISK', 'source': 'vmtestzvol'}):
-                devices = call('virt.instance.device_list', instance_name)
-                root_pool = None
-                test_disk_pool = None
-
-                for device in devices:
-                    if device['name'] == 'root':
-                        root_pool = device['storage_pool']
-
-                    elif device.get('source') == 'vmtestzvol':
-                        test_disk_pool = device['storage_pool']
-
-                assert root_pool == pool['name']
-                assert test_disk_pool == config['pool']
-
-                # The volume on other pool should cause VM to show as attached to it
-                dsa = call('pool.dataset.attachments', config['pool'])
-                assert len(dsa) == 1
-                assert dsa[0]['type'] == 'Virtualization'
-                assert dsa[0]['attachments'] == ['inst-second-pool']
-
-        # volume should be removed from VM now, removing attachment
-        assert call('pool.dataset.attachments', config['pool']) == []
-
-    # instance should be removed now
-    assert call('pool.dataset.attachments', pool['name']) == []
 
 
 def check_volumes(volumes):

@@ -26,8 +26,10 @@ disable wg-quick*
 disable nut-*
 disable nut.target
 disable wsdd.service
+disable libvirtd.service
 disable winbind.service
 disable nvidia-*
+disable libvirt*
 disable walinuxagent*
 disable serial-getty@*
 disable docker*
