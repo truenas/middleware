@@ -53,6 +53,8 @@ ZVOL_RESIZE_START_MB = 50
 ZVOL_RESIZE_END_MB = 150
 
 FAKE_HOSTNQN = 'nqn.2014-08.org.nvmexpress:uuid:48747223-7535-4f8e-a789-b8af8bfdea54'
+HOST1_NQN = 'nqn.2011-06.com.truenas:uuid-68bf9433-63ef-49f5-a921-4c0f8190fd94:host1'
+HOST2_NQN = 'nqn.2011-06.com.truenas:hostname2'
 DEVICE_TYPE_FILE = 'FILE'
 MB_10 = 100 * MB
 MB_100 = 100 * MB
@@ -1121,7 +1123,7 @@ class TestNVMe(NVMeRunning):
                 assert subsystems[0]['ports'][0] == fixture_port['id']
 
                 # Add a host -> no change
-                with nvmet_host('nqn.host1') as host1:
+                with nvmet_host(HOST1_NQN) as host1:
                     check_regular_query(1)
                     subsystems = check_verbose_query(1)
                     assert len(subsystems[0]['hosts']) == 0
@@ -1140,7 +1142,7 @@ class TestNVMe(NVMeRunning):
                         assert subsystems[0]['ports'][0] == fixture_port['id']
 
                         # Create/associate another host -> change
-                        with nvmet_host('nqn.host2') as host2:
+                        with nvmet_host(HOST2_NQN) as host2:
                             with nvmet_host_subsys(host2['id'], subsys1_id):
                                 check_regular_query(1)
                                 subsystems = check_verbose_query(1)
