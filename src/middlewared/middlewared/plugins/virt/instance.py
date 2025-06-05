@@ -376,50 +376,10 @@ class VirtInstanceService(CRUDService):
 
         data_devices = data['devices'] or []
         iso_volume = data.pop('iso_volume', None)
-        root_device_to_add = None
-        zvol_path = data.pop('zvol_path', None)
-        volume = data.pop('volume', None)
-        if data['source_type'] == 'ZVOL':
-            data['source_type'] = None
-            root_device_to_add = {
-                'name': 'ix_virt_zvol_root',
-                'dev_type': 'DISK',
-                'source': zvol_path,
-                'destination': None,
-                'readonly': False,
-                'boot_priority': 1,
-                'io_bus': data['root_disk_io_bus'],
-            }
-        elif data['source_type'] == 'ISO':
-            root_device_to_add = {
-                'name': iso_volume,
-                'dev_type': 'DISK',
-                'pool': pool,
-                'source': iso_volume,
-                'destination': None,
-                'readonly': False,
-                'boot_priority': 1,
-                'io_bus': 'VIRTIO-SCSI',
-            }
-        elif data['source_type'] == 'VOLUME':
-            root_device_to_add = {
-                'name': volume,
-                'dev_type': 'DISK',
-                'pool': pool,
-                'source': volume,
-                'destination': None,
-                'readonly': False,
-                'boot_priority': 1,
-                'io_bus': data['root_disk_io_bus'],
-            }
 
-        if root_device_to_add:
-            data['source_type'] = None
-            data_devices.append(root_device_to_add)
-
+        # Since instance_type is now hardcoded to CONTAINER and source_type to IMAGE
+        # in the API model, we only need the container root device configuration
         devices = {
-            'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus'], pool),
-        } if data['instance_type'] == 'VM' else {
             'root': {
                 'path': '/',
                 'pool': pool,
@@ -453,8 +413,9 @@ class VirtInstanceService(CRUDService):
         if data['remote'] == 'LINUX_CONTAINERS':
             url = LC_IMAGES_SERVER
 
+        # Since source_type is hardcoded to IMAGE in the API model
         source = {
-            'type': (data['source_type'] or 'none').lower(),
+            'type': 'image',
         }
 
         result = await incus_call(f'1.0/images/{data["image"]}', 'get')
@@ -476,7 +437,7 @@ class VirtInstanceService(CRUDService):
                 'devices': devices,
                 'source': source,
                 'profiles': ['default'],
-                'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
+                'type': 'container',  # Only containers are supported now
                 'start': False,
             }}, running_cb, timeout=15 * 60)
             # We will give 15 minutes to incus to download relevant image and then timeout
@@ -599,7 +560,7 @@ class VirtInstanceService(CRUDService):
         if instance['type'] == 'VM' and not await self.middleware.call('hardware.virtualization.guest_vms_supported'):
             raise ValidationError(
                 'virt.instance.start.id',
-                f'Cannot start {oid!r} as virtualization is not supported on this system'
+                f'Cannot start {id!r} as virtualization is not supported on this system'
             )
 
         # Apply any idmap changes
