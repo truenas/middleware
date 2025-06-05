@@ -26,12 +26,12 @@ def compose_action(
 
     if action == 'up':
         args.append('-d')
+        # Before we go ahead and 'up' the app, we need to make sure that the images can be pulled
+        # This is even more important if the `force_recreate` is set to True, because if we don't do this,
+        # and the 'up' action fails, app will remain in a stopped state, making the user to think the app is broken.
+        compose_action(app_name, app_version, 'pull')
         if force_recreate:
             args.append('--force-recreate')
-            # Before we go ahead and 'down' the app, we need to make sure that the images can be pulled
-            # If we don't do this, and the 'up' action fails, app will remain in a stopped state, making
-            # the user to think the app is broken.
-            compose_action(app_name, app_version, 'pull')
             # This needs to happen because --force-recreate doesn't recreate docker networks
             # So for example, an app was running and then system has been rebooted - the docker network
             # remains there but the relevant interfaces it created do not and if the app didn't had a restart
