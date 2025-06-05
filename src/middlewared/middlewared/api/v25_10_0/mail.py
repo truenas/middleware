@@ -61,14 +61,13 @@ class MailSendMessage(BaseModel):
     """If set to true, an array compromised of the following object is required via HTTP upload:
 
     * headers *(array)*
-
         * name *(string)*
         * value *(string)*
         * params *(object)*
 
     * content *(string)*
 
-    .. code-block:: json
+    ::
 
         [
           {

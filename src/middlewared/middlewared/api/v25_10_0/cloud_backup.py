@@ -30,17 +30,14 @@ class CloudBackupEntry(BaseCloudEntry):
     transfer_setting: Literal["DEFAULT", "PERFORMANCE", "FAST_STORAGE"] = "DEFAULT"
     """
     * DEFAULT:
-
         * pack size given by `$RESTIC_PACK_SIZE` (default 16 MiB)
         * read concurrency given by `$RESTIC_READ_CONCURRENCY` (default 2 files)
 
     * PERFORMANCE:
-
         * pack size = 29 MiB
         * read concurrency given by `$RESTIC_READ_CONCURRENCY` (default 2 files)
 
     * FAST_STORAGE:
-
         * pack size = 58 MiB
         * read concurrency = 100 files
     """

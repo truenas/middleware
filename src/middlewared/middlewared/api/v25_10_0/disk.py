@@ -97,7 +97,7 @@ class DiskGetUsedArgs(BaseModel):
     join_partitions: bool = False
     """Return all partitions currently written to disk.
 
-    **NOTE: this is an expensive operation.**
+    **NOTE: This is an expensive operation.**
     """
 
 
