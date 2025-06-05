@@ -149,9 +149,8 @@ class AppService(Service):
                 job.set_progress(50, 'Created snapshot for upgrade')
 
         try:
-            compose_action(
-                app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
-            )
+            compose_action(app_name, upgrade_version['version'], 'pull')
+            compose_action(app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
             new_app_instance = self.middleware.call_sync('app.get_instance', app_name)
