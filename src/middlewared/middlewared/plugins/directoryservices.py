@@ -10,7 +10,7 @@ from middlewared.service import Service, private, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.health import DSHealthObj
 
-DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
+DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh', 'ftp']
 
 
 class DirectoryServices(Service):

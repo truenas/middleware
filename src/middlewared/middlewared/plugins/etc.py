@@ -237,7 +237,8 @@ class EtcService(Service):
             'ctx': [
                 {'method': 'ftp.config'},
                 {'method': 'user.query', 'args': [[["builtin", "=", True], ["username", "!=", "ftp"]]]},
-                {'method': 'network.configuration.config'}
+                {'method': 'network.configuration.config'},
+                {'method': 'directoryservices.config'}
             ],
             'entries': [
                 {'type': 'mako', 'path': 'proftpd/proftpd.conf'},

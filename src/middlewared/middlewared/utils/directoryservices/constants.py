@@ -18,7 +18,7 @@ class DSType(enum.Enum):
     def etc_files(self):
         match self:
             case DSType.AD:
-                return ('pam', 'nss', 'smb', 'kerberos')
+                return ('pam', 'nss', 'smb', 'kerberos', 'ftp')
             case DSType.IPA:
                 return ('ldap', 'ipa', 'pam', 'nss', 'smb', 'kerberos')
             case DSType.LDAP:

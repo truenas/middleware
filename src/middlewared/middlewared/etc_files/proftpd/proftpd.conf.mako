@@ -3,6 +3,7 @@
 
     ftp = render_ctx['ftp.config']
     network_configuration = render_ctx['network.configuration.config']
+    directory_services = render_ctx['directoryservices.config']
 
     # Confirm necessary directories, files and permissions
     os.makedirs("/var/log/proftpd", exist_ok=True)
@@ -56,7 +57,13 @@ UseReverseDNS ${'on' if ftp['reversedns'] else 'off'}
     PassivePorts  ${ftp['passiveportsmin']} ${ftp['passiveportsmax']}
 % endif
 
+% if directory_services['enable']:
+AuthPAMConfig proftpd
+AuthOrder mod_auth_pam.c* mod_auth_unix.c
+% else:
 AuthOrder mod_auth_unix.c
+% endif
+
 % if ftp['onlyanonymous'] and anonpath:
 <Anonymous ${ftp['anonpath']}>
     User ftp
