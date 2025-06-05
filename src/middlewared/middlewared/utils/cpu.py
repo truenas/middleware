@@ -39,6 +39,9 @@ class CpuInfo(typing.TypedDict):
         (i.e. {"cpu0": "cpu8", "cpu1": "cpu9"})"""
 
 
+CpuFlags = list[str]
+
+
 @functools.cache
 def cpu_info() -> CpuInfo:
     return cpu_info_impl()
@@ -200,3 +203,18 @@ def get_cpu_temperatures() -> dict:
         data['cpu'] = total_temp / len(data)
 
     return data or ({f'cpu{i}': 0 for i in range(cinfo['core_count'])} | {'cpu': 0})
+
+
+@functools.cache
+def cpu_flags() -> dict[int, CpuFlags]:
+    result = {}
+    with open('/proc/cpuinfo', 'rb') as f:
+        for line in filter(lambda x: x.startswith((b'processor', b'flags')), f):
+            parts = line.decode('utf-8').split(':', 1)
+            title = parts[0].strip()
+            match title:
+                case 'processor':
+                    cpu_number = int(parts[1].strip())
+                case 'flags':
+                    result[cpu_number] = parts[1].strip().split()
+        return result
