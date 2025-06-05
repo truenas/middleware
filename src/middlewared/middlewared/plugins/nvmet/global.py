@@ -16,6 +16,7 @@ from .utils import uuid_nqn
 
 NVMET_DEBUG_DIR = '/sys/kernel/debug/nvmet'
 NVMF_SERVICE = 'nvmf'
+AVX2_FLAG = 'avx2'
 
 
 class NVMetGlobalModel(sa.Model):
@@ -66,6 +67,10 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     async def __ana_forbidden(self):
         return not await self.middleware.call('failover.licensed')
 
+    async def __spdk_forbidden(self):
+        # For now we'll disallow SPDK if any CPU is missing avx2
+        return any(AVX2_FLAG not in flags for flags in (await self.middleware.call('system.cpu_flags')).values())
+
     async def __validate(self, verrors, data, schema_name, old=None):
         if data['rdma'] and old['rdma'] != data['rdma']:
             available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
@@ -80,11 +85,17 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                     f'{schema_name}.ana',
                     'This platform does not support Asymmetric Namespace Access(ANA).'
                 )
-        if old['kernel'] != data['kernel'] and await self.running():
-            verrors.add(
-                f'{schema_name}.kernel',
-                'Cannot switch nvmet backend while the service is running.'
-            )
+        if old['kernel'] != data['kernel']:
+            if not data['kernel'] and await self.__spdk_forbidden():
+                verrors.add(
+                    f'{schema_name}.kernel',
+                    'Cannot switch nvmet backend because CPU lacks required capabilities.'
+                )
+            elif await self.running():
+                verrors.add(
+                    f'{schema_name}.kernel',
+                    'Cannot switch nvmet backend while the service is running.'
+                )
 
     @private
     async def ana_enabled(self):
