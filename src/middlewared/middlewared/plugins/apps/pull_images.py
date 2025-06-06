@@ -47,7 +47,7 @@ class AppService(Service):
         job = job or type('dummy_job', (object,), {'set_progress': lambda *args: None})()
         job.set_progress(20, 'Pulling app images')
 
-        compose_action(app_name, app['version'], action='pull')
+        compose_action(app_name, app['version'], action='pull', force_pull=True)
         job.set_progress(80 if options['redeploy'] else 100, 'Images pulled successfully')
 
         # We will update image cache so that it reflects the fact that image has been pulled again
