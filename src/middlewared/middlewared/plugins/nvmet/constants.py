@@ -4,10 +4,14 @@ NVMET_KERNEL_CONFIG_DIR = '/sys/kernel/config/nvmet'
 NVMET_NODE_A_ANA_GRPID = 2
 NVMET_NODE_B_ANA_GRPID = 3
 
+NVMET_DISCOVERY_NQN = 'nqn.2014-08.org.nvmexpress.discovery'
 NVMET_NQN_UUID = 'nqn.2011-06.com.truenas:uuid'
 NVMET_SERVICE_NAME = 'nvmet'
 
 NVMET_MAX_NSID = 0xFFFFFFFE
+
+NVMET_NODE_A_MAX_CONTROLLER_ID = 31999
+NVMET_NODE_B_MIN_CONTROLLER_ID = 32000
 
 
 class ApiMapper(enum.Enum):
@@ -23,6 +27,10 @@ class ApiMapper(enum.Enum):
     @property
     def sysfs(self):
         return self.value[2]
+
+    @property
+    def spdk(self):
+        return self.value[3]
 
     @classmethod
     def by_db(cls, needle, raise_exception=True):
@@ -68,10 +76,10 @@ class PORT_TRTYPE(ApiMapper):
 
 
 class PORT_ADDR_FAMILY(ApiMapper):
-    IPV4 = (1, 'IPV4', 'ipv4')
-    IPV6 = (2, 'IPV6', 'ipv6')
-    IB = (3, 'IB', 'ib')
-    FC = (4, 'FC', 'fc')
+    IPV4 = (1, 'IPV4', 'ipv4', 'IPv4')
+    IPV6 = (2, 'IPV6', 'ipv6', 'IPv6')
+    IB = (3, 'IB', 'ib', 'IB')
+    FC = (4, 'FC', 'fc', 'FC')
 
 
 def port_transport_family_generator():

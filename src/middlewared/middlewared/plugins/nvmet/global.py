@@ -19,6 +19,8 @@ from .mixin import NVMetStandbyMixin
 from .utils import uuid_nqn
 
 NVMET_DEBUG_DIR = '/sys/kernel/debug/nvmet'
+NVMF_SERVICE = 'nvmf'
+AVX2_FLAG = 'avx2'
 
 
 class NVMetGlobalModel(sa.Model):
@@ -69,9 +71,11 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     async def __ana_forbidden(self):
         return not await self.middleware.call('failover.licensed')
 
+    async def __spdk_forbidden(self):
+        # For now we'll disallow SPDK if any CPU is missing avx2
+        return any(AVX2_FLAG not in flags for flags in (await self.middleware.call('system.cpu_flags')).values())
+
     async def __validate(self, verrors, data, schema_name, old=None):
-        if not data.get('kernel', False):
-            verrors.add(f'{schema_name}.kernel', 'Cannot disable kernel mode.')
         if data['rdma'] and old['rdma'] != data['rdma']:
             available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
             if RDMAprotocols.NVMET.value not in available_rdma_protocols:
@@ -84,6 +88,17 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 verrors.add(
                     f'{schema_name}.ana',
                     'This platform does not support Asymmetric Namespace Access(ANA).'
+                )
+        if old['kernel'] != data['kernel']:
+            if not data['kernel'] and await self.__spdk_forbidden():
+                verrors.add(
+                    f'{schema_name}.kernel',
+                    'Cannot switch nvmet backend because CPU lacks required capabilities.'
+                )
+            elif await self.running():
+                verrors.add(
+                    f'{schema_name}.kernel',
+                    'Cannot switch nvmet backend while the service is running.'
                 )
 
     @api_method(
@@ -133,9 +148,9 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     async def sessions(self, filters, options):
         sessions = []
         subsys_id = None
-        for filter in filters:
-            if len(filter) == 3 and filter[0] == 'subsys_id' and filter[1] == '=':
-                subsys_id = filter[2]
+        for _filter in filters:
+            if len(_filter) == 3 and _filter[0] == 'subsys_id' and _filter[1] == '=':
+                subsys_id = _filter[2]
                 break
         sessions = await self.middleware.call('nvmet.global.local_sessions', subsys_id)
         if await self.ana_enabled():
@@ -223,18 +238,26 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         if (await self.config())['kernel']:
             return await self.middleware.run_in_thread(nvmet_kernel_module_loaded)
         else:
-            return False
+            return await self.middleware.call('service.started', NVMF_SERVICE)
 
     @private
     async def start(self):
-        await self.middleware.call('nvmet.global.load_kernel_modules')
+        if (await self.config())['kernel']:
+            await self.middleware.call('nvmet.global.load_kernel_modules')
+        else:
+            await self.middleware.call('nvmet.spdk.slots')
+            if await self.middleware.call('service.start', NVMF_SERVICE):
+                await self.middleware.call('nvmet.spdk.wait_nvmf_ready')
         await self.middleware.call('etc.generate', 'nvmet')
 
     @private
     async def stop(self):
         if await self.running():
-            await self.middleware.run_in_thread(clear_config)
-            await self.middleware.call('nvmet.global.unload_kernel_modules')
+            if (await self.config())['kernel']:
+                await self.middleware.run_in_thread(clear_config)
+                await self.middleware.call('nvmet.global.unload_kernel_modules')
+            else:
+                return await self.middleware.call('service.stop', NVMF_SERVICE)
 
     @private
     async def system_ready(self):
