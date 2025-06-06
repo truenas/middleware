@@ -1,5 +1,7 @@
 import asyncio
+import hashlib
 import os
+import tempfile
 from contextlib import contextmanager
 
 from spdk import rpc
@@ -15,6 +17,17 @@ SPDK_RPC_PORT = 5260
 SPDK_RPC_TIMEOUT = None
 SPDK_RPC_LOG_LEVEL = 'ERROR'
 SPDK_RPC_CONN_RETRIES = 0
+
+# Directory into which we will place our keys
+SPDK_KEY_DIR = '/var/run/spdk/keys'
+
+
+def host_config_key(config_item, key_type):
+    if key_value := config_item[key_type]:
+        md5_hash = hashlib.md5()
+        md5_hash.update(key_value.encode('utf-8'))
+        # Colon confuses things, replace
+        return f'{key_type}-{config_item["hostnqn"].replace(":", "-")}-{md5_hash.hexdigest()}'
 
 
 class NVMetSPDKService(Service):
@@ -308,7 +321,132 @@ class NvmetPortSubsysConfig(NvmetPortConfig):
         self.delete_from_nqn(client, live_item['port'], live_item['nqn'], render_ctx)
 
 
-class NvmetBdevConfig(NvmetPortConfig):
+class NvmetKeyringDhchapKeyConfig(NvmetConfig):
+    """
+    We may have configured dhchap_key or dhchap_ctrl_key for each host.
+
+    Both will be derived from nvmet.host.query, but in different
+    classes - this one, and a subclass.
+    """
+    query = 'nvmet.host.query'
+    key_type = 'dhchap_key'
+
+    def config_key(self, config_item):
+        return host_config_key(config_item, self.key_type)
+
+    def config_dict(self, render_ctx):
+        result = {}
+        for config_item in render_ctx[self.query]:
+            if _key := self.config_key(config_item):
+                result[_key] = config_item
+        return result
+
+    def _write_keyfile(self, key):
+        with tempfile.NamedTemporaryFile(mode="w+", dir=SPDK_KEY_DIR, delete=False) as tmp_file:
+            tmp_file.write(key)
+            return tmp_file.name
+
+    def get_live(self, client, render_ctx):
+        return {item['name']: item for item in rpc.keyring.keyring_get_keys(client)
+                if item['name'].startswith(f'{self.key_type}-')}
+
+    def add(self, client, config_item, render_ctx):
+        kwargs = {
+            'name': self.config_key(config_item),
+            'path': self._write_keyfile(config_item[self.key_type]),
+        }
+        rpc.keyring.keyring_file_add_key(client, **kwargs)
+
+    def update(self, client, config_item, live_item, render_ctx):
+        # Because the key contains a hash, we only need to handle add and remove.
+        pass
+
+    def delete(self, client, live_item, render_ctx):
+        rpc.keyring.keyring_file_remove_key(client, name=live_item['name'])
+        os.unlink(live_item['path'])
+
+
+class NvmetKeyringDhchapCtrlKeyConfig(NvmetKeyringDhchapKeyConfig):
+    query = 'nvmet.host.query'
+    key_type = 'dhchap_ctrl_key'
+
+
+class NvmetHostSubsysConfig(NvmetConfig):
+    query = 'nvmet.host_subsys.query'
+
+    def config_key(self, config_item):
+        # BRIAN include the dhchap keys in the key?
+        # Or just implement
+        # 1. On add add keys as necessary
+        # 2. On update remove and readd if necessary
+        # Leaning towards the latter, as in this case we probably need to remove FIRST
+        return f"{config_item['host']['hostnqn']}:{config_item['subsys']['subnqn']}"
+
+    def get_live(self, client, render_ctx):
+        result = {}
+        for subsys in rpc.nvmf.nvmf_get_subsystems(client):
+            if subsys['nqn'] == NVMET_DISCOVERY_NQN:
+                continue
+            for host in subsys['hosts']:
+
+                # port_key = self.live_address_to_key(address)
+                # Construct a synthetic live item that will facilitate delete when needed
+                hostnqn = host['nqn']
+                # result[f"{hostnqn}:{subsys['nqn']}"] = {'port': address, 'nqn': subsys['nqn']}
+                # Yes, deliberately mapped live dhchap_ctrlr_key to dhchap_ctrl_key here to
+                # make comparison in the update method easier
+                result[f"{hostnqn}:{subsys['nqn']}"] = {'hostnqn': host['nqn'],
+                                                        'nqn': subsys['nqn'],
+                                                        'dhchap_key': host.get('dhchap_key'),
+                                                        'dhchap_ctrl_key': host.get('dhchap_ctrlr_key'),
+                                                        }
+        return result
+
+    def add(self, client, config_item, render_ctx):
+        kwargs = {
+            'nqn': config_item['subsys']['subnqn'],
+            'host': config_item['host']['hostnqn'],
+        }
+
+        if config_item['host']['dhchap_key']:
+            kwargs.update({'dhchap_key': host_config_key(config_item['host'], 'dhchap_key')})
+
+        if config_item['host']['dhchap_ctrl_key']:
+            # Yes, the SPDK name is different from the name in our config:
+            # dhchap_ctrlr_key vs dhchap_ctrl_key
+            kwargs.update({'dhchap_ctrlr_key': host_config_key(config_item['host'], 'dhchap_ctrl_key')})
+
+        rpc.nvmf.nvmf_subsystem_add_host(client, **kwargs)
+
+    def update(self, client, config_item, live_item, render_ctx):
+        # We cannot update, so need to remove and reattach if the contents are wrong.
+        config_host = config_item['host']
+        matches = True
+        for key_type in ('dhchap_key', 'dhchap_ctrl_key'):
+            if config_host[key_type] is None and live_item[key_type] is None:
+                continue
+            if config_host[key_type] is None or live_item[key_type] is None:
+                matches = False
+                break
+            if live_item[key_type] != host_config_key(config_host, key_type):
+                matches = False
+                break
+
+        if matches:
+            return
+
+        self.delete(client, live_item, render_ctx)
+        self.add(client, config_item, render_ctx)
+
+    def delete(self, client, live_item, render_ctx):
+        kwargs = {
+            'nqn': live_item['nqn'],
+            'host': live_item['hostnqn'],
+        }
+        rpc.nvmf.nvmf_subsystem_remove_host(client, **kwargs)
+
+
+class NvmetBdevConfig(NvmetConfig):
     query = 'nvmet.namespace.query'
 
     def config_key(self, config_item):
@@ -420,6 +558,9 @@ def make_client():
 def write_config(config):
     client = make_client()
 
+    if not os.path.isdir(SPDK_KEY_DIR):
+        os.mkdir(SPDK_KEY_DIR)
+
     # Render operations are context managers that do
     # 1. Create-style operations
     # 2. yield
@@ -430,11 +571,12 @@ def write_config(config):
     with (
         NvmetSubsysConfig().render(client, config),
         NvmetTransportConfig().render(client, config),
-        # NvmetHostConfig().render(config),
+        NvmetKeyringDhchapKeyConfig().render(client, config),
+        NvmetKeyringDhchapCtrlKeyConfig().render(client, config),
         NvmetPortConfig().render(client, config),
         # NvmetPortReferralConfig().render(config),
         # NvmetPortAnaReferralConfig().render(config),
-        # NvmetHostSubsysConfig().render(config),
+        NvmetHostSubsysConfig().render(client, config),
         NvmetPortSubsysConfig().render(client, config),
         NvmetBdevConfig().render(client, config),
         NvmetNamespaceConfig().render(client, config),
