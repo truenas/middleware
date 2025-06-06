@@ -15,6 +15,12 @@ import sys
 import secrets
 import string
 
+TEST_DIR_TO_RESULT = {
+    'api2': 'results/api_v2_tests_result.xml',
+    'directory_services': 'results/directoryservices_tests_result.xml',
+    'stig': 'results/stig_tests_result.xml',
+}
+
 workdir = os.getcwd()
 sys.path.append(workdir)
 workdir = os.getcwd()
@@ -303,10 +309,11 @@ pytest_command = [
     "-o", "junit_family=xunit2",
     '--timeout=300',
     "--junitxml",
-    'results/api_v2_tests_result.xml',
+    TEST_DIR_TO_RESULT.get(test_dir),
 ]
 if testexpr:
     pytest_command.extend(['-k', testexpr])
+
 
 def parse_test_name(test):
     test = test.removeprefix(f"{test_dir}/")
@@ -317,6 +324,7 @@ def parse_test_name(test):
         return f"{filename}.py::{testname}"
     return test
 
+
 def parse_test_name_prefix_dir(test_name):
     name = parse_test_name(test_name)
     if name.startswith('/'):
@@ -324,12 +332,14 @@ def parse_test_name_prefix_dir(test_name):
     else:
         return f"{test_dir}/{name}"
 
+
 if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
 else:
     pytest_command.append(parse_test_name_prefix_dir(testName))
 
 proc_returncode = call(pytest_command)
+
 
 def get_cmd_result(cmd: str, target_file: str, target_ip: str):
     try:
@@ -342,6 +352,7 @@ def get_cmd_result(cmd: str, target_file: str, target_ip: str):
         with open(target_file, 'w') as f:
             f.writelines(results['stdout'])
             f.flush()
+
 
 if ha:
     get_folder('/var/log', f'{artifacts}/log_nodea', 'root', 'testing', ip)
