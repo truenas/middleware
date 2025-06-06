@@ -1564,6 +1564,10 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         if attachments:
             await self.restart_reload_services(attachments)
 
+    async def stop(self, attachments):
+        for share in attachments:
+            await self.middleware.call('sharing.smb.close_share', share[share_field.NAME])
+            
     async def restart_reload_services(self, attachments):
         """
         mDNS may need to be reloaded if a time machine share is located on
@@ -1589,6 +1593,10 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
 async def systemdataset_setup_hook(middleware, data):
     if not data['in_progress']:
         await middleware.call('smb.setup_directories')
+        
+
+async def hook_post_generic(middleware, datasets):
+    await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
 
 
 async def setup(middleware):
@@ -1597,5 +1605,7 @@ async def setup(middleware):
         SystemServiceListenMultipleDelegate(middleware, 'smb', 'bindip'),
     )
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
+    middleware.register_hook('pool.dataset.post_lock', hook_post_generic, sync=True)
+    middleware.register_hook('pool.dataset.post_unlock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
     middleware.register_hook("sysdataset.setup", systemdataset_setup_hook)
