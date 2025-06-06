@@ -69,7 +69,7 @@ def quota_alert_cb(hdl, state):
     info = hdl.asdict(
         properties={
             truenas_pylibzfs.ZFSProperty.USED,
-            truenas_pylibzfs.ZFSProperty.USEDDS,
+            truenas_pylibzfs.ZFSProperty.USEDBYDATASET,
             truenas_pylibzfs.ZFSProperty.QUOTA,
             truenas_pylibzfs.ZFSProperty.REFQUOTA,
             truenas_pylibzfs.ZFSProperty.AVAILABLE,
