@@ -8,7 +8,12 @@ from spdk import rpc
 
 from middlewared.service import CallError, Service
 from middlewared.utils import run
-from .constants import NAMESPACE_DEVICE_TYPE, NVMET_DISCOVERY_NQN, PORT_ADDR_FAMILY, PORT_TRTYPE
+from .constants import (NAMESPACE_DEVICE_TYPE,
+                        NVMET_DISCOVERY_NQN,
+                        NVMET_NODE_A_MAX_CONTROLLER_ID,
+                        NVMET_NODE_B_MIN_CONTROLLER_ID,
+                        PORT_ADDR_FAMILY,
+                        PORT_TRTYPE)
 
 SETUP_SH = '/opt/spdk/scripts/setup.sh'
 
@@ -416,6 +421,13 @@ class NvmetHostSubsysConfig(NvmetConfig):
             # dhchap_ctrlr_key vs dhchap_ctrl_key
             kwargs.update({'dhchap_ctrlr_key': host_config_key(config_item['host'], 'dhchap_ctrl_key')})
 
+        # If this is a HA system then inject some settings
+        match render_ctx['failover.node']:
+            case 'A':
+                kwargs.update({'max_cntlid': NVMET_NODE_A_MAX_CONTROLLER_ID})
+            case 'B':
+                kwargs.update({'min_cntlid': NVMET_NODE_B_MIN_CONTROLLER_ID})
+
         rpc.nvmf.nvmf_subsystem_add_host(client, **kwargs)
 
     def update(self, client, config_item, live_item, render_ctx):
@@ -568,13 +580,15 @@ def write_config(config):
     #
     # Therefore we can nest them to enfore the necessary
     # order of operations.
+    #
+    # SPDK automatically does what we had called cross-port
+    # referrals in the kernel implementation.
     with (
         NvmetSubsysConfig().render(client, config),
         NvmetTransportConfig().render(client, config),
         NvmetKeyringDhchapKeyConfig().render(client, config),
         NvmetKeyringDhchapCtrlKeyConfig().render(client, config),
         NvmetPortConfig().render(client, config),
-        # NvmetPortReferralConfig().render(config),
         # NvmetPortAnaReferralConfig().render(config),
         NvmetHostSubsysConfig().render(client, config),
         NvmetPortSubsysConfig().render(client, config),

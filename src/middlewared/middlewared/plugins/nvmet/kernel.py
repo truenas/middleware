@@ -11,7 +11,9 @@ from .constants import (DHCHAP_DHGROUP,
                         NAMESPACE_DEVICE_TYPE,
                         NVMET_KERNEL_CONFIG_DIR,
                         NVMET_NODE_A_ANA_GRPID,
+                        NVMET_NODE_A_MAX_CONTROLLER_ID,
                         NVMET_NODE_B_ANA_GRPID,
+                        NVMET_NODE_B_MIN_CONTROLLER_ID,
                         PORT_ADDR_FAMILY,
                         PORT_TRTYPE)
 
@@ -399,9 +401,9 @@ class NvmetSubsysConfig(NvmetConfig):
         # Perhaps inject some values
         match render_ctx['failover.node']:
             case 'A':
-                result['attr_cntlid_max'] = 31999
+                result['attr_cntlid_max'] = NVMET_NODE_A_MAX_CONTROLLER_ID
             case 'B':
-                result['attr_cntlid_min'] = 32000
+                result['attr_cntlid_min'] = NVMET_NODE_B_MIN_CONTROLLER_ID
 
         result['attr_model'] = render_ctx['nvmet.subsys.model']
         result['attr_firmware'] = render_ctx['nvmet.subsys.firmware']
