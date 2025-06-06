@@ -151,6 +151,6 @@ def setup_server_single():
         fail(f'{stage}: failed to set up truenas server: {exc}')
 
 
-def test_initialize_truenas():
+def pytest_sessionstart(session):
     setup_fn = setup_server_ha if ha else setup_server_single
     setup_fn()

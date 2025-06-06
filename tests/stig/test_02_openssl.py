@@ -3,7 +3,6 @@ import pytest
 from middlewared.test.integration.utils import call, ssh
 from auto_config import ha
 
-pytestmark = pytest.mark.skip('100% fail. Needs to be reworked.')
 
 retry = 5
 fips_version = "3.0.9"
