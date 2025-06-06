@@ -1567,7 +1567,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     async def stop(self, attachments):
         for share in attachments:
             await self.middleware.call('sharing.smb.close_share', share[share_field.NAME])
-            
+
     async def restart_reload_services(self, attachments):
         """
         mDNS may need to be reloaded if a time machine share is located on
@@ -1593,7 +1593,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
 async def systemdataset_setup_hook(middleware, data):
     if not data['in_progress']:
         await middleware.call('smb.setup_directories')
-        
+
 
 async def hook_post_generic(middleware, datasets):
     await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
