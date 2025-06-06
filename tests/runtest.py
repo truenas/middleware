@@ -17,7 +17,8 @@ import string
 
 TEST_DIR_TO_RESULT = {
     'api2': 'results/api_v2_tests_result.xml',
-    'directory_services': 'results/directoryservices_tests_result.xml'
+    'directory_services': 'results/directoryservices_tests_result.xml',
+    'stig': 'results/stig_tests_result.xml',
 }
 
 workdir = os.getcwd()
