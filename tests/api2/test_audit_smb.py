@@ -61,6 +61,7 @@ def test_smb_share_audit(smb_audit_dataset):
 
         # UPDATE
         payload = {
+            "purpose": "DEFAULT_SHARE",
             "options": {"aapl_extensions": True}
         }
         with expect_audit_method_calls([{
