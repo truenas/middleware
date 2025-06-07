@@ -105,7 +105,9 @@ class AuditService(ConfigService):
         data['space']['available'] = ds_info['properties']['available']['parsed']
         data['enabled_services'] = {'MIDDLEWARE': [], 'SMB': [], 'SUDO': []}
         audited_smb_shares = self.middleware.call_sync(
-            'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['name', 'audit']}
+            'sharing.smb.query',
+            [['audit.enable', '=', True], ['enable', '=', True]],
+            {'select': ['name', 'audit', 'enable']}
         )
 
         for share in audited_smb_shares:

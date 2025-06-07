@@ -363,19 +363,7 @@ class UsageService(Service):
             namespace = f'sharing.{service}' if service != 'iscsi' else 'iscsi.targetextent'
             for s in await self.middleware.call(f'{namespace}.query'):
                 if service == 'smb':
-                    sharing_list.append({
-                        'type': service_upper,
-                        'home': s['home'],
-                        'timemachine': s['timemachine'],
-                        'browsable': s['browsable'],
-                        'recyclebin': s['recyclebin'],
-                        'shadowcopy': s['shadowcopy'],
-                        'guestok': s['guestok'],
-                        'abe': s['abe'],
-                        'acl': s['acl'],
-                        'fsrvp': s['fsrvp'],
-                        'streams': s['streams'],
-                    })
+                    sharing_list.append({'type': service_upper, 'purpose': s['purpose']})
                 elif service == 'nfs':
                     sharing_list.append({'type': service_upper, 'readonly': s['ro']})
                 elif service == 'iscsi':

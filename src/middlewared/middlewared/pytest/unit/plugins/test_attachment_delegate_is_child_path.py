@@ -5,11 +5,11 @@ from middlewared.pytest.unit.middleware import Middleware
 
 
 @pytest.mark.parametrize('resource, path, check_parent, exact_match, is_child, expected_output', (
-    ({'path_local': '/mnt/tank/test'}, '/mnt/tank', False, False, True, True),
-    ({'path_local': '/mnt/tank/test'}, '/mnt/tank', False, True, True, False),
-    ({'path_local': '/mnt/tank'}, '/mnt/tank', False, False, True, True),
-    ({'path_local': '/mnt/test'}, '/mnt/tank', True, False, False, False),
-    ({'path_local': '/mnt/tank/test'}, '/mnt/tank', True, False, True, True),
+    ({'path': '/mnt/tank/test'}, '/mnt/tank', False, False, True, True),
+    ({'path': '/mnt/tank/test'}, '/mnt/tank', False, True, True, False),
+    ({'path': '/mnt/tank'}, '/mnt/tank', False, False, True, True),
+    ({'path': '/mnt/test'}, '/mnt/tank', True, False, False, False),
+    ({'path': '/mnt/tank/test'}, '/mnt/tank', True, False, True, True),
 ))
 @pytest.mark.asyncio
 async def test_attachment_is_child(resource, path, check_parent, exact_match, is_child, expected_output):

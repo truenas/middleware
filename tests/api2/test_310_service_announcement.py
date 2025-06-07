@@ -402,7 +402,7 @@ def test_003_mdns_smb_share(request):
                 ac.check_present(time_machine=False)
                 with smb_share(SMB_PATH1, {'name': SMB_NAME1,
                                            'comment': 'Basic TM SMB Share',
-                                           'purpose': 'TIMEMACHINE'}) as shareID1:
+                                           'purpose': 'TIMEMACHINE_SHARE'}) as shareID1:
                     allow_settle()
                     # Check mDNS now we have a time machine share
                     ac.find_items()
@@ -420,7 +420,7 @@ def test_003_mdns_smb_share(request):
                     with dataset(dataset_name2):
                         with smb_share(SMB_PATH2, {'name': SMB_NAME2,
                                                    'comment': 'Multiuser TM SMB Share',
-                                                   'purpose': 'ENHANCED_TIMEMACHINE'}) as shareID2:
+                                                   'purpose': 'TIMEMACHINE_SHARE'}) as shareID2:
                             share2 = call('sharing.smb.query', [['id', '=', shareID2]])[0]
                             allow_settle()
                             ac.find_items()

@@ -145,7 +145,7 @@ def test_004_creating_a_smb_share_path(request):
         "comment": "SMB VSS Testing Share",
         "path": smb_path,
         "name": SMB_NAME,
-        "purpose": "NO_PRESET",
+        "purpose": "LEGACY_SHARE",
     })['id']
     cmd = f'mkdir {smb_path}/{SMB_USER}; zpool sync; net cache flush'
     results = SSH_TEST(cmd, user, password)
@@ -263,7 +263,10 @@ def test_010_check_previous_versions_of_testfiles(request, zfs, gmt_data):
 
 def test_011_convert_to_home_share(request):
     depends(request, ["VSS_TESTFILES_VALIDATED"])
-    assert call("sharing.smb.update", smb_id, {"home": True})
+    assert call("sharing.smb.update", smb_id, {
+        "purpose": "LEGACY_SHARE",
+        "options": {"home": True}
+    })
 
 
 @pytest.mark.parametrize('zfs, gmt_data', snapshots.items())

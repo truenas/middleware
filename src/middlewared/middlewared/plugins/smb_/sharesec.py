@@ -79,10 +79,9 @@ class ShareSec(Service):
         """
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
         ACLs which can be viewed by calling `filesystem.getacl`.
-
         """
         if share_name.upper() == 'HOMES':
-            share_filter = [['home', '=', True]]
+            share_filter = [['options.home', '=', True]]
         else:
             share_filter = [['name', 'C=', share_name]]
 
@@ -90,8 +89,8 @@ class ShareSec(Service):
             self.middleware.call_sync(
                 'sharing.smb.query', share_filter, {'get': True, 'select': ['home', 'name']}
             )
-        except MatchNotFound:
-            raise CallError(f'{share_name}: share does not exist')
+        except MatchNotFound as exc:
+            raise CallError(f'{share_name}: share does not exist') from exc
 
         if not os.path.exists(LOCAL_SHARE_INFO_FILE):
             set_version_share_info()
@@ -105,7 +104,7 @@ class ShareSec(Service):
 
         return {'share_name': share_name, 'share_acl': share_acl}
 
-    def setacl(self, data, db_commit=True):
+    def setacl(self, data):
         """
         Set an ACL on `share_name`. Changes are written to samba's share_info.tdb file.
         This only impacts SMB sessions.
@@ -124,14 +123,14 @@ class ShareSec(Service):
         `ae_type` can be ALLOWED or DENIED.
         """
         if data['share_name'].upper() == 'HOMES':
-            share_filter = [['home', '=', True]]
+            share_filter = [['options.home', '=', True]]
         else:
             share_filter = [['name', 'C=', data['share_name']]]
 
         try:
             config_share = self.middleware.call_sync('sharing.smb.query', share_filter, {'get': True})
-        except MatchNotFound:
-            raise CallError(f'{data["share_name"]}: share does not exist')
+        except MatchNotFound as exc:
+            raise CallError(f'{data["share_name"]}: share does not exist') from exc
 
         share_sd_bytes = b64encode(share_acl_to_sd_bytes(data['share_acl'])).decode()
         store_share_acl(data['share_name'], share_sd_bytes)
@@ -159,8 +158,9 @@ class ShareSec(Service):
         if not os.path.exists(LOCAL_SHARE_INFO_FILE):
             if not self.middleware.call_sync('service.started', 'cifs'):
                 return
-            else:
-                return self.flush_share_info()
+
+            self.flush_share_info()
+            return
 
         self.middleware.call_sync('smb.sharesec.synchronize_acls')
 

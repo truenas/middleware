@@ -14,11 +14,15 @@ SMB_USER = "smbrpcuser"
 SMB_PWD = "smb1234#!@"
 INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'}
 
+
 @pytest.fixture(scope="module")
 def setup_smb_share(request):
     with dataset('rpc_test', data={'share_type': 'SMB'}) as ds:
-        with smb_share(os.path.join('/mnt', ds), "RPC_TEST", {"abe": True, "purpose": "NO_PRESET"}) as s:
+        with smb_share(os.path.join('/mnt', ds), "RPC_TEST", {
+            "access_based_share_enumeration": True, "purpose": "LEGACY_SHARE"
+        }) as s:
             yield {'dataset': ds, 'share': s}
+
 
 @pytest.fixture(autouse=True, scope="function")
 def setup_smb_user(request):
@@ -96,21 +100,21 @@ def test_share_name_restricutions(setup_smb_share):
         with pytest.raises(ValidationErrors) as ve:
             call('sharing.smb.update', first_share['id'], {'name': f'CANARY{char}'})
 
-        assert 'Share name contains the following invalid characters' in ve.value.errors[0].errmsg
+        assert 'share name contains the following invalid characters' in ve.value.errors[0].errmsg
 
         # Now try creating new share
         with pytest.raises(ValidationErrors) as ve:
             call('sharing.smb.create', {'path': os.path.join('/mnt', ds_name), 'name': f'CANARY{char}'})
 
-        assert 'Share name contains the following invalid characters' in ve.value.errors[0].errmsg
+        assert 'share name contains the following invalid characters' in ve.value.errors[0].errmsg
 
 
     with pytest.raises(ValidationErrors) as ve:
         call('sharing.smb.update', first_share['id'], {'name': 'CANARY\x85'})
 
-    assert 'Share name contains unicode control characters' in ve.value.errors[0].errmsg
+    assert 'share name contains unicode control characters' in ve.value.errors[0].errmsg
 
     with pytest.raises(ValidationErrors) as ve:
         call('sharing.smb.create', {'path': os.path.join('/mnt', ds_name), 'name': 'CANARY\x85'})
 
-    assert 'Share name contains unicode control characters' in ve.value.errors[0].errmsg
+    assert 'share name contains unicode control characters' in ve.value.errors[0].errmsg

@@ -3,6 +3,7 @@ import enum
 import subprocess
 from functions import SRVTarget, get_host_ip
 from platform import system
+from time import sleep
 
 
 # sys.real_prefix only found in old virtualenv
@@ -27,6 +28,7 @@ from samba.samba3 import libsmb_samba_internal as libsmb
 from samba.dcerpc import security
 from samba.samba3 import param as s3param
 from samba import credentials
+from samba import ntstatus
 from samba import NTSTATUSError
 
 libsmb_has_rename = 'rename' in dir(libsmb.Conn)
@@ -117,13 +119,28 @@ class SMB(object):
         self._username = username
         self._password = password
         self._domain = domain
-        self._connection = libsmb.Conn(
-            host,
-            share,
-            self._lp,
-            self._cred,
-            force_smb1=smb1,
-        )
+        try:
+            self._connection = libsmb.Conn(
+                host,
+                share,
+                self._lp,
+                self._cred,
+                force_smb1=smb1,
+            )
+        except NTSTATUSError as nterr:
+            if nterr.args[0] != ntstatus.NT_STATUS_CONNECTION_REFUSED:
+                raise nterr
+
+            # Samba service may still be in process of reloading. Sleep and retry
+            sleep(5)
+
+            self._connection = libsmb.Conn(
+                host,
+                share,
+                self._lp,
+                self._cred,
+                force_smb1=smb1,
+            )
 
     def get_smb_encryption(self):
         return SMBEncryption(self._cred.get_smb_encryption()).name
