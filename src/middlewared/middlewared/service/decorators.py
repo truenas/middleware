@@ -20,22 +20,6 @@ def cli_private(fn):
     return fn
 
 
-def filterable(fn=None, /, *, roles=None):
-    def filterable_internal(fn):
-        fn._filterable = True
-        fn._legacy_filterable = True
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable = True
-        return accepts(Ref('query-filters'), Ref('query-options'), roles=roles)(fn)
-    # See if we're being called as @filterable or @filterable().
-    if fn is None:
-        # We're called with parens.
-        return filterable_internal
-
-    # We're called as @filterable without parens.
-    return filterable_internal(fn)
-
-
 def filterable_api_method(
     fn=None, /, *, roles=None, item=None, private=False, cli_private=False, authorization_required=True,
     pass_app=False, pass_app_require=False, pass_app_rest=False,
