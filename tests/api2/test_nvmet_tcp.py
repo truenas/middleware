@@ -768,7 +768,7 @@ class TestNVMe(NVMeRunning):
                     except MatchNotFound:
                         pass
                     # Test with a FILE based namespace
-                    file2 = f'/mnt/{zvol_config["name"]}/file_{digits}'
+                    file2 = f'/mnt/{pool2["name"]}/file_{digits}'
                     with nvmet_namespace(subsys_id,
                                          file2,
                                          DEVICE_TYPE_FILE,
