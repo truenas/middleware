@@ -7,7 +7,6 @@ from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import query_result
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, GenericQueryResult
-from middlewared.schema import accepts, Ref
 
 
 LOCKS = defaultdict(asyncio.Lock)
