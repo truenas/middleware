@@ -10,7 +10,7 @@ from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 from middlewared.utils import filter_list
 from .constants import NVMET_SERVICE_NAME
-from .kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
+from middlewared.utils.nvmet.kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
 from .mixin import NVMetStandbyMixin
 from .utils import uuid_nqn
 

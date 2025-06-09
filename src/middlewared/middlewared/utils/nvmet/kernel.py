@@ -5,17 +5,17 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 
+from middlewared.plugins.nvmet.constants import (DHCHAP_DHGROUP,
+                                                 DHCHAP_HASH,
+                                                 NAMESPACE_DEVICE_TYPE,
+                                                 NVMET_KERNEL_CONFIG_DIR,
+                                                 NVMET_NODE_A_ANA_GRPID,
+                                                 NVMET_NODE_A_MAX_CONTROLLER_ID,
+                                                 NVMET_NODE_B_ANA_GRPID,
+                                                 NVMET_NODE_B_MIN_CONTROLLER_ID,
+                                                 PORT_ADDR_FAMILY,
+                                                 PORT_TRTYPE)
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from .constants import (DHCHAP_DHGROUP,
-                        DHCHAP_HASH,
-                        NAMESPACE_DEVICE_TYPE,
-                        NVMET_KERNEL_CONFIG_DIR,
-                        NVMET_NODE_A_ANA_GRPID,
-                        NVMET_NODE_A_MAX_CONTROLLER_ID,
-                        NVMET_NODE_B_ANA_GRPID,
-                        NVMET_NODE_B_MIN_CONTROLLER_ID,
-                        PORT_ADDR_FAMILY,
-                        PORT_TRTYPE)
 
 ANA_OPTIMIZED_STATE = 'optimized'
 ANA_INACCESSIBLE_STATE = 'inaccessible'
