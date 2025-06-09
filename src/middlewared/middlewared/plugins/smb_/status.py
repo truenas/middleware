@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import Field
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
+from middlewared.api.current import QueryFilters, QueryOptions
 
 from middlewared.service import Service, private
 from middlewared.plugins.smb import SMBCmd
@@ -32,13 +33,13 @@ class SMBStatusOptions(BaseModel):
 
 class SMBStatusArgs(BaseModel):
     info_level: Literal['ALL', 'SESSIONS', 'SHARES', 'LOCKS', 'BYTERANGE', 'NOTIFICATIONS'] = 'ALL'
-    query_filters: list = []
-    query_options: dict = {}
+    query_filters: QueryFilters = QueryFilters()
+    query_options: QueryOptions = QueryOptions()
     status_options: SMBStatusOptions = Field(default_factory=SMBStatusOptions)
 
 
 class SMBStatusResult(BaseModel):
-    result: list | dict | int
+    result: list[dict] | dict | int
 
 
 class SMBService(Service):
