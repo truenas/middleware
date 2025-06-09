@@ -127,10 +127,10 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
 
     if not schema_def.get('required', False):
         # If the attr is not required, we use NotRequired
-        field_type |= NotRequired
+        field_type = Union[field_type, NotRequired]
 
     if schema_def.get('null', False):
-        field_type |= None
+        field_type = Union[field_type, None]
 
     if schema_def.get('private', False):
         # If the field is private, we can use Secret type
