@@ -1,9 +1,11 @@
-from typing import Annotated, Type, Union
+import contextlib
+from typing import Annotated, Literal, Type, Union
 
 from pydantic import create_model, Field, Secret
 from middlewared.api.base import LongString, NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
+from middlewared.utils import filter_list
 
 from .pydantic_utils import AbsolutePath, BaseModel, HostPath, IPvAnyAddress, URI
 
@@ -19,7 +21,6 @@ NOT_PROVIDED = object()
 # 3) empty attribute should be supported in fields
 # 4) subquestions need to be supported
 # 5) show_subquestions_if - this is used in the apps schema to show subquestions based on a field value
-# 6) show_if - this is used in the apps schema to show a field based on a field value
 
 
 # Functionality to remove (these are not being used and we should remove them to reduce complexity)
@@ -34,7 +35,7 @@ def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: dict | object = NOT_PROVIDED
 ) -> dict:
     schema_name = f'app_{"update" if update else "create"}'
-    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name)
+    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, new_values)
     verrors = ValidationErrors()
     try:
         # Validate the new values against the generated model
@@ -50,22 +51,50 @@ def construct_schema(
     }
 
 
-def generate_pydantic_model(dict_attrs: list[dict], model_name: str) -> Type[BaseModel]:
+def generate_pydantic_model(
+    dict_attrs: list[dict], model_name: str, new_values: dict | Literal[NOT_PROVIDED]
+) -> Type[BaseModel]:
     """
     Generate a Pydantic model from a list of dictionary attributes.
     """
     fields = {}
     nested_models = {}
+    show_if_attrs = {}
     for attr in dict_attrs:
         var_name = attr['variable']
         schema_def = attr['schema']
-        field_type, field_info, nested_model = process_schema_field(schema_def, f'{model_name}_{var_name}')
+        attr_value = new_values.get(var_name, NOT_PROVIDED) if isinstance(new_values, dict) else NOT_PROVIDED
+        field_type, field_info, nested_model = process_schema_field(
+            schema_def, f'{model_name}_{var_name}', attr_value,
+        )
         if nested_model:
             nested_models[var_name] = nested_model
+        if schema_def.get('show_if'):
+            show_if_attrs[var_name] = schema_def['show_if']
         fields[var_name] = (field_type, field_info)
 
     # Create the model dynamically
     model = create_model(model_name, __base__=BaseModel, **fields)
+
+    if show_if_attrs:
+        # What we want to do here is make sure that we are not injecting default values
+        # for fields which have conditional defaults set
+        provided_values = new_values if isinstance(new_values, dict) else {}
+        defaults = get_defaults(model, provided_values)
+        rebuild = False
+        # If we were not able to get defaults, no need to do the below magic
+        # It just means that a validation error occurred and we are going to raise it anyways
+        # Also if a user already has provided value for some attr which has show_if set, there is
+        # no need to mark that field as NotRequired etc
+        for attr in filter(lambda k: k not in provided_values, [] if defaults is None else show_if_attrs):
+            if not filter_list([defaults], show_if_attrs[attr]):
+                # This means we should not be injecting default values here and instead mark it as NotRequired
+                fields[attr][1].default = NotRequired
+                fields[attr][1].default_factory = None
+                rebuild = True
+
+        if rebuild:
+            model = create_model(model_name, __base__=BaseModel, **fields)
 
     # Store nested models and schema info as class attributes for reference
     for nested_name, nested_model in nested_models.items():
@@ -77,7 +106,16 @@ def generate_pydantic_model(dict_attrs: list[dict], model_name: str) -> Type[Bas
     return model
 
 
-def process_schema_field(schema_def: dict, model_name: str) -> tuple[
+def get_defaults(model: Type[BaseModel], new_values: dict) -> dict | None:
+    # We will try to get default values form the current model being passed by dumping values
+    # if we are not able to do that, it is fine - it just probably means that we had
+    # required fields and they were not found, in this case we will be raising a validation
+    # error to the user anyways
+    with contextlib.suppress(ValidationErrors):
+        return validate_model(model, new_values)
+
+
+def process_schema_field(schema_def: dict, model_name: str, new_values: dict | Literal[NOT_PROVIDED]) -> tuple[
     Type, Field, Type[BaseModel] | None
 ]:
     """
@@ -103,7 +141,7 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
         field_type = AbsolutePath
     elif schema_type == 'dict':
         if dict_attrs := schema_def.get('attrs', []):
-            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name)
+            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name, new_values)
             field_info.default_factory = nested_model
         else:
             # We have a generic dict type without specific attributes
@@ -113,7 +151,7 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
         if list_items := schema_def.get('items', []):
             for item in list_items:
                 item_type, item_info, _ = process_schema_field(
-                    item['schema'], f'{model_name}_{item["variable"]}',
+                    item['schema'], f'{model_name}_{item["variable"]}', new_values,
                 )
                 annotated_items.append(Annotated[item_type, item_info])
 
