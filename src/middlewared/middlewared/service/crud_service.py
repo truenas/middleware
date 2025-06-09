@@ -17,7 +17,7 @@ from middlewared.utils import filter_list
 from middlewared.utils.type import copy_function_metadata
 
 from .base import ServiceBase
-from .decorators import filterable, pass_app, private
+from .decorators import pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
 
@@ -73,31 +73,22 @@ class CRUDServiceMetabase(ServiceBase):
         if not private:
             if not config.role_prefix:
                 raise ValueError(f'{config.namespace}: public CRUDService must have role_prefix defined')
-            # TODO: Enforce after SMB gets converted
-            # if not config.entry:
-            #     raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
+            if not config.entry:
+                raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
 
         if entry is not None:
             # FIXME: This is to prevent `Method cloudsync.credentials.ENTRY is public but has no @accepts()`, remove
             # eventually.
             klass.ENTRY = None
-            # FIXME: Remove `wraps` handling when we get rid of `@filterable` in `CRUDService.query` definition
             query_result_model = query_result(entry)
             if (
                 any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
                 not hasattr(klass.query, '_filterable') or klass.query._filterable is False
             ):
                 # No need to inject api method if filterable has been explicitly specified
-                klass.query = api_method(QueryArgs, query_result_model, private=private, cli_private=cli_private)(
-                    klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
-                )
-            else:
-                if getattr(klass.query, '_legacy_filterable', False):
-                    raise RuntimeError(
-                        'Legacy-style @filterable can\'t be used on classes with new-style `entry` defined. Please, '
-                        'either use @filterable_api_method or don\'t use any decorator at all (it will be applied '
-                        f'automatically). Offending class: {klass!r}.'
-                    )
+                klass.query = api_method(
+                    QueryArgs, query_result_model, private=private, cli_private=cli_private
+                )(klass.query)
 
             # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
             get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)
@@ -231,7 +222,6 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         options['prefix'] = self._config.datastore_prefix
         return options
 
-    @filterable
     async def query(self, filters, options):
         if not self._config.datastore:
             raise NotImplementedError(
