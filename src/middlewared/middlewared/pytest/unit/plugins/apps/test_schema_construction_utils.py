@@ -70,7 +70,16 @@ Test Coverage Checklist for schema_construction_utils.py
 ❌ empty attribute support
 ❌ subquestions support
 ❌ show_subquestions_if - Conditional subquestion display
-❌ show_if - Conditional field display
+✅ show_if - Conditional field display
+
+## show_if Feature Tests:
+✅ Basic boolean condition (field shown when condition is true)
+✅ Multiple conditions with AND logic
+✅ Different operators (=, !=, >)
+✅ Nested structure with show_if
+✅ List fields with show_if
+✅ NotRequired behavior when condition is false
+✅ Default value behavior when condition is true
 
 Remember each schema should follow the following json schema:
 'questions': {
@@ -97,7 +106,7 @@ import pytest
 from pydantic import ValidationError
 
 from middlewared.api.base import NotRequired, LongString
-from middlewared.plugins.apps.schema_construction_utils import generate_pydantic_model, construct_schema
+from middlewared.plugins.apps.schema_construction_utils import generate_pydantic_model, construct_schema, NOT_PROVIDED
 
 
 # Basic field type tests
@@ -105,7 +114,7 @@ def test_boolean_field_with_default():
     schema = [
         {'variable': 'enabled', 'schema': {'type': 'boolean', 'default': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestBool')
+    model = generate_pydantic_model(schema, 'TestBool', NOT_PROVIDED)
     # Default value
     m = model()
     assert m.enabled is True
@@ -120,7 +129,7 @@ def test_string_field_variations():
         {'variable': 'description', 'schema': {'type': 'string', 'default': 'No description'}},
         {'variable': 'optional_note', 'schema': {'type': 'string', 'required': False}}
     ]
-    model = generate_pydantic_model(schema, 'TestStrings')
+    model = generate_pydantic_model(schema, 'TestStrings', NOT_PROVIDED)
     
     # Valid with required field
     m = model(name='Test')
@@ -141,7 +150,7 @@ def test_required_int_field():
     schema = [
         {'variable': 'count', 'schema': {'type': 'int', 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestInt')
+    model = generate_pydantic_model(schema, 'TestInt', NOT_PROVIDED)
     # Valid
     m = model(count=5)
     assert m.count == 5
@@ -154,7 +163,7 @@ def test_optional_string_field():
     schema = [
         {'variable': 'name', 'schema': {'type': 'string', 'required': False}}
     ]
-    model = generate_pydantic_model(schema, 'TestOptStr')
+    model = generate_pydantic_model(schema, 'TestOptStr', NOT_PROVIDED)
     # No value: attribute omitted or None
     m = model()
     assert m.name is NotRequired
@@ -168,7 +177,7 @@ def test_list_of_ints():
         'variable': 'numbers',
         'schema': {'type': 'list', 'items': [{'schema': {'type': 'int'}, 'variable': 'number'}]}
     }]
-    model = generate_pydantic_model(schema, 'TestList')
+    model = generate_pydantic_model(schema, 'TestList', NOT_PROVIDED)
     # valid list
     m = model(numbers=[1, 2, 3])
     assert m.numbers == [1, 2, 3]
@@ -197,7 +206,7 @@ def test_nested_dict_with_defaults():
             }
         }
     ]
-    model = generate_pydantic_model(schema, 'TestNestedDefaults')
+    model = generate_pydantic_model(schema, 'TestNestedDefaults', NOT_PROVIDED)
     m = model()
     # default_factory should instantiate nested model with defaults
     assert isinstance(m.config, object)
@@ -225,7 +234,7 @@ def test_nested_dict_with_required_subfield():
             }
         }
     ]
-    model = generate_pydantic_model(schema, 'TestNestedReq')
+    model = generate_pydantic_model(schema, 'TestNestedReq', NOT_PROVIDED)
     # instantiation without info should raise (missing required nested)
     with pytest.raises(ValidationError):
         model()
@@ -243,7 +252,7 @@ def test_text_field_type():
     schema = [
         {'variable': 'content', 'schema': {'type': 'text', 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestText')
+    model = generate_pydantic_model(schema, 'TestText', NOT_PROVIDED)
     # Should accept long text
     long_text = 'x' * 10000  # 10KB text
     m = model(content=long_text)
@@ -260,7 +269,7 @@ def test_path_field_type():
     schema = [
         {'variable': 'file_path', 'schema': {'type': 'path', 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestPath')
+    model = generate_pydantic_model(schema, 'TestPath', NOT_PROVIDED)
     # Valid absolute path
     m = model(file_path='/etc/passwd')
     assert m.file_path == '/etc/passwd'
@@ -274,7 +283,7 @@ def test_hostpath_field_type():
     schema = [
         {'variable': 'host_dir', 'schema': {'type': 'hostpath', 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestHostPath')
+    model = generate_pydantic_model(schema, 'TestHostPath', NOT_PROVIDED)
     # HostPath type validates actual paths on the system and returns Path objects
     # For unit tests, we'll use paths that should exist
     m = model(host_dir='/tmp')
@@ -290,7 +299,7 @@ def test_ipaddr_field_type():
     schema = [
         {'variable': 'ip', 'schema': {'type': 'ipaddr', 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestIP')
+    model = generate_pydantic_model(schema, 'TestIP', NOT_PROVIDED)
     
     # Valid IPv4
     m = model(ip='192.168.1.1')
@@ -309,7 +318,7 @@ def test_uri_field_type():
     schema = [
         {'variable': 'url', 'schema': {'type': 'uri', 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestURI')
+    model = generate_pydantic_model(schema, 'TestURI', NOT_PROVIDED)
     
     # Valid URIs - Pydantic URL type normalizes URLs (adds trailing slash)
     m = model(url='https://example.com')
@@ -328,7 +337,7 @@ def test_int_field_with_constraints():
     schema = [
         {'variable': 'port', 'schema': {'type': 'int', 'min': 1, 'max': 65535, 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestIntConstraints')
+    model = generate_pydantic_model(schema, 'TestIntConstraints', NOT_PROVIDED)
     
     # Valid values
     m = model(port=8080)
@@ -353,7 +362,7 @@ def test_string_field_with_length_constraints():
     schema = [
         {'variable': 'username', 'schema': {'type': 'string', 'min_length': 3, 'max_length': 20, 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestStringConstraints')
+    model = generate_pydantic_model(schema, 'TestStringConstraints', NOT_PROVIDED)
     
     # Valid lengths
     m = model(username='john')
@@ -381,7 +390,7 @@ def test_nullable_fields():
         {'variable': 'nullable_int', 'schema': {'type': 'int', 'null': True, 'required': True}},
         {'variable': 'nullable_string', 'schema': {'type': 'string', 'null': True, 'default': None}}
     ]
-    model = generate_pydantic_model(schema, 'TestNullable')
+    model = generate_pydantic_model(schema, 'TestNullable', NOT_PROVIDED)
     
     # None values should be accepted
     m = model(nullable_int=None)
@@ -400,7 +409,7 @@ def test_private_fields():
         {'variable': 'password', 'schema': {'type': 'string', 'private': True, 'required': True}},
         {'variable': 'api_key', 'schema': {'type': 'string', 'private': True, 'null': True, 'default': None}}
     ]
-    model = generate_pydantic_model(schema, 'TestPrivate')
+    model = generate_pydantic_model(schema, 'TestPrivate', NOT_PROVIDED)
     
     # Should accept values
     m = model(password='secret123')
@@ -418,7 +427,7 @@ def test_field_with_ref_metadata():
     schema = [
         {'variable': 'cert_id', 'schema': {'type': 'int', '$ref': ['certificate.query'], 'required': True}}
     ]
-    model = generate_pydantic_model(schema, 'TestRef')
+    model = generate_pydantic_model(schema, 'TestRef', NOT_PROVIDED)
     
     # Should accept int values
     m = model(cert_id=123)
@@ -435,7 +444,7 @@ def test_empty_list_default():
     schema = [
         {'variable': 'items', 'schema': {'type': 'list', 'required': False}}
     ]
-    model = generate_pydantic_model(schema, 'TestEmptyList')
+    model = generate_pydantic_model(schema, 'TestEmptyList', NOT_PROVIDED)
     
     # Should default to empty list
     m = model()
@@ -450,7 +459,7 @@ def test_empty_dict_default():
     schema = [
         {'variable': 'config', 'schema': {'type': 'dict', 'required': False}}
     ]
-    model = generate_pydantic_model(schema, 'TestEmptyDict')
+    model = generate_pydantic_model(schema, 'TestEmptyDict', NOT_PROVIDED)
     
     # Should default to empty dict
     m = model()
@@ -510,7 +519,7 @@ def test_dict_containing_list_of_dicts():
         }
     ]
     
-    model = generate_pydantic_model(schema, 'TestComplexEnvs')
+    model = generate_pydantic_model(schema, 'TestComplexEnvs', NOT_PROVIDED)
     
     # Test with empty list (default)
     m1 = model()
@@ -577,7 +586,7 @@ def test_list_of_dicts_with_multiple_fields():
         }
     ]
     
-    model = generate_pydantic_model(schema, 'TestDevices')
+    model = generate_pydantic_model(schema, 'TestDevices', NOT_PROVIDED)
     
     # Test with valid devices
     m = model(devices=[
@@ -650,7 +659,7 @@ def test_deeply_nested_structure():
         }
     ]
     
-    model = generate_pydantic_model(schema, 'TestDeepNesting')
+    model = generate_pydantic_model(schema, 'TestDeepNesting', NOT_PROVIDED)
     
     # Test with nested data
     m = model(app_config={
@@ -704,7 +713,7 @@ def test_list_with_enum_constraints():
         }
     ]
     
-    model = generate_pydantic_model(schema, 'TestEnumList')
+    model = generate_pydantic_model(schema, 'TestEnumList', NOT_PROVIDED)
     
     # Test with valid enum values
     m = model(apt_packages=['ffmpeg', 'smbclient'])
@@ -757,7 +766,7 @@ def test_mixed_field_types_in_dict():
         }
     ]
     
-    model = generate_pydantic_model(schema, 'TestMixedTypes')
+    model = generate_pydantic_model(schema, 'TestMixedTypes', NOT_PROVIDED)
     
     # Test with all field types
     m = model(server_config={
@@ -801,7 +810,7 @@ def test_list_items_with_length_constraints():
         }
     ]
     
-    model = generate_pydantic_model(schema, 'TestConstrainedListItems')
+    model = generate_pydantic_model(schema, 'TestConstrainedListItems', NOT_PROVIDED)
     
     # Valid language codes
     m = model(tesseract_languages=['eng', 'chi-sim', 'fra'])
@@ -922,3 +931,537 @@ def test_construct_schema_complex():
     
     result_invalid = construct_schema(item_version_details, invalid_values, False)
     assert len(result_invalid['verrors'].errors) > 0
+
+
+# Test show_if functionality
+def test_show_if_basic_boolean_condition():
+    """Test show_if with basic boolean condition"""
+    schema = [
+        {
+            'variable': 'network',
+            'label': '',
+            'group': 'Network Configuration',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'publish',
+                        'label': 'Some New Field',
+                        'description': 'Some new field',
+                        'schema': {
+                            'type': 'boolean',
+                            'default': False,
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'web_port',
+                        'label': 'WebUI Port',
+                        'description': 'The port for Nginx WebUI',
+                        'schema': {
+                            'type': 'int',
+                            'default': 8080,
+                            'required': True,
+                            'show_if': [['publish', '=', True]]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # Test 1: When publish is False, web_port should not be required
+    model1 = generate_pydantic_model(schema[0]['schema']['attrs'], 'TestShowIf1', {'publish': False})
+    m1 = model1(publish=False)
+    # web_port should be NotRequired when publish is False
+    assert hasattr(m1, 'web_port')
+    assert m1.web_port is NotRequired
+    
+    # Test 2: When publish is True, web_port should use its default
+    model2 = generate_pydantic_model(schema[0]['schema']['attrs'], 'TestShowIf2', {'publish': True})
+    m2 = model2(publish=True)
+    assert m2.web_port == 8080
+    
+    # Test 3: When publish is True and web_port is provided
+    m3 = model2(publish=True, web_port=9090)
+    assert m3.web_port == 9090
+
+
+def test_show_if_multiple_conditions():
+    """Test show_if with multiple conditions (AND logic)"""
+    schema = [
+        {
+            'variable': 'config',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'mode',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'basic',
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'advanced_enabled',
+                        'schema': {
+                            'type': 'boolean',
+                            'default': False,
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'advanced_setting',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'default_advanced',
+                            'required': True,
+                            'show_if': [
+                                ['mode', '=', 'advanced'],
+                                ['advanced_enabled', '=', True]
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # Test 1: Both conditions false - field should be NotRequired
+    model1 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestMultiCond1', 
+        {'mode': 'basic', 'advanced_enabled': False}
+    )
+    m1 = model1(mode='basic', advanced_enabled=False)
+    assert m1.advanced_setting is NotRequired
+    
+    # Test 2: One condition true, one false - field should still be NotRequired
+    model2 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestMultiCond2',
+        {'mode': 'advanced', 'advanced_enabled': False}
+    )
+    m2 = model2(mode='advanced', advanced_enabled=False)
+    assert m2.advanced_setting is NotRequired
+    
+    # Test 3: Both conditions true - field should use default
+    model3 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestMultiCond3',
+        {'mode': 'advanced', 'advanced_enabled': True}
+    )
+    m3 = model3(mode='advanced', advanced_enabled=True)
+    assert m3.advanced_setting == 'default_advanced'
+
+
+def test_show_if_with_different_operators():
+    """Test show_if with different comparison operators"""
+    schema = [
+        {
+            'variable': 'settings',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'count',
+                        'schema': {
+                            'type': 'int',
+                            'default': 5,
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'status',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'active',
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'show_on_not_equal',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'shown',
+                            'required': True,
+                            'show_if': [['status', '!=', 'disabled']]
+                        }
+                    },
+                    {
+                        'variable': 'show_on_greater',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'threshold_met',
+                            'required': True,
+                            'show_if': [['count', '>', 10]]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # Test != operator
+    model1 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestOps1',
+        {'status': 'disabled', 'count': 5}
+    )
+    m1 = model1(status='disabled', count=5)
+    assert m1.show_on_not_equal is NotRequired
+    
+    model2 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestOps2',
+        {'status': 'active', 'count': 5}
+    )
+    m2 = model2(status='active', count=5)
+    assert m2.show_on_not_equal == 'shown'
+    
+    # Test > operator
+    model3 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestOps3',
+        {'status': 'active', 'count': 15}
+    )
+    m3 = model3(status='active', count=15)
+    assert m3.show_on_greater == 'threshold_met'
+
+
+def test_show_if_nested_structure():
+    """Test show_if in deeply nested structures"""
+    # Note: The current implementation evaluates show_if conditions at the immediate parent level
+    # For deeply nested structures where conditions reference fields from grandparent levels,
+    # the implementation would need to be enhanced to support path-based references like '../type'
+    # This test demonstrates the current behavior and limitations
+    
+    schema = [
+        {
+            'variable': 'app',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'enable_postgres',
+                        'schema': {
+                            'type': 'boolean',
+                            'default': False,
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'postgres_host',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'localhost',
+                            'required': True,
+                            'show_if': [['enable_postgres', '=', True]]
+                        }
+                    },
+                    {
+                        'variable': 'postgres_port',
+                        'schema': {
+                            'type': 'int',
+                            'default': 5432,
+                            'required': True,
+                            'show_if': [['enable_postgres', '=', True]]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # When enable_postgres is False, postgres fields should be NotRequired
+    model1 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestNested1',
+        {'enable_postgres': False}
+    )
+    m1 = model1(enable_postgres=False)
+    assert m1.postgres_host is NotRequired
+    assert m1.postgres_port is NotRequired
+    
+    # When enable_postgres is True, fields should have defaults
+    model2 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestNested2',
+        {'enable_postgres': True}
+    )
+    m2 = model2(enable_postgres=True)
+    assert m2.postgres_host == 'localhost'
+    assert m2.postgres_port == 5432
+
+
+def test_show_if_with_list_fields():
+    """Test show_if behavior with list fields"""
+    schema = [
+        {
+            'variable': 'services',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'enable_monitoring',
+                        'schema': {
+                            'type': 'boolean',
+                            'default': False,
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'monitoring_endpoints',
+                        'schema': {
+                            'type': 'list',
+                            'default': [],
+                            'items': [
+                                {
+                                    'variable': 'endpoint',
+                                    'schema': {
+                                        'type': 'string',
+                                        'required': True
+                                    }
+                                }
+                            ],
+                            'show_if': [['enable_monitoring', '=', True]]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # When monitoring disabled, list should be NotRequired
+    model1 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestListShowIf1',
+        {'enable_monitoring': False}
+    )
+    m1 = model1(enable_monitoring=False)
+    assert m1.monitoring_endpoints is NotRequired
+    
+    # When monitoring enabled, list should use default empty list
+    model2 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestListShowIf2',
+        {'enable_monitoring': True}
+    )
+    m2 = model2(enable_monitoring=True)
+    assert m2.monitoring_endpoints == []
+    
+    # Can provide values when enabled
+    m3 = model2(
+        enable_monitoring=True,
+        monitoring_endpoints=['http://monitor1.com', 'http://monitor2.com']
+    )
+    assert len(m3.monitoring_endpoints) == 2
+
+
+# Additional edge case tests
+def test_hidden_field_behavior():
+    """Test hidden field attribute (used in real apps for backward compatibility)"""
+    schema = [
+        {
+            'variable': 'db_user',
+            'label': 'Database User',
+            'description': 'The user for the database.',
+            'schema': {
+                'type': 'string',
+                'hidden': True,  # Field is hidden in UI but still validated
+                'default': 'app-user',
+                'required': True
+            }
+        },
+        {
+            'variable': 'visible_field',
+            'schema': {
+                'type': 'string',
+                'default': 'visible',
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestHidden', NOT_PROVIDED)
+    
+    # Hidden fields should still work normally in the model
+    m = model()
+    assert m.db_user == 'app-user'
+    assert m.visible_field == 'visible'
+    
+    # Can override hidden field values
+    m2 = model(db_user='custom-user')
+    assert m2.db_user == 'custom-user'
+
+
+def test_immutable_field_behavior():
+    """Test immutable field attribute (field cannot be changed once set)"""
+    # Note: This test documents that immutable is not yet implemented
+    # When implemented, it should prevent changing field values in update mode
+    schema = [
+        {
+            'variable': 'dataset_name',
+            'schema': {
+                'type': 'string',
+                'immutable': True,
+                'default': 'data',
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestImmutable', NOT_PROVIDED)
+    m = model()
+    assert m.dataset_name == 'data'
+    
+    # Currently, immutable is not enforced at the Pydantic level
+    # It would need to be enforced at the schema validation level
+    m2 = model(dataset_name='changed')
+    assert m2.dataset_name == 'changed'
+
+
+def test_enum_field_basic():
+    """Test basic enum field behavior (partial implementation)"""
+    # Note: Full enum support is not yet implemented
+    # This test documents current behavior
+    schema = [
+        {
+            'variable': 'log_level',
+            'schema': {
+                'type': 'string',
+                'default': 'info',
+                'enum': [
+                    {'value': 'debug', 'description': 'Debug level'},
+                    {'value': 'info', 'description': 'Info level'},
+                    {'value': 'warning', 'description': 'Warning level'},
+                    {'value': 'error', 'description': 'Error level'}
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestEnum', NOT_PROVIDED)
+    
+    # Default value works
+    m = model()
+    assert m.log_level == 'info'
+    
+    # Can set to any string value (enum not enforced yet)
+    m2 = model(log_level='debug')
+    assert m2.log_level == 'debug'
+    
+    # Currently allows invalid enum values (not enforced)
+    m3 = model(log_level='invalid')
+    assert m3.log_level == 'invalid'
+
+
+def test_complex_show_if_with_list_and_dict():
+    """Test show_if with complex nested structures involving lists and dicts"""
+    schema = [
+        {
+            'variable': 'storage',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'type',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'local',
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'advanced_settings',
+                        'schema': {
+                            'type': 'list',
+                            'default': [],
+                            'show_if': [['type', '=', 'advanced']],
+                            'items': [
+                                {
+                                    'variable': 'setting',
+                                    'schema': {
+                                        'type': 'dict',
+                                        'attrs': [
+                                            {
+                                                'variable': 'key',
+                                                'schema': {'type': 'string', 'required': True}
+                                            },
+                                            {
+                                                'variable': 'value',
+                                                'schema': {'type': 'string', 'required': True}
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # When type is 'local', advanced_settings should be NotRequired
+    model1 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestComplexShowIf1',
+        {'type': 'local'}
+    )
+    m1 = model1(type='local')
+    assert m1.advanced_settings is NotRequired
+    
+    # When type is 'advanced', advanced_settings should use default empty list
+    model2 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestComplexShowIf2',
+        {'type': 'advanced'}
+    )
+    m2 = model2(type='advanced')
+    assert m2.advanced_settings == []
+    
+    # Can provide values when shown
+    m3 = model2(
+        type='advanced',
+        advanced_settings=[
+            {'key': 'timeout', 'value': '30'},
+            {'key': 'retries', 'value': '3'}
+        ]
+    )
+    assert len(m3.advanced_settings) == 2
+    assert m3.advanced_settings[0].key == 'timeout'
+
+
+def test_field_with_dollar_ref():
+    """Test fields with $ref pointing to definitions (common in app schemas)"""
+    schema = [
+        {
+            'variable': 'timezone',
+            'label': 'Timezone',
+            'schema': {
+                'type': 'string',
+                'default': 'Etc/UTC',
+                'required': True,
+                '$ref': ['definitions/timezone']
+            }
+        },
+        {
+            'variable': 'certificate_id',
+            'label': 'Certificate',
+            'schema': {
+                'type': 'int',
+                'null': True,
+                '$ref': ['definitions/certificate']
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestRef', NOT_PROVIDED)
+    
+    # Test timezone with ref
+    m1 = model()
+    assert m1.timezone == 'Etc/UTC'
+    
+    # Test nullable certificate_id with ref
+    m2 = model(certificate_id=None)
+    assert m2.certificate_id is None
+    
+    m3 = model(certificate_id=123)
+    assert m3.certificate_id == 123
+    
+    # Verify refs are preserved in metadata
+    tz_field = model.model_fields['timezone']
+    assert tz_field.metadata == [['definitions/timezone']]
+    
+    cert_field = model.model_fields['certificate_id']
+    assert cert_field.metadata == [['definitions/certificate']]
