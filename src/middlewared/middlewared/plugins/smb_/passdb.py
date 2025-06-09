@@ -55,7 +55,7 @@ class SMBService(Service):
 
     @private
     @job(lock="passdb_sync", lock_queue_size=1)
-    def synchronize_passdb(self, job, force=False):
+    def synchronize_passdb(self, passdb_job, force=False):
         """ Sync user configuration from our user table with Samba's passdb.tdb file
 
         Params:
@@ -103,7 +103,6 @@ class SMBService(Service):
 
         if broken_entries:
             self.middleware.call_sync("alert.oneshot_create", "SMBUserMissingHash",
-                                      {'entries': ','.join(broken_entries)}
-            )
+                                      {'entries': ','.join(broken_entries)})
         else:
             self.middleware.call_sync("alert.oneshot_delete", "SMBUserMissingHash")

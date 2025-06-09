@@ -11,30 +11,22 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["pathref_open", "pathref_reopen", "is_child", "is_child_realpath", "path_location", "strip_location_prefix"]
+__all__ = ["pathref_open", "pathref_reopen", "is_child", "is_child_realpath", "path_location"]
 
+EXTERNAL_PATH = 'EXTERNAL'
 EXTERNAL_PATH_PREFIX = 'EXTERNAL:'
-CLUSTER_PATH_PREFIX = 'CLUSTER:'
 
 
 class FSLocation(enum.Enum):
-    CLUSTER = enum.auto()
     EXTERNAL = enum.auto()
     LOCAL = enum.auto()
 
 
 def path_location(path):
-    if path.startswith(CLUSTER_PATH_PREFIX):
-        return FSLocation.CLUSTER
-
-    if path.startswith(EXTERNAL_PATH_PREFIX):
+    if path == EXTERNAL_PATH or path.startswith(EXTERNAL_PATH_PREFIX):
         return FSLocation.EXTERNAL
 
     return FSLocation.LOCAL
-
-
-def strip_location_prefix(path):
-    return path.lstrip(f'{path_location(path).name}:')
 
 
 def pathref_reopen(fd_in: int, flags: int, **kwargs) -> int:

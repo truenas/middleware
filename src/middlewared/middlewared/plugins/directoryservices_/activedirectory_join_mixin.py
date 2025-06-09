@@ -268,7 +268,7 @@ class ADJoinMixin:
             return True
 
         err_msg = netads.stderr.decode()
-        log_path = f'{SMBPath.LOGDIR.platform()}/domain_testjoin_{time()}.log'
+        log_path = f'{SMBPath.LOGDIR.path}/domain_testjoin_{time()}.log'
         with open(log_path, 'w') as f:
             os.fchmod(f.fileno(), 0o600)
             f.write(err_msg)

@@ -90,8 +90,8 @@ def check_audit_download(report_path, report_type, tag=None):
 def initialize_for_smb_tests():
     with dataset('audit-test-basic', data={'share_type': 'SMB'}) as ds:
         with smb_share(os.path.join('/mnt', ds), 'AUDIT_BASIC_TEST', {
-            'purpose': 'NO_PRESET',
-            'guestok': False,
+            'purpose': 'LEGACY_SHARE',
+            'options': {'guestok': False},
             'audit': {'enable': True}
         }) as s:
             with user({

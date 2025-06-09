@@ -76,10 +76,10 @@ def test_pool_dataset_unlock_smb(smb_user, toggle_attachments):
     with (
         # Prepare test SMB share
         dataset('normal', mode='777') as normal,
-        smb_share(f'/mnt/{normal}', 'normal', {'guestok': True}),
+        smb_share(f'/mnt/{normal}', 'normal', {'purpose': 'LEGACY_SHARE', 'options': {'guestok': True}}),
         # Create an encrypted SMB share, unlocking which might lead to SMB service interruption
         dataset('encrypted', passphrase_encryption(), mode='777') as encrypted,
-        smb_share(f'/mnt/{encrypted}', 'encrypted', {'guestok': True})
+        smb_share(f'/mnt/{encrypted}', 'encrypted', {'purpose': 'LEGACY_SHARE', 'options': {'guestok': True}})
     ):
         ssh(f'touch /mnt/{encrypted}/secret')
         assert call('service.control', 'START', 'cifs', job=True)
