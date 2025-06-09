@@ -40,8 +40,8 @@ Test Coverage Checklist for schema_construction_utils.py
 ✅ generate_pydantic_model - Creates Pydantic models from schema
 ✅ process_schema_field - Processes individual field types
 ✅ create_field_info_from_schema - Creates Field info with constraints
-❌ construct_schema - Main entry point with validation
-❌ validate_model integration - How models are validated with actual data
+✅ construct_schema - Main entry point with validation
+✅ validate_model integration - How models are validated with actual data
 
 ## Edge Cases:
 ✅ Deeply nested dict structures
@@ -53,6 +53,16 @@ Test Coverage Checklist for schema_construction_utils.py
 ❌ Complex list with Union of different types
 ❌ Nested private fields
 ❌ Multiple validation constraints on same field
+
+## Complex Real-World Schemas:
+✅ Dict containing list of dicts (e.g., additional_envs pattern)
+✅ List of dicts with multiple required fields (e.g., devices pattern)
+✅ Deeply nested structure (3+ levels deep)
+🔧 List with enum constraints (e.g., apt_packages) - Not yet implemented
+✅ Mixed field types in same dict (string, int, boolean, list)
+❌ Schema with $ref at root level (e.g., timezone)
+❌ Hidden fields behavior
+✅ List items with min/max length constraints
 
 ## TODO Features (from comments):
 ❌ immutable fields - Field that can't be changed once set
@@ -87,7 +97,7 @@ import pytest
 from pydantic import ValidationError
 
 from middlewared.api.base import NotRequired, LongString
-from middlewared.plugins.apps.schema_construction_utils import generate_pydantic_model
+from middlewared.plugins.apps.schema_construction_utils import generate_pydantic_model, construct_schema
 
 
 # Basic field type tests
@@ -449,3 +459,466 @@ def test_empty_dict_default():
     # Can provide values
     m2 = model(config={'key': 'value'})
     assert m2.config == {'key': 'value'}
+
+
+# Complex real-world schema tests
+def test_dict_containing_list_of_dicts():
+    """Test pattern like additional_envs from Home Assistant"""
+    schema = [
+        {
+            'variable': 'home_assistant',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'additional_envs',
+                        'label': 'Additional Environment Variables',
+                        'schema': {
+                            'type': 'list',
+                            'default': [],
+                            'items': [
+                                {
+                                    'variable': 'env',
+                                    'label': 'Environment Variable',
+                                    'schema': {
+                                        'type': 'dict',
+                                        'attrs': [
+                                            {
+                                                'variable': 'name',
+                                                'label': 'Name',
+                                                'schema': {
+                                                    'type': 'string',
+                                                    'required': True
+                                                }
+                                            },
+                                            {
+                                                'variable': 'value',
+                                                'label': 'Value',
+                                                'schema': {
+                                                    'type': 'string',
+                                                    'required': True
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestComplexEnvs')
+    
+    # Test with empty list (default)
+    m1 = model()
+    assert m1.home_assistant.additional_envs == []
+    
+    # Test with valid env vars
+    m2 = model(home_assistant={
+        'additional_envs': [
+            {'name': 'DEBUG', 'value': 'true'},
+            {'name': 'LOG_LEVEL', 'value': 'info'}
+        ]
+    })
+    assert len(m2.home_assistant.additional_envs) == 2
+    # List items are Pydantic models, not dicts
+    assert m2.home_assistant.additional_envs[0].name == 'DEBUG'
+    assert m2.home_assistant.additional_envs[0].value == 'true'
+    
+    # Test validation - missing required field
+    with pytest.raises(ValidationError):
+        model(home_assistant={
+            'additional_envs': [
+                {'name': 'DEBUG'}  # missing 'value'
+            ]
+        })
+
+
+def test_list_of_dicts_with_multiple_fields():
+    """Test pattern like devices from Home Assistant"""
+    schema = [
+        {
+            'variable': 'devices',
+            'label': 'Devices',
+            'schema': {
+                'type': 'list',
+                'default': [],
+                'items': [
+                    {
+                        'variable': 'device',
+                        'label': 'Device',
+                        'schema': {
+                            'type': 'dict',
+                            'attrs': [
+                                {
+                                    'variable': 'host_device',
+                                    'label': 'Host Device',
+                                    'schema': {
+                                        'type': 'string',
+                                        'required': True
+                                    }
+                                },
+                                {
+                                    'variable': 'container_device',
+                                    'label': 'Container Device',
+                                    'schema': {
+                                        'type': 'string',
+                                        'required': True
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestDevices')
+    
+    # Test with valid devices
+    m = model(devices=[
+        {'host_device': '/dev/ttyUSB0', 'container_device': '/dev/ttyACM0'},
+        {'host_device': '/dev/ttyUSB1', 'container_device': '/dev/ttyACM1'}
+    ])
+    assert len(m.devices) == 2
+    # List items are Pydantic models, not dicts
+    assert m.devices[0].host_device == '/dev/ttyUSB0'
+    assert m.devices[1].container_device == '/dev/ttyACM1'
+
+
+def test_deeply_nested_structure():
+    """Test 3+ levels of nesting"""
+    schema = [
+        {
+            'variable': 'app_config',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'database',
+                        'schema': {
+                            'type': 'dict',
+                            'attrs': [
+                                {
+                                    'variable': 'connections',
+                                    'schema': {
+                                        'type': 'list',
+                                        'default': [],
+                                        'items': [
+                                            {
+                                                'variable': 'connection',
+                                                'schema': {
+                                                    'type': 'dict',
+                                                    'attrs': [
+                                                        {
+                                                            'variable': 'settings',
+                                                            'schema': {
+                                                                'type': 'dict',
+                                                                'attrs': [
+                                                                    {
+                                                                        'variable': 'host',
+                                                                        'schema': {
+                                                                            'type': 'string',
+                                                                            'default': 'localhost'
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        'variable': 'port',
+                                                                        'schema': {
+                                                                            'type': 'int',
+                                                                            'default': 5432
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestDeepNesting')
+    
+    # Test with nested data
+    m = model(app_config={
+        'database': {
+            'connections': [
+                {
+                    'settings': {
+                        'host': 'db.example.com',
+                        'port': 3306
+                    }
+                }
+            ]
+        }
+    })
+    
+    # Navigate the deep structure - list items are Pydantic models
+    assert m.app_config.database.connections[0].settings.host == 'db.example.com'
+    assert m.app_config.database.connections[0].settings.port == 3306
+
+
+def test_list_with_enum_constraints():
+    """Test pattern like apt_packages from Nextcloud"""
+    # TODO: Enum constraints are not yet implemented in the new schema system
+    # This test is commented out until enum support is added
+    pytest.skip("Enum constraints not yet implemented")
+    
+    schema = [
+        {
+            'variable': 'apt_packages',
+            'label': 'APT Packages',
+            'schema': {
+                'type': 'list',
+                'default': [],
+                'items': [
+                    {
+                        'variable': 'package',
+                        'label': 'Package',
+                        'schema': {
+                            'type': 'string',
+                            'required': True,
+                            'enum': [
+                                {'value': 'ffmpeg', 'description': 'ffmpeg'},
+                                {'value': 'smbclient', 'description': 'smbclient'},
+                                {'value': 'ocrmypdf', 'description': 'ocrmypdf'},
+                                {'value': 'libreoffice', 'description': 'libreoffice'}
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestEnumList')
+    
+    # Test with valid enum values
+    m = model(apt_packages=['ffmpeg', 'smbclient'])
+    assert m.apt_packages == ['ffmpeg', 'smbclient']
+    
+    # Test with invalid enum value
+    with pytest.raises(ValidationError):
+        model(apt_packages=['ffmpeg', 'invalid-package'])
+
+
+def test_mixed_field_types_in_dict():
+    """Test dict with various field types"""
+    schema = [
+        {
+            'variable': 'server_config',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'name',
+                        'schema': {'type': 'string', 'required': True}
+                    },
+                    {
+                        'variable': 'port',
+                        'schema': {'type': 'int', 'min': 1, 'max': 65535, 'default': 8080}
+                    },
+                    {
+                        'variable': 'ssl_enabled',
+                        'schema': {'type': 'boolean', 'default': False}
+                    },
+                    {
+                        'variable': 'allowed_ips',
+                        'schema': {
+                            'type': 'list',
+                            'default': [],
+                            'items': [
+                                {
+                                    'variable': 'ip',
+                                    'schema': {'type': 'ipaddr'}
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        'variable': 'database_url',
+                        'schema': {'type': 'uri', 'null': True, 'default': None}
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestMixedTypes')
+    
+    # Test with all field types
+    m = model(server_config={
+        'name': 'MyServer',
+        'port': 443,
+        'ssl_enabled': True,
+        'allowed_ips': ['192.168.1.100', '10.0.0.1'],
+        'database_url': 'postgres://localhost/mydb'
+    })
+    
+    assert m.server_config.name == 'MyServer'
+    assert m.server_config.port == 443
+    assert m.server_config.ssl_enabled is True
+    assert len(m.server_config.allowed_ips) == 2
+    assert str(m.server_config.allowed_ips[0]) == '192.168.1.100'
+    assert 'postgres://localhost/mydb' in str(m.server_config.database_url)
+
+
+def test_list_items_with_length_constraints():
+    """Test list items with min/max length like tesseract_languages"""
+    schema = [
+        {
+            'variable': 'tesseract_languages',
+            'label': 'Tesseract Language Codes',
+            'schema': {
+                'type': 'list',
+                'default': [],
+                'items': [
+                    {
+                        'variable': 'language',
+                        'label': 'Language',
+                        'schema': {
+                            'type': 'string',
+                            'min_length': 3,
+                            'max_length': 7,
+                            'required': True
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestConstrainedListItems')
+    
+    # Valid language codes
+    m = model(tesseract_languages=['eng', 'chi-sim', 'fra'])
+    assert m.tesseract_languages == ['eng', 'chi-sim', 'fra']
+    
+    # Too short
+    with pytest.raises(ValidationError):
+        model(tesseract_languages=['en'])  # 2 chars, min is 3
+    
+    # Too long
+    with pytest.raises(ValidationError):
+        model(tesseract_languages=['eng-long'])  # 8 chars, max is 7
+
+
+# Test construct_schema function
+def test_construct_schema_basic():
+    """Test the main construct_schema function"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'app_name',
+                    'schema': {'type': 'string', 'required': True}
+                },
+                {
+                    'variable': 'port',
+                    'schema': {'type': 'int', 'default': 8080}
+                }
+            ]
+        }
+    }
+    
+    # Test valid values
+    result = construct_schema(item_version_details, {'app_name': 'myapp', 'port': 9000}, False)
+    assert result['schema_name'] == 'app_create'
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values'] == {'app_name': 'myapp', 'port': 9000}
+    assert result['model'] is not None
+    
+    # Test missing required field
+    result2 = construct_schema(item_version_details, {'port': 9000}, False)
+    assert len(result2['verrors'].errors) > 0
+    assert 'app_name' in str(result2['verrors'].errors)
+
+
+def test_construct_schema_complex():
+    """Test construct_schema with complex nested structure"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'database',
+                    'schema': {
+                        'type': 'dict',
+                        'attrs': [
+                            {
+                                'variable': 'host',
+                                'schema': {'type': 'string', 'required': True}
+                            },
+                            {
+                                'variable': 'port',
+                                'schema': {'type': 'int', 'default': 5432}
+                            },
+                            {
+                                'variable': 'credentials',
+                                'schema': {
+                                    'type': 'dict',
+                                    'attrs': [
+                                        {
+                                            'variable': 'username',
+                                            'schema': {'type': 'string', 'required': True}
+                                        },
+                                        {
+                                            'variable': 'password',
+                                            'schema': {'type': 'string', 'private': True, 'required': True}
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    
+    new_values = {
+        'database': {
+            'host': 'localhost',
+            'port': 3306,
+            'credentials': {
+                'username': 'admin',
+                'password': 'secret123'
+            }
+        }
+    }
+    
+    # Test create mode
+    result = construct_schema(item_version_details, new_values, False)
+    assert result['schema_name'] == 'app_create'
+    assert len(result['verrors'].errors) == 0
+    
+    # Test update mode
+    result_update = construct_schema(item_version_details, new_values, True)
+    assert result_update['schema_name'] == 'app_update'
+    assert len(result_update['verrors'].errors) == 0
+    
+    # Test validation error - missing required nested field
+    invalid_values = {
+        'database': {
+            'host': 'localhost',
+            'credentials': {
+                'username': 'admin'
+                # missing required password
+            }
+        }
+    }
+    
+    result_invalid = construct_schema(item_version_details, invalid_values, False)
+    assert len(result_invalid['verrors'].errors) > 0
