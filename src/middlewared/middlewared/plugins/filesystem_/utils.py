@@ -168,16 +168,16 @@ def calculate_inherited_acl(theacl, isdir=True):
             return __calculate_inherited_nfs4(theacl, isdir)
 
         case FS_ACL_Type.DISABLED:
-            ValueError('ACL is disabled')
+            raise ValueError('ACL is disabled')
 
         case _:
-            TypeError(f'{acltype}: unknown ACL type')
+            raise TypeError(f'{acltype}: unknown ACL type')
 
 
 def gen_aclstring_posix1e(dacl: list, recursive: bool, verrors: ValidationErrors) -> str:
     """
     This method iterates through provided POSIX1e ACL and
-    performs addtional validation before returning the ACL
+    performs additional validation before returning the ACL
     string formatted for the setfacl command. In case
     of ValidationError, None is returned.
     """
@@ -203,7 +203,7 @@ def gen_aclstring_posix1e(dacl: list, recursive: bool, verrors: ValidationErrors
 
         if ace.get('who') and ace['id'] not in (None, ACL_UNDEFINED_ID):
             verrors.add(
-                'filesystem_acl.dacl.{idx}.who',
+                f'filesystem_acl.dacl.{idx}.who',
                 f'Numeric ID {ace["id"]} and account name {ace["who"]} may not be specified simultaneously'
             )
 
@@ -216,7 +216,7 @@ def gen_aclstring_posix1e(dacl: list, recursive: bool, verrors: ValidationErrors
 
         if duplicate_who is True:
             verrors.add(
-                'filesystem_acl.dacl.{idx}',
+                f'filesystem_acl.dacl.{idx}',
                 f'More than one {"default" if ace["default"] else ""} '
                 f'{ace["tag"]} entry is not permitted'
             )
