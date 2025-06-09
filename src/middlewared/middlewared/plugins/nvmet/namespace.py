@@ -249,7 +249,7 @@ class NVMetNamespaceService(SharingService):
                 if not self._is_dataset_path(device_path):
                     verrors.add(f'{schema_name}.device_path',
                                 'FILE device_path must reside in an existing directory '
-                                f'within volume mount point: {device_path}')
+                                f'on a dataset: {device_path}')
                 elif os.path.isdir(device_path):
                     verrors.add(f'{schema_name}.device_path',
                                 f'FILE device_path must not be a directory: {device_path}')
