@@ -104,6 +104,7 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
     elif schema_type == 'dict':
         if dict_attrs := schema_def.get('attrs', []):
             field_type = nested_model = generate_pydantic_model(dict_attrs, model_name)
+            field_info.default_factory = nested_model
         else:
             # We have a generic dict type without specific attributes
             field_type = dict
@@ -124,10 +125,6 @@ def process_schema_field(schema_def: dict, model_name: str) -> tuple[
         raise ValueError(f'Unsupported schema type: {schema_type!r}')
 
     assert field_type is not None
-
-    if not schema_def.get('required', False):
-        # If the attr is not required, we use NotRequired
-        field_type = Union[field_type, NotRequired]
 
     if schema_def.get('null', False):
         field_type = Union[field_type, None]
@@ -165,8 +162,17 @@ def create_field_info_from_schema(schema_def: dict) -> Field:
     if 'default' in schema_def:
         field_kwargs['default'] = schema_def['default']
     elif not schema_def.get('required', False):
-        # This case shouldn't happen since we filter out non-required fields without defaults
-        field_kwargs['default'] = None
+        # If a field is not marked as required, we set default to NotRequired
+        # which means that it is fine if this field is not set/specified and will
+        # not be added to normalized data
+        # lists/dicts are special in our old implementation as they always have their
+        # defaults populated if none are set
+        if schema_def['type'] == 'list':
+            field_kwargs['default_factory'] = list
+        elif schema_def['type'] == 'dict':
+            field_kwargs['default_factory'] = dict
+        else:
+            field_kwargs['default'] = NotRequired
 
     # Add validation constraints
     if 'min' in schema_def:
