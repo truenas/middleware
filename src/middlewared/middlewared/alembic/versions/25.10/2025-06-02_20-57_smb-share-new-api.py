@@ -27,6 +27,10 @@ def migrate_purposes():
         purpose = None
 
         match share.cifs_purpose:
+            case "DEFAULT_SHARE":
+                if share.cifs_guestok or share.cifs_afp:
+                    purpose = "LEGACY_SHARE"
+                    update = True
             case "ENHANCED_TIMEMACHINE":
                 purpose = "TIMEMACHINE_SHARE"
                 auto_snap = True
