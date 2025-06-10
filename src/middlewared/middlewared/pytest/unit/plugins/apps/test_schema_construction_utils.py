@@ -65,11 +65,11 @@ Test Coverage Checklist for schema_construction_utils.py
 ✅ List items with min/max length constraints
 
 ## TODO Features (from comments):
-❌ immutable fields - Field that can't be changed once set
-❌ editable=False - Field with enforced default value
+✅ immutable fields - Field that can't be changed once set (string, int, boolean, path)
+❌ editable=False - Field with enforced default value (removed from new implementation)
 ❌ empty attribute support
-❌ subquestions support
-❌ show_subquestions_if - Conditional subquestion display
+❌ subquestions support (removed from new implementation)
+❌ show_subquestions_if - Conditional subquestion display (removed from new implementation)
 ✅ show_if - Conditional field display
 
 ## show_if Feature Tests:
@@ -1286,10 +1286,8 @@ def test_hidden_field_behavior():
     assert m2.db_user == 'custom-user'
 
 
-def test_immutable_field_behavior():
-    """Test immutable field attribute (field cannot be changed once set)"""
-    # Note: This test documents that immutable is not yet implemented
-    # When implemented, it should prevent changing field values in update mode
+def test_immutable_string_field():
+    """Test immutable string field - cannot be changed once set"""
     schema = [
         {
             'variable': 'dataset_name',
@@ -1299,17 +1297,324 @@ def test_immutable_field_behavior():
                 'default': 'data',
                 'required': True
             }
+        },
+        {
+            'variable': 'description',
+            'schema': {
+                'type': 'string',
+                'default': 'My dataset',
+                'required': False
+            }
         }
     ]
     
-    model = generate_pydantic_model(schema, 'TestImmutable', NOT_PROVIDED)
-    m = model()
-    assert m.dataset_name == 'data'
+    # First time creation - no old values, immutable has no effect
+    model_create = generate_pydantic_model(schema, 'TestImmutableCreate', NOT_PROVIDED, NOT_PROVIDED)
+    m1 = model_create()
+    assert m1.dataset_name == 'data'
+    assert m1.description == 'My dataset'
     
-    # Currently, immutable is not enforced at the Pydantic level
-    # It would need to be enforced at the schema validation level
-    m2 = model(dataset_name='changed')
-    assert m2.dataset_name == 'changed'
+    # Can set custom value on creation
+    m2 = model_create(dataset_name='custom-data')
+    assert m2.dataset_name == 'custom-data'
+    
+    # Update mode - old_values provided, immutable field is locked
+    old_values = {'dataset_name': 'original-data', 'description': 'Original description'}
+    model_update = generate_pydantic_model(schema, 'TestImmutableUpdate', NOT_PROVIDED, old_values)
+    
+    # Can only set the immutable field to its original value
+    m3 = model_update(dataset_name='original-data', description='New description')
+    assert m3.dataset_name == 'original-data'
+    assert m3.description == 'New description'
+    
+    # Trying to change immutable field should fail
+    with pytest.raises(ValidationError) as exc_info:
+        model_update(dataset_name='changed-data')
+    assert 'dataset_name' in str(exc_info.value)
+
+
+def test_immutable_int_field():
+    """Test immutable int field - cannot be changed once set"""
+    schema = [
+        {
+            'variable': 'port',
+            'schema': {
+                'type': 'int',
+                'immutable': True,
+                'default': 8080,
+                'required': True
+            }
+        }
+    ]
+    
+    # Creation - can set any value
+    model_create = generate_pydantic_model(schema, 'TestImmutableIntCreate', NOT_PROVIDED, NOT_PROVIDED)
+    m1 = model_create(port=9090)
+    assert m1.port == 9090
+    
+    # Update - locked to old value
+    old_values = {'port': 3000}
+    model_update = generate_pydantic_model(schema, 'TestImmutableIntUpdate', NOT_PROVIDED, old_values)
+    
+    # Must use the old value
+    m2 = model_update(port=3000)
+    assert m2.port == 3000
+    
+    # Cannot change to different value
+    with pytest.raises(ValidationError):
+        model_update(port=4000)
+
+
+def test_immutable_boolean_field():
+    """Test immutable boolean field - cannot be changed once set"""
+    schema = [
+        {
+            'variable': 'enabled',
+            'schema': {
+                'type': 'boolean',
+                'immutable': True,
+                'default': False,
+                'required': True
+            }
+        }
+    ]
+    
+    # Creation
+    model_create = generate_pydantic_model(schema, 'TestImmutableBoolCreate', NOT_PROVIDED, NOT_PROVIDED)
+    m1 = model_create(enabled=True)
+    assert m1.enabled is True
+    
+    # Update - locked to old value
+    old_values = {'enabled': True}
+    model_update = generate_pydantic_model(schema, 'TestImmutableBoolUpdate', NOT_PROVIDED, old_values)
+    
+    # Must match old value
+    m2 = model_update(enabled=True)
+    assert m2.enabled is True
+    
+    # Cannot flip the boolean
+    with pytest.raises(ValidationError):
+        model_update(enabled=False)
+
+
+def test_immutable_path_field():
+    """Test immutable path field - cannot be changed once set"""
+    schema = [
+        {
+            'variable': 'install_path',
+            'schema': {
+                'type': 'path',
+                'immutable': True,
+                'default': '/opt/app',
+                'required': True
+            }
+        }
+    ]
+    
+    # Creation
+    model_create = generate_pydantic_model(schema, 'TestImmutablePathCreate', NOT_PROVIDED, NOT_PROVIDED)
+    m1 = model_create(install_path='/usr/local/app')
+    assert m1.install_path == '/usr/local/app'
+    
+    # Update - locked to old value
+    old_values = {'install_path': '/opt/myapp'}
+    model_update = generate_pydantic_model(schema, 'TestImmutablePathUpdate', NOT_PROVIDED, old_values)
+    
+    # Must use old path
+    m2 = model_update(install_path='/opt/myapp')
+    assert str(m2.install_path) == '/opt/myapp'
+    
+    # Cannot change path
+    with pytest.raises(ValidationError):
+        model_update(install_path='/new/path')
+
+
+def test_immutable_field_with_null():
+    """Test immutable nullable field"""
+    schema = [
+        {
+            'variable': 'optional_id',
+            'schema': {
+                'type': 'string',
+                'immutable': True,
+                'null': True,
+                'default': None,
+                'required': False
+            }
+        }
+    ]
+    
+    # Creation - can set to null or value
+    model_create = generate_pydantic_model(schema, 'TestImmutableNullCreate', NOT_PROVIDED, NOT_PROVIDED)
+    m1 = model_create(optional_id=None)
+    assert m1.optional_id is None
+    
+    m2 = model_create(optional_id='ABC123')
+    assert m2.optional_id == 'ABC123'
+    
+    # Update with null old value - must remain null
+    old_values = {'optional_id': None}
+    model_update1 = generate_pydantic_model(schema, 'TestImmutableNullUpdate1', NOT_PROVIDED, old_values)
+    m3 = model_update1(optional_id=None)
+    assert m3.optional_id is None
+    
+    # Update with non-null old value - locked to that value
+    old_values2 = {'optional_id': 'XYZ789'}
+    model_update2 = generate_pydantic_model(schema, 'TestImmutableNullUpdate2', NOT_PROVIDED, old_values2)
+    m4 = model_update2(optional_id='XYZ789')
+    assert m4.optional_id == 'XYZ789'
+    
+    with pytest.raises(ValidationError):
+        model_update2(optional_id='CHANGED')
+
+
+def test_immutable_not_supported_types():
+    """Test that immutable is ignored for unsupported types"""
+    # Dict type - immutable should be ignored
+    schema_dict = [
+        {
+            'variable': 'config',
+            'schema': {
+                'type': 'dict',
+                'immutable': True,  # Should be ignored
+                'attrs': [
+                    {'variable': 'key', 'schema': {'type': 'string', 'default': 'value'}}
+                ]
+            }
+        }
+    ]
+    
+    old_values = {'config': {'key': 'old_value'}}
+    model = generate_pydantic_model(schema_dict, 'TestImmutableDict', NOT_PROVIDED, old_values)
+    # Should allow changes since dict is not a supported immutable type
+    m = model(config={'key': 'new_value'})
+    assert m.config.key == 'new_value'
+    
+    # List type - immutable should be ignored
+    schema_list = [
+        {
+            'variable': 'items',
+            'schema': {
+                'type': 'list',
+                'immutable': True,  # Should be ignored
+                'default': []
+            }
+        }
+    ]
+    
+    old_values = {'items': ['a', 'b']}
+    model = generate_pydantic_model(schema_list, 'TestImmutableList', NOT_PROVIDED, old_values)
+    # Should allow changes since list is not a supported immutable type
+    m = model(items=['x', 'y', 'z'])
+    assert m.items == ['x', 'y', 'z']
+
+
+def test_immutable_nested_fields():
+    """Test immutable fields in nested structures"""
+    schema = [
+        {
+            'variable': 'database',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'host',
+                        'schema': {
+                            'type': 'string',
+                            'immutable': True,
+                            'default': 'localhost',
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'port',
+                        'schema': {
+                            'type': 'int',
+                            'default': 5432,
+                            'required': True
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # Creation - can set any values
+    model_create = generate_pydantic_model(schema, 'TestImmutableNestedCreate', NOT_PROVIDED, NOT_PROVIDED)
+    m1 = model_create(database={'host': 'db.example.com', 'port': 3306})
+    assert m1.database.host == 'db.example.com'
+    assert m1.database.port == 3306
+    
+    # Update - nested immutable field is locked
+    old_values = {'database': {'host': 'prod.db.com', 'port': 5432}}
+    model_update = generate_pydantic_model(schema, 'TestImmutableNestedUpdate', NOT_PROVIDED, old_values)
+    
+    # Can change non-immutable port but not immutable host
+    m2 = model_update(database={'host': 'prod.db.com', 'port': 3307})
+    assert m2.database.host == 'prod.db.com'
+    assert m2.database.port == 3307
+    
+    # Cannot change immutable nested field
+    with pytest.raises(ValidationError):
+        model_update(database={'host': 'new.db.com', 'port': 5432})
+
+
+def test_immutable_with_construct_schema():
+    """Test immutable fields through the main construct_schema function"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'app_id',
+                    'schema': {
+                        'type': 'string',
+                        'immutable': True,
+                        'required': True
+                    }
+                },
+                {
+                    'variable': 'version',
+                    'schema': {
+                        'type': 'string',
+                        'default': '1.0.0',
+                        'required': True
+                    }
+                }
+            ]
+        }
+    }
+    
+    # Create mode - no old values
+    result_create = construct_schema(
+        item_version_details,
+        {'app_id': 'my-app-123', 'version': '1.0.0'},
+        update=False
+    )
+    assert len(result_create['verrors'].errors) == 0
+    assert result_create['new_values']['app_id'] == 'my-app-123'
+    
+    # Update mode - with old values
+    old_values = {'app_id': 'my-app-123', 'version': '1.0.0'}
+    
+    # Valid update - keeping immutable field same
+    result_update_valid = construct_schema(
+        item_version_details,
+        {'app_id': 'my-app-123', 'version': '2.0.0'},
+        update=True,
+        old_values=old_values
+    )
+    assert len(result_update_valid['verrors'].errors) == 0
+    assert result_update_valid['new_values']['version'] == '2.0.0'
+    
+    # Invalid update - trying to change immutable field
+    result_update_invalid = construct_schema(
+        item_version_details,
+        {'app_id': 'different-app', 'version': '2.0.0'},
+        update=True,
+        old_values=old_values
+    )
+    assert len(result_update_invalid['verrors'].errors) > 0
+    assert 'app_id' in str(result_update_invalid['verrors'].errors)
 
 
 def test_enum_field_basic():
