@@ -18,6 +18,8 @@ USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
 # 1) immutable fields - lots of usages
 # A field which once set is immutable and cannot be changed.
 # 2) Support min/max for lists/arrays - For lists we have min/max attrs
+# 3) Add support for enum
+# 4) Add support for valid_chars
 #
 # Make sure immutable types are only supported for basic types strings/booleans/integers/path
 # Make sure we have tests for min/max/min_length/max_length
