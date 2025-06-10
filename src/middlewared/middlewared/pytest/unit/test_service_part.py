@@ -1,11 +1,9 @@
 import pytest
 
 from middlewared.service import job, Service, ServicePartBase
-from middlewared.schema import accepts, Int
 
 
 class SumServiceBase(ServicePartBase):
-    @accepts(Int("a"), Int("b"))
     def sum(self, a, b):
         """
         Sum two numbers
@@ -44,12 +42,11 @@ def test__schema_works():
         def sum(self, a, b):
             return a + b
 
-    assert SumServiceImpl(None).sum(1, "2") == 3
+    assert SumServiceImpl(None).sum(1, 2) == 3
 
 
 def test__job():
     class JobServiceBase(ServicePartBase):
-        @accepts(Int("arg"))
         @job()
         def process(self, job, arg):
             pass

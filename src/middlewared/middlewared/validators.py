@@ -122,16 +122,6 @@ class Port(Range):
         super().__init__(min_=1, max_=65535, exclude=exclude)
 
 
-class QueryFilters(ValidatorBase):
-    def __call__(self, value):
-        validate_filters(value)
-
-
-class QueryOptions(ValidatorBase):
-    def __call__(self, value):
-        validate_options(value)
-
-
 def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
     from middlewared.schema import Dict, Error
     from middlewared.service import ValidationErrors

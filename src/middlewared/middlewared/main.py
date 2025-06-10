@@ -787,18 +787,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 except Exception:
                     return args
 
-        if not hasattr(method, 'accepts'):
-            if crud_method := real_crud_method(method):
-                method = crud_method
-
         if hasattr(method, 'new_style_accepts'):
             return dump_params(method.new_style_accepts, args, False)
 
-        if not hasattr(method, 'accepts'):
-            return args
-
-        return [method.accepts[i].dump(arg) if i < len(method.accepts) else arg
-                for i, arg in enumerate(args)]
+        return args
 
     def dump_result(
         self,

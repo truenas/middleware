@@ -155,9 +155,6 @@ def api_method(
 
             wrapped._removed_in = removed_in
 
-        # FIXME: This is only here for backwards compatibility and should be removed eventually
-        wrapped.accepts = []
-        wrapped.returns = []
         wrapped.new_style_accepts = accepts
         wrapped.new_style_returns = returns
 

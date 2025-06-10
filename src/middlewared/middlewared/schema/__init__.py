@@ -10,7 +10,6 @@ from .integer_schema import Float, Int, Timestamp  # noqa
 from .list_schema import List  # noqa
 from .patch import Patch  # noqa
 from .plugin_schema import Schemas  # noqa
-from .processor import accepts, clean_and_validate_arg, returns  # noqa
 from .resolvers import resolve_methods  # noqa
 from .string_schema import ( # noqa
     Dataset, Datetime, Dir, File, HostPath, IPAddr, LDAP_DN, NetbiosName, NetbiosDomain,

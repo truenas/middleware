@@ -1,4 +1,3 @@
-from middlewared.schema import accepts, returns # noqa
 from middlewared.service_exception import ( # noqa
     CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
 )

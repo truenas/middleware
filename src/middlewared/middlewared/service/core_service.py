@@ -349,48 +349,14 @@ class CoreService(Service):
                             exname = '__all__'
                         examples[exname].append(sections[idx + 1])
 
-                method_schemas = {'accepts': None, 'returns': None}
-                for schema_type in method_schemas:
-                    if hasattr(method, 'new_style_accepts'):
-                        method_schemas['accepts'] = get_json_schema(method.new_style_accepts)
-                        method_schemas['returns'] = get_json_schema(method.new_style_returns)
-                        continue
-
-                    args_descriptions_doc = doc or ''
-                    if attr == 'update':
-                        if do_create := getattr(svc, 'do_create', None):
-                            args_descriptions_doc += "\n" + inspect.getdoc(do_create)
-                    method_schemas[schema_type] = self.get_json_schema(
-                        getattr(method, schema_type, None), args_descriptions_doc
-                    )
+                method_schemas = {
+                    'accepts': get_json_schema(method.new_style_accepts),
+                    'returns': get_json_schema(method.new_style_returns),
+                }
 
                 if filterable_schema := getattr(method, '_filterable_schema', None):
                     # filterable_schema is OROperator here, and we just want it's specific schema
                     filterable_schema = self.get_json_schema([filterable_schema.schemas[1]], None)[0]
-                elif attr == 'query':
-                    if isinstance(svc, CompoundService):
-                        for part in svc.parts:
-                            if hasattr(part, 'do_create'):
-                                d = inspect.getdoc(part.do_create)
-                                break
-                        else:
-                            d = None
-
-                        for part in svc.parts:
-                            if hasattr(part, 'ENTRY') and part.ENTRY is not None:
-                                filterable_schema = self.get_json_schema(
-                                    [self.middleware._schemas[part.ENTRY.name]],
-                                    d,
-                                )[0]
-                                break
-                    elif hasattr(svc, 'ENTRY') and svc.ENTRY is not None:
-                        d = None
-                        if hasattr(svc, 'do_create'):
-                            d = inspect.getdoc(svc.do_create)
-                        filterable_schema = self.get_json_schema(
-                            [self.middleware._schemas[svc.ENTRY.name]],
-                            d,
-                        )[0]
 
                 if method_schemas['accepts'] is None:
                     raise RuntimeError(f'Method {method_name} is public but has no @accepts()')
