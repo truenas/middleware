@@ -23,6 +23,7 @@ class IscsiTargetToExtentEntry(BaseModel):
 class IscsiTargetToExtentCreate(IscsiTargetToExtentEntry):
     id: Excluded = excluded_field()
     lunid: int | None = None
+    defer: Bool = False
 
 
 class IscsiTargetToExtentCreateArgs(BaseModel):
@@ -34,7 +35,7 @@ class IscsiTargetToExtentCreateResult(BaseModel):
 
 
 class IscsiTargetToExtentUpdate(IscsiTargetToExtentEntry, metaclass=ForUpdateMetaclass):
-    pass
+    defer: Bool = False
 
 
 class IscsiTargetToExtentUpdateArgs(BaseModel):
@@ -49,6 +50,7 @@ class IscsiTargetToExtentUpdateResult(BaseModel):
 class IscsiTargetToExtentDeleteArgs(BaseModel):
     id: int
     force: bool = False
+    defer: Bool = False
 
 
 class IscsiTargetToExtentDeleteResult(BaseModel):

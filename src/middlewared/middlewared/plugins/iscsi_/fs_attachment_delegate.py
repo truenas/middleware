@@ -25,7 +25,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
         for te in await self.middleware.call('iscsi.targetextent.query', [['target', 'in', orphan_targets_ids]]):
             orphan_targets_ids.discard(te['target'])
         for target_id in orphan_targets_ids:
-            await self.middleware.call('iscsi.target.delete', target_id, True)
+            await self.middleware.call('iscsi.target.delete', target_id, True, True)
 
         await self._service_change('iscsitarget', 'reload')
 
