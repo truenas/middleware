@@ -457,6 +457,18 @@ class Enclosure:
         ))
 
     @property
+    def is_r60(self):
+        """Determine if the enclosure device is an r60 controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_rseries,
+            (self.model == ControllerModels.R60.value),
+        ))
+
+    @property
     def is_fseries(self):
         """Determine if the enclosure device is a f-series controller.
 
