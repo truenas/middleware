@@ -63,7 +63,7 @@ class IscsiTargetValidateNameResult(BaseModel):
 class IscsiTargetCreate(IscsiTargetEntry):
     id: Excluded = excluded_field()
     rel_tgt_id: Excluded = excluded_field()
-    defer: Bool = False
+    defer: bool = False
 
 
 class IscsiTargetCreateArgs(BaseModel):
@@ -91,7 +91,7 @@ class IscsiTargetDeleteArgs(BaseModel):
     id: int
     force: bool = False
     delete_extents: bool = False
-    defer: Bool = False
+    defer: bool = False
 
 
 class IscsiTargetDeleteResult(BaseModel):

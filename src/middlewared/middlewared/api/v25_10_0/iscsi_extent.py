@@ -47,7 +47,7 @@ class IscsiExtentCreate(IscsiExtentEntry):
     naa: Excluded = excluded_field()
     vendor: Excluded = excluded_field()
     locked: Excluded = excluded_field()
-    defer: Bool = False
+    defer: bool = False
 
 
 class IscsiExtentCreateArgs(BaseModel):
@@ -75,7 +75,7 @@ class IscsiExtentDeleteArgs(BaseModel):
     id: int
     remove: bool = False
     force: bool = False
-    defer: Bool = False
+    defer: bool = False
 
 
 class IscsiExtentDeleteResult(BaseModel):
