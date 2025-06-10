@@ -16,19 +16,19 @@ NOT_PROVIDED = object()
 # Functionality we are concerned about which we would like to port over
 # 1) immutable fields - lots of usages
 # A field which once set is immutable and cannot be changed.
-# 2) editable toggle fields - we have usage in lyrion-music-server app
-# A field which has a default value and that is enforced and cannot be set by the user.
-# 3) empty attribute should be supported in fields
-# 4) subquestions need to be supported
-# 5) show_subquestions_if - this is used in the apps schema to show subquestions based on a field value
-
+# 2) Support min/max for lists/arrays - For lists we have min/max attrs
+#
+# Make sure immutable types are only supported for basic types strings/booleans/integers/path
+# Make sure we have tests for min/max/min_length/max_length
 
 # Functionality to remove (these are not being used and we should remove them to reduce complexity)
 # 1) Cron type
 # 2) hostpathdirectory type
 # 3) hostpathfile type
 # 4) additional_attrs field attr is not being used
-# 5)
+# 5) subquestions are being removed
+# 6) show_subquestions_if are being removed
+# 7) removing editable fields
 
 
 def construct_schema(
