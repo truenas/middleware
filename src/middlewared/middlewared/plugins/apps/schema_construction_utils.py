@@ -36,7 +36,7 @@ def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: USER_VALUES = NOT_PROVIDED,
 ) -> dict:
     schema_name = f'app_{"update" if update else "create"}'
-    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, new_values)
+    model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, new_values, old_values)
     verrors = ValidationErrors()
     try:
         # Validate the new values against the generated model
@@ -54,6 +54,7 @@ def construct_schema(
 
 def generate_pydantic_model(
     dict_attrs: list[dict], model_name: str, new_values: USER_VALUES = NOT_PROVIDED,
+    old_values: USER_VALUES = NOT_PROVIDED,
 ) -> Type[BaseModel]:
     """
     Generate a Pydantic model from a list of dictionary attributes.
@@ -65,8 +66,9 @@ def generate_pydantic_model(
         var_name = attr['variable']
         schema_def = attr['schema']
         attr_value = new_values.get(var_name, NOT_PROVIDED) if isinstance(new_values, dict) else NOT_PROVIDED
+        old_attr_value = old_values.get(var_name, NOT_PROVIDED) if isinstance(old_values, dict) else NOT_PROVIDED
         field_type, field_info, nested_model = process_schema_field(
-            schema_def, f'{model_name}_{var_name}', attr_value,
+            schema_def, f'{model_name}_{var_name}', attr_value, old_attr_value,
         )
         if nested_model:
             nested_models[var_name] = nested_model
@@ -116,7 +118,7 @@ def get_defaults(model: Type[BaseModel], new_values: dict) -> dict | None:
         return validate_model(model, new_values)
 
 
-def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VALUES) -> tuple[
+def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VALUES, old_values: USER_VALUES) -> tuple[
     Type, Field, Type[BaseModel] | None
 ]:
     """
@@ -142,7 +144,7 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
         field_type = AbsolutePath
     elif schema_type == 'dict':
         if dict_attrs := schema_def.get('attrs', []):
-            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name, new_values)
+            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name, new_values, old_values)
             field_info.default_factory = nested_model
         else:
             # We have a generic dict type without specific attributes
@@ -152,7 +154,7 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
         if list_items := schema_def.get('items', []):
             for item in list_items:
                 item_type, item_info, _ = process_schema_field(
-                    item['schema'], f'{model_name}_{item["variable"]}', new_values,
+                    item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
                 )
                 annotated_items.append(Annotated[item_type, item_info])
 
