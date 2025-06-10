@@ -18,7 +18,6 @@ USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
 
 # Functionality we are concerned about which we would like to port over
 # 1) Support min/max for lists/arrays - For lists we have min/max attrs
-# 2) Add support for enum
 #
 # Make sure immutable types are only supported for basic types strings/booleans/integers/path
 # Make sure we have tests for min/max/min_length/max_length
@@ -176,6 +175,8 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
     ) and old_values is not NOT_PROVIDED:
         # If we have a value for this field in old_values, we should not allow it to be changed
         field_type = Literal[old_values]
+    elif schema_def.get('enum') and schema_type == 'string':
+        field_type = Literal[*[v['value'] for v in schema_def['enum']]]
 
     if schema_def.get('valid_chars'):
         # If valid_chars is specified, we can use a match_validator to ensure the value matches the regex
