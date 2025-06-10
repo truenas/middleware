@@ -7,7 +7,6 @@ from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import query_result
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, GenericQueryResult
-from middlewared.schema import accepts, Ref
 
 
 LOCKS = defaultdict(asyncio.Lock)
@@ -19,22 +18,6 @@ def cli_private(fn):
     """Do not expose method in CLI"""
     fn._cli_private = True
     return fn
-
-
-def filterable(fn=None, /, *, roles=None):
-    def filterable_internal(fn):
-        fn._filterable = True
-        fn._legacy_filterable = True
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable = True
-        return accepts(Ref('query-filters'), Ref('query-options'), roles=roles)(fn)
-    # See if we're being called as @filterable or @filterable().
-    if fn is None:
-        # We're called with parens.
-        return filterable_internal
-
-    # We're called as @filterable without parens.
-    return filterable_internal(fn)
 
 
 def filterable_api_method(
