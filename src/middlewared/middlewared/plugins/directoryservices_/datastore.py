@@ -448,6 +448,8 @@ class DirectoryServices(ConfigService):
 
     @private
     async def bindip_choices(self):
+        choices = {}
+
         if await self.middleware.call('failover.licensed'):
             master, backup, init = await self.middleware.call('failover.vip.get_states')
             for master_iface in await self.middleware.call('interface.query', [["id", "in", master + backup]]):
