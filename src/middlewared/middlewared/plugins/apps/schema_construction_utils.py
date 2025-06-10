@@ -1,8 +1,10 @@
 import contextlib
+import re
 from typing import Annotated, Literal, Type, TypeAlias, Union
 
-from pydantic import create_model, Field, Secret
-from middlewared.api.base import LongString, NotRequired
+from pydantic import AfterValidator, create_model, Field, Secret
+
+from middlewared.api.base import LongString, match_validator, NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils import filter_list
@@ -17,7 +19,6 @@ USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
 # Functionality we are concerned about which we would like to port over
 # 1) Support min/max for lists/arrays - For lists we have min/max attrs
 # 2) Add support for enum
-# 3) Add support for valid_chars
 #
 # Make sure immutable types are only supported for basic types strings/booleans/integers/path
 # Make sure we have tests for min/max/min_length/max_length
@@ -175,6 +176,10 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
     ) and old_values is not NOT_PROVIDED:
         # If we have a value for this field in old_values, we should not allow it to be changed
         field_type = Literal[old_values]
+
+    if schema_def.get('valid_chars'):
+        # If valid_chars is specified, we can use a match_validator to ensure the value matches the regex
+        field_type = Annotated[field_type, AfterValidator(match_validator(re.compile(schema_def['valid_chars'])))]
 
     if schema_def.get('private', False):
         # If the field is private, we can use Secret type
