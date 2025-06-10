@@ -176,7 +176,9 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
         # If we have a value for this field in old_values, we should not allow it to be changed
         field_type = Literal[old_values]
     elif schema_def.get('enum') and schema_type == 'string':
-        field_type = Literal[*[v['value'] for v in schema_def['enum']]]
+        enum_values = [v['value'] for v in schema_def['enum']]
+        if enum_values:  # Only create Literal if there are actual enum values
+            field_type = Literal[*enum_values]
 
     if schema_def.get('valid_chars'):
         # If valid_chars is specified, we can use a match_validator to ensure the value matches the regex

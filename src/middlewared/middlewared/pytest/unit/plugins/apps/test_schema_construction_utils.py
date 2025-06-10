@@ -27,6 +27,7 @@ Test Coverage Checklist for schema_construction_utils.py
 ✅ min/max - Integer constraints
 ✅ min_length/max_length - String length constraints
 ✅ valid_chars - Regex pattern validation for strings
+✅ enum - String enum constraints with Literal types
 
 ## Special Behaviors:
 ✅ NotRequired - Non-required fields without defaults get NotRequired
@@ -59,18 +60,13 @@ Test Coverage Checklist for schema_construction_utils.py
 ✅ Dict containing list of dicts (e.g., additional_envs pattern)
 ✅ List of dicts with multiple required fields (e.g., devices pattern)
 ✅ Deeply nested structure (3+ levels deep)
-🔧 List with enum constraints (e.g., apt_packages) - Not yet implemented
+✅ List with enum constraints (e.g., apt_packages, minio protocols)
 ✅ Mixed field types in same dict (string, int, boolean, list)
 ❌ Schema with $ref at root level (e.g., timezone)
-❌ Hidden fields behavior
 ✅ List items with min/max length constraints
 
 ## TODO Features (from comments):
 ✅ immutable fields - Field that can't be changed once set (string, int, boolean, path)
-❌ editable=False - Field with enforced default value (removed from new implementation)
-❌ empty attribute support
-❌ subquestions support (removed from new implementation)
-❌ show_subquestions_if - Conditional subquestion display (removed from new implementation)
 ✅ show_if - Conditional field display
 
 ## show_if Feature Tests:
@@ -1619,9 +1615,7 @@ def test_immutable_with_construct_schema():
 
 
 def test_enum_field_basic():
-    """Test basic enum field behavior (partial implementation)"""
-    # Note: Full enum support is not yet implemented
-    # This test documents current behavior
+    """Test basic enum field behavior with proper enforcement"""
     schema = [
         {
             'variable': 'log_level',
@@ -1644,13 +1638,14 @@ def test_enum_field_basic():
     m = model()
     assert m.log_level == 'info'
     
-    # Can set to any string value (enum not enforced yet)
+    # Valid enum values work
     m2 = model(log_level='debug')
     assert m2.log_level == 'debug'
     
-    # Currently allows invalid enum values (not enforced)
-    m3 = model(log_level='invalid')
-    assert m3.log_level == 'invalid'
+    # Invalid enum values should fail
+    with pytest.raises(ValidationError) as exc_info:
+        model(log_level='invalid')
+    assert 'log_level' in str(exc_info.value)
 
 
 def test_complex_show_if_with_list_and_dict():
@@ -2206,3 +2201,385 @@ def test_valid_chars_with_construct_schema():
     )
     assert len(result_invalid['verrors'].errors) > 0
     assert 'docker_tag' in str(result_invalid['verrors'].errors)
+
+
+# Enum field tests
+def test_string_enum_basic():
+    """Test basic string enum field"""
+    schema = [
+        {
+            'variable': 'log_level',
+            'schema': {
+                'type': 'string',
+                'enum': [
+                    {'value': 'debug', 'description': 'Debug logging'},
+                    {'value': 'info', 'description': 'Info logging'},
+                    {'value': 'warning', 'description': 'Warning logging'},
+                    {'value': 'error', 'description': 'Error logging'}
+                ],
+                'default': 'info'
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestStringEnum', NOT_PROVIDED)
+    
+    # Default value works
+    m1 = model()
+    assert m1.log_level == 'info'
+    
+    # Valid enum values
+    m2 = model(log_level='debug')
+    assert m2.log_level == 'debug'
+    
+    m3 = model(log_level='error')
+    assert m3.log_level == 'error'
+    
+    # Invalid enum value should fail
+    with pytest.raises(ValidationError) as exc_info:
+        model(log_level='trace')  # Not in enum
+    assert 'log_level' in str(exc_info.value)
+
+
+def test_string_enum_with_null():
+    """Test that null should be explicitly included in enum if needed"""
+    # Based on real-world usage: if a field needs null, it should be in the enum
+    schema = [
+        {
+            'variable': 'optional_priority',
+            'schema': {
+                'type': 'string',
+                'enum': [
+                    {'value': None, 'description': 'No priority'},
+                    {'value': 'low', 'description': 'Low priority'},
+                    {'value': 'medium', 'description': 'Medium priority'},
+                    {'value': 'high', 'description': 'High priority'}
+                ],
+                'default': None
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestEnumNull', NOT_PROVIDED)
+    
+    # Null is allowed because it's in the enum
+    m1 = model(optional_priority=None)
+    assert m1.optional_priority is None
+    
+    # Valid enum values
+    m2 = model(optional_priority='high')
+    assert m2.optional_priority == 'high'
+    
+    # Invalid value should fail
+    with pytest.raises(ValidationError):
+        model(optional_priority='urgent')
+
+
+def test_string_enum_required():
+    """Test required string enum field"""
+    schema = [
+        {
+            'variable': 'environment',
+            'schema': {
+                'type': 'string',
+                'enum': [
+                    {'value': 'development', 'description': 'Development environment'},
+                    {'value': 'staging', 'description': 'Staging environment'},
+                    {'value': 'production', 'description': 'Production environment'}
+                ],
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestEnumRequired', NOT_PROVIDED)
+    
+    # Must provide a value
+    with pytest.raises(ValidationError):
+        model()
+    
+    # Valid value works
+    m = model(environment='staging')
+    assert m.environment == 'staging'
+
+
+def test_enum_empty_list():
+    """Test that empty enum list doesn't create Literal type"""
+    schema = [
+        {
+            'variable': 'status',
+            'schema': {
+                'type': 'string',
+                'enum': [],  # Empty enum list
+                'default': 'active'
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestEmptyEnum', NOT_PROVIDED)
+    
+    # Should work as a regular string field
+    m1 = model()
+    assert m1.status == 'active'
+    
+    # Can set any string value
+    m2 = model(status='inactive')
+    assert m2.status == 'inactive'
+
+
+def test_enum_with_immutable():
+    """Test that immutable takes precedence over enum"""
+    schema = [
+        {
+            'variable': 'app_type',
+            'schema': {
+                'type': 'string',
+                'enum': [
+                    {'value': 'web', 'description': 'Web application'},
+                    {'value': 'api', 'description': 'API service'}
+                ],
+                'immutable': True,
+                'default': 'web'
+            }
+        }
+    ]
+    
+    # Update mode with old values - immutable should take precedence
+    old_values = {'app_type': 'api'}
+    model = generate_pydantic_model(schema, 'TestEnumImmutable', NOT_PROVIDED, old_values)
+    
+    # Must use the old value
+    m1 = model(app_type='api')
+    assert m1.app_type == 'api'
+    
+    # Cannot change to other enum value
+    with pytest.raises(ValidationError):
+        model(app_type='web')
+
+
+def test_enum_in_nested_dict():
+    """Test enum field in nested dictionary"""
+    schema = [
+        {
+            'variable': 'database',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'type',
+                        'schema': {
+                            'type': 'string',
+                            'enum': [
+                                {'value': 'postgres', 'description': 'PostgreSQL'},
+                                {'value': 'mysql', 'description': 'MySQL'},
+                                {'value': 'sqlite', 'description': 'SQLite'}
+                            ],
+                            'default': 'postgres'
+                        }
+                    },
+                    {
+                        'variable': 'host',
+                        'schema': {
+                            'type': 'string',
+                            'default': 'localhost'
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestNestedEnum', NOT_PROVIDED)
+    
+    # Default values
+    m1 = model()
+    assert m1.database.type == 'postgres'
+    assert m1.database.host == 'localhost'
+    
+    # Valid enum value
+    m2 = model(database={'type': 'mysql', 'host': 'db.example.com'})
+    assert m2.database.type == 'mysql'
+    
+    # Invalid enum value
+    with pytest.raises(ValidationError):
+        model(database={'type': 'mongodb'})
+
+
+def test_enum_in_list_items():
+    """Test enum in list item schema"""
+    schema = [
+        {
+            'variable': 'log_levels',
+            'schema': {
+                'type': 'list',
+                'items': [
+                    {
+                        'variable': 'level',
+                        'schema': {
+                            'type': 'string',
+                            'enum': [
+                                {'value': 'debug', 'description': 'Debug'},
+                                {'value': 'info', 'description': 'Info'},
+                                {'value': 'warn', 'description': 'Warning'},
+                                {'value': 'error', 'description': 'Error'}
+                            ]
+                        }
+                    }
+                ],
+                'default': []
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestListEnum', NOT_PROVIDED)
+    
+    # Valid list of enum values
+    m1 = model(log_levels=['debug', 'info', 'error'])
+    assert m1.log_levels == ['debug', 'info', 'error']
+    
+    # Invalid value in list
+    with pytest.raises(ValidationError):
+        model(log_levels=['debug', 'verbose'])  # 'verbose' not in enum
+
+
+def test_enum_with_valid_chars():
+    """Test that enum and valid_chars can work together"""
+    schema = [
+        {
+            'variable': 'region_code',
+            'schema': {
+                'type': 'string',
+                'enum': [
+                    {'value': 'US-EAST', 'description': 'US East'},
+                    {'value': 'US-WEST', 'description': 'US West'},
+                    {'value': 'EU-WEST', 'description': 'EU West'}
+                ],
+                'valid_chars': '^[A-Z]{2}-[A-Z]{4}$',  # Enforces format
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestEnumValidChars', NOT_PROVIDED)
+    
+    # Valid enum value that matches pattern
+    m = model(region_code='US-EAST')
+    assert m.region_code == 'US-EAST'
+    
+    # Invalid enum value
+    with pytest.raises(ValidationError):
+        model(region_code='US-CENTRAL')  # Not in enum
+
+
+def test_enum_with_show_if():
+    """Test enum field with show_if condition"""
+    schema = [
+        {
+            'variable': 'deployment',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'use_custom',
+                        'schema': {
+                            'type': 'boolean',
+                            'default': False
+                        }
+                    },
+                    {
+                        'variable': 'preset',
+                        'schema': {
+                            'type': 'string',
+                            'enum': [
+                                {'value': 'small', 'description': 'Small deployment'},
+                                {'value': 'medium', 'description': 'Medium deployment'},
+                                {'value': 'large', 'description': 'Large deployment'}
+                            ],
+                            'default': 'medium',
+                            'show_if': [['use_custom', '=', False]]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    # When use_custom is False, preset should have enum constraint
+    model1 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestEnumShowIf1',
+        {'use_custom': False}
+    )
+    m1 = model1(use_custom=False, preset='large')
+    assert m1.preset == 'large'
+    
+    # Invalid enum value should fail
+    with pytest.raises(ValidationError):
+        model1(use_custom=False, preset='xlarge')
+    
+    # When use_custom is True, preset is NotRequired
+    model2 = generate_pydantic_model(
+        schema[0]['schema']['attrs'], 'TestEnumShowIf2',
+        {'use_custom': True}
+    )
+    m2 = model2(use_custom=True)
+    assert m2.preset is NotRequired
+
+
+def test_enum_with_minio_example():
+    """Test enum pattern from minio questions.yaml"""
+    # Based on actual minio schema pattern
+    schema = [
+        {
+            'variable': 'service',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'api_port_protocol',
+                        'label': 'API Port Protocol',
+                        'schema': {
+                            'type': 'string',
+                            'enum': [
+                                {'value': 'http', 'description': 'HTTP Protocol'},
+                                {'value': 'https', 'description': 'HTTPS Protocol'}
+                            ],
+                            'default': 'http',
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'console_port_protocol',
+                        'label': 'Console Port Protocol',
+                        'schema': {
+                            'type': 'string',
+                            'enum': [
+                                {'value': 'http', 'description': 'HTTP Protocol'},
+                                {'value': 'https', 'description': 'HTTPS Protocol'}
+                            ],
+                            'default': 'http',
+                            'required': True
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestMinioExample', NOT_PROVIDED)
+    
+    # Test defaults
+    m1 = model()
+    assert m1.service.api_port_protocol == 'http'
+    assert m1.service.console_port_protocol == 'http'
+    
+    # Test mixed protocols
+    m2 = model(service={
+        'api_port_protocol': 'https',
+        'console_port_protocol': 'http'
+    })
+    assert m2.service.api_port_protocol == 'https'
+    assert m2.service.console_port_protocol == 'http'
+    
+    # Invalid protocol should fail
+    with pytest.raises(ValidationError):
+        model(service={'api_port_protocol': 'tcp'})
