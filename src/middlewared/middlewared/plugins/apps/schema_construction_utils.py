@@ -1,5 +1,5 @@
 import contextlib
-from typing import Annotated, Literal, Type, Union
+from typing import Annotated, Literal, Type, TypeAlias, Union
 
 from pydantic import create_model, Field, Secret
 from middlewared.api.base import LongString, NotRequired
@@ -11,6 +11,7 @@ from .pydantic_utils import AbsolutePath, BaseModel, HostPath, IPvAnyAddress, UR
 
 
 NOT_PROVIDED = object()
+USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
 
 
 # Functionality we are concerned about which we would like to port over
@@ -32,7 +33,7 @@ NOT_PROVIDED = object()
 
 
 def construct_schema(
-    item_version_details: dict, new_values: dict, update: bool, old_values: dict | object = NOT_PROVIDED
+    item_version_details: dict, new_values: dict, update: bool, old_values: USER_VALUES = NOT_PROVIDED,
 ) -> dict:
     schema_name = f'app_{"update" if update else "create"}'
     model = generate_pydantic_model(item_version_details['schema']['questions'], schema_name, new_values)
@@ -52,7 +53,7 @@ def construct_schema(
 
 
 def generate_pydantic_model(
-    dict_attrs: list[dict], model_name: str, new_values: dict | Literal[NOT_PROVIDED]
+    dict_attrs: list[dict], model_name: str, new_values: USER_VALUES = NOT_PROVIDED,
 ) -> Type[BaseModel]:
     """
     Generate a Pydantic model from a list of dictionary attributes.
@@ -115,7 +116,7 @@ def get_defaults(model: Type[BaseModel], new_values: dict) -> dict | None:
         return validate_model(model, new_values)
 
 
-def process_schema_field(schema_def: dict, model_name: str, new_values: dict | Literal[NOT_PROVIDED]) -> tuple[
+def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VALUES) -> tuple[
     Type, Field, Type[BaseModel] | None
 ]:
     """
