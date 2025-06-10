@@ -170,6 +170,12 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
     if schema_def.get('null', False):
         field_type = Union[field_type, None]
 
+    if schema_def.get('immutable') and schema_type in (
+        'string', 'int', 'boolean', 'path'
+    ) and old_values is not NOT_PROVIDED:
+        # If we have a value for this field in old_values, we should not allow it to be changed
+        field_type = Literal[old_values]
+
     if schema_def.get('private', False):
         # If the field is private, we can use Secret type
         field_type = Secret[field_type]
