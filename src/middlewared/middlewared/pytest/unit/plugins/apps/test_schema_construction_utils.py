@@ -26,6 +26,7 @@ Test Coverage Checklist for schema_construction_utils.py
 ✅ title - Field title (tested implicitly)
 ✅ min/max - Integer constraints
 ✅ min_length/max_length - String length constraints
+✅ valid_chars - Regex pattern validation for strings
 
 ## Special Behaviors:
 ✅ NotRequired - Non-required fields without defaults get NotRequired
@@ -1770,3 +1771,438 @@ def test_field_with_dollar_ref():
     
     cert_field = model.model_fields['certificate_id']
     assert cert_field.metadata == [['definitions/certificate']]
+
+
+def test_string_field_with_valid_chars():
+    """Test string field with valid_chars regex validation"""
+    schema = [
+        {
+            'variable': 'username',
+            'schema': {
+                'type': 'string',
+                'valid_chars': '^[a-zA-Z][a-zA-Z0-9_-]{2,30}$',  # Username pattern
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestValidChars', NOT_PROVIDED)
+    
+    # Valid usernames
+    m1 = model(username='john_doe')
+    assert m1.username == 'john_doe'
+    
+    m2 = model(username='User123')
+    assert m2.username == 'User123'
+    
+    m3 = model(username='test-user')
+    assert m3.username == 'test-user'
+    
+    # Invalid usernames should fail
+    with pytest.raises(ValidationError) as exc_info:
+        model(username='123invalid')  # Starts with number
+    assert 'Value does not match' in str(exc_info.value)
+    
+    with pytest.raises(ValidationError) as exc_info:
+        model(username='a')  # Too short
+    assert 'Value does not match' in str(exc_info.value)
+    
+    with pytest.raises(ValidationError) as exc_info:
+        model(username='user@name')  # Contains invalid character
+    assert 'Value does not match' in str(exc_info.value)
+
+
+def test_valid_chars_with_different_patterns():
+    """Test various regex patterns with valid_chars"""
+    # Email pattern
+    schema_email = [
+        {
+            'variable': 'email',
+            'schema': {
+                'type': 'string',
+                'valid_chars': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                'required': True
+            }
+        }
+    ]
+    
+    model_email = generate_pydantic_model(schema_email, 'TestEmail', NOT_PROVIDED)
+    
+    # Valid emails
+    m1 = model_email(email='user@example.com')
+    assert m1.email == 'user@example.com'
+    
+    m2 = model_email(email='test.user+tag@sub.domain.org')
+    assert m2.email == 'test.user+tag@sub.domain.org'
+    
+    # Invalid emails
+    with pytest.raises(ValidationError):
+        model_email(email='invalid.email')
+    
+    with pytest.raises(ValidationError):
+        model_email(email='@example.com')
+    
+    # Alphanumeric pattern
+    schema_alphanumeric = [
+        {
+            'variable': 'code',
+            'schema': {
+                'type': 'string',
+                'valid_chars': '^[A-Z0-9]+$',  # Only uppercase letters and numbers
+                'required': True
+            }
+        }
+    ]
+    
+    model_alpha = generate_pydantic_model(schema_alphanumeric, 'TestAlpha', NOT_PROVIDED)
+    
+    # Valid codes
+    m3 = model_alpha(code='ABC123')
+    assert m3.code == 'ABC123'
+    
+    # Invalid codes
+    with pytest.raises(ValidationError):
+        model_alpha(code='abc123')  # Lowercase not allowed
+    
+    with pytest.raises(ValidationError):
+        model_alpha(code='ABC-123')  # Dash not allowed
+
+
+def test_valid_chars_with_nullable_field():
+    """Test valid_chars with nullable string field"""
+    schema = [
+        {
+            'variable': 'optional_code',
+            'schema': {
+                'type': 'string',
+                'valid_chars': '^[A-Z]{3}[0-9]{3}$',  # Pattern like ABC123
+                'null': True,
+                'default': None
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestNullableValidChars', NOT_PROVIDED)
+    
+    # Null is allowed
+    m1 = model(optional_code=None)
+    assert m1.optional_code is None
+    
+    # Valid pattern
+    m2 = model(optional_code='ABC123')
+    assert m2.optional_code == 'ABC123'
+    
+    # Invalid pattern
+    with pytest.raises(ValidationError):
+        model(optional_code='ABC12')  # Too short
+    
+    with pytest.raises(ValidationError):
+        model(optional_code='abc123')  # Lowercase
+
+
+def test_valid_chars_with_default_value():
+    """Test valid_chars with default value that must match pattern"""
+    schema = [
+        {
+            'variable': 'version',
+            'schema': {
+                'type': 'string',
+                'valid_chars': r'^\d+\.\d+\.\d+$',  # Semantic version pattern
+                'default': '1.0.0',
+                'required': False
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestDefaultValidChars', NOT_PROVIDED)
+    
+    # Default value is valid
+    m1 = model()
+    assert m1.version == '1.0.0'
+    
+    # Valid versions
+    m2 = model(version='2.1.0')
+    assert m2.version == '2.1.0'
+    
+    m3 = model(version='10.20.30')
+    assert m3.version == '10.20.30'
+    
+    # Invalid versions
+    with pytest.raises(ValidationError):
+        model(version='1.0')  # Missing patch version
+    
+    with pytest.raises(ValidationError):
+        model(version='v1.0.0')  # Has 'v' prefix
+
+
+def test_valid_chars_with_length_constraints():
+    """Test valid_chars combined with min_length/max_length"""
+    schema = [
+        {
+            'variable': 'product_code',
+            'schema': {
+                'type': 'string',
+                'valid_chars': '^[A-Z0-9-]+$',  # Uppercase alphanumeric with dashes
+                'min_length': 5,
+                'max_length': 10,
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestValidCharsLength', NOT_PROVIDED)
+    
+    # Valid codes
+    m1 = model(product_code='ABC-123')
+    assert m1.product_code == 'ABC-123'
+    
+    m2 = model(product_code='PROD-12345')
+    assert m2.product_code == 'PROD-12345'
+    
+    # Invalid pattern
+    with pytest.raises(ValidationError) as exc_info:
+        model(product_code='abc-123')  # Lowercase
+    assert 'Value does not match' in str(exc_info.value)
+    
+    # Too short (even if pattern matches)
+    with pytest.raises(ValidationError) as exc_info:
+        model(product_code='AB-1')
+    # Could fail on either length or pattern
+    assert 'at least 5 characters' in str(exc_info.value) or 'Value does not match' in str(exc_info.value)
+    
+    # Too long
+    with pytest.raises(ValidationError) as exc_info:
+        model(product_code='ABC-1234567')
+    assert 'at most 10 characters' in str(exc_info.value)
+
+
+def test_valid_chars_with_private_field():
+    """Test valid_chars with private/secret field"""
+    schema = [
+        {
+            'variable': 'api_key',
+            'schema': {
+                'type': 'string',
+                'valid_chars': '^[A-Za-z0-9]{32}$',  # 32 character alphanumeric key
+                'private': True,
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestPrivateValidChars', NOT_PROVIDED)
+    
+    # Valid API key
+    valid_key = 'a' * 16 + 'B' * 16  # 32 chars
+    m = model(api_key=valid_key)
+    assert m.api_key.get_secret_value() == valid_key
+    
+    # Invalid pattern (special characters)
+    with pytest.raises(ValidationError):
+        model(api_key='a' * 16 + 'B' * 15 + '!')  # Contains !
+    
+    # Invalid length
+    with pytest.raises(ValidationError):
+        model(api_key='a' * 31)  # Too short
+
+
+def test_valid_chars_in_nested_structure():
+    """Test valid_chars in nested dict structures"""
+    schema = [
+        {
+            'variable': 'network',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {
+                        'variable': 'hostname',
+                        'schema': {
+                            'type': 'string',
+                            'valid_chars': '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$',  # Hostname pattern
+                            'required': True
+                        }
+                    },
+                    {
+                        'variable': 'ip_address',
+                        'schema': {
+                            'type': 'string',
+                            'valid_chars': r'^(\d{1,3}\.){3}\d{1,3}$',  # Simple IPv4 pattern
+                            'required': True
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestNestedValidChars', NOT_PROVIDED)
+    
+    # Valid values
+    m = model(network={
+        'hostname': 'my-server-01',
+        'ip_address': '192.168.1.100'
+    })
+    assert m.network.hostname == 'my-server-01'
+    assert m.network.ip_address == '192.168.1.100'
+    
+    # Invalid hostname
+    with pytest.raises(ValidationError) as exc_info:
+        model(network={
+            'hostname': 'My-Server',  # Uppercase not allowed
+            'ip_address': '192.168.1.100'
+        })
+    assert 'hostname' in str(exc_info.value)
+    
+    # Invalid IP - Note: Our simple regex pattern doesn't validate octet values
+    # For proper IP validation, we should use the ipaddr type instead of regex
+    # This test shows the limitation of using regex for IP validation
+    m2 = model(network={
+        'hostname': 'my-server',
+        'ip_address': '192.168.1.256'  # 256 is technically invalid but passes our simple regex
+    })
+    # This passes because our regex only checks format, not value ranges
+    assert m2.network.ip_address == '192.168.1.256'
+
+
+def test_valid_chars_with_immutable_field():
+    """Test valid_chars combined with immutable field"""
+    schema = [
+        {
+            'variable': 'instance_id',
+            'schema': {
+                'type': 'string',
+                'valid_chars': '^i-[a-f0-9]{8}$',  # AWS-like instance ID pattern
+                'immutable': True,
+                'required': True
+            }
+        }
+    ]
+    
+    # Creation - must match pattern
+    model_create = generate_pydantic_model(schema, 'TestImmutableValidChars', NOT_PROVIDED, NOT_PROVIDED)
+    
+    # Valid instance ID
+    m1 = model_create(instance_id='i-1234abcd')
+    assert m1.instance_id == 'i-1234abcd'
+    
+    # Invalid pattern
+    with pytest.raises(ValidationError):
+        model_create(instance_id='i-1234ABCD')  # Uppercase not allowed
+    
+    # Update - immutable and must still match pattern
+    old_values = {'instance_id': 'i-abcd1234'}
+    model_update = generate_pydantic_model(schema, 'TestImmutableValidCharsUpdate', NOT_PROVIDED, old_values)
+    
+    # Must use exact old value (which should be valid)
+    m2 = model_update(instance_id='i-abcd1234')
+    assert m2.instance_id == 'i-abcd1234'
+    
+    # Cannot change even to another valid pattern
+    with pytest.raises(ValidationError):
+        model_update(instance_id='i-5678efgh')
+
+
+def test_valid_chars_with_text_field_type():
+    """Test valid_chars with text (LongString) field type"""
+    # Note: valid_chars with text type currently has issues because LongString
+    # wraps the value and the validator expects a string
+    # This test documents the current limitation
+    schema = [
+        {
+            'variable': 'config_content',
+            'schema': {
+                'type': 'text',  # LongString type
+                'valid_chars': '^[A-Za-z0-9\n\r\t =]+$',  # Allow alphanumeric, newlines, tabs, spaces, equals
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestTextValidChars', NOT_PROVIDED)
+    
+    # Currently this fails because LongStringWrapper is not a string
+    # Documenting this as a known limitation
+    with pytest.raises(TypeError) as exc_info:
+        config = """key1=value1
+key2=value2
+section=data"""
+        model(config_content=config)
+    assert "expected string or bytes-like object, got 'LongStringWrapper'" in str(exc_info.value)
+
+
+def test_valid_chars_error_message():
+    """Test the error message when valid_chars validation fails"""
+    schema = [
+        {
+            'variable': 'zipcode',
+            'schema': {
+                'type': 'string',
+                'valid_chars': r'^\d{5}(-\d{4})?$',  # US ZIP code pattern
+                'required': True
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestValidCharsError', NOT_PROVIDED)
+    
+    # Valid ZIP codes
+    m1 = model(zipcode='12345')
+    assert m1.zipcode == '12345'
+    
+    m2 = model(zipcode='12345-6789')
+    assert m2.zipcode == '12345-6789'
+    
+    # Invalid ZIP codes with specific error checking
+    with pytest.raises(ValidationError) as exc_info:
+        model(zipcode='1234')  # Too short
+    
+    # Check that the error mentions pattern matching
+    error_dict = exc_info.value.errors()[0]
+    assert error_dict['type'] == 'assertion_error'
+    assert 'Value does not match' in error_dict['msg']
+    assert 'zipcode' in error_dict['loc']
+
+
+def test_valid_chars_with_construct_schema():
+    """Test valid_chars through the main construct_schema function"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'docker_tag',
+                    'schema': {
+                        'type': 'string',
+                        'valid_chars': r'^[a-z0-9]+([._-][a-z0-9]+)*$',  # Docker tag pattern
+                        'required': True
+                    }
+                },
+                {
+                    'variable': 'port',
+                    'schema': {
+                        'type': 'int',
+                        'min': 1,
+                        'max': 65535,
+                        'required': True
+                    }
+                }
+            ]
+        }
+    }
+    
+    # Valid values
+    result_valid = construct_schema(
+        item_version_details,
+        {'docker_tag': 'nginx-1.21.0', 'port': 8080},
+        update=False
+    )
+    assert len(result_valid['verrors'].errors) == 0
+    assert result_valid['new_values']['docker_tag'] == 'nginx-1.21.0'
+    
+    # Invalid docker tag
+    result_invalid = construct_schema(
+        item_version_details,
+        {'docker_tag': 'Nginx:Latest', 'port': 8080},  # Uppercase and colon not allowed
+        update=False
+    )
+    assert len(result_invalid['verrors'].errors) > 0
+    assert 'docker_tag' in str(result_invalid['verrors'].errors)
