@@ -17,6 +17,7 @@ from .jbof_enclosures import map_jbof, set_slot_status as _jbof_set_slot_status
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
+from .r60_drive_identify import set_slot_status as r60_set_slot_status
 from .ses_enclosures2 import get_ses_enclosures
 from .sysfs_disks import toggle_enclosure_slot_identifier
 
@@ -90,6 +91,9 @@ class Enclosure2Service(Service):
                 # an all nvme flash system so drive identification is handled
                 # in a completely different way than sata/scsi
                 return r30_set_slot_status(data['slot'], data['status'])
+            elif enc_info['id'].startswith('r60'):
+                # R60 nvme flash system with different LED control mechanism
+                return r60_set_slot_status(data['slot'], data['status'])
             elif enc_info['id'].startswith(('f60', 'f100', 'f130')):
                 try:
                     return fseries_set_slot_status(data['slot'], data['status'])
