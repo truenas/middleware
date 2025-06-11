@@ -320,13 +320,12 @@ def test_007_add_smbuser_to_sudoers(request):
 def test_008_disable_smb_and_password(request):
     depends(request, ['SMB_CONVERT', UserAssets.TestUser01['depends_name']])
     username = UserAssets.TestUser01['create_payload']['username']
-    qry = call(
+    call(
         'user.update',
         UserAssets.TestUser01['query_response']['id'],
         {'password_disabled': True, 'smb': False}
     )
-    shadow_days = (qry['last_password_change'] - UTC_EPOCH).days
-    check_config_file('/etc/shadow', f'{username}:*:{shadow_days}::::0::')
+    check_config_file('/etc/shadow', f'{username}:*:::::::')
 
 
 @pytest.mark.parametrize('username', [UserAssets.TestUser01['create_payload']['username']])
@@ -548,8 +547,8 @@ def test_041_lock_smb_user(request):
 
     username = UserAssets.TestUser02['create_payload']['username']
 
-    my_entry = call('smb.passdb_list', [['username', '=', username]], {'get': True}) 
-    assert my_entry['acct_ctrl'] & 0x00000400, str(my_entry)  # 0x00000400 is AUTO_LOCKED in MS-SAMR 
+    my_entry = call('smb.passdb_list', [['username', '=', username]], {'get': True})
+    assert my_entry['acct_ctrl'] & 0x00000400, str(my_entry)  # 0x00000400 is AUTO_LOCKED in MS-SAMR
 
 
 def test_042_disable_smb_user(request):
