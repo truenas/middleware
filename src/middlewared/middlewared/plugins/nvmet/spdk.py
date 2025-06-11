@@ -77,13 +77,32 @@ class NVMetSPDKService(Service):
             raise CallError("No ports configured for NVMe-oF")
 
         # For the time being we only support TCP/RDMA with IPv6/IPv6
+        if do_failover := await self.middleware.call('failover.licensed'):
+            node = await self.middleware.call('failover.node')
+            choices = {}
         addresses = set()
         for port in ports:
             if port['addr_trtype'] not in [PORT_TRTYPE.TCP.api, PORT_TRTYPE.RDMA.api]:
                 raise CallError(f"Unsupported addr_trtype: {port['addr_trtype']!r}")
             if port['addr_adrfam'] not in [PORT_ADDR_FAMILY.IPV4.api, PORT_ADDR_FAMILY.IPV6.api]:
                 raise CallError(f"Unsupported addr_adrfam: {port['addr_adrfam']!r}")
-            addresses.add(port['addr_traddr'])
+            if do_failover:
+                # HA get the non-VIP address (this works on MASTER too)
+                trtype = port['addr_trtype']
+                if trtype not in choices:
+                    choices[trtype] = await self.middleware.call('nvmet.port.transport_address_choices', trtype, True)
+                try:
+                    pair = choices[trtype][port['addr_traddr']]
+                except KeyError:
+                    continue
+                match node:
+                    case 'A':
+                        addresses.add(pair.split('/')[0])
+                    case 'B':
+                        addresses.add(pair.split('/')[1])
+            else:
+                # Not HA, just use whatever address is in the config
+                addresses.add(port['addr_traddr'])
 
         if not addresses:
             raise CallError("No IP addresses configured for NVMe-oF")
