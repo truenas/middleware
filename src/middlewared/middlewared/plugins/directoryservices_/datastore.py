@@ -3,6 +3,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    DirectoryServicesEntry,
     DirectoryServicesUpdateArgs, DirectoryServicesUpdateResult,
     DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
 )
@@ -140,6 +141,7 @@ class DirectoryServices(ConfigService):
         cli_namespace = 'directory_service'
         datastore = 'directoryservices'
         datastore_extend = 'directoryservices.extend'
+        entry = DirectoryServicesEntry
         role_prefix = 'DIRECTORY_SERVICE'
 
     @private

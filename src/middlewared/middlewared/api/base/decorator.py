@@ -155,9 +155,6 @@ def api_method(
 
             wrapped._removed_in = removed_in
 
-        # FIXME: This is only here for backwards compatibility and should be removed eventually
-        wrapped.accepts = []
-        wrapped.returns = []
         wrapped.new_style_accepts = accepts
         wrapped.new_style_returns = returns
 
@@ -169,7 +166,7 @@ def api_method(
 def check_model_module(model: type[BaseModel], private: bool):
     module_name = model.__module__
 
-    if module_name in ["middlewared.service.crud_service"]:
+    if module_name in ["middlewared.plugins.test.rest", "middlewared.service.crud_service"]:
         return
 
     if private:

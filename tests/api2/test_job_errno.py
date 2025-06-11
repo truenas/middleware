@@ -6,12 +6,26 @@ from truenas_api_client import ClientException
 
 def test_job_errno():
     with mock("test.test1", """
+        from typing import Annotated
+        from pydantic import create_model, Field, Secret
+        from middlewared.api import api_method
+        from middlewared.api.base import BaseModel
         from middlewared.service import job
-        from middlewared.schema import returns, Password
         from middlewared.service_exception import CallError
 
+        @api_method(
+            create_model(
+                "MockArgs",
+                __base__=(BaseModel,),
+            ),
+            create_model(
+                "MockResult",
+                __base__=(BaseModel,),
+                result=Annotated[Secret[str], Field()],
+            ),
+            private=True,
+        )
         @job()
-        @returns(Password("my_password"))
         def mock(self, job, *args):
             raise CallError("canary", 13)
     """):

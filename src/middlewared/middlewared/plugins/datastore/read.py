@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import asdict, dataclass, field
 from functools import cache
 import re
 
@@ -6,11 +7,10 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.sql import Alias
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filters
-from middlewared.validators import QueryFilters, QueryOptions
+from middlewared.validators import validate_filters, validate_options
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
@@ -24,34 +24,29 @@ def regexp(expr, item):
     return reg.search(item) is not None
 
 
+@dataclass(slots=True, kw_only=True)
+class DatastoreQueryOptions:
+    relationships: bool = True
+    extend: str | None = None
+    extend_context: str | None = None
+    extend_fk: list | None = field(default_factory=list)
+    prefix: str | None = None
+    extra: dict = field(default_factory=dict)
+    order_by: list = field(default_factory=list)
+    select: list = field(default_factory=list)
+    count: bool = False
+    get: bool = False
+    offset: int = 0
+    limit: int = 0
+    force_sql_filters: bool = False
+
+
 class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     class Config:
         private = True
 
-    @accepts(
-        Str('name'),
-        List('query-filters', items=[List('query-filter')], validators=[QueryFilters()], register=True),
-        Dict(
-            'query-options',
-            Bool('relationships', default=True),
-            Str('extend', default=None, null=True),
-            Str('extend_context', default=None, null=True),
-            List('extend_fk', default=[], null=True),
-            Str('prefix', default=None, null=True),
-            Dict('extra', additional_attrs=True),
-            List('order_by'),
-            List('select'),
-            Bool('count', default=False),
-            Bool('get', default=False),
-            Int('offset', default=0),
-            Int('limit', default=0),
-            Bool('force_sql_filters', default=False),
-            register=True,
-            validators=[QueryOptions()]
-        ),
-    )
-    async def query(self, name, filters, options):
+    async def query(self, name, filters=None, options=None):
         """
         Query for items in a given collection `name`.
 
@@ -84,9 +79,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         """
         table = self._get_table(name)
 
-        # We do not want to make changes to original options
-        # which might happen with "prefix"
-        options = options.copy()
+        filters = filters or []
+        options = asdict(DatastoreQueryOptions(**(options or {})))
+
+        validate_filters(filters)
+        validate_options(options)
 
         prefix = options['prefix']
         extend_fk = options.get('extend_fk')
@@ -180,7 +177,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             options = dict()
 
         options.setdefault('get', True)
-        QueryOptions().__call__(options)
+        validate_options(options)
 
         return await self.query(name, [], options)
 

@@ -3,13 +3,33 @@ import pytest
 from middlewared.test.integration.utils import call, client, mock, ssh
 
 
-
 def test_private_params_do_not_leak_to_logs():
-    with mock("test.test1", """    
-        from middlewared.service import accepts
-        from middlewared.schema import Dict, Str
+    with mock("test.test1", """
+        from typing import Annotated
+        from pydantic import create_model, Field, Secret
+        from middlewared.api import api_method
+        from middlewared.api.base import BaseModel
 
-        @accepts(Dict("test", Str("password", private=True)))
+        @api_method(
+            create_model(
+                "MockArgs",
+                __base__=(BaseModel,),
+                args=Annotated[
+                    create_model(
+                        "MockArgsDict",
+                        __base__=(BaseModel,),
+                        password=Annotated[Secret[str], Field()],
+                    ),
+                    Field(),
+                ],
+            ),
+            create_model(
+                "MockResult",
+                __base__=(BaseModel,),
+                result=Annotated[int, Field()],
+            ),
+            private=True,
+        )
         async def mock(self, args):
             raise Exception()
     """):
@@ -24,11 +44,33 @@ def test_private_params_do_not_leak_to_logs():
 
 
 def test_private_params_do_not_leak_to_core_get_jobs():
-    with mock("test.test1", """    
-        from middlewared.service import accepts, job
-        from middlewared.schema import Dict, Str
+    with mock("test.test1", """
+        from typing import Annotated
+        from pydantic import create_model, Field, Secret
+        from middlewared.api import api_method
+        from middlewared.api.base import BaseModel
+        from middlewared.service import job
 
-        @accepts(Dict("test", Str("password", private=True)))
+        @api_method(
+            create_model(
+                "MockArgs",
+                __base__=(BaseModel,),
+                args=Annotated[
+                    create_model(
+                        "MockArgsDict",
+                        __base__=(BaseModel,),
+                        password=Annotated[Secret[str], Field()],
+                    ),
+                    Field(),
+                ],
+            ),
+            create_model(
+                "MockResult",
+                __base__=(BaseModel,),
+                result=Annotated[int, Field()],
+            ),
+            private=True,
+        )
         @job()
         async def mock(self, job, args):
             return 42

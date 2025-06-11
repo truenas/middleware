@@ -35,7 +35,8 @@ class LegacyAPIMethod(Method):
         methodobj = self.methodobj
         if crud_methodobj := real_crud_method(methodobj):
             methodobj = crud_methodobj
-        if hasattr(methodobj, "new_style_accepts"):  # FIXME: Remove this check when all models become new style
+
+        if hasattr(methodobj, "new_style_accepts"):
             self.accepts_model = methodobj.new_style_accepts
             self.returns_model = methodobj.new_style_returns
         else:
@@ -43,7 +44,7 @@ class LegacyAPIMethod(Method):
             self.returns_model = None
 
     async def call(self, app: "RpcWebSocketApp", id_: Any, params):
-        if self.accepts_model:  # FIXME: Remove this check when all models become new style
+        if self.accepts_model:
             params = await self._adapt_params(params)
 
         return await super().call(app, id_, params)
@@ -91,7 +92,7 @@ class LegacyAPIMethod(Method):
         return await super()._dump_result(app, methodobj, result)
 
     def dump_args(self, params):
-        if self.accepts_model:  # FIXME: Remove this check when all models become new style
+        if self.accepts_model:
             return dump_params(self.accepts_model, params, False)
 
         return super().dump_args(params)

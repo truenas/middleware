@@ -25,10 +25,6 @@ def filterable_api_method(
     pass_app=False, pass_app_require=False, pass_app_rest=False,
 ):
     def filterable_internal(fn):
-        fn._filterable = True
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable = True
-
         if item:
             returns = query_result(item)
         else:
@@ -83,7 +79,7 @@ def job(
             @job(lock=lambda args: f'scrub:{args[0]}')
             def scrub(self, pool_name):
 
-        Please beware that, as `@job` decorator must be executed before `@accepts`, the arguments passed to the lock
+        Please beware that, as `@job` decorator must be executed before `@api_method`, the arguments passed to the lock
         callable will be the raw arguments given by caller (there would be no arguments sanitizing or added defaults).
 
         Default value is `None` meaning that no locking is used.
@@ -131,7 +127,7 @@ def job(
 
                 @job(description=lambda dev, mode, *args: f'Wipe disk {dev}')
 
-        Please beware that, as `@job` decorator must be executed before `@accepts`, the arguments passed to the
+        Please beware that, as `@job` decorator must be executed before `@api_method`, the arguments passed to the
         description callable will be the raw arguments given by caller (there would be no arguments sanitizing or added
         defaults).
 

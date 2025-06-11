@@ -1,5 +1,4 @@
 import asyncio
-import copy
 import errno
 from typing import Annotated
 
@@ -12,7 +11,6 @@ from middlewared.api.base.model import (
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, QueryOptions
 from middlewared.service_exception import CallError, InstanceNotFound
-from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns
 from middlewared.utils import filter_list
 from middlewared.utils.type import copy_function_metadata
 
@@ -23,13 +21,6 @@ from .service_mixin import ServiceChangeMixin
 
 
 PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'select')
-
-
-def get_datastore_primary_key_schema(klass):
-    return convert_schema({
-        'type': klass._config.datastore_primary_key_type,
-        'name': klass._config.datastore_primary_key,
-    })
 
 
 def get_instance_args(entry, primary_key="id"):
@@ -77,25 +68,24 @@ class CRUDServiceMetabase(ServiceBase):
                 raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
 
         if entry is not None:
-            # FIXME: This is to prevent `Method cloudsync.credentials.ENTRY is public but has no @accepts()`, remove
-            # eventually.
-            klass.ENTRY = None
             query_result_model = query_result(entry)
             if (
                 any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
-                not hasattr(klass.query, '_filterable') or klass.query._filterable is False
+                not hasattr(klass.query, 'new_style_accepts')
             ):
                 # No need to inject api method if filterable has been explicitly specified
                 klass.query = api_method(
                     QueryArgs, query_result_model, private=private, cli_private=cli_private
                 )(klass.query)
 
-            # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
             get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)
             get_instance_result_model = get_instance_result(entry)
             klass.get_instance = api_method(
-                get_instance_args_model, get_instance_result_model, private=private, cli_private=cli_private
-            )(klass.get_instance.wraps)
+                get_instance_args_model,
+                get_instance_result_model,
+                private=private,
+                cli_private=cli_private,
+            )(klass.get_instance)
 
             klass._register_models = [
                 (query_result_model, query_result, entry.__name__),
@@ -104,74 +94,6 @@ class CRUDServiceMetabase(ServiceBase):
                 (get_instance_args_model, get_instance_args, entry.__name__),
                 (get_instance_result_model, get_instance_result, entry.__name__),
             ]
-
-            return klass
-
-        namespace = config.namespace.replace('.', '_')
-        entry_key = f'{namespace}_entry'
-        if klass.ENTRY == NotImplementedError:
-            klass.ENTRY = Dict(entry_key, additional_attrs=True)
-        else:
-            # We would like to ensure that not all fields are required as select can filter out fields
-            if isinstance(klass.ENTRY, (Dict, Patch)):
-                entry_key = klass.ENTRY.name
-            elif isinstance(klass.ENTRY, Ref):
-                entry_key = f'{klass.ENTRY.name}_ref_entry'
-            else:
-                raise ValueError('Result entry should be Dict/Patch/Ref instance')
-
-        result_entry = copy.deepcopy(klass.ENTRY)
-        query_result_entry = copy.deepcopy(klass.ENTRY)
-        if isinstance(result_entry, Ref):
-            query_result_entry = Patch(result_entry.name, entry_key)
-        if isinstance(result_entry, Patch):
-            query_result_entry.patches.append(('attr', {'update': True}))
-        else:
-            query_result_entry.update = True
-
-        result_entry.register = True
-        query_result_entry.register = False
-
-        query_method = klass.query.wraps if hasattr(klass.query, 'returns') else klass.query
-        klass.query = returns(OROperator(
-            List('query_result', items=[copy.deepcopy(query_result_entry)]),
-            query_result_entry,
-            Int('count'),
-            result_entry,
-            name='query_result',
-        ))(query_method)
-
-        klass.get_instance = returns(Ref(entry_key))(klass.get_instance)
-
-        for m_name in filter(lambda m: hasattr(klass, m), ('do_create', 'do_update')):
-            for d_name, decorator in filter(
-                lambda d: not hasattr(getattr(klass, m_name), d[0]), (('returns', returns), ('accepts', accepts))
-            ):
-                new_name = f'{namespace}_{m_name.split("_")[-1]}'
-                if d_name == 'returns':
-                    new_name += '_returns'
-
-                patch_entry = Patch(entry_key, new_name, register=True)
-                schema = []
-                if d_name == 'accepts':
-                    patch_entry.patches.append(('rm', {
-                        'name': config.datastore_primary_key,
-                        'safe_delete': True,
-                    }))
-                    if m_name == 'do_update':
-                        patch_entry.patches.append(('attr', {'update': True}))
-                        schema.append(get_datastore_primary_key_schema(klass))
-
-                schema.append(patch_entry)
-                setattr(klass, m_name, decorator(*schema)(getattr(klass, m_name)))
-
-        if hasattr(klass, 'do_delete'):
-            if not hasattr(klass.do_delete, 'accepts'):
-                klass.do_delete = accepts(get_datastore_primary_key_schema(klass))(klass.do_delete)
-            if not hasattr(klass.do_delete, 'returns'):
-                klass.do_delete = returns(Bool(
-                    'deleted', description='Will return `true` if `id` is deleted successfully'
-                ))(klass.do_delete)
 
         return klass
 
@@ -186,24 +108,19 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     CRUD stands for Create Retrieve Update Delete.
     """
 
-    ENTRY = NotImplementedError
-
     def __init__(self, middleware):
         super().__init__(middleware)
-        if self._config.event_register:
+        if self._config.event_register and self._config.entry:
             if self._config.role_prefix:
                 roles = [f'{self._config.role_prefix}_READ']
             else:
                 roles = ['READONLY_ADMIN']
 
-            if self._config.entry is not None:
-                kwargs = dict(models={
-                    'ADDED': added_event_model(self._config.entry),
-                    'CHANGED': changed_event_model(self._config.entry),
-                    'REMOVED': removed_event_model(self._config.entry),
-                })
-            else:
-                kwargs = dict(returns=Ref(self.ENTRY.name))
+            kwargs = dict(models={
+                'ADDED': added_event_model(self._config.entry),
+                'CHANGED': changed_event_model(self._config.entry),
+                'REMOVED': removed_event_model(self._config.entry),
+            })
 
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
@@ -306,23 +223,14 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         copy_function_metadata(func, nf)
         return nf
 
-    @accepts(
-        Any('id'),
-        Patch(
-            'query-options', 'query-options-get_instance',
-            ('edit', {
-                'name': 'force_sql_filters',
-                'method': lambda x: setattr(x, 'default', True),
-            }),
-            register=True,
-        ),
-    )
-    async def get_instance(self, id_, options):
+    async def get_instance(self, id_, options=None):
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
 
         Please see `query` method documentation for `options`.
         """
+        options = options or {}
+
         instance = await self.middleware.call(
             f'{self._config.namespace}.query',
             [[self._config.datastore_primary_key, '=', id_]],
@@ -333,11 +241,12 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         return instance[0]
 
     @private
-    @accepts(Any('id'), Ref('query-options-get_instance'))
-    def get_instance__sync(self, id_, options):
+    def get_instance__sync(self, id_, options=None):
         """
         Synchronous implementation of `get_instance`.
         """
+        options = options or {}
+
         instance = self.middleware.call_sync(
             f'{self._config.namespace}.query',
             [[self._config.datastore_primary_key, '=', id_]],

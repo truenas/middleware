@@ -23,7 +23,7 @@ def mock(method, declaration="", **kwargs):
 
     :param declaration: A string, containing python function declaration for mock. Function should be named `mock`,
         can be normal function or `async` and must accept `self` argument and all other arguments the function being
-        replaced accepts. No `@accepts`, `@job` or other decorators are required, but if a method being replaced is a
+        replaced accepts. No `@api_method`, `@job` or other decorators are required, but if a method being replaced is a
         job, then mock signature must also accept `job` argument.
 
     :param remote: Mock this method on another node of the HA setup instead.
