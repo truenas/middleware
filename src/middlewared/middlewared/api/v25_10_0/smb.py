@@ -20,16 +20,16 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose, validate_smb_path_suffix
 
 __all__ = [
-    'GetSmbAclArgs', 'GetSmbAclResult',
-    'SetSmbAclArgs', 'SetSmbAclResult',
-    'SmbServiceEntry', 'SmbServiceUpdateArgs', 'SmbServiceUpdateResult',
-    'SmbServiceUnixCharsetChoicesArgs', 'SmbServiceUnixCharsetChoicesResult',
-    'SmbServiceBindIPChoicesArgs', 'SmbServiceBindIPChoicesResult',
-    'SmbSharePresetsArgs', 'SmbSharePresetsResult',
-    'SmbSharePrecheckArgs', 'SmbSharePrecheckResult',
-    'SmbShareEntry', 'SmbShareCreateArgs', 'SmbShareCreateResult',
-    'SmbShareUpdateArgs', 'SmbShareUpdateResult',
-    'SmbShareDeleteArgs', 'SmbShareDeleteResult',
+    'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
+    'SharingSMBSetaclArgs', 'SharingSMBSetaclResult',
+    'SmbServiceEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
+    'SMBUnixcharsetChoicesArgs', 'SMBUnixcharsetChoicesResult',
+    'SMBBindipChoicesArgs', 'SMBBindipChoicesResult',
+    'SharingSMBPresetsArgs', 'SharingSMBPresetsResult',
+    'SharingSMBSharePrecheckArgs', 'SharingSMBSharePrecheckResult',
+    'SmbShareEntry', 'SharingSMBCreateArgs', 'SharingSMBCreateResult',
+    'SharingSMBUpdateArgs', 'SharingSMBUpdateResult',
+    'SharingSMBDeleteArgs', 'SharingSMBDeleteResult',
 ]
 
 EMPTY_STRING = ''
@@ -99,20 +99,20 @@ class SMBShareAcl(BaseModel):
 
 
 @single_argument_args('smb_setacl')
-class SetSmbAclArgs(SMBShareAcl):
+class SharingSMBSetaclArgs(SMBShareAcl):
     pass
 
 
-class SetSmbAclResult(BaseModel):
+class SharingSMBSetaclResult(BaseModel):
     result: SMBShareAcl
 
 
 @single_argument_args('smb_getacl')
-class GetSmbAclArgs(BaseModel):
+class SharingSMBGetaclArgs(BaseModel):
     share_name: NonEmptyString
 
 
-class GetSmbAclResult(SetSmbAclResult):
+class SharingSMBGetaclResult(SharingSMBSetaclResult):
     pass
 
 
@@ -183,44 +183,44 @@ class SmbServiceEntry(BaseModel):
 
 
 @single_argument_args('smb_update')
-class SmbServiceUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
+class SMBUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class SmbServiceUpdateResult(BaseModel):
+class SMBUpdateResult(BaseModel):
     result: SmbServiceEntry
 
 
-class SmbServiceUnixCharsetChoicesArgs(BaseModel):
+class SMBUnixcharsetChoicesArgs(BaseModel):
     pass
 
 
-class SmbServiceUnixCharsetChoicesResult(BaseModel):
+class SMBUnixcharsetChoicesResult(BaseModel):
     result: dict[str, SMBCharsetType]
 
 
-class SmbServiceBindIPChoicesArgs(BaseModel):
+class SMBBindipChoicesArgs(BaseModel):
     pass
 
 
-class SmbServiceBindIPChoicesResult(BaseModel):
+class SMBBindipChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class SmbSharePresetsArgs(BaseModel):
+class SharingSMBPresetsArgs(BaseModel):
     pass
 
 
-class SmbSharePresetsResult(BaseModel):
+class SharingSMBPresetsResult(BaseModel):
     result: dict[str, dict]
 
 
 @single_argument_args('smb_share_precheck')
-class SmbSharePrecheckArgs(BaseModel):
+class SharingSMBSharePrecheckArgs(BaseModel):
     name: SmbShareName | None = None
 
 
-class SmbSharePrecheckResult(BaseModel):
+class SharingSMBSharePrecheckResult(BaseModel):
     result: None
 
 
@@ -658,11 +658,11 @@ class SmbShareCreate(SmbShareEntry):
         return self
 
 
-class SmbShareCreateArgs(BaseModel):
+class SharingSMBCreateArgs(BaseModel):
     data: SmbShareCreate
 
 
-class SmbShareCreateResult(BaseModel):
+class SharingSMBCreateResult(BaseModel):
     result: SmbShareEntry
 
 
@@ -670,18 +670,18 @@ class SmbShareUpdate(SmbShareCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class SmbShareUpdateArgs(BaseModel):
+class SharingSMBUpdateArgs(BaseModel):
     id: int
     data: SmbShareUpdate
 
 
-class SmbShareUpdateResult(BaseModel):
+class SharingSMBUpdateResult(BaseModel):
     result: SmbShareEntry
 
 
-class SmbShareDeleteArgs(BaseModel):
+class SharingSMBDeleteArgs(BaseModel):
     id: int
 
 
-class SmbShareDeleteResult(BaseModel):
+class SharingSMBDeleteResult(BaseModel):
     result: Literal[True]

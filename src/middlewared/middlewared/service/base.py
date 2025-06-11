@@ -1,3 +1,6 @@
+import inspect
+
+
 def service_config(klass, config):
     namespace = klass.__name__
     if namespace.endswith('Service'):
@@ -39,6 +42,46 @@ def service_config(klass, config):
     })
 
     return type('Config', (), config_attrs)
+
+
+def validate_api_method_schema_class_names(klass):
+    """
+    Validate that API method argument class names follow the required format:
+    - accepts class should be named ServiceNameMethodNameArgs
+    - returns class should be named ServiceNameMethodNameResult
+    where MethodName is the method name converted from snake_case to CamelCase
+    """
+    service_name = klass.__name__
+    if service_name.endswith('Service'):
+        service_name = service_name[:-7]
+
+    for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
+        if name.startswith('_') or getattr(method, '_private', False):
+            continue
+
+        if not hasattr(method, 'new_style_accepts') or not hasattr(method, 'new_style_returns'):
+            continue
+
+        # Remove do_ prefix only for do_create, do_update, do_delete
+        method_name = name[3:] if name in ('do_create', 'do_update', 'do_delete') else name
+
+        # Convert snake_case to CamelCase
+        method_name = ''.join(word.capitalize() for word in method_name.split('_'))
+        expected_accepts = f"{service_name}{method_name}Args"
+        expected_returns = f"{service_name}{method_name}Result"
+
+        if method.new_style_accepts.__name__ != 'QueryArgs':
+            if method.new_style_accepts.__name__ != expected_accepts:
+                raise RuntimeError(
+                    f"API method {method!r} has incorrect accepts class name. "
+                    f"Expected {expected_accepts}, got {method.new_style_accepts.__name__}."
+                )
+
+        if method.new_style_returns.__name__ != expected_returns:
+            raise RuntimeError(
+                f"API method {method!r} has incorrect returns class name. "
+                f"Expected {expected_returns}, got {method.new_style_returns.__name__}."
+            )
 
 
 class ServiceBase(type):
@@ -86,4 +129,8 @@ class ServiceBase(type):
             klass._config_specified = {}
 
         klass._config = service_config(klass, klass._config_specified)
+
+        # Validate API method argument class names
+        validate_api_method_schema_class_names(klass)
+
         return klass

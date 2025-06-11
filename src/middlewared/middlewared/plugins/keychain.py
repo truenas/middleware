@@ -21,9 +21,9 @@ from middlewared.api.current import (
     KeychainCredentialUpdateArgs, KeychainCredentialUpdateResult,
     KeychainCredentialDeleteArgs, KeychainCredentialDeleteResult,
     KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult,
-    KeychainCredentialGenerateSSHKeyPairArgs, KeychainCredentialGenerateSSHKeyPairResult,
-    KeychainCredentialRemoteSSHHostKeyScanArgs, KeychainCredentialRemoteSSHHostKeyScanResult,
-    KeychainCredentialRemoteSSHSemiautomaticSetupArgs, KeychainCredentialRemoteSSHSemiautomaticSetupResult,
+    KeychainCredentialGenerateSshKeyPairArgs, KeychainCredentialGenerateSshKeyPairResult,
+    KeychainCredentialRemoteSshHostKeyScanArgs, KeychainCredentialRemoteSshHostKeyScanResult,
+    KeychainCredentialRemoteSshSemiautomaticSetupArgs, KeychainCredentialRemoteSshSemiautomaticSetupResult,
 )
 from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
@@ -458,8 +458,8 @@ class KeychainCredentialService(CRUDService):
             return credential
 
     @api_method(
-        KeychainCredentialGenerateSSHKeyPairArgs,
-        KeychainCredentialGenerateSSHKeyPairResult,
+        KeychainCredentialGenerateSshKeyPairArgs,
+        KeychainCredentialGenerateSshKeyPairResult,
         roles=["KEYCHAIN_CREDENTIAL_WRITE"]
     )
     def generate_ssh_key_pair(self):
@@ -490,8 +490,8 @@ class KeychainCredentialService(CRUDService):
         }
 
     @api_method(
-        KeychainCredentialRemoteSSHHostKeyScanArgs,
-        KeychainCredentialRemoteSSHHostKeyScanResult,
+        KeychainCredentialRemoteSshHostKeyScanArgs,
+        KeychainCredentialRemoteSshHostKeyScanResult,
         roles=["KEYCHAIN_CREDENTIAL_WRITE"]
     )
     async def remote_ssh_host_key_scan(self, data):
@@ -527,8 +527,8 @@ class KeychainCredentialService(CRUDService):
             raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}")
 
     @api_method(
-        KeychainCredentialRemoteSSHSemiautomaticSetupArgs,
-        KeychainCredentialRemoteSSHSemiautomaticSetupResult,
+        KeychainCredentialRemoteSshSemiautomaticSetupArgs,
+        KeychainCredentialRemoteSshSemiautomaticSetupResult,
         roles=["KEYCHAIN_CREDENTIAL_WRITE"],
         audit="SSH Semi-automatic Setup:",
         audit_extended=lambda data: data["name"]

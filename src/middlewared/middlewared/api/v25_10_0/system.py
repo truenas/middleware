@@ -8,8 +8,8 @@ from middlewared.api.base import BaseModel, single_argument_result
 __all__ = [
     "SystemDebugArgs",
     "SystemDebugResult",
-    "SystemHostIDArgs",
-    "SystemHostIDResult",
+    "SystemHostIdArgs",
+    "SystemHostIdResult",
     "SystemInfoArgs",
     "SystemInfoResult",
 ]
@@ -23,11 +23,11 @@ class SystemDebugResult(BaseModel):
     result: None
 
 
-class SystemHostIDArgs(BaseModel):
+class SystemHostIdArgs(BaseModel):
     pass
 
 
-class SystemHostIDResult(BaseModel):
+class SystemHostIdResult(BaseModel):
     result: str
     """The system host identifier."""
 

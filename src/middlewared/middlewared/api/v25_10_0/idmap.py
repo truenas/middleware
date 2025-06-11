@@ -3,13 +3,13 @@ from typing import Literal
 
 
 __all__ = [
-    'IdmapCacheClearArgs', 'IdmapCacheClearResult',
+    'IdmapDomainClearIdmapCacheArgs', 'IdmapDomainClearIdmapCacheResult',
 ]
 
 
-class IdmapCacheClearArgs(BaseModel):
+class IdmapDomainClearIdmapCacheArgs(BaseModel):
     pass
 
 
-class IdmapCacheClearResult(BaseModel):
+class IdmapDomainClearIdmapCacheResult(BaseModel):
     result: Literal[None]

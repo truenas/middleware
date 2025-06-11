@@ -2,7 +2,7 @@ from middlewared.api.base import BaseModel
 
 # from pydantic import ConfigDict, Field
 
-__all__ = ("PoolDatasetDetailsArgs", "PoolDatasetDetailsResults")
+__all__ = ("PoolDatasetDetailsArgs", "PoolDatasetDetailsResult")
 
 """
 FIXME: We need to fix the return validation
@@ -102,7 +102,7 @@ class PoolDatasetDetailsArgs(BaseModel):
     pass
 
 
-class PoolDatasetDetailsResults(BaseModel):
+class PoolDatasetDetailsResult(BaseModel):
     result: list[PoolDatasetDetailsEntry]
 """
 
@@ -111,5 +111,5 @@ class PoolDatasetDetailsArgs(BaseModel):
     pass
 
 
-class PoolDatasetDetailsResults(BaseModel):
+class PoolDatasetDetailsResult(BaseModel):
     result: list[dict]

@@ -2,10 +2,10 @@ from subprocess import run, DEVNULL
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    IPMIChassisIdentifyArgs,
-    IPMIChassisIdentifyResult,
-    IPMIChassisInfoArgs,
-    IPMIChassisInfoResult,
+    IpmiChassisIdentifyArgs,
+    IpmiChassisIdentifyResult,
+    IpmiChassisInfoArgs,
+    IpmiChassisInfoResult,
 )
 from middlewared.service import Service
 
@@ -17,8 +17,8 @@ class IpmiChassisService(Service):
         cli_namespace = 'service.ipmi.chassis'
 
     @api_method(
-        IPMIChassisInfoArgs,
-        IPMIChassisInfoResult,
+        IpmiChassisInfoArgs,
+        IpmiChassisInfoResult,
         roles=['IPMI_READ'],
     )
     def info(self):
@@ -35,8 +35,8 @@ class IpmiChassisService(Service):
         return rv
 
     @api_method(
-        IPMIChassisIdentifyArgs,
-        IPMIChassisIdentifyResult,
+        IpmiChassisIdentifyArgs,
+        IpmiChassisIdentifyResult,
         roles=['IPMI_WRITE'],
     )
     def identify(self, verb):

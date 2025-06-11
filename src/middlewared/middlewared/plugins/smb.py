@@ -8,16 +8,16 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    GetSmbAclArgs, GetSmbAclResult,
-    SetSmbAclArgs, SetSmbAclResult,
-    SmbServiceEntry, SmbServiceUpdateArgs, SmbServiceUpdateResult,
-    SmbServiceUnixCharsetChoicesArgs, SmbServiceUnixCharsetChoicesResult,
-    SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult,
-    SmbSharePresetsArgs, SmbSharePresetsResult,
-    SmbSharePrecheckArgs, SmbSharePrecheckResult,
-    SmbShareEntry, SmbShareCreateArgs, SmbShareCreateResult,
-    SmbShareUpdateArgs, SmbShareUpdateResult,
-    SmbShareDeleteArgs, SmbShareDeleteResult,
+    SharingSMBGetaclArgs, SharingSMBGetaclResult,
+    SharingSMBSetaclArgs, SharingSMBSetaclResult,
+    SmbServiceEntry, SMBUpdateArgs, SMBUpdateResult,
+    SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult,
+    SMBBindipChoicesArgs, SMBBindipChoicesResult,
+    SharingSMBPresetsArgs, SharingSMBPresetsResult,
+    SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult,
+    SmbShareEntry, SharingSMBCreateArgs, SharingSMBCreateResult,
+    SharingSMBUpdateArgs, SharingSMBUpdateResult,
+    SharingSMBDeleteArgs, SharingSMBDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -115,7 +115,7 @@ class SMBService(ConfigService):
         smb.pop('secrets', None)
         return smb
 
-    @api_method(SmbServiceUnixCharsetChoicesArgs, SmbServiceUnixCharsetChoicesResult)
+    @api_method(SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult)
     async def unixcharset_choices(self):
         return {str(charset): charset for charset in SMBUnixCharset}
 
@@ -143,7 +143,7 @@ class SMBService(ConfigService):
             security_config,
         )
 
-    @api_method(SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult)
+    @api_method(SMBBindipChoicesArgs, SMBBindipChoicesResult)
     async def bindip_choices(self):
         """
         List of valid choices for IP addresses to which to bind the SMB service.
@@ -434,7 +434,7 @@ class SMBService(ConfigService):
                     f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
                 )
 
-    @api_method(SmbServiceUpdateArgs, SmbServiceUpdateResult, audit='Update SMB configuration')
+    @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration')
     @pass_app(rest=True)
     async def do_update(self, app, data):
         """
@@ -592,7 +592,7 @@ class SharingSMBService(SharingService):
         entry = SmbShareEntry
 
     @api_method(
-        SmbShareCreateArgs, SmbShareCreateResult,
+        SharingSMBCreateArgs, SharingSMBCreateResult,
         audit='SMB share create',
         audit_extended=lambda data: data['name'],
         pass_app=True,
@@ -699,7 +699,7 @@ class SharingSMBService(SharingService):
                 await self.toggle_share(newname, False)
 
     @api_method(
-        SmbShareUpdateArgs, SmbShareUpdateResult,
+        SharingSMBUpdateArgs, SharingSMBUpdateResult,
         audit='SMB share update',
         audit_callback=True,
         pass_app=True,
@@ -848,7 +848,7 @@ class SharingSMBService(SharingService):
         return await self.get_instance(id_)
 
     @api_method(
-        SmbShareDeleteArgs, SmbShareDeleteResult,
+        SharingSMBDeleteArgs, SharingSMBDeleteResult,
         audit='SMB share delete',
         audit_callback=True,
     )
@@ -1168,7 +1168,7 @@ class SharingSMBService(SharingService):
                 'This feature may be enabled in the general SMB server configuration.'
             )
 
-    @api_method(SmbSharePrecheckArgs, SmbSharePrecheckResult, roles=['READONLY_ADMIN'])
+    @api_method(SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
@@ -1333,7 +1333,7 @@ class SharingSMBService(SharingService):
 
         return data
 
-    @api_method(SmbSharePresetsArgs, SmbSharePresetsResult, roles=['SHARING_SMB_READ'])
+    @api_method(SharingSMBPresetsArgs, SharingSMBPresetsResult, roles=['SHARING_SMB_READ'])
     async def presets(self):
         """
         Retrieve pre-defined configuration sets for specific use-cases. These parameter
@@ -1342,7 +1342,7 @@ class SharingSMBService(SharingService):
         return {x.name: {'verbose_name': x.value} for x in SMBSharePurpose}
 
     @api_method(
-        SetSmbAclArgs, SetSmbAclResult,
+        SharingSMBSetaclArgs, SharingSMBSetaclResult,
         roles=['SHARING_SMB_WRITE'],
         audit='Setacl SMB share',
         audit_extended=lambda data: data['share_name']
@@ -1454,7 +1454,7 @@ class SharingSMBService(SharingService):
         return await self.getacl({'share_name': data['share_name']})
 
     @api_method(
-        GetSmbAclArgs, GetSmbAclResult,
+        SharingSMBGetaclArgs, SharingSMBGetaclResult,
         roles=['SHARING_SMB_READ'],
         audit='Getacl SMB share',
         audit_extended=lambda data: data['share_name']

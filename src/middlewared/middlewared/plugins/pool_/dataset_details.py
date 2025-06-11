@@ -3,7 +3,7 @@ import pathlib
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetDetailsArgs,
-    PoolDatasetDetailsResults,
+    PoolDatasetDetailsResult,
 )
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
@@ -66,7 +66,7 @@ class PoolDatasetService(Service):
         #        valid_pools.append(i['name'])
         return [], options
 
-    @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResults, roles=['DATASET_READ'])
+    @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResult, roles=['DATASET_READ'])
     def details(self):
         """
         Retrieve all dataset(s) details outlining any

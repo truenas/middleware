@@ -1,6 +1,6 @@
 from middlewared.api.base import BaseModel
 
-__all__ = ["EnclosureLabelSetArgs", "EnclosureLabelUpdateResult"]
+__all__ = ["EnclosureLabelSetArgs", "EnclosureLabelSetResult"]
 
 
 class EnclosureLabelSetArgs(BaseModel):
@@ -8,5 +8,5 @@ class EnclosureLabelSetArgs(BaseModel):
     label: str
 
 
-class EnclosureLabelUpdateResult(BaseModel):
+class EnclosureLabelSetResult(BaseModel):
     result: None

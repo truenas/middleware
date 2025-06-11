@@ -3,7 +3,7 @@ import os.path
 import shutil
 
 from middlewared.api import api_method
-from middlewared.api.current import K8sToDockerMigrateArgs, K8sToDockerMigrateResult
+from middlewared.api.current import K8stoDockerMigrationMigrateArgs, K8stoDockerMigrationMigrateResult
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
 from middlewared.plugins.docker.state_utils import DatasetDefaults
 from middlewared.service import CallError, job, Service
@@ -22,8 +22,8 @@ class K8stoDockerMigrationService(Service):
         cli_namespace = 'k8s_to_docker'
 
     @api_method(
-        K8sToDockerMigrateArgs,
-        K8sToDockerMigrateResult,
+        K8stoDockerMigrationMigrateArgs,
+        K8stoDockerMigrationMigrateResult,
         audit='K8s_to_docker: Migrating backup from',
         audit_extended=lambda kubernetes_pool, options=None: f'{kubernetes_pool!r} kubernetes pool to docker',
         roles=['DOCKER_WRITE']

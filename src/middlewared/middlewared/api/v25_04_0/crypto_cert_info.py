@@ -1,22 +1,22 @@
 from middlewared.api.base import BaseModel
 
 __all__ = (
-    'CertificateCountryChoicesArgs',
-    'CertificateCountryChoicesResult',
+    'SystemGeneralCountryChoicesArgs',
+    'SystemGeneralCountryChoicesResult',
     'CertificateAcmeServerChoicesArgs',
     'CertificateAcmeServerChoicesResult',
-    'CertificateECCurveChoicesArgs',
-    'CertificateECCurveChoicesResult',
+    'CertificateEcCurveChoicesArgs',
+    'CertificateEcCurveChoicesResult',
     'CertificateExtendedKeyUsageChoicesArgs',
     'CertificateExtendedKeyUsageChoicesResult',
 )
 
 
-class CertificateCountryChoicesArgs(BaseModel):
+class SystemGeneralCountryChoicesArgs(BaseModel):
     pass
 
 
-class CertificateCountryChoicesResult(BaseModel):
+class SystemGeneralCountryChoicesResult(BaseModel):
     result: dict[str, str]
 
 
@@ -28,11 +28,11 @@ class CertificateAcmeServerChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class CertificateECCurveChoicesArgs(BaseModel):
+class CertificateEcCurveChoicesArgs(BaseModel):
     pass
 
 
-class CertificateECCurveChoicesResult(BaseModel):
+class CertificateEcCurveChoicesResult(BaseModel):
     result: dict[str, str]
 
 

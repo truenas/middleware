@@ -8,9 +8,9 @@ from collections import defaultdict
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (IscsiExtentCreateArgs, IscsiExtentCreateResult, IscsiExtentDeleteArgs,
-                                     IscsiExtentDeleteResult, IscsiExtentDiskChoicesArgs, IscsiExtentDiskChoicesResult,
-                                     IscsiExtentEntry, IscsiExtentUpdateArgs, IscsiExtentUpdateResult)
+from middlewared.api.current import (iSCSITargetExtentCreateArgs, iSCSITargetExtentCreateResult, iSCSITargetExtentDeleteArgs,
+                                     iSCSITargetExtentDeleteResult, iSCSITargetExtentDiskChoicesArgs, iSCSITargetExtentDiskChoicesResult,
+                                     IscsiExtentEntry, iSCSITargetExtentUpdateArgs, iSCSITargetExtentUpdateResult)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
@@ -74,8 +74,8 @@ class iSCSITargetExtentService(SharingService):
         )
 
     @api_method(
-        IscsiExtentCreateArgs,
-        IscsiExtentCreateResult,
+        iSCSITargetExtentCreateArgs,
+        iSCSITargetExtentCreateResult,
         audit='Create iSCSI extent',
         audit_extended=lambda data: data['name']
     )
@@ -124,8 +124,8 @@ class iSCSITargetExtentService(SharingService):
         return await self.get_instance(data['id'])
 
     @api_method(
-        IscsiExtentUpdateArgs,
-        IscsiExtentUpdateResult,
+        iSCSITargetExtentUpdateArgs,
+        iSCSITargetExtentUpdateResult,
         audit='Update iSCSI extent',
         audit_callback=True
     )
@@ -177,8 +177,8 @@ class iSCSITargetExtentService(SharingService):
         return await self.get_instance(id_)
 
     @api_method(
-        IscsiExtentDeleteArgs,
-        IscsiExtentDeleteResult,
+        iSCSITargetExtentDeleteArgs,
+        iSCSITargetExtentDeleteResult,
         audit='Delete iSCSI extent',
         audit_callback=True
     )
@@ -453,7 +453,7 @@ class iSCSITargetExtentService(SharingService):
         else:
             return naa
 
-    @api_method(IscsiExtentDiskChoicesArgs, IscsiExtentDiskChoicesResult)
+    @api_method(iSCSITargetExtentDiskChoicesArgs, iSCSITargetExtentDiskChoicesResult)
     async def disk_choices(self):
         """
         Return a dict of available zvols that can be used

@@ -1,10 +1,12 @@
 import errno
 import subprocess
+from typing import Literal
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel
 from middlewared.api.current import (
-    NTPPeerEntry, NTPServerEntry,
+    NTPServerEntry,
     NTPServerCreateArgs, NTPServerCreateResult,
     NTPServerUpdateArgs, NTPServerUpdateResult,
     NTPServerDeleteArgs, NTPServerDeleteResult,
@@ -91,6 +93,20 @@ class NTPPeer:
     @property
     def offset_in_secs(self):
         return self._offset
+
+
+class NTPPeerEntry(BaseModel):
+    mode: Literal['SERVER', 'PEER', 'LOCAL']
+    state: Literal['BEST', 'SELECTED', 'SELECTABLE', 'FALSE_TICKER', 'TOO_VARIABLE', 'NOT_SELECTABLE']
+    remote: str
+    stratum: int
+    poll_interval: int
+    reach: int
+    lastrx: int
+    offset: float
+    offset_measured: float
+    jitter: float
+    active: bool
 
 
 class NTPServerService(CRUDService):

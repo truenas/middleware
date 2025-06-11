@@ -7,7 +7,7 @@ from datetime import datetime
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DockerBackupArgs, DockerBackupResult, DockerListBackupArgs, DockerListBackupResult,
+    DockerBackupArgs, DockerBackupResult, DockerListBackupsArgs, DockerListBackupsResult,
     DockerDeleteBackupArgs, DockerDeleteBackupResult,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
@@ -81,7 +81,7 @@ class DockerService(Service):
 
         return name
 
-    @api_method(DockerListBackupArgs, DockerListBackupResult, roles=['DOCKER_READ'])
+    @api_method(DockerListBackupsArgs, DockerListBackupsResult, roles=['DOCKER_READ'])
     def list_backups(self):
         """
         List existing app backups.

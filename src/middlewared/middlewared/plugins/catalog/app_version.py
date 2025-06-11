@@ -5,7 +5,7 @@ import stat
 from catalog_reader.train_utils import get_train_path
 
 from middlewared.api import api_method
-from middlewared.api.current import CatalogAppDetailsArgs, CatalogAppDetailsResult
+from middlewared.api.current import CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult
 from middlewared.service import CallError, Service
 
 from .apps_util import get_app_details
@@ -16,7 +16,7 @@ class CatalogService(Service):
     class Config:
         cli_namespace = 'app.catalog'
 
-    @api_method(CatalogAppDetailsArgs, CatalogAppDetailsResult, roles=['CATALOG_READ'])
+    @api_method(CatalogGetAppDetailsArgs, CatalogGetAppDetailsResult, roles=['CATALOG_READ'])
     def get_app_details(self, app_name, options):
         """
         Retrieve information of `app_name` `app_version_details.catalog` catalog app.

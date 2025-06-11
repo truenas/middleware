@@ -12,10 +12,10 @@ from pydantic import IPvAnyNetwork
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.api.current import (IscsiTargetCreateArgs, IscsiTargetCreateResult, IscsiTargetDeleteArgs,
-                                     IscsiTargetDeleteResult, IscsiTargetEntry, IscsiTargetUpdateArgs,
-                                     IscsiTargetUpdateResult, IscsiTargetValidateNameArgs,
-                                     IscsiTargetValidateNameResult)
+from middlewared.api.current import (iSCSITargetCreateArgs, iSCSITargetCreateResult, iSCSITargetDeleteArgs,
+                                     iSCSITargetDeleteResult, IscsiTargetEntry, iSCSITargetUpdateArgs,
+                                     iSCSITargetUpdateResult, iSCSITargetValidateNameArgs,
+                                     iSCSITargetValidateNameResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.utils import UnexpectedFailure, run
 from .utils import AUTHMETHOD_LEGACY_MAP, sanitize_extent
@@ -101,8 +101,8 @@ class iSCSITargetService(CRUDService):
         return data
 
     @api_method(
-        IscsiTargetCreateArgs,
-        IscsiTargetCreateResult,
+        iSCSITargetCreateArgs,
+        iSCSITargetCreateResult,
         audit='Create iSCSI target',
         audit_extended=lambda data: data['name']
     )
@@ -286,8 +286,8 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('fcport.delete', fcport['id'])
 
     @api_method(
-        IscsiTargetValidateNameArgs,
-        IscsiTargetValidateNameResult,
+        iSCSITargetValidateNameArgs,
+        iSCSITargetValidateNameResult,
         roles=['SHARING_ISCSI_TARGET_WRITE']
     )
     async def validate_name(self, name, existing_id):
@@ -309,8 +309,8 @@ class iSCSITargetService(CRUDService):
                 return 'Target with this name already exists'
 
     @api_method(
-        IscsiTargetUpdateArgs,
-        IscsiTargetUpdateResult,
+        iSCSITargetUpdateArgs,
+        iSCSITargetUpdateResult,
         audit='Update iSCSI target',
         audit_callback=True
     )
@@ -384,8 +384,8 @@ class iSCSITargetService(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(
-        IscsiTargetDeleteArgs,
-        IscsiTargetDeleteResult,
+        iSCSITargetDeleteArgs,
+        iSCSITargetDeleteResult,
         audit='Delete iSCSI target',
         audit_callback=True
     )

@@ -10,10 +10,10 @@ from pydantic import Field
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 from middlewared.api.current import (
-    FilesystemGetAclArgs, FilesystemGetAclResult,
-    FilesystemSetAclArgs, FilesystemSetAclResult,
+    FilesystemGetaclArgs, FilesystemGetaclResult,
+    FilesystemSetaclArgs, FilesystemSetaclResult,
     FilesystemChownArgs, FilesystemChownResult,
-    FilesystemSetPermArgs, FilesystemSetPermResult,
+    FilesystemSetpermArgs, FilesystemSetpermResult,
     NFS4ACE, POSIXACE,
 )
 from middlewared.service import private, job, ValidationErrors, Service
@@ -209,7 +209,7 @@ class FilesystemService(Service):
         job.set_progress(100, 'Finished changing owner.')
 
     @api_method(
-        FilesystemSetPermArgs, FilesystemSetPermResult,
+        FilesystemSetpermArgs, FilesystemSetpermResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set permission', audit_extended=lambda data: data['path']
     )
@@ -439,8 +439,8 @@ class FilesystemService(Service):
         }
 
     @api_method(
-        FilesystemGetAclArgs,
-        FilesystemGetAclResult,
+        FilesystemGetaclArgs,
+        FilesystemGetaclResult,
         roles=['FILESYSTEM_ATTRS_READ'],
     )
     def getacl(self, path, simplified, resolve_ids):
@@ -631,8 +631,8 @@ class FilesystemService(Service):
         job.set_progress(100, 'Finished setting POSIX1e ACL.')
 
     @api_method(
-        FilesystemSetAclArgs,
-        FilesystemSetAclResult,
+        FilesystemSetaclArgs,
+        FilesystemSetaclResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set ACL',
         audit_extended=lambda data: data['path']

@@ -8,18 +8,19 @@ from .catalog import CatalogAppInfo
 
 
 __all__ = [
-    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableResponse',
+    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
     'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
     'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
     'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppContainerIDArgs', 'AppContainerIDResult', 'AppContainerConsoleChoiceArgs', 'AppContainerConsoleChoiceResult',
+    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult',
     'AppCertificateChoicesArgs', 'AppCertificateChoicesResult', 'AppUsedPortsArgs', 'AppUsedPortsResult',
-    'AppIPChoicesArgs', 'AppIPChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
+    'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
     'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
     'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
+    'AppLatestItem',
 ]
 
 
@@ -208,7 +209,7 @@ class AppContainerIDOptions(BaseModel):
     alive_only: bool = True
 
 
-class AppContainerIDArgs(BaseModel):
+class AppContainerIdsArgs(BaseModel):
     app_name: NonEmptyString
     options: AppContainerIDOptions = AppContainerIDOptions()
 
@@ -224,15 +225,15 @@ class AppContainerResponse(RootModel[dict[str, ContainerDetails]]):
     pass
 
 
-class AppContainerIDResult(BaseModel):
+class AppContainerIdsResult(BaseModel):
     result: AppContainerResponse
 
 
-class AppContainerConsoleChoiceArgs(BaseModel):
+class AppContainerConsoleChoicesArgs(BaseModel):
     app_name: NonEmptyString
 
 
-class AppContainerConsoleChoiceResult(BaseModel):
+class AppContainerConsoleChoicesResult(BaseModel):
     result: AppContainerResponse
 
 
@@ -257,11 +258,11 @@ class AppUsedPortsResult(BaseModel):
     result: list[int]
 
 
-class AppIPChoicesArgs(BaseModel):
+class AppIpChoicesArgs(BaseModel):
     pass
 
 
-class AppIPChoicesResult(BaseModel):
+class AppIpChoicesResult(BaseModel):
     result: dict[NonEmptyString, NonEmptyString]
 
 
@@ -362,11 +363,15 @@ class AppUpgradeSummaryResult(BaseModel):
     changelog: LongString | None
 
 
-class AppAvailableResponse(CatalogAppInfo):
+class AppAvailableItem(CatalogAppInfo):
     catalog: NonEmptyString
     installed: bool
     train: NonEmptyString
     popularity_rank: int | None
+
+
+class AppLatestItem(AppAvailableItem):
+    pass
 
 
 class AppCategoriesArgs(BaseModel):
@@ -383,7 +388,7 @@ class AppSimilarArgs(BaseModel):
 
 
 class AppSimilarResult(BaseModel):
-    result: list[AppAvailableResponse]
+    result: list[AppAvailableItem]
 
 
 class AppContainerLogsFollowTailEventSourceArgs(BaseModel):

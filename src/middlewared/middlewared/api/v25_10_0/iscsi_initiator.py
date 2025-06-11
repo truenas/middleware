@@ -4,12 +4,12 @@ from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, exclud
 
 __all__ = [
     "IscsiInitiatorEntry",
-    "IscsiInitiatorCreateArgs",
-    "IscsiInitiatorCreateResult",
-    "IscsiInitiatorUpdateArgs",
-    "IscsiInitiatorUpdateResult",
-    "IscsiInitiatorDeleteArgs",
-    "IscsiInitiatorDeleteResult",
+    "iSCSITargetAuthorizedInitiatorCreateArgs",
+    "iSCSITargetAuthorizedInitiatorCreateResult",
+    "iSCSITargetAuthorizedInitiatorUpdateArgs",
+    "iSCSITargetAuthorizedInitiatorUpdateResult",
+    "iSCSITargetAuthorizedInitiatorDeleteArgs",
+    "iSCSITargetAuthorizedInitiatorDeleteResult",
 ]
 
 
@@ -23,11 +23,11 @@ class IscsiInitiatorCreate(IscsiInitiatorEntry):
     id: Excluded = excluded_field()
 
 
-class IscsiInitiatorCreateArgs(BaseModel):
+class iSCSITargetAuthorizedInitiatorCreateArgs(BaseModel):
     iscsi_initiator_create: IscsiInitiatorCreate
 
 
-class IscsiInitiatorCreateResult(BaseModel):
+class iSCSITargetAuthorizedInitiatorCreateResult(BaseModel):
     result: IscsiInitiatorEntry
 
 
@@ -35,18 +35,18 @@ class IscsiInitiatorUpdate(IscsiInitiatorEntry, metaclass=ForUpdateMetaclass):
     pass
 
 
-class IscsiInitiatorUpdateArgs(BaseModel):
+class iSCSITargetAuthorizedInitiatorUpdateArgs(BaseModel):
     id: int
     iscsi_initiator_update: IscsiInitiatorUpdate
 
 
-class IscsiInitiatorUpdateResult(BaseModel):
+class iSCSITargetAuthorizedInitiatorUpdateResult(BaseModel):
     result: IscsiInitiatorEntry
 
 
-class IscsiInitiatorDeleteArgs(BaseModel):
+class iSCSITargetAuthorizedInitiatorDeleteArgs(BaseModel):
     id: int
 
 
-class IscsiInitiatorDeleteResult(BaseModel):
+class iSCSITargetAuthorizedInitiatorDeleteResult(BaseModel):
     result: Literal[True]

@@ -10,9 +10,9 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ACMEDNSAuthenticatorEntry', 'ACMEDNSAuthenticatorCreateArgs', 'ACMEDNSAuthenticatorCreateResult',
-    'ACMEDNSAuthenticatorUpdateArgs', 'ACMEDNSAuthenticatorUpdateResult', 'ACMEDNSAuthenticatorDeleteArgs',
-    'ACMEDNSAuthenticatorDeleteResult', 'ACMEDNSAuthenticatorSchemasArgs', 'ACMEDNSAuthenticatorSchemasResult',
+    'ACMEDNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
+    'DNSAuthenticatorUpdateArgs', 'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorDeleteArgs',
+    'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorAuthenticatorSchemasArgs', 'DNSAuthenticatorAuthenticatorSchemasResult',
     'Route53SchemaArgs', 'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'DigitalOceanSchemaArgs',
     'OVHSchemaArgs', 'ShellSchemaArgs', 'TrueNASConnectSchemaArgs',
 ]
@@ -121,11 +121,11 @@ class ACMEDNSAuthenticatorCreate(BaseModel):
 
 
 @single_argument_args('dns_authenticator_create')
-class ACMEDNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorCreate):
+class DNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorCreate):
     pass
 
 
-class ACMEDNSAuthenticatorCreateResult(BaseModel):
+class DNSAuthenticatorCreateResult(BaseModel):
     result: ACMEDNSAuthenticatorEntry
 
 
@@ -133,20 +133,20 @@ class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorCreate, metaclass=ForUpdate
     pass
 
 
-class ACMEDNSAuthenticatorUpdateArgs(BaseModel):
+class DNSAuthenticatorUpdateArgs(BaseModel):
     id: int
     dns_authenticator_update: ACMEDNSAuthenticatorUpdate
 
 
-class ACMEDNSAuthenticatorUpdateResult(BaseModel):
+class DNSAuthenticatorUpdateResult(BaseModel):
     result: ACMEDNSAuthenticatorEntry
 
 
-class ACMEDNSAuthenticatorDeleteArgs(BaseModel):
+class DNSAuthenticatorDeleteArgs(BaseModel):
     id: int
 
 
-class ACMEDNSAuthenticatorDeleteResult(BaseModel):
+class DNSAuthenticatorDeleteResult(BaseModel):
     result: bool
 
 
@@ -163,9 +163,9 @@ class ACMEDNSAuthenticatorSchema(BaseModel):
     schema_: ACMEDNSAuthenticatorAttributeSchema = Field(alias='schema')
 
 
-class ACMEDNSAuthenticatorSchemasArgs(BaseModel):
+class DNSAuthenticatorAuthenticatorSchemasArgs(BaseModel):
     pass
 
 
-class ACMEDNSAuthenticatorSchemasResult(BaseModel):
+class DNSAuthenticatorAuthenticatorSchemasResult(BaseModel):
     result: list[ACMEDNSAuthenticatorSchema]

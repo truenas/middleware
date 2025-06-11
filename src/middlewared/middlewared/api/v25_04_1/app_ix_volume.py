@@ -1,17 +1,17 @@
 from middlewared.api.base import BaseModel, NonEmptyString
 
 
-__all__ = ['AppIXVolumeEntry', 'AppIXVolumeExistsArgs', 'AppIXVolumeExistsResult']
+__all__ = ['AppsIxVolumeEntry', 'AppsIxVolumeExistsArgs', 'AppsIxVolumeExistsResult']
 
 
-class AppIXVolumeEntry(BaseModel):
+class AppsIxVolumeEntry(BaseModel):
     app_name: NonEmptyString
     name: NonEmptyString
 
 
-class AppIXVolumeExistsArgs(BaseModel):
+class AppsIxVolumeExistsArgs(BaseModel):
     name: NonEmptyString
 
 
-class AppIXVolumeExistsResult(BaseModel):
+class AppsIxVolumeExistsResult(BaseModel):
     result: bool

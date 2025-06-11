@@ -5,8 +5,8 @@ from time import time
 from middlewared.api import api_method
 from middlewared.api.current import (
     VirtVolumeEntry, VirtVolumeCreateArgs, VirtVolumeCreateResult, VirtVolumeUpdateArgs,
-    VirtVolumeUpdateResult, VirtVolumeDeleteArgs, VirtVolumeDeleteResult, VirtVolumeImportISOArgs,
-    VirtVolumeImportISOResult, VirtVolumeImportZvolArgs, VirtVolumeImportZvolResult
+    VirtVolumeUpdateResult, VirtVolumeDeleteArgs, VirtVolumeDeleteResult, VirtVolumeImportIsoArgs,
+    VirtVolumeImportIsoResult, VirtVolumeImportZvolArgs, VirtVolumeImportZvolResult
 )
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDService, job, ValidationErrors
@@ -152,8 +152,8 @@ class VirtVolumeService(CRUDService):
         return True
 
     @api_method(
-        VirtVolumeImportISOArgs,
-        VirtVolumeImportISOResult,
+        VirtVolumeImportIsoArgs,
+        VirtVolumeImportIsoResult,
         audit='Virt: Importing',
         audit_extended=lambda data: f'{data["name"]!r} ISO',
         roles=['VIRT_IMAGE_WRITE']

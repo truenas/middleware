@@ -13,8 +13,8 @@ from annotated_types import Ge, Le
 
 __all__ = [
     'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',
-    'SystemSecurityFipsAvailableArgs', 'SystemSecurityFipsAvailableResult',
-    'SystemSecurityFipsEnabledArgs', 'SystemSecurityFipsEnabledResult',
+    'SystemSecurityInfoFipsAvailableArgs', 'SystemSecurityInfoFipsAvailableResult',
+    'SystemSecurityInfoFipsEnabledArgs', 'SystemSecurityInfoFipsEnabledResult',
 ]
 
 
@@ -78,17 +78,17 @@ class SystemSecurityUpdateResult(BaseModel):
     result: SystemSecurityEntry
 
 
-class SystemSecurityFipsAvailableArgs(BaseModel):
+class SystemSecurityInfoFipsAvailableArgs(BaseModel):
     pass
 
 
-class SystemSecurityFipsAvailableResult(BaseModel):
+class SystemSecurityInfoFipsAvailableResult(BaseModel):
     result: bool
 
 
-class SystemSecurityFipsEnabledArgs(BaseModel):
+class SystemSecurityInfoFipsEnabledArgs(BaseModel):
     pass
 
 
-class SystemSecurityFipsEnabledResult(BaseModel):
+class SystemSecurityInfoFipsEnabledResult(BaseModel):
     result: bool

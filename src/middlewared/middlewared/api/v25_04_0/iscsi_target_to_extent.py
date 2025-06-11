@@ -4,12 +4,12 @@ from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, exclud
 
 __all__ = [
     "IscsiTargetToExtentEntry",
-    "IscsiTargetToExtentCreateArgs",
-    "IscsiTargetToExtentCreateResult",
-    "IscsiTargetToExtentUpdateArgs",
-    "IscsiTargetToExtentUpdateResult",
-    "IscsiTargetToExtentDeleteArgs",
-    "IscsiTargetToExtentDeleteResult",
+    "iSCSITargetToExtentCreateArgs",
+    "iSCSITargetToExtentCreateResult",
+    "iSCSITargetToExtentUpdateArgs",
+    "iSCSITargetToExtentUpdateResult",
+    "iSCSITargetToExtentDeleteArgs",
+    "iSCSITargetToExtentDeleteResult",
 ]
 
 
@@ -25,11 +25,11 @@ class IscsiTargetToExtentCreate(IscsiTargetToExtentEntry):
     lunid: int | None = None
 
 
-class IscsiTargetToExtentCreateArgs(BaseModel):
+class iSCSITargetToExtentCreateArgs(BaseModel):
     iscsi_target_to_extent_create: IscsiTargetToExtentCreate
 
 
-class IscsiTargetToExtentCreateResult(BaseModel):
+class iSCSITargetToExtentCreateResult(BaseModel):
     result: IscsiTargetToExtentEntry
 
 
@@ -37,21 +37,21 @@ class IscsiTargetToExtentUpdate(IscsiTargetToExtentEntry, metaclass=ForUpdateMet
     pass
 
 
-class IscsiTargetToExtentUpdateArgs(BaseModel):
+class iSCSITargetToExtentUpdateArgs(BaseModel):
     id: int
     iscsi_target_to_extent_update: IscsiTargetToExtentUpdate
 
 
-class IscsiTargetToExtentUpdateResult(BaseModel):
+class iSCSITargetToExtentUpdateResult(BaseModel):
     result: IscsiTargetToExtentEntry
 
 
-class IscsiTargetToExtentDeleteArgs(BaseModel):
+class iSCSITargetToExtentDeleteArgs(BaseModel):
     id: int
     force: bool = False
 
 
-class IscsiTargetToExtentDeleteResult(BaseModel):
+class iSCSITargetToExtentDeleteResult(BaseModel):
     result: Literal[True]
 
 

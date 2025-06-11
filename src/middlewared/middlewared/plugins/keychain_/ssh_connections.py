@@ -1,6 +1,6 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    KeychainCredentialSetupSSHConnectionArgs, KeychainCredentialSetupSSHConnectionResult
+    KeychainCredentialSetupSshConnectionArgs, KeychainCredentialSetupSshConnectionResult
 )
 from middlewared.service import Service, ValidationErrors
 
@@ -34,8 +34,8 @@ class KeychainCredentialService(Service):
         verrors.check()
 
     @api_method(
-        KeychainCredentialSetupSSHConnectionArgs,
-        KeychainCredentialSetupSSHConnectionResult,
+        KeychainCredentialSetupSshConnectionArgs,
+        KeychainCredentialSetupSshConnectionResult,
         roles=['KEYCHAIN_CREDENTIAL_WRITE'],
         audit="Setup SSH Connection:",
         audit_extended=lambda options: options["connection_name"]

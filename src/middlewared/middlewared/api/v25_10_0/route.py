@@ -1,10 +1,10 @@
 from middlewared.api.base import BaseModel, IPvAnyAddress
 
 
-__all__ = ["RouteSystemRoutes", "RouteIPv4gwReachableArgs", "RouteIPv4gwReachableResult",]
+__all__ = ["RouteSystemRoutesItem", "RouteIpv4gwReachableArgs", "RouteIpv4gwReachableResult",]
 
 
-class RouteSystemRoutes(BaseModel):
+class RouteSystemRoutesItem(BaseModel):
     network: IPvAnyAddress
     netmask: IPvAnyAddress
     gateway: IPvAnyAddress | None
@@ -15,9 +15,9 @@ class RouteSystemRoutes(BaseModel):
     preferred_source: str | None
 
 
-class RouteIPv4gwReachableArgs(BaseModel):
+class RouteIpv4gwReachableArgs(BaseModel):
     ipv4_gateway: str
 
 
-class RouteIPv4gwReachableResult(BaseModel):
+class RouteIpv4gwReachableResult(BaseModel):
     result: bool

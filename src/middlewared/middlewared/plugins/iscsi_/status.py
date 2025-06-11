@@ -1,5 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import IscsiGlobalClientCountArgs, IscsiGlobalClientCountResult
+from middlewared.api.current import ISCSIGlobalClientCountArgs, ISCSIGlobalClientCountResult
 from middlewared.service import Service
 
 
@@ -10,8 +10,8 @@ class ISCSIGlobalService(Service):
         cli_namespace = 'sharing.iscsi.global'
 
     @api_method(
-        IscsiGlobalClientCountArgs,
-        IscsiGlobalClientCountResult,
+        ISCSIGlobalClientCountArgs,
+        ISCSIGlobalClientCountResult,
         roles=['SHARING_ISCSI_GLOBAL_READ']
     )
     async def client_count(self):

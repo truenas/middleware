@@ -9,14 +9,14 @@ from middlewared.api.base import (
 
 __all__ = [
     "IscsiExtentEntry",
-    "IscsiExtentCreateArgs",
-    "IscsiExtentCreateResult",
-    "IscsiExtentUpdateArgs",
-    "IscsiExtentUpdateResult",
-    "IscsiExtentDeleteArgs",
-    "IscsiExtentDeleteResult",
-    "IscsiExtentDiskChoicesArgs",
-    "IscsiExtentDiskChoicesResult",
+    "iSCSITargetExtentCreateArgs",
+    "iSCSITargetExtentCreateResult",
+    "iSCSITargetExtentUpdateArgs",
+    "iSCSITargetExtentUpdateResult",
+    "iSCSITargetExtentDeleteArgs",
+    "iSCSITargetExtentDeleteResult",
+    "iSCSITargetExtentDiskChoicesArgs",
+    "iSCSITargetExtentDiskChoicesResult",
 ]
 
 
@@ -49,11 +49,11 @@ class IscsiExtentCreate(IscsiExtentEntry):
     locked: Excluded = excluded_field()
 
 
-class IscsiExtentCreateArgs(BaseModel):
+class iSCSITargetExtentCreateArgs(BaseModel):
     iscsi_extent_create: IscsiExtentCreate
 
 
-class IscsiExtentCreateResult(BaseModel):
+class iSCSITargetExtentCreateResult(BaseModel):
     result: IscsiExtentEntry
 
 
@@ -61,28 +61,28 @@ class IscsiExtentUpdate(IscsiExtentCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class IscsiExtentUpdateArgs(BaseModel):
+class iSCSITargetExtentUpdateArgs(BaseModel):
     id: int
     iscsi_extent_update: IscsiExtentUpdate
 
 
-class IscsiExtentUpdateResult(BaseModel):
+class iSCSITargetExtentUpdateResult(BaseModel):
     result: IscsiExtentEntry
 
 
-class IscsiExtentDeleteArgs(BaseModel):
+class iSCSITargetExtentDeleteArgs(BaseModel):
     id: int
     remove: bool = False
     force: bool = False
 
 
-class IscsiExtentDeleteResult(BaseModel):
+class iSCSITargetExtentDeleteResult(BaseModel):
     result: Literal[True]
 
 
-class IscsiExtentDiskChoicesArgs(BaseModel):
+class iSCSITargetExtentDiskChoicesArgs(BaseModel):
     pass
 
 
-class IscsiExtentDiskChoicesResult(BaseModel):
+class iSCSITargetExtentDiskChoicesResult(BaseModel):
     result: dict[str, str]

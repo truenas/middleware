@@ -2,11 +2,11 @@ from subprocess import run
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    IPMISELClearArgs,
-    IPMISELClearResult,
-    IPMISELElistEntry,
-    IPMISELInfoArgs,
-    IPMISELInfoResult,
+    IpmiSelClearArgs,
+    IpmiSelClearResult,
+    IpmiSelElistEntry,
+    IpmiSelInfoArgs,
+    IpmiSelInfoResult,
 )
 from middlewared.service import filterable_api_method, job, Service
 from middlewared.utils import filter_list
@@ -38,7 +38,7 @@ class IpmiSelService(Service):
         namespace = 'ipmi.sel'
         cli_namespace = 'service.ipmi.sel'
 
-    @filterable_api_method(item=IPMISELElistEntry, roles=['IPMI_READ'])
+    @filterable_api_method(item=IpmiSelElistEntry, roles=['IPMI_READ'])
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def elist(self, job, filters, options):
         """Query IPMI System Event Log (SEL) extended list"""
@@ -63,8 +63,8 @@ class IpmiSelService(Service):
         return filter_list(rv, filters, options)
 
     @api_method(
-        IPMISELInfoArgs,
-        IPMISELInfoResult,
+        IpmiSelInfoArgs,
+        IpmiSelInfoResult,
         roles=['IPMI_READ']
     )
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
@@ -84,8 +84,8 @@ class IpmiSelService(Service):
         return rv
 
     @api_method(
-        IPMISELClearArgs,
-        IPMISELClearResult,
+        IpmiSelClearArgs,
+        IpmiSelClearResult,
         roles=['IPMI_WRITE'],
     )
     @job(lock=SEL_LOCK, lock_queue_size=1)

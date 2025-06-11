@@ -2,8 +2,8 @@ from collections import defaultdict
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolSnapshotTaskUpdateWillChangeRetentionForArgs, PoolSnapshotTaskUpdateWillChangeRetentionForResult,
-    PoolSnapshotTaskDeleteWillChangeRetentionForArgs, PoolSnapshotTaskDeleteWillChangeRetentionForResult
+    PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs, PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
+    PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult
 )
 from middlewared.service import item_method, Service
 
@@ -14,7 +14,7 @@ class PeriodicSnapshotTaskService(Service):
         namespace = "pool.snapshottask"
 
     @item_method
-    @api_method(PoolSnapshotTaskUpdateWillChangeRetentionForArgs, PoolSnapshotTaskUpdateWillChangeRetentionForResult,
+    @api_method(PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs, PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
 		roles=['SNAPSHOT_TASK_READ'])
     async def update_will_change_retention_for(self, id_, data):
         """
@@ -37,7 +37,7 @@ class PeriodicSnapshotTaskService(Service):
         return result
 
     @item_method
-    @api_method(PoolSnapshotTaskDeleteWillChangeRetentionForArgs, PoolSnapshotTaskDeleteWillChangeRetentionForResult,
+    @api_method(PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
 		roles=['SNAPSHOT_TASK_READ'])
     async def delete_will_change_retention_for(self, id_):
         """

@@ -8,12 +8,12 @@ import shutil
 from middlewared.api import api_method
 from middlewared.api.current import (
     NfsEntry,
-    NfsUpdateArgs, NfsUpdateResult,
-    NfsBindipChoicesArgs, NfsBindipChoicesResult,
+    NFSUpdateArgs, NFSUpdateResult,
+    NFSBindipChoicesArgs, NFSBindipChoicesResult,
     NfsShareEntry,
-    NfsShareCreateArgs, NfsShareCreateResult,
-    NfsShareUpdateArgs, NfsShareUpdateResult,
-    NfsShareDeleteArgs, NfsShareDeleteResult
+    SharingNFSCreateArgs, SharingNFSCreateResult,
+    SharingNFSUpdateArgs, SharingNFSUpdateResult,
+    SharingNFSDeleteArgs, SharingNFSDeleteResult
 )
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
@@ -219,7 +219,7 @@ class NFSService(SystemServiceService):
 
         return nfs
 
-    @api_method(NfsBindipChoicesArgs, NfsBindipChoicesResult)
+    @api_method(NFSBindipChoicesArgs, NFSBindipChoicesResult)
     async def bindip_choices(self):
         """
         Returns ip choices for NFS service to use
@@ -257,7 +257,7 @@ class NFSService(SystemServiceService):
 
             return []
 
-    @api_method(NfsUpdateArgs, NfsUpdateResult, audit='Update NFS configuration')
+    @api_method(NFSUpdateArgs, NFSUpdateResult, audit='Update NFS configuration')
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
@@ -440,7 +440,7 @@ class SharingNFSService(SharingService):
         entry = NfsShareEntry
 
     @api_method(
-        NfsShareCreateArgs, NfsShareCreateResult,
+        SharingNFSCreateArgs, SharingNFSCreateResult,
         audit='NFS share create', audit_extended=lambda data: data["path"]
     )
     async def do_create(self, data):
@@ -481,7 +481,7 @@ class SharingNFSService(SharingService):
         return await self.get_instance(data["id"])
 
     @api_method(
-        NfsShareUpdateArgs, NfsShareUpdateResult,
+        SharingNFSUpdateArgs, SharingNFSUpdateResult,
         audit='NFS share update', audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
@@ -512,7 +512,7 @@ class SharingNFSService(SharingService):
         return await self.get_instance(id_)
 
     @api_method(
-        NfsShareDeleteArgs, NfsShareDeleteResult,
+        SharingNFSDeleteArgs, SharingNFSDeleteResult,
         audit='NFS share delete', audit_callback=True
     )
     async def do_delete(self, audit_callback, id_):

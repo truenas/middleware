@@ -8,7 +8,7 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_
 
 __all__ = [
     'TRUECOMMAND_CONNECTING_STATUS_REASON', 'TruecommandStatus', 'TruecommandStatusReason',
-    'TruecommandEntry', 'TruecommandUpdateArgs', 'TrueCommandUpdateResult',
+    'TruecommandEntry', 'TruecommandUpdateArgs', 'TruecommandUpdateResult',
 ]
 
 TRUECOMMAND_CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
@@ -58,5 +58,5 @@ class TruecommandUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     api_key: Secret[Annotated[str, Field(min_length=16, max_length=16)] | None]
 
 
-class TrueCommandUpdateResult(BaseModel):
+class TruecommandUpdateResult(BaseModel):
     result: TruecommandEntry

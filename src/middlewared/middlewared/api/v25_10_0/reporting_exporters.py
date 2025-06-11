@@ -8,9 +8,9 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ReportingExporterEntry', 'ReportingExporterCreateArgs', 'ReportingExporterCreateResult', 'GraphiteExporter',
-    'ReportingExporterUpdateArgs', 'ReportingExporterUpdateResult', 'ReportingExporterDeleteArgs',
-    'ReportingExporterDeleteResult', 'ReportingExporterSchemasArgs', 'ReportingExporterSchemasResult',
+    'ReportingExporterEntry', 'ReportingExportsCreateArgs', 'ReportingExportsCreateResult', 'GraphiteExporter',
+    'ReportingExportsUpdateArgs', 'ReportingExportsUpdateResult', 'ReportingExportsDeleteArgs',
+    'ReportingExportsDeleteResult', 'ReportingExportsExporterSchemasArgs', 'ReportingExportsExporterSchemasResult',
 ]
 
 
@@ -41,11 +41,11 @@ class ReportingExporterEntry(BaseModel):
 
 
 @single_argument_args('reporting_exporter_create')
-class ReportingExporterCreateArgs(ReportingExporterEntry):
+class ReportingExportsCreateArgs(ReportingExporterEntry):
     id: Excluded = excluded_field()
 
 
-class ReportingExporterCreateResult(BaseModel):
+class ReportingExportsCreateResult(BaseModel):
     result: ReportingExporterEntry
 
 
@@ -53,24 +53,24 @@ class ReportingExporterUpdate(ReportingExporterEntry, metaclass=ForUpdateMetacla
     id: Excluded = excluded_field()
 
 
-class ReportingExporterUpdateArgs(BaseModel):
+class ReportingExportsUpdateArgs(BaseModel):
     id: int
     reporting_exporter_update: ReportingExporterUpdate
 
 
-class ReportingExporterUpdateResult(BaseModel):
+class ReportingExportsUpdateResult(BaseModel):
     result: ReportingExporterEntry
 
 
-class ReportingExporterDeleteArgs(BaseModel):
+class ReportingExportsDeleteArgs(BaseModel):
     id: int
 
 
-class ReportingExporterDeleteResult(BaseModel):
+class ReportingExportsDeleteResult(BaseModel):
     result: bool
 
 
-class ReportingExporterSchemasArgs(BaseModel):
+class ReportingExportsExporterSchemasArgs(BaseModel):
     pass
 
 
@@ -87,5 +87,5 @@ class ReportingExporterSchema(BaseModel):
     schema_: list[ReportingExporterAttributeSchema] = Field(alias='schema')
 
 
-class ReportingExporterSchemasResult(BaseModel):
+class ReportingExportsExporterSchemasResult(BaseModel):
     result: list[ReportingExporterSchema]
