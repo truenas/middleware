@@ -704,17 +704,18 @@ class Enclosure:
         Returns: bool
         """
         return any((
-            self.is_xseries,
+            self.is_12_bay_jbod,
+            self.is_24_bay_jbod,
+            self.is_fseries,
+            self.is_hseries,
+            self.is_mini,
+            self.is_mseries,
+            self.is_r10,
+            self.is_r20_series,
             self.is_r30,
             self.is_r40,
-            self.is_12_bay_jbod,
-            self.is_r20_series,
-            self.is_hseries,
-            self.is_r10,
-            self.is_fseries,
-            self.is_mseries,
-            self.is_mini,
-            self.is_24_bay_jbod
+            self.is_r60,
+            self.is_xseries,
         ))
 
     @property
@@ -731,7 +732,7 @@ class Enclosure:
                 return 7
             elif self.is_mini_3_xl_plus:
                 return 10
-            elif any((self.is_mini_r, self.is_hseries, self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
+            elif any((self.is_mini_r, self.is_hseries, self.is_xseries, self.is_r30, self.is_r60, self.is_12_bay_jbod)):
                 return 12
             elif self.is_r20_series:
                 return 14
