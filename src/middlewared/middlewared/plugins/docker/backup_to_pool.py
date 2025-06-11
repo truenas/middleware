@@ -51,28 +51,28 @@ class DockerService(Service):
 
         job.set_progress(10, 'Initial validation has been completed, stopping docker service')
         await self.middleware.call('service.stop', 'docker')
-        job.set_progress(30, 'Incrementally replicating apps dataset')
+        job.set_progress(30, 'Snapshotting apps dataset')
+        schema = f'ix-apps-{docker_config["pool"]}-to-{target_pool}-backup-%Y-%m-%d_%H-%M-%S'
+        await self.middleware.call(
+            'zfs.snapshot.create', {
+                'dataset': applications_ds_name(docker_config["pool"]),
+                'naming_schema': schema,
+                'recursive': True,
+            }
+        )
+        await self.middleware.call('service.start', 'docker')
+        job.set_progress(45, 'Incrementally replicating apps dataset')
 
         try:
-            await self.incrementally_replicate_apps_dataset(docker_config['pool'], target_pool)
+            await self.incrementally_replicate_apps_dataset(docker_config['pool'], target_pool, schema)
         except Exception:
             job.set_progress(90, 'Failed to incrementally replicate apps dataset')
             raise
         else:
             job.set_progress(100, 'Successfully incrementally replicated apps dataset')
-        finally:
-            await self.middleware.call('service.start', 'docker')
 
     @private
-    async def incrementally_replicate_apps_dataset(self, source_pool, target_pool):
-        schema = f'ix-apps-{source_pool}-to-{target_pool}-backup-%Y-%m-%d_%H-%M-%S'
-        await self.middleware.call(
-            'zfs.snapshot.create', {
-                'dataset': applications_ds_name(source_pool),
-                'naming_schema': schema,
-                'recursive': True,
-            }
-        )
+    async def incrementally_replicate_apps_dataset(self, source_pool, target_pool, schema):
         old_ds = applications_ds_name(source_pool)
         new_ds = applications_ds_name(target_pool)
         replication_job = await self.middleware.call(
