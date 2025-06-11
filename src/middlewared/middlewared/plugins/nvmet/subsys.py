@@ -213,6 +213,12 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
         await self._ensure_unique(verrors, schema_name, 'name', data['name'], id_)
         data['serial'] = await self.subsys_serial(data.get('serial'))
         data['subnqn'] = await self.subsys_subnqn(data.get('subnqn'), data.get('name', ''))
+        if data['ana'] is not None:
+            if not await self.middleware.call('failover.licensed'):
+                verrors.add(
+                    f'{schema_name}.ana',
+                    'This platform does not support Asymmetric Namespace Access(ANA).'
+                )
 
     @private
     @cache
