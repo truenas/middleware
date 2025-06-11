@@ -49,10 +49,26 @@ def test_authorized():
 def test_authorized_audit():
     with unprivileged_user_client(roles=["MOCK"]) as c:
         with mock("test.test1", """
-            from middlewared.schema import Int
-            from middlewared.service import accepts
-
-            @accepts(Int("param"), audit="Mock", audit_extended=lambda param: str(param))
+            from typing import Annotated
+            from pydantic import create_model, Field
+            from middlewared.api import api_method
+            from middlewared.api.base import BaseModel
+            
+            @api_method(
+                create_model(
+                    "MockArgs",
+                    __base__=(BaseModel,),
+                    args=Annotated[int, Field()],
+                ),
+                create_model(
+                    "MockResult",
+                    __base__=(BaseModel,),
+                    result=Annotated[int, Field()],
+                ),
+                audit="Mock",
+                audit_extended=lambda param: str(param),
+                private=True,
+            )
             async def mock(self, param):
                 return 
         """):

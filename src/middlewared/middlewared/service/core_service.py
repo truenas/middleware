@@ -354,12 +354,10 @@ class CoreService(Service):
                     'returns': get_json_schema(method.new_style_returns),
                 }
 
-                if filterable_schema := getattr(method, '_filterable_schema', None):
-                    # filterable_schema is OROperator here, and we just want it's specific schema
-                    filterable_schema = self.get_json_schema([filterable_schema.schemas[1]], None)[0]
-
-                if method_schemas['accepts'] is None:
-                    raise RuntimeError(f'Method {method_name} is public but has no @accepts()')
+                if filterable := issubclass(method.new_style_accepts, QueryArgs):
+                    filterable_schema = method_schemas['accepts'][1]
+                else:
+                    filterable_schema = None
 
                 data[method_name] = {
                     'description': doc,
@@ -367,10 +365,7 @@ class CoreService(Service):
                     'examples': examples,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': no_auth_required,
-                    'filterable': hasattr(method, '_filterable') or (
-                        getattr(method, 'new_style_accepts', None) is not None and
-                        issubclass(method.new_style_accepts, QueryArgs)
-                    ),
+                    'filterable': filterable,
                     'filterable_schema': filterable_schema,
                     'pass_application': hasattr(method, '_pass_app'),
                     'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
@@ -383,34 +378,6 @@ class CoreService(Service):
                 }
 
         return data
-
-    @private
-    def get_json_schema(self, schema, args_descriptions_doc):
-        if not schema:
-            return schema
-
-        args_descriptions_doc = args_descriptions_doc or ''
-        schema = [i.to_json_schema() for i in schema if not getattr(i, 'hidden', False)]
-
-        names = set()
-        for i in schema:
-            names.add(i['_name_'])
-
-            if i.get('type') == 'object':
-                for j in i['properties'].values():
-                    names.add(j['_name_'])
-
-        args_descriptions = self._cli_args_descriptions(args_descriptions_doc, names)
-        for i in schema:
-            if not i.get('description') and i['_name_'] in args_descriptions:
-                i['description'] = args_descriptions[i['_name_']]
-
-            if i.get('type') == 'object':
-                for j in i['properties'].values():
-                    if not j.get('description') and j['_name_'] in args_descriptions:
-                        j['description'] = args_descriptions[j['_name_']]
-
-        return schema
 
     @private
     async def call_hook(self, name, args, kwargs=None):
@@ -704,43 +671,6 @@ class CoreService(Service):
                 self._environ[k] = v
 
         self.middleware.send_event('core.environ', 'CHANGED', fields=update)
-
-    RE_ARG = re.compile(r'`[a-z0-9_]+`', flags=re.IGNORECASE)
-    RE_NEW_ARG_START = re.compile(r'`|[A-Z]|\*')
-
-    def _cli_args_descriptions(self, doc, names):
-        descriptions = defaultdict(list)
-
-        current_names = set()
-        current_doc = []
-        for line in (doc or '').split('\n'):
-            if (
-                (matched_line_names := {name.strip('`') for name in self.RE_ARG.findall(line)}) and
-                (line_names := matched_line_names & names)
-            ):
-                if line_names & current_names or not self.RE_NEW_ARG_START.match(line):
-                    current_names |= line_names
-                else:
-                    for name in current_names:
-                        descriptions[name] += current_doc
-
-                    current_names = line_names
-                    current_doc = []
-
-                current_doc.append(line)
-            elif line:
-                current_doc.append(line)
-            else:
-                for name in current_names:
-                    descriptions[name] += current_doc
-
-                current_names = set()
-                current_doc = []
-
-        return {
-            k: '\n'.join(v)
-            for k, v in descriptions.items()
-        }
 
     @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False,
                 pass_app=True)

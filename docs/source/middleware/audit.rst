@@ -10,15 +10,13 @@ Logging method calls
 ********************
 
 In order to log specific method call to audit log, use `audit`, `audit_extended` and `audit_callback` parameters of the
-`@accepts` decorator:
+`@api_method` decorator:
 
 .. code-block:: python
 
-    @accepts(
-        Dict(
-            'user_create',
-            LocalUsername('username', required=True),
-        ),
+    @api_method(
+        UserCreateArgs,
+        UserCreateResult,
         audit='Create user',
         audit_extended=lambda data: data["username"],
     )
@@ -33,12 +31,9 @@ function, it will be silently ignored, and only `audit` string will be logged.
 
 .. code-block:: python
 
-    @accepts(
-        Int('id'),
-        Dict(
-            'user_update',
-            LocalUsername('username', required=True),
-        ),
+    @api_method(
+        UserUpdateArgs,
+        UserUpdateResult,
         audit='Update user',
         audit_callback=True,
     )

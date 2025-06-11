@@ -71,7 +71,7 @@ class CRUDServiceMetabase(ServiceBase):
             query_result_model = query_result(entry)
             if (
                 any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
-                not hasattr(klass.query, '_filterable') or klass.query._filterable is False
+                not hasattr(klass.query, 'new_style_accepts')
             ):
                 # No need to inject api method if filterable has been explicitly specified
                 klass.query = api_method(

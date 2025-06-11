@@ -166,7 +166,7 @@ def api_method(
 def check_model_module(model: type[BaseModel], private: bool):
     module_name = model.__module__
 
-    if module_name in ["middlewared.service.crud_service"]:
+    if module_name in ["middlewared.plugins.test.rest", "middlewared.service.crud_service"]:
         return
 
     if private:

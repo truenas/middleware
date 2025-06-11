@@ -787,6 +787,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 except Exception:
                     return args
 
+        if crud_method := real_crud_method(method):
+            method = crud_method
+
         if hasattr(method, 'new_style_accepts'):
             return dump_params(method.new_style_accepts, args, False)
 
