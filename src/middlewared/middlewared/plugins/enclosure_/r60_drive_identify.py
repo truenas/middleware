@@ -7,6 +7,7 @@ from subprocess import run
 
 
 def slot_to_group_and_bitmask_mapping(slot: int) -> tuple[str, str]:
+    """Get the group selector and drive bitmask associated with an HDD."""
     mapping = {
         # Group 0x60 (HDDs 0-3, Physical drives 1-4)
         1: ('0x60', '0x02'),
@@ -45,12 +46,15 @@ def led_status_mapping(status: str) -> bool:
 
 def set_slot_status(slot: int, status: str) -> None:
     """Control the LED identification for individual drive slots using the R60-specific IPMI commands."""
+    # - 0x06: Network Funcion (Application)
+    # - 0x52: Command (OEM/Vendor specific)
+    # - 0x11 ... : Vendor-defined data bytes specific to the function
     if led_status_mapping(status):
         group_selector, bitmask = slot_to_group_and_bitmask_mapping(slot)
         # Enable BMC LED function first
-        run('ipmitool raw 0x06 0x52 0x11 0x20 0x00 0xD1 0x01', check=False, shell=True)
+        run('ipmitool raw 0x06 0x52 0x11 0x20 0x00 0xD1 0x01', check=False, shell=True)  # 0x01 = ON
         # Enable the specific drive's green LED
         run(f'ipmitool raw 0x06 0x52 0x11 0xF0 0x00 {group_selector} {bitmask}', check=False, shell=True)
     else:
         # For OFF/CLEAR, we need to disable the BMC LED function which turns off all LEDs
-        run('ipmitool raw 0x06 0x52 0x11 0x20 0x00 0xD1 0x00', check=False, shell=True)
+        run('ipmitool raw 0x06 0x52 0x11 0x20 0x00 0xD1 0x00', check=False, shell=True)  # 0x00 = OFF

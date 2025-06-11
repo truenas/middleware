@@ -73,12 +73,7 @@ class Enclosure2Service(Service):
 
     @api_method(Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult, roles=['ENCLOSURE_WRITE'])
     def set_slot_status(self, data):
-        """Set enclosure bay number `slot` to `status` for `enclosure_id`.
-
-        `enclosure_id` str: represents the enclosure logical identifier of the enclosure
-        `slot` int: the enclosure drive bay number to send the status command
-        `status` str: the status for which to send to the command.
-        """
+        """Set enclosure bay number `slot` to `status` for `enclosure_id`."""
         try:
             enc_info = self.middleware.call_sync(
                 'enclosure2.query', [['id', '=', data['enclosure_id']]], {'get': True}
