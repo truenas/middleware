@@ -53,14 +53,18 @@ class DockerService(Service):
         await self.middleware.call('service.stop', 'docker')
         job.set_progress(30, 'Snapshotting apps dataset')
         schema = f'ix-apps-{docker_config["pool"]}-to-{target_pool}-backup-%Y-%m-%d_%H-%M-%S'
-        await self.middleware.call(
-            'zfs.snapshot.create', {
-                'dataset': applications_ds_name(docker_config["pool"]),
-                'naming_schema': schema,
-                'recursive': True,
-            }
-        )
-        await self.middleware.call('service.start', 'docker')
+        try:
+            await self.middleware.call(
+                'zfs.snapshot.create', {
+                    'dataset': applications_ds_name(docker_config["pool"]),
+                    'naming_schema': schema,
+                    'recursive': True,
+                }
+            )
+        finally:
+            # We do this in try/finally block to ensure that docker service is started back
+            await self.middleware.call('service.start', 'docker')
+
         job.set_progress(45, 'Incrementally replicating apps dataset')
 
         try:
