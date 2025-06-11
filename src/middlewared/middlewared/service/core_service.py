@@ -354,19 +354,14 @@ class CoreService(Service):
                     'returns': get_json_schema(method.new_style_returns),
                 }
 
-                if filterable := issubclass(method.new_style_accepts, QueryArgs):
-                    filterable_schema = method_schemas['accepts'][1]
-                else:
-                    filterable_schema = None
-
                 data[method_name] = {
                     'description': doc,
                     'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
                     'examples': examples,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': no_auth_required,
-                    'filterable': filterable,
-                    'filterable_schema': filterable_schema,
+                    'filterable': issubclass(method.new_style_accepts, QueryArgs),
+                    'filterable_schema': None,
                     'pass_application': hasattr(method, '_pass_app'),
                     'require_websocket': hasattr(method, '_pass_app') and not method._pass_app['rest'],
                     'job': hasattr(method, '_job'),
