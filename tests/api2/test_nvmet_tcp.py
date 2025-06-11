@@ -253,13 +253,22 @@ class NVMeRunning:
 
     @contextlib.contextmanager
     def subsys(self, name, port, **kwargs):
+        zvol_name = kwargs.pop('zvol_name', None)
         nqn = f'{basenqn()}:{name}'
         with nvmet_subsys(name, **kwargs) as subsys:
             with nvmet_port_subsys(subsys['id'], port['id']):
-                yield {
-                    'id': subsys['id'],
-                    'nqn': nqn,
-                    'subsys': subsys}
+                if zvol_name:
+                    with nvmet_namespace(subsys['id'], f'zvol/{zvol_name}') as ns:
+                        yield {
+                            'id': subsys['id'],
+                            'nqn': nqn,
+                            'subsys': subsys,
+                            'namespace': ns}
+                else:
+                    yield {
+                        'id': subsys['id'],
+                        'nqn': nqn,
+                        'subsys': subsys}
 
     def assert_subsys_namespaces(self, data: dict, subnqn: str, sizes: list):
         assert len(data[subnqn]['namespace']) == len(sizes)
@@ -1216,14 +1225,122 @@ class TestNVMe(NVMeRunning):
             with nvmet_subsys(SUBSYS_NAME1) as subsys:
                 with nvmet_port_subsys(subsys['id'], port2['id']):
                     with assert_validation_errors('nvmet_port_update.addr_trsvcid',
-                                                  'Cannot change addr_trsvcid on an active port.  Disable first to allow change.'):
+                                                  'Cannot change addr_trsvcid on an active port.  '
+                                                  'Disable first to allow change.'):
                         call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4422})
 
                 call('nvmet.port.update', port2['id'], {'addr_trsvcid': 4422})
 
             with assert_validation_errors('nvmet_port_update.addr_trtype',
-                                          'This platform cannot support NVMe-oF(RDMA) or is missing an RDMA capable NIC.'):
+                                          'This platform cannot support NVMe-oF(RDMA) or '
+                                          'is missing an RDMA capable NIC.'):
                 call('nvmet.port.update', port2['id'], {'addr_trtype': 'RDMA'})
+
+    def test__ana_settings(self, fixture_port, loopback_client, zvol1, zvol2):
+        """
+        Test that the global ANA setting, and per-subsystem ANA settings
+        perform as expected, wrt connectivity on HA systems.
+
+        On non-HA these settings should not be functional.
+        """
+        nc = loopback_client
+
+        if not ha:
+            with assert_validation_errors('nvmet_global_update.ana',
+                                          'This platform does not support Asymmetric Namespace Access(ANA).'):
+                call('nvmet.global.update', {'ana': True})
+
+        # Make two subsystems.  We will only modify the ANA setting of
+        # subsystem 2
+        with self.subsys(SUBSYS_NAME1,
+                         fixture_port,
+                         allow_any_host=True,
+                         zvol_name=zvol1["name"]) as subsys1:
+            with self.subsys(SUBSYS_NAME2,
+                             fixture_port,
+                             allow_any_host=True,
+                             zvol_name=zvol2["name"]) as subsys2:
+                subsys1_nqn = subsys1['nqn']
+                subsys2_id = subsys2['id']
+                subsys2_nqn = subsys2['nqn']
+
+                if not ha:
+                    with assert_validation_errors('nvmet_subsys_update.ana',
+                                                  'This platform does not support Asymmetric Namespace Access(ANA).'):
+                        call('nvmet.subsys.update', subsys2_id, {'ana': True})
+                    # Now return from the test (for non-HA)
+                    return
+
+                # HA only - all ANA settings currently off
+                #
+                # Here are the setting combinations to be tested
+                #     Global ANA | Subsystem ANA
+                # 1.     False   |   None
+                # 2.     False   |   False
+                # 3.     False   |   True
+                # 4.     True    |   None
+                # 5.     True    |   False
+                # 6.     True    |   True
+
+                # Check which node is currently NASTER
+                match call('failover.node'):
+                    case 'A':
+                        active_ip = truenas_server.nodea_ip
+                        standby_ip = truenas_server.nodeb_ip
+                    case 'B':
+                        active_ip = truenas_server.nodeb_ip
+                        standby_ip = truenas_server.nodea_ip
+                    case _:
+                        assert False, 'Unexpected failover.node'
+
+                def assert_nqn_access(by_vip, nqn):
+                    if by_vip:
+                        with nc.connect_ctx(nqn):
+                            pass
+                        with pytest.raises(AssertionError):
+                            with nc.connect_ctx(nqn, active_ip):
+                                pass
+                        with pytest.raises(AssertionError):
+                            with nc.connect_ctx(nqn, standby_ip):
+                                pass
+                    else:
+                        with pytest.raises(AssertionError):
+                            with nc.connect_ctx(nqn):
+                                pass
+                        with nc.connect_ctx(nqn, active_ip):
+                            pass
+                        with nc.connect_ctx(nqn, standby_ip):
+                            pass
+
+                # 1.     False   |   None
+                assert_nqn_access(True, subsys1_nqn)
+                assert_nqn_access(True, subsys2_nqn)
+
+                # 2.     False   |   False
+                call('nvmet.subsys.update', subsys2_id, {'ana': False})
+                assert_nqn_access(True, subsys1_nqn)
+                assert_nqn_access(True, subsys2_nqn)
+
+                # 3.     False   |   True
+                call('nvmet.subsys.update', subsys2_id, {'ana': True})
+                assert_nqn_access(True, subsys1_nqn)
+                assert_nqn_access(False, subsys2_nqn)
+
+                with nvmet_ana(True):
+                    # 4.     True    |   None
+                    call('nvmet.subsys.update', subsys2_id, {'ana': None})
+                    assert_nqn_access(False, subsys1_nqn)
+                    assert_nqn_access(False, subsys2_nqn)
+
+                    # 5.     True    |   False
+                    call('nvmet.subsys.update', subsys2_id, {'ana': False})
+                    assert_nqn_access(False, subsys1_nqn)
+                    assert_nqn_access(True, subsys2_nqn)
+
+                    # 6.     True    |   True
+                    call('nvmet.subsys.update', subsys2_id, {'ana': True})
+                    assert_nqn_access(False, subsys1_nqn)
+                    assert_nqn_access(False, subsys2_nqn)
 
 
 class TestNVMeHostAuth(NVMeRunning):
