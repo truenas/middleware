@@ -10,10 +10,7 @@ try:
 except ImportError:
     truenas_pylibzfs = None
 
-__all__ = (
-    "BASE_FS_PROPS",
-    "BASE_VOL_PROPS",
-)
+__all__ = ("generic_query",)
 
 GENERIC_FILTERS = filters()
 

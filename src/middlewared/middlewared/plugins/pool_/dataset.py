@@ -1,4 +1,3 @@
-import copy
 import errno
 import os
 
@@ -17,6 +16,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 
+from .dataset_query_utils import generic_query
 from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize, ZFSKeyFormat,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
@@ -122,8 +122,11 @@ class PoolDatasetService(CRUDService):
         pool = dataset.split('/')[0]
         return not bool(filter_list([{'id': dataset, 'pool': pool}], await self.internal_datasets_filters()))
 
-    @filterable_api_method(item=PoolDatasetEntry)
-    def query(self, filters, options):
+    @filterable_api_method(
+        item=PoolDatasetEntry,
+        pass_thread_local_storage=True,
+    )
+    def query(self, tls, filters, options):
         """
         Query Pool Datasets with `query-filters` and `query-options`.
 
@@ -155,37 +158,12 @@ class PoolDatasetService(CRUDService):
         for snapshot(s) related to each dataset. By default only name of the snapshot would be retrieved, however
         if `null` is specified all properties of the snapshot would be retrieved in this case.
         """
-        # Optimization for cases in which they can be filtered at zfs.dataset.query
-        zfsfilters = []
-        filters = filters or []
-        if len(filters) == 1 and len(f := filters[0]) == 3 and f[0] in ('id', 'name') and f[1] in ('=', 'in'):
-            zfsfilters.append(copy.deepcopy(f))
-
-        internal_datasets_filters = self.middleware.call_sync('pool.dataset.internal_datasets_filters')
-        filters.extend(internal_datasets_filters)
-        extra = copy.deepcopy(options.get('extra', {}))
-        retrieve_children = extra.get('retrieve_children', True)
-        props = extra.get('properties')
-        snapshots = extra.get('snapshots')
-        snapshots_recursive = extra.get('snapshots_recursive')
-        snapshots_count = extra.get('snapshots_count')
-        retrieve_user_props = extra.get('retrieve_user_props', True)
-        return filter_list(
-            self.__transform(self.middleware.call_sync(
-                'zfs.dataset.query', zfsfilters, {
-                    'extra': {
-                        'flat': extra.get('flat', True),
-                        'retrieve_children': retrieve_children,
-                        'properties': props,
-                        'snapshots': snapshots,
-                        'snapshots_recursive': snapshots_recursive,
-                        'snapshots_count': snapshots_count,
-                        'snapshots_properties': extra.get('snapshots_properties', []),
-                        'user_properties': retrieve_user_props,
-                    }
-                }
-            ), retrieve_children, internal_datasets_filters, retrieve_user_props,
-            ), filters, options
+        filters.extend(self.middleware.call_sync('pool.dataset.internal_datasets_filters'))
+        return generic_query(
+            tls.lzh.iter_root_filesystems,
+            filters,
+            options,
+            options.pop("extra", {})
         )
 
     @private
