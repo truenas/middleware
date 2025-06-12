@@ -36,6 +36,10 @@ class DatastoreOptions:
     send_events: bool = True
 
 
+class NoRowsWereUpdatedException(Exception):
+    pass
+
+
 class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     class Config:
@@ -129,7 +133,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 },
             )
             if result.rowcount != 1:
-                raise RuntimeError('No rows were updated')
+                raise NoRowsWereUpdatedException()
 
             if options['send_events']:
                 await self.middleware.call('datastore.send_update_events', name, id_)
