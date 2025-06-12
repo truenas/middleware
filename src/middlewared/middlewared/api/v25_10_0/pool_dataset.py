@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BeforeValidator, Field, Secret
+from pydantic import BeforeValidator, ConfigDict, Field, Secret
 
 from middlewared.api.base import (
     BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result, ForUpdateMetaclass, Excluded,
@@ -55,6 +55,7 @@ class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
 
 
 class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
+    model_config = ConfigDict(extra="allow", strict=False)
     id: str
     type: str
     name: str
