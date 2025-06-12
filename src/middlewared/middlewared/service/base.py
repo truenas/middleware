@@ -47,8 +47,8 @@ def service_config(klass, config):
 def validate_api_method_schema_class_names(klass):
     """
     Validate that API method argument class names follow the required format:
-    - accepts class should be named ServiceNameMethodNameArgs
-    - returns class should be named ServiceNameMethodNameResult
+    - accepts class should be named f"{ServiceName}{MethodName}Args"
+    - returns class should be named f"{ServiceName}{MethodName}Result"
     where MethodName is the method name converted from snake_case to CamelCase
     """
     service_name = klass.__name__
