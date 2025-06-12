@@ -1,10 +1,11 @@
-"""Cleanup orphaned ACME registrations
+"""Cleanup orphaned ACME registrations and remove unused contact column
 
 Revision ID: 7a8b9c0d1e2f
 Revises: 30c9619bf9e7
 Create Date: 2025-06-12 10:00:00.000000+00:00
 """
 from alembic import op
+import sqlalchemy as sa
 
 
 revision = '7a8b9c0d1e2f'
@@ -36,7 +37,13 @@ def upgrade():
             orphaned_ids
         )
 
+    # Drop the contact column from system_acmeregistrationbody
+    # as ACME services no longer provide contact information
+    with op.batch_alter_table('system_acmeregistrationbody', schema=None) as batch_op:
+        batch_op.drop_column('contact')
+
 
 def downgrade():
-    # This migration is a cleanup operation, no downgrade needed
-    pass
+    # Add back the contact column
+    with op.batch_alter_table('system_acmeregistrationbody', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('contact', sa.String(254), nullable=True))
