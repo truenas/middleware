@@ -1,4 +1,7 @@
+import contextlib
+
 from middlewared.service import private
+from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
 
 
 class TaskStateMixin:
@@ -38,12 +41,13 @@ class TaskStateMixin:
                 job = args["fields"]
 
                 if job["method"] in self.task_state_methods:
-                    await self.middleware.call(
-                        "datastore.update",
-                        self._config.datastore,
-                        job["arguments"][0],
-                        {"job": dict(job, id=None, logs_path=None)},
-                        {"prefix": self._config.datastore_prefix},
-                    )
+                    with contextlib.suppress(NoRowsWereUpdatedException):
+                        await self.middleware.call(
+                            "datastore.update",
+                            self._config.datastore,
+                            job["arguments"][0],
+                            {"job": dict(job, id=None, logs_path=None)},
+                            {"prefix": self._config.datastore_prefix},
+                        )
 
         self.middleware.event_subscribe("core.get_jobs", on_job_change)
