@@ -74,7 +74,6 @@ class ACMERegistrationBodyModel(sa.Model):
     __tablename__ = 'system_acmeregistrationbody'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    contact = sa.Column(sa.String(254))
     status = sa.Column(sa.String(10))
     key = sa.Column(sa.Text())
     acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True)
@@ -208,8 +207,6 @@ class ACMERegistrationService(CRUDService):
             'datastore.insert',
             'system.acmeregistrationbody',
             {
-                # Let's encrypt does not send us email/contact anymore now
-                'contact': 'mailto:',
                 'status': register.body.status,
                 'key': key.json_dumps(),
                 'acme': registration_id
