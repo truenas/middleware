@@ -181,7 +181,8 @@ class ACMERegistrationService(CRUDService):
             'datastore.insert',
             'system.acmeregistrationbody',
             {
-                'contact': register.body.contact[0],
+                # Let's encrypt does not send us email/contact anymore now
+                'contact': f'mailto:{email}',
                 'status': register.body.status,
                 'key': key.json_dumps(),
                 'acme': registration_id
