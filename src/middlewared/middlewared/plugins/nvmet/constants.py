@@ -1,17 +1,11 @@
 import enum
 
 NVMET_KERNEL_CONFIG_DIR = '/sys/kernel/config/nvmet'
-NVMET_NODE_A_ANA_GRPID = 2
-NVMET_NODE_B_ANA_GRPID = 3
-
 NVMET_DISCOVERY_NQN = 'nqn.2014-08.org.nvmexpress.discovery'
 NVMET_NQN_UUID = 'nqn.2011-06.com.truenas:uuid'
 NVMET_SERVICE_NAME = 'nvmet'
 
 NVMET_MAX_NSID = 0xFFFFFFFE
-
-NVMET_NODE_A_MAX_CONTROLLER_ID = 31999
-NVMET_NODE_B_MIN_CONTROLLER_ID = 32000
 
 
 class ApiMapper(enum.Enum):
