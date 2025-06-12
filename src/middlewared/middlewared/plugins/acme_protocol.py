@@ -129,14 +129,6 @@ class ACMERegistrationService(CRUDService):
                 'Please agree to the terms of service'
             )
 
-        # For now we assume that only root is responsible for certs issued under ACME protocol
-        email = self.middleware.call_sync('mail.local_administrator_email')
-        if not email:
-            raise CallError(
-                'Please configure an email address for any local administrator user which will be used with the ACME '
-                'server'
-            )
-
         if self.middleware.call_sync(
             'acme.registration.query', [['directory', '=', data['acme_directory_uri']]]
         ):
@@ -155,7 +147,6 @@ class ACMERegistrationService(CRUDService):
         acme_client = client.ClientV2(directory, client.ClientNetwork(key))
         register = acme_client.new_account(
             messages.NewRegistration.from_data(
-                email=email,
                 terms_of_service_agreed=True
             )
         )
@@ -182,7 +173,7 @@ class ACMERegistrationService(CRUDService):
             'system.acmeregistrationbody',
             {
                 # Let's encrypt does not send us email/contact anymore now
-                'contact': f'mailto:{email}',
+                'contact': 'mailto:',
                 'status': register.body.status,
                 'key': key.json_dumps(),
                 'acme': registration_id
