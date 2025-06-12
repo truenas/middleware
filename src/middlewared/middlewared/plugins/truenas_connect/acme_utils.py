@@ -5,8 +5,6 @@ from cryptography.hazmat.primitives import serialization
 from josepy import JWKRSA
 from jsonschema import validate as jsonschema_validate, ValidationError as JSONValidationError
 
-from .cert_utils import CERT_BOT_EMAIL
-
 
 ACME_CONFIG_JSON_SCHEMA = {
     '$schema': 'http://json-schema.org/draft-07/schema#',
@@ -59,7 +57,6 @@ def normalize_acme_config(config: dict) -> dict:
         'new_order_uri': f'{parsed_url.scheme}://{parsed_url.netloc}/acme/new-order',
         'revoke_cert_uri': f'{parsed_url.scheme}://{parsed_url.netloc}/acme/revoke-cert',
         'body': {
-            'contact': CERT_BOT_EMAIL,
             'status': acme_details['account']['status'],
             'key': jwk_rsa.json_dumps(),
         }
