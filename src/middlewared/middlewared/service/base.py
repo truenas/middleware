@@ -56,11 +56,29 @@ def validate_api_method_schema_class_names(klass):
         service_name = service_name[:-7]
 
     for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
-        if name.startswith('_') or getattr(method, '_private', False):
+        if name.startswith('_') or getattr(method, '_private', False) or klass._config.private:
             continue
 
-        if not hasattr(method, 'new_style_accepts') or not hasattr(method, 'new_style_returns'):
+        methods_will_be_wrapped_later = {
+            "ConfigService": {"config", "update"},
+            "CRUDService": {"query", "get_instance", "create", "update", "delete"},
+        }
+        methods_will_be_wrapped_later["SystemServiceService"] = methods_will_be_wrapped_later["ConfigService"]
+        methods_will_be_wrapped_later["SharingService"] = methods_will_be_wrapped_later["CRUDService"]
+        methods_will_be_wrapped_later["SharingTaskService"] = methods_will_be_wrapped_later["CRUDService"]
+        methods_will_be_wrapped_later["TaskPathService"] = methods_will_be_wrapped_later["CRUDService"]
+        will_be_wrapped_later = False
+        for base in (klass,) + klass.__bases__:
+            if name in methods_will_be_wrapped_later.get(base.__name__, set()):
+                will_be_wrapped_later = True
+                break
+        if will_be_wrapped_later:
             continue
+
+        if not hasattr(method, 'new_style_accepts'):
+            raise RuntimeError(
+                f"API method {method!r} is public, but has no @api_method."
+            )
 
         # Remove do_ prefix only for do_create, do_update, do_delete
         method_name = name[3:] if name in ('do_create', 'do_update', 'do_delete') else name
