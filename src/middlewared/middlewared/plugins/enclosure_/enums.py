@@ -42,6 +42,7 @@ class ControllerModels(Enum):
     R50 = 'R50'
     R50B = 'R50B'
     R50BM = 'R50BM'
+    R60 = 'R60'  # all nvme flash
     X10 = 'X10'
     X20 = 'X20'
 
