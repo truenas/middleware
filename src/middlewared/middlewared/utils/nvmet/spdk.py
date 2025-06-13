@@ -83,9 +83,6 @@ class NvmetConfig:
             pprint.pprint(config)
             print()
 
-    def before_add(self, client, config, live, render_ctx: dict):
-        pass
-
     @contextmanager
     def render(self, client, render_ctx: dict):
         live = self.get_live(client, render_ctx)
@@ -98,8 +95,6 @@ class NvmetConfig:
         update_keys = config_keys - remove_keys - add_keys
 
         self.debug(live, config)
-
-        self.before_add(client, config, live, render_ctx)
 
         for item in add_keys:
             self.add(client, config[item], render_ctx)
@@ -123,18 +118,6 @@ class NvmetSubsysConfig(NvmetConfig):
 
     def get_live(self, client, render_ctx):
         return {subsys['nqn']: subsys for subsys in rpc.nvmf.nvmf_get_subsystems(client)}
-
-    def before_add(self, client, config, live, render_ctx: dict):
-        # If we have just toggled HA MASTER then the subsystem will
-        # currently have a bunch of NULL bdevs attached.  We need to
-        # remove them so that the real BDEVs can be attached.
-        if render_ctx['failover.status'] == 'MASTER':
-            for nqn, subsys in live.items():
-                if nqn == NVMET_DISCOVERY_NQN:
-                    continue
-                for namespace in subsys['namespaces']:
-                    if namespace['name'].startswith('NULL:'):
-                        rpc.nvmf.nvmf_subsystem_remove_ns(client, nqn=nqn, nsid=namespace['nsid'])
 
     def add(self, client, config_item, render_ctx):
 
@@ -449,9 +432,8 @@ class NvmetBdevConfig(NvmetConfig):
 
     def config_key(self, config_item, render_ctx):
         if subsys_visible(config_item['subsys'], render_ctx):
-            if render_ctx['failover.status'] == 'BACKUP':
-                return f"NULL:{config_item['device_path']}"
-            return f"{config_item['device_type']}:{config_item['device_path']}"
+            if render_ctx['failover.status'] != 'BACKUP':
+                return f"{config_item['device_type']}:{config_item['device_path']}"
 
     def live_key(self, live_item):
         match live_item['product_name']:
@@ -474,8 +456,9 @@ class NvmetBdevConfig(NvmetConfig):
         return result
 
     def bdev_name(self, config_item, render_ctx):
+        # Skip is we're the BACKUP in a HA
         if render_ctx['failover.status'] == 'BACKUP':
-            return f"NULL:{config_item['device_path']}"
+            return
 
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
