@@ -158,7 +158,6 @@ class PoolDatasetService(CRUDService):
         for snapshot(s) related to each dataset. By default only name of the snapshot would be retrieved, however
         if `null` is specified all properties of the snapshot would be retrieved in this case.
         """
-        filters.extend(self.middleware.call_sync('pool.dataset.internal_datasets_filters'))
         return generic_query(
             tls.lzh.iter_root_filesystems,
             filters,
