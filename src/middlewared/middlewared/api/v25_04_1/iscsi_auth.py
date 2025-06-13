@@ -6,12 +6,12 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 
 __all__ = [
     "IscsiAuthEntry",
-    "IscsiAuthCreateArgs",
-    "IscsiAuthCreateResult",
-    "IscsiAuthUpdateArgs",
-    "IscsiAuthUpdateResult",
-    "IscsiAuthDeleteArgs",
-    "IscsiAuthDeleteResult",
+    "iSCSITargetAuthCredentialCreateArgs",
+    "iSCSITargetAuthCredentialCreateResult",
+    "iSCSITargetAuthCredentialUpdateArgs",
+    "iSCSITargetAuthCredentialUpdateResult",
+    "iSCSITargetAuthCredentialDeleteArgs",
+    "iSCSITargetAuthCredentialDeleteResult",
 ]
 
 
@@ -29,11 +29,11 @@ class IscsiAuthCreate(IscsiAuthEntry):
     id: Excluded = excluded_field()
 
 
-class IscsiAuthCreateArgs(BaseModel):
+class iSCSITargetAuthCredentialCreateArgs(BaseModel):
     data: IscsiAuthCreate
 
 
-class IscsiAuthCreateResult(BaseModel):
+class iSCSITargetAuthCredentialCreateResult(BaseModel):
     result: IscsiAuthEntry
 
 
@@ -41,18 +41,18 @@ class IscsiAuthUpdate(IscsiAuthCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class IscsiAuthUpdateArgs(BaseModel):
+class iSCSITargetAuthCredentialUpdateArgs(BaseModel):
     id: int
     data: IscsiAuthUpdate
 
 
-class IscsiAuthUpdateResult(BaseModel):
+class iSCSITargetAuthCredentialUpdateResult(BaseModel):
     result: IscsiAuthEntry
 
 
-class IscsiAuthDeleteArgs(BaseModel):
+class iSCSITargetAuthCredentialDeleteArgs(BaseModel):
     id: int
 
 
-class IscsiAuthDeleteResult(BaseModel):
+class iSCSITargetAuthCredentialDeleteResult(BaseModel):
     result: Literal[True]

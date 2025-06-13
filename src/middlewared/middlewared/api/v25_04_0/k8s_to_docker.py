@@ -4,11 +4,11 @@ from middlewared.api.base import BaseModel, single_argument_result
 
 
 __all__ = [
-    'K8sToDockerListBackupsArgs', 'K8sToDockerListBackupsResult', 'K8sToDockerMigrateArgs', 'K8sToDockerMigrateResult',
+    'K8stoDockerMigrationListBackupsArgs', 'K8stoDockerMigrationListBackupsResult', 'K8stoDockerMigrationMigrateArgs', 'K8stoDockerMigrationMigrateResult',
 ]
 
 
-class K8sToDockerListBackupsArgs(BaseModel):
+class K8stoDockerMigrationListBackupsArgs(BaseModel):
     kubernetes_pool: str
 
 
@@ -37,7 +37,7 @@ class Backups(RootModel[dict[str, BackupDetails]]):
 
 
 @single_argument_result
-class K8sToDockerListBackupsResult(BaseModel):
+class K8stoDockerMigrationListBackupsResult(BaseModel):
     error: str | None
     backups: Backups
 
@@ -46,7 +46,7 @@ class MigrateOptions(BaseModel):
     backup_name: str | None = None
 
 
-class K8sToDockerMigrateArgs(BaseModel):
+class K8stoDockerMigrationMigrateArgs(BaseModel):
     kubernetes_pool: str
     options: MigrateOptions = MigrateOptions()
 
@@ -57,5 +57,5 @@ class AppMigrationDetails(BaseModel):
     error: str | None
 
 
-class K8sToDockerMigrateResult(BaseModel):
+class K8stoDockerMigrationMigrateResult(BaseModel):
     result: list[AppMigrationDetails]

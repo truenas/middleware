@@ -1,8 +1,8 @@
 import middlewared.sqlalchemy as sa
 from middlewared.alert.source.discovery_auth import UPGRADE_ALERTS
 from middlewared.api import api_method
-from middlewared.api.current import (IscsiAuthCreateArgs, IscsiAuthCreateResult, IscsiAuthDeleteArgs,
-                                     IscsiAuthDeleteResult, IscsiAuthEntry, IscsiAuthUpdateArgs, IscsiAuthUpdateResult)
+from middlewared.api.current import (iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, iSCSITargetAuthCredentialDeleteArgs,
+                                     iSCSITargetAuthCredentialDeleteResult, IscsiAuthEntry, iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from .utils import IscsiAuthType
 
@@ -40,7 +40,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         role_prefix = 'SHARING_ISCSI_AUTH'
         entry = IscsiAuthEntry
 
-    @api_method(IscsiAuthCreateArgs, IscsiAuthCreateResult, audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
+    @api_method(iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
     async def do_create(self, data):
         """
         Create an iSCSI Authorized Access.
@@ -69,7 +69,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @api_method(IscsiAuthUpdateArgs, IscsiAuthUpdateResult, audit='Update iSCSI Authorized Access', audit_callback=True)
+    @api_method(iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult, audit='Update iSCSI Authorized Access', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI Authorized Access of `id`.
@@ -105,7 +105,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(IscsiAuthDeleteArgs, IscsiAuthDeleteResult, audit='Delete iSCSI Authorized Access', audit_callback=True)
+    @api_method(iSCSITargetAuthCredentialDeleteArgs, iSCSITargetAuthCredentialDeleteResult, audit='Delete iSCSI Authorized Access', audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI Authorized Access of `id`.

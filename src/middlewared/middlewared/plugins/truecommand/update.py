@@ -5,7 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     TRUECOMMAND_CONNECTING_STATUS_REASON, TruecommandStatus, TruecommandStatusReason, TruecommandEntry,
-    TruecommandUpdateArgs, TrueCommandUpdateResult,
+    TruecommandUpdateArgs, TruecommandUpdateResult,
 )
 from middlewared.service import ConfigService, private, ValidationErrors
 
@@ -72,7 +72,7 @@ class TruecommandService(ConfigService):
         })
         return config
 
-    @api_method(TruecommandUpdateArgs, TrueCommandUpdateResult)
+    @api_method(TruecommandUpdateArgs, TruecommandUpdateResult)
     async def do_update(self, data):
         """
         Update Truecommand service settings.

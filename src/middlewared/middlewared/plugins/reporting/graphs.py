@@ -5,7 +5,8 @@ import typing
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ReportingGraphArgs, ReportingGetDataResult, ReportingGraph, ReportingGetDataArgs,
+    ReportingNetdataGraphArgs, ReportingNetdataGraphResult, ReportingNetdataGraphsItem, ReportingNetdataGetDataArgs,
+    ReportingNetdataGetDataResult,
 )
 from middlewared.service import CallError, filterable_api_method, private, Service, ValidationErrors
 from middlewared.utils import filter_list
@@ -30,7 +31,7 @@ class ReportingService(Service):
     async def graph_names(self):
         return list(self.__graphs.keys())
 
-    @api_method(ReportingGraphArgs, ReportingGetDataResult, roles=['REPORTING_READ'], cli_private=True)
+    @api_method(ReportingNetdataGraphArgs, ReportingNetdataGraphResult, roles=['REPORTING_READ'], cli_private=True)
     async def netdata_graph(self, name, query):
         """
         Get reporting data for `name` graph.
@@ -45,14 +46,14 @@ class ReportingService(Service):
 
         return await graph_plugin.export_multiple_identifiers(query_params, identifiers, query['aggregate'])
 
-    @filterable_api_method(roles=['REPORTING_READ'], item=ReportingGraph, cli_private=True)
+    @filterable_api_method(roles=['REPORTING_READ'], item=ReportingNetdataGraphsItem, cli_private=True)
     async def netdata_graphs(self, filters, options):
         """
         Get reporting netdata graphs.
         """
         return filter_list([await i.as_dict() for i in self.__graphs.values()], filters, options)
 
-    @api_method(ReportingGetDataArgs, ReportingGetDataResult, roles=['REPORTING_READ'], cli_private=True)
+    @api_method(ReportingNetdataGetDataArgs, ReportingNetdataGetDataResult, roles=['REPORTING_READ'], cli_private=True)
     async def netdata_get_data(self, graphs, query):
         """
         Get reporting data for given graphs.

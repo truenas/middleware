@@ -1,12 +1,12 @@
 from middlewared.api.base import BaseModel
 
 
-__all__ = ["FailoverDisabledReasonsArgs", "FailoverDisabledReasonsResult"]
+__all__ = ["FailoverDisabledReasonsReasonsArgs", "FailoverDisabledReasonsReasonsResult"]
 
 
-class FailoverDisabledReasonsArgs(BaseModel):
+class FailoverDisabledReasonsReasonsArgs(BaseModel):
     pass
 
 
-class FailoverDisabledReasonsResult(BaseModel):
+class FailoverDisabledReasonsReasonsResult(BaseModel):
     result: list[str]

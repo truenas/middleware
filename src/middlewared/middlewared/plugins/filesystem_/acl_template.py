@@ -1,10 +1,10 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
     AclTemplateEntry,
-    AclTemplateByPathArgs, AclTemplateByPathResult,
-    AclTemplateCreateArgs, AclTemplateCreateResult,
-    AclTemplateUpdateArgs, AclTemplateUpdateResult,
-    AclTemplateDeleteArgs, AclTemplateDeleteResult,
+    ACLTemplateByPathArgs, ACLTemplateByPathResult,
+    ACLTemplateCreateArgs, ACLTemplateCreateResult,
+    ACLTemplateUpdateArgs, ACLTemplateUpdateResult,
+    ACLTemplateDeleteArgs, ACLTemplateDeleteResult,
 )
 from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service import private
@@ -102,8 +102,8 @@ class ACLTemplateService(CRUDService):
             gen_aclstring_posix1e(copy.deepcopy(data['acl']), False, verrors)
 
     @api_method(
-        AclTemplateCreateArgs,
-        AclTemplateCreateResult,
+        ACLTemplateCreateArgs,
+        ACLTemplateCreateResult,
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_create(self, data):
@@ -129,8 +129,8 @@ class ACLTemplateService(CRUDService):
         return await self.get_instance(data['id'])
 
     @api_method(
-        AclTemplateUpdateArgs,
-        AclTemplateUpdateResult,
+        ACLTemplateUpdateArgs,
+        ACLTemplateUpdateResult,
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_update(self, id_, data):
@@ -169,8 +169,8 @@ class ACLTemplateService(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(
-        AclTemplateDeleteArgs,
-        AclTemplateDeleteResult,
+        ACLTemplateDeleteArgs,
+        ACLTemplateDeleteResult,
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_delete(self, id_):
@@ -303,8 +303,8 @@ class ACLTemplateService(CRUDService):
         return
 
     @api_method(
-        AclTemplateByPathArgs,
-        AclTemplateByPathResult,
+        ACLTemplateByPathArgs,
+        ACLTemplateByPathResult,
         roles=['FILESYSTEM_ATTRS_READ']
     )
     async def by_path(self, data):

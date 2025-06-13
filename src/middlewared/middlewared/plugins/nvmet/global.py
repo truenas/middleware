@@ -5,11 +5,11 @@ from middlewared.api import api_method
 from middlewared.api.current import (NVMetGlobalAnaEnabledArgs,
                                      NVMetGlobalAnaEnabledResult,
                                      NVMetGlobalEntry,
-                                     NVMetGlobalRDMAEnabledArgs,
-                                     NVMetGlobalRDMAEnabledResult,
+                                     NVMetGlobalRdmaEnabledArgs,
+                                     NVMetGlobalRdmaEnabledResult,
                                      NVMetGlobalUpdateArgs,
                                      NVMetGlobalUpdateResult,
-                                     NVMetSession)
+                                     NVMetGlobalSessionsItem)
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 from middlewared.utils import filter_list
@@ -116,8 +116,8 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         return False
 
     @api_method(
-        NVMetGlobalRDMAEnabledArgs,
-        NVMetGlobalRDMAEnabledResult,
+        NVMetGlobalRdmaEnabledArgs,
+        NVMetGlobalRdmaEnabledResult,
         roles=['SHARING_NVME_TARGET_READ']
     )
     async def rdma_enabled(self):
@@ -129,7 +129,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
         return (await self.middleware.call('nvmet.global.config'))['rdma']
 
-    @filterable_api_method(item=NVMetSession, roles=['SHARING_NVME_TARGET_READ'])
+    @filterable_api_method(item=NVMetGlobalSessionsItem, roles=['SHARING_NVME_TARGET_READ'])
     async def sessions(self, filters, options):
         sessions = []
         subsys_id = None

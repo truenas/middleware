@@ -1,9 +1,9 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemAdvancedGpuChoicesArgs,
-    SystemAdvancedGpuChoicesResult,
-    SystemAdvancedUpdateGpuPciIdArgs,
-    SystemAdvancedUpdateGpuPciIdResult,
+    SystemAdvancedGetGpuPciChoicesArgs,
+    SystemAdvancedGetGpuPciChoicesResult,
+    SystemAdvancedUpdateGpuPciIdsArgs,
+    SystemAdvancedUpdateGpuPciIdsResult,
 )
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.utils.gpu import get_gpus
@@ -16,8 +16,8 @@ class SystemAdvancedService(Service):
         cli_namespace = 'system.advanced'
 
     @api_method(
-        SystemAdvancedGpuChoicesArgs,
-        SystemAdvancedGpuChoicesResult,
+        SystemAdvancedGetGpuPciChoicesArgs,
+        SystemAdvancedGetGpuPciChoicesResult,
         roles=['SYSTEM_ADVANCED_READ']
     )
     def get_gpu_pci_choices(self):
@@ -35,8 +35,8 @@ class SystemAdvancedService(Service):
         return gpus
 
     @api_method(
-        SystemAdvancedUpdateGpuPciIdArgs,
-        SystemAdvancedUpdateGpuPciIdResult,
+        SystemAdvancedUpdateGpuPciIdsArgs,
+        SystemAdvancedUpdateGpuPciIdsResult,
         roles=['SYSTEM_ADVANCED_WRITE']
     )
     async def update_gpu_pci_ids(self, isolated_gpu_pci_ids):

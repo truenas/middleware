@@ -3,7 +3,7 @@ import os
 from contextlib import suppress
 
 from middlewared.api import api_method
-from middlewared.api.current import IscsiGlobalSessionsArgs, IscsiGlobalSessionsResult
+from middlewared.api.current import ISCSIGlobalSessionsArgs, ISCSIGlobalSessionsResult
 from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filter_list, run
@@ -15,8 +15,8 @@ class ISCSIGlobalService(Service):
         namespace = 'iscsi.global'
 
     @api_method(
-        IscsiGlobalSessionsArgs,
-        IscsiGlobalSessionsResult,
+        ISCSIGlobalSessionsArgs,
+        ISCSIGlobalSessionsResult,
         roles=['SHARING_ISCSI_GLOBAL_READ']
     )
     def sessions(self, filters, options):

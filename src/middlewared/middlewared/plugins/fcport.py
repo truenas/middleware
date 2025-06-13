@@ -6,7 +6,7 @@ from typing import Literal
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (FCPortChoicesArgs, FCPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
+from middlewared.api.current import (FCPortPortChoicesArgs, FCPortPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
                                      FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry, FCPortStatusArgs,
                                      FCPortStatusResult, FCPortUpdateArgs, FCPortUpdateResult)
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
@@ -110,7 +110,7 @@ class FCPortService(CRUDService):
 
         return response
 
-    @api_method(FCPortChoicesArgs, FCPortChoicesResult)
+    @api_method(FCPortPortChoicesArgs, FCPortPortChoicesResult)
     async def port_choices(self, include_used):
         result = {}
         if include_used:

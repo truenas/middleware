@@ -10,7 +10,7 @@ from middlewared.api.base import (
 __all__ = [
     'VirtVolumeEntry', 'VirtVolumeCreateArgs', 'VirtVolumeCreateResult',
     'VirtVolumeUpdateArgs', 'VirtVolumeUpdateResult', 'VirtVolumeDeleteArgs',
-    'VirtVolumeDeleteResult', 'VirtVolumeImportISOArgs', 'VirtVolumeImportISOResult',
+    'VirtVolumeDeleteResult', 'VirtVolumeImportIsoArgs', 'VirtVolumeImportIsoResult',
     'VirtVolumeImportZvolArgs', 'VirtVolumeImportZvolResult',
 ]
 
@@ -80,7 +80,7 @@ class VirtVolumeDeleteResult(BaseModel):
 
 
 @single_argument_args('virt_volume_import_iso')
-class VirtVolumeImportISOArgs(BaseModel):
+class VirtVolumeImportIsoArgs(BaseModel):
     name: VOLUME_NAME
     '''Specify name of the newly created volume from the ISO specified'''
     iso_location: NonEmptyString | None = None
@@ -93,7 +93,7 @@ class VirtVolumeImportISOArgs(BaseModel):
     '''
 
 
-class VirtVolumeImportISOResult(BaseModel):
+class VirtVolumeImportIsoResult(BaseModel):
     result: VirtVolumeEntry
 
 

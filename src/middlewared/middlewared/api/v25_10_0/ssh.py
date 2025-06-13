@@ -3,7 +3,7 @@ from typing import Literal
 from middlewared.api.base import BaseModel, LongString, Excluded, excluded_field, ForUpdateMetaclass, TcpPort
 
 
-__all__ = ['SSHEntry', 'SSHBindIfaceChoicesArgs', 'SSHBindIfaceChoicesResult', 'SSHUpdateArgs', 'SSHUpdateResult',]
+__all__ = ['SSHEntry', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs', 'SSHUpdateResult',]
 
 
 class SSHEntry(BaseModel):
@@ -57,11 +57,11 @@ class SSHUpdate(SSHEntry, metaclass=ForUpdateMetaclass):
     host_rsa_key_cert_pub: Excluded = excluded_field()
 
 
-class SSHBindIfaceChoicesArgs(BaseModel):
+class SSHBindifaceChoicesArgs(BaseModel):
     pass
 
 
-class SSHBindIfaceChoicesResult(BaseModel):
+class SSHBindifaceChoicesResult(BaseModel):
     result: dict[str, str]
     """Result of `interface.choices`."""
 

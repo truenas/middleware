@@ -7,13 +7,13 @@ from .common import CronModel
 
 
 __all__ = [
-    "PoolSnapshotTaskEntry", "PoolSnapshotTaskCreateArgs", "PoolSnapshotTaskCreateResult",
-    "PoolSnapshotTaskUpdateArgs", "PoolSnapshotTaskUpdateResult", "PoolSnapshotTaskDeleteArgs",
-    "PoolSnapshotTaskDeleteResult", "PoolSnapshotTaskMaxCountArgs", "PoolSnapshotTaskMaxCountResult",
-    "PoolSnapshotTaskMaxTotalCountArgs", "PoolSnapshotTaskMaxTotalCountResult", "PoolSnapshotTaskRunArgs",
-    "PoolSnapshotTaskRunResult", "PoolSnapshotTaskUpdateWillChangeRetentionForArgs",
-    "PoolSnapshotTaskUpdateWillChangeRetentionForResult", "PoolSnapshotTaskDeleteWillChangeRetentionForArgs",
-    "PoolSnapshotTaskDeleteWillChangeRetentionForResult"
+    "PoolSnapshotTaskEntry", "PeriodicSnapshotTaskCreateArgs", "PeriodicSnapshotTaskCreateResult",
+    "PeriodicSnapshotTaskUpdateArgs", "PeriodicSnapshotTaskUpdateResult", "PeriodicSnapshotTaskDeleteArgs",
+    "PeriodicSnapshotTaskDeleteResult", "PeriodicSnapshotTaskMaxCountArgs", "PeriodicSnapshotTaskMaxCountResult",
+    "PeriodicSnapshotTaskMaxTotalCountArgs", "PeriodicSnapshotTaskMaxTotalCountResult", "PeriodicSnapshotTaskRunArgs",
+    "PeriodicSnapshotTaskRunResult", "PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs",
+    "PeriodicSnapshotTaskUpdateWillChangeRetentionForResult", "PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs",
+    "PeriodicSnapshotTaskDeleteWillChangeRetentionForResult"
 ]
 
 
@@ -53,68 +53,68 @@ class PoolSnapshotTaskEntry(PoolSnapshotTaskCreate):
     state: Any
 
 
-class PoolSnapshotTaskCreateArgs(BaseModel):
+class PeriodicSnapshotTaskCreateArgs(BaseModel):
     data: PoolSnapshotTaskCreate
 
 
-class PoolSnapshotTaskCreateResult(BaseModel):
+class PeriodicSnapshotTaskCreateResult(BaseModel):
     result: PoolSnapshotTaskEntry
 
 
-class PoolSnapshotTaskUpdateArgs(BaseModel):
+class PeriodicSnapshotTaskUpdateArgs(BaseModel):
     id: int
     data: PoolSnapshotTaskUpdate
 
 
-class PoolSnapshotTaskUpdateResult(BaseModel):
+class PeriodicSnapshotTaskUpdateResult(BaseModel):
     result: PoolSnapshotTaskEntry
 
 
-class PoolSnapshotTaskDeleteArgs(BaseModel):
+class PeriodicSnapshotTaskDeleteArgs(BaseModel):
     id: int
     options: PoolSnapshotTaskDeleteOptions = Field(default_factory=PoolSnapshotTaskDeleteOptions)
 
 
-class PoolSnapshotTaskDeleteResult(BaseModel):
+class PeriodicSnapshotTaskDeleteResult(BaseModel):
     result: Literal[True]
 
 
-class PoolSnapshotTaskMaxCountArgs(BaseModel):
+class PeriodicSnapshotTaskMaxCountArgs(BaseModel):
     pass
 
 
-class PoolSnapshotTaskMaxCountResult(BaseModel):
+class PeriodicSnapshotTaskMaxCountResult(BaseModel):
     result: int
 
 
-class PoolSnapshotTaskMaxTotalCountArgs(BaseModel):
+class PeriodicSnapshotTaskMaxTotalCountArgs(BaseModel):
     pass
 
 
-class PoolSnapshotTaskMaxTotalCountResult(BaseModel):
+class PeriodicSnapshotTaskMaxTotalCountResult(BaseModel):
     result: int
 
 
-class PoolSnapshotTaskRunArgs(BaseModel):
+class PeriodicSnapshotTaskRunArgs(BaseModel):
     id: int
 
 
-class PoolSnapshotTaskRunResult(BaseModel):
+class PeriodicSnapshotTaskRunResult(BaseModel):
     result: None
 
 
-class PoolSnapshotTaskUpdateWillChangeRetentionForArgs(BaseModel):
+class PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs(BaseModel):
     id: int
     data: PoolSnapshotTaskUpdateWillChangeRetentionFor
 
 
-class PoolSnapshotTaskUpdateWillChangeRetentionForResult(BaseModel):
+class PeriodicSnapshotTaskUpdateWillChangeRetentionForResult(BaseModel):
     result: dict[str, list[str]]
 
 
-class PoolSnapshotTaskDeleteWillChangeRetentionForArgs(BaseModel):
+class PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs(BaseModel):
     id: int
 
 
-class PoolSnapshotTaskDeleteWillChangeRetentionForResult(BaseModel):
+class PeriodicSnapshotTaskDeleteWillChangeRetentionForResult(BaseModel):
     result: dict[str, list[str]]

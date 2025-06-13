@@ -1,12 +1,12 @@
 from middlewared.api.base import BaseModel
 
 
-__all__ = ["SystemGeneralKbdMapChoicesArgs", "SystemGeneralKbdMapChoicesResult",]
+__all__ = ["SystemGeneralKbdmapChoicesArgs", "SystemGeneralKbdmapChoicesResult",]
 
 
-class SystemGeneralKbdMapChoicesArgs(BaseModel):
+class SystemGeneralKbdmapChoicesArgs(BaseModel):
     pass
 
 
-class SystemGeneralKbdMapChoicesResult(BaseModel):
+class SystemGeneralKbdmapChoicesResult(BaseModel):
     result: dict[str, str]

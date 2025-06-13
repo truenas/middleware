@@ -11,12 +11,12 @@ from middlewared.api.base import (
 )
 
 __all__ = ["NfsEntry",
-           "NfsUpdateArgs", "NfsUpdateResult",
-           "NfsBindipChoicesArgs", "NfsBindipChoicesResult",
+           "NFSUpdateArgs", "NFSUpdateResult",
+           "NFSBindipChoicesArgs", "NFSBindipChoicesResult",
            "NfsShareEntry",
-           "NfsShareCreateArgs", "NfsShareCreateResult",
-           "NfsShareUpdateArgs", "NfsShareUpdateResult",
-           "NfsShareDeleteArgs", "NfsShareDeleteResult"]
+           "SharingNFSCreateArgs", "SharingNFSCreateResult",
+           "SharingNFSUpdateArgs", "SharingNFSUpdateResult",
+           "SharingNFSDeleteArgs", "SharingNFSDeleteResult"]
 
 MAX_NUM_NFS_NETWORKS = 42
 MAX_NUM_NFS_HOSTS = 42
@@ -64,22 +64,22 @@ class NfsEntry(BaseModel):
 
 
 @single_argument_args('nfs_update')
-class NfsUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
+class NFSUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     managed_nfsd: Excluded = excluded_field()
     v4_krb_enabled: Excluded = excluded_field()
     keytab_has_nfs_spn: Excluded = excluded_field()
 
 
-class NfsUpdateResult(BaseModel):
+class NFSUpdateResult(BaseModel):
     result: NfsEntry
 
 
-class NfsBindipChoicesArgs(BaseModel):
+class NFSBindipChoicesArgs(BaseModel):
     pass
 
 
-class NfsBindipChoicesResult(BaseModel):
+class NFSBindipChoicesResult(BaseModel):
     """ Return a dictionary of IP addresses """
     result: dict[str, str]
 
@@ -128,11 +128,11 @@ class NfsShareCreate(NfsShareEntry):
     locked: Excluded = excluded_field()
 
 
-class NfsShareCreateArgs(BaseModel):
+class SharingNFSCreateArgs(BaseModel):
     data: NfsShareCreate
 
 
-class NfsShareCreateResult(BaseModel):
+class SharingNFSCreateResult(BaseModel):
     result: NfsShareEntry
 
 
@@ -140,18 +140,18 @@ class NfsShareUpdate(NfsShareCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class NfsShareUpdateArgs(BaseModel):
+class SharingNFSUpdateArgs(BaseModel):
     id: int
     data: NfsShareUpdate
 
 
-class NfsShareUpdateResult(BaseModel):
+class SharingNFSUpdateResult(BaseModel):
     result: NfsShareEntry
 
 
-class NfsShareDeleteArgs(BaseModel):
+class SharingNFSDeleteArgs(BaseModel):
     id: int
 
 
-class NfsShareDeleteResult(BaseModel):
+class SharingNFSDeleteResult(BaseModel):
     result: Literal[True]

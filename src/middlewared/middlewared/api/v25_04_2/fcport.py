@@ -56,11 +56,11 @@ class FCPortChoiceEntry(BaseModel):
     wwpn_b: WWPN | None
 
 
-class FCPortChoicesArgs(BaseModel):
+class FCPortPortChoicesArgs(BaseModel):
     include_used: bool = True
 
 
-class FCPortChoicesResult(BaseModel):
+class FCPortPortChoicesResult(BaseModel):
     result: Dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(examples=[
         {
             'fc0': {

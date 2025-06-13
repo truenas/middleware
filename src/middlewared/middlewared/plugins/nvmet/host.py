@@ -6,10 +6,10 @@ from middlewared.api.current import (NVMetHostCreateArgs,
                                      NVMetHostCreateResult,
                                      NVMetHostDeleteArgs,
                                      NVMetHostDeleteResult,
-                                     NVMetHostDHChapDHGroupChoicesArgs,
-                                     NVMetHostDHChapDHGroupChoicesResult,
-                                     NVMetHostDHChapHashChoicesArgs,
-                                     NVMetHostDHChapHashChoicesResult,
+                                     NVMetHostDhchapDhgroupChoicesArgs,
+                                     NVMetHostDhchapDhgroupChoicesResult,
+                                     NVMetHostDhchapHashChoicesArgs,
+                                     NVMetHostDhchapHashChoicesResult,
                                      NVMetHostEntry,
                                      NVMetHostGenerateKeyArgs,
                                      NVMetHostGenerateKeyResult,
@@ -190,7 +190,7 @@ class NVMetHostService(CRUDService):
             )
         return key
 
-    @api_method(NVMetHostDHChapDHGroupChoicesArgs, NVMetHostDHChapDHGroupChoicesResult)
+    @api_method(NVMetHostDhchapDhgroupChoicesArgs, NVMetHostDhchapDhgroupChoicesResult)
     async def dhchap_dhgroup_choices(self):
         """
         Returns possible choices for `dhchap_dhgroup` attribute of `host` create and update.
@@ -198,7 +198,7 @@ class NVMetHostService(CRUDService):
         """
         return ['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
 
-    @api_method(NVMetHostDHChapHashChoicesArgs, NVMetHostDHChapHashChoicesResult)
+    @api_method(NVMetHostDhchapHashChoicesArgs, NVMetHostDhchapHashChoicesResult)
     async def dhchap_hash_choices(self):
         """
         Returns possible choices for `dhchap_hash` attribute of `host` create and update.

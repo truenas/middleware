@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 from middlewared.api import api_method
-from middlewared.api.current import FailoverDisabledReasonsArgs, FailoverDisabledReasonsResult
+from middlewared.api.current import FailoverDisabledReasonsReasonsArgs, FailoverDisabledReasonsReasonsResult
 from middlewared.service import Service, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -19,8 +19,8 @@ class FailoverDisabledReasonsService(Service):
     SYSTEM_DATASET_SETUP_IN_PROGRESS = False
 
     @api_method(
-        FailoverDisabledReasonsArgs,
-        FailoverDisabledReasonsResult,
+        FailoverDisabledReasonsReasonsArgs,
+        FailoverDisabledReasonsReasonsResult,
         pass_app=True,
         roles=['FAILOVER_READ']
     )

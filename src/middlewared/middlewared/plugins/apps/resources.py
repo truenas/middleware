@@ -1,8 +1,8 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppContainerIDArgs, AppContainerIDResult, AppContainerConsoleChoiceArgs, AppContainerConsoleChoiceResult,
+    AppContainerIdsArgs, AppContainerIdsResult, AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult,
     AppCertificateChoicesArgs, AppCertificateChoicesResult,
-    AppUsedPortsArgs, AppUsedPortsResult, AppIPChoicesArgs, AppIPChoicesResult, AppAvailableSpaceArgs,
+    AppUsedPortsArgs, AppUsedPortsResult, AppIpChoicesArgs, AppIpChoicesResult, AppAvailableSpaceArgs,
     AppAvailableSpaceResult, AppGpuChoicesArgs, AppGpuChoicesResult,
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
@@ -20,7 +20,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @api_method(AppContainerIDArgs, AppContainerIDResult, roles=['APPS_READ'])
+    @api_method(AppContainerIdsArgs, AppContainerIdsResult, roles=['APPS_READ'])
     async def container_ids(self, app_name, options):
         """
         Returns container IDs for `app_name`.
@@ -38,7 +38,7 @@ class AppService(Service):
             )
         }
 
-    @api_method(AppContainerConsoleChoiceArgs, AppContainerConsoleChoiceResult, roles=['APPS_READ'])
+    @api_method(AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult, roles=['APPS_READ'])
     async def container_console_choices(self, app_name):
         """
         Returns container console choices for `app_name`.
@@ -67,7 +67,7 @@ class AppService(Service):
             for host_port in port_entry['host_ports']
         })))
 
-    @api_method(AppIPChoicesArgs, AppIPChoicesResult, roles=['APPS_READ'])
+    @api_method(AppIpChoicesArgs, AppIpChoicesResult, roles=['APPS_READ'])
     async def ip_choices(self):
         """
         Returns IP choices which can be used by applications.

@@ -3,10 +3,10 @@ import os
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolSnapshotTaskEntry, PoolSnapshotTaskCreateArgs, PoolSnapshotTaskCreateResult, PoolSnapshotTaskUpdateArgs,
-    PoolSnapshotTaskUpdateResult, PoolSnapshotTaskDeleteArgs, PoolSnapshotTaskDeleteResult,
-    PoolSnapshotTaskMaxCountArgs, PoolSnapshotTaskMaxCountResult, PoolSnapshotTaskMaxTotalCountArgs,
-    PoolSnapshotTaskMaxTotalCountResult, PoolSnapshotTaskRunArgs, PoolSnapshotTaskRunResult
+    PoolSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult, PeriodicSnapshotTaskUpdateArgs,
+    PeriodicSnapshotTaskUpdateResult, PeriodicSnapshotTaskDeleteArgs, PeriodicSnapshotTaskDeleteResult,
+    PeriodicSnapshotTaskMaxCountArgs, PeriodicSnapshotTaskMaxCountResult, PeriodicSnapshotTaskMaxTotalCountArgs,
+    PeriodicSnapshotTaskMaxTotalCountResult, PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult
 )
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import Cron
@@ -78,8 +78,8 @@ class PeriodicSnapshotTaskService(CRUDService):
         return data
 
     @api_method(
-        PoolSnapshotTaskCreateArgs,
-        PoolSnapshotTaskCreateResult,
+        PeriodicSnapshotTaskCreateArgs,
+        PeriodicSnapshotTaskCreateResult,
         audit='Snapshot task create:',
         audit_extended=lambda data: data['dataset']
     )
@@ -147,8 +147,8 @@ class PeriodicSnapshotTaskService(CRUDService):
         return await self.get_instance(data['id'])
 
     @api_method(
-        PoolSnapshotTaskUpdateArgs,
-        PoolSnapshotTaskUpdateResult,
+        PeriodicSnapshotTaskUpdateArgs,
+        PeriodicSnapshotTaskUpdateResult,
         audit='Snapshot task update:',
         audit_callback=True
     )
@@ -239,8 +239,8 @@ class PeriodicSnapshotTaskService(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(
-        PoolSnapshotTaskDeleteArgs,
-        PoolSnapshotTaskDeleteResult,
+        PeriodicSnapshotTaskDeleteArgs,
+        PeriodicSnapshotTaskDeleteResult,
         audit='Snapshot task delete:',
         audit_callback=True
     )
@@ -298,7 +298,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return response
 
-    @api_method(PoolSnapshotTaskMaxCountArgs, PoolSnapshotTaskMaxCountResult, roles=['SNAPSHOT_TASK_READ'])
+    @api_method(PeriodicSnapshotTaskMaxCountArgs, PeriodicSnapshotTaskMaxCountResult, roles=['SNAPSHOT_TASK_READ'])
     def max_count(self):
         """
         Returns a maximum amount of snapshots (per-dataset) the system can sustain.
@@ -308,7 +308,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         # with too many, then File Explorer will show no snapshots available.
         return 512
 
-    @api_method(PoolSnapshotTaskMaxTotalCountArgs, PoolSnapshotTaskMaxTotalCountResult, roles=['SNAPSHOT_TASK_READ'])
+    @api_method(PeriodicSnapshotTaskMaxTotalCountArgs, PeriodicSnapshotTaskMaxTotalCountResult, roles=['SNAPSHOT_TASK_READ'])
     def max_total_count(self):
         """
         Returns a maximum amount of snapshots (total) the system can sustain.
@@ -319,7 +319,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         return 10000
 
     @item_method
-    @api_method(PoolSnapshotTaskRunArgs, PoolSnapshotTaskRunResult, roles=['SNAPSHOT_TASK_WRITE'])
+    @api_method(PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult, roles=['SNAPSHOT_TASK_WRITE'])
     async def run(self, id_):
         """
         Execute a Periodic Snapshot Task of `id`.

@@ -5,5 +5,5 @@ class PoolDatasetSnapshotCountArgs(BaseModel):
     dataset: str
 
 
-class PoolDatasetSnapshotCountResults(BaseModel):
+class PoolDatasetSnapshotCountResult(BaseModel):
     result: int

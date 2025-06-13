@@ -3,7 +3,7 @@ import errno
 import wbclient
 
 from middlewared.api import api_method
-from middlewared.api.current import IdmapCacheClearArgs, IdmapCacheClearResult
+from middlewared.api.current import IdmapDomainClearIdmapCacheArgs, IdmapDomainClearIdmapCacheResult
 from middlewared.service import CallError, Service, job, private, ValidationError, filterable_api_method
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
@@ -190,7 +190,7 @@ class IdmapDomainService(Service):
 
         return (hash_ % max_slices) * range_size + range_size
 
-    @api_method(IdmapCacheClearArgs, IdmapCacheClearResult, roles=['DIRECTORY_SERVICE_WRITE'])
+    @api_method(IdmapDomainClearIdmapCacheArgs, IdmapDomainClearIdmapCacheResult, roles=['DIRECTORY_SERVICE_WRITE'])
     @job(lock='clear_idmap_cache', lock_queue_size=1)
     async def clear_idmap_cache(self, job):
         """

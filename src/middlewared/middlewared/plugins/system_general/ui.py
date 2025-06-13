@@ -2,18 +2,18 @@ import asyncio
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemGeneralUIAddressChoicesArgs,
-    SystemGeneralUIAddressChoicesResult,
-    SystemGeneralUICertificateChoicesArgs,
-    SystemGeneralUICertificateChoicesResult,
-    SystemGeneralUIHTTPSProtocolChoicesArgs,
-    SystemGeneralUIHTTPSProtocolChoicesResult,
-    SystemGeneralUILocalURLArgs,
-    SystemGeneralUILocalURLResult,
-    SystemGeneralUIRestartArgs,
-    SystemGeneralUIRestartResult,
-    SystemGeneralUIV6AddressChoicesArgs,
-    SystemGeneralUIV6AddressChoicesResult,
+    SystemGeneralUiAddressChoicesArgs,
+    SystemGeneralUiAddressChoicesResult,
+    SystemGeneralUiCertificateChoicesArgs,
+    SystemGeneralUiCertificateChoicesResult,
+    SystemGeneralUiHttpsprotocolsChoicesArgs,
+    SystemGeneralUiHttpsprotocolsChoicesResult,
+    SystemGeneralLocalUrlArgs,
+    SystemGeneralLocalUrlResult,
+    SystemGeneralUiRestartArgs,
+    SystemGeneralUiRestartResult,
+    SystemGeneralUiV6addressChoicesArgs,
+    SystemGeneralUiV6addressChoicesResult,
 )
 from middlewared.service import CallError, private, Service
 
@@ -28,8 +28,8 @@ class SystemGeneralService(Service):
         cli_namespace = "system.general"
 
     @api_method(
-        SystemGeneralUIAddressChoicesArgs,
-        SystemGeneralUIAddressChoicesResult,
+        SystemGeneralUiAddressChoicesArgs,
+        SystemGeneralUiAddressChoicesResult,
         roles=["SYSTEM_GENERAL_READ"],
     )
     async def ui_address_choices(self):
@@ -45,8 +45,8 @@ class SystemGeneralService(Service):
         }
 
     @api_method(
-        SystemGeneralUIV6AddressChoicesArgs,
-        SystemGeneralUIV6AddressChoicesResult,
+        SystemGeneralUiV6addressChoicesArgs,
+        SystemGeneralUiV6addressChoicesResult,
         roles=["SYSTEM_GENERAL_READ"],
     )
     async def ui_v6address_choices(self):
@@ -62,8 +62,8 @@ class SystemGeneralService(Service):
         }
 
     @api_method(
-        SystemGeneralUIHTTPSProtocolChoicesArgs,
-        SystemGeneralUIHTTPSProtocolChoicesResult,
+        SystemGeneralUiHttpsprotocolsChoicesArgs,
+        SystemGeneralUiHttpsprotocolsChoicesResult,
         roles=["SYSTEM_GENERAL_READ"],
     )
     def ui_httpsprotocols_choices(self):
@@ -71,8 +71,8 @@ class SystemGeneralService(Service):
         return dict(zip(HTTPS_PROTOCOLS, HTTPS_PROTOCOLS))
 
     @api_method(
-        SystemGeneralUICertificateChoicesArgs,
-        SystemGeneralUICertificateChoicesResult,
+        SystemGeneralUiCertificateChoicesArgs,
+        SystemGeneralUiCertificateChoicesResult,
         roles=["SYSTEM_GENERAL_READ"]
     )
     async def ui_certificate_choices(self):
@@ -86,8 +86,8 @@ class SystemGeneralService(Service):
         }
 
     @api_method(
-        SystemGeneralUIRestartArgs,
-        SystemGeneralUIRestartResult,
+        SystemGeneralUiRestartArgs,
+        SystemGeneralUiRestartResult,
         roles=["SYSTEM_GENERAL_WRITE"],
     )
     async def ui_restart(self, delay: int):
@@ -105,8 +105,8 @@ class SystemGeneralService(Service):
         )
 
     @api_method(
-        SystemGeneralUILocalURLArgs,
-        SystemGeneralUILocalURLResult,
+        SystemGeneralLocalUrlArgs,
+        SystemGeneralLocalUrlResult,
         roles=["SYSTEM_GENERAL_READ"]
     )
     async def local_url(self):

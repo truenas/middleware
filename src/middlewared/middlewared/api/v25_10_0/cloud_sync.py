@@ -19,8 +19,8 @@ __all__ = [
     "CloudSyncEntry",
     "CloudSyncCreateArgs",
     "CloudSyncCreateResult",
-    "CloudSyncCrudRestoreArgs",
-    "CloudSyncCrudRestoreResult",
+    "CloudSyncRestoreArgs",
+    "CloudSyncRestoreResult",
     "CloudSyncUpdateArgs",
     "CloudSyncUpdateResult",
     "CloudSyncDeleteArgs",
@@ -33,8 +33,8 @@ __all__ = [
     "CloudSyncListDirectoryResult",
     "CloudSyncSyncArgs",
     "CloudSyncSyncResult",
-    "CloudSyncSyncOneTimeArgs",
-    "CloudSyncSyncOneTimeResult",
+    "CloudSyncSyncOnetimeArgs",
+    "CloudSyncSyncOnetimeResult",
     "CloudSyncAbortArgs",
     "CloudSyncAbortResult",
     "CloudSyncProvidersArgs",
@@ -87,12 +87,12 @@ class RestoreOpts(BaseModel):
     path: NonEmptyString
 
 
-class CloudSyncCrudRestoreArgs(BaseModel):
+class CloudSyncRestoreArgs(BaseModel):
     id: int
     opts: RestoreOpts
 
 
-class CloudSyncCrudRestoreResult(BaseModel):
+class CloudSyncRestoreResult(BaseModel):
     result: CloudSyncEntry
 
 
@@ -164,14 +164,14 @@ class CloudSyncSyncResult(BaseModel):
     result: None
 
 
-class CloudSyncSyncOneTimeArgs(BaseModel):
+class CloudSyncSyncOnetimeArgs(BaseModel):
     cloud_sync_sync_onetime: CloudSyncCreate
     cloud_sync_sync_onetime_options: CloudSyncSyncOptions = Field(
         default_factory=CloudSyncSyncOptions
     )
 
 
-class CloudSyncSyncOneTimeResult(BaseModel):
+class CloudSyncSyncOnetimeResult(BaseModel):
     result: None
 
 

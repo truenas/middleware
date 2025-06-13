@@ -12,7 +12,7 @@ from middlewared.api.base import (
 )
 
 __all__ = ["FtpEntry",
-           "FtpUpdateArgs", "FtpUpdateResult"]
+           "FTPUpdateArgs", "FTPUpdateResult"]
 
 TLS_PolicyOptions = Literal[
     "", "on", "off", "data", "!data", "auth", "ctrl", "ctrl+data", "ctrl+!data", "auth+data", "auth+!data"
@@ -74,9 +74,9 @@ class FtpEntry(BaseModel):
 
 
 @single_argument_args('ftp_update')
-class FtpUpdateArgs(FtpEntry, metaclass=ForUpdateMetaclass):
+class FTPUpdateArgs(FtpEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class FtpUpdateResult(BaseModel):
+class FTPUpdateResult(BaseModel):
     result: FtpEntry

@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemGeneralKbdMapChoicesArgs,
-    SystemGeneralKbdMapChoicesResult,
+    SystemGeneralKbdmapChoicesArgs,
+    SystemGeneralKbdmapChoicesResult,
 )
 from middlewared.service import Service
 from middlewared.utils.kbdmap_choices import kbdmap_choices
@@ -13,8 +13,8 @@ class SystemGeneralService(Service):
         cli_namespace = "system.general"
 
     @api_method(
-        SystemGeneralKbdMapChoicesArgs,
-        SystemGeneralKbdMapChoicesResult,
+        SystemGeneralKbdmapChoicesArgs,
+        SystemGeneralKbdmapChoicesResult,
     )
     async def kbdmap_choices(self):
         """Returns keyboard map choices."""

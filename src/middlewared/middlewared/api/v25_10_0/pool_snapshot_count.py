@@ -1,12 +1,12 @@
 from middlewared.api.base import BaseModel
 
 
-__all__ = ["PoolDatasetSnapshotCountArgs", "PoolDatasetSnapshotCountResults",]
+__all__ = ["PoolDatasetSnapshotCountArgs", "PoolDatasetSnapshotCountResult",]
 
 
 class PoolDatasetSnapshotCountArgs(BaseModel):
     dataset: str
 
 
-class PoolDatasetSnapshotCountResults(BaseModel):
+class PoolDatasetSnapshotCountResult(BaseModel):
     result: int

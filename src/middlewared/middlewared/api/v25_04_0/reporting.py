@@ -8,8 +8,9 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraph', 'ReportingGetDataArgs',
-    'ReportingGetDataResult', 'ReportingGraphArgs', 'ReportingGeneratePasswordArgs', 'ReportingGeneratePasswordResult',
+    'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',
+    'ReportingNetdataGetDataArgs', 'ReportingNetdataGraphResult', 'ReportingNetdataGraphArgs',
+    'ReportingGeneratePasswordArgs', 'ReportingGeneratePasswordResult', 'ReportingNetdataGraphsItem',
 ]
 
 
@@ -49,7 +50,7 @@ class GraphIdentifier(BaseModel):
     identifier: NonEmptyString | None = None
 
 
-class ReportingGetDataArgs(BaseModel):
+class ReportingNetdataGetDataArgs(BaseModel):
     graphs: list[GraphIdentifier] = Field(min_length=1)
     query: ReportingQuery = Field(default_factory=lambda: ReportingQuery())
 
@@ -70,18 +71,25 @@ class ReportingGetDataResponse(BaseModel):
     legend: list[str]
 
 
-class ReportingGetDataResult(BaseModel):
+class ReportingNetdataGraphResult(BaseModel):
     result: list[ReportingGetDataResponse]
 
 
-class ReportingGraph(BaseModel):
+class ReportingGraphsItem(BaseModel):
     name: NonEmptyString
     title: NonEmptyString
     vertical_label: NonEmptyString
     identifiers: list[str] | None
 
 
-class ReportingGraphArgs(BaseModel):
+class ReportingNetdataGraphsItem(BaseModel):
+    name: NonEmptyString
+    title: NonEmptyString
+    vertical_label: NonEmptyString
+    identifiers: list[str] | None
+
+
+class ReportingNetdataGraphArgs(BaseModel):
     str: NonEmptyString
     query: ReportingQuery = Field(default_factory=lambda: ReportingQuery())
 

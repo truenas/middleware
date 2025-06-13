@@ -8,7 +8,7 @@ from .common import QueryArgs
 
 __all__ = [
     "FCPortEntry", "FCPortCreateArgs", "FCPortCreateResult", "FCPortUpdateArgs", "FCPortUpdateResult",
-    "FCPortDeleteArgs", "FCPortDeleteResult", "FCPortChoicesArgs", "FCPortChoicesResult", "FCPortStatusArgs",
+    "FCPortDeleteArgs", "FCPortDeleteResult", "FCPortPortChoicesArgs", "FCPortPortChoicesResult", "FCPortStatusArgs",
     "FCPortStatusResult",
 ]
 
@@ -63,11 +63,11 @@ class FCPortChoiceEntry(BaseModel):
     wwpn_b: WWPN | None
 
 
-class FCPortChoicesArgs(BaseModel):
+class FCPortPortChoicesArgs(BaseModel):
     include_used: bool = True
 
 
-class FCPortChoicesResult(BaseModel):
+class FCPortPortChoicesResult(BaseModel):
     result: dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(examples=[
         {
             'fc0': {

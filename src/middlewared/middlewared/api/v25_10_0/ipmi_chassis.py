@@ -5,7 +5,7 @@ from middlewared.api.base import BaseModel
 from pydantic import Field
 
 
-__all__ = ["IPMIChassisIdentifyArgs", "IPMIChassisIdentifyResult", "IPMIChassisInfoArgs", "IPMIChassisInfoResult"]
+__all__ = ["IpmiChassisIdentifyArgs", "IpmiChassisIdentifyResult", "IpmiChassisInfoArgs", "IpmiChassisInfoResult"]
 
 
 class IPMIChassisInfo(BaseModel):
@@ -23,17 +23,17 @@ class IPMIChassisInfo(BaseModel):
     chassis_identify_state: str
 
 
-class IPMIChassisIdentifyArgs(BaseModel):
+class IpmiChassisIdentifyArgs(BaseModel):
     verb: Literal["ON", "OFF"] = "ON"
 
 
-class IPMIChassisIdentifyResult(BaseModel):
+class IpmiChassisIdentifyResult(BaseModel):
     result: None
 
 
-class IPMIChassisInfoArgs(BaseModel):
+class IpmiChassisInfoArgs(BaseModel):
     pass
 
 
-class IPMIChassisInfoResult(BaseModel):
+class IpmiChassisInfoResult(BaseModel):
     result: IPMIChassisInfo | dict

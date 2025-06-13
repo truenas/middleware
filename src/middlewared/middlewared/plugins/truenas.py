@@ -7,10 +7,10 @@ from middlewared.service import cli_private, job, private, Service
 from middlewared.api.current import (
     TrueNASSetProductionArgs, TrueNASSetProductionResult,
     TrueNASIsProductionArgs, TrueNASIsProductionResult,
-    TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult,
-    TrueNASIsEULAAcceptedArgs, TrueNASIsEULAAcceptedResult,
-    TrueNASGetEULAArgs, TrueNASGetEULAResult,
-    TrueNASIsIXHardwareArgs, TrueNASIsIXHardwareResult,
+    TrueNASAcceptEulaArgs, TrueNASAcceptEulaResult,
+    TrueNASIsEulaAcceptedArgs, TrueNASIsEulaAcceptedResult,
+    TrueNASGetEulaArgs, TrueNASGetEulaResult,
+    TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult,
     TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult,
     TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult, TruecommandStatus,
 )
@@ -52,14 +52,14 @@ class TrueNASService(Service):
         """
         return get_chassis_hardware()
 
-    @api_method(TrueNASIsIXHardwareArgs, TrueNASIsIXHardwareResult, roles=['READONLY_ADMIN'])
+    @api_method(TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult, roles=['READONLY_ADMIN'])
     async def is_ix_hardware(self):
         """
         Return a boolean value on whether this is hardware that iXsystems sells.
         """
         return await self.get_chassis_hardware() != TRUENAS_UNKNOWN
 
-    @api_method(TrueNASGetEULAArgs, TrueNASGetEULAResult, roles=['READONLY_ADMIN'])
+    @api_method(TrueNASGetEulaArgs, TrueNASGetEulaResult, roles=['READONLY_ADMIN'])
     @cli_private
     def get_eula(self):
         """
@@ -71,7 +71,7 @@ class TrueNASService(Service):
         except FileNotFoundError:
             pass
 
-    @api_method(TrueNASIsEULAAcceptedArgs, TrueNASIsEULAAcceptedResult, roles=['READONLY_ADMIN'])
+    @api_method(TrueNASIsEulaAcceptedArgs, TrueNASIsEulaAcceptedResult, roles=['READONLY_ADMIN'])
     @cli_private
     def is_eula_accepted(self):
         """
@@ -79,7 +79,7 @@ class TrueNASService(Service):
         """
         return not os.path.exists(EULA_PENDING_PATH)
 
-    @api_method(TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult, roles=['FULL_ADMIN'])
+    @api_method(TrueNASAcceptEulaArgs, TrueNASAcceptEulaResult, roles=['FULL_ADMIN'])
     def accept_eula(self):
         """
         Accept TrueNAS EULA.

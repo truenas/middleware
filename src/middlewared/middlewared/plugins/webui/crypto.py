@@ -1,8 +1,8 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CSRProfilesArgs,
+    WebUICryptoCsrProfilesArgs,
     CSRProfilesModel,
-    CSRProfilesResult,
+    WebUICryptoCsrProfilesResult,
     WebUICryptoGetCertificateDomainNamesArgs,
     WebUICryptoGetCertificateDomainNamesResult,
 )
@@ -25,8 +25,8 @@ class WebUICryptoService(Service):
         return await self.middleware.call('certificate.get_domain_names', cert_id)
 
     @api_method(
-        CSRProfilesArgs,
-        CSRProfilesResult,
+        WebUICryptoCsrProfilesArgs,
+        WebUICryptoCsrProfilesResult,
         roles=['CERTIFICATE_READ']
     )
     async def csr_profiles(self):

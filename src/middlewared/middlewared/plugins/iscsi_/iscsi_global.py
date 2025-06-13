@@ -4,9 +4,9 @@ import socket
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (IscsiGlobalAluaEnabledArgs, IscsiGlobalAluaEnabledResult, IscsiGlobalEntry,
-                                     IscsiGlobalISEREnabledArgs, IscsiGlobalISEREnabledResult, IscsiGlobalUpdateArgs,
-                                     IscsiGlobalUpdateResult)
+from middlewared.api.current import (ISCSIGlobalAluaEnabledArgs, ISCSIGlobalAluaEnabledResult, IscsiGlobalEntry,
+                                     ISCSIGlobalIserEnabledArgs, ISCSIGlobalIserEnabledResult, ISCSIGlobalUpdateArgs,
+                                     ISCSIGlobalUpdateResult)
 from middlewared.async_validators import validate_port
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
@@ -105,8 +105,8 @@ class ISCSIGlobalService(SystemServiceService):
         return data
 
     @api_method(
-        IscsiGlobalUpdateArgs,
-        IscsiGlobalUpdateResult,
+        ISCSIGlobalUpdateArgs,
+        ISCSIGlobalUpdateResult,
         audit='Update iSCSI'
     )
     async def do_update(self, data):
@@ -212,8 +212,8 @@ class ISCSIGlobalService(SystemServiceService):
             self.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
 
     @api_method(
-        IscsiGlobalAluaEnabledArgs,
-        IscsiGlobalAluaEnabledResult,
+        ISCSIGlobalAluaEnabledArgs,
+        ISCSIGlobalAluaEnabledResult,
         roles=['SHARING_ISCSI_GLOBAL_READ']
     )
     async def alua_enabled(self):
@@ -232,8 +232,8 @@ class ISCSIGlobalService(SystemServiceService):
         return (await self.middleware.call('iscsi.global.config'))['alua']
 
     @api_method(
-        IscsiGlobalISEREnabledArgs,
-        IscsiGlobalISEREnabledResult,
+        ISCSIGlobalIserEnabledArgs,
+        ISCSIGlobalIserEnabledResult,
         roles=['SHARING_ISCSI_GLOBAL_READ']
     )
     async def iser_enabled(self):

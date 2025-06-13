@@ -8,11 +8,11 @@ from middlewared.service import (
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    VirtInstanceDeviceListArgs, VirtInstanceDeviceListResult,
-    VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult,
-    VirtInstanceDeviceDeleteArgs, VirtInstanceDeviceDeleteResult,
-    VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult,
-    VirtInstanceBootableDiskArgs, VirtInstanceBootableDiskResult,
+    VirtInstanceDeviceDeviceListArgs, VirtInstanceDeviceDeviceListResult,
+    VirtInstanceDeviceDeviceAddArgs, VirtInstanceDeviceDeviceAddResult,
+    VirtInstanceDeviceDeviceDeleteArgs, VirtInstanceDeviceDeviceDeleteResult,
+    VirtInstanceDeviceDeviceUpdateArgs, VirtInstanceDeviceDeviceUpdateResult,
+    VirtInstanceDeviceSetBootableDiskArgs, VirtInstanceDeviceSetBootableDiskResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
 from .utils import (
@@ -27,7 +27,7 @@ class VirtInstanceDeviceService(Service):
         namespace = 'virt.instance'
         cli_namespace = 'virt.instance'
 
-    @api_method(VirtInstanceDeviceListArgs, VirtInstanceDeviceListResult, roles=['VIRT_INSTANCE_READ'])
+    @api_method(VirtInstanceDeviceDeviceListArgs, VirtInstanceDeviceDeviceListResult, roles=['VIRT_INSTANCE_READ'])
     async def device_list(self, id_):
         """
         List all devices associated to an instance.
@@ -519,8 +519,8 @@ class VirtInstanceDeviceService(Service):
         }
 
     @api_method(
-        VirtInstanceDeviceAddArgs,
-        VirtInstanceDeviceAddResult,
+        VirtInstanceDeviceDeviceAddArgs,
+        VirtInstanceDeviceDeviceAddResult,
         audit='Virt: Adding device',
         audit_extended=lambda i, device: f'{device["dev_type"]!r} to {i!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
@@ -551,8 +551,8 @@ class VirtInstanceDeviceService(Service):
         return True
 
     @api_method(
-        VirtInstanceDeviceUpdateArgs,
-        VirtInstanceDeviceUpdateResult,
+        VirtInstanceDeviceDeviceUpdateArgs,
+        VirtInstanceDeviceDeviceUpdateResult,
         audit='Virt: Updating device',
         audit_extended=lambda i, device: f'{device["name"]!r} of {i!r} instance',
         roles=['VIRT_INSTANCE_WRITE']
@@ -586,8 +586,8 @@ class VirtInstanceDeviceService(Service):
         return True
 
     @api_method(
-        VirtInstanceDeviceDeleteArgs,
-        VirtInstanceDeviceDeleteResult,
+        VirtInstanceDeviceDeviceDeleteArgs,
+        VirtInstanceDeviceDeviceDeleteResult,
         audit='Virt: Deleting device',
         audit_extended=lambda i, device: f'{device!r} from {i!r} instance',
         roles=['VIRT_INSTANCE_DELETE']
@@ -612,8 +612,8 @@ class VirtInstanceDeviceService(Service):
         return True
 
     @api_method(
-        VirtInstanceBootableDiskArgs,
-        VirtInstanceBootableDiskResult,
+        VirtInstanceDeviceSetBootableDiskArgs,
+        VirtInstanceDeviceSetBootableDiskResult,
         audit='Virt: Choosing',
         audit_extended=lambda id_, disk: f'{disk!r} as bootable disk for {id_!r} instance',
         roles=['VIRT_INSTANCE_WRITE']

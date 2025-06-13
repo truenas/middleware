@@ -25,12 +25,12 @@ from .common import QueryFilters, QueryOptions
 
 __all__ = [
     'AclTemplateEntry',
-    'AclTemplateByPathArgs', 'AclTemplateByPathResult',
-    'AclTemplateCreateArgs', 'AclTemplateCreateResult',
-    'AclTemplateUpdateArgs', 'AclTemplateUpdateResult',
-    'AclTemplateDeleteArgs', 'AclTemplateDeleteResult',
-    'FilesystemGetAclArgs', 'FilesystemGetAclResult',
-    'FilesystemSetAclArgs', 'FilesystemSetAclResult',
+    'ACLTemplateByPathArgs', 'ACLTemplateByPathResult',
+    'ACLTemplateCreateArgs', 'ACLTemplateCreateResult',
+    'ACLTemplateUpdateArgs', 'ACLTemplateUpdateResult',
+    'ACLTemplateDeleteArgs', 'ACLTemplateDeleteResult',
+    'FilesystemGetaclArgs', 'FilesystemGetaclResult',
+    'FilesystemSetaclArgs', 'FilesystemSetaclResult',
     'NFS4ACE', 'POSIXACE',
 ]
 
@@ -206,7 +206,7 @@ class DISABLED_ACL(AclBaseInfo):
     trivial: Literal[True]
 
 
-class FilesystemGetAclArgs(BaseModel):
+class FilesystemGetaclArgs(BaseModel):
     path: NonEmptyString
     simplified: bool = True
     resolve_ids: bool = False
@@ -230,7 +230,7 @@ class DISABLED_ACLResult(DISABLED_ACL, AclBaseResult):
     pass
 
 
-class FilesystemGetAclResult(BaseModel):
+class FilesystemGetaclResult(BaseModel):
     result: NFS4ACLResult | POSIXACLResult | DISABLED_ACLResult
 
 
@@ -243,7 +243,7 @@ class FilesystemSetAclOptions(BaseModel):
 
 
 @single_argument_args('filesystem_acl')
-class FilesystemSetAclArgs(BaseModel):
+class FilesystemSetaclArgs(BaseModel):
     path: NonEmptyString
     dacl: list[NFS4ACE] | list[POSIXACE]
     options: FilesystemSetAclOptions = Field(default=FilesystemSetAclOptions())
@@ -266,7 +266,7 @@ class FilesystemSetAclArgs(BaseModel):
         return self
 
 
-class FilesystemSetAclResult(FilesystemGetAclResult):
+class FilesystemSetaclResult(FilesystemGetaclResult):
     pass
 
 
@@ -284,11 +284,11 @@ class AclTemplateCreate(AclTemplateEntry):
     builtin: Excluded = excluded_field()
 
 
-class AclTemplateCreateArgs(BaseModel):
+class ACLTemplateCreateArgs(BaseModel):
     acltemplate_create: AclTemplateCreate
 
 
-class AclTemplateCreateResult(BaseModel):
+class ACLTemplateCreateResult(BaseModel):
     result: AclTemplateEntry
 
 
@@ -296,20 +296,20 @@ class AclTemplateUpdate(AclTemplateCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class AclTemplateUpdateArgs(BaseModel):
+class ACLTemplateUpdateArgs(BaseModel):
     id: int
     acltemplate_update: AclTemplateUpdate
 
 
-class AclTemplateUpdateResult(BaseModel):
+class ACLTemplateUpdateResult(BaseModel):
     result: AclTemplateEntry
 
 
-class AclTemplateDeleteArgs(BaseModel):
+class ACLTemplateDeleteArgs(BaseModel):
     id: int
 
 
-class AclTemplateDeleteResult(BaseModel):
+class ACLTemplateDeleteResult(BaseModel):
     result: Literal[True]
 
 
@@ -320,12 +320,12 @@ class AclTemplateFormatOptions(BaseModel):
 
 
 @single_argument_args('filesystem_acl')
-class AclTemplateByPathArgs(BaseModel):
+class ACLTemplateByPathArgs(BaseModel):
     path: str = ""
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
     query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
     format_options: AclTemplateFormatOptions = Field(alias='format-options', default=AclTemplateFormatOptions())
 
 
-class AclTemplateByPathResult(BaseModel):
+class ACLTemplateByPathResult(BaseModel):
     result: list[AclTemplateEntry]

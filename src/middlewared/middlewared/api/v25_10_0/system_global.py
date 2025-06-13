@@ -1,11 +1,11 @@
 from middlewared.api.base import BaseModel
 
-__all__ = ("SystemGlobalIdArgs", "SystemGlobalIdResult")
+__all__ = ("SystemGlobalIDIdArgs", "SystemGlobalIDIdResult")
 
 
-class SystemGlobalIdArgs(BaseModel):
+class SystemGlobalIDIdArgs(BaseModel):
     pass
 
 
-class SystemGlobalIdResult(BaseModel):
+class SystemGlobalIDIdResult(BaseModel):
     result: str
