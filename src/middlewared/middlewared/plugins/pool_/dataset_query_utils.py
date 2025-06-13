@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Union
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
@@ -47,16 +49,16 @@ class DeterminedProperties:
     these need to only be calculated once for each zfs type
     that we come across."""
 
-    fs: (
-        set[truenas_pylibzfs.ZFSProperty]
-        | frozenset[truenas_pylibzfs.ZFSProperty]
-        | None
-    ) = None
-    vol: (
-        set[truenas_pylibzfs.ZFSProperty]
-        | frozenset[truenas_pylibzfs.ZFSProperty]
-        | None
-    ) = None
+    fs: Union[
+        set[truenas_pylibzfs.ZFSProperty],
+        frozenset[truenas_pylibzfs.ZFSProperty],
+        None,
+    ] = None
+    vol: Union[
+        set[truenas_pylibzfs.ZFSProperty],
+        frozenset[truenas_pylibzfs.ZFSProperty],
+        None,
+    ] = None
     default: frozenset[truenas_pylibzfs.ZFSProperty] = (
         truenas_pylibzfs.property_sets.ZFS_SPACE_PROPERTIES
     )
@@ -105,11 +107,11 @@ class ExtraArgs:
 class QueryFiltersCallbackState:
     filters: list = field(default_factory=list)
     """list of filters"""
-    filter_fn: callable = GENERIC_FILTERS.filter_list
+    filter_fn: Callable = GENERIC_FILTERS.filter_list
     """function to do filtering"""
-    get_fn: callable = get_impl
+    get_fn: Callable = get_impl
     """function to get value from dict"""
-    select_fn: callable = GENERIC_FILTERS.do_select
+    select_fn: Callable = GENERIC_FILTERS.do_select
     """function to select values"""
     select: list = field(default_factory=list)
     """list of fields to select. None means all"""
@@ -423,11 +425,10 @@ def normalize_zfs_properties(zprops: dict[str, dict] | None) -> dict[str, dict]:
             else:
                 try:
                     parsed_value = int(raw_value)
-                    value_field = (
-                        _format_bytes(parsed_value)
-                        if zfs_prop_name in size_properties
-                        else raw_value.upper()
-                    )
+                    if zfs_prop_name in size_properties:
+                        value_field = _format_bytes(parsed_value)
+                    else:
+                        value_field = raw_value.upper()
                 except ValueError:
                     parsed_value = raw_value
                     value_field = raw_value.upper()
@@ -474,12 +475,10 @@ def normalize_zfs_properties(zprops: dict[str, dict] | None) -> dict[str, dict]:
                 else:
                     value_field = str(parsed_value)
             else:
-                value_field = (
-                    _format_bytes(parsed_value)
-                    if zfs_prop_name in size_properties
-                    and isinstance(parsed_value, (int, float))
-                    else raw_value.upper()
-                )
+                if zfs_prop_name in size_properties and isinstance(parsed_value, (int, float)):
+                    value_field = _format_bytes(parsed_value)
+                else:
+                    value_field = raw_value.upper()
         elif zfs_prop_name in size_properties and isinstance(
             parsed_value, (int, float)
         ):
@@ -727,7 +726,7 @@ def build_info(hdl, state: QueryFiltersCallbackState):
             info["encrypted"] = True
             info["encryption_root"] = crypto["encryption_root"]
             info["key_loaded"] = crypto["key_is_loaded"]
-            info["locked"] = crypto["key_is_loaded"]
+            info["locked"] = not crypto["key_is_loaded"]
         else:
             info["encrypted"] = False
             info["encryption_root"] = None
@@ -907,10 +906,10 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     info = build_info(hdl, state)
 
     # Add snapshot functionality if requested - do this directly here for efficiency
-    if (
-        state.extra.snap_properties.snapshots_count
-        or state.extra.snap_properties.snapshots
-    ):
+    if any((
+        state.extra.snap_properties.snapshots_count,
+        state.extra.snap_properties.snapshots
+    )):
         # Initialize snapshot_count to 0 if counting is requested
         if state.extra.snap_properties.snapshots_count:
             info["snapshot_count"] = 0
@@ -1011,7 +1010,7 @@ def _flatten_hierarchy(hierarchy):
 
 
 def generic_query(
-    rsrc_iterator: callable,
+    rsrc_iterator: Callable,
     filters_in: list,
     options_in: dict,
     extra: dict,
