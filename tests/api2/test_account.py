@@ -2,7 +2,7 @@ import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import (
-    user, group, unprivileged_user_client, test_user, temporary_update
+    user, group, unprivileged_user_client, temporary_update
 )
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.utils.audit import expect_audit_method_calls

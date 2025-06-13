@@ -1,9 +1,16 @@
 import os
 import pytest
 
-from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.pytest import failed
+
+# pytest fixtures
+# Importing pytest fixtures in test modules is not supported.
+# The work-around is to import them in conftest.py (this module),
+# making them available (in scope) for all test modules.
+# See: https://stackoverflow.com/questions/75647682/how-can-i-resolve-flake8-unused-import-error-for-pytest-fixture-imported-from
+from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
+from middlewared.test.integration.assets.account import test_user  # noqa
 
 pytest.register_assert_rewrite("middlewared.test")
 
