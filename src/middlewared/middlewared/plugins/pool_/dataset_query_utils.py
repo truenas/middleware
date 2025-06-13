@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import filters, get_impl
+from middlewared.utils import BOOT_POOL_NAME_VALID, filters, get_impl
 from middlewared.utils.size import format_size
 
 try:
@@ -13,51 +13,29 @@ except ImportError:
 __all__ = ("generic_query",)
 
 GENERIC_FILTERS = filters()
+INTERNAL_DATASETS = (
+    ".system",
+    "ix-applications",
+    "ix-apps",
+    ".ix-virt",
+)
+"""
+Tuple of internal dataset name patterns that should be filtered out by default.
+
+These patterns represent system-managed datasets that are typically hidden
+from user interfaces. Used by is_internal_dataset() to perform efficient
+string prefix matching.
+"""
 
 
 def _format_bytes(value):
-    """Format byte values as human-readable strings using middlewared's format_size."""
+    """Format byte values as human-readable strings."""
     if isinstance(value, (int, float)) and value >= 0:
         try:
             return format_size(value)
         except Exception:
             return str(value)
     return str(value)
-
-
-def get_internal_dataset_filters():
-    """Get filters to exclude internal datasets like the current API."""
-    # These are the actual boot pool names that could be valid
-    # The current API uses BOOT_POOL_NAME_VALID which we'll approximate
-    boot_pool_names = ["boot-pool", "freenas-boot", "truenas-boot"]
-
-    return [
-        ["pool", "nin", boot_pool_names],
-        ["id", "rnin", "/.system"],
-        ["id", "rnin", "/ix-applications/"],
-        ["id", "rnin", "/ix-apps"],
-        ["id", "rnin", "/.ix-virt"],
-    ]
-
-
-def _is_boot_pool(dataset_name):
-    """Check if a dataset belongs to a boot pool."""
-    boot_pool_names = ["boot-pool", "freenas-boot", "truenas-boot"]
-    pool_name = dataset_name.split("/")[0]
-    return pool_name in boot_pool_names
-
-
-def _is_internal_dataset(dataset_name):
-    """Check if a dataset is internal and should be filtered out."""
-    # Check for internal paths that the current API filters out
-    # Note: Boot pools are filtered out entirely by the API, so we only check for
-    # internal datasets within regular pools
-    internal_patterns = ["/.system", "/ix-applications/", "/ix-apps", "/.ix-virt"]
-    for pattern in internal_patterns:
-        if pattern in dataset_name:
-            return True
-
-    return False
 
 
 @dataclass(slots=True, kw_only=True)
@@ -93,7 +71,7 @@ class SnapshotArgs:
     """Recursively retrieve snapshots for the zfs resource"""
     snapshots_count: bool = False
     """Count the number of snapshots for a given zfs resource"""
-    snapshots_properties: list[str] | None = field(default_factory=lambda: [])
+    snapshots_properties: list[str] | None = field(default_factory=list)
     """Properties to retrieve for snapshots. Empty list means minimal properties,
     None means all properties."""
 
@@ -127,7 +105,7 @@ class ExtraArgs:
 class QueryFiltersCallbackState:
     filters: list = field(default_factory=list)
     """list of filters"""
-    filter_fn: callable = GENERIC_FILTERS.eval_filter
+    filter_fn: callable = GENERIC_FILTERS.filter_list
     """function to do filtering"""
     get_fn: callable = get_impl
     """function to get value from dict"""
@@ -155,6 +133,11 @@ class QueryFiltersCallbackState:
     """stores the index values of each dataset that is iterated"""
     count: int = 0
     """the count of objects if count_only == True"""
+    exclude_internal_datasets: bool = True
+    """Flag to control whether internal datasets should be filtered out.
+    When True, system datasets matching INTERNAL_DATASETS patterns and boot
+    pools will be excluded from query results. Allows for flexible control
+    over when system datasets should be included in results."""
 
 
 # FIXME: At time of writing, calling pool.dataset.query
@@ -175,7 +158,6 @@ BASE_PROPS = frozenset(
         # encryption_root is just a string at top of dict
         truenas_pylibzfs.ZFSProperty.ENCRYPTIONROOT,  # encryption_root
         truenas_pylibzfs.ZFSProperty.KEYFORMAT,  # key_format
-        # truenas_pylibzfs.ZFSProperty.KEYSTATUS,  # FIXME: not sure about this one
         truenas_pylibzfs.ZFSProperty.ORIGIN,
         truenas_pylibzfs.ZFSProperty.PBKDF2ITERS,
         truenas_pylibzfs.ZFSProperty.READONLY,
@@ -479,12 +461,25 @@ def normalize_zfs_properties(zprops: dict[str, dict] | None) -> dict[str, dict]:
             except ValueError:
                 # If conversion fails, keep original value
                 pass
-            value_field = (
-                _format_bytes(parsed_value)
-                if zfs_prop_name in size_properties
-                and isinstance(parsed_value, (int, float))
-                else raw_value.upper()
-            )
+
+            # Special formatting for recordsize and volblocksize to match original API
+            if zfs_prop_name in ("recordsize", "volblocksize") and isinstance(
+                parsed_value, (int, float)
+            ):
+                # Convert bytes to human-readable format like the original API (e.g., 131072 -> "128K")
+                if parsed_value >= 1024 * 1024:
+                    value_field = f"{int(parsed_value / (1024 * 1024))}M"
+                elif parsed_value >= 1024:
+                    value_field = f"{int(parsed_value / 1024)}K"
+                else:
+                    value_field = str(parsed_value)
+            else:
+                value_field = (
+                    _format_bytes(parsed_value)
+                    if zfs_prop_name in size_properties
+                    and isinstance(parsed_value, (int, float))
+                    else raw_value.upper()
+                )
         elif zfs_prop_name in size_properties and isinstance(
             parsed_value, (int, float)
         ):
@@ -640,80 +635,6 @@ def build_set_of_zfs_props(
         return state.determined_properties.default
 
     return result
-
-
-def should_short_circuit(hdl, state: QueryFiltersCallbackState):
-    """
-    Determine if a ZFS resource should be skipped during iteration for performance.
-
-    This function performs early filtering using only cheap operations (hdl.name,
-    hdl.pool_name, hdl.type) to avoid hdl.asdict() calls on resources that won't
-    match the query filters.
-
-    When retrieve_children is True, the function also checks if the current resource
-    could be a descendant of a filtered resource, allowing children to be processed
-    even if they don't directly match the parent filters.
-
-    Args:
-        hdl: ZFS handle from truenas_pylibzfs
-        state: Query callback state containing filters and options
-
-    Returns:
-        bool: True if the resource should be skipped (short-circuited),
-              False if it should be processed
-    """
-    tmp = {
-        "id": hdl.name,
-        "name": hdl.name,
-        "type": normalize_zfs_type(hdl.type),
-        "pool": hdl.pool_name,
-    }
-
-    # Check if this dataset matches any filter
-    matches_filter = True
-    for f in state.filters:
-        if not state.filter_fn(tmp, f, get_impl, None):
-            matches_filter = False
-            break
-
-    # If it matches, don't short-circuit
-    if matches_filter:
-        return False
-
-    # If retrieve_children is True, check if this could be a child of a filtered dataset
-    if state.extra.retrieve_children:
-        # Check if current dataset could be a descendant of any filtered dataset
-        for f in state.filters:
-            if (
-                len(f) == 3
-                and f[0] in ("name", "id", "pool", "type")
-                and f[1] in ("=", "in")
-            ):
-                # ["name", "in", ["tank", "cargo"]]
-                ids = f[2] if isinstance(f[2], list) else [f[2]]
-                for id_name_or_pool in ids:
-                    if f[0] == "pool":
-                        # For pool filters, check against pool name
-                        if hdl.pool_name == id_name_or_pool:
-                            return False
-                    elif f[0] == "type":
-                        # For type filters, check against dataset type
-                        dataset_type = normalize_zfs_type(hdl.type)
-                        if dataset_type == id_name_or_pool:
-                            return False
-                    else:
-                        # For name/id filters, check descendant relationship
-                        if (
-                            hdl.name.startswith(f"{id_name_or_pool}/")
-                            or hdl.name == id_name_or_pool
-                        ):
-                            return False
-
-        # If no filters match ancestry, short-circuit
-        return True
-
-    # No retrieve_children and doesn't match filter, short-circuit
-    return True
 
 
 def normalize_zfs_asdict_result(raw_data, hdl):
@@ -932,17 +853,45 @@ def snapshot_callback(snap_hdl, info):
     return True
 
 
+def is_internal_dataset(hdl):
+    """
+    Check if a dataset is an internal system dataset that should be filtered out.
+
+    Detects system datasets by checking against known boot pool names and
+    internal dataset patterns defined in INTERNAL_DATASETS.
+
+    Args:
+        hdl: ZFS handle from truenas_pylibzfs
+
+    Returns:
+        bool: True if the dataset is internal and should be filtered out,
+              False if it should be included in results
+    """
+    name = hdl.name
+    for i in BOOT_POOL_NAME_VALID:
+        if name == i or name.startswith(f"{i}/"):
+            return True
+    for i in INTERNAL_DATASETS:
+        if f"/{i}" in name:
+            return True
+    return False
+
+
 def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     """
     Callback function for processing individual ZFS resources during iteration.
 
     This function is called for each ZFS resource during iteration and handles:
-    1. Early filtering via should_short_circuit for performance
+    1. Early filtering using internal dataset and exact match checks
     2. Building complete resource information
     3. Adding snapshot count if requested
     4. Applying field selection if specified
     5. Adding results to flat array or building hierarchical structure
     6. Recursively processing children if requested
+
+    The function uses two focused filtering approaches:
+    - is_internal_dataset() for configurable system dataset filtering
+    - exact_match_filters_specified_and_did_not_match() for performance optimization
 
     Args:
         hdl: ZFS handle from truenas_pylibzfs for current resource
@@ -951,7 +900,8 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     Returns:
         bool: True to continue iteration, False to halt iteration
     """
-    if should_short_circuit(hdl, state):
+    if state.exclude_internal_datasets and is_internal_dataset(hdl):
+        # is an internal dataset and told to exclude them from results
         return True
 
     info = build_info(hdl, state)
@@ -977,19 +927,9 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
             # Process snapshots for this specific dataset
             # Use fast=True for counting only, fast=False when we need snapshot data
             use_fast = not state.extra.snap_properties.snapshots
-
-            # If snapshots_recursive is True, get snapshots recursively
-            # Note: The recursive parameter might not be supported, so let's handle this differently
-            if state.extra.snap_properties.snapshots_recursive:
-                # For recursive, we might need to handle this at a higher level
-                # For now, try without the recursive parameter to see if it works
-                hdl.iter_snapshots(
-                    callback=snapshot_callback, state=info, fast=use_fast
-                )
-            else:
-                hdl.iter_snapshots(
-                    callback=snapshot_callback, state=info, fast=use_fast
-                )
+            # For recursive, we might need to handle this at a higher level
+            # For now, try without the recursive parameter to see if it works
+            hdl.iter_snapshots(callback=snapshot_callback, state=info, fast=use_fast)
         except Exception:
             # If snapshot iteration fails, initialized values remain
             pass
@@ -999,45 +939,54 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     else:
         data = info
 
+    # Note: Filtering will be applied at the end in generic_query function
+
     if state.count_only:
         state.count += 1
     else:
-        # Always build hierarchy during iteration to populate children relationships
-        dataset_name = data["name"]
-        curr_path = ""
-        curr_children = state.results
+        # When retrieve_children is False, don't build hierarchy - just add datasets directly
+        # This fixes filtering issues where specific datasets get lost in hierarchy building
+        if not state.extra.retrieve_children:
+            state.results.append(data)
+        else:
+            # Build hierarchy during iteration to populate children relationships
+            dataset_name = data["name"]
+            curr_path = ""
+            curr_children = state.results
 
-        # Navigate/create the path to this dataset
-        for part in dataset_name.split("/"):
-            curr_path = f"{curr_path}/{part}" if curr_path else part
+            # Navigate/create the path to this dataset
+            for part in dataset_name.split("/"):
+                curr_path = f"{curr_path}/{part}" if curr_path else part
 
-            # Find or create this path level
-            existing_node = None
-            for node in curr_children:
-                if node["name"] == curr_path:
-                    existing_node = node
-                    break
+                # Find or create this path level
+                existing_node = None
+                for node in curr_children:
+                    if node["name"] == curr_path:
+                        existing_node = node
+                        break
 
-            if existing_node:
-                # Path already exists, navigate to its children
-                curr_children = existing_node["children"]
-            else:
-                # Create new node
-                if curr_path == dataset_name:
-                    # This is the actual dataset we're processing
-                    new_node = data
+                if existing_node:
+                    # Path already exists, navigate to its children
+                    curr_children = existing_node["children"]
                 else:
-                    # This is an intermediate path, create placeholder
-                    new_node = {"id": curr_path, "name": curr_path, "children": []}
+                    # Create new node
+                    if curr_path == dataset_name:
+                        # This is the actual dataset we're processing
+                        new_node = data
+                    else:
+                        # This is an intermediate path, create placeholder
+                        new_node = {"id": curr_path, "name": curr_path, "children": []}
 
-                curr_children.append(new_node)
-                curr_children = new_node["children"]
+                    curr_children.append(new_node)
+                    curr_children = new_node["children"]
 
     if state.single_result:
         # halt iterator
         return False
 
-    if state.extra.retrieve_children:
+    # Always recurse when we have filters, even if retrieve_children is False
+    # This ensures filtered queries can find child datasets
+    if state.extra.retrieve_children or state.filters:
         hdl.iter_filesystems(callback=generic_query_callback, state=state)
 
     return True
@@ -1066,6 +1015,7 @@ def generic_query(
     filters_in: list,
     options_in: dict,
     extra: dict,
+    exclude_internal_datasets: bool = True,
 ):
     """
     Generic query function for ZFS resources with filtering, pagination, and hierarchy support.
@@ -1077,6 +1027,7 @@ def generic_query(
     - Pagination with offset and limit
     - Property-specific retrieval for performance
     - Children retrieval with descendant filtering
+    - Configurable internal dataset filtering
     - API compatibility transformations to match current API format
 
     Args:
@@ -1084,6 +1035,7 @@ def generic_query(
         filters_in: List of filter expressions [["field", "operator", "value"], ...]
         options_in: Query options dict with keys like "get", "count", "order_by", etc.
         extra: Extra options dict with keys like "flat", "properties", "retrieve_children"
+        exclude_internal_datasets: If True, filter out system datasets (default True)
 
     Returns:
         list | dict | int: Query results based on options:
@@ -1115,6 +1067,7 @@ def generic_query(
                 snapshots_properties=extra.get("snapshots_properties", []),
             ),
         ),
+        exclude_internal_datasets=exclude_internal_datasets,
     )
 
     # do iteration
@@ -1131,6 +1084,12 @@ def generic_query(
     # Apply flattening if flat=True (matches old API behavior)
     if state.extra.flat:
         state.results = _flatten_hierarchy(state.results)
+
+    # Apply filtering after flattening
+    if state.filters:
+        state.results = state.filter_fn(
+            state.results, filters=state.filters, options={}
+        )
 
     if order_by:
         state.results = GENERIC_FILTERS.do_order(state.results, order_by)
