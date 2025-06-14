@@ -822,6 +822,128 @@ def test_list_items_with_length_constraints():
         model(tesseract_languages=['eng-long'])  # 8 chars, max is 7
 
 
+def test_list_with_min_max_constraints():
+    """Test list with min/max constraints on the number of items"""
+    schema = [
+        {
+            'variable': 'ports',
+            'label': 'Port Numbers',
+            'schema': {
+                'type': 'list',
+                'min': 1,  # At least 1 port required
+                'max': 5,  # Maximum 5 ports allowed
+                'default': [],
+                'items': [
+                    {
+                        'variable': 'port',
+                        'label': 'Port',
+                        'schema': {
+                            'type': 'int',
+                            'min': 1,
+                            'max': 65535,
+                            'required': True
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestListMinMax', NOT_PROVIDED)
+    
+    # Valid: 1-5 ports
+    m1 = model(ports=[8080])
+    assert m1.ports == [8080]
+    
+    m2 = model(ports=[80, 443, 8080])
+    assert m2.ports == [80, 443, 8080]
+    
+    m3 = model(ports=[80, 443, 8080, 8443, 9000])
+    assert m3.ports == [80, 443, 8080, 8443, 9000]
+    
+    # Invalid: empty list (min is 1)
+    with pytest.raises(ValidationError) as exc_info:
+        model(ports=[])
+    assert 'at least 1 item' in str(exc_info.value).lower()
+    
+    # Invalid: too many items (max is 5)
+    with pytest.raises(ValidationError) as exc_info:
+        model(ports=[80, 443, 8080, 8443, 9000, 9090])
+    assert 'at most 5 items' in str(exc_info.value).lower()
+
+
+def test_list_with_only_min_constraint():
+    """Test list with only min constraint"""
+    schema = [
+        {
+            'variable': 'tags',
+            'schema': {
+                'type': 'list',
+                'min': 2,  # At least 2 tags required
+                'default': [],
+                'items': [
+                    {
+                        'variable': 'tag',
+                        'schema': {
+                            'type': 'string',
+                            'required': True
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestListMin', NOT_PROVIDED)
+    
+    # Valid: 2 or more tags
+    m = model(tags=['web', 'api'])
+    assert m.tags == ['web', 'api']
+    
+    m2 = model(tags=['web', 'api', 'database', 'cache'])
+    assert len(m2.tags) == 4
+    
+    # Invalid: less than 2 tags
+    with pytest.raises(ValidationError):
+        model(tags=['single'])
+
+
+def test_list_with_only_max_constraint():
+    """Test list with only max constraint"""
+    schema = [
+        {
+            'variable': 'dns_servers',
+            'schema': {
+                'type': 'list',
+                'max': 3,  # Maximum 3 DNS servers
+                'default': [],
+                'items': [
+                    {
+                        'variable': 'server',
+                        'schema': {
+                            'type': 'ipaddr',
+                            'required': True
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    model = generate_pydantic_model(schema, 'TestListMax', NOT_PROVIDED)
+    
+    # Valid: 0-3 DNS servers
+    m1 = model(dns_servers=[])
+    assert m1.dns_servers == []
+    
+    m2 = model(dns_servers=['8.8.8.8', '8.8.4.4'])
+    assert len(m2.dns_servers) == 2
+    
+    # Invalid: more than 3 servers
+    with pytest.raises(ValidationError):
+        model(dns_servers=['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1'])
+
+
 # Test construct_schema function
 def test_construct_schema_basic():
     """Test the main construct_schema function"""

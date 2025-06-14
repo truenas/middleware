@@ -229,10 +229,23 @@ def create_field_info_from_schema(schema_def: dict) -> Field:
             field_kwargs['default'] = NotRequired
 
     # Add validation constraints
-    if any(k in schema_def for k in ('min_length', 'min')):
-        field_kwargs['min_length'] = schema_def['min_length']
-    if any(k in schema_def for k in ('max_length', 'max')):
-        field_kwargs['max_length'] = schema_def['max_length']
+    if schema_def['type'] == 'list':
+        # For lists, min/max refer to the number of items
+        if 'min' in schema_def:
+            field_kwargs['min_length'] = schema_def['min']
+        if 'max' in schema_def:
+            field_kwargs['max_length'] = schema_def['max']
+    elif schema_def['type'] in ('string', 'text', 'path', 'hostpath'):
+        # For string types, use min_length/max_length
+        if 'min_length' in schema_def:
+            field_kwargs['min_length'] = schema_def['min_length']
+        if 'max_length' in schema_def:
+            field_kwargs['max_length'] = schema_def['max_length']
+    else:
+        # For numeric types (int), min/max are bounds
+        if 'min' in schema_def:
+            field_kwargs['ge'] = schema_def['min']
+        if 'max' in schema_def:
+            field_kwargs['le'] = schema_def['max']
 
     return Field(**field_kwargs)
-
