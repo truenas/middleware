@@ -88,20 +88,6 @@ class AppSchemaService(Service):
                 verrors, value, question, schema_name, app_data,
             )
 
-        subquestions_enabled = (
-            schema['show_subquestions_if'] == value
-            if 'show_subquestions_if' in schema else 'subquestions' in schema
-        )
-        if subquestions_enabled:
-            for sub_question in schema.get('subquestions', []):
-                # TODO: Add support for nested subquestions validation for List schema types.
-                if isinstance(parent_attr, Dict) and sub_question['variable'] in parent_value:
-                    item_key, attr = sub_question['variable'], parent_attr.attrs[sub_question['variable']]
-                    await self.validate_question(
-                        verrors, parent_value, parent_value[sub_question['variable']], sub_question,
-                        parent_attr, attr, f'{schema_name}.{item_key}', app_data,
-                    )
-
         return verrors
 
     async def validate_certificate(self, verrors, value, question, schema_name, app_data):
