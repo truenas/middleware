@@ -1,10 +1,9 @@
 from pathlib import Path
 
-from middlewared.schema import Dict
 from middlewared.service import Service
 from middlewared.utils import filter_list
 
-from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVIDED, RESERVED_NAMES
+from .schema_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES
 
 
 VALIDATION_REF_MAPPING = {
@@ -42,11 +41,8 @@ class AppSchemaService(Service):
         for key in filter(lambda k: k in questions, new_values):
             await self.validate_question(
                 verrors=verrors,
-                parent_value=new_values,
                 value=new_values[key],
                 question=questions[key],
-                parent_attr=dict_obj,
-                var_attr=dict_obj.attrs[key],
                 schema_name=f'{schema_name}.{questions[key]["variable"]}',
                 app_data=app_data,
             )
@@ -56,7 +52,7 @@ class AppSchemaService(Service):
         return dict_obj
 
     async def validate_question(
-        self, verrors, parent_value, value, question, parent_attr, var_attr, schema_name, app_data=None
+        self, verrors, value, question, schema_name, app_data=None
     ):
         schema = question['schema']
 
@@ -64,17 +60,15 @@ class AppSchemaService(Service):
             dict_attrs = {v['variable']: v for v in schema['attrs']}
             for k in filter(lambda k: k in dict_attrs, value):
                 await self.validate_question(
-                    verrors, value, value[k], dict_attrs[k],
-                    var_attr, var_attr.attrs[k], f'{schema_name}.{k}', app_data,
+                    verrors, value[k], dict_attrs[k], f'{schema_name}.{k}', app_data,
                 )
 
         elif schema['type'] == 'list' and value:
             for index, item in enumerate(value):
-                item_index, attr = get_list_item_from_value(item, var_attr)
-                if attr:
+                if schema['items']:
                     await self.validate_question(
-                        verrors, value, item, schema['items'][item_index],
-                        var_attr, attr, f'{schema_name}.{index}', app_data,
+                        verrors, item, schema['items'][0],  # We will always have a single item schema
+                        f'{schema_name}.{index}', app_data,
                     )
 
         # FIXME: See if this is valid or not and port appropriately
