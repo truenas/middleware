@@ -17,7 +17,6 @@ USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
 
 
 # Functionality we are concerned about which we would like to port over
-# 1) Support min/max for lists/arrays - For lists we have min/max attrs
 #
 # Make sure immutable types are only supported for basic types strings/booleans/integers/path
 # Make sure we have tests for min/max/min_length/max_length
@@ -230,13 +229,10 @@ def create_field_info_from_schema(schema_def: dict) -> Field:
             field_kwargs['default'] = NotRequired
 
     # Add validation constraints
-    if 'min' in schema_def:
-        field_kwargs['ge'] = schema_def['min']
-    if 'max' in schema_def:
-        field_kwargs['le'] = schema_def['max']
-    if 'min_length' in schema_def:
+    if any(k in schema_def for k in ('min_length', 'min')):
         field_kwargs['min_length'] = schema_def['min_length']
-    if 'max_length' in schema_def:
+    if any(k in schema_def for k in ('max_length', 'max')):
         field_kwargs['max_length'] = schema_def['max_length']
 
     return Field(**field_kwargs)
+
