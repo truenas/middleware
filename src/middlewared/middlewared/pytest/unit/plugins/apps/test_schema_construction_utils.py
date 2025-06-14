@@ -679,10 +679,7 @@ def test_deeply_nested_structure():
 
 def test_list_with_enum_constraints():
     """Test pattern like apt_packages from Nextcloud"""
-    # TODO: Enum constraints are not yet implemented in the new schema system
-    # This test is commented out until enum support is added
-    pytest.skip("Enum constraints not yet implemented")
-    
+
     schema = [
         {
             'variable': 'apt_packages',
@@ -709,7 +706,7 @@ def test_list_with_enum_constraints():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestEnumList', NOT_PROVIDED)
     
     # Test with valid enum values
