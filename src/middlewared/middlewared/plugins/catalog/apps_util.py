@@ -9,7 +9,7 @@ from apps_validation.json_schema_utils import VERSION_VALIDATION_SCHEMA
 from catalog_reader.app import get_app_version_details as get_catalog_app_version_details
 from catalog_reader.questions import normalize_questions
 
-from middlewared.plugins.apps.schema_utils import construct_schema
+from middlewared.plugins.apps.schema_construction_utils import construct_schema
 from middlewared.plugins.update_.utils import can_update
 from middlewared.service import CallError
 from middlewared.utils import sw_info
