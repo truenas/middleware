@@ -12,6 +12,13 @@ from middlewared.utils import filter_list
 from .pydantic_utils import AbsolutePath, BaseModel, HostPath, IPvAnyAddress, URI
 
 
+CONTEXT_KEY_NAME = 'ix_context'
+RESERVED_NAMES = [
+    ('ix_certificates', dict),
+    ('ix_certificate_authorities', dict),
+    ('ix_volumes', dict),
+    (CONTEXT_KEY_NAME, dict),
+]
 NOT_PROVIDED = object()
 USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
 

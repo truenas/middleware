@@ -7,13 +7,6 @@ from middlewared.schema import (
 from middlewared.validators import Match, Range, validate_schema
 
 
-CONTEXT_KEY_NAME = 'ix_context'
-RESERVED_NAMES = [
-    ('ix_certificates', dict),
-    ('ix_certificate_authorities', dict),
-    ('ix_volumes', dict),
-    (CONTEXT_KEY_NAME, dict),
-]
 SCHEMA_MAPPING = {
     'string': Str,
     'int': Int,

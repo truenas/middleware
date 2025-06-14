@@ -4,7 +4,7 @@ from collections.abc import Callable
 from middlewared.service import Service
 
 from .ix_apps.path import get_app_volume_path
-from .schema_utils import RESERVED_NAMES
+from .schema_construction_utils import RESERVED_NAMES
 
 
 REF_MAPPING = {
