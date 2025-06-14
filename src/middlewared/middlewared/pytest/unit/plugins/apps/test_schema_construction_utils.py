@@ -102,7 +102,7 @@ Remember each schema should follow the following json schema:
 import pytest
 from pydantic import ValidationError
 
-from middlewared.api.base import NotRequired, LongString
+from middlewared.api.base import NotRequired
 from middlewared.plugins.apps.schema_construction_utils import generate_pydantic_model, construct_schema, NOT_PROVIDED
 
 
@@ -127,17 +127,17 @@ def test_string_field_variations():
         {'variable': 'optional_note', 'schema': {'type': 'string', 'required': False}}
     ]
     model = generate_pydantic_model(schema, 'TestStrings', NOT_PROVIDED)
-    
+
     # Valid with required field
     m = model(name='Test')
     assert m.name == 'Test'
     assert m.description == 'No description'
     assert m.optional_note is NotRequired
-    
+
     # Override default
     m2 = model(name='Test2', description='Custom description')
     assert m2.description == 'Custom description'
-    
+
     # Missing required field should fail
     with pytest.raises(ValidationError):
         model(description='Only description')
@@ -270,7 +270,7 @@ def test_path_field_type():
     # Valid absolute path
     m = model(file_path='/etc/passwd')
     assert m.file_path == '/etc/passwd'
-    
+
     # Relative path should fail
     with pytest.raises(ValidationError):
         model(file_path='relative/path')
@@ -285,7 +285,7 @@ def test_hostpath_field_type():
     # For unit tests, we'll use paths that should exist
     m = model(host_dir='/tmp')
     assert str(m.host_dir) == '/tmp'
-    
+
     # Test with empty string (which HostPath seems to accept as a special case)
     m2 = model(host_dir='')
     assert str(m2.host_dir) == ''
@@ -297,15 +297,15 @@ def test_ipaddr_field_type():
         {'variable': 'ip', 'schema': {'type': 'ipaddr', 'required': True}}
     ]
     model = generate_pydantic_model(schema, 'TestIP', NOT_PROVIDED)
-    
+
     # Valid IPv4
     m = model(ip='192.168.1.1')
     assert str(m.ip) == '192.168.1.1'
-    
+
     # Valid IPv6
     m2 = model(ip='::1')
     assert str(m2.ip) == '::1'
-    
+
     # Invalid IP should fail
     with pytest.raises(ValidationError):
         model(ip='not.an.ip')
@@ -316,14 +316,14 @@ def test_uri_field_type():
         {'variable': 'url', 'schema': {'type': 'uri', 'required': True}}
     ]
     model = generate_pydantic_model(schema, 'TestURI', NOT_PROVIDED)
-    
+
     # Valid URIs - Pydantic URL type normalizes URLs (adds trailing slash)
     m = model(url='https://example.com')
     assert str(m.url) == 'https://example.com/'
-    
+
     m2 = model(url='ftp://files.example.org/data')
     assert str(m2.url) == 'ftp://files.example.org/data'
-    
+
     # Invalid URI should fail
     with pytest.raises(ValidationError):
         model(url='not a uri')
@@ -335,22 +335,22 @@ def test_int_field_with_constraints():
         {'variable': 'port', 'schema': {'type': 'int', 'min': 1, 'max': 65535, 'required': True}}
     ]
     model = generate_pydantic_model(schema, 'TestIntConstraints', NOT_PROVIDED)
-    
+
     # Valid values
     m = model(port=8080)
     assert m.port == 8080
-    
+
     # Edge cases
     m_min = model(port=1)
     assert m_min.port == 1
-    
+
     m_max = model(port=65535)
     assert m_max.port == 65535
-    
+
     # Out of range should fail
     with pytest.raises(ValidationError):
         model(port=0)
-    
+
     with pytest.raises(ValidationError):
         model(port=65536)
 
@@ -360,22 +360,22 @@ def test_string_field_with_length_constraints():
         {'variable': 'username', 'schema': {'type': 'string', 'min_length': 3, 'max_length': 20, 'required': True}}
     ]
     model = generate_pydantic_model(schema, 'TestStringConstraints', NOT_PROVIDED)
-    
+
     # Valid lengths
     m = model(username='john')
     assert m.username == 'john'
-    
+
     # Edge cases
     m_min = model(username='abc')
     assert m_min.username == 'abc'
-    
+
     m_max = model(username='a' * 20)
     assert m_max.username == 'a' * 20
-    
+
     # Too short
     with pytest.raises(ValidationError):
         model(username='ab')
-    
+
     # Too long
     with pytest.raises(ValidationError):
         model(username='a' * 21)
@@ -388,12 +388,12 @@ def test_nullable_fields():
         {'variable': 'nullable_string', 'schema': {'type': 'string', 'null': True, 'default': None}}
     ]
     model = generate_pydantic_model(schema, 'TestNullable', NOT_PROVIDED)
-    
+
     # None values should be accepted
     m = model(nullable_int=None)
     assert m.nullable_int is None
     assert m.nullable_string is None
-    
+
     # Regular values should also work
     m2 = model(nullable_int=42, nullable_string='hello')
     assert m2.nullable_int == 42
@@ -407,13 +407,13 @@ def test_private_fields():
         {'variable': 'api_key', 'schema': {'type': 'string', 'private': True, 'null': True, 'default': None}}
     ]
     model = generate_pydantic_model(schema, 'TestPrivate', NOT_PROVIDED)
-    
+
     # Should accept values
     m = model(password='secret123')
     # The actual value might be wrapped in Secret type
     assert m.password.get_secret_value() == 'secret123'
     assert m.api_key is None
-    
+
     # With api_key set
     m2 = model(password='pass', api_key='key123')
     assert m2.api_key.get_secret_value() == 'key123'
@@ -425,11 +425,11 @@ def test_field_with_ref_metadata():
         {'variable': 'cert_id', 'schema': {'type': 'int', '$ref': ['certificate.query'], 'required': True}}
     ]
     model = generate_pydantic_model(schema, 'TestRef', NOT_PROVIDED)
-    
+
     # Should accept int values
     m = model(cert_id=123)
     assert m.cert_id == 123
-    
+
     # Check metadata is preserved (accessing through model_fields)
     field_info = model.model_fields['cert_id']
     # The $ref should be in metadata
@@ -442,11 +442,11 @@ def test_empty_list_default():
         {'variable': 'items', 'schema': {'type': 'list', 'required': False}}
     ]
     model = generate_pydantic_model(schema, 'TestEmptyList', NOT_PROVIDED)
-    
+
     # Should default to empty list
     m = model()
     assert m.items == []
-    
+
     # Can provide values
     m2 = model(items=[1, 2, 3])
     assert m2.items == [1, 2, 3]
@@ -457,11 +457,11 @@ def test_empty_dict_default():
         {'variable': 'config', 'schema': {'type': 'dict', 'required': False}}
     ]
     model = generate_pydantic_model(schema, 'TestEmptyDict', NOT_PROVIDED)
-    
+
     # Should default to empty dict
     m = model()
     assert m.config == {}
-    
+
     # Can provide values
     m2 = model(config={'key': 'value'})
     assert m2.config == {'key': 'value'}
@@ -515,13 +515,13 @@ def test_dict_containing_list_of_dicts():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestComplexEnvs', NOT_PROVIDED)
-    
+
     # Test with empty list (default)
     m1 = model()
     assert m1.home_assistant.additional_envs == []
-    
+
     # Test with valid env vars
     m2 = model(home_assistant={
         'additional_envs': [
@@ -533,7 +533,7 @@ def test_dict_containing_list_of_dicts():
     # List items are Pydantic models, not dicts
     assert m2.home_assistant.additional_envs[0].name == 'DEBUG'
     assert m2.home_assistant.additional_envs[0].value == 'true'
-    
+
     # Test validation - missing required field
     with pytest.raises(ValidationError):
         model(home_assistant={
@@ -582,9 +582,9 @@ def test_list_of_dicts_with_multiple_fields():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestDevices', NOT_PROVIDED)
-    
+
     # Test with valid devices
     m = model(devices=[
         {'host_device': '/dev/ttyUSB0', 'container_device': '/dev/ttyACM0'},
@@ -655,9 +655,9 @@ def test_deeply_nested_structure():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestDeepNesting', NOT_PROVIDED)
-    
+
     # Test with nested data
     m = model(app_config={
         'database': {
@@ -671,7 +671,7 @@ def test_deeply_nested_structure():
             ]
         }
     })
-    
+
     # Navigate the deep structure - list items are Pydantic models
     assert m.app_config.database.connections[0].settings.host == 'db.example.com'
     assert m.app_config.database.connections[0].settings.port == 3306
@@ -708,11 +708,11 @@ def test_list_with_enum_constraints():
     ]
 
     model = generate_pydantic_model(schema, 'TestEnumList', NOT_PROVIDED)
-    
+
     # Test with valid enum values
     m = model(apt_packages=['ffmpeg', 'smbclient'])
     assert m.apt_packages == ['ffmpeg', 'smbclient']
-    
+
     # Test with invalid enum value
     with pytest.raises(ValidationError):
         model(apt_packages=['ffmpeg', 'invalid-package'])
@@ -759,9 +759,9 @@ def test_mixed_field_types_in_dict():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestMixedTypes', NOT_PROVIDED)
-    
+
     # Test with all field types
     m = model(server_config={
         'name': 'MyServer',
@@ -770,7 +770,7 @@ def test_mixed_field_types_in_dict():
         'allowed_ips': ['192.168.1.100', '10.0.0.1'],
         'database_url': 'postgres://localhost/mydb'
     })
-    
+
     assert m.server_config.name == 'MyServer'
     assert m.server_config.port == 443
     assert m.server_config.ssl_enabled is True
@@ -803,17 +803,17 @@ def test_list_items_with_length_constraints():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestConstrainedListItems', NOT_PROVIDED)
-    
+
     # Valid language codes
     m = model(tesseract_languages=['eng', 'chi-sim', 'fra'])
     assert m.tesseract_languages == ['eng', 'chi-sim', 'fra']
-    
+
     # Too short
     with pytest.raises(ValidationError):
         model(tesseract_languages=['en'])  # 2 chars, min is 3
-    
+
     # Too long
     with pytest.raises(ValidationError):
         model(tesseract_languages=['eng-long'])  # 8 chars, max is 7
@@ -845,24 +845,24 @@ def test_list_with_min_max_constraints():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestListMinMax', NOT_PROVIDED)
-    
+
     # Valid: 1-5 ports
     m1 = model(ports=[8080])
     assert m1.ports == [8080]
-    
+
     m2 = model(ports=[80, 443, 8080])
     assert m2.ports == [80, 443, 8080]
-    
+
     m3 = model(ports=[80, 443, 8080, 8443, 9000])
     assert m3.ports == [80, 443, 8080, 8443, 9000]
-    
+
     # Invalid: empty list (min is 1)
     with pytest.raises(ValidationError) as exc_info:
         model(ports=[])
     assert 'at least 1 item' in str(exc_info.value).lower()
-    
+
     # Invalid: too many items (max is 5)
     with pytest.raises(ValidationError) as exc_info:
         model(ports=[80, 443, 8080, 8443, 9000, 9090])
@@ -890,16 +890,16 @@ def test_list_with_only_min_constraint():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestListMin', NOT_PROVIDED)
-    
+
     # Valid: 2 or more tags
     m = model(tags=['web', 'api'])
     assert m.tags == ['web', 'api']
-    
+
     m2 = model(tags=['web', 'api', 'database', 'cache'])
     assert len(m2.tags) == 4
-    
+
     # Invalid: less than 2 tags
     with pytest.raises(ValidationError):
         model(tags=['single'])
@@ -926,16 +926,16 @@ def test_list_with_only_max_constraint():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestListMax', NOT_PROVIDED)
-    
+
     # Valid: 0-3 DNS servers
     m1 = model(dns_servers=[])
     assert m1.dns_servers == []
-    
+
     m2 = model(dns_servers=['8.8.8.8', '8.8.4.4'])
     assert len(m2.dns_servers) == 2
-    
+
     # Invalid: more than 3 servers
     with pytest.raises(ValidationError):
         model(dns_servers=['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1'])
@@ -958,14 +958,14 @@ def test_construct_schema_basic():
             ]
         }
     }
-    
+
     # Test valid values
     result = construct_schema(item_version_details, {'app_name': 'myapp', 'port': 9000}, False)
     assert result['schema_name'] == 'app_create'
     assert len(result['verrors'].errors) == 0
     assert result['new_values'] == {'app_name': 'myapp', 'port': 9000}
     assert result['model'] is not None
-    
+
     # Test missing required field
     result2 = construct_schema(item_version_details, {'port': 9000}, False)
     assert len(result2['verrors'].errors) > 0
@@ -1012,7 +1012,7 @@ def test_construct_schema_complex():
             ]
         }
     }
-    
+
     new_values = {
         'database': {
             'host': 'localhost',
@@ -1023,17 +1023,17 @@ def test_construct_schema_complex():
             }
         }
     }
-    
+
     # Test create mode
     result = construct_schema(item_version_details, new_values, False)
     assert result['schema_name'] == 'app_create'
     assert len(result['verrors'].errors) == 0
-    
+
     # Test update mode
     result_update = construct_schema(item_version_details, new_values, True)
     assert result_update['schema_name'] == 'app_update'
     assert len(result_update['verrors'].errors) == 0
-    
+
     # Test validation error - missing required nested field
     invalid_values = {
         'database': {
@@ -1044,7 +1044,7 @@ def test_construct_schema_complex():
             }
         }
     }
-    
+
     result_invalid = construct_schema(item_version_details, invalid_values, False)
     assert len(result_invalid['verrors'].errors) > 0
 
@@ -1085,19 +1085,19 @@ def test_show_if_basic_boolean_condition():
             }
         }
     ]
-    
+
     # Test 1: When publish is False, web_port should not be required
     model1 = generate_pydantic_model(schema[0]['schema']['attrs'], 'TestShowIf1', {'publish': False})
     m1 = model1(publish=False)
     # web_port should be NotRequired when publish is False
     assert hasattr(m1, 'web_port')
     assert m1.web_port is NotRequired
-    
+
     # Test 2: When publish is True, web_port should use its default
     model2 = generate_pydantic_model(schema[0]['schema']['attrs'], 'TestShowIf2', {'publish': True})
     m2 = model2(publish=True)
     assert m2.web_port == 8080
-    
+
     # Test 3: When publish is True and web_port is provided
     m3 = model2(publish=True, web_port=9090)
     assert m3.web_port == 9090
@@ -1143,15 +1143,15 @@ def test_show_if_multiple_conditions():
             }
         }
     ]
-    
+
     # Test 1: Both conditions false - field should be NotRequired
     model1 = generate_pydantic_model(
-        schema[0]['schema']['attrs'], 'TestMultiCond1', 
+        schema[0]['schema']['attrs'], 'TestMultiCond1',
         {'mode': 'basic', 'advanced_enabled': False}
     )
     m1 = model1(mode='basic', advanced_enabled=False)
     assert m1.advanced_setting is NotRequired
-    
+
     # Test 2: One condition true, one false - field should still be NotRequired
     model2 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestMultiCond2',
@@ -1159,7 +1159,7 @@ def test_show_if_multiple_conditions():
     )
     m2 = model2(mode='advanced', advanced_enabled=False)
     assert m2.advanced_setting is NotRequired
-    
+
     # Test 3: Both conditions true - field should use default
     model3 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestMultiCond3',
@@ -1215,7 +1215,7 @@ def test_show_if_with_different_operators():
             }
         }
     ]
-    
+
     # Test != operator
     model1 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestOps1',
@@ -1223,14 +1223,14 @@ def test_show_if_with_different_operators():
     )
     m1 = model1(status='disabled', count=5)
     assert m1.show_on_not_equal is NotRequired
-    
+
     model2 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestOps2',
         {'status': 'active', 'count': 5}
     )
     m2 = model2(status='active', count=5)
     assert m2.show_on_not_equal == 'shown'
-    
+
     # Test > operator
     model3 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestOps3',
@@ -1246,7 +1246,7 @@ def test_show_if_nested_structure():
     # For deeply nested structures where conditions reference fields from grandparent levels,
     # the implementation would need to be enhanced to support path-based references like '../type'
     # This test demonstrates the current behavior and limitations
-    
+
     schema = [
         {
             'variable': 'app',
@@ -1283,7 +1283,7 @@ def test_show_if_nested_structure():
             }
         }
     ]
-    
+
     # When enable_postgres is False, postgres fields should be NotRequired
     model1 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestNested1',
@@ -1292,7 +1292,7 @@ def test_show_if_nested_structure():
     m1 = model1(enable_postgres=False)
     assert m1.postgres_host is NotRequired
     assert m1.postgres_port is NotRequired
-    
+
     # When enable_postgres is True, fields should have defaults
     model2 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestNested2',
@@ -1340,7 +1340,7 @@ def test_show_if_with_list_fields():
             }
         }
     ]
-    
+
     # When monitoring disabled, list should be NotRequired
     model1 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestListShowIf1',
@@ -1348,7 +1348,7 @@ def test_show_if_with_list_fields():
     )
     m1 = model1(enable_monitoring=False)
     assert m1.monitoring_endpoints is NotRequired
-    
+
     # When monitoring enabled, list should use default empty list
     model2 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestListShowIf2',
@@ -1356,7 +1356,7 @@ def test_show_if_with_list_fields():
     )
     m2 = model2(enable_monitoring=True)
     assert m2.monitoring_endpoints == []
-    
+
     # Can provide values when enabled
     m3 = model2(
         enable_monitoring=True,
@@ -1389,14 +1389,14 @@ def test_hidden_field_behavior():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestHidden', NOT_PROVIDED)
-    
+
     # Hidden fields should still work normally in the model
     m = model()
     assert m.db_user == 'app-user'
     assert m.visible_field == 'visible'
-    
+
     # Can override hidden field values
     m2 = model(db_user='custom-user')
     assert m2.db_user == 'custom-user'
@@ -1423,26 +1423,26 @@ def test_immutable_string_field():
             }
         }
     ]
-    
+
     # First time creation - no old values, immutable has no effect
     model_create = generate_pydantic_model(schema, 'TestImmutableCreate', NOT_PROVIDED, NOT_PROVIDED)
     m1 = model_create()
     assert m1.dataset_name == 'data'
     assert m1.description == 'My dataset'
-    
+
     # Can set custom value on creation
     m2 = model_create(dataset_name='custom-data')
     assert m2.dataset_name == 'custom-data'
-    
+
     # Update mode - old_values provided, immutable field is locked
     old_values = {'dataset_name': 'original-data', 'description': 'Original description'}
     model_update = generate_pydantic_model(schema, 'TestImmutableUpdate', NOT_PROVIDED, old_values)
-    
+
     # Can only set the immutable field to its original value
     m3 = model_update(dataset_name='original-data', description='New description')
     assert m3.dataset_name == 'original-data'
     assert m3.description == 'New description'
-    
+
     # Trying to change immutable field should fail
     with pytest.raises(ValidationError) as exc_info:
         model_update(dataset_name='changed-data')
@@ -1462,20 +1462,20 @@ def test_immutable_int_field():
             }
         }
     ]
-    
+
     # Creation - can set any value
     model_create = generate_pydantic_model(schema, 'TestImmutableIntCreate', NOT_PROVIDED, NOT_PROVIDED)
     m1 = model_create(port=9090)
     assert m1.port == 9090
-    
+
     # Update - locked to old value
     old_values = {'port': 3000}
     model_update = generate_pydantic_model(schema, 'TestImmutableIntUpdate', NOT_PROVIDED, old_values)
-    
+
     # Must use the old value
     m2 = model_update(port=3000)
     assert m2.port == 3000
-    
+
     # Cannot change to different value
     with pytest.raises(ValidationError):
         model_update(port=4000)
@@ -1494,20 +1494,20 @@ def test_immutable_boolean_field():
             }
         }
     ]
-    
+
     # Creation
     model_create = generate_pydantic_model(schema, 'TestImmutableBoolCreate', NOT_PROVIDED, NOT_PROVIDED)
     m1 = model_create(enabled=True)
     assert m1.enabled is True
-    
+
     # Update - locked to old value
     old_values = {'enabled': True}
     model_update = generate_pydantic_model(schema, 'TestImmutableBoolUpdate', NOT_PROVIDED, old_values)
-    
+
     # Must match old value
     m2 = model_update(enabled=True)
     assert m2.enabled is True
-    
+
     # Cannot flip the boolean
     with pytest.raises(ValidationError):
         model_update(enabled=False)
@@ -1526,20 +1526,20 @@ def test_immutable_path_field():
             }
         }
     ]
-    
+
     # Creation
     model_create = generate_pydantic_model(schema, 'TestImmutablePathCreate', NOT_PROVIDED, NOT_PROVIDED)
     m1 = model_create(install_path='/usr/local/app')
     assert m1.install_path == '/usr/local/app'
-    
+
     # Update - locked to old value
     old_values = {'install_path': '/opt/myapp'}
     model_update = generate_pydantic_model(schema, 'TestImmutablePathUpdate', NOT_PROVIDED, old_values)
-    
+
     # Must use old path
     m2 = model_update(install_path='/opt/myapp')
     assert str(m2.install_path) == '/opt/myapp'
-    
+
     # Cannot change path
     with pytest.raises(ValidationError):
         model_update(install_path='/new/path')
@@ -1559,27 +1559,27 @@ def test_immutable_field_with_null():
             }
         }
     ]
-    
+
     # Creation - can set to null or value
     model_create = generate_pydantic_model(schema, 'TestImmutableNullCreate', NOT_PROVIDED, NOT_PROVIDED)
     m1 = model_create(optional_id=None)
     assert m1.optional_id is None
-    
+
     m2 = model_create(optional_id='ABC123')
     assert m2.optional_id == 'ABC123'
-    
+
     # Update with null old value - must remain null
     old_values = {'optional_id': None}
     model_update1 = generate_pydantic_model(schema, 'TestImmutableNullUpdate1', NOT_PROVIDED, old_values)
     m3 = model_update1(optional_id=None)
     assert m3.optional_id is None
-    
+
     # Update with non-null old value - locked to that value
     old_values2 = {'optional_id': 'XYZ789'}
     model_update2 = generate_pydantic_model(schema, 'TestImmutableNullUpdate2', NOT_PROVIDED, old_values2)
     m4 = model_update2(optional_id='XYZ789')
     assert m4.optional_id == 'XYZ789'
-    
+
     with pytest.raises(ValidationError):
         model_update2(optional_id='CHANGED')
 
@@ -1599,13 +1599,13 @@ def test_immutable_not_supported_types():
             }
         }
     ]
-    
+
     old_values = {'config': {'key': 'old_value'}}
     model = generate_pydantic_model(schema_dict, 'TestImmutableDict', NOT_PROVIDED, old_values)
     # Should allow changes since dict is not a supported immutable type
     m = model(config={'key': 'new_value'})
     assert m.config.key == 'new_value'
-    
+
     # List type - immutable should be ignored
     schema_list = [
         {
@@ -1617,7 +1617,7 @@ def test_immutable_not_supported_types():
             }
         }
     ]
-    
+
     old_values = {'items': ['a', 'b']}
     model = generate_pydantic_model(schema_list, 'TestImmutableList', NOT_PROVIDED, old_values)
     # Should allow changes since list is not a supported immutable type
@@ -1654,22 +1654,22 @@ def test_immutable_nested_fields():
             }
         }
     ]
-    
+
     # Creation - can set any values
     model_create = generate_pydantic_model(schema, 'TestImmutableNestedCreate', NOT_PROVIDED, NOT_PROVIDED)
     m1 = model_create(database={'host': 'db.example.com', 'port': 3306})
     assert m1.database.host == 'db.example.com'
     assert m1.database.port == 3306
-    
+
     # Update - nested immutable field is locked
     old_values = {'database': {'host': 'prod.db.com', 'port': 5432}}
     model_update = generate_pydantic_model(schema, 'TestImmutableNestedUpdate', NOT_PROVIDED, old_values)
-    
+
     # Can change non-immutable port but not immutable host
     m2 = model_update(database={'host': 'prod.db.com', 'port': 3307})
     assert m2.database.host == 'prod.db.com'
     assert m2.database.port == 3307
-    
+
     # Cannot change immutable nested field
     with pytest.raises(ValidationError):
         model_update(database={'host': 'new.db.com', 'port': 5432})
@@ -1699,7 +1699,7 @@ def test_immutable_with_construct_schema():
             ]
         }
     }
-    
+
     # Create mode - no old values
     result_create = construct_schema(
         item_version_details,
@@ -1708,10 +1708,10 @@ def test_immutable_with_construct_schema():
     )
     assert len(result_create['verrors'].errors) == 0
     assert result_create['new_values']['app_id'] == 'my-app-123'
-    
+
     # Update mode - with old values
     old_values = {'app_id': 'my-app-123', 'version': '1.0.0'}
-    
+
     # Valid update - keeping immutable field same
     result_update_valid = construct_schema(
         item_version_details,
@@ -1721,7 +1721,7 @@ def test_immutable_with_construct_schema():
     )
     assert len(result_update_valid['verrors'].errors) == 0
     assert result_update_valid['new_values']['version'] == '2.0.0'
-    
+
     # Invalid update - trying to change immutable field
     result_update_invalid = construct_schema(
         item_version_details,
@@ -1750,17 +1750,17 @@ def test_enum_field_basic():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestEnum', NOT_PROVIDED)
-    
+
     # Default value works
     m = model()
     assert m.log_level == 'info'
-    
+
     # Valid enum values work
     m2 = model(log_level='debug')
     assert m2.log_level == 'debug'
-    
+
     # Invalid enum values should fail
     with pytest.raises(ValidationError) as exc_info:
         model(log_level='invalid')
@@ -1813,7 +1813,7 @@ def test_complex_show_if_with_list_and_dict():
             }
         }
     ]
-    
+
     # When type is 'local', advanced_settings should be NotRequired
     model1 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestComplexShowIf1',
@@ -1821,7 +1821,7 @@ def test_complex_show_if_with_list_and_dict():
     )
     m1 = model1(type='local')
     assert m1.advanced_settings is NotRequired
-    
+
     # When type is 'advanced', advanced_settings should use default empty list
     model2 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestComplexShowIf2',
@@ -1829,7 +1829,7 @@ def test_complex_show_if_with_list_and_dict():
     )
     m2 = model2(type='advanced')
     assert m2.advanced_settings == []
-    
+
     # Can provide values when shown
     m3 = model2(
         type='advanced',
@@ -1865,24 +1865,24 @@ def test_field_with_dollar_ref():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestRef', NOT_PROVIDED)
-    
+
     # Test timezone with ref
     m1 = model()
     assert m1.timezone == 'Etc/UTC'
-    
+
     # Test nullable certificate_id with ref
     m2 = model(certificate_id=None)
     assert m2.certificate_id is None
-    
+
     m3 = model(certificate_id=123)
     assert m3.certificate_id == 123
-    
+
     # Verify refs are preserved in metadata
     tz_field = model.model_fields['timezone']
     assert tz_field.metadata == [['definitions/timezone']]
-    
+
     cert_field = model.model_fields['certificate_id']
     assert cert_field.metadata == [['definitions/certificate']]
 
@@ -1899,28 +1899,28 @@ def test_string_field_with_valid_chars():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestValidChars', NOT_PROVIDED)
-    
+
     # Valid usernames
     m1 = model(username='john_doe')
     assert m1.username == 'john_doe'
-    
+
     m2 = model(username='User123')
     assert m2.username == 'User123'
-    
+
     m3 = model(username='test-user')
     assert m3.username == 'test-user'
-    
+
     # Invalid usernames should fail
     with pytest.raises(ValidationError) as exc_info:
         model(username='123invalid')  # Starts with number
     assert 'Value does not match' in str(exc_info.value)
-    
+
     with pytest.raises(ValidationError) as exc_info:
         model(username='a')  # Too short
     assert 'Value does not match' in str(exc_info.value)
-    
+
     with pytest.raises(ValidationError) as exc_info:
         model(username='user@name')  # Contains invalid character
     assert 'Value does not match' in str(exc_info.value)
@@ -1939,23 +1939,23 @@ def test_valid_chars_with_different_patterns():
             }
         }
     ]
-    
+
     model_email = generate_pydantic_model(schema_email, 'TestEmail', NOT_PROVIDED)
-    
+
     # Valid emails
     m1 = model_email(email='user@example.com')
     assert m1.email == 'user@example.com'
-    
+
     m2 = model_email(email='test.user+tag@sub.domain.org')
     assert m2.email == 'test.user+tag@sub.domain.org'
-    
+
     # Invalid emails
     with pytest.raises(ValidationError):
         model_email(email='invalid.email')
-    
+
     with pytest.raises(ValidationError):
         model_email(email='@example.com')
-    
+
     # Alphanumeric pattern
     schema_alphanumeric = [
         {
@@ -1967,17 +1967,17 @@ def test_valid_chars_with_different_patterns():
             }
         }
     ]
-    
+
     model_alpha = generate_pydantic_model(schema_alphanumeric, 'TestAlpha', NOT_PROVIDED)
-    
+
     # Valid codes
     m3 = model_alpha(code='ABC123')
     assert m3.code == 'ABC123'
-    
+
     # Invalid codes
     with pytest.raises(ValidationError):
         model_alpha(code='abc123')  # Lowercase not allowed
-    
+
     with pytest.raises(ValidationError):
         model_alpha(code='ABC-123')  # Dash not allowed
 
@@ -1995,21 +1995,21 @@ def test_valid_chars_with_nullable_field():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestNullableValidChars', NOT_PROVIDED)
-    
+
     # Null is allowed
     m1 = model(optional_code=None)
     assert m1.optional_code is None
-    
+
     # Valid pattern
     m2 = model(optional_code='ABC123')
     assert m2.optional_code == 'ABC123'
-    
+
     # Invalid pattern
     with pytest.raises(ValidationError):
         model(optional_code='ABC12')  # Too short
-    
+
     with pytest.raises(ValidationError):
         model(optional_code='abc123')  # Lowercase
 
@@ -2027,24 +2027,24 @@ def test_valid_chars_with_default_value():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestDefaultValidChars', NOT_PROVIDED)
-    
+
     # Default value is valid
     m1 = model()
     assert m1.version == '1.0.0'
-    
+
     # Valid versions
     m2 = model(version='2.1.0')
     assert m2.version == '2.1.0'
-    
+
     m3 = model(version='10.20.30')
     assert m3.version == '10.20.30'
-    
+
     # Invalid versions
     with pytest.raises(ValidationError):
         model(version='1.0')  # Missing patch version
-    
+
     with pytest.raises(ValidationError):
         model(version='v1.0.0')  # Has 'v' prefix
 
@@ -2063,27 +2063,27 @@ def test_valid_chars_with_length_constraints():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestValidCharsLength', NOT_PROVIDED)
-    
+
     # Valid codes
     m1 = model(product_code='ABC-123')
     assert m1.product_code == 'ABC-123'
-    
+
     m2 = model(product_code='PROD-12345')
     assert m2.product_code == 'PROD-12345'
-    
+
     # Invalid pattern
     with pytest.raises(ValidationError) as exc_info:
         model(product_code='abc-123')  # Lowercase
     assert 'Value does not match' in str(exc_info.value)
-    
+
     # Too short (even if pattern matches)
     with pytest.raises(ValidationError) as exc_info:
         model(product_code='AB-1')
     # Could fail on either length or pattern
     assert 'at least 5 characters' in str(exc_info.value) or 'Value does not match' in str(exc_info.value)
-    
+
     # Too long
     with pytest.raises(ValidationError) as exc_info:
         model(product_code='ABC-1234567')
@@ -2103,18 +2103,18 @@ def test_valid_chars_with_private_field():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestPrivateValidChars', NOT_PROVIDED)
-    
+
     # Valid API key
     valid_key = 'a' * 16 + 'B' * 16  # 32 chars
     m = model(api_key=valid_key)
     assert m.api_key.get_secret_value() == valid_key
-    
+
     # Invalid pattern (special characters)
     with pytest.raises(ValidationError):
         model(api_key='a' * 16 + 'B' * 15 + '!')  # Contains !
-    
+
     # Invalid length
     with pytest.raises(ValidationError):
         model(api_key='a' * 31)  # Too short
@@ -2148,9 +2148,9 @@ def test_valid_chars_in_nested_structure():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestNestedValidChars', NOT_PROVIDED)
-    
+
     # Valid values
     m = model(network={
         'hostname': 'my-server-01',
@@ -2158,7 +2158,7 @@ def test_valid_chars_in_nested_structure():
     })
     assert m.network.hostname == 'my-server-01'
     assert m.network.ip_address == '192.168.1.100'
-    
+
     # Invalid hostname
     with pytest.raises(ValidationError) as exc_info:
         model(network={
@@ -2166,7 +2166,7 @@ def test_valid_chars_in_nested_structure():
             'ip_address': '192.168.1.100'
         })
     assert 'hostname' in str(exc_info.value)
-    
+
     # Invalid IP - Note: Our simple regex pattern doesn't validate octet values
     # For proper IP validation, we should use the ipaddr type instead of regex
     # This test shows the limitation of using regex for IP validation
@@ -2191,26 +2191,26 @@ def test_valid_chars_with_immutable_field():
             }
         }
     ]
-    
+
     # Creation - must match pattern
     model_create = generate_pydantic_model(schema, 'TestImmutableValidChars', NOT_PROVIDED, NOT_PROVIDED)
-    
+
     # Valid instance ID
     m1 = model_create(instance_id='i-1234abcd')
     assert m1.instance_id == 'i-1234abcd'
-    
+
     # Invalid pattern
     with pytest.raises(ValidationError):
         model_create(instance_id='i-1234ABCD')  # Uppercase not allowed
-    
+
     # Update - immutable and must still match pattern
     old_values = {'instance_id': 'i-abcd1234'}
     model_update = generate_pydantic_model(schema, 'TestImmutableValidCharsUpdate', NOT_PROVIDED, old_values)
-    
+
     # Must use exact old value (which should be valid)
     m2 = model_update(instance_id='i-abcd1234')
     assert m2.instance_id == 'i-abcd1234'
-    
+
     # Cannot change even to another valid pattern
     with pytest.raises(ValidationError):
         model_update(instance_id='i-5678efgh')
@@ -2231,9 +2231,9 @@ def test_valid_chars_with_text_field_type():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestTextValidChars', NOT_PROVIDED)
-    
+
     # Currently this fails because LongStringWrapper is not a string
     # Documenting this as a known limitation
     with pytest.raises(TypeError) as exc_info:
@@ -2256,20 +2256,20 @@ def test_valid_chars_error_message():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestValidCharsError', NOT_PROVIDED)
-    
+
     # Valid ZIP codes
     m1 = model(zipcode='12345')
     assert m1.zipcode == '12345'
-    
+
     m2 = model(zipcode='12345-6789')
     assert m2.zipcode == '12345-6789'
-    
+
     # Invalid ZIP codes with specific error checking
     with pytest.raises(ValidationError) as exc_info:
         model(zipcode='1234')  # Too short
-    
+
     # Check that the error mentions pattern matching
     error_dict = exc_info.value.errors()[0]
     assert error_dict['type'] == 'assertion_error'
@@ -2302,7 +2302,7 @@ def test_valid_chars_with_construct_schema():
             ]
         }
     }
-    
+
     # Valid values
     result_valid = construct_schema(
         item_version_details,
@@ -2311,7 +2311,7 @@ def test_valid_chars_with_construct_schema():
     )
     assert len(result_valid['verrors'].errors) == 0
     assert result_valid['new_values']['docker_tag'] == 'nginx-1.21.0'
-    
+
     # Invalid docker tag
     result_invalid = construct_schema(
         item_version_details,
@@ -2340,20 +2340,20 @@ def test_string_enum_basic():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestStringEnum', NOT_PROVIDED)
-    
+
     # Default value works
     m1 = model()
     assert m1.log_level == 'info'
-    
+
     # Valid enum values
     m2 = model(log_level='debug')
     assert m2.log_level == 'debug'
-    
+
     m3 = model(log_level='error')
     assert m3.log_level == 'error'
-    
+
     # Invalid enum value should fail
     with pytest.raises(ValidationError) as exc_info:
         model(log_level='trace')  # Not in enum
@@ -2378,17 +2378,17 @@ def test_string_enum_with_null():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestEnumNull', NOT_PROVIDED)
-    
+
     # Null is allowed because it's in the enum
     m1 = model(optional_priority=None)
     assert m1.optional_priority is None
-    
+
     # Valid enum values
     m2 = model(optional_priority='high')
     assert m2.optional_priority == 'high'
-    
+
     # Invalid value should fail
     with pytest.raises(ValidationError):
         model(optional_priority='urgent')
@@ -2410,13 +2410,13 @@ def test_string_enum_required():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestEnumRequired', NOT_PROVIDED)
-    
+
     # Must provide a value
     with pytest.raises(ValidationError):
         model()
-    
+
     # Valid value works
     m = model(environment='staging')
     assert m.environment == 'staging'
@@ -2434,13 +2434,13 @@ def test_enum_empty_list():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestEmptyEnum', NOT_PROVIDED)
-    
+
     # Should work as a regular string field
     m1 = model()
     assert m1.status == 'active'
-    
+
     # Can set any string value
     m2 = model(status='inactive')
     assert m2.status == 'inactive'
@@ -2462,15 +2462,15 @@ def test_enum_with_immutable():
             }
         }
     ]
-    
+
     # Update mode with old values - immutable should take precedence
     old_values = {'app_type': 'api'}
     model = generate_pydantic_model(schema, 'TestEnumImmutable', NOT_PROVIDED, old_values)
-    
+
     # Must use the old value
     m1 = model(app_type='api')
     assert m1.app_type == 'api'
-    
+
     # Cannot change to other enum value
     with pytest.raises(ValidationError):
         model(app_type='web')
@@ -2507,18 +2507,18 @@ def test_enum_in_nested_dict():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestNestedEnum', NOT_PROVIDED)
-    
+
     # Default values
     m1 = model()
     assert m1.database.type == 'postgres'
     assert m1.database.host == 'localhost'
-    
+
     # Valid enum value
     m2 = model(database={'type': 'mysql', 'host': 'db.example.com'})
     assert m2.database.type == 'mysql'
-    
+
     # Invalid enum value
     with pytest.raises(ValidationError):
         model(database={'type': 'mongodb'})
@@ -2549,13 +2549,13 @@ def test_enum_in_list_items():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestListEnum', NOT_PROVIDED)
-    
+
     # Valid list of enum values
     m1 = model(log_levels=['debug', 'info', 'error'])
     assert m1.log_levels == ['debug', 'info', 'error']
-    
+
     # Invalid value in list
     with pytest.raises(ValidationError):
         model(log_levels=['debug', 'verbose'])  # 'verbose' not in enum
@@ -2578,13 +2578,13 @@ def test_enum_with_valid_chars():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestEnumValidChars', NOT_PROVIDED)
-    
+
     # Valid enum value that matches pattern
     m = model(region_code='US-EAST')
     assert m.region_code == 'US-EAST'
-    
+
     # Invalid enum value
     with pytest.raises(ValidationError):
         model(region_code='US-CENTRAL')  # Not in enum
@@ -2622,7 +2622,7 @@ def test_enum_with_show_if():
             }
         }
     ]
-    
+
     # When use_custom is False, preset should have enum constraint
     model1 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestEnumShowIf1',
@@ -2630,11 +2630,11 @@ def test_enum_with_show_if():
     )
     m1 = model1(use_custom=False, preset='large')
     assert m1.preset == 'large'
-    
+
     # Invalid enum value should fail
     with pytest.raises(ValidationError):
         model1(use_custom=False, preset='xlarge')
-    
+
     # When use_custom is True, preset is NotRequired
     model2 = generate_pydantic_model(
         schema[0]['schema']['attrs'], 'TestEnumShowIf2',
@@ -2683,14 +2683,14 @@ def test_enum_with_minio_example():
             }
         }
     ]
-    
+
     model = generate_pydantic_model(schema, 'TestMinioExample', NOT_PROVIDED)
-    
+
     # Test defaults
     m1 = model()
     assert m1.service.api_port_protocol == 'http'
     assert m1.service.console_port_protocol == 'http'
-    
+
     # Test mixed protocols
     m2 = model(service={
         'api_port_protocol': 'https',
@@ -2698,7 +2698,7 @@ def test_enum_with_minio_example():
     })
     assert m2.service.api_port_protocol == 'https'
     assert m2.service.console_port_protocol == 'http'
-    
+
     # Invalid protocol should fail
     with pytest.raises(ValidationError):
         model(service={'api_port_protocol': 'tcp'})
