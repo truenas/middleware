@@ -3,8 +3,7 @@ from pathlib import Path
 from middlewared.service import Service
 from middlewared.utils import filter_list
 
-from .schema_construction_utils import construct_schema
-from .schema_utils import NOT_PROVIDED, RESERVED_NAMES
+from .schema_construction_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES
 
 
 VALIDATION_REF_MAPPING = {
