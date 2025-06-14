@@ -1,7 +1,7 @@
 import pytest
 
-from middlewared.plugins.apps.schema_utils import construct_schema
-from middlewared.schema import Dict, ValidationErrors
+from middlewared.plugins.apps.schema_construction_utils import construct_schema
+from middlewared.schema import ValidationErrors
 
 
 @pytest.mark.parametrize('data, new_values, update', [
@@ -66,7 +66,6 @@ def test_construct_schema_update_False(data, new_values, update):
     result = construct_schema(data, new_values, update)
     assert isinstance(result['verrors'], ValidationErrors)
     assert len(result['verrors'].errors) == 0
-    assert isinstance(result['dict_obj'], Dict)
     assert result['new_values'] == new_values
     assert result['schema_name'] == 'app_create'
 
@@ -133,7 +132,6 @@ def test_construct_schema_update_True(data, new_values, update):
     result = construct_schema(data, new_values, update)
     assert isinstance(result['verrors'], ValidationErrors)
     assert len(result['verrors'].errors) == 0
-    assert isinstance(result['dict_obj'], Dict)
     assert result['new_values'] == new_values
     assert result['schema_name'] == 'app_update'
 
@@ -220,6 +218,5 @@ def test_construct_schema_ValidationError(data, new_values, update):
     result = construct_schema(data, new_values, update)
     assert isinstance(result['verrors'], ValidationErrors)
     assert len(result['verrors'].errors) > 0
-    assert isinstance(result['dict_obj'], Dict)
     assert result['new_values'] == new_values
     assert result['schema_name'] == 'app_update' if update else 'app_create'
