@@ -54,7 +54,9 @@ class AppSchemaService(Service):
             values[k[0]] = k[1]()
 
         for attr in filter(lambda v: v['variable'] in values, dict_attrs):
-            values[attr['variable']] = await self.normalize_question(attr, values[attr.name], update, values, context)
+            values[attr['variable']] = await self.normalize_question(
+                attr, values[attr['variable']], update, values, context
+            )
 
         return values, context
 
@@ -79,7 +81,7 @@ class AppSchemaService(Service):
                         schema_def['items'][0], item, update, complete_config, context
                     )
 
-        for ref in filter(lambda k: k in REF_MAPPING, schema_def.get('$refs', [])):
+        for ref in filter(lambda k: k in REF_MAPPING, schema_def.get('$ref', [])):
             value = await self.middleware.call(
                 f'app.schema.normalize_{REF_MAPPING[ref]}', attr_schema, value, complete_config, context
             )
