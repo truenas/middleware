@@ -3,7 +3,8 @@ from pathlib import Path
 from middlewared.service import Service
 from middlewared.utils import filter_list
 
-from .schema_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES
+from .schema_construction_utils import construct_schema
+from .schema_utils import NOT_PROVIDED, RESERVED_NAMES
 
 
 VALIDATION_REF_MAPPING = {
@@ -26,7 +27,7 @@ class AppSchemaService(Service):
         for k in RESERVED_NAMES:
             new_values.pop(k[0], None)
 
-        verrors, new_values, dict_obj, schema_name = (
+        verrors, new_values, schema_name = (
             construct_schema(
                 app_version_details, new_values, update, (app_data or {}).get('config', NOT_PROVIDED)
             )
@@ -49,7 +50,7 @@ class AppSchemaService(Service):
 
         verrors.check()
 
-        return dict_obj
+        return app_version_details
 
     async def validate_question(
         self, verrors, value, question, schema_name, app_data=None

@@ -46,7 +46,6 @@ def construct_schema(
     return {
         'verrors': verrors,
         'new_values': new_values,
-        'model': model,
         'schema_name': schema_name,
     }
 
