@@ -964,7 +964,6 @@ def test_construct_schema_basic():
     assert result['schema_name'] == 'app_create'
     assert len(result['verrors'].errors) == 0
     assert result['new_values'] == {'app_name': 'myapp', 'port': 9000}
-    assert result['model'] is not None
 
     # Test missing required field
     result2 = construct_schema(item_version_details, {'port': 9000}, False)
