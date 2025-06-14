@@ -57,7 +57,7 @@ class AppSchemaService(Service):
     ):
         schema = question['schema']
 
-        if schema['type'] == 'dict' and value:
+        if schema['type'] == 'dict' and schema.get('attrs') and value:
             dict_attrs = {v['variable']: v for v in schema['attrs']}
             for k in filter(lambda k: k in dict_attrs, value):
                 await self.validate_question(
