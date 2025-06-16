@@ -109,11 +109,11 @@ class AuthLoginExResult(BaseModel):
     result: AuthRespSuccess | AuthRespAuthErr | AuthRespExpired | AuthRespOTPRequired | AuthRespAuthRedirect
 
 
-class AuthMechChoicesArgs(BaseModel):
+class AuthMechanismChoicesArgs(BaseModel):
     pass
 
 
-class AuthMechChoicesResult(BaseModel):
+class AuthMechanismChoicesResult(BaseModel):
     result: list[str]
 
 
@@ -152,7 +152,7 @@ class TokenCredentialData(BaseCredentialData):
     username: str | None
 
 
-class AuthSessionEntry(BaseModel):
+class AuthSessionsEntry(BaseModel):
     id: str
     current: bool
     internal: bool
@@ -187,11 +187,11 @@ class AuthTerminateOtherSessionsResult(AuthTerminateSessionResult):
     result: Literal[True]
 
 
-class AuthSessionLogoutArgs(BaseModel):
+class AuthLogoutArgs(BaseModel):
     pass
 
 
-class AuthSessionLogoutResult(BaseModel):
+class AuthLogoutResult(BaseModel):
     result: Literal[True]
 
 

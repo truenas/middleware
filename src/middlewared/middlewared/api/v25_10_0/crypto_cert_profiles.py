@@ -5,9 +5,9 @@ from middlewared.api.base import BaseModel
 from pydantic import Field
 
 __all__ = (
-    "CSRProfilesArgs",
+    "WebUICryptoCsrProfilesArgs",
     "CSRProfilesModel",
-    "CSRProfilesResult",
+    "WebUICryptoCsrProfilesResult",
 )
 
 
@@ -104,10 +104,10 @@ class CSRProfilesModel(BaseModel):
     )
 
 
-class CSRProfilesArgs(BaseModel):
+class WebUICryptoCsrProfilesArgs(BaseModel):
     pass
 
 
 @final
-class CSRProfilesResult(BaseModel):
+class WebUICryptoCsrProfilesResult(BaseModel):
     result: CSRProfilesModel = CSRProfilesModel()

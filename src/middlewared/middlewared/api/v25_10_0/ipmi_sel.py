@@ -1,10 +1,10 @@
 from middlewared.api.base import BaseModel
 
 
-__all__ = ["IPMISELElistEntry", "IPMISELClearArgs", "IPMISELClearResult", "IPMISELInfoArgs", "IPMISELInfoResult",]
+__all__ = ["IpmiSelElistEntry", "IpmiSelClearArgs", "IpmiSelClearResult", "IpmiSelInfoArgs", "IpmiSelInfoResult",]
 
 
-class IPMISELElistEntry(BaseModel):
+class IpmiSelElistEntry(BaseModel):
     id: str
     date: str
     time: str
@@ -31,17 +31,17 @@ class IPMISELInfo(BaseModel):
     maximum_record_size: str
 
 
-class IPMISELClearArgs(BaseModel):
+class IpmiSelClearArgs(BaseModel):
     pass
 
 
-class IPMISELClearResult(BaseModel):
+class IpmiSelClearResult(BaseModel):
     result: None
 
 
-class IPMISELInfoArgs(BaseModel):
+class IpmiSelInfoArgs(BaseModel):
     pass
 
 
-class IPMISELInfoResult(BaseModel):
+class IpmiSelInfoResult(BaseModel):
     result: IPMISELInfo | dict

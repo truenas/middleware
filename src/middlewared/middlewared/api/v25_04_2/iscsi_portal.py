@@ -6,14 +6,14 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 
 __all__ = [
     "IscsiPortalEntry",
-    "IscsiPortalListenIPChoicesArgs",
-    "IscsiPortalListenIPChoicesResult",
-    "IscsiPortalCreateArgs",
-    "IscsiPortalCreateResult",
-    "IscsiPortalUpdateArgs",
-    "IscsiPortalUpdateResult",
-    "IscsiPortalDeleteArgs",
-    "IscsiPortalDeleteResult",
+    "ISCSIPortalListenIpChoicesArgs",
+    "ISCSIPortalListenIpChoicesResult",
+    "ISCSIPortalCreateArgs",
+    "ISCSIPortalCreateResult",
+    "ISCSIPortalUpdateArgs",
+    "ISCSIPortalUpdateResult",
+    "ISCSIPortalDeleteArgs",
+    "ISCSIPortalDeleteResult",
 ]
 
 
@@ -38,11 +38,11 @@ class IscsiPortalEntry(BaseModel):
     comment: str = ''
 
 
-class IscsiPortalListenIPChoicesArgs(BaseModel):
+class ISCSIPortalListenIpChoicesArgs(BaseModel):
     pass
 
 
-class IscsiPortalListenIPChoicesResult(BaseModel):
+class ISCSIPortalListenIpChoicesResult(BaseModel):
     result: dict[str, str]
 
 
@@ -52,11 +52,11 @@ class IscsiPortalCreate(IscsiPortalEntry):
     listen: list[IscsiPortalIP]
 
 
-class IscsiPortalCreateArgs(BaseModel):
+class ISCSIPortalCreateArgs(BaseModel):
     iscsi_portal_create: IscsiPortalCreate
 
 
-class IscsiPortalCreateResult(BaseModel):
+class ISCSIPortalCreateResult(BaseModel):
     result: IscsiPortalEntry
 
 
@@ -64,18 +64,18 @@ class IscsiPortalUpdate(IscsiPortalCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class IscsiPortalUpdateArgs(BaseModel):
+class ISCSIPortalUpdateArgs(BaseModel):
     id: int
     iscsi_portal_update: IscsiPortalUpdate
 
 
-class IscsiPortalUpdateResult(BaseModel):
+class ISCSIPortalUpdateResult(BaseModel):
     result: IscsiPortalEntry
 
 
-class IscsiPortalDeleteArgs(BaseModel):
+class ISCSIPortalDeleteArgs(BaseModel):
     id: int
 
 
-class IscsiPortalDeleteResult(BaseModel):
+class ISCSIPortalDeleteResult(BaseModel):
     result: Literal[True]

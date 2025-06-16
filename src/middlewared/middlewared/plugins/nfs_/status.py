@@ -6,10 +6,10 @@ from contextlib import suppress
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    GetNFSv3ClientsEntry,
-    GetNFSv4ClientsEntry,
-    NfsClientCountArgs,
-    NfsClientCountResult,
+    NFSGetNfs3ClientsEntry,
+    NFSGetNfs4ClientsEntry,
+    NFSClientCountArgs,
+    NFSClientCountResult,
 )
 from middlewared.plugins.nfs import NFSServicePathInfo
 from middlewared.service import Service, private, filterable_api_method
@@ -73,7 +73,7 @@ class NFSService(Service):
                     os.rename(outf.name, rmtab)
 
     @filterable_api_method(
-        item=GetNFSv3ClientsEntry,
+        item=NFSGetNfs3ClientsEntry,
         # NFS_WRITE because this exposes hostnames and IP addresses
         # READONLY is considered administrative-level permission
         roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
@@ -121,7 +121,7 @@ class NFSService(Service):
         return states or []
 
     @filterable_api_method(
-        item=GetNFSv4ClientsEntry,
+        item=NFSGetNfs4ClientsEntry,
         # NFS_WRITE because this exposes hostnames, IP addresses and other details
         # READONLY is considered administrative-level permission
         roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
@@ -206,7 +206,7 @@ class NFSService(Service):
 
         return filter_list(clients, filters, options)
 
-    @api_method(NfsClientCountArgs, NfsClientCountResult, roles=['SHARING_NFS_READ'])
+    @api_method(NFSClientCountArgs, NFSClientCountResult, roles=['SHARING_NFS_READ'])
     def client_count(self):
         """
         Return currently connected clients count.

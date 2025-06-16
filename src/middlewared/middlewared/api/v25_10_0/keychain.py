@@ -11,10 +11,10 @@ __all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
            "KeychainCredentialUpdateArgs", "KeychainCredentialUpdateResult",
            "KeychainCredentialDeleteArgs", "KeychainCredentialDeleteResult",
            "KeychainCredentialUsedByArgs", "KeychainCredentialUsedByResult",
-           "KeychainCredentialGenerateSSHKeyPairArgs", "KeychainCredentialGenerateSSHKeyPairResult",
-           "KeychainCredentialRemoteSSHHostKeyScanArgs", "KeychainCredentialRemoteSSHHostKeyScanResult",
-           "KeychainCredentialRemoteSSHSemiautomaticSetupArgs", "KeychainCredentialRemoteSSHSemiautomaticSetupResult",
-           "KeychainCredentialSetupSSHConnectionArgs", "KeychainCredentialSetupSSHConnectionResult"]
+           "KeychainCredentialGenerateSshKeyPairArgs", "KeychainCredentialGenerateSshKeyPairResult",
+           "KeychainCredentialRemoteSshHostKeyScanArgs", "KeychainCredentialRemoteSshHostKeyScanResult",
+           "KeychainCredentialRemoteSshSemiautomaticSetupArgs", "KeychainCredentialRemoteSshSemiautomaticSetupResult",
+           "KeychainCredentialSetupSshConnectionArgs", "KeychainCredentialSetupSshConnectionResult"]
 
 
 class SSHKeyPair(BaseModel):
@@ -119,24 +119,24 @@ class KeychainCredentialUsedByResult(BaseModel):
     result: list[UsedKeychainCredential]
 
 
-class KeychainCredentialGenerateSSHKeyPairArgs(BaseModel):
+class KeychainCredentialGenerateSshKeyPairArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class KeychainCredentialGenerateSSHKeyPairResult(BaseModel):
+class KeychainCredentialGenerateSshKeyPairResult(BaseModel):
     private_key: LongString
     public_key: LongString
 
 
 @single_argument_args("keychain_remote_ssh_host_key_scan")
-class KeychainCredentialRemoteSSHHostKeyScanArgs(BaseModel):
+class KeychainCredentialRemoteSshHostKeyScanArgs(BaseModel):
     host: NonEmptyString
     port: int = 22
     connect_timeout: int = 10
 
 
-class KeychainCredentialRemoteSSHHostKeyScanResult(BaseModel):
+class KeychainCredentialRemoteSshHostKeyScanResult(BaseModel):
     result: LongString
 
 
@@ -154,11 +154,11 @@ class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):
     sudo: bool = False
 
 
-class KeychainCredentialRemoteSSHSemiautomaticSetupArgs(BaseModel):
+class KeychainCredentialRemoteSshSemiautomaticSetupArgs(BaseModel):
     data: KeychainCredentialRemoteSSHSemiautomaticSetup
 
 
-class KeychainCredentialRemoteSSHSemiautomaticSetupResult(BaseModel):
+class KeychainCredentialRemoteSshSemiautomaticSetupResult(BaseModel):
     result: SSHCredentialsEntry
 
 
@@ -197,12 +197,12 @@ class SetupSSHConnectionSemiautomatic(SetupSSHConnectionManual):
     manual_setup: Excluded = excluded_field()
 
 
-class KeychainCredentialSetupSSHConnectionArgs(BaseModel):
+class KeychainCredentialSetupSshConnectionArgs(BaseModel):
     options: Annotated[
         Union[SetupSSHConnectionManual, SetupSSHConnectionSemiautomatic],
         Discriminator("setup_type"),
     ]
 
 
-class KeychainCredentialSetupSSHConnectionResult(BaseModel):
+class KeychainCredentialSetupSshConnectionResult(BaseModel):
     result: SSHCredentialsEntry

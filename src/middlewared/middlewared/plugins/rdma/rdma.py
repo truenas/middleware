@@ -4,8 +4,8 @@ from pathlib import Path
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.api.current import (RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult, RdmaCardConfigArgs,
-                                     RdmaCardConfigResult, RdmaLinkConfig)
+from middlewared.api.current import (RDMACapableProtocolsArgs, RDMACapableProtocolsResult, RDMAGetCardChoicesArgs,
+                                     RDMAGetCardChoicesResult, RdmaLinkConfig)
 from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (just import to start the service)
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
@@ -87,7 +87,7 @@ class RDMAService(Service):
                 result.append({'rdma': link['ifname'], 'netdev': link['netdev']})
         return result
 
-    @api_method(RdmaCardConfigArgs, RdmaCardConfigResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(RDMAGetCardChoicesArgs, RDMAGetCardChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     @cache
     def get_card_choices(self):
         """Return a list containing details about each RDMA card.  Dual cards
@@ -132,7 +132,7 @@ class RDMAService(Service):
             v['name'] = ':'.join(sorted(names))
         return list(grouper.values())
 
-    @api_method(RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(RDMACapableProtocolsArgs, RDMACapableProtocolsResult, roles=['NETWORK_INTERFACE_READ'])
     async def capable_protocols(self):
         result = []
         is_ent = await self.middleware.call('system.is_enterprise')

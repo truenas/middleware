@@ -2,8 +2,8 @@ from subprocess import run
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemSecurityFipsAvailableArgs, SystemSecurityFipsAvailableResult,
-    SystemSecurityFipsEnabledArgs, SystemSecurityFipsEnabledResult,
+    SystemSecurityInfoFipsAvailableArgs, SystemSecurityInfoFipsAvailableResult,
+    SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,
 )
 from middlewared.service import CallError, Service
 
@@ -15,7 +15,7 @@ class SystemSecurityInfoService(Service):
         cli_namespace = 'system.security.info'
 
     @api_method(
-        SystemSecurityFipsAvailableArgs, SystemSecurityFipsAvailableResult,
+        SystemSecurityInfoFipsAvailableArgs, SystemSecurityInfoFipsAvailableResult,
         roles=['SYSTEM_SECURITY_READ']
     )
     def fips_available(self):
@@ -24,7 +24,7 @@ class SystemSecurityInfoService(Service):
         return bool(self.middleware.call_sync('system.license'))
 
     @api_method(
-        SystemSecurityFipsEnabledArgs, SystemSecurityFipsEnabledResult,
+        SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,
         roles=['SYSTEM_SECURITY_READ']
     )
     def fips_enabled(self):

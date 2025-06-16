@@ -2,8 +2,8 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetChecksumChoicesArgs, PoolDatasetChecksumChoicesResult, PoolDatasetCompressionChoicesArgs,
     PoolDatasetCompressionChoicesResult, PoolDatasetEncryptionAlgorithmChoicesArgs,
-    PoolDatasetEncryptionAlgorithmChoicesResult, PoolDatasetRecommendedZVolBlockSizeArgs,
-    PoolDatasetRecommendedZVolBlockSizeResult
+    PoolDatasetEncryptionAlgorithmChoicesResult, PoolDatasetRecommendedZvolBlocksizeArgs,
+    PoolDatasetRecommendedZvolBlocksizeResult
 )
 from middlewared.service import Service
 
@@ -41,8 +41,8 @@ class PoolDatasetService(Service):
         return {v: v for v in ZFS_ENCRYPTION_ALGORITHM_CHOICES}
 
     @api_method(
-        PoolDatasetRecommendedZVolBlockSizeArgs,
-        PoolDatasetRecommendedZVolBlockSizeResult,
+        PoolDatasetRecommendedZvolBlocksizeArgs,
+        PoolDatasetRecommendedZvolBlocksizeResult,
         roles=['DATASET_READ']
     )
     async def recommended_zvol_blocksize(self, pool):

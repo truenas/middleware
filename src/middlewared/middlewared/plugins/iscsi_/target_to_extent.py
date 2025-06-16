@@ -4,12 +4,12 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     IscsiTargetToExtentEntry,
-    IscsiTargetToExtentCreateArgs,
-    IscsiTargetToExtentCreateResult,
-    IscsiTargetToExtentUpdateArgs,
-    IscsiTargetToExtentUpdateResult,
-    IscsiTargetToExtentDeleteArgs,
-    IscsiTargetToExtentDeleteResult)
+    iSCSITargetToExtentCreateArgs,
+    iSCSITargetToExtentCreateResult,
+    iSCSITargetToExtentUpdateArgs,
+    iSCSITargetToExtentUpdateResult,
+    iSCSITargetToExtentDeleteArgs,
+    iSCSITargetToExtentDeleteResult)
 
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 
@@ -41,8 +41,8 @@ class iSCSITargetToExtentService(CRUDService):
         entry = IscsiTargetToExtentEntry
 
     @api_method(
-        IscsiTargetToExtentCreateArgs,
-        IscsiTargetToExtentCreateResult,
+        iSCSITargetToExtentCreateArgs,
+        iSCSITargetToExtentCreateResult,
         audit='Create iSCSI target/LUN/extent mapping',
         audit_callback=True
     )
@@ -97,8 +97,8 @@ class iSCSITargetToExtentService(CRUDService):
         return f'{target}/{data.get("lunid")}/{extent}'
 
     @api_method(
-        IscsiTargetToExtentUpdateArgs,
-        IscsiTargetToExtentUpdateResult,
+        iSCSITargetToExtentUpdateArgs,
+        iSCSITargetToExtentUpdateResult,
         audit='Update iSCSI target/LUN/extent mapping',
         audit_callback=True
     )
@@ -126,8 +126,8 @@ class iSCSITargetToExtentService(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(
-        IscsiTargetToExtentDeleteArgs,
-        IscsiTargetToExtentDeleteResult,
+        iSCSITargetToExtentDeleteArgs,
+        iSCSITargetToExtentDeleteResult,
         audit='Delete iSCSI target/LUN/extent mapping',
         audit_callback=True
     )

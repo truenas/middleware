@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetSnapshotCountArgs,
-    PoolDatasetSnapshotCountResults,
+    PoolDatasetSnapshotCountResult,
 )
 from middlewared.service import Service
 
@@ -12,7 +12,7 @@ class PoolDatasetService(Service):
 
     @api_method(
         PoolDatasetSnapshotCountArgs,
-        PoolDatasetSnapshotCountResults,
+        PoolDatasetSnapshotCountResult,
         roles=["DATASET_READ"],
     )
     def snapshot_count(self, dataset):

@@ -32,7 +32,7 @@ def ensure_unique_string(conn, table, column):
                         break
 
             if update:
-                op.execute(f"UPDATE {table} SET {column} = ? WHERE id = ?", [row[column], row["id"]])
+                conn.execute(f"UPDATE {table} SET {column} = ? WHERE id = ?", [row[column], row["id"]])
 
             values.add(row[column])
 

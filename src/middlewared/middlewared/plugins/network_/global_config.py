@@ -2,7 +2,7 @@ import ipaddress
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    NetworkConfigurationEntry, NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
+    NetworkConfigurationEntry, NetworkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
 )
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
@@ -176,7 +176,7 @@ class NetworkConfigurationService(ConfigService):
 
             await (await self.middleware.call('service.control', verb, service_name)).wait(raise_error=True)
 
-    @api_method(NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult)
+    @api_method(NetworkConfigurationUpdateArgs, NetworkConfigurationUpdateResult)
     async def do_update(self, data):
         """
         Update Network Configuration Service configuration.

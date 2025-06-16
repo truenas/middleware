@@ -15,6 +15,10 @@ from zettarepl.transport.local import LocalShell
 
 
 class ZettareplService(Service):
+
+    class Config:
+        private = True
+
     removal_dates = defaultdict(dict)
     removal_dates_loaded = False
 

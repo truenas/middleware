@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
+from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
 from middlewared.sqlalchemy import EncryptedText, JSON, Time
 
 import middlewared.plugins.datastore  # noqa
@@ -24,7 +25,8 @@ Model = declarative_base()
 
 
 @asynccontextmanager
-async def datastore_test(mocked_calls={}):
+async def datastore_test(mocked_calls=None):
+    mocked_calls = mocked_calls or {}
     m = Middleware()
     with patch("middlewared.plugins.datastore.connection.FREENAS_DATABASE", ":memory:"):
         with patch("middlewared.plugins.datastore.schema.Model", Model):
@@ -227,7 +229,7 @@ async def test__update_fk():
 @pytest.mark.asyncio
 async def test__bad_fk_update():
     async with datastore_test() as ds:
-        with pytest.raises(RuntimeError):
+        with pytest.raises(NoRowsWereUpdatedException):
             ds.execute("INSERT INTO `account_bsdgroups` VALUES (5, 50)")
             assert await ds.update("account.bsdgroups", 1, {"bsdgrp_gid": 5})
 

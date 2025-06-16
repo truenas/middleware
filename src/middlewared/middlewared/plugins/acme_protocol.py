@@ -10,9 +10,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, LongString, single_argument_args
 from middlewared.api.current import (
-    ACMEDNSAuthenticatorEntry, ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult,
-    ACMEDNSAuthenticatorUpdateArgs, ACMEDNSAuthenticatorUpdateResult, ACMEDNSAuthenticatorDeleteArgs,
-    ACMEDNSAuthenticatorDeleteResult,
+    ACMEDNSAuthenticatorEntry, DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult,
+    DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult, DNSAuthenticatorDeleteArgs,
+    DNSAuthenticatorDeleteResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, CRUDService, private
@@ -262,7 +262,7 @@ class DNSAuthenticatorService(CRUDService):
 
         verrors.check()
 
-    @api_method(ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult)
+    @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult)
     async def do_create(self, data):
         """
         Create a DNS Authenticator
@@ -299,7 +299,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(ACMEDNSAuthenticatorUpdateArgs, ACMEDNSAuthenticatorUpdateResult)
+    @api_method(DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult)
     async def do_update(self, id_, data):
         """
         Update DNS Authenticator of `id`
@@ -343,7 +343,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult)
+    @api_method(DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult)
     async def do_delete(self, id_):
         """
         Delete DNS Authenticator of `id`

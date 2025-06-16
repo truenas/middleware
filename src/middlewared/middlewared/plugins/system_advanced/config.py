@@ -10,8 +10,8 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemAdvancedEntry, SystemAdvancedLoginBannerArgs, SystemAdvancedLoginBannerResult,
-    SystemAdvancedSEDGlobalPasswordArgs, SystemAdvancedSEDGlobalPasswordResult,
-    SystemAdvancedSEDGlobalPasswordIsSetArgs, SystemAdvancedSEDGlobalPasswordIsSetResult, SystemAdvancedUpdateArgs,
+    SystemAdvancedSedGlobalPasswordArgs, SystemAdvancedSedGlobalPasswordResult,
+    SystemAdvancedSedGlobalPasswordIsSetArgs, SystemAdvancedSedGlobalPasswordIsSetResult, SystemAdvancedUpdateArgs,
     SystemAdvancedUpdateResult
 )
 from middlewared.service import ConfigService, private
@@ -242,8 +242,8 @@ class SystemAdvancedService(ConfigService):
         return await self.config()
 
     @api_method(
-        SystemAdvancedSEDGlobalPasswordIsSetArgs,
-        SystemAdvancedSEDGlobalPasswordIsSetResult,
+        SystemAdvancedSedGlobalPasswordIsSetArgs,
+        SystemAdvancedSedGlobalPasswordIsSetResult,
         roles=['SYSTEM_ADVANCED_READ']
     )
     async def sed_global_password_is_set(self):
@@ -252,8 +252,8 @@ class SystemAdvancedService(ConfigService):
         return bool(await self.sed_global_password())
 
     @api_method(
-        SystemAdvancedSEDGlobalPasswordArgs,
-        SystemAdvancedSEDGlobalPasswordResult,
+        SystemAdvancedSedGlobalPasswordArgs,
+        SystemAdvancedSedGlobalPasswordResult,
         roles=['SYSTEM_ADVANCED_READ']
     )
     async def sed_global_password(self):

@@ -9,18 +9,18 @@ from datetime import date
 from licenselib.license import ContractType, Features, License
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemProductFeatureEnabledArgs,
-    SystemProductFeatureEnabledResult,
-    SystemProductLicenseArgs,
-    SystemProductLicenseResult,
-    SystemProductReleaseNotesUrlArgs,
-    SystemProductReleaseNotesUrlResult,
+    SystemFeatureEnabledArgs,
+    SystemFeatureEnabledResult,
+    SystemLicenseUpdateArgs,
+    SystemLicenseUpdateResult,
+    SystemReleaseNotesUrlArgs,
+    SystemReleaseNotesUrlResult,
     SystemProductTypeArgs,
     SystemProductTypeResult,
-    SystemProductVersionArgs,
-    SystemProductVersionResult,
-    SystemProductVersionShortArgs,
-    SystemProductVersionShortResult,
+    SystemVersionArgs,
+    SystemVersionResult,
+    SystemVersionShortArgs,
+    SystemVersionShortResult,
 )
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.service import CallError, private, Service, ValidationError
@@ -73,8 +73,8 @@ class SystemService(Service):
         return await self.middleware.call('system.product_type') == ProductType.ENTERPRISE
 
     @api_method(
-        SystemProductVersionShortArgs,
-        SystemProductVersionShortResult,
+        SystemVersionShortArgs,
+        SystemVersionShortResult,
         authorization_required=False,
     )
     def version_short(self):
@@ -82,8 +82,8 @@ class SystemService(Service):
         return sw_info()['version']
 
     @api_method(
-        SystemProductReleaseNotesUrlArgs,
-        SystemProductReleaseNotesUrlResult,
+        SystemReleaseNotesUrlArgs,
+        SystemReleaseNotesUrlResult,
         roles=['SYSTEM_PRODUCT_READ']
     )
     def release_notes_url(self, version_str):
@@ -107,8 +107,8 @@ class SystemService(Service):
             return f'{base_url}/#{"".join(version_split)}'
 
     @api_method(
-        SystemProductVersionArgs,
-        SystemProductVersionResult,
+        SystemVersionArgs,
+        SystemVersionResult,
         authorization_required=False,
     )
     def version(self):
@@ -174,8 +174,8 @@ class SystemService(Service):
         return LICENSE_FILE
 
     @api_method(
-        SystemProductLicenseArgs,
-        SystemProductLicenseResult,
+        SystemLicenseUpdateArgs,
+        SystemLicenseUpdateResult,
         roles=['SYSTEM_PRODUCT_WRITE']
     )
     def license_update(self, license_):
@@ -207,8 +207,8 @@ class SystemService(Service):
         )
 
     @api_method(
-        SystemProductFeatureEnabledArgs,
-        SystemProductFeatureEnabledResult,
+        SystemFeatureEnabledArgs,
+        SystemFeatureEnabledResult,
         roles=['SYSTEM_PRODUCT_READ'],
     )
     async def feature_enabled(self, name):

@@ -6,7 +6,7 @@ from contextlib import suppress
 from middlewared.api import api_method
 from middlewared.api.current import (
     SnmpEntry,
-    SnmpUpdateArgs, SnmpUpdateResult
+    SNMPUpdateArgs, SNMPUpdateResult
 )
 
 from middlewared.common.ports import ServicePortDelegate
@@ -147,7 +147,7 @@ class SNMPService(SystemServiceService):
         if snmp_service['state'] == "STOPPED":
             await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
 
-    @api_method(SnmpUpdateArgs, SnmpUpdateResult)
+    @api_method(SNMPUpdateArgs, SNMPUpdateResult)
     async def do_update(self, data):
         """
         Update SNMP Service Configuration.

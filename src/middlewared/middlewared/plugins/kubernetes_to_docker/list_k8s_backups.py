@@ -1,7 +1,7 @@
 import os
 
 from middlewared.api import api_method
-from middlewared.api.current import K8sToDockerListBackupsArgs, K8sToDockerListBackupsResult
+from middlewared.api.current import K8stoDockerMigrationListBackupsArgs, K8stoDockerMigrationListBackupsResult
 from middlewared.service import job, Service
 
 from .list_utils import get_backup_dir, get_default_release_details, K8s_BACKUP_NAME_PREFIX, release_details
@@ -14,7 +14,7 @@ class K8stoDockerMigrationService(Service):
         namespace = 'k8s_to_docker'
         cli_namespace = 'k8s_to_docker'
 
-    @api_method(K8sToDockerListBackupsArgs, K8sToDockerListBackupsResult, roles=['DOCKER_READ'])
+    @api_method(K8stoDockerMigrationListBackupsArgs, K8stoDockerMigrationListBackupsResult, roles=['DOCKER_READ'])
     @job(lock=lambda args: f'k8s_to_docker_list_backups_{args[0]}')
     def list_backups(self, job, kubernetes_pool):
         """

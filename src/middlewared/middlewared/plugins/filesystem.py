@@ -22,10 +22,10 @@ from middlewared.api.current import (
     FilesystemMkdirArgs, FilesystemMkdirResult,
     FilesystemStatArgs, FilesystemStatResult,
     FilesystemStatfsArgs, FilesystemStatfsResult,
-    FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
-    FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult,
-    FilesystemGetFileArgs, FilesystemGetFileResult,
-    FilesystemPutFileArgs, FilesystemPutFileResult,
+    FilesystemSetZfsAttributesArgs, FilesystemSetZfsAttributesResult,
+    FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult,
+    FilesystemGetArgs, FilesystemGetResult,
+    FilesystemPutArgs, FilesystemPutResult,
     FileFollowTailEventSourceArgs, FileFollowTailEventSourceEvent,
 )
 from middlewared.event import EventSource
@@ -154,7 +154,7 @@ class FilesystemService(Service):
         }
 
     @api_method(
-        FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
+        FilesystemSetZfsAttributesArgs, FilesystemSetZfsAttributesResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set ZFS attributes',
         audit_extended=lambda data: data['path']
@@ -191,7 +191,7 @@ class FilesystemService(Service):
         """
         return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
 
-    @api_method(FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult, roles=['FILESYSTEM_ATTRS_READ'])
+    @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=['FILESYSTEM_ATTRS_READ'])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
@@ -548,7 +548,7 @@ class FilesystemService(Service):
 
         return True
 
-    @api_method(FilesystemGetFileArgs, FilesystemGetFileResult, audit='Filesystem get', roles=['FULL_ADMIN'])
+    @api_method(FilesystemGetArgs, FilesystemGetResult, audit='Filesystem get', roles=['FULL_ADMIN'])
     @job(pipes=["output"])
     def get(self, job, path):
         """
@@ -561,7 +561,7 @@ class FilesystemService(Service):
         with open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @api_method(FilesystemPutFileArgs, FilesystemPutFileResult, audit='Filesystem put', roles=['FULL_ADMIN'])
+    @api_method(FilesystemPutArgs, FilesystemPutResult, audit='Filesystem put', roles=['FULL_ADMIN'])
     @job(pipes=["input"])
     def put(self, job, path, options):
         """

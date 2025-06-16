@@ -1,8 +1,8 @@
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (IscsiInitiatorCreateArgs, IscsiInitiatorCreateResult, IscsiInitiatorDeleteArgs,
-                                     IscsiInitiatorDeleteResult, IscsiInitiatorEntry, IscsiInitiatorUpdateArgs,
-                                     IscsiInitiatorUpdateResult)
+from middlewared.api.current import (iSCSITargetAuthorizedInitiatorCreateArgs, iSCSITargetAuthorizedInitiatorCreateResult, iSCSITargetAuthorizedInitiatorDeleteArgs,
+                                     iSCSITargetAuthorizedInitiatorDeleteResult, IscsiInitiatorEntry, iSCSITargetAuthorizedInitiatorUpdateArgs,
+                                     iSCSITargetAuthorizedInitiatorUpdateResult)
 from middlewared.service import CRUDService, private
 
 
@@ -40,8 +40,8 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         entry = IscsiInitiatorEntry
 
     @api_method(
-        IscsiInitiatorCreateArgs,
-        IscsiInitiatorCreateResult,
+        iSCSITargetAuthorizedInitiatorCreateArgs,
+        iSCSITargetAuthorizedInitiatorCreateResult,
         audit='Create iSCSI initiator',
         audit_extended=lambda data: initiator_summary(data)
     )
@@ -63,8 +63,8 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         return await self.get_instance(data['id'])
 
     @api_method(
-        IscsiInitiatorUpdateArgs,
-        IscsiInitiatorUpdateResult,
+        iSCSITargetAuthorizedInitiatorUpdateArgs,
+        iSCSITargetAuthorizedInitiatorUpdateResult,
         audit='Update iSCSI initiator',
         audit_callback=True,
     )
@@ -88,8 +88,8 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(
-        IscsiInitiatorDeleteArgs,
-        IscsiInitiatorDeleteResult,
+        iSCSITargetAuthorizedInitiatorDeleteArgs,
+        iSCSITargetAuthorizedInitiatorDeleteResult,
         audit='Delete iSCSI initiator',
         audit_callback=True,
     )

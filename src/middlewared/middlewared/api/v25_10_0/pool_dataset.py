@@ -14,7 +14,7 @@ from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
 
 __all__ = [
     "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",
-    "PoolDatasetCreateResult", "PoolDatasetDetailsArgs", "PoolDatasetDetailsResults",
+    "PoolDatasetCreateResult", "PoolDatasetDetailsArgs", "PoolDatasetDetailsResult",
     "PoolDatasetEncryptionSummaryArgs", "PoolDatasetEncryptionSummaryResult", "PoolDatasetExportKeysArgs",
     "PoolDatasetExportKeysResult", "PoolDatasetExportKeysForReplicationArgs",
     "PoolDatasetExportKeysForReplicationResult", "PoolDatasetExportKeyArgs", "PoolDatasetExportKeyResult",
@@ -24,9 +24,9 @@ __all__ = [
     "PoolDatasetInheritParentEncryptionPropertiesResult", "PoolDatasetChecksumChoicesArgs",
     "PoolDatasetChecksumChoicesResult", "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
     "PoolDatasetEncryptionAlgorithmChoicesArgs", "PoolDatasetEncryptionAlgorithmChoicesResult",
-    "PoolDatasetRecommendedZVolBlockSizeArgs", "PoolDatasetRecommendedZVolBlockSizeResult", "PoolDatasetProcessesArgs",
+    "PoolDatasetRecommendedZvolBlocksizeArgs", "PoolDatasetRecommendedZvolBlocksizeResult", "PoolDatasetProcessesArgs",
     "PoolDatasetProcessesResult", "PoolDatasetGetQuotaArgs", "PoolDatasetGetQuotaResult", "PoolDatasetSetQuotaArgs",
-    "PoolDatasetSetQuotaResult", "PoolDatasetRecordSizeChoicesArgs", "PoolDatasetRecordSizeChoicesResult",
+    "PoolDatasetSetQuotaResult", "PoolDatasetRecordsizeChoicesArgs", "PoolDatasetRecordsizeChoicesResult",
     "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
     "PoolDatasetDestroySnapshotsArgs", "PoolDatasetDestroySnapshotsResult", "PoolDatasetPromoteArgs",
     "PoolDatasetPromoteResult", "PoolDatasetRenameArgs", "PoolDatasetRenameResult",
@@ -418,7 +418,7 @@ class PoolDatasetDetailsArgs(BaseModel):
     pass
 
 
-class PoolDatasetDetailsResults(BaseModel):
+class PoolDatasetDetailsResult(BaseModel):
     result: list[dict]
 
 
@@ -527,19 +527,19 @@ class PoolDatasetPromoteResult(BaseModel):
     result: None
 
 
-class PoolDatasetRecommendedZVolBlockSizeArgs(BaseModel):
+class PoolDatasetRecommendedZvolBlocksizeArgs(BaseModel):
     pool: str
 
 
-class PoolDatasetRecommendedZVolBlockSizeResult(BaseModel):
+class PoolDatasetRecommendedZvolBlocksizeResult(BaseModel):
     result: str
 
 
-class PoolDatasetRecordSizeChoicesArgs(BaseModel):
+class PoolDatasetRecordsizeChoicesArgs(BaseModel):
     pool_name: str | None = None
 
 
-class PoolDatasetRecordSizeChoicesResult(BaseModel):
+class PoolDatasetRecordsizeChoicesResult(BaseModel):
     result: list[str]
 
 

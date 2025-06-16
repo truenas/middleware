@@ -2,11 +2,11 @@ from dataclasses import asdict
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    VirtDeviceUSBChoicesArgs, VirtDeviceUSBChoicesResult,
-    VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult,
+    VirtDeviceUsbChoicesArgs, VirtDeviceUsbChoicesResult,
+    VirtDeviceGpuChoicesArgs, VirtDeviceGpuChoicesResult,
     VirtDeviceDiskChoicesArgs, VirtDeviceDiskChoicesResult,
-    VirtDeviceNICChoicesArgs, VirtDeviceNICChoicesResult,
-    VirtDevicePCIChoicesArgs, VirtDevicePCIChoicesResult,
+    VirtDeviceNicChoicesArgs, VirtDeviceNicChoicesResult,
+    VirtDevicePciChoicesArgs, VirtDevicePciChoicesResult,
 )
 from middlewared.service import CallError, private, Service
 from middlewared.utils.functools_ import cache
@@ -22,14 +22,14 @@ class VirtDeviceService(Service):
         namespace = 'virt.device'
         cli_namespace = 'virt.device'
 
-    @api_method(VirtDeviceUSBChoicesArgs, VirtDeviceUSBChoicesResult, roles=['VIRT_INSTANCE_READ'])
+    @api_method(VirtDeviceUsbChoicesArgs, VirtDeviceUsbChoicesResult, roles=['VIRT_INSTANCE_READ'])
     def usb_choices(self):
         """
         Provide choices for USB devices.
         """
         return list_usb_devices()
 
-    @api_method(VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult, roles=['VIRT_INSTANCE_READ'])
+    @api_method(VirtDeviceGpuChoicesArgs, VirtDeviceGpuChoicesResult, roles=['VIRT_INSTANCE_READ'])
     async def gpu_choices(self, gpu_type):
         """
         Provide choices for GPU devices.
@@ -92,7 +92,7 @@ class VirtDeviceService(Service):
         """
         return await self.disk_choices_internal()
 
-    @api_method(VirtDeviceNICChoicesArgs, VirtDeviceNICChoicesResult, roles=['VIRT_INSTANCE_READ'])
+    @api_method(VirtDeviceNicChoicesArgs, VirtDeviceNicChoicesResult, roles=['VIRT_INSTANCE_READ'])
     async def nic_choices(self, nic_type):
         """
         Returns choices for NIC device.
@@ -109,7 +109,7 @@ class VirtDeviceService(Service):
                 )}
         return choices
 
-    @api_method(VirtDevicePCIChoicesArgs, VirtDevicePCIChoicesResult, roles=['VIRT_INSTANCE_READ'])
+    @api_method(VirtDevicePciChoicesArgs, VirtDevicePciChoicesResult, roles=['VIRT_INSTANCE_READ'])
     def pci_choices(self):
         """
         Returns choices for PCI devices valid for VM virt instances.

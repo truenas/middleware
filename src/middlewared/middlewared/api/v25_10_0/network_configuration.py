@@ -5,7 +5,7 @@ from middlewared.api.base.types.network import IPvAnyAddress, Hostname, Domain
 
 
 __all__ = [
-    "NetworkConfigurationEntry", "NetWorkConfigurationUpdateArgs", "NetworkConfigurationUpdateResult",
+    "NetworkConfigurationEntry", "NetworkConfigurationUpdateArgs", "NetworkConfigurationUpdateResult",
     "NetworkConfigurationActivityChoicesArgs", "NetworkConfigurationActivityChoicesResult",
 ]
 
@@ -74,7 +74,7 @@ class NetworkConfigurationActivityChoicesResult(BaseModel):
     result: list[list[str]]
 
 
-class NetWorkConfigurationUpdateArgs(BaseModel):
+class NetworkConfigurationUpdateArgs(BaseModel):
     data: NetWorkConfigurationUpdate
 
 

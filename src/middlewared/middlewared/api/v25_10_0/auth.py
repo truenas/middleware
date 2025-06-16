@@ -9,11 +9,11 @@ from .user import UserGetUserObj
 
 
 __all__ = [
-    'AuthSessionEntry', 'AuthGenerateOnetimePasswordArgs', 'AuthGenerateOnetimePasswordResult',
+    'AuthSessionsEntry', 'AuthGenerateOnetimePasswordArgs', 'AuthGenerateOnetimePasswordResult',
     'AuthGenerateTokenArgs', 'AuthGenerateTokenResult', 'AuthLoginArgs', 'AuthLoginResult', 'AuthLoginExArgs',
     'AuthLoginExResult', 'AuthLoginExContinueArgs', 'AuthLoginExContinueResult', 'AuthLoginWithApiKeyArgs',
     'AuthLoginWithApiKeyResult', 'AuthLoginWithTokenArgs', 'AuthLoginWithTokenResult', 'AuthMeArgs', 'AuthMeResult',
-    'AuthMechChoicesArgs', 'AuthMechChoicesResult', 'AuthSessionLogoutArgs', 'AuthSessionLogoutResult',
+    'AuthMechanismChoicesArgs', 'AuthMechanismChoicesResult', 'AuthLogoutArgs', 'AuthLogoutResult',
     'AuthSetAttributeArgs', 'AuthSetAttributeResult', 'AuthTerminateOtherSessionsArgs',
     'AuthTerminateOtherSessionsResult', 'AuthTerminateSessionArgs', 'AuthTerminateSessionResult',
 ]
@@ -42,7 +42,7 @@ class TokenCredentialData(BaseCredentialData):
     username: str | None
 
 
-class AuthSessionEntry(BaseModel):
+class AuthSessionsEntry(BaseModel):
     id: str
     current: bool
     internal: bool
@@ -212,19 +212,19 @@ class AuthMeResult(AuthUserInfo):
     pass
 
 
-class AuthMechChoicesArgs(BaseModel):
+class AuthMechanismChoicesArgs(BaseModel):
     pass
 
 
-class AuthMechChoicesResult(BaseModel):
+class AuthMechanismChoicesResult(BaseModel):
     result: list[str]
 
 
-class AuthSessionLogoutArgs(BaseModel):
+class AuthLogoutArgs(BaseModel):
     pass
 
 
-class AuthSessionLogoutResult(BaseModel):
+class AuthLogoutResult(BaseModel):
     result: Literal[True]
 
 

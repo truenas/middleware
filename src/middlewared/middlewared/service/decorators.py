@@ -26,7 +26,18 @@ def filterable_api_method(
 ):
     def filterable_internal(fn):
         if item:
-            returns = query_result(item)
+            name = item.__name__
+            if name.endswith("Entry"):
+                if fn.__name__ == "query":
+                    name = name.removesuffix("Entry") + "QueryResult"
+                else:
+                    name = name.removesuffix("Entry") + "Result"
+            elif name.endswith("Item"):
+                name = name.removesuffix("Item") + "Result"
+            else:
+                raise RuntimeError(f"{item=!r} class name must end with `Entry` or `Item`")
+
+            returns = query_result(item, name)
         else:
             if not private:
                 raise ValueError('Public methods may not use GenericQueryResult.')

@@ -13,9 +13,9 @@ __all__ = [
     'VirtInstanceUpdateResult', 'VirtInstanceDeleteArgs', 'VirtInstanceDeleteResult',
     'VirtInstanceStartArgs', 'VirtInstanceStartResult', 'VirtInstanceStopArgs', 'VirtInstanceStopResult',
     'VirtInstanceRestartArgs', 'VirtInstanceRestartResult', 'VirtInstanceImageChoicesArgs',
-    'VirtInstanceImageChoicesResult', 'VirtInstanceDeviceListArgs', 'VirtInstanceDeviceListResult',
-    'VirtInstanceDeviceAddArgs', 'VirtInstanceDeviceAddResult', 'VirtInstanceDeviceUpdateArgs',
-    'VirtInstanceDeviceUpdateResult', 'VirtInstanceDeviceDeleteArgs', 'VirtInstanceDeviceDeleteResult',
+    'VirtInstanceImageChoicesResult', 'VirtInstanceDeviceDeviceListArgs', 'VirtInstanceDeviceDeviceListResult',
+    'VirtInstanceDeviceDeviceAddArgs', 'VirtInstanceDeviceDeviceAddResult', 'VirtInstanceDeviceDeviceUpdateArgs',
+    'VirtInstanceDeviceDeviceUpdateResult', 'VirtInstanceDeviceDeviceDeleteArgs', 'VirtInstanceDeviceDeviceDeleteResult',
     'VirtInstancesMetricsEventSourceArgs', 'VirtInstancesMetricsEventSourceEvent',
 ]
 
@@ -283,38 +283,38 @@ class VirtInstanceImageChoicesResult(BaseModel):
     result: dict[str, ImageChoiceItem]
 
 
-class VirtInstanceDeviceListArgs(BaseModel):
+class VirtInstanceDeviceDeviceListArgs(BaseModel):
     id: str
 
 
-class VirtInstanceDeviceListResult(BaseModel):
+class VirtInstanceDeviceDeviceListResult(BaseModel):
     result: list[DeviceType]
 
 
-class VirtInstanceDeviceAddArgs(BaseModel):
+class VirtInstanceDeviceDeviceAddArgs(BaseModel):
     id: str
     device: DeviceType
 
 
-class VirtInstanceDeviceAddResult(BaseModel):
+class VirtInstanceDeviceDeviceAddResult(BaseModel):
     result: Literal[True]
 
 
-class VirtInstanceDeviceUpdateArgs(BaseModel):
+class VirtInstanceDeviceDeviceUpdateArgs(BaseModel):
     id: str
     device: DeviceType
 
 
-class VirtInstanceDeviceUpdateResult(BaseModel):
+class VirtInstanceDeviceDeviceUpdateResult(BaseModel):
     result: Literal[True]
 
 
-class VirtInstanceDeviceDeleteArgs(BaseModel):
+class VirtInstanceDeviceDeviceDeleteArgs(BaseModel):
     id: str
     name: str
 
 
-class VirtInstanceDeviceDeleteResult(BaseModel):
+class VirtInstanceDeviceDeviceDeleteResult(BaseModel):
     result: Literal[True]
 
 

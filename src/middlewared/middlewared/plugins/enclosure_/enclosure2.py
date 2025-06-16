@@ -17,6 +17,7 @@ from .jbof_enclosures import map_jbof, set_slot_status as _jbof_set_slot_status
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
+from .r60_drive_identify import set_slot_status as r60_set_slot_status
 from .ses_enclosures2 import get_ses_enclosures
 from .sysfs_disks import toggle_enclosure_slot_identifier
 
@@ -72,12 +73,7 @@ class Enclosure2Service(Service):
 
     @api_method(Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult, roles=['ENCLOSURE_WRITE'])
     def set_slot_status(self, data):
-        """Set enclosure bay number `slot` to `status` for `enclosure_id`.
-
-        `enclosure_id` str: represents the enclosure logical identifier of the enclosure
-        `slot` int: the enclosure drive bay number to send the status command
-        `status` str: the status for which to send to the command.
-        """
+        """Set enclosure bay number `slot` to `status` for `enclosure_id`."""
         try:
             enc_info = self.middleware.call_sync(
                 'enclosure2.query', [['id', '=', data['enclosure_id']]], {'get': True}
@@ -90,6 +86,9 @@ class Enclosure2Service(Service):
                 # an all nvme flash system so drive identification is handled
                 # in a completely different way than sata/scsi
                 return r30_set_slot_status(data['slot'], data['status'])
+            elif enc_info['id'].startswith('r60'):
+                # R60 nvme flash system with different LED control mechanism
+                return r60_set_slot_status(data['slot'], data['status'])
             elif enc_info['id'].startswith(('f60', 'f100', 'f130')):
                 try:
                     return fseries_set_slot_status(data['slot'], data['status'])

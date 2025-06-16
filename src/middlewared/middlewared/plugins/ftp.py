@@ -5,7 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     FtpEntry,
-    FtpUpdateArgs, FtpUpdateResult
+    FTPUpdateArgs, FTPUpdateResult
 )
 
 
@@ -71,7 +71,7 @@ class FTPService(SystemServiceService):
             data['ssltls_certificate'] = data['ssltls_certificate']['id']
         return data
 
-    @api_method(FtpUpdateArgs, FtpUpdateResult, audit='Update FTP configuration')
+    @api_method(FTPUpdateArgs, FTPUpdateResult, audit='Update FTP configuration')
     async def do_update(self, data):
         """
         Update ftp service configuration.

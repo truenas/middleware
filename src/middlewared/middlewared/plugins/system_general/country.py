@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CertificateCountryChoicesArgs,
-    CertificateCountryChoicesResult,
+    SystemGeneralCountryChoicesArgs,
+    SystemGeneralCountryChoicesResult,
 )
 from middlewared.service import Service
 from middlewared.utils.country_codes import get_country_codes
@@ -14,8 +14,8 @@ class SystemGeneralService(Service):
         cli_namespace = 'system.general'
 
     @api_method(
-        CertificateCountryChoicesArgs,
-        CertificateCountryChoicesResult,
+        SystemGeneralCountryChoicesArgs,
+        SystemGeneralCountryChoicesResult,
         roles=['SYSTEM_GENERAL_READ']
     )
     def country_choices(self):

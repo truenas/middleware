@@ -3,8 +3,8 @@ from typing import Literal
 
 __all__ = [
     "RdmaLinkConfig",
-    "RdmaCardConfigArgs", "RdmaCardConfigResult",
-    "RdmaCapableProtocolsArgs", "RdmaCapableProtocolsResult"
+    "RDMAGetCardChoicesArgs", "RDMAGetCardChoicesResult",
+    "RDMACapableProtocolsArgs", "RDMACapableProtocolsResult"
 ]
 
 
@@ -13,7 +13,7 @@ class RdmaLinkConfig(BaseModel):
     netdev: str
 
 
-class RdmaCardConfigArgs(BaseModel):
+class RDMAGetCardChoicesArgs(BaseModel):
     pass
 
 
@@ -25,13 +25,13 @@ class RdmaCardConfig(BaseModel):
     links: list[RdmaLinkConfig]
 
 
-class RdmaCardConfigResult(BaseModel):
+class RDMAGetCardChoicesResult(BaseModel):
     result: list[RdmaCardConfig]
 
 
-class RdmaCapableProtocolsArgs(BaseModel):
+class RDMACapableProtocolsArgs(BaseModel):
     pass
 
 
-class RdmaCapableProtocolsResult(BaseModel):
+class RDMACapableProtocolsResult(BaseModel):
     result: list[Literal["ISER", "NFS", "NVMET"]]

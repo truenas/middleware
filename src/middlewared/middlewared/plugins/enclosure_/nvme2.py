@@ -200,7 +200,7 @@ def map_r50_or_r50b(model, ctx):
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
 
 
-def map_r30_or_fseries(model, ctx):
+def map_r30_r60_or_fseries(model, ctx):
     nvmes = {}
     for i in ctx.list_devices(subsystem='nvme'):
         for namespace_dev in i.children:
@@ -229,6 +229,12 @@ def map_r30_or_fseries(model, ctx):
         num_of_nvme_slots = 16
         front_slots = 12
         internal_slots = 4
+    elif model == ControllerModels.R60.value:
+        webui_map = {
+            '1': 1, '3': 2, '5': 3, '7': 4, '9': 5, '11': 6,
+            '2': 7, '4': 8, '6': 9, '8': 10, '10': 11, '12': 12,
+        }
+        num_of_nvme_slots = front_slots = len(webui_map)
     else:
         # f-series vendor is nice to us and nvme phys slots start at 1
         # and increment in a human readable way already
@@ -268,12 +274,13 @@ def map_nvme():
         return map_r50_or_r50b(model, ctx)
     elif model in (
         ControllerModels.R30.value,
+        ControllerModels.R60.value,
         ControllerModels.F60.value,
         ControllerModels.F100.value,
         ControllerModels.F130.value,
     ):
         # all nvme systems which we need to handle separately
-        return map_r30_or_fseries(model, ctx)
+        return map_r30_r60_or_fseries(model, ctx)
     elif model in (
         ControllerModels.M30.value,
         ControllerModels.M40.value,

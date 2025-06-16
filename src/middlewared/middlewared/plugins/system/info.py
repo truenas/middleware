@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from middlewared.api import api_method
-from middlewared.api.current import SystemHostIDArgs, SystemHostIDResult, SystemInfoArgs, SystemInfoResult
+from middlewared.api.current import SystemHostIdArgs, SystemHostIdResult, SystemInfoArgs, SystemInfoResult
 from middlewared.service import no_authz_required, private, Service
 from middlewared.utils import sw_buildtime
 from middlewared.utils.cpu import cpu_info
@@ -55,7 +55,7 @@ class SystemService(Service):
     async def hostname(self) -> str:
         return socket.gethostname()
 
-    @api_method(SystemHostIDArgs, SystemHostIDResult, roles=['READONLY_ADMIN'])
+    @api_method(SystemHostIdArgs, SystemHostIdResult, roles=['READONLY_ADMIN'])
     def host_id(self):
         """
         Retrieve a hex string that is generated based

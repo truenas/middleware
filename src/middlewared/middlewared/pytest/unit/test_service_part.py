@@ -1,9 +1,10 @@
 import pytest
 
-from middlewared.service import job, Service, ServicePartBase
+from middlewared.service import job, private, Service, ServicePartBase
 
 
 class SumServiceBase(ServicePartBase):
+    @private
     def sum(self, a, b):
         """
         Sum two numbers
@@ -14,6 +15,7 @@ class SumServiceBase(ServicePartBase):
 def test__method_not_defined():
     with pytest.raises(RuntimeError) as e:
         class SumServiceImpl(Service, SumServiceBase):
+            @private
             def add(self, a, b):
                 return a + b
 
@@ -23,6 +25,7 @@ def test__method_not_defined():
 def test__signatures_do_not_match():
     with pytest.raises(RuntimeError) as e:
         class SumServiceImpl(Service, SumServiceBase):
+            @private
             def sum(self, a, b, c=0):
                 return a + b
 
@@ -31,6 +34,7 @@ def test__signatures_do_not_match():
 
 def test__ok():
     class SumServiceImpl(Service, SumServiceBase):
+        @private
         def sum(self, a, b):
             return a + b
 
@@ -39,6 +43,7 @@ def test__ok():
 
 def test__schema_works():
     class SumServiceImpl(Service, SumServiceBase):
+        @private
         def sum(self, a, b):
             return a + b
 
@@ -48,10 +53,12 @@ def test__schema_works():
 def test__job():
     class JobServiceBase(ServicePartBase):
         @job()
+        @private
         def process(self, job, arg):
             pass
 
     class JobServiceImpl(Service, JobServiceBase):
+        @private
         def process(self, job, arg):
             return arg * 2
 

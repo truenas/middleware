@@ -2,8 +2,8 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ReportingEntry, ReportingGraph, ReportingUpdateArgs, ReportingUpdateResult, ReportingGetDataArgs,
-    ReportingGetDataResult, ReportingGraphArgs,
+    ReportingEntry, ReportingGraphsItem, ReportingUpdateArgs, ReportingUpdateResult, ReportingGetDataArgs,
+    ReportingGetDataResult, ReportingGraphResult, ReportingGraphArgs,
 )
 from middlewared.service import filterable_api_method, ConfigService, private
 
@@ -40,7 +40,7 @@ class ReportingService(ConfigService):
         await (await self.middleware.call('service.control', 'RESTART', 'netdata')).wait(raise_error=True)
         return await self.config()
 
-    @filterable_api_method(roles=['REPORTING_READ'], item=ReportingGraph, cli_private=True)
+    @filterable_api_method(roles=['REPORTING_READ'], item=ReportingGraphsItem, cli_private=True)
     async def graphs(self, filters, options):
         return await self.middleware.call('reporting.netdata_graphs', filters, options)
 
@@ -78,7 +78,7 @@ class ReportingService(ConfigService):
     async def get_all(self, query):
         return await self.middleware.call('reporting.netdata_get_all', query)
 
-    @api_method(ReportingGraphArgs, ReportingGetDataResult, roles=['REPORTING_READ'], cli_private=True)
+    @api_method(ReportingGraphArgs, ReportingGraphResult, roles=['REPORTING_READ'], cli_private=True)
     async def graph(self, name, query):
         """
         Get reporting data for `name` graph.

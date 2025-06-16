@@ -5,8 +5,8 @@ __all__ = (
     'CertificateCountryChoicesResult',
     'CertificateAcmeServerChoicesArgs',
     'CertificateAcmeServerChoicesResult',
-    'CertificateECCurveChoicesArgs',
-    'CertificateECCurveChoicesResult',
+    'CertificateEcCurveChoicesArgs',
+    'CertificateEcCurveChoicesResult',
     'CertificateExtendedKeyUsageChoicesArgs',
     'CertificateExtendedKeyUsageChoicesResult',
 )
@@ -28,11 +28,11 @@ class CertificateAcmeServerChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class CertificateECCurveChoicesArgs(BaseModel):
+class CertificateEcCurveChoicesArgs(BaseModel):
     pass
 
 
-class CertificateECCurveChoicesResult(BaseModel):
+class CertificateEcCurveChoicesResult(BaseModel):
     result: dict[str, str]
 
 

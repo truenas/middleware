@@ -22,6 +22,7 @@ def to_ignore(enclosure):
         ControllerModels.F100.value,
         ControllerModels.F130.value,
         ControllerModels.R30.value,
+        ControllerModels.R60.value,
     )):
         # these are all nvme flash systems and
         # are treated as-is

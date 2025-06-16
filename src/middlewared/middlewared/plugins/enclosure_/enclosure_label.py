@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
-from middlewared.api.current import EnclosureLabelSetArgs, EnclosureLabelUpdateResult
+from middlewared.api.current import EnclosureLabelSetArgs, EnclosureLabelSetResult
 from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound, ValidationError
 
@@ -26,7 +26,7 @@ class EnclosureLabelService(Service):
             for label in await self.middleware.call("datastore.query", "enclosure.label")
         }
 
-    @api_method(EnclosureLabelSetArgs, EnclosureLabelUpdateResult, roles=["ENCLOSURE_WRITE"])
+    @api_method(EnclosureLabelSetArgs, EnclosureLabelSetResult, roles=["ENCLOSURE_WRITE"])
     async def set(self, id_, label):
         try:
             await self.middleware.call("enclosure2.query", [["id", "=", id_]], {"get": True})
