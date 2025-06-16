@@ -19,27 +19,19 @@ class UpdateService(Service):
         """
         trains = await self.middleware.call('update.get_trains')
 
-        current_train_name = await self.middleware.call('update.get_current_train_name', trains)
-        found_current_train = False
-        valid_trains = []
-        for name, data in trains['trains'].items():
-            if name == current_train_name:
-                found_current_train = True
-
-            if not found_current_train:
-                continue
-
-            valid_trains.append(name)
+        next_trains = await self.middleware.call('update.get_next_trains_names', trains)
 
         versions = []
-        for train, manifest in zip(
-            valid_trains,
-            await asyncio.gather(*[self.middleware.call('update.get_train_manifest', train) for train in valid_trains]),
+        for train, releases in zip(
+            next_trains,
+            await asyncio.gather(*[self.middleware.call('update.get_train_releases', train) for train in next_trains]),
         ):
-            versions.append({
-                'train': train,
-                'version': await self.version_from_manifest(manifest),
-            })
+            for version, manifest in reversed(releases.items()):
+                if await self.can_update_to(version):
+                    versions.append({
+                        'train': train,
+                        'version': await self.version_from_manifest({**manifest, 'version': version}),
+                    })
 
         return versions
 
