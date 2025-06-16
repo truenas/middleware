@@ -41,41 +41,40 @@ class UpdateService(Service):
             trains = await self.middleware.call('update.get_trains')
 
             current_train_name = await self.middleware.call('update.get_current_train_name', trains)
-            current_train_profile = trains['trains'][current_train_name]['update_profile']
-            matches_profile = await self.middleware.call(
-                'update.profile_matches', current_train_profile, config['profile'],
-            )
+            current_profile = await self.middleware.call('update.current_version_profile', trains)
+            matches_profile = await self.middleware.call('update.profile_matches', current_profile, config['profile'])
 
-            update_train_name = None
-            for train_name, train_data in trains['trains'].items():
-                if await self.middleware.call(
-                    'update.profile_matches', train_data['update_profile'], config['profile'],
-                ):
-                    update_train_name = train_name
+            new_version = None
+            for next_train in await self.middleware.call('update.get_next_trains_names', trains):
+                releases = await self.middleware.call('update.get_train_releases', next_train)
+                for version_number, version in reversed(releases.items()):
+                    if await self.middleware.call('update.profile_matches', version['profile'], config['profile']):
+                        new_version = {**version, 'train': next_train, 'version': version_number}
+                        break
 
-            if update_train_name is None:
-                return self._result('ERROR', {'error': 'No trains match specified update profile.'})
+                if new_version is not None:
+                    break
+            else:
+                return self._result('ERROR', {'error': 'No releases match specified update profile.'})
 
-            update_train_manifest = await self.middleware.call('update.get_train_manifest', update_train_name)
-
-            if update_train_manifest['version'] == current_version:
+            if new_version['version'] == current_version:
                 new_version = None
             else:
-                new_version_number = update_train_manifest['version']
-                if not await self.middleware.call('update.can_update_to', new_version_number):
+                if not await self.middleware.call('update.can_update_to', new_version['version']):
                     return self._result('ERROR', {
                         'error': (
                             f'Currently installed version {current_version} is newer than the newest version '
-                            f'{new_version_number} provided by train {update_train_manifest}.'
+                            f'{new_version["version"]} provided by train {next_train}.'
                         ),
                     })
 
-                new_version = await self.middleware.call('update.version_from_manifest', update_train_manifest)
+                new_version = await self.middleware.call('update.version_from_manifest', new_version)
+
             return self._result('NORMAL', {
                 'status': {
-                    'current_train': {
-                        'name': current_train_name,
-                        'profile': current_train_profile,
+                    'current_version': {
+                        'train': current_train_name,
+                        'profile': current_profile,
                         'matches_profile': matches_profile,
                     },
                     'new_version': new_version,
@@ -88,13 +87,23 @@ class UpdateService(Service):
             })
 
     def _result(self, code, data=None):
-        return {
+        result = {
             'code': code,
             'error': None,
             'status': None,
-            'update_download_progress': self.update_download_progress,
             **(data or {}),
         }
+
+        if (
+            self.update_download_progress is not None and
+            result['status'] is not None and
+            result['status']['new_version']['version'] == self.update_download_progress['version']
+        ):
+            result['update_download_progress'] = self.update_download_progress
+        else:
+            result['update_download_progress'] = None
+
+        return result
 
     @private
     async def set_update_download_progress(self, progress, update_status):
