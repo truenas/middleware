@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
 STARTING_INSTALLER = "Starting installer"
 
+
 def get_hash(file_path, digest="sha1"):
     with open(file_path, 'rb') as f:
         return hashlib.file_digest(f, digest).hexdigest()

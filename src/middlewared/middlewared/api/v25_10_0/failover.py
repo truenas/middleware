@@ -1,5 +1,3 @@
-from pydantic import Field
-
 from middlewared.api.base import (
     BaseModel,
     Excluded,
@@ -46,6 +44,7 @@ class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
 
 class FailoverUpgrade(BaseModel):
     train: NonEmptyString | None = None
+    version: str | None = None
     resume: bool = False
     """Should be set to true if a previous call to this method returned a \
     `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed \
@@ -104,7 +103,7 @@ class FailoverSyncFromPeerResult(BaseModel):
 
 
 class FailoverSyncToPeerArgs(BaseModel):
-    options: FailoverSyncToPeer = Field(default_factory=FailoverSyncToPeer)
+    options: FailoverSyncToPeer = FailoverSyncToPeer()
 
 
 class FailoverSyncToPeerResult(BaseModel):
@@ -120,7 +119,7 @@ class FailoverUpdateResult(BaseModel):
 
 
 class FailoverUpgradeArgs(BaseModel):
-    failover_upgrade: FailoverUpgrade = Field(default_factory=FailoverUpgrade)
+    failover_upgrade: FailoverUpgrade = FailoverUpgrade()
 
 
 class FailoverUpgradeResult(BaseModel):

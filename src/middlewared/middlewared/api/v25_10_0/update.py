@@ -60,11 +60,11 @@ class UpdateStatusArgs(BaseModel):
     pass
 
 
-class UpdateStatusCurrentTrain(BaseModel):
-    name: str
+class UpdateStatusCurrentVersion(BaseModel):
+    train: str
     "Train name."
     profile: str
-    "Update profile assigned for the train."
+    "Update profile assigned for the version."
     matches_profile: bool
     "Whether the system version running matches the configured update profile."
 
@@ -78,7 +78,7 @@ class UpdateStatusNewVersion(BaseModel):
 
 
 class UpdateStatusStatus(BaseModel):
-    current_train: UpdateStatusCurrentTrain
+    current_version: UpdateStatusCurrentVersion
     "Currently running system version information."
     new_version: UpdateStatusNewVersion | None
     "New system version information (or `null` if no new system version is available)."
@@ -128,6 +128,9 @@ class UpdateAvailableVersion(BaseModel):
 
 class UpdateDownloadArgs(BaseModel):
     train: str | None = None
+    """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most recent
+    version that matches the currently selected update profile is used."""
+    version: str | None = None
 
 
 class UpdateDownloadResult(BaseModel):
@@ -178,11 +181,14 @@ class UpdateRunAttrs(BaseModel):
     that an upgrade can be performed with a warning and that warning is accepted. In that case, update process will be
     continued using an already downloaded file without performing any extra checks."""
     train: str | None = None
+    """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most recent
+    version that matches the currently selected update profile is used."""
+    version: str | None = None
     reboot: bool = False
 
 
 class UpdateRunArgs(BaseModel):
-    attrs: UpdateUpdate = UpdateRunAttrs()
+    attrs: UpdateRunAttrs = UpdateRunAttrs()
 
 
 class UpdateRunResult(BaseModel):

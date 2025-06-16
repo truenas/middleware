@@ -3,10 +3,10 @@ import json
 from aiohttp import ClientResponseError, ClientSession, ClientTimeout
 
 from middlewared.service import CallError, private, Service
+from middlewared.utils import MANIFEST_FILE
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.utils.functools_ import cache
-from .profile import Profile
-from .utils import scale_update_server, SCALE_MANIFEST_FILE
+from .utils import scale_update_server
 
 
 class UpdateService(Service):
@@ -16,7 +16,7 @@ class UpdateService(Service):
     @private
     @cache
     def get_manifest_file(self):
-        with open(SCALE_MANIFEST_FILE) as f:
+        with open(MANIFEST_FILE) as f:
             return json.load(f)
 
     @private
@@ -39,8 +39,7 @@ class UpdateService(Service):
             {
                 "trains": {
                     "TrueNAS-SCALE-Fangtooth": {
-                        "description": "TrueNAS SCALE Fangtooth 25.04 [release]",
-                        "update_profile": "GENERAL"
+                        "description": "TrueNAS SCALE Fangtooth 25.04 [release]"
                     }
                 },
                 "trains_redirection": {
@@ -53,13 +52,13 @@ class UpdateService(Service):
 
         current_train_name = await self.get_current_train_name(trains)
         if current_train_name not in trains['trains']:
-            trains['trains'][current_train_name] = {'update_profile': Profile.DEVELOPER.name}
+            trains['trains'][current_train_name] = {}
 
         return trains
 
     @private
-    async def get_train_manifest(self, name):
-        return await self.fetch(f"{self.update_srv}/{name}/manifest.json")
+    async def get_train_releases(self, name):
+        return await self.fetch(f"{self.update_srv}/{name}/releases.json")
 
     @private
     async def get_current_train_name(self, trains):
@@ -69,3 +68,30 @@ class UpdateService(Service):
             return trains['trains_redirection'][manifest['train']]
         else:
             return manifest['train']
+
+    @private
+    async def get_next_trains_names(self, trains):
+        """
+        Returns the names of trains to which this system can be upgraded, listed in descending order (most recent
+        train first).
+
+        Currently, the system can be upgraded only to the next train — skipping trains is not allowed. If the next train
+        does not include a version that matches the requested update profile, the current train will also be considered.
+        """
+        current_train_name = await self.get_current_train_name(trains)
+        trains_names = list(trains['trains'].keys())
+        try:
+            index = trains_names.index(current_train_name)
+        except ValueError:
+            raise CallError(f'Current train {current_train_name!r} is not present in the update trains list') from None
+
+        next_trains_names = []
+        try:
+            next_trains_names.append(trains_names[index + 1])
+        except IndexError:
+            # Current train is the newest train
+            pass
+
+        next_trains_names.append(current_train_name)
+
+        return next_trains_names
