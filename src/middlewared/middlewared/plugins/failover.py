@@ -667,7 +667,7 @@ class FailoverService(ConfigService):
                         None, j['progress']['description'] or 'Downloading upgrade files'
                     )
 
-                djob = self.middleware.call_sync('update.download', options['train'],
+                djob = self.middleware.call_sync('update.download', options['train'], options['version'],
                                                  job_on_progress_cb=download_callback)
                 djob.wait_sync(raise_error=True)
                 if not djob.result:

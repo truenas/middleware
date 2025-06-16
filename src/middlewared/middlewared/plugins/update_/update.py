@@ -30,7 +30,8 @@ class UpdateService(Service):
             options = {'raise_warnings': False}
         else:
             options = {}
-            update = await self.middleware.call('update.download_update', job, attrs['train'], location, 50)
+            update = await self.middleware.call('update.download_update', job, attrs['train'], attrs['version'],
+                                                location, 50)
             if not update:
                 raise CallError('No update available')
 

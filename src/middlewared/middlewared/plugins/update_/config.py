@@ -1,7 +1,9 @@
 from middlewared.api import api_method
 from middlewared.api.current import UpdateEntry, UpdateUpdateArgs, UpdateUpdateResult
-from middlewared.service import ConfigService, ValidationErrors
+from middlewared.service import ConfigService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+
+from .profile import Profile
 
 
 class UpdateModel(sa.Model):
@@ -9,7 +11,7 @@ class UpdateModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     upd_autocheck = sa.Column(sa.Boolean())
-    upd_profile = sa.Column(sa.Text())
+    upd_profile = sa.Column(sa.Text(), nullable=True)
 
 
 class UpdateService(ConfigService):
@@ -20,6 +22,22 @@ class UpdateService(ConfigService):
         cli_namespace = 'system.update'
         role_prefix = 'SYSTEM_UPDATE'
         entry = UpdateEntry
+
+    async def config(self, *, _allow_null_profile=False):
+        data = await super().config()
+
+        if data['profile'] is None and not _allow_null_profile:
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                data['id'],
+                {'profile': await self.middleware.call('update.current_version_profile')},
+                {'prefix': self._config.datastore_prefix},
+            )
+
+            return await super().config()
+        else:
+            return data
 
     @api_method(UpdateUpdateArgs, UpdateUpdateResult)
     async def do_update(self, data):
@@ -51,7 +69,24 @@ class UpdateService(ConfigService):
         if new['autocheck'] != old['autocheck']:
             await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
 
+        if new['profile'] != old['profile']:
+            self.middleware.send_event('update.status', 'CHANGED', status=await self.middleware.call('update.status'))
+
         return await self.config()
+
+    @private
+    async def set_profile(self, name):
+        # This must be used for setting update profile when internet connection might be unavailable.
+
+        old = await self.config(_allow_null_profile=True)
+
+        await self.middleware.call(
+            'datastore.update',
+            self._config.datastore,
+            old['id'],
+            {'profile': Profile[name].name},
+            {'prefix': self._config.datastore_prefix},
+        )
 
 
 async def setup(middleware):
