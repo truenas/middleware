@@ -58,7 +58,7 @@ class QueryOptions(BaseModel):
 
     @model_validator(mode='after')
     def validate_query_options(self) -> Self:
-        filter_obj.validate_options(self.dict())
+        filter_obj.validate_options(self.model_dump())
         return self
 
 
