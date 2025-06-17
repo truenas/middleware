@@ -1,3 +1,4 @@
+import contextlib
 import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
@@ -10,6 +11,30 @@ from middlewared.test.integration.utils.audit import expect_audit_method_calls
 BASE_SYNTHETIC_DATASTORE_ID = 100000000
 DS_USR_VERR_STR = "Directory services users may not be added as members of local groups."
 DS_GRP_VERR_STR = "Local users may not be members of directory services groups."
+
+# Alias
+pp = pytest.param
+
+
+@pytest.fixture(scope="function")
+def admin_users():
+    builtin_administrators_group_id = call(
+        "datastore.query",
+        "account.bsdgroups",
+        [["group", "=", "builtin_administrators"]],
+        {"get": True, "prefix": "bsdgrp_"},
+    )["id"]
+    with user({
+        "username": "adminuser",
+        "full_name": "adminuser",
+        "group_create": True,
+        "password": "canary",
+        "groups": [builtin_administrators_group_id],
+    }):
+        fa_users = call('user.query', [
+            ["roles", "rin", "FULL_ADMIN"], ["local", "=", True], ["locked", "=", False]
+        ])
+        yield fa_users
 
 
 def test_create_account_audit():
@@ -159,7 +184,7 @@ def test_create_account_invalid_gid():
 
 
 def test_create_user_random_password_with_specified_password_fail():
-    with pytest.raises(ValidationErrors, match='Requesting a randomized password while') as ve:
+    with pytest.raises(ValidationErrors, match='Requesting a randomized password while'):
         with user({
             "username": "bobshouldnotexist",
             "full_name": "bob",
@@ -211,3 +236,31 @@ def test_account_update_invalid_username(test_user: dict):
     with pytest.raises(ValidationErrors, match="Valid characters are:"):
         with temporary_update(test_user, {"username": "_блин"}):
             pass
+
+
+@pytest.mark.parametrize("name", [
+    pp("root", id="root is last"),
+    pp("truenas_admin", id="truenas_admin is last"),
+    pp("adminuser", id="admin_user is last"),
+])
+def test_account_last_admin(admin_users, name):
+    ''' With all FULL_ADMIN users except one 'locked', confirm
+        that we cannot lock the last remaining FULL_ADMIN user'''
+
+    admin_users_count = len(admin_users)
+    assert admin_users_count > 0
+
+    admin_to_lock = [usr for usr in admin_users if usr['username'] != name]
+    assert len(admin_to_lock) == admin_users_count - 1
+
+    last_admin = [usr for usr in admin_users if usr['username'] == name][0]
+    assert last_admin['username'] == name
+
+    with contextlib.ExitStack() as es:
+        # This loop tests the passing case: lock the other admin users
+        for fa_user in admin_to_lock:
+            es.enter_context(temporary_update(fa_user, {"locked": True}))
+
+        with pytest.raises(ValidationErrors, match='After locking this user'):
+            with temporary_update(last_admin, {"locked": True}):
+                pass
