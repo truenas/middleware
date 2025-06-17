@@ -624,6 +624,10 @@ def make_client():
                                     conn_retries=SPDK_RPC_CONN_RETRIES)
 
 
+def nvmf_subsystem_get_qpairs(client, nqn):
+    return rpc.nvmf.nvmf_subsystem_get_qpairs(client, nqn=nqn)
+
+
 class NvmetAnaStateConfig:
 
     @contextmanager
