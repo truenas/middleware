@@ -11,6 +11,7 @@ from middlewared.service import SystemServiceService, ValidationErrors, filterab
 from middlewared.utils import filter_list
 from .constants import NVMET_SERVICE_NAME
 from middlewared.utils.nvmet.kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
+from middlewared.utils.nvmet.spdk import make_client, nvmf_subsystem_get_qpairs
 from .mixin import NVMetStandbyMixin
 from .utils import uuid_nqn
 
@@ -174,33 +175,74 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         sessions = []
         global_info = self.middleware.call_sync('nvmet.global.config')
         subsystems = self.middleware.call_sync('nvmet.subsys.query')
+        ports = self.middleware.call_sync('nvmet.port.query')
+        ha = self.middleware.call_sync('failover.licensed')
 
         if global_info['kernel']:
             nvmet_debug_path = pathlib.Path(NVMET_DEBUG_DIR)
             if not nvmet_debug_path.exists():
                 return sessions
 
-        port_index_to_id = {port['index']: port['id'] for port in self.middleware.call_sync('nvmet.port.query')}
+            port_index_to_id = {port['index']: port['id'] for port in ports}
 
-        if subsys_id is None:
-            basenqn = global_info['basenqn']
-            subsys_name_to_subsys_id = {f'{basenqn}:{subsys["name"]}': subsys['id'] for subsys in subsystems}
-            for subsys in nvmet_debug_path.iterdir():
-                if subsys_id := subsys_name_to_subsys_id.get(subsys.name):
-                    for ctrl in subsys.iterdir():
-                        if session := self.__parse_session_dir(ctrl, port_index_to_id):
-                            session['subsys_id'] = subsys_id
-                            sessions.append(session)
-        else:
-            for subsys in subsystems:
-                if subsys['id'] == subsys_id:
-                    subnqn = f'{global_info["basenqn"]}:{subsys["name"]}'
-                    path = nvmet_debug_path / subnqn
-                    if path.is_dir():
-                        for ctrl in path.iterdir():
+            if subsys_id is None:
+                subsys_name_to_subsys_id = {subsys['subnqn']: subsys['id'] for subsys in subsystems}
+                for subsys in nvmet_debug_path.iterdir():
+                    if subsys_id := subsys_name_to_subsys_id.get(subsys.name):
+                        for ctrl in subsys.iterdir():
                             if session := self.__parse_session_dir(ctrl, port_index_to_id):
                                 session['subsys_id'] = subsys_id
                                 sessions.append(session)
+            else:
+                for subsys in subsystems:
+                    if subsys['id'] == subsys_id:
+                        subnqn = subsys['subnqn']
+                        path = nvmet_debug_path / subnqn
+                        if path.is_dir():
+                            for ctrl in path.iterdir():
+                                if session := self.__parse_session_dir(ctrl, port_index_to_id):
+                                    session['subsys_id'] = subsys_id
+                                    sessions.append(session)
+        else:
+            if not self.middleware.call_sync('nvmet.spdk.nvmf_ready'):
+                return sessions
+            client = make_client()
+            choices = {}
+            port_to_portid = {}
+            for port in ports:
+                addr = port['addr_traddr']
+                trtype = port['addr_trtype']
+                addrs = [addr]
+                if ha:
+                    try:
+                        mychoices = choices[trtype]
+                    except KeyError:
+                        mychoices = self.middleware.call_sync('nvmet.port.transport_address_choices', trtype, True)
+                        mychoices[trtype] = mychoices
+                    if pair := mychoices.get(addr, '').split('/'):
+                        addrs.extend(pair)
+
+                for addr in addrs:
+                    port_to_portid[f"{trtype}:{addr}:{port['addr_trsvcid']}"] = port['id']
+            for subsys in subsystems:
+                if subsys_id is not None and subsys_id != subsys['id']:
+                    continue
+                for entry in nvmf_subsystem_get_qpairs(client, subsys['subnqn']):
+                    laddr = entry['listen_address']
+                    key = f"{laddr['trtype']}:{laddr['traddr']}:{laddr['trsvcid']}"
+                    if port_id := port_to_portid.get(key):
+                        session = {
+                            'host_traddr': entry.get('peer_address', {}).get('traddr'),
+                            'hostnqn': entry['hostnqn'],
+                            'subsys_id': subsys['id'],
+                            'port_id': port_id,
+                            'ctrl': entry['cntlid']
+                        }
+                        # Do we really care that we might have multiple duplicate connections
+                        # (only visible delta being a different qid and peer_address.trsvcid)
+                        # If so, replace this with a simple append.
+                        if session not in sessions:
+                            sessions.append(session)
 
         return sessions
 
