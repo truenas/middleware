@@ -263,6 +263,69 @@ class NvmetPortConfig(NvmetConfig):
         self.delete_from_nqn(client, live_item['address'], NVMET_DISCOVERY_NQN, render_ctx)
 
 
+class NvmetPortAnaReferralConfig(NvmetConfig):
+    """
+    Referrals are substantially different in SPDK than in the kernel
+    implementation.  They are global rather than attached to a
+    particular port.
+
+    Therefore we will just add referrals for each ANA port to its peer.
+    """
+    query = 'nvmet.port.query'
+
+    def config_dict(self, render_ctx):
+        config = {}
+        # If not HA then no peer referrals
+        if render_ctx['failover.node'] not in ('A', 'B'):
+            return config
+
+        # If ANA is enabled on a port then we want to add a referral to
+        # the peer port on the other node.
+        ana_port_ids = render_ctx['nvmet.port.usage']['ana_port_ids']
+        for entry in render_ctx[self.query]:
+            port_id = entry['id']
+            if port_id in ana_port_ids:
+                peer_addr = None
+                prefix = entry['addr_trtype'].lower()
+                choices = render_ctx[f'{prefix}.nvmet.port.transport_address_choices']
+                try:
+                    pair = choices[entry['addr_traddr']].split('/')
+                except KeyError:
+                    continue
+                match render_ctx['failover.node']:
+                    case 'A':
+                        peer_addr = pair[1]
+                    case 'B':
+                        peer_addr = pair[0]
+                if peer_addr:
+                    # Make the entry a valid listen address to simplify implementation of add()
+                    config[f"{entry['addr_trtype']}:{peer_addr}:{entry['addr_trsvcid']}"] = {
+                        'trtype': entry['addr_trtype'],
+                        'adrfam': PORT_ADDR_FAMILY.by_api(entry['addr_adrfam']).spdk,
+                        'traddr': peer_addr,
+                        'trsvcid': str(entry['addr_trsvcid']),
+                    }
+        return config
+
+    def add(self, client, config_item, render_ctx):
+        rpc.nvmf.nvmf_discovery_add_referral(client, **config_item)
+
+    def update(self, client, config_item, live_item, render_ctx):
+        # Update is a no-op because all the relevant data is in the key
+        pass
+
+    def delete(self, client, live_item, render_ctx):
+        rpc.nvmf.nvmf_discovery_remove_referral(client, **live_item)
+        pass
+
+    def get_live(self, client, render_ctx):
+        result = {}
+        for entry in rpc.nvmf.nvmf_discovery_get_referrals(client):
+            laddr = entry['address']
+            result[f"{laddr['trtype']}:{laddr['traddr']}:{laddr['trsvcid']}"] = laddr
+        return result
+
+
 class NvmetPortSubsysConfig(NvmetPortConfig):
     query = 'nvmet.port_subsys.query'
 
@@ -620,7 +683,7 @@ def write_config(config):
         NvmetKeyringDhchapKeyConfig().render(client, config),
         NvmetKeyringDhchapCtrlKeyConfig().render(client, config),
         NvmetPortConfig().render(client, config),
-        # NvmetPortAnaReferralConfig().render(config),
+        NvmetPortAnaReferralConfig().render(client, config),
         NvmetHostSubsysConfig().render(client, config),
         NvmetPortSubsysConfig().render(client, config),
         NvmetAnaStateConfig().render(client, config),
