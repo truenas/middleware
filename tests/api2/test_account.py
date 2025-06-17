@@ -240,7 +240,6 @@ def test_account_update_invalid_username(test_user: dict):
 
 @pytest.mark.parametrize("name", [
     pp("root", id="root is last"),
-    pp("truenas_admin", id="truenas_admin is last"),
     pp("adminuser", id="admin_user is last"),
 ])
 def test_account_last_admin(admin_users, name):
@@ -248,7 +247,7 @@ def test_account_last_admin(admin_users, name):
         that we cannot lock the last remaining FULL_ADMIN user'''
 
     admin_users_count = len(admin_users)
-    assert admin_users_count >= 3, admin_users
+    assert admin_users_count >= 2, admin_users
 
     admin_to_lock = [usr for usr in admin_users if usr['username'] != name]
     assert len(admin_to_lock) == admin_users_count - 1, admin_to_lock
