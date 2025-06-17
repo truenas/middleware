@@ -15,6 +15,11 @@ import sys
 import secrets
 import string
 
+# MCG - test NFS
+MCG_test_suite = [
+    'api2/test_account.py',
+]
+
 TEST_DIR_TO_RESULT = {
     'api2': 'results/api_v2_tests_result.xml',
     'directory_services': 'results/directoryservices_tests_result.xml',
@@ -333,6 +338,13 @@ def parse_test_name_prefix_dir(test_name):
         return f"{test_dir}/{name}"
 
 
+tests = ['api2/test_001_ssh.py',
+         'api2/test_002_system_license.py',
+         'api2/test_003_network_global.py',
+         'api2/test_005_interface.py',
+         'api2/test_006_pool_and_sysds.py',
+         'api2/test_007_early_settings.py']
+tests += MCG_test_suite
 if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
 else:
