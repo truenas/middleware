@@ -837,6 +837,21 @@ class UserService(CRUDService):
         else:
             group_ids.extend(user['groups'])
 
+        # NAS-136301: prevent locking all admin accounts
+        if data.get('locked') is True:
+            number_admin_remaining = self.middleware.call_sync(
+                'user.query', [
+                    ['roles', 'rin', 'FULL_ADMIN'],
+                    ['local', '=', True],
+                    ['locked', '=', False],
+                    ['id', '!=', user['id']]
+                ],
+                {'count': True}
+            )
+            if 0 >= number_admin_remaining:
+                verrors.add('user_update.locked',
+                            'After locking this user no local users will have FULL_ADMIN role')
+
         self.middleware.call_sync('user.common_validation', verrors, data, 'user_update', group_ids, user)
 
         try:
