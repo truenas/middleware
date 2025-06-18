@@ -2,11 +2,10 @@ import os
 from typing import Annotated, Literal
 
 from pydantic import (
-    AfterValidator, AnyUrl, ConfigDict, DirectoryPath, FilePath,
-    IPvAnyAddress as PydanticIPvAnyAddress, PlainSerializer,
+    AfterValidator, AnyUrl, ConfigDict, DirectoryPath, FilePath, PlainSerializer,
 )
 
-from middlewared.api.base import BaseModel as PydanticBaseModel
+from middlewared.api.base import BaseModel as PydanticBaseModel, IPvAnyAddress  # noqa: F401
 
 
 class BaseModel(PydanticBaseModel):
@@ -37,10 +36,6 @@ AbsolutePath = Annotated[
 HostPath = Annotated[
     Literal[''] | FilePath | DirectoryPath,
     PlainSerializer(lambda x: str(x), return_type=str)
-]
-IPvAnyAddress = Annotated[
-    Literal[''] | PydanticIPvAnyAddress,
-    PlainSerializer(lambda x: str(x), return_type=str),
 ]
 URI = Annotated[
     Literal[''] | AnyUrl,
