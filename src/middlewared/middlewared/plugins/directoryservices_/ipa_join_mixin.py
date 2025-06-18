@@ -10,6 +10,7 @@ from middlewared.utils.directoryservices import (
     ipa, ipa_constants
 )
 from middlewared.utils.directoryservices.common import ds_config_to_fqdn
+from middlewared.utils.netbios import validate_netbios_name, NETBIOSNAME_MAX_LEN
 from middlewared.utils.directoryservices.constants import DSCredType, DSType, DEF_SVC_OPTS
 from middlewared.utils.directoryservices.ipactl_constants import (
     ExitCode,
