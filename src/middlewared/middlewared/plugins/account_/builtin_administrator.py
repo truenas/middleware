@@ -9,19 +9,23 @@ class GroupService(Service):
     @api_method(GroupHasPasswordEnabledUserArgs, GroupHasPasswordEnabledUserResult, roles=['ACCOUNT_READ'])
     async def has_password_enabled_user(self, gids, exclude_user_ids):
         """
-        Checks whether at least one local user with a password is a member of any of the `group_ids`.
+        Checks if at least one local user with a password is a member of any of the given groups.
         """
         return len(await self.get_password_enabled_users(gids, exclude_user_ids)) > 0
 
     @private
     async def get_password_enabled_users(self, gids, exclude_user_ids, groups=None):
+        """
+        :param groups: List of group entries to check.
+        """
         if groups is None:
-            groups = await self.middleware.call("group.query")
+            groups = await self.middleware.call("group.query", [["gid", "in", gids]])
+        else:
+            groups = filter_list(groups, [["gid", "in", gids]])
 
         result = []
         result_user_ids = set()
 
-        groups = filter_list(groups, [["gid", "in", gids]])
         for membership in await self.middleware.call(
             "datastore.query",
             "account.bsdgroupmembership",

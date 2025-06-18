@@ -130,7 +130,9 @@ class GroupGetGroupObjResult(BaseModel):
 
 class GroupHasPasswordEnabledUserArgs(BaseModel):
     gids: list[int]
+    """IDs of groups to check."""
     exclude_user_ids: list[int] = []
+    """IDs of users to exclude from the check."""
 
 
 class GroupHasPasswordEnabledUserResult(BaseModel):
