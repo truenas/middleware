@@ -3331,3 +3331,195 @@ def test_construct_schema_with_all_field_types():
     assert 'bind_ip' in error_str  # Invalid IP
     assert 'api_endpoint' in error_str  # Invalid URI
     assert 'config_file' in error_str  # Not absolute path
+
+
+# Type coercion tests - documenting behavior with strict=False
+def test_boolean_type_coercion():
+    """Test that boolean fields coerce string values due to strict=False in BaseModel.
+
+    This is intentional behavior for backward compatibility. The BaseModel in
+    pydantic_utils.py has strict=False which enables automatic type coercion.
+    """
+    schema = [
+        {'variable': 'enabled', 'schema': {'type': 'boolean', 'required': True}},
+        {'variable': 'public', 'schema': {'type': 'boolean', 'default': False}}
+    ]
+
+    model = generate_pydantic_model(schema, 'TestBoolCoercion', NOT_PROVIDED)
+
+    # Test various string values that get coerced to boolean
+    test_cases = [
+        # String value -> Expected boolean
+        ('true', True),
+        ('True', True),
+        ('TRUE', True),
+        ('false', False),
+        ('False', False),
+        ('FALSE', False),
+        ('1', True),
+        ('0', False),
+        ('yes', True),
+        ('no', False),
+        ('on', True),
+        ('off', False),
+    ]
+
+    for string_val, expected_bool in test_cases:
+        m = model(enabled=string_val)
+        assert m.enabled is expected_bool
+        assert isinstance(m.enabled, bool)
+
+    # Test that actual booleans still work
+    m1 = model(enabled=True)
+    assert m1.enabled is True
+
+    m2 = model(enabled=False)
+    assert m2.enabled is False
+
+
+def test_int_type_coercion():
+    """Test that integer fields coerce string values due to strict=False in BaseModel.
+
+    This is intentional behavior for backward compatibility.
+    """
+    schema = [
+        {'variable': 'port', 'schema': {'type': 'int', 'required': True, 'min': 1, 'max': 65535}},
+        {'variable': 'count', 'schema': {'type': 'int', 'default': 10}}
+    ]
+
+    model = generate_pydantic_model(schema, 'TestIntCoercion', NOT_PROVIDED)
+
+    # Test string numbers get coerced to integers
+    m1 = model(port='8080')
+    assert m1.port == 8080
+    assert isinstance(m1.port, int)
+
+    m2 = model(port='443', count='25')
+    assert m2.port == 443
+    assert m2.count == 25
+    assert isinstance(m2.count, int)
+
+    # Test that actual integers still work
+    m3 = model(port=3000)
+    assert m3.port == 3000
+
+    # Test that invalid strings fail validation
+    with pytest.raises(ValidationError) as exc_info:
+        model(port='not_a_number')
+    assert 'port' in str(exc_info.value)
+
+    # Test that out of range values fail even when coerced
+    with pytest.raises(ValidationError) as exc_info:
+        model(port='70000')  # Exceeds max
+    assert 'port' in str(exc_info.value)
+
+
+def test_type_coercion_through_construct_schema():
+    """Test type coercion through the full construct_schema flow.
+
+    This tests the real-world photoprism example where boolean string values
+    are passed and should be coerced due to strict=False.
+    """
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'photoprism',
+                    'label': '',
+                    'group': 'Photoprism Configuration',
+                    'schema': {
+                        'type': 'dict',
+                        'attrs': [
+                            {
+                                'variable': 'site_url',
+                                'label': 'Site URL',
+                                'description': 'The URL for the Photoprism site',
+                                'schema': {
+                                    'type': 'uri'
+                                }
+                            },
+                            {
+                                'variable': 'public',
+                                'label': 'Public',
+                                'description': 'Enable public access to Photoprism',
+                                'schema': {
+                                    'type': 'boolean',
+                                    'default': False
+                                }
+                            },
+                            {
+                                'variable': 'port',
+                                'label': 'Port',
+                                'schema': {
+                                    'type': 'int',
+                                    'default': 2342
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test with string values that should be coerced
+    values = {
+        'photoprism': {
+            'public': 'false',  # String instead of boolean
+            'site_url': '',
+            'port': '8080'  # String instead of int
+        }
+    }
+
+    result = construct_schema(item_version_details, values, False)
+
+    # Should not have validation errors due to type coercion
+    assert len(result['verrors'].errors) == 0
+
+    # Values should be coerced to correct types
+    photoprism = result['new_values']['photoprism']
+    assert photoprism['public'] is False  # String 'false' -> boolean False
+    assert isinstance(photoprism['public'], bool)
+    assert photoprism['port'] == 8080  # String '8080' -> int 8080
+    assert isinstance(photoprism['port'], int)
+    assert photoprism['site_url'] == ''
+
+    # Test with other boolean string values
+    values2 = {
+        'photoprism': {
+            'public': 'true',  # Different string value
+            'site_url': 'https://photoprism.example.com',
+            'port': 2342  # Use actual int this time
+        }
+    }
+
+    result2 = construct_schema(item_version_details, values2, False)
+    assert len(result2['verrors'].errors) == 0
+
+    photoprism2 = result2['new_values']['photoprism']
+    assert photoprism2['public'] is True  # String 'true' -> boolean True
+    assert photoprism2['site_url'] == 'https://photoprism.example.com/'  # URL normalized
+    assert photoprism2['port'] == 2342
+
+
+def test_string_type_no_int_coercion():
+    """Test that string fields do NOT coerce integers to strings.
+
+    While strict=False allows some type coercion, not all types are coerced.
+    Integer to string coercion is not automatic.
+    """
+    schema = [
+        {'variable': 'name', 'schema': {'type': 'string', 'required': True}}
+    ]
+
+    model = generate_pydantic_model(schema, 'TestStringNoCoercion', NOT_PROVIDED)
+
+    # String values work fine
+    m1 = model(name='test')
+    assert m1.name == 'test'
+
+    # But integers are NOT automatically coerced to strings
+    with pytest.raises(ValidationError) as exc_info:
+        model(name=12345)
+    assert 'name' in str(exc_info.value)
+    assert 'string' in str(exc_info.value).lower()
