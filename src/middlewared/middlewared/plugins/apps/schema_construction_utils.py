@@ -104,9 +104,6 @@ def generate_pydantic_model(
         if rebuild:
             model = create_model(model_name, __base__=BaseModel, **fields)
 
-    # Store the original schema for validation purposes
-    setattr(model, '__schema_attrs__', dict_attrs)
-
     return model
 
 
