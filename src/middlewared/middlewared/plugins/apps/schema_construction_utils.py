@@ -104,10 +104,6 @@ def generate_pydantic_model(
         if rebuild:
             model = create_model(model_name, __base__=BaseModel, **fields)
 
-    # Store nested models and schema info as class attributes for reference
-    for nested_name, nested_model in nested_models.items():
-        setattr(model, f'__{nested_name}_model', nested_model)
-
     # Store the original schema for validation purposes
     setattr(model, '__schema_attrs__', dict_attrs)
 
