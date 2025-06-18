@@ -434,10 +434,10 @@ def test_field_with_ref_metadata():
     m = model(cert_id=123)
     assert m.cert_id == 123
 
-    # Check metadata is preserved (accessing through model_fields)
+    # $ref metadata is no longer stored in pydantic model after commit 78cf7c7799
+    # The field should still work correctly, just without the metadata
     field_info = model.model_fields['cert_id']
-    # The $ref should be in metadata
-    assert field_info.metadata == [['certificate.query']]
+    assert field_info is not None
 
 
 # Empty collections tests
@@ -1882,12 +1882,13 @@ def test_field_with_dollar_ref():
     m3 = model(certificate_id=123)
     assert m3.certificate_id == 123
 
-    # Verify refs are preserved in metadata
+    # $ref metadata is no longer stored in pydantic model after commit 78cf7c7799
+    # Fields should still work correctly, just without the metadata
     tz_field = model.model_fields['timezone']
-    assert tz_field.metadata == [['definitions/timezone']]
+    assert tz_field is not None
 
     cert_field = model.model_fields['certificate_id']
-    assert cert_field.metadata == [['definitions/certificate']]
+    assert cert_field is not None
 
 
 def test_string_field_with_valid_chars():
@@ -2936,3 +2937,397 @@ def test_construct_schema_required_fields_with_non_required_containers():
     assert len(result3['verrors'].errors) == 0
     assert result3['new_values']['optional_config']['mandatory_field'] == 'value'
     assert 'optional_field' not in result3['new_values']['optional_config']
+
+
+# Tests for all field types through construct_schema
+def test_construct_schema_with_ipaddr():
+    """Test IP address field validation and serialization through construct_schema"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'server_ip',
+                    'schema': {
+                        'type': 'ipaddr',
+                        'required': True
+                    }
+                },
+                {
+                    'variable': 'optional_ip',
+                    'schema': {
+                        'type': 'ipaddr',
+                        'required': False
+                    }
+                },
+                {
+                    'variable': 'nullable_ip',
+                    'schema': {
+                        'type': 'ipaddr',
+                        'null': True,
+                        'required': False
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test valid IPv4
+    result = construct_schema(item_version_details, {'server_ip': '192.168.1.1'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['server_ip'] == '192.168.1.1'  # Should be serialized as string
+
+    # Test valid IPv6
+    result = construct_schema(item_version_details, {'server_ip': '2001:db8::1'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['server_ip'] == '2001:db8::1'
+
+    # Test localhost
+    result = construct_schema(item_version_details, {'server_ip': '::1'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['server_ip'] == '::1'
+
+    # Test invalid IP
+    result = construct_schema(item_version_details, {'server_ip': 'not.an.ip'}, False)
+    assert len(result['verrors'].errors) > 0
+    assert 'server_ip' in str(result['verrors'].errors)
+
+    # Test empty string (special case for IPvAnyAddress)
+    result = construct_schema(item_version_details, {'server_ip': ''}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['server_ip'] == ''
+
+    # Test nullable IP with null
+    result = construct_schema(item_version_details, {'server_ip': '10.0.0.1', 'nullable_ip': None}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['nullable_ip'] is None
+
+    # Test optional field not provided
+    result = construct_schema(item_version_details, {'server_ip': '10.0.0.1'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert 'optional_ip' not in result['new_values']
+
+
+def test_construct_schema_with_uri():
+    """Test URI field validation and serialization through construct_schema"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'webhook_url',
+                    'schema': {
+                        'type': 'uri',
+                        'required': True
+                    }
+                },
+                {
+                    'variable': 'backup_url',
+                    'schema': {
+                        'type': 'uri',
+                        'null': True,
+                        'required': False
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test valid HTTPS URL
+    result = construct_schema(item_version_details, {'webhook_url': 'https://example.com'}, False)
+    assert len(result['verrors'].errors) == 0
+    # Pydantic normalizes URLs by adding trailing slash
+    assert result['new_values']['webhook_url'] == 'https://example.com/'
+
+    # Test URL with path
+    result = construct_schema(item_version_details, {'webhook_url': 'https://api.example.com/webhook'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['webhook_url'] == 'https://api.example.com/webhook'
+
+    # Test FTP URL
+    result = construct_schema(item_version_details, {'webhook_url': 'ftp://files.example.com/data'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['webhook_url'] == 'ftp://files.example.com/data'
+
+    # Test invalid URI
+    result = construct_schema(item_version_details, {'webhook_url': 'not a url'}, False)
+    assert len(result['verrors'].errors) > 0
+    assert 'webhook_url' in str(result['verrors'].errors)
+
+    # Test empty string (special case for URI)
+    result = construct_schema(item_version_details, {'webhook_url': ''}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['webhook_url'] == ''
+
+    # Test nullable URI with null
+    result = construct_schema(item_version_details, {'webhook_url': 'https://example.com', 'backup_url': None}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['backup_url'] is None
+
+
+def test_construct_schema_with_hostpath():
+    """Test hostpath field validation and serialization through construct_schema"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'data_dir',
+                    'schema': {
+                        'type': 'hostpath',
+                        'required': True
+                    }
+                },
+                {
+                    'variable': 'optional_path',
+                    'schema': {
+                        'type': 'hostpath',
+                        'required': False
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test valid path that exists
+    result = construct_schema(item_version_details, {'data_dir': '/tmp'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['data_dir'] == '/tmp'
+
+    # Test empty string (special case for HostPath)
+    result = construct_schema(item_version_details, {'data_dir': ''}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['data_dir'] == ''
+
+    # Test non-existent path (should fail)
+    result = construct_schema(item_version_details, {'data_dir': '/path/that/does/not/exist'}, False)
+    assert len(result['verrors'].errors) > 0
+    assert 'data_dir' in str(result['verrors'].errors)
+
+    # Test optional field not provided
+    result = construct_schema(item_version_details, {'data_dir': '/tmp'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert 'optional_path' not in result['new_values']
+
+
+def test_construct_schema_with_path():
+    """Test absolute path field validation through construct_schema"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'config_path',
+                    'schema': {
+                        'type': 'path',
+                        'required': True
+                    }
+                },
+                {
+                    'variable': 'log_path',
+                    'schema': {
+                        'type': 'path',
+                        'null': True,
+                        'required': False
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test valid absolute path
+    result = construct_schema(item_version_details, {'config_path': '/etc/app/config.yaml'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['config_path'] == '/etc/app/config.yaml'
+
+    # Test path normalization (trailing slash removal)
+    result = construct_schema(item_version_details, {'config_path': '/var/log/app/'}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['config_path'] == '/var/log/app'
+
+    # Test relative path (should fail)
+    result = construct_schema(item_version_details, {'config_path': 'relative/path'}, False)
+    assert len(result['verrors'].errors) > 0
+    assert 'config_path' in str(result['verrors'].errors)
+
+    # Test empty string (special case for AbsolutePath)
+    result = construct_schema(item_version_details, {'config_path': ''}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['config_path'] == ''
+
+    # Test nullable path with null
+    result = construct_schema(item_version_details, {'config_path': '/etc/config', 'log_path': None}, False)
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['log_path'] is None
+
+
+def test_construct_schema_with_all_field_types():
+    """Test all field types together through construct_schema"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'app_config',
+                    'schema': {
+                        'type': 'dict',
+                        'attrs': [
+                            {
+                                'variable': 'name',
+                                'schema': {
+                                    'type': 'string',
+                                    'required': True,
+                                    'min_length': 3,
+                                    'max_length': 50
+                                }
+                            },
+                            {
+                                'variable': 'description',
+                                'schema': {
+                                    'type': 'text',  # LongString
+                                    'required': False
+                                }
+                            },
+                            {
+                                'variable': 'port',
+                                'schema': {
+                                    'type': 'int',
+                                    'required': True,
+                                    'min': 1,
+                                    'max': 65535
+                                }
+                            },
+                            {
+                                'variable': 'enabled',
+                                'schema': {
+                                    'type': 'boolean',
+                                    'default': True
+                                }
+                            },
+                            {
+                                'variable': 'bind_ip',
+                                'schema': {
+                                    'type': 'ipaddr',
+                                    'default': '0.0.0.0'
+                                }
+                            },
+                            {
+                                'variable': 'api_endpoint',
+                                'schema': {
+                                    'type': 'uri',
+                                    'required': False
+                                }
+                            },
+                            {
+                                'variable': 'data_path',
+                                'schema': {
+                                    'type': 'hostpath',
+                                    'required': False
+                                }
+                            },
+                            {
+                                'variable': 'config_file',
+                                'schema': {
+                                    'type': 'path',
+                                    'required': False
+                                }
+                            },
+                            {
+                                'variable': 'tags',
+                                'schema': {
+                                    'type': 'list',
+                                    'items': [
+                                        {
+                                            'variable': 'tag',
+                                            'schema': {
+                                                'type': 'string'
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                'variable': 'environment',
+                                'schema': {
+                                    'type': 'dict',
+                                    'attrs': []  # Generic dict
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test with all fields
+    test_data = {
+        'app_config': {
+            'name': 'MyApp',
+            'description': 'A very long description ' * 100,  # Long text
+            'port': 8080,
+            'enabled': False,
+            'bind_ip': '127.0.0.1',
+            'api_endpoint': 'https://api.example.com/v1',
+            'data_path': '/tmp',
+            'config_file': '/etc/myapp/config.yaml',
+            'tags': ['production', 'v2'],
+            'environment': {'DEBUG': 'false', 'LOG_LEVEL': 'info'}
+        }
+    }
+
+    result = construct_schema(item_version_details, test_data, False)
+    assert len(result['verrors'].errors) == 0
+
+    # Verify all values are properly serialized
+    config = result['new_values']['app_config']
+    assert config['name'] == 'MyApp'
+    assert 'description' in config  # LongString is present
+    assert config['port'] == 8080
+    assert config['enabled'] is False
+    assert config['bind_ip'] == '127.0.0.1'  # IP serialized as string
+    assert config['api_endpoint'] == 'https://api.example.com/v1'  # URI serialized as string
+    assert config['data_path'] == '/tmp'  # HostPath serialized as string
+    assert config['config_file'] == '/etc/myapp/config.yaml'
+    assert config['tags'] == ['production', 'v2']
+    assert config['environment'] == {'DEBUG': 'false', 'LOG_LEVEL': 'info'}
+
+    # Test with minimal required fields only
+    minimal_data = {
+        'app_config': {
+            'name': 'MinApp',
+            'port': 80
+        }
+    }
+
+    result = construct_schema(item_version_details, minimal_data, False)
+    assert len(result['verrors'].errors) == 0
+
+    config = result['new_values']['app_config']
+    assert config['name'] == 'MinApp'
+    assert config['port'] == 80
+    # Default values are not returned when using exclude_unset=True
+    assert 'enabled' not in config
+    assert 'bind_ip' not in config
+    # Optional fields should not be present
+    assert 'description' not in config
+    assert 'api_endpoint' not in config
+    assert 'data_path' not in config
+    assert 'config_file' not in config
+    assert 'tags' not in config  # Non-required list
+    assert 'environment' not in config  # Non-required dict
+
+    # Test validation errors
+    invalid_data = {
+        'app_config': {
+            'name': 'AB',  # Too short
+            'port': 70000,  # Out of range
+            'bind_ip': 'not an ip',
+            'api_endpoint': 'not a url',
+            'config_file': 'relative/path'
+        }
+    }
+
+    result = construct_schema(item_version_details, invalid_data, False)
+    assert len(result['verrors'].errors) > 0
+    error_str = str(result['verrors'].errors)
+    assert 'name' in error_str  # Min length violation
+    assert 'port' in error_str  # Max value violation
+    assert 'bind_ip' in error_str  # Invalid IP
+    assert 'api_endpoint' in error_str  # Invalid URI
+    assert 'config_file' in error_str  # Not absolute path
