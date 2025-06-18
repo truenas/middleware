@@ -209,7 +209,7 @@ class SystemService(Service):
     @private
     def license_string(self):
         with contextlib.suppress(Exception):
-            with open(LICENSE_FILE) as f:
+            with open(LICENSE_FILE, 'r') as f:
                 return f.read().strip('\n')
 
     @api_method(

@@ -90,6 +90,9 @@ class TrueNASConnectService(Service):
         # Add license information if valid license exists
         license_info = await self.middleware.call('system.license')
         if license_info is not None and not license_info.get('expired', True):
-            query_params['license'] = license_info
+            if license := await self.middleware.call('system.license_string'):
+                # We should have license string available, just having another sanity
+                # conditional here to ensure we do not end up with None
+                query_params['license'] = license
 
         return f'{get_registration_uri(config)}?{urlencode(query_params)}'
