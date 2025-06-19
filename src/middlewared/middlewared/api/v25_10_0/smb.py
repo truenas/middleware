@@ -242,7 +242,7 @@ class SmbAuditConfig(BaseModel):
 
 
 class DefaultOpt(BaseModel):
-    """ These configuration options apply to shares with the DEFAULT_SHARE purpose. """
+    """ These configuration options apply to shares with the `DEFAULT_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.DEFAULT_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: bool = False
     """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
@@ -254,7 +254,7 @@ class DefaultOpt(BaseModel):
 
 
 class LegacyOpt(BaseModel):
-    """ These configuration options apply to shares with the LEGACY_SHARE purpose. """
+    """ These configuration options apply to shares with the `LEGACY_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.LEGACY_SHARE] = Field(exclude=True, repr=False)
     recyclebin: bool = False
     """ If set, deleted files are moved to per-user subdirectories in the `.recycle` directory. The
@@ -346,7 +346,7 @@ class LegacyOpt(BaseModel):
 
 
 class TimeMachineOpt(BaseModel):
-    """ These configuration options apply to shares with the TIMEMACHINE_SHARE purpose. """
+    """ These configuration options apply to shares with the `TIMEMACHINE_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.TIMEMACHINE_SHARE] = Field(exclude=True, repr=False)
     timemachine_quota: int = 0
     """ If set, it defines the maximum size of a single time machine sparsebundle volume by limiting the
@@ -376,7 +376,7 @@ class TimeMachineOpt(BaseModel):
 
 
 class MultiprotocolOpt(BaseModel):
-    """ These configuration options apply to shares with the MULTIPROTOCOL_SHARE purpose. """
+    """ These configuration options apply to shares with the `MULTIPROTOCOL_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.MULTIPROTOCOL_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: bool = False
     """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
@@ -388,7 +388,7 @@ class MultiprotocolOpt(BaseModel):
 
 
 class TimeLockedOpt(BaseModel):
-    """ These configuration options apply to shares with the TIME_LOCKED_SHARE purpose. """
+    """ These configuration options apply to shares with the `TIME_LOCKED_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.TIME_LOCKED_SHARE] = Field(exclude=True, repr=False)
     grace_period: int = Field(default=900)
     """ Time in seconds when write access to the file or directory is allowed. """
@@ -402,7 +402,7 @@ class TimeLockedOpt(BaseModel):
 
 
 class PrivateDatasetOpt(BaseModel):
-    """ These configuration options apply to shares with the PRIVATE_DATASETS_SHARE purpose. """
+    """ These configuration options apply to shares with the `PRIVATE_DATASETS_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.PRIVATE_DATASETS_SHARE] = Field(exclude=True, repr=False)
     dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
     """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema,
@@ -423,7 +423,7 @@ class PrivateDatasetOpt(BaseModel):
 
 
 class ExternalOpt(BaseModel):
-    """ These configuration options apply to shares with the EXTERNAL_SHARE purpose. """
+    """ These configuration options apply to shares with the `EXTERNAL_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.EXTERNAL_SHARE] = Field(exclude=True, repr=False)
     remote_path: list[NonEmptyString] = Field(examples=[
         ['192.168.0.200\\SHARE'],
@@ -471,28 +471,28 @@ class SmbShareEntry(BaseModel):
     available through options. The DEFAULT_SHARE setting is best for most applications, and should be used, unless
     there is a specific reason to change it.
 
-    DEFAULT_SHARE: Set the SMB share for best compatibility with common SMB clients.
+    `DEFAULT_SHARE`: Set the SMB share for best compatibility with common SMB clients.
 
-    LEGACY_SHARE: Set the SMB share for compatibility with older TrueNAS versions. Automated backend migrations
+    `LEGACY_SHARE`: Set the SMB share for compatibility with older TrueNAS versions. Automated backend migrations
     use this to help the administrator move to better-supported share settings. It should not be used for new SMB
     shares.
 
-    TIMEMACHINE_SHARE: The SMB share is presented to MacOS clients as a time machine target. NOTE: `aapl_extensions`
+    `TIMEMACHINE_SHARE`: The SMB share is presented to MacOS clients as a time machine target. NOTE: `aapl_extensions`
     must be set in the global `smb.config`.
 
-    MULTIPROTOCOL_SHARE: The SMB share is configured for multi-protocol access. Set this if the `path` is shared
+    `MULTIPROTOCOL_SHARE`: The SMB share is configured for multi-protocol access. Set this if the `path` is shared
     through NFS, FTP, or used by containers or apps. NOTE: This setting can reduce SMB share performance because it
     turns off some SMB features for safer interoperability with external processes.
 
-    TIME_LOCKED_SHARE: The SMB share makes files read-only through the SMB protocol after the set grace_period ends.
+    `TIME_LOCKED_SHARE`: The SMB share makes files read-only through the SMB protocol after the set grace_period ends.
     WARNING: This setting does not work if the `path` is accessed locally or if another SMB share without the
-    TIME_LOCKED_SHARE purpose uses the same path. WARNING: This setting might not meet regulatory requirements for
+    `TIME_LOCKED_SHARE` purpose uses the same path. WARNING: This setting might not meet regulatory requirements for
     write-once storage.
 
-    PRIVATE_DATASETS_SHARE: The server uses the specified `dataset_naming_schema` in `options` to make a new ZFS
+    `PRIVATE_DATASETS_SHARE`: The server uses the specified `dataset_naming_schema` in `options` to make a new ZFS
     dataset when the client connects. The server uses this dataset as the share path during the SMB session.
 
-    EXTERNAL_SHARE: The SMB share is a DFS proxy to a share hosted on an external SMB server.
+    `EXTERNAL_SHARE`: The SMB share is a DFS proxy to a share hosted on an external SMB server.
     """
     name: SmbShareName = Field(examples=['SHARE', 'Macrodata_refinement'])
     """ SMB share name. SMB share names are case-insensitive and must be unique, and are subject
