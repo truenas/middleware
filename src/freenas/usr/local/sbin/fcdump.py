@@ -1281,8 +1281,16 @@ def render_fc_stats_text(fc_stats: Dict[str, Dict[str, Any]]) -> str:
     output_lines = []
 
     for host_name, host_data in fc_stats.items():
-        output_lines.append(f"\nStatistics for {host_name}")
-        output_lines.append("=" * (len(host_name) + 15))
+        # Create prominent header with visual separation
+        header_text = f"FIBRE CHANNEL STATISTICS - {host_name.upper()}"
+        separator_line = "=" * len(header_text)
+
+        output_lines.append("")
+        output_lines.append("")
+        output_lines.append(separator_line)
+        output_lines.append(header_text)
+        output_lines.append(separator_line)
+        output_lines.append("")
 
         if not host_data["success"]:
             output_lines.append(f"ERROR: {host_data['error']}")
