@@ -13,7 +13,7 @@ VEEAM_BLOCKSIZE = 131072
 def check_veeam_alert(expected):
     alert = None
     for a in call('alert.list'):
-        if a['source'] == 'SMBVeeamFastClone':
+        if a['klass'] == 'SMBVeeamFastClone':
             alert = a
             break
 
@@ -63,10 +63,8 @@ def test_veeam_alert():
         }):
             call('pool.dataset.update', ds, {'recordsize': '1M'})
             call('etc.generate', 'smb')
-            sleep(1)
             check_veeam_alert(True)
 
             call('pool.dataset.update', ds, {'recordsize': '128K'})
             call('etc.generate', 'smb')
-            sleep(1)
             check_veeam_alert(False)
