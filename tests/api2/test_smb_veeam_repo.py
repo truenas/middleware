@@ -1,6 +1,5 @@
 import os
 import pytest
-from time import sleep
 
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
