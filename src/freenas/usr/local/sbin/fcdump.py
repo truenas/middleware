@@ -790,17 +790,6 @@ def print_text_output(text: str) -> None:
     print(text)
 
 
-# Deprecated global JSON functions - will be removed
-def add_to_json_data(section: str, title: str, data: Dict[str, Any]) -> None:
-    """Deprecated - use render functions instead."""
-    pass
-
-
-def print_json_output() -> None:
-    """Deprecated - use render functions instead."""
-    pass
-
-
 def decode_sfp_field(value: int,
                      decode_table: Dict[int, str]) -> Dict[str, Any]:
     """
