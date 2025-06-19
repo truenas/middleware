@@ -1150,6 +1150,11 @@ class SharingSMBService(SharingService):
                 )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+                if not await self.middleware.call('system.is_enterprise'):
+                    verrors.add(
+                        f'{schema_name}.{share_field.PURPOSE}',
+                        'Veeam repository shares require a TrueNAS enterprise license.'
+                    )
                 bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH]))['blocksize']
                 if bsize != VEEAM_REPO_BLOCKSIZE:
                     verrors.add(
