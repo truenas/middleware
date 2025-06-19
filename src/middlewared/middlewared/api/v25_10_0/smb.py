@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Literal, Self
+from typing import Annotated, Any, Literal, Self, Union
 from pydantic import AfterValidator, Field, field_validator, IPvAnyInterface, model_validator
 from middlewared.api.base import (
     BaseModel,
@@ -476,8 +476,16 @@ class ExternalOpt(BaseModel):
         return remote_path
 
 
+class VeeamRepositoryOpt(BaseModel):
+    """ These configuration options apply to shares with the `VEEAM_REPOSITORY_SHARE` purpose. """
+    purpose: Literal[SMBSharePurpose.VEEAM_REPOSITORY_SHARE] = Field(exclude=True, repr=False)
+
+
 SmbShareOptions = Annotated[
-    LegacyOpt | DefaultOpt | TimeMachineOpt | MultiprotocolOpt | TimeLockedOpt | PrivateDatasetOpt | ExternalOpt,
+    Union[
+        LegacyOpt, DefaultOpt, TimeMachineOpt, MultiprotocolOpt, TimeLockedOpt, PrivateDatasetOpt, ExternalOpt,
+        VeeamRepositoryOpt,
+    ],
     Field(discriminator='purpose')
 ]
 
@@ -492,7 +500,8 @@ class SmbShareEntry(BaseModel):
         SMBSharePurpose.MULTIPROTOCOL_SHARE,
         SMBSharePurpose.TIME_LOCKED_SHARE,
         SMBSharePurpose.PRIVATE_DATASETS_SHARE,
-        SMBSharePurpose.EXTERNAL_SHARE
+        SMBSharePurpose.EXTERNAL_SHARE,
+        SMBSharePurpose.VEEAM_REPOSITORY_SHARE
     ] = SMBSharePurpose.DEFAULT_SHARE.value
     """ This parameter sets the purpose of the SMB share. It controls how the SMB share behaves and what features are
     available through options. The DEFAULT_SHARE setting is best for most applications, and should be used, unless
@@ -520,6 +529,9 @@ class SmbShareEntry(BaseModel):
     dataset when the client connects. The server uses this dataset as the share path during the SMB session.
 
     `EXTERNAL_SHARE`: The SMB share is a DFS proxy to a share hosted on an external SMB server.
+
+    `VEEAM_REPOSITORY_SHARE`: The SMB share is a repository for Veeam Backup & Replication and supports
+    Fast Clone. NOTE: this feature is available only for TrueNAS Enterprise customers.
     """
     name: SmbShareName = Field(examples=['SHARE', 'Macrodata_refinement'])
     """ SMB share name. SMB share names are case-insensitive and must be unique, and are subject
@@ -674,6 +686,8 @@ class SmbShareCreate(SmbShareEntry):
                 case SMBSharePurpose.EXTERNAL_SHARE:
                     opt_model = ExternalOpt
                     raise ValueError('External shares require explicit options configuration')
+                case SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+                    opt_model = VeeamRepositoryOpt
                 case _:
                     raise ValueError(f'{self.purpose}: unexpected share purpose')
 

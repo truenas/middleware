@@ -31,6 +31,7 @@ from middlewared.plugins.smb_.constants import (
     SMBCmd,
     SMBPath,
 )
+from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.sharesec import remove_share_acl
 from middlewared.plugins.smb_.util_param import (
@@ -129,10 +130,37 @@ class SMBService(ConfigService):
 
         ds_config = self.middleware.call_sync('directoryservices.config')
         smb_config = self.middleware.call_sync('smb.config')
-        smb_shares = self.middleware.call_sync('sharing.smb.query')
+        smb_shares = self.middleware.call_sync('sharing.smb.query', [
+            [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
+        ])
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
         security_config = self.middleware.call_sync('system.security.config')
+        veeam_repo_errors = []
+
+        # admins may change ZFS recordsize from shell, UI, or API. Make sure we generate or clear any alerts.
+        # we already have validation on SMB share create / update to check recordsize.
+        for share in smb_shares:
+            if share[share_field.PURPOSE] != SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+                continue
+
+            try:
+                if os.statvfs(share[share_field.PATH]).f_bsize != VEEAM_REPO_BLOCKSIZE:
+                    veeam_repo_errors.append(share[share_field.NAME])
+            except FileNotFoundError:
+                # possibly dataset not mounted
+                pass
+            except Exception:
+                self.logger.debug('%s: statvfs for SMB share path failed', share[share_field.PATH], exc_info=True)
+                pass
+
+        if veeam_repo_errors:
+            # These don't need to be fatal, but we should raise an alert so that admin can fix the record size
+            self.middleware.call_sync('alert.oneshot_create', 'SMBVeeamFastClone', {
+                'shares': ', '.join(veeam_repo_errors)
+            })
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'SMBVeeamFastClone')
 
         return generate_smb_conf_dict(
             ds_config,
@@ -1124,12 +1152,6 @@ class SharingSMBService(SharingService):
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
-        """
-        Path is a required key in almost all cases. There is a special edge case for LDAP
-        [homes] shares. In this case we allow an empty path. Samba interprets this to mean
-        that the path should be dynamically set to the user's home directory on the LDAP server.
-        Local user auth to SMB shares is prohibited when LDAP is enabled with a samba schema.
-        """
         if await self.query([[share_field.NAME, 'C=', data[share_field.NAME]], ['id', '!=', data.get('id', 0)]]):
             verrors.add(f'{schema_name}.name', 'Share names are case-insensitive and must be unique')
 
@@ -1144,6 +1166,20 @@ class SharingSMBService(SharingService):
                     f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
                     'of SMB share.'
                 )
+
+            if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+                if not await self.middleware.call('system.is_enterprise'):
+                    verrors.add(
+                        f'{schema_name}.{share_field.PURPOSE}',
+                        'Veeam repository shares require a TrueNAS enterprise license.'
+                    )
+                bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH]))['blocksize']
+                if bsize != VEEAM_REPO_BLOCKSIZE:
+                    verrors.add(
+                        f'{schema_name}.{share_field.PATH}',
+                        'The ZFS dataset recordsize property for a dataset used by a Veeam Repository SMB share '
+                        'must be set to 128 KiB.'
+                    )
 
         if data.get(share_field.NAME) is not None:
             await self.validate_share_name(share_field.NAME, schema_name, verrors)
