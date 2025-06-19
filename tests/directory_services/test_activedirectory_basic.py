@@ -122,6 +122,16 @@ def test_enable_leave_activedirectory():
         assert res['ds_groups'][0]['sid'].endswith('512')
         assert res['roles'][0] == 'FULL_ADMIN'
 
+        # A few minor validation checks
+        with pytest.raises(match='NetBIOS name may not be changed'):
+            call('smb.update', {'netbiosname': 'wilbure'})
+
+        with pytest.raises(match='NetBIOS aliases may not be changed'):
+            call('smb.update', {'netbiosalias': ['wilbur']})
+
+        with pytest.raises(match='Workgroup may not be changed'):
+            call('smb.update', {'workgroup': 'wilbur'})
+
     assert check_ad_started() is False
 
     secrets_has_domain = call('directoryservices.secrets.has_domain', short_name)
