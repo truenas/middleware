@@ -482,10 +482,31 @@ class SMBService(ConfigService):
 
         verrors = ValidationErrors()
         ds = await self.middleware.call('directoryservices.config')
-        if ds['enable'] and ds['service_type'] == 'ACTIVEDIRECTORY':
-            await self.middleware.call('activedirectory.netbios_name_check', 'smb_update', old, new)
+        if ds['enable']:
+            if new['netbiosname'].casefold() != old['netbiosname'].casefold():
+                verrors.add(
+                    'smb_update.netbiosname',
+                    f'{old["netbiosname"]} -> {new["netbiosname"]}: '
+                    'NetBIOS name may not be changed while directory service is enabled.'
+                )
+
+            if len(new['netbiosalias']) != len(old['netbiosalias']):
+                verrors.add(
+                    'smb_update.netbiosalias',
+                    f'{old["netbiosalias"]} -> {new["netbiosalias"]}: '
+                    'NetBIOS aliases may not be changed while directory service is enabled.'
+                )
+            else:
+                for idx, nbname in new['netbiosalias']:
+                    if old['netbiosalias'][idx].casefold() != new['netbiosalias'][idx].casefold():
+                        verrors.add(
+                            f'smb_update.netbiosalias.{idx}',
+                            f'{old["netbiosalias"][idx]} -> {new["netbiosalias"][idx]}: '
+                            'NetBIOS aliases may not be changed while directory service is enabled.'
+                        )
+
             if old['workgroup'].casefold() != new['workgroup'].casefold():
-                verrors.add('smb_update.workgroup', 'Workgroup may not be changed while AD is enabled')
+                verrors.add('smb_update.workgroup', 'Workgroup may not be changed while directory service is enabled')
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['smb_options'] != new['smb_options']:
