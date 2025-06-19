@@ -1,5 +1,6 @@
 import os
 import pytest
+from time import sleep
 
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
@@ -62,8 +63,10 @@ def test_veeam_alert():
         }):
             call('pool.dataset.update', ds, {'recordsize': '1M'})
             call('etc.generate', 'smb')
+            sleep(1)
             check_veeam_alert(True)
 
             call('pool.dataset.update', ds, {'recordsize': '128K'})
             call('etc.generate', 'smb')
+            sleep(1)
             check_veeam_alert(False)
