@@ -18,7 +18,7 @@ def check_veeam_alert(expected):
 
     assert bool(alert) is expected, str(alert)
     if expected:
-        assert SHARE_NAME in alert
+        assert SHARE_NAME in alert['formatted']
 
 
 def test_record_size_smb_create_verror():
