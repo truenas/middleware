@@ -1120,13 +1120,10 @@ class SharingSMBService(SharingService):
 
         if data[share_field.OPTS][share_field.AUX]:
             schema = f'{schema_name}.{share_field.OPTS}.{share_field.AUX}'
-            try:
-                await self.validate_aux_params(data[share_field.OPTS][share_field.AUX], schema)
-            except ValidationErrors as errs:
-                verrors.add_child(schema, errs)
+            await self.validate_aux_params(data[share_field.OPTS][share_field.AUX], schema)
 
     @private
-    async def validate(self, data, schema_name, verrors):
+    async def validate(self, data, schema_name, verrors, old=None):
         """
         Path is a required key in almost all cases. There is a special edge case for LDAP
         [homes] shares. In this case we allow an empty path. Samba interprets this to mean
@@ -1188,6 +1185,9 @@ class SharingSMBService(SharingService):
                 'Apple SMB2/3 protocol extension support is required by this parameter. '
                 'This feature may be enabled in the general SMB server configuration.'
             )
+
+        if data[share_field.PURPOSE] == SMBSharePurpose.LEGACY_SHARE:
+            await self.legacy_share_validate(data, schema_name, verrors, old)
 
     @api_method(SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
