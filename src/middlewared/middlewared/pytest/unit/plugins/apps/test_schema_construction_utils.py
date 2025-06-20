@@ -1439,7 +1439,9 @@ def test_immutable_string_field():
 
     # Update mode - old_values provided, immutable field is locked
     old_values = {'dataset_name': 'original-data', 'description': 'Original description'}
-    model_update = generate_pydantic_model(schema, 'TestImmutableUpdate', NOT_PROVIDED, old_values)
+    # Test with new_values to simulate real usage through construct_schema
+    new_values = {'dataset_name': 'changed-data', 'description': 'New description'}
+    model_update = generate_pydantic_model(schema, 'TestImmutableUpdate', new_values, old_values)
 
     # Can only set the immutable field to its original value
     m3 = model_update(dataset_name='original-data', description='New description')
@@ -1447,9 +1449,13 @@ def test_immutable_string_field():
     assert m3.description == 'New description'
 
     # Trying to change immutable field should fail
-    with pytest.raises(ValidationError) as exc_info:
-        model_update(dataset_name='changed-data')
-    assert 'dataset_name' in str(exc_info.value)
+    # First, let's see if we can instantiate the model with changed data
+    try:
+        m_fail = model_update(dataset_name='changed-data')
+        # If we get here, the immutable validation is not working!
+        assert False, f"Expected ValidationError but model was created with dataset_name={m_fail.dataset_name}"
+    except ValidationError as exc_info:
+        assert 'dataset_name' in str(exc_info)
 
 
 def test_immutable_int_field():
