@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.apps.schema_utils import get_schema, SCHEMA_MAPPING
+from middlewared.plugins.apps.schema_construction_utils import construct_schema, generate_pydantic_model
 
 
 @pytest.mark.parametrize('data', [
@@ -43,11 +43,12 @@ from middlewared.plugins.apps.schema_utils import get_schema, SCHEMA_MAPPING
         }
     },
 ])
-def test_get_schema_success(data):
-    result = get_schema(data, False)
-    assert result is not None
-    valid_types = tuple(v for v in SCHEMA_MAPPING.values() if isinstance(v, type))
-    assert isinstance(result[0], valid_types)
+def test_generate_model_success(data):
+    # Test that we can generate a Pydantic model from the schema
+    model = generate_pydantic_model([data], 'test_model')
+    assert model is not None
+    assert hasattr(model, '__fields__')
+    assert 'actual_budget' in model.__fields__
 
 
 @pytest.mark.parametrize('data', [
@@ -61,7 +62,7 @@ def test_get_schema_success(data):
         'label': '',
         'group': 'Actual Budget Configuration',
         'schema': {
-            'type': 'dict',
+            'type': 'custom',  # Invalid type
             'attrs': [
                 {
                     'variable': 'additional_envs',
@@ -77,9 +78,9 @@ def test_get_schema_success(data):
         }
     }
 ])
-def test_get_schema_KeyError(data):
-    with pytest.raises(KeyError):
-        get_schema(data, False)
+def test_generate_model_invalid_type(data):
+    with pytest.raises((KeyError, ValueError)):
+        generate_pydantic_model([data], 'test_model')
 
 
 @pytest.mark.parametrize('data, existing', [
@@ -125,15 +126,20 @@ def test_get_schema_KeyError(data):
             }
         },
         {
-            'actual_budget': {'env': {'name': 'EXAMPLE_ENV', 'value': 'example_value'}}
+            'actual_budget': {
+                'additional_envs': [{'env': {'name': 'EXAMPLE_ENV'}}]
+            }
         }
     ),
 ])
-def test_get_schema_existing(data, existing):
-    result = get_schema(data, False, existing)
-    assert result is not None
-    valid_types = tuple(v for v in SCHEMA_MAPPING.values() if isinstance(v, type))
-    assert isinstance(result[0], valid_types)
+def test_construct_schema_with_existing(data, existing):
+    # Test construct_schema with existing values
+    item_version_details = {'schema': {'questions': [data]}}
+    result = construct_schema(item_version_details, {}, True, existing)
+    assert 'verrors' in result
+    assert 'new_values' in result
+    assert 'schema_name' in result
+    assert result['schema_name'] == 'app_update'
 
 
 @pytest.mark.parametrize('data', [
@@ -201,11 +207,38 @@ def test_get_schema_existing(data, existing):
         }
     },
 ])
-def test_get_schema_port_min_max(data):
-    result = get_schema(data, False)
-    assert result is not None
-    valid_types = tuple(v for v in SCHEMA_MAPPING.values() if isinstance(v, type))
-    assert isinstance(result[0], valid_types)
+def test_schema_port_min_max(data):
+    # Test that port min/max constraints are handled correctly
+    model = generate_pydantic_model([data], 'test_model')
+    assert model is not None
+
+    # Create valid instance
+    valid_data = {
+        'actual_budget': {
+            'additional_envs': [{
+                'name': 'test',
+                'network': {
+                    'web_port': 8080
+                }
+            }]
+        }
+    }
+    instance = model(**valid_data)
+    assert instance.actual_budget.additional_envs[0].network.web_port == 8080
+
+    # Test min constraint
+    invalid_data = {
+        'actual_budget': {
+            'additional_envs': [{
+                'name': 'test',
+                'network': {
+                    'web_port': 0  # Below min
+                }
+            }]
+        }
+    }
+    with pytest.raises(Exception):  # Pydantic validation error
+        model(**invalid_data)
 
 
 @pytest.mark.parametrize('data', [
@@ -235,7 +268,7 @@ def test_get_schema_port_min_max(data):
                                             'label': 'Name',
                                             'schema': {
                                                 'type': 'string',
-                                                'valid_chars': ('char1'),
+                                                'valid_chars': '^[a-zA-Z0-9_]+$',
                                                 'required': True
                                             }
                                         }
@@ -249,11 +282,32 @@ def test_get_schema_port_min_max(data):
         }
     },
 ])
-def test_get_schema_valid_chars(data):
-    result = get_schema(data, False)
-    assert result is not None
-    valid_types = tuple(v for v in SCHEMA_MAPPING.values() if isinstance(v, type))
-    assert isinstance(result[0], valid_types)
+def test_schema_valid_chars(data):
+    # Test that valid_chars constraint works correctly
+    model = generate_pydantic_model([data], 'test_model')
+    assert model is not None
+
+    # Create valid instance
+    valid_data = {
+        'actual_budget': {
+            'additional_envs': [{
+                'name': 'TEST_VAR_123'
+            }]
+        }
+    }
+    instance = model(**valid_data)
+    assert instance.actual_budget.additional_envs[0].name == 'TEST_VAR_123'
+
+    # Test invalid characters
+    invalid_data = {
+        'actual_budget': {
+            'additional_envs': [{
+                'name': 'TEST-VAR'  # Contains dash, not allowed
+            }]
+        }
+    }
+    with pytest.raises(Exception):  # Pydantic validation error
+        model(**invalid_data)
 
 
 @pytest.mark.parametrize('data', [
@@ -263,43 +317,34 @@ def test_get_schema_valid_chars(data):
         'group': 'Actual Budget Configuration',
         'schema': {
             'type': 'dict',
-            'subquestions': [
-                {
-                    'variable': 'sub_question_1',
-                    'schema': {
-                        'type': 'dict',
-                        'attrs': []
-                    }
-                },
-                {
-                    'variable': 'sub_question_2',
-                    'schema': {
-                        'type': 'dict',
-                        'attrs': []
-                    }
-                }
-            ],
             'attrs': [
                 {
-                    'variable': 'additional_envs',
-                    'label': 'Additional Environment Variables',
-                    'description': 'Configure additional environment variables for Actual Budget.',
+                    'variable': 'config',
+                    'label': 'Configuration',
                     'schema': {
-                        'type': 'list',
-                        'default': [],
-                        'items': [
+                        'type': 'dict',
+                        'attrs': [
                             {
-                                'variable': 'env',
-                                'label': 'Environment Variable',
+                                'variable': 'enabled',
+                                'label': 'Enable Feature',
+                                'schema': {
+                                    'type': 'boolean',
+                                    'default': False
+                                }
+                            },
+                            {
+                                'variable': 'advanced_settings',
+                                'label': 'Advanced Settings',
                                 'schema': {
                                     'type': 'dict',
+                                    'show_if': [['enabled', '=', True]],
                                     'attrs': [
                                         {
-                                            'variable': 'name',
-                                            'label': 'Name',
+                                            'variable': 'debug_mode',
+                                            'label': 'Debug Mode',
                                             'schema': {
-                                                'type': 'string',
-                                                'required': True
+                                                'type': 'boolean',
+                                                'default': False
                                             }
                                         }
                                     ]
@@ -312,8 +357,33 @@ def test_get_schema_valid_chars(data):
         }
     },
 ])
-def test_get_schema_subquestions(data):
-    result = get_schema(data, False)
-    assert result is not None
-    valid_types = tuple(v for v in SCHEMA_MAPPING.values() if isinstance(v, type))
-    assert isinstance(result[0], valid_types)
+def test_schema_show_if_conditions(data):
+    # Test that show_if conditions are properly handled
+    model = generate_pydantic_model([data], 'test_model')
+    assert model is not None
+
+    # When enabled is False, advanced_settings should still be optional
+    valid_data = {
+        'actual_budget': {
+            'config': {
+                'enabled': False
+            }
+        }
+    }
+    instance = model(**valid_data)
+    assert instance.actual_budget.config.enabled is False
+
+    # When enabled is True, advanced_settings can be provided
+    valid_data_with_advanced = {
+        'actual_budget': {
+            'config': {
+                'enabled': True,
+                'advanced_settings': {
+                    'debug_mode': True
+                }
+            }
+        }
+    }
+    instance = model(**valid_data_with_advanced)
+    assert instance.actual_budget.config.enabled is True
+    assert instance.actual_budget.config.advanced_settings.debug_mode is True
