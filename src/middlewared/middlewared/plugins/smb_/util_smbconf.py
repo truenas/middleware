@@ -14,7 +14,7 @@ from middlewared.utils.smb import SMBSharePurpose
 from middlewared.plugins.account import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
-from middlewared.plugins.smb_.utils import get_share_name, smb_strip_comments
+from middlewared.plugins.smb_.utils import get_share_name
 from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
 
 LOGGER = getLogger(__name__)
@@ -59,6 +59,26 @@ class TrueNASVfsObjects(enum.StrEnum):
     WORM = 'worm'
     TMPROTECT = 'tmprotect'
     ZFS_FSRVP = 'zfs_fsrvp'
+
+
+def __parse_aux_param_list(smbconf: dict, aux: list[str]) -> None:
+    for entry in aux:
+        entry = entry.strip()
+
+        # Skip if entry is commented-out or if it's not in format of `key = value`
+        if entry.startswith(('#', ';')) or '=' not in entry:
+            continue
+
+        param, value = entry.split('=', 1)
+        param = param.strip()
+        value = value.strip()
+
+        # User may have old garbage from prior releases that were less restrictive
+        # (or manually edited the sqlite database) so check blacklist before insert.
+        if param in AUX_PARAM_BLACKLIST:
+            continue
+
+        smbconf[param] = value
 
 
 def __order_vfs_objects(vfs_objects: set, fruit_enabled: bool):
@@ -316,21 +336,7 @@ def generate_smb_share_conf_dict(
 
     # Apply auxiliary parameters
     if (auxparams := share_config[share_field.OPTS].get(share_field.AUX)) is not None:
-        for param in smb_strip_comments(auxparams).splitlines():
-            if not param.strip():
-                # user has inserted an empty line
-                continue
-
-            auxparam, value = param.split('=', 1)
-            auxparam = auxparam.strip()
-            value = value.strip()
-
-            # User may have inserted garbage in a previous release or have manually
-            # modified sqlite database
-            if auxparam in AUX_PARAM_BLACKLIST:
-                continue
-
-            config_out[auxparam] = value
+        __parse_aux_param_list(config_out, auxparams.splitlines())
 
     return config_out
 
@@ -613,14 +619,8 @@ def generate_smb_conf_dict(
             f'idmap config {domain_short} : range': f'{range_low} - {range_high}',
         })
 
-    for e in smb_service_config['smb_options'].splitlines():
-        # Add relevant auxiliary parameters
-        entry = e.strip()
-        if entry.startswith(('#', ';')) or '=' not in entry:
-            continue
-
-        param, value = entry.split('=', 1)
-        smbconf[param.strip()] = value.strip()
+    # Add relevant auxiliary parameters
+    __parse_aux_param_list(smbconf, smb_service_config['smb_options'].splitlines())
 
     # Ordering here is relevant. Do not permit smb_options to override required
     # settings for the STIG.

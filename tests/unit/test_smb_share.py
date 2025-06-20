@@ -547,3 +547,24 @@ def test__disabled_io_uring(nfsacl_dataset, disable_io_uring):
     }, BASE_SMB_CONFIG, disable_io_uring)
 
     assert TrueNASVfsObjects.IO_URING not in conf['vfs objects']
+
+
+def test__aux_param_invalid(nfsacl_dataset):
+    smb = LEGACY_SHARE | {'path': nfsacl_dataset}
+    smb['options']['auxsmbconf'] = '\n'.join([
+        'zfs_core:zfs_block_cloning = True',  # verify that enterprise feature removed
+        'vfs objects = Canary', # verify that blacklist param removed
+        '333',  # verify that invalid value removed
+        '# test:one = canary',  # verify this type of comment is removed
+        '; test:two = canary',  # verify that this comment is also removed
+        'test:three = canary',  # This one should be added
+    ])
+
+    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+
+    assert conf['vfs objects'] != 'canary'
+    assert 'zfs_core:zfs_block_cloning' not in conf
+    assert '333' not in conf
+    assert '# test:one' not in conf
+    assert '; test:two' not in conf
+    assert 'test:three' in conf
