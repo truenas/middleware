@@ -6,7 +6,6 @@ from acme import client, messages
 
 
 class BodyDict(typing.TypedDict):
-    contact: str
     status: str
     key: str
 
@@ -31,7 +30,6 @@ def get_acme_client_and_key(data: ACMEClientAndKeyData) -> tuple[client.ClientV2
     - new_order_uri: str
     - revoke_cert_uri: str
     - body: dict
-        - contact: str
         - status: str
         - key: dict
             - e: str
@@ -46,7 +44,6 @@ def get_acme_client_and_key(data: ACMEClientAndKeyData) -> tuple[client.ClientV2
         'uri': data['uri'],
         'terms_of_service': data['tos'],
         'body': {
-            'contact': [data['body']['contact']],
             'status': data['body']['status'],
             'key': {
                 'e': key_dict['e'],
