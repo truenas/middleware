@@ -623,10 +623,23 @@ class AuthService(Service):
             )
 
     @api_method(AuthMechChoicesArgs, AuthMechChoicesResult, authentication_required=False)
-    async def mechanism_choices(self) -> list:
+    @pass_app()
+    async def mechanism_choices(self, app) -> list:
         """ Get list of available authentication mechanisms available for auth.login_ex """
         aal = CURRENT_AAL.level
-        return [mech.name for mech in aal.mechanisms]
+        cred_allows_token = True
+
+        # The currently authenticated credential may actually restrict whether it can
+        # generate authentication tokens. This is used by UI as a hint that it shouldn't
+        # try to generate tokens for this user.
+        if app and not app.authenticated_credentials.may_create_auth_token:
+            cred_allows_token = False
+
+        choices = [mech.name for mech in aal.mechanisms]
+        if not cred_allows_token and AuthMech.TOKEN_PLAIN in choices:
+            choices.remove(AuthMech.TOKEN_PLAIN.value)
+
+        return choices
 
     @cli_private
     @api_method(AuthLoginExContinueArgs, AuthLoginExResult, authentication_required=False)
