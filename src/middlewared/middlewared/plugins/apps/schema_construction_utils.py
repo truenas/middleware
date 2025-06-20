@@ -2,7 +2,7 @@ import contextlib
 import re
 from typing import Annotated, Literal, Type, TypeAlias, Union
 
-from pydantic import AfterValidator, create_model, Field, Secret
+from pydantic import AfterValidator, create_model, Field
 
 from middlewared.api.base import LongString, match_validator, NotRequired
 from middlewared.api.base.handler.accept import validate_model
@@ -180,10 +180,6 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
     if schema_def.get('valid_chars'):
         # If valid_chars is specified, we can use a match_validator to ensure the value matches the regex
         field_type = Annotated[field_type, AfterValidator(match_validator(re.compile(schema_def['valid_chars'])))]
-
-    if schema_def.get('private', False):
-        # If the field is private, we can use Secret type
-        field_type = Secret[field_type]
 
     return field_type, field_info, nested_model
 

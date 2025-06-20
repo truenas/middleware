@@ -414,13 +414,140 @@ def test_private_fields():
 
     # Should accept values
     m = model(password='secret123')
-    # The actual value might be wrapped in Secret type
-    assert m.password.get_secret_value() == 'secret123'
+    # Private fields are no longer wrapped in Secret type
+    assert m.password == 'secret123'
     assert m.api_key is None
 
     # With api_key set
     m2 = model(password='pass', api_key='key123')
-    assert m2.api_key.get_secret_value() == 'key123'
+    assert m2.api_key == 'key123'
+
+
+def test_private_string_with_length_constraints():
+    """Test private/secret string fields with min/max length validation"""
+    schema = [
+        {
+            'variable': 'api_token',
+            'schema': {
+                'type': 'string',
+                'private': True,
+                'min_length': 10,
+                'max_length': 50,
+                'required': True
+            }
+        },
+        {
+            'variable': 'secret_key',
+            'schema': {
+                'type': 'string',
+                'private': True,
+                'min_length': 5,
+                'max_length': 20,
+                'default': 'default123',
+                'required': False
+            }
+        }
+    ]
+
+    model = generate_pydantic_model(schema, 'TestPrivateLength', NOT_PROVIDED)
+    # Test valid lengths
+    m1 = model(api_token='1234567890')  # Exactly 10 chars (min)
+    assert m1.api_token == '1234567890'
+    assert m1.secret_key == 'default123'
+
+    # Test max length
+    m2 = model(api_token='a' * 50)  # Exactly 50 chars (max)
+    assert m2.api_token == 'a' * 50
+
+    # Test custom secret_key within bounds
+    m3 = model(api_token='valid_token_123', secret_key='mysecret')
+    assert m3.api_token == 'valid_token_123'
+    assert m3.secret_key == 'mysecret'
+
+    # Test too short - should fail
+    with pytest.raises(ValidationError) as exc_info:
+        model(api_token='short')  # Only 5 chars, min is 10
+    assert 'at least 10 characters' in str(exc_info.value)
+    assert 'api_token' in str(exc_info.value)
+
+    # Test too long - should fail
+    with pytest.raises(ValidationError) as exc_info:
+        model(api_token='a' * 51)  # 51 chars, max is 50
+    assert 'at most 50 characters' in str(exc_info.value)
+    assert 'api_token' in str(exc_info.value)
+
+    # Test secret_key too short
+    with pytest.raises(ValidationError) as exc_info:
+        model(api_token='valid_token', secret_key='abc')  # Only 3 chars, min is 5
+    assert 'at least 5 characters' in str(exc_info.value)
+    assert 'secret_key' in str(exc_info.value)
+
+    # Test secret_key too long
+    with pytest.raises(ValidationError) as exc_info:
+        model(api_token='valid_token', secret_key='a' * 21)  # 21 chars, max is 20
+    assert 'at most 20 characters' in str(exc_info.value)
+    assert 'secret_key' in str(exc_info.value)
+
+
+def test_private_string_complex_validation():
+    """Test private string fields with multiple validation constraints combined"""
+    schema = [
+        {
+            'variable': 'license_key',
+            'schema': {
+                'type': 'string',
+                'private': True,
+                'min_length': 19,
+                'max_length': 19,  # Exactly 19 chars (4+1+4+1+4+1+4)
+                'valid_chars': '^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$',  # XXXX-XXXX-XXXX-XXXX format
+                'required': True
+            }
+        },
+        {
+            'variable': 'optional_secret',
+            'schema': {
+                'type': 'string',
+                'private': True,
+                'null': True,
+                'min_length': 8,
+                'max_length': 32,
+                'default': None,
+                'required': False
+            }
+        }
+    ]
+
+    model = generate_pydantic_model(schema, 'TestPrivateComplex', NOT_PROVIDED)
+    # Valid license key
+    m1 = model(license_key='ABCD-1234-WXYZ-5678')
+    assert m1.license_key == 'ABCD-1234-WXYZ-5678'
+    assert m1.optional_secret is None
+
+    # Valid with optional secret
+    m2 = model(license_key='XXXX-YYYY-ZZZZ-0000', optional_secret='mysecret123')
+    assert m2.license_key == 'XXXX-YYYY-ZZZZ-0000'
+    assert m2.optional_secret == 'mysecret123'
+
+    # Invalid format (lowercase letters)
+    with pytest.raises(ValidationError) as exc_info:
+        model(license_key='abcd-1234-wxyz-5678')
+    assert 'license_key' in str(exc_info.value)
+
+    # Wrong length (too short)
+    with pytest.raises(ValidationError) as exc_info:
+        model(license_key='ABC-123-XYZ-456')  # Only 15 chars
+    assert 'at least 19 characters' in str(exc_info.value)
+
+    # Wrong length (too long)
+    with pytest.raises(ValidationError) as exc_info:
+        model(license_key='ABCD-1234-WXYZ-56789')  # 20 chars
+    assert 'at most 19 characters' in str(exc_info.value)
+
+    # Optional secret too short
+    with pytest.raises(ValidationError) as exc_info:
+        model(license_key='ABCD-1234-WXYZ-5678', optional_secret='short')
+    assert 'at least 8 characters' in str(exc_info.value)
+    assert 'optional_secret' in str(exc_info.value)
 
 
 # Field metadata tests
@@ -2119,7 +2246,7 @@ def test_valid_chars_with_private_field():
     # Valid API key
     valid_key = 'a' * 16 + 'B' * 16  # 32 chars
     m = model(api_key=valid_key)
-    assert m.api_key.get_secret_value() == valid_key
+    assert m.api_key == valid_key
 
     # Invalid pattern (special characters)
     with pytest.raises(ValidationError):
