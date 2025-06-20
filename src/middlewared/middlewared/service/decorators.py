@@ -22,7 +22,7 @@ def cli_private(fn):
 
 def filterable_api_method(
     fn=None, /, *, roles=None, item=None, private=False, cli_private=False, authorization_required=True,
-    pass_app=False, pass_app_require=False, pass_app_rest=False,
+    pass_app=False, pass_app_require=False, pass_app_rest=False, pass_thread_local_storage=False,
 ):
     def filterable_internal(fn):
         if item:
@@ -47,7 +47,7 @@ def filterable_api_method(
         return api_method(
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
             authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
-            pass_app_rest=pass_app_rest,
+            pass_app_rest=pass_app_rest, pass_thread_local_storage=pass_thread_local_storage,
         )(fn)
 
     # See if we're being called as @filterable or @filterable().
