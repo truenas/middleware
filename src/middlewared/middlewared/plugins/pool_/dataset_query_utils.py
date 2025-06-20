@@ -115,8 +115,6 @@ class QueryFiltersCallbackState:
     """function to select values"""
     select: list = field(default_factory=list)
     """list of fields to select. None means all"""
-    single_result: bool = False
-    """return single result with no pagination"""
     count_only: bool = False
     """only count entries"""
     extra: ExtraArgs
@@ -181,11 +179,12 @@ BASE_FS_PROPS = BASE_PROPS | frozenset(
         truenas_pylibzfs.ZFSProperty.ATIME,
         truenas_pylibzfs.ZFSProperty.CASESENSITIVITY,
         truenas_pylibzfs.ZFSProperty.EXEC,
+        truenas_pylibzfs.ZFSProperty.MOUNTPOINT,
         truenas_pylibzfs.ZFSProperty.QUOTA,
         truenas_pylibzfs.ZFSProperty.RECORDSIZE,
         truenas_pylibzfs.ZFSProperty.REFQUOTA,
         truenas_pylibzfs.ZFSProperty.SNAPDIR,
-        truenas_pylibzfs.ZFSProperty.SPECIAL_SMALL_BLOCKS,  # special_small_block_size
+        truenas_pylibzfs.ZFSProperty.SPECIAL_SMALL_BLOCKS,
         truenas_pylibzfs.ZFSProperty.XATTR,
     }
 )
@@ -475,7 +474,9 @@ def normalize_zfs_properties(zprops: dict[str, dict] | None) -> dict[str, dict]:
                 else:
                     value_field = str(parsed_value)
             else:
-                if zfs_prop_name in size_properties and isinstance(parsed_value, (int, float)):
+                if zfs_prop_name in size_properties and isinstance(
+                    parsed_value, (int, float)
+                ):
                     value_field = _format_bytes(parsed_value)
                 else:
                     value_field = raw_value.upper()
@@ -573,7 +574,13 @@ def build_set_of_zfs_props(
         return state.determined_properties.default
 
     if state.extra.zfs_properties == []:
-        return None  # Empty list means query no properties
+        # Empty list means query no properties, but include mountpoint for filesystems only
+        # as it's required by other parts of the system (e.g., dataset_processes)
+        if is_fs:
+            return frozenset({truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
+        else:
+            # For volumes and snapshots, return minimal properties
+            return frozenset()
 
     # Check if we already have cached properties for this type
     if is_fs and state.determined_properties.fs is not None:
@@ -636,18 +643,19 @@ def build_set_of_zfs_props(
     return result
 
 
-def normalize_zfs_asdict_result(raw_data, hdl):
+def normalize_zfs_asdict_result(raw_data, hdl, include_user_properties=True):
     """
     Normalize the raw result from hdl.asdict() into a standardized format.
 
     This function processes the raw dictionary returned by hdl.asdict() and creates
     a normalized dictionary with basic metadata and properly formatted properties.
     Properties are always flattened to the top level for consistent API structure.
-    User properties are always normalized since the function handles None gracefully.
+    User properties are conditionally normalized based on include_user_properties.
 
     Args:
         raw_data: Raw dictionary from hdl.asdict()
         hdl: ZFS handle from truenas_pylibzfs
+        include_user_properties: Whether to include user_properties in the result
 
     Returns:
         dict: Normalized dictionary with basic metadata and flattened properties
@@ -679,10 +687,11 @@ def normalize_zfs_asdict_result(raw_data, hdl):
 
     result.update(**normalized_properties)
 
-    # Always add normalized user properties (normalize_user_properties handles None gracefully)
-    result["user_properties"] = normalize_user_properties(
-        raw_data.get("user_properties")
-    )
+    # Conditionally add normalized user properties
+    if include_user_properties:
+        result["user_properties"] = normalize_user_properties(
+            raw_data.get("user_properties")
+        )
 
     return result
 
@@ -718,7 +727,7 @@ def build_info(hdl, state: QueryFiltersCallbackState):
     )
 
     # Use the common normalization function
-    info = normalize_zfs_asdict_result(tmp, hdl)
+    info = normalize_zfs_asdict_result(tmp, hdl, state.extra.get_user_properties)
 
     # crypto related
     if state.get_crypto:
@@ -906,10 +915,12 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     info = build_info(hdl, state)
 
     # Add snapshot functionality if requested - do this directly here for efficiency
-    if any((
-        state.extra.snap_properties.snapshots_count,
-        state.extra.snap_properties.snapshots
-    )):
+    if any(
+        (
+            state.extra.snap_properties.snapshots_count,
+            state.extra.snap_properties.snapshots,
+        )
+    ):
         # Initialize snapshot_count to 0 if counting is requested
         if state.extra.snap_properties.snapshots_count:
             info["snapshot_count"] = 0
@@ -979,10 +990,6 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
                     curr_children.append(new_node)
                     curr_children = new_node["children"]
 
-    if state.single_result:
-        # halt iterator
-        return False
-
     # Always recurse when we have filters, even if retrieve_children is False
     # This ensures filtered queries can find child datasets
     if state.extra.retrieve_children or state.filters:
@@ -1043,7 +1050,7 @@ def generic_query(
                           - Count integer (if count=True)
 
     Raises:
-        MatchNotFound: When get=True or single_result=True but no results found
+        MatchNotFound: When get=True but no results found
     """
     # parse query-options
     options, select, order_by = GENERIC_FILTERS.validate_options(options_in)
@@ -1052,7 +1059,6 @@ def generic_query(
     state = QueryFiltersCallbackState(
         filters=filters_in,
         select=select,
-        single_result=options["get"] and not order_by,
         count_only=options["count"],
         extra=ExtraArgs(
             flat=extra.get("flat", True),
@@ -1072,27 +1078,34 @@ def generic_query(
     # do iteration
     rsrc_iterator(callback=generic_query_callback, state=state)
 
-    if state.single_result:
-        if not state.results:
-            raise MatchNotFound()
-        return state.results[0]
-
     if options["count"]:
         return state.count
 
-    # Apply flattening if flat=True (matches old API behavior)
-    if state.extra.flat:
-        state.results = _flatten_hierarchy(state.results)
-
-    # Apply filtering after flattening
+    # Apply filtering - we need to filter on a flat structure regardless of final output format
     if state.filters:
-        state.results = state.filter_fn(
-            state.results, filters=state.filters, options={}
+        # Always flatten for filtering to ensure we can find nested datasets
+        flat_for_filtering = _flatten_hierarchy(state.results)
+        filtered_flat = state.filter_fn(
+            flat_for_filtering, filters=state.filters, options={}
         )
+
+        # If we want flat output, use the filtered flat results
+        if state.extra.flat:
+            state.results = filtered_flat
+        else:
+            # If we want hierarchical output, rebuild hierarchy from filtered results
+            # For now, when flat=False with filters, return the filtered items as a flat list
+            # This matches the behavior when specific datasets are requested
+            state.results = filtered_flat
+    else:
+        # No filtering needed, apply flattening if requested
+        if state.extra.flat:
+            state.results = _flatten_hierarchy(state.results)
 
     if order_by:
         state.results = GENERIC_FILTERS.do_order(state.results, order_by)
 
+    # Apply get=True AFTER filtering and ordering
     if options["get"]:
         if not state.results:
             raise MatchNotFound()
