@@ -160,7 +160,7 @@ class PoolDatasetService(Service):
                         fd = f'/proc/{pid}/fd/{f}'
                         is_link = False
                         realpath = None
-                        with contextlib.suppress(FileNotFoundError):
+                        with contextlib.suppress(FileNotFoundError, PermissionError):
                             # Have second suppression here so that we don't lose list of files
                             # if we have TOCTOU issue on one of files.
                             #
