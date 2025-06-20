@@ -49,8 +49,8 @@ from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOO
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.system.reboot import RebootReason
-from middlewared.plugins.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.install import STARTING_INSTALLER
+from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.utils.contextlib import asyncnullcontext
@@ -389,7 +389,7 @@ class FailoverService(ConfigService):
 
         # need to make sure the license information is updated on the standby node since
         # it's cached in memory
-        _prev = self.middleware.call_sync('system.product_type')
+        _prev = self.middleware.call_sync('system.license')
         self.middleware.call_sync(
             'failover.call_remote', 'core.call_hook', ['system.post_license_update', [_prev]]
         )
@@ -624,7 +624,8 @@ class FailoverService(ConfigService):
     )
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
     def upgrade(self, job, options):
-        """Upgrades both controllers. Files will be downloaded to the
+        """
+        Upgrades both controllers. Files will be downloaded to the
         Active Controller and then transferred to the Standby Controller.
         Upgrade process will start concurrently on both nodes. Once both
         upgrades are applied, the Standby Controller will reboot. This
@@ -642,10 +643,6 @@ class FailoverService(ConfigService):
                 updatefile = True
         else:
             updatefile = options['resume_manual']
-
-        train = options.get('train', NOT_PROVIDED)
-        if train is not NOT_PROVIDED:
-            self.middleware.call_sync('update.set_train', train)
 
         local_path = self.middleware.call_sync('update.get_update_location')
         updatefile_name = 'updatefile.sqsh'
@@ -670,7 +667,8 @@ class FailoverService(ConfigService):
                         None, j['progress']['description'] or 'Downloading upgrade files'
                     )
 
-                djob = self.middleware.call_sync('update.download', job_on_progress_cb=download_callback)
+                djob = self.middleware.call_sync('update.download', options['train'], options['version'],
+                                                 job_on_progress_cb=download_callback)
                 djob.wait_sync(raise_error=True)
                 if not djob.result:
                     raise CallError('No updates available.')
