@@ -94,6 +94,8 @@ class DockerStateService(Service):
             error_str = 'No pool configured for Docker'
         if not error_str and not await self.middleware.call('service.started', 'docker'):
             error_str = 'Docker service is not running'
+        if not await self.middleware.call('docker.license_active'):
+            error_str = 'System is not licensed to use Applications'
 
         if error_str and raise_error:
             raise CallError(error_str)
