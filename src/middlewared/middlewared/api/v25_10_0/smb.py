@@ -265,7 +265,7 @@ class LegacyOpt(BaseModel):
     NOTE: this feature does not work with recycle bin features in client operating systems.
 
     WARNING: Do not use this feature instead of backups or ZFS snapshots. """
-    path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
+    path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%U", "%u"])
     hostsallow: list[str] = Field(default=[], examples=[
         ['192.168.0.200', '150.203.'],
         ['150.203.15.0/255.255.255.0'],
@@ -364,8 +364,7 @@ class TimeMachineOpt(BaseModel):
     NOTE: this setting requires the share path to be a dataset mountpoint."""
     dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
     """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema,
-    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to
-    Active Directory it uses `%D/%u` (domain/username). See the `VARIABLE SUBSTITUTIONS` section in the smb.conf
+    the server uses `%u` (username). See the `VARIABLE SUBSTITUTIONS` section in the smb.conf
     manpage for valid strings.
 
     WARNING: ZFS dataset naming rules are more restrictive than normal path rules."""
@@ -406,8 +405,7 @@ class PrivateDatasetOpt(BaseModel):
     purpose: Literal[SMBSharePurpose.PRIVATE_DATASETS_SHARE] = Field(exclude=True, repr=False)
     dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
     """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema,
-    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to
-    Active Directory it uses `%D/%u` (domain/username).
+    the server uses `%u` (username).
 
     WARNING: ZFS dataset naming rules are more restrictive than normal path rules."""
     auto_quota: int = Field(default=0, examples=[10])

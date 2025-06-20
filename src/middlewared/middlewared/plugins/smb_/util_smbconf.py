@@ -129,7 +129,7 @@ def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict
     path = share_config[share_field.PATH]
     opts = share_config[share_field.OPTS]
     path_suffix = None
-    default_path_suffix = '%D/%u' if ds_type is DSType.AD else '%u'
+    default_path_suffix = '%u'
 
     if path == 'EXTERNAL':
         config_out.update({
@@ -358,9 +358,7 @@ def generate_smb_conf_dict(
 
     home_share = filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.HOME}', '=', True]])
     if home_share:
-        if ds_type is DSType.AD:
-            home_path_suffix = '%D/%U'
-        elif not home_share[0][share_field.OPTS][share_field.PATH_SUFFIX]:
+        if not home_share[0][share_field.OPTS][share_field.PATH_SUFFIX]:
             home_path_suffix = '%U'
         else:
             home_path_suffix = home_share[0][share_field.OPTS][share_field.PATH_SUFFIX]
