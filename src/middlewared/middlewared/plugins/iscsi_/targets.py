@@ -117,6 +117,12 @@ class iSCSITargetService(CRUDService):
         `auth_networks` is a list of IP/CIDR addresses which are allowed to use this initiator. If all networks are
         to be allowed, this field should be left empty.
         """
+        defer = False
+        try:
+            defer = data.pop('defer')
+        except KeyError:
+            pass
+
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsi_target_create')
         verrors.check()
@@ -136,8 +142,9 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('datastore.delete', self._config.datastore, pk)
             raise e
 
-        # First process the local (MASTER) config
-        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+        if not defer:
+            # First process the local (MASTER) config
+            await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Then process the remote (BACKUP) config if we are HA and ALUA is enabled.
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
@@ -318,6 +325,12 @@ class iSCSITargetService(CRUDService):
         """
         Update iSCSI Target of `id`.
         """
+        defer = False
+        try:
+            defer = data.pop('defer')
+        except KeyError:
+            pass
+
         old = await self.get_instance(id_)
         audit_callback(old['name'])
         new = old.copy()
@@ -350,8 +363,9 @@ class iSCSITargetService(CRUDService):
         if remove_fcport:
             await self.__remove_target_fcport(id_)
 
-        # First process the local (MASTER) config
-        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+        if not defer:
+            # First process the local (MASTER) config
+            await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Then process the BACKUP config if we are HA and ALUA is enabled.
         alua_enabled = await self.middleware.call("iscsi.global.alua_enabled")
@@ -389,7 +403,7 @@ class iSCSITargetService(CRUDService):
         audit='Delete iSCSI target',
         audit_callback=True
     )
-    async def do_delete(self, audit_callback, id_, force, delete_extents):
+    async def do_delete(self, audit_callback, id_, force, delete_extents, defer):
         """
         Delete iSCSI Target of `id`.
 
@@ -404,9 +418,9 @@ class iSCSITargetService(CRUDService):
             else:
                 raise CallError(f'Target {target["name"]} is in use.')
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id_]]):
-            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force, defer)
             if delete_extents:
-                await self.middleware.call('iscsi.extent.delete', target_to_extent['extent'], False, force)
+                await self.middleware.call('iscsi.extent.delete', target_to_extent['extent'], False, force, defer)
 
         # If the target was being used for FC then we may also need to clear the
         # Fibre Channel port mapping
@@ -428,7 +442,9 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         await self.middleware.call('iscsi.target.remove_target', target["name"])
-        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+
+        if not defer:
+            await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         return rv
 
