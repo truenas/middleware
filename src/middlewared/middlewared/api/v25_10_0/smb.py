@@ -62,36 +62,44 @@ SMBCharsetType = Literal[
 
 
 class SMBShareAclEntryWhoId(BaseModel):
-    id_type: Literal['USER', 'GROUP', 'BOTH']
-    xid: int = Field(alias='id')
+    id_type: Literal['USER', 'GROUP']
+    """ The type of Unix ID.
+    If the type is `USER`, the `xid` value refers to a Unix UID.
+    If the type is `GROUP`, the `xid` value refers to a Unix GID."""
+    xid: int = Field(alias='id', ge=0, le=2147483647)
 
 
 class SMBShareAclEntry(BaseModel):
-    """ An SMB Share ACL Entry. """
+    """ An SMB Share ACL Entry that grants or denies specific permissions to a principal.
+    You can identify the principal by a SID (`ae_who_sid`), Unix ID (`ae_who_id`),
+    or name (`ae_who_str`). """
     ae_perm: Literal['FULL', 'CHANGE', 'READ']
-    """ Permissions granted to the principal. """
+    """ Permissions granted or denied to the principal. """
     ae_type: Literal['ALLOWED', 'DENIED']
-    """ The type of SMB share ACL entry. """
+    """ The type of SMB share ACL entry.
+    This value determines whether the permissions (ae_perm) are granted (ALLOWED) or denied (DENIED). """
     ae_who_sid: SID | None = None
-    """ SID value of the principal to whom ACL entry applies. """
+    """ The SID of the principal to whom this ACL entry applies. """
     ae_who_id: SMBShareAclEntryWhoId | None = None
-    """ Unix ID of the principal to whom ACL entry applies. """
+    """ The Unix ID of the principal to whom this ACL entry applies. """
     ae_who_str: NonEmptyString | None = None
-    """ User or group name of the principal to whom the ACL entry applies """
+    """ The User or group name of the principal to whom this ACL entry applies. """
 
     @model_validator(mode='after')
     def check_ae_who(self) -> Self:
         if self.ae_who_sid is None and self.ae_who_id is None and self.ae_who_str is None:
             raise ValueError(
-                'One of the following fields is required to identify the user or group to whom the '
-                'ACL entry applies: "ae_who_sid", "ae_who_str", or "ae_who_id"'
+                'You must set one of the following fields to identify the user or group that this ACL entry '
+                'applies to: "ae_who_sid", "ae_who_str", or "ae_who_id"'
             )
 
         return self
 
 
 class SMBShareAcl(BaseModel):
-    """ The SMB share ACL for a specific SMB share. """
+    """ The ACL that applies to a specific SMB share.
+
+    NOTE: this is not the same as a filesystem ACL. It only affects access through the SMB protocol. """
     share_name: NonEmptyString
     """ Name of the SMB share. """
     share_acl: list[SMBShareAclEntry] = [SMBShareAclEntry(ae_who_sid='S-1-1-0', ae_perm='FULL', ae_type='ALLOWED')]
@@ -123,32 +131,37 @@ class SmbServiceEntry(BaseModel):
     """ TrueNAS SMB server configuration. """
     id: int
     netbiosname: NetbiosName
-    """ Netbios name of this server """
+    """ The NetBIOS name of this server """
     netbiosalias: list[NetbiosName]
-    """ Alternative netbios names of the server that will be announced via
-    netbios nameserver and registered in active directory when joined."""
+    """ Alternative netbios names of the TrueNAS server. These names are announced through NetBIOS name server and
+    registered in Active Directory when TrueNAS joins the domain."""
     workgroup: NetbiosDomain
-    """ Workgroup. When joined to active directory, this will be automatically
-    reconfigured to match the netbios domain of the AD domain. """
+    """ Workgroup name. When TrueNAS joins active directory, it automatically changes this value to match the NetBIOS
+    domain of the Active Directory domain. """
     description: str
-    """ Description of SMB server. May appear to clients during some operations. """
+    """ Description of the SMB server. SMB clients may see this description during some operations. """
     enable_smb1: bool
-    """ Enable SMB1 support for server. WARNING: using SMB1 protocol is not recommended """
+    """ Enable SMB1 support on the server. WARNING: using the SMB1 protocol is not recommended. """
     unixcharset: SMBCharsetType
-    """ Select characterset for file names on local filesystem. This should only be used
-    in cases where system administrator knows that the filenames are not UTF-8."""
+    """ Select character set for file names on local filesystem. Use this option only if you know the names are not
+    UTF-8. """
     localmaster: bool
+    """ When set to `True` the NetBIOS name server in TrueNAS participates in elections for the local master browser.
+    When set to `False` the NetBIOS name server does not attempt to become a local master browser on a subnet and loses
+    all browsing elections.
+
+    NOTE: this parameter has no effect if the NetBIOS name server is disabled. """
     syslog: bool
-    """ Send log messages to syslog. This should be enabled if system administrator
-    wishes for SMB server error logs to be included in information sent to remote syslog
-    server if this is globally configured for TrueNAS."""
+    """ Send log messages to syslog. Enable this option if you want SMB server error logs to be included in information
+    sent to a remote syslog server. NOTE: This requires that remote syslog is globally configured on TrueNAS. """
     aapl_extensions: bool
-    """ Enable support for SMB2/3 AAPL protocol extensions. This changes the TrueNAS server
-    so that it is advertised as supporting Apple protocol extensions as a MacOS server, and
-    is required for Time Machine support. """
+    """ Enable support for SMB2/3 AAPL protocol extensions. This setting makes the TrueNAS server advertise support for
+    Apple protocol extensions as a MacOS server. Enabling this is required for Time Machine support. """
     admin_group: str | None
-    """ The selected group will have full administrator privileges on TrueNAS over SMB protocol. """
+    """ The selected group has full administrator privileges on TrueNAS via the SMB protocol. """
     guest: NonEmptyString
+    """ SMB guest account username. This username provides access to legacy SMB shares with guest access enabled.
+    It must be a valid, existing local user account. """
     filemask: UnixPerm | Literal['DEFAULT']
     """ smb.conf create mask. DEFAULT applies current server default which is 664. """
     dirmask: UnixPerm | Literal['DEFAULT']
@@ -157,17 +170,31 @@ class SmbServiceEntry(BaseModel):
     """ Enable legacy and very insecure NTLMv1 authentication. This should never be done except
     in extreme edge cases and may be against regulations in non-home environments. """
     multichannel: bool
+    """ Enable SMB3 multi-channel support. """
     encryption: SMBEncryption
+    """ SMB2/3 transport encryption setting for the TrueNAS SMB server.
+
+    `NEGOTIATE`: Enable negotiation of data encryption. Encrypt data only if the client explicitly requests it.
+
+    `DESIRED`: Enable negotiation of data encryption. Encrypt data on sessions and share connections for clients that
+    support it.
+
+    `REQUIRED`: Require data encryption for sessions and share connections.
+    NOTE: Clients that do not support encryption cannot access SMB shares.
+
+    `DEFAULT`: Use the TrueNAS SMB server default encryption settings. Currently, this is the same as `NEGOTIATE`.
+    """
     bindip: list[IPvAnyInterface]
+    """ List of IP addresses used by the TrueNAS SMB server. """
     server_sid: SID | None
-    """ Universally-unique identifier for this particular SMB server that serves as domain SID
-    for all local SMB user and group accounts """
+    """ The unique identifier for the TrueNAS SMB server. It also serves as the domain SID for all local SMB user and
+    group accounts. """
     smb_options: str
     """ Additional unvalidated and unsupported configuration options for the SMB server.
     WARNING: using smb_options may produce unexpected server behavior. """
     debug: bool
-    """ Set SMB log levels to debug. This should only be used when troubleshooting a specific SMB
-    issue and should not be used in production environments. """
+    """ Set SMB log levels to debug. Use this setting only when troubleshooting a specific SMB issue. Do not use it
+    in production environments. """
 
     @field_validator('bindip')
     @classmethod
@@ -236,7 +263,7 @@ class SmbAuditConfig(BaseModel):
     """ Turn on auditing for the SMB share. SMB share auditing may not be enabled if `enable_smb1` is True
     in the SMB service configuration."""
     watch_list: list[NonEmptyString] = Field(default=[], examples=[['interns', 'contractors']])
-    """ Only audit the listed group acounts. If the list is empty, all groups will be audited. """
+    """ Only audit the listed group accounts. If the list is empty, all groups will be audited. """
     ignore_list: list[NonEmptyString] = Field(default=[], examples=[['automation', 'apps']])
     """ List of groups that will not be audited. """
 
