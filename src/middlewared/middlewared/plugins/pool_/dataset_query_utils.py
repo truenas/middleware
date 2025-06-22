@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Union
+from typing import TypeAlias
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
@@ -28,6 +28,10 @@ These patterns represent system-managed datasets that are typically hidden
 from user interfaces. Used by is_internal_dataset() to perform efficient
 string prefix matching.
 """
+# String type annotations to prevent github CI
+# from exploding since truenas_pylibzfs module
+# isn't installed
+ZFSPropSetType: TypeAlias = frozenset["truenas_pylibzfs.ZFSProperty"]
 
 
 def _format_bytes(value):
@@ -49,19 +53,9 @@ class DeterminedProperties:
     these need to only be calculated once for each zfs type
     that we come across."""
 
-    fs: Union[
-        set[truenas_pylibzfs.ZFSProperty],
-        frozenset[truenas_pylibzfs.ZFSProperty],
-        None,
-    ] = None
-    vol: Union[
-        set[truenas_pylibzfs.ZFSProperty],
-        frozenset[truenas_pylibzfs.ZFSProperty],
-        None,
-    ] = None
-    default: frozenset[truenas_pylibzfs.ZFSProperty] = (
-        truenas_pylibzfs.property_sets.ZFS_SPACE_PROPERTIES
-    )
+    fs: ZFSPropSetType | None = None
+    vol: ZFSPropSetType | None = None
+    default: ZFSPropSetType = truenas_pylibzfs.property_sets.ZFS_SPACE_PROPERTIES
 
 
 @dataclass(slots=True, kw_only=True)
@@ -541,9 +535,7 @@ def normalize_user_properties(uprops: dict[str, str] | None) -> dict[str, dict]:
     return props
 
 
-def build_set_of_zfs_props(
-    hdl, state: QueryFiltersCallbackState
-) -> frozenset[truenas_pylibzfs.ZFSProperty] | set[truenas_pylibzfs.ZFSProperty]:
+def build_set_of_zfs_props(hdl, state: QueryFiltersCallbackState) -> ZFSPropSetType:
     """
     Build a set of ZFS properties to retrieve for a given ZFS resource.
 
@@ -640,7 +632,7 @@ def build_set_of_zfs_props(
     if is_snap:
         return state.determined_properties.default
 
-    return result
+    return frozenset(result)
 
 
 def normalize_zfs_asdict_result(raw_data, hdl, include_user_properties=True):
