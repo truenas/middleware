@@ -86,10 +86,12 @@ class ADJoinMixin:
                 # KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN - account doesn't exist yet
                 # KRB5KDC_ERR_CLIENT_REVOKED - account locked (unlock maybe not replicated)
                 # KRB5KDC_ERR_PREAUTH_FAILED - bad password (password update not replicated)
+                # KRB5_FCC_NOFILE - possible intermittent error due to keychain based credential
                 if krberr.krb5_code not in (
                     KRB5ErrCode.KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN,
                     KRB5ErrCode.KRB5KDC_ERR_CLIENT_REVOKED,
                     KRB5ErrCode.KRB5KDC_ERR_PREAUTH_FAILED,
+                    KRB5ErrCode.KRB5_FCC_NOFILE,
                 ):
                     raise krberr
 
