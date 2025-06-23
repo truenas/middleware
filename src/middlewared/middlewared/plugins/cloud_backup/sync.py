@@ -29,6 +29,7 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
             snapshot = (await middleware.call("zfs.snapshot.create", {
                 "dataset": zvol_path_to_name(local_path),
                 "name": name,
+                "suspend_vms": True,
                 "vmware_sync": True,
             }))["name"]
 
@@ -180,5 +181,8 @@ class CloudBackupService(Service):
     @private
     async def validate_zvol(self, path):
         dataset = zvol_path_to_name(path)
-        if not (await self.middleware.call("vmware.dataset_has_vms", dataset, False)):
-            raise CallError("Backed up zvol must be used by a VMware VM")
+        if not (
+            await self.middleware.call("vm.query_snapshot_begin", dataset, False) or
+            await self.middleware.call("vmware.dataset_has_vms", dataset, False)
+        ):
+            raise CallError("Backed up zvol must be used by a local or VMware VM")

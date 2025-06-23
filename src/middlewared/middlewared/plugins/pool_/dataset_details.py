@@ -96,6 +96,7 @@ class PoolDatasetService(Service):
         dataset['nfs_shares'] = self.get_nfs_shares(dataset, info['nfs'])
         dataset['smb_shares'] = self.get_smb_shares(dataset, info['smb'])
         dataset['iscsi_shares'] = self.get_iscsi_shares(dataset, info['iscsi'])
+        dataset['vms'] = self.get_vms(dataset, info['vm'])
         dataset['apps'] = self.get_apps(dataset, info['app'])
         dataset['virt_instances'] = self.get_virt_instances(dataset, info['virt_instance'])
         dataset['replication_tasks_count'] = self.get_repl_tasks_count(dataset, info['repl'])
@@ -146,7 +147,8 @@ class PoolDatasetService(Service):
         results = {
             'iscsi': [], 'nfs': [], 'smb': [],
             'repl': [], 'snap': [], 'cloud': [],
-            'rsync': [], 'app': [], 'virt_instance': [],
+            'rsync': [], 'vm': [], 'app': [],
+            'virt_instance': [],
         }
 
         # iscsi
@@ -191,6 +193,17 @@ class PoolDatasetService(Service):
         for task in self.middleware.call_sync('rsynctask.query'):
             task['mount_info'] = self.get_mount_info(task['path'], mntinfo)
             results['rsync'].append(task)
+
+        # vm
+        for vm in self.middleware.call_sync('vm.device.query', [['attributes.dtype', 'in', ['RAW', 'DISK']]]):
+            if vm['attributes']['dtype'] == 'DISK':
+                # disk type is always a zvol
+                vm['zvol'] = zvol_path_to_name(vm['attributes']['path'])
+            else:
+                # raw type is always a file
+                vm['mount_info'] = self.get_mount_info(vm['attributes']['path'], mntinfo)
+
+            results['vm'].append(vm)
 
         for app in self.middleware.call_sync('app.query'):
             for path_config in filter(
@@ -299,6 +312,20 @@ class PoolDatasetService(Service):
                     count += 1
 
         return count
+
+    @private
+    def get_vms(self, ds, _vms):
+        vms = []
+        vms_mapping = {vm['id']: vm for vm in self.middleware.call_sync('datastore.query', 'vm.vm')}
+        for i in _vms:
+            if (
+                'zvol' in i and i['zvol'] == ds['id'] or
+                i['attributes']['path'] == ds['mountpoint'] or
+                i.get('mount_info', {}).get('mount_source') == ds['id']
+            ):
+                vms.append({'name': vms_mapping[i['vm']]['name'], 'path': i['attributes']['path']})
+
+        return vms
 
     @private
     def get_virt_instances(self, ds, _instances):

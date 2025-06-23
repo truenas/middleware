@@ -91,6 +91,7 @@ async def test_virt_environment_validation(
         mock_set_idmaps.return_value = instance
         middleware['virt.global.check_initialized'] = lambda *args: True
         middleware['virt.instance.get_instance'] = lambda *args: instance
+        middleware['virt.global.config'] = lambda *args: {'pool': 'tank'}
 
         result = await virt_obj.do_create(12, {
             'name': 'test-vm',
