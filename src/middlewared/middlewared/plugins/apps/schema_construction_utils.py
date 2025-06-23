@@ -9,7 +9,7 @@ from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils import filter_list
 
-from .pydantic_utils import AbsolutePath, BaseModel, HostPath, IPvAnyAddress, URI
+from .pydantic_utils import AbsolutePath, BaseModel, create_length_validated_hostpath, IPvAnyAddress, URI
 
 
 CONTEXT_KEY_NAME = 'ix_context'
@@ -137,7 +137,10 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
     elif schema_type == 'uri':
         field_type = URI
     elif schema_type == 'hostpath':
-        field_type = HostPath
+        field_type = create_length_validated_hostpath(
+            min_length=schema_def.get('min_length'),
+            max_length=schema_def.get('max_length'),
+        )
     elif schema_type == 'path':
         field_type = AbsolutePath
     elif schema_type == 'dict':
@@ -211,8 +214,9 @@ def create_field_info_from_schema(schema_def: dict) -> Field:
             field_kwargs['min_length'] = schema_def['min']
         if 'max' in schema_def:
             field_kwargs['max_length'] = schema_def['max']
-    elif schema_def['type'] in ('string', 'text', 'path', 'hostpath'):
+    elif schema_def['type'] in ('string', 'text', 'path'):
         # For string types, use min_length/max_length
+        # Skip hostpath if it has length constraints (handled in type)
         if 'min_length' in schema_def:
             field_kwargs['min_length'] = schema_def['min_length']
         if 'max_length' in schema_def:

@@ -2,7 +2,7 @@ import os
 from typing import Annotated, Literal
 
 from pydantic import (
-    AfterValidator, AnyUrl, ConfigDict, DirectoryPath, FilePath, PlainSerializer,
+    AfterValidator, AnyUrl, BeforeValidator, ConfigDict, DirectoryPath, FilePath, PlainSerializer,
 )
 
 from middlewared.api.base import BaseModel as PydanticBaseModel, IPvAnyAddress  # noqa: F401
@@ -27,6 +27,24 @@ def _validate_absolute_path(value: str) -> str:
         raise ValueError('Path must be absolute')
 
     return os.path.normpath(value.rstrip('/'))
+
+
+def create_length_validated_hostpath(min_length: int | None = None, max_length: int | None = None):
+    """Create a HostPath type with length validation applied before path validation"""
+
+    def validate_length(v):
+        if isinstance(v, str):
+            if min_length is not None and len(v) < min_length:
+                raise ValueError(f'String should have at least {min_length} characters')
+            if max_length is not None and len(v) > max_length:
+                raise ValueError(f'String should have at most {max_length} characters')
+        return v
+
+    # Create a new annotated type that validates length before HostPath validation
+    return Annotated[
+        HostPath,
+        BeforeValidator(validate_length),
+    ]
 
 
 AbsolutePath = Annotated[
