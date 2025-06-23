@@ -29,6 +29,15 @@ class QuotaAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(hours=1))
     run_on_backup_node = False
 
+    def __cast_threshold(self, val):
+        try:
+            return abs(int(val))
+        except Exception:
+            # this is a zfs user property that can
+            # be altered trivially by-hand, let's
+            # not crash here
+            return 0
+
     def check_sync(self):
         alerts = []
         hostname = self.middleware.call_sync("system.hostname")
@@ -44,17 +53,19 @@ class QuotaAlertSource(ThreadedAlertSource):
                     continue
 
                 warn_prop = TNUserProp[f"{quota_property.upper()}_WARN"]
-                warning_threshold = uprops[warn_prop.value]
+                warning_threshold = self.__cast_threshold(uprops[warn_prop.value])
                 if warning_threshold == 0:
                     # there is a quota on the dataset but there is
-                    # no warning threshold configured
+                    # no warning threshold configured or the value
+                    # written isn't a number
                     continue
 
                 crit_prop = TNUserProp[f"{quota_property.upper()}_CRIT"]
-                critical_threshold = uprops[crit_prop.value]
+                critical_threshold = self.__cast_threshold(uprops[crit_prop.value])
                 if critical_threshold == 0:
                     # there is a quota on the dataset but there is
-                    # no critical threshold configured
+                    # no critical threshold configured or the value
+                    # written isn't a number
                     continue
 
                 if quota_property == "quota":
