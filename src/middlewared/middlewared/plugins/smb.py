@@ -44,6 +44,7 @@ from middlewared.plugins.smb_.constants import (
     SMBSharePreset
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so may be imported from here)
+from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.sharesec import remove_share_acl
 from middlewared.plugins.smb_.util_param import (
     AUX_PARAM_BLACKLIST,
@@ -176,6 +177,31 @@ class SMBService(ConfigService):
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
         security_config = self.middleware.call_sync('system.security.config')
+        veeam_repo_errors = []
+
+        # admins may change ZFS recordsize from shell, UI, or API. Make sure we generate or clear any alerts.
+        # we already have validation on SMB share create / update to check recordsize.
+        for share in smb_shares:
+            if share['purpose'] != 'VEEAM_REPOSITORY_SHARE':
+                continue
+
+            try:
+                if os.statvfs(share['path']).f_bsize != VEEAM_REPO_BLOCKSIZE:
+                    veeam_repo_errors.append(share['name'])
+            except FileNotFoundError:
+                # possibly dataset not mounted
+                pass
+            except Exception:
+                self.logger.debug('%s: statvfs for SMB share path failed', share['path'], exc_info=True)
+                pass
+
+        if veeam_repo_errors:
+            # These don't need to be fatal, but we should raise an alert so that admin can fix the record size
+            self.middleware.call_sync('alert.oneshot_create', 'SMBVeeamFastClone', {
+                'shares': ', '.join(veeam_repo_errors)
+            })
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'SMBVeeamFastClone')
 
         return generate_smb_conf_dict(
             ds_type,
@@ -1296,6 +1322,19 @@ class SharingSMBService(SharingService):
                     f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
                     'of SMB share.'
                 )
+
+            if data['purpose'] == 'VEEAM_REPOSITORY_SHARE':
+                if not await self.middleware.call('system.is_enterprise'):
+                    verrors.add(
+                        f'{schema_name}.purpose',
+                        'Veeam repository shares require a TrueNAS enterprise license.'
+                    )
+                bsize = (await self.middleware.call('filesystem.statfs', data['path']))['blocksize']
+                if bsize != VEEAM_REPO_BLOCKSIZE:
+                    verrors.add(
+                        f'{schema_name}.path',
+                        'The ZFS dataset recordsize property for a dataset used by a Veeam Repository SMB share '
+                    )
 
         if data.get('name') is not None:
             await self.validate_share_name(data['name'], schema_name, verrors)
