@@ -9,7 +9,7 @@ from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, SMBSharePreset
+from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, SMBSharePreset, VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.utils import apply_presets, smb_strip_comments
 from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
 

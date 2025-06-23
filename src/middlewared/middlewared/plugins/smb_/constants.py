@@ -8,6 +8,7 @@ CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'}
 RESERVED_SHARE_NAMES = ('global', 'printers', 'homes')
+VEEAM_REPO_BLOCKSIZE = 131072
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -152,4 +153,22 @@ class SMBSharePreset(enum.Enum):
         'auxsmbconf': '\n'.join([
             'worm:grace_period = 300',
         ])
+    }, "cluster": False}
+    VEEAM_REPOSITORY_SHARE = {"verbose_name": "Veeam repository with Fast Clone", "params": {
+        'path_suffix': '',
+        'home': False,
+        'ro': False,
+        'browsable': True,
+        'timemachine': False,
+        'recyclebin': False,
+        'abe': False,
+        'hostsallow': [],
+        'hostsdeny': [],
+        'aapl_name_mangling': False,
+        'acl': True,
+        'durablehandle': True,
+        'shadowcopy': True,
+        'streams': True,
+        'fsrvp': False,
+        'auxsmbconf': f'block size = {VEEAM_REPO_BLOCKSIZE}',
     }, "cluster": False}
