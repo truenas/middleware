@@ -2,7 +2,7 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
-import contextlib
+
 import os
 from datetime import date
 
@@ -209,12 +209,6 @@ class SystemService(Service):
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )
-
-    @private
-    def license_string(self):
-        with contextlib.suppress(Exception):
-            with open(LICENSE_FILE, 'r') as f:
-                return f.read().strip('\n')
 
     @api_method(
         SystemFeatureEnabledArgs,
