@@ -120,14 +120,15 @@ class SystemService(Service):
         return 'LINUX'
 
     @private
-    def license(self):
-        return self._get_license()
+    def license(self, include_raw_license: bool = False):
+        return self._get_license(include_raw_license=include_raw_license)
 
     @staticmethod
-    def _get_license():
+    def _get_license(include_raw_license: bool = False):
         try:
             with open(LICENSE_FILE) as f:
-                licenseobj = License.load(f.read().strip('\n'))
+                raw_license = f.read().strip('\n')
+                licenseobj = License.load(raw_license)
         except Exception:
             return
 
@@ -166,6 +167,9 @@ class SystemService(Service):
             # means they were issued having dedup+jails instead.
             if Features.dedup in licenseobj.features and Features.jails in licenseobj.features:
                 license_['features'].append(Features.fibrechannel.name.upper())
+
+        if include_raw_license:
+            license_['raw_license'] = raw_license
 
         return license_
 
