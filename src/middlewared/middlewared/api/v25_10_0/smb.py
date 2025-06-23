@@ -319,7 +319,7 @@ class LegacyOpt(BaseModel):
     via the AFP protocol. """
     timemachine: bool = False
     """ If set, MacOS clients can use the share as a time machine target. """
-    timemachine_quota: int = 0
+    timemachine_quota: int = Field(default=0, ge=0, le=109951162777600)
     """ If set, it defines the maximum size of a single time machine sparsebundle volume by limiting the
     reported disk size to the SMB client. A value of zero means no quota is applied to the share.
 
@@ -348,9 +348,9 @@ class LegacyOpt(BaseModel):
 class TimeMachineOpt(BaseModel):
     """ These configuration options apply to shares with the `TIMEMACHINE_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.TIMEMACHINE_SHARE] = Field(exclude=True, repr=False)
-    timemachine_quota: int = 0
-    """ If set, it defines the maximum size of a single time machine sparsebundle volume by limiting the
-    reported disk size to the SMB client.
+    timemachine_quota: int = Field(default=0, ge=0, le=109951162777600)
+    """ If set, it defines the maximum size in bytes of a single time machine sparsebundle volume by limiting the
+    reported disk size to the SMB client. A value of zero means no quota is set.
 
     NOTE: Modern MacOS versions you set Time Machine quotas client-side. This gives more predictable
     server and client behavior."""
@@ -390,7 +390,7 @@ class MultiprotocolOpt(BaseModel):
 class TimeLockedOpt(BaseModel):
     """ These configuration options apply to shares with the `TIME_LOCKED_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.TIME_LOCKED_SHARE] = Field(exclude=True, repr=False)
-    grace_period: int = Field(default=900)
+    grace_period: int = Field(default=900, ge=60, le=86400 * 180)
     """ Time in seconds when write access to the file or directory is allowed. """
     aapl_name_mangling: bool = False
     """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
@@ -410,7 +410,7 @@ class PrivateDatasetOpt(BaseModel):
     Active Directory it uses `%D/%u` (domain/username).
 
     WARNING: ZFS dataset naming rules are more restrictive than normal path rules."""
-    auto_quota: int = Field(default=0, examples=[10])
+    auto_quota: int = Field(default=0, examples=[10], ge=0)
     """ Set the specified ZFS quota (in gibibytes) on new datasets. If the value is zero, TrueNAS disables
     automatic quotas for the share."""
     aapl_name_mangling: bool = False
