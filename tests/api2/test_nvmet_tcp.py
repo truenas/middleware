@@ -354,6 +354,7 @@ class TestNVMe(NVMeRunning):
         assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'STOPPED'
 
     def test__no_sessions_when_service_stopped(self):
+        assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'STOPPED'
         assert call('nvmet.global.sessions') == []
 
     def test__discover_fail_not_running(self, loopback_client: NVMeCLIClient):
