@@ -1,6 +1,6 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    VMGetVMMemoryInfoArgs, VMGetVMMemoryInfoResult, VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult,
+    VMGetVmMemoryInfoArgs, VMGetVmMemoryInfoResult, VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult,
     VMGetVMemoryInUseArgs, VMGetVMemoryInUseResult, VMRandomMacArgs, VMRandomMacResult,
 )
 from middlewared.service import CallError, Service
@@ -80,7 +80,7 @@ class VMService(Service):
 
         return max(0, total_free - vms_memory_used)
 
-    @api_method(VMGetVMMemoryInfoArgs, VMGetVMMemoryInfoResult, roles=['VM_READ'])
+    @api_method(VMGetVmMemoryInfoArgs, VMGetVmMemoryInfoResult, roles=['VM_READ'])
     async def get_vm_memory_info(self, vm_id):
         """
         Returns memory information for `vm_id` VM if it is going to be started.

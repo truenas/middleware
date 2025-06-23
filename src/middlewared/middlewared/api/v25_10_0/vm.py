@@ -27,7 +27,7 @@ __all__ = [
     'VMDisplayWebURIResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
     'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMSuspendArgs',
     'VMSuspendResult', 'VMGetVMemoryInUseArgs', 'VMGetVMemoryInUseResult', 'VMGetAvailableMemoryArgs',
-    'VMGetAvailableMemoryResult', 'VMGetVMMemoryInfoArgs', 'VMGetVMMemoryInfoResult', 'VMRandomMacArgs',
+    'VMGetAvailableMemoryResult', 'VMGetVmMemoryInfoArgs', 'VMGetVmMemoryInfoResult', 'VMRandomMacArgs',
     'VMRandomMacResult',
 ]
 
@@ -402,12 +402,12 @@ class VMGetAvailableMemoryResult(BaseModel):
     result: int
 
 
-class VMGetVMMemoryInfoArgs(BaseModel):
+class VMGetVmMemoryInfoArgs(BaseModel):
     id: int
 
 
 @single_argument_result
-class VMGetVMMemoryInfoResult(BaseModel):
+class VMGetVmMemoryInfoResult(BaseModel):
     minimum_memory_requested: int | None
     '''Minimum memory requested by the VM'''
     total_memory_requested: int
