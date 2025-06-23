@@ -479,6 +479,9 @@ def generate_smb_conf_dict(
             'template homedir': home_path,
             'winbind enum users': not ac['disable_freenas_cache'],
             'winbind enum groups': not ac['disable_freenas_cache'],
+            # The machine password timeout is currently set to zero to match
+            # behavior with earlier TrueNAS versions. This will be removed in 25.10.
+            'machine password timeout': 0,
         })
 
     """
