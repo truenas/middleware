@@ -4,8 +4,8 @@ from xml.etree import ElementTree as etree
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    VMDeviceUSBPassthroughDeviceArgs, VMDeviceUSBPassthroughDeviceResult, VMDeviceUSBPassthroughDeviceChoicesArgs,
-    VMDeviceUSBPassthroughDeviceChoicesResult, VMDeviceUSBControllerChoicesArgs, VMDeviceUSBControllerChoicesResult,
+    VMDeviceUsbPassthroughDeviceArgs, VMDeviceUsbPassthroughDeviceResult, VMDeviceUsbPassthroughChoicesArgs,
+    VMDeviceUsbPassthroughChoicesResult, VMDeviceUsbControllerChoicesArgs, VMDeviceUsbControllerChoicesResult,
 )
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
@@ -22,7 +22,7 @@ class VMDeviceService(Service):
     class Config:
         namespace = 'vm.device'
 
-    @api_method(VMDeviceUSBControllerChoicesArgs, VMDeviceUSBControllerChoicesResult, roles=['VM_DEVICE_READ'])
+    @api_method(VMDeviceUsbControllerChoicesArgs, VMDeviceUsbControllerChoicesResult, roles=['VM_DEVICE_READ'])
     async def usb_controller_choices(self):
         """
         Retrieve USB controller type choices
@@ -55,7 +55,7 @@ class VMDeviceService(Service):
             'device': None,
         }
 
-    @api_method(VMDeviceUSBPassthroughDeviceArgs, VMDeviceUSBPassthroughDeviceResult, roles=['VM_DEVICE_READ'])
+    @api_method(VMDeviceUsbPassthroughDeviceArgs, VMDeviceUsbPassthroughDeviceResult, roles=['VM_DEVICE_READ'])
     async def usb_passthrough_device(self, device):
         """
         Retrieve details about `device` USB device.
@@ -89,7 +89,7 @@ class VMDeviceService(Service):
         }
 
     @api_method(
-        VMDeviceUSBPassthroughDeviceChoicesArgs, VMDeviceUSBPassthroughDeviceChoicesResult, roles=['VM_DEVICE_READ']
+        VMDeviceUsbPassthroughChoicesArgs, VMDeviceUsbPassthroughChoicesResult, roles=['VM_DEVICE_READ']
     )
     async def usb_passthrough_choices(self):
         """

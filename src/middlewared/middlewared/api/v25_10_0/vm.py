@@ -14,19 +14,19 @@ from .vm_device import VMDisplayDevice, VMDeviceEntry
 
 __all__ = [
     'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',
-    'VMBootloaderOVMFChoicesArgs', 'VMBootloaderOVMFChoicesResult', 'VMBootloaderOptionsArgs',
+    'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult', 'VMBootloaderOptionsArgs',
     'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
-    'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureMachineChoicesArgs',
-    'VMGuestArchitectureMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult', 'VMImportDiskImageArgs',
+    'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureAndMachineChoicesArgs',
+    'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult', 'VMImportDiskImageArgs',
     'VMImportDiskImageResult', 'VMExportDiskImageArgs', 'VMExportDiskImageResult', 'VMSupportsVirtualizationArgs',
     'VMSupportsVirtualizationResult', 'VMVirtualizationDetailsArgs', 'VMVirtualizationDetailsResult',
-    'VMMaximumSupportedVCPUsArgs', 'VMMaximumSupportedVCPUsResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
-    'VMGetConsoleResult', 'VMCPUModelChoicesArgs', 'VMCPUModelChoicesResult', 'VMGetMemoryUsageArgs',
+    'VMMaximumSupportedVcpusArgs', 'VMMaximumSupportedVcpusResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
+    'VMGetConsoleResult', 'VMCpuModelChoicesArgs', 'VMCpuModelChoicesResult', 'VMGetMemoryUsageArgs',
     'VMGetMemoryUsageResult', 'VMPortWizardArgs', 'VMPortWizardResult', 'VMResolutionChoicesArgs',
-    'VMResolutionChoicesResult', 'VMGetDisplayDevicesArgs', 'VMGetDisplayDevicesResult', 'VMDisplayWebURIArgs',
-    'VMDisplayWebURIResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
+    'VMResolutionChoicesResult', 'VMGetDisplayDevicesArgs', 'VMGetDisplayDevicesResult', 'VMGetDisplayWebUriArgs',
+    'VMGetDisplayWebUriResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
     'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMSuspendArgs',
-    'VMSuspendResult', 'VMGetVMemoryInUseArgs', 'VMGetVMemoryInUseResult', 'VMGetAvailableMemoryArgs',
+    'VMSuspendResult', 'VMGetVmemoryInUseArgs', 'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
     'VMGetAvailableMemoryResult', 'VMGetVmMemoryInfoArgs', 'VMGetVmMemoryInfoResult', 'VMRandomMacArgs',
     'VMRandomMacResult',
 ]
@@ -124,12 +124,12 @@ class VMDeleteResult(BaseModel):
     result: bool
 
 
-class VMBootloaderOVMFChoicesArgs(BaseModel):
+class VMBootloaderOvmfChoicesArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class VMBootloaderOVMFChoicesResult(BaseModel):
+class VMBootloaderOvmfChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
@@ -167,12 +167,12 @@ class VMLogFileDownloadResult(BaseModel):
     result: None
 
 
-class VMGuestArchitectureMachineChoicesArgs(BaseModel):
+class VMGuestArchitectureAndMachineChoicesArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class VMGuestArchitectureMachineChoicesResult(BaseModel):
+class VMGuestArchitectureAndMachineChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
@@ -224,11 +224,11 @@ class VMVirtualizationDetailsResult(BaseModel):
     error: str | None
 
 
-class VMMaximumSupportedVCPUsArgs(BaseModel):
+class VMMaximumSupportedVcpusArgs(BaseModel):
     pass
 
 
-class VMMaximumSupportedVCPUsResult(BaseModel):
+class VMMaximumSupportedVcpusResult(BaseModel):
     result: int
 
 
@@ -252,12 +252,12 @@ class VMGetConsoleResult(BaseModel):
     result: NonEmptyString
 
 
-class VMCPUModelChoicesArgs(BaseModel):
+class VMCpuModelChoicesArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class VMCPUModelChoicesResult(BaseModel):
+class VMCpuModelChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
@@ -309,14 +309,14 @@ class DisplayWebURIOptions(BaseModel):
     protocol: Literal['HTTP', 'HTTPS'] = 'HTTP'
 
 
-class VMDisplayWebURIArgs(BaseModel):
+class VMGetDisplayWebUriArgs(BaseModel):
     id: int
     host: str = ''
     options: DisplayWebURIOptions = DisplayWebURIOptions()
 
 
 @single_argument_result
-class VMDisplayWebURIResult(BaseModel):
+class VMGetDisplayWebUriResult(BaseModel):
     error: str | None
     uri: str | None
 
@@ -380,12 +380,12 @@ class VMResumeResult(BaseModel):
     result: None
 
 
-class VMGetVMemoryInUseArgs(BaseModel):
+class VMGetVmemoryInUseArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class VMGetVMemoryInUseResult(BaseModel):
+class VMGetVmemoryInUseResult(BaseModel):
     RNP: int
     '''Running but not provisioned'''
     PRD: int

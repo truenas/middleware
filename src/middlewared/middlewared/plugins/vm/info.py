@@ -6,8 +6,8 @@ from xml.etree import ElementTree as etree
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMSupportsVirtualizationArgs, VMSupportsVirtualizationResult, VMVirtualizationDetailsArgs,
-    VMVirtualizationDetailsResult, VMMaximumSupportedVCPUsArgs, VMMaximumSupportedVCPUsResult, VMFlagsArgs,
-    VMFlagsResult, VMGetConsoleArgs, VMGetConsoleResult, VMCPUModelChoicesArgs, VMCPUModelChoicesResult,
+    VMVirtualizationDetailsResult, VMMaximumSupportedVcpusArgs, VMMaximumSupportedVcpusResult, VMFlagsArgs,
+    VMFlagsResult, VMGetConsoleArgs, VMGetConsoleResult, VMCpuModelChoicesArgs, VMCpuModelChoicesResult,
 )
 from middlewared.service import private, Service
 from middlewared.utils import run
@@ -55,7 +55,7 @@ class VMService(Service, LibvirtConnectionMixin):
             'error': None if self._is_kvm_supported() else 'Your CPU does not support KVM extensions',
         }
 
-    @api_method(VMMaximumSupportedVCPUsArgs, VMMaximumSupportedVCPUsResult, roles=['VM_READ'])
+    @api_method(VMMaximumSupportedVcpusArgs, VMMaximumSupportedVcpusResult, roles=['VM_READ'])
     async def maximum_supported_vcpus(self):
         """
         Returns maximum supported VCPU's
@@ -106,7 +106,7 @@ class VMService(Service, LibvirtConnectionMixin):
         vm = await self.middleware.call('vm.get_instance', id_)
         return f'{vm["id"]}_{vm["name"]}'
 
-    @api_method(VMCPUModelChoicesArgs, VMCPUModelChoicesResult, roles=['VM_READ'])
+    @api_method(VMCpuModelChoicesArgs, VMCpuModelChoicesResult, roles=['VM_READ'])
     def cpu_model_choices(self):
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.

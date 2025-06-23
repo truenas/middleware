@@ -12,14 +12,15 @@ __all__ = [
     'VMCDROMDevice', 'VMDisplayDevice', 'VMNICDevice', 'VMPCIDevice', 'VMRAWDevice', 'VMDiskDevice', 'VMUSBDevice',
     'VMDeviceType', 'VMDeviceEntry', 'VMDeviceCreateArgs', 'VMDeviceCreateResult', 'VMDeviceUpdateArgs',
     'VMDeviceUpdateResult', 'VMDeviceDeleteArgs', 'VMDeviceDeleteResult', 'VMDeviceDiskChoicesArgs',
-    'VMDeviceDiskChoicesResult', 'VMDeviceIOTypeArgs', 'VMDeviceIOTypeResult', 'VMDeviceNICAttachChoicesArgs',
-    'VMDeviceNICAttachChoicesResult', 'VMDeviceBindChoicesArgs', 'VMDeviceBindChoicesResult',
-    'VMDevicePassthroughDeviceArgs', 'VMDevicePassthroughDeviceResult', 'VMDeviceIOMMUEnabledArgs',
-    'VMDeviceIOMMUEnabledResult', 'VMDevicePassthroughDeviceChoicesArgs', 'VMDevicePassthroughDeviceChoicesResult',
-    'VMDevicePPTDevChoicesArgs', 'VMDevicePPTDevChoicesResult',
-    'VMDeviceUSBPassthroughDeviceArgs', 'VMDeviceUSBPassthroughDeviceResult',
-    'VMDeviceUSBPassthroughDeviceChoicesArgs', 'VMDeviceUSBPassthroughDeviceChoicesResult',
-    'VMDeviceUSBControllerChoicesArgs', 'VMDeviceUSBControllerChoicesResult',
+    'VMDeviceDiskChoicesResult', 'VMDeviceIotypeChoicesArgs', 'VMDeviceIotypeChoicesResult',
+    'VMDeviceNicAttachChoicesArgs',
+    'VMDeviceNicAttachChoicesResult', 'VMDeviceBindChoicesArgs', 'VMDeviceBindChoicesResult',
+    'VMDevicePassthroughDeviceArgs', 'VMDevicePassthroughDeviceResult', 'VMDeviceIommuEnabledArgs',
+    'VMDeviceIommuEnabledResult', 'VMDevicePassthroughDeviceChoicesArgs', 'VMDevicePassthroughDeviceChoicesResult',
+    'VMDevicePptdevChoicesArgs', 'VMDevicePptdevChoicesResult',
+    'VMDeviceUsbPassthroughDeviceArgs', 'VMDeviceUsbPassthroughDeviceResult',
+    'VMDeviceUsbPassthroughChoicesArgs', 'VMDeviceUsbPassthroughChoicesResult',
+    'VMDeviceUsbControllerChoicesArgs', 'VMDeviceUsbControllerChoicesResult',
 ]
 
 
@@ -182,23 +183,23 @@ class VMDeviceDiskChoicesResult(BaseModel):
     result: VMDeviceDiskChoices
 
 
-class VMDeviceIOTypeArgs(BaseModel):
+class VMDeviceIotypeChoicesArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class VMDeviceIOTypeResult(BaseModel):
+class VMDeviceIotypeChoicesResult(BaseModel):
     NATIVE: str = 'NATIVE'
     THREADS: str = 'THREADS'
     IO_URING: str = 'IO_URING'
 
 
-class VMDeviceNICAttachChoicesArgs(BaseModel):
+class VMDeviceNicAttachChoicesArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class VMDeviceNICAttachChoicesResult(BaseModel):
+class VMDeviceNicAttachChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
@@ -211,11 +212,11 @@ class VMDeviceBindChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
-class VMDeviceIOMMUEnabledArgs(BaseModel):
+class VMDeviceIommuEnabledArgs(BaseModel):
     pass
 
 
-class VMDeviceIOMMUEnabledResult(BaseModel):
+class VMDeviceIommuEnabledResult(BaseModel):
     result: bool
 
 
@@ -274,11 +275,11 @@ class VMDevicePassthroughDeviceChoicesResult(BaseModel):
     result: VMDevicePassthroughInfo
 
 
-class VMDevicePPTDevChoicesArgs(BaseModel):
+class VMDevicePptdevChoicesArgs(BaseModel):
     pass
 
 
-class VMDevicePPTDevChoicesResult(BaseModel):
+class VMDevicePptdevChoicesResult(BaseModel):
     result: VMDevicePassthroughInfo
 
 
@@ -291,7 +292,7 @@ class USBCapability(BaseModel):
     device: str | None
 
 
-class VMDeviceUSBPassthroughDeviceArgs(BaseModel):
+class VMDeviceUsbPassthroughDeviceArgs(BaseModel):
     device: NonEmptyString
 
 
@@ -305,22 +306,22 @@ class USBPassthroughInfo(RootModel[dict[str, USBPassthroughDevice]]):
     pass
 
 
-class VMDeviceUSBPassthroughDeviceResult(BaseModel):
+class VMDeviceUsbPassthroughDeviceResult(BaseModel):
     result: USBPassthroughDevice
 
 
-class VMDeviceUSBPassthroughDeviceChoicesArgs(BaseModel):
+class VMDeviceUsbPassthroughChoicesArgs(BaseModel):
     pass
 
 
-class VMDeviceUSBPassthroughDeviceChoicesResult(BaseModel):
+class VMDeviceUsbPassthroughChoicesResult(BaseModel):
     result: USBPassthroughInfo
 
 
-class VMDeviceUSBControllerChoicesArgs(BaseModel):
+class VMDeviceUsbControllerChoicesArgs(BaseModel):
     pass
 
 
 @single_argument_result
-class VMDeviceUSBControllerChoicesResult(BaseModel):
+class VMDeviceUsbControllerChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')

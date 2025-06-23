@@ -8,7 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     VMDeviceEntry, VMDeviceCreateArgs, VMDeviceCreateResult, VMDeviceUpdateArgs, VMDeviceUpdateResult,
     VMDeviceDeleteArgs, VMDeviceDeleteResult, VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult,
-    VMDeviceIOTypeArgs, VMDeviceIOTypeResult, VMDeviceNICAttachChoicesArgs, VMDeviceNICAttachChoicesResult,
+    VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, VMDeviceNicAttachChoicesArgs, VMDeviceNicAttachChoicesResult,
     VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult,
 )
 from middlewared.plugins.vm.devices.storage_devices import IOTYPE_CHOICES
@@ -62,7 +62,7 @@ class VMDeviceService(CRUDService):
 
         return out
 
-    @api_method(VMDeviceIOTypeArgs, VMDeviceIOTypeResult, roles=['VM_DEVICE_READ'])
+    @api_method(VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, roles=['VM_DEVICE_READ'])
     async def iotype_choices(self):
         """
         IO-type choices for storage devices.
@@ -82,7 +82,7 @@ class VMDeviceService(CRUDService):
                 device['order'] = 1002
         return device
 
-    @api_method(VMDeviceNICAttachChoicesArgs, VMDeviceNICAttachChoicesResult, roles=['VM_DEVICE_READ'])
+    @api_method(VMDeviceNicAttachChoicesArgs, VMDeviceNicAttachChoicesResult, roles=['VM_DEVICE_READ'])
     def nic_attach_choices(self):
         """
         Available choices for NIC Attach attribute.

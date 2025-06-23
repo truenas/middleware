@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMGetVmMemoryInfoArgs, VMGetVmMemoryInfoResult, VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult,
-    VMGetVMemoryInUseArgs, VMGetVMemoryInUseResult, VMRandomMacArgs, VMRandomMacResult,
+    VMGetVmemoryInUseArgs, VMGetVmemoryInUseResult, VMRandomMacArgs, VMRandomMacResult,
 )
 from middlewared.service import CallError, Service
 from middlewared.utils.memory import get_memory_info
@@ -12,7 +12,7 @@ from .utils import ACTIVE_STATES
 
 class VMService(Service):
 
-    @api_method(VMGetVMemoryInUseArgs, VMGetVMemoryInUseResult, roles=['VM_READ'])
+    @api_method(VMGetVmemoryInUseArgs, VMGetVmemoryInUseResult, roles=['VM_READ'])
     async def get_vmemory_in_use(self):
         """
         The total amount of virtual memory in MB used by guests

@@ -3,7 +3,7 @@ from socket import AF_INET6
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMPortWizardArgs, VMPortWizardResult, VMResolutionChoicesArgs, VMResolutionChoicesResult, VMGetDisplayDevicesArgs,
-    VMGetDisplayDevicesResult, VMDisplayWebURIArgs, VMDisplayWebURIResult,
+    VMGetDisplayDevicesResult, VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult,
 )
 from middlewared.service import pass_app, private, Service
 
@@ -60,7 +60,7 @@ class VMService(Service):
             devices.append(device)
         return devices
 
-    @api_method(VMDisplayWebURIArgs, VMDisplayWebURIResult, roles=['VM_READ'])
+    @api_method(VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult, roles=['VM_READ'])
     @pass_app()
     async def get_display_web_uri(self, app, id_, host, options):
         """

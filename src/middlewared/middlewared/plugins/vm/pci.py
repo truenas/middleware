@@ -5,9 +5,9 @@ from pyudev import Context
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    VMDeviceIOMMUEnabledArgs, VMDeviceIOMMUEnabledResult, VMDevicePassthroughDeviceArgs,
+    VMDeviceIommuEnabledArgs, VMDeviceIommuEnabledResult, VMDevicePassthroughDeviceArgs,
     VMDevicePassthroughDeviceResult, VMDevicePassthroughDeviceChoicesArgs, VMDevicePassthroughDeviceChoicesResult,
-    VMDevicePPTDevChoicesArgs, VMDevicePPTDevChoicesResult,
+    VMDevicePptdevChoicesArgs, VMDevicePptdevChoicesResult,
 )
 from middlewared.service import private, Service
 from middlewared.utils.iommu import get_iommu_groups_info
@@ -22,7 +22,7 @@ class VMDeviceService(Service):
     class Config:
         namespace = 'vm.device'
 
-    @api_method(VMDeviceIOMMUEnabledArgs, VMDeviceIOMMUEnabledResult, roles=['VM_DEVICE_READ'])
+    @api_method(VMDeviceIommuEnabledArgs, VMDeviceIommuEnabledResult, roles=['VM_DEVICE_READ'])
     def iommu_enabled(self):
         """Returns "true" if iommu is enabled, "false" otherwise"""
         return os.path.exists('/sys/kernel/iommu_groups')
@@ -128,7 +128,7 @@ class VMDeviceService(Service):
         """Available choices for PCI passthru devices"""
         return self.get_all_pci_devices_details()
 
-    @api_method(VMDevicePPTDevChoicesArgs, VMDevicePPTDevChoicesResult, roles=['VM_DEVICE_READ'])
+    @api_method(VMDevicePptdevChoicesArgs, VMDevicePptdevChoicesResult, roles=['VM_DEVICE_READ'])
     def pptdev_choices(self):
         """Available choices for PCI passthru device"""
         return self.get_all_pci_devices_details()

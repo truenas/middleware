@@ -12,7 +12,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMEntry, VMCreateArgs, VMCreateResult, VMUpdateArgs, VMUpdateResult, VMDeleteArgs, VMDeleteResult,
-    VMBootloaderOVMFChoicesArgs, VMBootloaderOVMFChoicesResult, VMBootloaderOptionsArgs, VMBootloaderOptionsResult,
+    VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, VMBootloaderOptionsArgs, VMBootloaderOptionsResult,
     VMStatusArgs, VMStatusResult, VMLogFilePathArgs, VMLogFilePathResult, VMLogFileDownloadArgs,
     VMLogFileDownloadResult,
 )
@@ -81,7 +81,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         role_prefix = 'VM'
         entry = VMEntry
 
-    @api_method(VMBootloaderOVMFChoicesArgs, VMBootloaderOVMFChoicesResult, roles=['VM_READ'])
+    @api_method(VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, roles=['VM_READ'])
     def bootloader_ovmf_choices(self):
         """
         Retrieve bootloader ovmf choices
