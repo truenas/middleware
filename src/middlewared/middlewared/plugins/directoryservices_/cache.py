@@ -9,7 +9,7 @@ from middlewared.utils.directoryservices.constants import (
 )
 from middlewared.utils.nss.pwd import iterpw
 from middlewared.utils.nss.grp import itergrp
-from middlewared.utils.nss.nss_common import NssModule
+from middlewared.utils.nss.nss_common import NssModule, NssError, NssReturnCode
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from .util_cache import (
@@ -240,15 +240,26 @@ class DSCache(Service):
         has_users = has_groups = False
 
         while waited <= 60:
-            if not has_users:
-                for pwd in iterpw(module=NssModule.SSS.name):
-                    has_users = True
-                    break
+            try:
+                if not has_users:
+                    for pwd in iterpw(module=NssModule.SSS.name):
+                        has_users = True
+                        break
 
-            if not has_groups:
-                for grp in itergrp(module=NssModule.SSS.name):
-                    has_groups = True
-                    break
+                if not has_groups:
+                    for grp in itergrp(module=NssModule.SSS.name):
+                        has_groups = True
+                        break
+
+            except NssError as exc:
+                # After SSSD is first wired up the NSS module may take some
+                # time to become available.
+                if exc.return_code != NssReturnCode.UNAVAIL:
+                    raise exc from None
+
+                self.logger.debug('nss_sss is currently unavailable.')
+                # insert a little more delay to avoid spamming sssd
+                sleep(5)
 
             if has_users and has_groups:
                 # allow SSSD a little more time to build cache
