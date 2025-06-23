@@ -36,6 +36,11 @@ __all__ = ["UserEntry",
 
 class UserEntry(BaseModel):
     id: int
+    """ This is the API identifier for the user. Use this ID for `user.update` and `user.delete` API calls. This ID
+    also appears in the `users` array for each group entry in `group.query` results.
+
+    NOTE: For users from a directory service, the `id` is calculated by adding 100000000 to the `uid`. This ensures
+    consistent API results. You cannot change directory service accounts through TrueNAS. """
     uid: int
     """ A non-negative integer used to identify a system user. TrueNAS uses this value for permission
     checks and many other system purposes. """
