@@ -12,7 +12,7 @@ from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.utils.smb import SMBSharePurpose
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath
+from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.utils import get_share_name
 from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
@@ -253,6 +253,12 @@ def __apply_purpose_and_options(
             vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             vfs_objects.add(TrueNASVfsObjects.WORM)
             out['worm:grace_period'] = opts[share_field.WORM_GRACE]
+
+        case SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+            vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+            out['posix locking'] = False
+            out['block size'] = VEEAM_REPO_BLOCKSIZE
 
         case _:
             raise ValueError(f'{config_in["purpose"]}: Unexpected share purpose.')
