@@ -74,7 +74,7 @@ class NetdataService(Service):
             cpu_info()['core_count'],
             self.middleware.call_sync('interface.query', [], {'count': True}),
             len(query_imported_fast_impl()),
-            len(self.middleware.call_sync('virt.instance.query', [['type', '=', 'VM']])),
+            self.middleware.call_sync('datastore.query', 'vm.vm', [], {'count': True}),
             len(glob.glob('/sys/fs/cgroup/**/*.service')),
         )
 

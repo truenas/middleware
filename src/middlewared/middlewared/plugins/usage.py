@@ -393,6 +393,39 @@ class UsageService(Service):
 
         return {'shares': sharing_list}
 
+    async def gather_vms(self, context):
+        vms = []
+        for v in await self.middleware.call('vm.query'):
+            nics = disks = 0
+            display_list = []
+            for d in v['devices']:
+                dtype = d['attributes']['dtype']
+                if dtype == 'NIC':
+                    nics += 1
+                elif dtype == 'DISK':
+                    disks += 1
+                elif dtype == 'DISPLAY':
+                    attrs = d['attributes']
+                    display_list.append({
+                        'wait': attrs.get('wait'),
+                        'resolution': attrs.get('resolution'),
+                        'web': attrs.get('web')
+                    })
+
+            vms.append({
+                'bootloader': v['bootloader'],
+                'memory': v['memory'],
+                'vcpus': v['vcpus'],
+                'autostart': v['autostart'],
+                'time': v['time'],
+                'nics': nics,
+                'disks': disks,
+                'display_devices': len(display_list),
+                'display_devices_configs': display_list
+            })
+
+        return {'vms': vms}
+
     async def gather_virt(self, context):
         virt = []
         for v in await self.middleware.call('virt.instance.query'):

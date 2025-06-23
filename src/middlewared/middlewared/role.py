@@ -103,6 +103,12 @@ ROLES = {
     'NETWORK_INTERFACE_READ': Role(),
     'NETWORK_INTERFACE_WRITE': Role(includes=['NETWORK_INTERFACE_READ']),
 
+    # VM roles
+    'VM_READ': Role(),
+    'VM_WRITE': Role(includes=['VM_READ'], stig=None),
+    'VM_DEVICE_READ': Role(includes=['VM_READ']),
+    'VM_DEVICE_WRITE': Role(includes=['VM_WRITE', 'VM_DEVICE_READ'], stig=None),
+
     # JBOF roles
     'JBOF_READ': Role(),
     'JBOF_WRITE': Role(includes=['JBOF_READ']),

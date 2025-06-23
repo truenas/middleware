@@ -116,6 +116,8 @@ from .virt_device import *
 from .virt_global import *
 from .virt_instance import *
 from .virt_volume import *
+from .vm import *
+from .vm_device import *
 from .vmware import *
 from .webui_crypto import *
 from .webui_enclosure import *

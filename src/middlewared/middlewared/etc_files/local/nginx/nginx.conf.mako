@@ -43,6 +43,8 @@
         disabled_ciphers = ':!SHA1:!SHA256:!SHA384'
     else:
         disabled_ciphers = ''
+    display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
+    display_devices = middleware.call_sync('vm.device.query', [['dtype', '=', 'DISPLAY']])
 
     has_tn_connect = middleware.call_sync('tn_connect.config')['certificate'] is not None
 
@@ -164,6 +166,23 @@ http {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
 
+% for device in display_devices:
+        location ${display_device_path}/${device['id']} {
+    % if ":" in device['attributes']['bind']:
+            proxy_pass http://[${device['attributes']['bind']}]:${device['attributes']['web_port']}/;
+    % else:
+            proxy_pass http://${device['attributes']['bind']}:${device['attributes']['web_port']}/;
+    % endif
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+        }
+
+% endfor
         location /progress {
             # report uploads tracked in the 'proxied' zone
             report_uploads proxied;

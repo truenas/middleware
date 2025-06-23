@@ -42,13 +42,24 @@ class ShellWorkerThread(threading.Thread):
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def get_command(self, username, as_root, options):
-        allowed_options = ("app_name", "virt_instance_id")
+        allowed_options = ("vm_id", "app_name", "virt_instance_id")
         if all(options.get(k) for k in allowed_options):
             raise CallError(
                 f'Only one option is supported from {", ".join(allowed_options)}'
             )
 
-        if options.get("app_name"):
+        if options.get("vm_id"):
+            command = [
+                "/usr/bin/virsh",
+                "-c",
+                "qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock",
+                "console",
+                f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}',
+            ]
+            if not as_root:
+                command = ["/usr/bin/sudo", "-H", "-u", username] + command
+            return command, not as_root
+        elif options.get("app_name"):
             command = [
                 "/usr/bin/docker",
                 "exec",
@@ -261,6 +272,10 @@ class ShellApplication:
                 authenticated = True
 
                 options = data.get("options", {})
+                if options.get("vm_id"):
+                    options["vm_data"] = await self.middleware.call(
+                        "vm.get_instance", options["vm_id"]
+                    )
                 if options.get("virt_instance_id"):
                     try:
                         virt_instance = await self.middleware.call(
