@@ -29,7 +29,6 @@ class JWKCreate(BaseModel):
 
 class ACMERegistrationBody(BaseModel):
     id: int
-    contact: str
     status: str
     key: LongString
 
