@@ -545,6 +545,11 @@ def generate_smb_conf_dict(
             'template homedir': home_path,
             'winbind enum users': ds_config['enable_account_cache'],
             'winbind enum groups': ds_config['enable_account_cache'],
+            # The machine password timeout is currently set to zero to match
+            # behavior with earlier TrueNAS versions. This can be removed once we've
+            # properly tested edge-cases with HA and have CI coverage for winbindd-initiated
+            # password changes.
+            'machine password timeout': 0,
         })
 
         idmap = ds_config['configuration']['idmap']['idmap_domain']
