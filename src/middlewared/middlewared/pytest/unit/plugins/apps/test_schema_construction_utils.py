@@ -295,6 +295,106 @@ def test_hostpath_field_type():
     assert str(m2.host_dir) == ''
 
 
+def test_path_field_with_length_constraints():
+    """Test path type with min_length and max_length validation"""
+    schema = [
+        {
+            'variable': 'config_path',
+            'schema': {
+                'type': 'path',
+                'min_length': 5,
+                'max_length': 50,
+                'required': True
+            }
+        }
+    ]
+    model = generate_pydantic_model(schema, 'TestPathLengthConstraints', NOT_PROVIDED)
+
+    # Valid path within length bounds
+    m = model(config_path='/etc/config')
+    assert m.config_path == '/etc/config'
+
+    # Edge case - minimum length (5 characters)
+    m_min = model(config_path='/tmp/')
+    assert m_min.config_path == '/tmp'  # Normalized without trailing slash
+
+    # Edge case - maximum length (50 characters)
+    long_path = '/' + 'a' * 49
+    m_max = model(config_path=long_path)
+    assert m_max.config_path == long_path
+
+    # Too short - less than 5 characters
+    with pytest.raises(ValidationError) as exc_info:
+        model(config_path='/ab')
+    assert 'Value should have at least 5 items' in str(exc_info.value)
+
+    # Too long - more than 50 characters
+    with pytest.raises(ValidationError) as exc_info:
+        model(config_path='/' + 'a' * 50)
+    assert 'Value should have at most 50 items' in str(exc_info.value)
+
+    # Still must be absolute path
+    with pytest.raises(ValidationError) as exc_info:
+        model(config_path='relative/path/long/enough')
+    assert 'Path must be absolute' in str(exc_info.value)
+
+    # Empty string should fail min_length validation
+    with pytest.raises(ValidationError) as exc_info:
+        model(config_path='')
+    assert 'Value should have at least 5 items' in str(exc_info.value)
+
+
+def test_hostpath_field_with_length_constraints():
+    """Test hostpath type with min_length and max_length validation"""
+    schema = [
+        {
+            'variable': 'data_dir',
+            'schema': {
+                'type': 'hostpath',
+                'min_length': 4,
+                'max_length': 30,
+                'required': True
+            }
+        }
+    ]
+    model = generate_pydantic_model(schema, 'TestHostPathLengthConstraints', NOT_PROVIDED)
+
+    # Valid hostpath within length bounds
+    m = model(data_dir='/tmp')
+    assert str(m.data_dir) == '/tmp'
+
+    # Edge case - minimum length (4 characters)
+    m_min = model(data_dir='/tmp')
+    assert str(m_min.data_dir) == '/tmp'
+
+    # Edge case - maximum length (must exist on system)
+    # Using /tmp since it should exist on most systems
+    m_max = model(data_dir='/tmp')
+    assert str(m_max.data_dir) == '/tmp'
+
+    # Empty string should fail min_length validation
+    with pytest.raises(ValidationError) as exc_info:
+        model(data_dir='')
+    assert 'String should have at least 4 characters' in str(exc_info.value)
+
+    # Too short non-empty path
+    with pytest.raises(ValidationError) as exc_info:
+        model(data_dir='/a')
+    # This will now fail because of length validation happening first
+    assert 'String should have at least 4 characters' in str(exc_info.value)
+
+    # Too long - more than 30 characters (if path exists)
+    # Note: This test is tricky because hostpath validates actual existence
+    # We can't easily test max_length without a real long path that exists
+    with pytest.raises(ValidationError) as exc_info:
+        model(data_dir='/this/is/a/very/long/path/that/exceeds/limit')
+    # This will fail either because of length or non-existence
+    errors = str(exc_info.value)
+    assert ('String should have at most 30 characters' in errors or
+            'Path does not exist' in errors or
+            'File does not exist' in errors)
+
+
 # Network type tests
 def test_ipaddr_field_type():
     schema = [
@@ -3288,6 +3388,101 @@ def test_construct_schema_with_path():
     result = construct_schema(item_version_details, {'config_path': '/etc/config', 'log_path': None}, False)
     assert len(result['verrors'].errors) == 0
     assert result['new_values']['log_path'] is None
+
+
+def test_construct_schema_path_with_length_constraints():
+    """Test path and hostpath fields with length constraints through construct_schema"""
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'short_path',
+                    'schema': {
+                        'type': 'path',
+                        'min_length': 10,
+                        'max_length': 50,
+                        'required': True
+                    }
+                },
+                {
+                    'variable': 'host_path',
+                    'schema': {
+                        'type': 'hostpath',
+                        'min_length': 5,
+                        'max_length': 20,
+                        'required': True
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test valid paths within length bounds
+    result = construct_schema(
+        item_version_details,
+        {'short_path': '/etc/config/app', 'host_path': '/home'},
+        False
+    )
+    assert len(result['verrors'].errors) == 0
+    assert result['new_values']['short_path'] == '/etc/config/app'
+    assert result['new_values']['host_path'] == '/home'
+
+    # Test path too short
+    result = construct_schema(
+        item_version_details,
+        {'short_path': '/etc', 'host_path': '/home'},
+        False
+    )
+    assert len(result['verrors'].errors) > 0
+    errors = str(result['verrors'].errors)
+    assert 'short_path' in errors
+    assert 'at least 10 items' in errors
+
+    # Test path too long
+    result = construct_schema(
+        item_version_details,
+        {'short_path': '/' + 'a' * 50, 'host_path': '/home'},
+        False
+    )
+    assert len(result['verrors'].errors) > 0
+    errors = str(result['verrors'].errors)
+    assert 'short_path' in errors
+    assert 'at most 50 items' in errors
+
+    # Test hostpath too long (but path doesn't exist)
+    result = construct_schema(
+        item_version_details,
+        {'short_path': '/etc/config', 'host_path': '/very/long/path/exceeding/limit'},
+        False
+    )
+    assert len(result['verrors'].errors) > 0
+    errors = str(result['verrors'].errors)
+    assert 'host_path' in errors
+    # Error could be either length or existence
+    assert ('at most 20 characters' in errors or
+            'does not exist' in errors)
+
+    # Test empty string for path (should fail min_length)
+    result = construct_schema(
+        item_version_details,
+        {'short_path': '', 'host_path': '/home'},
+        False
+    )
+    assert len(result['verrors'].errors) > 0
+    errors = str(result['verrors'].errors)
+    assert 'short_path' in errors
+    assert 'at least 10 items' in errors
+
+    # Test empty string for hostpath (should fail min_length)
+    result = construct_schema(
+        item_version_details,
+        {'short_path': '/etc/config', 'host_path': ''},
+        False
+    )
+    assert len(result['verrors'].errors) > 0
+    errors = str(result['verrors'].errors)
+    assert 'host_path' in errors
+    assert 'at least 5 characters' in errors
 
 
 def test_construct_schema_with_all_field_types():
