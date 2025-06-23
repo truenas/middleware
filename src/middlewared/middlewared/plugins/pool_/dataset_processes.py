@@ -160,7 +160,10 @@ class PoolDatasetService(Service):
                         fd = f'/proc/{pid}/fd/{f}'
                         is_link = False
                         realpath = None
-                        with contextlib.suppress(FileNotFoundError):
+                        # stat(2) from host may fail with EACCES if file is inside private mount
+                        # namespace in a container. An example of why this can happen is if file is
+                        # in snap installed in an Ubuntu container.
+                        with contextlib.suppress(FileNotFoundError, PermissionError):
                             # Have second suppression here so that we don't lose list of files
                             # if we have TOCTOU issue on one of files.
                             #
