@@ -353,6 +353,10 @@ class TestNVMe(NVMeRunning):
     def test__service_stopped(self):
         assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'STOPPED'
 
+    def test__no_sessions_when_service_stopped(self):
+        assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'STOPPED'
+        assert call('nvmet.global.sessions') == []
+
     def test__discover_fail_not_running(self, loopback_client: NVMeCLIClient):
         nc = loopback_client
         with pytest.raises(AssertionError, match='Connection refused'):
@@ -1341,6 +1345,81 @@ class TestNVMe(NVMeRunning):
                     call('nvmet.subsys.update', subsys2_id, {'ana': True})
                     assert_nqn_access(False, subsys1_nqn)
                     assert_nqn_access(False, subsys2_nqn)
+
+    def test__global_sessions_loopback(self, fixture_port, loopback_client, zvol1, zvol2, hostnqn):
+        """
+        Test that session reporting seems reasonable when using a loopback client.
+        """
+        nc = loopback_client
+
+        def assert_session(session, port_id, subsys_id, ip=truenas_server.ip):
+            assert session['host_traddr'] == ip
+            assert session['hostnqn'] == hostnqn
+            assert session['port_id'] == port_id
+            assert session['subsys_id'] == subsys_id
+
+        # Make two subsystems.
+        with self.subsys(SUBSYS_NAME1,
+                         fixture_port,
+                         allow_any_host=True,
+                         zvol_name=zvol1["name"]) as subsys1:
+            with self.subsys(SUBSYS_NAME2,
+                             fixture_port,
+                             allow_any_host=True,
+                             zvol_name=zvol2["name"]) as subsys2:
+                # Ensure no sessions are currently reported
+                assert call('nvmet.global.sessions') == []
+                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]) == []
+                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]) == []
+
+                # Now connect to one subsystem
+                with nc.connect_ctx(subsys1['nqn']):
+                    sessions = call('nvmet.global.sessions')
+                    assert len(sessions) == 1
+                    assert_session(sessions[0], fixture_port['id'], subsys1['id'])
+
+                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                    assert len(sessions) == 1
+                    assert_session(sessions[0], fixture_port['id'], subsys1['id'])
+
+                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                    assert len(sessions) == 0
+
+                    # Now connect to the other subsystem
+                    with nc.connect_ctx(subsys2['nqn']):
+                        sessions = call('nvmet.global.sessions')
+                        assert len(sessions) == 2
+                        if sessions[0]['subsys_id'] == subsys1['id']:
+                            assert_session(sessions[0], fixture_port['id'], subsys1['id'])
+                            assert_session(sessions[1], fixture_port['id'], subsys2['id'])
+                        else:
+                            assert_session(sessions[0], fixture_port['id'], subsys2['id'])
+                            assert_session(sessions[1], fixture_port['id'], subsys1['id'])
+
+                        sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                        assert len(sessions) == 1
+                        assert_session(sessions[0], fixture_port['id'], subsys1['id'])
+
+                        sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                        assert len(sessions) == 1
+                        assert_session(sessions[0], fixture_port['id'], subsys2['id'])
+
+                    # Back to only having one session
+                    sessions = call('nvmet.global.sessions')
+                    assert len(sessions) == 1
+                    assert_session(sessions[0], fixture_port['id'], subsys1['id'])
+
+                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]])
+                    assert len(sessions) == 1
+                    assert_session(sessions[0], fixture_port['id'], subsys1['id'])
+
+                    sessions = call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]])
+                    assert len(sessions) == 0
+
+                # back to having no sessions
+                assert call('nvmet.global.sessions') == []
+                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]) == []
+                assert call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]) == []
 
 
 class TestNVMeHostAuth(NVMeRunning):
