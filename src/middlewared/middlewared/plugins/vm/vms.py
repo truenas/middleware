@@ -158,7 +158,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         a snapshot is being taken for periodic snapshot tasks. For manual snapshots, if user has specified vms to
         be paused, they will be in that case.
         """
-        raise CallError('Creating legacy VMs is not supported on this system')
         async with LIBVIRT_LOCK:
             await self.middleware.run_in_thread(self._check_setup_connection)
 
@@ -299,7 +298,7 @@ class VMService(CRUDService, VMSupervisorMixin):
            an existing device.
         3) Devices that do not have an `id` attribute are created and attached to `id` VM.
         """
-        raise CallError('Updating legacy VMs is not supported on this system')
+
         old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)

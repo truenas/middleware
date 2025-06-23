@@ -29,7 +29,6 @@ class VMService(Service, VMSupervisorMixin):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        raise CallError('Starting legacy VMs is not supported on this system')
         await self.lifecycle_action_check()
         await self.middleware.run_in_thread(self._check_setup_connection)
 
@@ -106,7 +105,6 @@ class VMService(Service, VMSupervisorMixin):
         """
         Restart a VM.
         """
-        raise CallError('Restarting legacy VMs is not supported on this system')
         self._check_setup_connection()
         vm = self.middleware.call_sync('vm.get_instance', id_)
         stop_job = self.middleware.call_sync('vm.stop', id_, {'force_after_timeout': True})
@@ -122,7 +120,6 @@ class VMService(Service, VMSupervisorMixin):
         """
         Suspend `id` VM.
         """
-        raise CallError('Suspending legacy VMs is not supported on this system')
         self._check_setup_connection()
 
         vm = self.middleware.call_sync('vm.get_instance', id_)
@@ -134,7 +131,6 @@ class VMService(Service, VMSupervisorMixin):
         """
         Resume suspended `id` VM.
         """
-        raise CallError('Resuming legacy VMs is not supported on this system')
         self._check_setup_connection()
 
         vm = self.middleware.call_sync('vm.get_instance', id_)

@@ -78,7 +78,6 @@ class VMService(Service):
         `name` is an optional parameter for the cloned VM.
         If not provided it will append the next number available to the VM name.
         """
-        raise CallError('Cloning legacy VMs is not supported on this system')
         vm = await self.middleware.call('vm.get_instance', id_)
         await self.validate(vm)
 

@@ -145,7 +145,6 @@ class VMDeviceService(CRUDService):
         If `attributes.dtype` is of `DISK` type and a new Zvol is to be created, `attributes.create_zvol` will be
         passed as true with valid `attributes.zvol_name` and `attributes.zvol_volsize` values.
         """
-        raise CallError('Adding devices to legacy VMs is not supported on this system')
         data = await self.validate_device(data, update=False)
         data = await self.update_device(data)
 
@@ -163,7 +162,6 @@ class VMDeviceService(CRUDService):
 
         Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
-        raise CallError('Updating devices on legacy VMs is not supported on this system')
         device = await self.get_instance(id_)
         new = copy.deepcopy(device)
         new_attrs = data.pop('attributes', {})
