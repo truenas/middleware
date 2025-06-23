@@ -223,28 +223,6 @@ class VirtInstanceService(CRUDService):
                         'vnc_port': None,
                         'vnc_password': None,
                     })
-        else:
-            if new['instance_type'] == 'VM' and not await self.middleware.call(
-                'hardware.virtualization.guest_vms_supported'
-            ):
-                verrors.add(f'{schema_name}.instance_type', 'Virtualization is not supported on this system')
-
-            # Creation case
-            if new['source_type'] == 'ISO' and not await self.middleware.call(
-                'virt.volume.query', [['content_type', '=', 'ISO'], ['id', '=', new['iso_volume']]]
-            ):
-                verrors.add(
-                    f'{schema_name}.iso_volume',
-                    'Invalid ISO volume selected. Please select a valid ISO volume.'
-                )
-
-            if new['source_type'] == 'VOLUME' and not await self.middleware.call(
-                'virt.volume.query', [['content_type', '=', 'BLOCK'], ['id', '=', new['volume']]]
-            ):
-                verrors.add(
-                    f'{schema_name}.volume',
-                    'Invalid Volume selected. Please select a valid Volume.'
-                )
 
         if instance_type == 'VM' and new.get('enable_vnc'):
             if not new.get('vnc_port'):
@@ -383,41 +361,10 @@ class VirtInstanceService(CRUDService):
             pool = storage_pool_to_incus_pool(defpool)
 
         data_devices = data['devices'] or []
-        max_boot_priority_device = get_max_boot_priority_device(data_devices)
-        max_boot_priority = max_boot_priority_device['boot_priority'] + 1 if max_boot_priority_device else 1
-        iso_volume = data.pop('iso_volume', None)
-        root_device_to_add = None
-        volume = data.pop('volume', None)
-        if data['source_type'] == 'ISO':
-            root_device_to_add = {
-                'name': iso_volume,
-                'dev_type': 'DISK',
-                'pool': pool,
-                'source': iso_volume,
-                'destination': None,
-                'readonly': False,
-                'boot_priority': max_boot_priority,
-                'io_bus': 'VIRTIO-SCSI',
-            }
-        elif data['source_type'] == 'VOLUME':
-            root_device_to_add = {
-                'name': volume,
-                'dev_type': 'DISK',
-                'pool': pool,
-                'source': volume,
-                'destination': None,
-                'readonly': False,
-                'boot_priority': max_boot_priority,
-                'io_bus': data['root_disk_io_bus'],
-            }
 
-        if root_device_to_add:
-            data['source_type'] = None
-            data_devices.append(root_device_to_add)
-
+        # Since instance_type is now hardcoded to CONTAINER and source_type to IMAGE
+        # in the API model, we only need the container root device configuration
         devices = {
-            'root': get_root_device_dict(data['root_disk_size'], data['root_disk_io_bus'], pool),
-        } if data['instance_type'] == 'VM' else {
             'root': {
                 'path': '/',
                 'pool': pool,
@@ -455,8 +402,9 @@ class VirtInstanceService(CRUDService):
         if data['remote'] == 'LINUX_CONTAINERS':
             url = LC_IMAGES_SERVER
 
+        # Since source_type is hardcoded to IMAGE in the API model
         source = {
-            'type': (data['source_type'] or 'none').lower(),
+            'type': 'image',
         }
 
         result = await incus_call(f'1.0/images/{data["image"]}', 'get')
@@ -478,7 +426,7 @@ class VirtInstanceService(CRUDService):
                 'devices': devices,
                 'source': source,
                 'profiles': ['default'],
-                'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
+                'type': 'container',  # Only containers are supported now
                 'start': False,
             }}, running_cb, timeout=15 * 60)
             # We will give 15 minutes to incus to download relevant image and then timeout
