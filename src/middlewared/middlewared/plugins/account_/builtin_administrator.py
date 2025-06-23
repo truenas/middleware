@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import GroupHasPasswordEnabledUserArgs, GroupHasPasswordEnabledUserResult
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.service import filter_list, Service, private
+from middlewared.service import Service, private
 
 
 class GroupService(Service):
@@ -16,20 +16,23 @@ class GroupService(Service):
     @private
     async def get_password_enabled_users(self, gids, exclude_user_ids, groups=None):
         if groups is None:
-            groups = await self.middleware.call("group.query")
+            groups = await self.middleware.call("group.query", [["local", "=", True]])
 
         result = []
         result_user_ids = set()
+        group_ids = {g["id"] for g in groups if g["gid"] in gids}
 
-        groups = filter_list(groups, [["gid", "in", gids]])
         for membership in await self.middleware.call(
             "datastore.query",
             "account.bsdgroupmembership",
             [
-                ["group", "in", [g["id"] for g in groups]],
+                ["OR", [
+                    ["group", "in", group_ids],
+                    ["user.bsdusr_group", "in", group_ids],  # primary group
+                ]],
                 ["user", "nin", set(exclude_user_ids)],
             ],
-            {"prefix": "bsdgrpmember_"}
+            {"prefix": "bsdgrpmember_"},
         ):
             if membership["user"]["id"] in result_user_ids:
                 continue
