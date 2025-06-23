@@ -32,6 +32,12 @@ string prefix matching.
 # from exploding since truenas_pylibzfs module
 # isn't installed
 ZFSPropSetType: TypeAlias = frozenset["truenas_pylibzfs.ZFSProperty"]
+ZFSDefaultPropSet = frozenset()
+if truenas_pylibzfs is not None:
+    # NOTE: this is initialized this way so
+    # github CI doesn't explode since this module
+    # isn't installed in the CI VM.
+    ZFSDefaultPropSet = truenas_pylibzfs.property_sets.ZFS_SPACE_PROPERTIES
 
 
 def _format_bytes(value):
@@ -55,7 +61,7 @@ class DeterminedProperties:
 
     fs: ZFSPropSetType | None = None
     vol: ZFSPropSetType | None = None
-    default: ZFSPropSetType = truenas_pylibzfs.property_sets.ZFS_SPACE_PROPERTIES
+    default: ZFSPropSetType | None = ZFSDefaultPropSet
 
 
 @dataclass(slots=True, kw_only=True)
@@ -139,55 +145,62 @@ class QueryFiltersCallbackState:
 # these properties. We should review these and remove the
 # ones that aren't needed. The less we query here, the
 # more performant/efficient the endpoint is by default.
-BASE_PROPS = frozenset(
-    {
-        truenas_pylibzfs.ZFSProperty.AVAILABLE,
-        truenas_pylibzfs.ZFSProperty.CHECKSUM,
-        truenas_pylibzfs.ZFSProperty.COMPRESSION,
-        truenas_pylibzfs.ZFSProperty.COMPRESSRATIO,
-        truenas_pylibzfs.ZFSProperty.COPIES,
-        truenas_pylibzfs.ZFSProperty.CREATION,
-        truenas_pylibzfs.ZFSProperty.DEDUP,  # deduplication
-        truenas_pylibzfs.ZFSProperty.ENCRYPTION,  # encryption_algorithm
-        # encryption_root is just a string at top of dict
-        truenas_pylibzfs.ZFSProperty.ENCRYPTIONROOT,  # encryption_root
-        truenas_pylibzfs.ZFSProperty.KEYFORMAT,  # key_format
-        truenas_pylibzfs.ZFSProperty.ORIGIN,
-        truenas_pylibzfs.ZFSProperty.PBKDF2ITERS,
-        truenas_pylibzfs.ZFSProperty.READONLY,
-        truenas_pylibzfs.ZFSProperty.REFRESERVATION,
-        truenas_pylibzfs.ZFSProperty.RESERVATION,
-        truenas_pylibzfs.ZFSProperty.SNAPDEV,
-        truenas_pylibzfs.ZFSProperty.SYNC,
-        truenas_pylibzfs.ZFSProperty.USED,
-        truenas_pylibzfs.ZFSProperty.USEDBYCHILDREN,
-        truenas_pylibzfs.ZFSProperty.USEDBYDATASET,
-        truenas_pylibzfs.ZFSProperty.USEDBYREFRESERVATION,
-        truenas_pylibzfs.ZFSProperty.USEDBYSNAPSHOTS,
-    }
-)
-BASE_FS_PROPS = BASE_PROPS | frozenset(
-    {
-        truenas_pylibzfs.ZFSProperty.ACLMODE,
-        truenas_pylibzfs.ZFSProperty.ACLTYPE,
-        truenas_pylibzfs.ZFSProperty.ATIME,
-        truenas_pylibzfs.ZFSProperty.CASESENSITIVITY,
-        truenas_pylibzfs.ZFSProperty.EXEC,
-        truenas_pylibzfs.ZFSProperty.MOUNTPOINT,
-        truenas_pylibzfs.ZFSProperty.QUOTA,
-        truenas_pylibzfs.ZFSProperty.RECORDSIZE,
-        truenas_pylibzfs.ZFSProperty.REFQUOTA,
-        truenas_pylibzfs.ZFSProperty.SNAPDIR,
-        truenas_pylibzfs.ZFSProperty.SPECIAL_SMALL_BLOCKS,
-        truenas_pylibzfs.ZFSProperty.XATTR,
-    }
-)
-BASE_VOL_PROPS = BASE_PROPS | frozenset(
-    {
-        truenas_pylibzfs.ZFSProperty.VOLBLOCKSIZE,
-        truenas_pylibzfs.ZFSProperty.VOLSIZE,
-    }
-)
+# Additional NOTE: these global variables are initialized
+# this way so github CI doesn't explode since this module
+# isn't installed in the CI VM.
+BASE_PROPS = frozenset()
+BASE_FS_PROPS = frozenset()
+BASE_VOL_PROPS = frozenset()
+if truenas_pylibzfs is not None:
+    BASE_PROPS = frozenset(
+        {
+            truenas_pylibzfs.ZFSProperty.AVAILABLE,
+            truenas_pylibzfs.ZFSProperty.CHECKSUM,
+            truenas_pylibzfs.ZFSProperty.COMPRESSION,
+            truenas_pylibzfs.ZFSProperty.COMPRESSRATIO,
+            truenas_pylibzfs.ZFSProperty.COPIES,
+            truenas_pylibzfs.ZFSProperty.CREATION,
+            truenas_pylibzfs.ZFSProperty.DEDUP,  # deduplication
+            truenas_pylibzfs.ZFSProperty.ENCRYPTION,  # encryption_algorithm
+            # encryption_root is just a string at top of dict
+            truenas_pylibzfs.ZFSProperty.ENCRYPTIONROOT,  # encryption_root
+            truenas_pylibzfs.ZFSProperty.KEYFORMAT,  # key_format
+            truenas_pylibzfs.ZFSProperty.ORIGIN,
+            truenas_pylibzfs.ZFSProperty.PBKDF2ITERS,
+            truenas_pylibzfs.ZFSProperty.READONLY,
+            truenas_pylibzfs.ZFSProperty.REFRESERVATION,
+            truenas_pylibzfs.ZFSProperty.RESERVATION,
+            truenas_pylibzfs.ZFSProperty.SNAPDEV,
+            truenas_pylibzfs.ZFSProperty.SYNC,
+            truenas_pylibzfs.ZFSProperty.USED,
+            truenas_pylibzfs.ZFSProperty.USEDBYCHILDREN,
+            truenas_pylibzfs.ZFSProperty.USEDBYDATASET,
+            truenas_pylibzfs.ZFSProperty.USEDBYREFRESERVATION,
+            truenas_pylibzfs.ZFSProperty.USEDBYSNAPSHOTS,
+        }
+    )
+    BASE_FS_PROPS = BASE_PROPS | frozenset(
+        {
+            truenas_pylibzfs.ZFSProperty.ACLMODE,
+            truenas_pylibzfs.ZFSProperty.ACLTYPE,
+            truenas_pylibzfs.ZFSProperty.ATIME,
+            truenas_pylibzfs.ZFSProperty.CASESENSITIVITY,
+            truenas_pylibzfs.ZFSProperty.EXEC,
+            truenas_pylibzfs.ZFSProperty.MOUNTPOINT,
+            truenas_pylibzfs.ZFSProperty.QUOTA,
+            truenas_pylibzfs.ZFSProperty.RECORDSIZE,
+            truenas_pylibzfs.ZFSProperty.REFQUOTA,
+            truenas_pylibzfs.ZFSProperty.SNAPDIR,
+            truenas_pylibzfs.ZFSProperty.SPECIAL_SMALL_BLOCKS,
+            truenas_pylibzfs.ZFSProperty.XATTR,
+        }
+    )
+    BASE_VOL_PROPS = BASE_PROPS | frozenset(
+        {
+            truenas_pylibzfs.ZFSProperty.VOLBLOCKSIZE,
+            truenas_pylibzfs.ZFSProperty.VOLSIZE,
+        }
+    )
 
 
 def zfs_property_names_to_be_renamed() -> dict[str, str]:
