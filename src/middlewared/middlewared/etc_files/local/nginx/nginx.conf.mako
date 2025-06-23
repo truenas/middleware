@@ -44,7 +44,7 @@
     else:
         disabled_ciphers = ''
     display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
-    display_devices = middleware.call_sync('vm.device.query', [['dtype', '=', 'DISPLAY']])
+    display_devices = middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISPLAY']])
 
     has_tn_connect = middleware.call_sync('tn_connect.config')['certificate'] is not None
 
