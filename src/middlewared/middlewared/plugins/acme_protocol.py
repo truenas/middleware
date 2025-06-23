@@ -29,7 +29,6 @@ class JWKCreate(BaseModel):
 
 class ACMERegistrationBody(BaseModel):
     id: int
-    contact: str
     status: str
     key: LongString
 
@@ -74,7 +73,6 @@ class ACMERegistrationBodyModel(sa.Model):
     __tablename__ = 'system_acmeregistrationbody'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    contact = sa.Column(sa.String(254))
     status = sa.Column(sa.String(10))
     key = sa.Column(sa.Text())
     acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True)
@@ -165,14 +163,6 @@ class ACMERegistrationService(CRUDService):
                 'Please agree to the terms of service'
             )
 
-        # For now we assume that only root is responsible for certs issued under ACME protocol
-        email = self.middleware.call_sync('mail.local_administrator_email')
-        if not email:
-            raise CallError(
-                'Please configure an email address for any local administrator user which will be used with the ACME '
-                'server'
-            )
-
         if self.middleware.call_sync(
             'acme.registration.query', [['directory', '=', data['acme_directory_uri']]]
         ):
@@ -191,7 +181,6 @@ class ACMERegistrationService(CRUDService):
         acme_client = client.ClientV2(directory, client.ClientNetwork(key))
         register = acme_client.new_account(
             messages.NewRegistration.from_data(
-                email=email,
                 terms_of_service_agreed=True
             )
         )
@@ -217,7 +206,6 @@ class ACMERegistrationService(CRUDService):
             'datastore.insert',
             'system.acmeregistrationbody',
             {
-                'contact': register.body.contact[0],
                 'status': register.body.status,
                 'key': key.json_dumps(),
                 'acme': registration_id
