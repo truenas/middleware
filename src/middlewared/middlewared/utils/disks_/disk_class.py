@@ -1,22 +1,23 @@
-from collections.abc import Generator
-from dataclasses import dataclass
-from functools import cached_property
-from json import loads
-from os import scandir, O_RDWR, O_EXCL, open as os_open, path
-from re import compile as rcompile
-from subprocess import PIPE, run
-from typing import Literal
+import collections
+import dataclasses
+import functools
+import json
+import os
+import re
+import subprocess
+import typing
+import uuid
 
-from .disk_io import read_gpt, wipe_disk_quick
+from .disk_io import read_gpt, wipe_disk_quick, create_gpt_partition
 from .gpt_parts import GptPartEntry
 
 __all__ = ("DiskEntry", "iterate_disks")
 
 # sda, pmem0, vda, nvme0n1 but not sda1/vda1/nvme0n1p1
-VALID_WHOLE_DISK = rcompile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
+VALID_WHOLE_DISK = re.compile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class TempEntry:
     temp_c: float | None = None
     """The current temperature in celsius"""
@@ -50,7 +51,7 @@ class TempEntry:
     """
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True, kw_only=True)
 class DiskEntry:
     name: str | None = None
     """The disk's name (i.e. 'sda')"""
@@ -78,7 +79,7 @@ class DiskEntry:
         except Exception:
             pass
 
-    @cached_property
+    @functools.cached_property
     def lbs(self) -> int:
         """The disk's logical block size as reported by sysfs"""
         try:
@@ -87,7 +88,7 @@ class DiskEntry:
             # fallback to 512 always
             return 512
 
-    @cached_property
+    @functools.cached_property
     def pbs(self) -> int:
         """The disk's physical block size as reported by sysfs"""
         try:
@@ -96,7 +97,7 @@ class DiskEntry:
             # fallback to 512 always
             return 512
 
-    @cached_property
+    @functools.cached_property
     def size_sectors(self) -> int:
         """The disk's total size in sectors"""
         # Cf. include/linux/types.h
@@ -110,7 +111,7 @@ class DiskEntry:
             # rare but dont crash here
             return 0
 
-    @cached_property
+    @functools.cached_property
     def size_bytes(self) -> int:
         """The disk's total size in bytes"""
         # Cf. include/linux/types.h
@@ -120,14 +121,16 @@ class DiskEntry:
         # block size.
         return 512 * self.size_sectors
 
-    @cached_property
+    @functools.cached_property
     def serial(self) -> str | None:
         """The disk's serial number as reported by sysfs"""
         if not (serial := self.__opener(relative_path="device/serial")):
             if serial := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
-                serial = "".join(
-                    chr(b) if 32 <= b <= 126 else "\ufffd" for b in serial
-                ).replace("\ufffd", "").strip()
+                serial = (
+                    "".join(chr(b) if 32 <= b <= 126 else "\ufffd" for b in serial)
+                    .replace("\ufffd", "")
+                    .strip()
+                )
 
         if not serial:
             # pmem devices have a uuid attribute that we use as serial
@@ -137,7 +140,7 @@ class DiskEntry:
         # >>> d.serial reported as '        3FJ1U1HT'
         return serial.strip() if serial else None
 
-    @cached_property
+    @functools.cached_property
     def lunid(self) -> str | None:
         """The disk's 'wwid' as presented in sysfs.
 
@@ -158,28 +161,28 @@ class DiskEntry:
         # but there is no harm to remove empty spaces
         return wwid.replace(" ", "") if wwid else wwid
 
-    @cached_property
+    @functools.cached_property
     def model(self) -> str | None:
         """The disk's model as reported by sysfs"""
         return self.__opener(relative_path="device/model")
 
-    @cached_property
+    @functools.cached_property
     def vendor(self) -> str | None:
         return self.__opener(relative_path="device/vendor")
 
-    @cached_property
+    @functools.cached_property
     def firmware_revision(self) -> str | None:
         fr = self.__opener(relative_path="device/rev")
         if fr is None:
             fr = self.__opener(relative_path="device/firmware_rev")
         return fr
 
-    @cached_property
+    @functools.cached_property
     def media_type(self) -> str:
         fr = self.__opener(relative_path="queue/rotational")
         return "HDD" if fr == "1" else "SSD"
 
-    @cached_property
+    @functools.cached_property
     def identifier(self) -> str:
         """Return, ideally, a unique identifier for the disk.
 
@@ -196,8 +199,8 @@ class DiskEntry:
         else:
             return f"{{devicename}}{self.name}"
 
-    @cached_property
-    def translation(self) -> Literal["SATL", "SNTL", None]:
+    @functools.cached_property
+    def translation(self) -> typing.Literal["SATL", "SNTL", None]:
         """Determine if the disk is using translation.
 
         Returns:
@@ -213,7 +216,7 @@ class DiskEntry:
 
         None: No translation.
         """
-        if path.exists(f"/sys/block/{self.name}/vpd_pg89"):
+        if os.path.exists(f"/sys/block/{self.name}/vpd_pg89"):
             return "SATL"
         elif self.name.startswith("sd") and self.vendor == "NVMe":
             return "SNTL"
@@ -226,11 +229,11 @@ class DiskEntry:
             elif tl == "SNTL":
                 cmd.extend(["-d", "nvme"])
 
-        cp = run(
+        cp = subprocess.run(
             cmd,
             check=False,
-            stdout=PIPE,
-            stderr=PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             encoding="utf8",
             errors="ignore",
         )
@@ -238,23 +241,28 @@ class DiskEntry:
             raise OSError(f"{cmd!r} failed for {self.name}:\n{cp.stderr}")
         return cp.stdout
 
-    def smartctl_info(self, json: bool = False) -> dict | str:
-        """Return smartcl -x information.
+    def smartctl_info(self, return_json: bool = False) -> dict | str:
+        """Return smartctl -x information.
 
-        json: bool if true, will return json serialize the results.
+        Args:
+            return_json: If True, will return JSON serialized results.
+                        If False, returns raw string output.
+
+        Returns:
+            dict | str: Parsed JSON dict if return_json=True, raw string otherwise.
         """
         cmd = ["smartctl", "-x", self.devpath]
-        if json:
+        if return_json:
             cmd.extend(["-jc"])
 
         stdout = self.__run_smartctl_cmd_impl(cmd)
-        if json:
-            return loads(stdout)
+        if return_json:
+            return json.loads(stdout)
         else:
             return stdout
 
     def smartctl_test(
-        self, ttype: Literal["long", "short", "offline", "conveyance"]
+        self, ttype: typing.Literal["long", "short", "offline", "conveyance"]
     ) -> None:
         """Run a SMART test.
 
@@ -279,7 +287,7 @@ class DiskEntry:
 
         rv = {"temp_c": None, "crit": None}
         try:
-            with scandir(path) as sdir:
+            with os.scandir(path) as sdir:
                 for i in filter(
                     lambda x: x.is_dir() and x.name.startswith("hwmon"), sdir
                 ):
@@ -316,7 +324,6 @@ class DiskEntry:
 
         return TempEntry(**rv)
 
-    @property
     def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry] | None:
         """Return a tuple of `GptPartEntry` objects for any
         GPT partitions written to the disk."""
@@ -327,14 +334,59 @@ class DiskEntry:
         This should remove all filesystem metadata and partition
         info."""
         if dev_fd is None:
-            with open(os_open(self.devpath, O_RDWR | O_EXCL), "r+b") as f:
+            with open(os.open(self.devpath, os.O_RDWR | os.O_EXCL), "r+b") as f:
                 wipe_disk_quick(f.fileno(), disk_size=self.size_bytes)
         else:
             wipe_disk_quick(dev_fd, disk_size=self.size_bytes)
 
+    def format(self) -> uuid.UUID:
+        """Format the disk with a GPT partition table containing a single ZFS partition.
 
-def iterate_disks() -> Generator[DiskEntry]:
+        Creates a complete GPT (GUID Partition Table) structure on the disk,
+        including protective MBR, primary and secondary GPT headers, and partition entries.
+        The partition is configured for ZFS use with proper alignment and sizing.
+
+        This method automatically wipes any existing partitions before creating the new
+        GPT structure. It opens the device once and reuses the file descriptor for all
+        operations to optimize performance.
+
+        Returns:
+            uuid.UUID: The unique identifier (GUID) of the created partition
+
+        Raises:
+            ValueError: If there's insufficient space on the disk after applying
+                       alignment constraints
+            OSError: If the device cannot be opened or accessed
+
+        Note:
+            - The device must not be mounted or in use
+            - Requires root privileges to access block devices
+            - Automatically wipes existing partitions if present
+            - Creates a single partition spanning most of the disk with proper alignment
+            - Reserves space at the end of the disk for resilience (up to 2GB or 1% of disk)
+            - Uses 1MB alignment for optimal performance
+            - For 4K native disks, uses sector 2048 as the first usable sector
+            - Opens device only once for optimal performance
+        """
+        dev_fd = os.open(self.devpath, os.O_RDWR | os.O_EXCL)
+        try:
+            if self.partitions(dev_fd):
+                # existing partitions detected
+                # so we need to wipe them before
+                # we format the disk with new ones
+                self.wipe_quick(dev_fd)
+            return create_gpt_partition(
+                dev_fd,
+                ts_512=self.size_sectors,
+                lbs=self.lbs,
+                pbs=self.pbs,
+            )
+        finally:
+            os.close(dev_fd)
+
+
+def iterate_disks() -> collections.abc.Generator[DiskEntry]:
     """Iterate over /dev and yield valid devices."""
-    with scandir("/dev") as sdir:
+    with os.scandir("/dev") as sdir:
         for i in filter(lambda x: VALID_WHOLE_DISK.match(x.name), sdir):
             yield DiskEntry(name=i.name, devpath=i.path)
