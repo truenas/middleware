@@ -1286,7 +1286,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     async def api_versions_handler(self, request):
         return web.Response(
-            body=json.dumps([version.version for version in self.api_versions]),
+            body=json.dumps([version.version for version in self.api_versions if version.version != "v24.10"]),
             content_type="application/json",
         )
 
