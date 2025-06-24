@@ -155,7 +155,9 @@ class ServiceService(CRUDService):
             Bool('silent', default=True),
             register=True,
         ),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        audit='Service: start',
+        audit_extended=lambda service: service,
     )
     @returns(Bool('started_service', description='Will return `true` if service successfully started'))
     @pass_app(rest=True)
@@ -241,7 +243,9 @@ class ServiceService(CRUDService):
     @accepts(
         Str('service'),
         Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        audit='Service: stop',
+        audit_extended=lambda service: service,
     )
     @returns(Bool('service_stopped', description='Will return `true` if service successfully stopped'))
     @pass_app(rest=True)
@@ -279,7 +283,9 @@ class ServiceService(CRUDService):
     @accepts(
         Str('service'),
         Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        audit='Service: restart',
+        audit_extended=lambda service: service,
     )
     @returns(Bool('service_restarted'))
     @pass_app(rest=True)
@@ -341,7 +347,9 @@ class ServiceService(CRUDService):
     @accepts(
         Str('service'),
         Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        audit='Service: reload',
+        audit_extended=lambda service: service,
     )
     @returns(Bool('service_reloaded'))
     @pass_app(rest=True)
