@@ -105,7 +105,6 @@ async def test_use_ssh_enabled_validation(
             smb=False,
             group={},
             password_disabled=True,
-            id_type_both=False,
             local=True,
             immutable=False,
             twofactor_auth_configured=twofactor_enabled,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import errno
+import json
 import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.directory_service import directoryservice
@@ -60,11 +61,25 @@ def get_ad_user_and_group(do_ad_connection):
     return (user, group)
 
 
+def get_tdb_version_data(filename):
+    tdb_data = ssh(f'tdbdump -k TRUENAS_VERSION {filename}')
+    return json.loads(tdb_data.replace('\\22', '"'))
+
+
+def check_cache_version():
+    tn_version = call('system.version_short')
+    tdb_v_usr = get_tdb_version_data('/root/tdb/persistent/directoryservice_cache_user.tdb')
+    assert tdb_v_usr['truenas_version'] == tn_version
+    tdb_v_grp = get_tdb_version_data('/root/tdb/persistent/directoryservice_cache_group.tdb')
+    assert tdb_v_grp['truenas_version'] == tn_version
+
+
 def test_check_for_ad_users(do_ad_connection):
     """
     This test validates that wbinfo -u output matches entries
     we get through user.query
     """
+    check_cache_version()
     cmd = "wbinfo -u"
     results = ssh(cmd, complete_response=True)
     assert results['result'], str(results['output'])
@@ -100,6 +115,7 @@ def test_check_directoryservices_cache_refresh(do_ad_connection):
 
     # directoryservices.cache_refresh job causes us to rebuild / refresh LDAP / AD users.
     call('directoryservices.cache.refresh_impl', job=True)
+    check_cache_version()
 
     users = set([x['username'] for x in call(
         'user.query', [['local', '=', False]]
@@ -128,10 +144,8 @@ def test_check_lazy_initialization_of_users_and_groups_by_name(do_ad_connection)
     ssh('rm -f /root/tdb/persistent/*')
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
 
-    assert ad_user['id_type_both'] is True
     assert ad_user['immutable'] is True
     assert ad_user['local'] is False
-    assert ad_group['id_type_both'] is True
     assert ad_group['local'] is False
 
     cache_names = set([x['username'] for x in call(

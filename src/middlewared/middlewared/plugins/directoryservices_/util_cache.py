@@ -43,6 +43,8 @@ TDB_LOCKS = defaultdict(Lock)
 
 CACHE_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON)
 
+TRUENAS_CACHE_VERSION_KEY = 'TRUENAS_VERSION'
+
 
 class DSCacheFile(enum.Enum):
     USER = 'directoryservice_cache_user'
@@ -110,7 +112,6 @@ class DSCacheFill:
         self,
         idmap_ctx: idmap_winbind.WBClient | idmap_sss.SSSClient,
         nss_entries: list,
-        dom_by_sid: dict
     ) -> list[dict]:
         """
         Add SID information to entries that NSS has returned. Dictionary
@@ -120,10 +121,6 @@ class DSCacheFill:
         posix accounts to SIDs
 
         `nss_entries` - list of posix accounts to look up
-
-        `dom_by_sid` - mapping for trusted domains to provide idmap backend
-        information for trusted domains. This is used to ensure that synthetic
-        database IDs are unique and guaranteed to not change.
 
         Returns:
             Same list passed in as nss_entries
@@ -153,10 +150,6 @@ class DSCacheFill:
 
             entry['sid'] = idmap_entry['sid']
             entry['id_type'] = idmap_entry['id_type']
-            if dom_by_sid:
-                entry['domain_info'] = dom_by_sid[idmap_entry['sid'].rsplit('-', 1)[0]]
-            else:
-                entry['domain_info'] = None
 
         to_remove.reverse()
         for idx in to_remove:
@@ -169,7 +162,6 @@ class DSCacheFill:
         idmap_ctx: idmap_winbind.WBClient | idmap_sss.SSSClient | None,
         nss_module: NssModule,
         entry_type: IDType,
-        dom_by_sid: dict
     ) -> Iterable[dict]:
         """
         This method yields the users or groups in batches of 100 entries.
@@ -193,7 +185,6 @@ class DSCacheFill:
                     'sid': None,
                     'nss': entry,
                     'id_type': entry_type.name,
-                    'domain_info': None
                 })
 
             # Depending on the directory sevice we may need to add SID
@@ -201,14 +192,43 @@ class DSCacheFill:
             if idmap_ctx is None:
                 yield out
             else:
-                yield self._add_sid_info_to_entries(idmap_ctx, out, dom_by_sid)
+                yield self._add_sid_info_to_entries(idmap_ctx, out)
 
     def fill_cache(
         self,
         job: Job,
         ds_type: DSType,
-        dom_by_sid: dict
+        truenas_version: str,
     ) -> None:
+        """ Create and fill directory services cache based on the specified DSType
+        params:
+        -------
+        job - middleware job object. Callers to the function should be a middleware job since it may be incredibly
+            long-running.
+
+        ds_type - The type of the enabled directory service. This is used to determine whether to use winbind client
+            or sss client to speak to the domain in order to get SID information.
+
+        truenas_version - output of system.version_short. Used for cache invalidation on middleware startup on version
+            mismatch.
+
+
+        returns:
+        --------
+        None - this method creates a new cache tdb and renames over existing one so that middleware never sees a
+            partial cache file
+
+
+        raises:
+        -------
+        ValueError - invalid DSType provided as `ds_type`.
+        ValueError - IPA-only. SSSD failed to retrieve idmapping result. May indicate unhealthy domain.
+        IOError - IPA-only. The SID operation is not supported. This is an unexpected and may indicate a significantly
+            broken domain. Documented merely because it's a visible in the `pysss_nss_idmap.c` source.
+        NssError - NSS module for directory service is in unhealthy state. This can result from join breaking while
+            filling cache.
+        WBCErr - AD-only. Winbind client error. This can also result from domain join breaking while filling cache.
+        """
         match ds_type:
             case DSType.AD:
                 nss_module = NssModule.WINBIND
@@ -226,21 +246,17 @@ class DSCacheFill:
         group_count = 0
 
         job.set_progress(40, 'Preparing to add users to cache')
+        for hdl in (self.users_handle, self.groups_handle):
+            _tdb_add_version(hdl, truenas_version)
 
         # First grab batches of 100 entries
         for users in self._get_entries_for_cache(
             idmap_ctx,
             nss_module,
             IDType.USER,
-            dom_by_sid
         ):
             # Now iterate members of 100 for insertion
             for u in users:
-                if u['domain_info']:
-                    id_type_both = u['domain_info']['idmap_backend'] in ('AUTORID', 'RID')
-                else:
-                    id_type_both = False
-
                 user_data = u['nss']
                 entry = {
                     'id': BASE_SYNTHETIC_DATASTORE_ID + user_data.pw_uid,
@@ -263,7 +279,6 @@ class DSCacheFill:
                     'immutable': True,
                     'twofactor_auth_configured': False,
                     'local': False,
-                    'id_type_both': id_type_both,
                     'smb': u['sid'] is not None,
                     'sid': u['sid'],
                     'roles': [],
@@ -287,14 +302,8 @@ class DSCacheFill:
             idmap_ctx,
             nss_module,
             IDType.GROUP,
-            dom_by_sid
         ):
             for g in groups:
-                if g['domain_info']:
-                    id_type_both = g['domain_info']['idmap_backend'] in ('AUTORID', 'RID')
-                else:
-                    id_type_both = False
-
                 group_data = g['nss']
                 entry = {
                     'id': BASE_SYNTHETIC_DATASTORE_ID + group_data.gr_gid,
@@ -306,7 +315,6 @@ class DSCacheFill:
                     'sudo_commands_nopasswd': [],
                     'users': [],
                     'local': False,
-                    'id_type_both': id_type_both,
                     'smb': g['sid'] is not None,
                     'sid': g['sid'],
                     'roles': []
@@ -320,6 +328,14 @@ class DSCacheFill:
 
         job.set_progress(100, f'Cached {user_count} users and {group_count} groups.')
         self._commit()
+
+
+def _tdb_add_version(
+    handle: TDBHandle,
+    version: str
+) -> None:
+    """ Unlocked call to add version info to a TDB handle. """
+    handle.store(TRUENAS_CACHE_VERSION_KEY, {'truenas_version': version})
 
 
 def _tdb_add_entry(
@@ -387,3 +403,35 @@ def query_cache_entries(
 ) -> list:
     with get_tdb_handle(DSCacheFile[id_type.name].value, CACHE_OPTIONS) as handle:
         return filter_list(handle.entries(include_keys=False, key_prefix='ID_'), filters, options)
+
+
+def check_cache_version(truenas_version: str) -> None:
+    """ Check that cache matches expected TrueNAS version and remove files if invalid. This should
+    be called only during middleware startup. These files are not particularly valuable and so
+    error handling here is to simply delete them. They will be replaced when directory services
+    initialize after the system.ready event."""
+    is_valid = True
+
+    for cache_file in DSCacheFile:
+        try:
+            with get_tdb_handle(cache_file.value, CACHE_OPTIONS) as hdl:
+                try:
+                    vers_data = hdl.get(TRUENAS_CACHE_VERSION_KEY)
+                    if vers_data['truenas_version'] == truenas_version:
+                        continue
+                except Exception:
+                    pass
+
+                is_valid = False
+                break
+        except Exception:
+            # Possibly a corrupted tdb file or garbage that was inserted into our persistent tdb directory.
+            is_valid = False
+            break
+
+    if not is_valid:
+        for cache_file in DSCacheFile:
+            try:
+                os.remove(cache_file.path)
+            except Exception:
+                pass

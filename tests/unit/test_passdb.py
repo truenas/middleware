@@ -76,7 +76,6 @@ SAMPLE_USER = {
     'immutable': False,
     'twofactor_auth_configured': False,
     'local': True,
-    'id_type_both': False,
     'sid': 'S-1-5-21-710078819-430336432-4106732522-20075',
     'roles': [],
     'last_password_change': 1711547527,  # Deliberately old password
