@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import PortDelegate, ServicePortDelegate
 
-from .utils import VirtGlobalStatus, INCUS_BRIDGE, incus_call
+from .utils import VirtGlobalStatus, INCUS_BRIDGE
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
