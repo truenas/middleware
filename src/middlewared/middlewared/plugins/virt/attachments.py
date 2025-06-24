@@ -1,3 +1,5 @@
+import ipaddress
+
 from itertools import product
 from typing import TYPE_CHECKING
 
@@ -225,11 +227,12 @@ class IncusServicePortDelegate(ServicePortDelegate):
             network_info = await self.middleware.call('virt.global.get_network', INCUS_BRIDGE)
             for family in ['ipv4_address', 'ipv6_address']:
                 if network_info.get(family):
-                    # Extract IP address from CIDR notation (e.g., "10.0.0.1/24" -> "10.0.0.1")
-                    # Extract IP address from CIDR notation (e.g., "2001:db8::1/64" -> "2001:db8::1")
-                    ip_address = network_info[family].split('/')[0]
-                    # Port 53 is bound on incusbr0 for DNS
-                    ports.append((ip_address, 53))
+                    try:
+                        # Extract IP address from CIDR notation
+                        ip = ipaddress.ip_interface(network_info[family]).ip
+                        ports.append((str(ip), 53))
+                    except ValueError:
+                        continue
         except Exception:
             # If we can't get network info, don't report ports
             pass
