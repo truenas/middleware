@@ -166,7 +166,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         api_versions = [
             (version_dir.name.replace('_', '.'), f'middlewared.api.{version_dir.name}')
             for version_dir in sorted(pathlib.Path(api_dir).iterdir())
-            if version_dir.name.startswith('v') and version_dir.is_dir()
+            if version_dir.name.startswith('v') and version_dir.is_dir() and (version_dir / '__init__.py').exists()
         ]
         for i, (version, module_name) in enumerate(api_versions):
             if i == len(api_versions) - 1:

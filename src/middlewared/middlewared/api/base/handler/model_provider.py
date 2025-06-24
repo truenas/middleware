@@ -16,7 +16,6 @@ ModelFactory: TypeAlias = Callable[[type[BaseModel]], type[BaseModel]]
 
 
 class ModelProvider(ABC):
-
     @abstractmethod
     def __init__(self):
         self.models: dict[str, type[BaseModel]]
@@ -43,11 +42,12 @@ class ModuleModelProvider(ModelProvider):
     """
     Provides API models from specified module.
     """
-    def __init__(self, module: ModuleType):
+
+    def __init__(self, module_name: str):
         """
-        :param module: Module that contains models.
+        :param module_name: module that contains models
         """
-        self.models = models_from_module(module)
+        self.models = models_from_module(importlib.import_module(module_name))
 
 
 class LazyModuleModelProvider(ModelProvider):
