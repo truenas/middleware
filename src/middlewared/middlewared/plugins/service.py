@@ -161,6 +161,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: start',
+        audit_extended=lambda service: service,
     )
     async def start(self, app, service, options):
         """
@@ -249,6 +251,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: stop',
+        audit_extended=lambda service: service,
     )
     async def stop(self, app, service, options):
         """
@@ -295,6 +299,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: restart',
+        audit_extended=lambda service: service,
     )
     async def restart(self, app, service, options):
         """
@@ -365,6 +371,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: reload',
+        audit_extended=lambda service: service,
     )
     async def reload(self, app, service, options):
         """
