@@ -5,16 +5,22 @@ from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 from middlewared.pytest.unit.helpers import TestModelProvider
 
 
-class ContactV1(BaseModel):
+class Contact(BaseModel):
     name: str
     email: str
 
 
-class SettingsV1(BaseModel):
+ContactV1 = Contact
+
+
+class Settings(BaseModel):
     contacts: list[ContactV1]
 
 
-class ContactV2(BaseModel):
+SettingsV1 = Settings
+
+
+class Contact(BaseModel):
     first_name: str
     last_name: str
     email: str
@@ -36,8 +42,14 @@ class ContactV2(BaseModel):
         return value
 
 
-class SettingsV2(BaseModel):
+ContactV2 = Contact
+
+
+class Settings(BaseModel):
     contacts: list[ContactV2]
+
+
+SettingsV2 = Settings
 
 
 @pytest.mark.asyncio

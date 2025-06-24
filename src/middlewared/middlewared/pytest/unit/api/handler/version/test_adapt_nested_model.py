@@ -6,15 +6,21 @@ from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 from middlewared.pytest.unit.helpers import TestModelProvider
 
 
-class SettingsV1(BaseModel):
+class Settings(BaseModel):
     email: EmailStr | None = None
 
 
-class UpdateSettingsArgsV1(BaseModel):
+SettingsV1 = Settings
+
+
+class UpdateSettingsArgs(BaseModel):
     settings: SettingsV1
 
 
-class SettingsV2(BaseModel):
+UpdateSettingsArgsV1 = UpdateSettingsArgs
+
+
+class Settings(BaseModel):
     emails: list[EmailStr]
 
     @classmethod
@@ -40,11 +46,17 @@ class SettingsV2(BaseModel):
         return value
 
 
-class UpdateSettingsArgsV2(BaseModel):
+SettingsV2 = Settings
+
+
+class UpdateSettingsArgs(BaseModel):
     settings: SettingsV2
 
 
-class SettingsV3(BaseModel):
+UpdateSettingsArgsV2 = UpdateSettingsArgs
+
+
+class Settings(BaseModel):
     contacts: list[dict]
 
     @classmethod
@@ -65,8 +77,14 @@ class SettingsV3(BaseModel):
         return value
 
 
-class UpdateSettingsArgsV3(BaseModel):
+SettingsV3 = Settings
+
+
+class UpdateSettingsArgs(BaseModel):
     settings: SettingsV3
+
+
+UpdateSettingsArgsV3 = UpdateSettingsArgs
 
 
 @pytest.mark.asyncio
