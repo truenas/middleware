@@ -184,7 +184,7 @@ def test_list_of_ints():
 
 
 def test_nested_dict_with_defaults():
-    # nested dict with default values on all subfields => no required => NotRequired
+    # nested dict with default values on all subfields => no required => default_factory should apply
     schema = [
         {
             'variable': 'config',
@@ -205,13 +205,10 @@ def test_nested_dict_with_defaults():
     ]
     model = generate_pydantic_model(schema, 'TestNestedDefaults', NOT_PROVIDED)
     m = model()
-    # Non-required dict without explicit default gets NotRequired
-    assert m.config is NotRequired
-
-    # Can still provide values
-    m2 = model(config={'port': 9090, 'flag': True})
-    assert m2.config.port == 9090
-    assert m2.config.flag is True
+    # default_factory should instantiate nested model with defaults
+    assert isinstance(m.config, object)
+    assert m.config.port == 8080
+    assert m.config.flag is False
 
 
 def test_nested_dict_with_required_subfield():
@@ -235,10 +232,9 @@ def test_nested_dict_with_required_subfield():
         }
     ]
     model = generate_pydantic_model(schema, 'TestNestedReq', NOT_PROVIDED)
-    # instantiation without info returns NotRequired (dict itself is not required)
-    m = model()
-    assert m.info is NotRequired
-
+    # instantiation without info should raise (missing required nested)
+    with pytest.raises(ValidationError):
+        model()
     # instantiation with partial nested missing 'name' should raise
     with pytest.raises(ValidationError):
         model(info={})
@@ -674,9 +670,9 @@ def test_empty_list_default():
     ]
     model = generate_pydantic_model(schema, 'TestEmptyList', NOT_PROVIDED)
 
-    # Non-required list without explicit default gets NotRequired
+    # Should default to empty list
     m = model()
-    assert m.items is NotRequired
+    assert m.items == []
 
     # Can provide values
     m2 = model(items=[1, 2, 3])
@@ -689,9 +685,9 @@ def test_empty_dict_default():
     ]
     model = generate_pydantic_model(schema, 'TestEmptyDict', NOT_PROVIDED)
 
-    # Non-required dict without explicit default gets NotRequired
+    # Should default to empty dict
     m = model()
-    assert m.config is NotRequired
+    assert m.config == {}
 
     # Can provide values
     m2 = model(config={'key': 'value'})
@@ -749,9 +745,9 @@ def test_dict_containing_list_of_dicts():
 
     model = generate_pydantic_model(schema, 'TestComplexEnvs', NOT_PROVIDED)
 
-    # Test without providing the dict - gets NotRequired
+    # Test with empty list (default)
     m1 = model()
-    assert m1.home_assistant is NotRequired
+    assert m1.home_assistant.additional_envs == []
 
     # Test with valid env vars
     m2 = model(home_assistant={
@@ -2747,9 +2743,10 @@ def test_enum_in_nested_dict():
 
     model = generate_pydantic_model(schema, 'TestNestedEnum', NOT_PROVIDED)
 
-    # Non-required dict gets NotRequired
+    # Default values
     m1 = model()
-    assert m1.database is NotRequired
+    assert m1.database.type == 'postgres'
+    assert m1.database.host == 'localhost'
 
     # Valid enum value
     m2 = model(database={'type': 'mysql', 'host': 'db.example.com'})
@@ -2922,9 +2919,10 @@ def test_enum_with_minio_example():
 
     model = generate_pydantic_model(schema, 'TestMinioExample', NOT_PROVIDED)
 
-    # Non-required dict gets NotRequired
+    # Test defaults
     m1 = model()
-    assert m1.service is NotRequired
+    assert m1.service.api_port_protocol == 'http'
+    assert m1.service.console_port_protocol == 'http'
 
     # Test mixed protocols
     m2 = model(service={
@@ -2937,241 +2935,6 @@ def test_enum_with_minio_example():
     # Invalid protocol should fail
     with pytest.raises(ValidationError):
         model(service={'api_port_protocol': 'tcp'})
-
-
-# Tests for verifying default behavior with construct_schema
-def test_construct_schema_no_defaults_for_non_required_list():
-    """Test that non-required lists without explicit defaults don't get empty list"""
-    item_version_details = {
-        'schema': {
-            'questions': [
-                {
-                    'variable': 'tags',
-                    'schema': {
-                        'type': 'list',
-                        'required': False,
-                        'items': [
-                            {
-                                'variable': 'tag',
-                                'schema': {'type': 'string'}
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }
-
-    # When no value provided, it should not populate an empty list
-    result = construct_schema(item_version_details, {}, False)
-    assert len(result['verrors'].errors) == 0
-    # The field should not be in new_values since it's not required and no default
-    assert 'tags' not in result['new_values']
-
-    # When value is provided, it should work
-    result2 = construct_schema(item_version_details, {'tags': ['python', 'docker']}, False)
-    assert len(result2['verrors'].errors) == 0
-    assert result2['new_values']['tags'] == ['python', 'docker']
-
-
-def test_construct_schema_no_defaults_for_non_required_dict():
-    """Test that non-required dicts without explicit defaults don't get empty dict"""
-    item_version_details = {
-        'schema': {
-            'questions': [
-                {
-                    'variable': 'metadata',
-                    'schema': {
-                        'type': 'dict',
-                        'required': False,
-                        'attrs': [
-                            {
-                                'variable': 'version',
-                                'schema': {'type': 'string', 'default': '1.0'}
-                            },
-                            {
-                                'variable': 'author',
-                                'schema': {'type': 'string', 'required': False}
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }
-
-    # When no value provided, it should not populate a dict
-    result = construct_schema(item_version_details, {}, False)
-    assert len(result['verrors'].errors) == 0
-    # The field should not be in new_values since it's not required and no default
-    assert 'metadata' not in result['new_values']
-
-    # When value is provided, it should work with defaults applied to nested fields
-    result2 = construct_schema(item_version_details, {'metadata': {}}, False)
-    assert len(result2['verrors'].errors) == 0
-    # With exclude_unset=True, only provided fields are returned
-    assert result2['new_values'] == {'metadata': {}}
-
-
-def test_construct_schema_explicit_defaults_still_work():
-    """Test that explicit defaults still work for lists and dicts"""
-    item_version_details = {
-        'schema': {
-            'questions': [
-                {
-                    'variable': 'ports',
-                    'schema': {
-                        'type': 'list',
-                        'default': [80, 443],
-                        'required': False
-                    }
-                },
-                {
-                    'variable': 'labels',
-                    'schema': {
-                        'type': 'dict',
-                        'default': {'env': 'production'},
-                        'required': False
-                    }
-                }
-            ]
-        }
-    }
-
-    # With no values provided, explicit defaults are NOT returned with exclude_unset=True
-    result = construct_schema(item_version_details, {}, False)
-    assert len(result['verrors'].errors) == 0
-    # With exclude_unset=True, only provided fields are returned, not defaults
-    assert result['new_values'] == {}
-
-    # Can override defaults
-    result2 = construct_schema(item_version_details, {'ports': [8080], 'labels': {'env': 'dev'}}, False)
-    assert len(result2['verrors'].errors) == 0
-    assert result2['new_values']['ports'] == [8080]
-    assert result2['new_values']['labels'] == {'env': 'dev'}
-
-
-def test_construct_schema_nested_non_required_behavior():
-    """Test complex nested structure with non-required fields"""
-    item_version_details = {
-        'schema': {
-            'questions': [
-                {
-                    'variable': 'app_config',
-                    'schema': {
-                        'type': 'dict',
-                        'required': False,
-                        'attrs': [
-                            {
-                                'variable': 'database',
-                                'schema': {
-                                    'type': 'dict',
-                                    'required': False,
-                                    'attrs': [
-                                        {
-                                            'variable': 'connections',
-                                            'schema': {
-                                                'type': 'list',
-                                                'required': False,
-                                                'items': [
-                                                    {
-                                                        'variable': 'conn',
-                                                        'schema': {
-                                                            'type': 'dict',
-                                                            'attrs': [
-                                                                {
-                                                                    'variable': 'host',
-                                                                    'schema': {'type': 'string', 'required': True}
-                                                                },
-                                                                {
-                                                                    'variable': 'port',
-                                                                    'schema': {'type': 'int', 'default': 5432}
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }
-
-    # With no values, nothing should be populated
-    result = construct_schema(item_version_details, {}, False)
-    assert len(result['verrors'].errors) == 0
-    assert 'app_config' not in result['new_values']
-
-    # With partial values, only provided parts should exist
-    result2 = construct_schema(item_version_details, {
-        'app_config': {
-            'database': {
-                'connections': [{'host': 'localhost'}]
-            }
-        }
-    }, False)
-    assert len(result2['verrors'].errors) == 0
-    # With exclude_unset=True, only provided fields are returned
-    assert result2['new_values'] == {
-        'app_config': {
-            'database': {
-                'connections': [{'host': 'localhost'}]
-            }
-        }
-    }
-
-
-def test_construct_schema_required_fields_with_non_required_containers():
-    """Test that required fields inside non-required containers behave correctly"""
-    item_version_details = {
-        'schema': {
-            'questions': [
-                {
-                    'variable': 'optional_config',
-                    'schema': {
-                        'type': 'dict',
-                        'required': False,
-                        'attrs': [
-                            {
-                                'variable': 'mandatory_field',
-                                'schema': {'type': 'string', 'required': True}
-                            },
-                            {
-                                'variable': 'optional_field',
-                                'schema': {'type': 'string', 'required': False}
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }
-
-    # When container not provided, no error (container itself is optional
-    result = construct_schema(item_version_details, {}, False)
-    assert len(result['verrors'].errors) == 0
-    assert 'optional_config' not in result['new_values']
-
-    # When container provided but required field missing, should error
-    result2 = construct_schema(item_version_details, {'optional_config': {}}, False)
-    assert len(result2['verrors'].errors) > 0
-    assert 'mandatory_field' in str(result2['verrors'].errors)
-
-    # When all required fields provided, should work
-    result3 = construct_schema(item_version_details, {
-        'optional_config': {'mandatory_field': 'value'}
-    }, False)
-    assert len(result3['verrors'].errors) == 0
-    assert result3['new_values']['optional_config']['mandatory_field'] == 'value'
-    assert 'optional_field' not in result3['new_values']['optional_config']
-
-
 # Tests for all field types through construct_schema
 def test_construct_schema_with_ipaddr():
     """Test IP address field validation and serialization through construct_schema"""
