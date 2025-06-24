@@ -147,6 +147,7 @@ class ServiceBase(type):
             klass._config_specified = {}
 
         klass._config = service_config(klass, klass._config_specified)
+        klass._register_models = sum([getattr(getattr(klass, m), '_register_models', []) for m in dir(klass)], [])
 
         # Validate API method argument class names
         validate_api_method_schema_class_names(klass)
