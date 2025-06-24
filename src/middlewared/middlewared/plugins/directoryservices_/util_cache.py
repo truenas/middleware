@@ -154,7 +154,15 @@ class DSCacheFill:
             entry['sid'] = idmap_entry['sid']
             entry['id_type'] = idmap_entry['id_type']
             if dom_by_sid:
-                entry['domain_info'] = dom_by_sid[idmap_entry['sid'].rsplit('-', 1)[0]]
+                domain_sid = idmap_entry['sid'].rsplit('-', 1)[0]
+                if domain_sid not in dom_by_sid:
+                    # The administrator hasn't properly configured idmapping for this domain
+                    # We won't include in cached accounts to dissuade from using the entry since
+                    # the unix id assignment is not deterministic
+                    to_remove.append(idx)
+                    continue
+
+                entry['domain_info'] = dom_by_sid[domain_sid]
             else:
                 entry['domain_info'] = None
 
