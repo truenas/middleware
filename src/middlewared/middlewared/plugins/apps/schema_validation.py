@@ -49,7 +49,7 @@ class AppSchemaService(Service):
 
         verrors.check()
 
-        return app_version_details
+        return new_values
 
     async def validate_question(
         self, verrors, value, question, schema_name, app_data=None
