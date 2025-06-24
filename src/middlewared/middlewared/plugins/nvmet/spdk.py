@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from middlewared.service import CallError, Service
 from middlewared.utils import run
@@ -15,9 +16,9 @@ class NVMetSPDKService(Service):
         private = True
         namespace = 'nvmet.spdk'
 
-    async def _run_setup(self, *args):
+    async def _run_setup(self, *args, **kwargs):
         command = [SETUP_SH, *args]
-        cp = await run(command)
+        cp = await run(command, **kwargs)
         if cp.returncode:
             return False
         return True
@@ -29,7 +30,10 @@ class NVMetSPDKService(Service):
         Allocate hugepages and bind PCI devices.
         """
         _slots = await self.slots()
-        return await self._run_setup('config', f'PCI_ALLOWED="{" ".join(_slots)}"')
+        if _slots:
+            my_env = os.environ.copy()
+            my_env['PCI_ALLOWED'] = " ".join(_slots)
+            return await self._run_setup('config', env=my_env)
 
     async def reset(self):
         """
