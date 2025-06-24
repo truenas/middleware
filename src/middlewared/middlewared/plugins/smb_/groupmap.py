@@ -135,8 +135,8 @@ class SMBService(Service):
 
         if ad_state == DSStatus.HEALTHY.name:
             try:
-                domain_info = self.middleware.call_sync('idmap.domain_info',
-                                                        'DS_TYPE_ACTIVEDIRECTORY')
+                workgroup = self.middleware.call_sync('smb.config')['workgroup']
+                domain_info = self.middleware.call_sync('idmap.domain_info', workgroup)
                 domain_sid = domain_info['sid']
                 # add domain account SIDS
                 entries.append((SMBGroupMembership(

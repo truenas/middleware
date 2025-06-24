@@ -241,7 +241,8 @@ class ACLTemplateService(CRUDService):
         if ds['type'] != DSType.AD.value or ds['status'] != DSStatus.HEALTHY.name:
             return
 
-        domain_info = await self.middleware.call('idmap.domain_info', 'DS_TYPE_ACTIVEDIRECTORY')
+        workgroup = (await self.middleware.call('smb.config'))['workgroup']
+        domain_info = await self.middleware.call('idmap.domain_info', workgroup)
         if 'ACTIVE_DIRECTORY' not in domain_info['domain_flags']['parsed']:
             self.logger.warning(
                 '%s: domain is not identified properly as an Active Directory domain.',
