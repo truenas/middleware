@@ -92,7 +92,9 @@ class SMARTAlertSource(ThreadedAlertSource):
                 continue
 
             try:
-                ue, testfail = self.parse_smart_test_log(disk.smartctl_info(json=True))
+                ue, testfail = self.parse_smart_test_log(
+                    disk.smartctl_info(return_json=True)
+                )
                 if ue:
                     alerts.append(
                         Alert(
