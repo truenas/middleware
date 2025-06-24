@@ -138,7 +138,7 @@ class WebSocketApplication(RpcWebSocketApp):
                 self.middleware.api_versions_adapter,
                 passthrough_nonexistent_methods=True,
             )
-            if lam.accepts_model:
+            if lam.current_accepts_model:
                 params = await lam._adapt_params(params)
 
             async with self._softhardsemaphore:
