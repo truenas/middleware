@@ -8,6 +8,10 @@ class CompoundService(Service):
     def __init__(self, middleware, parts):
         super().__init__(middleware)
 
+        self._register_models = []
+        for part in parts:
+            self._register_models += getattr(part, '_register_models', [])
+
         config_specified = {}
         for part1, part2 in itertools.combinations(parts, 2):
             for key in set(part1._config_specified.keys()) & set(part2._config_specified.keys()):
