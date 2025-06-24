@@ -24,6 +24,9 @@ class PoolDatasetService(Service):
                 'flat': True,
                 'order_by': 'name',
                 'properties': [
+                    'atime',
+                    'casesensitivity',
+                    'readonly',
                     'used',
                     'available',
                     'usedbysnapshots',
@@ -52,18 +55,6 @@ class PoolDatasetService(Service):
                 'snapshots_count': True,
             }
         }
-        # FIXME: this is querying boot-pool datasets
-        # because of how bad our pool.dataset.query API
-        # is designed. If boot pool has a few old BE's,
-        # then this endpoint slows down exponentially
-        # which makes sense, because we have like 10/11
-        # datasets on the boot drive. So multiply that
-        # value by number of BEs and you're asking ZFS
-        # for a bunch of unnecessary data.
-        # valid_pools = list()
-        # for i in query_imported_fast_impl().values():
-        #    if i['name'] not in BOOT_POOL_NAME_VALID:
-        #        valid_pools.append(i['name'])
         return [], options
 
     @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResult, roles=['DATASET_READ'])
@@ -83,11 +74,6 @@ class PoolDatasetService(Service):
 
     @private
     def normalize_dataset(self, dataset, info, mnt_info):
-        atime, case, readonly = self.get_mntinfo(dataset, mnt_info)
-        dataset['locked'] = dataset['locked']
-        dataset['atime'] = atime
-        dataset['casesensitive'] = case
-        dataset['readonly'] = readonly
         dataset['thick_provisioned'] = any((dataset['reservation']['value'], dataset['refreservation']['value']))
         dataset['nfs_shares'] = self.get_nfs_shares(dataset, info['nfs'])
         dataset['smb_shares'] = self.get_smb_shares(dataset, info['smb'])
@@ -121,21 +107,6 @@ class PoolDatasetService(Service):
                 mount_info = mntinfo[mnt_id]
 
         return mount_info
-
-    @private
-    def get_mntinfo(self, ds, mntinfo):
-        atime = case = True
-        readonly = False
-        for devid, info in filter(lambda x: x[1]['mountpoint'] == ds['mountpoint'], mntinfo.items()):
-            atime = not ('NOATIME' in info['mount_opts'])
-            readonly = 'RO' in info['mount_opts']
-            case = any((i for i in ('CASESENSITIVE', 'CASEMIXED') if i in info['super_opts']))
-
-        # case sensitivity is either on or off (sensitive or insensitve)
-        # the "mixed" property is silently ignored in our use case because it
-        # only applies to illumos kernel when using the in-kernel SMB server.
-        # if it's set to "mixed" on linux, it's treated as case sensitive.
-        return atime, case, readonly
 
     @private
     def build_details(self, mntinfo):
