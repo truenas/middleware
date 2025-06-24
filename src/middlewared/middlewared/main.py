@@ -140,7 +140,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.api_versions = api_versions
         self.api_versions_adapter = api_versions_adapter  # FIXME: Only necessary as a class member for legacy WS API
         self._check_removed_in(api_versions)
-        return self._create_apis(api_versions, api_versions_adapter)
+        apis = self._create_apis(api_versions, api_versions_adapter)
+        for service in self.get_services().values():
+            for current_api_model, model_factory, arg_model_name in getattr(service, '_register_models', []):
+                for api_version in self.api_versions:
+                    api_version.register_model(current_api_model, model_factory, arg_model_name)
+        return apis
 
     def _load_api_versions(self) -> list[APIVersion]:
         versions = []
@@ -1318,14 +1323,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
             last = current
 
-    def dump_api(self, stream: typing.TextIO):
+    async def dump_api(self, stream: typing.TextIO):
         self.__plugins_load()
 
         apis = self._load_apis()
 
         result = {"versions": []}
         for version, api in apis.items():
-            result["versions"].append(APIDumper(version, api, self.role_manager).dump().model_dump())
+            result["versions"].append((await APIDumper(version, api, self.role_manager).dump()).model_dump())
 
         json.dump(result, stream)
 
@@ -1366,11 +1371,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         setup_funcs = self.__plugins_load()
 
         apis = self._load_apis()
-
-        for service in self.get_services().values():
-            for current_api_model, model_factory, arg_model_name in getattr(service, '_register_models', []):
-                for api_version in self.api_versions:
-                    api_version.register_model(current_api_model, model_factory, arg_model_name)
 
         self._console_write('registering services')
 
@@ -1502,7 +1502,7 @@ def main():
     )
 
     if args.dump_api:
-        middleware.dump_api(sys.stdout)
+        asyncio.get_event_loop().run_until_complete(middleware.dump_api(sys.stdout))
         return
 
     setproctitle.setproctitle('middlewared')

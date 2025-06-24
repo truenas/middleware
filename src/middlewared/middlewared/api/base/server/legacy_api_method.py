@@ -36,21 +36,35 @@ class LegacyAPIMethod(Method):
         if crud_methodobj := real_crud_method(methodobj):
             methodobj = crud_methodobj
         if hasattr(methodobj, "new_style_accepts"):  # FIXME: Remove this check when all models become new style
-            self.accepts_model = methodobj.new_style_accepts
-            self.returns_model = methodobj.new_style_returns
+            self.current_accepts_model = methodobj.new_style_accepts
+            self.current_returns_model = methodobj.new_style_returns
         else:
-            self.accepts_model = None
-            self.returns_model = None
+            self.current_accepts_model = None
+            self.current_returns_model = None
+
+    async def accepts_model(self):
+        try:
+            return await self.adapter.versions[self.api_version].get_model(self.current_accepts_model.__name__)
+        except KeyError:
+            return None
+
+    async def returns_model(self):
+        try:
+            return await self.adapter.versions[self.api_version].get_model(self.current_returns_model.__name__)
+        except KeyError:
+            return None
 
     async def call(self, app: "RpcWebSocketApp", params):
-        if self.accepts_model:  # FIXME: Remove this check when all models become new style
+        if self.current_accepts_model:  # FIXME: Remove this check when all models become new style
             params = await self._adapt_params(params)
 
         return await super().call(app, params)
 
     async def _adapt_params(self, params):
         try:
-            legacy_accepts_model = await self.adapter.versions[self.api_version].get_model(self.accepts_model.__name__)
+            legacy_accepts_model = await self.adapter.versions[self.api_version].get_model(
+                self.current_accepts_model.__name__
+            )
         except KeyError:
             if self.passthrough_nonexistent_methods:
                 return params
@@ -68,14 +82,14 @@ class LegacyAPIMethod(Method):
             self.adapter.current_version,
         )
 
-        return [adapted_params_dict[field] for field in self.accepts_model.model_fields]
+        return [adapted_params_dict[field] for field in self.current_accepts_model.model_fields]
 
     async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
-        if self.accepts_model:  # FIXME: Remove this check when all models become new style
+        if self.current_accepts_model:  # FIXME: Remove this check when all models become new style
             try:
                 model, result = await self.adapter.adapt_model(
                     {"result": result},
-                    self.returns_model.__name__,
+                    self.current_returns_model.__name__,
                     self.adapter.current_version,
                     self.api_version,
                 )
@@ -91,7 +105,7 @@ class LegacyAPIMethod(Method):
         return await super()._dump_result(app, methodobj, result)
 
     def dump_args(self, params):
-        if self.accepts_model:  # FIXME: Remove this check when all models become new style
-            return dump_params(self.accepts_model, params, False)
+        if self.current_accepts_model:  # FIXME: Remove this check when all models become new style
+            return dump_params(self.current_accepts_model, params, False)
 
         return super().dump_args(params)

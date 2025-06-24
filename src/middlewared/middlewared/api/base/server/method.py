@@ -22,6 +22,18 @@ class Method:
         self.name = name
         self.serviceobj, self.methodobj = self.middleware.get_method(self.name)
 
+    async def accepts_model(self):
+        """
+        :return: model that validates method input params.
+        """
+        return self.methodobj.new_style_accepts
+
+    async def returns_model(self):
+        """
+        :return: model that validates method return value.
+        """
+        return self.methodobj.new_style_returns
+
     async def call(self, app: "RpcWebSocketApp", params: list):
         """
         Calls the method in the context of a given `app`.
