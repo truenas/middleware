@@ -31,8 +31,8 @@ class AppSchemaService(Service):
     async def normalize_and_validate_values(
         self, item_details, values, update, app_dir, app_data=None, perform_actions=True,
     ):
-        await self.middleware.call('app.schema.validate_values', item_details, values, update, app_data)
-        new_values, context = await self.normalize_values(item_details['schema']['questions'], values, update, {
+        new_values = await self.middleware.call('app.schema.validate_values', item_details, values, update, app_data)
+        new_values, context = await self.normalize_values(item_details['schema']['questions'], new_values, update, {
             'app': {
                 'name': app_dir.split('/')[-1],
                 'path': app_dir,
