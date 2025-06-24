@@ -159,7 +159,6 @@ all with the NSS `uid` or `gid`. For example in the following group entry::
     "sudo_commands_nopasswd": [],
     "smb": false,
     "group": "test",
-    "id_type_both": false,
     "local": true,
     "sid": null,
     "roles": [],
