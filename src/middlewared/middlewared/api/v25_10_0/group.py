@@ -52,7 +52,6 @@ class GroupEntry(BaseModel):
     "Specifies whether the group should be mapped into an NT group."
     group: NonEmptyString
     """ A string used to identify a group. Identical to the `name` key. """
-    id_type_both: bool
     local: bool
     """ If `True`, the group is local to the TrueNAS server. If `False`, the group is provided by a directory service. """
     sid: str | None
@@ -72,7 +71,6 @@ class GroupCreate(GroupEntry):
     id: Excluded = excluded_field()
     builtin: Excluded = excluded_field()
     group: Excluded = excluded_field()
-    id_type_both: Excluded = excluded_field()
     local: Excluded = excluded_field()
     sid: Excluded = excluded_field()
     roles: Excluded = excluded_field()

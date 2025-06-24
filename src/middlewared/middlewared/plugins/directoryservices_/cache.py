@@ -298,25 +298,20 @@ class DSCache(Service):
             )
             return
 
-        dom_by_sid = None
         ds_type = DSType(ds['type'])
         match ds_type:
             case DSType.AD:
                 self.idmap_online_check_wait_wbclient(job)
-                domain_info = self.middleware.call_sync(
-                    'idmap.query',
-                    [["domain_info", "!=", None]],
-                    {'extra': {'additional_information': ['DOMAIN_INFO']}}
-                )
-                dom_by_sid = {dom['domain_info']['sid']: dom for dom in domain_info}
             case DSType.IPA | DSType.LDAP:
                 self.idmap_online_check_wait_sssd(job)
             case _:
                 raise ValueError(f'{ds_type}: unexpected DSType')
 
+        vers = self.middleware.call_sync('system.version_short')
+
         with DSCacheFill() as dc:
             job.set_progress(15, 'Filling cache')
-            dc.fill_cache(job, ds_type, dom_by_sid)
+            dc.fill_cache(job, ds_type, vers)
 
     async def abort_refresh(self):
         cache_job = await self.middleware.call('core.get_jobs', [

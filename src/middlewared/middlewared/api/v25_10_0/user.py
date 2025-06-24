@@ -109,7 +109,6 @@ class UserEntry(BaseModel):
     email: EmailStr | None = None
     """ Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and
     notifications. """
-    id_type_both: bool
     local: bool
     """ If `True`, the account is local to the TrueNAS server. If `False`, the account is provided by a directory
     service. """
@@ -150,7 +149,6 @@ class UserCreate(UserEntry):
     unixhash: Excluded = excluded_field()
     smbhash: Excluded = excluded_field()
     builtin: Excluded = excluded_field()
-    id_type_both: Excluded = excluded_field()
     local: Excluded = excluded_field()
     immutable: Excluded = excluded_field()
     twofactor_auth_configured: Excluded = excluded_field()

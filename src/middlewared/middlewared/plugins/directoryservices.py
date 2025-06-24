@@ -6,6 +6,7 @@ from middlewared.api.current import (
     DirectoryServicesStatusArgs, DirectoryServicesStatusResult,
     DirectoryServicesCacheRefreshArgs, DirectoryServicesCacheRefreshResult,
 )
+from middlewared.plugins.directoryservices_.util_cache import check_cache_version
 from middlewared.service import Service, private, job
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.health import DSHealthObj
@@ -166,3 +167,9 @@ async def setup(middleware):
         'Sent on directory service state changes.',
         roles=['DIRECTORY_SERVICE_READ']
     )
+    truenas_version = await middleware.call('system.version_short')
+
+    try:
+        await middleware.run_in_thread(check_cache_version, truenas_version)
+    except Exception:
+        middleware.logger.warning('Failed to check directory services cache', exc_info=True)

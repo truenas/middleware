@@ -342,7 +342,6 @@ class UserService(CRUDService):
 
         user.update({
             'local': True,
-            'id_type_both': False,
             'sid': sid,
             'roles': list(user_roles),
             'api_keys': ctx['user_api_keys'][user['username']]
@@ -364,7 +363,6 @@ class UserService(CRUDService):
         to_remove = [
             'api_keys',
             'local',
-            'id_type_both',
             'sid',
             'immutable',
             'home_create',
@@ -1949,7 +1947,6 @@ class GroupService(CRUDService):
 
         group.update({
             'local': True,
-            'id_type_both': False,
             'sid': sid,
             'roles': privilege_mappings['roles']
         })
@@ -1960,7 +1957,6 @@ class GroupService(CRUDService):
         to_remove = [
             'name',
             'local',
-            'id_type_both',
             'sid',
             'roles'
         ]

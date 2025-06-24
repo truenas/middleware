@@ -138,32 +138,7 @@ class IdmapDomainService(Service):
 
     @private
     def domain_info(self, domain):
-        if domain == 'DS_TYPE_ACTIVEDIRECTORY':
-            return WBClient().domain_info()
-
-        elif domain == 'DS_TYPE_DEFAULT_DOMAIN':
-            return WBClient().domain_info('BUILTIN')
-
-        elif domain == 'DS_TYPE_LDAP':
-            return None
-
         return WBClient().domain_info(domain)
-
-    @private
-    def parse_domain_info(self, sid):
-        if sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
-            return {'domain': 'LOCAL', 'domain_sid': None, 'online': True, 'activedirectory': False}
-
-        domain_info = self.known_domains([['sid', '=', sid.rsplit('-', 1)[0]]])
-        if not domain_info:
-            return {'domain': 'UNKNOWN', 'domain_sid': None, 'online': False, 'activedirectory': False}
-
-        return {
-            'domain': domain_info[0]['netbios_domain'],
-            'domain_sid': domain_info[0]['sid'],
-            'online': domain_info[0]['online'],
-            'activedirectory': 'ACTIVE_DIRECTORY' in domain_info[0]['domain_flags']['parsed']
-        }
 
     @private
     async def get_sssd_low_range(self, domain, sssd_config=None, seed=0xdeadbeef):
@@ -482,39 +457,11 @@ class IdmapDomainService(Service):
         return name
 
     @private
-    async def has_id_type_both(self, xid):
-        """
-        Check whether xid comes from domain that returns ID_TYPE_BOTH from idmap
-        backend. In this case the xid is both a user and a group with special
-        behavior in OS.
-        """
-        domains = await self.query()
-        for d in domains:
-            if d['name'] == 'DS_TYPE_LDAP':
-                continue
-
-            if xid >= d['range_low'] and xid <= d['range_high']:
-                # currently in AD case these are only two supported backends that provide
-                # this special ID type
-                return d['idmap_backend'] in ['AUTORID', 'RID']
-
-        return False
-
-    @private
     async def synthetic_user(self, passwd: dict, sid: str | None) -> dict | None:
-        match passwd['source']:
-            case 'LOCAL':
-                # local user, should be retrieved via user.query
-                # with exception of our special synthetic account for the container root
-                if passwd['pw_uid'] != CONTAINER_ROOT_UID:
-                    return None
-
-                id_type_both = False
-
-            case 'ACTIVEDIRECTORY':
-                id_type_both = await self.has_id_type_both(passwd['pw_uid'])
-            case _:
-                id_type_both = False
+        # local user, should be retrieved via user.query
+        # with exception of our special synthetic account for the container root
+        if passwd['source'] == 'LOCAL' and passwd['pw_uid'] != CONTAINER_ROOT_UID:
+            return None
 
         return {
             'id': BASE_SYNTHETIC_DATASTORE_ID + passwd['pw_uid'],
@@ -537,7 +484,6 @@ class IdmapDomainService(Service):
             'sudo_commands': [],
             'sudo_commands_nopasswd': [],
             'email': None,
-            'id_type_both': id_type_both,
             'local': False,
             'immutable': True,
             'twofactor_auth_configured': False,
@@ -552,14 +498,9 @@ class IdmapDomainService(Service):
 
     @private
     async def synthetic_group(self, grp, sid):
-        match grp['source']:
-            case 'LOCAL':
-                # local group, should be retrieved via group.query
-                return None
-            case 'ACTIVEDIRECTORY':
-                id_type_both = await self.has_id_type_both(grp['gr_gid'])
-            case _:
-                id_type_both = False
+        if grp['source'] == 'LOCAL':
+            # local group, should be retrieved via group.query
+            return None
 
         return {
             'id': BASE_SYNTHETIC_DATASTORE_ID + grp['gr_gid'],
@@ -571,7 +512,6 @@ class IdmapDomainService(Service):
             'sudo_commands_nopasswd': [],
             'users': [],
             'local': False,
-            'id_type_both': id_type_both,
             'roles': [],
             'smb': sid is not None,
             'userns_idmap': None,
