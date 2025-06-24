@@ -1,8 +1,7 @@
-from middlewared.test.integration.utils import client
+def test_query_method(legacy_api_client, query_method):
+    version = legacy_api_client._ws.url.split("/")[-1].lstrip("v")
+    # Methods that do not exist in the previous API versions
+    if version in {"25.04.0", "25.04.1"} and query_method in {"vm.query", "vm.device.query"}:
+        return
 
-OLDEST_VERSION = "v25.04.0"
-
-
-def test_account():
-    with client(version=OLDEST_VERSION) as c:
-        c.call("user.query")
+    legacy_api_client.call(query_method)
