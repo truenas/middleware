@@ -2,9 +2,9 @@ from itertools import product
 from typing import TYPE_CHECKING
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.common.ports import PortDelegate
+from middlewared.common.ports import PortDelegate, ServicePortDelegate
 
-from .utils import VirtGlobalStatus
+from .utils import VirtGlobalStatus, INCUS_BRIDGE, incus_call
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -212,6 +212,28 @@ class VirtPortDelegate(PortDelegate):
         return ports
 
 
+class IncusServicePortDelegate(ServicePortDelegate):
+
+    name = 'incus'
+    namespace = 'incus'
+    title = 'Incus Service'
+
+    async def get_ports_internal(self):
+        ports = []
+        try:
+            # Get incusbr0 network details from incus API
+            network_info = await self.middleware.call('virt.global.get_network', INCUS_BRIDGE)
+            if network_info.get('ipv4_address'):
+                # Extract IP address from CIDR notation (e.g., "10.0.0.1/24" -> "10.0.0.1")
+                ip_address = network_info['ipv4_address'].split('/')[0]
+                # Port 53 is bound on incusbr0 for DNS
+                ports.append((ip_address, 53))
+        except Exception:
+            # If we can't get network info, don't report ports
+            pass
+        return ports
+
+
 async def setup(middleware: 'Middleware'):
     middleware.create_task(
         middleware.call(
@@ -220,3 +242,4 @@ async def setup(middleware: 'Middleware'):
         )
     )
     await middleware.call('port.register_attachment_delegate', VirtPortDelegate(middleware))
+    await middleware.call('port.register_attachment_delegate', IncusServicePortDelegate(middleware))

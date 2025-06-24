@@ -14,7 +14,7 @@ from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 from .websocket import IncusWS
 
-
+INCUS_BRIDGE = 'incusbr0'
 CDROM_PREFIX = 'ix_cdrom'
 HTTP_URI = 'http://unix.socket'
 INCUS_METADATA_CDROM_KEY = 'user.ix_cdrom_devices'
