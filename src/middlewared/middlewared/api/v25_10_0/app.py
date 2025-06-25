@@ -95,7 +95,7 @@ class AppCreateArgs(BaseModel):
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
     custom_compose_config_string: Secret[LongString] = ''
     catalog_app: str | None = None
-    app_name: str = Field(pattern=r'^[a-z]([-a-z0-9]*[a-z0-9])?$', min_length=1, max_length=40)
+    app_name: str = Field(pattern='^[a-z]([-a-z0-9]*[a-z0-9])?$', min_length=1, max_length=40)
     """
     Application name must have the following:
 

@@ -61,7 +61,7 @@ class UserEntry(BaseModel):
     the `builtin_users` group."""
     password_disabled: bool = False
     ssh_password_enabled: bool = False
-    "Required if `password_disabled` is false."
+    """Required if `password_disabled` is false."""
     sshpubkey: LongString | None = None
     locked: bool = False
     sudo_commands: list[NonEmptyString] = Field(default_factory=list)

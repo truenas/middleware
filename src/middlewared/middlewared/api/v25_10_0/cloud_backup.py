@@ -145,7 +145,7 @@ class CloudBackupDeleteResult(BaseModel):
 class CloudBackupRestoreArgs(BaseModel):
     id: int
     """ID of the cloud backup task."""
-    snapshot_id: str = Field(pattern=r"^[^-]")
+    snapshot_id: str = Field(pattern="^[^-]")
     """ID of the snapshot to restore."""
     subfolder: str
     """Path within the snapshot to restore."""
@@ -172,9 +172,9 @@ class CloudBackupListSnapshotsResult(BaseModel):
 class CloudBackupListSnapshotDirectoryArgs(BaseModel):
     id: int
     """The cloud backup task ID."""
-    snapshot_id: str = Field(pattern=r"^[^-]")
+    snapshot_id: str = Field(pattern="^[^-]")
     """ID of the snapshot whose contents to list."""
-    path: str = Field(pattern=r"^[^-]")
+    path: str = Field(pattern="^[^-]")
     """Path within the snapshot to list the contents of."""
 
 
@@ -186,7 +186,7 @@ class CloudBackupListSnapshotDirectoryResult(BaseModel):
 class CloudBackupDeleteSnapshotArgs(BaseModel):
     id: int
     """The cloud backup task ID."""
-    snapshot_id: str = Field(pattern=r"^[^-]")
+    snapshot_id: str = Field(pattern="^[^-]")
     """ID of the snapshot to delete."""
 
 

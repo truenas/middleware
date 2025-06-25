@@ -118,7 +118,7 @@ class PoolDatasetChangeKeyOptions(BaseModel):
 
 
 class PoolDatasetCreateUserProperty(BaseModel):
-    key: Annotated[str, Field(pattern=r".*:.*")]
+    key: Annotated[str, Field(pattern=".*:.*")]
     value: str
 
 
@@ -598,12 +598,12 @@ class PoolDatasetRenameOptions(BaseModel):
     new_name: DATASET_NAME
     recursive: bool = False
     force: bool = False
-    '''
+    """
     This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt
     SMB shares, iSCSI targets, snapshots, replication, and other services.
 
     Set Force only if you understand and accept the risks.
-    '''
+    """
 
 
 class PoolDatasetRenameArgs(BaseModel):
