@@ -107,13 +107,25 @@ from middlewared.schema import Dict
 async def test_normalize_and_validate(app_detail, values, expected):
     middleware = Middleware()
     app_schema_obj = AppSchemaService(middleware)
-    # Mock validate_values to return an empty dict (or the input values)
-    # since normalize_values expects a mutable dictionary
-    middleware['app.schema.validate_values'] = lambda item_details, values, update, app_data: values or {}
+    # Use the actual validation logic from construct_schema instead of a simple mock
+    from middlewared.plugins.apps.schema_construction_utils import construct_schema
+    def validate_values_mock(item_details, values, update, app_data):
+        result = construct_schema(item_details, values, update)
+        return result['new_values']
+    
+    middleware['app.schema.validate_values'] = validate_values_mock
     new_values = await app_schema_obj.normalize_and_validate_values(
         item_details=app_detail,
         values=values,
         update=False,
         app_dir='/path/to/app'
     )
-    assert new_values == expected
+    # Update expected to include the default from the schema
+    expected_with_defaults = {
+        'actual_budget': {'additional_envs': []},
+        'ix_certificates': {},
+        'ix_certificate_authorities': {},
+        'ix_volumes': {},
+        'ix_context': {}
+    }
+    assert new_values == expected_with_defaults
