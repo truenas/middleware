@@ -1,5 +1,5 @@
+import contextlib
 import ipaddress
-
 from itertools import product
 from typing import TYPE_CHECKING
 
@@ -216,15 +216,21 @@ class VirtPortDelegate(PortDelegate):
 
 class IncusServicePortDelegate(ServicePortDelegate):
 
-    name = 'incus'
-    namespace = 'incus'
-    title = 'Incus Service'
+    name = 'virt'
+    namespace = 'virt.global'
+    title = 'Virt Service'
 
     async def get_ports_internal(self):
         ports = []
-        try:
+        config = await self.middleware.call('virt.global.config')
+        if config['state'] != VirtGlobalStatus.INITIALIZED.value:
+            # No need to report ports if incus is not initialized
+            return ports
+
+        with contextlib.suppress(Exception):
             # Get incusbr0 network details from incus API
-            network_info = await self.middleware.call('virt.global.get_network', INCUS_BRIDGE)
+            bridge = config['bridge'] or INCUS_BRIDGE
+            network_info = await self.middleware.call('virt.global.get_network', bridge)
             for family in ['ipv4_address', 'ipv6_address']:
                 if network_info.get(family):
                     try:
@@ -233,9 +239,7 @@ class IncusServicePortDelegate(ServicePortDelegate):
                         ports.append((str(ip), 53))
                     except ValueError:
                         continue
-        except Exception:
-            # If we can't get network info, don't report ports
-            pass
+
         return ports
 
 
