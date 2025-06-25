@@ -1,3 +1,5 @@
+import errno
+
 from pydantic_core import ValidationError
 
 from middlewared.api.base.model import BaseModel
@@ -43,7 +45,9 @@ def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
     :return: a dictionary of method args.
     """
     if len(args) > len(model.model_fields):
-        raise CallError(f"Too many arguments (expected {len(model.model_fields)}, found {len(args)})")
+        verrors = ValidationErrors()
+        verrors.add("", f"Too many arguments (expected {len(model.model_fields)}, found {len(args)})", errno.EINVAL)
+        raise verrors
 
     return {
         field: value
