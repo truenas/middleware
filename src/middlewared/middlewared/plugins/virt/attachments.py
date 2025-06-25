@@ -1,10 +1,12 @@
+import contextlib
+import ipaddress
 from itertools import product
 from typing import TYPE_CHECKING
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.common.ports import PortDelegate
+from middlewared.common.ports import PortDelegate, ServicePortDelegate
 
-from .utils import VirtGlobalStatus
+from .utils import VirtGlobalStatus, INCUS_BRIDGE
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -212,6 +214,35 @@ class VirtPortDelegate(PortDelegate):
         return ports
 
 
+class IncusServicePortDelegate(ServicePortDelegate):
+
+    name = 'virt'
+    namespace = 'virt.global'
+    title = 'Virt Service'
+
+    async def get_ports_internal(self):
+        ports = []
+        config = await self.middleware.call('virt.global.config')
+        if config['state'] != VirtGlobalStatus.INITIALIZED.value:
+            # No need to report ports if incus is not initialized
+            return ports
+
+        with contextlib.suppress(Exception):
+            # Get incusbr0 network details from incus API
+            bridge = config['bridge'] or INCUS_BRIDGE
+            network_info = await self.middleware.call('virt.global.get_network', bridge)
+            for family in ['ipv4_address', 'ipv6_address']:
+                if network_info.get(family):
+                    try:
+                        # Extract IP address from CIDR notation
+                        ip = ipaddress.ip_interface(network_info[family]).ip
+                        ports.append((str(ip), 53))
+                    except ValueError:
+                        continue
+
+        return ports
+
+
 async def setup(middleware: 'Middleware'):
     middleware.create_task(
         middleware.call(
@@ -220,3 +251,4 @@ async def setup(middleware: 'Middleware'):
         )
     )
     await middleware.call('port.register_attachment_delegate', VirtPortDelegate(middleware))
+    await middleware.call('port.register_attachment_delegate', IncusServicePortDelegate(middleware))
