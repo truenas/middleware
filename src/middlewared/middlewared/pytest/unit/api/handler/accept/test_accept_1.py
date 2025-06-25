@@ -5,7 +5,7 @@ import pytest
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.accept import accept_params
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 
 
 class MethodArgs(BaseModel):
@@ -20,7 +20,7 @@ class Param(BaseModel):
 
 @pytest.mark.parametrize("params,result_or_error", [
     ([], {"param": "Field required"}),
-    ([1, 2, 3], "Too many arguments (expected 2, found 3)"),
+    ([1, 2, 3], {"": "Too many arguments (expected 2, found 3)"}),
     ([{"name": "test"}], [{"name": "test", "count": 1}, False]),
     ([{"name": "test"}, True], [{"name": "test", "count": 1}, True]),
     ([{"name": "test"}, 1], {"force": "Input should be a valid boolean"}),
@@ -35,8 +35,3 @@ def test__accept_params(params, result_or_error):
             accept_params(MethodArgs, params)
 
         assert {e.attribute: e.errmsg for e in ve.value.errors} == result_or_error
-    elif isinstance(result_or_error, str):
-        with pytest.raises(CallError) as ve:
-            accept_params(Param, params)
-
-        assert ve.value.errmsg == result_or_error
