@@ -1,6 +1,5 @@
 <%
 from middlewared.logger import DEFAULT_SYSLOG_PATH, ALL_LOG_FILES
-## from time import sleep   # MCG DEBUG
 
 logger = middleware.logger
 
