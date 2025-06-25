@@ -60,7 +60,7 @@ def construct_schema(
 
 def generate_pydantic_model(
     dict_attrs: list[dict], model_name: str, new_values: USER_VALUES = NOT_PROVIDED,
-    old_values: USER_VALUES = NOT_PROVIDED,
+    old_values: USER_VALUES = NOT_PROVIDED, parent_hidden: bool = False,
 ) -> Type[BaseModel]:
     """
     Generate a Pydantic model from a list of dictionary attributes.
@@ -73,8 +73,17 @@ def generate_pydantic_model(
         schema_def = attr['schema']
         attr_value = new_values.get(var_name, NOT_PROVIDED) if isinstance(new_values, dict) else NOT_PROVIDED
         old_attr_value = old_values.get(var_name, NOT_PROVIDED) if isinstance(old_values, dict) else NOT_PROVIDED
+        
+        # Check if this field should be visible based on its show_if
+        field_hidden = parent_hidden
+        if not parent_hidden and schema_def.get('show_if') and isinstance(new_values, dict):
+            # Evaluate show_if condition against sibling values
+            if not filter_list([new_values], schema_def['show_if']):
+                field_hidden = True
+        
         field_type, field_info, nested_model = process_schema_field(
             schema_def, f'{model_name}_{var_name}', attr_value, old_attr_value,
+            field_hidden=field_hidden,
         )
         if nested_model:
             nested_models[var_name] = nested_model
@@ -85,7 +94,7 @@ def generate_pydantic_model(
     # Create the model dynamically
     model = create_model(model_name, __base__=BaseModel, **fields)
 
-    if show_if_attrs:
+    if show_if_attrs and not parent_hidden:
         # What we want to do here is make sure that we are not injecting default values
         # for fields which have conditional defaults set
         provided_values = new_values if isinstance(new_values, dict) else {}
@@ -117,15 +126,16 @@ def get_defaults(model: Type[BaseModel], new_values: dict) -> dict | None:
         return validate_model(model, new_values)
 
 
-def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VALUES, old_values: USER_VALUES) -> tuple[
-    Type, Field, Type[BaseModel] | None
-]:
+def process_schema_field(
+    schema_def: dict, model_name: str, new_values: USER_VALUES, old_values: USER_VALUES,
+    field_hidden: bool = False,
+) -> tuple[Type, Field, Type[BaseModel] | None]:
     """
     Process a schema field type / field information and any nested model if applicable which was generated.
     """
     schema_type = schema_def['type']
     field_type = nested_model = None
-    field_info = create_field_info_from_schema(schema_def)
+    field_info = create_field_info_from_schema(schema_def, field_hidden=field_hidden)
     if schema_type == 'int':
         field_type = int
     elif schema_type in ('string', 'text'):
@@ -146,8 +156,12 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
         field_type = AbsolutePath
     elif schema_type == 'dict':
         if dict_attrs := schema_def.get('attrs', []):
-            field_type = nested_model = generate_pydantic_model(dict_attrs, model_name, new_values, old_values)
-            field_info.default_factory = nested_model
+            # Pass field_hidden to nested model generation
+            field_type = nested_model = generate_pydantic_model(
+                dict_attrs, model_name, new_values, old_values, parent_hidden=field_hidden
+            )
+            if not field_hidden:
+                field_info.default_factory = nested_model
         else:
             # We have a generic dict type without specific attributes
             field_type = dict
@@ -189,7 +203,7 @@ def process_schema_field(schema_def: dict, model_name: str, new_values: USER_VAL
     return field_type, field_info, nested_model
 
 
-def create_field_info_from_schema(schema_def: dict) -> Field:
+def create_field_info_from_schema(schema_def: dict, field_hidden: bool = False) -> Field:
     """
     Create Pydantic Field info from schema definition.
     """
@@ -201,7 +215,10 @@ def create_field_info_from_schema(schema_def: dict) -> Field:
     if 'title' in schema_def:
         field_kwargs['title'] = schema_def['title']
 
-    if 'default' in schema_def:
+    # If field is hidden by parent's show_if, make it NotRequired
+    if field_hidden:
+        field_kwargs['default'] = NotRequired
+    elif 'default' in schema_def:
         field_kwargs['default'] = schema_def['default']
     elif not schema_def.get('required', False):
         # If a field is not marked as required, we set default to NotRequired
