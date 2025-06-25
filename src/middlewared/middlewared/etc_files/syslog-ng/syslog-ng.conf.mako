@@ -17,25 +17,32 @@ def generate_syslog_remote_destination(advanced_config):
 
     host = host.replace("[", "").replace("]", "")
     transport = advanced_config["syslog_transport"].lower()
+    cert_id = advanced_config["syslog_tls_certificate"]
 
-    remotelog_stanza = 'destination loghost { '
-    remotelog_stanza += f'syslog("{host}" port({port}) ip-protocol(6) transport("{transport}")'
+    remotelog_stanza = 'destination loghost {\n'
+    remotelog_stanza += '  syslog(\n'
+    remotelog_stanza += f'    "{host}"\n'
+    remotelog_stanza += f'    port({port})\n'
+    remotelog_stanza += '    ip-protocol(6)\n'
+    remotelog_stanza += f'    transport("{transport}")\n'
 
     if advanced_config["syslog_transport"] == "TLS":
         # Both mutual and one-way TLS require this
-        remotelog_stanza += ' tls(ca-file("/etc/ssl/certs/ca-certificates.crt")'
+        remotelog_stanza += '    tls(\n'
+        remotelog_stanza += '      ca-file("/etc/ssl/certs/ca-certificates.crt")\n'
 
-        certificate = middleware.call_sync(
-            "certificate.query", [("id", "=", advanced_config["syslog_tls_certificate"])]
-        )
-        if certificate and not certificate[0]["revoked"]:
+        if cert_id is not None:
             # Mutual TLS
-            remotelog_stanza += f' key-file(\"{certificate[0]["privatekey_path"]}\")'
-            remotelog_stanza += f' cert-file(\"{certificate[0]["certificate_path"]}\")'
+            certificate = []
+            certificate = middleware.call_sync(
+                "certificate.query", [["id", "=", cert_id]]
+            )
+            if certificate is not []:
+                remotelog_stanza += f'      key-file(\"{certificate[0]["privatekey_path"]}\")\n'
+                remotelog_stanza += f'      cert-file(\"{certificate[0]["certificate_path"]}\")\n'
+        remotelog_stanza += '    )\n'
 
-        remotelog_stanza += ')'
-
-    remotelog_stanza += '); };\n'
+    remotelog_stanza += '  );\n};\n'    
     remotelog_stanza += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
     remotelog_stanza += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
     remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };'
