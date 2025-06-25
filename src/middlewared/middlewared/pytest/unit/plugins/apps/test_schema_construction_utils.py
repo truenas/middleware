@@ -1273,6 +1273,9 @@ def test_construct_schema_complex():
 
     result_invalid = construct_schema(item_version_details, invalid_values, False)
     assert len(result_invalid['verrors'].errors) > 0
+    # Check that the error path includes the full nested path without 'values.' prefix
+    error_paths = [e.attribute for e in result_invalid['verrors'].errors]
+    assert 'database.credentials.password' in error_paths
 
 
 # Test show_if functionality

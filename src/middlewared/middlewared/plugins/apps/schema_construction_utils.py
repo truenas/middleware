@@ -48,7 +48,8 @@ def construct_schema(
         # Validate the new values against the generated model
         new_values = validate_model(model, new_values, exclude_unset=True, expose_secrets=False)
     except ValidationErrors as e:
-        verrors.add_child('values', e)
+        # Don't add 'values' prefix - just extend the errors directly
+        verrors.extend(e)
 
     return {
         'verrors': verrors,
