@@ -131,12 +131,9 @@ class ADHealthMixin:
                         "TrueNAS to Active Directory."
                     )
                 case _:
-                    faulted_reason = f'Failed to validate stored credential: {krb_err.errmsg}'
+                    faulted_reason = f'Failed to validate stored credential: {krberr.errmsg}'
 
-            raise ADHealthError(
-                    ADHealthCheckFailReason.AD_SECRET_INVALID,
-                    faulted_reason
-            )
+            raise ADHealthError(ADHealthCheckFailReason.AD_SECRET_INVALID, faulted_reason)
 
         self.logger.warning('Recovered from broken or missing AD secrets file')
 
