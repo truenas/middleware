@@ -287,73 +287,75 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     if not verrors:
                         connect_kwargs['known_hosts'] = known_hosts
 
-                    if data['validate_rpath']:
-                        try:
-                            async with await asyncssh.connect(
-                                **connect_kwargs,
-                                options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
-                            ) as conn:
-                                await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
-                        except asyncio.TimeoutError:
+                verrors.check()
+
+                if data['validate_rpath']:
+                    try:
+                        async with await asyncssh.connect(
+                            **connect_kwargs,
+                            options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
+                        ) as conn:
+                            print(await conn.run(f'test -d {shlex.quote(remote_path)}', check=True))
+                    except asyncio.TimeoutError:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            'SSH timeout occurred. Remote path cannot be validated.'
+                        )
+                    except OSError as e:
+                        if e.errno == 113:
                             verrors.add(
                                 f'{schema}.remotehost',
-                                'SSH timeout occurred. Remote path cannot be validated.'
+                                f'Connection to the remote host {connect_kwargs["host"]} on port '
+                                f'{connect_kwargs["port"]} failed.'
                             )
-                        except OSError as e:
-                            if e.errno == 113:
-                                verrors.add(
-                                    f'{schema}.remotehost',
-                                    f'Connection to the remote host {connect_kwargs["host"]} on port '
-                                    f'{connect_kwargs["port"]} failed.'
-                                )
-                            else:
-                                verrors.add(
-                                    f'{schema}.remotehost',
-                                    e.__str__()
-                                )
-                        except asyncssh.HostKeyNotVerifiable as e:
+                        else:
                             verrors.add(
                                 f'{schema}.remotehost',
-                                f'Failed to verify remote host key: {e.reason}',
-                                CallError.ESSLCERTVERIFICATIONERROR,
+                                e.__str__()
                             )
-                        except asyncssh.DisconnectError as e:
-                            verrors.add(
-                                f'{schema}.remotehost',
-                                f'Disconnect Error [error code {e.code}: {e.reason}] was generated when trying to '
-                                f'communicate with remote host {connect_kwargs["host"]} and remote user '
-                                f'{connect_kwargs["username"]}.'
-                            )
-                        except asyncssh.ProcessError as e:
-                            if e.code == '1':
-                                verrors.add(
-                                    f'{schema}.remotepath',
-                                    'The Remote Path you specified does not exist or is not a directory.'
-                                    'Either create one yourself on the remote machine or uncheck the '
-                                    'validate_rpath field'
-                                )
-                            else:
-                                verrors.add(
-                                    f'{schema}.remotepath',
-                                    f'Connection to Remote Host was successful but failed to verify '
-                                    f'Remote Path. {e.__str__()}'
-                                )
-                        except asyncssh.Error as e:
-                            if e.__class__.__name__ in e.__str__():
-                                exception_reason = e.__str__()
-                            else:
-                                exception_reason = e.__class__.__name__ + ' ' + e.__str__()
+                    except asyncssh.HostKeyNotVerifiable as e:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            f'Failed to verify remote host key: {e.reason}',
+                            CallError.ESSLCERTVERIFICATIONERROR,
+                        )
+                    except asyncssh.DisconnectError as e:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            f'Disconnect Error [error code {e.code}: {e.reason}] was generated when trying to '
+                            f'communicate with remote host {connect_kwargs["host"]} and remote user '
+                            f'{connect_kwargs["username"]}.'
+                        )
+                    except asyncssh.ProcessError as e:
+                        if e.code == 1:
                             verrors.add(
                                 f'{schema}.remotepath',
-                                f'Remote Path could not be validated. An exception was raised. {exception_reason}'
+                                'The Remote Path you specified does not exist or is not a directory. '
+                                'Either create one yourself on the remote machine or uncheck the '
+                                'validate_rpath field'
                             )
-                    else:
-                        if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
+                        else:
                             verrors.add(
-                                f'{schema}.remotehost',
-                                f'Host key not found in {known_hosts_path}',
-                                CallError.ESSLCERTVERIFICATIONERROR,
+                                f'{schema}.remotepath',
+                                f'Connection to Remote Host was successful but failed to verify '
+                                f'Remote Path. {e.__str__()}'
                             )
+                    except asyncssh.Error as e:
+                        if e.__class__.__name__ in e.__str__():
+                            exception_reason = e.__str__()
+                        else:
+                            exception_reason = e.__class__.__name__ + ' ' + e.__str__()
+                        verrors.add(
+                            f'{schema}.remotepath',
+                            f'Remote Path could not be validated. An exception was raised. {exception_reason}'
+                        )
+                else:
+                    if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            f'Host key not found in {known_hosts_path}',
+                            CallError.ESSLCERTVERIFICATIONERROR,
+                        )
 
         data.pop('validate_rpath', None)
         data.pop('ssh_keyscan', None)
