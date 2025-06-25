@@ -83,4 +83,7 @@ class ServiceBase(type):
             klass._config_specified = {}
 
         klass._config = service_config(klass, klass._config_specified)
+
+        klass._register_models = sum([getattr(getattr(klass, m), '_register_models', []) for m in dir(klass)], [])
+
         return klass

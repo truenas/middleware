@@ -166,11 +166,12 @@ truenas_server = TrueNAS_Server()
 
 
 @contextlib.contextmanager
-def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None, ssl=True):
+def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None, ssl=True,
+           version="current"):
     if auth is undefined:
         auth = ("root", password())
 
-    uri = host_websocket_uri(host_ip, ssl)
+    uri = host_websocket_uri(host_ip, ssl, version)
     try:
         with Client(uri, py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions, verify_ssl=False) as c:
             if auth is not None:
@@ -229,9 +230,9 @@ def host():
     return truenas_server
 
 
-def host_websocket_uri(host_ip=None, ssl=True):
+def host_websocket_uri(host_ip=None, ssl=True, version="current"):
     prefix = 'wss://' if ssl else 'ws://'
-    return f"{prefix}{host_ip or host().ip}/api/current"
+    return f"{prefix}{host_ip or host().ip}/api/{version}"
 
 
 def password():

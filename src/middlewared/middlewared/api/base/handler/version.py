@@ -192,9 +192,10 @@ class APIVersionsAdapter:
                 new_model_field = new_model.model_fields[k].annotation
                 if (
                     isinstance(value[k], dict) and
-                    (current_nested_model := model_field_is_model(current_model_field)) and
-                    (new_nested_model := model_field_is_model(new_model_field)) and
-                    current_nested_model.__class__.__name__ == new_nested_model.__class__.__name__
+                    (current_nested_model := model_field_is_model(current_model_field, value_hint=value[k])) and
+                    (new_nested_model := model_field_is_model(new_model_field,
+                                                              name_hint=current_nested_model.__name__)) and
+                    current_nested_model.__name__ == new_nested_model.__name__
                 ):
                     value[k] = self._adapt_value(value[k], current_nested_model, new_nested_model, direction)
                 elif (
@@ -203,7 +204,7 @@ class APIVersionsAdapter:
                     (current_nested_model := model_field_is_model(current_nested_model)) and
                     (new_nested_model := model_field_is_list_of_models(new_model_field)) and
                     (new_nested_model := model_field_is_model(new_nested_model)) and
-                    current_nested_model.__class__.__name__ == new_nested_model.__class__.__name__
+                    current_nested_model.__name__ == new_nested_model.__name__
                 ):
                     value[k] = [
                         self._adapt_value(v, current_nested_model, new_nested_model, direction)

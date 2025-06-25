@@ -54,33 +54,34 @@ def filterable_returns(schema):
 
 
 def filterable_api_method(
-    fn=None, /, *, roles=None, item=None, private=False, cli_private=False, authorization_required=True,
-    pass_app=False, pass_app_require=False, pass_app_rest=False,
+    *, roles=None, item=None, private=False, cli_private=False, authorization_required=True, pass_app=False,
+    pass_app_require=False, pass_app_rest=False,
 ):
     def filterable_internal(fn):
         fn._filterable = True
         if hasattr(fn, 'wraps'):
             fn.wraps._filterable = True
 
+        register_models = []
         if item:
             returns = query_result(item)
+            if not private:
+                register_models = [(returns, query_result, item.__name__)]
         else:
             if not private:
                 raise ValueError('Public methods may not use GenericQueryResult.')
 
             returns = GenericQueryResult
 
-        return api_method(
+        wrapped = api_method(
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
             authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
             pass_app_rest=pass_app_rest,
         )(fn)
+        wrapped._register_models = register_models
+        return wrapped
 
-    # See if we're being called as @filterable or @filterable().
-    if fn is None:
-        return filterable_internal
-
-    return filterable_internal(fn)
+    return filterable_internal
 
 
 def item_method(fn):
