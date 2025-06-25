@@ -68,6 +68,17 @@ def generate_pydantic_model(
     fields = {}
     nested_models = {}
     show_if_attrs = {}
+    # Build a context with values and defaults for show_if evaluation
+    eval_context = {}
+    if isinstance(new_values, dict):
+        eval_context.update(new_values)
+
+    # Add defaults for fields that aren't in new_values
+    for attr in dict_attrs:
+        var_name = attr['variable']
+        if var_name not in eval_context and 'default' in attr['schema']:
+            eval_context[var_name] = attr['schema']['default']
+
     for attr in dict_attrs:
         var_name = attr['variable']
         schema_def = attr['schema']
@@ -76,9 +87,9 @@ def generate_pydantic_model(
 
         # Check if this field should be visible based on its show_if
         field_hidden = parent_hidden
-        if not parent_hidden and schema_def.get('show_if') and isinstance(new_values, dict):
-            # Evaluate show_if condition against sibling values
-            if not filter_list([new_values], schema_def['show_if']):
+        if not parent_hidden and schema_def.get('show_if'):
+            # Evaluate show_if condition against sibling values with defaults
+            if eval_context and not filter_list([eval_context], schema_def['show_if']):
                 field_hidden = True
 
         field_type, field_info, nested_model = process_schema_field(
