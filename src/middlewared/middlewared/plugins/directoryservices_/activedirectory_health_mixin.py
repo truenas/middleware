@@ -219,7 +219,7 @@ class ADHealthMixin:
                     domain_info['kdc_server'],
                     machine_pass
                 )
-            except CallError:
+            except (CallError, KRB5Error):
                 faulted_reason = (
                     'Stored machine account secret is invalid. This may indicate that '
                     'the machine account password was reset in Active Directory without '
