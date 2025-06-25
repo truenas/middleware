@@ -18,6 +18,7 @@ from middlewared.utils.directoryservices.krb5_constants import (
     KRB_LibDefaults,
     PERSISTENT_KEYRING_PREFIX,
 )
+from middlewared.utils.directoryservices.krb5_error import KRB5Error, KRB5ErrCode
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -105,7 +106,37 @@ class ADHealthMixin:
             smb_config['workgroup']
         )
 
-        self._test_machine_account_password(domain_info['kdc_server'], machine_pass)
+        try:
+            self._test_machine_account_password(domain_info['kdc_server'], machine_pass)
+        except KRB5Error as krberr:
+            match krberr.krb5_code:
+                case KRB5ErrCode.KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
+                    faulted_reason = (
+                        f"The domain controller at {domain_info['kdc_server']} said that the "
+                        "TrueNAS computer account does not exist. This happened after the "
+                        "TrueNAS server tried to recover the secret from a saved backup. "
+                        "This means that the TrueNAS account was deleted or that the domain "
+                        "controllers do not agree about the list of computer accounts. "
+                        "You may need to re-join TrueNAS to active directory. "
+                    )
+                case KRB5ErrCode.KRB5_PREAUTH_FAILED:
+                    faulted_reason = (
+                        f"The domain controller at {domain_info['kdc_server']} said that the "
+                        "TrueNAS computer account credentials are not valid. This means that "
+                        "saved credentials on TrueNAS do not match the credentials expected by"
+                        "the domain controller. This can happen if the TrueNAS configuration was "
+                        "restored from a backup, if the domain controllers in the domain do "
+                        "not agree about credentials, or if the TrueNAS credential was changed "
+                        "without involvement of the TrueNAS server."
+                    )
+                case _:
+                    faulted_reason = f'Failed to validate stored credential: {krb_err.errmsg}'
+
+            raise ADHealthError(
+                    ADHealthCheckFailReason.AD_SECRET_INVALID,
+                    faulted_reason
+            )
+
         self.logger.warning('Recovered from broken or missing AD secrets file')
 
     def _recover_ad(self, error: ADHealthError) -> None:
