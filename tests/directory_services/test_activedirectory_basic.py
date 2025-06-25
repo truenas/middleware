@@ -204,7 +204,7 @@ def test_activedirectory_smb_ops(enable_smb):
         ) as ds:
             with smb_share(f'/mnt/{ds}', {
                 'name': 'DATASETS',
-                'purpose': 'NO_PRESET',
+                'purpose': 'LEGACY_SHARE',
                 'auxsmbconf': 'zfs_core:zfs_auto_create = true',
                 'path_suffix': '%D/%U'
             }):
@@ -245,7 +245,7 @@ def test_activedirectory_smb_ops(enable_smb):
 
             with smb_share(f'/mnt/{ds}', {
                 'name': 'TEST_HOME',
-                'purpose': 'NO_PRESET',
+                'purpose': 'LEGACY_SHARE',
                 'home': True,
             }):
                 # must refresh idmap cache to get new homedir from NSS
