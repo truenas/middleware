@@ -3,7 +3,7 @@ import errno
 from pydantic_core import ValidationError
 
 from middlewared.api.base.model import BaseModel
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 
 
 def accept_params(model: type[BaseModel], args: list, *, exclude_unset=False, expose_secrets=True) -> list:
