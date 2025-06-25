@@ -256,3 +256,112 @@ def test_show_if_preserves_existing_behavior():
     result2 = construct_schema(schema, values2, False)
     assert len(result2['verrors'].errors) == 0
     # The existing show_if logic should inject the default
+
+
+def test_nested_show_if_with_field_level_conditions():
+    """Test nested show_if where fields within hidden dicts also have show_if conditions.
+    
+    This tests the actual-budget scenario where:
+    - storage.data.host_path_config has show_if based on type
+    - storage.data.host_path_config.path has its own show_if based on acl_enable
+    """
+    schema = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'storage',
+                    'schema': {
+                        'type': 'dict',
+                        'attrs': [
+                            {
+                                'variable': 'data',
+                                'schema': {
+                                    'type': 'dict',
+                                    'attrs': [
+                                        {
+                                            'variable': 'type',
+                                            'schema': {
+                                                'type': 'string',
+                                                'required': True,
+                                                'default': 'ix_volume',
+                                            }
+                                        },
+                                        {
+                                            'variable': 'host_path_config',
+                                            'schema': {
+                                                'type': 'dict',
+                                                'show_if': [['type', '=', 'host_path']],
+                                                'attrs': [
+                                                    {
+                                                        'variable': 'acl_enable',
+                                                        'schema': {
+                                                            'type': 'boolean',
+                                                            'default': False
+                                                        }
+                                                    },
+                                                    {
+                                                        'variable': 'path',
+                                                        'schema': {
+                                                            'type': 'hostpath',
+                                                            'show_if': [['acl_enable', '=', False]],
+                                                            'required': True
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test with empty values - should use defaults and not require path
+    values = {}
+    result = construct_schema(schema, values, False)
+    assert len(result['verrors'].errors) == 0
+
+    # Test with explicit ix_volume type
+    values2 = {
+        'storage': {
+            'data': {
+                'type': 'ix_volume'
+            }
+        }
+    }
+    result2 = construct_schema(schema, values2, False)
+    assert len(result2['verrors'].errors) == 0
+
+    # Test with host_path type and acl_enable=False - path should be required
+    values3 = {
+        'storage': {
+            'data': {
+                'type': 'host_path',
+                'host_path_config': {
+                    'acl_enable': False
+                    # Missing path
+                }
+            }
+        }
+    }
+    result3 = construct_schema(schema, values3, False)
+    assert len(result3['verrors'].errors) == 1
+    assert 'path' in result3['verrors'].errors[0].attribute
+
+    # Test with host_path type and acl_enable=True - path should NOT be required
+    values4 = {
+        'storage': {
+            'data': {
+                'type': 'host_path',
+                'host_path_config': {
+                    'acl_enable': True
+                }
+            }
+        }
+    }
+    result4 = construct_schema(schema, values4, False)
+    assert len(result4['verrors'].errors) == 0
