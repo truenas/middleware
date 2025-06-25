@@ -1,16 +1,14 @@
-import pytest
-
 from middlewared.plugins.apps.schema_construction_utils import construct_schema
 
 
 def test_nested_show_if_parent_hides_children():
     """Test that when a parent dict field is hidden by show_if, its required children don't cause validation errors.
-    
+
     This tests the specific case from actual-budget where:
     - storage.data.type = 'ix_volume' (default)
     - storage.data.host_path_config has show_if: [['type', '=', 'host_path']]
     - storage.data.host_path_config.path is required
-    
+
     When type is 'ix_volume', host_path_config should be hidden and its required path field shouldn't validate.
     """
     schema = {
@@ -76,7 +74,7 @@ def test_nested_show_if_parent_hides_children():
             ]
         }
     }
-    
+
     # Test with ix_volume type (default) - host_path_config.path should NOT be required
     values = {
         'storage': {
@@ -89,11 +87,11 @@ def test_nested_show_if_parent_hides_children():
             }
         }
     }
-    
+
     result = construct_schema(schema, values, False)
     # Should not have validation errors
     assert len(result['verrors'].errors) == 0
-    
+
     # Test with host_path type - host_path_config.path SHOULD be required
     values2 = {
         'storage': {
@@ -105,7 +103,7 @@ def test_nested_show_if_parent_hides_children():
             }
         }
     }
-    
+
     result2 = construct_schema(schema, values2, False)
     # Should have validation error for missing path
     assert len(result2['verrors'].errors) == 1
@@ -169,7 +167,7 @@ def test_nested_show_if_with_nested_conditions():
             ]
         }
     }
-    
+
     # Test with feature disabled - all nested fields should be optional
     values = {
         'app': {
@@ -177,10 +175,10 @@ def test_nested_show_if_with_nested_conditions():
             # No feature_config provided
         }
     }
-    
+
     result = construct_schema(schema, values, False)
     assert len(result['verrors'].errors) == 0
-    
+
     # Test with feature enabled but basic mode - advanced_config fields should be optional
     values2 = {
         'app': {
@@ -191,10 +189,10 @@ def test_nested_show_if_with_nested_conditions():
             }
         }
     }
-    
+
     result2 = construct_schema(schema, values2, False)
     assert len(result2['verrors'].errors) == 0
-    
+
     # Test with feature enabled and advanced mode - required_setting should be required
     values3 = {
         'app': {
@@ -207,7 +205,7 @@ def test_nested_show_if_with_nested_conditions():
             }
         }
     }
-    
+
     result3 = construct_schema(schema, values3, False)
     assert len(result3['verrors'].errors) == 1
     assert 'required_setting' in result3['verrors'].errors[0].attribute
@@ -246,15 +244,15 @@ def test_show_if_preserves_existing_behavior():
             ]
         }
     }
-    
+
     # When publish is False, port should not be required
     values = {'network': {'publish': False}}
     result = construct_schema(schema, values, False)
     assert len(result['verrors'].errors) == 0
     # The existing show_if logic should handle this
-    
+
     # When publish is True, port should use default
     values2 = {'network': {'publish': True}}
-    result2 = construct_schema(schema, values2, False) 
+    result2 = construct_schema(schema, values2, False)
     assert len(result2['verrors'].errors) == 0
     # The existing show_if logic should inject the default
