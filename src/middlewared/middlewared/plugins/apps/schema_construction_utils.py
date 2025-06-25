@@ -73,14 +73,14 @@ def generate_pydantic_model(
         schema_def = attr['schema']
         attr_value = new_values.get(var_name, NOT_PROVIDED) if isinstance(new_values, dict) else NOT_PROVIDED
         old_attr_value = old_values.get(var_name, NOT_PROVIDED) if isinstance(old_values, dict) else NOT_PROVIDED
-        
+
         # Check if this field should be visible based on its show_if
         field_hidden = parent_hidden
         if not parent_hidden and schema_def.get('show_if') and isinstance(new_values, dict):
             # Evaluate show_if condition against sibling values
             if not filter_list([new_values], schema_def['show_if']):
                 field_hidden = True
-        
+
         field_type, field_info, nested_model = process_schema_field(
             schema_def, f'{model_name}_{var_name}', attr_value, old_attr_value,
             field_hidden=field_hidden,

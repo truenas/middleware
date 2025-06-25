@@ -107,13 +107,9 @@ from middlewared.schema import Dict
 async def test_normalize_and_validate(app_detail, values, expected):
     middleware = Middleware()
     app_schema_obj = AppSchemaService(middleware)
-    dict_obj = Dict(
-        'actual-budget',
-        Dict('run_as'),
-        Dict('network'),
-        Dict('resources')
-    )
-    middleware['app.schema.validate_values'] = lambda *args: dict_obj
+    # Mock validate_values to return an empty dict (or the input values)
+    # since normalize_values expects a mutable dictionary
+    middleware['app.schema.validate_values'] = lambda item_details, values, update, app_data: values or {}
     new_values = await app_schema_obj.normalize_and_validate_values(
         item_details=app_detail,
         values=values,
