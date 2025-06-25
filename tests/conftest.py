@@ -73,7 +73,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def legacy_api_client(request):
-    with client(version=request.param, py_exceptions=False) as c:
+    with client(version=request.param) as c:
         yield c
 
 
