@@ -44,7 +44,7 @@ SYSTEM_SECURITY_GPOS_STIG = {'id': 1, 'enable_fips': True, 'enable_gpos_stig': T
 
 BASE_SMB_SHARE = {
     'id': 1,
-    'purpose': 'NO_PRESET',
+    'purpose': 'LEGACY_SHARE',
     'path': '/mnt/dozer/BASE',
     'path_suffix': '',
     'home': False,
