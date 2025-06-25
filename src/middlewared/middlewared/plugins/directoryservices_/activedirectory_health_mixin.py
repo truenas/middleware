@@ -117,7 +117,7 @@ class ADHealthMixin:
                         "TrueNAS server tried to recover the secret from a saved backup. "
                         "This means that the TrueNAS account was deleted or that the domain "
                         "controllers do not agree about the list of computer accounts. "
-                        "You may need to re-join TrueNAS to active directory. "
+                        "You may need to re-join TrueNAS to Active Directory. "
                     )
                 case KRB5ErrCode.KRB5_PREAUTH_FAILED:
                     faulted_reason = (
@@ -126,8 +126,9 @@ class ADHealthMixin:
                         "saved credentials on TrueNAS do not match the credentials expected by"
                         "the domain controller. This can happen if the TrueNAS configuration was "
                         "restored from a backup, if the domain controllers in the domain do "
-                        "not agree about credentials, or if the TrueNAS credential was changed "
-                        "without involvement of the TrueNAS server."
+                        "not agree about the credentials, or if someone changed the TrueNAS "
+                        "credentials through an unsupported method. You may need to re-join "
+                        "TrueNAS to Active Directory."
                     )
                 case _:
                     faulted_reason = f'Failed to validate stored credential: {krb_err.errmsg}'
