@@ -319,3 +319,24 @@ def test_ipv6_ssh_credentials(cleanup, localuser, remoteuser, src, dst, ipv6_ssh
         run_task(t)
 
     assert ssh(f"ls -1 {dst}") == "test\n"
+
+
+def test_validate_rpath_does_not_exist(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    with pytest.raises(ValidationErrors) as e:
+        with task({
+            "path": f"{src}/",
+            "user": "localuser",
+            "ssh_credentials": ssh_credentials["credentials"]["id"],
+            "mode": "SSH",
+            "remotepath": f"{dst}/nonexistent/",
+            "validate_rpath": True,
+        }):
+            pass
+
+    assert e.value.errors == [
+        ValidationError(
+            "rsync_task_create.remotepath",
+            RegexString("The Remote Path you specified does not exist or is not a directory.*"),
+            errno.EINVAL,
+        )
+    ]
