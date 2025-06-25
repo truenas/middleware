@@ -280,9 +280,9 @@ class VirtGlobalService(ConfigService):
             'type': data['type'].upper(),
             'managed': data['managed'],
             'ipv4_address': data['config']['ipv4.address'],
-            'ipv4_nat': data['config']['ipv4.nat'],
+            'ipv4_nat': data['config']['ipv4.nat'] == 'true',
             'ipv6_address': data['config']['ipv6.address'],
-            'ipv6_nat': data['config']['ipv6.nat'],
+            'ipv6_nat': data['config']['ipv6.nat'] == 'true',
         }
 
     @private
