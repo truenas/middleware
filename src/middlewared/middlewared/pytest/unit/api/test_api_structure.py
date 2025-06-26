@@ -33,6 +33,14 @@ def test_api_current_module_exports(current_api_package):
 
 
 def check_docstring(docstr: str | None):
+    """Enforce API docstring rules.
+
+    Rules are skipped if the docstring contains any asterisks (*) or hyphens (-).
+    1. First character cannot be a lowercase letter
+    2. Last character must be a period
+    3. Last character of each line must be a period or colon
+
+    """
     if not docstr:
         return
     if any(c in docstr for c in ["*", "-"]):
@@ -44,6 +52,8 @@ def check_docstring(docstr: str | None):
         return "Docstring cannot start with lowercase letter"
     if not docstr.endswith("."):
         return "Docstring must end with a period"
+    if any(line[-1] not in (".", ":") for line in docstr.splitlines() if line):
+        return "Use '\' at ends of lines to wrap text"
 
 
 def test_api_docstrings(current_api_package):
@@ -57,7 +67,8 @@ def test_api_docstrings(current_api_package):
 
         for name, obj in inspect.getmembers(module):
             if inspect.isclass(obj) and issubclass(obj, BaseModel):
-                if err := check_docstring(obj.__doc__):  # model's docstring
+                # Check model's docstring
+                if err := check_docstring(obj.__doc__):
                     errors.append(SyntaxWarning(f"{name}: {err}"))
 
                 # Iterate over field docstrings
