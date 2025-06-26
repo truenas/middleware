@@ -1,7 +1,7 @@
 import re
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import AfterValidator, model_validator, Secret, StringConstraints
+from pydantic import AfterValidator, Field, model_validator, Secret, StringConstraints
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, match_validator, NonEmptyString, single_argument_args
 

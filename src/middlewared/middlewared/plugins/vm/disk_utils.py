@@ -13,7 +13,8 @@ from middlewared.service import CallError, Service, job
 
 
 # Valid Disk Formats we can export
-VALID_DISK_FORMATS = ['qcow2', 'qed', 'raw', 'vdi', 'vpc', 'vmdk' ]
+VALID_DISK_FORMATS = ['qcow2', 'qed', 'raw', 'vdi', 'vpc', 'vmdk']
+
 
 class VMService(Service):
 
@@ -22,7 +23,7 @@ class VMService(Service):
     def import_disk_image(self, job, data):
 
         """
-        Imports a specified disk image. 
+        Imports a specified disk image.
 
         Utilized qemu-img with the auto-detect functionality to auto-convert
         any supported disk image format to RAW -> ZVOL
@@ -39,15 +40,14 @@ class VMService(Service):
         `diskimg` is an required parameter for the incoming disk image
         `zvol` is the required target for the imported disk image
         """
-        
         if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', data['zvol'])]):
-           raise CallError(f"zvol {data['zvol']} does not exist.", errno.ENOENT)
+            raise CallError(f"zvol {data['zvol']} does not exist.", errno.ENOENT)
 
         if os.path.exists(data['diskimg']) is False:
-           raise CallError('Disk Image does not exist.', errno.ENOENT)
+            raise CallError('Disk Image does not exist.', errno.ENOENT)
 
         if os.path.exists(zvol_name_to_path(data['zvol'])) is False:
-           raise CallError('Zvol device does not exist.', errno.ENOENT)
+            raise CallError('Zvol device does not exist.', errno.ENOENT)
 
         zvol_device_path = str(zvol_name_to_path(data['zvol']))
 
@@ -57,7 +57,10 @@ class VMService(Service):
         command = f"qemu-img convert -p -O raw {imgsafe} {devsafe}"
         self.logger.warning('Running Disk Import using: "' + command + '"')
 
-        cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
+        cp = subprocess.Popen(
+            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            bufsize=1, universal_newlines=True
+        )
 
         re_progress = re.compile(r'(\d+\.\d+)')
         stderr = ''
@@ -106,13 +109,13 @@ class VMService(Service):
         """
 
         if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', data['zvol'])]):
-           raise CallError(f"zvol {data['zvol']} does not exist.", errno.ENOENT)
+            raise CallError(f"zvol {data['zvol']} does not exist.", errno.ENOENT)
 
         if os.path.isdir(data['directory']) is False:
-           raise CallError(f"Export directory {data['directory']} does not exist.", errno.ENOENT)
+            raise CallError(f"Export directory {data['directory']} does not exist.", errno.ENOENT)
 
         if os.path.exists(zvol_name_to_path(data['zvol'])) is False:
-           raise CallError('Zvol device does not exist.', errno.ENOENT)
+            raise CallError('Zvol device does not exist.', errno.ENOENT)
 
         # Check that a supported format was specified
         format = data['format'].lower()
@@ -137,7 +140,10 @@ class VMService(Service):
         command = f"qemu-img convert -p -f raw -O {data['format']} {devsafe} {filesafe}"
         self.logger.warning('Running Disk export using: "' + command + '"')
 
-        cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
+        cp = subprocess.Popen(
+            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            bufsize=1, universal_newlines=True
+        )
 
         re_progress = re.compile(r'(\d+\.\d+)')
         stderr = ''

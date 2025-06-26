@@ -24,7 +24,7 @@ from middlewared.api.current import (
 from middlewared.utils.size import normalize_size
 
 from .utils import (
-    create_vnc_password_file, get_max_boot_priority_device, get_root_device_dict, get_vnc_info_from_config,
+    create_vnc_password_file, get_root_device_dict, get_vnc_info_from_config,
     VirtGlobalStatus, incus_call, incus_call_and_wait, incus_pool_to_storage_pool, root_device_pool_from_raw,
     storage_pool_to_incus_pool, validate_device_name, generate_qemu_cmd, generate_qemu_cdrom_metadata,
     INCUS_METADATA_CDROM_KEY,
