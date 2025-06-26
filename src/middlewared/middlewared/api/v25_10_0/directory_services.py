@@ -133,7 +133,7 @@ class LDAP_Idmap(IdmapDomainBase):
     ldap_user_dn_password: Secret[NonEmptyString]
     """ Secret to use for authenticating the user specified by `ldap_user_dn`. """
     ldap_url: LDAP_URL
-    """ LDAP server to use for the idmap entries """
+    """ LDAP server to use for the idmap entries. """
     readonly: bool = True
     """ If readonly is set to True then TrueNAS will not attempt to write new idmap entries. """
     validate_certificates: bool = True
@@ -247,10 +247,10 @@ DSCred = Annotated[
 
 class ActiveDirectoryConfig(BaseModel):
     hostname: NonEmptyString
-    """ Hostname of TrueNAS server to register in Active Directory. Example: "truenasnyc" """
+    """ Hostname of TrueNAS server to register in Active Directory. Example: "truenasnyc". """
     domain: NonEmptyString
     """ The full DNS domain name of the Active Directory domain. This must not be a domain controller.
-    Example: "mydomain.internal"  """
+    Example: "mydomain.internal".  """
     idmap: PrimaryDomainIdmap | PrimaryDomainIdmapAutoRid = Field(default=PrimaryDomainIdmap(), example=[
         {
             'builtin': {'range_low': 90000001, 'range_high': 100000000},
@@ -407,9 +407,9 @@ class LDAPAttributeMaps(BaseModel):
 class LDAPConfig(BaseModel):
     server_urls: list[LDAP_URL]
     """ List of LDAP server URIs used for LDAP binds. Each URI must begin with ldap:// or ldaps:// and may use either a
-    DNS name or an IP address. Example: ['ldaps://myldap.domain.internal']"""
+    DNS name or an IP address. Example: `['ldaps://myldap.domain.internal']`."""
     basedn: LDAP_DN
-    """ The base DN to use when performing LDAP operations. Example: "dc=domain,dc=internal" """
+    """ The base DN to use when performing LDAP operations. Example: `"dc=domain,dc=internal"`. """
     starttls: bool = False
     """ Establish TLS by transmitting a StartTLS request to the server. """
     validate_certificates: bool = True
@@ -435,13 +435,13 @@ class LDAPConfig(BaseModel):
 class IPAConfig(BaseModel):
     target_server: NonEmptyString
     """ The name of the IPA server that TrueNAS uses to build URLs when it joins or leaves the IPA domain.
-    Example: "ipa.example.internal" """
+    Example: "ipa.example.internal". """
     hostname: NonEmptyString
-    """ Hostname of TrueNAS server to register in IPA during the join process. Example: "truenasnyc" """
+    """ Hostname of TrueNAS server to register in IPA during the join process. Example: "truenasnyc". """
     domain: NonEmptyString
-    """ The domain of the IPA server. Example "ipa.internal" """
+    """ The domain of the IPA server. Example "ipa.internal". """
     basedn: LDAP_DN
-    """ The base DN to use when performing LDAP operations. Example: "dc=example,dc=internal" """
+    """ The base DN to use when performing LDAP operations. Example: "dc=example,dc=internal". """
     smb_domain: IPA_SMBDomain | None = None
     """ Settings for the IPA SMB domain. TrueNAS detects these settings during IPA join. Some IPA domains may not
     include SMB schema configuration. """

@@ -131,7 +131,7 @@ class SmbServiceEntry(BaseModel):
     """ TrueNAS SMB server configuration. """
     id: int
     netbiosname: NetbiosName
-    """ The NetBIOS name of this server """
+    """ The NetBIOS name of this server. """
     netbiosalias: list[NetbiosName]
     """ Alternative netbios names of the TrueNAS server. These names are announced through NetBIOS name server and
     registered in Active Directory when TrueNAS joins the domain."""

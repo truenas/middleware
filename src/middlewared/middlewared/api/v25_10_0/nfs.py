@@ -133,11 +133,11 @@ class NfsShareEntry(BaseModel):
     ] = []
     """ List of authorized networks that are allowed to access the share having format \
     "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed.
-    Maximum number of entries: 42 """
+    Maximum number of entries: 42. """
     hosts: Annotated[list[NonEmptyString], Field(max_length=MAX_NUM_NFS_HOSTS)] = []
     """ List of IP's/hostnames which are allowed to access the share.  No quotes or spaces are allowed. \
     Each entry must be unique. If empty, all IP's/hostnames are allowed.
-    Maximum number of entries: 42 """
+    Maximum number of entries: 42. """
     ro: bool = False
     """ Export the share as read only. """
     maproot_user: str | None = None
