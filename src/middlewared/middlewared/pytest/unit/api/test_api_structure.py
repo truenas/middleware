@@ -1,5 +1,6 @@
 import importlib
 import inspect
+import os
 import pathlib
 import pkgutil
 
@@ -15,10 +16,11 @@ def current_api_package():
     api_dir = pathlib.Path(middlewared.api.__file__).parent
 
     # Find all version directories
-    version_dirs = [
-        d.name for d in api_dir.iterdir()
-        if d.is_dir() and d.name.startswith('v')
-    ]
+    with os.scandir(api_dir) as sdir:
+        version_dirs = [
+            d.name for d in sdir
+            if d.is_dir() and d.name.startswith('v')
+        ]
 
     # Sort to get the latest version
     latest_version = sorted(version_dirs)[-1]
@@ -26,10 +28,6 @@ def current_api_package():
     # Import and return the latest API package
     module_name = f"middlewared.api.{latest_version}"
     return importlib.import_module(module_name)
-
-
-def test_api_current_module_exports(current_api_package):
-    assert "BaseModel" not in dir(current_api_package), "__all__ must be defined in all API model modules"
 
 
 def check_docstring(docstr: str | None):
@@ -54,6 +52,10 @@ def check_docstring(docstr: str | None):
         return "Docstring must end with a period"
     if any(line[-1] not in (".", ":") for line in docstr.splitlines() if line):
         return r"Use '\' at ends of lines to wrap text"
+
+
+def test_api_current_module_exports(current_api_package):
+    assert "BaseModel" not in dir(current_api_package), "__all__ must be defined in all API model modules"
 
 
 def test_api_docstrings(current_api_package):
