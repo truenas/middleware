@@ -35,6 +35,10 @@ def test_api_current_module_exports(current_api_package):
 def check_docstring(docstr: str | None):
     if not docstr:
         return
+    if any(c in docstr for c in ["*", "-"]):
+        # Just assume Markdown and skip rules check
+        return
+
     docstr = docstr.strip()
     if docstr[0].islower():
         return "Docstring cannot start with lowercase letter"

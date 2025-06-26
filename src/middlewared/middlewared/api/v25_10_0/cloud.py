@@ -68,7 +68,7 @@ class BaseCloudEntry(BaseModel):
     exclude: list[NonEmptyString] = Field(default_factory=list)
     """Paths to pass to `restic backup --exclude`."""
     args: LongString = ""
-    """(Slated for removal)"""
+    """(Slated for removal)."""
     enabled: bool = True
     """Can enable/disable the task."""
     job: dict | None
