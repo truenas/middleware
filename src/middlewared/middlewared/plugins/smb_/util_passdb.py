@@ -512,10 +512,10 @@ def user_entry_to_passdb_entry(
 
     try:
         nt_pw = user_smbhash_to_nt_pw(user_entry['username'], user_entry['smbhash'])
-    except Exception:
+    except Exception as exc:
         raise ValueError(
             f'{user_entry["username"]}: failed to parse SMB hash of {user_entry["smbhash"]}'
-        )
+        ) from exc
 
     if user_entry['last_password_change']:
         if isinstance(user_entry['last_password_change'], int):

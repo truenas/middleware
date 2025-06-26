@@ -1,20 +1,19 @@
 import os
 import shlex
-import textwrap
 
+from middlewared.api.base.handler.accept import validate_model
+from middlewared.api.base.model import model_subset
+from middlewared.api.current import CloudTaskAttributes
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.schema import Bool, Str
 from middlewared.service import CallError, private
-from middlewared.service_exception import InstanceNotFound
+from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.utils.privilege import credential_has_full_admin
-from middlewared.validators import validate_schema
 
 
 class CloudTaskServiceMixin:
     allow_zvol = False
 
-    @private
     async def _get_credentials(self, credentials_id):
         try:
             return await self.middleware.call("cloudsync.credentials.get_instance", credentials_id)
@@ -22,18 +21,21 @@ class CloudTaskServiceMixin:
             return None
 
     @private
-    def _common_task_schema(self, provider):
-        schema = []
+    def task_attributes(self, provider):
+        attributes = []
+
+        if provider.buckets:
+            attributes.append("bucket")
+
+        attributes.append("folder")
 
         if provider.fast_list:
-            schema.append(Bool("fast_list", default=False, title="Use --fast-list", description=textwrap.dedent("""\
-                Use fewer transactions in exchange for more RAM. This may also speed up or slow down your
-                transfer. See [rclone documentation](https://rclone.org/docs/#fast-list) for more details.
-            """).rstrip()))
+            attributes.append("fast_list")
 
-        return schema
+        attributes += provider.task_attributes
 
-    @private
+        return attributes
+
     async def _basic_validate(self, verrors, name, data):
         try:
             shlex.split(data["args"])
@@ -49,25 +51,16 @@ class CloudTaskServiceMixin:
 
         provider = REMOTES[credentials["provider"]["type"]]
 
-        schema = []
-
-        if provider.buckets:
-            schema.append(Str("bucket", required=True, empty=False))
-
-        schema.append(Str("folder", required=True))
-
-        schema.extend(provider.task_schema)
-
-        schema.extend(self._common_task_schema(provider))
-
-        attributes_verrors = validate_schema(schema, data["attributes"])
-
-        if not attributes_verrors:
+        try:
+            data["attributes"] = validate_model(
+                model_subset(CloudTaskAttributes, self.task_attributes(provider)),
+                data["attributes"],
+            )
+        except ValidationErrors as e:
+            verrors.add_child(f"{name}.attributes", e)
+        else:
             await provider.validate_task_basic(data, credentials, verrors)
 
-        verrors.add_child(f"{name}.attributes", attributes_verrors)
-
-    @private
     async def _validate(self, app, verrors, name, data):
         await self._basic_validate(verrors, name, data)
 

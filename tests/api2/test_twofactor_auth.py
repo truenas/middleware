@@ -6,7 +6,7 @@ import pytest
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user as user_create
-from middlewared.test.integration.assets.directory_service import active_directory, ADPASSWORD
+from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_user_secret_sid, get_2fa_totp_token,
 )
@@ -50,7 +50,7 @@ def ensure_small_time_difference():
 @pytest.fixture(scope='function')
 def enterprise_ad():
     with product_type():
-        with active_directory() as ad:
+        with directoryservice('ACTIVEDIRECTORY') as ad:
             call("system.general.update", {"ds_auth": True})
             try:
                 yield ad
@@ -299,14 +299,15 @@ def test_login_with_otp_switch_account(clear_ratelimit):
 def test_login_with_ad_otp(clear_ratelimit, enterprise_ad):
     """ Validate AD account can use 2FA """
     with enabled_twofactor_auth():
-        user_obj = call('user.query', [['username', '=', enterprise_ad['user_obj']['pw_name']]], {'get': True})
+        username = enterprise_ad['account'].user_obj['pw_name']
+        user_obj = call('user.query', [['username', '=', username]], {'get': True})
         assert user_obj['twofactor_auth_configured'] is False
 
         call('user.renew_2fa_secret', user_obj['username'], TEST_TWOFACTOR_INTERVAL)
-        user_obj = call('user.query', [['username', '=', enterprise_ad['user_obj']['pw_name']]], {'get': True})
+        user_obj = call('user.query', [['username', '=', username]], {'get': True})
         assert user_obj['twofactor_auth_configured'] is True
 
         user_secret_obj = get_user_secret_sid(user_obj['sid'], True)
         assert user_secret_obj['secret'] is not None
 
-        do_login(user_obj['username'], ADPASSWORD, get_2fa_totp_token(user_secret_obj))
+        do_login(user_obj['username'], enterprise_ad['account'].password, get_2fa_totp_token(user_secret_obj))

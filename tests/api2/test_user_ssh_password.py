@@ -2,7 +2,7 @@ import pytest
 
 from auto_config import pool_name
 from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.account import user, group, test_user, temporary_update
+from middlewared.test.integration.assets.account import user, group, temporary_update
 from middlewared.test.integration.utils import call, ssh
 
 

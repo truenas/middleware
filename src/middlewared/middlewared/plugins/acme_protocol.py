@@ -3,22 +3,57 @@ import josepy as jose
 import json
 import requests
 
+from acme import client, messages
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel, LongString, single_argument_args
 from middlewared.api.current import (
-    ACMERegistrationCreateArgs, ACMERegistrationCreateResult, ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
-    ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult, ACMEDNSAuthenticatorUpdateArgs,
-    ACMEDNSAuthenticatorUpdateResult, ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult,
+    ACMEDNSAuthenticatorEntry, DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult,
+    DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult, DNSAuthenticatorDeleteArgs,
+    DNSAuthenticatorDeleteResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
 
-from acme import client, messages
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
-
 
 # TODO: See what can be done to respect rate limits
+
+
+class JWKCreate(BaseModel):
+    key_size: int = 2048
+    public_exponent: int = 65537
+
+
+class ACMERegistrationBody(BaseModel):
+    id: int
+    status: str
+    key: LongString
+
+
+class ACMERegistrationEntry(BaseModel):
+    id: int
+    uri: str
+    directory: str
+    tos: str
+    new_account_uri: str
+    new_nonce_uri: str
+    new_order_uri: str
+    revoke_cert_uri: str
+    body: ACMERegistrationBody
+
+
+@single_argument_args('acme_registration_create')
+class ACMERegistrationCreateArgs(BaseModel):
+    tos: bool = False
+    JWK_create: JWKCreate = JWKCreate()
+    acme_directory_uri: str
+
+
+class ACMERegistrationCreateResult(BaseModel):
+    result: ACMERegistrationEntry
 
 
 class ACMERegistrationModel(sa.Model):
@@ -38,7 +73,6 @@ class ACMERegistrationBodyModel(sa.Model):
     __tablename__ = 'system_acmeregistrationbody'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    contact = sa.Column(sa.String(254))
     status = sa.Column(sa.String(10))
     key = sa.Column(sa.Text())
     acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True)
@@ -77,7 +111,7 @@ class ACMERegistrationService(CRUDService):
         except (requests.ConnectionError, requests.Timeout, json.JSONDecodeError, KeyError) as e:
             raise CallError(f'Unable to retrieve directory : {e}')
 
-    @api_method(ACMERegistrationCreateArgs, ACMERegistrationCreateResult)
+    @api_method(ACMERegistrationCreateArgs, ACMERegistrationCreateResult, private=True)
     def do_create(self, data):
         """
         Register with ACME Server
@@ -129,14 +163,6 @@ class ACMERegistrationService(CRUDService):
                 'Please agree to the terms of service'
             )
 
-        # For now we assume that only root is responsible for certs issued under ACME protocol
-        email = self.middleware.call_sync('mail.local_administrator_email')
-        if not email:
-            raise CallError(
-                'Please configure an email address for any local administrator user which will be used with the ACME '
-                'server'
-            )
-
         if self.middleware.call_sync(
             'acme.registration.query', [['directory', '=', data['acme_directory_uri']]]
         ):
@@ -155,7 +181,6 @@ class ACMERegistrationService(CRUDService):
         acme_client = client.ClientV2(directory, client.ClientNetwork(key))
         register = acme_client.new_account(
             messages.NewRegistration.from_data(
-                email=email,
                 terms_of_service_agreed=True
             )
         )
@@ -181,7 +206,6 @@ class ACMERegistrationService(CRUDService):
             'datastore.insert',
             'system.acmeregistrationbody',
             {
-                'contact': register.body.contact[0],
                 'status': register.body.status,
                 'key': key.json_dumps(),
                 'acme': registration_id
@@ -226,7 +250,7 @@ class DNSAuthenticatorService(CRUDService):
 
         verrors.check()
 
-    @api_method(ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult)
+    @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult)
     async def do_create(self, data):
         """
         Create a DNS Authenticator
@@ -263,7 +287,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(ACMEDNSAuthenticatorUpdateArgs, ACMEDNSAuthenticatorUpdateResult)
+    @api_method(DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult)
     async def do_update(self, id_, data):
         """
         Update DNS Authenticator of `id`
@@ -307,7 +331,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult)
+    @api_method(DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult)
     async def do_delete(self, id_):
         """
         Delete DNS Authenticator of `id`

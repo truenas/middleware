@@ -2,7 +2,7 @@ from typing import Annotated, Literal, TypeAlias
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NormalPath, NonEmptyString, excluded_field
 from .nvmet_subsys import NVMetSubsysEntry
 
 __all__ = [
@@ -31,7 +31,7 @@ class NVMetNamespaceEntry(BaseModel):
     subsys: NVMetSubsysEntry
     device_type: DeviceType
     """ Type of device (or file) used to implement the namespace. """
-    device_path: str
+    device_path: NonEmptyString
     """
     Path to the device or file being used to implement the namespace.
 
@@ -66,6 +66,7 @@ class NVMetNamespaceCreate(NVMetNamespaceEntry):
     device_nguid: Excluded = excluded_field()
     locked: Excluded = excluded_field()
     subsys_id: int
+    device_path: NormalPath
 
 
 class NVMetNamespaceCreateArgs(BaseModel):

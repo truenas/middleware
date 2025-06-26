@@ -86,6 +86,8 @@ class NVMetNamespaceService(SharingService):
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'nvmet_namespace_create')
+        verrors.check()
+
         await self.middleware.call('nvmet.namespace.save_file', data, 'nvmet_namespace_create', verrors)
         verrors.check()
 
@@ -118,6 +120,8 @@ class NVMetNamespaceService(SharingService):
 
         verrors = ValidationErrors()
         await self.__validate(verrors, new, 'nvmet_namespace_update', old=old)
+        verrors.check()
+
         await self.middleware.call('nvmet.namespace.save_file', new, 'nvmet_namespace_update', verrors, old)
         verrors.check()
 
@@ -214,6 +218,19 @@ class NVMetNamespaceService(SharingService):
                                         'Shrinking an namespace file is not allowed. This can lead to data loss.')
 
     @private
+    def _is_dataset_path(self, pathstr: str) -> bool:
+        if not pathstr.startswith('/mnt'):
+            return False
+        root_dev = os.stat('/mnt').st_dev
+        path = pathlib.Path(pathstr)
+        if path.exists():
+            return path.stat().st_dev != root_dev
+        elif path.parent.exists():
+            return path.parent.stat().st_dev != root_dev
+        else:
+            return False
+
+    @private
     def clean_type_and_path(self, data, schema_name, verrors):
         device_type = data.get('device_type')
         device_path = data.get('device_path')
@@ -229,9 +246,13 @@ class NVMetNamespaceService(SharingService):
                     verrors.add(f'{schema_name}.device_path',
                                 f'ZVOL device_path must start with "zvol/": {device_path}')
             case 'FILE':
-                if not device_path.startswith('/mnt/'):
+                if not self._is_dataset_path(device_path):
                     verrors.add(f'{schema_name}.device_path',
-                                f'FILE device_path must start with "/mnt/": {device_path}')
+                                'FILE device_path must reside in an existing directory '
+                                f'on a dataset: {device_path}')
+                elif os.path.isdir(device_path):
+                    verrors.add(f'{schema_name}.device_path',
+                                f'FILE device_path must not be a directory: {device_path}')
             case _:
                 verrors.add(f'{schema_name}.device_type', 'Invalid device_type supplied')
 

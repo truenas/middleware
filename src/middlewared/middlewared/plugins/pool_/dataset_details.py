@@ -1,13 +1,13 @@
-import os
 import pathlib
 
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetDetailsArgs,
-    PoolDatasetDetailsResults,
+    PoolDatasetDetailsResult,
 )
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
+from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.mount import getmntinfo
 
 
@@ -66,7 +66,7 @@ class PoolDatasetService(Service):
         #        valid_pools.append(i['name'])
         return [], options
 
-    @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResults, roles=['DATASET_READ'])
+    @api_method(PoolDatasetDetailsArgs, PoolDatasetDetailsResult, roles=['DATASET_READ'])
     def details(self):
         """
         Retrieve all dataset(s) details outlining any
@@ -112,13 +112,13 @@ class PoolDatasetService(Service):
             path = f'/dev/{path}'
 
         try:
-            devid = os.stat(path).st_dev
+            mnt_id = statx(path).stx_mnt_id
         except Exception:
             # path deleted/umounted/locked etc
             pass
         else:
-            if devid in mntinfo:
-                mount_info = mntinfo[devid]
+            if mnt_id in mntinfo:
+                mount_info = mntinfo[mnt_id]
 
         return mount_info
 

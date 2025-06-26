@@ -342,7 +342,6 @@ class UserService(CRUDService):
 
         user.update({
             'local': True,
-            'id_type_both': False,
             'sid': sid,
             'roles': list(user_roles),
             'api_keys': ctx['user_api_keys'][user['username']]
@@ -364,7 +363,6 @@ class UserService(CRUDService):
         to_remove = [
             'api_keys',
             'local',
-            'id_type_both',
             'sid',
             'immutable',
             'home_create',
@@ -836,6 +834,21 @@ class UserService(CRUDService):
             group_ids.extend(data['groups'])
         else:
             group_ids.extend(user['groups'])
+
+        # NAS-136301: prevent locking all admin accounts
+        if data.get('locked') is True:
+            number_admin_remaining = self.middleware.call_sync(
+                'user.query', [
+                    ['roles', 'rin', 'FULL_ADMIN'],
+                    ['local', '=', True],
+                    ['locked', '=', False],
+                    ['id', '!=', user['id']]
+                ],
+                {'count': True}
+            )
+            if 0 >= number_admin_remaining:
+                verrors.add('user_update.locked',
+                            'After locking this user no local users will have FULL_ADMIN role')
 
         self.middleware.call_sync('user.common_validation', verrors, data, 'user_update', group_ids, user)
 
@@ -1934,7 +1947,6 @@ class GroupService(CRUDService):
 
         group.update({
             'local': True,
-            'id_type_both': False,
             'sid': sid,
             'roles': privilege_mappings['roles']
         })
@@ -1945,7 +1957,6 @@ class GroupService(CRUDService):
         to_remove = [
             'name',
             'local',
-            'id_type_both',
             'sid',
             'roles'
         ]

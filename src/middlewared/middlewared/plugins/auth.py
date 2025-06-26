@@ -14,10 +14,10 @@ from middlewared.api.current import (
     AuthLoginExArgs, AuthLoginExResult,
     AuthLoginExContinueArgs, AuthLoginExContinueResult,
     AuthMeArgs, AuthMeResult,
-    AuthMechChoicesArgs, AuthMechChoicesResult,
-    AuthSessionEntry,
+    AuthMechanismChoicesArgs, AuthMechanismChoicesResult,
+    AuthSessionsEntry,
     AuthGenerateTokenArgs, AuthGenerateTokenResult,
-    AuthSessionLogoutArgs, AuthSessionLogoutResult,
+    AuthLogoutArgs, AuthLogoutResult,
     AuthSetAttributeArgs, AuthSetAttributeResult,
     AuthTerminateSessionArgs, AuthTerminateSessionResult,
     AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult,
@@ -246,7 +246,7 @@ class AuthService(Service):
         super(AuthService, self).__init__(*args, **kwargs)
         self.session_manager.middleware = self.middleware
 
-    @filterable_api_method(item=AuthSessionEntry, roles=['AUTH_SESSIONS_READ'])
+    @filterable_api_method(item=AuthSessionsEntry, roles=['AUTH_SESSIONS_READ'])
     @pass_app(require=True)
     def sessions(self, app, filters, options):
         """
@@ -624,11 +624,24 @@ class AuthService(Service):
                 errno.EOPNOTSUPP
             )
 
-    @api_method(AuthMechChoicesArgs, AuthMechChoicesResult, authentication_required=False)
-    async def mechanism_choices(self) -> list:
+    @api_method(AuthMechanismChoicesArgs, AuthMechanismChoicesResult, authentication_required=False)
+    @pass_app()
+    async def mechanism_choices(self, app) -> list:
         """ Get list of available authentication mechanisms available for auth.login_ex """
         aal = CURRENT_AAL.level
-        return [mech.name for mech in aal.mechanisms]
+        cred_allows_token = True
+
+        # The currently authenticated credential may actually restrict whether it can
+        # generate authentication tokens. This is used by UI as a hint that it shouldn't
+        # try to generate tokens for this user.
+        if app and not app.authenticated_credentials.may_create_auth_token:
+            cred_allows_token = False
+
+        choices = [mech.name for mech in aal.mechanisms]
+        if not cred_allows_token and AuthMech.TOKEN_PLAIN in choices:
+            choices.remove(AuthMech.TOKEN_PLAIN.value)
+
+        return choices
 
     @cli_private
     @api_method(AuthLoginExContinueArgs, AuthLoginExContinueResult, authentication_required=False)
@@ -1178,7 +1191,7 @@ class AuthService(Service):
         return resp['response_type'] == AuthResp.SUCCESS
 
     @cli_private
-    @api_method(AuthSessionLogoutArgs, AuthSessionLogoutResult, authorization_required=False)
+    @api_method(AuthLogoutArgs, AuthLogoutResult, authorization_required=False)
     @pass_app()
     async def logout(self, app):
         """

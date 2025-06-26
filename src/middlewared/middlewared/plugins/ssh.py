@@ -6,7 +6,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SSHEntry, SSHBindIfaceChoicesArgs, SSHBindIfaceChoicesResult, SSHUpdateArgs, SSHUpdateResult
+    SSHEntry, SSHBindifaceChoicesArgs, SSHBindifaceChoicesResult, SSHUpdateArgs, SSHUpdateResult
 )
 from middlewared.async_validators import validate_port
 from middlewared.common.ports import ServicePortDelegate
@@ -56,7 +56,7 @@ class SSHService(SystemServiceService):
         role_prefix = 'SSH'
         entry = SSHEntry
 
-    @api_method(SSHBindIfaceChoicesArgs, SSHBindIfaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(SSHBindifaceChoicesArgs, SSHBindifaceChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     def bindiface_choices(self):
         """
         Available choices for the bindiface attribute of SSH service.

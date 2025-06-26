@@ -57,6 +57,9 @@ def test_onetime_password_generate_token_fail(onetime_password):
         })
         assert resp['response_type'] == 'SUCCESS'
 
+        auth_mech_choices = c.call('auth.mechanism_choices')
+        assert 'TOKEN_PLAIN' not in auth_mech_choices
+
         with pytest.raises(CallError) as ce:
             c.call('auth.generate_token')
 

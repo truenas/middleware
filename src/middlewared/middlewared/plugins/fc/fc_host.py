@@ -30,7 +30,6 @@ class FCHostService(CRUDService):
     check_hardware = True
 
     class Config:
-        private = True
         namespace = "fc.fc_host"
         datastore = "services.fc_host"
         datastore_prefix = 'fc_host_'
@@ -63,7 +62,7 @@ class FCHostService(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(FCHostUpdateArgs, FCHostUpdateResult, audit='Update FC host', audit_callback=True)
-    async def do_update(self, audit_callback: callable, id_: int, data: dict) -> dict:
+    async def do_update(self, audit_callback, id_: int, data: dict) -> dict:
         """
         Update FC host `id`.
 
@@ -94,7 +93,7 @@ class FCHostService(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(FCHostDeleteArgs, FCHostDeleteResult, audit='Delete FC host', audit_callback=True)
-    async def do_delete(self, audit_callback: callable, id_: int) -> Literal[True]:
+    async def do_delete(self, audit_callback, id_: int) -> Literal[True]:
         """
         Delete FC host `id`.
         """

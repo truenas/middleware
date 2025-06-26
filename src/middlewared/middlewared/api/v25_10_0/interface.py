@@ -15,14 +15,14 @@ __all__ = [
     "InterfaceCommitArgs", "InterfaceCommitResult", "InterfaceCreateArgs", "InterfaceCreateResult",
     "InterfaceDefaultRouteWillBeRemovedArgs", "InterfaceDefaultRouteWillBeRemovedResult", "InterfaceDeleteArgs",
     "InterfaceDeleteResult", "InterfaceHasPendingChangesArgs", "InterfaceHasPendingChangesResult",
-    "InterfaceIPInUseArgs", "InterfaceIPInUseResult", "InterfaceLacpduRateChoicesArgs",
+    "InterfaceIpInUseArgs", "InterfaceIpInUseResult", "InterfaceLacpduRateChoicesArgs",
     "InterfaceLacpduRateChoicesResult", "InterfaceLagPortsChoicesArgs", "InterfaceLagPortsChoicesResult",
     "InterfaceRollbackArgs", "InterfaceRollbackResult", "InterfaceSaveDefaultRouteArgs",
     "InterfaceSaveDefaultRouteResult", "InterfaceServicesRestartedOnSyncArgs",
     "InterfaceServicesRestartedOnSyncResult", "InterfaceUpdateArgs", "InterfaceUpdateResult",
-    "InterfaceVLANParentInterfaceChoicesArgs", "InterfaceVLANParentInterfaceChoicesResult",
-    "InterfaceWebsocketInterfaceArgs", "InterfaceWebsocketInterfaceResult", "InterfaceWebsocketLocalIPArgs",
-    "InterfaceWebsocketLocalIPResult", "InterfaceXmitHashPolicyChoicesArgs", "InterfaceXmitHashPolicyChoicesResult",
+    "InterfaceVlanParentInterfaceChoicesArgs", "InterfaceVlanParentInterfaceChoicesResult",
+    "InterfaceWebsocketInterfaceArgs", "InterfaceWebsocketInterfaceResult", "InterfaceWebsocketLocalIpArgs",
+    "InterfaceWebsocketLocalIpResult", "InterfaceXmitHashPolicyChoicesArgs", "InterfaceXmitHashPolicyChoicesResult",
 ]
 
 
@@ -274,11 +274,11 @@ class InterfaceHasPendingChangesResult(BaseModel):
     result: bool
 
 
-class InterfaceIPInUseArgs(BaseModel):
+class InterfaceIpInUseArgs(BaseModel):
     options: InterfaceIPInUseOptions = Field(default_factory=InterfaceIPInUseOptions)
 
 
-class InterfaceIPInUseResult(BaseModel):
+class InterfaceIpInUseResult(BaseModel):
     result: list[InterfaceIPInUseItem] = Field(examples=[[
         {
             "type": "INET6",
@@ -347,11 +347,11 @@ class InterfaceUpdateResult(BaseModel):
     result: InterfaceEntry
 
 
-class InterfaceVLANParentInterfaceChoicesArgs(BaseModel):
+class InterfaceVlanParentInterfaceChoicesArgs(BaseModel):
     pass
 
 
-class InterfaceVLANParentInterfaceChoicesResult(BaseModel):
+class InterfaceVlanParentInterfaceChoicesResult(BaseModel):
     result: dict[str, str]
     """Names and descriptions of available interfaces for `vlan_parent_interface` attribute."""
 
@@ -364,11 +364,11 @@ class InterfaceWebsocketInterfaceResult(BaseModel):
     result: InterfaceEntry | None
 
 
-class InterfaceWebsocketLocalIPArgs(BaseModel):
+class InterfaceWebsocketLocalIpArgs(BaseModel):
     pass
 
 
-class InterfaceWebsocketLocalIPResult(BaseModel):
+class InterfaceWebsocketLocalIpResult(BaseModel):
     result: IPvAnyAddress | None
     """The local IP address for the current websocket session or `null`."""
 

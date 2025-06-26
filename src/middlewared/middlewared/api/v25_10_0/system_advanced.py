@@ -8,14 +8,14 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "SystemAdvancedEntry", "SystemAdvancedGpuChoicesArgs", "SystemAdvancedGpuChoicesResult",
-    "SystemAdvancedLoginBannerArgs", "SystemAdvancedLoginBannerResult", "SystemAdvancedSEDGlobalPasswordArgs",
-    "SystemAdvancedSEDGlobalPasswordResult", "SystemAdvancedSEDGlobalPasswordIsSetArgs",
-    "SystemAdvancedSEDGlobalPasswordIsSetResult", "SystemAdvancedSerialPortChoicesArgs",
+    "SystemAdvancedEntry", "SystemAdvancedGetGpuPciChoicesArgs", "SystemAdvancedGetGpuPciChoicesResult",
+    "SystemAdvancedLoginBannerArgs", "SystemAdvancedLoginBannerResult", "SystemAdvancedSedGlobalPasswordArgs",
+    "SystemAdvancedSedGlobalPasswordResult", "SystemAdvancedSedGlobalPasswordIsSetArgs",
+    "SystemAdvancedSedGlobalPasswordIsSetResult", "SystemAdvancedSerialPortChoicesArgs",
     "SystemAdvancedSerialPortChoicesResult", "SystemAdvancedSyslogCertificateAuthorityChoicesArgs",
     "SystemAdvancedSyslogCertificateAuthorityChoicesResult", "SystemAdvancedSyslogCertificateChoicesArgs",
     "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
-    "SystemAdvancedUpdateGpuPciIdArgs", "SystemAdvancedUpdateGpuPciIdResult",
+    "SystemAdvancedUpdateGpuPciIdsArgs", "SystemAdvancedUpdateGpuPciIdsResult",
 ]
 
 
@@ -62,11 +62,11 @@ class SystemAdvancedUpdate(SystemAdvancedEntry, metaclass=ForUpdateMetaclass):
     sed_passwd: Secret[str]
 
 
-class SystemAdvancedGpuChoicesArgs(BaseModel):
+class SystemAdvancedGetGpuPciChoicesArgs(BaseModel):
     pass
 
 
-class SystemAdvancedGpuChoicesResult(BaseModel):
+class SystemAdvancedGetGpuPciChoicesResult(BaseModel):
     result: dict
 
 
@@ -78,19 +78,19 @@ class SystemAdvancedLoginBannerResult(BaseModel):
     result: str
 
 
-class SystemAdvancedSEDGlobalPasswordArgs(BaseModel):
+class SystemAdvancedSedGlobalPasswordArgs(BaseModel):
     pass
 
 
-class SystemAdvancedSEDGlobalPasswordResult(BaseModel):
+class SystemAdvancedSedGlobalPasswordResult(BaseModel):
     result: Secret[str]
 
 
-class SystemAdvancedSEDGlobalPasswordIsSetArgs(BaseModel):
+class SystemAdvancedSedGlobalPasswordIsSetArgs(BaseModel):
     pass
 
 
-class SystemAdvancedSEDGlobalPasswordIsSetResult(BaseModel):
+class SystemAdvancedSedGlobalPasswordIsSetResult(BaseModel):
     result: bool
 
 
@@ -127,9 +127,9 @@ class SystemAdvancedUpdateResult(BaseModel):
     result: SystemAdvancedEntry
 
 
-class SystemAdvancedUpdateGpuPciIdArgs(BaseModel):
+class SystemAdvancedUpdateGpuPciIdsArgs(BaseModel):
     data: list[str]
 
 
-class SystemAdvancedUpdateGpuPciIdResult(BaseModel):
+class SystemAdvancedUpdateGpuPciIdsResult(BaseModel):
     result: None

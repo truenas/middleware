@@ -6,11 +6,12 @@ import subprocess
 from dataclasses import asdict
 from functools import cache
 from middlewared.job import Job
-from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
 from middlewared.utils.directoryservices import (
     ipa, ipa_constants
 )
-from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.common import ds_config_to_fqdn
+from middlewared.utils.netbios import validate_netbios_name, NETBIOSNAME_MAX_LEN
+from middlewared.utils.directoryservices.constants import DSCredType, DSType, DEF_SVC_OPTS
 from middlewared.utils.directoryservices.ipactl_constants import (
     ExitCode,
     IpaOperation,
@@ -48,21 +49,14 @@ def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
 class IPAJoinMixin:
     __ipa_smb_domain = undefined
 
-    def _ipa_remove_kerberos_cert_config(self, job: Job | None, ldap_config: dict | None):
-        if ldap_config is None:
-            ldap_config = self.middleware.call_sync('ldap.config')
-
-        if job:
-            job.set_progress(80, 'Removing kerberos configuration.')
-
-        if ldap_config['kerberos_realm']:
-            # TODO: remove after unifying the directory services plugins
-            # User may have configured our kerberos realm in AD plugin
-            # necessitating deletion from config
-            self.middleware.call_sync(
-                'datastore.update', 'directoryservice.activedirectory', 1, {'ad_kerberos_realm': None}
-            )
-            self.middleware.call_sync('kerberos.realm.delete', ldap_config['kerberos_realm'])
+    def _ipa_remove_kerberos_cert_config(self, job: Job | None, ds_config: dict | None):
+        if ds_config['kerberos_realm']:
+            self.middleware.call_sync('datastore.update', 'directoryservices', 1, {
+                'kerberos_realm_id': None,
+            })
+            realm = self.middleware.call_sync('kerberos.realm.query', [['realm', '=', ds_config['kerberos_realm']]])
+            if realm:
+                self.middleware.call_sync('kerberos.realm.delete', realm[0]['id'])
 
         if (host_kt := self.middleware.call_sync('kerberos.keytab.query', [
             ['name', '=', ipa_constants.IpaConfigName.IPA_HOST_KEYTAB.value]
@@ -70,31 +64,30 @@ class IPAJoinMixin:
             self.middleware.call_sync('kerberos.keytab.delete', host_kt[0]['id'])
 
         if job:
-            job.set_progress(90, 'Removing IPA certificate.')
+            job.set_progress(description='Removing IPA certificate.')
         if (ipa_cert := self.middleware.call_sync('certificate.query', [
             ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
         ])):
             delete_job = self.middleware.call_sync('certificate.delete', ipa_cert[0]['id'])
             delete_job.wait_sync(raise_error=True)
 
-    def _ipa_leave(self, job: Job, ds_type: DSType, domain: str):
+    def _ipa_cleanup(self, job: Job, ds_config: dict):
+        job.set_progress(description='Removing local configuration')
+        self.middleware.call_sync('directoryservices.reset')
+        self._ipa_remove_kerberos_cert_config(job, ds_config)
+
+    def _ipa_leave(self, job: Job, ds_config: dict):
         """
         Leave the IPA domain
         """
-        ldap_config = self.middleware.call_sync('ldap.config')
-        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
-
-        if ipa_config['domain'] != domain:
-            raise CallError(f'{domain}: TrueNAS is joined to {ipa_config["domain"]}')
-
-        job.set_progress(0, 'Deleting NFS and SMB service principals.')
+        job.set_progress(description='Deleting NFS and SMB service principals.')
         self._ipa_del_spn()
 
-        job.set_progress(10, 'Removing DNS entries.')
-        self.unregister_dns(ipa_config['host'], False)
+        job.set_progress(description='Removing DNS entries.')
+        self.unregister_dns(ds_config_to_fqdn(ds_config), False)
 
         # now leave IPA
-        job.set_progress(30, 'Leaving IPA domain.')
+        job.set_progress(description='Leaving IPA domain.')
         try:
             join = subprocess.run([
                 IPACTL, '-a', IpaOperation.LEAVE.name
@@ -108,36 +101,14 @@ class IPAJoinMixin:
             )
 
         # At this point we can start removing local configuration
-        job.set_progress(50, 'Disabling LDAP service.')
-
-        # This disables the LDAP service and cancels any in progress cache
-        # jobs
-        ldap_update_job = self.middleware.call_sync('ldap.update', {
-            'binddn': '',
-            'bindpw': '',
-            'kerberos_principal': '',
-            'kerberos_realm': None,
-            'enable': False,
-        })
-
-        ldap_update_job.wait_sync()
-
-        self._ipa_remove_kerberos_cert_config(job, ldap_config)
-
-        job.set_progress(95, 'Removing privileges.')
-        if (priv := self.middleware.call_sync('privilege.query', [
-            ['name', '=', ipa_config['domain'].upper()]
-        ])):
-            self.middleware.call_sync('privilege.delete', priv[0]['id'])
-
-        job.set_progress(100, 'IPA leave complete.')
+        self._ipa_cleanup(job, ds_config)
+        job.set_progress(description='IPA leave complete.')
 
     def _ipa_activate(self) -> None:
         for etc_file in DSType.IPA.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'sssd', {'silent': False}).wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'RESTART', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
         self.middleware.call_sync('kerberos.start')
 
     def _ipa_insert_keytab(self, service: ipa_constants.IpaConfigName, keytab_data: str) -> None:
@@ -160,14 +131,12 @@ class IPAJoinMixin:
                 {'keytab_name': kt_name, 'keytab_file': keytab_data}
             )
 
-    def _ipa_grant_privileges(self) -> None:
+    def _ipa_grant_privileges(self, domain: str) -> None:
         """ Grant domain admins ability to manage TrueNAS """
-
-        ipa_config = self.middleware.call_sync('ldap.ipa_config')
 
         existing_privileges = self.middleware.call_sync(
             'privilege.query',
-            [["name", "=", ipa_config['domain'].upper()]]
+            [["name", "=", domain.upper()]]
         )
 
         if existing_privileges:
@@ -205,7 +174,7 @@ class IPAJoinMixin:
 
         try:
             self.middleware.call_sync('privilege.create', {
-                'name': ipa_config['domain'].upper(),
+                'name': domain.upper(),
                 'ds_groups': [admins_grp['gr_gid']],
                 'roles': ['FULL_ADMIN'],
                 'web_shell': True
@@ -219,25 +188,23 @@ class IPAJoinMixin:
             )
 
     @kerberos_ticket
-    def _ipa_test_join(self, dstype, domain):
+    def _ipa_test_join(self, domain):
         """
         Rudimentary check for whether we've already joined IPA domain
 
         This allows us to force a re-join if user has deleted relevant
         config information.
         """
-        ldap_conf = self.middleware.call_sync('ldap.config')
-        if ldap_conf['server_type'] != SERVER_TYPE_FREEIPA:
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        if not ds_config['kerberos_realm'] or ds_config['configuration']['domain'] != domain:
             return False
 
-        if not ldap_conf['kerberos_realm']:
+        if not self.middleware.call_sync('kerberos.keytab.query', [
+            ['name', '=', ipa_constants.IpaConfigName.IPA_HOST_KEYTAB.value]
+        ]):
             return False
 
-        if not self.middleware.call_sync('ldap.has_ipa_host_keytab'):
-            return False
-
-        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_conf)
-        return ipa_config['domain'].casefold() == domain.casefold()
+        return True
 
     @kerberos_ticket
     def _ipa_set_spn(self):
@@ -283,7 +250,7 @@ class IPAJoinMixin:
 
     @kerberos_ticket
     def _ipa_setup_services(self, job: Job):
-        job.set_progress(60, 'Configuring kerberos principals')
+        job.set_progress(description='Configuring kerberos principals')
         resp = self._ipa_set_spn()
         domain_info = None
 
@@ -294,9 +261,22 @@ class IPAJoinMixin:
                 password = entry['password']
 
         if domain_info:
-            job.set_progress(70, 'Configuring SMB server for IPA')
+            job.set_progress(description='Configuring SMB server for IPA')
             self.middleware.call_sync('datastore.update', 'services.cifs', 1, {
                 'cifs_srv_workgroup': domain_info['netbios_name']
+            })
+
+            # insert the domain info into our datastore config so that it's
+            # available for smb.conf generation
+            self.middleware.call_sync('datastore.update', 'directoryservices', 1, {
+                'ipa_smb_domain': {
+                    'name': domain_info['netbios_name'],
+                    'idmap_backend': 'SSS',
+                    'range_low': domain_info['range_id_min'],
+                    'range_high': domain_info['range_id_max'],
+                    'domain_sid': domain_info['domain_sid'],
+                    'domain_name': domain_info['domain_name']
+                }
             })
 
             # regenerate our SMB config to apply our new domain
@@ -415,7 +395,7 @@ class IPAJoinMixin:
         return resp
 
     @kerberos_ticket
-    def _ipa_join(self, job: Job, ds_type: DSType, domain: str):
+    def _ipa_join(self, job: Job, ds_config: dict):
         """
         This method performs all the steps required to join TrueNAS to an
         IPA domain and update our TrueNAS configuration with details gleaned
@@ -429,41 +409,77 @@ class IPAJoinMixin:
         5. updated samba's secrets.tdb to contain the info from SMB keytab
         6. backed up samba's secrets.tdb
         """
-        ldap_config = self.middleware.call_sync('ldap.config')
-        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
         self.__ipa_smb_domain = undefined
+        hostname = ds_config['configuration']['hostname']
+        ngc = self.middleware.call_sync('network.configuration.config')
+        smb = self.middleware.call_sync('smb.config')
 
-        job.set_progress(15, 'Performing IPA join')
+        # Make some reasonable hostname guesses if user hasn't done override
+        if not hostname:
+            hostname = ngc.get('hostname_virtual') or ngc['hostname_local']
+
+        # If user has specified a hostname to use for join, then overwrite other parts of config if needed
+        elif hostname != (ngc.get('hostname_virtual') or ngc['hostname_local']):
+            if ngc.get('hostname_virtual'):
+                self.middleware.call_sync('network.configuration.update', {'hostname_virtual': hostname})
+            else:
+                self.middleware.call_sync('network.configuration.update', {'hostname': hostname})
+
+        # Update the netbiosname to something reasonably related to our hostname
+        # There are probably some legacy users who have "truenas" as the name of their server
+        # because that was the default netbiosname. This isn't a great choice because if another device
+        # joins AD with same generic name then it will clobber this one's computer account in AD, and so
+        # we want to discourage that.
+        if smb['netbiosname'] != hostname and smb['netbiosname'] == 'truenas':
+            # Default netbiosname. We *really* don't want to collide with other servers.
+            # We'll start by trying to truncate to max netbiosname length
+            smb['netbiosname'] = hostname[:NETBIOSNAME_MAX_LEN - 1]
+
+            # Allow job failure if our best guess at a valid netbiosname fails
+            validate_netbios_name(smb['netbiosname'])
+            self.middleware.call_sync('datastore.update', 'services.cifs', smb['id'], {'cifs_srv_netbiosname': smb['netbiosname']})
+
+        ds_config['configuration']['hostname'] = hostname.lower()
+
+        host = ds_config_to_fqdn(ds_config)
+        job.set_progress(description='Performing IPA join')
         resp = self._ipa_join_impl(
-            ipa_config['host'],
-            ipa_config['basedn'],
-            ipa_config['domain'],
-            ipa_config['realm'],
-            ipa_config['target_server']
+            host.lower(),
+            ds_config['configuration']['basedn'],
+            ds_config['configuration']['domain'].lower(),
+            ds_config['kerberos_realm'] or ds_config['configuration']['domain'].upper(),
+            ds_config['configuration']['target_server']
         )
         # resp includes `cacert` for domain and `keytab` for our host principal to use
         # in future.
 
         # insert the IPA host principal keytab into our database
-        job.set_progress(50, 'Updating TrueNAS configuration with IPA domain details.')
+        job.set_progress(description='Updating TrueNAS configuration with IPA domain details.')
         self._ipa_insert_keytab(ipa_constants.IpaConfigName.IPA_HOST_KEYTAB, resp['keytab'])
 
         # make sure database also has the IPA realm
-        ipa_realm = self.middleware.call_sync('kerberos.realm.query', [
-            ['realm', '=', ipa_config['realm']]
-        ])
-        if ipa_realm:
-            ipa_realm_id = ipa_realm[0]['id']
-        else:
-            ipa_realm_id = self.middleware.call_sync(
-                'datastore.insert', 'directoryservice.kerberosrealm',
-                {'krb_realm': ipa_config['realm']}
-            )
+        if not ds_config['kerberos_realm']:
+            ds_config['kerberos_realm'] = ds_config['configuration']['domain'].upper()
+
+        if not self.middleware.call_sync('kerberos.realm.query', [
+            ['realm', '=', ds_config['kerberos_realm']]
+        ]):
+            self.middleware.call_sync('datastore.insert', 'directoryservice.kerberosrealm', {
+                'krb_realm': ds_config['kerberos_realm']
+            })
 
         with NamedTemporaryFile() as f:
             f.write(base64.b64decode(resp['keytab']))
             f.flush()
             krb_principal = ktutil_list_impl(f.name)[0]['principal']
+
+        # Update directory services config to use keytab and proper hostname (if changed)
+        ds_config['credential'] = {
+            'credential_type': DSCredType.KERBEROS_PRINCIPAL,
+            'principal': krb_principal
+        }
+        compressed = self.middleware.call_sync('directoryservices.compress', ds_config)
+        self.middleware.call_sync('datastore.update', 'directoryservices', ds_config['id'], compressed)
 
         # update our cacerts with IPA domain one:
         existing_cacert = self.middleware.call_sync('certificate.query', [
@@ -495,17 +511,6 @@ class IPAJoinMixin:
             })
             cert_job.wait_sync(raise_error=True)
 
-        # make sure ldap service is updated to use realm and principal and
-        # clear out the bind account password since it is no longer needed. We
-        # don't insert the IPA cacert into the LDAP configuration since the
-        # certificate field is for certificate-based authentication and _not_
-        # providing certificate authority certificates
-        self.middleware.call_sync('datastore.update', 'directoryservice.ldap', ldap_config['id'], {
-            'ldap_kerberos_realm': ipa_realm_id,
-            'ldap_kerberos_principal': krb_principal,
-            'ldap_bindpw': ''
-        })
-
         # We've joined API and have a proper host principal. Time to destroy admin keytab.
         self.middleware.call_sync('kerberos.kdestroy')
 
@@ -518,19 +523,12 @@ class IPAJoinMixin:
                     # DNS is broken in the IPA domain and so we need to roll back our config
                     # changes.
 
-                    saved_config = self.middleware.call_sync('ldap.config')
-
                     self.logger.warning(
                         'Unable to resolve kerberos realm via DNS. This may indicate misconfigured '
                         'nameservers on the TrueNAS server or a misconfigured IPA domain.', exc_info=True
                     )
-                    self.middleware.call('datastore.update', 'directoryservice.ldap', ldap_config['id'], {
-                        'ldap_kerberos_realm': None,
-                        'ldap_kerberos_principal': '',
-                        'ldap_bindpw': ldap_config['bindpw']
-                    })
 
-                    self._ipa_remove_kerberos_cert_config(None, saved_config)
+                    self._ipa_remove_kerberos_cert_config(None, ds_config)
 
                     # remove any configuration files we have written
                     for p in (
@@ -557,9 +555,9 @@ class IPAJoinMixin:
         elif not cred['name'].startswith('host/'):
             raise CallError(f'{cred}: not host principal.')
 
-        self.register_dns(ipa_config['host'])
+        self.register_dns(ds_config_to_fqdn(ds_config))
         self._ipa_setup_services(job)
-        job.set_progress(75, 'Activating IPA service.')
+        job.set_progress(description='Activating IPA service.')
         self._ipa_activate()
 
         # Wrap around cache fill because this forces a wait until IPA becomes ready

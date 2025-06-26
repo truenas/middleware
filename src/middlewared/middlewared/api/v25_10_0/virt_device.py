@@ -7,12 +7,12 @@ from middlewared.validators import RE_MAC_ADDRESS
 
 
 __all__ = [
-    'DeviceType', 'InstanceType', 'VirtDeviceUSBChoicesArgs', 'VirtDeviceUSBChoicesResult',
-    'VirtDeviceGPUChoicesArgs', 'VirtDeviceGPUChoicesResult', 'VirtDeviceDiskChoicesArgs',
-    'VirtDeviceDiskChoicesResult', 'VirtDeviceNICChoicesArgs', 'VirtDeviceNICChoicesResult',
+    'DeviceType', 'InstanceType', 'VirtDeviceUsbChoicesArgs', 'VirtDeviceUsbChoicesResult',
+    'VirtDeviceGpuChoicesArgs', 'VirtDeviceGpuChoicesResult', 'VirtDeviceDiskChoicesArgs',
+    'VirtDeviceDiskChoicesResult', 'VirtDeviceNicChoicesArgs', 'VirtDeviceNicChoicesResult',
     'VirtDeviceExportDiskImageArgs', 'VirtDeviceExportDiskImageResult', 'VirtDeviceImportDiskImageArgs',
-    'VirtDeviceImportDiskImageResult', 'VirtDevicePCIChoicesArgs', 'VirtDevicePCIChoicesResult',
-    'VirtInstanceBootableDiskArgs', 'VirtInstanceBootableDiskResult',
+    'VirtDeviceImportDiskImageResult', 'VirtDevicePciChoicesArgs', 'VirtDevicePciChoicesResult',
+    'VirtInstanceDeviceSetBootableDiskArgs', 'VirtInstanceDeviceSetBootableDiskResult',
 ]
 
 
@@ -138,7 +138,7 @@ DeviceType: TypeAlias = Annotated[
 ]
 
 
-class VirtDeviceUSBChoicesArgs(BaseModel):
+class VirtDeviceUsbChoicesArgs(BaseModel):
     pass
 
 
@@ -151,11 +151,11 @@ class USBChoice(BaseModel):
     manufacturer: str | None
 
 
-class VirtDeviceUSBChoicesResult(BaseModel):
+class VirtDeviceUsbChoicesResult(BaseModel):
     result: dict[str, USBChoice]
 
 
-class VirtDeviceGPUChoicesArgs(BaseModel):
+class VirtDeviceGpuChoicesArgs(BaseModel):
     gpu_type: GPUType
 
 
@@ -167,7 +167,7 @@ class GPUChoice(BaseModel):
     pci: str
 
 
-class VirtDeviceGPUChoicesResult(BaseModel):
+class VirtDeviceGpuChoicesResult(BaseModel):
     result: dict[str, GPUChoice]
 
 
@@ -179,11 +179,11 @@ class VirtDeviceDiskChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class VirtDeviceNICChoicesArgs(BaseModel):
+class VirtDeviceNicChoicesArgs(BaseModel):
     nic_type: NicType
 
 
-class VirtDeviceNICChoicesResult(BaseModel):
+class VirtDeviceNicChoicesResult(BaseModel):
     result: dict[str, str]
 
 
@@ -208,18 +208,18 @@ class VirtDeviceExportDiskImageResult(BaseModel):
     result: bool
 
 
-class VirtDevicePCIChoicesArgs(BaseModel):
+class VirtDevicePciChoicesArgs(BaseModel):
     pass
 
 
-class VirtDevicePCIChoicesResult(BaseModel):
+class VirtDevicePciChoicesResult(BaseModel):
     result: dict
 
 
-class VirtInstanceBootableDiskArgs(BaseModel):
+class VirtInstanceDeviceSetBootableDiskArgs(BaseModel):
     id: NonEmptyString
     disk: NonEmptyString
 
 
-class VirtInstanceBootableDiskResult(BaseModel):
+class VirtInstanceDeviceSetBootableDiskResult(BaseModel):
     result: bool

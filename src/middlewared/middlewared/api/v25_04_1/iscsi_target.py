@@ -11,14 +11,14 @@ RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 
 __all__ = [
     "IscsiTargetEntry",
-    "IscsiTargetValidateNameArgs",
-    "IscsiTargetValidateNameResult",
-    "IscsiTargetCreateArgs",
-    "IscsiTargetCreateResult",
-    "IscsiTargetUpdateArgs",
-    "IscsiTargetUpdateResult",
-    "IscsiTargetDeleteArgs",
-    "IscsiTargetDeleteResult",
+    "iSCSITargetValidateNameArgs",
+    "iSCSITargetValidateNameResult",
+    "iSCSITargetCreateArgs",
+    "iSCSITargetCreateResult",
+    "iSCSITargetUpdateArgs",
+    "iSCSITargetUpdateResult",
+    "iSCSITargetDeleteArgs",
+    "iSCSITargetDeleteResult",
 ]
 
 
@@ -51,12 +51,12 @@ class IscsiTargetEntry(BaseModel):
     iscsi_parameters: IscsiTargetParameters | None = None
 
 
-class IscsiTargetValidateNameArgs(BaseModel):
+class iSCSITargetValidateNameArgs(BaseModel):
     name: str
     existing_id: int | None = None
 
 
-class IscsiTargetValidateNameResult(BaseModel):
+class iSCSITargetValidateNameResult(BaseModel):
     result: str | None
 
 
@@ -65,11 +65,11 @@ class IscsiTargetCreate(IscsiTargetEntry):
     rel_tgt_id: Excluded = excluded_field()
 
 
-class IscsiTargetCreateArgs(BaseModel):
+class iSCSITargetCreateArgs(BaseModel):
     iscsi_target_create: IscsiTargetCreate
 
 
-class IscsiTargetCreateResult(BaseModel):
+class iSCSITargetCreateResult(BaseModel):
     result: IscsiTargetEntry
 
 
@@ -77,20 +77,20 @@ class IscsiTargetUpdate(IscsiTargetCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class IscsiTargetUpdateArgs(BaseModel):
+class iSCSITargetUpdateArgs(BaseModel):
     id: int
     iscsi_target_update: IscsiTargetUpdate
 
 
-class IscsiTargetUpdateResult(BaseModel):
+class iSCSITargetUpdateResult(BaseModel):
     result: IscsiTargetEntry
 
 
-class IscsiTargetDeleteArgs(BaseModel):
+class iSCSITargetDeleteArgs(BaseModel):
     id: int
     force: bool = False
     delete_extents: bool = False
 
 
-class IscsiTargetDeleteResult(BaseModel):
+class iSCSITargetDeleteResult(BaseModel):
     result: Literal[True]

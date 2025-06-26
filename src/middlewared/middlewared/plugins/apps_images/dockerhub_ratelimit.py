@@ -1,5 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import AppImageDockerhubRateLimitArgs, AppImageDockerhubRateLimitResult
+from middlewared.api.current import ContainerImagesDockerhubRateLimitArgs, ContainerImagesDockerhubRateLimitResult
 from middlewared.service import Service
 
 from .client import ContainerRegistryClientMixin
@@ -11,7 +11,7 @@ class ContainerImagesService(Service):
     class Config:
         namespace = 'app.image'
 
-    @api_method(AppImageDockerhubRateLimitArgs, AppImageDockerhubRateLimitResult, roles=['APPS_READ'])
+    @api_method(ContainerImagesDockerhubRateLimitArgs, ContainerImagesDockerhubRateLimitResult, roles=['APPS_READ'])
     async def dockerhub_rate_limit(self):
         """
         Returns the current rate limit information for Docker Hub registry.

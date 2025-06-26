@@ -1,4 +1,3 @@
-from middlewared.schema import accepts, returns # noqa
 from middlewared.service_exception import ( # noqa
     CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
 )
@@ -8,7 +7,7 @@ from .compound_service import CompoundService # noqa
 from .config_service import ConfigService # noqa
 from .crud_service import CRUDService # noqa
 from .decorators import ( # noqa
-    cli_private, filterable, item_method, job, no_auth_required,
+    cli_private, item_method, job, no_auth_required,
     no_authz_required, pass_app, periodic, private,
     filterable_api_method
 )

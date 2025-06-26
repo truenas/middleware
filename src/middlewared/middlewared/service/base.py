@@ -1,3 +1,6 @@
+import inspect
+
+
 def service_config(klass, config):
     namespace = klass.__name__
     if namespace.endswith('Service'):
@@ -16,6 +19,7 @@ def service_config(klass, config):
         'event_register': True,
         'event_send': True,
         'events': [],
+        'event_sources': {},
         'service': None,
         'service_verb': 'reload',
         'service_verb_sync': True,
@@ -38,6 +42,64 @@ def service_config(klass, config):
     })
 
     return type('Config', (), config_attrs)
+
+
+def validate_api_method_schema_class_names(klass):
+    """
+    Validate that API method argument class names follow the required format:
+    - accepts class should be named f"{ServiceName}{MethodName}Args"
+    - returns class should be named f"{ServiceName}{MethodName}Result"
+    where MethodName is the method name converted from snake_case to CamelCase
+    """
+    service_name = klass.__name__
+    if service_name.endswith('Service'):
+        service_name = service_name[:-7]
+
+    for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
+        if name.startswith('_') or getattr(method, '_private', False) or klass._config.private:
+            continue
+
+        methods_will_be_wrapped_later = {
+            "ConfigService": {"config", "update"},
+            "CRUDService": {"query", "get_instance", "create", "update", "delete"},
+        }
+        methods_will_be_wrapped_later["SystemServiceService"] = methods_will_be_wrapped_later["ConfigService"]
+        methods_will_be_wrapped_later["SharingService"] = methods_will_be_wrapped_later["CRUDService"]
+        methods_will_be_wrapped_later["SharingTaskService"] = methods_will_be_wrapped_later["CRUDService"]
+        methods_will_be_wrapped_later["TaskPathService"] = methods_will_be_wrapped_later["CRUDService"]
+        will_be_wrapped_later = False
+        for base in (klass,) + klass.__bases__:
+            if name in methods_will_be_wrapped_later.get(base.__name__, set()):
+                will_be_wrapped_later = True
+                break
+        if will_be_wrapped_later:
+            continue
+
+        if not hasattr(method, 'new_style_accepts'):
+            raise RuntimeError(
+                f"API method {method!r} is public, but has no @api_method."
+            )
+
+        # Remove do_ prefix only for do_create, do_update, do_delete
+        method_name = name[3:] if name in ('do_create', 'do_update', 'do_delete') else name
+
+        # Convert snake_case to CamelCase
+        method_name = ''.join(word.capitalize() for word in method_name.split('_'))
+        expected_accepts = f"{service_name}{method_name}Args"
+        expected_returns = f"{service_name}{method_name}Result"
+
+        if method.new_style_accepts.__name__ != 'QueryArgs':
+            if method.new_style_accepts.__name__ != expected_accepts:
+                raise RuntimeError(
+                    f"API method {method!r} has incorrect accepts class name. "
+                    f"Expected {expected_accepts}, got {method.new_style_accepts.__name__}."
+                )
+
+        if method.new_style_returns.__name__ != expected_returns:
+            raise RuntimeError(
+                f"API method {method!r} has incorrect returns class name. "
+                f"Expected {expected_returns}, got {method.new_style_returns.__name__}."
+            )
 
 
 class ServiceBase(type):
@@ -85,4 +147,8 @@ class ServiceBase(type):
             klass._config_specified = {}
 
         klass._config = service_config(klass, klass._config_specified)
+
+        # Validate API method argument class names
+        validate_api_method_schema_class_names(klass)
+
         return klass

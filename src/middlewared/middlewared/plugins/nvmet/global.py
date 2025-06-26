@@ -5,11 +5,11 @@ from middlewared.api import api_method
 from middlewared.api.current import (NVMetGlobalAnaEnabledArgs,
                                      NVMetGlobalAnaEnabledResult,
                                      NVMetGlobalEntry,
-                                     NVMetGlobalRDMAEnabledArgs,
-                                     NVMetGlobalRDMAEnabledResult,
+                                     NVMetGlobalRdmaEnabledArgs,
+                                     NVMetGlobalRdmaEnabledResult,
                                      NVMetGlobalUpdateArgs,
                                      NVMetGlobalUpdateResult,
-                                     NVMetSession)
+                                     NVMetGlobalSessionsItem)
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 from middlewared.utils import filter_list
@@ -116,8 +116,8 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         return False
 
     @api_method(
-        NVMetGlobalRDMAEnabledArgs,
-        NVMetGlobalRDMAEnabledResult,
+        NVMetGlobalRdmaEnabledArgs,
+        NVMetGlobalRdmaEnabledResult,
         roles=['SHARING_NVME_TARGET_READ']
     )
     async def rdma_enabled(self):
@@ -129,7 +129,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
         return (await self.middleware.call('nvmet.global.config'))['rdma']
 
-    @filterable_api_method(item=NVMetSession, roles=['SHARING_NVME_TARGET_READ'])
+    @filterable_api_method(item=NVMetGlobalSessionsItem, roles=['SHARING_NVME_TARGET_READ'])
     async def sessions(self, filters, options):
         sessions = []
         subsys_id = None
@@ -172,12 +172,17 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         global_info = self.middleware.call_sync('nvmet.global.config')
         subsystems = self.middleware.call_sync('nvmet.subsys.query')
 
+        if global_info['kernel']:
+            nvmet_debug_path = pathlib.Path(NVMET_DEBUG_DIR)
+            if not nvmet_debug_path.exists():
+                return sessions
+
         port_index_to_id = {port['index']: port['id'] for port in self.middleware.call_sync('nvmet.port.query')}
 
         if subsys_id is None:
             basenqn = global_info['basenqn']
             subsys_name_to_subsys_id = {f'{basenqn}:{subsys["name"]}': subsys['id'] for subsys in subsystems}
-            for subsys in pathlib.Path(NVMET_DEBUG_DIR).iterdir():
+            for subsys in nvmet_debug_path.iterdir():
                 if subsys_id := subsys_name_to_subsys_id.get(subsys.name):
                     for ctrl in subsys.iterdir():
                         if session := self.__parse_session_dir(ctrl, port_index_to_id):
@@ -187,7 +192,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
             for subsys in subsystems:
                 if subsys['id'] == subsys_id:
                     subnqn = f'{global_info["basenqn"]}:{subsys["name"]}'
-                    path = pathlib.Path(NVMET_DEBUG_DIR, subnqn)
+                    path = nvmet_debug_path / subnqn
                     if path.is_dir():
                         for ctrl in path.iterdir():
                             if session := self.__parse_session_dir(ctrl, port_index_to_id):

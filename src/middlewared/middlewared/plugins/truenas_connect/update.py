@@ -7,7 +7,7 @@ from truenas_connect_utils.urls import get_account_service_url
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import TNCEntry, TNCUpdateArgs, TNCUpdateResult, TNCIPChoicesArgs, TNCIPChoicesResult
+from middlewared.api.current import TNCEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult, TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
 from .mixin import TNCAPIMixin
@@ -87,7 +87,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         verrors.check()
 
-    @api_method(TNCUpdateArgs, TNCUpdateResult)
+    @api_method(TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult)
     async def do_update(self, data):
         """
         Update TrueNAS Connect configuration.
@@ -165,7 +165,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             else:
                 raise CallError(f'Failed to revoke account: {response["error"]}')
 
-    @api_method(TNCIPChoicesArgs, TNCIPChoicesResult, roles=['TRUENAS_CONNECT_READ'])
+    @api_method(TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'])
     async def ip_choices(self):
         """
         Returns IP choices which can be used with TrueNAS Connect.

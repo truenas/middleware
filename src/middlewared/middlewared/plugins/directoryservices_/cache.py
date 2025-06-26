@@ -9,7 +9,7 @@ from middlewared.utils.directoryservices.constants import (
 )
 from middlewared.utils.nss.pwd import iterpw
 from middlewared.utils.nss.grp import itergrp
-from middlewared.utils.nss.nss_common import NssModule
+from middlewared.utils.nss.nss_common import NssModule, NssError, NssReturnCode
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from .util_cache import (
@@ -128,9 +128,9 @@ class DSCache(Service):
                         who = {'uid': data.get('id')}
 
                     pwdobj = self.middleware.call_sync('user.get_user_obj', {
-                        'get_groups': False, 'sid_info': True
+                        'get_groups': False, 'sid_info': options['smb']
                     } | who)
-                    if pwdobj['sid'] is None:
+                    if options['smb'] and pwdobj['sid'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
@@ -144,8 +144,8 @@ class DSCache(Service):
                     else:
                         who = {'gid': data.get('id')}
 
-                    grpobj = self.middleware.call_sync('group.get_group_obj', {'sid_info': True} | who)
-                    if grpobj['sid'] is None:
+                    grpobj = self.middleware.call_sync('group.get_group_obj', {'sid_info': options['smb']} | who)
+                    if options['smb'] and grpobj['sid'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
@@ -193,7 +193,7 @@ class DSCache(Service):
             entry = self._retrieve({
                 'idtype': id_type,
                 key: filters[0][2],
-            }, {'smb': True})
+            }, {'smb': ds['type'] in (DSType.AD.value, DSType.IPA.value)})
 
             return [entry] if entry else []
 
@@ -240,15 +240,26 @@ class DSCache(Service):
         has_users = has_groups = False
 
         while waited <= 60:
-            if not has_users:
-                for pwd in iterpw(module=NssModule.SSS.name):
-                    has_users = True
-                    break
+            try:
+                if not has_users:
+                    for pwd in iterpw(module=NssModule.SSS.name):
+                        has_users = True
+                        break
 
-            if not has_groups:
-                for grp in itergrp(module=NssModule.SSS.name):
-                    has_groups = True
-                    break
+                if not has_groups:
+                    for grp in itergrp(module=NssModule.SSS.name):
+                        has_groups = True
+                        break
+
+            except NssError as exc:
+                # After SSSD is first wired up the NSS module may take some
+                # time to become available.
+                if exc.return_code != NssReturnCode.UNAVAIL:
+                    raise exc from None
+
+                self.logger.debug('nss_sss is currently unavailable.')
+                # insert a little more delay to avoid spamming sssd
+                sleep(5)
 
             if has_users and has_groups:
                 # allow SSSD a little more time to build cache
@@ -287,25 +298,20 @@ class DSCache(Service):
             )
             return
 
-        dom_by_sid = None
         ds_type = DSType(ds['type'])
         match ds_type:
             case DSType.AD:
                 self.idmap_online_check_wait_wbclient(job)
-                domain_info = self.middleware.call_sync(
-                    'idmap.query',
-                    [["domain_info", "!=", None]],
-                    {'extra': {'additional_information': ['DOMAIN_INFO']}}
-                )
-                dom_by_sid = {dom['domain_info']['sid']: dom for dom in domain_info}
             case DSType.IPA | DSType.LDAP:
                 self.idmap_online_check_wait_sssd(job)
             case _:
                 raise ValueError(f'{ds_type}: unexpected DSType')
 
+        vers = self.middleware.call_sync('system.version_short')
+
         with DSCacheFill() as dc:
             job.set_progress(15, 'Filling cache')
-            dc.fill_cache(job, ds_type, dom_by_sid)
+            dc.fill_cache(job, ds_type, vers)
 
     async def abort_refresh(self):
         cache_job = await self.middleware.call('core.get_jobs', [

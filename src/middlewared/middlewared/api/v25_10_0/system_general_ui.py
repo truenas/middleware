@@ -4,58 +4,58 @@ from pydantic import NonNegativeInt
 
 
 __all__ = [
-    "SystemGeneralUIAddressChoicesArgs", "SystemGeneralUIAddressChoicesResult",
-    "SystemGeneralUICertificateChoicesArgs", "SystemGeneralUICertificateChoicesResult",
-    "SystemGeneralUIHTTPSProtocolChoicesArgs", "SystemGeneralUIHTTPSProtocolChoicesResult",
-    "SystemGeneralUILocalURLArgs", "SystemGeneralUILocalURLResult", "SystemGeneralUIRestartArgs",
-    "SystemGeneralUIRestartResult", "SystemGeneralUIV6AddressChoicesArgs", "SystemGeneralUIV6AddressChoicesResult",
+    "SystemGeneralUiAddressChoicesArgs", "SystemGeneralUiAddressChoicesResult",
+    "SystemGeneralUiCertificateChoicesArgs", "SystemGeneralUiCertificateChoicesResult",
+    "SystemGeneralUiHttpsprotocolsChoicesArgs", "SystemGeneralUiHttpsprotocolsChoicesResult",
+    "SystemGeneralLocalUrlArgs", "SystemGeneralLocalUrlResult", "SystemGeneralUiRestartArgs",
+    "SystemGeneralUiRestartResult", "SystemGeneralUiV6addressChoicesArgs", "SystemGeneralUiV6addressChoicesResult",
 ]
 
 
-class SystemGeneralUIAddressChoicesArgs(BaseModel):
+class SystemGeneralUiAddressChoicesArgs(BaseModel):
     pass
 
 
-class SystemGeneralUIAddressChoicesResult(BaseModel):
+class SystemGeneralUiAddressChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class SystemGeneralUICertificateChoicesArgs(BaseModel):
+class SystemGeneralUiCertificateChoicesArgs(BaseModel):
     pass
 
 
-class SystemGeneralUICertificateChoicesResult(BaseModel):
+class SystemGeneralUiCertificateChoicesResult(BaseModel):
     result: dict[int, str]
 
 
-class SystemGeneralUIHTTPSProtocolChoicesArgs(BaseModel):
+class SystemGeneralUiHttpsprotocolsChoicesArgs(BaseModel):
     pass
 
 
-class SystemGeneralUIHTTPSProtocolChoicesResult(BaseModel):
+class SystemGeneralUiHttpsprotocolsChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class SystemGeneralUILocalURLArgs(BaseModel):
+class SystemGeneralLocalUrlArgs(BaseModel):
     pass
 
 
-class SystemGeneralUILocalURLResult(BaseModel):
+class SystemGeneralLocalUrlResult(BaseModel):
     result: str
 
 
-class SystemGeneralUIRestartArgs(BaseModel):
+class SystemGeneralUiRestartArgs(BaseModel):
     delay: NonNegativeInt = 3
     """How long to wait before the UI is restarted."""
 
 
-class SystemGeneralUIRestartResult(BaseModel):
+class SystemGeneralUiRestartResult(BaseModel):
     result: None
 
 
-class SystemGeneralUIV6AddressChoicesArgs(BaseModel):
+class SystemGeneralUiV6addressChoicesArgs(BaseModel):
     pass
 
 
-class SystemGeneralUIV6AddressChoicesResult(BaseModel):
+class SystemGeneralUiV6addressChoicesResult(BaseModel):
     result: dict[str, str]

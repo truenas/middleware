@@ -1,7 +1,7 @@
 import collections
 
 from middlewared.api import api_method
-from middlewared.api.current import AppIXVolumeEntry, AppIXVolumeExistsArgs, AppIXVolumeExistsResult
+from middlewared.api.current import AppsIxVolumeEntry, AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult
 from middlewared.service import filterable_api_method, Service
 from middlewared.utils import filter_list
 
@@ -14,9 +14,9 @@ class AppsIxVolumeService(Service):
         namespace = 'app.ix_volume'
         event_send = False
         cli_namespace = 'app.ix_volume'
-        entry = AppIXVolumeEntry
+        entry = AppsIxVolumeEntry
 
-    @filterable_api_method(item=AppIXVolumeEntry, roles=['APPS_READ'])
+    @filterable_api_method(item=AppsIxVolumeEntry, roles=['APPS_READ'])
     async def query(self, filters, options):
         """
         Query ix-volumes with `filters` and `options`.
@@ -45,7 +45,7 @@ class AppsIxVolumeService(Service):
 
         return filter_list(volumes, filters, options)
 
-    @api_method(AppIXVolumeExistsArgs, AppIXVolumeExistsResult, roles=['APPS_READ'])
+    @api_method(AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult, roles=['APPS_READ'])
     async def exists(self, app_name):
         """
         Check if ix-volumes exist for `app_name`.

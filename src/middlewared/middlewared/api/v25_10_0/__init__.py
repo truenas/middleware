@@ -1,6 +1,5 @@
 from .acl import *
 from .acme_dns_authenticator import *
-from .acme_registration import *
 from .alert import *
 from .alertservice import *
 from .api_key import *
@@ -25,6 +24,7 @@ from .cronjob import *
 from .crypto_cert_info import *
 from .crypto_cert_profiles import *
 from .device import *
+from .directory_services import *
 from .disk import *
 from .dns import *
 from .docker import *
@@ -40,6 +40,7 @@ from .fcport import *
 from .filesystem import *
 from .ftp import *
 from .group import *
+from .idmap import *
 from .initshutdownscript import *
 from .interface import *
 from .ipmi import *
@@ -78,7 +79,6 @@ from .pool_snapshot_count import *
 from .pool_snapshottask import *
 from .privilege import *
 from .rdma import *
-from .rdma_interface import *
 from .replication import *
 from .replication_config import *
 from .replication_crud import *

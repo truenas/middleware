@@ -23,7 +23,7 @@ from middlewared.service_exception import CallError
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 
 from .utils import (
-    VirtGlobalStatus, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_STORAGE
+    VirtGlobalStatus, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_BRIDGE, INCUS_STORAGE
 )
 
 if TYPE_CHECKING:
@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 
 BRIDGE_AUTO = '[AUTO]'
-INCUS_BRIDGE = 'incusbr0'
 POOL_DISABLED = '[DISABLED]'
 RE_FAILED_INSTANCE = re.compile(r'Failed creating instance "(.*)" record')
 
@@ -280,9 +279,9 @@ class VirtGlobalService(ConfigService):
             'type': data['type'].upper(),
             'managed': data['managed'],
             'ipv4_address': data['config']['ipv4.address'],
-            'ipv4_nat': data['config']['ipv4.nat'],
+            'ipv4_nat': data['config']['ipv4.nat'] == 'true',
             'ipv6_address': data['config']['ipv6.address'],
-            'ipv6_nat': data['config']['ipv6.nat'],
+            'ipv6_nat': data['config']['ipv6.nat'] == 'true',
         }
 
     @private

@@ -4,10 +4,10 @@ from middlewared.api.base import BaseModel, LongString
 __all__ = [
     'TrueNASSetProductionArgs', 'TrueNASSetProductionResult',
     'TrueNASIsProductionArgs', 'TrueNASIsProductionResult',
-    'TrueNASAcceptEULAArgs', 'TrueNASAcceptEULAResult',
-    'TrueNASIsEULAAcceptedArgs', 'TrueNASIsEULAAcceptedResult',
-    'TrueNASGetEULAArgs', 'TrueNASGetEULAResult',
-    'TrueNASIsIXHardwareArgs', 'TrueNASIsIXHardwareResult',
+    'TrueNASAcceptEulaArgs', 'TrueNASAcceptEulaResult',
+    'TrueNASIsEulaAcceptedArgs', 'TrueNASIsEulaAcceptedResult',
+    'TrueNASGetEulaArgs', 'TrueNASGetEulaResult',
+    'TrueNASIsIxHardwareArgs', 'TrueNASIsIxHardwareResult',
     'TrueNASGetChassisHardwareArgs', 'TrueNASGetChassisHardwareResult',
     'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult'
 ]
@@ -29,35 +29,35 @@ class TrueNASGetChassisHardwareResult(BaseModel):
     result: str
 
 
-class TrueNASIsIXHardwareArgs(BaseModel):
+class TrueNASIsIxHardwareArgs(BaseModel):
     pass
 
 
-class TrueNASIsIXHardwareResult(BaseModel):
+class TrueNASIsIxHardwareResult(BaseModel):
     result: bool
 
 
-class TrueNASGetEULAArgs(BaseModel):
+class TrueNASGetEulaArgs(BaseModel):
     pass
 
 
-class TrueNASGetEULAResult(BaseModel):
+class TrueNASGetEulaResult(BaseModel):
     result: LongString | None
 
 
-class TrueNASIsEULAAcceptedArgs(BaseModel):
+class TrueNASIsEulaAcceptedArgs(BaseModel):
     pass
 
 
-class TrueNASIsEULAAcceptedResult(BaseModel):
+class TrueNASIsEulaAcceptedResult(BaseModel):
     result: bool
 
 
-class TrueNASAcceptEULAArgs(BaseModel):
+class TrueNASAcceptEulaArgs(BaseModel):
     pass
 
 
-class TrueNASAcceptEULAResult(BaseModel):
+class TrueNASAcceptEulaResult(BaseModel):
     result: None
 
 

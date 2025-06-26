@@ -1,10 +1,13 @@
 import middlewared.sqlalchemy as sa
 from middlewared.alert.source.discovery_auth import UPGRADE_ALERTS
 from middlewared.api import api_method
-from middlewared.api.current import (IscsiAuthCreateArgs, IscsiAuthCreateResult, IscsiAuthDeleteArgs,
-                                     IscsiAuthDeleteResult, IscsiAuthEntry, IscsiAuthUpdateArgs, IscsiAuthUpdateResult)
+from middlewared.api.current import (iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, iSCSITargetAuthCredentialDeleteArgs,
+                                     iSCSITargetAuthCredentialDeleteResult, IscsiAuthEntry, iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from .utils import IscsiAuthType
+
+
+INVALID_CHARACTERS = '#'
 
 
 def _auth_summary(data):
@@ -37,7 +40,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         role_prefix = 'SHARING_ISCSI_AUTH'
         entry = IscsiAuthEntry
 
-    @api_method(IscsiAuthCreateArgs, IscsiAuthCreateResult, audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
+    @api_method(iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
     async def do_create(self, data):
         """
         Create an iSCSI Authorized Access.
@@ -66,7 +69,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @api_method(IscsiAuthUpdateArgs, IscsiAuthUpdateResult, audit='Update iSCSI Authorized Access', audit_callback=True)
+    @api_method(iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult, audit='Update iSCSI Authorized Access', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI Authorized Access of `id`.
@@ -94,11 +97,15 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
 
         await self.middleware.call('iscsi.auth.recalc_mutual_chap_alert', orig_peerusers)
+
+        # We might have cleared some junk
+        await self.middleware.call('alert.alert_source_clear_run', 'ISCSIAuthSecret')
+
         await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
 
-    @api_method(IscsiAuthDeleteArgs, IscsiAuthDeleteResult, audit='Delete iSCSI Authorized Access', audit_callback=True)
+    @api_method(iSCSITargetAuthCredentialDeleteArgs, iSCSITargetAuthCredentialDeleteResult, audit='Delete iSCSI Authorized Access', audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI Authorized Access of `id`.
@@ -119,6 +126,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
         if orig_peerusers:
             await self.middleware.call('iscsi.auth.recalc_mutual_chap_alert', orig_peerusers)
+
+        # We might have cleared some junk
+        await self.middleware.call('alert.alert_source_clear_run', 'ISCSIAuthSecret')
+
         await self._service_change('iscsitarget', 'reload')
 
         return result
@@ -140,6 +151,24 @@ class iSCSITargetAuthCredentialService(CRUDService):
         return {'in_use': bool(usages), 'usages': '\n'.join(usages)}
 
     @private
+    def _validate_secret(self, secret, fieldname, title, schema_name, verrors):
+        if len(secret) < 12 or len(secret) > 16:
+            verrors.add(
+                f'{schema_name}.{fieldname}',
+                f'{title} must be between 12 and 16 characters.'
+            )
+        if secret != secret.strip():
+            verrors.add(
+                f'{schema_name}.{fieldname}',
+                f'{title} contains leading or trailing space.'
+            )
+        if bad_chars := [ch for ch in INVALID_CHARACTERS if ch in secret]:
+            verrors.add(
+                f'{schema_name}.{fieldname}',
+                f'{title} contains invalid characters: {",".join(bad_chars)}'
+            )
+
+    @private
     async def validate(self, data, schema_name, verrors, discovery_auth_mutual_chap_count):
         secret = data.get('secret')
         peer_secret = data.get('peersecret')
@@ -152,11 +181,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
                 'The peer user is required if you set a peer secret.'
             )
 
-        if len(secret) < 12 or len(secret) > 16:
-            verrors.add(
-                f'{schema_name}.secret',
-                'Secret must be between 12 and 16 characters.'
-            )
+        self._validate_secret(secret, 'secret', 'Secret', schema_name, verrors)
 
         if peer_user:
             if not peer_secret:
@@ -169,12 +194,8 @@ class iSCSITargetAuthCredentialService(CRUDService):
                     f'{schema_name}.peersecret',
                     'The peer secret cannot be the same as user secret.'
                 )
-            elif peer_secret:
-                if len(peer_secret) < 12 or len(peer_secret) > 16:
-                    verrors.add(
-                        f'{schema_name}.peersecret',
-                        'Peer Secret must be between 12 and 16 characters.'
-                    )
+            else:
+                self._validate_secret(peer_secret, 'peersecret', 'Peer Secret', schema_name, verrors)
             if discovery_auth == IscsiAuthType.CHAP_MUTUAL and discovery_auth_mutual_chap_count:
                 verrors.add(
                     f'{schema_name}.discovery_auth',

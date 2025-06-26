@@ -7,7 +7,6 @@ from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import query_result
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, GenericQueryResult
-from middlewared.schema import accepts, Ref
 
 
 LOCKS = defaultdict(asyncio.Lock)
@@ -21,33 +20,24 @@ def cli_private(fn):
     return fn
 
 
-def filterable(fn=None, /, *, roles=None):
-    def filterable_internal(fn):
-        fn._filterable = True
-        fn._legacy_filterable = True
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable = True
-        return accepts(Ref('query-filters'), Ref('query-options'), roles=roles)(fn)
-    # See if we're being called as @filterable or @filterable().
-    if fn is None:
-        # We're called with parens.
-        return filterable_internal
-
-    # We're called as @filterable without parens.
-    return filterable_internal(fn)
-
-
 def filterable_api_method(
     fn=None, /, *, roles=None, item=None, private=False, cli_private=False, authorization_required=True,
-    pass_app=False, pass_app_require=False, pass_app_rest=False,
+    pass_app=False, pass_app_require=False, pass_app_rest=False, pass_thread_local_storage=False,
 ):
     def filterable_internal(fn):
-        fn._filterable = True
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable = True
-
         if item:
-            returns = query_result(item)
+            name = item.__name__
+            if name.endswith("Entry"):
+                if fn.__name__ == "query":
+                    name = name.removesuffix("Entry") + "QueryResult"
+                else:
+                    name = name.removesuffix("Entry") + "Result"
+            elif name.endswith("Item"):
+                name = name.removesuffix("Item") + "Result"
+            else:
+                raise RuntimeError(f"{item=!r} class name must end with `Entry` or `Item`")
+
+            returns = query_result(item, name)
         else:
             if not private:
                 raise ValueError('Public methods may not use GenericQueryResult.')
@@ -57,7 +47,7 @@ def filterable_api_method(
         return api_method(
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
             authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
-            pass_app_rest=pass_app_rest,
+            pass_app_rest=pass_app_rest, pass_thread_local_storage=pass_thread_local_storage,
         )(fn)
 
     # See if we're being called as @filterable or @filterable().
@@ -100,7 +90,7 @@ def job(
             @job(lock=lambda args: f'scrub:{args[0]}')
             def scrub(self, pool_name):
 
-        Please beware that, as `@job` decorator must be executed before `@accepts`, the arguments passed to the lock
+        Please beware that, as `@job` decorator must be executed before `@api_method`, the arguments passed to the lock
         callable will be the raw arguments given by caller (there would be no arguments sanitizing or added defaults).
 
         Default value is `None` meaning that no locking is used.
@@ -148,7 +138,7 @@ def job(
 
                 @job(description=lambda dev, mode, *args: f'Wipe disk {dev}')
 
-        Please beware that, as `@job` decorator must be executed before `@accepts`, the arguments passed to the
+        Please beware that, as `@job` decorator must be executed before `@api_method`, the arguments passed to the
         description callable will be the raw arguments given by caller (there would be no arguments sanitizing or added
         defaults).
 

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 def load_compound_service(name: str) -> 'Callable[[Middleware], CompoundService]':
     lpm = LoadPluginsMixin()
     lpm.event_register = Mock()
-    lpm.get_events = Mock(return_value=[])
+    lpm.event_source_manager = Mock()
     lpm._load_plugins()
     service = lpm.get_service(name)
     return functools.partial(_compound_service_wrapper, service)

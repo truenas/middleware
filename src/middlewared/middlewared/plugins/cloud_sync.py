@@ -1,10 +1,10 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 from middlewared.api import api_method
 from middlewared.api.current import (CloudCredentialEntry,
-                                     CloudCredentialCreateArgs, CloudCredentialCreateResult,
-                                     CloudCredentialUpdateArgs, CloudCredentialUpdateResult,
-                                     CloudCredentialDeleteArgs, CloudCredentialDeleteResult,
-                                     CloudCredentialVerifyArgs, CloudCredentialVerifyResult,
+                                     CredentialsCreateArgs, CredentialsCreateResult,
+                                     CredentialsUpdateArgs, CredentialsUpdateResult,
+                                     CredentialsDeleteArgs, CredentialsDeleteResult,
+                                     CredentialsVerifyArgs, CredentialsVerifyResult,
                                      CloudSyncEntry,
                                      CloudSyncCreateArgs, CloudSyncCreateResult,
                                      CloudSyncUpdateArgs, CloudSyncUpdateResult,
@@ -13,7 +13,7 @@ from middlewared.api.current import (CloudCredentialEntry,
                                      CloudSyncListBucketsArgs, CloudSyncListBucketsResult,
                                      CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult,
                                      CloudSyncSyncArgs, CloudSyncSyncResult,
-                                     CloudSyncSyncOneTimeArgs, CloudSyncSyncOneTimeResult,
+                                     CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult,
                                      CloudSyncAbortArgs, CloudSyncAbortResult,
                                      CloudSyncProvidersArgs, CloudSyncProvidersResult)
 from middlewared.common.attachment import LockableFSAttachmentDelegate
@@ -537,7 +537,7 @@ class CredentialsService(CRUDService):
         data["provider"] = data["attributes"].pop("type")
         return data
 
-    @api_method(CloudCredentialVerifyArgs, CloudCredentialVerifyResult, roles=["CLOUD_SYNC_WRITE"])
+    @api_method(CredentialsVerifyArgs, CredentialsVerifyResult, roles=["CLOUD_SYNC_WRITE"])
     async def verify(self, data):
         """
         Verify if `attributes` provided for `provider` are authorized by the `provider`.
@@ -553,7 +553,7 @@ class CredentialsService(CRUDService):
             else:
                 return {"valid": False, "error": proc.stderr, "excerpt": lsjson_error_excerpt(proc.stderr)}
 
-    @api_method(CloudCredentialCreateArgs, CloudCredentialCreateResult)
+    @api_method(CredentialsCreateArgs, CredentialsCreateResult)
     async def do_create(self, data):
         """
         Create Cloud Sync Credentials.
@@ -571,7 +571,7 @@ class CredentialsService(CRUDService):
         await self.extend(data)
         return data
 
-    @api_method(CloudCredentialUpdateArgs, CloudCredentialUpdateResult)
+    @api_method(CredentialsUpdateArgs, CredentialsUpdateResult)
     async def do_update(self, id_, data):
         """
         Update Cloud Sync Credentials of `id`.
@@ -594,7 +594,7 @@ class CredentialsService(CRUDService):
 
         return new
 
-    @api_method(CloudCredentialDeleteArgs, CloudCredentialDeleteResult)
+    @api_method(CredentialsDeleteArgs, CredentialsDeleteResult)
     async def do_delete(self, id_):
         """
         Delete Cloud Sync Credentials of `id`.
@@ -647,7 +647,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
     share_task_type = 'CloudSync'
-    allowed_path_types = [FSLocation.CLUSTER, FSLocation.LOCAL]
+    allowed_path_types = [FSLocation.LOCAL]
     task_state_methods = ['cloudsync.sync', 'cloudsync.restore']
 
     class Config:
@@ -938,7 +938,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         await self._sync(cloud_sync, options, job)
 
-    @api_method(CloudSyncSyncOneTimeArgs, CloudSyncSyncOneTimeResult, roles=["CLOUD_SYNC_WRITE"])
+    @api_method(CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult, roles=["CLOUD_SYNC_WRITE"])
     @job(logs=True, abortable=True)
     async def sync_onetime(self, job, cloud_sync, options):
         """
@@ -1033,10 +1033,9 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                     "bucket_title": provider.bucket_title,
                     "task_schema": [
                         {
-                            "property": field.name,
-                            "schema": field.to_json_schema()
+                            "property": attribute,
                         }
-                        for field in provider.task_schema + self._common_task_schema(provider)
+                        for attribute in await self.middleware.call("cloudsync.task_attributes", provider)
                     ],
                 }
                 for provider in REMOTES.values()

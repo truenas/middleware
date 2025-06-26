@@ -5,8 +5,8 @@ from middlewared.api.base.types import HttpsOnlyURL
 
 
 __all__ = [
-    'TNCEntry', 'TNCGetRegistrationURIArgs', 'TNCGetRegistrationURIResult', 'TNCUpdateArgs', 'TNCUpdateResult',
-    'TNCGenerateClaimTokenArgs', 'TNCGenerateClaimTokenResult', 'TNCIPChoicesArgs', 'TNCIPChoicesResult',
+    'TNCEntry', 'TrueNASConnectGetRegistrationUriArgs', 'TrueNASConnectGetRegistrationUriResult', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
+    'TrueNASConnectGenerateClaimTokenArgs', 'TrueNASConnectGenerateClaimTokenResult', 'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
 ]
 
 
@@ -25,7 +25,7 @@ class TNCEntry(BaseModel):
 
 
 @single_argument_args('tn_connect_update')
-class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
+class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     ips: list[IPvAnyAddress]
     account_service_base_url: HttpsOnlyURL
@@ -34,29 +34,29 @@ class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     heartbeat_url: HttpsOnlyURL
 
 
-class TNCUpdateResult(BaseModel):
+class TrueNASConnectUpdateResult(BaseModel):
     result: TNCEntry
 
 
-class TNCGetRegistrationURIArgs(BaseModel):
+class TrueNASConnectGetRegistrationUriArgs(BaseModel):
     pass
 
 
-class TNCGetRegistrationURIResult(BaseModel):
+class TrueNASConnectGetRegistrationUriResult(BaseModel):
     result: NonEmptyString
 
 
-class TNCGenerateClaimTokenArgs(BaseModel):
+class TrueNASConnectGenerateClaimTokenArgs(BaseModel):
     pass
 
 
-class TNCGenerateClaimTokenResult(BaseModel):
+class TrueNASConnectGenerateClaimTokenResult(BaseModel):
     result: NonEmptyString
 
 
-class TNCIPChoicesArgs(BaseModel):
+class TrueNASConnectIpChoicesArgs(BaseModel):
     pass
 
 
-class TNCIPChoicesResult(BaseModel):
+class TrueNASConnectIpChoicesResult(BaseModel):
     result: dict[str, str]

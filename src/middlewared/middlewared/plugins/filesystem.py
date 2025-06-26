@@ -22,10 +22,11 @@ from middlewared.api.current import (
     FilesystemMkdirArgs, FilesystemMkdirResult,
     FilesystemStatArgs, FilesystemStatResult,
     FilesystemStatfsArgs, FilesystemStatfsResult,
-    FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
-    FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult,
-    FilesystemGetFileArgs, FilesystemGetFileResult,
-    FilesystemPutFileArgs, FilesystemPutFileResult,
+    FilesystemSetZfsAttributesArgs, FilesystemSetZfsAttributesResult,
+    FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult,
+    FilesystemGetArgs, FilesystemGetResult,
+    FilesystemPutArgs, FilesystemPutResult,
+    FileFollowTailEventSourceArgs, FileFollowTailEventSourceEvent,
 )
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
@@ -60,13 +61,100 @@ class FilesystemReceiveFileResult(BaseModel):
     result: Literal[True]
 
 
+class FileFollowTailEventSource(EventSource):
+    """
+    Retrieve last `no_of_lines` specified as an integer argument for a specific `path` and then
+    any new lines as they are added. Specified argument has the format `path:no_of_lines` ( `/var/log/messages:3` ).
+
+    `no_of_lines` is optional and if it is not specified it defaults to `3`.
+
+    However, `path` is required for this.
+    """
+    args = FileFollowTailEventSourceArgs
+    event = FileFollowTailEventSourceEvent
+
+    def parse_arg(self):
+        if ':' in self.arg:
+            path, lines = self.arg.rsplit(':', 1)
+            lines = int(lines)
+        else:
+            path = self.arg
+            lines = 3
+
+        return path, lines
+
+    def run_sync(self):
+        path, lines = self.parse_arg()
+
+        if not os.path.exists(path):
+            # FIXME: Error?
+            return
+
+        bufsize = 8192
+        fsize = os.stat(path).st_size
+        if fsize < bufsize:
+            bufsize = fsize
+        i = 0
+        with open(path, encoding='utf-8', errors='ignore') as f:
+            data = []
+            while True:
+                i += 1
+                if bufsize * i > fsize:
+                    break
+                f.seek(fsize - bufsize * i)
+                data.extend(f.readlines())
+                if len(data) >= lines or f.tell() == 0:
+                    break
+
+            self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
+            f.seek(fsize)
+
+            for data in self._follow_path(path, f):
+                self.send_event('ADDED', fields={'data': data})
+
+    def _follow_path(self, path, f):
+        queue = []
+        watch_manager = pyinotify.WatchManager()
+        notifier = pyinotify.Notifier(watch_manager)
+        watch_manager.add_watch(path, pyinotify.IN_MODIFY, functools.partial(self._follow_callback, queue, f))
+
+        data = f.read()
+        if data:
+            yield data
+
+        last_sent_at = time.monotonic()
+        interval = 0.5  # For performance reasons do not send websocket events more than twice a second
+        while not self._cancel_sync.is_set():
+            notifier.process_events()
+
+            if time.monotonic() - last_sent_at >= interval:
+                data = "".join(queue)
+                if data:
+                    yield data
+                queue[:] = []
+                last_sent_at = time.monotonic()
+
+            if notifier.check_events(timeout=int(interval * 1000)):
+                notifier.read_events()
+
+        notifier.stop()
+
+    def _follow_callback(self, queue, f, event):
+        data = f.read()
+        if data:
+            queue.append(data)
+
+
 class FilesystemService(Service):
 
     class Config:
         cli_private = True
+        event_sources = {
+            'filesystem.file_tail_follow': FileFollowTailEventSource,
+        }
 
     @api_method(
-        FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
+        FilesystemSetZfsAttributesArgs, FilesystemSetZfsAttributesResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set ZFS attributes',
         audit_extended=lambda data: data['path']
@@ -103,7 +191,7 @@ class FilesystemService(Service):
         """
         return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
 
-    @api_method(FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult, roles=['FILESYSTEM_ATTRS_READ'])
+    @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=['FILESYSTEM_ATTRS_READ'])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
@@ -460,7 +548,7 @@ class FilesystemService(Service):
 
         return True
 
-    @api_method(FilesystemGetFileArgs, FilesystemGetFileResult, audit='Filesystem get', roles=['FULL_ADMIN'])
+    @api_method(FilesystemGetArgs, FilesystemGetResult, audit='Filesystem get', roles=['FULL_ADMIN'])
     @job(pipes=["output"])
     def get(self, job, path):
         """
@@ -473,7 +561,7 @@ class FilesystemService(Service):
         with open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @api_method(FilesystemPutFileArgs, FilesystemPutFileResult, audit='Filesystem put', roles=['FULL_ADMIN'])
+    @api_method(FilesystemPutArgs, FilesystemPutResult, audit='Filesystem put', roles=['FULL_ADMIN'])
     @job(pipes=["input"])
     def put(self, job, path, options):
         """
@@ -549,89 +637,3 @@ class FilesystemService(Service):
         for k in ['total_blocks', 'free_blocks', 'avail_blocks', 'total_bytes', 'free_bytes', 'avail_bytes']:
             result[f'{k}_str'] = str(result[k])
         return result
-
-
-class FileFollowTailEventSource(EventSource):
-    """
-    Retrieve last `no_of_lines` specified as an integer argument for a specific `path` and then
-    any new lines as they are added. Specified argument has the format `path:no_of_lines` ( `/var/log/messages:3` ).
-
-    `no_of_lines` is optional and if it is not specified it defaults to `3`.
-
-    However, `path` is required for this.
-    """
-
-    def parse_arg(self):
-        if ':' in self.arg:
-            path, lines = self.arg.rsplit(':', 1)
-            lines = int(lines)
-        else:
-            path = self.arg
-            lines = 3
-
-        return path, lines
-
-    def run_sync(self):
-        path, lines = self.parse_arg()
-
-        if not os.path.exists(path):
-            # FIXME: Error?
-            return
-
-        bufsize = 8192
-        fsize = os.stat(path).st_size
-        if fsize < bufsize:
-            bufsize = fsize
-        i = 0
-        with open(path, encoding='utf-8', errors='ignore') as f:
-            data = []
-            while True:
-                i += 1
-                if bufsize * i > fsize:
-                    break
-                f.seek(fsize - bufsize * i)
-                data.extend(f.readlines())
-                if len(data) >= lines or f.tell() == 0:
-                    break
-
-            self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
-            f.seek(fsize)
-
-            for data in self._follow_path(path, f):
-                self.send_event('ADDED', fields={'data': data})
-
-    def _follow_path(self, path, f):
-        queue = []
-        watch_manager = pyinotify.WatchManager()
-        notifier = pyinotify.Notifier(watch_manager)
-        watch_manager.add_watch(path, pyinotify.IN_MODIFY, functools.partial(self._follow_callback, queue, f))
-
-        data = f.read()
-        if data:
-            yield data
-
-        last_sent_at = time.monotonic()
-        interval = 0.5  # For performance reasons do not send websocket events more than twice a second
-        while not self._cancel_sync.is_set():
-            notifier.process_events()
-
-            if time.monotonic() - last_sent_at >= interval:
-                data = "".join(queue)
-                if data:
-                    yield data
-                queue[:] = []
-                last_sent_at = time.monotonic()
-
-            if notifier.check_events(timeout=int(interval * 1000)):
-                notifier.read_events()
-
-        notifier.stop()
-
-    def _follow_callback(self, queue, f, event):
-        data = f.read()
-        if data:
-            queue.append(data)
-
-
-def setup(middleware):
-    middleware.register_event_source('filesystem.file_tail_follow', FileFollowTailEventSource)

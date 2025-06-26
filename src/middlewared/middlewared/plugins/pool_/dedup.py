@@ -1,5 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import DDTPrefetchArgs, DDTPrefetchResult, DDTPruneArgs, DDTPruneResult
+from middlewared.api.current import PoolDdtPrefetchArgs, PoolDdtPrefetchResult, PoolDdtPruneArgs, PoolDdtPruneResult
 from middlewared.service import job, Service
 
 
@@ -8,7 +8,7 @@ class PoolService(Service):
     class Config:
         cli_namespace = 'storage.pool'
 
-    @api_method(DDTPruneArgs, DDTPruneResult, roles=['POOL_WRITE'])
+    @api_method(PoolDdtPruneArgs, PoolDdtPruneResult, roles=['POOL_WRITE'])
     @job(lock=lambda args: f'ddt_prune_{args[0].get("pool_name")}')
     async def ddt_prune(self, job, options):
         """
@@ -20,7 +20,7 @@ class PoolService(Service):
         """
         return await self.middleware.call('zfs.pool.ddt_prune', options)
 
-    @api_method(DDTPrefetchArgs, DDTPrefetchResult, roles=['POOL_WRITE'])
+    @api_method(PoolDdtPrefetchArgs, PoolDdtPrefetchResult, roles=['POOL_WRITE'])
     @job(lock=lambda args: f'ddt_prefetch_{args[0]}')
     async def ddt_prefetch(self, job, pool_name):
         """

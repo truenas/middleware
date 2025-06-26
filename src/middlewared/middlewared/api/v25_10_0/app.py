@@ -8,17 +8,19 @@ from .catalog import CatalogAppInfo
 
 
 __all__ = [
-    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableResponse',
+    'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
     'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
     'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
     'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppContainerIDArgs', 'AppContainerIDResult', 'AppContainerConsoleChoiceArgs', 'AppContainerConsoleChoiceResult',
+    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult',
     'AppCertificateChoicesArgs', 'AppCertificateChoicesResult', 'AppUsedPortsArgs', 'AppUsedPortsResult',
-    'AppIPChoicesArgs', 'AppIPChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
+    'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
     'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
-    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult',
+    'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
+    'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
+    'AppLatestItem',
 ]
 
 
@@ -209,7 +211,7 @@ class AppContainerIDOptions(BaseModel):
     alive_only: bool = True
 
 
-class AppContainerIDArgs(BaseModel):
+class AppContainerIdsArgs(BaseModel):
     app_name: NonEmptyString
     options: AppContainerIDOptions = AppContainerIDOptions()
 
@@ -225,15 +227,15 @@ class AppContainerResponse(RootModel[dict[str, ContainerDetails]]):
     pass
 
 
-class AppContainerIDResult(BaseModel):
+class AppContainerIdsResult(BaseModel):
     result: AppContainerResponse
 
 
-class AppContainerConsoleChoiceArgs(BaseModel):
+class AppContainerConsoleChoicesArgs(BaseModel):
     app_name: NonEmptyString
 
 
-class AppContainerConsoleChoiceResult(BaseModel):
+class AppContainerConsoleChoicesResult(BaseModel):
     result: AppContainerResponse
 
 
@@ -258,11 +260,11 @@ class AppUsedPortsResult(BaseModel):
     result: list[int]
 
 
-class AppIPChoicesArgs(BaseModel):
+class AppIpChoicesArgs(BaseModel):
     pass
 
 
-class AppIPChoicesResult(BaseModel):
+class AppIpChoicesResult(BaseModel):
     result: dict[NonEmptyString, NonEmptyString]
 
 
@@ -363,11 +365,15 @@ class AppUpgradeSummaryResult(BaseModel):
     changelog: LongString | None
 
 
-class AppAvailableResponse(CatalogAppInfo):
+class AppAvailableItem(CatalogAppInfo):
     catalog: NonEmptyString
     installed: bool
     train: NonEmptyString
     popularity_rank: int | None
+
+
+class AppLatestItem(AppAvailableItem):
+    pass
 
 
 class AppCategoriesArgs(BaseModel):
@@ -384,4 +390,53 @@ class AppSimilarArgs(BaseModel):
 
 
 class AppSimilarResult(BaseModel):
-    result: list[AppAvailableResponse]
+    result: list[AppAvailableItem]
+
+
+class AppContainerLogsFollowTailEventSourceArgs(BaseModel):
+    tail_lines: int | None = Field(default=500, ge=1)
+    app_name: str
+    container_id: str
+
+
+@single_argument_result
+class AppContainerLogsFollowTailEventSourceEvent(BaseModel):
+    data: str
+    timestamp: str | None
+
+
+class AppStatsEventSourceArgs(BaseModel):
+    interval: int = Field(default=2, ge=2)
+
+
+class AppStatsEventSourceEvent(BaseModel):
+    result: list["AppStatsEventSourceEventItem"]
+
+
+class AppStatsEventSourceEventItem(BaseModel):
+    app_name: str
+    cpu_usage: int
+    """Percentage of cpu used by an app."""
+    memory: int
+    """Current memory (in bytes) used by an app."""
+    networks: list["AppStatsEventSourceEventItemNetwork"]
+    blkio: "AppStatsEventSourceEventItemBlkio"
+
+
+class AppStatsEventSourceEventItemNetwork(BaseModel):
+    interface_name: str
+    """Name of the interface used by the app."""
+    rx_bytes: int
+    """Received bytes/s by an interface."""
+    tx_bytes: int
+    """Transmitted bytes/s by an interface."""
+
+
+class AppStatsEventSourceEventItemBlkio(BaseModel):
+    read: int
+    """Blkio read bytes."""
+    write: int
+    """Blkio write bytes."""
+
+
+AppStatsEventSourceEvent.model_rebuild()

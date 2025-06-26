@@ -72,6 +72,7 @@ def get_nvme_slot_info(model):
         ControllerModels.R50.value,
         ControllerModels.R50B.value,
         ControllerModels.R50BM.value,
+        ControllerModels.R60.value,
     ):
         return {
             'any_version': True,
@@ -213,6 +214,18 @@ def get_nvme_slot_info(model):
                                 DISK_REAR_KEY: True,
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 5), range(49, 53))
+                        },
+                        'r60_nvme_enclosure': {
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: i,
+                                SUPPORTS_IDENTIFY_KEY: True,
+                                SUPPORTS_IDENTIFY_STATUS_KEY: False,
+                                DISK_FRONT_KEY: True,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: False,
+                                DISK_INTERNAL_KEY: False,
+                            } for i in range(1, 13)
                         },
                     }
                 }

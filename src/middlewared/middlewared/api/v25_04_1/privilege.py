@@ -2,7 +2,7 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 from middlewared.utils.security import STIGType
 from .group import GroupEntry
 
-__all__ = ["PrivilegeEntry", "PrivilegeRoleEntry",
+__all__ = ["PrivilegeEntry", "PrivilegeRolesEntry",
            "PrivilegeCreateArgs", "PrivilegeCreateResult",
            "PrivilegeUpdateArgs", "PrivilegeUpdateResult",
            "PrivilegeDeleteArgs", "PrivilegeDeleteResult"]
@@ -60,7 +60,7 @@ class PrivilegeDeleteResult(BaseModel):
     result: bool
 
 
-class PrivilegeRoleEntry(BaseModel):
+class PrivilegeRolesEntry(BaseModel):
     name: NonEmptyString
     title: NonEmptyString
     includes: list[NonEmptyString]

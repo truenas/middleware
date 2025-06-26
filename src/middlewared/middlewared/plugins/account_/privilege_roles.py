@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from middlewared.api.current import PrivilegeRoleEntry
+from middlewared.api.current import PrivilegeRolesEntry
 
 from middlewared.role import ROLES
 from middlewared.service import Service, filterable_api_method, filter_list, private
@@ -12,7 +12,7 @@ class PrivilegeService(Service):
         namespace = "privilege"
         cli_namespace = "auth.privilege"
 
-    @filterable_api_method(item=PrivilegeRoleEntry, authorization_required=False)
+    @filterable_api_method(item=PrivilegeRolesEntry, authorization_required=False)
     async def roles(self, filters, options):
         """
         Get all available roles.

@@ -1,102 +1,66 @@
 <%
-        def safe_call(*args):
-            try:
-                val = middleware.call_sync(*args)
-            except:
-                val = False
-            return val
+    from middlewared.plugins.etc import FileShouldNotExist
+    from middlewared.utils.directoryservices.constants import DSCredType, DSType
 
-        uri = None
-        base = None
-        ssl = False
-        tls_cacert = None
-        tls_reqcert = True
-        binddn = None
+    ds_config = middleware.call_sync('directoryservices.config')
+    if not ds_config['enable']:
+        raise FileShouldNotExist
 
-        ldap = middleware.call_sync('ldap.config')
-        ldap_enabled = ldap['enable']
-        is_kerberized = False
-        krb_realm = None
-        network_timeout = 60
-        timeout = 10
+    uri = None
+    credential = ds_config['credential']
 
-        ad = middleware.call_sync('activedirectory.config')
-        ad_enabled = ad['enable']
-        idmap = middleware.call_sync('idmap.query',
-                                     [('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')],
-                                     {'get': True})
+    match ds_config['service_type']:
+        case DSType.AD.value:
+            idmap = ds_config['configuration']['idmap']['idmap_domain']
+            if idmap['idmap_backend'] not in ('LDAP', 'RFC2307'):
+                raise FileShouldNotExist
 
-        if ad['enable'] and idmap['idmap_backend'] in ["rfc2307", "ldap"]:
-            is_kerberized = True
-            krb_realm = middleware.call_sync(
-                'kerberos.realm.query',
-                [('id', '=', ad['kerberos_realm'])],
-                {'get': True}
-            )['realm']
+            uri = idmap['ldap_url']
+            basedn = idmap['ldap_base_dn']
+            credential = {
+                'credential_type': DSCredType.LDAP_PLAIN,
+                'binddn': idmap['ldap_user_dn'],
+                'bindpw': idmap['ldap_user_dn_password']
+            }
+            tls_reqcert = idmap['validate_certificates']
+        case DSType.LDAP.value:
+            uri = ' '.join(ds_config['configuration']['server_urls'])
+            basedn = ds_config['configuration']['basedn']
+            tls_reqcert = ds_config['configuration']['validate_certificates']
 
-            base = idmap['ldap_base_dn']
-            idmap_url = idmap['ldap_url']
-            idmap_url = re.sub('^(ldaps?://)', '', idmap_url)
-            uri = "%s://%s" % ("ldaps" if idmap['ssl'] == "ON" else "ldap", idmap_url)
-            if idmap['ssl'] in ('start_tls', 'on'):
-                cert = safe_call('certificate.query', [('id', '=', idmap['certificate']['id'])], {'get': True})
-                tls_certfile = cert['certificate_path']
-                tls_keyfile = cert['privatekey_path']
-                ssl = idmap['ssl']
-            timeout = ad['timeout']
-            network_timeout = ad['dns_timeout']
-            tls_reqcert = ad['validate_certificates']
+        case DSType.IPA.value:
+            uri = f'ldaps://{ds_config["configuration"]["target_server"]}'
+            basedn = ds_config['configuration']['basedn']
+            tls_reqcert = ds_config['configuration']['validate_certificates']
 
-        elif ldap_enabled and ldap:
-            uri = " ".join(ldap['uri_list'])
-            if ldap['kerberos_realm']:
-                krb_realm = middleware.call_sync(
-                    'kerberos.realm.query',
-                    [('id', '=', ldap['kerberos_realm'])],
-                    {'get': True}
-                )['realm']
+        case _:
+            middleware.logger.error('%s: unexpected service type', ds_config['service_type'])
+            raise FileShouldNotExist
 
-                is_kerberized = True
-            else:
-                binddn = ldap['binddn']
+    if not uri:
+        middleware.logger.error('Directory serivce does not have a configured LDAP URI')
+        raise FileShouldNotExist
 
-            base = ldap['basedn']
-            timeout = ldap['timeout']
-            network_timeout = ldap['dns_timeout']
-            tls_reqcert = ldap['validate_certificates']
-            tls_certfile = None
+    if credential['credential_type'] == DSCredType.LDAP_MTLS:
+        cert = middleware.call_sync('certificate.query', [['cert_name', '=', credential['client_certificate']]], {'get': True})
+        tls_certfile = cert['certificate_path']
+        tls_keyfile = cert['privatekey_path']
 
-            if ldap['ssl'] in ("START_TLS", "ON"):
-                if ldap['certificate']:
-                    cert = safe_call('certificate.query', [('id', '=', ldap['certificate'])], {'get': True})
-                    tls_certfile = cert['certificate_path']
-                    tls_keyfile = cert['privatekey_path']
-                ssl = ldap['ssl']
 %>
-% if (ldap_enabled and ldap) or (ad_enabled and ad):
-# This file is used by Samba. If NETWORK_TIMEOUT is too high, then ldap failover
-# in Samba's ldapsam passdb backend may not occur.
-    %if uri:
 URI ${uri}
-    %endif
-    %if base:
-BASE ${base}
-    %endif
-NETWORK_TIMEOUT ${network_timeout}
-TIMEOUT ${timeout}
+BASE ${basedn}
+NETWORK_TIMEOUT ${ds_config['timeout']}
+TIMEOUT ${ds_config['timeout']}
 TLS_CACERT /etc/ssl/certs/ca-certificates.crt
-    % if ssl:
-        % if tls_certfile:
+% if credential['credential_type'] == DSCredType.LDAP_MTLS:
 TLS_CERT ${tls_certfile}
 TLS_KEY ${tls_keyfile}
 SASL_MECH EXTERNAL
-        % endif
+% endif
 TLS_REQCERT ${'demand' if tls_reqcert else 'allow'}
-    % endif
-    % if is_kerberized:
+% if credential['credential_type'].startswith('KERBEROS'):
 SASL_MECH GSSAPI
-SASL_REALM ${krb_realm}
-    % elif binddn:
-BINDDN ${binddn}
-    % endif
+SASL_REALM ${ds_config['kerberos_realm']}
+% elif credential['credential_type'] == DSCredType.LDAP_PLAIN:
+BINDDN ${credential['binddn']}
 % endif

@@ -3,6 +3,7 @@ import logging
 from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.utils import filter_list
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.krb5 import kdc_saf_cache_get
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
 from middlewared.utils.directoryservices.krb5_constants import KRB_LibDefaults, PERSISTENT_KEYRING_PREFIX
 
@@ -19,7 +20,6 @@ def generate_krb5_conf(
         raise FileShouldNotExist
 
     krbconf = KRB5Conf()
-    krbconf.add_realms(realms)
 
     appdefaults = {}
     libdefaults = {
@@ -30,25 +30,40 @@ def generate_krb5_conf(
     }
 
     default_realm = None
+    ds_config = middleware.call_sync('directoryservices.config')
+    if not ds_config['enable']:
+        raise FileShouldNotExist
+
+    default_realm = ds_config['kerberos_realm']
+    kdc_override = kdc_saf_cache_get()
 
     match directory_service['type']:
-        case DSType.AD.value:
-            ds_config = middleware.call_sync('activedirectory.config')
-            default_realm = filter_list(realms, [['id', '=', ds_config['kerberos_realm']]])
+        case DSType.AD.value | DSType.IPA.value:
+            # It's possible that for some reason the kerberos realm configuration for the
+            # AD / IPA domain has been lost. In almost all circumstances this will match the
+            # domainname so we can recover from there
             if not default_realm:
                 logger.error(
-                    '%s: no realm configuration found for active directory domain',
-                    ds_config['domainname']
+                    '%s: no realm configuration found for domain. Attempting to recover.',
+                    ds_config['configuration']['domain']
                 )
 
-                # Try looking up again by domainname
-                default_realm = filter_list(realms, [['realm', '=', ds_config['domainname']]])
+                # Try looking up again by domain
+                default_realm = filter_list(realms, [['realm', '=', ds_config['configuration']['domain']]])
                 if not default_realm:
-
                     # Try to recover by creating a realm stub
+                    if not ds_config['configuration']['domain']:
+                        # We have an invalid directory services configuration (no domain, no realm)
+                        # log an error message and prevent kerberos config generation
+
+                        logger.error("Configuration for domain lacks required options to properly "
+                                     "generate a kerberos configuration. Both kerberos realm and domain name "
+                                     "are absent")
+                        raise FileShouldNotExist
+
                     realm_id = middleware.call_sync(
                         'datastore.insert', 'directoryservice.kerberosrealm',
-                        {'krb_realm': ds_config['domainname']}
+                        {'krb_realm': ds_config['configuration']['domain']}
                     )
 
                     default_realm = middleware.call_sync('kerberos.realm.get_instance', realm_id)['realm']
@@ -56,34 +71,33 @@ def generate_krb5_conf(
                     realm_id = default_realm[0]['id']
                     default_realm = default_realm[0]['realm']
 
-                # set the kerberos realm in AD form to correct value
                 middleware.call_sync(
-                    'datastore.update', 'directoryservice.activedirectory',
-                    ds_config['id'], {'ad_kerberos_realm': realm_id}
+                    'datastore.update', 'directoryservices',
+                    ds_config['id'], {'kerberos_realm': realm_id}
                 )
-            else:
-                default_realm = default_realm[0]['realm']
-        case DSType.IPA.value:
-            try:
-                default_realm = middleware.call_sync('ldap.ipa_config')['realm']
-            except Exception:
-                # This can happen if we're simultaneously disabling IPA service
-                # while generating the krb5.conf file
-                default_realm = None
-
-            # This matches defaults from ipa-client-install
-            libdefaults.update({
-                str(KRB_LibDefaults.RDNS): 'false',
-                str(KRB_LibDefaults.DNS_CANONICALIZE_HOSTNAME): 'false',
-            })
-        case DSType.LDAP.value:
-            ds_config = middleware.call_sync('ldap.config')
-            if ds_config['kerberos_realm']:
-                default_realm = filter_list(realms, [['id', '=', ds_config['kerberos_realm']]])
-                if default_realm:
-                    default_realm = default_realm[0]['realm']
         case _:
+            # LDAP does not require special handling
             pass
+
+    if kdc_override and default_realm:
+        # Possibly sysvol replication in progress. We'll hard-code kdc used for join
+        libdefaults.update({
+            str(KRB_LibDefaults.DNS_LOOKUP_KDC): 'false',
+        })
+
+        for realm in realms:
+            if realm['realm'] != default_realm:
+                continue
+
+            realm['kdc'] = [kdc_override]
+
+    krbconf.add_realms(realms)
+
+    if directory_service['type'] == DSType.IPA.value:
+        libdefaults.update({
+            str(KRB_LibDefaults.RDNS): 'false',
+            str(KRB_LibDefaults.DNS_CANONICALIZE_HOSTNAME): 'false',
+        })
 
     if default_realm:
         libdefaults[str(KRB_LibDefaults.DEFAULT_REALM)] = default_realm
@@ -95,6 +109,7 @@ def generate_krb5_conf(
 
 
 def render(service, middleware, render_ctx):
+
     return generate_krb5_conf(
         middleware,
         render_ctx['directoryservices.status'],

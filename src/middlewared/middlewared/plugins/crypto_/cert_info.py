@@ -4,8 +4,8 @@ from middlewared.api.current import (
     CertificateCountryChoicesResult,
     CertificateAcmeServerChoicesArgs,
     CertificateAcmeServerChoicesResult,
-    CertificateECCurveChoicesArgs,
-    CertificateECCurveChoicesResult,
+    CertificateEcCurveChoicesArgs,
+    CertificateEcCurveChoicesResult,
     CertificateExtendedKeyUsageChoicesArgs,
     CertificateExtendedKeyUsageChoicesResult,
     EKU_OID, ECCurves
@@ -51,8 +51,8 @@ class CertificateService(Service):
         }
 
     @api_method(
-        CertificateECCurveChoicesArgs,
-        CertificateECCurveChoicesResult,
+        CertificateEcCurveChoicesArgs,
+        CertificateEcCurveChoicesResult,
         roles=['CERTIFICATE_READ']
     )
     async def ec_curve_choices(self):

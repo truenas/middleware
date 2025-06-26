@@ -8,6 +8,7 @@ from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_D
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem.constants import ZFSCTL
+from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import is_child
 from middlewared.utils.tdb import (
@@ -357,11 +358,11 @@ def path_to_dataset_impl(path: str, mntinfo: dict | None = None) -> str:
     can be raised by a failed call to os.stat() are
     possible.
     """
-    st = os.stat(path)
+    stx = statx(path)
     if mntinfo is None:
-        mntinfo = getmntinfo(st.st_dev)[st.st_dev]
+        mntinfo = getmntinfo(stx.stx_mnt_id)[stx.stx_mnt_id]
     else:
-        mntinfo = mntinfo[st.st_dev]
+        mntinfo = mntinfo[stx.stx_mnt_id]
 
     ds_name = mntinfo['mount_source']
     if mntinfo['fs_type'] != 'zfs':

@@ -3,10 +3,10 @@ from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdate
 from .cloud_sync_providers import CloudCredentialProvider
 
 __all__ = ["CloudCredentialEntry",
-           "CloudCredentialCreateArgs", "CloudCredentialCreateResult",
-           "CloudCredentialUpdateArgs", "CloudCredentialUpdateResult",
-           "CloudCredentialDeleteArgs", "CloudCredentialDeleteResult",
-           "CloudCredentialVerifyArgs", "CloudCredentialVerifyResult"]
+           "CredentialsCreateArgs", "CredentialsCreateResult",
+           "CredentialsUpdateArgs", "CredentialsUpdateResult",
+           "CredentialsDeleteArgs", "CredentialsDeleteResult",
+           "CredentialsVerifyArgs", "CredentialsVerifyResult"]
 
 
 class CloudCredentialEntry(BaseModel):
@@ -23,37 +23,37 @@ class CloudCredentialUpdate(CloudCredentialCreate, metaclass=ForUpdateMetaclass)
     pass
 
 
-class CloudCredentialCreateArgs(BaseModel):
+class CredentialsCreateArgs(BaseModel):
     cloud_sync_credentials_create: CloudCredentialCreate
 
 
-class CloudCredentialCreateResult(BaseModel):
+class CredentialsCreateResult(BaseModel):
     result: CloudCredentialEntry
 
 
-class CloudCredentialUpdateArgs(BaseModel):
+class CredentialsUpdateArgs(BaseModel):
     id: int
     cloud_sync_credentials_update: CloudCredentialUpdate
 
 
-class CloudCredentialUpdateResult(BaseModel):
+class CredentialsUpdateResult(BaseModel):
     result: CloudCredentialEntry
 
 
-class CloudCredentialDeleteArgs(BaseModel):
+class CredentialsDeleteArgs(BaseModel):
     id: int
 
 
-class CloudCredentialDeleteResult(BaseModel):
+class CredentialsDeleteResult(BaseModel):
     result: bool
 
 
-class CloudCredentialVerifyArgs(BaseModel):
+class CredentialsVerifyArgs(BaseModel):
     cloud_sync_credentials_create: CloudCredentialProvider
 
 
 @single_argument_result
-class CloudCredentialVerifyResult(BaseModel):
+class CredentialsVerifyResult(BaseModel):
     valid: bool
     error: LongString | None = None
     excerpt: LongString | None = None

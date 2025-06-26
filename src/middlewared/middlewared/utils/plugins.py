@@ -135,7 +135,7 @@ class LoadPluginsMixin(SchemasMixin):
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
-        self._resolve_methods(list(self._services.values()), self.get_events())
+        self._resolve_methods(list(self._services.values()), [])
 
     def add_service(self, service: 'Service'):
         self._services[service._config.namespace] = service

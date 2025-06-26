@@ -7,18 +7,18 @@ from ipaddress import ip_address, ip_interface
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult, 
+    InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
     InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, InterfaceCheckinArgs, InterfaceCheckinResult,
     InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, InterfaceChoicesArgs, InterfaceChoicesResult,
     InterfaceCommitArgs, InterfaceCommitResult, InterfaceCreateArgs, InterfaceCreateResult,
     InterfaceDefaultRouteWillBeRemovedArgs, InterfaceDefaultRouteWillBeRemovedResult, InterfaceDeleteArgs,
     InterfaceDeleteResult, InterfaceHasPendingChangesArgs, InterfaceHasPendingChangesResult,
-    InterfaceIPInUseArgs, InterfaceIPInUseResult, InterfaceLacpduRateChoicesArgs, InterfaceLacpduRateChoicesResult,
+    InterfaceIpInUseArgs, InterfaceIpInUseResult, InterfaceLacpduRateChoicesArgs, InterfaceLacpduRateChoicesResult,
     InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, InterfaceRollbackArgs, InterfaceRollbackResult,
     InterfaceSaveDefaultRouteArgs, InterfaceSaveDefaultRouteResult, InterfaceUpdateArgs, InterfaceUpdateResult,
-    InterfaceVLANParentInterfaceChoicesArgs, InterfaceVLANParentInterfaceChoicesResult,
-    InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIPArgs,
-    InterfaceWebsocketLocalIPResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
+    InterfaceVlanParentInterfaceChoicesArgs, InterfaceVlanParentInterfaceChoicesResult,
+    InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIpArgs,
+    InterfaceWebsocketLocalIpResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, CRUDService, filterable_api_method, pass_app, private
@@ -1338,7 +1338,7 @@ class InterfaceService(CRUDService):
 
         return oid
 
-    @api_method(InterfaceWebsocketLocalIPArgs, InterfaceWebsocketLocalIPResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(InterfaceWebsocketLocalIpArgs, InterfaceWebsocketLocalIpResult, roles=['NETWORK_INTERFACE_READ'])
     @pass_app()
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
@@ -1480,8 +1480,8 @@ class InterfaceService(CRUDService):
         return {k: v for k, v in include.items() if k not in exclude}
 
     @api_method(
-        InterfaceVLANParentInterfaceChoicesArgs,
-        InterfaceVLANParentInterfaceChoicesResult,
+        InterfaceVlanParentInterfaceChoicesArgs,
+        InterfaceVlanParentInterfaceChoicesResult,
         roles=['NETWORK_INTERFACE_READ']
     )
     async def vlan_parent_interface_choices(self):
@@ -1667,7 +1667,7 @@ class InterfaceService(CRUDService):
         except Exception:
             self.logger.error('Failed to run DHCP for {}'.format(name), exc_info=True)
 
-    @api_method(InterfaceIPInUseArgs, InterfaceIPInUseResult, roles=['NETWORK_INTERFACE_READ'])
+    @api_method(InterfaceIpInUseArgs, InterfaceIpInUseResult, roles=['NETWORK_INTERFACE_READ'])
     def ip_in_use(self, choices):
         """
         Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.

@@ -8,7 +8,7 @@ from middlewared.api.base import (
 )
 
 __all__ = ["SnmpEntry",
-           "SnmpUpdateArgs", "SnmpUpdateResult"]
+           "SNMPUpdateArgs", "SNMPUpdateResult"]
 
 
 class SnmpEntry(BaseModel):
@@ -29,9 +29,9 @@ class SnmpEntry(BaseModel):
 
 
 @single_argument_args('snmp_update')
-class SnmpUpdateArgs(SnmpEntry, metaclass=ForUpdateMetaclass):
+class SNMPUpdateArgs(SnmpEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class SnmpUpdateResult(BaseModel):
+class SNMPUpdateResult(BaseModel):
     result: SnmpEntry

@@ -29,8 +29,6 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "s3"
 
-    task_schema = []
-
     async def create_bucket(self, credentials, name):
         def create_bucket_sync():
             provider = credentials["provider"]

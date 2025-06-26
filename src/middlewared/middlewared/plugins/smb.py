@@ -1,44 +1,38 @@
 import asyncio
 from copy import deepcopy
 import errno
-import middlewared.sqlalchemy as sa
 import os
 from pathlib import Path
 import uuid
-import unicodedata
+import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    GetSmbAclArgs, GetSmbAclResult,
-    SetSmbAclArgs, SetSmbAclResult,
-    SmbServiceEntry, SmbServiceUpdateArgs, SmbServiceUpdateResult,
-    SmbServiceUnixCharsetChoicesArgs, SmbServiceUnixCharsetChoicesResult,
-    SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult,
-    SmbSharePresetsArgs, SmbSharePresetsResult,
-    SmbSharePrecheckArgs, SmbSharePrecheckResult,
+    SharingSMBGetaclArgs, SharingSMBGetaclResult,
+    SharingSMBSetaclArgs, SharingSMBSetaclResult,
+    SmbServiceEntry, SMBUpdateArgs, SMBUpdateResult,
+    SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult,
+    SMBBindipChoicesArgs, SMBBindipChoicesResult,
+    SharingSMBPresetsArgs, SharingSMBPresetsResult,
+    SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult,
+    SmbShareEntry, SharingSMBCreateArgs, SharingSMBCreateResult,
+    SharingSMBUpdateArgs, SharingSMBUpdateResult,
+    SharingSMBDeleteArgs, SharingSMBDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.schema import Bool, Dict, List, Str, Int, Patch
-from middlewared.schema import Path as SchemaPath
-# List schema defaults to [], supplying NOT_PROVIDED avoids having audit update that
-# defaults for ignore_list or watch_list from overrwriting previous value
-from middlewared.schema.utils import NOT_PROVIDED
-from middlewared.service import accepts, job, pass_app, private, SharingService
+from middlewared.service import job, pass_app, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.constants import (
     NETIF_COMPLETE_SENTINEL,
     CONFIGURED_SENTINEL,
     SMB_AUDIT_DEFAULTS,
-    INVALID_SHARE_NAME_CHARACTERS,
-    RESERVED_SHARE_NAMES,
-    SMBHAMODE,
     SMBCmd,
     SMBPath,
-    SMBSharePreset
 )
-from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so may be imported from here)
+from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE
+from middlewared.plugins.smb_.constants import SMBShareField as share_field
 from middlewared.plugins.smb_.sharesec import remove_share_acl
 from middlewared.plugins.smb_.util_param import (
     AUX_PARAM_BLACKLIST,
@@ -48,15 +42,18 @@ from middlewared.plugins.smb_.util_param import (
     lpctx_validate_parm
 )
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
-from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
+from middlewared.plugins.smb_.utils import get_share_name, is_time_machine_share, smb_strip_comments
 from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.mount import getmnttree
-from middlewared.utils.path import FSLocation, path_location, is_child_realpath
+from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
-from middlewared.utils.smb import SMBUnixCharset
+from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose
 from middlewared.utils.tdb import TDBError
+
+
+BASE_SHARE_PARAMS = frozenset(['id', 'name', 'purpose', 'enabled', 'comment', 'ro', 'browsable', 'abe', 'audit', 'path'])
 
 
 class SMBModel(sa.Model):
@@ -119,71 +116,70 @@ class SMBService(ConfigService):
         smb.pop('secrets', None)
         return smb
 
-    @api_method(SmbServiceUnixCharsetChoicesArgs, SmbServiceUnixCharsetChoicesResult)
+    @api_method(SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult)
     async def unixcharset_choices(self):
         return {str(charset): charset for charset in SMBUnixCharset}
 
     @private
     def generate_smb_configuration(self):
-        if self.middleware.call_sync('failover.status') not in ('SINGLE', 'MASTER'):
-            return {'netbiosname': 'TN_STANDBY', 'SHARES': {}}
+        if self.middleware.call_sync('failover.status') in ('SINGLE', 'MASTER'):
+            smb_shares = self.middleware.call_sync('sharing.smb.query')
+        else:
+            # Do not include SMB shares in configuration on standby controller
+            smb_shares = []
 
-        if (ds_type := self.middleware.call_sync('directoryservices.status')['type']) is not None:
-            ds_type = DSType(ds_type)
-
-        match ds_type:
-            case DSType.AD:
-                ds_config = self.middleware.call_sync('activedirectory.config')
-            case DSType.IPA:
-                ds_config = self.middleware.call_sync('ldap.config')
-                try:
-                    ipa_domain = self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
-                except Exception:
-                    ipa_domain = None
-                try:
-                    ipa_config = self.middleware.call_sync('ldap.ipa_config')
-                except Exception:
-                    self.middleware.logger.warning(
-                        'Failed to retrieve IPA configuration. Disabling IPA SMB support',
-                        exc_info=True
-                    )
-                    ipa_config = {}
-                    ipa_domain = None
-
-                ds_config |= {'ipa_domain': ipa_domain, 'ipa_config': ipa_config}
-            case DSType.LDAP:
-                ds_config = self.middleware.call_sync('ldap.config')
-            case _:
-                ds_config = None
-
-        idmap_config = self.middleware.call_sync('idmap.query')
+        ds_config = self.middleware.call_sync('directoryservices.config')
         smb_config = self.middleware.call_sync('smb.config')
-        smb_shares = self.middleware.call_sync('sharing.smb.query')
+        smb_shares = self.middleware.call_sync('sharing.smb.query', [
+            [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
+        ])
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
         security_config = self.middleware.call_sync('system.security.config')
+        veeam_repo_errors = []
+
+        # admins may change ZFS recordsize from shell, UI, or API. Make sure we generate or clear any alerts.
+        # we already have validation on SMB share create / update to check recordsize.
+        for share in smb_shares:
+            if share[share_field.PURPOSE] != SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+                continue
+
+            try:
+                if os.statvfs(share[share_field.PATH]).f_bsize != VEEAM_REPO_BLOCKSIZE:
+                    veeam_repo_errors.append(share[share_field.NAME])
+            except FileNotFoundError:
+                # possibly dataset not mounted
+                pass
+            except Exception:
+                self.logger.debug('%s: statvfs for SMB share path failed', share[share_field.PATH], exc_info=True)
+                pass
+
+        if veeam_repo_errors:
+            # These don't need to be fatal, but we should raise an alert so that admin can fix the record size
+            self.middleware.call_sync('alert.oneshot_create', 'SMBVeeamFastClone', {
+                'shares': ', '.join(veeam_repo_errors)
+            })
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'SMBVeeamFastClone')
 
         return generate_smb_conf_dict(
-            ds_type,
             ds_config,
             smb_config,
             smb_shares,
             bind_ip_choices,
-            idmap_config,
             is_enterprise,
             security_config,
         )
 
-    @api_method(SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult)
+    @api_method(SMBBindipChoicesArgs, SMBBindipChoicesResult)
     async def bindip_choices(self):
         """
         List of valid choices for IP addresses to which to bind the SMB service.
         Addresses assigned by DHCP are excluded from the results.
         """
         choices = {}
-        ha_mode = await self.get_smb_ha_mode()
 
-        if ha_mode == 'UNIFIED':
+        if await self.middleware.call('failover.licensed'):
             master, backup, init = await self.middleware.call('failover.vip.get_states')
             for master_iface in await self.middleware.call('interface.query', [["id", "in", master + backup]]):
                 for i in master_iface['failover_virtual_aliases']:
@@ -206,23 +202,6 @@ class SMBService(ConfigService):
         return [dom['netbios_domain'] for dom in domains]
 
     @private
-    async def store_ldap_admin_password(self):
-        """
-        This is required if the LDAP directory service is enabled. The ldap admin dn and
-        password are stored in private/secrets.tdb file.
-        """
-        ldap = await self.middleware.call('ldap.config')
-        if not ldap['enable']:
-            return True
-
-        set_pass = await run([SMBCmd.SMBPASSWD.value, '-w', ldap['bindpw']], check=False)
-        if set_pass.returncode != 0:
-            self.logger.debug(f"Failed to set set ldap bindpw in secrets.tdb: {set_pass.stdout.decode()}")
-            return False
-
-        return True
-
-    @private
     def getparm(self, parm, section):
         """
         Get a parameter from the smb4.conf file. This is more reliable than
@@ -232,30 +211,24 @@ class SMBService(ConfigService):
         return smbconf_getparm(parm, section)
 
     @private
-    async def get_next_rid(self, objtype, id_):
-        base_rid = 20000 if objtype == 'USER' else 200000
-        return base_rid + id_
-
-    @private
     async def setup_directories(self):
         def create_dirs(spec, path):
             try:
-                os.chmod(path, spec.mode())
+                os.chmod(path, spec.mode)
                 if os.stat(path).st_uid != 0:
                     self.logger.warning("%s: invalid owner for path. Correcting.", path)
                     os.chown(path, 0, 0)
             except FileNotFoundError:
-                if spec.is_dir():
-                    os.mkdir(path, spec.mode())
+                if spec.is_dir:
+                    os.mkdir(path, spec.mode)
 
-        await self.reset_smb_ha_mode()
         await self.middleware.call('etc.generate', 'smb')
 
         for p in SMBPath:
             if p == SMBPath.STUBCONF:
                 continue
 
-            path = p.platform()
+            path = p.path
             await self.middleware.run_in_thread(create_dirs, p, path)
 
     @private
@@ -284,22 +257,22 @@ class SMBService(ConfigService):
                 i['state']['link_state'] == 'LINK_STATE_UP' for i in await self.middleware.call('interface.query')
             )):
                 break
+
+            timeout -= 1
+            if timeout <= 0:
+                self.logger.warning('Failed to detect any connected network interfaces.')
             else:
-                timeout -= 1
-                if timeout <= 0:
-                    self.logger.warning('Failed to detect any connected network interfaces.')
-                else:
-                    await asyncio.sleep(1)
+                await asyncio.sleep(1)
 
     @private
     @job(lock="smb_configure")
-    async def configure(self, job):
+    async def configure(self, config_job):
         """
         Many samba-related tools will fail if they are unable to initialize
         a messaging context, which will happen if the samba-related directories
         do not exist or have incorrect permissions.
         """
-        job.set_progress(0, 'Setting up SMB directories.')
+        config_job.set_progress(0, 'Setting up SMB directories.')
         await self.setup_directories()
 
         """
@@ -317,13 +290,13 @@ class SMBService(ConfigService):
         We cannot continue without network.
         Wait here until we see the ix-netif completion sentinel.
         """
-        job.set_progress(20, 'Wait for ix-netif completion.')
+        config_job.set_progress(20, 'Wait for ix-netif completion.')
         await self.netif_wait()
 
-        job.set_progress(30, 'Setting up server SID.')
+        config_job.set_progress(30, 'Setting up server SID.')
         await self.middleware.call('smb.set_system_sid')
 
-        job.set_progress(40, 'Synchronizing passdb and groupmap.')
+        config_job.set_progress(40, 'Synchronizing passdb and groupmap.')
         await self.middleware.call('etc.generate', 'user')
         await self.middleware.call('smb.apply_account_policy')
         pdb_job = await self.middleware.call("smb.synchronize_passdb", True)
@@ -337,28 +310,21 @@ class SMBService(ConfigService):
         wiped our secrets.tdb file. Re-import directory service secrets
         if they are missing from the current running configuration.
         """
-        job.set_progress(65, 'Initializing directory services')
-        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
-        if ad_enabled:
-            ldap_enabled = False
-        else:
-            ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
-
-        ds_job = await self.middleware.call(
-            "directoryservices.initialize",
-            {"activedirectory": ad_enabled, "ldap": ldap_enabled}
-        )
+        config_job.set_progress(65, 'Initializing directory services')
+        ds_job = await self.middleware.call("directoryservices.initialize")
         await ds_job.wait()
 
-        job.set_progress(70, 'Checking SMB server status.')
+        config_job.set_progress(70, 'Checking SMB server status.')
         if await self.middleware.call("service.started_or_enabled", "cifs"):
-            job.set_progress(80, 'Restarting SMB service.')
-            await (await self.middleware.call("service.control", "RESTART", "cifs", {"ha_propagate": False})).wait(raise_error=True)
+            config_job.set_progress(80, 'Restarting SMB service.')
+            svc_job = await self.middleware.call('service.control', 'RESTART', 'cifs', {'ha_propagate': False})
+            await svc_job.wait(raise_error=True)
 
         # Ensure that winbind is running once we configure SMB service
-        await (await self.middleware.call('service.control', 'RESTART', 'idmap', {'ha_propagate': False})).wait(raise_error=True)
+        svc_job = await self.middleware.call('service.control', 'RESTART', 'idmap', {'ha_propagate': False})
+        await svc_job.wait(raise_error=True)
 
-        job.set_progress(100, 'Finished configuring SMB.')
+        config_job.set_progress(100, 'Finished configuring SMB.')
 
     @private
     async def configure_wait(self):
@@ -391,26 +357,6 @@ class SMBService(ConfigService):
         conf_job = await self.middleware.call("smb.configure")
         await conf_job.wait(raise_error=True)
         return True
-
-    @private
-    async def get_smb_ha_mode(self):
-        try:
-            return await self.middleware.call('cache.get', 'SMB_HA_MODE')
-        except KeyError:
-            pass
-
-        if await self.middleware.call('failover.licensed'):
-            hamode = SMBHAMODE['UNIFIED'].name
-        else:
-            hamode = SMBHAMODE['STANDALONE'].name
-
-        await self.middleware.call('cache.put', 'SMB_HA_MODE', hamode)
-        return hamode
-
-    @private
-    async def reset_smb_ha_mode(self):
-        await self.middleware.call('cache.pop', 'SMB_HA_MODE')
-        return await self.get_smb_ha_mode()
 
     @private
     async def validate_smb(self, new, verrors):
@@ -495,9 +441,12 @@ class SMBService(ConfigService):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
         if not new['aapl_extensions']:
-            filters = [['OR', [['afp', '=', True], ['timemachine', '=', True]]]]
+            filters = [['OR', [
+                ['options.afp', '=', True], ['options.timemachine', '=', True],
+                ['purpose', '=', 'TIMEMACHINE_SHARE']
+            ]]]
             if await self.middleware.call(
-                'sharing.smb.query', filters, {'count': True, 'select': ['afp', 'timemachine']}
+                'sharing.smb.query', filters, {'count': True, 'select': ['purpose']}
             ):
                 verrors.add(
                     'smb_update.aapl_extensions',
@@ -513,7 +462,7 @@ class SMBService(ConfigService):
                     f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
                 )
 
-    @api_method(SmbServiceUpdateArgs, SmbServiceUpdateResult, audit='Update SMB configuration')
+    @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration')
     @pass_app(rest=True)
     async def do_update(self, app, data):
         """
@@ -560,14 +509,32 @@ class SMBService(ConfigService):
         new.update(data)
 
         verrors = ValidationErrors()
-        # Skip this check if we're joining AD
-        ds = await self.middleware.call('directoryservices.status')
-        if ds['type'] == DSType.AD.value and ds['status'] in (
-            DSStatus.HEALTHY.name, DSStatus.FAULTED.name
-        ):
-            await self.middleware.call('activedirectory.netbios_name_check', 'smb_update', old, new)
+        ds = await self.middleware.call('directoryservices.config')
+        if ds['enable']:
+            if new['netbiosname'].casefold() != old['netbiosname'].casefold():
+                verrors.add(
+                    'smb_update.netbiosname',
+                    f'{old["netbiosname"]} -> {new["netbiosname"]}: '
+                    'NetBIOS name may not be changed while directory service is enabled.'
+                )
+
+            if len(new['netbiosalias']) != len(old['netbiosalias']):
+                verrors.add(
+                    'smb_update.netbiosalias',
+                    f'{old["netbiosalias"]} -> {new["netbiosalias"]}: '
+                    'NetBIOS aliases may not be changed while directory service is enabled.'
+                )
+            else:
+                for idx, nbname in new['netbiosalias']:
+                    if old['netbiosalias'][idx].casefold() != new['netbiosalias'][idx].casefold():
+                        verrors.add(
+                            f'smb_update.netbiosalias.{idx}',
+                            f'{old["netbiosalias"][idx]} -> {new["netbiosalias"][idx]}: '
+                            'NetBIOS aliases may not be changed while directory service is enabled.'
+                        )
+
             if old['workgroup'].casefold() != new['workgroup'].casefold():
-                verrors.add('smb_update.workgroup', 'Workgroup may not be changed while AD is enabled')
+                verrors.add('smb_update.workgroup', 'Workgroup may not be changed while directory service is enabled')
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['smb_options'] != new['smb_options']:
@@ -588,7 +555,6 @@ class SMBService(ConfigService):
 
         await self.middleware.call('etc.generate', 'smb')
         new_config = await self.config()
-        await self.reset_smb_ha_mode()
 
         if old['netbiosname'] != new_config['netbiosname']:
             await self.middleware.call('smb.set_system_sid')
@@ -601,8 +567,8 @@ class SMBService(ConfigService):
             await self.middleware.call("network.configuration.toggle_announcement", srv)
 
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
-            job = await self.middleware.call('smb.synchronize_group_mappings')
-            await job.wait()
+            grp_job = await self.middleware.call('smb.synchronize_group_mappings')
+            await grp_job.wait()
 
         await self._service_change(self._config.service, 'restart')
         return new_config
@@ -654,12 +620,15 @@ class SharingSMBModel(sa.Model):
     cifs_share_acl = sa.Column(sa.Text())
     cifs_afp = sa.Column(sa.Boolean())
     cifs_audit = sa.Column(sa.JSON(dict), default=SMB_AUDIT_DEFAULTS)
+    cifs_auto_quota = sa.Column(sa.Integer())
+    cifs_auto_snapshot = sa.Column(sa.Boolean())
+    cifs_auto_dataset_creation = sa.Column(sa.Boolean())
+    cifs_worm_grace_period = sa.Column(sa.Integer())
 
 
 class SharingSMBService(SharingService):
 
     share_task_type = 'SMB'
-    path_field = 'path_local'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
 
     class Config:
@@ -669,104 +638,44 @@ class SharingSMBService(SharingService):
         datastore_extend = 'sharing.smb.extend'
         cli_namespace = 'sharing.smb'
         role_prefix = 'SHARING_SMB'
+        entry = SmbShareEntry
 
-    @accepts(
-        Dict(
-            'sharingsmb_create',
-            Str('purpose', enum=[x.name for x in SMBSharePreset], default=SMBSharePreset.DEFAULT_SHARE.name),
-            SchemaPath('path', required=True),
-            Str('path_suffix', default=''),
-            Bool('home', default=False),
-            Str('name', max_length=80, required=True),
-            Str('comment', default=''),
-            Bool('ro', default=False),
-            Bool('browsable', default=True),
-            Bool('timemachine', default=False),
-            Int('timemachine_quota', default=0),
-            Bool('recyclebin', default=False),
-            Bool('guestok', default=False),
-            Bool('abe', default=False),
-            List('hostsallow'),
-            List('hostsdeny'),
-            Bool('aapl_name_mangling', default=False),
-            Bool('acl', default=True),
-            Bool('durablehandle', default=True),
-            Bool('shadowcopy', default=True),
-            Bool('streams', default=True),
-            Bool('fsrvp', default=False),
-            Str('auxsmbconf', max_length=None, default=''),
-            Bool('enabled', default=True),
-            Bool('afp', default=False),
-            Dict(
-                'audit',
-                Bool('enable'),
-                List('watch_list', default=NOT_PROVIDED),
-                List('ignore_list', default=NOT_PROVIDED)
-            ),
-            register=True
-        ),
-        audit='SMB share create', audit_extended=lambda data: data['name']
+    @api_method(
+        SharingSMBCreateArgs, SharingSMBCreateResult,
+        audit='SMB share create',
+        audit_extended=lambda data: data['name'],
+        pass_app=True,
+        pass_app_rest=True
     )
-    @pass_app(rest=True)
     async def do_create(self, app, data):
-        """
-        Create a SMB Share.
-
-        `purpose` applies common configuration presets depending on intended purpose.
-
-        `path` path to export over the SMB protocol.
-
-        `timemachine` when set, enables Time Machine backups for this share.
-
-        `ro` when enabled, prohibits write access to the share.
-
-        `guestok` when enabled, allows access to this share without a password.
-
-        `hostsallow` is a list of hostnames / IP addresses which have access to this share.
-
-        `hostsdeny` is a list of hostnames / IP addresses which are not allowed access to this share. If a handful
-        of hostnames are to be only allowed access, `hostsdeny` can be passed "ALL" which means that it will deny
-        access to ALL hostnames except for the ones which have been listed in `hostsallow`.
-
-        `acl` enables support for storing the SMB Security Descriptor as a Filesystem ACL.
-
-        `streams` enables support for storing alternate datastreams as filesystem extended attributes.
-
-        `fsrvp` enables support for the filesystem remote VSS protocol. This allows clients to create
-        ZFS snapshots through RPC.
-
-        `shadowcopy` enables support for the volume shadow copy service.
-
-        `audit` object contains configuration parameters related to SMB share auditing. It contains the
-        following keys: `enable`, `watch_list` and `ignore_list`. Enable is boolean and controls whether
-        audit messages will be generated for the share. `watch_list` is a list of groups for which to
-        generate audit messages (defaults to all groups). `ignore_list` is a list of groups to ignore
-        when auditing. If conflict arises between watch_list and ignore_list (based on user group
-        membershipt), then watch_list will take precedence and ops will be audited.
-        NOTE: auditing may not be enabled if SMB1 support is enabled for the server.
-
-        `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
-        """
-        audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get('audit')
-        data['audit'] = audit_info
+        audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get(share_field.AUDIT)
+        data[share_field.AUDIT] = audit_info
 
         verrors = ValidationErrors()
+        aux = data[share_field.OPTS].get(share_field.AUX)
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
-            if data['auxsmbconf']:
+            if aux:
                 verrors.add(
-                    'smb_update.auxsmbconf',
+                    f'sharingsmb_create.{share_field.OPTS}.{share_field.AUX}',
                     'Changes to auxiliary parameters for SMB shares are restricted '
                     'to users with full administrative privileges.'
                 )
 
-        await self.add_path_local(data)
         await self.validate(data, 'sharingsmb_create', verrors)
         await self.legacy_afp_check(data, 'sharingsmb_create', verrors)
 
         verrors.check()
 
-        data['vuid'] = str(uuid.uuid4())
+        if data[share_field.PURPOSE] in (SMBSharePurpose.LEGACY_SHARE, SMBSharePurpose.TIMEMACHINE_SHARE):
+            if not data[share_field.OPTS][share_field.VUID]:
+                data[share_field.OPTS][share_field.VUID] = str(uuid.uuid4())
+            else:
+                try:
+                    uuid.UUID(data[share_field.OPTS][share_field.VUID])
+                except Exception as exc:
+                    raise ValidationError('sharingsmb_create.options.vuid', 'Invalid UUID') from exc
+
         compressed = await self.compress(data)
 
         data['id'] = await self.middleware.call(
@@ -776,26 +685,26 @@ class SharingSMBService(SharingService):
         do_global_reload = await self.must_reload_globals(data)
         await self.middleware.call('etc.generate', 'smb')
 
-        if data['auxsmbconf']:
+        if aux:
             # Auxiliary parameters may contain invalid values for known parameters
             # that fail in such a way that break ability to create a loadparm context.
             # This was seen in wild with user who was blindly copy-pasting things from
             # internet.
             try:
                 await self.middleware.run_in_thread(smbconf_sanity_check)
-            except ValueError:
+            except ValueError as exc:
                 # Delete the share and regenerate config so that we're not broken
                 await self.middleware.call('datastore.delete', self._config.datastore, data['id'])
                 await self.middleware.call('etc.generate', 'smb')
                 raise ValidationError(
-                    'sharingsmb_create.auxsmbconf',
+                    f'sharingsmb_create.{share_field.OPTS}.{share_field.AUX}',
                     'Auxiliary parameters rejected because they would break the SMB server'
-                )
+                ) from exc
 
         if do_global_reload:
             ds = await self.middleware.call('directoryservices.status')
             if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
-                if data['home']:
+                if data['options'].get('home'):
                     await self.middleware.call('idmap.clear_idmap_cache')
 
             await self._service_change('cifs', 'restart')
@@ -803,7 +712,9 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if is_time_machine_share(data):
-            await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
+            mdns_reload = await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})
+            # Failure to reload mDNS shouldn't be passed to API consumer
+            await mdns_reload.wait()
 
         return await self.get_instance(data['id'])
 
@@ -836,54 +747,66 @@ class SharingSMBService(SharingService):
             if not new['enabled']:
                 await self.toggle_share(newname, False)
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'sharingsmb_create',
-            'sharingsmb_update',
-            ('attr', {'update': True})
-        ),
+    @api_method(
+        SharingSMBUpdateArgs, SharingSMBUpdateResult,
         audit='SMB share update',
         audit_callback=True,
+        pass_app=True,
+        pass_app_rest=True
     )
-    @pass_app(rest=True)
     async def do_update(self, app, audit_callback, id_, data):
-        """
-        Update SMB Share of `id`.
-        """
         old = await self.get_instance(id_)
-        audit_callback(old['name'])
+        audit_callback(old[share_field.NAME])
 
         verrors = ValidationErrors()
-        old_audit = old['audit']
+        old_audit = old[share_field.AUDIT]
 
         new = old.copy()
         new.update(data)
-        new['audit'] = old_audit | data.get('audit', {})
+        new[share_field.AUDIT] = old_audit | data.get(share_field.AUDIT, {})
 
-        oldname = 'homes' if old['home'] else old['name']
-        newname = 'homes' if new['home'] else new['name']
+        oldname = get_share_name(old)
+        newname = get_share_name(new)
+        old_aux = old[share_field.OPTS].get(share_field.AUX)
+        new_aux = new[share_field.OPTS].get(share_field.AUX)
 
-        await self.add_path_local(new)
-        await self.validate(new, 'sharingsmb_update', verrors, old=old)
+        await self.validate(new, 'sharingsmb_update', verrors)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
-            if old['auxsmbconf'] != new['auxsmbconf']:
+            if old_aux != new_aux:
                 verrors.add(
-                    'smb_update.auxsmbconf',
+                    f'sharingsmb_update.{share_field.OPTS}.{share_field.AUX}',
                     'Changes to auxiliary parameters for SMB shares are restricted '
                     'to users with full administrative privileges.'
                 )
 
+        if new[share_field.PURPOSE] in (SMBSharePurpose.LEGACY_SHARE, SMBSharePurpose.TIMEMACHINE_SHARE):
+            # Ignore NULL value for VUID in legacy share since there's no reason to forcibly generate a new VUID
+            if share_field.VUID in new[share_field.OPTS] and new[share_field.OPTS][share_field.VUID] is None:
+                if old[share_field.OPTS].get(share_field.VUID):
+                    # Ignore NULL value for VUID in legacy share since there's no reason to forcibly generate a new VUID
+                    del new[share_field.OPTS][share_field.VUID]
+                else:
+                    # We're potentially changing share purpose and so need a VUID
+                    new[share_field.OPTS][share_field.VUID] = str(uuid.uuid4())
+            elif share_field.VUID in new[share_field.OPTS]:
+                # API consumer is providing a volume UUID. We need to check it.
+                try:
+                    uuid.UUID(new[share_field.OPTS][share_field.VUID])
+                except Exception:
+                    verrors.add(f'sharingsmb_update.{share_field.OPTS}.{share_field.VUID}', 'Invalid UUID')
+
         verrors.check()
 
-        guest_changed = old['guestok'] != new['guestok']
+        old_guest = old[share_field.OPTS].get(share_field.GUESTOK)
+        new_guest = new[share_field.OPTS].get(share_field.GUESTOK)
+        guest_changed = old_guest != new_guest
 
-        old_is_locked = (await self.get_instance(id_))['locked']
-        if old['path'] != new['path']:
-            new_is_locked = await self.middleware.call('pool.dataset.path_in_locked_datasets', new['path'])
+        old_is_locked = (await self.get_instance(id_))[share_field.LOCKED]
+        if old[share_field.PATH] != new[share_field.PATH]:
+            new_is_locked = await self.middleware.call('pool.dataset.path_in_locked_datasets', new[share_field.PATH])
         else:
             new_is_locked = old_is_locked
 
@@ -892,9 +815,10 @@ class SharingSMBService(SharingService):
             'datastore.update', self._config.datastore, id_, compressed,
             {'prefix': self._config.datastore_prefix})
 
-        new['auxsmbconf'] = smb_strip_comments(new['auxsmbconf'])
+        if new[share_field.PURPOSE] == SMBSharePurpose.LEGACY_SHARE:
+            new[share_field.OPTS][share_field.AUX] = smb_strip_comments(new[share_field.OPTS][share_field.AUX])
 
-        if new['auxsmbconf']:
+        if new_aux:
             # Auxiliary parameters may contain invalid values for known parameters
             # that fail in such a way that break ability to create a loadparm context.
             # This was seen in wild with user who was blindly copy-pasting things from
@@ -902,7 +826,7 @@ class SharingSMBService(SharingService):
             await self.middleware.call('etc.generate', 'smb')
             try:
                 await self.middleware.run_in_thread(smbconf_sanity_check)
-            except ValueError:
+            except ValueError as exc:
                 # restore original configuration
                 compressed = await self.compress(old)
 
@@ -913,9 +837,9 @@ class SharingSMBService(SharingService):
                 await self.middleware.call('etc.generate', 'smb')
 
                 raise ValidationError(
-                    'sharingsmb_update.auxsmbconf',
+                    f'sharingsmb_update.{share_field.OPTS}.{share_field.AUX}',
                     'Auxiliary parameters rejected because they would break the SMB server'
-                )
+                ) from exc
 
         if not new_is_locked:
             """
@@ -945,46 +869,52 @@ class SharingSMBService(SharingService):
                 'datastore.update', self._config.datastore, id_, compressed,
                 {'prefix': self._config.datastore_prefix}
             )
-            raise ValidationError('sharingsmb_update.auxsmbconf', e.errmsg)
+            raise ValidationError('sharingsmb_update.auxsmbconf', e.errmsg) from e
 
-        if new['enabled'] != old['enabled']:
+        if new[share_field.ENABLED] != old[share_field.ENABLED]:
             check_mdns = True
 
         # Homes shares require pam restrictions to be enabled (global setting)
         # so that we auto-generate the home directory via pam_mkhomedir.
         # Hence, we need to redo the global settings after changing homedir.
-        if new.get('home') is not None and old['home'] != new['home']:
+        old_home = old[share_field.OPTS].get(share_field.HOME)
+        new_home = new[share_field.OPTS].get(share_field.HOME)
+        if new_home is not None and old_home != new_home:
             do_global_reload = True
 
         if do_global_reload:
             ds = await self.middleware.call('directoryservices.status')
             if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
-                if new['home'] or old['home']:
-                    await self.middleware.call('idmap.clear_idmap_cache')
+                await self.middleware.call('idmap.clear_idmap_cache')
 
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
 
-        if check_mdns or old['timemachine'] != new['timemachine']:
+        if check_mdns:
             await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), audit='SMB share delete', audit_callback=True)
+    @api_method(
+        SharingSMBDeleteArgs, SharingSMBDeleteResult,
+        audit='SMB share delete',
+        audit_callback=True,
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete SMB Share of `id`. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
         share = await self.get_instance(id_)
-        audit_callback(share['name'])
+        audit_callback(share[share_field.NAME])
 
         result = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
-        share_name = 'homes' if share['home'] else share['name']
+        share_name = get_share_name(share)
         share_list = await self.middleware.call('sharing.smb.smbconf_list_shares')
 
+        # if share is currently active we need to gracefully clean up config and clients
         if share_name in share_list:
             await self.toggle_share(share_name, False)
             try:
@@ -1004,16 +934,21 @@ class SharingSMBService(SharingService):
 
     @private
     async def legacy_afp_check(self, data, schema, verrors):
-        to_check = Path(data['path']).resolve(strict=False)
+        to_check = Path(data[share_field.PATH]).resolve(strict=False)
         legacy_afp = await self.query([
-            ("afp", "=", True),
-            ("enabled", "=", True),
+            (f"{share_field.OPTS}.{share_field.AFP}", "=", True),
+            (share_field.ENABLED, "=", True),
             ("id", "!=", data.get("id"))
         ])
         for share in legacy_afp:
-            if share['afp'] == data['afp']:
+            share_afp = share[share_field.OPTS].get(share_field.AFP, False)
+            new_afp = data[share_field.OPTS].get(share_field.AFP, False)
+
+            if share_afp is new_afp:
+                # Shares have matching AFP settings
                 continue
-            s = Path(share['path']).resolve(strict=(not share['locked']))
+
+            s = Path(share[share_field.PATH]).resolve(strict=not share[share_field.LOCKED])
             if s.is_relative_to(to_check) or to_check.is_relative_to(s):
                 verrors.add(
                     f"{schema}.afp",
@@ -1034,12 +969,9 @@ class SharingSMBService(SharingService):
         1) guest access is enabled on a share for the first time. In this case, the SMB
            server must be reconfigured to allow mapping of bad users to the guest account.
 
-        2) vfs_fruit (currently in the form of time machine) is enabled on an SMB share.
-           Support for SMB2/3 apple extensions is negotiated on client's first SMB tree
-           connection. This means that settings are de-facto global in scope and we must
-           reload.
+        2) homes share (requires changing global PAM-related settings)
         """
-        if data['guestok']:
+        if data[share_field.OPTS].get(share_field.GUESTOK):
             """
             Verify that running configuration has required setting for guest access.
             """
@@ -1047,7 +979,7 @@ class SharingSMBService(SharingService):
             if guest_mapping != 'Bad User':
                 return True
 
-        if data['home']:
+        if data[share_field.OPTS].get(share_field.HOME):
             return True
 
         return False
@@ -1060,8 +992,8 @@ class SharingSMBService(SharingService):
                 # smbd is not running. Don't log error message.
                 return
 
-            self.logger.warn('Failed to close smb share [%s]: [%s]',
-                             share_name, c.stderr.decode().strip())
+            self.logger.warning('Failed to close smb share [%s]: [%s]',
+                                share_name, c.stderr.decode().strip())
 
     @private
     async def toggle_share(self, share_name, available):
@@ -1179,25 +1111,9 @@ class SharingSMBService(SharingService):
             validate_child(child)
 
     @private
-    async def get_path_field(self, data):
-        if self.path_field in data:
-            return data[self.path_field]
-
-        resolved = await self.add_path_local({'path': data['path']})
-        return resolved[self.path_field]
-
-    @private
     async def validate_external_path(self, verrors, name, path):
-        proxy_list = path.split(',')
-        for proxy in proxy_list:
-            if len(proxy.split('\\')) != 2:
-                verrors.add(name, f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
-
-            if proxy.startswith('\\') or proxy.endswith('\\'):
-                verrors.add(name, f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
-
-        if len(proxy_list) == 0:
-            verrors.add(name, 'At least one DFS proxy must be specified')
+        if path != 'EXTERNAL':
+            verrors.add(name, f'{path}: Path must be set to "EXTERNAL"')
 
     @private
     async def validate_local_path(self, verrors, name, path):
@@ -1219,121 +1135,101 @@ class SharingSMBService(SharingService):
 
     @private
     async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
-        # Standards for SMB share name are defined in MS-FSCC 2.1.6
-        # We are slighly more strict in that blacklist all unicode control characters
-        if name.lower() in RESERVED_SHARE_NAMES:
-            verrors.add(
-                f'{schema_name}.name',
-                f'{name} is a reserved section name, please select another one'
-            )
-
-        if len(name) == 0:
-            verrors.add(
-                f'{schema_name}.name',
-                'Share name may not be an empty string.'
-            )
-
-        invalid_characters = INVALID_SHARE_NAME_CHARACTERS & set(name)
-        if invalid_characters:
-            verrors.add(
-                f'{schema_name}.name',
-                f'Share name contains the following invalid characters: {", ".join(invalid_characters)}'
-            )
-
-        if any(unicodedata.category(char) == 'Cc' for char in name):
-            verrors.add(
-                f'{schema_name}.name', 'Share name contains unicode control characters.'
-            )
-
         if not exist_ok and await self.query([['name', 'C=', name]], {'select': ['name']}):
             verrors.add(
                 f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
             )
 
     @private
-    async def validate(self, data, schema_name, verrors, old=None):
-        """
-        Path is a required key in almost all cases. There is a special edge case for LDAP
-        [homes] shares. In this case we allow an empty path. Samba interprets this to mean
-        that the path should be dynamically set to the user's home directory on the LDAP server.
-        Local user auth to SMB shares is prohibited when LDAP is enabled with a samba schema.
-        """
-        if await self.home_exists(data['home'], schema_name, verrors, old):
-            verrors.add(f'{schema_name}.home',
+    async def legacy_share_validate(self, data, schema_name, verrors, old):
+        if await self.home_exists(data[share_field.OPTS][share_field.HOME], old):
+            verrors.add(f'{schema_name}.{share_field.OPTS}.{share_field.HOME}',
                         'Only one share is allowed to be a home share.')
 
-        if await self.query([['name', 'C=', data['name']], ['id', '!=', data.get('id', 0)]]):
+        if data[share_field.OPTS][share_field.AUX]:
+            schema = f'{schema_name}.{share_field.OPTS}.{share_field.AUX}'
+            await self.validate_aux_params(data[share_field.OPTS][share_field.AUX], schema)
+
+    @private
+    async def validate(self, data, schema_name, verrors, old=None):
+        if await self.query([[share_field.NAME, 'C=', data[share_field.NAME]], ['id', '!=', data.get('id', 0)]]):
             verrors.add(f'{schema_name}.name', 'Share names are case-insensitive and must be unique')
 
         await self.validate_path_field(data, schema_name, verrors)
+        timemachine = is_time_machine_share(data)
 
-        if data['auxsmbconf']:
-            try:
-                await self.validate_aux_params(data['auxsmbconf'],
-                                               f'{schema_name}.auxsmbconf')
-            except ValidationErrors as errs:
-                verrors.add_child(f'{schema_name}.auxsmbconf', errs)
-
-        if data.get('path') and path_location(data['path']) is FSLocation.LOCAL:
-            stat_info = await self.middleware.call('filesystem.stat', data['path'])
-            if not data['acl'] and stat_info['acl']:
+        if data.get(share_field.PATH) and data[share_field.PURPOSE] != SMBSharePurpose.EXTERNAL_SHARE:
+            stat_info = await self.middleware.call('filesystem.stat', data[share_field.PATH])
+            if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info['acl']:
                 verrors.add(
                     f'{schema_name}.acl',
                     f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
                     'of SMB share.'
                 )
 
-        if data.get('name') is not None:
-            await self.validate_share_name(data['name'], schema_name, verrors)
+            if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+                if not await self.middleware.call('system.is_enterprise'):
+                    verrors.add(
+                        f'{schema_name}.{share_field.PURPOSE}',
+                        'Veeam repository shares require a TrueNAS enterprise license.'
+                    )
+                bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH]))['blocksize']
+                if bsize != VEEAM_REPO_BLOCKSIZE:
+                    verrors.add(
+                        f'{schema_name}.{share_field.PATH}',
+                        'The ZFS dataset recordsize property for a dataset used by a Veeam Repository SMB share '
+                        'must be set to 128 KiB.'
+                    )
 
-        if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
-            verrors.add(f'{schema_name}.name',
-                        'Path suffix may not contain more than two components.')
+        if data.get(share_field.NAME) is not None:
+            await self.validate_share_name(share_field.NAME, schema_name, verrors)
 
-        if data['timemachine'] and data['enabled']:
+        if timemachine and data[share_field.ENABLED]:
             ngc = await self.middleware.call('network.configuration.config')
             if not ngc['service_announcement']['mdns']:
                 verrors.add(
-                    f'{schema_name}.timemachine',
+                    f'{schema_name}.purpose',
                     'mDNS must be enabled in order to use an SMB share as a time machine target.'
                 )
 
         smb_config = await self.middleware.call('smb.config')
 
-        if data['audit']['enable']:
+        if data[share_field.AUDIT][share_field.AUDIT_ENABLE]:
             if smb_config['enable_smb1']:
                 verrors.add(
                     f'{schema_name}.audit.enable',
                     'SMB auditing is not supported if SMB1 protocol is enabled'
                 )
-            for key in ['watch_list', 'ignore_list']:
-                for idx, group in enumerate(data['audit'][key]):
+            for key in [share_field.AUDIT_WATCH_LIST, share_field.AUDIT_IGNORE_LIST]:
+                for idx, group in enumerate(data[share_field.AUDIT][key]):
                     try:
                         await self.middleware.call('group.get_group_obj', {'groupname': group})
                     except KeyError:
                         verrors.add(f'{schema_name}.audit.{key}.{idx}',
                                     f'{group}: group does not exist.')
 
-        if data['afp'] and not smb_config['aapl_extensions']:
+        if data[share_field.OPTS].get(share_field.AFP) and not smb_config['aapl_extensions']:
             verrors.add(
-                f'{schema_name}.afp',
+                f'{schema_name}.{share_field.OPTS}.{share_field.AFP}',
                 'Apple SMB2/3 protocol extension support is required by this parameter. '
                 'This feature may be enabled in the general SMB server configuration.'
             )
 
-        if data['timemachine'] or data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
-            if not smb_config['aapl_extensions']:
-                verrors.add(
-                    f'{schema_name}.timemachine',
-                    'Apple SMB2/3 protocol extension support is required by this parameter. '
-                    'This feature may be enabled in the general SMB server configuration.'
-                )
+        if timemachine and not smb_config['aapl_extensions']:
+            verrors.add(
+                f'{schema_name}.purpose',
+                'Apple SMB2/3 protocol extension support is required by this parameter. '
+                'This feature may be enabled in the general SMB server configuration.'
+            )
 
-    @api_method(SmbSharePrecheckArgs, SmbSharePrecheckResult, roles=['READONLY_ADMIN'])
+        if data[share_field.PURPOSE] == SMBSharePurpose.LEGACY_SHARE:
+            await self.legacy_share_validate(data, schema_name, verrors, old)
+
+    @api_method(SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
         verrors = ValidationErrors()
-        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
-        if not ad_enabled:
+        ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
+        if not ds_enabled:
             local_smb_user_cnt = await self.middleware.call(
                 'user.query',
                 [['smb', '=', True], ['local', '=', True]],
@@ -1342,20 +1238,21 @@ class SharingSMBService(SharingService):
             if local_smb_user_cnt == 0:
                 verrors.add(
                     'sharing.smb.share_precheck',
-                    'TrueNAS server must be joined to Active Directory or have '
+                    'TrueNAS server must be joined to a directory service or have '
                     'at least one local SMB user before creating an SMB share.'
                 )
 
-        if data.get('name') is not None:
-            await self.validate_share_name(data['name'], 'sharing.smb.share_precheck', verrors, False)
+        if data.get(share_field.NAME) is not None:
+            await self.validate_share_name(data[share_field.NAME], 'sharing.smb.share_precheck', verrors, False)
 
         verrors.check()
 
     @private
-    async def home_exists(self, home, schema_name, verrors, old=None):
+    async def home_exists(self, home, old=None):
         if not home:
             return
 
+        # Since this is raw datastore query, it's `home` and not `options.home`
         home_filters = [('home', '=', True)]
 
         if old:
@@ -1367,53 +1264,142 @@ class SharingSMBService(SharingService):
         )
 
     @private
-    async def add_path_local(self, data):
-        data['path_local'] = data['path']
-        return data
-
-    @private
     async def extend(self, data):
-        data['hostsallow'] = data['hostsallow'].split()
-        data['hostsdeny'] = data['hostsdeny'].split()
-        if data['fsrvp']:
-            data['shadowcopy'] = True
+        out = {}
+        for key in BASE_SHARE_PARAMS:
+            out[key] = data.pop(key)
 
-        if 'share_acl' in data:
-            data.pop('share_acl')
+        out[share_field.RO] = out.pop('ro')
+        out[share_field.ABE] = out.pop('abe')
+        out[share_field.OPTS] = {}
 
-        for key, val in [('enable', False), ('watch_list', []), ('ignore_list', [])]:
-            if key not in data['audit']:
-                data['audit'][key] = val
+        match out[share_field.PURPOSE]:
+            case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE:
+                out[share_field.OPTS][share_field.AAPL_MANGLING] = data[share_field.AAPL_MANGLING]
+            case SMBSharePurpose.TIMEMACHINE_SHARE:
+                out[share_field.OPTS] = {
+                    share_field.AUTO_SNAP: data[share_field.AUTO_SNAP],
+                    share_field.AUTO_DS: data[share_field.AUTO_DS],
+                    share_field.DS_NAMING_SCHEMA: data[share_field.PATH_SUFFIX] or None,
+                    share_field.TIMEMACHINE_QUOTA: data[share_field.TIMEMACHINE_QUOTA],
+                    share_field.VUID: data[share_field.VUID] or None,
+                }
+            case SMBSharePurpose.TIME_LOCKED_SHARE:
+                out[share_field.OPTS] = {
+                    share_field.WORM_GRACE: data['worm_grace_period'],
+                    share_field.AAPL_MANGLING: data[share_field.AAPL_MANGLING],
+                }
+            case SMBSharePurpose.PRIVATE_DATASETS_SHARE:
+                out[share_field.OPTS] = {
+                    share_field.DS_NAMING_SCHEMA: data[share_field.PATH_SUFFIX] or None,
+                    share_field.AUTO_QUOTA: data[share_field.AUTO_QUOTA],
+                    share_field.AAPL_MANGLING: data[share_field.AAPL_MANGLING],
+                }
+            case SMBSharePurpose.EXTERNAL_SHARE:
+                if out[share_field.PATH].startswith('EXTERNAL:'):
+                    remote_path = out[share_field.PATH].removeprefix('EXTERNAL:').split(',')
+                else:
+                    remote_path = None
 
-        if data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
-            # backstop to ensure all checks for time machine being enabled succeed
-            data['timemachine'] = True
+                out[share_field.OPTS] = {
+                    share_field.REMOTE_PATH: remote_path,
+                }
+                out[share_field.PATH] = 'EXTERNAL'
+            case SMBSharePurpose.LEGACY_SHARE:
+                # catchall for all of old options
+                data.pop('share_acl', None)
+                data[share_field.HOSTSALLOW] = data[share_field.HOSTSALLOW].split()
+                data[share_field.HOSTSDENY] = data[share_field.HOSTSDENY].split()
+                data[share_field.PATH_SUFFIX] = data[share_field.PATH_SUFFIX] or None
+                data[share_field.VUID] = data[share_field.VUID] or None
+                for param in (
+                    share_field.AUTO_QUOTA,
+                    share_field.AUTO_DS,
+                    share_field.AUTO_SNAP,
+                    'worm_grace_period',
+                ):
+                    data.pop(param)
 
-        return await self.add_path_local(data)
+                out[share_field.OPTS] = data
+
+        for key, default in [
+            (share_field.AUDIT_ENABLE, False),
+            (share_field.AUDIT_WATCH_LIST, []),
+            (share_field.AUDIT_IGNORE_LIST, [])
+        ]:
+            if key not in out[share_field.AUDIT]:
+                out[share_field.AUDIT][key] = default
+
+        return out
 
     @private
     async def compress(self, data_in):
-        original_aux = data_in['auxsmbconf']
-        data = apply_presets(data_in)
+        data = data_in.copy()
+        opts = data.pop(share_field.OPTS, {})
 
-        data['hostsallow'] = ' '.join(data['hostsallow'])
-        data['hostsdeny'] = ' '.join(data['hostsdeny'])
+        if share_field.DS_NAMING_SCHEMA in opts:
+            data[share_field.PATH_SUFFIX] = opts.pop(share_field.DS_NAMING_SCHEMA, '')
+        else:
+            data[share_field.PATH_SUFFIX] = opts.pop(share_field.PATH_SUFFIX, '')
+
+        # handle explicit NULL from API
+        if data[share_field.PATH_SUFFIX] is None:
+            data[share_field.PATH_SUFFIX] = ''
+
+        data[share_field.AAPL_MANGLING] = opts.pop(share_field.AAPL_MANGLING, False)
+
+        data['ro'] = data.pop(share_field.RO)
+        data['abe'] = data.pop(share_field.ABE)
+        data[share_field.TIMEMACHINE_QUOTA] = opts.pop(share_field.TIMEMACHINE_QUOTA, 0)
+
+        # normalize VUID to uuid or empty string. May be None type prior to compression
+        if share_field.VUID in opts:
+            data[share_field.VUID] = opts[share_field.VUID] or ''
+
+        match data[share_field.PURPOSE]:
+            case SMBSharePurpose.LEGACY_SHARE:
+                data[share_field.HOSTSALLOW] = ' '.join(opts.pop(share_field.HOSTSALLOW, []))
+                data[share_field.HOSTSDENY] = ' '.join(opts.pop(share_field.HOSTSDENY, []))
+            case SMBSharePurpose.TIME_LOCKED_SHARE:
+                data['worm_grace_period'] = opts.pop(share_field.WORM_GRACE, 900)
+            case SMBSharePurpose.EXTERNAL_SHARE:
+                data[share_field.PATH] = f'EXTERNAL:{",".join(opts.pop(share_field.REMOTE_PATH, []))}'
+            case _:
+                pass
+
+        # Set defaults for our legacy fields y4
+        for param in (share_field.DURABLEHANDLE, share_field.SHADOWCOPY, share_field.STREAMS):
+            if param not in data:
+                data[param] = True
+
         data.pop(self.locked_field, None)
-        data.pop('path_local', None)
-        data['auxsmbconf'] = original_aux
+        data.update(opts)
+
+        if data[share_field.PURPOSE] != SMBSharePurpose.LEGACY_SHARE:
+            # Make sure to set these keys to defaults for sake of DB consistency
+            # These ones default to True
+            for param in (share_field.DURABLEHANDLE, share_field.SHADOWCOPY, share_field.STREAMS, share_field.ACL):
+                data[param] = True
+
+            # These ones default to False
+            for param in (
+                share_field.HOME, share_field.GUESTOK, share_field.FSRVP, share_field.AFP, share_field.RECYCLE,
+                share_field.TIMEMACHINE
+            ):
+                data[param] = False
 
         return data
 
-    @api_method(SmbSharePresetsArgs, SmbSharePresetsResult, roles=['SHARING_SMB_READ'])
+    @api_method(SharingSMBPresetsArgs, SharingSMBPresetsResult, roles=['SHARING_SMB_READ'])
     async def presets(self):
         """
         Retrieve pre-defined configuration sets for specific use-cases. These parameter
         combinations are often non-obvious, but beneficial in these scenarios.
         """
-        return {x.name: x.value for x in SMBSharePreset}
+        return {x.name: {'verbose_name': x.value} for x in SMBSharePurpose}
 
     @api_method(
-        SetSmbAclArgs, SetSmbAclResult,
+        SharingSMBSetaclArgs, SharingSMBSetaclResult,
         roles=['SHARING_SMB_WRITE'],
         audit='Setacl SMB share',
         audit_extended=lambda data: data['share_name']
@@ -1495,7 +1481,7 @@ class SharingSMBService(SharingService):
             normalized_acl.append(normalized_entry)
 
         if data['share_name'].upper() == 'HOMES':
-            share_filter = [['home', '=', True]]
+            share_filter = [['options.home', '=', True]]
         else:
             share_filter = [['name', 'C=', data['share_name']]]
 
@@ -1525,7 +1511,7 @@ class SharingSMBService(SharingService):
         return await self.getacl({'share_name': data['share_name']})
 
     @api_method(
-        GetSmbAclArgs, GetSmbAclResult,
+        SharingSMBGetaclArgs, SharingSMBGetaclResult,
         roles=['SHARING_SMB_READ'],
         audit='Getacl SMB share',
         audit_extended=lambda data: data['share_name']
@@ -1534,7 +1520,7 @@ class SharingSMBService(SharingService):
         verrors = ValidationErrors()
 
         if data['share_name'].upper() == 'HOMES':
-            share_filter = [['home', '=', True]]
+            share_filter = [['options.home', '=', True]]
         else:
             share_filter = [['name', 'C=', data['share_name']]]
 
@@ -1551,7 +1537,7 @@ class SharingSMBService(SharingService):
         verrors.check()
 
         acl = await self.middleware.call('smb.sharesec.getacl', data['share_name'])
-        sids = set([x['ae_who_sid'] for x in acl['share_acl'] if x['ae_who_sid'] != 'S-1-1-0'])
+        sids = set(x['ae_who_sid'] for x in acl['share_acl'] if x['ae_who_sid'] != 'S-1-1-0')
         if sids:
             try:
                 conv = await self.middleware.call('idmap.convert_sids', list(sids))
@@ -1613,8 +1599,8 @@ async def pool_post_import(middleware, pool):
     if await middleware.call(
         'sharing.smb.query',
         [('OR', [
-            ('path', '=', path),
-            ('path', '^', f'{path}/'),
+            (share_field.PATH, '=', path),
+            (share_field.PATH, '^', f'{path}/'),
         ])]
     ):
         await middleware.call('smb.disable_acl_if_trivial')
@@ -1634,6 +1620,10 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
         if attachments:
             await self.restart_reload_services(attachments)
+
+    async def stop(self, attachments):
+        for share in attachments:
+            await self.middleware.call('sharing.smb.close_share', share[share_field.NAME])
 
     async def restart_reload_services(self, attachments):
         """
@@ -1662,11 +1652,17 @@ async def systemdataset_setup_hook(middleware, data):
         await middleware.call('smb.setup_directories')
 
 
+async def hook_post_generic(middleware, datasets):
+    await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
+
+
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
         SystemServiceListenMultipleDelegate(middleware, 'smb', 'bindip'),
     )
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
+    middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
+    middleware.register_hook('dataset.post_unlock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
     middleware.register_hook("sysdataset.setup", systemdataset_setup_hook)

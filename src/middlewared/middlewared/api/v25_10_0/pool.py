@@ -10,7 +10,7 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "PoolEntry", "DDTPruneArgs", "DDTPruneResult", "DDTPrefetchArgs", "DDTPrefetchResult", "PoolAttachArgs",
+    "PoolEntry", "PoolDdtPruneArgs", "PoolDdtPruneResult", "PoolDdtPrefetchArgs", "PoolDdtPrefetchResult", "PoolAttachArgs",
     "PoolAttachResult", "PoolAttachmentsArgs", "PoolAttachmentsResult", "PoolCreateArgs", "PoolCreateResult",
     "PoolDetachArgs", "PoolDetachResult", "PoolExpandArgs", "PoolExpandResult", "PoolExportArgs", "PoolExportResult",
     "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs", "PoolGetDisksResult",
@@ -276,21 +276,21 @@ class PoolUpdate(PoolCreate, metaclass=ForUpdateMetaclass):
 
 
 @single_argument_args("options")
-class DDTPruneArgs(BaseModel):
+class PoolDdtPruneArgs(BaseModel):
     pool_name: NonEmptyString
     percentage: Annotated[int, Field(ge=1, le=100)] | None = None
     days: Annotated[int, Field(ge=1)] | None = None
 
 
-class DDTPruneResult(BaseModel):
+class PoolDdtPruneResult(BaseModel):
     result: None
 
 
-class DDTPrefetchArgs(BaseModel):
+class PoolDdtPrefetchArgs(BaseModel):
     pool_name: NonEmptyString
 
 
-class DDTPrefetchResult(BaseModel):
+class PoolDdtPrefetchResult(BaseModel):
     result: None
 
 

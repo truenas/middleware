@@ -10,8 +10,8 @@ from middlewared.api.base import (
 __all__ = [
     'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
-    'DockerListBackupArgs', 'DockerListBackupResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
-    'DockerDeleteBackupArgs', 'DockerDeleteBackupResult',
+    'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
+    'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
 ]
 
 
@@ -102,7 +102,7 @@ class DockerBackupResult(BaseModel):
     result: NonEmptyString
 
 
-class DockerListBackupArgs(BaseModel):
+class DockerListBackupsArgs(BaseModel):
     pass
 
 
@@ -124,7 +124,7 @@ class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
     pass
 
 
-class DockerListBackupResult(BaseModel):
+class DockerListBackupsResult(BaseModel):
     result: DockerBackupInfo
 
 
@@ -141,4 +141,12 @@ class DockerDeleteBackupArgs(BaseModel):
 
 
 class DockerDeleteBackupResult(BaseModel):
+    result: None
+
+
+class DockerBackupToPoolArgs(BaseModel):
+    target_pool: NonEmptyString
+
+
+class DockerBackupToPoolResult(BaseModel):
     result: None

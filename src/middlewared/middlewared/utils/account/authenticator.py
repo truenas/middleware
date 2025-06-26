@@ -334,7 +334,9 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         match otpw_resp.code:
             case OTPWResponseCode.SUCCESS:
                 self.truenas_state.passwd['account_attributes'].append(AccountFlag.OTPW)
-                if otpw_resp.data['password_set_override']:
+                # PASSWORD_CHANGE_REQUIRED can only be set for local accounts. We don't allow
+                # password changes through middleware currently for directory services.
+                if otpw_resp.data['password_set_override'] and passwd_entry['source'] == 'LOCAL':
                     self.truenas_state.passwd['account_attributes'].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
 
                 code = pam.PAM_SUCCESS

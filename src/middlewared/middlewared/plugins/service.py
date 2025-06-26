@@ -149,6 +149,8 @@ class ServiceService(CRUDService):
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
         pass_app=True,
         pass_app_rest=True,
+        audit='Service Control:',
+        audit_extended=lambda verb, service: f'{verb} {service}',
     )
     @job(lock=lambda args: f'service_{args[1]}')
     async def control(self, app, job, verb, service, options):
@@ -161,6 +163,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: start',
+        audit_extended=lambda service: service,
     )
     async def start(self, app, service, options):
         """
@@ -249,6 +253,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: stop',
+        audit_extended=lambda service: service,
     )
     async def stop(self, app, service, options):
         """
@@ -295,6 +301,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: restart',
+        audit_extended=lambda service: service,
     )
     async def restart(self, app, service, options):
         """
@@ -365,6 +373,8 @@ class ServiceService(CRUDService):
         pass_app=True,
         pass_app_rest=True,
         removed_in="v26.04",
+        audit='Service: reload',
+        audit_extended=lambda service: service,
     )
     async def reload(self, app, service, options):
         """
@@ -457,7 +467,7 @@ class ServiceService(CRUDService):
         return await service_object.become_standby()
 
     @private
-    def terminate_process(self, pid, timeout = 10):
+    def terminate_process(self, pid, timeout=10):
         """
         Terminate the process with the given `pid`.
 

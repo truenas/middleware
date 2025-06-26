@@ -31,14 +31,23 @@ class PWEncService(Service):
 
     def _reset_passwords(self):
         for table, field, value in (
-            ('directoryservice_ldap', 'ldap_bindpw', ''),
             ('services_ups', 'ups_monpwd', ''),
             ('system_email', 'em_pass', ''),
             ('system_certificate', 'cert_domains_authenticators', 'NULL'),
+            # The following removes all DS-related config and disables directory services
+            ('services_cifs', 'cifs_srv_secrets', 'NULL'),
+            ('directoryservices', 'enable', '0'),
+            ('directoryservices', 'service_type', 'NULL'),
+            ('directoryservices', 'cred_type', 'NULL'),
+            ('directoryservices', 'cred_ldap_plain', 'NULL'),
+            ('directoryservices', 'cred_ldap_mtls_cert_id', 'NULL'),
+            ('directoryservices', 'cred_krb5', 'NULL'),
+            ('directoryservices', 'ad_trusted_domains', 'NULL'),
         ):
             value = value or "''"
             self.middleware.call_sync('datastore.sql', f'UPDATE {table} SET {field} = {value}')
 
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM directoryservice_kerberoskeytab')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_cloud_backup')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_cloudsync')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM system_cloudcredentials')
@@ -49,6 +58,8 @@ class PWEncService(Service):
         )
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_rsync WHERE rsync_ssh_credentials_id IS NOT NULL')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM system_keychaincredential')
+        # If config is restored without secret seed then SMB auth won't be possible. Disable SMB for all users.
+        self.middleware.call_sync('datastore.sql', 'UPDATE account_bsdusers SET bsdusr_smb=0')
 
     @staticmethod
     def _secret_opener(path, flags):

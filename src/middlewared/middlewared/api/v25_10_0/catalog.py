@@ -8,7 +8,7 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, 
 __all__ = [
     'CatalogEntry', 'CatalogUpdateArgs', 'CatalogUpdateResult', 'CatalogTrainsArgs', 'CatalogTrainsResult',
     'CatalogSyncArgs', 'CatalogSyncResult', 'CatalogAppInfo', 'CatalogAppsArgs', 'CatalogAppsResult',
-    'CatalogAppDetailsArgs', 'CatalogAppDetailsResult',
+    'CatalogGetAppDetailsArgs', 'CatalogGetAppDetailsResult',
 ]
 
 
@@ -115,10 +115,10 @@ class CatalogAppVersionDetails(BaseModel):
     train: NonEmptyString
 
 
-class CatalogAppDetailsArgs(BaseModel):
+class CatalogGetAppDetailsArgs(BaseModel):
     app_name: NonEmptyString
     app_version_details: CatalogAppVersionDetails
 
 
-class CatalogAppDetailsResult(BaseModel):
+class CatalogGetAppDetailsResult(BaseModel):
     result: CatalogAppInfo

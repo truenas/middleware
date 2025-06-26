@@ -6,9 +6,9 @@ __all__ = [
     "NVMetGlobalUpdateResult",
     "NVMetGlobalAnaEnabledArgs",
     "NVMetGlobalAnaEnabledResult",
-    "NVMetGlobalRDMAEnabledArgs",
-    "NVMetGlobalRDMAEnabledResult",
-    "NVMetSession"
+    "NVMetGlobalRdmaEnabledArgs",
+    "NVMetGlobalRdmaEnabledResult",
+    "NVMetGlobalSessionsItem"
 ]
 
 
@@ -59,16 +59,16 @@ class NVMetGlobalAnaEnabledResult(BaseModel):
     """ `True` if Asymmetric Namespace Access (ANA) is enabled. """
 
 
-class NVMetGlobalRDMAEnabledArgs(BaseModel):
+class NVMetGlobalRdmaEnabledArgs(BaseModel):
     pass
 
 
-class NVMetGlobalRDMAEnabledResult(BaseModel):
+class NVMetGlobalRdmaEnabledResult(BaseModel):
     result: bool
     """ `True` if Remote Direct Memory Access (RDMA) is enabled for NVMe-oF. """
 
 
-class NVMetSession(BaseModel):
+class NVMetGlobalSessionsItem(BaseModel):
     host_traddr: str
     """ Address of the connected host. For example an IP address."""
     hostnqn: str

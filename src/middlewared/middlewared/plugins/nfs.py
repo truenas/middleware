@@ -8,12 +8,12 @@ import shutil
 from middlewared.api import api_method
 from middlewared.api.current import (
     NfsEntry,
-    NfsUpdateArgs, NfsUpdateResult,
-    NfsBindipChoicesArgs, NfsBindipChoicesResult,
+    NFSUpdateArgs, NFSUpdateResult,
+    NFSBindipChoicesArgs, NFSBindipChoicesResult,
     NfsShareEntry,
-    NfsShareCreateArgs, NfsShareCreateResult,
-    NfsShareUpdateArgs, NfsShareUpdateResult,
-    NfsShareDeleteArgs, NfsShareDeleteResult
+    SharingNFSCreateArgs, SharingNFSCreateResult,
+    SharingNFSUpdateArgs, SharingNFSUpdateResult,
+    SharingNFSDeleteArgs, SharingNFSDeleteResult
 )
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
@@ -219,7 +219,7 @@ class NFSService(SystemServiceService):
 
         return nfs
 
-    @api_method(NfsBindipChoicesArgs, NfsBindipChoicesResult)
+    @api_method(NFSBindipChoicesArgs, NFSBindipChoicesResult)
     async def bindip_choices(self):
         """
         Returns ip choices for NFS service to use
@@ -257,7 +257,7 @@ class NFSService(SystemServiceService):
 
             return []
 
-    @api_method(NfsUpdateArgs, NfsUpdateResult, audit='Update NFS configuration')
+    @api_method(NFSUpdateArgs, NFSUpdateResult, audit='Update NFS configuration')
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
@@ -377,19 +377,11 @@ class NFSService(SystemServiceService):
                 )
 
         if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
-            """
-            In environments with kerberized NFSv4 enabled, we need to tell winbindd to not prefix
-            usernames with the short form of the AD domain. Directly update the db and regenerate
-            the smb.conf to avoid having a service disruption due to restarting the samba server.
-            """
-            ad_config = await self.middleware.call('activedirectory.config')
-            if ad_config['enable'] and not ad_config['use_default_domain']:
-                await self.middleware.call(
-                    'datastore.update', 'directoryservice.activedirectory', ad_config['id'],
-                    {'use_default_domain': True}, {'prefix': 'ad_'}
-                )
-                await self.middleware.call('etc.generate', 'smb')
-                await (await self.middleware.call('service.control', 'RELOAD', 'idmap')).wait(raise_error=True)
+            # If we're using KRB5 + NFS then we need a v4_domain defined
+            # We can get this from the configured `kerberos_realm`.
+            ds_config = await self.middleware.call('directoryservices.config')
+            if ds_config["enable"] and ds_config["kerberos_realm"] and not new["v4_domain"]:
+                new["v4_domain"] = ds_config["kerberos_realm"]
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
@@ -448,7 +440,7 @@ class SharingNFSService(SharingService):
         entry = NfsShareEntry
 
     @api_method(
-        NfsShareCreateArgs, NfsShareCreateResult,
+        SharingNFSCreateArgs, SharingNFSCreateResult,
         audit='NFS share create', audit_extended=lambda data: data["path"]
     )
     async def do_create(self, data):
@@ -489,7 +481,7 @@ class SharingNFSService(SharingService):
         return await self.get_instance(data["id"])
 
     @api_method(
-        NfsShareUpdateArgs, NfsShareUpdateResult,
+        SharingNFSUpdateArgs, SharingNFSUpdateResult,
         audit='NFS share update', audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
@@ -520,7 +512,7 @@ class SharingNFSService(SharingService):
         return await self.get_instance(id_)
 
     @api_method(
-        NfsShareDeleteArgs, NfsShareDeleteResult,
+        SharingNFSDeleteArgs, SharingNFSDeleteResult,
         audit='NFS share delete', audit_callback=True
     )
     async def do_delete(self, audit_callback, id_):

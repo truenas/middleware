@@ -26,14 +26,30 @@ class DomainRid(enum.IntEnum):
 
 
 class WellKnownSid(enum.Enum):
-    """ Defined in MS-DTYP Section 2.4.2.4 """
+    """ Defined in MS-DTYP Section 2.4.2.4
+
+    WARNING: entries may be added to the end of this enum, but the ordering of
+    it must not change because it is used to determine GID assigned to the SID
+    in samba's winbindd_idmap.tdb.  """
+    NULL = 'S-1-0-0'
     WORLD = 'S-1-1-0'
+    LOCAL = 'S-1-2-0'
+    CONSOLE_LOGON = 'S-1-2-1'
     CREATOR_OWNER = 'S-1-3-0'
     CREATOR_GROUP = 'S-1-3-1'
     OWNER_RIGHTS = 'S-1-3-4'
+    DIALUP = 'S-1-5-1'
+    NETWORK = 'S-1-5-2'
+    BATCH = 'S-1-5-3'
+    INTERACTIVE = 'S-1-5-4'
+    SERVICE = 'S-1-5-6'
+    ANONYMOUS = 'S-1-5-7'
     AUTHENTICATED_USERS = 'S-1-5-11'
+    TERMINAL_SERVER_USER = 'S-1-5-13'
+    REMOTE_AUTHENTICATED_LOGON = 'S-1-5-14'
     SYSTEM = 'S-1-5-18'
     NT_AUTHORITY = 'S-1-5-19'
+    NETWORK_SERVICE = 'S-1-5-20'
     BUILTIN_ADMINISTRATORS = 'S-1-5-32-544'
     BUILTIN_USERS = 'S-1-5-32-545'
     BUILTIN_GUESTS = 'S-1-5-32-546'
@@ -41,6 +57,29 @@ class WellKnownSid(enum.Enum):
     @property
     def sid(self):
         return self.value
+
+    @property
+    def valid_for_mapping(self):
+        """
+        Put full mapping in the winbind_idmap.tdb file so that all TrueNAS servers are consistent.
+        There is special behavior for builtins and so they are also excluded from this list because
+        they are explicitly mapped in Samba's group_mapping.tdb file.
+        """
+        return self not in (
+            WellKnownSid.NULL,
+            WellKnownSid.BUILTIN_ADMINISTRATORS,
+            WellKnownSid.BUILTIN_USERS,
+            WellKnownSid.BUILTIN_GUESTS,
+        )
+
+
+VALID_API_SIDS = frozenset([
+    WellKnownSid.WORLD.sid,
+    WellKnownSid.OWNER_RIGHTS.sid,
+    WellKnownSid.BUILTIN_ADMINISTRATORS.sid,
+    WellKnownSid.BUILTIN_USERS.sid,
+    WellKnownSid.BUILTIN_GUESTS.sid,
+])
 
 
 class lsa_sidtype(enum.IntEnum):
@@ -79,13 +118,7 @@ def sid_is_valid(sid: str) -> bool:
         return False
 
     # Whitelist some well-known SIDs user may have
-    if sid in (
-        WellKnownSid.WORLD.sid,
-        WellKnownSid.OWNER_RIGHTS.sid,
-        WellKnownSid.BUILTIN_ADMINISTRATORS.sid,
-        WellKnownSid.BUILTIN_USERS.sid,
-        WellKnownSid.BUILTIN_GUESTS.sid,
-    ):
+    if sid in VALID_API_SIDS:
         return True
 
     if not sid.startswith(DOM_SID_PREFIX):

@@ -1,7 +1,4 @@
-import errno
-
 from .base import SimpleService
-from middlewared.service_exception import CallError
 
 
 class CIFSService(SimpleService):

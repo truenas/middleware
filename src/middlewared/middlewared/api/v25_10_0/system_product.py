@@ -4,42 +4,42 @@ from middlewared.api.base import BaseModel, NonEmptyString
 
 
 __all__ = (
-    "SystemProductFeatureEnabledArgs",
-    "SystemProductFeatureEnabledResult",
-    "SystemProductLicenseArgs",
-    "SystemProductLicenseResult",
-    "SystemProductReleaseNotesUrlArgs",
-    "SystemProductReleaseNotesUrlResult",
+    "SystemFeatureEnabledArgs",
+    "SystemFeatureEnabledResult",
+    "SystemLicenseUpdateArgs",
+    "SystemLicenseUpdateResult",
+    "SystemReleaseNotesUrlArgs",
+    "SystemReleaseNotesUrlResult",
     "SystemProductTypeArgs",
     "SystemProductTypeResult",
-    "SystemProductVersionArgs",
-    "SystemProductVersionResult",
-    "SystemProductVersionShortArgs",
-    "SystemProductVersionShortResult",
+    "SystemVersionArgs",
+    "SystemVersionResult",
+    "SystemVersionShortArgs",
+    "SystemVersionShortResult",
 )
 
 
-class SystemProductFeatureEnabledArgs(BaseModel):
+class SystemFeatureEnabledArgs(BaseModel):
     feature: Literal["DEDUP", "FIBRECHANNEL", "VM"]
 
 
-class SystemProductFeatureEnabledResult(BaseModel):
+class SystemFeatureEnabledResult(BaseModel):
     result: bool
 
 
-class SystemProductLicenseArgs(BaseModel):
+class SystemLicenseUpdateArgs(BaseModel):
     license: NonEmptyString
 
 
-class SystemProductLicenseResult(BaseModel):
+class SystemLicenseUpdateResult(BaseModel):
     result: None
 
 
-class SystemProductReleaseNotesUrlArgs(BaseModel):
+class SystemReleaseNotesUrlArgs(BaseModel):
     version_str: NonEmptyString | None = None
 
 
-class SystemProductReleaseNotesUrlResult(BaseModel):
+class SystemReleaseNotesUrlResult(BaseModel):
     result: str
 
 
@@ -51,17 +51,17 @@ class SystemProductTypeResult(BaseModel):
     result: Literal["COMMUNITY_EDITION", "ENTERPRISE"]
 
 
-class SystemProductVersionArgs(BaseModel):
+class SystemVersionArgs(BaseModel):
     pass
 
 
-class SystemProductVersionResult(BaseModel):
+class SystemVersionResult(BaseModel):
     result: str
 
 
-class SystemProductVersionShortArgs(BaseModel):
+class SystemVersionShortArgs(BaseModel):
     pass
 
 
-class SystemProductVersionShortResult(BaseModel):
+class SystemVersionShortResult(BaseModel):
     result: str

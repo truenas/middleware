@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
@@ -59,9 +59,9 @@ def temp_user(temp_ds):
 )
 def test_error(temp_ds, id_, quota_type, error):
     """Changing any quota type for the root user/group should be prohibited"""
-    with pytest.raises(ValidationErrors) as ve:
+    with pytest.raises(ValidationError) as ve:
         call('pool.dataset.set_quota', temp_ds, [{'quota_type': quota_type, 'id': id_, 'quota_value': 5242880}])
-    assert ve.value.errors[0].errmsg == f'Setting {error} [0] is not permitted'
+    assert ve.value.errmsg == f'Setting {error} [0] is not permitted'
 
 
 def test_quotas(temp_ds, temp_user):

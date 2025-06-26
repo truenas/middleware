@@ -2,7 +2,7 @@ import ipaddress
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    NetworkConfigurationEntry, NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
+    NetworkConfigurationEntry, NetworkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
 )
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
@@ -176,7 +176,7 @@ class NetworkConfigurationService(ConfigService):
 
             await (await self.middleware.call('service.control', verb, service_name)).wait(raise_error=True)
 
-    @api_method(NetWorkConfigurationUpdateArgs, NetworkConfigurationUpdateResult)
+    @api_method(NetworkConfigurationUpdateArgs, NetworkConfigurationUpdateResult)
     async def do_update(self, data):
         """
         Update Network Configuration Service configuration.
@@ -193,9 +193,12 @@ class NetworkConfigurationService(ConfigService):
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
-        filters = [('timemachine', '=', True), ('enabled', '=', True)]
+        filters = [
+            ["OR", [('options.timemachine', '=', True), ('purpose', '=', 'TIMEMACHINE_SHARE')]],
+            ['enabled', '=', True]
+        ]
         if not new_config['service_announcement']['mdns'] and await self.middleware.call(
-            'sharing.smb.query', filters, {'select': ['enabled', 'timemachine']}
+            'sharing.smb.query', filters, {'select': ['enabled', 'timemachine', 'purpose']}
         ):
             verrors.add(
                 'global_configuration_update.service_announcement.mdns',
@@ -212,14 +215,28 @@ class NetworkConfigurationService(ConfigService):
             rhost_changed = config['hostname'] != new_config['hostname']
 
         vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
-        if vhost_changed:
+        if vhost_changed or lhost_changed or rhost_changed:
+            if vhost_changed:
+                schema = 'global_configuration_update.hostname_virtual'
+            else:
+                if this_node == 'B':
+                    if lhost_changed:
+                        schema = 'global_configuration_update.hostname_b'
+                    else:
+                        schema = 'global_configuration_update.hostname'
+                else:
+                    if lhost_changed:
+                        schema = 'global_configuration_update.hostname'
+                    else:
+                        schema = 'global_configuration_update.hostname_b'
+
             ds = await self.middleware.call('directoryservices.status')
-            if ds['type'] in (DSType.AD.value, DSType.IPA.value):
+            if ds['type'] in (DSType.AD.value, DSType.IPA.value) and ds['status'] != 'JOINING':
                 verrors.add(
-                    'global_configuration_update.hostname_virtual',
-                    'This parameter may not be changed after joining a directory service. '
-                    'If it must be changed, the proper procedure is to cleanly leave the domain '
-                    'and then alter the parameter before re-joining the domain.'
+                    schema,
+                    'You cannot change this parameter after TrueNAS joins a domain. '
+                    'To change it, first leave the domain cleanly. '
+                    'Then change the parameter and rejoin the domain.'
                 )
 
         verrors.check()
@@ -334,7 +351,7 @@ class NetworkConfigurationService(ConfigService):
                 service_actions.add((service_name, verb))
 
         for service, verb in service_actions:
-            await (await self.middleware.call(f'service.control', verb, service)).wait(raise_error=True)
+            await (await self.middleware.call('service.control', verb, service)).wait(raise_error=True)
 
         await self.middleware.call('network.configuration.toggle_announcement', new_config['service_announcement'])
 

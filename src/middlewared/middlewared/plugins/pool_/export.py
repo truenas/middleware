@@ -4,7 +4,6 @@ import shutil
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolExportArgs, PoolExportResult
-from middlewared.schema import accepts, Bool, Dict, Int, returns
 from middlewared.service import CallError, item_method, job, private, Service, ValidationError
 from middlewared.utils.asyncio_ import asyncio_map
 

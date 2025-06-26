@@ -200,7 +200,7 @@ class PrivilegeService(CRUDService):
             if not await self._ds_groups(groups, [ds_group_id], include_nonexistent=False):
                 verrors.add(
                     f"{schema_name}.ds_groups.{i}",
-                    f"{ds_group_id}: directory Service group does not exist. "
+                    f"{ds_group_id}: directory service group does not exist. "
                     "If the directory service state is healthy, then this error may be "
                     "addressed by removing this entry from the privilege."
                 )

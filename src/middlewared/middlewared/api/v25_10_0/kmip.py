@@ -7,9 +7,9 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'KmipEntry', 'KmipSyncPendingArgs', 'KmipSyncPendingResult',
-    'KmipSyncKeysArgs', 'KmipSyncKeysResult', 'KmipClearSyncPendingKeysArgs',
-    'KmipClearSyncPendingKeysResult', 'KmipUpdateArgs', 'KmipUpdateResult'
+    'KmipEntry', 'KMIPKmipSyncPendingArgs', 'KMIPKmipSyncPendingResult',
+    'KMIPSyncKeysArgs', 'KMIPSyncKeysResult', 'KMIPClearSyncPendingKeysArgs',
+    'KMIPClearSyncPendingKeysResult', 'KMIPUpdateArgs', 'KMIPUpdateResult'
 ]
 
 
@@ -26,7 +26,7 @@ class KmipEntry(BaseModel):
 
 
 @single_argument_args('kmip_update')
-class KmipUpdateArgs(KmipEntry, metaclass=ForUpdateMetaclass):
+class KMIPUpdateArgs(KmipEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     enabled: bool
     force_clear: bool
@@ -34,29 +34,29 @@ class KmipUpdateArgs(KmipEntry, metaclass=ForUpdateMetaclass):
     validate_: bool = Field(alias='validate')
 
 
-class KmipUpdateResult(BaseModel):
+class KMIPUpdateResult(BaseModel):
     result: KmipEntry
 
 
-class KmipSyncPendingArgs(BaseModel):
+class KMIPKmipSyncPendingArgs(BaseModel):
     pass
 
 
-class KmipSyncPendingResult(BaseModel):
+class KMIPKmipSyncPendingResult(BaseModel):
     result: bool
 
 
-class KmipSyncKeysArgs(BaseModel):
+class KMIPSyncKeysArgs(BaseModel):
     pass
 
 
-class KmipSyncKeysResult(BaseModel):
+class KMIPSyncKeysResult(BaseModel):
     result: None
 
 
-class KmipClearSyncPendingKeysArgs(BaseModel):
+class KMIPClearSyncPendingKeysArgs(BaseModel):
     pass
 
 
-class KmipClearSyncPendingKeysResult(BaseModel):
+class KMIPClearSyncPendingKeysResult(BaseModel):
     result: None

@@ -3,11 +3,10 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
-    ReportingExporterEntry, ReportingExporterCreateArgs, ReportingExporterCreateResult, ReportingExporterUpdateArgs,
-    ReportingExporterUpdateResult, ReportingExporterDeleteArgs, ReportingExporterDeleteResult,
-    ReportingExporterSchemasArgs, ReportingExporterSchemasResult,
+    ReportingExporterEntry, ReportingExportsCreateArgs, ReportingExportsCreateResult, ReportingExportsUpdateArgs,
+    ReportingExportsUpdateResult, ReportingExportsDeleteArgs, ReportingExportsDeleteResult,
+    ReportingExportsExporterSchemasArgs, ReportingExportsExporterSchemasResult,
 )
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str, returns
 from middlewared.service import CRUDService, private, ValidationErrors
 
 from .exporters.factory import export_factory
@@ -51,7 +50,7 @@ class ReportingExportsService(CRUDService):
 
         verrors.check()
 
-    @api_method(ReportingExporterCreateArgs, ReportingExporterCreateResult)
+    @api_method(ReportingExportsCreateArgs, ReportingExportsCreateResult)
     async def do_create(self, data):
         """
         Create a specific reporting exporter configuration containing required details for exporting reporting metrics.
@@ -70,7 +69,7 @@ class ReportingExportsService(CRUDService):
 
         return await self.get_instance(oid)
 
-    @api_method(ReportingExporterUpdateArgs, ReportingExporterUpdateResult)
+    @api_method(ReportingExportsUpdateArgs, ReportingExportsUpdateResult)
     async def do_update(self, oid, data):
         """
         Update Reporting Exporter of `id`.
@@ -94,7 +93,7 @@ class ReportingExportsService(CRUDService):
 
         return await self.get_instance(oid)
 
-    @api_method(ReportingExporterDeleteArgs, ReportingExporterDeleteResult)
+    @api_method(ReportingExportsDeleteArgs, ReportingExportsDeleteResult)
     async def do_delete(self, oid):
         """
         Delete Reporting Exporter of `id`.
@@ -107,7 +106,7 @@ class ReportingExportsService(CRUDService):
         await (await self.middleware.call('service.control', 'RESTART', 'netdata')).wait(raise_error=True)
         return True
 
-    @api_method(ReportingExporterSchemasArgs, ReportingExporterSchemasResult, roles=['REPORTING_READ'])
+    @api_method(ReportingExportsExporterSchemasArgs, ReportingExportsExporterSchemasResult, roles=['REPORTING_READ'])
     def exporter_schemas(self):
         """
         Get the schemas for all the reporting export types we support with their respective attributes

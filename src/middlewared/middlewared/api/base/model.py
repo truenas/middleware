@@ -15,7 +15,7 @@ from middlewared.utils.lang import undefined
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
            "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",
-           "NotRequired"]
+           "NotRequired", "model_subset"]
 
 
 class _NotRequired:...
@@ -118,13 +118,31 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
         cls = ModelMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
 
         for field in cls.model_fields.values():
+            # We want to back `default` and `default_factory` so that `model_subset` can later use them.
+            # However, `field` (an instance of `FieldInfo`) has `__slots__` which prevents us from adding new
+            # attributes like `_original_default` and `_original_default_factory`.
+            # What we do instead is create a hackish `default_factory` function that returns `undefined` as it should,
+            # but if a second argument is passed, and it is `True` (only `model_subset` does that) then we return
+            # the original `default` and `default_factory` values.
+            default_factory = ForUpdateMetaclass._default_factory(field.default, field.default_factory)
             # Set defaults of all fields to `undefined`.
             # New defaults do not apply until model is rebuilt in `_apply_model_serializer`.
             field.default = undefined
-            field.default_factory = None
+            field.default_factory = default_factory
 
         _apply_model_serializer(cls, _for_update_serializer)
         return cls
+
+    @staticmethod
+    def _default_factory(default, default_factory):
+        def f(data=None, return_original_default=False):
+            if return_original_default:
+                return default, default_factory
+
+            return undefined
+
+        return f
+
 
 
 class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
@@ -284,10 +302,10 @@ def single_argument_result(klass, klass_name=None):
     return model
 
 
-def query_result(item):
+def query_result(item, name=None):
     result_item = query_result_item(item)
     return create_model(
-        item.__name__.removesuffix("Entry") + "QueryResult",
+        name or item.__name__.removesuffix("Entry") + "QueryResult",
         __base__=(BaseModel,),
         __module__=item.__module__,
         result=Annotated[list[result_item] | result_item | int, Field()],
@@ -331,3 +349,34 @@ def removed_event_model(item):
         __module__=item.__module__,
         id=Annotated[item.model_fields["id"].annotation, Field()],
     )
+
+
+def model_subset(base: type[BaseModel], fields: list[str]) -> type[BaseModel]:
+    """Create a model that is a copy of `base` but only has `fields` fields."""
+    model = create_model(
+        base.__name__ + "Subset",
+        __base__=(BaseModel,),
+        __module__=base.__module__,
+        **{
+            field.alias or field_name: Annotated[field.annotation, field]
+            for field_name, field in [
+                (field, base.model_fields[field])
+                for field in fields
+            ]
+        }
+    )
+
+    rebuild = False
+    for field in model.model_fields.values():
+        # Restore values backed up by `ForUpdateMetaclass` (if it was present)
+        try:
+            field.default, field.default_factory = field.default_factory({}, True)
+        except TypeError:
+            pass
+        else:
+            rebuild = True
+
+    if rebuild:
+        model.model_rebuild(force=True)
+
+    return model

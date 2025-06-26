@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CloudSyncCrudRestoreArgs,
-    CloudSyncCrudRestoreResult,
+    CloudSyncRestoreArgs,
+    CloudSyncRestoreResult,
 )
 from middlewared.service import Service
 
@@ -9,8 +9,8 @@ from middlewared.service import Service
 class CloudSyncService(Service):
 
     @api_method(
-        CloudSyncCrudRestoreArgs,
-        CloudSyncCrudRestoreResult,
+        CloudSyncRestoreArgs,
+        CloudSyncRestoreResult,
         roles=["CLOUD_SYNC_WRITE"],
     )
     async def restore(self, id_, data):

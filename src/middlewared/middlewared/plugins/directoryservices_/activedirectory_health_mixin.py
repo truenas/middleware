@@ -6,11 +6,19 @@ from middlewared.utils.directoryservices.ad_constants import (
     MACHINE_ACCOUNT_KT_NAME,
     MAX_SERVER_TIME_OFFSET,
 )
-from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
+from middlewared.utils.directoryservices.credential import kinit_with_cred
 from middlewared.utils.directoryservices.health import (
     ADHealthCheckFailReason,
     ADHealthError,
 )
+from middlewared.utils.directoryservices.krb5 import krb5ccache
+from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
+from middlewared.utils.directoryservices.krb5_constants import (
+    KRB_LibDefaults,
+    PERSISTENT_KEYRING_PREFIX,
+)
+from middlewared.utils.directoryservices.krb5_error import KRB5Error, KRB5ErrCode
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -25,25 +33,33 @@ class ADHealthMixin:
         """
         Validate that our machine account password can be used to kinit
         """
-        config = self.middleware.call_sync('activedirectory.config')
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
 
-        cred = self.middleware.call_sync('kerberos.get_cred', {
-            'dstype': DSType.AD.value,
-            'conf': {
-                'bindname': config['netbiosname'].upper() + '$',
-                'bindpw': b64decode(account_password).decode(),
-                'domainname': config['domainname']
-            }
+        # Write temporary krb5.conf targeting kdc. Since this is a health check we
+        # don't want to introduce a server affinity
+        krbconf = KRB5Conf()
+        krbconf.add_libdefaults({
+            str(KRB_LibDefaults.DEFAULT_REALM): ds_config['kerberos_realm'],
+            str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
+            str(KRB_LibDefaults.FORWARDABLE): 'true',
+            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
         })
+        krbconf.add_realms([{
+            'realm': ds_config['kerberos_realm'] or ds_config['configuration']['domain'],
+            'admin_server': [],
+            'kdc': [kdc],
+            'kpasswd_server': [],
+        }])
+        krbconf.write()
 
-        # validate machine account secret can kinit
-        self.middleware.call_sync('kerberos.do_kinit', {
-            'krb5_cred': cred,
-            'kinit-options': {'ccache': 'TEMP', 'kdc_override': {
-                'domain': config['domainname'].upper(),
-                'kdc': kdc
-            }}
-        })
+        cred = {
+            'credential_type': 'KERBEROS_USER',
+            'username': netbiosname,
+            'password': b64decode(account_password).decode(),
+        }
+
+        kinit_with_cred(cred, ccache=krb5ccache.TEMP.value)
 
         # remove our ticket
         self.middleware.call_sync('kerberos.kdestroy', {'ccache': 'TEMP'})
@@ -75,9 +91,9 @@ class ADHealthMixin:
         credentials it contains.
         """
         self.logger.warning('Attempting to recover from broken or missing AD secrets file')
-        config = self.middleware.call_sync('activedirectory.config')
+        ds_config = self.middleware.call_sync('directoryservices.config')
         smb_config = self.middleware.call_sync('smb.config')
-        domain_info = get_domain_info(config['domainname'])
+        domain_info = get_domain_info(ds_config['configuration']['domain'])
 
         if not self.middleware.call_sync('directoryservices.secrets.restore', smb_config['netbiosname']):
             raise CallError(
@@ -90,10 +106,35 @@ class ADHealthMixin:
             smb_config['workgroup']
         )
 
-        self._test_machine_account_password(domain_info['kdc_server'], machine_pass)
+        try:
+            self._test_machine_account_password(domain_info['kdc_server'], machine_pass)
+        except KRB5Error as krberr:
+            match krberr.krb5_code:
+                case KRB5ErrCode.KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
+                    faulted_reason = (
+                        f"The domain controller at {domain_info['kdc_server']} said that the "
+                        "TrueNAS computer account does not exist. This happened after the "
+                        "TrueNAS server tried to recover the secret from a saved backup. "
+                        "This means that the TrueNAS account was deleted or that the domain "
+                        "controllers do not agree about the list of computer accounts. "
+                        "You may need to re-join TrueNAS to Active Directory. "
+                    )
+                case KRB5ErrCode.KRB5_PREAUTH_FAILED:
+                    faulted_reason = (
+                        f"The domain controller at {domain_info['kdc_server']} said that the "
+                        "TrueNAS computer account credentials are not valid. This means that "
+                        "saved credentials on TrueNAS do not match the credentials expected by"
+                        "the domain controller. This can happen if the TrueNAS configuration was "
+                        "restored from a backup, if the domain controllers in the domain do "
+                        "not agree about the credentials, or if someone changed the TrueNAS "
+                        "credentials through an unsupported method. You may need to re-join "
+                        "TrueNAS to Active Directory."
+                    )
+                case _:
+                    faulted_reason = f'Failed to validate stored credential: {krberr.errmsg}'
 
-        self.middleware.call_sync('service.control', 'STOP', 'idmap').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+            raise ADHealthError(ADHealthCheckFailReason.AD_SECRET_INVALID, faulted_reason)
+
         self.logger.warning('Recovered from broken or missing AD secrets file')
 
     def _recover_ad(self, error: ADHealthError) -> None:
@@ -120,8 +161,7 @@ class ADHealthMixin:
                 # not recoverable
                 raise error from None
 
-        self.middleware.call_sync('service.control', 'STOP', 'idmap').wait_sync(raise_error=True)
-        self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'RESTART', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
 
     def _health_check_ad(self):
         """
@@ -133,9 +173,9 @@ class ADHealthMixin:
         # We should validate some basic AD configuration before the common
         # kerberos health checks. This will expose issues with clock slew
         # and invalid stored machine account passwords
-        config = self.middleware.call_sync('activedirectory.config')
+        config = self.middleware.call_sync('directoryservices.config')
         try:
-            domain_info = get_domain_info(config['domainname'])
+            domain_info = get_domain_info(config['configuration']['domain'])
         except Exception:
             domain_info = None
 
@@ -179,11 +219,11 @@ class ADHealthMixin:
                     domain_info['kdc_server'],
                     machine_pass
                 )
-            except CallError:
+            except (CallError, KRB5Error):
                 faulted_reason = (
                     'Stored machine account secret is invalid. This may indicate that '
                     'the machine account password was reset in Active Directory without '
-                    'coresponding changes being made to the TrueNAS server configuration.'
+                    'corresponding changes being made to the TrueNAS server configuration.'
                 )
                 raise ADHealthError(
                     ADHealthCheckFailReason.AD_SECRET_INVALID,
@@ -207,7 +247,7 @@ class ADHealthMixin:
 
         if not self.middleware.call_sync('service.started', 'idmap'):
             try:
-                self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+                self.middleware.call_sync('service.control', 'START', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
             except CallError as e:
                 faulted_reason = str(e.errmsg)
                 raise ADHealthError(

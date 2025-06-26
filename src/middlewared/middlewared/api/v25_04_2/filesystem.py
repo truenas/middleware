@@ -18,15 +18,15 @@ from .common import QueryFilters, QueryOptions
 
 __all__ = [
     'FilesystemChownArgs', 'FilesystemChownResult',
-    'FilesystemSetPermArgs', 'FilesystemSetPermResult',
+    'FilesystemSetpermArgs', 'FilesystemSetpermResult',
     'FilesystemListdirArgs', 'FilesystemListdirResult',
     'FilesystemMkdirArgs', 'FilesystemMkdirResult',
     'FilesystemStatArgs', 'FilesystemStatResult',
     'FilesystemStatfsArgs', 'FilesystemStatfsResult',
-    'FilesystemSetZfsAttrsArgs', 'FilesystemSetZfsAttrsResult',
-    'FilesystemGetZfsAttrsArgs', 'FilesystemGetZfsAttrsResult',
-    'FilesystemGetFileArgs', 'FilesystemGetFileResult',
-    'FilesystemPutFileArgs', 'FilesystemPutFileResult',
+    'FilesystemSetZfsAttributesArgs', 'FilesystemSetZfsAttributesResult',
+    'FilesystemGetZfsAttributesArgs', 'FilesystemGetZfsAttributesResult',
+    'FilesystemGetArgs', 'FilesystemGetResult',
+    'FilesystemPutArgs', 'FilesystemPutResult',
 ]
 
 
@@ -74,7 +74,7 @@ class FilesystemChownResult(BaseModel):
 
 
 @single_argument_args('filesystem_setperm')
-class FilesystemSetPermArgs(FilesystemPermChownBase):
+class FilesystemSetpermArgs(FilesystemPermChownBase):
     mode: UnixPerm | None = None
     options: FilesystemSetpermOptions = Field(default=FilesystemSetpermOptions())
 
@@ -90,7 +90,7 @@ class FilesystemSetPermArgs(FilesystemPermChownBase):
         return self
 
 
-class FilesystemSetPermResult(BaseModel):
+class FilesystemSetpermResult(BaseModel):
     result: Literal[None]
 
 
@@ -330,28 +330,28 @@ class ZFSFileAttrsData(BaseModel):
 
 
 @single_argument_args('set_zfs_file_attributes')
-class FilesystemSetZfsAttrsArgs(BaseModel):
+class FilesystemSetZfsAttributesArgs(BaseModel):
     path: NonEmptyString
     zfs_file_attributes: ZFSFileAttrsData
 
 
-class FilesystemSetZfsAttrsResult(BaseModel):
+class FilesystemSetZfsAttributesResult(BaseModel):
     result: ZFSFileAttrsData
 
 
-class FilesystemGetZfsAttrsArgs(BaseModel):
+class FilesystemGetZfsAttributesArgs(BaseModel):
     path: NonEmptyString
 
 
-class FilesystemGetZfsAttrsResult(BaseModel):
+class FilesystemGetZfsAttributesResult(BaseModel):
     result: ZFSFileAttrsData
 
 
-class FilesystemGetFileArgs(BaseModel):
+class FilesystemGetArgs(BaseModel):
     path: NonEmptyString
 
 
-class FilesystemGetFileResult(BaseModel):
+class FilesystemGetResult(BaseModel):
     result: Literal[None]
 
 
@@ -360,10 +360,10 @@ class FilesystemPutOptions(BaseModel):
     mode: int | None = None
 
 
-class FilesystemPutFileArgs(BaseModel):
+class FilesystemPutArgs(BaseModel):
     path: NonEmptyString
     options: FilesystemPutOptions = FilesystemPutOptions()
 
 
-class FilesystemPutFileResult(BaseModel):
+class FilesystemPutResult(BaseModel):
     result: Literal[True]

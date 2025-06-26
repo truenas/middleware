@@ -270,7 +270,11 @@ AD_SESSION = PAMConfLines(
         PAMLine(
             pam_service=PAMService.SESSION,
             pam_control=PAMSimpleControl.OPTIONAL,
-            pam_module=PAMModule.WINBIND
+            pam_module=PAMModule.WINBIND,
+            # We have pam_winbind handle mkhomedir because pam_mkhomedir
+            # is erratic for automatic home directory creation for AD users.
+            # This is simpler than fixing pam_mkhomedir.
+            pam_module_args=('mkhomedir',)
         ),
     )
 )
@@ -321,7 +325,7 @@ FAILLOCK_AUTH_FAIL = PAMLine(
 
 FAILLOCK_AUTH_SUCC = PAMLine(
     pam_service=PAMService.AUTH,
-    pam_control=PAMSimpleControl.SUFFICIENT,
+    pam_control=PAMSimpleControl.REQUIRED,
     pam_module=PAMModule.FAILLOCK,
     pam_module_args=(
         'authsucc',

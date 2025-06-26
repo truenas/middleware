@@ -1,8 +1,8 @@
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (IscsiPortalCreateArgs, IscsiPortalCreateResult, IscsiPortalDeleteArgs,
-                                     IscsiPortalDeleteResult, IscsiPortalEntry, IscsiPortalListenIPChoicesArgs,
-                                     IscsiPortalListenIPChoicesResult, IscsiPortalUpdateArgs, IscsiPortalUpdateResult)
+from middlewared.api.current import (ISCSIPortalCreateArgs, ISCSIPortalCreateResult, ISCSIPortalDeleteArgs,
+                                     ISCSIPortalDeleteResult, IscsiPortalEntry, ISCSIPortalListenIpChoicesArgs,
+                                     ISCSIPortalListenIpChoicesResult, ISCSIPortalUpdateArgs, ISCSIPortalUpdateResult)
 from middlewared.service import CRUDService, private, ValidationErrors
 
 
@@ -69,7 +69,7 @@ class ISCSIPortalService(CRUDService):
             })
         return data
 
-    @api_method(IscsiPortalListenIPChoicesArgs, IscsiPortalListenIPChoicesResult)
+    @api_method(ISCSIPortalListenIpChoicesArgs, ISCSIPortalListenIpChoicesResult)
     async def listen_ip_choices(self):
         """
         Returns possible choices for `listen.ip` attribute of portal create and update.
@@ -121,8 +121,8 @@ class ISCSIPortalService(CRUDService):
                     verrors.add(f'{schema}.listen', f'IP {i["ip"]} not configured on this system.')
 
     @api_method(
-        IscsiPortalCreateArgs,
-        IscsiPortalCreateResult,
+        ISCSIPortalCreateArgs,
+        ISCSIPortalCreateResult,
         audit='Create iSCSI portal',
         audit_extended=lambda data: portal_summary(data)
     )
@@ -186,8 +186,8 @@ class ISCSIPortalService(CRUDService):
                 )
 
     @api_method(
-        IscsiPortalUpdateArgs,
-        IscsiPortalUpdateResult,
+        ISCSIPortalUpdateArgs,
+        ISCSIPortalUpdateResult,
         audit='Update iSCSI portal',
         audit_callback=True,
     )
@@ -220,8 +220,8 @@ class ISCSIPortalService(CRUDService):
         return await self.get_instance(pk)
 
     @api_method(
-        IscsiPortalDeleteArgs,
-        IscsiPortalDeleteResult,
+        ISCSIPortalDeleteArgs,
+        ISCSIPortalDeleteResult,
         audit='Delete iSCSI portal',
         audit_callback=True,
     )

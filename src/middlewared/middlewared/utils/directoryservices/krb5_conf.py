@@ -339,6 +339,7 @@ class KRB5Conf():
         for realm in list(self.realms.keys()):
             this_realm = self.realms[realm].copy()
             this_realm.pop('realm')
+
             kconf += self.__dump_a_parameter(
                 realm, {'default_domain': realm} | this_realm
             )

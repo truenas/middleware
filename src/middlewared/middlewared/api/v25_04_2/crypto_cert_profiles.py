@@ -8,9 +8,9 @@ __all__ = (
     "CertProfilesArgs",
     "CertProfilesModel",
     "CertProfilesResult",
-    "CSRProfilesArgs",
+    "WebUICryptoCsrProfilesArgs",
     "CSRProfilesModel",
-    "CSRProfilesResult",
+    "WebUICryptoCsrProfilesResult",
 )
 
 
@@ -167,10 +167,10 @@ class CSRProfilesModel(BaseModel):
     )
 
 
-class CSRProfilesArgs(BaseModel):
+class WebUICryptoCsrProfilesArgs(BaseModel):
     pass
 
 
 @final
-class CSRProfilesResult(BaseModel):
+class WebUICryptoCsrProfilesResult(BaseModel):
     result: CSRProfilesModel = CSRProfilesModel()

@@ -20,6 +20,8 @@ __all__ = [
     "SystemGeneralEntry", "SystemGeneralUpdateArgs", "SystemGeneralUpdateResult",
     "SystemGeneralCheckinWaitingArgs", "SystemGeneralCheckinWaitingResult",
     "SystemGeneralCheckinArgs", "SystemGeneralCheckinResult",
+    'SystemGeneralCountryChoicesArgs',
+    'SystemGeneralCountryChoicesResult',
 ]
 
 
@@ -82,3 +84,11 @@ class SystemGeneralCheckinArgs(BaseModel):
 
 class SystemGeneralCheckinResult(BaseModel):
     result: None
+
+
+class SystemGeneralCountryChoicesArgs(BaseModel):
+    pass
+
+
+class SystemGeneralCountryChoicesResult(BaseModel):
+    result: dict[str, str]

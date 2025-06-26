@@ -8,14 +8,33 @@ class CompoundService(Service):
     def __init__(self, middleware, parts):
         super().__init__(middleware)
 
-        config_specified = {}
+        config_specified = {
+            'events': [],
+            'event_sources': {},
+        }
+
+        for part in parts:
+            for event in part._config_specified.get('events', []):
+                config_specified['events'].append(event)
+            for name, klass in part._config_specified.get('event_sources', {}).items():
+                if name in config_specified['event_sources']:
+                    raise RuntimeError(f'More than one part defines event source {name!r}')
+
+                config_specified['event_sources'][name] = klass
+
         for part1, part2 in itertools.combinations(parts, 2):
-            for key in set(part1._config_specified.keys()) & set(part2._config_specified.keys()):
-                if part1._config_specified[key] != part2._config_specified[key]:
-                    raise RuntimeError(f'{part1} has {key}={part1._config_specified[key]!r}, but '
-                                       f'{part2} has {key}={part2._config_specified[key]!r}')
-            config_specified.update(part1._config_specified)
-            config_specified.update(part2._config_specified)
+            config1 = part1._config_specified.copy()
+            config2 = part2._config_specified.copy()
+            for k in ['events', 'event_sources']:
+                config1.pop(k, None)
+                config2.pop(k, None)
+
+            for key in set(config1.keys()) & set(config2.keys()):
+                if config1[key] != config2[key]:
+                    raise RuntimeError(f'{part1} has {key}={config1[key]!r}, but {part2} has {key}={config2[key]!r}')
+
+            config_specified.update(config1)
+            config_specified.update(config2)
 
         self._config = service_config(parts[0].__class__, config_specified)
 

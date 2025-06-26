@@ -8,7 +8,7 @@ from truenas_connect_utils.urls import get_registration_uri
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    TNCGetRegistrationURIArgs, TNCGetRegistrationURIResult, TNCGenerateClaimTokenArgs, TNCGenerateClaimTokenResult,
+    TrueNASConnectGetRegistrationUriArgs, TrueNASConnectGetRegistrationUriResult, TrueNASConnectGenerateClaimTokenArgs, TrueNASConnectGenerateClaimTokenResult,
 )
 from middlewared.service import CallError, Service
 
@@ -24,7 +24,7 @@ class TrueNASConnectService(Service):
         namespace = 'tn_connect'
         cli_private = True
 
-    @api_method(TNCGenerateClaimTokenArgs, TNCGenerateClaimTokenResult, roles=['TRUENAS_CONNECT_WRITE'])
+    @api_method(TrueNASConnectGenerateClaimTokenArgs, TrueNASConnectGenerateClaimTokenResult, roles=['TRUENAS_CONNECT_WRITE'])
     async def generate_claim_token(self):
         """
         Generate a claim token for TrueNAS Connect.
@@ -61,7 +61,7 @@ class TrueNASConnectService(Service):
         return claim_token
 
 
-    @api_method(TNCGetRegistrationURIArgs, TNCGetRegistrationURIResult, roles=['TRUENAS_CONNECT_READ'])
+    @api_method(TrueNASConnectGetRegistrationUriArgs, TrueNASConnectGetRegistrationUriResult, roles=['TRUENAS_CONNECT_READ'])
     async def get_registration_uri(self):
         """
         Return the registration URI for TrueNAS Connect.
@@ -86,5 +86,10 @@ class TrueNASConnectService(Service):
             'system_id': await self.middleware.call('system.global.id'),
             'token': claim_token,
         }
+
+        # Add license information if valid license exists
+        license_info = await self.middleware.call('system.license', True)
+        if license_info is not None and not license_info.get('expired', True):
+            query_params['license'] = license_info['raw_license']
 
         return f'{get_registration_uri(config)}?{urlencode(query_params)}'

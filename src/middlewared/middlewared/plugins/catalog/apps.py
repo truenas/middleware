@@ -1,6 +1,6 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AppCategoriesArgs, AppCategoriesResult, AppAvailableResponse,
+    AppCategoriesArgs, AppCategoriesResult, AppAvailableItem, AppLatestItem,
 )
 from middlewared.api.v25_04_0 import AppSimilarArgs, AppSimilarResult
 from middlewared.service import filterable_api_method, Service
@@ -14,7 +14,7 @@ class AppService(Service):
     class Config:
         cli_namespace = 'app'
 
-    @filterable_api_method(item=AppAvailableResponse, roles=['CATALOG_READ'])
+    @filterable_api_method(item=AppLatestItem, roles=['CATALOG_READ'])
     async def latest(self, filters, options):
         """
         Retrieve latest updated apps.
@@ -27,7 +27,7 @@ class AppService(Service):
             ), filters, options
         )
 
-    @filterable_api_method(item=AppAvailableResponse, roles=['CATALOG_READ'])
+    @filterable_api_method(item=AppAvailableItem, roles=['CATALOG_READ'])
     def available(self, filters, options):
         """
         Retrieve all available applications from all configured catalogs.

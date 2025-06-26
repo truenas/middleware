@@ -15,12 +15,12 @@ from pydantic import Field, field_validator, IPvAnyInterface, model_validator
 from typing import Literal, Self
 
 __all__ = [
-    'GetSmbAclArgs', 'GetSmbAclResult',
-    'SetSmbAclArgs', 'SetSmbAclResult',
-    'SmbServiceEntry', 'SmbServiceUpdateArgs', 'SmbServiceUpdateResult',
-    'SmbServiceUnixCharsetChoicesArgs', 'SmbServiceUnixCharsetChoicesResult',
-    'SmbServiceBindIPChoicesArgs', 'SmbServiceBindIPChoicesResult',
-    'SmbSharePresetsArgs', 'SmbSharePresetsResult',
+    'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
+    'SharingSMBSetaclArgs', 'SharingSMBSetaclResult',
+    'SmbServiceEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
+    'SMBUnixcharsetChoicesArgs', 'SMBUnixcharsetChoicesResult',
+    'SMBBindipChoicesArgs', 'SMBBindipChoicesResult',
+    'SharingSMBPresetsArgs', 'SharingSMBPresetsResult',
 ]
 
 EMPTY_STRING = ''
@@ -88,20 +88,20 @@ class SMBShareAcl(BaseModel):
 
 
 @single_argument_args('smb_setacl')
-class SetSmbAclArgs(SMBShareAcl):
+class SharingSMBSetaclArgs(SMBShareAcl):
     pass
 
 
-class SetSmbAclResult(BaseModel):
+class SharingSMBSetaclResult(BaseModel):
     result: SMBShareAcl
 
 
 @single_argument_args('smb_getacl')
-class GetSmbAclArgs(BaseModel):
+class SharingSMBGetaclArgs(BaseModel):
     share_name: NonEmptyString
 
 
-class GetSmbAclResult(SetSmbAclResult):
+class SharingSMBGetaclResult(SharingSMBSetaclResult):
     pass
 
 
@@ -171,33 +171,33 @@ class SmbServiceEntry(BaseModel):
 
 
 @single_argument_args('smb_update')
-class SmbServiceUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
+class SMBUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class SmbServiceUpdateResult(BaseModel):
+class SMBUpdateResult(BaseModel):
     result: SmbServiceEntry
 
 
-class SmbServiceUnixCharsetChoicesArgs(BaseModel):
+class SMBUnixcharsetChoicesArgs(BaseModel):
     pass
 
 
-class SmbServiceUnixCharsetChoicesResult(BaseModel):
+class SMBUnixcharsetChoicesResult(BaseModel):
     result: dict[str, SMBCharsetType]
 
 
-class SmbServiceBindIPChoicesArgs(BaseModel):
+class SMBBindipChoicesArgs(BaseModel):
     pass
 
 
-class SmbServiceBindIPChoicesResult(BaseModel):
+class SMBBindipChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class SmbSharePresetsArgs(BaseModel):
+class SharingSMBPresetsArgs(BaseModel):
     pass
 
 
-class SmbSharePresetsResult(BaseModel):
+class SharingSMBPresetsResult(BaseModel):
     result: dict[str, dict]

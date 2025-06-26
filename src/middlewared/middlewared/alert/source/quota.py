@@ -1,14 +1,10 @@
-from datetime import timedelta
+import datetime
 import logging
 import os
 
-try:
-    from bsd import getmntinfo
-except ImportError:
-    getmntinfo = None
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils.mount import getmntinfo
 from middlewared.utils.size import format_size
 from middlewared.plugins.zfs_.utils import TNUserProp
 
@@ -30,93 +26,88 @@ class QuotaCriticalAlertClass(AlertClass):
 
 
 class QuotaAlertSource(ThreadedAlertSource):
-    schedule = IntervalSchedule(timedelta(minutes=5))
+    schedule = IntervalSchedule(datetime.timedelta(hours=1))
+    run_on_backup_node = False
+
+    def __cast_threshold(self, val):
+        try:
+            return abs(int(val))
+        except Exception:
+            # this is a zfs user property that can
+            # be altered trivially by-hand, let's
+            # not crash here
+            return 0
 
     def check_sync(self):
         alerts = []
-
-        datasets = self.middleware.call_sync("zfs.dataset.query_for_quota_alert")
-
-        pool_sizes = {}
-        for d in datasets:
-            d["name"] = d["name"]["rawvalue"]
-
-            if "/" not in d["name"]:
-                pool_sizes[d["name"]] = int(d["available"]["rawvalue"]) + int(d["used"]["rawvalue"])
-
-            for k, default in TNUserProp.quotas():
-                try:
-                    d[k] = int(d[k]["rawvalue"])
-                except (KeyError, ValueError):
-                    d[k] = default
-
-        # call this outside the for loop since we don't need to check
-        # for every dataset that could be potentially be out of quota...
         hostname = self.middleware.call_sync("system.hostname")
-        datasets = sorted(datasets, key=lambda ds: ds["name"])
-        for dataset in datasets:
-            for quota_property in ["quota", "refquota"]:
-                warn_prop = TNUserProp[f"{quota_property.upper()}_WARN"]
-                crit_prop = TNUserProp[f"{quota_property.upper()}_CRIT"]
-                try:
-                    quota_value = int(dataset[quota_property]["rawvalue"])
-                except (AttributeError, KeyError, ValueError):
+        mntinfo = getmntinfo()
+        rv = self.middleware.call_sync("pool.dataset.query_for_quota_alert")
+        for ds, info in rv["datasets"].items():
+            props, uprops = info["properties"], info["user_properties"]
+            for quota_property in ("quota", "refquota"):
+                quota_value = props[quota_property]["value"]
+                if quota_value == 0:
+                    # if there is no quota on the dataset
+                    # then there is no reason to continue
                     continue
 
-                if quota_value == 0:
+                warn_prop = TNUserProp[f"{quota_property.upper()}_WARN"]
+                warning_threshold = self.__cast_threshold(uprops[warn_prop.value])
+                if warning_threshold == 0:
+                    # there is a quota on the dataset but there is
+                    # no warning threshold configured or the value
+                    # written isn't a number
+                    continue
+
+                crit_prop = TNUserProp[f"{quota_property.upper()}_CRIT"]
+                critical_threshold = self.__cast_threshold(uprops[crit_prop.value])
+                if critical_threshold == 0:
+                    # there is a quota on the dataset but there is
+                    # no critical threshold configured or the value
+                    # written isn't a number
                     continue
 
                 if quota_property == "quota":
                     # We can't use "used" property since it includes refreservation
-
-                    # But if "refquota" is smaller than "quota", then "available" will be reported with regards to
-                    # that smaller value, and we will get false positive
-                    try:
-                        refquota_value = int(dataset["refquota"]["rawvalue"])
-                    except (AttributeError, KeyError, ValueError):
-                        continue
-                    else:
-                        if refquota_value and refquota_value < quota_value:
-                            continue
-
-                    # Quota larger than dataset available size will never be exceeded,
-                    # but will break out logic
-                    if quota_value > pool_sizes[dataset["name"].split("/")[0]]:
+                    # But if "refquota" is smaller than "quota", then "available"
+                    # will be reported with regards to that smaller value, and we
+                    # will get false positive
+                    refquota_value = props["refquota"]["value"]
+                    if refquota_value and refquota_value < quota_value:
                         continue
 
-                    used = quota_value - int(dataset["available"]["rawvalue"])
+                    if quota_value > rv["pools"][info["pool"]]:
+                        # Quota larger than zpool's total size will never
+                        # be exceeded but will break our logic
+                        continue
+
+                    used = quota_value - props["available"]["value"]
                 elif quota_property == "refquota":
-                    used = int(dataset["usedbydataset"]["rawvalue"])
-                else:
-                    raise RuntimeError()
+                    used = props["usedbydataset"]["value"]
 
                 used_fraction = 100 * used / quota_value
-
-                critical_threshold = dataset[crit_prop.value]
-                warning_threshold = dataset[warn_prop.value]
-                if critical_threshold != 0 and used_fraction >= critical_threshold:
+                if used_fraction >= critical_threshold:
                     klass = QuotaCriticalAlertClass
-                elif warning_threshold != 0 and used_fraction >= warning_threshold:
+                elif used_fraction >= warning_threshold:
                     klass = QuotaWarningAlertClass
                 else:
                     continue
 
-                quota_name = quota_property[0].upper() + quota_property[1:]
+                quota_name = quota_property.title()
                 args = {
                     "name": quota_name,
-                    "dataset": dataset["name"],
+                    "dataset": ds,
                     "used_fraction": used_fraction,
                     "used": format_size(used),
                     "quota_value": format_size(quota_value),
                 }
 
                 mail = None
-                owner = self._get_owner(dataset)
+                owner = self._get_owner(ds, props, mntinfo)
                 if owner != 0:
                     try:
-                        self.middleware.call_sync(
-                            'user.get_user_obj', {'uid': owner}
-                        )
+                        self.middleware.call_sync('user.get_user_obj', {'uid': owner})
                     except KeyError:
                         to = None
                         logger.debug("Unable to query user with uid %r", owner)
@@ -135,31 +126,31 @@ class QuotaAlertSource(ThreadedAlertSource):
                     if to is not None:
                         mail = {
                             "to": [to],
-                            "subject": f"{hostname}: {quota_name} exceeded on dataset {dataset['name']}",
+                            "subject": f"{hostname}: {quota_name} exceeded on dataset {ds}",
                             "text": klass.text % args
                         }
 
                 alerts.append(Alert(
                     klass,
                     args=args,
-                    key=[dataset["name"], quota_property],
+                    key=[ds, quota_property],
                     mail=mail,
                 ))
-
         return alerts
 
-    def _get_owner(self, dataset):
+    def _get_owner(self, dataset_name, props, mntinfo):
         mountpoint = None
-        if dataset["mounted"]["value"] == "yes":
-            if dataset["mountpoint"]["value"] == "legacy":
-                for m in (getmntinfo() if getmntinfo else []):
-                    if m.source == dataset["name"]:
-                        mountpoint = m.dest
+        if props["mounted"]["value"] is True:
+            if props["mountpoint"]["raw"] == "legacy":
+                for v in mntinfo.values():
+                    if v["mount_source"] == dataset_name:
+                        mountpoint = v["mountpoint"]
                         break
             else:
-                mountpoint = dataset["mountpoint"]["value"]
+                mountpoint = props["mountpoint"]["raw"]
+
         if mountpoint is None:
-            logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root", dataset["name"])
+            logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root", dataset_name)
             uid = 0
         else:
             try:
@@ -169,5 +160,4 @@ class QuotaAlertSource(ThreadedAlertSource):
                 uid = 0
             else:
                 uid = stat_info.st_uid
-
         return uid

@@ -1,43 +1,31 @@
-import enum
 import struct
 
 from base64 import b64decode
-from middlewared.schema import accepts, Dict, List, OROperator, returns, Str
-from middlewared.service import no_authz_required, Service, private, job
-from middlewared.service_exception import MatchNotFound
-from middlewared.utils.directoryservices.constants import (
-    DSStatus, DSType, NSS_Info
+from middlewared.api import api_method
+from middlewared.api.current import (
+    DirectoryServicesStatusArgs, DirectoryServicesStatusResult,
+    DirectoryServicesCacheRefreshArgs, DirectoryServicesCacheRefreshResult,
 )
+from middlewared.plugins.directoryservices_.util_cache import check_cache_version
+from middlewared.service import Service, private, job
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.health import DSHealthObj
 
-DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
-
-
-class SSL(enum.Enum):
-    NOSSL = 'OFF'
-    USESSL = 'ON'
-    USESTARTTLS = 'START_TLS'
-
-
-class SASL_Wrapping(enum.Enum):
-    PLAIN = 'PLAIN'
-    SIGN = 'SIGN'
-    SEAL = 'SEAL'
+DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh', 'ftp']
 
 
 class DirectoryServices(Service):
     class Config:
         service = "directoryservices"
         cli_namespace = "directory_service"
+        datastore = "directoryservices"
+        datastore_extend = "directoryservices.extend"
+        role_prefix = "DIRECTORY_SERVICE"
 
-    @no_authz_required
-    @accepts()
-    @returns(Dict(
-        'directoryservices_status',
-        Str('type', enum=[x.value for x in DSType], null=True),
-        Str('status', enum=[status.name for status in DSStatus], null=True),
-        Str('status_msg', null=True)
-    ))
+    @api_method(
+        DirectoryServicesStatusArgs, DirectoryServicesStatusResult,
+        authorization_required=False
+    )
     def status(self):
         """
         Provide the type and status of the currently-enabled directory service
@@ -50,38 +38,25 @@ class DirectoryServices(Service):
 
         return DSHealthObj.dump()
 
-    @no_authz_required
-    @accepts()
-    @returns(Dict(
-        'directory_services_states',
-        Str(DSType.AD.value.lower(), enum=[status.name for status in DSStatus]),
-        Str(DSType.LDAP.value.lower(), enum=[status.name for status in DSStatus]),
-    ))
+    @private
     def get_state(self):
-        """
-        `DISABLED` Directory Service is disabled.
-
-        `FAULTED` Directory Service is enabled, but not HEALTHY. Review logs and generated alert
-        messages to debug the issue causing the service to be in a FAULTED state.
-
-        `LEAVING` Directory Service is in process of stopping.
-
-        `JOINING` Directory Service is in process of starting.
-
-        `HEALTHY` Directory Service is enabled, and last status check has passed.
-        """
-        output = {'activedirectory': DSStatus.DISABLED.name, 'ldap': DSStatus.DISABLED.name}
+        """ LEGACY method to get directory services state. To be removed when UI
+        stops using this. """
+        output = {'activedirectory': 'DISABLED', 'ldap': 'DISABLED'}
         status = self.status()
 
         match status['type']:
-            case DSType.AD.value:
-                output[DSType.AD.value.lower()] = status['status']
-            case DSType.LDAP.value | DSType.IPA.value:
-                output[DSType.LDAP.value.lower()] = status['status']
+            case 'ACTIVEDIRECTORY':
+                output['activedirectory'] = status['status']
+            case 'LDAP' | 'IPA':
+                output['ldap'] = status['status']
 
         return output
 
-    @accepts()
+    @api_method(
+        DirectoryServicesCacheRefreshArgs, DirectoryServicesCacheRefreshResult,
+        roles=['DIRECTORY_SERVICE_WRITE']
+    )
     @job(lock="directoryservices_refresh_cache", lock_queue_size=1)
     async def cache_refresh(self, job):
         """
@@ -98,50 +73,6 @@ class DirectoryServices(Service):
         with users being unable to authenticate to shares.
         """
         return await job.wrap(await self.middleware.call('directoryservices.cache.refresh_impl'))
-
-    @private
-    @returns(List(
-        'ldap_ssl_choices', items=[
-            Str('ldap_ssl_choice', enum=[x.value for x in list(SSL)], default=SSL.USESSL.value, register=True)
-        ]
-    ))
-    async def ssl_choices(self, dstype):
-        return [x.value for x in list(SSL)]
-
-    @private
-    @returns(List(
-        'sasl_wrapping_choices', items=[
-            Str('sasl_wrapping_choice', enum=[x.value for x in list(SASL_Wrapping)], register=True)
-        ]
-    ))
-    async def sasl_wrapping_choices(self, dstype):
-        return [x.value for x in list(SASL_Wrapping)]
-
-    @private
-    @returns(OROperator(
-        List('ad_nss_choices', items=[Str(
-            'nss_info_ad',
-            enum=[x.value[0] for x in NSS_Info if DSType.AD in x.value[1]],
-            default=NSS_Info.SFU.value[0],
-            register=True
-        )]),
-        List('ldap_nss_choices', items=[Str(
-            'nss_info_ldap',
-            enum=[x.value[0] for x in NSS_Info if DSType.LDAP in x.value[1]],
-            default=NSS_Info.RFC2307.value[0],
-            register=True)
-        ]),
-        name='nss_info_choices'
-    ))
-    async def nss_info_choices(self, dstype):
-        ds = DSType(dstype)
-        ret = []
-
-        for x in list(NSS_Info):
-            if ds in x.value[1]:
-                ret.append(x.value[0])
-
-        return ret
 
     @private
     async def get_last_password_change(self, domain=None):
@@ -176,7 +107,7 @@ class DirectoryServices(Service):
 
     @private
     @job()
-    async def initialize(self, job, data=None):
+    async def initialize(self, job):
         # retrieve status to force initialization of status
         if (await self.middleware.call('directoryservices.status'))['type'] is None:
             return
@@ -199,14 +130,9 @@ class DirectoryServices(Service):
     @private
     @job(lock='ds_init', lock_queue_size=1)
     def setup(self, job):
+        # ensure that samba is properly configured
         config_job = self.middleware.call_sync('smb.configure')
         config_job.wait_sync(raise_error=True)
-
-        failover_status = self.middleware.call_sync('failover.status')
-        if failover_status not in ('SINGLE', 'MASTER'):
-            self.logger.debug('%s: skipping directory service setup due to failover status', failover_status)
-            job.set_progress(100, f'{failover_status}: skipping directory service setup due to failover status')
-            return
 
         # Recover is called here because it short-circuits if health check
         # shows we're healthy. If we can't recover due to things being irreparably
@@ -217,9 +143,13 @@ class DirectoryServices(Service):
 
         # nsswitch.conf needs to be updated
         self.middleware.call_sync('etc.generate', 'nss')
-        job.set_progress(10, 'Refreshing cache'),
-        cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
-        cache_refresh.wait_sync()
+
+        # The UI / API user cache isn't required for standby controller. This means we can avoid unnecessary
+        # load on remote servers.
+        if self.middleware.call_sync('failover.is_single_master_node'):
+            job.set_progress(10, 'Refreshing cache'),
+            cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
+            cache_refresh.wait_sync()
 
         job.set_progress(75, 'Restarting dependent services')
         self.restart_dependent_services()
@@ -237,3 +167,9 @@ async def setup(middleware):
         'Sent on directory service state changes.',
         roles=['DIRECTORY_SERVICE_READ']
     )
+    truenas_version = await middleware.call('system.version_short')
+
+    try:
+        await middleware.run_in_thread(check_cache_version, truenas_version)
+    except Exception:
+        middleware.logger.warning('Failed to check directory services cache', exc_info=True)

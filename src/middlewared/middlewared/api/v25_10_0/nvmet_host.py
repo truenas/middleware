@@ -14,10 +14,10 @@ __all__ = [
     "NVMetHostDeleteResult",
     "NVMetHostGenerateKeyArgs",
     "NVMetHostGenerateKeyResult",
-    "NVMetHostDHChapDHGroupChoicesArgs",
-    "NVMetHostDHChapDHGroupChoicesResult",
-    "NVMetHostDHChapHashChoicesArgs",
-    "NVMetHostDHChapHashChoicesResult",
+    "NVMetHostDhchapDhgroupChoicesArgs",
+    "NVMetHostDhchapDhgroupChoicesResult",
+    "NVMetHostDhchapHashChoicesArgs",
+    "NVMetHostDhchapHashChoicesResult",
 ]
 
 DHChapHashType: TypeAlias = Literal['SHA-256', 'SHA-384', 'SHA-512']
@@ -104,17 +104,17 @@ class NVMetHostGenerateKeyResult(BaseModel):
     result: str
 
 
-class NVMetHostDHChapDHGroupChoicesArgs(BaseModel):
+class NVMetHostDhchapDhgroupChoicesArgs(BaseModel):
     pass
 
 
-class NVMetHostDHChapDHGroupChoicesResult(BaseModel):
+class NVMetHostDhchapDhgroupChoicesResult(BaseModel):
     result: list[DHChapDHGroupType]
 
 
-class NVMetHostDHChapHashChoicesArgs(BaseModel):
+class NVMetHostDhchapHashChoicesArgs(BaseModel):
     pass
 
 
-class NVMetHostDHChapHashChoicesResult(BaseModel):
+class NVMetHostDhchapHashChoicesResult(BaseModel):
     result: list[DHChapHashType]

@@ -1,3 +1,5 @@
+# Utilities for generating the smb.conf file based on various TrueNAS settings
+
 import os
 import enum
 
@@ -8,9 +10,11 @@ from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
+from middlewared.utils.smb import SMBSharePurpose
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, SMBSharePreset
-from middlewared.plugins.smb_.utils import apply_presets, smb_strip_comments
+from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, VEEAM_REPO_BLOCKSIZE
+from middlewared.plugins.smb_.constants import SMBShareField as share_field
+from middlewared.plugins.smb_.utils import get_share_name
 from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
 
 LOGGER = getLogger(__name__)
@@ -35,6 +39,8 @@ AD_KEYTAB_PARAMS = (
     f"{SAMBA_KEYTAB_DIR}/krb5.keytab2:spn_prefixes=nfs:sync_kvno:machine_password"
 )
 
+EXCLUDED_IDMAP_ITEMS = frozenset(['name', 'range_low', 'range_high', 'idmap_backend', 'sssd_compat'])
+
 
 class TrueNASVfsObjects(enum.StrEnum):
     # Ordering here determines order in which objects entered into
@@ -55,7 +61,27 @@ class TrueNASVfsObjects(enum.StrEnum):
     ZFS_FSRVP = 'zfs_fsrvp'
 
 
-def __order_vfs_objects(vfs_objects: set, fruit_enabled: bool, purpose: str):
+def __parse_aux_param_list(smbconf: dict, aux: list[str]) -> None:
+    for entry in aux:
+        entry = entry.strip()
+
+        # Skip if entry is commented-out or if it's not in format of `key = value`
+        if entry.startswith(('#', ';')) or '=' not in entry:
+            continue
+
+        param, value = entry.split('=', 1)
+        param = param.strip()
+        value = value.strip()
+
+        # User may have old garbage from prior releases that were less restrictive
+        # (or manually edited the sqlite database) so check blacklist before insert.
+        if param in AUX_PARAM_BLACKLIST:
+            continue
+
+        smbconf[param] = value
+
+
+def __order_vfs_objects(vfs_objects: set, fruit_enabled: bool):
     vfs_objects_ordered = []
 
     if fruit_enabled:
@@ -65,12 +91,6 @@ def __order_vfs_objects(vfs_objects: set, fruit_enabled: bool, purpose: str):
     if TrueNASVfsObjects.FRUIT in vfs_objects:
         # vfs_fruit requires streams_xattr
         vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
-
-    if purpose == 'WORM_DROPBOX':
-        vfs_objects.add(TrueNASVfsObjects.WORM)
-
-    elif purpose == 'ENHANCED_TIMEMACHINE':
-        vfs_objects.add(TrueNASVfsObjects.TMPROTECT)
 
     for obj in TrueNASVfsObjects:
         if obj in vfs_objects:
@@ -106,36 +126,160 @@ def __parse_share_fs_acl(share_path: str, vfs_objects: set) -> None:
 
 
 def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict) -> None:
-    path = share_config['path']
+    path = share_config[share_field.PATH]
+    opts = share_config[share_field.OPTS]
+    path_suffix = None
+    default_path_suffix = '%D/%u' if ds_type is DSType.AD else '%u'
 
-    if path_location(path) is FSLocation.EXTERNAL:
+    if path == 'EXTERNAL':
         config_out.update({
             'msdfs root': True,
-            'msdfs proxy': path[len('EXTERNAL:'):],
-            'path': '/var/empty'
+            'msdfs proxy': ','.join(share_config[share_field.OPTS][share_field.REMOTE_PATH]),
         })
-        return
+        path = '/var/empty'
 
-    if share_config['home'] and not share_config['path_suffix']:
-        if ds_type is DSType.AD:
-            share_config['path_suffix'] = '%D/%U'
-        else:
-            share_config['path_suffix'] = '%U'
+    match share_config[share_field.PURPOSE]:
+        case SMBSharePurpose.LEGACY_SHARE:
+            if opts[share_field.HOME] and not opts[share_field.PATH_SUFFIX]:
+                path_suffix = default_path_suffix
 
-    if share_config['path_suffix']:
-        path = os.path.join(path, share_config['path_suffix'])
+            elif opts[share_field.PATH_SUFFIX]:
+                path_suffix = opts[share_field.PATH_SUFFIX]
+
+        case SMBSharePurpose.TIMEMACHINE_SHARE:
+            if opts[share_field.AUTO_DS]:
+                path_suffix = opts[share_field.DS_NAMING_SCHEMA] or default_path_suffix
+
+        case SMBSharePurpose.PRIVATE_DATASETS_SHARE:
+            path_suffix = opts[share_field.DS_NAMING_SCHEMA] or default_path_suffix
+
+        case _:
+            pass
+
+    acl_check_path = path
+    if path_suffix:
+        path = os.path.join(path, path_suffix)
 
     config_out['path'] = path
+    return acl_check_path
+
+
+def __apply_purpose_and_options(
+    ds_type: DSType,
+    vfs_objects: set,
+    config_in: dict,
+    out: dict,
+    acl_check_path: str
+) -> None:
+    acl_enabled = True
+    opts = config_in[share_field.OPTS]
+
+    match config_in[share_field.PURPOSE]:
+        case SMBSharePurpose.DEFAULT_SHARE:
+            vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+            out['posix locking'] = False
+
+        case SMBSharePurpose.TIMEMACHINE_SHARE:
+            vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+            out['fruit:time machine'] = True
+            out['posix locking'] = False
+            if opts[share_field.AUTO_SNAP]:
+                vfs_objects.add(TrueNASVfsObjects.TMPROTECT)
+            if opts[share_field.AUTO_DS]:
+                out['zfs_core:zfs_auto_create'] = True
+            if opts[share_field.TIMEMACHINE_QUOTA]:
+                out['fruit:time machine max size'] = opts[share_field.TIMEMACHINE_QUOTA]
+
+        case SMBSharePurpose.MULTIPROTOCOL_SHARE:
+            vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+            out['posix locking'] = False
+            out['oplocks'] = 'no'
+            out['level2 oplocks'] = 'no'
+
+        case SMBSharePurpose.PRIVATE_DATASETS_SHARE:
+            vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+            out['zfs_core:zfs_auto_create'] = True
+            if opts[share_field.AUTO_QUOTA]:
+                out['zfs_core:dataset_auto_quota'] = f'{opts[share_field.AUTO_QUOTA]}G'
+
+        case SMBSharePurpose.LEGACY_SHARE:
+            out['hosts allow'] = opts[share_field.HOSTSALLOW]
+            out['hosts deny'] = opts[share_field.HOSTSDENY]
+            out['nt acl support'] = opts[share_field.ACL]
+            out['guest ok'] = opts[share_field.GUESTOK]
+            if opts[share_field.STREAMS]:
+                vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+
+            if opts[share_field.RECYCLE]:
+                vfs_objects.add(TrueNASVfsObjects.RECYCLE)
+                out.update({
+                    'recycle:repository': '.recycle/%D/%U' if ds_type is DSType.AD else '.recycle/%U',
+                    'recycle:keeptree': True,
+                    'recycle:versions': True,
+                    'recycle:touch': True,
+                    'recycle:directory_mode': '0777',
+                    'recycle:subdir_mode': '0700'
+                })
+
+            if opts[share_field.SHADOWCOPY]:
+                vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+
+            if opts[share_field.DURABLEHANDLE]:
+                out['posix locking'] = False
+
+            if opts[share_field.TIMEMACHINE]:
+                out['fruit:time machine'] = True
+
+            if opts[share_field.TIMEMACHINE_QUOTA]:
+                out['fruit:time machine max size'] = opts[share_field.TIMEMACHINE_QUOTA]
+
+            if not opts[share_field.ACL]:
+                out['nt acl support'] = False
+                acl_enabled = False
+
+            if opts[share_field.FSRVP]:
+                vfs_objects.add(TrueNASVfsObjects.ZFS_FSRVP)
+
+        case SMBSharePurpose.EXTERNAL_SHARE:
+            # Parameters already applied when parsing share path
+            acl_enabled = False
+
+        case SMBSharePurpose.TIME_LOCKED_SHARE:
+            vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+            vfs_objects.add(TrueNASVfsObjects.WORM)
+            out['worm:grace_period'] = opts[share_field.WORM_GRACE]
+
+        case SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
+            vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+            vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+            out['posix locking'] = False
+            out['block size'] = VEEAM_REPO_BLOCKSIZE
+
+        case _:
+            raise ValueError(f'{config_in["purpose"]}: Unexpected share purpose.')
+
+    if acl_enabled:
+        # Add vfs object for our ACL type
+        try:
+            __parse_share_fs_acl(acl_check_path, vfs_objects)
+        except NotImplementedError:
+            # User has disabled ACLs at ZFS level but not in SMB config
+            # We'll disable NT ACL support proactively
+            out['nt acl support'] = False
 
 
 def generate_smb_share_conf_dict(
     ds_type: DSType,
-    share_config_in: dict,
+    share_config: dict,
     smb_service_config: dict,
     io_uring_enabled: bool = True
 ) -> dict:
     # apply any presets to the config here
-    share_config = apply_presets(share_config_in)
     fruit_enabled = smb_service_config['aapl_extensions']
     vfs_objects = set([TrueNASVfsObjects.ZFS_CORE])
 
@@ -143,61 +287,20 @@ def generate_smb_share_conf_dict(
         vfs_objects.add(TrueNASVfsObjects.IO_URING)
 
     config_out = {
-        'hosts allow': share_config['hostsallow'],
-        'hosts deny': share_config['hostsdeny'],
-        'access based share enum': share_config['abe'],
-        'readonly': share_config['ro'],
-        'available': share_config['enabled'] and not share_config['locked'],
-        'guest ok': share_config['guestok'],
-        'nt acl support': share_config['acl'],
+        'access based share enum': share_config[share_field.ABE],
+        'readonly': share_config[share_field.RO],
+        'available': share_config[share_field.ENABLED] and not share_config[share_field.LOCKED],
         'smbd max xattr size': 2097152,
         'fruit:metadata': 'stream',
         'fruit:resource': 'stream',
-        'comment': share_config['comment'],
-        'browseable': share_config['browsable'],
+        'comment': share_config[share_field.COMMENT],
+        'browseable': share_config[share_field.BROWSEABLE],
     }
 
-    __transform_share_path(ds_type, share_config, config_out)
+    acl_check = __transform_share_path(ds_type, share_config, config_out)
+    __apply_purpose_and_options(ds_type, vfs_objects, share_config, config_out, acl_check)
 
-    if share_config['streams']:
-        vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
-
-    if share_config['recyclebin']:
-        vfs_objects.add(TrueNASVfsObjects.RECYCLE)
-        config_out.update({
-            'recycle:repository': '.recycle/%D/%U' if ds_type is DSType.AD else '.recycle/%U',
-            'recycle:keeptree': True,
-            'recycle:versions': True,
-            'recycle:touch': True,
-            'recycle:directory_mode': '0777',
-            'recycle:subdir_mode': '0700'
-        })
-
-    if share_config['shadowcopy']:
-        vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
-
-    if share_config['fsrvp']:
-        vfs_objects.add(TrueNASVfsObjects.ZFS_FSRVP)
-
-    if share_config['durablehandle']:
-        config_out['posix locking'] = False
-
-    if share_config['timemachine']:
-        config_out['fruit:time machine'] = True
-
-        if share_config['timemachine_quota']:
-            config_out['fruit:time machine max size'] = share_config['timemachine_quota']
-
-    if share_config['acl']:
-        # Add vfs object for our ACL type
-        try:
-            __parse_share_fs_acl(share_config['path'], vfs_objects)
-        except NotImplementedError:
-            # User has disabled ACLs at ZFS level but not in SMB config
-            # We'll disable NT ACL support proactively
-            config_out['nt acl support'] = False
-
-    if share_config['aapl_name_mangling']:
+    if share_config[share_field.OPTS].get(share_field.AAPL_MANGLING):
         # Apply SFM mangling to share. This takes different form depending
         # on whether fruit is enabled. The end result is the same.
         vfs_objects.add(TrueNASVfsObjects.CATIA)
@@ -213,7 +316,7 @@ def generate_smb_share_conf_dict(
                 'mangled names': False
             })
 
-    if share_config['afp']:
+    if share_config[share_field.OPTS].get(share_field.AFP):
         # Parameters for compatibility with how data was written by Netatalk
         vfs_objects.add(TrueNASVfsObjects.FRUIT)
         vfs_objects.add(TrueNASVfsObjects.CATIA)
@@ -226,82 +329,49 @@ def generate_smb_share_conf_dict(
             'streams_xattr:xattr_compat': True
         })
 
-    if share_config['audit']['enable']:
+    if share_config[share_field.AUDIT][share_field.AUDIT_ENABLE]:
         vfs_objects.add(TrueNASVfsObjects.TRUENAS_AUDIT)
-        for key in ('watch_list', 'ignore_list'):
-            if not share_config['audit'][key]:
+        for key in (share_field.AUDIT_WATCH_LIST, share_field.AUDIT_IGNORE_LIST):
+            if not share_config[share_field.AUDIT][key]:
                 continue
 
-            config_out[f'truenas_audit:{key}'] = share_config['audit'][key]
+            config_out[f'truenas_audit:{key}'] = share_config[share_field.AUDIT][key]
 
-    ordered_vfs_objects = __order_vfs_objects(vfs_objects, fruit_enabled, share_config['purpose'])
+    ordered_vfs_objects = __order_vfs_objects(vfs_objects, fruit_enabled)
     config_out['vfs objects'] = ordered_vfs_objects
 
-    # Some presets contain aux parameters. Set them proior to aux parameter processing
-    if share_config['purpose'] not in ('NO_PRESET', 'DEFAULT_SHARE'):
-        preset_params = SMBSharePreset[share_config['purpose']].value['params']
-        for param in preset_params['auxsmbconf'].splitlines():
-            auxparam, val = param.split('=', 1)
-            config_out[auxparam.strip()] = val.strip()
-
     # Apply auxiliary parameters
-    for param in smb_strip_comments(share_config['auxsmbconf']).splitlines():
-        if not param.strip():
-            # user has inserted an empty line
-            continue
-
-        auxparam, value = param.split('=', 1)
-        auxparam = auxparam.strip()
-        value = value.strip()
-
-        # User may have inserted garbage in a previous release or have manually
-        # modified sqlite database
-        if auxparam in AUX_PARAM_BLACKLIST:
-            continue
-
-        config_out[auxparam] = value
+    if (auxparams := share_config[share_field.OPTS].get(share_field.AUX)) is not None:
+        __parse_aux_param_list(config_out, auxparams.splitlines())
 
     return config_out
 
 
 def generate_smb_conf_dict(
-    ds_type: DSType,
     ds_config: dict | None,
     smb_service_config: dict,
     smb_shares: list,
     smb_bind_choices: dict,
-    idmap_settings: list,
     is_enterprise: bool,
     security_config: dict[str, bool]
 ):
-    guest_enabled = any(filter_list(smb_shares, [['guestok', '=', True]]))
-    fsrvp_enabled = any(filter_list(smb_shares, [['fsrvp', '=', True]]))
-    ad_idmap = None
-    ipa_domain = None
+    guest_enabled = any(filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]]))
+    fsrvp_enabled = any(filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]]))
+    if ds_config['service_type']:
+        ds_type = DSType(ds_config['service_type'])
+    else:
+        ds_type = None
 
-    match ds_type:
-        case DSType.AD:
-            ad_idmap = filter_list(
-                idmap_settings,
-                [('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')],
-                {'get': True}
-            )
-        case DSType.IPA:
-            ipa_domain = ds_config['ipa_domain']
-            ipa_config = ds_config['ipa_config']
-        case _:
-            pass
-
-    home_share = filter_list(smb_shares, [['home', '=', True]])
+    home_share = filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.HOME}', '=', True]])
     if home_share:
         if ds_type is DSType.AD:
             home_path_suffix = '%D/%U'
-        elif not home_share[0]['path_suffix']:
+        elif not home_share[0][share_field.OPTS][share_field.PATH_SUFFIX]:
             home_path_suffix = '%U'
         else:
-            home_path_suffix = home_share[0]['path_suffix']
+            home_path_suffix = home_share[0][share_field.OPTS][share_field.PATH_SUFFIX]
 
-        home_path = os.path.join(home_share[0]['path'], home_path_suffix)
+        home_path = os.path.join(home_share[0][share_field.PATH], home_path_suffix)
     else:
         home_path = DEFAULT_HOME_PATH
 
@@ -383,6 +453,10 @@ def generate_smb_conf_dict(
         'log level': loglevelint,
         'logging': 'file',
         'server smb encrypt': SMBEncryption[smb_service_config['encryption']].value,
+        # Idmap range for builtins that are auto-allocated by winbindd
+        # AD configuration can override this
+        'idmap config * : backend': 'tdb',
+        'idmap config * : range': '90000001 - 90010001',
     }
 
     """
@@ -459,7 +533,6 @@ def generate_smb_conf_dict(
     via getpwent / getgrent. It does not impact getpwnam and getgrnam.
     """
     if ds_type is DSType.AD:
-        ac = ds_config
         smbconf.update({
             'server role': 'member server',
             'kerberos method': 'secrets only',
@@ -470,16 +543,62 @@ def generate_smb_conf_dict(
             'preferred master': False,
             'winbind cache time': 7200,
             'winbind max domain connections': 10,
-            'winbind use default domain': ac['use_default_domain'],
+            'winbind use default domain': ds_config['configuration']['use_default_domain'],
             'client ldap sasl wrapping': 'seal',
             'template shell': '/bin/sh',
-            'allow trusted domains': ac['allow_trusted_doms'],
-            'realm': ac['domainname'],
-            'winbind nss info': ac['nss_info'].lower(),
+            'allow trusted domains': ds_config['configuration']['enable_trusted_domains'],
+            'realm': ds_config['configuration']['domain'],
             'template homedir': home_path,
-            'winbind enum users': not ac['disable_freenas_cache'],
-            'winbind enum groups': not ac['disable_freenas_cache'],
+            'winbind enum users': ds_config['enable_account_cache'],
+            'winbind enum groups': ds_config['enable_account_cache'],
+            # The machine password timeout is currently set to zero to match
+            # behavior with earlier TrueNAS versions. This can be removed once we've
+            # properly tested edge-cases with HA and have CI coverage for winbindd-initiated
+            # password changes.
+            'machine password timeout': 0,
         })
+
+        idmap = ds_config['configuration']['idmap']['idmap_domain']
+        if ds_config['configuration']['idmap']['idmap_domain']['idmap_backend'] == 'AUTORID':
+            idmap_prefix = 'idmap config * :'
+        else:
+            builtin = ds_config['configuration']['idmap']['builtin']
+            idmap_prefix = f'idmap config {idmap["name"]}'
+
+            smbconf.update({
+                'idmap config * : backend': 'tdb',
+                'idmap config * : range': f'{builtin["range_low"]} - {builtin["range_high"]}'
+            })
+
+        smbconf.update({
+            f'{idmap_prefix} : backend': idmap['idmap_backend'].lower(),
+            f'{idmap_prefix} : range': f'{idmap["range_low"]} - {idmap["range_high"]}',
+        })
+        for key, value in idmap.items():
+            if key in EXCLUDED_IDMAP_ITEMS:
+                continue
+
+            smbconf[f'{idmap_prefix} : {key}'] = value
+
+        # Set trusted domains in the configuration. This has no impact if
+        # enable_trusted_domains is False and so we don't need another check
+        for idmap in ds_config['configuration']['trusted_domains']:
+            idmap_prefix = f'idmap config {idmap["name"]} :'
+            # Set basic parameters
+            smbconf.update({
+                f'{idmap_prefix} backend': idmap['idmap_backend'].lower(),
+                f'{idmap_prefix} range': f'{idmap["range_low"]} - {idmap["range_high"]}',
+            })
+
+            # Set other configuration options
+            for key, value in idmap.items():
+                if key in EXCLUDED_IDMAP_ITEMS:
+                    continue
+
+                smbconf[f'{idmap_prefix} {key}'] = value
+
+            if idmap['idmap_backend'] == 'RFC2307':
+                smbconf[f'{idmap_prefix} ldap_server'] = 'stand-alone'
 
     """
     The following parameters are based on what is performed when admin runs
@@ -492,79 +611,27 @@ def generate_smb_conf_dict(
     NOTE2: There is some chance that the IPA domain will not have SMB information
     and in this situation we will omit from our smb.conf.
     """
-    if ds_type is DSType.IPA and ipa_domain is not None:
+    if ds_type is DSType.IPA and ds_config['configuration']['smb_domain']:
         # IPA SMB config is stored in remote IPA server and so we don't let
         # users override the config. If this is a problem it should be fixed on
         # the other end.
-        domain_short = ipa_domain['netbios_name']
-        range_low = ipa_domain['range_id_min']
-        range_high = ipa_domain['range_id_max']
+        domain_short = ds_config['configuration']['smb_domain']['name']
+        range_low = ds_config['configuration']['smb_domain']['range_low']
+        range_high = ds_config['configuration']['smb_domain']['range_high']
+        domain_name = ds_config['configuration']['smb_domain']['domain_name']
 
         smbconf.update({
             'server role': 'member server',
             'kerberos method': 'dedicated keytab',
             'dedicated keytab file': 'FILE:/etc/ipa/smb.keytab',
-            'workgroup': ipa_domain['netbios_name'],
-            'realm': ipa_config['realm'],
+            'workgroup': domain_short,
+            'realm': domain_name,
             f'idmap config {domain_short} : backend': 'sss',
             f'idmap config {domain_short} : range': f'{range_low} - {range_high}',
         })
 
-    """
-    The following part generates the smb.conf parameters from our idmap plugin
-    settings. This is primarily relevant for case where TrueNAS is joined to
-    an Active Directory domain.
-    """
-    for i in idmap_settings:
-        match i['name']:
-            case 'DS_TYPE_DEFAULT_DOMAIN':
-                if ad_idmap and ad_idmap['idmap_backend'] == 'AUTORID':
-                    continue
-
-                domain = '*'
-            case 'DS_TYPE_ACTIVEDIRECTORY':
-                if ds_type is not DSType.AD:
-                    continue
-
-                if i['idmap_backend'] == 'AUTORID':
-                    domain = '*'
-                else:
-                    domain = smb_service_config['workgroup']
-            case 'DS_TYPE_LDAP':
-                # TODO: in future we will have migration remove this
-                # from the idmap table
-                continue
-            case _:
-                domain = i['name']
-
-        idmap_prefix = f'idmap config {domain} :'
-        smbconf.update({
-            f'{idmap_prefix} backend': i['idmap_backend'].lower(),
-            f'{idmap_prefix} range': f'{i["range_low"]} - {i["range_high"]}',
-        })
-
-        for k, v in i['options'].items():
-            backend_parameter = 'realm' if k == 'cn_realm' else k
-            match k:
-                case 'ldap_server':
-                    value = 'ad' if v == 'AD' else 'stand-alone'
-                case 'ldap_url':
-                    value = f'{"ldaps://" if i["options"]["ssl"]  == "ON" else "ldap://"}{v}'
-                case 'ssl':
-                    continue
-                case _:
-                    value = v
-
-            smbconf.update({f'{idmap_prefix} {backend_parameter}': value})
-
-    for e in smb_service_config['smb_options'].splitlines():
-        # Add relevant auxiliary parameters
-        entry = e.strip()
-        if entry.startswith(('#', ';')) or '=' not in entry:
-            continue
-
-        param, value = entry.split('=', 1)
-        smbconf[param.strip()] = value.strip()
+    # Add relevant auxiliary parameters
+    __parse_aux_param_list(smbconf, smb_service_config['smb_options'].splitlines())
 
     # Ordering here is relevant. Do not permit smb_options to override required
     # settings for the STIG.
@@ -592,7 +659,7 @@ def generate_smb_conf_dict(
         except FileNotFoundError:
             # Share path doesn't exist, exclude from config
             continue
-        share_name = share['name'] if not share['home'] else 'homes'
-        smbconf['SHARES'][share_name] = share_conf
+
+        smbconf['SHARES'][get_share_name(share)] = share_conf
 
     return smbconf

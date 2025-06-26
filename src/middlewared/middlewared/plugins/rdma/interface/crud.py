@@ -1,16 +1,61 @@
-
-import middlewared.sqlalchemy as sa
-
-from middlewared.api import api_method
-from middlewared.api.current import (
-    RdmaInterfaceCreateArgs, RdmaInterfaceCreateResult,
-    RdmaInterfaceUpdateArgs, RdmaInterfaceUpdateResult,
-    RdmaInterfaceDeleteArgs, RdmaInterfaceDeleteResult
-)
-from middlewared.service import CallError, CRUDService
+from typing import Literal, Optional
 
 from pyroute2 import NDB
 from pyroute2.ndb.transaction import CheckProcessException
+
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IPvAnyAddress
+from middlewared.service import CallError, CRUDService
+import middlewared.sqlalchemy as sa
+
+
+class RdmaInterfaceEntry(BaseModel):
+    id: str
+    node: str = ''
+    ifname: str
+    address: IPvAnyAddress
+    prefixlen: int
+    mtu: int = 5000
+
+
+class RdmaInterfaceCreateCheck(BaseModel):
+    ping_ip: str
+    ping_mac: str
+
+
+class RdmaInterfaceCreate(RdmaInterfaceEntry):
+    id: Excluded = excluded_field()
+    check: Optional[RdmaInterfaceCreateCheck] = None
+
+
+class RdmaInterfaceUpdate(RdmaInterfaceCreate, metaclass=ForUpdateMetaclass):
+    pass
+
+
+class RdmaInterfaceCreateArgs(BaseModel):
+    data: RdmaInterfaceCreate
+
+
+class RdmaInterfaceCreateResult(BaseModel):
+    result: RdmaInterfaceEntry | None
+    """`None` indicates that the RDMA interface failed to be created."""
+
+
+class RdmaInterfaceUpdateArgs(BaseModel):
+    id: int
+    data: RdmaInterfaceUpdate
+
+
+class RdmaInterfaceUpdateResult(BaseModel):
+    result: RdmaInterfaceEntry
+
+
+class RdmaInterfaceDeleteArgs(BaseModel):
+    id: int
+
+
+class RdmaInterfaceDeleteResult(BaseModel):
+    result: Literal[True]
 
 
 class ConnectionChecker:
@@ -47,12 +92,13 @@ class RDMAInterfaceService(CRUDService):
         datastore = 'rdma.interface'
         datastore_prefix = "rdmaif_"
         role_prefix = 'NETWORK_INTERFACE'
+        entry = RdmaInterfaceEntry
 
     async def compress(self, data):
         if 'check' in data:
             del data['check']
 
-    @api_method(RdmaInterfaceCreateArgs, RdmaInterfaceCreateResult)
+    @api_method(RdmaInterfaceCreateArgs, RdmaInterfaceCreateResult, private=True)
     async def do_create(self, data):
         result = await self.middleware.call('rdma.interface.configure_interface',
                                             data['node'], data['ifname'], data['address'],
@@ -66,7 +112,7 @@ class RDMAInterfaceService(CRUDService):
         else:
             return None
 
-    @api_method(RdmaInterfaceUpdateArgs, RdmaInterfaceUpdateResult)
+    @api_method(RdmaInterfaceUpdateArgs, RdmaInterfaceUpdateResult, private=True)
     async def do_update(self, id_, data):
         """
         Update RDMA interface of `id`
@@ -90,7 +136,7 @@ class RDMAInterfaceService(CRUDService):
         else:
             raise CallError("Failed to update active RDMA interface configuration")
 
-    @api_method(RdmaInterfaceDeleteArgs, RdmaInterfaceDeleteResult)
+    @api_method(RdmaInterfaceDeleteArgs, RdmaInterfaceDeleteResult, private=True)
     async def do_delete(self, id_):
         """
         Delete a RDMA interface by ID.
@@ -221,7 +267,7 @@ class RDMAInterfaceService(CRUDService):
                 return False
         return True
 
-    async def internal_interfaces(self, all=False):
+    async def internal_interfaces(self, get_all=False):
         # We must fetch all link choices.  If we did not there would
         # be a circular call chain between interface and rdma
         links = await self.middleware.call('rdma._get_link_choices')
@@ -229,7 +275,7 @@ class RDMAInterfaceService(CRUDService):
         for link in links:
             ifname_to_netdev[link['rdma']] = link['netdev']
 
-        if all:
+        if get_all:
             # Treat all RDMA interfaces as internal
             return list(ifname_to_netdev.values())
         else:

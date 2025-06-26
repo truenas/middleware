@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from middlewared.service import Service
@@ -17,3 +18,8 @@ class HardwareVirtualization(Service):
     def is_virtualized(self) -> bool:
         """Detect if the TrueNAS system is virtualized"""
         return self.variant() != 'none'
+
+    @cache
+    def guest_vms_supported(self) -> bool:
+        """Detect if TrueNAS system supports guest VMs"""
+        return os.path.exists('/dev/kvm')

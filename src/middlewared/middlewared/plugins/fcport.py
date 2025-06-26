@@ -6,7 +6,7 @@ from typing import Literal
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (FCPortChoicesArgs, FCPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
+from middlewared.api.current import (FCPortPortChoicesArgs, FCPortPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
                                      FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry, FCPortStatusArgs,
                                      FCPortStatusResult, FCPortUpdateArgs, FCPortUpdateResult)
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
@@ -31,7 +31,6 @@ class FCPortModel(sa.Model):
 class FCPortService(CRUDService):
 
     class Config:
-        private = True
         namespace = "fcport"
         datastore = "services.fibrechanneltotarget"
         datastore_prefix = 'fc_'
@@ -111,7 +110,7 @@ class FCPortService(CRUDService):
 
         return response
 
-    @api_method(FCPortChoicesArgs, FCPortChoicesResult)
+    @api_method(FCPortPortChoicesArgs, FCPortPortChoicesResult)
     async def port_choices(self, include_used):
         result = {}
         if include_used:
@@ -161,8 +160,8 @@ class FCPortService(CRUDService):
             sessions_path = qla_target_path / wwn_as_colon_hex(naa) / 'sessions'
             sessions = []
             try:
-                with os.scandir(sessions_path) as iter:
-                    for entry in iter:
+                with os.scandir(sessions_path) as iterator:
+                    for entry in iterator:
                         if not entry.is_dir():
                             continue
                         if with_lun_access:

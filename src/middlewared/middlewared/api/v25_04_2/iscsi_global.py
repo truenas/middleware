@@ -6,16 +6,16 @@ from .common import QueryFilters, QueryOptions
 
 __all__ = [
     "IscsiGlobalEntry",
-    "IscsiGlobalUpdateArgs",
-    "IscsiGlobalUpdateResult",
-    "IscsiGlobalAluaEnabledArgs",
-    "IscsiGlobalAluaEnabledResult",
-    "IscsiGlobalISEREnabledArgs",
-    "IscsiGlobalISEREnabledResult",
-    "IscsiGlobalClientCountArgs",
-    "IscsiGlobalClientCountResult",
-    "IscsiGlobalSessionsArgs",
-    "IscsiGlobalSessionsResult"
+    "ISCSIGlobalUpdateArgs",
+    "ISCSIGlobalUpdateResult",
+    "ISCSIGlobalAluaEnabledArgs",
+    "ISCSIGlobalAluaEnabledResult",
+    "ISCSIGlobalIserEnabledArgs",
+    "ISCSIGlobalIserEnabledResult",
+    "ISCSIGlobalClientCountArgs",
+    "ISCSIGlobalClientCountResult",
+    "ISCSIGlobalSessionsArgs",
+    "ISCSIGlobalSessionsResult"
 ]
 
 
@@ -30,35 +30,35 @@ class IscsiGlobalEntry(BaseModel):
 
 
 @single_argument_args('iscsi_update')
-class IscsiGlobalUpdateArgs(IscsiGlobalEntry, metaclass=ForUpdateMetaclass):
+class ISCSIGlobalUpdateArgs(IscsiGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class IscsiGlobalUpdateResult(BaseModel):
+class ISCSIGlobalUpdateResult(BaseModel):
     result: IscsiGlobalEntry
 
 
-class IscsiGlobalAluaEnabledArgs(BaseModel):
+class ISCSIGlobalAluaEnabledArgs(BaseModel):
     pass
 
 
-class IscsiGlobalAluaEnabledResult(BaseModel):
+class ISCSIGlobalAluaEnabledResult(BaseModel):
     result: bool
 
 
-class IscsiGlobalISEREnabledArgs(BaseModel):
+class ISCSIGlobalIserEnabledArgs(BaseModel):
     pass
 
 
-class IscsiGlobalISEREnabledResult(BaseModel):
+class ISCSIGlobalIserEnabledResult(BaseModel):
     result: bool
 
 
-class IscsiGlobalClientCountArgs(BaseModel):
+class ISCSIGlobalClientCountArgs(BaseModel):
     pass
 
 
-class IscsiGlobalClientCountResult(BaseModel):
+class ISCSIGlobalClientCountResult(BaseModel):
     result: int
 
 
@@ -80,9 +80,9 @@ class IscsiSession(BaseModel):
     offload: bool
 
 
-class IscsiGlobalSessionsArgs(BaseModel):
+class ISCSIGlobalSessionsArgs(BaseModel):
     query_filters: QueryFilters = []
     query_options: QueryOptions = QueryOptions()
 
 
-IscsiGlobalSessionsResult = query_result(IscsiSession)
+ISCSIGlobalSessionsResult = query_result(IscsiSession)

@@ -3,25 +3,11 @@ from typing import Literal
 
 
 __all__ = [
-    'NTPPeerEntry', 'NTPServerEntry',
+    'NTPServerEntry',
     'NTPServerCreateArgs', 'NTPServerCreateResult',
     'NTPServerUpdateArgs', 'NTPServerUpdateResult',
     'NTPServerDeleteArgs', 'NTPServerDeleteResult',
 ]
-
-
-class NTPPeerEntry(BaseModel):
-    mode: Literal['SERVER', 'PEER', 'LOCAL']
-    state: Literal['BEST', 'SELECTED', 'SELECTABLE', 'FALSE_TICKER', 'TOO_VARIABLE', 'NOT_SELECTABLE']
-    remote: str
-    stratum: int
-    poll_interval: int
-    reach: int
-    lastrx: int
-    offset: float
-    offset_measured: float
-    jitter: float
-    active: bool
 
 
 class NTPServerEntry(BaseModel):

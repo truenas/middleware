@@ -1,5 +1,5 @@
 from middlewared.api import api_method
-from middlewared.api.current import PoolDatasetRecordSizeChoicesArgs, PoolDatasetRecordSizeChoicesResult
+from middlewared.api.current import PoolDatasetRecordsizeChoicesArgs, PoolDatasetRecordsizeChoicesResult
 from middlewared.service import Service
 
 
@@ -30,7 +30,7 @@ class PoolDatasetService(Service):
         (1 << 24, '16M'),
     ]
 
-    @api_method(PoolDatasetRecordSizeChoicesArgs, PoolDatasetRecordSizeChoicesResult, roles=['DATASET_READ'])
+    @api_method(PoolDatasetRecordsizeChoicesArgs, PoolDatasetRecordsizeChoicesResult, roles=['DATASET_READ'])
     def recordsize_choices(self, pool_name):
         """
         Retrieve recordsize choices for datasets.

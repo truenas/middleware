@@ -1,14 +1,14 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
     AclTemplateEntry,
-    AclTemplateByPathArgs, AclTemplateByPathResult,
-    AclTemplateCreateArgs, AclTemplateCreateResult,
-    AclTemplateUpdateArgs, AclTemplateUpdateResult,
-    AclTemplateDeleteArgs, AclTemplateDeleteResult,
+    ACLTemplateByPathArgs, ACLTemplateByPathResult,
+    ACLTemplateCreateArgs, ACLTemplateCreateResult,
+    ACLTemplateUpdateArgs, ACLTemplateUpdateResult,
+    ACLTemplateDeleteArgs, ACLTemplateDeleteResult,
 )
 from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service import private
-from middlewared.plugins.smb import SMBBuiltin
+from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
@@ -102,8 +102,8 @@ class ACLTemplateService(CRUDService):
             gen_aclstring_posix1e(copy.deepcopy(data['acl']), False, verrors)
 
     @api_method(
-        AclTemplateCreateArgs,
-        AclTemplateCreateResult,
+        ACLTemplateCreateArgs,
+        ACLTemplateCreateResult,
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_create(self, data):
@@ -129,8 +129,8 @@ class ACLTemplateService(CRUDService):
         return await self.get_instance(data['id'])
 
     @api_method(
-        AclTemplateUpdateArgs,
-        AclTemplateUpdateResult,
+        ACLTemplateUpdateArgs,
+        ACLTemplateUpdateResult,
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_update(self, id_, data):
@@ -169,8 +169,8 @@ class ACLTemplateService(CRUDService):
         return await self.get_instance(id_)
 
     @api_method(
-        AclTemplateDeleteArgs,
-        AclTemplateDeleteResult,
+        ACLTemplateDeleteArgs,
+        ACLTemplateDeleteResult,
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_delete(self, id_):
@@ -241,7 +241,8 @@ class ACLTemplateService(CRUDService):
         if ds['type'] != DSType.AD.value or ds['status'] != DSStatus.HEALTHY.name:
             return
 
-        domain_info = await self.middleware.call('idmap.domain_info', 'DS_TYPE_ACTIVEDIRECTORY')
+        workgroup = (await self.middleware.call('smb.config'))['workgroup']
+        domain_info = await self.middleware.call('idmap.domain_info', workgroup)
         if 'ACTIVE_DIRECTORY' not in domain_info['domain_flags']['parsed']:
             self.logger.warning(
                 '%s: domain is not identified properly as an Active Directory domain.',
@@ -303,8 +304,8 @@ class ACLTemplateService(CRUDService):
         return
 
     @api_method(
-        AclTemplateByPathArgs,
-        AclTemplateByPathResult,
+        ACLTemplateByPathArgs,
+        ACLTemplateByPathResult,
         roles=['FILESYSTEM_ATTRS_READ']
     )
     async def by_path(self, data):

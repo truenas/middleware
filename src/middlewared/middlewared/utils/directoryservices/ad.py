@@ -7,6 +7,7 @@ from .ad_constants import (
     ADEncryptionTypes
 )
 from middlewared.plugins.smb_.constants import SMBCmd
+from middlewared.utils import gencache
 from middlewared.service_exception import CallError
 
 
@@ -27,7 +28,7 @@ def _normalize_dict(dict_in) -> None:
     return dict_in
 
 
-def get_domain_info(domain: str) -> dict:
+def get_domain_info(domain: str, retry: bool = False) -> dict:
     """
     Use libads to query information about the specified domain.
 
@@ -51,6 +52,7 @@ def get_domain_info(domain: str) -> dict:
     """
     netads = subprocess.run([
         SMBCmd.NET.value,
+        '-d', '0',
         '-S', domain,
         '--json',
         '--option', f'realm={domain}',
@@ -61,9 +63,16 @@ def get_domain_info(domain: str) -> dict:
         data = json.loads(netads.stdout.decode())
         return _normalize_dict(data)
 
-    if (err_msg := netads.stderr.decode().strip()) == "Didn't find the ldap server!":
+    err_msg = netads.stderr.decode().strip()
+    if "Didn't find the ldap server!" in err_msg:
+        if retry:
+            # We may have stale negative lookup from misconfigured DNS
+            # Flush out the cache and retry
+            gencache.flush_gencache_entries()
+            return get_domain_info(domain, False)
+
         raise CallError(
-            'Failed to discover Active Directory Domain Controller '
+            f'{domain}: Failed to discover Active Directory Domain Controller '
             'for domain. This may indicate a DNS misconfiguration.',
             errno.ENOENT
         )

@@ -1,12 +1,16 @@
-from middlewared.schema import Bool, Dict, Ref, Str
-from middlewared.service import Service, accepts
-from middlewared.plugins.smb import SMBCmd
-from middlewared.service_exception import CallError
-from middlewared.utils import filter_list
-
 import enum
 import json
 import subprocess
+from typing import Literal
+from pydantic import Field
+from middlewared.api import api_method
+from middlewared.api.base import BaseModel
+from middlewared.api.current import QueryFilters, QueryOptions
+
+from middlewared.service import Service, private
+from middlewared.plugins.smb import SMBCmd
+from middlewared.service_exception import CallError
+from middlewared.utils import filter_list
 
 
 class InfoLevel(enum.Enum):
@@ -19,25 +23,33 @@ class InfoLevel(enum.Enum):
     NOTIFICATIONS = 'N'
 
 
+class SMBStatusOptions(BaseModel):
+    verbose: bool = True
+    fast: bool = False
+    restrict_user: str = ''
+    restrict_session: str = ''
+    resolve_uids: bool = True
+
+
+class SMBStatusArgs(BaseModel):
+    info_level: Literal['ALL', 'SESSIONS', 'SHARES', 'LOCKS', 'BYTERANGE', 'NOTIFICATIONS'] = 'ALL'
+    query_filters: QueryFilters = QueryFilters()
+    query_options: QueryOptions = QueryOptions()
+    status_options: SMBStatusOptions = Field(default_factory=SMBStatusOptions)
+
+
+class SMBStatusResult(BaseModel):
+    result: list[dict] | dict | int
+
+
 class SMBService(Service):
 
     class Config:
         service = 'cifs'
         service_verb = 'restart'
 
-    @accepts(
-        Str('info_level', enum=[x.name for x in InfoLevel], default=InfoLevel.ALL.name),
-        Ref('query-filters'),
-        Ref('query-options'),
-        Dict(
-            'status_options',
-            Bool('verbose', default=True),
-            Bool('fast', default=False),
-            Str('restrict_user', default=''),
-            Str('restrict_session', default=''),
-            Bool('resolve_uids', default=True),
-        ), roles=['SHARING_SMB_WRITE', 'READONLY_ADMIN']
-    )
+    # TODO - convert this method into properly documented public API
+    @api_method(SMBStatusArgs, SMBStatusResult, private=True)
     def status(self, info_level, filters, options, status_options):
         """
         Returns SMB server status (sessions, open files, locks, notifications).
@@ -131,7 +143,7 @@ class SMBService(Service):
 
         return filter_list(to_filter, filters, options)
 
-    @accepts(roles=['SHARING_SMB_READ'])
+    @private
     def client_count(self):
         """
         Return currently connected clients count.

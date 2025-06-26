@@ -7,7 +7,7 @@ from datetime import datetime
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DockerBackupArgs, DockerBackupResult, DockerListBackupArgs, DockerListBackupResult,
+    DockerBackupArgs, DockerBackupResult, DockerListBackupsArgs, DockerListBackupsResult,
     DockerDeleteBackupArgs, DockerDeleteBackupResult,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
@@ -36,6 +36,8 @@ class DockerService(Service):
     def backup(self, job, backup_name):
         """
         Create a backup of existing apps.
+
+        This creates a backup of existing apps on the same pool in which docker is initialized.
         """
         self.middleware.call_sync('docker.state.validate')
         docker_config = self.middleware.call_sync('docker.config')
@@ -79,7 +81,7 @@ class DockerService(Service):
 
         return name
 
-    @api_method(DockerListBackupArgs, DockerListBackupResult, roles=['DOCKER_READ'])
+    @api_method(DockerListBackupsArgs, DockerListBackupsResult, roles=['DOCKER_READ'])
     def list_backups(self):
         """
         List existing app backups.

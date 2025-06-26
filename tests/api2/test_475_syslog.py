@@ -7,6 +7,15 @@ from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.assets.system import standby_syslog_to_remote_syslog
 
 
+# Alias
+pp = pytest.param
+
+
+# ---------------------------------------
+# ---------- utility functions ----------
+# ---------------------------------------
+
+
 def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_INFO'):
     """
     This generates a syslog message on the TrueNAS server we're currently testing.
@@ -47,6 +56,31 @@ def check_syslog(log_path, message,
             timeout -= sleep_time
         else:
             return found
+
+
+# -----------------------------------
+# ------------ fixtures -------------
+# -----------------------------------
+
+
+@pytest.fixture(scope="class")
+def tls_cert():
+    ''' Placeholder for adding remote certs and
+        Restore syslog to default after testing '''
+    truenas_default_id = 1
+    try:
+        yield truenas_default_id
+    finally:
+        call('system.advanced.update', {
+            "syslogserver": "",
+            "syslog_transport": "UDP",
+            "syslog_tls_certificate": None,
+        })
+
+
+# -----------------------------------
+# -------------- tests --------------
+# -----------------------------------
 
 
 @pytest.mark.parametrize('params', [
@@ -155,24 +189,42 @@ def test_remote_syslog_function():
         call('system.advanced.update', {"syslogserver": "", "syslog_transport": "UDP"})
 
 
-def test_set_remote_syslog_with_TLS_transport():
-    """
-    Confirm expected settings in syslog-ng.conf when selecting TLS transport.
-    NOTE: This test does NOT confirm end-to-end functionality.
-    TODO: Add remote syslog server to enable end-to-end testing
-    """
-    restore_cmd = {"syslogserver": "", "syslog_transport": "UDP", "syslog_tls_certificate": None}
-    remote = "127.0.0.1"
-    port = "5140"
-    transport = "TLS"
-    tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}"}
-    try:
+class TestTLS:
+    @pytest.mark.parametrize('testing', ['TLS transport', 'Mutual TLS'])
+    def test_remote_syslog_with_TLS(self, tls_cert, testing):
+        """
+        Confirm expected settings in syslog-ng.conf when selecting TLS transport.
+        NOTE: This test does NOT confirm end-to-end functionality.
+        TODO: Add remote syslog server to enable end-to-end testing:
+                * Mutual TLS: Add client cert,key and CA from remote syslog server
+                (For testing purposes use 'truenas_default' cert)
+        The tls_cert fixture performs syslog cleanup.
+        """
+        remote = "127.0.0.1"
+        port = "5140"
+        transport = "TLS"
+        assert tls_cert is not None
+
+        test_tls = [
+            f'{remote}', f'port({port})', 'transport("tls")', 'ca-file("/etc/ssl/certs/ca-certificates.crt")'
+        ]
+        tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}"}
+
+        if testing == "Mutual TLS":
+            test_tls += [
+                "key-file(\"/etc/certificates/truenas_default.key\")",
+                "cert-file(\"/etc/certificates/truenas_default.crt\")"
+            ]
+            tls_cmd.update({"syslog_tls_certificate": tls_cert})
+
         data = call('system.advanced.update', tls_cmd)
         assert data['syslog_transport'] == 'TLS'
-        conf = ssh('grep "destination loghost" /etc/syslog-ng/syslog-ng.conf', complete_response=True, check=False)
-        assert f"port({port})" in conf['stdout'], f"conf={conf}"
-        assert 'transport("tls")' in conf['stdout'], f"conf={conf}"
-        assert 'tls(ca-file("/etc/ssl/certs/ca-certificates.crt"))' in conf['stdout'], f"conf={conf}"
 
-    finally:
-        call('system.advanced.update', restore_cmd)
+        conf = ssh(
+            'grep -A10 "destination loghost" /etc/syslog-ng/syslog-ng.conf',
+            complete_response=True, check=False
+        )
+        assert conf['result'] is True, "Missing remote entry"
+
+        for item in test_tls:
+            assert list(filter(lambda s: item in s, conf['output'].splitlines())) is not []

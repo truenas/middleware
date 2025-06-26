@@ -12,14 +12,15 @@ from middlewared.api.base import (
     single_argument_args,
     TimeString,
 )
-from .cloud import BaseCloudEntry
+from .cloud import BaseCloudEntry, CloudTaskAttributes
 
 __all__ = [
+    "CloudTaskAttributes",
     "CloudSyncEntry",
     "CloudSyncCreateArgs",
     "CloudSyncCreateResult",
-    "CloudSyncCrudRestoreArgs",
-    "CloudSyncCrudRestoreResult",
+    "CloudSyncRestoreArgs",
+    "CloudSyncRestoreResult",
     "CloudSyncUpdateArgs",
     "CloudSyncUpdateResult",
     "CloudSyncDeleteArgs",
@@ -32,8 +33,8 @@ __all__ = [
     "CloudSyncListDirectoryResult",
     "CloudSyncSyncArgs",
     "CloudSyncSyncResult",
-    "CloudSyncSyncOneTimeArgs",
-    "CloudSyncSyncOneTimeResult",
+    "CloudSyncSyncOnetimeArgs",
+    "CloudSyncSyncOnetimeResult",
     "CloudSyncAbortArgs",
     "CloudSyncAbortResult",
     "CloudSyncProvidersArgs",
@@ -86,12 +87,12 @@ class RestoreOpts(BaseModel):
     path: NonEmptyString
 
 
-class CloudSyncCrudRestoreArgs(BaseModel):
+class CloudSyncRestoreArgs(BaseModel):
     id: int
     opts: RestoreOpts
 
 
-class CloudSyncCrudRestoreResult(BaseModel):
+class CloudSyncRestoreResult(BaseModel):
     result: CloudSyncEntry
 
 
@@ -140,7 +141,7 @@ class CloudSyncListDirectoryArgs(BaseModel):
     filename_encryption: bool = False
     encryption_password: Secret[str] = ""
     encryption_salt: Secret[str] = ""
-    attributes: dict
+    attributes: CloudTaskAttributes
     args: str = ""
 
 
@@ -163,14 +164,14 @@ class CloudSyncSyncResult(BaseModel):
     result: None
 
 
-class CloudSyncSyncOneTimeArgs(BaseModel):
+class CloudSyncSyncOnetimeArgs(BaseModel):
     cloud_sync_sync_onetime: CloudSyncCreate
     cloud_sync_sync_onetime_options: CloudSyncSyncOptions = Field(
         default_factory=CloudSyncSyncOptions
     )
 
 
-class CloudSyncSyncOneTimeResult(BaseModel):
+class CloudSyncSyncOnetimeResult(BaseModel):
     result: None
 
 
@@ -197,8 +198,12 @@ class CloudSyncProvider(BaseModel):
     buckets: bool
     """Set to `true` if provider supports buckets."""
     bucket_title: str | None
-    task_schema: list[dict]
+    task_schema: list["CloudSyncProviderTaskSchemaItem"]
     """JSON schema for task attributes."""
+
+
+class CloudSyncProviderTaskSchemaItem(BaseModel):
+    property: str
 
 
 @single_argument_args("onedrive_list_drives")
