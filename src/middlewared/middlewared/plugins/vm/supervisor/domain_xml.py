@@ -208,6 +208,9 @@ def features_xml(vm_data):
     if vm_data['hyperv_enlightenments']:
         features.append(get_hyperv_xml())
 
+    if vm_data['enable_secure_boot']:
+        features.append(create_element('smm', state='on'),)
+
     return create_element(
         'features', attribute_dict={
             'children': [
@@ -263,7 +266,7 @@ def os_xml(vm_data):
         children.extend([
             create_element(
                 'loader', attribute_dict={'text': f'/usr/share/OVMF/{vm_data["bootloader_ovmf"]}'},
-                readonly='yes', type='pflash',
+                readonly='yes', type='pflash', secure='yes' if vm_data['enable_secure_boot'] else 'no',
             ),
             create_element('nvram', attribute_dict={
                 'text': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(vm_data)),
