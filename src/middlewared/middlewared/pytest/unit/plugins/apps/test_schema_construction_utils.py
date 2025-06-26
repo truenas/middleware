@@ -2522,7 +2522,7 @@ def test_valid_chars_with_construct_schema():
                     'variable': 'docker_tag',
                     'schema': {
                         'type': 'string',
-                        'valid_chars': r'^[a-z0-9]+([._-][a-z0-9]+)*$',  # Docker tag pattern
+                        'valid_chars': '^[a-z0-9]+([._-][a-z0-9]+)*$',  # Docker tag pattern
                         'required': True
                     }
                 },
@@ -2938,6 +2938,8 @@ def test_enum_with_minio_example():
     # Invalid protocol should fail
     with pytest.raises(ValidationError):
         model(service={'api_port_protocol': 'tcp'})
+
+
 # Tests for all field types through construct_schema
 def test_construct_schema_with_ipaddr():
     """Test IP address field validation and serialization through construct_schema"""
@@ -3395,16 +3397,16 @@ def test_construct_schema_with_all_field_types():
     config = result['new_values']['app_config']
     assert config['name'] == 'MinApp'
     assert config['port'] == 80
-    # Default values are not returned when using exclude_unset=True
-    assert 'enabled' not in config
-    assert 'bind_ip' not in config
-    # Optional fields should not be present
+    # Default values should be present when exclude_unset=False
+    assert config['enabled'] is True  # Has default value
+    assert config['bind_ip'] == '0.0.0.0'  # Has default value
+    # Optional fields without values should not be present (NotRequired removed)
     assert 'description' not in config
     assert 'api_endpoint' not in config
     assert 'data_path' not in config
     assert 'config_file' not in config
-    assert 'tags' not in config  # Non-required list
-    assert 'environment' not in config  # Non-required dict
+    assert config['tags'] == []  # Non-required list gets empty list
+    assert config['environment'] == {}  # Non-required dict gets empty dict
 
     # Test validation errors
     invalid_data = {
