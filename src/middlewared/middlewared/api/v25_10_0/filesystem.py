@@ -38,7 +38,7 @@ UNSET_ENTRY = frozenset([ACL_UNDEFINED_ID, None])
 class FilesystemRecursionOptions(BaseModel):
     recursive: bool = False
     traverse: bool = False
-    "If set do not limit to single dataset / filesystem."
+    """If set do not limit to single dataset / filesystem."""
 
 
 class FilesystemChownOptions(FilesystemRecursionOptions):
@@ -140,7 +140,7 @@ class FilesystemDirEntry(BaseModel):
     path: NonEmptyString
     """ Entry's full path. """
     realpath: NonEmptyString
-    """ Canonical path of the entry, eliminating any symbolic links"""
+    """ Canonical path of the entry, eliminating any symbolic links. """
     type: FileType
     size: int
     """ Size in bytes of a plain file. This corresonds with stx_size. """
@@ -149,10 +149,10 @@ class FilesystemDirEntry(BaseModel):
     mode: int
     """ Entry's mode including file type information and file permission bits. This corresponds with stx_mode. """
     mount_id: int
-    """ The mount ID of the mount containing the entry. This corresponds to the number in first
+    """ The mount ID of the mount containing the entry. This corresponds to the number in first \
     field of /proc/self/mountinfo and stx_mnt_id. """
     acl: bool
-    """ Specifies whether ACL is present on the entry. If this is the case then file permission
+    """ Specifies whether ACL is present on the entry. If this is the case then file permission \
     bits as reported in `mode` may not be representative of the actual permissions. """
     uid: int
     """ User ID of the entry's owner. This corresponds with stx_uid. """
@@ -196,7 +196,7 @@ class FilesystemMkdirResult(BaseModel):
 
 class FilesystemStatData(BaseModel):
     realpath: NonEmptyString
-    """ Canonical path of the entry, eliminating any symbolic links"""
+    """ Canonical path of the entry, eliminating any symbolic links. """
     type: FileType
     size: int
     """ Size in bytes of a plain file. This corresonds with stx_size. """
@@ -205,7 +205,7 @@ class FilesystemStatData(BaseModel):
     mode: int
     """ Entry's mode including file type information and file permission bits. This corresponds with stx_mode. """
     mount_id: int
-    """ The mount ID of the mount containing the entry. This corresponds to the number in first
+    """ The mount ID of the mount containing the entry. This corresponds to the number in first \
     field of /proc/self/mountinfo and stx_mnt_id. """
     uid: int
     """ User ID of the entry's owner. This corresponds with stx_uid. """
@@ -220,14 +220,14 @@ class FilesystemStatData(BaseModel):
     btime: float
     """ Time of creation. Corresponds with stx_btime. """
     dev: int
-    """ The ID of the device containing the filesystem where the file resides. This is not sufficient to uniquely
+    """ The ID of the device containing the filesystem where the file resides. This is not sufficient to uniquely \
     identify a particular filesystem mount. mount_id must be used for that purpose. This corresponds with st_dev. """
     inode: int
     """ The inode number of the file. This corresponds with stx_ino. """
     nlink: int
     """ Number of hard links. Corresponds with stx_nlinks. """
     acl: bool
-    """ Specifies whether ACL is present on the entry. If this is the case then file permission
+    """ Specifies whether ACL is present on the entry. If this is the case then file permission \
     bits as reported in `mode` may not be representative of the actual permissions. """
     is_mountpoint: bool
     """ Specifies whether the entry is also the mountpoint of a filesystem. """
@@ -308,22 +308,22 @@ class FilesystemStatfsResult(BaseModel):
 
 class ZFSFileAttrsData(BaseModel):
     readonly: bool | None = None
-    """ READONLY MS-DOS attribute. When set, file may not be written to (toggling
+    """ READONLY MS-DOS attribute. When set, file may not be written to (toggling \
     does not impact existing file opens). """
     hidden: bool | None = None
-    """ HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag is set and file
+    """ HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag is set and file \
     is "hidden" from the perspective of SMB clients. """
     system: bool | None = None
     """ SYSTEM MS-DOS attribute. Is presented to SMB clients, but has no impact on local filesystem. """
     archive: bool | None = None
     """ ARCHIVE MS-DOS attribute. Value is reset to True whenever file is modified. """
     immutable: bool | None = None
-    """ File may not be altered or deleted. Also appears as IMMUTABLE in attributes in
+    """ File may not be altered or deleted. Also appears as IMMUTABLE in attributes in \
     `filesystem.stat` output and as STATX_ATTR_IMMUTABLE in statx() response. """
     nounlink: bool | None = None
     """ File may be altered but not deleted. """
     appendonly: bool | None = None
-    """ File may only be opened with O_APPEND flag. Also appears as APPEND in
+    """ File may only be opened with O_APPEND flag. Also appears as APPEND in \
     attributes in `filesystem.stat` output and as STATX_ATTR_APPEND in statx() response. """
     offline: bool | None = None
     """ OFFLINE MS-DOS attribute. Is presented to SMB clients, but has no impact on local filesystem. """

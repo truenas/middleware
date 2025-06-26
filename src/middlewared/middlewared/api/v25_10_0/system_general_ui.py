@@ -46,7 +46,7 @@ class SystemGeneralLocalUrlResult(BaseModel):
 
 class SystemGeneralUiRestartArgs(BaseModel):
     delay: NonNegativeInt = 3
-    """How long to wait before the UI is restarted"""
+    """How long to wait before the UI is restarted."""
 
 
 class SystemGeneralUiRestartResult(BaseModel):

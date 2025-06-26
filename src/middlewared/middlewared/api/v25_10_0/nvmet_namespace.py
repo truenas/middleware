@@ -22,7 +22,7 @@ DeviceType: TypeAlias = Literal['ZVOL', 'FILE']
 class NVMetNamespaceEntry(BaseModel):
     id: int
     nsid: Annotated[int, Field(ge=1, lt=0xFFFFFFFF)] | None = None
-    """ Namespace ID (NSID)
+    """ Namespace ID (NSID).
 
     Each namespace within a subsystem has an associated NSID, unique within that subsystem.
 
@@ -35,14 +35,13 @@ class NVMetNamespaceEntry(BaseModel):
     """
     Path to the device or file being used to implement the namespace.
 
-    When `device_type` is "ZVOL" then this path is e.g. "zvol/poolname/zvolname"
+    When `device_type` is:
 
-    When `device_type` is "FILE" then this path is e.g. "/mnt/poolmnt/path/to/file".  The file will be created if necessary.
+    * "ZVOL": `device_path` is e.g. "zvol/poolname/zvolname"
+    * "FILE": `device_path` is e.g. "/mnt/poolmnt/path/to/file". The file will be created if necessary.
     """
     filesize: int | None = None
-    """
-    When `device_type` is "FILE" then this will be the size of the file in bytes.
-    """
+    """When `device_type` is "FILE" then this will be the size of the file in bytes."""
     device_uuid: NonEmptyString
     device_nguid: NonEmptyString
     enabled: bool = True
@@ -55,7 +54,8 @@ class NVMetNamespaceEntry(BaseModel):
     """
     Reflect the locked state of the namespace.
 
-    The underlying `device_path` could be an encrypted ZVOL, or a file on an encrypted dataset.  In either case `locked` will be `True` if the underlying entity is locked.
+    The underlying `device_path` could be an encrypted ZVOL, or a file on an encrypted dataset. In either case \
+    `locked` will be `True` if the underlying entity is locked.
     """
 
 

@@ -42,8 +42,8 @@ class ServiceControlArgs(BaseModel):
 class ServiceControlResult(BaseModel):
     result: bool
     """
-    For "START", "RESTART", "RELOAD", it will indicate whether the service is running after performing the operation.
-    For "STOP", it will indicate whether the service was successfully stopped.
+    For "START", "RESTART", "RELOAD", indicate whether the service is running after performing the operation.
+    For "STOP", indicate whether the service was successfully stopped.
     """
 
 
@@ -114,6 +114,3 @@ class ServiceUpdateArgs(BaseModel):
 class ServiceUpdateResult(BaseModel):
     result: int
     """The service ID."""
-
-
-

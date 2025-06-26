@@ -37,13 +37,13 @@ class ContainerImagesDockerhubRateLimitArgs(BaseModel):
 @single_argument_result
 class ContainerImagesDockerhubRateLimitResult(BaseModel):
     total_pull_limit: int | None = None
-    '''Total pull limit for Docker Hub registry'''
+    """Total pull limit for Docker Hub registry."""
     total_time_limit_in_secs: int | None = None
-    '''Total time limit in seconds for Docker Hub registry before the limit renews'''
+    """Total time limit in seconds for Docker Hub registry before the limit renews."""
     remaining_pull_limit: int | None = None
-    '''Remaining pull limit for Docker Hub registry'''
+    """Remaining pull limit for Docker Hub registry."""
     remaining_time_limit_in_secs: int | None = None
-    '''Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed'''
+    """Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed."""
     error: str | None = None
 
 

@@ -20,12 +20,12 @@ __all__ = [
 class VMWareEntry(BaseModel):
     id: int
     datastore: str
-    "valid datastore name which exists on the VMWare host."
+    """Valid datastore name which exists on the VMWare host."""
     filesystem: str
     hostname: str
-    "valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for the cluster."
+    """Valid IP address / hostname of a VMWare host. When clustering, this is the vCenter server for the cluster."""
     username: str
-    "credentials used to authorize access to the VMWare host."
+    """Credentials used to authorize access to the VMWare host."""
     password: Secret[str]
     state: dict
 

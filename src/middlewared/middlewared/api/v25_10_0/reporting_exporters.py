@@ -36,8 +36,10 @@ ExporterType: TypeAlias = Annotated[GraphiteExporter, Field(discriminator='expor
 class ReportingExporterEntry(BaseModel):
     id: int
     enabled: bool
-    attributes: ExporterType = Field(description='Specific attributes for the exporter')
-    name: str = Field(description='User defined name of exporter configuration')
+    attributes: ExporterType
+    """Specific attributes for the exporter."""
+    name: str
+    """User defined name of exporter configuration."""
 
 
 @single_argument_args('reporting_exporter_create')

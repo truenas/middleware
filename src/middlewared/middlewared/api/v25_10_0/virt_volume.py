@@ -45,13 +45,13 @@ class VirtVolumeCreateArgs(BaseModel):
     name: VOLUME_NAME
     content_type: Literal['BLOCK'] = 'BLOCK'
     size: int = Field(ge=512, default=1024)  # 1 gb default
-    '''Size of volume in MB and it should at least be 512 MB'''
+    """Size of volume in MB and it should at least be 512 MB."""
     storage_pool: NonEmptyString | None = None
-    '''
-    Storage pool in which to create the volume. This must be one of pools listed
-    in virt.global.config output under `storage_pools`. If the value is None, then
+    """
+    Storage pool in which to create the volume. This must be one of pools listed \
+    in virt.global.config output under `storage_pools`. If the value is None, then \
     the pool defined as `pool` in virt.global.config will be used.
-    '''
+    """
 
 
 class VirtVolumeCreateResult(BaseModel):
@@ -82,15 +82,15 @@ class VirtVolumeDeleteResult(BaseModel):
 @single_argument_args('virt_volume_import_iso')
 class VirtVolumeImportIsoArgs(BaseModel):
     name: VOLUME_NAME
-    '''Specify name of the newly created volume from the ISO specified'''
+    """Specify name of the newly created volume from the ISO specified."""
     iso_location: NonEmptyString | None = None
     upload_iso: bool = False
     storage_pool: NonEmptyString | None = None
-    '''
-    Storage pool in which to create the volume. This must be one of pools listed
-    in virt.global.config output under `storage_pools`. If the value is None, then
+    """
+    Storage pool in which to create the volume. This must be one of pools listed \
+    in virt.global.config output under `storage_pools`. If the value is None, then \
     the pool defined as `pool` in virt.global.config will be used.
-    '''
+    """
 
 
 class VirtVolumeImportIsoResult(BaseModel):
@@ -99,9 +99,9 @@ class VirtVolumeImportIsoResult(BaseModel):
 
 class ZvolImportEntry(BaseModel):
     virt_volume_name: VOLUME_NAME
-    '''Specify name of the newly created volume from the ISO specified'''
+    """Specify name of the newly created volume from the ISO specified."""
     zvol_path: NonEmptyString
-    '''Specify path of zvol in /dev/zvol'''
+    """Specify path of zvol in /dev/zvol."""
 
     @field_validator('zvol_path')
     @classmethod
@@ -115,9 +115,9 @@ class ZvolImportEntry(BaseModel):
 @single_argument_args('virt_volume_import_iso')
 class VirtVolumeImportZvolArgs(BaseModel):
     to_import: list[ZvolImportEntry]
-    '''List of zvols to import as volumes'''
+    """List of zvols to import as volumes."""
     clone: bool = False
-    '''Optionally clone and promote zvol'''
+    """Optionally clone and promote zvol."""
 
 
 class VirtVolumeImportZvolResult(BaseModel):

@@ -16,9 +16,9 @@ class BootEnvironmentEntry(BaseModel):
     dataset: NonEmptyString
     """The name of the zfs dataset that represents the boot environment."""
     active: bool
-    """If active is True, this is the currently running boot environment."""
+    """This is the currently running boot environment."""
     activated: bool
-    """If True, this will be the boot environment that is used at next boot."""
+    """Use this boot environment on next boot."""
     created: datetime
     """The date when the boot environment was created."""
     used_bytes: int
@@ -26,12 +26,12 @@ class BootEnvironmentEntry(BaseModel):
     used: NonEmptyString
     """The boot environment's used space in human readable format."""
     keep: bool
-    """When set to false, this makes the boot environment subject to
-    automatic deletion if the TrueNAS updater needs space for an update.
-    Otherwise, the updater will not delete this boot environment if it is
+    """When set to false, this makes the boot environment subject to \
+    automatic deletion if the TrueNAS updater needs space for an update. \
+    Otherwise, the updater will not delete this boot environment if it is \
     set to true."""
     can_activate: bool
-    """If set to true, the given boot environment may be activated."""
+    """The given boot environment may be activated."""
 
 
 @single_argument_args("boot_environment_activate")

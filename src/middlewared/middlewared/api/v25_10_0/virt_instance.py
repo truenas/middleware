@@ -93,7 +93,7 @@ class VirtInstanceEntry(BaseModel):
     root_disk_size: int | None
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None]
     storage_pool: NonEmptyString
-    "Storage pool in which the root of the instance is located."
+    """Storage pool in which the root of the instance is located."""
 
 
 def validate_memory(value: int) -> int:
@@ -115,17 +115,17 @@ class VirtInstanceCreateArgs(BaseModel):
     iso_volume: NonEmptyString | None = None
     source_type: Literal[None, 'IMAGE', 'ISO', 'VOLUME'] = 'IMAGE'
     storage_pool: NonEmptyString | None = None
-    '''
-    Storage pool under which to allocate root filesystem. Must be one of the pools
-    listed in virt.global.config output under "storage_pools". If None (default) then the pool
+    """
+    Storage pool under which to allocate root filesystem. Must be one of the pools \
+    listed in virt.global.config output under "storage_pools". If None (default) then the pool \
     specified in the global configuration will be used.
-    '''
+    """
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
     root_disk_size: int = Field(ge=5, default=10)  # In GBs
-    '''
-    This can be specified when creating VMs so the root device's size can be configured. Root device for VMs
+    """
+    This can be specified when creating VMs so the root device's size can be configured. Root device for VMs \
     is a sparse zvol and the field specifies space in GBs and defaults to 10 GBs.
-    '''
+    """
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI'] = 'NVME'
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
@@ -138,17 +138,17 @@ class VirtInstanceCreateArgs(BaseModel):
     enable_vnc: bool = False
     vnc_port: int | None = Field(ge=5900, le=65535, default=None)
     volume: NonEmptyString | None = None
-    '''
-    This should be set when source type is "VOLUME" and should be the name of the virt volume which should
+    """
+    This should be set when source type is "VOLUME" and should be the name of the virt volume which should \
     be used to boot the VM instance.
-    '''
+    """
     vnc_password: Secret[NonEmptyString | None] = None
     image_os: str | OS_ENUM = None
     privileged_mode: bool = False
-    '''
-    This is only valid for containers and should only be set when container instance which is to be deployed is to
+    """
+    This is only valid for containers and should only be set when container instance which is to be deployed is to \
     run in a privileged mode.
-    '''
+    """
 
     @model_validator(mode='after')
     def validate_attrs(self):
@@ -196,16 +196,16 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     vnc_port: int | None = Field(ge=5900, le=65535)
     enable_vnc: bool
     vnc_password: Secret[NonEmptyString | None]
-    '''Setting vnc_password to null will unset VNC password'''
+    """Setting vnc_password to null will unset VNC password."""
     secure_boot: bool
     root_disk_size: int | None = Field(ge=5, default=None)
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI', None] = None
     image_os: str | OS_ENUM = None
     privileged_mode: bool
-    '''
-    This is only valid for containers and should only be set when container instance which is to be deployed is to
+    """
+    This is only valid for containers and should only be set when container instance which is to be deployed is to \
     run in a privileged mode.
-    '''
+    """
 
 
 class VirtInstanceUpdateArgs(BaseModel):

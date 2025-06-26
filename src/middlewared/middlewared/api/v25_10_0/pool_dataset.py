@@ -119,7 +119,7 @@ class PoolDatasetChangeKeyOptions(BaseModel):
 
 
 class PoolDatasetCreateUserProperty(BaseModel):
-    key: Annotated[str, Field(pattern=r".*:.*")]
+    key: Annotated[str, Field(pattern=".*:.*")]
     value: str
 
 
@@ -158,7 +158,7 @@ class PoolDatasetCreate(BaseModel):
     encryption: bool = False
     """Create a ZFS encrypted root dataset for `name` pool.
     There is 1 case where ZFS encryption is not allowed for a dataset:
-    1) If the parent dataset is encrypted with a passphrase and `name` is being created with a key for encrypting the
+    1) If the parent dataset is encrypted with a passphrase and `name` is being created with a key for encrypting the \
        dataset.
     """
     inherit_encryption: bool = True
@@ -189,7 +189,7 @@ class PoolDatasetCreateVolume(PoolDatasetCreate):
 
 class PoolDatasetDeleteOptions(BaseModel):
     recursive: bool = False
-    """Also delete/destroy all children datasets. When root dataset is specified as `id` with `recursive`, it will
+    """Also delete/destroy all children datasets. When root dataset is specified as `id` with `recursive`, it will \
     destroy all the children of the root dataset present leaving root dataset intact."""
     force: bool = False
     """Delete datasets even if they are busy."""
@@ -210,21 +210,21 @@ class PoolDatasetEncryptionSummaryOptions(BaseModel):
 
 class PoolDatasetEncryptionSummary(BaseModel):
     """
-    There are 2 keys which show if a recursive unlock operation is done for `id`, which dataset will be unlocked and if
-    not why it won't be unlocked. The keys namely are `unlock_successful` and `unlock_error`. The former is a boolean
-    value showing if unlock would succeed/fail. The latter is description why it failed if it failed.
+    There are 2 keys which show if a recursive unlock operation is done for `id`, which dataset will be unlocked and \
+    if not why it won't be unlocked. The keys namely are `unlock_successful` and `unlock_error`. The former is a \
+    boolean value showing if unlock would succeed/fail. The latter is description why it failed if it failed.
 
-    In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is supposed to
-    be mounted after being unlocked already exists and is not empty. In this case, unlock operation would fail and
-    `unlock_error` will reflect this error appropriately. This can be overridden by setting `options.datasets.X.force`
-    boolean flag or by setting `options.force` flag. In practice, when the dataset is going to be unlocked and these
-    flags have been provided to `pool.dataset.unlock`, system will rename the directory/file path where the dataset
-    should be mounted resulting in successful unlock of the dataset.
+    In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is supposed \
+    to be mounted after being unlocked already exists and is not empty. In this case, unlock operation would fail and \
+    `unlock_error` will reflect this error appropriately. This can be overridden by setting \
+    `options.datasets.X.force` boolean flag or by setting `options.force` flag. In practice, when the dataset is \
+    going to be unlocked and these flags have been provided to `pool.dataset.unlock`, system will rename the \
+    directory/file path where the dataset should be mounted resulting in successful unlock of the dataset.
 
-    If a dataset is already unlocked, it will show up as true for "unlock_successful" regardless of what key user
-    provided as the unlock keys in the output are to reflect what a real unlock operation would behave. If user is
-    interested in seeing if a provided key is valid or not, then the key to look out for in the output is "valid_key"
-    which based on what system has in database or if a user provided one, validates the key and sets a boolean value
+    If a dataset is already unlocked, it will show up as true for "unlock_successful" regardless of what key user \
+    provided as the unlock keys in the output are to reflect what a real unlock operation would behave. If user is \
+    interested in seeing if a provided key is valid or not, then the key to look out for in the output is "valid_key" \
+    which based on what system has in database or if a user provided one, validates the key and sets a boolean value \
     for the dataset.
     """
     name: str
@@ -242,7 +242,7 @@ class PoolDatasetLockOptions(BaseModel):
 
 class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
     used_bytes: int
-    """The number of bytes the user has written to the dataset. A value of zero means unlimited. May not instantly
+    """The number of bytes the user has written to the dataset. A value of zero means unlimited. May not instantly \
     update as space is used."""
     quota: int
     """The quota size in bytes. Absent if no quota is set."""
@@ -253,12 +253,12 @@ class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
     id: int
     """The UID or GID to which the quota applies."""
     name: str | None
-    """The user or group name to which the quota applies. Value is null if the id in the quota cannot be resolved to a
-    user or group. This indicates that the user or group does not exist on the server."""
+    """The user or group name to which the quota applies. Value is null if the id in the quota cannot be resolved to \
+    a user or group. This indicates that the user or group does not exist on the server."""
     obj_used: int
     """The number of objects currently owned by `id`."""
     obj_quota: int
-    """The number of objects that may be owned by `id`. A value of zero means unlimited. Absent if no objquota is
+    """The number of objects that may be owned by `id`. A value of zero means unlimited. Absent if no objquota is \
     set."""
 
 
@@ -277,7 +277,7 @@ class PoolDatasetProjectQuota(_PoolDatasetQuota):
     obj_used: int
     """The number of objects currently owned by `id`."""
     obj_quota: int
-    """The number of objects that may be owned by `id`. A value of zero means unlimited. Absent if no objquota is
+    """The number of objects that may be owned by `id`. A value of zero means unlimited. Absent if no objquota is \
     set."""
 
 
@@ -291,18 +291,17 @@ class PoolDatasetSetQuota(BaseModel):
     quota_type: Literal['DATASET', 'USER', 'USEROBJ', 'GROUP', 'GROUPOBJ']
     """The type of quota to apply to the dataset. There are three over-arching types of quotas for ZFS datasets:
 
-    1) Dataset quotas and refquotas. If a `DATASET` quota type is specified in this API call, then the API acts as a
-    wrapper for `pool.dataset.update`.
-
-    2) User and group quotas. These limit the amount of disk space consumed by files that are owned by the specified
-    users or groups. If the respective "object quota" type is specfied, then the quota limits the number of objects
-    that may be owned by the specified user or group.
-
-    3) Project quotas. These limit the amount of disk space consumed by files that are owned by the specified project.
-    Project quotas are not yet implemented."""
+    * **Dataset quotas and refquotas.** If a `DATASET` quota type is specified in this API call, then the API acts as \
+    a wrapper for `pool.dataset.update`.
+    * **User and group quotas.** These limit the amount of disk space consumed by files that are owned by the \
+    specified users or groups. If the respective "object quota" type is specfied, then the quota limits the number \
+    of objects that may be owned by the specified user or group.
+    * **Project quotas.** These limit the amount of disk space consumed by files that are owned by the specified \
+    project. *Project quotas are not yet implemented.*
+    """
     id: str
-    """The UID, GID, or name to which the quota applies. If `quota_type` is 'DATASET', then `id` must be either `QUOTA`
-    or `REFQUOTA`."""
+    """The UID, GID, or name to which the quota applies. If `quota_type` is 'DATASET', then `id` must be either \
+    `QUOTA` or `REFQUOTA`."""
     quota_value: int | None
     """The quota size in bytes. Setting a value of `0` removes the user or group quota."""
 
@@ -314,19 +313,19 @@ class PoolDatasetUnlockOptionsDataset(PoolDatasetEncryptionSummaryOptionsDataset
 
 class PoolDatasetUnlockOptions(BaseModel):
     force: bool = False
-    """In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is supposed
-    to be mounted after being unlocked already exists and is not empty. In this case, unlock operation would fail. This
-    can be overridden by setting `datasets.X.force` boolean flag or by setting `force` flag. When any of these flags
-    are set, system will rename the existing directory/file path where the dataset should be mounted resulting in
-    successful unlock of the dataset."""
+    """In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is \
+    supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation would \
+    fail. This can be overridden by setting `datasets.X.force` boolean flag or by setting `force` flag. When any of \
+    these flags are set, system will rename the existing directory/file path where the dataset should be mounted \
+    resulting in successful unlock of the dataset."""
     key_file: bool = False
     recursive: bool = False
     toggle_attachments: bool = True
-    """Whether attachments should be put in action after unlocking the dataset(s). Toggling attachments can
-    theoretically lead to service interruption when daemons configurations are reloaded (this should not happen, and if
-    this happens it should be considered a bug). As TrueNAS does not have a state for resources that should be unlocked
-    but are still locked, disabling this option will put the system into an inconsistent state so it should really
-    never be disabled."""
+    """Whether attachments should be put in action after unlocking the dataset(s). Toggling attachments can \
+    theoretically lead to service interruption when daemons configurations are reloaded (this should not happen, and \
+    if this happens it should be considered a bug). As TrueNAS does not have a state for resources that should be \
+    unlocked but are still locked, disabling this option will put the system into an inconsistent state so it should \
+    really never be disabled."""
     datasets: list[PoolDatasetUnlockOptionsDataset] = []
 
 
@@ -353,7 +352,7 @@ class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, me
     user_properties_update: list[PoolDatasetUpdateUserProperty]
 
 
-##############################   Args and Results   #############################################
+# --------------------   Args and Results   ------------------------ #
 
 
 class PoolDatasetAttachmentsArgs(BaseModel):
@@ -600,12 +599,12 @@ class PoolDatasetRenameOptions(BaseModel):
     new_name: DATASET_NAME
     recursive: bool = False
     force: bool = False
-    '''
-    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt
+    """
+    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt \
     SMB shares, iSCSI targets, snapshots, replication, and other services.
 
     Set Force only if you understand and accept the risks.
-    '''
+    """
 
 
 class PoolDatasetRenameArgs(BaseModel):

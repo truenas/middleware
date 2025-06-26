@@ -20,16 +20,16 @@ class InitShutdownScriptCreate(BaseModel):
     """Must be given if `type="SCRIPT"`."""
     when: Literal["PREINIT", "POSTINIT", "SHUTDOWN"]
     """
-    "PREINIT": Early in the boot process before all services have started.
-    "POSTINIT": Late in the boot process when most services have started.
-    "SHUTDOWN": On shutdown.
+    * "PREINIT": Early in the boot process before all services have started.
+    * "POSTINIT": Late in the boot process when most services have started.
+    * "SHUTDOWN": On shutdown.
     """
     enabled: bool = True
     timeout: int = 10
     """An integer time in seconds that the system should wait for the execution of the script/command.
 
-    A hard limit for a timeout is configured by the base OS, so when a script/command is set to execute on SHUTDOWN,
-    the hard limit configured by the base OS is changed adding the timeout specified by script/command so it can be
+    A hard limit for a timeout is configured by the base OS, so when a script/command is set to execute on SHUTDOWN, \
+    the hard limit configured by the base OS is changed adding the timeout specified by script/command so it can be \
     ensured that it executes as desired and is not interrupted by the base OS's limit.
     """
     comment: Annotated[str, Field(max_length=255)] = ""

@@ -17,24 +17,24 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     bucket: NonEmptyString
     folder: str
     fast_list: bool = False
-    """Valid only for some providers. Use fewer transactions in exchange for more RAM. This may also speed up or slow
+    """Valid only for some providers. Use fewer transactions in exchange for more RAM. This may also speed up or slow \
     down your transfer. See https://rclone.org/docs/#fast-list for more details."""
     bucket_policy_only: bool = False
-    """Valid only for GOOGLE_CLOUD_STORAGE provider. Access checks should use bucket-level IAM policies. If you want to
-    upload objects to a bucket with Bucket Policy Only set then you will need to set this."""
+    """Valid only for GOOGLE_CLOUD_STORAGE provider. Access checks should use bucket-level IAM policies. If you want \
+    to upload objects to a bucket with Bucket Policy Only set then you will need to set this."""
     b2_chunk_size: int = Field(alias="chunk_size", default=96, ge=5)
-    """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in memory
-    and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be split in
-    no more than 10 000 chunks."""
+    """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
+    memory and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be \
+    split in no more than 10 000 chunks."""
     dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lte=149)
-    """Valid only for DROPBOX provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in
-    memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business accounts can have
-    monthly data transfer limits per team per month. By using larger chnuk sizes you will decrease the number of data
-    transfer calls used and you'll be able to transfer more data to your Dropbox Business account."""
+    """Valid only for DROPBOX provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
+    memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business accounts can \
+    have monthly data transfer limits per team per month. By using larger chnuk sizes you will decrease the number of \
+    data transfer calls used and you'll be able to transfer more data to your Dropbox Business account."""
     acknowledge_abuse: bool = False
-    """Valid only for GOOGLE_DRIVER provider. Allow files which return cannotDownloadAbusiveFile to be downloaded. If
-    downloading a file returns the error "This file has been identified as malware or spam and cannot be downloaded"
-    with the error code "cannotDownloadAbusiveFile" then enable this flag to indicate you acknowledge the risks of
+    """Valid only for GOOGLE_DRIVER provider. Allow files which return cannotDownloadAbusiveFile to be downloaded. If \
+    downloading a file returns the error "This file has been identified as malware or spam and cannot be downloaded" \
+    with the error code "cannotDownloadAbusiveFile" then enable this flag to indicate you acknowledge the risks of \
     downloading the file and TrueNAS will download it anyway."""
     region: str = ""
     """Valid only for S3 provider. S3 Region."""
@@ -48,30 +48,30 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
 class BaseCloudEntry(BaseModel):
     id: int
     description: str = ""
-    """The name of the task to display in the UI"""
+    """The name of the task to display in the UI."""
     path: str
-    """The local path to back up beginning with `/mnt` or `/dev/zvol`"""
+    """The local path to back up beginning with `/mnt` or `/dev/zvol`."""
     credentials: CloudCredentialEntry
-    """Cloud credentials to use for each backup"""
+    """Cloud credentials to use for each backup."""
     attributes: CloudTaskAttributes
-    """Additional information for each backup, e.g. bucket name"""
+    """Additional information for each backup, e.g. bucket name."""
     schedule: CloudCron = Field(default_factory=CloudCron)
-    """Cron schedule dictating when the task should run"""
+    """Cron schedule dictating when the task should run."""
     pre_script: LongString = ""
-    """A Bash script to run immediately before every backup"""
+    """A Bash script to run immediately before every backup."""
     post_script: LongString = ""
-    """A Bash script to run immediately after every backup if it succeeds"""
+    """A Bash script to run immediately after every backup if it succeeds."""
     snapshot: bool = False
-    """Whether to create a temporary snapshot of the dataset before every backup"""
+    """Whether to create a temporary snapshot of the dataset before every backup."""
     include: list[NonEmptyString] = Field(default_factory=list)
-    """Paths to pass to `restic backup --include`"""
+    """Paths to pass to `restic backup --include`."""
     exclude: list[NonEmptyString] = Field(default_factory=list)
-    """Paths to pass to `restic backup --exclude`"""
+    """Paths to pass to `restic backup --exclude`."""
     args: LongString = ""
-    """(Slated for removal)"""
+    """(Slated for removal)."""
     enabled: bool = True
-    """Can enable/disable the task"""
+    """Can enable/disable the task."""
     job: dict | None
-    """Information regarding the task's job state, e.g. progress"""
+    """Information regarding the task's job state, e.g. progress."""
     locked: bool
-    """A locked task cannot run"""
+    """A locked task cannot run."""

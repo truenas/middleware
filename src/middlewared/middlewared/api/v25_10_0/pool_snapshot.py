@@ -34,7 +34,7 @@ SNAPSHOT_NAME = Annotated[
     NonEmptyString,
     BeforeValidator(_validate_snapshot_name),
 ]
-UserPropertyKey = Annotated[str, Field(pattern=r'.*:.*')]
+UserPropertyKey = Annotated[str, Field(pattern='.*:.*')]
 
 
 class PoolSnapshotEntryPropertyFields(BaseModel):
@@ -123,8 +123,8 @@ class PoolSnapshotRollbackOptions(BaseModel):
     force: bool = False
     """Force unmount of any clones."""
     recursive_rollback: bool = False
-    """Do a complete recursive rollback of each child snapshot for `id`. If any child does not have specified snapshot,
-    this operation will fail."""
+    """Do a complete recursive rollback of each child snapshot for `id`. If any child does not have specified \
+    snapshot, this operation will fail."""
 
 
 class PoolSnapshotUserPropertyUpdate(BaseModel):
@@ -211,12 +211,12 @@ class PoolSnapshotUpdateResult(BaseModel):
 class PoolSnapshotRenameOptions(BaseModel):
     new_name: SNAPSHOT_NAME
     force: bool = False
-    '''
-    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt
+    """
+    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt \
     SMB shares, iSCSI targets, snapshots, replication, and other services.
 
     Set Force only if you understand and accept the risks.
-    '''
+    """
 
 
 class PoolSnapshotRenameArgs(BaseModel):
