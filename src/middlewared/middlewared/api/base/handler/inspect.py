@@ -1,4 +1,3 @@
-import pydantic_core
 import types
 import typing
 
