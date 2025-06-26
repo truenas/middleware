@@ -275,10 +275,9 @@ def test_construct_schema_populates_defaults_with_empty_input():
             ]
         }
     }
-    
+
     # Pass empty dict - should get defaults populated
     result = construct_schema(data, {}, False)
-    
     assert len(result['verrors'].errors) == 0
     assert result['new_values'] == {
         'run_as': {'user': 568, 'group': 568},

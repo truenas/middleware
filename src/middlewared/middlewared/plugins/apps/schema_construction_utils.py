@@ -38,6 +38,24 @@ USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
 # 7) removing editable fields
 
 
+def remove_not_required(data):
+    """Recursively remove fields with NotRequired values from the data structure."""
+    if isinstance(data, dict):
+        result = {}
+        for k, v in data.items():
+            # Check if the value is the NotRequired sentinel
+            if v is NotRequired or (hasattr(v, '__class__') and v.__class__.__name__ == '_NotRequired'):
+                continue  # Skip this field
+            # Also check for string representations of NotRequired objects
+            if isinstance(v, str) and v.startswith('<middlewared.api.base.model._NotRequired object at'):
+                continue  # Skip this field
+            result[k] = remove_not_required(v)
+        return result
+    elif isinstance(data, list):
+        return [remove_not_required(item) for item in data]
+    return data
+
+
 def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: USER_VALUES = NOT_PROVIDED,
 ) -> dict:
@@ -48,6 +66,8 @@ def construct_schema(
         # Validate the new values against the generated model
         # exclude_unset=False ensures defaults are populated for fields not provided by user
         new_values = validate_model(model, new_values, exclude_unset=False, expose_secrets=False)
+        # Remove any fields that have NotRequired as their value
+        new_values = remove_not_required(new_values)
     except ValidationErrors as e:
         # Don't add 'values' prefix - just extend the errors directly
         verrors.extend(e)

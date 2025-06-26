@@ -260,7 +260,7 @@ def test_show_if_preserves_existing_behavior():
 
 def test_nested_show_if_with_field_level_conditions():
     """Test nested show_if where fields within hidden dicts also have show_if conditions.
-    
+
     This tests the actual-budget scenario where:
     - storage.data.host_path_config has show_if based on type
     - storage.data.host_path_config.path has its own show_if based on acl_enable
