@@ -63,6 +63,7 @@ class VMModel(sa.Model):
     bootloader_ovmf = sa.Column(sa.String(1024), default='OVMF_CODE.fd')
     trusted_platform_module = sa.Column(sa.Boolean(), default=False)
     enable_cpu_topology_extension = sa.Column(sa.Boolean(), default=False)
+    enable_secure_boot = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
 @functools.cache
@@ -277,6 +278,17 @@ class VMService(CRUDService, VMSupervisorMixin):
                 verrors.add(
                     f'{schema_name}.pin_vcpus',
                     f'Number of cpus in "{schema_name}.cpuset" must be equal to total number vpcus if pinning is enabled.'
+                )
+
+        if data['enable_secure_boot']:
+            # Only q35 machine type supports secure boot
+            # https://docs.openstack.org/nova/latest/admin/secure-boot.html
+            if not data['machine_type']:
+                data['machine_type'] = 'pc-q35-6.2'
+            elif data['machine_type'] and 'pc-q35' not in data['machine_type']:
+                verrors.add(
+                    f'{schema_name}.machine_type',
+                    'Secure boot is only available in q35 machine type'
                 )
 
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
