@@ -7,7 +7,10 @@ from truenas_connect_utils.urls import get_account_service_url
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import TNCEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult, TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult
+from middlewared.api.current import (
+    TNCEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
+    TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult,
+)
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
 from .mixin import TNCAPIMixin
@@ -25,6 +28,8 @@ class TrueNASConnectModel(sa.Model):
     jwt_token = sa.Column(sa.EncryptedText(), default=None, nullable=True)
     registration_details = sa.Column(sa.JSON(dict), nullable=False)
     ips = sa.Column(sa.JSON(list), nullable=False)
+    interfaces = sa.Column(sa.JSON(list), nullable=False, default=list)
+    interfaces_ips = sa.Column(sa.JSON(list), nullable=False, default=list)
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     account_service_base_url = sa.Column(
@@ -59,6 +64,9 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         config.pop('last_heartbeat_failure_datetime', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
+        # Ensure interfaces and interfaces_ips are included
+        config['interfaces'] = config.get('interfaces', [])
+        config['interfaces_ips'] = config.get('interfaces_ips', [])
         return config
 
     @private
