@@ -22,7 +22,7 @@ DeviceType: TypeAlias = Literal['ZVOL', 'FILE']
 class NVMetNamespaceEntry(BaseModel):
     id: int
     nsid: Annotated[int, Field(ge=1, lt=0xFFFFFFFF)] | None = None
-    """ Namespace ID (NSID)
+    """ Namespace ID (NSID).
 
     Each namespace within a subsystem has an associated NSID, unique within that subsystem.
 

@@ -212,7 +212,7 @@ class PoolSnapshotRenameOptions(BaseModel):
     new_name: SNAPSHOT_NAME
     force: bool = False
     """
-    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt
+    This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt \
     SMB shares, iSCSI targets, snapshots, replication, and other services.
 
     Set Force only if you understand and accept the risks.

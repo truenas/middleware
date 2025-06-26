@@ -71,7 +71,7 @@ class SMBShareAclEntryWhoId(BaseModel):
 
 class SMBShareAclEntry(BaseModel):
     """ An SMB Share ACL Entry that grants or denies specific permissions to a principal.
-    You can identify the principal by a SID (`ae_who_sid`), Unix ID (`ae_who_id`),
+    You can identify the principal by a SID (`ae_who_sid`), Unix ID (`ae_who_id`), \
     or name (`ae_who_str`). """
     ae_perm: Literal['FULL', 'CHANGE', 'READ']
     """ Permissions granted or denied to the principal. """
@@ -133,34 +133,35 @@ class SmbServiceEntry(BaseModel):
     netbiosname: NetbiosName
     """ The NetBIOS name of this server. """
     netbiosalias: list[NetbiosName]
-    """ Alternative netbios names of the TrueNAS server. These names are announced through NetBIOS name server and
+    """ Alternative netbios names of the TrueNAS server. These names are announced through NetBIOS name server and \
     registered in Active Directory when TrueNAS joins the domain."""
     workgroup: NetbiosDomain
-    """ Workgroup name. When TrueNAS joins active directory, it automatically changes this value to match the NetBIOS
+    """ Workgroup name. When TrueNAS joins active directory, it automatically changes this value to match the NetBIOS \
     domain of the Active Directory domain. """
     description: str
     """ Description of the SMB server. SMB clients may see this description during some operations. """
     enable_smb1: bool
     """ Enable SMB1 support on the server. WARNING: using the SMB1 protocol is not recommended. """
     unixcharset: SMBCharsetType
-    """ Select character set for file names on local filesystem. Use this option only if you know the names are not
+    """ Select character set for file names on local filesystem. Use this option only if you know the names are not \
     UTF-8. """
     localmaster: bool
-    """ When set to `True` the NetBIOS name server in TrueNAS participates in elections for the local master browser.
-    When set to `False` the NetBIOS name server does not attempt to become a local master browser on a subnet and loses
-    all browsing elections.
+    """ When set to `true` the NetBIOS name server in TrueNAS participates in elections for the local master browser.
+    When set to `false` the NetBIOS name server does not attempt to become a local master browser on a subnet and \
+    loses all browsing elections.
 
-    NOTE: this parameter has no effect if the NetBIOS name server is disabled. """
+    NOTE: This parameter has no effect if the NetBIOS name server is disabled. """
     syslog: bool
-    """ Send log messages to syslog. Enable this option if you want SMB server error logs to be included in information
-    sent to a remote syslog server. NOTE: This requires that remote syslog is globally configured on TrueNAS. """
+    """ Send log messages to syslog. Enable this option if you want SMB server error logs to be included in \
+    information sent to a remote syslog server. NOTE: This requires that remote syslog is globally configured on \
+    TrueNAS. """
     aapl_extensions: bool
-    """ Enable support for SMB2/3 AAPL protocol extensions. This setting makes the TrueNAS server advertise support for
-    Apple protocol extensions as a MacOS server. Enabling this is required for Time Machine support. """
+    """ Enable support for SMB2/3 AAPL protocol extensions. This setting makes the TrueNAS server advertise support \
+    for Apple protocol extensions as a MacOS server. Enabling this is required for Time Machine support. """
     admin_group: str | None
     """ The selected group has full administrator privileges on TrueNAS via the SMB protocol. """
     guest: NonEmptyString
-    """ SMB guest account username. This username provides access to legacy SMB shares with guest access enabled.
+    """ SMB guest account username. This username provides access to legacy SMB shares with guest access enabled. \
     It must be a valid, existing local user account. """
     filemask: UnixPerm | Literal['DEFAULT']
     """ `smb.conf` create mask. DEFAULT applies current server default which is 664. """
@@ -174,26 +175,23 @@ class SmbServiceEntry(BaseModel):
     encryption: SMBEncryption
     """ SMB2/3 transport encryption setting for the TrueNAS SMB server.
 
-    `NEGOTIATE`: Enable negotiation of data encryption. Encrypt data only if the client explicitly requests it.
-
-    `DESIRED`: Enable negotiation of data encryption. Encrypt data on sessions and share connections for clients that
-    support it.
-
-    `REQUIRED`: Require data encryption for sessions and share connections.
-    NOTE: Clients that do not support encryption cannot access SMB shares.
-
-    `DEFAULT`: Use the TrueNAS SMB server default encryption settings. Currently, this is the same as `NEGOTIATE`.
+    * `NEGOTIATE`: Enable negotiation of data encryption. Encrypt data only if the client explicitly requests it.
+    * `DESIRED`: Enable negotiation of data encryption. Encrypt data on sessions and share connections for clients \
+      that support it.
+    * `REQUIRED`: Require data encryption for sessions and share connections.
+      NOTE: Clients that do not support encryption cannot access SMB shares.
+    * `DEFAULT`: Use the TrueNAS SMB server default encryption settings. Currently, this is the same as `NEGOTIATE`.
     """
     bindip: list[IPvAnyInterface]
     """ List of IP addresses used by the TrueNAS SMB server. """
     server_sid: SID | None
-    """ The unique identifier for the TrueNAS SMB server. It also serves as the domain SID for all local SMB user and
+    """ The unique identifier for the TrueNAS SMB server. It also serves as the domain SID for all local SMB user and \
     group accounts. """
     smb_options: str
     """ Additional unvalidated and unsupported configuration options for the SMB server.
     WARNING: Using `smb_options` may produce unexpected server behavior. """
     debug: bool
-    """ Set SMB log levels to debug. Use this setting only when troubleshooting a specific SMB issue. Do not use it
+    """ Set SMB log levels to debug. Use this setting only when troubleshooting a specific SMB issue. Do not use it \
     in production environments. """
 
     @field_validator('bindip')
@@ -257,10 +255,10 @@ SmbNamingSchema = Annotated[str, AfterValidator(validate_smb_path_suffix)]
 class SmbAuditConfig(BaseModel):
     """ Settings for auditing SMB shares.
 
-    NOTE: If a user is a member of groups in the `watch_list` and the `ignore_list`, the `watch_list`
+    NOTE: If a user is a member of groups in the `watch_list` and the `ignore_list`, the `watch_list` \
     has priority, and the SMB session is audited. """
     enable: bool = False
-    """ Turn on auditing for the SMB share. SMB share auditing may not be enabled if `enable_smb1` is True
+    """ Turn on auditing for the SMB share. SMB share auditing may not be enabled if `enable_smb1` is `true` \
     in the SMB service configuration."""
     watch_list: list[NonEmptyString] = Field(default=[], examples=[['interns', 'contractors']])
     """ Only audit the listed group accounts. If the list is empty, all groups will be audited. """
@@ -272,24 +270,24 @@ class DefaultOpt(BaseModel):
     """ These configuration options apply to shares with the `DEFAULT_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.DEFAULT_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: bool = False
-    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
+    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB \
     server's local filesystem.
 
-    NOTE: files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
+    NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
-    WARNING: this value should not be changed once data is written to the SMB share. """
+    WARNING: This value should not be changed once data is written to the SMB share. """
 
 
 class LegacyOpt(BaseModel):
     """ These configuration options apply to shares with the `LEGACY_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.LEGACY_SHARE] = Field(exclude=True, repr=False)
     recyclebin: bool = False
-    """ If set, deleted files are moved to per-user subdirectories in the `.recycle` directory. The
-    SMB server creates the `.recycle` directory at the root of the SMB share if the file is in the same
-    ZFS dataset as the share `path`. If the file is in a child ZFS dataset, the server uses the
+    """ If set, deleted files are moved to per-user subdirectories in the `.recycle` directory. The \
+    SMB server creates the `.recycle` directory at the root of the SMB share if the file is in the same \
+    ZFS dataset as the share `path`. If the file is in a child ZFS dataset, the server uses the \
     `mountpoint` of that dataset to create the `.recycle` directory.
 
-    NOTE: this feature does not work with recycle bin features in client operating systems.
+    NOTE: This feature does not work with recycle bin features in client operating systems.
 
     WARNING: Do not use this feature instead of backups or ZFS snapshots. """
     path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
@@ -298,120 +296,120 @@ class LegacyOpt(BaseModel):
         ['150.203.15.0/255.255.255.0'],
         ['150.203. EXCEPT 150.203.6.66']
     ])
-    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword
+    """ A list of IP addresses or subnets that are allowed to access the SMB share. The EXCEPT keyword \
     may be used to limit a wildcard list.
 
-    NOTE: hostname lookups are disabled on the SMB server for performance reasons. """
+    NOTE: Hostname lookups are disabled on the SMB server for performance reasons. """
     hostsdeny: list[str] = Field(default=[], examples=[['150.203.4.'], ['ALL'], ['0.0.0.0/0']])
-    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword
+    """ A list of IP addresses or subnets that are not allowed to access the SMB share. The keyword \
     `ALL` or the netmask `0.0.0.0/0` may be used to deny all by default. """
     guestok: bool = False
     """ If set, guest access to the share is allowed. This should not be used in production environments.
 
     NOTE: If a user account does not exist, the SMB server maps access to the guest account.
 
-    WARNING: additional client-side configuration downgrading security settings may be required in order
+    WARNING: Additional client-side configuration downgrading security settings may be required in order \
     to use this feature. """
     streams: bool = True
     """ If set, support for SMB alternate data streams is enabled.
 
-    WARNING: this value should not be changed once data is written to the SMB share. """
+    WARNING: This value should not be changed once data is written to the SMB share. """
     durablehandle: bool = True
     """ If set, support for SMB durable handles is enabled.
 
-    WARNING: this feature is incompatible with multiprotocol and local filesystem access. """
+    WARNING: This feature is incompatible with multiprotocol and local filesystem access. """
     shadowcopy: bool = True
-    """ If set, previous versions of files contained in ZFS snapshots are accessible through standard SMB protocol
+    """ If set, previous versions of files contained in ZFS snapshots are accessible through standard SMB protocol \
     operations on previous versions of files. """
     fsrvp: bool = False
-    """ If set, enable support for the File Server Remote VSS Protocol. This allows clients to manage
+    """ If set, enable support for the File Server Remote VSS Protocol. This allows clients to manage \
     snapshots for the specified SMB share. """
     home: bool = False
-    """ Use the `path` to store user home directories. Each user has a personal home directory and share.
+    """ Use the `path` to store user home directories. Each user has a personal home directory and share. \
     Users cannot access other user directories when connecting to shares.
 
-    NOTE: This parameter changes the share `name` to `homes`. It also creates a dynamic share that mirrors
-    the username of the user. Both shares use the same `path`. You can hide the homes share by turning off `browsable`.
-    The dynamic user home share cannot be hidden.
+    NOTE: This parameter changes the share `name` to `homes`. It also creates a dynamic share that mirrors \
+    the username of the user. Both shares use the same `path`. You can hide the homes share by turning off \
+    `browsable`. The dynamic user home share cannot be hidden.
 
-    WARNING: This parameter changes the global server configuration. The SMB server will not authenticate
+    WARNING: This parameter changes the global server configuration. The SMB server will not authenticate \
     users without a valid home directory or shell."""
     acl: bool = True
     """ If set, enable mapping of local filesystem ACLs to NT ACLs for SMB clients. """
     afp: bool = False
-    """ If set, SMB server will read and store file metadata in an on-disk format compatible with the
+    """ If set, SMB server will read and store file metadata in an on-disk format compatible with the \
     legacy AFP file server.
 
-    WARNING: this should not be set unless the SMB server is sharing data that was originally written
+    WARNING: This should not be set unless the SMB server is sharing data that was originally written \
     via the AFP protocol. """
     timemachine: bool = False
     """ If set, MacOS clients can use the share as a time machine target. """
     timemachine_quota: int = Field(default=0, ge=0, le=109951162777600)
-    """ If set, it defines the maximum size of a single time machine sparsebundle volume by limiting the
+    """ If set, it defines the maximum size of a single time machine sparsebundle volume by limiting the \
     reported disk size to the SMB client. A value of zero means no quota is applied to the share.
 
-    NOTE: Modern MacOS versions you set Time Machine quotas client-side. This gives more predictable
+    NOTE: Modern MacOS versions you set Time Machine quotas client-side. This gives more predictable \
     server and client behavior."""
     aapl_name_mangling: bool = False
-    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
+    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB \
     server's local filesystem.
 
-    NOTE: files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
+    NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
-    WARNING: this value should not be changed once data is written to the SMB share. """
+    WARNING: This value should not be changed once data is written to the SMB share. """
     vuid: NonEmptyString | None = Field(default=None, examples=['d12aafdc-a7ac-4e3c-8bbd-6001f7f19819'])
-    """ This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the mDNS
-    advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you create or
-    update a share, setting this value to None makes the TrueNAS server generate a new UUID for the share. """
+    """ This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the mDNS \
+    advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you create or \
+    update a share, setting this value to null makes the TrueNAS server generate a new UUID for the share. """
     auxsmbconf: LongString = ''
     """ Additional parameters to set on the SMB share. Parameters must be separated by the new-line character.
 
-    WARNING: these parameters are not validated and may cause undefined server behavior including
+    WARNING: These parameters are not validated and may cause undefined server behavior including \
     data corruption or data loss.
 
-    WARNING: auxiliary parameters are an unsupported configuration."""
+    WARNING: Auxiliary parameters are an unsupported configuration."""
 
 
 class TimeMachineOpt(BaseModel):
     """ These configuration options apply to shares with the `TIMEMACHINE_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.TIMEMACHINE_SHARE] = Field(exclude=True, repr=False)
     timemachine_quota: int = Field(default=0, ge=0, le=109951162777600)
-    """ If set, it defines the maximum size in bytes of a single time machine sparsebundle volume by limiting the
+    """ If set, it defines the maximum size in bytes of a single time machine sparsebundle volume by limiting the \
     reported disk size to the SMB client. A value of zero means no quota is set.
 
-    NOTE: Modern MacOS versions you set Time Machine quotas client-side. This gives more predictable
+    NOTE: Modern MacOS versions you set Time Machine quotas client-side. This gives more predictable \
     server and client behavior."""
     auto_snapshot: bool = False
-    """ If set, the server makes a ZFS snapshot of the share dataset when the client makes a new
+    """ If set, the server makes a ZFS snapshot of the share dataset when the client makes a new \
     Time Machine backup. """
     auto_dataset_creation: bool = False
-    """ If set, the server uses the `dataset_naming_schema` to make a new ZFS dataset when the client connects.
+    """ If set, the server uses the `dataset_naming_schema` to make a new ZFS dataset when the client connects. \
     The server uses this dataset as the share path during the SMB session.
 
-    NOTE: this setting requires the share path to be a dataset mountpoint."""
+    NOTE: This setting requires the share path to be a dataset mountpoint."""
     dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
-    """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema,
-    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to
-    Active Directory it uses `%D/%u` (domain/username). See the `VARIABLE SUBSTITUTIONS` section in the smb.conf
+    """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema, \
+    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to \
+    Active Directory it uses `%D/%u` (domain/username). See the `VARIABLE SUBSTITUTIONS` section in the smb.conf \
     manpage for valid strings.
 
     WARNING: ZFS dataset naming rules are more restrictive than normal path rules."""
     vuid: NonEmptyString | None = Field(default=None, examples=['d12aafdc-a7ac-4e3c-8bbd-6001f7f19819'])
-    """ This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the mDNS
-    advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you create or
-    update a share, setting this value to None makes the TrueNAS server generate a new UUID for the share. """
+    """ This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the mDNS \
+    advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you create or \
+    update a share, setting this value to null makes the TrueNAS server generate a new UUID for the share. """
 
 
 class MultiprotocolOpt(BaseModel):
     """ These configuration options apply to shares with the `MULTIPROTOCOL_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.MULTIPROTOCOL_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: bool = False
-    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
+    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB \
     server's local filesystem.
 
-    NOTE: files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
+    NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
-    WARNING: this value should not be changed once data is written to the SMB share. """
+    WARNING: This value should not be changed once data is written to the SMB share. """
 
 
 class TimeLockedOpt(BaseModel):
@@ -420,33 +418,33 @@ class TimeLockedOpt(BaseModel):
     grace_period: int = Field(default=900, ge=60, le=86400 * 180)
     """ Time in seconds when write access to the file or directory is allowed. """
     aapl_name_mangling: bool = False
-    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
+    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB \
     server's local filesystem.
 
-    NOTE: files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
+    NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
-    WARNING: this value should not be changed once data is written to the SMB share. """
+    WARNING: This value should not be changed once data is written to the SMB share. """
 
 
 class PrivateDatasetOpt(BaseModel):
     """ These configuration options apply to shares with the `PRIVATE_DATASETS_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.PRIVATE_DATASETS_SHARE] = Field(exclude=True, repr=False)
     dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
-    """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema,
-    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to
+    """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema, \
+    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to \
     Active Directory it uses `%D/%u` (domain/username).
 
     WARNING: ZFS dataset naming rules are more restrictive than normal path rules."""
     auto_quota: int = Field(default=0, examples=[10], ge=0)
-    """ Set the specified ZFS quota (in gibibytes) on new datasets. If the value is zero, TrueNAS disables
+    """ Set the specified ZFS quota (in gibibytes) on new datasets. If the value is zero, TrueNAS disables \
     automatic quotas for the share."""
     aapl_name_mangling: bool = False
-    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB
+    """ If set, illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB \
     server's local filesystem.
 
-    NOTE: files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
+    NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients.
 
-    WARNING: this value should not be changed once data is written to the SMB share. """
+    WARNING: This value should not be changed once data is written to the SMB share. """
 
 
 class ExternalOpt(BaseModel):
@@ -457,7 +455,7 @@ class ExternalOpt(BaseModel):
         ['SERVER1.MYDOM.INTERNAL\\SHARE'],
         ['SERVER1.MYDOM.INTERNAL\\SHARE, SERVER2.MYDOM.INTERNAL\\SHARE']
     ])
-    """ This is the path to the external server and share. Each server entry must include a full domain name or IP
+    """ This is the path to the external server and share. Each server entry must include a full domain name or IP \
     address and share name. Separate the server and share with the `\\` character.
 
     WARNING: The SMB server and TrueNAS middleware do not check if external paths are reachable. """
@@ -503,38 +501,40 @@ class SmbShareEntry(BaseModel):
         SMBSharePurpose.EXTERNAL_SHARE,
         SMBSharePurpose.VEEAM_REPOSITORY_SHARE
     ] = SMBSharePurpose.DEFAULT_SHARE.value
-    """ This parameter sets the purpose of the SMB share. It controls how the SMB share behaves and what features are
-    available through options. The DEFAULT_SHARE setting is best for most applications, and should be used, unless
+    """ This parameter sets the purpose of the SMB share. It controls how the SMB share behaves and what features are \
+    available through options. The DEFAULT_SHARE setting is best for most applications, and should be used, unless \
     there is a specific reason to change it.
 
-    `DEFAULT_SHARE`: Set the SMB share for best compatibility with common SMB clients.
+    * `DEFAULT_SHARE`: Set the SMB share for best compatibility with common SMB clients.
 
-    `LEGACY_SHARE`: Set the SMB share for compatibility with older TrueNAS versions. Automated backend migrations
-    use this to help the administrator move to better-supported share settings. It should not be used for new SMB
-    shares.
+    * `LEGACY_SHARE`: Set the SMB share for compatibility with older TrueNAS versions. Automated backend migrations \
+      use this to help the administrator move to better-supported share settings. It should not be used for new SMB \
+      shares.
 
-    `TIMEMACHINE_SHARE`: The SMB share is presented to MacOS clients as a time machine target. NOTE: `aapl_extensions`
-    must be set in the global `smb.config`.
+    * `TIMEMACHINE_SHARE`: The SMB share is presented to MacOS clients as a time machine target.
+      NOTE: `aapl_extensions` must be set in the global `smb.config`.
 
-    `MULTIPROTOCOL_SHARE`: The SMB share is configured for multi-protocol access. Set this if the `path` is shared
-    through NFS, FTP, or used by containers or apps. NOTE: This setting can reduce SMB share performance because it
-    turns off some SMB features for safer interoperability with external processes.
+    * `MULTIPROTOCOL_SHARE`: The SMB share is configured for multi-protocol access. Set this if the `path` is shared \
+      through NFS, FTP, or used by containers or apps.
+      NOTE: This setting can reduce SMB share performance because it turns off some SMB features for safer \
+      interoperability with external processes.
 
-    `TIME_LOCKED_SHARE`: The SMB share makes files read-only through the SMB protocol after the set grace_period ends.
-    WARNING: This setting does not work if the `path` is accessed locally or if another SMB share without the
-    `TIME_LOCKED_SHARE` purpose uses the same path. WARNING: This setting might not meet regulatory requirements for
-    write-once storage.
+    * `TIME_LOCKED_SHARE`: The SMB share makes files read-only through the SMB protocol after the set grace_period \
+      ends.
+      WARNING: This setting does not work if the `path` is accessed locally or if another SMB share without the \
+      `TIME_LOCKED_SHARE` purpose uses the same path.
+      WARNING: This setting might not meet regulatory requirements for write-once storage.
 
-    `PRIVATE_DATASETS_SHARE`: The server uses the specified `dataset_naming_schema` in `options` to make a new ZFS
-    dataset when the client connects. The server uses this dataset as the share path during the SMB session.
+    * `PRIVATE_DATASETS_SHARE`: The server uses the specified `dataset_naming_schema` in `options` to make a new ZFS \
+      dataset when the client connects. The server uses this dataset as the share path during the SMB session.
 
-    `EXTERNAL_SHARE`: The SMB share is a DFS proxy to a share hosted on an external SMB server.
+    * `EXTERNAL_SHARE`: The SMB share is a DFS proxy to a share hosted on an external SMB server.
 
-    `VEEAM_REPOSITORY_SHARE`: The SMB share is a repository for Veeam Backup & Replication and supports
-    Fast Clone. NOTE: this feature is available only for TrueNAS Enterprise customers.
+    * `VEEAM_REPOSITORY_SHARE`: The SMB share is a repository for Veeam Backup & Replication and supports Fast Clone.
+      NOTE: This feature is available only for TrueNAS Enterprise customers.
     """
     name: SmbShareName = Field(examples=['SHARE', 'Macrodata_refinement'])
-    """ SMB share name. SMB share names are case-insensitive and must be unique, and are subject
+    """ SMB share name. SMB share names are case-insensitive and must be unique, and are subject \
     to the following restrictions:
 
     * A share name must be no more than 80 characters in length.
@@ -546,7 +546,7 @@ class SmbShareEntry(BaseModel):
     * The following share names are not allowed: global, printers, homes.
     """
     path: NonEmptyString | Literal['EXTERNAL'] = Field(examples=['/mnt/dozer/SHARE', 'EXTERNAL'])
-    """ Local server path to share by using the SMB protocol. The path must start with `/mnt/` and must be in a
+    """ Local server path to share by using the SMB protocol. The path must start with `/mnt/` and must be in a \
     ZFS pool.
 
     Use the string `EXTERNAL` if the share works as a DFS proxy.
@@ -555,16 +555,16 @@ class SmbShareEntry(BaseModel):
     enabled: bool = True
     """ If unset, the SMB share is not available over the SMB protocol. """
     comment: str = Field(default='', examples=['Mammalian nurturable'])
-    """ Text field that is seen next to a share when an SMB client requests a list of SMB shares on the TrueNAS
+    """ Text field that is seen next to a share when an SMB client requests a list of SMB shares on the TrueNAS \
     server. """
     readonly: bool = False
     """ If set, SMB clients cannot create or change files and directories in the SMB share.
 
-    NOTE: if set, the share path is still writeable by local processes or other file sharing protocols. """
+    NOTE: If set, the share path is still writeable by local processes or other file sharing protocols. """
     browsable: bool = True
     """ If set, the share is included when an SMB client requests a list of SMB shares on the TrueNAS server. """
     access_based_share_enumeration: bool = False
-    """ If set, the share is only included when an SMB client requests a list of shares on the SMB server if
+    """ If set, the share is only included when an SMB client requests a list of shares on the SMB server if \
     the share (not filesystem) access control list (see `sharing.smb.getacl`) grants access to the user. """
     locked: bool
     """ Read-only value showing if the share is in a locked dataset. """
@@ -576,7 +576,7 @@ class SmbShareEntry(BaseModel):
         {'auto_snapshot': True},
         {'auto_quota': 100},
     ])
-    """ Additional configuration related to the configured SMB share purpose. If None, then the default
+    """ Additional configuration related to the configured SMB share purpose. If null, then the default \
     options related to the share purpose will be applied. """
 
     @classmethod
@@ -668,7 +668,7 @@ class SmbShareCreate(SmbShareEntry):
             # case we apply purpose-related defaults
             if self.purpose is undefined:
                 # Explicit handling in case we're in update method and have wonky options
-                raise ValueError('purpose field is required if options are specified as None')
+                raise ValueError('purpose field is required if options are specified as null')
 
             match self.purpose:
                 case SMBSharePurpose.DEFAULT_SHARE:

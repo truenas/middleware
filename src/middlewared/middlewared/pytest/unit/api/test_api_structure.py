@@ -53,7 +53,7 @@ def check_docstring(docstr: str | None):
     if not docstr.endswith("."):
         return "Docstring must end with a period"
     if any(line[-1] not in (".", ":") for line in docstr.splitlines() if line):
-        return "Use '\' at ends of lines to wrap text"
+        return r"Use '\' at ends of lines to wrap text"
 
 
 def test_api_docstrings(current_api_package):
