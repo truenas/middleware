@@ -35,8 +35,11 @@ def test_api_current_module_exports(current_api_package):
 def check_docstring(docstr: str | None):
     if not docstr:
         return
+    docstr = docstr.strip()
     if docstr[0].islower():
         return "Docstring cannot start with lowercase letter"
+    if not docstr.endswith("."):
+        return "Docstring must end with a period"
 
 
 def test_api_docstrings(current_api_package):

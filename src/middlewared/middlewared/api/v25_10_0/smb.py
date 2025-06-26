@@ -163,9 +163,9 @@ class SmbServiceEntry(BaseModel):
     """ SMB guest account username. This username provides access to legacy SMB shares with guest access enabled.
     It must be a valid, existing local user account. """
     filemask: UnixPerm | Literal['DEFAULT']
-    """ smb.conf create mask. DEFAULT applies current server default which is 664. """
+    """ `smb.conf` create mask. DEFAULT applies current server default which is 664. """
     dirmask: UnixPerm | Literal['DEFAULT']
-    """ smb.conf directory mask. DEFAULT applies current server default which is 775. """
+    """ `smb.conf` directory mask. DEFAULT applies current server default which is 775. """
     ntlmv1_auth: bool
     """ Enable legacy and very insecure NTLMv1 authentication. This should never be done except \
     in extreme edge cases and may be against regulations in non-home environments. """
