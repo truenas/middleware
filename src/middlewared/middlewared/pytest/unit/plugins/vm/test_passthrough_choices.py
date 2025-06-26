@@ -29,7 +29,7 @@ from middlewared.pytest.unit.middleware import Middleware
                 'vendor': 'Intel Corporation'
             },
             'controller_type': 'Host bridge',
-            'critical': False,
+            'critical': True,
             'iommu_group': {
                 'number': 27,
                 'addresses': [
@@ -41,7 +41,7 @@ from middlewared.pytest.unit.middleware import Middleware
                     }
                 ]
             },
-            'available': True,
+            'available': False,
             'drivers': [],
             'error': None,
             'device_path': '/sys/bus/pci/devices/0000:00:00.0',
