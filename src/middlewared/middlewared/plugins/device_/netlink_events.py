@@ -4,6 +4,7 @@ import socket
 import struct
 import time
 
+from middlewared.utils import run
 from middlewared.utils.threading import start_daemon_thread
 
 
@@ -410,10 +411,20 @@ def netlink_events(middleware):
             time.sleep(5)  # Wait before retry
 
 
+async def _systemctl_restart_ixvendor(middleware):
+    if await middleware.call("system.vendor.is_vendored"):
+        await run(["systemctl", "restart", "ix-vendor"], check=False)
+
+
+async def _restart_vendor_service(middleware, event_type, args):
+    middleware.create_task(_systemctl_restart_ixvendor(middleware))
+
+
 def setup(middleware):
     # Register the IP address change event
     middleware.event_register(
         "ipaddress.change", "Sent when IP addresses change on a NIC", private=True
     )
+    middleware.event_subscribe("ipaddress.change", _restart_vendor_service)
     # Start the netlink monitoring daemon thread
     start_daemon_thread(target=netlink_events, args=(middleware,))
