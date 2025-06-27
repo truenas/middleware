@@ -42,7 +42,9 @@ class VMService(Service):
                 'pool.dataset.query', [['id', '^', f'{dataset}/']], {'extra': {'properties': []}}
             )
         }
-        to_ignore_vms = await self.get_vms_to_ignore_for_querying_attachments(True, [['suspend_on_snapshot', '=', False]])
+        to_ignore_vms = await self.get_vms_to_ignore_for_querying_attachments(
+            True, [['suspend_on_snapshot', '=', False]]
+        )
         for device in await self.middleware.call(
             'vm.device.query', [
                 ['attributes.dtype', 'in', ('DISK', 'RAW', 'CDROM')],

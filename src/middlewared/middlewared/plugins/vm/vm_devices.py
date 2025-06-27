@@ -8,8 +8,8 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     VMDeviceEntry, VMDeviceCreateArgs, VMDeviceCreateResult, VMDeviceUpdateArgs, VMDeviceUpdateResult,
     VMDeviceDeleteArgs, VMDeviceDeleteResult, VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult,
-    VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, VMDeviceNicAttachChoicesArgs, VMDeviceNicAttachChoicesResult,
-    VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult,
+    VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, VMDeviceNicAttachChoicesArgs,
+    VMDeviceNicAttachChoicesResult, VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult,
 )
 from middlewared.plugins.vm.devices.storage_devices import IOTYPE_CHOICES
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name

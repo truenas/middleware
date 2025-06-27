@@ -10,6 +10,6 @@ def migrate(middleware):
             os.chown(path, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID)
         except (FileNotFoundError, TypeError):
             middleware.logger.error(
-                'Unable to chown %s VM device\'s path of %r VM as %r path cannot be located',
+                "Unable to chown %s VM device's path of %r VM as %r path cannot be located",
                 device['dtype'], device['vm'], path,
             )

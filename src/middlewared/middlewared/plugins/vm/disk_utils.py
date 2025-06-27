@@ -118,8 +118,8 @@ class VMService(Service):
             raise CallError('Zvol device does not exist.', errno.ENOENT)
 
         # Check that a supported format was specified
-        format = data['format'].lower()
-        if format not in VALID_DISK_FORMATS:
+        disk_format = data['format'].lower()
+        if disk_format not in VALID_DISK_FORMATS:
             raise CallError('Invalid disk format specified.', errno.ENOENT)
 
         # Grab the owner / group of the parent directory
@@ -132,7 +132,7 @@ class VMService(Service):
 
         # Set the target file location
         zvolbasename = os.path.basename(data['zvol'])
-        targetfile = f"{data['directory']}/vmdisk-{zvolbasename}.{format}"
+        targetfile = f"{data['directory']}/vmdisk-{zvolbasename}.{disk_format}"
 
         # Use quotes safely and assemble the command
         filesafe = shlex.quote(targetfile)

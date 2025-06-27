@@ -276,7 +276,8 @@ class VMService(CRUDService, VMSupervisorMixin):
             elif len(parse_numeric_set(data['cpuset'])) != vcpus:
                 verrors.add(
                     f'{schema_name}.pin_vcpus',
-                    f'Number of cpus in "{schema_name}.cpuset" must be equal to total number vpcus if pinning is enabled.'
+                    f'Number of cpus in "{schema_name}.cpuset" must be equal to total number '
+                    'vcpus if pinning is enabled.'
                 )
 
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
@@ -393,7 +394,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                 if not force_delete:
                     raise
                 else:
-                    self.logger.error('Failed to un-define %r VM\'s domain', vm['name'], exc_info=True)
+                    self.logger.error("Failed to un-define %r VM's domain", vm['name'], exc_info=True)
 
             # We remove vm devices first
             for device in vm['devices']:

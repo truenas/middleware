@@ -32,7 +32,7 @@ class VMService(Service, VMSupervisorMixin):
         if guest_status.get('state') not in ACTIVE_STATES:
             await self._set_guest_vmemory(vm['id'], overcommit)
         else:
-            raise CallError('VM process is running, we won\'t allocate memory')
+            raise CallError("VM process is running, we won't allocate memory")
 
     @private
     async def teardown_guest_vmemory(self, vm_id):
