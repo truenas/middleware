@@ -1,8 +1,8 @@
-from typing import Annotated, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
 __all__ = [
     "NVMetSubsysEntry",
@@ -14,8 +14,6 @@ __all__ = [
     "NVMetSubsysDeleteResult",
 ]
 
-MAX_NQN_LEN = 223
-
 
 class NVMetSubsysEntry(BaseModel):
     id: int
@@ -26,7 +24,7 @@ class NVMetSubsysEntry(BaseModel):
     If `subnqn` is not provided on creation, then this name will be appended to the `basenqn` from \
     `nvmet.global.config` to generate a subnqn.
     """
-    subnqn: Annotated[NonEmptyString, Field(max_length=MAX_NQN_LEN)] | None = None
+    subnqn: NonEmptyString | None = None
     serial: str
     allow_any_host: bool = False
     """Any host can access the storage associated with this subsystem (i.e. no access control)."""
@@ -66,6 +64,7 @@ class NVMetSubsysCreate(NVMetSubsysEntry):
     hosts: Excluded = excluded_field()
     namespaces: Excluded = excluded_field()
     ports: Excluded = excluded_field()
+    subnqn: NQN | None = None
 
 
 class NVMetSubsysCreateArgs(BaseModel):

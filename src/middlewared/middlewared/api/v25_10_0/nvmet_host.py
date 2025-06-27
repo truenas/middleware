@@ -2,7 +2,7 @@ from typing import Literal, TypeAlias
 
 from pydantic import Field, Secret, model_validator
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
 
 __all__ = [
     "NVMetHostEntry",
@@ -49,6 +49,7 @@ class NVMetHostEntry(BaseModel):
 
 class NVMetHostCreate(NVMetHostEntry):
     id: Excluded = excluded_field()
+    hostnqn: NQN
 
     @model_validator(mode='after')
     def validate_attrs(self):
