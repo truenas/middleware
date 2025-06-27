@@ -40,15 +40,15 @@ class APIDumper:
         self.api = api
         self.role_manager = role_manager
 
-    def dump(self):
+    async def dump(self):
         return APIDump(
             version=self.version,
             version_title=self.version_title,
-            methods=self._dump_methods(),
+            methods=await self._dump_methods(),
             events=self._dump_events(),
         )
 
-    def _dump_methods(self):
+    async def _dump_methods(self):
         result = []
         for method in self.api.methods:
             if method.serviceobj._config.private:
@@ -60,11 +60,19 @@ class APIDumper:
             if not hasattr(method.methodobj, "new_style_accepts"):
                 continue
 
-            result.append(self._dump_method(method))
+            method_dump = await self._dump_method(method)
+            if method_dump is None:
+                continue
+
+            result.append(method_dump)
 
         return sorted(result, key=lambda method: method.name)
 
-    def _dump_method(self, method: Method):
+    async def _dump_method(self, method: Method):
+        schemas = await self._dump_method_schemas(method)
+        if schemas is None:
+            return None
+
         name = method.name
         plugin, method_name = name.rsplit(".", 1)
         if method_name in ("do_create", "do_update", "do_delete"):
@@ -87,15 +95,20 @@ class APIDumper:
             name=name,
             roles=sorted(self.role_manager.atomic_roles_for_method(name)),
             doc=doc,
-            schemas=self._dump_method_schemas(method),
+            schemas=schemas,
             removed_in=getattr(method.methodobj, "_removed_in", None),
         )
 
-    def _dump_method_schemas(self, method: Method):
-        accepts_json_schema = method.methodobj.new_style_accepts.model_json_schema()
+    async def _dump_method_schemas(self, method: Method):
+        accepts_model = await method.accepts_model()
+        returns_model = await method.returns_model()
+        if accepts_model is None or returns_model is None:
+            return None
+
+        accepts_json_schema = accepts_model.model_json_schema()
         accepts_json_schema = replace_refs(accepts_json_schema)
 
-        returns_json_schema = method.methodobj.new_style_returns.model_json_schema(mode="serialization")
+        returns_json_schema = returns_model.model_json_schema(mode="serialization")
         returns_json_schema = replace_refs(returns_json_schema)
 
         return {

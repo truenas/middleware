@@ -8,6 +8,10 @@ class CompoundService(Service):
     def __init__(self, middleware, parts):
         super().__init__(middleware)
 
+        self._register_models = []
+        for part in parts:
+            self._register_models += getattr(part, '_register_models', [])
+
         config_specified = {
             'events': [],
             'event_sources': {},

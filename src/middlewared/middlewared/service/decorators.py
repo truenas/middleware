@@ -21,10 +21,11 @@ def cli_private(fn):
 
 
 def filterable_api_method(
-    fn=None, /, *, roles=None, item=None, private=False, cli_private=False, authorization_required=True,
-    pass_app=False, pass_app_require=False, pass_app_rest=False, pass_thread_local_storage=False,
+    *, roles=None, item=None, private=False, cli_private=False, authorization_required=True, pass_app=False,
+    pass_app_require=False, pass_app_rest=False, pass_thread_local_storage=False,
 ):
     def filterable_internal(fn):
+        register_models = []
         if item:
             name = item.__name__
             if name.endswith("Entry"):
@@ -38,23 +39,23 @@ def filterable_api_method(
                 raise RuntimeError(f"{item=!r} class name must end with `Entry` or `Item`")
 
             returns = query_result(item, name)
+            if not private:
+                register_models = [(returns, query_result, item.__name__)]
         else:
             if not private:
                 raise ValueError('Public methods may not use GenericQueryResult.')
 
             returns = GenericQueryResult
 
-        return api_method(
+        wrapped = api_method(
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
             authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
             pass_app_rest=pass_app_rest, pass_thread_local_storage=pass_thread_local_storage,
         )(fn)
+        wrapped._register_models = register_models
+        return wrapped
 
-    # See if we're being called as @filterable or @filterable().
-    if fn is None:
-        return filterable_internal
-
-    return filterable_internal(fn)
+    return filterable_internal
 
 
 def item_method(fn):

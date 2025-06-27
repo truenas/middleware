@@ -5,17 +5,23 @@ from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 from middlewared.pytest.unit.helpers import TestModelProvider
 
 
-class EntryV1(BaseModel):
+class Entry(BaseModel):
     name: str
 
 
-class EntryV2(BaseModel):
+EntryV1 = Entry
+
+
+class Entry(BaseModel):
     first_name: str
     last_name: str
 
     @classmethod
     def to_previous(cls, value):
         return {"name": f"{value['first_name']} {value['last_name']}"}
+
+
+EntryV2 = Entry
 
 
 QueryResultV1 = query_result(EntryV1)
