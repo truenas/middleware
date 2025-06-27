@@ -16,6 +16,8 @@ __all__ = (
     "SystemVersionResult",
     "SystemVersionShortArgs",
     "SystemVersionShortResult",
+    "SystemSupportedArgs",
+    "SystemSupportedResult",
 )
 
 
@@ -65,3 +67,11 @@ class SystemVersionShortArgs(BaseModel):
 
 class SystemVersionShortResult(BaseModel):
     result: str
+
+
+class SystemSupportedArgs(BaseModel):
+    pass
+
+
+class SystemSupportedResult(BaseModel):
+    result: bool
