@@ -54,7 +54,6 @@ import contextlib
 from dataclasses import dataclass
 import errno
 import functools
-import importlib
 import inspect
 import multiprocessing
 import os
@@ -175,7 +174,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         ]
         for i, (version, module_name) in enumerate(api_versions):
             if i == len(api_versions) - 1:
-                module_provider = ModuleModelProvider(importlib.import_module(module_name))
+                module_provider = ModuleModelProvider(module_name)
             else:
                 module_provider = LazyModuleModelProvider(io_thread_pool_executor, module_name)
 
