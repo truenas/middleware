@@ -16,7 +16,6 @@ from middlewared.service_exception import ValidationErrors as ClientValidationEr
 
 from functions import POST, wait_on_job
 
-pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
 
 ISO_VOLUME_NAME = 'testiso'
 VM_NAME = 'virt-vm'
@@ -89,8 +88,8 @@ def test_iso_import_as_volume(virt_pool):
 ])
 def test_volume_name_validation(virt_pool, vol_name, should_work):
     if should_work:
-        call('virt.volume.create', {'name': vol_name})
-        call('virt.volume.delete', vol_name)
+        v = call('virt.volume.create', {'name': vol_name})
+        call('virt.volume.delete', v['id'])
     else:
         with pytest.raises(ClientValidationErrors):
             call('virt.volume.create', {'name': vol_name})
@@ -103,7 +102,7 @@ def test_volume_name_dataset_existing_validation_error(virt_pool):
     ssh(f'zfs create -V 500MB -s {ds_name}')
     try:
         with pytest.raises(ClientValidationErrors):
-            call('virt.volume.create', {'name': vol_name})
+            call('virt.volume.create', {'name': vol_name, 'storage_pool': pool_name})
 
         assert call('zfs.dataset.query', [['id', '=', ds_name]], {'count': True}) == 1
     finally:
@@ -120,7 +119,8 @@ def test_upload_iso_file(virt_pool):
                 {
                     'name': vol_name,
                     'iso_location': None,
-                    'upload_iso': True
+                    'upload_iso': True,
+                    'storage_pool': virt_pool['pool']
                 }
             ]
         }
@@ -135,12 +135,12 @@ def test_upload_iso_file(virt_pool):
 
     wait_on_job(json.loads(response.text)['job_id'], 600)
 
-    vol = call('virt.volume.get_instance', 'test_uploaded_iso')
+    vol = call('virt.volume.get_instance', f'{virt_pool["pool"]}_{vol_name}')
     assert vol['name'] == vol_name
     assert vol['config']['size'] == 50
     assert vol['content_type'] == 'ISO'
 
-    call('virt.volume.delete', vol_name)
+    call('virt.volume.delete', vol['id'])
 
 
 def test_disk_device_attachment_validation_on_containers(container):
