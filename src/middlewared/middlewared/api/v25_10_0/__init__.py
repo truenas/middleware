@@ -117,6 +117,7 @@ from .virt_global import *
 from .virt_instance import *
 from .virt_volume import *
 from .vmware import *
+from .webshare import *
 from .webui_crypto import *
 from .webui_enclosure import *
 from .webui_main_dashboard import *

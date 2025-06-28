@@ -214,6 +214,7 @@ class UserModel(sa.Model):
     bsdusr_full_name = sa.Column(sa.String(120))
     bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
     bsdusr_smb = sa.Column(sa.Boolean(), default=True)
+    bsdusr_webshare = sa.Column(sa.Boolean(), default=False)
     bsdusr_userns_idmap = sa.Column(sa.Integer(), default=USERNS_IDMAP_NONE)
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_ssh_password_enabled = sa.Column(sa.Boolean(), default=False)

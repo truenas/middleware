@@ -113,6 +113,7 @@ class AuthUserInfo(UserGetUserObj):
     two_factor_config: dict
     privilege: dict
     account_attributes: list[str]
+    webshare: bool
 
 
 class AuthRespSuccess(BaseModel):

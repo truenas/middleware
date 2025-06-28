@@ -1257,6 +1257,7 @@ class AuthService(Service):
         username = credentials.user['username']
 
         account_attributes = credentials.user['account_attributes'].copy()
+        webshare = False
         # Local accounts may have hit soft limit for requiring password change
         # If they hit a hard limit then they wouldn't be here (auth would have failed)
         if 'LOCAL' in account_attributes:
@@ -1266,11 +1267,23 @@ class AuthService(Service):
             ], {'get': True})
             if user_entry['password_change_required']:
                 account_attributes.append('PASSWORD_CHANGE_REQUIRED')
+            webshare = user_entry.get('webshare', False)
+        else:
+            # For non-local users, try to fetch webshare status from database
+            try:
+                user_entry = await self.middleware.call('user.query', [
+                    ['username', '=', username]
+                ], {'get': True})
+                webshare = user_entry.get('webshare', False)
+            except Exception:
+                # If user not found in database, default to False
+                webshare = False
 
         return {
             **(await self.middleware.call('user.get_user_obj', {'username': username})),
             'privilege': credentials.user['privilege'],
-            'account_attributes': account_attributes
+            'account_attributes': account_attributes,
+            'webshare': webshare
         }
 
     async def _attributes(self, user):

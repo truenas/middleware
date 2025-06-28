@@ -13,6 +13,7 @@ from .ssh import SSHService
 from .sssd import SSSDService
 from .truecommand import TruecommandService
 from .ups import UPSService
+from .webshare import WebShareService
 from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .idmap import IdmapService
@@ -53,6 +54,7 @@ all_services = [
     SSHService,
     SSSDService,
     UPSService,
+    WebShareService,
     WSDService,
     NetdataService,
     IdmapService,
