@@ -121,7 +121,7 @@ class APIDumper:
                             **accepts_json_schema["properties"][field],
                             "title": field,
                         }
-                        for field in method.methodobj.new_style_accepts.schema_model_fields()
+                        for field in accepts_model.schema_model_fields()
                     ],
                     "items": False,
                 },
