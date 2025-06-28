@@ -39,6 +39,11 @@ class ZFSDatasetService(Service):
                 zvol_path_to_name('/dev/' + i['path']): i for i in extents
             }
 
+            vm_devices = self.middleware.call_sync('vm.device.query', [['dtype', '=', 'DISK']])
+            vm_zvols = {
+                zvol_path_to_name(i['attributes']['path']): i for i in vm_devices
+            }
+
             instance_zvols = {}
             for instance in self.middleware.call_sync('virt.instance.query'):
                 for device in self.middleware.call_sync('virt.instance.device_list', instance['id']):
@@ -57,6 +62,7 @@ class ZFSDatasetService(Service):
             }
             return {
                 'iscsi.extent.query': iscsi_zvols,
+                'vm.devices.query': vm_zvols,
                 'virt.instance.query': instance_zvols,
                 'nvmet.namespace.query': nvmet_zvols,
             }

@@ -4,7 +4,7 @@ DefaultDependencies=no
 
 Requires=ix-wait-on-disks.service
 Wants=dbus.socket
-After=dbus.socket
+After=dbus.socket libvirtd.service
 Before=reboot.target shutdown.target halt.target
 Conflicts=reboot.target shutdown.target halt.target
 

@@ -55,6 +55,7 @@ def validate_api_method_schema_class_names(klass):
     if service_name.endswith('Service'):
         service_name = service_name[:-7]
 
+    errors = []
     for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
         if name.startswith('_') or getattr(method, '_private', False) or klass._config.private:
             continue
@@ -90,16 +91,21 @@ def validate_api_method_schema_class_names(klass):
 
         if method.new_style_accepts.__name__ != 'QueryArgs':
             if method.new_style_accepts.__name__ != expected_accepts:
-                raise RuntimeError(
+                errors.append(
                     f"API method {method!r} has incorrect accepts class name. "
                     f"Expected {expected_accepts}, got {method.new_style_accepts.__name__}."
                 )
 
         if method.new_style_returns.__name__ != expected_returns:
-            raise RuntimeError(
+            errors.append(
                 f"API method {method!r} has incorrect returns class name. "
                 f"Expected {expected_returns}, got {method.new_style_returns.__name__}."
             )
+
+    if errors:
+        raise RuntimeError(
+            f"Service {klass.__name__} has API method schema class name validation errors:\n" + '\n'.join(errors)
+        )
 
 
 class ServiceBase(type):

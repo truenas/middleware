@@ -14,10 +14,6 @@ from middlewared.test.integration.assets.virt import (
 )
 from middlewared.test.integration.utils import call, client, ssh, pool
 
-INS1_NAME = 'debian'
-INS1_OS = 'Debian'
-INS1_IMAGE = 'debian/trixie'
-
 INS2_NAME = 'void'
 INS2_OS = 'Void Linux'
 INS2_IMAGE = 'voidlinux/musl'
@@ -26,7 +22,6 @@ INS3_NAME = 'ubuntu'
 INS3_OS = 'Ubuntu'
 INS3_IMAGE = 'ubuntu/oracular/default'
 
-pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
 
 @pytest.fixture(scope='module')
 def virt_setup():
@@ -47,46 +42,35 @@ def check_idmap_entry(instance_name, entry):
 
 @pytest.fixture(scope='module')
 def virt_instances(virt_setup):
-    wait_agent = Event()
-
-    def wait_debian(*args, **kwargs):
-        wait_agent.set()
-
-    with client() as c:
-        c.subscribe('virt.instance.agent_running', wait_debian, sync=True)
-
-        # Create first so there is time for the agent to start
-        with virt_instance(INS1_NAME, INS1_IMAGE, instance_type='VM') as v1:
-            with virt_instance(INS2_NAME, INS2_IMAGE) as v2:
-                nics = list(call('virt.device.nic_choices', 'MACVLAN').keys())
-                assert len(nics) > 0
-                with virt_instance(INS3_NAME, INS3_IMAGE, devices=[
-                    {
-                        'dev_type': 'TPM',
-                        'path': '/dev/tpm0',
-                        'pathrm': '/dev/tmprm0'
-                    },
-                    {
-                        'dev_type': 'PROXY',
-                        'source_proto': 'TCP',
-                        'source_port': 60123,
-                        'dest_proto': 'TCP',
-                        'dest_port': 2000
-                    },
-                    {
-                        'dev_type': 'NIC',
-                        'name': 'eth1',
-                        'nic_type': 'MACVLAN',
-                        'parent': nics[0]
-                    },
-                ]) as v3:
-                    assert wait_agent.wait(timeout=60)
-                    yield (v1, v2, v3)
+    # Create first so there is time for the agent to start
+    with virt_instance(INS2_NAME, INS2_IMAGE) as v2:
+        nics = list(call('virt.device.nic_choices', 'MACVLAN').keys())
+        assert len(nics) > 0
+        with virt_instance(INS3_NAME, INS3_IMAGE, devices=[
+            {
+                'dev_type': 'TPM',
+                'path': '/dev/tpm0',
+                'pathrm': '/dev/tmprm0'
+            },
+            {
+                'dev_type': 'PROXY',
+                'source_proto': 'TCP',
+                'source_port': 60123,
+                'dest_proto': 'TCP',
+                'dest_port': 2000
+            },
+            {
+                'dev_type': 'NIC',
+                'name': 'eth1',
+                'nic_type': 'MACVLAN',
+                'parent': nics[0]
+            },
+        ]) as v3:
+            yield v2, v3
 
 
 def test_virt_instance_create(virt_instances):
     for name, os_rel in (
-        (INS1_NAME, INS1_OS),
         (INS2_NAME, INS2_OS),
         (INS3_NAME, INS3_OS),
     ):
@@ -148,14 +132,6 @@ def test_virt_instance_restart(virt_instances):
 
 
 def test_virt_instance_device_add(virt_instances):
-    assert ssh(f'incus list {INS1_NAME} -f json| jq ".[].status"').strip() == '"Running"'
-    call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)
-
-    assert call('virt.instance.device_add', INS1_NAME, {
-        'name': 'tpm',
-        'dev_type': 'TPM',
-    }) is True
-
     assert call('virt.instance.device_add', INS3_NAME, {
         'name': 'proxy',
         'dev_type': 'PROXY',
@@ -165,22 +141,8 @@ def test_virt_instance_device_add(virt_instances):
         'dest_port': 80,
     }) is True
 
-    devices = call('virt.instance.device_list', INS1_NAME)
-    assert any(i for i in devices if i['name'] == 'tpm'), devices
     devices = call('virt.instance.device_list', INS3_NAME)
     assert any(i for i in devices if i['name'] == 'proxy'), devices
-
-    wait_agent = Event()
-
-    def wait_debian(*args, **kwargs):
-        wait_agent.set()
-
-    with client() as c:
-        c.subscribe('virt.instance.agent_running', wait_debian, sync=True)
-        call('virt.instance.start', INS1_NAME, job=True)
-        assert wait_agent.wait(timeout=30)
-
-    ssh('incus exec debian ls /dev/tpm0')
 
     with dataset('virtshare') as ds:
         call('virt.instance.device_add', INS3_NAME, {
@@ -194,17 +156,6 @@ def test_virt_instance_device_add(virt_instances):
         with mkfile(f'/mnt/{ds}/testfile'):
             ssh(f'incus exec {INS3_NAME} ls /host/testfile')
         assert call('virt.instance.device_delete', INS3_NAME, 'disk1') is True
-
-    with dataset('virtshare', {'type': 'VOLUME', 'volsize': 200 * 1024 * 1024, 'sparse': True}) as ds:
-        ssh(f'mkfs.ext3 /dev/zvol/{ds}')
-        call('virt.instance.device_add', INS1_NAME, {
-            'name': 'disk2',
-            'dev_type': 'DISK',
-            'source': f'/dev/zvol/{ds}',
-        })
-        devices = call('virt.instance.device_list', INS1_NAME)
-        assert any(i for i in devices if i['name'] == 'disk2'), devices
-        assert call('virt.instance.device_delete', INS1_NAME, 'disk2') is True
 
 
 def test_virt_instance_device_update(virt_instances):
@@ -273,24 +224,6 @@ def test_virt_instance_idmap(virt_instances):
 
         call('virt.instance.restart', instance['name'], {'force': True}, job=True)
         assert not check_idmap_entry(instance['name'], f'gid {gid} 8675309')
-
-
-def test_virt_instance_device_delete(virt_instances):
-    call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)
-    assert call('virt.instance.device_delete', INS1_NAME, 'tpm') is True
-    devices = call('virt.instance.device_list', INS1_NAME)
-    assert not any(i for i in devices if i['name'] == 'tpm'), devices
-
-
-def test_virt_instance_delete(virt_setup):
-    with virt_instance('tmpinstance'):
-        ssh('incus config show tmpinstance')
-        assert call('virt.instance.query', [['name', '=', 'tmpinstance']], {'count': True}) == 1
-
-    with pytest.raises(AssertionError, match='Instance not found'):
-        ssh('incus config show tmpinstance')
-
-    assert call('virt.instance.query', [['name', '=', 'tmpinstance']], {'count': True}) == 0
 
 
 def test_virt_instance_device_validation(virt_setup):

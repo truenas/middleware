@@ -112,15 +112,14 @@ MemoryType: TypeAlias = Annotated[int, AfterValidator(validate_memory)]
 @single_argument_args('virt_instance_create')
 class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
-    iso_volume: NonEmptyString | None = None
-    source_type: Literal[None, 'IMAGE', 'ISO', 'VOLUME'] = 'IMAGE'
+    source_type: Literal['IMAGE'] = 'IMAGE'
     storage_pool: NonEmptyString | None = None
     """
     Storage pool under which to allocate root filesystem. Must be one of the pools \
     listed in virt.global.config output under "storage_pools". If None (default) then the pool \
     specified in the global configuration will be used.
     """
-    image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
+    image: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     root_disk_size: int = Field(ge=5, default=10)  # In GBs
     """
     This can be specified when creating VMs so the root device's size can be configured. Root device for VMs \
@@ -128,60 +127,17 @@ class VirtInstanceCreateArgs(BaseModel):
     """
     root_disk_io_bus: Literal['NVME', 'VIRTIO-BLK', 'VIRTIO-SCSI'] = 'NVME'
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
-    instance_type: InstanceType = 'CONTAINER'
+    instance_type: Literal['CONTAINER'] = 'CONTAINER'
     environment: dict[ENV_KEY, ENV_VALUE] | None = None
     autostart: bool | None = True
     cpu: str | None = None
     devices: list[DeviceType] | None = None
     memory: MemoryType | None = None
-    secure_boot: bool = False
-    enable_vnc: bool = False
-    vnc_port: int | None = Field(ge=5900, le=65535, default=None)
-    volume: NonEmptyString | None = None
-    """
-    This should be set when source type is "VOLUME" and should be the name of the virt volume which should \
-    be used to boot the VM instance.
-    """
-    vnc_password: Secret[NonEmptyString | None] = None
-    image_os: str | OS_ENUM = None
     privileged_mode: bool = False
     """
     This is only valid for containers and should only be set when container instance which is to be deployed is to \
     run in a privileged mode.
     """
-
-    @model_validator(mode='after')
-    def validate_attrs(self):
-        if self.instance_type == 'CONTAINER':
-            if self.source_type != 'IMAGE':
-                raise ValueError('Source type must be set to "IMAGE" when instance type is CONTAINER')
-            if self.enable_vnc:
-                raise ValueError('VNC is not supported for containers and `enable_vnc` should be unset')
-        else:
-            if self.privileged_mode:
-                raise ValueError('Privileged mode is not supported for VMs and `privileged_mode` should be unset')
-
-            if self.enable_vnc and self.vnc_port is None:
-                raise ValueError('VNC port must be set when VNC is enabled')
-
-            if self.vnc_password is not None and not self.enable_vnc:
-                raise ValueError('VNC password can only be set when VNC is enabled')
-
-            if self.source_type == 'ISO' and self.iso_volume is None:
-                raise ValueError('ISO volume must be set when source type is "ISO"')
-
-            if self.source_type == 'VOLUME' and self.volume is None:
-                raise ValueError('volume must be set when source type is "VOLUME"')
-
-            if self.image_os and self.source_type != 'ISO':
-                raise ValueError('image_os can only be set when source type is "ISO"')
-
-        if self.source_type == 'IMAGE' and self.image is None:
-            raise ValueError('Image must be set when source type is "IMAGE"')
-        elif self.source_type != 'IMAGE' and self.image:
-            raise ValueError('Image must not be set when source type is not "IMAGE"')
-
-        return self
 
 
 class VirtInstanceCreateResult(BaseModel):
