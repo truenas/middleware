@@ -29,12 +29,13 @@ def set_thread_name(name):
 
 def initializer(thread_name, tls):
     set_name(thread_name)
-    tls.lzh = open_handle(
-        history_prefix="tn-mw: ",
-        # TODO: investigate mnttab_cache
-        # wrt to zfs native encryption
-        mnttab_cache=True
-    )
+    if open_handle is not None:
+        tls.lzh = open_handle(
+            history_prefix="tn-mw: ",
+            # TODO: investigate mnttab_cache
+            # wrt to zfs native encryption
+            mnttab_cache=True
+        )
 
 
 def start_daemon_thread(*args, **kwargs):
