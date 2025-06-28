@@ -9,6 +9,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
+from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
@@ -122,11 +123,22 @@ class PoolDatasetService(CRUDService):
         pool = dataset.split('/')[0]
         return not bool(filter_list([{'id': dataset, 'pool': pool}], await self.internal_datasets_filters()))
 
-    @filterable_api_method(
-        item=PoolDatasetEntry,
-        pass_thread_local_storage=True,
-    )
-    def query(self, tls, filters, options):
+    @private
+    @pass_thread_local_storage
+    def query_impl(self, tls, filters=None, options=None, eid=False):
+        filters = filters or []
+        options = options or {}
+        extra = options.pop('extra', {})
+        return generic_query(
+            tls.lzh.iter_root_filesystems,
+            filters,
+            options,
+            extra,
+            exclude_internal_datasets=eid,
+        )
+
+    @filterable_api_method(item=PoolDatasetEntry)
+    def query(self, filters, options):
         """
         Query Pool Datasets with `query-filters` and `query-options`.
 
@@ -158,12 +170,7 @@ class PoolDatasetService(CRUDService):
         for snapshot(s) related to each dataset. By default only name of the snapshot would be retrieved, however
         if `null` is specified all properties of the snapshot would be retrieved in this case.
         """
-        return generic_query(
-            tls.lzh.iter_root_filesystems,
-            filters,
-            options,
-            options.pop("extra", {})
-        )
+        return self.middleware.call_sync('pool.dataset.query_impl', filters, options, True)
 
     @private
     async def get_create_update_user_props(self, user_properties, update=False):
