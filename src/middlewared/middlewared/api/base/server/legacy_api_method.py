@@ -46,7 +46,7 @@ class LegacyAPIMethod(Method):
     async def accepts_model(self):
         try:
             return await self.adapter.versions[self.api_version].get_model(self.current_accepts_model.__name__)
-        except (KeyError, APIVersionDoesNotContainModelException):
+        except APIVersionDoesNotContainModelException:
             return None
 
     async def returns_model(self):
