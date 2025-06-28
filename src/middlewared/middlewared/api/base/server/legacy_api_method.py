@@ -46,13 +46,13 @@ class LegacyAPIMethod(Method):
     async def accepts_model(self):
         try:
             return await self.adapter.versions[self.api_version].get_model(self.current_accepts_model.__name__)
-        except KeyError:
+        except (KeyError, APIVersionDoesNotContainModelException):
             return None
 
     async def returns_model(self):
         try:
             return await self.adapter.versions[self.api_version].get_model(self.current_returns_model.__name__)
-        except KeyError:
+        except (KeyError, APIVersionDoesNotContainModelException):
             return None
 
     async def call(self, app: "RpcWebSocketApp", id_: Any, params):
