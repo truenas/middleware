@@ -261,8 +261,8 @@ class TestWebshareDatasets:
 class TestWebshareService:
     """Test WebShare service operations."""
 
-    def test_service_requires_pool_configuration(self):
-        """Test that service requires pools to be configured before starting."""
+    def test_service_auto_selects_pool_on_manual_start(self):
+        """Test that service auto-selects pools when manually started."""
         original_config = call('webshare.config')
         service_status = call('service.query',
                               [['service', '=', 'webshare']],
@@ -279,18 +279,19 @@ class TestWebshareService:
             if not service_status['enable']:
                 call('service.update', 'webshare', {'enable': True})
                 
-                # Starting the service should fail
-                with pytest.raises(CallError) as exc_info:
-                    call('service.start', 'webshare')
+                # Starting the service should auto-select pools
+                call('service.start', 'webshare')
                 
-                # Check that the error mentions pool configuration
-                assert 'No bulk download pool configured' in str(exc_info.value)
+                # Check that pools were auto-selected
+                config = call('webshare.config')
+                assert config['bulk_download_pool'] is not None
+                assert config['search_index_pool'] is not None
 
         finally:
             # Restore original state
             if not service_status['enable']:
                 call('service.update', 'webshare', {'enable': False})
-                # Service might not be running, so ignore stop errors
+                # Service might be running now, stop it
                 try:
                     call('service.stop', 'webshare')
                 except Exception:

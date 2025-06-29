@@ -582,8 +582,50 @@ class WebShareService(SystemServiceService):
             raise CallError('\n'.join(errors))
 
     @private
+    async def _auto_configure_pools_if_needed(self):
+        """Auto-configure pools if not set when service is manually started."""
+        config = await self.config()
+        
+        # Only auto-configure if pools are not already set
+        if config['bulk_download_pool'] and config['search_index_pool']:
+            return
+        
+        # Get available pools for automatic selection
+        boot_pool = await self.middleware.call('boot.pool_name')
+        pools = await self.middleware.call(
+            'pool.query', [['status', '!=', 'OFFLINE']]
+        )
+        available_pools = [p['name'] for p in pools if p['name'] != boot_pool]
+        
+        if not available_pools:
+            # No pools available, let check_configuration handle the error
+            return
+        
+        # Auto-select first available pool
+        update_data = {}
+        
+        if not config['bulk_download_pool']:
+            update_data['bulk_download_pool'] = available_pools[0]
+            self.logger.info(
+                f'Auto-selecting pool "{available_pools[0]}" for bulk download'
+            )
+        
+        if not config['search_index_pool']:
+            update_data['search_index_pool'] = available_pools[0]
+            self.logger.info(
+                f'Auto-selecting pool "{available_pools[0]}" for search index'
+            )
+        
+        if update_data:
+            # Update configuration
+            await self.middleware.call('webshare.update', update_data)
+
+    @private
     async def before_start(self):
         """Called before starting the service."""
+        # Auto-select pools if not configured (manual start scenario)
+        await self._auto_configure_pools_if_needed()
+        
         await self.check_configuration()
         await self._verify_datasets_mounted()
         await self._generate_config_files()
