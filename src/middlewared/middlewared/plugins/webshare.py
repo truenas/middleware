@@ -166,11 +166,24 @@ class WebShareService(SystemServiceService):
 
         # Validate time format
         if data.get('search_pruning_start_time'):
+            time_str = data['search_pruning_start_time']
+            valid = False
+            
             try:
-                hour, minute = data['search_pruning_start_time'].split(':')
-                if not (0 <= int(hour) <= 23 and 0 <= int(minute) <= 59):
-                    raise ValueError()
+                # Check format is exactly HH:MM
+                if len(time_str) == 5 and time_str[2] == ':':
+                    hour_str, minute_str = time_str.split(':')
+                    # Check both parts are exactly 2 digits
+                    if (len(hour_str) == 2 and len(minute_str) == 2 and
+                        hour_str.isdigit() and minute_str.isdigit()):
+                        hour = int(hour_str)
+                        minute = int(minute_str)
+                        if 0 <= hour <= 23 and 0 <= minute <= 59:
+                            valid = True
             except (ValueError, AttributeError):
+                pass
+            
+            if not valid:
                 verrors.add(
                     'webshare_update.search_pruning_start_time',
                     'Invalid time format. Use HH:MM (24-hour format)'
