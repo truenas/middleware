@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+from urllib.parse import urlparse
 
 from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
@@ -36,6 +37,26 @@ def render(service, middleware):
             } if http_proxy else {}
         )
     }
+
+    # Process registry mirrors
+    if config.get('registry_mirrors'):
+        registry_mirrors = []
+        insecure_registries = []
+
+        for registry_url in config['registry_mirrors']:
+            parsed = urlparse(registry_url)
+            if parsed.scheme == 'http':
+                # For HTTP, add to insecure-registries
+                insecure_registries.append(registry_url)
+            else:
+                # For HTTPS, add to registry-mirrors
+                registry_mirrors.append(registry_url)
+
+        if registry_mirrors:
+            base['registry-mirrors'] = registry_mirrors
+        if insecure_registries:
+            base['insecure-registries'] = insecure_registries
+
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):
         base.update({
