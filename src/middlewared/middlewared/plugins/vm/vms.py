@@ -285,6 +285,11 @@ class VMService(CRUDService, VMSupervisorMixin):
             # https://docs.openstack.org/nova/latest/admin/secure-boot.html
             if not data['machine_type']:
                 data['machine_type'] = 'pc-q35-6.2'
+                if not data['arch_type']:
+                    # If arch type is not specified, we assume x86_64 architecture
+                    # we set this because otherwise vm.update will fail if this is not set
+                    # explicitly
+                    data['arch_type'] = 'x86_64'
             elif data['machine_type'] and 'pc-q35' not in data['machine_type']:
                 verrors.add(
                     f'{schema_name}.machine_type',
