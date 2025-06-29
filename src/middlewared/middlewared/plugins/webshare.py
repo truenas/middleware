@@ -168,21 +168,21 @@ class WebShareService(SystemServiceService):
         if data.get('search_pruning_start_time'):
             time_str = data['search_pruning_start_time']
             valid = False
-            
+
             try:
                 # Check format is exactly HH:MM
                 if len(time_str) == 5 and time_str[2] == ':':
                     hour_str, minute_str = time_str.split(':')
                     # Check both parts are exactly 2 digits
                     if (len(hour_str) == 2 and len(minute_str) == 2 and
-                        hour_str.isdigit() and minute_str.isdigit()):
+                            hour_str.isdigit() and minute_str.isdigit()):
                         hour = int(hour_str)
                         minute = int(minute_str)
                         if 0 <= hour <= 23 and 0 <= minute <= 59:
                             valid = True
             except (ValueError, AttributeError):
                 pass
-            
+
             if not valid:
                 verrors.add(
                     'webshare_update.search_pruning_start_time',
@@ -292,6 +292,9 @@ class WebShareService(SystemServiceService):
                     await self.middleware.call(
                         'zfs.dataset.mount', dataset
                     )
+                    # Set permissions immediately after creation
+                    if dataset_suffix == 'search-index':
+                        await self._set_search_index_permissions(dataset)
                 else:
                     # Dataset exists, ensure it's mounted
                     ds = dataset_exists[0]
@@ -358,6 +361,43 @@ class WebShareService(SystemServiceService):
 
         if errors:
             raise CallError('. '.join(errors))
+
+    @private
+    async def _set_search_index_permissions(self, dataset_name):
+        """Set ownership for search index dataset after creation."""
+        # Get the actual mount point of the dataset
+        datasets = await self.middleware.call(
+            'zfs.dataset.query',
+            [['name', '=', dataset_name]]
+        )
+
+        if not datasets:
+            self.logger.warning(f'Dataset {dataset_name} not found')
+            return
+
+        mountpoint = datasets[0]['properties']['mountpoint']['value']
+        if not mountpoint or mountpoint == 'none':
+            self.logger.warning(f'Dataset {dataset_name} has no mountpoint')
+            return
+
+        try:
+            # Use middleware's filesystem.chown for ownership
+            chown_job = await self.middleware.call('filesystem.chown', {
+                'path': mountpoint,
+                'uid': None,  # Will be resolved by username
+                'gid': None,  # Will be resolved by group name
+                'user': 'truesearch',
+                'group': 'truesearch',
+                'recursive': True,
+                'traverse': False
+            })
+            await chown_job.wait(raise_error=True)
+            self.logger.info(
+                f'Set ownership of {mountpoint} to truesearch:truesearch')
+        except Exception as e:
+            self.logger.warning(
+                f'Failed to set ownership for {mountpoint}: {e}'
+            )
 
     @private
     async def _set_directory_permissions(self):
@@ -585,37 +625,37 @@ class WebShareService(SystemServiceService):
     async def _auto_configure_pools_if_needed(self):
         """Auto-configure pools if not set when service is manually started."""
         config = await self.config()
-        
+
         # Only auto-configure if pools are not already set
         if config['bulk_download_pool'] and config['search_index_pool']:
             return
-        
+
         # Get available pools for automatic selection
         boot_pool = await self.middleware.call('boot.pool_name')
         pools = await self.middleware.call(
             'pool.query', [['status', '!=', 'OFFLINE']]
         )
         available_pools = [p['name'] for p in pools if p['name'] != boot_pool]
-        
+
         if not available_pools:
             # No pools available, let check_configuration handle the error
             return
-        
+
         # Auto-select first available pool
         update_data = {}
-        
+
         if not config['bulk_download_pool']:
             update_data['bulk_download_pool'] = available_pools[0]
             self.logger.info(
                 f'Auto-selecting pool "{available_pools[0]}" for bulk download'
             )
-        
+
         if not config['search_index_pool']:
             update_data['search_index_pool'] = available_pools[0]
             self.logger.info(
                 f'Auto-selecting pool "{available_pools[0]}" for search index'
             )
-        
+
         if update_data:
             # Update configuration
             await self.middleware.call('webshare.update', update_data)
@@ -623,11 +663,12 @@ class WebShareService(SystemServiceService):
     @private
     async def before_start(self):
         """Called before starting the service."""
-        # Auto-select pools if not configured (manual start or autostart without config)
-        # Note: During boot with autostart enabled, the etc renderer already calls this
-        # but we call it again here to handle manual start scenarios
+        # Auto-select pools if not configured
+        # (manual start or autostart without config)
+        # Note: During boot with autostart enabled, the etc renderer
+        # already calls this but we call it again here for manual start
         await self._auto_configure_pools_if_needed()
-        
+
         await self.check_configuration()
         await self._verify_datasets_mounted()
         await self._generate_config_files()
