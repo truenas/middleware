@@ -4,7 +4,7 @@ from pydantic import Field
 
 from middlewared.api.base import (
     BaseModel, IPv4Address, UniqueList, IPvAnyAddress, Excluded, excluded_field, ForUpdateMetaclass,
-    single_argument_result, NotRequired
+    single_argument_result, NotRequired, NonEmptyString,
 )
 
 
@@ -166,6 +166,8 @@ class InterfaceIPInUseOptions(BaseModel):
     """Return wildcard addresses (0.0.0.0 and ::)."""
     static: bool = False
     """Only return configured static IPs."""
+    interfaces: list[NonEmptyString] = Field(default_factory=list)
+    """Only return IPs from specified interfaces. If empty, returns IPs from all interfaces."""
 
 
 class InterfaceIPInUseItem(BaseModel):

@@ -1674,9 +1674,14 @@ class InterfaceService(CRUDService):
         """
         list_of_ip = []
         static_ips = {}
+        # Filter by specified interfaces if provided
+        specified_interfaces = choices.get('interfaces', [])
         if choices['static']:
             licensed = self.middleware.call_sync('failover.licensed')
             for i in self.middleware.call_sync('interface.query'):
+                if specified_interfaces and i['name'] not in specified_interfaces:
+                    continue
+
                 if licensed:
                     for alias in i.get('failover_virtual_aliases') or []:
                         static_ips[alias['address']] = alias['address']
@@ -1708,6 +1713,9 @@ class InterfaceService(CRUDService):
 
         ignore_nics = tuple(ignore_nics)
         for iface in filter(lambda x: not x.orig_name.startswith(ignore_nics), list(netif.list_interfaces().values())):
+            # Skip interfaces not in the specified list if interfaces were specified
+            if specified_interfaces and iface.orig_name not in specified_interfaces:
+                continue
             try:
                 aliases_list = iface.asdict()['aliases']
             except FileNotFoundError:
