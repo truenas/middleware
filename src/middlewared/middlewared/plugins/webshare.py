@@ -258,7 +258,7 @@ class WebShareService(SystemServiceService):
                     await self.middleware.call(
                         'zfs.dataset.create', {
                             'name': parent_dataset,
-                            'properties': {'mountpoint': 'none'}
+                            'properties': {}
                         }
                     )
 
@@ -275,6 +275,18 @@ class WebShareService(SystemServiceService):
                             'properties': properties
                         }
                     )
+                    # Mount the dataset after creation
+                    await self.middleware.call(
+                        'zfs.dataset.mount', dataset
+                    )
+                else:
+                    # Dataset exists, ensure it's mounted
+                    ds = dataset_exists[0]
+                    mountpoint = ds['properties']['mountpoint']['value']
+                    if mountpoint == 'none' or not ds.get('mounted', False):
+                        await self.middleware.call(
+                            'zfs.dataset.mount', dataset
+                        )
 
     @private
     async def _get_dataset_paths(self):
