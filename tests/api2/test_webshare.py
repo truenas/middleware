@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool
 from truenas_api_client import ClientException
@@ -274,8 +274,8 @@ class TestWebshareDatasets:
 class TestWebshareService:
     """Test WebShare service operations."""
 
-    def test_service_auto_selects_pool(self):
-        """Test that service auto-selects pool if not configured."""
+    def test_service_requires_pool_configuration(self):
+        """Test that service requires pools to be configured before starting."""
         original_config = call('webshare.config')
         service_status = call('service.query',
                               [['service', '=', 'webshare']],
@@ -288,21 +288,26 @@ class TestWebshareService:
                 'search_index_pool': None
             })
 
-            # Try to start the service
+            # Try to start the service without pools configured
             if not service_status['enable']:
                 call('service.update', 'webshare', {'enable': True})
-                call('service.start', 'webshare')
-
-                # Check that pools were auto-selected
-                config = call('webshare.config')
-                assert config['bulk_download_pool'] is not None
-                assert config['search_index_pool'] is not None
+                
+                # Starting the service should fail
+                with pytest.raises(CallError) as exc_info:
+                    call('service.start', 'webshare')
+                
+                # Check that the error mentions pool configuration
+                assert 'No bulk download pool configured' in str(exc_info.value)
 
         finally:
             # Restore original state
             if not service_status['enable']:
                 call('service.update', 'webshare', {'enable': False})
-                call('service.stop', 'webshare')
+                # Service might not be running, so ignore stop errors
+                try:
+                    call('service.stop', 'webshare')
+                except Exception:
+                    pass
 
             call('webshare.update', {
                 'bulk_download_pool':
