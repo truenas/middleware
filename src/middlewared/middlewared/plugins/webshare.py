@@ -623,7 +623,9 @@ class WebShareService(SystemServiceService):
     @private
     async def before_start(self):
         """Called before starting the service."""
-        # Auto-select pools if not configured (manual start scenario)
+        # Auto-select pools if not configured (manual start or autostart without config)
+        # Note: During boot with autostart enabled, the etc renderer already calls this
+        # but we call it again here to handle manual start scenarios
         await self._auto_configure_pools_if_needed()
         
         await self.check_configuration()

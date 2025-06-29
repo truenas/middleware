@@ -15,6 +15,9 @@ async def render(service, middleware, render_ctx):
         return None
 
     try:
+        # Auto-configure pools if needed (for autostart scenario)
+        await middleware.call('webshare._auto_configure_pools_if_needed')
+        
         # Call the webshare service's configuration generator
         await middleware.call('webshare._generate_config_files')
     except Exception as e:
