@@ -2,12 +2,11 @@ import pytest
 
 from middlewared.plugins.apps.schema_normalization import AppSchemaService
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.schema import Dict
 
 
 @pytest.mark.parametrize('attr, value, complete_config, context', [
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'dataset_name': 'volume_1',
             'properties': {'prop_key': 'prop_value'},
@@ -24,7 +23,7 @@ from middlewared.schema import Dict
         {'actions': [], 'app': {'name': 'test_app'}}
     ),
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'dataset_name': 'volume_1',
             'properties': {'prop_key': 'prop_value'},
@@ -41,7 +40,7 @@ from middlewared.schema import Dict
         {'actions': [], 'app': {'name': 'test_app'}}
     ),
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'dataset_name': 'volume_1',
             'properties': {'prop_key': 'prop_value'},
@@ -71,7 +70,7 @@ from middlewared.schema import Dict
         }
     ),
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'dataset_name': 'volume_1',
             'properties': {'prop_key': 'prop_value'},

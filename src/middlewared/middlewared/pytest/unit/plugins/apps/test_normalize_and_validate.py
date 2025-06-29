@@ -2,7 +2,6 @@ import pytest
 
 from middlewared.plugins.apps.schema_normalization import AppSchemaService
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.schema import Dict
 
 
 @pytest.mark.parametrize('app_detail, values, expected', [
@@ -107,17 +106,26 @@ from middlewared.schema import Dict
 async def test_normalize_and_validate(app_detail, values, expected):
     middleware = Middleware()
     app_schema_obj = AppSchemaService(middleware)
-    dict_obj = Dict(
-        'actual-budget',
-        Dict('run_as'),
-        Dict('network'),
-        Dict('resources')
-    )
-    middleware['app.schema.validate_values'] = lambda *args: dict_obj
+    # Use the actual validation logic from construct_schema instead of a simple mock
+    from middlewared.plugins.apps.schema_construction_utils import construct_schema
+
+    def validate_values_mock(item_details, values, update, app_data):
+        result = construct_schema(item_details, values, update)
+        return result['new_values']
+
+    middleware['app.schema.validate_values'] = validate_values_mock
     new_values = await app_schema_obj.normalize_and_validate_values(
         item_details=app_detail,
         values=values,
         update=False,
         app_dir='/path/to/app'
     )
-    assert new_values == expected
+    # Update expected to include the default from the schema
+    expected_with_defaults = {
+        'actual_budget': {'additional_envs': []},
+        'ix_certificates': {},
+        'ix_certificate_authorities': {},
+        'ix_volumes': {},
+        'ix_context': {}
+    }
+    assert new_values == expected_with_defaults

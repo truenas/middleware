@@ -1,11 +1,10 @@
 import os
 from collections.abc import Callable
 
-from middlewared.schema import Cron, Dict, Int, List, Str
 from middlewared.service import Service
 
 from .ix_apps.path import get_app_volume_path
-from .schema_utils import get_list_item_from_value, RESERVED_NAMES
+from .schema_construction_utils import RESERVED_NAMES
 
 
 REF_MAPPING = {
@@ -32,10 +31,8 @@ class AppSchemaService(Service):
     async def normalize_and_validate_values(
         self, item_details, values, update, app_dir, app_data=None, perform_actions=True,
     ):
-        dict_obj = await self.middleware.call(
-            'app.schema.validate_values', item_details, values, update, app_data,
-        )
-        new_values, context = await self.normalize_values(dict_obj, values, update, {
+        new_values = await self.middleware.call('app.schema.validate_values', item_details, values, update, app_data)
+        new_values, context = await self.normalize_values(item_details['schema']['questions'], new_values, update, {
             'app': {
                 'name': app_dir.split('/')[-1],
                 'path': app_dir,
@@ -50,44 +47,49 @@ class AppSchemaService(Service):
         for action in sorted(context['actions'], key=lambda d: 0 if d['method'] == 'update_volumes' else 1):
             await self.middleware.call(f'app.schema.action.{action["method"]}', *action['args'])
 
-    async def normalize_values(self, dict_obj, values, update, context):
+    async def normalize_values(self, dict_attrs: list[dict], values, update, context):
         for k in RESERVED_NAMES:
             # We reset reserved names from configuration as these are automatically going to
             # be added by middleware during the process of normalising the values
             values[k[0]] = k[1]()
 
-        for attr in filter(lambda v: v.name in values, dict_obj.attrs.values()):
-            values[attr.name] = await self.normalize_question(attr, values[attr.name], update, values, context)
+        for attr in filter(lambda v: v['variable'] in values, dict_attrs):
+            values[attr['variable']] = await self.normalize_question(
+                attr, values[attr['variable']], update, values, context
+            )
 
         return values, context
 
-    async def normalize_question(self, question_attr, value, update, complete_config, context):
-        if value is None and isinstance(question_attr, (Dict, List)):
+    async def normalize_question(self, attr_schema: dict, value, update, complete_config, context):
+        schema_def = attr_schema['schema']
+        schema_type = schema_def['type']
+        if value is None and schema_type in ('dict', 'list'):
             # This shows that the value provided has been explicitly specified as null and if validation
             # was okay with it, we shouldn't try to normalize it
             return value
 
-        if isinstance(question_attr, Dict) and not isinstance(question_attr, Cron):
-            for attr in filter(lambda v: v.name in value, question_attr.attrs.values()):
-                value[attr.name] = await self.normalize_question(
-                    attr, value[attr.name], update, complete_config, context
+        if schema_type == 'dict':
+            for attr in filter(lambda v: v['variable'] in value, schema_def.get('attrs', [])):
+                value[attr['variable']] = await self.normalize_question(
+                    attr, value[attr['variable']], update, complete_config, context
                 )
 
-        if isinstance(question_attr, List):
+        if schema_type == 'list':
             for index, item in enumerate(value):
-                _, attr = get_list_item_from_value(item, question_attr)
-                if attr:
-                    value[index] = await self.normalize_question(attr, item, update, complete_config, context)
+                if schema_def.get('items'):
+                    value[index] = await self.normalize_question(
+                        schema_def['items'][0], item, update, complete_config, context
+                    )
 
-        for ref in filter(lambda k: k in REF_MAPPING, question_attr.ref):
+        for ref in filter(lambda k: k in REF_MAPPING, schema_def.get('$ref', [])):
             value = await self.middleware.call(
-                f'app.schema.normalize_{REF_MAPPING[ref]}', question_attr, value, complete_config, context
+                f'app.schema.normalize_{REF_MAPPING[ref]}', attr_schema, value, complete_config, context
             )
 
         return value
 
-    async def normalize_certificate(self, attr, value, complete_config, context):
-        assert isinstance(attr, Int) is True
+    async def normalize_certificate(self, attr_schema, value, complete_config, context):
+        assert attr_schema['schema']['type'] == 'int'
 
         if not value:
             return value
@@ -96,7 +98,7 @@ class AppSchemaService(Service):
 
         return value
 
-    async def normalize_gpu_configuration(self, attr, value, complete_config, context):
+    async def normalize_gpu_configuration(self, attr_schema, value, complete_config, context):
         gpu_choices = {
             gpu['pci_slot']: gpu
             for gpu in await self.middleware.call('app.gpu_choices_internal') if not gpu['error']
@@ -111,11 +113,11 @@ class AppSchemaService(Service):
 
         return value
 
-    async def normalize_ix_volume(self, attr, value, complete_config, context):
+    async def normalize_ix_volume(self, attr_schema, value, complete_config, context):
         # Let's allow ix volume attr to be a string as well making it easier to define a volume in questions.yaml
-        assert isinstance(attr, (Dict, Str)) is True
+        assert attr_schema['schema']['type'] in ('dict', 'string')
 
-        if isinstance(attr, Dict):
+        if attr_schema['schema']['type'] == 'dict':
             vol_data = {'name': value['dataset_name'], 'properties': value.get('properties') or {}}
             acl_dict = value.get('acl_entries', {})
         else:
@@ -141,11 +143,11 @@ class AppSchemaService(Service):
 
         if acl_dict:
             acl_dict['path'] = host_path
-            await self.normalize_acl(Dict(), acl_dict, complete_config, context)
+            await self.normalize_acl({'schema': {'type': 'dict'}}, acl_dict, complete_config, context)
         return value
 
-    async def normalize_acl(self, attr, value, complete_config, context):
-        assert isinstance(attr, Dict) is True
+    async def normalize_acl(self, attr_schema, value, complete_config, context):
+        assert attr_schema['schema']['type'] == 'dict'
 
         if not value or any(not value[k] for k in ('entries', 'path')):
             return value

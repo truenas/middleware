@@ -2,12 +2,11 @@ import pytest
 
 from middlewared.plugins.apps.schema_normalization import AppSchemaService
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.schema import Dict
 
 
 @pytest.mark.parametrize('attr, value, context', [
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'entries': [{'type': 'ALLOW', 'permissions': 'read'}],
             'path': '/mnt/data'
@@ -15,7 +14,7 @@ from middlewared.schema import Dict
         {'actions': []},
     ),
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'entries': [{'type': 'ALLOW', 'permissions': 'write'}],
             'path': '/mnt/data'
@@ -41,7 +40,7 @@ from middlewared.schema import Dict
         },
     ),
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'entries': [],
             'path': ''
@@ -49,7 +48,7 @@ from middlewared.schema import Dict
         {'actions': []},
     ),
     (
-        Dict(),
+        {'schema': {'type': 'dict'}},
         {
             'entries': [{'type': 'ALLOW', 'permissions': 'rw'}],
             'path': ''

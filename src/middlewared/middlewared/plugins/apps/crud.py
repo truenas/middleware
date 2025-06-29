@@ -225,7 +225,7 @@ class AppService(CRUDService):
         """
         Update `app_name` app with new configuration.
         """
-        app = self.get_instance__sync(app_name)
+        app = self.get_instance__sync(app_name, {'extra': {'retrieve_config': True}})
         app = self.update_internal(job, app, data, trigger_compose=app['state'] != 'STOPPED')
         self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         return app
