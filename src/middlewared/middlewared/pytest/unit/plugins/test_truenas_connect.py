@@ -75,7 +75,13 @@ class TestTNCInterfacesValidation:
     @pytest.mark.asyncio
     async def test_validate_data_interface_has_ip(self, tnc_service, mock_interfaces):
         """Test that selected interfaces must have at least one IP when no direct IPs provided."""
-        tnc_service.middleware.call = AsyncMock(return_value=mock_interfaces)
+        tnc_service.middleware.call = AsyncMock()
+        tnc_service.middleware.call.side_effect = [
+            # interface.query() call
+            mock_interfaces,
+            # interface.ip_in_use() call - returns empty list for ens5
+            [],
+        ]
 
         old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
         data = {'enabled': True, 'ips': [], 'interfaces': ['ens5']}  # ens5 has no IPs
@@ -149,17 +155,45 @@ class TestTNCInterfacesUpdate:
             'heartbeat_url': 'https://example.com/'
         })
 
-        tnc_service.middleware.call.side_effect = [
-            # interface.query() call in validate_data
-            mock_interfaces,
-            # interface.query() call in do_update
-            mock_interfaces,
-            # alert.oneshot_delete calls
-            None,
-            None,
-            # datastore.update() call
-            None,
-            # config() call for return value
+        # Create a function that handles the calls appropriately
+        def mock_middleware_call(method, *args, **kwargs):
+            if method == 'interface.query':
+                return mock_interfaces
+            elif method == 'interface.ip_in_use':
+                # Return IPs for the requested interfaces
+                return [
+                    {'type': 'INET', 'address': '192.168.1.10', 'netmask': 24},
+                    {'type': 'INET6', 'address': '2001:db8::1', 'netmask': 64},
+                    {'type': 'INET', 'address': '10.0.0.10', 'netmask': 24},
+                ]
+            elif method == 'cache.pop':
+                return None
+            elif method == 'alert.oneshot_delete':
+                return None
+            elif method == 'datastore.update':
+                return None
+            else:
+                raise ValueError(f"Unexpected middleware.call: {method}")
+
+        tnc_service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+
+        # Also need to mock the final config call
+        tnc_service.config = AsyncMock()
+        tnc_service.config.side_effect = [
+            # First call returns initial config
+            {
+                'id': 1,
+                'enabled': False,
+                'ips': [],
+                'interfaces': [],
+                'status': Status.DISABLED.name,
+                'interfaces_ips': [],
+                'account_service_base_url': 'https://example.com/',
+                'leca_service_base_url': 'https://example.com/',
+                'tnc_base_url': 'https://example.com/',
+                'heartbeat_url': 'https://example.com/'
+            },
+            # Second call returns updated config
             {
                 'id': 1,
                 'enabled': True,
@@ -173,7 +207,7 @@ class TestTNCInterfacesUpdate:
                 'leca_service_base_url': 'https://example.com/',
                 'tnc_base_url': 'https://example.com/',
                 'heartbeat_url': 'https://example.com/',
-            },
+            }
         ]
 
         tnc_service.middleware.send_event = MagicMock()
@@ -184,24 +218,25 @@ class TestTNCInterfacesUpdate:
             'interfaces': ['ens3', 'ens4']
         }
 
+        # Track the datastore.update call
+        db_update_payload = {}
+
+        # Update the mock to capture datastore.update payload
+        original_mock = tnc_service.middleware.call.side_effect
+
+        def capture_middleware_call(method, *args, **kwargs):
+            if method == 'datastore.update':
+                nonlocal db_update_payload
+                db_update_payload = args[2]  # Third argument is the payload
+            return original_mock(method, *args, **kwargs)
+
+        tnc_service.middleware.call.side_effect = capture_middleware_call
+
         await tnc_service.do_update(data)
 
-        # Find the datastore.update call
-        datastore_call = None
-        for idx, call in enumerate(tnc_service.middleware.call.call_args_list):
-            if call[0][0] == 'datastore.update':
-                datastore_call = call
-                break
-
-        assert datastore_call is not None, (
-            f"datastore.update not found in calls: "
-            f"{[c[0][0] for c in tnc_service.middleware.call.call_args_list]}"
-        )
-        db_payload = datastore_call[0][3]
-
         # Check extracted IPs (should not include link-local IPv6)
-        assert set(db_payload['interfaces_ips']) == {'192.168.1.10', '2001:db8::1', '10.0.0.10'}
-        assert db_payload['interfaces'] == ['ens3', 'ens4']
+        assert set(db_update_payload['interfaces_ips']) == {'192.168.1.10', '2001:db8::1', '10.0.0.10'}
+        assert db_update_payload['interfaces'] == ['ens3', 'ens4']
 
     @pytest.mark.asyncio
     async def test_do_update_filters_link_local_ipv6(self, tnc_service):
@@ -235,17 +270,44 @@ class TestTNCInterfacesUpdate:
             'heartbeat_url': 'https://example.com/'
         })
 
-        tnc_service.middleware.call.side_effect = [
-            # interface.query() call in validate_data
-            mock_interfaces_with_link_local,
-            # interface.query() call in do_update
-            mock_interfaces_with_link_local,
-            # alert.oneshot_delete calls
-            None,
-            None,
-            # datastore.update() call
-            None,
-            # config() call for return value
+        # Create a function that handles the calls appropriately
+        def mock_middleware_call(method, *args, **kwargs):
+            if method == 'interface.query':
+                return mock_interfaces_with_link_local
+            elif method == 'interface.ip_in_use':
+                # Return IPs for the requested interfaces (already filters link-local)
+                return [
+                    {'type': 'INET', 'address': '192.168.2.10', 'netmask': 24},
+                    {'type': 'INET6', 'address': '2001:db8::2', 'netmask': 64},
+                ]
+            elif method == 'cache.pop':
+                return None
+            elif method == 'alert.oneshot_delete':
+                return None
+            elif method == 'datastore.update':
+                return None
+            else:
+                raise ValueError(f"Unexpected middleware.call: {method}")
+
+        tnc_service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+
+        # Also need to mock the final config call
+        tnc_service.config = AsyncMock()
+        tnc_service.config.side_effect = [
+            # First call returns initial config
+            {
+                'id': 1,
+                'enabled': False,
+                'ips': [],
+                'interfaces': [],
+                'status': Status.DISABLED.name,
+                'interfaces_ips': [],
+                'account_service_base_url': 'https://example.com/',
+                'leca_service_base_url': 'https://example.com/',
+                'tnc_base_url': 'https://example.com/',
+                'heartbeat_url': 'https://example.com/'
+            },
+            # Second call returns updated config
             {
                 'id': 1,
                 'enabled': True,
@@ -259,7 +321,7 @@ class TestTNCInterfacesUpdate:
                 'leca_service_base_url': 'https://example.com/',
                 'tnc_base_url': 'https://example.com/',
                 'heartbeat_url': 'https://example.com/',
-            },
+            }
         ]
 
         tnc_service.middleware.send_event = MagicMock()
@@ -270,24 +332,25 @@ class TestTNCInterfacesUpdate:
             'interfaces': ['ens6']
         }
 
+        # Track the datastore.update call
+        db_update_payload = {}
+
+        # Update the mock to capture datastore.update payload
+        original_mock = tnc_service.middleware.call.side_effect
+
+        def capture_middleware_call(method, *args, **kwargs):
+            if method == 'datastore.update':
+                nonlocal db_update_payload
+                db_update_payload = args[2]  # Third argument is the payload
+            return original_mock(method, *args, **kwargs)
+
+        tnc_service.middleware.call.side_effect = capture_middleware_call
+
         await tnc_service.do_update(data)
 
-        # Find the datastore.update call
-        datastore_call = None
-        for idx, call in enumerate(tnc_service.middleware.call.call_args_list):
-            if call[0][0] == 'datastore.update':
-                datastore_call = call
-                break
-
-        assert datastore_call is not None, (
-            f"datastore.update not found in calls: "
-            f"{[c[0][0] for c in tnc_service.middleware.call.call_args_list]}"
-        )
-        db_payload = datastore_call[0][3]
-
         # Check that link-local IPv6 was filtered out
-        assert set(db_payload['interfaces_ips']) == {'192.168.2.10', '2001:db8::2'}
-        assert 'fe80::1234:5678:90ab:cdef' not in db_payload['interfaces_ips']
+        assert set(db_update_payload['interfaces_ips']) == {'192.168.2.10', '2001:db8::2'}
+        assert 'fe80::1234:5678:90ab:cdef' not in db_update_payload['interfaces_ips']
 
     @pytest.mark.asyncio
     async def test_do_update_combined_ips_registration(self, tnc_service, mock_interfaces):
@@ -311,8 +374,10 @@ class TestTNCInterfacesUpdate:
         tnc_service.middleware.call.side_effect = [
             # interface.query() call in validate_data
             mock_interfaces,
-            # interface.query() call in do_update
-            mock_interfaces,
+            # interface.ip_in_use() call in do_update (for ens4)
+            [
+                {'type': 'INET', 'address': '10.0.0.10', 'netmask': 24},
+            ],
             # hostname.register_update_ips() call
             {'error': None},
             # datastore.update() call

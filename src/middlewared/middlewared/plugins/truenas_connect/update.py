@@ -90,16 +90,17 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
             # If no direct IPs are provided, ensure selected interfaces have at least one IP
             if data['enabled'] and not data['ips']:
-                has_any_ip = False
-                for iface in all_interfaces:
-                    if iface['id'] in data['interfaces']:
-                        # Check if interface has any IPv4 or IPv6 address
-                        aliases = iface.get('state', {}).get('aliases', [])
-                        if any(alias['type'] in ('INET', 'INET6') for alias in aliases):
-                            has_any_ip = True
-                            break
+                interface_ips = await self.middleware.call('interface.ip_in_use', {
+                    'ipv4': True,
+                    'ipv6': True,
+                    'ipv6_link_local': False,
+                    'interfaces': data['interfaces'],
+                    'static': False,
+                    'loopback': False,
+                    'any': False,
+                })
 
-                if not has_any_ip:
+                if not interface_ips:
                     verrors.add(
                         'tn_connect_update.interfaces',
                         'Selected interfaces must have at least one IP address configured'
@@ -142,20 +143,19 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             'interfaces': data.get('interfaces', []),
         } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
 
-        # Extract IPs from selected interfaces
+        # Extract IPs from selected interfaces using ip_in_use method
         interfaces_ips = []
         if db_payload['interfaces']:
-            all_interfaces = await self.middleware.call('interface.query')
-            for iface in all_interfaces:
-                if iface['id'] in db_payload['interfaces']:
-                    # Get all IPs from the interface, excluding link-local IPv6
-                    aliases = iface.get('state', {}).get('aliases', [])
-                    for alias in aliases:
-                        if alias['type'] in ('INET', 'INET6'):
-                            # Skip link-local IPv6 addresses
-                            if alias['type'] == 'INET6' and alias['address'].startswith('fe80::'):
-                                continue
-                            interfaces_ips.append(alias['address'])
+            ip_data = await self.middleware.call('interface.ip_in_use', {
+                'ipv4': True,
+                'ipv6': True,
+                'ipv6_link_local': False,
+                'interfaces': db_payload['interfaces'],
+                'static': False,
+                'loopback': False,
+                'any': False,
+            })
+            interfaces_ips = [ip['address'] for ip in ip_data]
 
         db_payload['interfaces_ips'] = interfaces_ips
         if config['enabled'] is False and data['enabled'] is True:
