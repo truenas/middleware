@@ -1,5 +1,6 @@
 import pytest
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool
 from truenas_api_client import ClientException
@@ -62,7 +63,7 @@ class TestWebshareValidation:
 
     def test_validate_invalid_pool(self):
         """Test validation rejects invalid pool names."""
-        with pytest.raises(ClientException) as exc_info:
+        with pytest.raises(ValidationErrors) as exc_info:
             call('webshare.validate', {
                 'bulk_download_pool': 'nonexistent_pool'
             })
@@ -76,7 +77,7 @@ class TestWebshareValidation:
         if not boot_pool:
             pytest.skip("No boot pool available in test environment")
 
-        with pytest.raises(ClientException) as exc_info:
+        with pytest.raises(ValidationErrors) as exc_info:
             call('webshare.validate', {
                 'search_index_pool': boot_pool
             })
@@ -101,7 +102,7 @@ class TestWebshareValidation:
                     if 'path already exists' not in str(e):
                         raise
 
-                with pytest.raises(ClientException) as exc_info:
+                with pytest.raises(ValidationErrors) as exc_info:
                     call('webshare.validate', {
                         'altroots': {
                             'root1': path1,
@@ -113,7 +114,7 @@ class TestWebshareValidation:
 
     def test_validate_altroots_invalid_path(self):
         """Test validation rejects paths not under /mnt/."""
-        with pytest.raises(ClientException) as exc_info:
+        with pytest.raises(ValidationErrors) as exc_info:
             call('webshare.validate', {
                 'altroots': {
                     'invalid': '/tmp/test'
@@ -123,7 +124,7 @@ class TestWebshareValidation:
 
     def test_validate_altroots_nonexistent_path(self):
         """Test validation rejects nonexistent paths."""
-        with pytest.raises(ClientException) as exc_info:
+        with pytest.raises(ValidationErrors) as exc_info:
             call('webshare.validate', {
                 'altroots': {
                     'missing': f'/mnt/{pool}/nonexistent_directory'
@@ -148,7 +149,7 @@ class TestWebshareValidation:
             })
 
             # Invalid path should fail
-            with pytest.raises(ClientException) as exc_info:
+            with pytest.raises(ValidationErrors) as exc_info:
                 call('webshare.validate', {
                     'search_directories': ['/invalid/path']
                 })
@@ -164,7 +165,7 @@ class TestWebshareValidation:
 
         # Invalid time formats
         for invalid_time in ['24:00', '12:60', 'invalid', '1:30', '12:3']:
-            with pytest.raises(ClientException) as exc_info:
+            with pytest.raises(ValidationErrors) as exc_info:
                 call('webshare.validate', {
                     'search_pruning_start_time': invalid_time
                 })
@@ -181,7 +182,7 @@ class TestWebshareValidation:
 
         # Invalid range
         for invalid_value in [-1, 101, 200]:
-            with pytest.raises(ClientException) as exc_info:
+            with pytest.raises(ValidationErrors) as exc_info:
                 call('webshare.validate', {
                     'search_index_cleanup_threshold': invalid_value
                 })
