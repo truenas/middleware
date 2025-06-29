@@ -64,9 +64,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         config.pop('last_heartbeat_failure_datetime', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
-        # Ensure interfaces and interfaces_ips are included
-        config['interfaces'] = config.get('interfaces', [])
-        config['interfaces_ips'] = config.get('interfaces_ips', [])
         return config
 
     @private
