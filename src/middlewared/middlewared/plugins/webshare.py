@@ -584,10 +584,13 @@ class WebShareService(SystemServiceService):
     @private
     async def check_configuration(self):
         """Check if WebShare service can start with current configuration."""
+        # Auto-configure pools if not set
+        await self._auto_configure_pools_if_needed()
+
         config = await self.config()
         errors = []
 
-        # Check if required pools are configured
+        # Check if required pools are configured (after auto-configuration)
         if not config['bulk_download_pool']:
             errors.append(
                 'No bulk download pool configured. '
@@ -663,12 +666,7 @@ class WebShareService(SystemServiceService):
     @private
     async def before_start(self):
         """Called before starting the service."""
-        # Auto-select pools if not configured
-        # (manual start or autostart without config)
-        # Note: During boot with autostart enabled, the etc renderer
-        # already calls this but we call it again here for manual start
-        await self._auto_configure_pools_if_needed()
-
+        # check_configuration will auto-configure pools if needed
         await self.check_configuration()
         await self._verify_datasets_mounted()
         await self._generate_config_files()
