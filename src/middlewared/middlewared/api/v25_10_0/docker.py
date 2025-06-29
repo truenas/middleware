@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
 )
 
 
@@ -43,6 +43,7 @@ class DockerEntry(BaseModel):
     nvidia: bool
     address_pools: list[dict]
     cidr_v6: str
+    registry_mirrors: list[HttpUrl]
 
 
 @single_argument_args('docker_update')
@@ -52,6 +53,7 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     address_pools: list[AddressPool]
     cidr_v6: IPvAnyInterface
     migrate_applications: bool
+    registry_mirrors: list[HttpUrl]
 
     @field_validator('cidr_v6')
     @classmethod
