@@ -70,6 +70,7 @@ class VMEntry(BaseModel):
     display_available: bool
     id: int
     status: VMStatus
+    enable_secure_boot: bool = False
 
 
 class VMCreate(VMEntry):

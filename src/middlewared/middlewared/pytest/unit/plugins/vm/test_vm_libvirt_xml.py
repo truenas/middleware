@@ -122,15 +122,17 @@ def test_cpu_xml(vm_data, context, expected_xml):
 
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'hide_from_msr': False, 'hyperv_enlightenments': False},
+    ({'hide_from_msr': False, 'hyperv_enlightenments': False, 'enable_secure_boot': False},
      '<features><acpi /><apic /><msrs unknown="ignore" /></features>'),
-    ({'hide_from_msr': True, 'hyperv_enlightenments': False},
+    ({'hide_from_msr': True, 'hyperv_enlightenments': False, 'enable_secure_boot': False},
      '<features><acpi /><apic /><msrs unknown="ignore" /><kvm><hidden state="on" /></kvm></features>'),
-    ({'hide_from_msr': True, 'hyperv_enlightenments': True},
+    ({'hide_from_msr': True, 'hyperv_enlightenments': True, 'enable_secure_boot': False},
      '<features><acpi /><apic /><msrs unknown="ignore" /><kvm><hidden state="on" /></kvm>'
      '<hyperv><relaxed state="on" /><vapic state="on" /><spinlocks state="on" retries="8191" /><reset state="on" />'
      '<frequencies state="on" /><vpindex state="on" /><synic state="on" /><ipi state="on" /><tlbflush state="on" />'
      '<stimer state="on" /></hyperv></features>'),
+    ({'hide_from_msr': False, 'hyperv_enlightenments': False, 'enable_secure_boot': True},
+     '<features><acpi /><apic /><msrs unknown="ignore" /><smm state="on" /></features>'),
 ])
 def test_features_xml(vm_data, expected_xml):
     assert etree.tostring(features_xml(vm_data)).decode().strip() == expected_xml
