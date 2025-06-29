@@ -5,9 +5,11 @@ from middlewared.api.base.types import HttpsOnlyURL
 
 
 __all__ = [
-    'TNCEntry', 'TrueNASConnectGetRegistrationUriArgs', 'TrueNASConnectGetRegistrationUriResult',
+    'TNCEntry', 'TrueNASConnectGetRegistrationUriArgs',
+    'TrueNASConnectGetRegistrationUriResult',
     'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
-    'TrueNASConnectGenerateClaimTokenArgs', 'TrueNASConnectGenerateClaimTokenResult',
+    'TrueNASConnectGenerateClaimTokenArgs',
+    'TrueNASConnectGenerateClaimTokenResult',
     'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
 ]
 

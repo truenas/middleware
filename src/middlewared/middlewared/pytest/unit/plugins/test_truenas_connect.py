@@ -105,7 +105,11 @@ class TestTNCInterfacesValidation:
             'enabled': True,
             'ips': ['192.168.1.10'],
             'interfaces': [],
-            'status': Status.CERT_GENERATION_IN_PROGRESS.name
+            'status': Status.CERT_GENERATION_IN_PROGRESS.name,
+            'account_service_base_url': 'https://example.com/',
+            'leca_service_base_url': 'https://example.com/',
+            'tnc_base_url': 'https://example.com/',
+            'heartbeat_url': 'https://example.com/'
         }
         data = {
             'enabled': True,
@@ -130,37 +134,8 @@ class TestTNCInterfacesUpdate:
     async def test_do_update_extracts_interface_ips(self, tnc_service, mock_interfaces):
         """Test that do_update properly extracts IPs from selected interfaces."""
         tnc_service.middleware.call = AsyncMock()
-        tnc_service.middleware.call.side_effect = [
-            # config() call
-            {
-                'id': 1,
-                'enabled': False,
-                'ips': [],
-                'interfaces': [],
-                'status': Status.DISABLED.name,
-                'interfaces_ips': [],
-                'account_service_base_url': 'https://example.com/',
-                'leca_service_base_url': 'https://example.com/',
-                'tnc_base_url': 'https://example.com/',
-                'heartbeat_url': 'https://example.com/'
-            },
-            # interface.query() call in validate_data
-            mock_interfaces,
-            # interface.query() call in do_update
-            mock_interfaces,
-            # datastore.update() call
-            None,
-            # config() call for return
-            {
-                'id': 1,
-                'enabled': True,
-                'ips': [],
-                'interfaces': ['ens3', 'ens4'],
-                'interfaces_ips': ['192.168.1.10', '2001:db8::1', '10.0.0.10'],
-                'status': Status.CLAIM_TOKEN_MISSING.name
-            }
-        ]
 
+        # Mock the config method
         tnc_service.config = AsyncMock(return_value={
             'id': 1,
             'enabled': False,
@@ -174,6 +149,33 @@ class TestTNCInterfacesUpdate:
             'heartbeat_url': 'https://example.com/'
         })
 
+        tnc_service.middleware.call.side_effect = [
+            # interface.query() call in validate_data
+            mock_interfaces,
+            # interface.query() call in do_update
+            mock_interfaces,
+            # alert.oneshot_delete calls
+            None,
+            None,
+            # datastore.update() call
+            None,
+            # config() call for return value
+            {
+                'id': 1,
+                'enabled': True,
+                'ips': [],
+                'interfaces': ['ens3', 'ens4'],
+                'interfaces_ips': ['192.168.1.10', '2001:db8::1', '10.0.0.10'],
+                'status': 'CLAIM_TOKEN_MISSING',
+                'status_reason': 'Claim token is missing',
+                'certificate': None,
+                'account_service_base_url': 'https://example.com/',
+                'leca_service_base_url': 'https://example.com/',
+                'tnc_base_url': 'https://example.com/',
+                'heartbeat_url': 'https://example.com/',
+            },
+        ]
+
         tnc_service.middleware.send_event = MagicMock()
 
         data = {
@@ -184,52 +186,115 @@ class TestTNCInterfacesUpdate:
 
         await tnc_service.do_update(data)
 
-        # Verify datastore.update was called with correct payload
-        update_call = tnc_service.middleware.call.call_args_list[3]
-        assert update_call[0][0] == 'datastore.update'
-        db_payload = update_call[0][3]
+        # Find the datastore.update call
+        datastore_call = None
+        for idx, call in enumerate(tnc_service.middleware.call.call_args_list):
+            if call[0][0] == 'datastore.update':
+                datastore_call = call
+                break
+
+        assert datastore_call is not None, (
+            f"datastore.update not found in calls: "
+            f"{[c[0][0] for c in tnc_service.middleware.call.call_args_list]}"
+        )
+        db_payload = datastore_call[0][3]
 
         # Check extracted IPs (should not include link-local IPv6)
         assert set(db_payload['interfaces_ips']) == {'192.168.1.10', '2001:db8::1', '10.0.0.10'}
         assert db_payload['interfaces'] == ['ens3', 'ens4']
 
     @pytest.mark.asyncio
-    async def test_do_update_combined_ips_registration(self, tnc_service, mock_interfaces):
-        """Test that hostname registration uses combined IPs."""
-        tnc_service.middleware.call = AsyncMock()
-        tnc_service.middleware.call.side_effect = [
-            # config() call
+    async def test_do_update_filters_link_local_ipv6(self, tnc_service):
+        """Test that do_update filters out link-local IPv6 addresses."""
+        mock_interfaces_with_link_local = [
             {
-                'id': 1,
-                'enabled': True,
-                'ips': ['192.168.1.100'],
-                'interfaces': ['ens3'],
-                'interfaces_ips': ['192.168.1.10'],
-                'status': Status.CONFIGURED.name,
-                'account_service_base_url': 'https://example.com/',
-                'leca_service_base_url': 'https://example.com/',
-                'tnc_base_url': 'https://example.com/',
-                'heartbeat_url': 'https://example.com/'
-            },
-            # interface.query() call in validate_data
-            mock_interfaces,
-            # interface.query() call in do_update
-            mock_interfaces,
-            # hostname.register_update_ips() call
-            {'error': None},
-            # datastore.update() call
-            None,
-            # config() call for return
-            {
-                'id': 1,
-                'enabled': True,
-                'ips': ['192.168.1.100'],
-                'interfaces': ['ens4'],
-                'interfaces_ips': ['10.0.0.10'],
-                'status': Status.CONFIGURED.name
+                'id': 'ens6',
+                'state': {
+                    'aliases': [
+                        {'type': 'INET', 'address': '192.168.2.10'},
+                        {'type': 'INET6', 'address': 'fe80::1234:5678:90ab:cdef'},
+                        {'type': 'INET6', 'address': '2001:db8::2'},
+                    ]
+                }
             }
         ]
 
+        tnc_service.middleware.call = AsyncMock()
+
+        # Mock the config method
+        tnc_service.config = AsyncMock(return_value={
+            'id': 1,
+            'enabled': False,
+            'ips': [],
+            'interfaces': [],
+            'status': Status.DISABLED.name,
+            'interfaces_ips': [],
+            'account_service_base_url': 'https://example.com/',
+            'leca_service_base_url': 'https://example.com/',
+            'tnc_base_url': 'https://example.com/',
+            'heartbeat_url': 'https://example.com/'
+        })
+
+        tnc_service.middleware.call.side_effect = [
+            # interface.query() call in validate_data
+            mock_interfaces_with_link_local,
+            # interface.query() call in do_update
+            mock_interfaces_with_link_local,
+            # alert.oneshot_delete calls
+            None,
+            None,
+            # datastore.update() call
+            None,
+            # config() call for return value
+            {
+                'id': 1,
+                'enabled': True,
+                'ips': [],
+                'interfaces': ['ens6'],
+                'interfaces_ips': ['192.168.2.10', '2001:db8::2'],
+                'status': 'CLAIM_TOKEN_MISSING',
+                'status_reason': 'Claim token is missing',
+                'certificate': None,
+                'account_service_base_url': 'https://example.com/',
+                'leca_service_base_url': 'https://example.com/',
+                'tnc_base_url': 'https://example.com/',
+                'heartbeat_url': 'https://example.com/',
+            },
+        ]
+
+        tnc_service.middleware.send_event = MagicMock()
+
+        data = {
+            'enabled': True,
+            'ips': [],
+            'interfaces': ['ens6']
+        }
+
+        await tnc_service.do_update(data)
+
+        # Find the datastore.update call
+        datastore_call = None
+        for idx, call in enumerate(tnc_service.middleware.call.call_args_list):
+            if call[0][0] == 'datastore.update':
+                datastore_call = call
+                break
+
+        assert datastore_call is not None, (
+            f"datastore.update not found in calls: "
+            f"{[c[0][0] for c in tnc_service.middleware.call.call_args_list]}"
+        )
+        db_payload = datastore_call[0][3]
+
+        # Check that link-local IPv6 was filtered out
+        assert set(db_payload['interfaces_ips']) == {'192.168.2.10', '2001:db8::2'}
+        assert 'fe80::1234:5678:90ab:cdef' not in db_payload['interfaces_ips']
+
+    @pytest.mark.asyncio
+    async def test_do_update_combined_ips_registration(self, tnc_service, mock_interfaces):
+        """Test that hostname registration uses combined IPs."""
+        tnc_service.middleware.call = AsyncMock()
+
+        # Mock the config method
         tnc_service.config = AsyncMock(return_value={
             'id': 1,
             'enabled': True,
@@ -243,6 +308,17 @@ class TestTNCInterfacesUpdate:
             'heartbeat_url': 'https://example.com/'
         })
 
+        tnc_service.middleware.call.side_effect = [
+            # interface.query() call in validate_data
+            mock_interfaces,
+            # interface.query() call in do_update
+            mock_interfaces,
+            # hostname.register_update_ips() call
+            {'error': None},
+            # datastore.update() call
+            None,
+        ]
+
         tnc_service.middleware.send_event = MagicMock()
 
         data = {
@@ -254,7 +330,7 @@ class TestTNCInterfacesUpdate:
         await tnc_service.do_update(data)
 
         # Verify hostname.register_update_ips was called with combined IPs
-        register_call = tnc_service.middleware.call.call_args_list[3]
+        register_call = tnc_service.middleware.call.call_args_list[2]
         assert register_call[0][0] == 'tn_connect.hostname.register_update_ips'
         combined_ips = register_call[0][1]
         assert set(combined_ips) == {'192.168.1.100', '10.0.0.10'}

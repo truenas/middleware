@@ -139,7 +139,25 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         db_payload = {
             'enabled': data['enabled'],
             'ips': data['ips'],
+            'interfaces': data.get('interfaces', []),
         } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
+
+        # Extract IPs from selected interfaces
+        interfaces_ips = []
+        if db_payload['interfaces']:
+            all_interfaces = await self.middleware.call('interface.query')
+            for iface in all_interfaces:
+                if iface['id'] in db_payload['interfaces']:
+                    # Get all IPs from the interface, excluding link-local IPv6
+                    aliases = iface.get('state', {}).get('aliases', [])
+                    for alias in aliases:
+                        if alias['type'] in ('INET', 'INET6'):
+                            # Skip link-local IPv6 addresses
+                            if alias['type'] == 'INET6' and alias['address'].startswith('fe80::'):
+                                continue
+                            interfaces_ips.append(alias['address'])
+
+        db_payload['interfaces_ips'] = interfaces_ips
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token
