@@ -1,9 +1,8 @@
 import pytest
 
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool
-from truenas_api_client import ClientException
 
 
 # Skip all tests if no pool is available
@@ -86,22 +85,20 @@ class TestWebshareValidation:
     def test_validate_altroots_duplicate_values(self):
         """Test validation rejects duplicate values in altroots."""
         with dataset('webshare_test1') as ds1:
-            with dataset('webshare_test2') as ds2:
-                path1 = f'/mnt/{ds1}'
-                path2 = f'/mnt/{ds2}'
+            path1 = f'/mnt/{ds1}'
 
-                # Datasets automatically create their mount point directories
-                # No need to create them manually
+            # Datasets automatically create their mount point directories
+            # No need to create them manually
 
-                with pytest.raises(ValidationErrors) as exc_info:
-                    call('webshare.validate', {
-                        'altroots': {
-                            'root1': path1,
-                            'root2': path1  # Duplicate value
-                        }
-                    })
-                assert 'Duplicate values are not allowed' in \
-                    str(exc_info.value)
+            with pytest.raises(ValidationErrors) as exc_info:
+                call('webshare.validate', {
+                    'altroots': {
+                        'root1': path1,
+                        'root2': path1  # Duplicate value
+                    }
+                })
+            assert 'Duplicate values are not allowed' in \
+                str(exc_info.value)
 
     def test_validate_altroots_invalid_path(self):
         """Test validation rejects paths not under /mnt/."""
@@ -278,10 +275,10 @@ class TestWebshareService:
             # Try to start the service without pools configured
             if not service_status['enable']:
                 call('service.update', 'webshare', {'enable': True})
-                
+
                 # Starting the service should auto-select pools
                 call('service.start', 'webshare')
-                
+
                 # Check that pools were auto-selected
                 config = call('webshare.config')
                 assert config['bulk_download_pool'] is not None
@@ -302,6 +299,75 @@ class TestWebshareService:
                     original_config['bulk_download_pool'],
                 'search_index_pool':
                     original_config['search_index_pool']
+            })
+
+    def test_service_auto_configuration_sets_permissions(self):
+        """Test auto-configuration sets correct permissions on datasets."""
+        original_config = call('webshare.config')
+
+        try:
+            # Clear pool configuration
+            call('webshare.update', {
+                'bulk_download_pool': None,
+                'search_index_pool': None,
+                'search_enabled': True  # Enable search to test permissions
+            })
+
+            # Call check_configuration which should auto-configure pools
+            call('service.start', 'webshare')
+
+            # Get the updated configuration
+            config = call('webshare.config')
+            assert config['bulk_download_pool'] is not None
+            assert config['search_index_pool'] is not None
+
+            # Check bulk download dataset permissions (should be 777)
+            bulk_dataset = (f"{config['bulk_download_pool']}/"
+                            ".webshare-private/bulk_download")
+            datasets = call('zfs.dataset.query',
+                            [['name', '=', bulk_dataset]])
+            assert len(datasets) == 1
+
+            bulk_mount = datasets[0]['properties']['mountpoint']['value']
+            bulk_stat = call('filesystem.stat', bulk_mount)
+            # Check permissions are 777 (octal 0o777 = decimal 511)
+            assert bulk_stat['mode'] & 0o777 == 0o777, \
+                f"Expected mode 777, got {oct(bulk_stat['mode'] & 0o777)}"
+
+            # Check search index dataset ownership (truesearch:truesearch)
+            search_dataset = (f"{config['search_index_pool']}/"
+                              ".webshare-private/search-index")
+            datasets = call('zfs.dataset.query',
+                            [['name', '=', search_dataset]])
+            assert len(datasets) == 1
+
+            search_mount = datasets[0]['properties']['mountpoint']['value']
+            search_stat = call('filesystem.stat', search_mount)
+
+            # Get truesearch user/group info
+            truesearch_user = call('user.query',
+                                   [['username', '=', 'truesearch']],
+                                   {'get': True})
+            truesearch_group = call('group.query',
+                                    [['group', '=', 'truesearch']],
+                                    {'get': True})
+
+            assert search_stat['uid'] == truesearch_user['uid'], \
+                f"Expected uid {truesearch_user['uid']}, " \
+                f"got {search_stat['uid']}"
+            assert search_stat['gid'] == truesearch_group['gid'], \
+                f"Expected gid {truesearch_group['gid']}, " \
+                f"got {search_stat['gid']}"
+
+            # Stop the service
+            call('service.stop', 'webshare')
+
+        finally:
+            # Restore original configuration
+            call('webshare.update', {
+                'bulk_download_pool': original_config['bulk_download_pool'],
+                'search_index_pool': original_config['search_index_pool'],
+                'search_enabled': original_config['search_enabled']
             })
 
     def test_service_with_search_enabled(self):
