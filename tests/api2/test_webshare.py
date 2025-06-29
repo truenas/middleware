@@ -90,17 +90,8 @@ class TestWebshareValidation:
                 path1 = f'/mnt/{ds1}'
                 path2 = f'/mnt/{ds2}'
 
-                # Create the directories (ignore if they already exist)
-                try:
-                    call('filesystem.mkdir', {'path': path1})
-                except ClientException as e:
-                    if 'path already exists' not in str(e):
-                        raise
-                try:
-                    call('filesystem.mkdir', {'path': path2})
-                except ClientException as e:
-                    if 'path already exists' not in str(e):
-                        raise
+                # Datasets automatically create their mount point directories
+                # No need to create them manually
 
                 with pytest.raises(ValidationErrors) as exc_info:
                     call('webshare.validate', {
@@ -137,11 +128,7 @@ class TestWebshareValidation:
         """Test validation of search directories."""
         with dataset('webshare_search_test') as ds:
             path = f'/mnt/{ds}'
-            try:
-                call('filesystem.mkdir', {'path': path})
-            except ClientException as e:
-                if 'path already exists' not in str(e):
-                    raise
+            # Dataset automatically creates its mount point directory
 
             # Valid path should pass
             call('webshare.validate', {
@@ -322,11 +309,7 @@ class TestWebshareService:
 
         with dataset('webshare_search_dir') as ds:
             search_path = f'/mnt/{ds}'
-            try:
-                call('filesystem.mkdir', {'path': search_path})
-            except ClientException as e:
-                if 'path already exists' not in str(e):
-                    raise
+            # Dataset automatically creates its mount point directory
 
             try:
                 # Configure with search enabled
