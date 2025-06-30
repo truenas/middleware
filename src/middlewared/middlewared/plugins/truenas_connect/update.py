@@ -7,7 +7,10 @@ from truenas_connect_utils.urls import get_account_service_url
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import TNCEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult, TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult
+from middlewared.api.current import (
+    TNCEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
+    TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult,
+)
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
 from .mixin import TNCAPIMixin
@@ -25,6 +28,8 @@ class TrueNASConnectModel(sa.Model):
     jwt_token = sa.Column(sa.EncryptedText(), default=None, nullable=True)
     registration_details = sa.Column(sa.JSON(dict), nullable=False)
     ips = sa.Column(sa.JSON(list), nullable=False)
+    interfaces = sa.Column(sa.JSON(list), nullable=False, default=list)
+    interfaces_ips = sa.Column(sa.JSON(list), nullable=False, default=list)
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     account_service_base_url = sa.Column(
@@ -64,18 +69,53 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     @private
     async def validate_data(self, old_config, data):
         verrors = ValidationErrors()
-        if data['enabled'] and not data['ips']:
-            verrors.add('tn_connect_update.ips', 'This field is required when TrueNAS Connect is enabled')
+
+        # Ensure at least one interface or at least one IP is provided
+        if data['enabled'] and not data['ips'] and not data['interfaces']:
+            verrors.add(
+                'tn_connect_update',
+                'At least one IP or interface must be provided when TrueNAS Connect is enabled'
+            )
 
         data['ips'] = [str(ip) for ip in data['ips']]
 
+        # Validate interfaces exist
+        if data['interfaces']:
+            all_interfaces = await self.middleware.call('interface.query', [], {'extra': {'retrieve_names_only': True}})
+            interface_names = {iface['name'] for iface in all_interfaces}
+
+            for interface in data['interfaces']:
+                if interface not in interface_names:
+                    verrors.add('tn_connect_update.interfaces', f'Interface "{interface}" does not exist')
+
+            # If no direct IPs are provided, ensure selected interfaces have at least one IP
+            if data['enabled'] and not data['ips']:
+                interface_ips = await self.middleware.call('interface.ip_in_use', {
+                    'ipv4': True,
+                    'ipv6': True,
+                    'ipv6_link_local': False,
+                    'interfaces': data['interfaces'],
+                    'static': False,
+                    'loopback': False,
+                    'any': False,
+                })
+
+                if not interface_ips:
+                    verrors.add(
+                        'tn_connect_update.interfaces',
+                        'Selected interfaces must have at least one IP address configured'
+                    )
+
         ips_changed = set(old_config['ips']) != set(data['ips'])
-        if ips_changed and (
+        interfaces_changed = set(old_config.get('interfaces', [])) != set(data.get('interfaces', []))
+
+        if (ips_changed or interfaces_changed) and (
             data['enabled'] is True and old_config['status'] not in (Status.DISABLED.name, Status.CONFIGURED.name)
         ):
             verrors.add(
-                'tn_connect_update.ips',
-                'IPs cannot be changed when TrueNAS Connect is in a state other than disabled or completely configured'
+                'tn_connect_update',
+                'IPs and interfaces cannot be changed when TrueNAS Connect is in a state '
+                'other than disabled or completely configured'
             )
 
         if data['enabled'] and old_config['enabled']:
@@ -100,7 +140,24 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         db_payload = {
             'enabled': data['enabled'],
             'ips': data['ips'],
+            'interfaces': data.get('interfaces', []),
         } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
+
+        # Extract IPs from selected interfaces using ip_in_use method
+        interfaces_ips = []
+        if db_payload['interfaces']:
+            ip_data = await self.middleware.call('interface.ip_in_use', {
+                'ipv4': True,
+                'ipv6': True,
+                'ipv6_link_local': False,
+                'interfaces': db_payload['interfaces'],
+                'static': False,
+                'loopback': False,
+                'any': False,
+            })
+            interfaces_ips = [ip['address'] for ip in ip_data]
+
+        db_payload['interfaces_ips'] = interfaces_ips
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token
@@ -114,12 +171,17 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             await self.unset_registration_details()
             db_payload.update(get_unset_payload())
 
+        # Check if IPs or interfaces have changed
+        combined_ips_old = config['ips'] + config.get('interfaces_ips', [])
+        combined_ips_new = db_payload['ips'] + db_payload['interfaces_ips']
+
         if (
             config['status'] == Status.CONFIGURED.name and db_payload.get(
                 'status', Status.CONFIGURED.name
             ) == Status.CONFIGURED.name
-        ) and config['ips'] != db_payload['ips']:
-            response = await self.middleware.call('tn_connect.hostname.register_update_ips', db_payload['ips'])
+        ) and set(combined_ips_old) != set(combined_ips_new):
+            # Send combined IPs to TNC service
+            response = await self.middleware.call('tn_connect.hostname.register_update_ips', combined_ips_new)
             if response['error']:
                 raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
 
