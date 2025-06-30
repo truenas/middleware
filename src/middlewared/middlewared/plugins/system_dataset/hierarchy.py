@@ -1,5 +1,7 @@
 import os
 
+from middlewared.plugins.vm.utils import LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
+
 from .utils import SYSDATASET_PATH
 
 
@@ -137,6 +139,26 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'gid': 0,
                 'mode': 0o755,
             },
+        },
+        {
+            'name': os.path.join(pool_name, '.system/vm'),
+            'props': {
+                'mountpoint': 'legacy',
+                'readonly': 'off',
+                'snapdir': 'hidden',
+            },
+            'chown_config': {
+                'uid': LIBVIRT_QEMU_UID,
+                'gid': LIBVIRT_QEMU_GID,
+                'mode': 0o755,
+            },
+            'create_paths': [
+                {
+                    'path': '/var/db/system/vm/nvram',
+                    'uid': LIBVIRT_QEMU_UID,
+                    'gid': LIBVIRT_QEMU_GID
+                },
+            ],
         },
         {
             'name': os.path.join(pool_name, f'.system/configs-{uuid}'),
