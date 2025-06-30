@@ -388,8 +388,10 @@ class WebShareService(SystemServiceService):
                 'gid': None,  # Will be resolved by group name
                 'user': 'truesearch',
                 'group': 'truesearch',
-                'recursive': True,
-                'traverse': False
+                'options': {
+                    'recursive': False,
+                    'traverse': False
+                }
             })
             await chown_job.wait(raise_error=True)
             self.logger.info(
@@ -415,8 +417,10 @@ class WebShareService(SystemServiceService):
                     'gid': None,  # Will be resolved by group name
                     'user': 'truesearch',
                     'group': 'truesearch',
-                    'recursive': True,
-                    'traverse': False
+                    'options': {
+                        'recursive': False,
+                        'traverse': False
+                    }
                 })
                 await chown_job.wait(raise_error=True)
             except Exception as e:
