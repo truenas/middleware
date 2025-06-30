@@ -94,6 +94,8 @@ class DockerStateService(Service):
             error_str = 'No pool configured for Docker'
         if not error_str and not await self.middleware.call('service.started', 'docker'):
             error_str = 'Docker service is not running'
+        if not await self.middleware.call('docker.license_active'):
+            error_str = 'System is not licensed to use Applications'
 
         if error_str and raise_error:
             raise CallError(error_str)
@@ -129,8 +131,15 @@ async def _event_system_shutdown(middleware, event_type, args):
         await middleware.call('service.control', 'STOP', 'docker')  # No need to wait for this to complete
 
 
+async def handle_license_update(middleware, prev_product_type, *args, **kwargs):
+    if not await middleware.call('docker.license_active'):
+        # We will like to stop docker in this case
+        middleware.create_task(middleware.call('service.stop', 'docker'))
+
+
 async def setup(middleware):
     middleware.event_register('docker.state', 'Docker state events', roles=['DOCKER_READ'])
     middleware.event_subscribe('system.ready', _event_system_ready)
     middleware.event_subscribe('system.shutdown', _event_system_shutdown)
     await middleware.call('docker.state.initialize')
+    middleware.register_hook('system.post_license_update', handle_license_update)
