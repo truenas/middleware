@@ -81,8 +81,8 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         # Validate interfaces exist
         if data['interfaces']:
-            all_interfaces = await self.middleware.call('interface.query')
-            interface_names = {iface['id'] for iface in all_interfaces}
+            all_interfaces = await self.middleware.call('interface.query', [], {'extra': {'retrieve_names_only': True}})
+            interface_names = {iface['name'] for iface in all_interfaces}
 
             for interface in data['interfaces']:
                 if interface not in interface_names:
