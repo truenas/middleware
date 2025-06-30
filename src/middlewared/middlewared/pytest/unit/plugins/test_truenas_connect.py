@@ -62,7 +62,9 @@ class TestTNCInterfacesValidation:
     @pytest.mark.asyncio
     async def test_validate_data_interface_exists(self, tnc_service, mock_interfaces):
         """Test validation of interface existence."""
-        tnc_service.middleware.call = AsyncMock(return_value=mock_interfaces)
+        # When retrieve_names_only=True, interface.query returns only names
+        mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
+        tnc_service.middleware.call = AsyncMock(return_value=mock_interface_names)
 
         old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
         data = {'enabled': True, 'ips': [], 'interfaces': ['ens3', 'invalid_interface']}
@@ -75,10 +77,12 @@ class TestTNCInterfacesValidation:
     @pytest.mark.asyncio
     async def test_validate_data_interface_has_ip(self, tnc_service, mock_interfaces):
         """Test that selected interfaces must have at least one IP when no direct IPs provided."""
+        # When retrieve_names_only=True, interface.query returns only names
+        mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
         tnc_service.middleware.call = AsyncMock()
         tnc_service.middleware.call.side_effect = [
-            # interface.query() call
-            mock_interfaces,
+            # interface.query() call with retrieve_names_only=True
+            mock_interface_names,
             # interface.ip_in_use() call - returns empty list for ens5
             [],
         ]
@@ -94,7 +98,9 @@ class TestTNCInterfacesValidation:
     @pytest.mark.asyncio
     async def test_validate_data_interface_with_direct_ips(self, tnc_service, mock_interfaces):
         """Test that interface without IPs is allowed if direct IPs are provided."""
-        tnc_service.middleware.call = AsyncMock(return_value=mock_interfaces)
+        # When retrieve_names_only=True, interface.query returns only names
+        mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
+        tnc_service.middleware.call = AsyncMock(return_value=mock_interface_names)
 
         old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
         data = {'enabled': True, 'ips': ['192.168.1.100'], 'interfaces': ['ens5']}  # ens5 has no IPs
@@ -105,7 +111,9 @@ class TestTNCInterfacesValidation:
     @pytest.mark.asyncio
     async def test_validate_data_status_restriction(self, tnc_service, mock_interfaces):
         """Test that IPs/interfaces cannot be changed in certain states."""
-        tnc_service.middleware.call = AsyncMock(return_value=mock_interfaces)
+        # When retrieve_names_only=True, interface.query returns only names
+        mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
+        tnc_service.middleware.call = AsyncMock(return_value=mock_interface_names)
 
         old_config = {
             'enabled': True,
@@ -155,10 +163,13 @@ class TestTNCInterfacesUpdate:
             'heartbeat_url': 'https://example.com/'
         })
 
+        # When retrieve_names_only=True, interface.query returns only names
+        mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
+
         # Create a function that handles the calls appropriately
         def mock_middleware_call(method, *args, **kwargs):
             if method == 'interface.query':
-                return mock_interfaces
+                return mock_interface_names
             elif method == 'interface.ip_in_use':
                 # Return IPs for the requested interfaces
                 return [
@@ -241,19 +252,6 @@ class TestTNCInterfacesUpdate:
     @pytest.mark.asyncio
     async def test_do_update_filters_link_local_ipv6(self, tnc_service):
         """Test that do_update filters out link-local IPv6 addresses."""
-        mock_interfaces_with_link_local = [
-            {
-                'id': 'ens6',
-                'state': {
-                    'aliases': [
-                        {'type': 'INET', 'address': '192.168.2.10'},
-                        {'type': 'INET6', 'address': 'fe80::1234:5678:90ab:cdef'},
-                        {'type': 'INET6', 'address': '2001:db8::2'},
-                    ]
-                }
-            }
-        ]
-
         tnc_service.middleware.call = AsyncMock()
 
         # Mock the config method
@@ -270,10 +268,13 @@ class TestTNCInterfacesUpdate:
             'heartbeat_url': 'https://example.com/'
         })
 
+        # When retrieve_names_only=True, interface.query returns only names
+        mock_interface_names = [{'name': 'ens6'}]
+
         # Create a function that handles the calls appropriately
         def mock_middleware_call(method, *args, **kwargs):
             if method == 'interface.query':
-                return mock_interfaces_with_link_local
+                return mock_interface_names
             elif method == 'interface.ip_in_use':
                 # Return IPs for the requested interfaces (already filters link-local)
                 return [
@@ -371,9 +372,12 @@ class TestTNCInterfacesUpdate:
             'heartbeat_url': 'https://example.com/'
         })
 
+        # When retrieve_names_only=True, interface.query returns only names
+        mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
+
         tnc_service.middleware.call.side_effect = [
-            # interface.query() call in validate_data
-            mock_interfaces,
+            # interface.query() call in validate_data with retrieve_names_only=True
+            mock_interface_names,
             # interface.ip_in_use() call in do_update (for ens4)
             [
                 {'type': 'INET', 'address': '10.0.0.10', 'netmask': 24},
