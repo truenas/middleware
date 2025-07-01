@@ -1117,7 +1117,7 @@ class SharingSMBService(SharingService):
             #    under the share path.
             # 2. Share path is a directory, but admin has mounted a remote NFS export under it.
             #    In this case we want to raise a validation error.
-            if is_child_realpath(path, child['mountpoint']):
+            if is_child_realpath(child['mountpoint'], path):
                 validate_child(child)
 
     @private
