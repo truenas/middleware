@@ -374,15 +374,17 @@ class InterfaceService(CRUDService):
         configured gateway doesn't match the one currently installed in kernel.
         """
         # FIXME: What about IPv6??
-        ifaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
         rtgw = netif.RoutingTable().default_route_ipv4
-        if not ifaces and rtgw:
+        if rtgw is None:
+            return False
+
+        if not self.middleware.call_sync('datastore.query', 'network.interfaces'):
             return True
 
         # we have a default route in kernel and we have a route specified in the db
         # and they do not match
         dbgw = self.middleware.call_sync('network.configuration.config')['ipv4gateway']
-        return rtgw and (dbgw != rtgw.gateway.exploded)
+        return dbgw != rtgw.gateway.exploded
 
     @api_method(InterfaceSaveDefaultRouteArgs, InterfaceSaveDefaultRouteResult, roles=['NETWORK_INTERFACE_WRITE'])
     async def save_default_route(self, gw):
