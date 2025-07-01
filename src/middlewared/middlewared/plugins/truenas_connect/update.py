@@ -144,20 +144,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
 
         # Extract IPs from selected interfaces using ip_in_use method
-        interfaces_ips = []
-        if db_payload['interfaces']:
-            ip_data = await self.middleware.call('interface.ip_in_use', {
-                'ipv4': True,
-                'ipv6': True,
-                'ipv6_link_local': False,
-                'interfaces': db_payload['interfaces'],
-                'static': False,
-                'loopback': False,
-                'any': False,
-            })
-            interfaces_ips = [ip['address'] for ip in ip_data]
-
-        db_payload['interfaces_ips'] = interfaces_ips
+        db_payload['interfaces_ips'] = await self.get_interface_ips(db_payload['interfaces'])
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token
@@ -191,6 +178,25 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=new_config)
 
         return new_config
+
+    @private
+    async def get_interface_ips(self, interfaces):
+        """
+        Returns a list of IPs for the given interfaces.
+        """
+        if not interfaces:
+            return []
+
+        ip_data = await self.middleware.call('interface.ip_in_use', {
+            'ipv4': True,
+            'ipv6': True,
+            'ipv6_link_local': False,
+            'interfaces': interfaces,
+            'static': False,
+            'loopback': False,
+            'any': False,
+        })
+        return [ip['address'] for ip in ip_data]
 
     @private
     async def unset_registration_details(self):
