@@ -15,7 +15,7 @@ from middlewared.utils import run
 from middlewared.utils.time_utils import utc_now
 
 
-async def restic_backup(middleware, job, cloud_backup, dry_run):
+async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = False, rate_limit: int | None = None):
     await middleware.call("network.general.will_perform_activity", "cloud_backup")
 
     snapshot = None
@@ -76,6 +76,8 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
 
         if dry_run:
             cmd.append("-n")
+        if rate_limit:
+            cmd.append(f"--limit-upload={rate_limit}")
 
         cmd.extend(["--exclude=" + excl for excl in cloud_backup["exclude"]])
 
@@ -138,12 +140,12 @@ class CloudBackupService(Service):
 
         await self._sync(cloud_backup, options, job)
 
-    async def _sync(self, cloud_backup, options, job):
+    async def _sync(self, cloud_backup: dict, options: dict, job):
         job.set_progress(0, "Starting")
         try:
             await self.middleware.call("cloud_backup.ensure_initialized", cloud_backup)
 
-            await restic_backup(self.middleware, job, cloud_backup, options["dry_run"])
+            await restic_backup(self.middleware, job, cloud_backup, **options)
 
             job.set_progress(100, "Cleaning up")
             restic_config = get_restic_config(cloud_backup)

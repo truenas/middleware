@@ -33,6 +33,8 @@ class CloudBackupService(Service):
         cmd = ["restore", f"{snapshot_id}:{subfolder}", "--target", destination_path]
         cmd += sum([["--exclude", exclude] for exclude in options["exclude"]], [])
         cmd += sum([["--include", include] for include in options["include"]], [])
+        if rate_limit := options["rate_limit"]:
+            cmd.append(f"--limit-download={rate_limit}")
 
         await run_restic(
             job,

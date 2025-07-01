@@ -64,6 +64,8 @@ class CloudBackupRestoreOptions(BaseModel):
     """Paths to exclude from a restore using `restic restore --exclude`."""
     include: list[str] = []
     """Paths to include in a restore using `restic restore --include`."""
+    rate_limit: PositiveInt | None = None
+    """Maximum download rate in KiB/s. Passed to `restic --limit-download`."""
 
 
 class CloudBackupSnapshot(BaseModel):
@@ -98,6 +100,8 @@ class CloudBackupSnapshotItem(BaseModel):
 class CloudBackupSyncOptions(BaseModel):
     dry_run: bool = False
     """Simulate the backup without actually writing to the remote repository."""
+    rate_limit: PositiveInt | None = None
+    """Maximum upload rate in KiB/s. Passed to `restic --limit-upload`."""
 
 
 class CloudBackupTransferSettingChoicesArgs(BaseModel):
