@@ -10,9 +10,9 @@ from middlewared.test.integration.utils import call
 @pytest.fixture(scope='module')
 def fs_tree():
     with dataset('nfs4ds', data={'share_type': 'SMB'}) as ds1:
-        with dataset(f'{ds1}/posix') as ds2:
+        with dataset('nfs4ds/posix') as ds2:
             # Make sure that we don't end up with collision on dataset name partial match
-            with dataset(f'{ds1}/posixcanary'):
+            with dataset(f'nfs4ds/posixcanary'):
                 mountpoint1 = os.path.join('/mnt', ds1)
                 mountpoint2 = os.path.join('/mnt', ds2)
                 path = os.path.join(mountpoint1, 'subdir')
