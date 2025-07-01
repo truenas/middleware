@@ -548,7 +548,7 @@ def normalize_user_properties(uprops: dict[str, str] | None) -> dict[str, dict]:
     return props
 
 
-def build_set_of_zfs_props(hdl, state: QueryFiltersCallbackState) -> ZFSPropSetType:
+def build_set_of_zfs_props(hdl, state: QueryFiltersCallbackState) -> ZFSPropSetType | None:
     """
     Build a set of ZFS properties to retrieve for a given ZFS resource.
 
@@ -645,7 +645,7 @@ def build_set_of_zfs_props(hdl, state: QueryFiltersCallbackState) -> ZFSPropSetT
     if is_snap:
         return state.determined_properties.default
 
-    return frozenset(result)
+    return frozenset(result) if result else None
 
 
 def normalize_zfs_asdict_result(raw_data, hdl, include_user_properties=True):
