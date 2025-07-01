@@ -213,7 +213,7 @@ def completed_cloud_backup_task(s3_credential, request):
     {"absolute_paths": True},
 ], indirect=["completed_cloud_backup_task"])
 @pytest.mark.parametrize("options,result", [
-    ({}, ["dir1/file1", "dir2/file2", "dir3/file3"]),
+    ({"rate_limit": 512}, ["dir1/file1", "dir2/file2", "dir3/file3"]),
     ({"include": ["dir1", "dir2"]}, ["dir1/file1", "dir2/file2"]),
     ({"exclude": ["dir2", "dir3"]}, ["dir1/file1"]),
 ])
@@ -347,18 +347,32 @@ def test_transfer_setting_choices():
 @pytest.mark.parametrize("cloud_backup_task, options", [
     (
         {"transfer_setting": "PERFORMANCE"},
-        "'--pack-size', '29'"
+        "'--pack-size', '29'",
     ),
     (
         {"transfer_setting": "FAST_STORAGE"},
-        "'--pack-size', '58', '--read-concurrency', '100'"
-    )
+        "'--pack-size', '58', '--read-concurrency', '100'",
+    ),
+    (
+        {"rate_limit": 512},
+        "'--limit-upload=512'",
+    ),
 ], indirect=["cloud_backup_task"])
 def test_other_transfer_settings(cloud_backup_task, options):
     ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
     result = ssh(f'grep "{options}" /var/log/middlewared.log')
     assert options in result
+
+
+@pytest.mark.parametrize("cloud_backup_task", [{"rate_limit": 512}], indirect=True)
+def test_rate_limit_override(cloud_backup_task):
+    """Passing `rate_limit` to `cloud_backup.sync` should override the task's rate limit."""
+    ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
+    actual_limit = 1024
+    call("cloud_backup.sync", cloud_backup_task.task["id"], {"rate_limit": actual_limit}, job=True, timeout=30)
+    result = ssh(f'grep "--limit-upload={actual_limit}" /var/log/middlewared.log')
+    assert f"--limit-upload={actual_limit}" in result
 
 
 def test_snapshot(s3_credential):
