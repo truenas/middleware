@@ -76,8 +76,8 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
         if dry_run:
             cmd.append("-n")
-        if rate_limit:
-            cmd.append(f"--limit-upload={rate_limit}")
+        if limit := (rate_limit or cloud_backup["rate_limit"]):
+            cmd.append(f"--limit-upload={limit}")
 
         cmd.extend(["--exclude=" + excl for excl in cloud_backup["exclude"]])
 

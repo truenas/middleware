@@ -45,6 +45,11 @@ class CloudBackupEntry(BaseCloudEntry):
     """Preserve absolute paths in each backup (cannot be set when `snapshot=True`)."""
     cache_path: str | None = None
     """Cache path. If not set, performance may degrade."""
+    rate_limit: PositiveInt | None = None
+    """Maximum upload/download rate in KiB/s. Passed to `restic --limit-upload` on `cloud_backup.sync` and \
+    `restic --limit-download` on `cloud_backup.restore`.
+
+    Can be overridden on a sync or restore call."""
 
 
 class CloudBackupCreate(CloudBackupEntry):
@@ -65,7 +70,9 @@ class CloudBackupRestoreOptions(BaseModel):
     include: list[str] = []
     """Paths to include in a restore using `restic restore --include`."""
     rate_limit: PositiveInt | None = None
-    """Maximum download rate in KiB/s. Passed to `restic --limit-download`."""
+    """Maximum download rate in KiB/s. Passed to `restic --limit-download`.
+
+    If provided, overrides the task's rate limit."""
 
 
 class CloudBackupSnapshot(BaseModel):
@@ -101,7 +108,9 @@ class CloudBackupSyncOptions(BaseModel):
     dry_run: bool = False
     """Simulate the backup without actually writing to the remote repository."""
     rate_limit: PositiveInt | None = None
-    """Maximum upload rate in KiB/s. Passed to `restic --limit-upload`."""
+    """Maximum upload rate in KiB/s. Passed to `restic --limit-upload`.
+
+    If provided, overrides the task's rate limit."""
 
 
 class CloudBackupTransferSettingChoicesArgs(BaseModel):
