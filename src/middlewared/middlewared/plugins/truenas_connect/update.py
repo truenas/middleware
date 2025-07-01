@@ -90,16 +90,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
             # If no direct IPs are provided, ensure selected interfaces have at least one IP
             if data['enabled'] and not data['ips']:
-                interface_ips = await self.middleware.call('interface.ip_in_use', {
-                    'ipv4': True,
-                    'ipv6': True,
-                    'ipv6_link_local': False,
-                    'interfaces': data['interfaces'],
-                    'static': False,
-                    'loopback': False,
-                    'any': False,
-                })
-
+                interface_ips = await self.get_interface_ips(data['interfaces'])
                 if not interface_ips:
                     verrors.add(
                         'tn_connect_update.interfaces',
