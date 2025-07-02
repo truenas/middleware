@@ -64,7 +64,18 @@ class TestTNCInterfacesValidation:
         """Test validation of interface existence."""
         # When retrieve_names_only=True, interface.query returns only names
         mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
-        tnc_service.middleware.call = AsyncMock(return_value=mock_interface_names)
+
+        # Create a function that handles the calls appropriately
+        def mock_middleware_call(method, *args, **kwargs):
+            if method == 'interface.query':
+                return mock_interface_names
+            elif method == 'interface.ip_in_use':
+                # Return empty list since we're testing interface validation error
+                return []
+            else:
+                raise ValueError(f"Unexpected middleware.call: {method}")
+
+        tnc_service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
 
         old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
         data = {'enabled': True, 'ips': [], 'interfaces': ['ens3', 'invalid_interface']}
