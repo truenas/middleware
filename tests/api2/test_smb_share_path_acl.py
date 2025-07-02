@@ -16,7 +16,7 @@ def fs_tree():
                 mountpoint1 = os.path.join('/mnt', ds1)
                 mountpoint2 = os.path.join('/mnt', ds2)
                 path = os.path.join(mountpoint1, 'subdir')
-                with directory(path):
+                with directory(path, {'options': {'raise_chmod_error': False}}):
                     yield {
                         'mountpoint1': mountpoint1,
                         'ds1': ds1,
