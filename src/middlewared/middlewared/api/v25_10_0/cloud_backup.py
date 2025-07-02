@@ -47,7 +47,7 @@ class CloudBackupEntry(BaseCloudEntry):
     """Cache path. If not set, performance may degrade."""
     rate_limit: PositiveInt | None = None
     """Maximum upload/download rate in KiB/s. Passed to `restic --limit-upload` on `cloud_backup.sync` and \
-    `restic --limit-download` on `cloud_backup.restore`.
+    `restic --limit-download` on `cloud_backup.restore`. `null` indicates no rate limit will be imposed.
 
     Can be overridden on a sync or restore call."""
 
