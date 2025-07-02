@@ -47,7 +47,7 @@ def render(service, middleware):
             parsed = urlparse(registry_url)
             if parsed.scheme == 'http':
                 # For HTTP, add to insecure-registries
-                insecure_registries.append(registry_url)
+                insecure_registries.append(parsed.netloc)
             else:
                 # For HTTPS, add to registry-mirrors
                 registry_mirrors.append(registry_url)
