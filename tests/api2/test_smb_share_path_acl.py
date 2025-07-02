@@ -12,7 +12,7 @@ def fs_tree():
     with dataset('nfs4ds', data={'share_type': 'SMB'}) as ds1:
         with dataset('nfs4ds/posix') as ds2:
             # Make sure that we don't end up with collision on dataset name partial match
-            with dataset(f'nfs4ds/posixcanary', {'acltype': 'POSIX'}):
+            with dataset(f'nfs4ds/posixcanary', {'acltype': 'POSIX', 'aclmode': 'DISCARD'}):
                 mountpoint1 = os.path.join('/mnt', ds1)
                 mountpoint2 = os.path.join('/mnt', ds2)
                 path = os.path.join(mountpoint1, 'subdir')
