@@ -715,6 +715,9 @@ class DirectoryServices(ConfigService):
     )
     @job(lock='directoryservices_change')
     def leave(self, job, cred):
+        """ Leave an Active Directory or IPA domain. Calling this endpoint when the directory services status is
+        `HEALTHY` will cause TrueNAS to remove its account from the domain and then reset the local directory
+        services configuration on TrueNAS. """
         revert = []
         verrors = ValidationErrors()
 

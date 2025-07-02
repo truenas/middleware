@@ -528,12 +528,22 @@ class DirectoryServicesEntry(BaseModel):
 @single_argument_args('directoryservices_update')
 class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMetaclass):
     """ Update the directory services configuration with the specified payload. If service_type is set to null and \
-    enable is False, then the all existing directory service configuration will be cleared.
+    enable is false, then the all existing directory service configuration will be cleared.
 
-    Note about domain joins:
-    IPA and Active Directory directory service types perform a join operation the first time they are enabled. \
-    This operation creates a domain account for the TrueNAS server. The account's credentials, in the form of a \
-    machine account keytab, will be used for all future domain-related operations. """
+    About domain joins:
+    When you enable IPA or Active Directory for the first time, TrueNAS joins the domain. This requires \
+    a KERBEROS_USER credential type for an account with administrator privileges to the domain. This creates \
+    a domain account for the TrueNAS server. TrueNAS stores the account credentials in a machine account keytab \
+    and uses them for all domain-related actions.
+
+    About disabling directory services or leaving a domain:
+    To temporarily disable directory services, set `enable` to `false` with the full configuration. \
+    This disables directory services but keeps the settings, so you can enable them later.
+
+    To remove all directory service settings, set `enable` to `false and `service_type` to `null`. NOTE: This \
+    does not remove the TrueNAS computer account from an Active Directory or IPA domain. If the domain status \
+    is `HEALTHY`, use `directoryservices.leave` to remove the account and clear the directory services \
+    configuration. """
     id: Excluded = excluded_field()
     force: bool = Field(default=False)
     """ Bypass validation to check if a server with this hostname and NetBIOS name is already registered in an IPA or \
