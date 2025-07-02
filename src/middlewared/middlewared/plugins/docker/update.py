@@ -76,13 +76,11 @@ class DockerService(ConfigService):
             )
 
         # Validate registry mirrors
-        if 'registry_mirrors' in config:
-            seen_registries = set()
-            for idx, registry in enumerate(config['registry_mirrors']):
-                registry_str = str(registry)
-                if registry_str in seen_registries:
-                    verrors.add(f'{schema}.registry_mirrors.{idx}', 'Duplicate registry mirror.')
-                seen_registries.add(registry_str)
+        seen_registries = set()
+        for idx, registry_str in enumerate(config.get('registry_mirrors', [])):
+            if registry_str in seen_registries:
+                verrors.add(f'{schema}.registry_mirrors.{idx}', 'Duplicate registry mirror.')
+            seen_registries.add(registry_str)
 
         if config.pop('migrate_applications', False):
             if config['pool'] == old_config['pool']:
@@ -164,9 +162,6 @@ class DockerService(ConfigService):
         config = old_config.copy()
         config.update(data)
         config['cidr_v6'] = str(config['cidr_v6'])
-        # Convert HttpUrl objects to strings
-        if 'registry_mirrors' in config:
-            config['registry_mirrors'] = [str(url) for url in config['registry_mirrors']]
         migrate_apps = config.get('migrate_applications', False)
 
         await self.validate_data(old_config, config)
