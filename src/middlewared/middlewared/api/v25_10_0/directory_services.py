@@ -540,7 +540,7 @@ class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMet
     To temporarily disable directory services, set `enable` to `false` with the full configuration. \
     This disables directory services but keeps the settings, so you can enable them later.
 
-    To remove all directory service settings, set `enable` to `false and `service_type` to `null`. NOTE: this \
+    To remove all directory service settings, set `enable` to `false and `service_type` to `null`. NOTE: This \
     does not remove the TrueNAS computer account from an Active Directory or IPA domain. If the domain status \
     is `HEALTHY`, use `directoryservices.leave` to remove the account and clear the directory services \
     configuration. """
