@@ -17,6 +17,7 @@ def fs_tree():
                 mountpoint2 = os.path.join('/mnt', ds2)
                 path = os.path.join(mountpoint1, 'subdir')
                 with directory(path, {'options': {'raise_chmod_error': False}}):
+                    call('service.stop', 'cifs')
                     yield {
                         'mountpoint1': mountpoint1,
                         'ds1': ds1,
