@@ -35,7 +35,7 @@ class TNCHostnameService(Service):
         tnc_config = await self.middleware.call('tn_connect.config')
         await self.middleware.call(
             'datastore.update', 'truenas_connect', tnc_config['id'], {
-                'interfaces_ips': await self.middleware.call('tn_connect.get_interface_ips'),
+                'interfaces_ips': await self.middleware.call('tn_connect.get_interface_ips', tnc_config['interfaces']),
             }
         )
         response = await self.middleware.call('tn_connect.hostname.register_update_ips')
