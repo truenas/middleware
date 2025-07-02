@@ -10,7 +10,7 @@ from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils import filter_list
 
-from .pydantic_utils import AbsolutePath, BaseModel, create_length_validated_hostpath, IPvAnyAddress, URI
+from .pydantic_utils import AbsolutePath, BaseModel, create_length_validated_type, HostPath, IPvAnyAddress, URI
 
 
 class NotProvided:
@@ -186,12 +186,23 @@ def process_schema_field(
         case 'uri':
             field_type = URI
         case 'hostpath':
-            field_type = create_length_validated_hostpath(
-                min_length=schema_def.get('min_length'),
-                max_length=schema_def.get('max_length'),
-            )
+            if 'min_length' in schema_def or 'max_length' in schema_def:
+                field_type = create_length_validated_type(
+                    HostPath,
+                    min_length=schema_def.get('min_length'),
+                    max_length=schema_def.get('max_length'),
+                )
+            else:
+                field_type = HostPath
         case 'path':
-            field_type = AbsolutePath
+            if 'min_length' in schema_def or 'max_length' in schema_def:
+                field_type = create_length_validated_type(
+                    AbsolutePath,
+                    min_length=schema_def.get('min_length'),
+                    max_length=schema_def.get('max_length'),
+                )
+            else:
+                field_type = AbsolutePath
         case 'dict':
             if dict_attrs := schema_def.get('attrs', []):
                 # Pass field_hidden to nested model generation

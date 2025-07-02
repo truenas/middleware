@@ -371,13 +371,13 @@ def test_hostpath_field_with_length_constraints():
     # Empty string should fail min_length validation
     with pytest.raises(ValidationError) as exc_info:
         model(data_dir='')
-    assert 'String should have at least 4 characters' in str(exc_info.value)
+    assert 'Value should have at least 4 items' in str(exc_info.value)
 
     # Too short non-empty path
     with pytest.raises(ValidationError) as exc_info:
         model(data_dir='/a')
     # This will now fail because of length validation happening first
-    assert 'String should have at least 4 characters' in str(exc_info.value)
+    assert 'Value should have at least 4 items' in str(exc_info.value)
 
     # Too long - more than 30 characters (if path exists)
     # Note: This test is tricky because hostpath validates actual existence
@@ -386,7 +386,7 @@ def test_hostpath_field_with_length_constraints():
         model(data_dir='/this/is/a/very/long/path/that/exceeds/limit')
     # This will fail either because of length or non-existence
     errors = str(exc_info.value)
-    assert ('String should have at most 30 characters' in errors or
+    assert ('Value should have at most 30 items' in errors or
             'Path does not exist' in errors or
             'File does not exist' in errors)
 
@@ -3293,7 +3293,7 @@ def test_construct_schema_path_with_length_constraints():
     errors = str(result['verrors'].errors)
     assert 'host_path' in errors
     # Error could be either length or existence
-    assert ('at most 20 characters' in errors or
+    assert ('at most 20 items' in errors or
             'does not exist' in errors)
 
     # Test empty string for path (should fail min_length)
@@ -3316,7 +3316,7 @@ def test_construct_schema_path_with_length_constraints():
     assert len(result['verrors'].errors) > 0
     errors = str(result['verrors'].errors)
     assert 'host_path' in errors
-    assert 'at least 5 characters' in errors
+    assert 'at least 5 items' in errors
 
 
 def test_construct_schema_with_all_field_types():

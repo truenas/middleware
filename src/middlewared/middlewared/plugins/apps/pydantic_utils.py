@@ -29,20 +29,19 @@ def _validate_absolute_path(value: str) -> str:
     return os.path.normpath(value.rstrip('/'))
 
 
-def create_length_validated_hostpath(min_length: int | None = None, max_length: int | None = None):
-    """Create a HostPath type with length validation applied before path validation"""
+def create_length_validated_type(base_type, min_length: int | None = None, max_length: int | None = None):
+    """Create a type with length validation applied before the base type validation"""
 
     def validate_length(v):
         if isinstance(v, str):
             if min_length is not None and len(v) < min_length:
-                raise ValueError(f'String should have at least {min_length} characters')
+                raise ValueError(f'Value should have at least {min_length} items')
             if max_length is not None and len(v) > max_length:
-                raise ValueError(f'String should have at most {max_length} characters')
+                raise ValueError(f'Value should have at most {max_length} items')
         return v
 
-    # Create a new annotated type that validates length before HostPath validation
     return Annotated[
-        HostPath,
+        base_type,
         BeforeValidator(validate_length),
     ]
 
