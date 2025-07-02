@@ -48,7 +48,7 @@ def create_length_validated_hostpath(min_length: int | None = None, max_length: 
 
 
 AbsolutePath = Annotated[
-    Literal[''] | str,
+    str,
     AfterValidator(_validate_absolute_path),
 ]
 HostPath = Annotated[

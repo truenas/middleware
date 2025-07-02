@@ -1,8 +1,9 @@
 import contextlib
 import re
-from typing import Annotated, Literal, Type, TypeAlias, Union
+from typing import Annotated, Literal, TypeAlias, Union
 
 from pydantic import AfterValidator, create_model, Field
+from pydantic.fields import FieldInfo
 
 from middlewared.api.base import LongString, match_validator, NotRequired
 from middlewared.api.base.handler.accept import validate_model
@@ -12,6 +13,10 @@ from middlewared.utils import filter_list
 from .pydantic_utils import AbsolutePath, BaseModel, create_length_validated_hostpath, IPvAnyAddress, URI
 
 
+class NotProvided:
+    pass
+
+
 CONTEXT_KEY_NAME = 'ix_context'
 RESERVED_NAMES = [
     ('ix_certificates', dict),
@@ -19,8 +24,8 @@ RESERVED_NAMES = [
     ('ix_volumes', dict),
     (CONTEXT_KEY_NAME, dict),
 ]
-NOT_PROVIDED = object()
-USER_VALUES: TypeAlias = dict | Literal[NOT_PROVIDED]
+NOT_PROVIDED = NotProvided()
+USER_VALUES: TypeAlias = dict | NotProvided
 
 
 # Functionality we are concerned about which we would like to port over
@@ -82,7 +87,7 @@ def construct_schema(
 def generate_pydantic_model(
     dict_attrs: list[dict], model_name: str, new_values: USER_VALUES = NOT_PROVIDED,
     old_values: USER_VALUES = NOT_PROVIDED, parent_hidden: bool = False,
-) -> Type[BaseModel]:
+) -> type[BaseModel]:
     """
     Generate a Pydantic model from a list of dictionary attributes.
     """
@@ -149,7 +154,7 @@ def generate_pydantic_model(
     return model
 
 
-def get_defaults(model: Type[BaseModel], new_values: dict) -> dict | None:
+def get_defaults(model: type[BaseModel], new_values: dict) -> dict | None:
     # We will try to get default values form the current model being passed by dumping values
     # if we are not able to do that, it is fine - it just probably means that we had
     # required fields and they were not found, in this case we will be raising a validation
@@ -161,7 +166,7 @@ def get_defaults(model: Type[BaseModel], new_values: dict) -> dict | None:
 def process_schema_field(
     schema_def: dict, model_name: str, new_values: USER_VALUES, old_values: USER_VALUES,
     field_hidden: bool = False,
-) -> tuple[Type, Field, Type[BaseModel] | None]:
+) -> tuple[type, FieldInfo, type[BaseModel] | None]:
     """
     Process a schema field type / field information and any nested model if applicable which was generated.
     """
@@ -293,7 +298,7 @@ def process_schema_field(
     return field_type, field_info, nested_model
 
 
-def create_field_info_from_schema(schema_def: dict, field_hidden: bool = False) -> Field:
+def create_field_info_from_schema(schema_def: dict, field_hidden: bool = False) -> FieldInfo:
     """
     Create Pydantic Field info from schema definition.
     """
