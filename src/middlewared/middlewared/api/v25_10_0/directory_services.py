@@ -486,7 +486,7 @@ class DirectoryServicesEntry(BaseModel):
 
     The following credential types are supported based on `service_type`:
 
-    `ACTIVE_DIRECTORY` service_type: `KERBEROS_USER` and `KERBEROS_PRINCIPAL`.
+    `ACTIVEDIRECTORY` service_type: `KERBEROS_USER` and `KERBEROS_PRINCIPAL`.
 
     `LDAP` service_type: `LDAP_PLAIN`, `LDAP_ANONYMOUS`, `LDAP_MTLS`, `KERBEROS_USER`, and `KERBEROS_PRINCIPAL`. \
     NOTE: prior configuration of kerberos realm is required in order to use kerberos credentials with the `LDAP` \
