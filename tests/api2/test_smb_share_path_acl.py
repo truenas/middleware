@@ -28,7 +28,7 @@ def fs_tree():
 
 def test__verror_share_create_acltype(fs_tree):
     with pytest.raises(Exception, match='ACL type mismatch with child mountpoint'):
-        with smb_share(fs_tree['mountpoint1'], SMB_NAME):
+        with smb_share(fs_tree['mountpoint1'], 'test_share_path'):
             pass
 
 
