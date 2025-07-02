@@ -36,7 +36,7 @@ def smb_share(path, name, options=None):
         "name": name,
         **(options or {})
     })
-    assert call("service.control", "START", "cifs")
+    assert call("service.control", "START", "cifs", job=True)
 
     try:
         yield share
@@ -48,7 +48,7 @@ def smb_share(path, name, options=None):
             # this should not cause an error
             pass
 
-        call("service.control", "STOP", "cifs")
+        call("service.control", "STOP", "cifs", job=True)
 
 
 @contextlib.contextmanager
