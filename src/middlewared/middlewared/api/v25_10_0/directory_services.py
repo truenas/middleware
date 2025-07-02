@@ -482,7 +482,18 @@ class DirectoryServicesEntry(BaseModel):
     """ Credential used to bind to the specified directory service. Kerberos credentials are required for Active \
     Directory or IPA domains. Generic LDAP environments support various authentication methods. Available methods \
     depend on the remote LDAP server configuration. If Kerberos credentials are selected for LDAP, GSSAPI binds \
-    replace plain LDAP binds. Use Kerberos or mutual TLS authentication when possible for better security. """
+    replace plain LDAP binds. Use Kerberos or mutual TLS authentication when possible for better security.
+
+    The following credential types are supported based on `service_type`:
+
+    `ACTIVEDIRECTORY` service_type: `KERBEROS_USER` and `KERBEROS_PRINCIPAL`.
+
+    `LDAP` service_type: `LDAP_PLAIN`, `LDAP_ANONYMOUS`, `LDAP_MTLS`, `KERBEROS_USER`, and `KERBEROS_PRINCIPAL`. \
+    NOTE: prior configuration of kerberos realm is required in order to use kerberos credentials with the `LDAP` \
+    `service_type`.
+
+    `IPA` service_type: `KERBEROS_USER` and `KERBEROS_PRINCIPAL`. NOTE: `KERBEROS_USER` should be used when initially \
+    joining an IPA domain. """
     enable: bool
     """ Enable the directory service.
 
