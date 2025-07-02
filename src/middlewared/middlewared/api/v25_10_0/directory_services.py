@@ -537,7 +537,7 @@ class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMet
     and uses them for all domain-related actions.
 
     About disabling directory services or leaving a domain:
-    To temporarily disable directory services, set `enable` to `false` with the full configuraiton. \
+    To temporarily disable directory services, set `enable` to `false` with the full configuration. \
     This disables directory services but keeps the settings, so you can enable them later.
 
     To remove all directory service settings, set `enable` to `false and `service_type` to `null`. NOTE: this \
