@@ -173,76 +173,77 @@ def process_schema_field(
     schema_type = schema_def['type']
     field_type = nested_model = None
     field_info = create_field_info_from_schema(schema_def, field_hidden=field_hidden)
-    if schema_type == 'int':
-        field_type = int
-    elif schema_type in ('string', 'text'):
-        field_type = str if schema_type == 'string' else LongString
-        # We can probably have more complex logic here for string types
-    elif schema_type == 'boolean':
-        field_type = bool
-    elif schema_type == 'ipaddr':
-        field_type = IPvAnyAddress
-    elif schema_type == 'uri':
-        field_type = URI
-    elif schema_type == 'hostpath':
-        field_type = create_length_validated_hostpath(
-            min_length=schema_def.get('min_length'),
-            max_length=schema_def.get('max_length'),
-        )
-    elif schema_type == 'path':
-        field_type = AbsolutePath
-    elif schema_type == 'dict':
-        if dict_attrs := schema_def.get('attrs', []):
-            # Pass field_hidden to nested model generation
-            field_type = nested_model = generate_pydantic_model(
-                dict_attrs, model_name, new_values, old_values, parent_hidden=field_hidden
+    match schema_type:
+        case 'int':
+            field_type = int
+        case 'string' | 'text':
+            field_type = str if schema_type == 'string' else LongString
+            # We can probably have more complex logic here for string types
+        case 'boolean':
+            field_type = bool
+        case 'ipaddr':
+            field_type = IPvAnyAddress
+        case 'uri':
+            field_type = URI
+        case 'hostpath':
+            field_type = create_length_validated_hostpath(
+                min_length=schema_def.get('min_length'),
+                max_length=schema_def.get('max_length'),
             )
-            if not field_hidden:
-                field_info.default_factory = nested_model
-        else:
-            # We have a generic dict type without specific attributes
-            field_type = dict
-    elif schema_type == 'list':
-        annotated_items = []
-        if list_items := schema_def.get('items', []):
-            # Check if any item has immutable fields
-            has_immutable_fields = False
-            for item in list_items:
-                if item['schema']['type'] == 'dict' and 'attrs' in item['schema']:
-                    for attr in item['schema']['attrs']:
-                        if attr['schema'].get('immutable'):
-                            has_immutable_fields = True
-                            break
-                if has_immutable_fields:
-                    break
-
-            # If we have immutable fields and old values, create a custom validator
-            if has_immutable_fields and old_values is not NOT_PROVIDED and isinstance(old_values, list):
-                # Process items normally but without old values for type generation
-                for item in list_items:
-                    item_type, item_info, _ = process_schema_field(
-                        item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
-                    )
-                    annotated_items.append(Annotated[item_type, item_info])
-                # Apply the validator to the list type
-                field_type = Annotated[
-                    list[Union[*annotated_items]],
-                    AfterValidator(create_list_immutable_validator(list_items, old_values))
-                ]
+        case 'path':
+            field_type = AbsolutePath
+        case 'dict':
+            if dict_attrs := schema_def.get('attrs', []):
+                # Pass field_hidden to nested model generation
+                field_type = nested_model = generate_pydantic_model(
+                    dict_attrs, model_name, new_values, old_values, parent_hidden=field_hidden
+                )
+                if not field_hidden:
+                    field_info.default_factory = nested_model
             else:
-                # Normal processing without immutability checks
+                # We have a generic dict type without specific attributes
+                field_type = dict
+        case 'list':
+            annotated_items = []
+            if list_items := schema_def.get('items', []):
+                # Check if any item has immutable fields
+                has_immutable_fields = False
                 for item in list_items:
-                    item_type, item_info, _ = process_schema_field(
-                        item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
-                    )
-                    annotated_items.append(Annotated[item_type, item_info])
+                    if item['schema']['type'] == 'dict' and 'attrs' in item['schema']:
+                        for attr in item['schema']['attrs']:
+                            if attr['schema'].get('immutable'):
+                                has_immutable_fields = True
+                                break
+                    if has_immutable_fields:
+                        break
 
-                field_type = list[Union[*annotated_items]]
-        else:
-            # We have a generic list type without specific items
-            field_type = list
-    else:
-        raise ValueError(f'Unsupported schema type: {schema_type!r}')
+                # If we have immutable fields and old values, create a custom validator
+                if has_immutable_fields and old_values is not NOT_PROVIDED and isinstance(old_values, list):
+                    # Process items normally but without old values for type generation
+                    for item in list_items:
+                        item_type, item_info, _ = process_schema_field(
+                            item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                        )
+                        annotated_items.append(Annotated[item_type, item_info])
+                    # Apply the validator to the list type
+                    field_type = Annotated[
+                        list[Union[*annotated_items]],
+                        AfterValidator(create_list_immutable_validator(list_items, old_values))
+                    ]
+                else:
+                    # Normal processing without immutability checks
+                    for item in list_items:
+                        item_type, item_info, _ = process_schema_field(
+                            item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                        )
+                        annotated_items.append(Annotated[item_type, item_info])
+
+                    field_type = list[Union[*annotated_items]]
+            else:
+                # We have a generic list type without specific items
+                field_type = list
+        case _:
+            raise ValueError(f'Unsupported schema type: {schema_type!r}')
 
     assert field_type is not None
 
