@@ -3,7 +3,7 @@ from middlewared.api.current import UpdateEntry, UpdateUpdateArgs, UpdateUpdateR
 from middlewared.service import ConfigService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
-from .profile import Profile
+from .profile_ import Profile
 
 
 class UpdateModel(sa.Model):

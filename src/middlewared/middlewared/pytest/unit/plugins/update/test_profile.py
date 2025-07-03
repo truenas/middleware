@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, Mock
 
-from middlewared.plugins.update_.profile import UpdateService
+from middlewared.plugins.update_.profile_ import UpdateService
 from middlewared.pytest.unit.middleware import Middleware
 
 
