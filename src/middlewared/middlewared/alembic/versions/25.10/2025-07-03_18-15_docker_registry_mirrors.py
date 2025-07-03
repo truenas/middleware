@@ -1,8 +1,8 @@
 """Docker registry mirrors
 
 Revision ID: 3693df62fd6f
-Revises: c8f3a2b4d5e6
-Create Date: 2025-07-03 01:15:00.000000+00:00
+Revises: 9c52f1653402
+Create Date: 2025-07-03 18:15:00.000000+00:00
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '3693df62fd6f'
-down_revision = 'c8f3a2b4d5e6'
+down_revision = '9c52f1653402'
 branch_labels = None
 depends_on = None
 
