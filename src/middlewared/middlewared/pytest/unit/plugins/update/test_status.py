@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 
-from middlewared.plugins.update_.profile import UpdateService as ProfileService
+from middlewared.plugins.update_.profile_ import UpdateService as ProfileService
 from middlewared.plugins.update_.status import UpdateService
 from middlewared.plugins.update_.version import UpdateService as VersionUpdateService
 from middlewared.pytest.unit.middleware import Middleware
