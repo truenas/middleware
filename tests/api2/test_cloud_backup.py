@@ -35,13 +35,15 @@ def clean():
 
 
 def parse_log(task_id):
-    log = ssh("cat " + call("cloud_backup.get_instance", task_id)["job"]["logs_path"])
-    return [json.loads(line) for line in log.strip().split("\n")]
+    task = call("cloud_backup.get_instance", task_id)
+    log = [json.loads(line) for line in ssh("cat " + task["job"]["logs_path"]).strip().split("\n")]
+    summary_index = -1 if task["job"]["method"] == "cloud_backup.restore" else -3
+
+    return " ".join(log[0]), log[1:summary_index], log[summary_index]
 
 
 def validate_log(task_id, **kwargs):
-    log = parse_log(task_id)
-    cmd, log, summary = " ".join(log[0]), log[1:-3], log[-3]
+    cmd, log, summary = parse_log(task_id)
 
     for message in log:
         if message["message_type"] == "error":
