@@ -46,11 +46,14 @@ __all__ = [
 
 class CloudSyncBwlimit(BaseModel):
     time: TimeString
+    """Time at which the bandwidth limit takes effect in 24-hour format."""
     bandwidth: PositiveInt | None
+    """Bandwidth limit in bytes per second (upload and download)."""
 
 
 class CloudSyncEntry(BaseCloudEntry):
     bwlimit: list[CloudSyncBwlimit] = Field(default_factory=list)
+    """Schedule of bandwidth limits."""
     transfers: PositiveInt | None = None
 
     direction: Literal["PUSH", "PULL"]

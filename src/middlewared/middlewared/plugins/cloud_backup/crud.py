@@ -25,6 +25,7 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
     transfer_setting = sa.Column(sa.String(16))
     absolute_paths = sa.Column(sa.Boolean())
     cache_path = sa.Column(sa.Text(), nullable=True)
+    rate_limit = sa.Column(sa.Integer(), nullable=True)
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):

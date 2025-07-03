@@ -26,11 +26,11 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
     memory and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be \
     split in no more than 10 000 chunks."""
-    dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lte=149)
-    """Valid only for DROPBOX provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
-    memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business accounts can \
-    have monthly data transfer limits per team per month. By using larger chnuk sizes you will decrease the number of \
-    data transfer calls used and you'll be able to transfer more data to your Dropbox Business account."""
+    dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lt=150)
+    """Valid only for DROPBOX provider. Upload chunk size in MiB. Must fit in memory. Note that these chunks are \
+    buffered in memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business \
+    accounts can have monthly data transfer limits per team per month. By using larger chunk sizes you will decrease \
+    the number of data transfer calls used and you'll be able to transfer more data to your Dropbox Business account."""
     acknowledge_abuse: bool = False
     """Valid only for GOOGLE_DRIVER provider. Allow files which return cannotDownloadAbusiveFile to be downloaded. If \
     downloading a file returns the error "This file has been identified as malware or spam and cannot be downloaded" \

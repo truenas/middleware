@@ -66,7 +66,7 @@ LongString = Annotated[
 ]
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
-TimeString = Annotated[str, AfterValidator(time_validator)]
+TimeString = Annotated[str, AfterValidator(time_validator), Field(examples=["00:00", "06:30", "18:00", "23:00"])]
 EmailString = Annotated[str, AfterValidator(email_validator)]
 NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
 NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
