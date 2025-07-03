@@ -1,4 +1,4 @@
-from pydantic import PositiveInt
+from pydantic import Field, PositiveInt
 import pytest
 
 from middlewared.api.base import BaseModel
@@ -33,3 +33,15 @@ def test__accept_params(params, result_or_error):
             accept_params(MethodArgs, params)
 
         assert {e.attribute: e.errmsg for e in ve.value.errors} == result_or_error
+
+
+class AliasMethodArgs(BaseModel):
+    query_filters: int = Field(alias="query-filters", default=1)
+
+
+def test__accept_alias():
+    assert accept_params(AliasMethodArgs, [1]) == [1]
+
+
+def test__accept_alias_default():
+    assert accept_params(AliasMethodArgs, []) == [1]

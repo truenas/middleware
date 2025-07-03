@@ -10,12 +10,12 @@ from middlewared.test.integration.utils import call, ssh
 def ftp_server(config=None):
     if config is not None:
         call("ftp.update", config)
-    call("service.control", "START", "ftp")
+    call("service.control", "START", "ftp", job=True)
 
     try:
         yield
     finally:
-        call("service.control", "STOP", "ftp")
+        call("service.control", "STOP", "ftp", job=True)
 
 
 @contextlib.contextmanager

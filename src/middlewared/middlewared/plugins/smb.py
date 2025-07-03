@@ -1107,8 +1107,18 @@ class SharingSMBService(SharingService):
             verrors.add(schema, 'Extended attribute support is required for SMB shares')
 
         current_acltype = get_acl_type(this_mnt['super_opts'])
+
         for child in this_mnt['children']:
-            validate_child(child)
+            # The child filesystem may or may not be mounted under the SMB share. Two relevant
+            # cases:
+            #
+            # 1. Share path is a directory without any filesystems mounted under it. In this
+            #    case we don't want to raise validation errors for datasets that aren't mounted
+            #    under the share path.
+            # 2. Share path is a directory, but admin has mounted a remote NFS export under it.
+            #    In this case we want to raise a validation error.
+            if is_child_realpath(child['mountpoint'], path):
+                validate_child(child)
 
     @private
     async def validate_external_path(self, verrors, name, path):
