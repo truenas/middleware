@@ -76,8 +76,7 @@ class DockerService(ConfigService):
                 await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
             )
 
-        # Validate registry mirrors
-        all_registries = set()
+        # Validate registry mirrors - first check for duplicates within each list
         for registry_type in ['secure_registry_mirrors', 'insecure_registry_mirrors']:
             seen_registries = set()
             for idx, registry_str in enumerate(config.get(registry_type, [])):
@@ -88,12 +87,19 @@ class DockerService(ConfigService):
                     )
                 seen_registries.add(registry_str)
 
-                if registry_str in all_registries:
-                    verrors.add(
-                        f'{schema}.{registry_type}.{idx}',
-                        f'Registry mirror {registry_str} cannot be in both secure and insecure lists.'
-                    )
-                all_registries.add(registry_str)
+        # Check for duplicates across both lists
+        secure_set = set(config.get('secure_registry_mirrors', []))
+        insecure_set = set(config.get('insecure_registry_mirrors', []))
+        cross_duplicates = secure_set & insecure_set
+
+        if cross_duplicates:
+            for registry_type in ['secure_registry_mirrors', 'insecure_registry_mirrors']:
+                for idx, registry_str in enumerate(config.get(registry_type, [])):
+                    if registry_str in cross_duplicates:
+                        verrors.add(
+                            f'{schema}.{registry_type}.{idx}',
+                            f'Registry mirror {registry_str} cannot be in both secure and insecure lists.'
+                        )
 
         if config.pop('migrate_applications', False):
             if config['pool'] == old_config['pool']:
