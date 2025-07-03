@@ -28,7 +28,7 @@ def accept_params(model: type[BaseModel], args: list, *, exclude_unset=False, ex
     if exclude_unset:
         fields = fields[:len(args)]
 
-    return [dump[field] for field in fields]
+    return [dump[model.model_fields[field].alias or field] for field in fields]
 
 
 def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
@@ -50,7 +50,7 @@ def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
         raise verrors
 
     return {
-        field: value
+        model.model_fields[field].alias or field: value
         for field, value in zip(model.model_fields.keys(), args)
     }
 
