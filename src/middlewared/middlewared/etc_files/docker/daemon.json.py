@@ -28,6 +28,8 @@ def render(service, middleware):
         'storage-driver': 'overlay2',
         'fixed-cidr-v6': config['cidr_v6'],
         'default-address-pools': config['address_pools'],
+        'registry-mirrors': config['secure_registry_mirrors'],
+        'insecure-registries': [urlparse(registry_url).netloc for registry_url in config['insecure_registry_mirrors']]
         **(
             {
                 'proxies': {
@@ -37,25 +39,6 @@ def render(service, middleware):
             } if http_proxy else {}
         )
     }
-
-    # Process registry mirrors
-    if config.get('registry_mirrors'):
-        registry_mirrors = []
-        insecure_registries = []
-
-        for registry_url in config['registry_mirrors']:
-            parsed = urlparse(registry_url)
-            if parsed.scheme == 'http':
-                # For HTTP, add to insecure-registries
-                insecure_registries.append(parsed.netloc)
-            else:
-                # For HTTPS, add to registry-mirrors
-                registry_mirrors.append(registry_url)
-
-        if registry_mirrors:
-            base['registry-mirrors'] = registry_mirrors
-        if insecure_registries:
-            base['insecure-registries'] = insecure_registries
 
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):

@@ -31,7 +31,8 @@ class DockerModel(sa.Model):
         {'base': '172.17.0.0/12', 'size': 24},
         {'base': 'fdd0::/48', 'size': 64},
     ])
-    registry_mirrors = sa.Column(sa.JSON(list), default=[])
+    secure_registry_mirrors = sa.Column(sa.JSON(list), default=[])
+    insecure_registry_mirrors = sa.Column(sa.JSON(list), default=[])
 
 
 class DockerService(ConfigService):
@@ -76,11 +77,23 @@ class DockerService(ConfigService):
             )
 
         # Validate registry mirrors
-        seen_registries = set()
-        for idx, registry_str in enumerate(config.get('registry_mirrors', [])):
-            if registry_str in seen_registries:
-                verrors.add(f'{schema}.registry_mirrors.{idx}', 'Duplicate registry mirror.')
-            seen_registries.add(registry_str)
+        all_registries = set()
+        for registry_type in ['secure_registry_mirrors', 'insecure_registry_mirrors']:
+            seen_registries = set()
+            for idx, registry_str in enumerate(config.get(registry_type, [])):
+                if registry_str in seen_registries:
+                    verrors.add(
+                        f'{schema}.{registry_type}.{idx}',
+                        f'Duplicate {registry_type.replace("_", " ").replace("mirrors", "mirror")}.'
+                    )
+                seen_registries.add(registry_str)
+
+                if registry_str in all_registries:
+                    verrors.add(
+                        f'{schema}.{registry_type}.{idx}',
+                        f'Registry mirror {registry_str} cannot be in both secure and insecure lists.'
+                    )
+                all_registries.add(registry_str)
 
         if config.pop('migrate_applications', False):
             if config['pool'] == old_config['pool']:
@@ -173,7 +186,10 @@ class DockerService(ConfigService):
         if old_config != config:
             address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
             pool_changed = config['pool'] != old_config['pool']
-            registry_mirrors_changed = config.get('registry_mirrors', []) != old_config.get('registry_mirrors', [])
+            registry_mirrors_changed = (
+                config.get('secure_registry_mirrors', []) != old_config.get('secure_registry_mirrors', []) or
+                config.get('insecure_registry_mirrors', []) != old_config.get('insecure_registry_mirrors', [])
+            )
             if pool_changed:
                 # We want to clear upgrade alerts for apps at this point
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')

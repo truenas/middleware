@@ -43,7 +43,8 @@ class DockerEntry(BaseModel):
     nvidia: bool
     address_pools: list[dict]
     cidr_v6: str
-    registry_mirrors: list[HttpUrl]
+    secure_registry_mirrors: list[HttpUrl]
+    insecure_registry_mirrors: list[HttpUrl]
 
 
 @single_argument_args('docker_update')
@@ -53,7 +54,8 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     address_pools: list[AddressPool]
     cidr_v6: IPvAnyInterface
     migrate_applications: bool
-    registry_mirrors: list[HttpUrl]
+    secure_registry_mirrors: list[HttpUrl]
+    insecure_registry_mirrors: list[HttpUrl]
 
     @field_validator('cidr_v6')
     @classmethod
@@ -62,6 +64,14 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
             raise ValueError('cidr_v6 must be an IPv6 address.')
         if v.network.prefixlen == 128:
             raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
+        return v
+
+    @field_validator('secure_registry_mirrors')
+    @classmethod
+    def validate_secure_registries(cls, v):
+        for url in v:
+            if url.scheme == 'http':
+                raise ValueError(f'Secure registry mirror {url} cannot use HTTP protocol.')
         return v
 
     @model_validator(mode='after')
