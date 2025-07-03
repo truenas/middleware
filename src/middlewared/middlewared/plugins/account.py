@@ -984,6 +984,8 @@ class UserService(CRUDService):
         reset_tally(user['username'])
         self.middleware.call_sync('service.control', 'RELOAD', 'ssh').wait_sync(raise_error=True)
         self.middleware.call_sync('service.control', 'RELOAD', 'user').wait_sync(raise_error=True)
+        # NAS-136461: Possible group membership change. Reload nfs to avoid a 10 min delay.
+        self.middleware.call_sync('service.control', 'RELOAD', 'nfs').wait_sync(raise_error=True)
         if user['smb'] and must_change_pdb_entry:
             self.middleware.call_sync('smb.update_passdb_user', user)
 
