@@ -19,8 +19,7 @@ TEST_DIR_TO_RESULT = {
     'api2': 'results/api_v2_tests_result.xml',
     'directory_services': 'results/directoryservices_tests_result.xml',
     'stig': 'results/stig_tests_result.xml',
-    'sharing_protocols/nfs': 'results/sharing_protocols_nfs_tests_result.xml',
-    'sharing_protocols/smb': 'results/sharing_protocols_smb_tests_result.xml',
+    'sharing_protocols': 'results/sharing_protocols_tests_result.xml',
 }
 
 workdir = os.getcwd()
