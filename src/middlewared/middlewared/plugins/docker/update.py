@@ -31,6 +31,8 @@ class DockerModel(sa.Model):
         {'base': '172.17.0.0/12', 'size': 24},
         {'base': 'fdd0::/48', 'size': 64},
     ])
+    secure_registry_mirrors = sa.Column(sa.JSON(list), default=[])
+    insecure_registry_mirrors = sa.Column(sa.JSON(list), default=[])
 
 
 class DockerService(ConfigService):
@@ -73,6 +75,31 @@ class DockerService(ConfigService):
             validate_address_pools(
                 await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
             )
+
+        # Validate registry mirrors - first check for duplicates within each list
+        for registry_type in ['secure_registry_mirrors', 'insecure_registry_mirrors']:
+            seen_registries = set()
+            for idx, registry_str in enumerate(config.get(registry_type, [])):
+                if registry_str in seen_registries:
+                    verrors.add(
+                        f'{schema}.{registry_type}.{idx}',
+                        f'Duplicate {registry_type.replace("_", " ").replace("mirrors", "mirror")}.'
+                    )
+                seen_registries.add(registry_str)
+
+        # Check for duplicates across both lists
+        secure_set = set(config.get('secure_registry_mirrors', []))
+        insecure_set = set(config.get('insecure_registry_mirrors', []))
+        cross_duplicates = secure_set & insecure_set
+
+        if cross_duplicates:
+            for registry_type in ['secure_registry_mirrors', 'insecure_registry_mirrors']:
+                for idx, registry_str in enumerate(config.get(registry_type, [])):
+                    if registry_str in cross_duplicates:
+                        verrors.add(
+                            f'{schema}.{registry_type}.{idx}',
+                            f'Registry mirror {registry_str} cannot be in both secure and insecure lists.'
+                        )
 
         if config.pop('migrate_applications', False):
             if config['pool'] == old_config['pool']:
@@ -165,6 +192,10 @@ class DockerService(ConfigService):
         if old_config != config:
             address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
             pool_changed = config['pool'] != old_config['pool']
+            registry_mirrors_changed = (
+                config.get('secure_registry_mirrors', []) != old_config.get('secure_registry_mirrors', []) or
+                config.get('insecure_registry_mirrors', []) != old_config.get('insecure_registry_mirrors', [])
+            )
             if pool_changed:
                 # We want to clear upgrade alerts for apps at this point
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')
@@ -181,7 +212,7 @@ class DockerService(ConfigService):
 
             nvidia_changed = old_config['nvidia'] != config['nvidia']
 
-            if pool_changed or address_pools_changed or nvidia_changed:
+            if pool_changed or address_pools_changed or nvidia_changed or registry_mirrors_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await (await self.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
@@ -212,7 +243,7 @@ class DockerService(ConfigService):
             if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
-            elif config['pool'] and (address_pools_changed or nvidia_changed):
+            elif config['pool'] and (address_pools_changed or nvidia_changed or registry_mirrors_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
                 if catalog_sync_job:

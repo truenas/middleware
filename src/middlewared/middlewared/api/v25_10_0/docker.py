@@ -1,9 +1,10 @@
 from typing import Annotated, Literal
+from urllib.parse import urlparse
 
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
 )
 
 
@@ -43,6 +44,8 @@ class DockerEntry(BaseModel):
     nvidia: bool
     address_pools: list[dict]
     cidr_v6: str
+    secure_registry_mirrors: list[HttpUrl]
+    insecure_registry_mirrors: list[HttpUrl]
 
 
 @single_argument_args('docker_update')
@@ -52,6 +55,8 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     address_pools: list[AddressPool]
     cidr_v6: IPvAnyInterface
     migrate_applications: bool
+    secure_registry_mirrors: list[HttpUrl]
+    insecure_registry_mirrors: list[HttpUrl]
 
     @field_validator('cidr_v6')
     @classmethod
@@ -60,6 +65,15 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
             raise ValueError('cidr_v6 must be an IPv6 address.')
         if v.network.prefixlen == 128:
             raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
+        return v
+
+    @field_validator('secure_registry_mirrors')
+    @classmethod
+    def validate_secure_registries(cls, v):
+        for url in v:
+            parsed = urlparse(url)
+            if parsed.scheme == 'http':
+                raise ValueError(f'Secure registry mirror {url} cannot use HTTP protocol.')
         return v
 
     @model_validator(mode='after')

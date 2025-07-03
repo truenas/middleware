@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+from urllib.parse import urlparse
 
 from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
@@ -27,6 +28,8 @@ def render(service, middleware):
         'storage-driver': 'overlay2',
         'fixed-cidr-v6': config['cidr_v6'],
         'default-address-pools': config['address_pools'],
+        'registry-mirrors': config['secure_registry_mirrors'],
+        'insecure-registries': [urlparse(registry_url).netloc for registry_url in config['insecure_registry_mirrors']],
         **(
             {
                 'proxies': {
@@ -36,6 +39,7 @@ def render(service, middleware):
             } if http_proxy else {}
         )
     }
+
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):
         base.update({
