@@ -1,7 +1,7 @@
 """Add rate_limit field to cloud_backup.
 
 Revision ID: 9c52f1653402
-Revises: 2368b4b28a87
+Revises: c8f3a2b4d5e6
 Create Date: 2025-07-01 17:20:10.015634+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '9c52f1653402'
-down_revision = '2368b4b28a87'
+down_revision = 'c8f3a2b4d5e6'
 branch_labels = None
 depends_on = None
 
