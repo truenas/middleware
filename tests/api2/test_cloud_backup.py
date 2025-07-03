@@ -41,13 +41,14 @@ def parse_log(task_id):
 
 def validate_log(task_id, **kwargs):
     log = parse_log(task_id)
-    log, summary = log[:-2], log[-2]
+    cmd, log, summary = " ".join(log[0]), log[1:-3], log[-3]
 
     for message in log:
         if message["message_type"] == "error":
             pytest.fail(f'Received restic error {message}')
 
     assert all(summary[k] == v for k, v in kwargs.items())
+    return cmd
 
 
 @pytest.fixture(scope="module")
@@ -212,21 +213,24 @@ def completed_cloud_backup_task(s3_credential, request):
     {"absolute_paths": False},
     {"absolute_paths": True},
 ], indirect=["completed_cloud_backup_task"])
-@pytest.mark.parametrize("options,result", [
-    ({"rate_limit": 512}, ["dir1/file1", "dir2/file2", "dir3/file3"]),
-    ({"include": ["dir1", "dir2"]}, ["dir1/file1", "dir2/file2"]),
-    ({"exclude": ["dir2", "dir3"]}, ["dir1/file1"]),
+@pytest.mark.parametrize("options, arg, result", [
+    ({"rate_limit": 512}, "--limit-download=512", ["dir1/file1", "dir2/file2", "dir3/file3"]),
+    ({"include": ["dir1", "dir2"]}, "--include", ["dir1/file1", "dir2/file2"]),
+    ({"exclude": ["dir2", "dir3"]}, "--exclude", ["dir1/file1"]),
 ])
-def test_cloud_backup_restore(completed_cloud_backup_task, options, result):
+def test_cloud_backup_restore(completed_cloud_backup_task, options, arg, result):
+    task_info = completed_cloud_backup_task.task
+    task_id = task_info["id"]
+
     with dataset("restore") as restore:
-        if completed_cloud_backup_task.task["absolute_paths"]:
+        if task_info["absolute_paths"]:
             subfolder = f"/mnt/{completed_cloud_backup_task.local_dataset}"
         else:
             subfolder = "/"
 
         call(
             "cloud_backup.restore",
-            completed_cloud_backup_task.task["id"],
+            task_id,
             completed_cloud_backup_task.snapshot["id"],
             subfolder,
             f"/mnt/{restore}",
@@ -238,6 +242,9 @@ def test_cloud_backup_restore(completed_cloud_backup_task, options, result):
             os.path.relpath(path, f"/mnt/{restore}")
             for path in ssh(f"find /mnt/{restore} -type f").splitlines()
         ]) == result
+
+    cmd = validate_log(task_id)
+    assert arg in cmd
 
 
 @pytest.fixture(scope="module")
@@ -347,22 +354,22 @@ def test_transfer_setting_choices():
 @pytest.mark.parametrize("cloud_backup_task, options", [
     (
         {"transfer_setting": "PERFORMANCE"},
-        "'--pack-size', '29'",
+        "--pack-size 29",
     ),
     (
         {"transfer_setting": "FAST_STORAGE"},
-        "'--pack-size', '58', '--read-concurrency', '100'",
+        "--pack-size 58 --read-concurrency 100",
     ),
     (
         {"rate_limit": 512},
-        "'--limit-upload=512'",
+        "--limit-upload=512",
     ),
 ], indirect=["cloud_backup_task"])
 def test_other_transfer_settings(cloud_backup_task, options):
     ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
-    result = ssh(f'grep "{options}" /var/log/middlewared.log')
-    assert options in result
+    cmd = validate_log(cloud_backup_task.task["id"], files_new=1)
+    assert options in cmd
 
 
 @pytest.mark.parametrize("cloud_backup_task", [{"rate_limit": 512}], indirect=True)
@@ -371,8 +378,8 @@ def test_rate_limit_override(cloud_backup_task):
     ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     actual_limit = 1024
     call("cloud_backup.sync", cloud_backup_task.task["id"], {"rate_limit": actual_limit}, job=True, timeout=30)
-    result = ssh(f'grep "--limit-upload={actual_limit}" /var/log/middlewared.log')
-    assert f"--limit-upload={actual_limit}" in result
+    cmd = validate_log(cloud_backup_task.task["id"], files_new=1)
+    assert f"--limit-upload={actual_limit}" in cmd
 
 
 def test_snapshot(s3_credential):
@@ -450,7 +457,7 @@ def test_script_shebang(cloud_backup_task, expected):
     ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
     job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
-    assert ssh("cat " + job["logs_path"]).strip().split("\n")[-2] == expected
+    assert ssh("cat " + job["logs_path"]).strip().split("\n")[-3] == expected
 
 
 @pytest.mark.parametrize("cloud_backup_task", [

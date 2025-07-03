@@ -37,7 +37,7 @@ def get_restic_config(cloud_backup):
 
 
 async def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
-    job.middleware.logger.trace("Running %r", cmd)
+    await job.logs_fd_write((json.dumps(cmd) + "\n").encode("utf-8", "ignore"))
     proc = await Popen(
         cmd,
         cwd=cwd,
