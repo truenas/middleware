@@ -349,10 +349,14 @@ class CoreService(Service):
                             exname = '__all__'
                         examples[exname].append(sections[idx + 1])
 
-                method_schemas = {
-                    'accepts': get_json_schema(method.new_style_accepts),
-                    'returns': get_json_schema(method.new_style_returns),
-                }
+                try:
+                    method_schemas = {
+                        'accepts': get_json_schema(method.new_style_accepts),
+                        'returns': get_json_schema(method.new_style_returns),
+                    }
+                except Exception:
+                    self.logger.error("Error getting schemas for method %r", method)
+                    raise
 
                 data[method_name] = {
                     'description': doc,

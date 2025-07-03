@@ -216,7 +216,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
     @classmethod
     def schema_model_fields(cls):
         return {
-            name: field
+            field.alias or name: field
             for name, field in cls.model_fields.items()
             if not any(isinstance(metadata, SkipJsonSchema) for metadata in field.metadata)
         }
