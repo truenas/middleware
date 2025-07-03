@@ -106,16 +106,18 @@ def set_interfaces():
 
 
 def create_permanent_pool():
-    unused_disks = call('disk.get_unused')
-    assert len(unused_disks) > 0
-    call('pool.create', {
-        'name': pool,
-        'topology': {
-            'data': [{
-                'type': 'STRIPE', 'disks': [unused_disks[0]['name']]
-            }]
-        }
-    }, job=True)
+    # Create a pool if one doesn't already exist
+    if [] == call('pool.query', [["name", "=", pool]]):
+        unused_disks = call('disk.get_unused')
+        assert len(unused_disks) > 0
+        call('pool.create', {
+            'name': pool,
+            'topology': {
+                'data': [{
+                    'type': 'STRIPE', 'disks': [unused_disks[0]['name']]
+                }]
+            }
+        }, job=True)
 
     if ha:
         call('failover.update', {'disabled': False, 'master': True})
