@@ -1,4 +1,5 @@
 from typing import Annotated, Literal
+from urllib.parse import urlparse
 
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
@@ -70,7 +71,8 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     @classmethod
     def validate_secure_registries(cls, v):
         for url in v:
-            if url.scheme == 'http':
+            parsed = urlparse(url)
+            if parsed.scheme == 'http':
                 raise ValueError(f'Secure registry mirror {url} cannot use HTTP protocol.')
         return v
 
