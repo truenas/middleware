@@ -20,9 +20,9 @@ __all__ = [
 class UpdateEntry(BaseModel):
     id: int
     autocheck: bool
-    "Automatically check and download updates every night."
+    """Automatically check and download updates every night."""
     profile: str
-    "Update profile used for the system."
+    """Update profile used for the system."""
 
 
 class UpdateUpdate(UpdateEntry, metaclass=ForUpdateMetaclass):
@@ -47,13 +47,13 @@ class UpdateProfileChoicesResult(BaseModel):
 
 class UpdateProfileChoice(BaseModel):
     name: str
-    "Profile name."
+    """Profile name."""
     footnote: str
-    "Profile footnote."
+    """Profile footnote."""
     description: LongString
-    "Profile description."
+    """Profile description."""
     available: bool
-    "Whether profile is available for selection."
+    """Whether profile is available for selection."""
 
 
 class UpdateStatusArgs(BaseModel):
@@ -62,26 +62,26 @@ class UpdateStatusArgs(BaseModel):
 
 class UpdateStatusCurrentVersion(BaseModel):
     train: str
-    "Train name."
+    """Train name."""
     profile: str
-    "Update profile assigned for the version."
+    """Update profile assigned for the version."""
     matches_profile: bool
-    "Whether the system version running matches the configured update profile."
+    """Whether the system version running matches the configured update profile."""
 
 
 class UpdateStatusNewVersion(BaseModel):
     version: str
-    "Newly available version number."
+    """Newly available version number."""
     manifest: dict
     release_notes_url: LongString
-    "Release notes URL."
+    """Release notes URL."""
 
 
 class UpdateStatusStatus(BaseModel):
     current_version: UpdateStatusCurrentVersion
-    "Currently running system version information."
+    """Currently running system version information."""
     new_version: UpdateStatusNewVersion | None
-    "New system version information (or `null` if no new system version is available)."
+    """New system version information (or `null` if no new system version is available)."""
 
 
 class UpdateDownloadProgress(BaseModel):
@@ -101,7 +101,7 @@ class UpdateStatus(BaseModel):
     status: UpdateStatusStatus | None
     error: LongString | None
     update_download_progress: UpdateDownloadProgress | None
-    "Current update download progress."
+    """Current update download progress."""
 
 
 class UpdateStatusResult(BaseModel):
@@ -122,14 +122,14 @@ class UpdateAvailableVersionsResult(BaseModel):
 
 class UpdateAvailableVersion(BaseModel):
     train: str
-    "Train that provides this version."
+    """Train that provides this version."""
     version: UpdateStatusNewVersion
 
 
 class UpdateDownloadArgs(BaseModel):
     train: str | None = None
-    """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most recent
-    version that matches the currently selected update profile is used."""
+    """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most \
+    recent version that matches the currently selected update profile is used."""
     version: str | None = None
 
 
@@ -177,12 +177,12 @@ class UpdateManualResult(BaseModel):
 class UpdateRunAttrs(BaseModel):
     dataset_name: str | None = None
     resume: bool = False
-    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning
-    that an upgrade can be performed with a warning and that warning is accepted. In that case, update process will be
-    continued using an already downloaded file without performing any extra checks."""
+    """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning \
+    that an upgrade can be performed with a warning and that warning is accepted. In that case, update process will \
+    be continued using an already downloaded file without performing any extra checks."""
     train: str | None = None
-    """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most recent
-    version that matches the currently selected update profile is used."""
+    """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most \
+    recent version that matches the currently selected update profile is used."""
     version: str | None = None
     reboot: bool = False
 
