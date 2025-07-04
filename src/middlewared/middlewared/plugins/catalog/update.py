@@ -126,7 +126,7 @@ class CatalogService(ConfigService):
                 )
 
 
-async def enterprise_train_update(middleware, prev_product_type, *args, **kwargs):
+async def enterprise_train_update(middleware, *args, **kwargs):
     await middleware.call('catalog.update_train_for_enterprise')
 
 
