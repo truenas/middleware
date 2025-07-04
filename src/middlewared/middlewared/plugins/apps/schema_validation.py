@@ -1,10 +1,9 @@
 from pathlib import Path
 
-from middlewared.schema import Dict
 from middlewared.service import Service
 from middlewared.utils import filter_list
 
-from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVIDED, RESERVED_NAMES
+from .schema_construction_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES
 
 
 VALIDATION_REF_MAPPING = {
@@ -27,7 +26,7 @@ class AppSchemaService(Service):
         for k in RESERVED_NAMES:
             new_values.pop(k[0], None)
 
-        verrors, new_values, dict_obj, schema_name = (
+        verrors, new_values, schema_name = (
             construct_schema(
                 app_version_details, new_values, update, (app_data or {}).get('config', NOT_PROVIDED)
             )
@@ -42,39 +41,34 @@ class AppSchemaService(Service):
         for key in filter(lambda k: k in questions, new_values):
             await self.validate_question(
                 verrors=verrors,
-                parent_value=new_values,
                 value=new_values[key],
                 question=questions[key],
-                parent_attr=dict_obj,
-                var_attr=dict_obj.attrs[key],
                 schema_name=f'{schema_name}.{questions[key]["variable"]}',
                 app_data=app_data,
             )
 
         verrors.check()
 
-        return dict_obj
+        return new_values
 
     async def validate_question(
-        self, verrors, parent_value, value, question, parent_attr, var_attr, schema_name, app_data=None
+        self, verrors, value, question, schema_name, app_data=None
     ):
         schema = question['schema']
 
-        if schema['type'] == 'dict' and value:
+        if schema['type'] == 'dict' and schema.get('attrs') and value:
             dict_attrs = {v['variable']: v for v in schema['attrs']}
             for k in filter(lambda k: k in dict_attrs, value):
                 await self.validate_question(
-                    verrors, value, value[k], dict_attrs[k],
-                    var_attr, var_attr.attrs[k], f'{schema_name}.{k}', app_data,
+                    verrors, value[k], dict_attrs[k], f'{schema_name}.{k}', app_data,
                 )
 
         elif schema['type'] == 'list' and value:
             for index, item in enumerate(value):
-                item_index, attr = get_list_item_from_value(item, var_attr)
-                if attr:
+                if schema['items']:
                     await self.validate_question(
-                        verrors, value, item, schema['items'][item_index],
-                        var_attr, attr, f'{schema_name}.{index}', app_data,
+                        verrors, item, schema['items'][0],  # We will always have a single item schema
+                        f'{schema_name}.{index}', app_data,
                     )
 
         # FIXME: See if this is valid or not and port appropriately
@@ -87,20 +81,6 @@ class AppSchemaService(Service):
                 f'app.schema.validate_{VALIDATION_REF_MAPPING[validator_def]}',
                 verrors, value, question, schema_name, app_data,
             )
-
-        subquestions_enabled = (
-            schema['show_subquestions_if'] == value
-            if 'show_subquestions_if' in schema else 'subquestions' in schema
-        )
-        if subquestions_enabled:
-            for sub_question in schema.get('subquestions', []):
-                # TODO: Add support for nested subquestions validation for List schema types.
-                if isinstance(parent_attr, Dict) and sub_question['variable'] in parent_value:
-                    item_key, attr = sub_question['variable'], parent_attr.attrs[sub_question['variable']]
-                    await self.validate_question(
-                        verrors, parent_value, parent_value[sub_question['variable']], sub_question,
-                        parent_attr, attr, f'{schema_name}.{item_key}', app_data,
-                    )
 
         return verrors
 

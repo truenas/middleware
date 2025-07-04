@@ -2,17 +2,12 @@ import pytest
 
 from middlewared.plugins.apps.schema_normalization import AppSchemaService
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.schema import Dict
 
 
-@pytest.mark.parametrize('dict_obj, values, update, context, expected', [
+@pytest.mark.parametrize('dict_attrs, values, update, context, expected', [
     (
-        Dict(
-            'actual-budget',
-            Dict('run_as'),
-            Dict('network'),
-            Dict('resources')
-        ),
+        # Empty questions list - just reserved names
+        [],
         {
             'ix_certificates': {},
             'ix_certificate_authorities': {},
@@ -38,12 +33,8 @@ from middlewared.schema import Dict
         )
     ),
     (
-        Dict(
-            'actual-budget',
-            Dict('run_as'),
-            Dict('network'),
-            Dict('resources')
-        ),
+        # Empty questions list - just reserved names (update mode)
+        [],
         {
             'ix_certificates': {},
             'ix_certificate_authorities': {},
@@ -70,11 +61,11 @@ from middlewared.schema import Dict
     ),
 ])
 @pytest.mark.asyncio
-async def test_normalize_values(dict_obj, values, update, context, expected):
+async def test_normalize_values(dict_attrs, values, update, context, expected):
     middleware = Middleware()
     app_schema_obj = AppSchemaService(middleware)
     result = await app_schema_obj.normalize_values(
-        dict_obj,
+        dict_attrs,
         values,
         update,
         context

@@ -4,7 +4,6 @@ import pytest
 
 from middlewared.plugins.apps.schema_normalization import AppSchemaService
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.schema import Int
 
 
 @pytest.mark.parametrize('cert, value, should_work', [
@@ -96,7 +95,7 @@ async def test_normalize_certificate(cert, value, should_work):
     app_schema_obj = AppSchemaService(middleware)
     middleware['certificate.get_instance'] = lambda *args: cert
     complete_config = {'ix_certificates': {value: cert}}
-    result = await app_schema_obj.normalize_certificate(Int('Cert'), value, complete_config, '')
+    result = await app_schema_obj.normalize_certificate({'schema': {'type': 'int'}}, value, complete_config, '')
     if should_work:
         assert result is not None
     else:
