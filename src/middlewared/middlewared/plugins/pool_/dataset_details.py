@@ -80,6 +80,7 @@ class PoolDatasetService(Service):
         dataset['smb_shares'] = self.get_smb_shares(dataset, info['smb'])
         dataset['iscsi_shares'] = self.get_iscsi_shares(dataset, info['iscsi'])
         dataset['vms'] = self.get_vms(dataset, info['vm'])
+        dataset['webshares'] = self.get_webshares(dataset, info['webshare'])
         dataset['apps'] = self.get_apps(dataset, info['app'])
         dataset['virt_instances'] = self.get_virt_instances(dataset, info['virt_instance'])
         dataset['replication_tasks_count'] = self.get_repl_tasks_count(dataset, info['repl'])
@@ -116,7 +117,7 @@ class PoolDatasetService(Service):
             'iscsi': [], 'nfs': [], 'smb': [],
             'repl': [], 'snap': [], 'cloud': [],
             'rsync': [], 'vm': [], 'app': [],
-            'virt_instance': [],
+            'virt_instance': [], 'webshare': [],
         }
 
         # iscsi
@@ -200,6 +201,19 @@ class PoolDatasetService(Service):
                     device['mount_info'] = self.get_mount_info(device['source'], mntinfo)
                 results['virt_instance'].append(device)
 
+        # webshare
+        webshare_config = self.middleware.call_sync('webshare.config')
+        if webshare_config.get('shares'):
+            for share in webshare_config['shares']:
+                webshare_data = {
+                    'name': share['name'],
+                    'path': share['path'],
+                    'mount_info': self.get_mount_info(share['path'], mntinfo),
+                    'search_indexed': share.get('search_indexed', True),
+                    'is_home_base': share.get('is_home_base', False),
+                }
+                results['webshare'].append(webshare_data)
+
         return results
 
     @private
@@ -248,6 +262,29 @@ class PoolDatasetService(Service):
                     })
 
         return iscsi_shares
+
+    @private
+    def get_webshares(self, ds, webshares):
+        webshare_list = []
+        for share in webshares:
+            # Check if the WebShare path matches the dataset mountpoint or
+            # if the WebShare is on this dataset
+            if share['path'] == ds['mountpoint'] or share['mount_info'].get('mount_source') == ds['id']:
+                webshare_list.append({
+                    'name': share['name'],
+                    'path': share['path'],
+                    'is_home_base': share.get('is_home_base', False),
+                })
+            # Also check if this dataset is under a WebShare path
+            # (inheritance)
+            elif ds['mountpoint'] and ds['mountpoint'].startswith(share['path'] + '/'):
+                webshare_list.append({
+                    'name': share['name'],
+                    'path': share['path'],
+                    'is_home_base': share.get('is_home_base', False),
+                })
+
+        return webshare_list
 
     @private
     def get_repl_tasks_count(self, ds, repltasks):
