@@ -1,8 +1,8 @@
 """Add complete WebShare functionality
 
 Revision ID: 12ab58fd8105
-Revises: 1fc32b52c240
-Create Date: 2025-06-24 15:00:00.000000+00:00
+Revises: 3693df62fd6f
+Create Date: 2025-07-05 10:00:00.000000+00:00
 
 This migration combines all WebShare-related schema changes:
 1. Create webshare service configuration table
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '12ab58fd8105'
-down_revision = 'fb5567f445b8'
+down_revision = '3693df62fd6f'
 branch_labels = None
 depends_on = None
 
