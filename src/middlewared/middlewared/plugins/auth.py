@@ -1270,7 +1270,7 @@ class AuthService(Service):
         return {
             **(await self.middleware.call('user.get_user_obj', {'username': username})),
             'privilege': credentials.user['privilege'],
-            'account_attributes': account_attributes
+            'account_attributes': account_attributes,
         }
 
     async def _attributes(self, user):

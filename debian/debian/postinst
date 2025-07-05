@@ -39,6 +39,7 @@ systemctl disable walinuxagent
 systemctl disable openipmi
 systemctl disable nfs-server
 systemctl disable rpcbind
+systemctl disable truenas-webshare-auth
 
 # NAS-123024: disable proftpd.socket, if it starts it will block proftpd.service
 # proftpd.socket is used in conjunction with xinetd

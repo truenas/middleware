@@ -20,6 +20,7 @@ INTERNAL_DATASETS = (
     "ix-applications",
     "ix-apps",
     ".ix-virt",
+    ".webshare-private",
 )
 """
 Tuple of internal dataset name patterns that should be filtered out by default.
