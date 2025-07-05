@@ -39,6 +39,7 @@ systemctl disable walinuxagent
 systemctl disable openipmi
 systemctl disable nfs-server
 systemctl disable rpcbind
+systemctl disable truenas-webshare-auth
 
 # This service will be started from middleware as needed
 systemctl disable ix-nvmf

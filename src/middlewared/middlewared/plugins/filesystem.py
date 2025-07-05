@@ -390,7 +390,14 @@ class FilesystemService(Service):
             # prevent shares from being configured to point to
             # a path that doesn't exist on a zpool, we'll
             # filter these here.
-            filters.extend([['is_mountpoint', '=', True], ['name', '!=', IX_APPS_DIR_NAME]])
+            filters.extend([
+                ['is_mountpoint', '=', True],
+                ['name', '!=', IX_APPS_DIR_NAME]
+            ])
+
+        # Filter out .webshare-private directories at any level
+        # These are internal directories used by the webshare service
+        filters.extend([['name', '!=', '.webshare-private']])
 
         with DirectoryIterator(path, file_type=file_type, request_mask=request_mask) as d_iter:
             return filter_list(d_iter, filters, options)
