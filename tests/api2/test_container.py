@@ -1,0 +1,283 @@
+import base64
+import contextlib
+import json
+import re
+import shlex
+import textwrap
+import time
+
+import pytest
+import requests
+import websocket
+
+from middlewared.test.integration.assets.pool import dataset, pool
+from middlewared.test.integration.utils import call, host, ssh, websocket_url
+
+VIRSH = "virsh -c 'lxc:///system?socket=/run/truenas_libvirt/libvirt-sock'"
+# Capabilities necessary to launch a basic LXC container from linuxcontainers.org
+BASIC_CAPABILITIES = {
+    # Capabilities enabled in a default docker container
+    "chown": True,
+    "dac_override": True,
+    "fowner": True,
+    "fsetid": True,
+    "kill": True,
+    "setgid": True,
+    "setuid": True,
+    "setpcap": True,
+    "net_bind_service": True,
+    "net_raw": True,
+    "sys_chroot": True,
+    "mknod": True,
+    "audit_write": True,
+    "setfcap": True,
+    # systemd needs this to do `mount`
+    "sys_admin": True,
+}
+
+
+def nsenter(container, command):
+    return shlex.join(call("container.nsenter", container) + [command])
+
+
+def script_output(container):
+    for i in range(30):
+        result = ssh(nsenter(container, "cat /log"), check=False, complete_response=True)
+        if result["returncode"] == 0:
+            return result["stdout"]
+
+        time.sleep(1)
+
+    assert False, result["output"]
+
+
+def bounding_set(capsh_print):
+    return re.search("Bounding set =(.*)", capsh_print).group(1).strip().split(",")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def bridge():
+    call("container.config.update", {
+        "v4_network": "10.47.214.0/24",
+        "v6_network": "fd42:3656:7be9:e46c::0/64",
+    })
+
+
+@pytest.fixture(scope="module")
+def images_dataset():
+    with dataset("images") as ds:
+        call("container.config.update", {"image_dataset": ds})
+        yield ds
+
+
+@pytest.fixture(scope="module")
+def ubuntu_image(images_dataset):
+    base_url = "https://images.linuxcontainers.org/images/ubuntu/plucky/amd64/default"
+    recent_version = re.findall(r'href="(.+)"', requests.get(f"{base_url}/").text)[-1]
+    url = f"{base_url}/{recent_version}/rootfs.tar.xz"
+
+    call("container.image.pull", url, "ubuntu", job=True)
+    yield f"{images_dataset}/ubuntu@image"
+
+
+@contextlib.contextmanager
+def container(image, options=None, start=False, startup_script=None):
+    options = options or {}
+
+    dataset = f"{pool}/container"
+    call("pool.snapshot.clone", {"snapshot": image, "dataset_dst": dataset})
+    try:
+        container = call("container.create", {
+            "name": "test",
+            "dataset": dataset,
+            "init": "/sbin/init",
+            **options,
+        })
+        try:
+            if startup_script is not None:
+                ssh(f"mkdir -p /mnt/{dataset}/var/spool/cron/crontabs")
+
+                call(
+                    "filesystem.file_receive",
+                    f"/mnt/{dataset}/var/spool/cron/crontabs/root",
+                    base64.b64encode(b"@reboot /script-wrapper.sh\n").decode("ascii"),
+                    {"mode": 0o600},
+                )
+                call(
+                    "filesystem.file_receive",
+                    f"/mnt/{dataset}/script-wrapper.sh",
+                    base64.b64encode(textwrap.dedent("""\
+                        #!/bin/sh
+                        /script.sh > /.log 2>&1
+                        mv /.log /log
+                    """).encode("ascii")).decode("ascii"),
+                    {"mode": 0o755},
+                )
+                call(
+                    "filesystem.file_receive",
+                    f"/mnt/{dataset}/script.sh",
+                    base64.b64encode(startup_script.encode("ascii")).decode("ascii"),
+                    {"mode": 0o755},
+                )
+
+            if start:
+                call("container.start", container["id"])
+
+                container = call("container.get_instance", container["id"])
+                assert container["status"]["state"] == "RUNNING"
+
+            yield container
+        finally:
+            call("container.delete", container["id"])
+
+            #  Id   Name   State
+            # --------------------
+            assert len(ssh(f"{VIRSH} list --all").strip().splitlines()) == 2
+    finally:
+        call("pool.dataset.delete", dataset)
+
+
+@pytest.fixture(scope="function")
+def ubuntu_container(ubuntu_image):
+    with container(ubuntu_image) as c:
+        yield c
+
+
+@pytest.fixture(scope="function")
+def started_ubuntu_container(ubuntu_container):
+    call("container.start", ubuntu_container["id"])
+
+    container = call("container.get_instance", ubuntu_container["id"])
+    assert container["status"]["state"] == "RUNNING"
+    assert "/sbin/init" in ssh(f"ps -p {container['status']['pid']} -o args")
+
+    yield container
+
+
+def test_container_stop(started_ubuntu_container):
+    call("container.stop", started_ubuntu_container["id"])
+
+    container = call("container.get_instance", started_ubuntu_container["id"])
+    assert container["status"]["state"] == "STOPPED"
+    assert container["status"]["pid"] is None
+    assert (
+        ssh(
+            f"ps -p {started_ubuntu_container['status']['pid']}", check=False, complete_response=True,
+        )["returncode"] == 1
+    )
+
+
+def test_container_update(started_ubuntu_container):
+    call("container.update", started_ubuntu_container["id"], {"init": "/bin/sleep infinity"})
+
+    container = call("container.get_instance", started_ubuntu_container["id"])
+    assert "/sbin/init" in ssh(f"ps -p {container['status']['pid']} -o args")
+
+    call("container.stop", started_ubuntu_container["id"])
+
+    call("container.start", started_ubuntu_container["id"])
+
+    container = call("container.get_instance", started_ubuntu_container["id"])
+    assert "/bin/sleep infinity" in ssh(f"ps -p {container['status']['pid']} -o args")
+
+
+def test_container_stop_force_after_timeout(ubuntu_container):
+    container = ubuntu_container
+
+    call("container.update", container["id"], {"init": "/bin/sleep infinity", "shutdown_timeout": 5})
+
+    call("container.start", container["id"])
+    container = call("container.get_instance", container["id"])
+    assert container["status"]["state"] == "RUNNING"
+
+    call("container.stop", container["id"])
+    container = call("container.get_instance", container["id"])
+    assert container["status"]["state"] == "RUNNING"  # Process with PID=1 ignores SIGTERM if it is not init
+
+    call("container.stop", container["id"], {"force_after_timeout": True})
+    container = call("container.get_instance", container["id"])
+    assert container["status"]["state"] == "STOPPED"
+
+
+def test_container_shell(started_ubuntu_container):
+    ssh(f"touch /mnt/{started_ubuntu_container['dataset']}/mnt/canary")
+    token = call("auth.generate_token", 300, {}, False)
+    ws = websocket.create_connection(websocket_url() + "/websocket/shell")
+    try:
+        ws.send(json.dumps({
+            "token": token,
+            "options": {"container_id": started_ubuntu_container["id"], "command": ["ls", "/mnt"]}
+        }))
+        resp_opcode, msg = ws.recv_data()
+        assert json.loads(msg.decode())["msg"] == "connected", msg
+
+        data = ""
+        ws.settimeout(30)
+        for i in range(60):
+            try:
+                resp_opcode, msg = ws.recv_data()
+            except Exception as e:
+                print(e)
+                break
+
+            data += msg.decode("ascii", "ignore")
+
+        assert data.replace("\x03", "").strip().split()[-1] == f"canary"
+    finally:
+        ws.close()
+
+
+def test_idmap(ubuntu_image):
+    with container(ubuntu_image, {
+        "idmap": {
+            "uid": {
+                "target": 5000,
+                "count": 10,
+            },
+            "gid": {
+                "target": 6000,
+                "count": 10,
+            },
+        },
+    }, True) as c:
+        assert ssh(f"ps -p {c['status']['pid']} -o uid,gid --no-headers").strip().split() == ["5000", "6000"]
+
+        ssh(f"mkdir -m 777 /mnt/{c['dataset']}/playground")
+        ssh(nsenter(c, "touch /playground/canary"))
+        assert ssh(f"stat -c '%u %g' /mnt/{c['dataset']}/playground/canary").strip().split() == ["5000", "6000"]
+
+
+@pytest.mark.parametrize("configuration,has", [
+    ({}, True),
+    ({"capabilities_state": {"lease": False}}, False),
+    ({"capabilities_policy": "ALLOW"}, True),
+    ({"capabilities_policy": "ALLOW", "capabilities_state": {"lease": False}}, False),
+    ({"capabilities_policy": "DENY", "capabilities_state": {**BASIC_CAPABILITIES}}, False),
+    ({"capabilities_policy": "DENY", "capabilities_state": {**BASIC_CAPABILITIES, "lease": True}}, True),
+])
+def test_capabilities(ubuntu_image, configuration, has):
+    with container(ubuntu_image, configuration, True, startup_script=textwrap.dedent("""\
+        #!/bin/sh
+        capsh --print
+    """)) as c:
+        s = script_output(c)
+
+        if has:
+            assert "cap_lease" in bounding_set(s)
+        else:
+            assert "cap_lease" not in bounding_set(s)
+
+        def normalize(output):
+            # `groups=0(root)` vs `groups=`
+            return re.sub("groups=(.*)", "", output)
+
+        # Ensure that the process launched with `nsenter` has the same capabilities as container init process
+        assert normalize(ssh(nsenter(c, "capsh --print"))) == normalize(s)
+
+
+def test_network(started_ubuntu_container):
+    assert ssh(nsenter(started_ubuntu_container, f"ping -c 1 {host().ip}"))
+    assert ssh(nsenter(started_ubuntu_container, "ping -c 1 8.8.8.8"))
+    print(ssh(nsenter(started_ubuntu_container, "ip addr list")))
+    assert "inet 10.47.214." in ssh(nsenter(started_ubuntu_container, "ip addr list"))
+    assert "inet6 fd42:3656:7be9:e46c:" in ssh(nsenter(started_ubuntu_container, "ip addr list"))

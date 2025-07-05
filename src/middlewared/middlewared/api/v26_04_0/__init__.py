@@ -19,6 +19,9 @@ from .cloud_credential import *
 from .cloud_sync import *
 from .common import *
 from .config import *
+from .container import *
+from .container_config import *
+from .container_image import *
 from .core import *
 from .cronjob import *
 from .crypto_cert_info import *
