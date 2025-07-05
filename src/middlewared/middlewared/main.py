@@ -15,6 +15,7 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue, State
 from .pipe import Pipe
+from .pylibvirt import create_pylibvirt_domains_manager
 from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
 from .schema import OROperator
@@ -135,6 +136,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.api_versions = None
         self.api_versions_adapter = None
         self.__audit_logger = setup_audit_logging()
+        self.libvirt_domains_manager = create_pylibvirt_domains_manager(self)
 
     def get_method(self, name, *, mocks=False, params=None):
         serviceobj, methodobj = super().get_method(name)
