@@ -9,6 +9,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
+from middlewared.utils import filter_list
 
 from .query_impl import query_impl, ZFSPathNotFoundException
 
@@ -79,6 +80,10 @@ class ZFSResourceService(Service):
     def query(self, tls, data):
         self.validate_query_args(data)
         try:
-            return query_impl(tls.lzh, data)
+            return filter_list(
+                query_impl(tls.lzh, data),
+                data["query-filters"],
+                data["query-options"],
+            )
         except ZFSPathNotFoundException as e:
             raise ValidationError("zfs.resource.query", str(e), errno.ENOENT)
