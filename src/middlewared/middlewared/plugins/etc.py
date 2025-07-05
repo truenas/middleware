@@ -326,6 +326,14 @@ class EtcService(Service):
         'wsd': [
             {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},
         ],
+        'webshare': {
+            'ctx': [
+                {'method': 'webshare.config'},
+            ],
+            'entries': [
+                {'type': 'py', 'path': 'webshare'},
+            ]
+        },
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
             {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
