@@ -10,7 +10,7 @@ from ..validators import match_validator
 
 __all__ = [
     "exclude_tcp_ports", "TcpPort", "Hostname", "MACAddress", "Domain", "IPv4Address", "IPv6Address", "IPvAnyAddress",
-    "IPNetwork", "IPv4Nameserver", "IPv6Nameserver"
+    "IPNetwork", "IPv4Nameserver", "IPv6Nameserver", "IPv4Network", "IPv6Network",
 ]
 
 
@@ -51,6 +51,16 @@ def _validate_ip_network(network: str):
     return network
 
 
+def _validate_ipv4_network(network: str):
+    ipaddress.IPv4Network(network)
+    return network
+
+
+def _validate_ipv6_network(network: str):
+    ipaddress.IPv6Network(network)
+    return network
+
+
 def _validate_nameserver(address: pydantic.IPvAnyAddress) -> str:
     str_form = address.compressed
 
@@ -80,3 +90,5 @@ IPvAnyAddress = Literal[''] | Annotated[str, AfterValidator(_validate_ipaddr)]
 IPv4Nameserver = Annotated[str, AfterValidator(ipaddress.IPv4Address), AfterValidator(_validate_nameserver)]
 IPv6Nameserver = Annotated[str, AfterValidator(ipaddress.IPv6Address), AfterValidator(_validate_nameserver)]
 IPNetwork = Annotated[str, AfterValidator(_validate_ip_network)]
+IPv4Network = Annotated[str, AfterValidator(_validate_ipv4_network)]
+IPv6Network = Annotated[str, AfterValidator(_validate_ipv6_network)]

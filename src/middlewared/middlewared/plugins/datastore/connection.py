@@ -34,24 +34,6 @@ class DatastoreService(Service):
         self.logger.warning("Row %d in table %s violates foreign key constraint on table %s.",
                             row.rowid, row.table, row.parent)
 
-        if row.table == "directoryservice_idmap_domain" and row.rowid <= 5 and row.parent == "system_certificate":
-            """
-            In commit 5265c8c49f8 a migration was written to use AUTOINCREMENT to ensure id uniqueness.
-            In commit 85f5b97ec9a the aforementioned migration was modified to also fix potential constraint
-            violation in this field.
-
-            Since there was a gap between these two commits, it is impossible that the original
-            migration without the subsequent revision and therefore the user's DB still contains the original
-            constraint violation. This table entry is critical to the proper function of the AD
-            plugin and since it is user-configurable, deletion cannot be repaired without manual
-            intervention.
-            """
-            self.logger.warning("Removing certificate id for default idmap table entry.")
-            self.connection.execute(text(
-                f"UPDATE {row.table} SET idmap_domain_certificate_id = NULL WHERE rowid = {row.rowid}"
-            ))
-            return
-
         self.logger.warning("Deleting row %d from table %s.", row.rowid, row.table)
         op = f"DELETE FROM {row.table} WHERE rowid = {row.rowid}"
         self.connection.execute(text(op))

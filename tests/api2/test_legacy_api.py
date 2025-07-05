@@ -44,10 +44,11 @@ def test_query_method(legacy_api_client, query_method):
     }:
         return
 
-    if version in {"25.04.0", "25.04.1", "25.04.2"} and query_method in {
+    if version in {"25.04.0", "25.04.1", "25.04.2", "25.10.0"} and query_method in {
         "audit.query",
         "certificate.query",
         "cloudsync.query",
+        "container.query",
         "disk.query",
         "dns.query",
         "interface.query",
