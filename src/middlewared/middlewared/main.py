@@ -17,6 +17,7 @@ from .event import Events
 from .job import Job, JobsQueue, State
 from .logger import Logger, setup_audit_logging, setup_logging
 from .pipe import Pipe
+from .pylibvirt import create_pylibvirt_domains_manager
 from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
 import middlewared.service
@@ -156,6 +157,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.tasks: set[asyncio.Task] = set()
         self.__audit_logger = setup_audit_logging()
         self.external_method_calls = defaultdict(int)  # Track external API method calls
+        self.libvirt_domains_manager = create_pylibvirt_domains_manager(self)
 
     @typing.overload
     def get_method(

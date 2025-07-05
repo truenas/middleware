@@ -502,7 +502,7 @@ class Job:
         self,
         timeout: float | None = None,
         raise_error: bool = False,
-        raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError,),
+        raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError, ValidationErrors,),
     ) -> typing.Any:
         if timeout is None:
             await self._finished.wait()
