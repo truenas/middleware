@@ -102,21 +102,25 @@ def __extract_filters_to_paths(state):
     # state so that the iteration is done as efficiently
     # as possible.
     filters = state.query_args["query-filters"]
-    if filters and filters[0][0] == "name" and filters[0][1] in ("=", "in"):
-        extracted = filters.pop(0)
-        if isinstance(extracted[2], str):
-            # [["name", "=", "tank"]]
-            state.query_args["paths"].append(extracted[2])
-        else:
-            # [["name", "in", ["tank", "dozer"]]]
-            state.query_args["paths"].extend(extracted[2])
+    if filters:
+        if filters[0][0] in ("name", "pool") and filters[0][1] in ("=", "in"):
+            extracted = filters.pop(0)
+            if isinstance(extracted[2], str):
+                # [["name", "=", "tank/foo"]]
+                # or
+                # [["pool"], "=", "tank"]
+                state.query_args["paths"].append(extracted[2])
+            else:
+                # [["name", "in", ["tank/foo", "dozer/foo"]]]
+                # or
+                # [["pool", "in", ["tank", "dozer"]]]
+                state.query_args["paths"].extend(extracted[2])
 
 
 def __should_exclude_internal_paths(state):
     if not state.query_args["paths"]:
-        # no filters or paths given, which equates
-        # to an "empty" query. we'll ignore internal
-        # paths.
+        # no paths given, which equates to an
+        # "empty" query. ignore internal paths.
         state.eip = True
     else:
         for path in state.query_args["paths"]:
