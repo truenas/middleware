@@ -144,7 +144,6 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
         return f
 
 
-
 class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
     model_config = ConfigDict(
         extra="forbid",

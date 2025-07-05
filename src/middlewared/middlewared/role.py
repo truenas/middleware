@@ -109,6 +109,14 @@ ROLES = {
     'VM_DEVICE_READ': Role(includes=['VM_READ']),
     'VM_DEVICE_WRITE': Role(includes=['VM_WRITE', 'VM_DEVICE_READ'], stig=None),
 
+    # Container roles
+    'CONTAINER_READ': Role(),
+    'CONTAINER_WRITE': Role(includes=['CONTAINER_READ'], stig=None),
+    'CONTAINER_CONFIG_READ': Role(),
+    'CONTAINER_CONFIG_WRITE': Role(includes=['CONTAINER_CONFIG_READ'], stig=None),
+    'CONTAINER_IMAGE_READ': Role(),
+    'CONTAINER_IMAGE_WRITE': Role(includes=['CONTAINER_IMAGE_READ'], stig=None),
+
     # JBOF roles
     'JBOF_READ': Role(),
     'JBOF_WRITE': Role(includes=['JBOF_READ']),

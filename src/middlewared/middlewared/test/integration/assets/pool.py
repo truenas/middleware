@@ -4,7 +4,7 @@ import time
 
 from truenas_api_client import ValidationErrors
 
-from middlewared.service_exception import InstanceNotFound, MatchNotFound
+from middlewared.service_exception import CallError, InstanceNotFound, MatchNotFound
 from middlewared.test.integration.utils import call, fail, pool, ssh
 from middlewared.test.integration.utils.disk import retry_get_parts_on_disk
 
@@ -91,6 +91,11 @@ def dataset(name, data=None, pool=pool, **kwargs):
             call("pool.dataset.delete", dataset, {"recursive": True})
         except InstanceNotFound:
             pass
+        except CallError as e:
+            if "dataset already exists" in str(e):
+                call("pool.dataset.delete", dataset, {"recursive": True})
+            else:
+                raise
 
 
 @contextlib.contextmanager

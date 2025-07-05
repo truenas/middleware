@@ -6,6 +6,7 @@ SYSTEM_NVRAM_FOLDER_PATH = '/data/subsystems/vm/nvram'
 LIBVIRT_QEMU_UID = 986
 LIBVIRT_QEMU_GID = 986
 LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
+LIBVIRT_URI = 'lxc:///system?socket=/run/truenas_libvirt/libvirt-sock'
 LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
 

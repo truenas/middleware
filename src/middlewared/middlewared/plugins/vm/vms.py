@@ -20,7 +20,8 @@ from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDService, item_method, job, private, ValidationErrors
 from middlewared.plugins.vm.numeric_set import parse_numeric_set
 
-from .utils import ACTIVE_STATES, get_default_status, get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
+from .utils import ACTIVE_STATES, get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
+from .crud import VMCRUDMixin
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -29,7 +30,6 @@ BOOT_LOADER_OPTIONS = {
     'UEFI_CSM': 'Legacy BIOS',
 }
 LIBVIRT_LOCK = asyncio.Lock()
-RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
 
 
 class VMModel(sa.Model):
@@ -71,16 +71,27 @@ def ovmf_options():
     return [path for path in os.listdir('/usr/share/OVMF') if re.findall(r'^OVMF_CODE.*.fd', path)]
 
 
-class VMService(CRUDService, VMSupervisorMixin):
+class VMService(CRUDService, VMCRUDMixin, VMSupervisorMixin):
 
     class Config:
         namespace = 'vm'
         datastore = 'vm.vm'
-        datastore_extend = 'vm.extend_vm'
+        datastore_extend = 'vm.extend'
         datastore_extend_context = 'vm.extend_context'
         cli_namespace = 'service.vm'
         role_prefix = 'VM'
         entry = VMEntry
+
+    @private
+    async def extend(self, vm, context):
+        vm = await super().extend(vm, context)
+        vm['devices'] = await self.middleware.call(
+            'vm.device.query',
+            [('vm', '=', vm['id'])],
+            {'force_sql_filters': True},
+        )
+        vm['display_available'] = any(device['attributes']['dtype'] == 'DISPLAY' for device in vm['devices'])
+        return vm
 
     @api_method(VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, roles=['VM_READ'])
     def bootloader_ovmf_choices(self):
@@ -89,39 +100,12 @@ class VMService(CRUDService, VMSupervisorMixin):
         """
         return {path: path for path in ovmf_options()}
 
-    @private
-    def extend_context(self, rows, extra):
-        status = {}
-        shutting_down = self.middleware.call_sync('system.state') == 'SHUTTING_DOWN'
-        kvm_supported = self._is_kvm_supported()
-        if shutting_down is False and rows and kvm_supported:
-            self._safely_check_setup_connection(5)
-
-        libvirt_running = shutting_down is False and self._is_connection_alive()
-        for row in rows:
-            status[row['id']] = self.status_impl(row) if libvirt_running else get_default_status()
-
-        return {
-            'status': status,
-        }
-
     @api_method(VMBootloaderOptionsArgs, VMBootloaderOptionsResult, roles=['VM_READ'])
     async def bootloader_options(self):
         """
         Supported motherboard firmware options.
         """
         return BOOT_LOADER_OPTIONS
-
-    @private
-    async def extend_vm(self, vm, context):
-        vm['devices'] = await self.middleware.call(
-            'vm.device.query',
-            [('vm', '=', vm['id'])],
-            {'force_sql_filters': True},
-        )
-        vm['display_available'] = any(device['attributes']['dtype'] == 'DISPLAY' for device in vm['devices'])
-        vm['status'] = context['status'][vm['id']]
-        return vm
 
     @api_method(VMCreateArgs, VMCreateResult)
     async def do_create(self, data):
@@ -160,6 +144,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         be paused, they will be in that case.
         """
         async with LIBVIRT_LOCK:
+            await self.middleware.run_in_thread(self._system_supports_virtualization)
             await self.middleware.run_in_thread(self._check_setup_connection)
 
         verrors = ValidationErrors()
@@ -179,9 +164,6 @@ class VMService(CRUDService, VMSupervisorMixin):
                 f'{schema_name}.bootloader_ovmf',
                 'Invalid bootloader ovmf choice specified'
             )
-
-        if not data.get('uuid'):
-            data['uuid'] = str(uuid.uuid4())
 
         if not await self.middleware.call('vm.license_active'):
             verrors.add(
@@ -253,20 +235,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             verrors.add(f'{schema_name}.cpu_model',
                         'Please select a valid CPU model.')
 
-        if 'name' in data:
-            filters = [('name', '=', data['name'])]
-            if old:
-                filters.append(('id', '!=', old['id']))
-            if await self.middleware.call('vm.query', filters):
-                verrors.add(
-                    f'{schema_name}.name',
-                    'This name already exists.', errno.EEXIST
-                )
-            elif not RE_NAME.search(data['name']):
-                verrors.add(
-                    f'{schema_name}.name',
-                    'Only alphanumeric characters are allowed.'
-                )
+        await self.base_common_validation('vm', verrors, schema_name, data, old)
 
         if data['pin_vcpus']:
             if not data['cpuset']:
@@ -316,18 +285,15 @@ class VMService(CRUDService, VMSupervisorMixin):
            an existing device.
         3) Devices that do not have an `id` attribute are created and attached to `id` VM.
         """
+        async with LIBVIRT_LOCK:
+            await self.middleware.run_in_thread(self._system_supports_virtualization)
+            await self.middleware.run_in_thread(self._check_setup_connection)
 
         old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
-        if new['name'] != old['name']:
-            await self.middleware.run_in_thread(self._check_setup_connection)
-            if old['status']['state'] in ACTIVE_STATES:
-                raise CallError('VM name can only be changed when VM is inactive')
-
-            if old['name'] not in self.vms:
-                raise CallError(f'Unable to locate domain for {old["name"]}')
+        await self.pre_update(old, new, 'VM')
 
         verrors = ValidationErrors()
         await self.common_validation(verrors, 'vm_update', new, old=old)
@@ -437,17 +403,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id_]], {'get': True})
         self._check_setup_connection()
         return self.status_impl(vm)
-
-    @private
-    def status_impl(self, vm):
-        if self._has_domain(vm['name']):
-            try:
-                # Whatever happens, query shouldn't fail
-                return self._status(vm['name'])
-            except Exception:
-                self.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
-
-        return get_default_status()
 
     @api_method(VMLogFilePathArgs, VMLogFilePathResult, roles=['VM_READ'])
     def log_file_path(self, vm_id):
