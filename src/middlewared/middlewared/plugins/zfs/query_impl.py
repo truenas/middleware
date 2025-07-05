@@ -30,6 +30,7 @@ class CallbackState:
     query_args: dict
     dp: DeterminedProperties
     eip: bool = False
+    short_circuit_filters: dict
 
 
 def __is_internal_path(path):
@@ -55,6 +56,17 @@ def __query_impl_callback(hdl, state):
         # returning False here will halt the iteration
         # entirely which is not what we want to do
         return True
+
+    for k, v in state.short_circuit_filters.items():
+        attr = getattr(hdl, k)
+        if k == "type" and state.short_circuit_filters["value"] != attr.name:
+            # returning False here will halt the iteration
+            # entirely which is not what we want to do because
+            # the user is trying to query all resources for
+            # a specific type
+            return True
+        elif state.short_circuit_filters["value"] != attr:
+            return True
 
     state.results.append(
         normalize_asdict_result(
@@ -93,28 +105,42 @@ def __query_impl_roots(hdl, state):
     hdl.iter_root_filesystems(callback=__query_impl_callback, state=state)
 
 
-def __extract_filters_to_paths(state):
-    # Someone could pass us a query-filter looking
-    # like [["name", "=", "tank/test"]] or
-    # like [["name", "in", ["tank/test" "tank/foo"]]
-    # In either scenario, we'll extract these out
-    # and put them into the "paths" key in the callback
-    # state so that the iteration is done as efficiently
-    # as possible.
+def __extract_filters(state):
+    # Certain incantations of query filters can
+    # be given to us that allow us to apply some
+    # dramatic optimizations.
     filters = state.query_args["query-filters"]
-    if filters:
-        if filters[0][0] in ("name", "pool") and filters[0][1] in ("=", "in"):
+    if filters and filters[0][1] in ("=", "in"):
+        if filters[0][0] in ("name", "pool"):
             extracted = filters.pop(0)
             if isinstance(extracted[2], str):
                 # [["name", "=", "tank/foo"]]
                 # or
-                # [["pool"], "=", "tank"]
+                # [["pool", "=", "tank"]
                 state.query_args["paths"].append(extracted[2])
             else:
                 # [["name", "in", ["tank/foo", "dozer/foo"]]]
                 # or
                 # [["pool", "in", ["tank", "dozer"]]]
                 state.query_args["paths"].extend(extracted[2])
+        elif filters[0][0] in ("type", "guid", "createtxg"):
+            # [["type", "=", "ZFS_TYPE_FILESYSTEM"]]
+            extracted = filters.pop(0)
+            is_enum = filters[0][0] == "type"
+            if isinstance(extracted[2], str):
+                # [["type", "=", "ZFS_TYPE_FILESYSTEM"]]
+                state.short_circuit_filters = {
+                    "attribute": filters[0][0],
+                    "value": [filters[0][2]],
+                    "is_enum": is_enum,
+                }
+            else:
+                # [["type", "in", ["ZFS_TYPE_FILESYSTEM", ...]]]
+                state.short_circuit_filters = {
+                    "attribute": filters[0][0],
+                    "value": filters[0][2],
+                    "is_enum": is_enum,
+                }
 
 
 def __should_exclude_internal_paths(state):
@@ -136,8 +162,13 @@ def __should_exclude_internal_paths(state):
 
 
 def query_impl(hdl, data):
-    state = CallbackState(results=list(), query_args=data, dp=DeterminedProperties())
-    __extract_filters_to_paths(state)
+    state = CallbackState(
+        results=list(),
+        query_args=data,
+        dp=DeterminedProperties(),
+        short_circuit_filters=dict(),
+    )
+    __extract_filters(state)
     __should_exclude_internal_paths(state)
     if state.query_args["paths"]:
         __query_impl_paths(hdl, state)
