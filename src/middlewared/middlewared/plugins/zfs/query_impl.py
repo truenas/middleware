@@ -126,19 +126,19 @@ def __extract_filters(state):
         elif filters[0][0] in ("type", "guid", "createtxg"):
             # [["type", "=", "ZFS_TYPE_FILESYSTEM"]]
             extracted = filters.pop(0)
-            is_enum = filters[0][0] == "type"
+            is_enum = extracted[0] == "type"
             if isinstance(extracted[2], str):
                 # [["type", "=", "ZFS_TYPE_FILESYSTEM"]]
                 state.short_circuit_filters = {
-                    "attribute": filters[0][0],
-                    "value": [filters[0][2]],
+                    "attribute": extracted[0],
+                    "value": [extracted[2]],
                     "is_enum": is_enum,
                 }
             else:
                 # [["type", "in", ["ZFS_TYPE_FILESYSTEM", ...]]]
                 state.short_circuit_filters = {
-                    "attribute": filters[0][0],
-                    "value": filters[0][2],
+                    "attribute": extracted[0],
+                    "value": extracted[2],
                     "is_enum": is_enum,
                 }
 
