@@ -59,13 +59,13 @@ def __query_impl_callback(hdl, state):
 
     for k, v in state.short_circuit_filters.items():
         attr = getattr(hdl, k)
-        if k == "type" and state.short_circuit_filters["value"] != attr.name:
+        if v["is_enum"] and v["value"] != attr.name:
             # returning False here will halt the iteration
             # entirely which is not what we want to do because
             # the user is trying to query all resources for
             # a specific type
             return True
-        elif state.short_circuit_filters["value"] != attr:
+        elif v["value"] != attr:
             return True
 
     state.results.append(
