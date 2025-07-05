@@ -130,16 +130,12 @@ def __extract_filters(state):
             if isinstance(extracted[2], str):
                 # [["type", "=", "ZFS_TYPE_FILESYSTEM"]]
                 state.short_circuit_filters = {
-                    "attribute": extracted[0],
-                    "value": [extracted[2]],
-                    "is_enum": is_enum,
+                    extracted[0]: {"value": [extracted[2]], "is_enum": is_enum}
                 }
             else:
                 # [["type", "in", ["ZFS_TYPE_FILESYSTEM", ...]]]
                 state.short_circuit_filters = {
-                    "attribute": extracted[0],
-                    "value": extracted[2],
-                    "is_enum": is_enum,
+                    extracted[0]: {"value": [extracted[2]], "is_enum": is_enum}
                 }
 
 
