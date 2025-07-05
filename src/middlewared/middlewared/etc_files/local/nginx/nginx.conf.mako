@@ -96,6 +96,14 @@ http {
     access_log off;
     error_log syslog:server=unix:/dev/log,nohostname;
 
+    # Rate limiting zones for TrueNAS WebShare
+    # Connection limit zones
+    limit_conn_zone $binary_remote_addr zone=webshare_conn_ip:10m;
+    limit_conn_zone $server_name$request_uri zone=webshare_conn_downloads:10m;
+
+    # Request rate limit zone (600 requests per minute = 10 req/s)
+    limit_req_zone $binary_remote_addr zone=webshare_req:10m rate=600r/m;
+
     map $http_upgrade $connection_upgrade {
         default upgrade;
         '' close;
@@ -250,6 +258,227 @@ http {
             alias /usr/share/truenas/webui;
             try_files $uri $uri/ @index;
         }
+
+        # Handle all download API requests - file and directory downloads
+        location ~ ^/webshare/download/([^/]+)/api/ {
+           # Rewrite to remove /webshare prefix before passing to backend
+           rewrite ^/webshare(.*)$ $1 break;
+
+           proxy_pass http://unix:/var/run/webshare/auth.sock;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+
+           # Important for file downloads
+           proxy_buffering off;
+           proxy_read_timeout 3600s;
+           proxy_send_timeout 3600s;
+           client_max_body_size 0;
+        }
+
+        # Handle upload file requests directly - MUST come BEFORE the general /webshare/ location
+        location ~ ^/webshare/upload/([^/]+)/file$ {
+            # Rewrite to remove /webshare prefix before passing to backend
+            rewrite ^/webshare(.*)$ $1 break;
+
+            proxy_pass http://unix:/var/run/webshare/auth.sock;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            client_max_body_size 0;
+            proxy_request_buffering off;
+            proxy_connect_timeout 3600s;  # Keep for initial connection
+            proxy_read_timeout 86400s;    # 24 hours - let uploads run for very long
+            proxy_send_timeout 86400s;    # 24 hours - let uploads run for very long
+            client_body_timeout 86400s;   # 24 hours - let uploads run for very long
+            send_timeout 86400s;          # 24 hours - let uploads run for very long
+
+            # Keepalive and TCP settings to prevent connection drops
+            proxy_set_header Connection "";
+            proxy_buffering off;
+            proxy_http_version 1.1;
+            tcp_nodelay on;               # Send data immediately
+            tcp_nopush off;               # Don't buffer TCP packets
+        }
+
+        location /webshare/ {
+            allow all;
+
+            # Enforce HTTPS only
+            if ($https != "on") {
+                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
+            }
+
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
+
+            add_header Cache-Control "must-revalidate";
+            add_header Etag "${system_version}";
+
+            # Security Headers
+            add_header Strict-Transport-Security "max-age=0; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+            add_header Referrer-Policy "strict-origin" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+
+            alias /usr/share/truenas-webshare/truenas-webshare-auth-ui/browser/;
+            try_files $uri $uri/ /webshare/index.html;
+        }
+
+        location /webshare {
+            allow all;
+
+            # Enforce HTTPS only
+            if ($https != "on") {
+                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
+            }
+
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
+
+            add_header Cache-Control "must-revalidate";
+            add_header Etag "${system_version}";
+
+            # Security Headers
+            add_header Strict-Transport-Security "max-age=0; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+            add_header Referrer-Policy "strict-origin" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+
+            alias /usr/share/truenas-webshare/truenas-webshare-auth-ui/browser/;
+            try_files $uri $uri/ /webshare/index.html;
+        }
+
+        location = /webshare/browser/ {
+            allow all;
+
+            # Enforce HTTPS only
+            if ($https != "on") {
+                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
+            }
+
+            add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate";
+            add_header Pragma "no-cache";
+            add_header Expires "0";
+            expires -1;
+
+            # Security Headers
+            add_header Strict-Transport-Security "max-age=0; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+            add_header Referrer-Policy "strict-origin" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+
+            root /usr/share/truenas-webshare/truenas-file-manager-ui/browser;
+            try_files /index.html =404;
+        }
+
+        location /webshare/browser {
+            allow all;
+
+            # Enforce HTTPS only
+            if ($https != "on") {
+                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
+            }
+
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
+
+            add_header Cache-Control "must-revalidate";
+            add_header Etag "${system_version}";
+
+            # Security Headers
+            add_header Strict-Transport-Security "max-age=0; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+            add_header Referrer-Policy "strict-origin" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+
+            alias /usr/share/truenas-webshare/truenas-file-manager-ui/browser;
+            try_files $uri $uri/ @index;
+        }
+
+        # Proxy WebSocket connections to the auth service
+        location /webshare/ws {
+            # Enforce HTTPS only
+            if ($https != "on") {
+                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
+            }
+
+            proxy_pass http://unix:/var/run/webshare/auth.sock:/ws;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
+
+            # WebSocket timeouts
+            proxy_read_timeout 86400;
+            proxy_connect_timeout 86400;
+            proxy_send_timeout 86400;
+        }
+
+        # API endpoints - strip /webshare prefix when proxying
+        location ~ ^/webshare/api/(.*)$ {
+            proxy_pass http://unix:/var/run/webshare/auth.sock:/api/$1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Allow large file uploads for upload API endpoints
+            client_max_body_size 0;
+            proxy_request_buffering off;
+
+            # Timeout settings for large uploads via API
+            proxy_connect_timeout 3600s;  # Keep for initial connection
+            proxy_read_timeout 86400s;    # 24 hours - let uploads run for very long
+            proxy_send_timeout 86400s;    # 24 hours - let uploads run for very long
+            client_body_timeout 86400s;   # 24 hours - let uploads run for very long
+            send_timeout 86400s;          # 24 hours - let uploads run for very long
+
+            # Keepalive and TCP settings
+            proxy_set_header Connection "";
+            proxy_buffering off;
+            proxy_http_version 1.1;
+            tcp_nodelay on;
+            tcp_nopush off;
+        }
+
+        # Health check endpoint
+        location /webshare/health {
+            # Enforce HTTPS only
+            if ($https != "on") {
+                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
+            }
+
+            proxy_pass http://unix:/var/run/webshare/auth.sock:/health;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Include all webshare session configurations
+        include /etc/nginx/webshare-includes/*.conf;
 
         location /websocket {
             allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
