@@ -96,6 +96,14 @@ http {
     access_log off;
     error_log syslog:server=unix:/dev/log,nohostname;
 
+    # Rate limiting zones for TrueNAS WebShare
+    # Connection limit zones
+    limit_conn_zone $binary_remote_addr zone=webshare_conn_ip:10m;
+    limit_conn_zone $server_name$request_uri zone=webshare_conn_downloads:10m;
+
+    # Request rate limit zone (600 requests per minute = 10 req/s)
+    limit_req_zone $binary_remote_addr zone=webshare_req:10m rate=600r/m;
+
     map $http_upgrade $connection_upgrade {
         default upgrade;
         '' close;
@@ -250,6 +258,12 @@ http {
             alias /usr/share/truenas/webui;
             try_files $uri $uri/ @index;
         }
+
+        # Include webshare primary configuration
+        include /etc/nginx/webshare/*.conf;
+
+        # Include all webshare session configurations
+        include /etc/nginx/webshare-includes/*.conf;
 
         location /websocket {
             allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
