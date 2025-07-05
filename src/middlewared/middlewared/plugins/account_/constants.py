@@ -23,6 +23,8 @@ USERNS_IDMAP_NONE = 0
 # unexpected security issues.
 ALLOWED_BUILTIN_GIDS = {
     14,  # ftp -- required for FTP access
+    444,  # truesearch
+    445,  # webshare
     544,  # builtin_administrators
     545,  # builtin_users
     568,  # apps
