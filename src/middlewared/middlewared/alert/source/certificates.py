@@ -47,35 +47,11 @@ class CertificateChecksAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)  # every 24 hours
     run_on_backup_node = False
 
-    async def _get_service_certs(self):
-        _type = 'certificate'
-        service_certs = [
-            {
-                'id': (await self.middleware.call('ftp.config'))['ssltls_certificate'],
-                'service': 'FTP',
-                'type': _type,
-            },
-            {
-                'id': (await self.middleware.call('system.general.config'))['ui_certificate']['id'],
-                'service': 'Web UI',
-                'type': _type,
-            },
-            {
-                'id': (await self.middleware.call('system.advanced.config'))['syslog_tls_certificate'],
-                'service': 'Syslog',
-                'type': _type,
-            },
-        ]
-        return service_certs
-
     async def check(self):
         alerts = []
 
         # system certs
         certs = await self.middleware.call('certificate.query', [['certificate', '!=', None]])
-
-        # service certs
-        check_for_revocation = await self._get_service_certs()
 
         for cert in certs:
             # make the sure certs have been parsed correctly
@@ -86,7 +62,7 @@ class CertificateChecksAlertSource(AlertSource):
                 ))
             else:
                 # check the parsed certificate(s) for expiration
-                if cert['cert_type'].capitalize() == 'CERTIFICATE':
+                if cert['cert_type'] == 'CERTIFICATE':
                     diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()).days
                     if diff < 10:
                         if diff >= 0:
