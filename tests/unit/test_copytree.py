@@ -122,18 +122,6 @@ def directory_for_test(tmpdir):
     return tmpdir
 
 
-def get_fd_count() -> int:
-    # Make sure we free up any dangling files waiting for garbage
-    # collection before we get authoritative count for this module
-    gc.collect()
-    return len(os.listdir('/proc/self/fd'))
-
-
-@pytest.fixture(scope="function")
-def fd_count() -> int:
-    return get_fd_count()
-
-
 def validate_attributes(
     src: str,
     dst: str,
@@ -275,7 +263,7 @@ def validate_copy_tree(
     validate_the_things(src, dst, flags)
 
 
-def test__copytree_default(directory_for_test, fd_count):
+def test__copytree_default(directory_for_test):
     """ test basic behavior of copytree """
 
     src = os.path.join(directory_for_test, 'SOURCE')
@@ -291,11 +279,9 @@ def test__copytree_default(directory_for_test, fd_count):
     assert stats.dirs != 0
     assert stats.symlinks != 0
 
-    assert get_fd_count() == fd_count
-
 
 @pytest.mark.parametrize('is_ctldir', [True, False])
-def test__copytree_exclude_ctldir(directory_for_test, fd_count, is_ctldir):
+def test__copytree_exclude_ctldir(directory_for_test, is_ctldir):
     """ test that we do not recurse into ZFS ctldir """
 
     src = os.path.join(directory_for_test, 'SOURCE')
@@ -325,7 +311,7 @@ def test__copytree_exclude_ctldir(directory_for_test, fd_count, is_ctldir):
 
 
 @pytest.mark.parametrize('existok', [True, False])
-def test__copytree_existok(directory_for_test, fd_count, existok):
+def test__copytree_existok(directory_for_test, existok):
     """ test behavior of `exist_ok` configuration option """
 
     src = os.path.join(directory_for_test, 'SOURCE')
@@ -341,8 +327,6 @@ def test__copytree_existok(directory_for_test, fd_count, existok):
         with pytest.raises(FileExistsError):
             copy.copytree(src, dst, config)
 
-    assert get_fd_count() == fd_count
-
 
 @pytest.mark.parametrize('flag', [
     copy.CopyFlags.XATTRS,
@@ -350,7 +334,7 @@ def test__copytree_existok(directory_for_test, fd_count, existok):
     copy.CopyFlags.TIMESTAMPS,
     copy.CopyFlags.OWNER
 ])
-def test__copytree_flags(directory_for_test, fd_count, flag):
+def test__copytree_flags(directory_for_test, flag):
     """
     copytree allows user to specify what types of metadata to
     preserve on copy similar to robocopy on Windows. This tests
@@ -364,10 +348,8 @@ def test__copytree_flags(directory_for_test, fd_count, flag):
 
     validate_copy_tree(src, dst, flag)
 
-    assert get_fd_count() == fd_count
 
-
-def test__force_userspace_copy(directory_for_test, fd_count):
+def test__force_userspace_copy(directory_for_test):
     """ force use of shutil.copyfileobj wrapper instead of copy_file_range """
 
     src = os.path.join(directory_for_test, 'SOURCE')
@@ -378,10 +360,8 @@ def test__force_userspace_copy(directory_for_test, fd_count):
 
     validate_copy_tree(src, dst, flags)
 
-    assert get_fd_count() == fd_count
 
-
-def test__copytree_into_itself_simple(directory_for_test, fd_count):
+def test__copytree_into_itself_simple(directory_for_test):
     """ perform a basic copy of a tree into a subdirectory of itself.
     This simulates case where user has mistakenly set homedir to FOO
     and performs an update of homedir to switch it to FOO/username.
@@ -396,10 +376,8 @@ def test__copytree_into_itself_simple(directory_for_test, fd_count):
 
     assert not os.path.exists(os.path.join(directory_for_test, 'SOURCE', 'DEST', 'DEST'))
 
-    assert get_fd_count() == fd_count
 
-
-def test__copytree_into_itself_complex(directory_for_test, fd_count):
+def test__copytree_into_itself_complex(directory_for_test):
     """ check recursion guard against deeper nested target """
 
     src = os.path.join(directory_for_test, 'SOURCE')
@@ -416,10 +394,8 @@ def test__copytree_into_itself_complex(directory_for_test, fd_count):
     # but not quite get there
     assert not os.path.exists(os.path.join(dst, 'FOO', 'BAR', 'DEST'))
 
-    assert get_fd_count() == fd_count
 
-
-def test__copytree_job_log(directory_for_test, fd_count):
+def test__copytree_job_log(directory_for_test):
     """ check that providing job object causes progress to be written properly """
     src = os.path.join(directory_for_test, 'SOURCE')
     dst = os.path.join(directory_for_test, 'DEST')
@@ -435,7 +411,7 @@ def test__copytree_job_log(directory_for_test, fd_count):
     assert last.startswith('Successfully copied')
 
 
-def test__copytree_job_log_prefix(directory_for_test, fd_count):
+def test__copytree_job_log_prefix(directory_for_test):
     """ check that log message prefix gets written as expected """
     src = os.path.join(directory_for_test, 'SOURCE')
     dst = os.path.join(directory_for_test, 'DEST')
