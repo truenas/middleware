@@ -97,6 +97,7 @@ def cloud_backup_task(s3_credential, request):
     {"absolute_paths": False},
     {"absolute_paths": True},
     {"cache_path": "<placeholder>"},
+    {"snapshot": True},
 ], indirect=["cloud_backup_task"])
 def test_cloud_backup(cloud_backup_task):
     task_ = cloud_backup_task.task
@@ -114,14 +115,16 @@ def test_cloud_backup(cloud_backup_task):
     assert len(snapshots) == 1
     first_snapshot = snapshots[0]
     assert (first_snapshot["time"] - call("system.info")["datetime"]).total_seconds() < 300
-    assert first_snapshot["paths"] == [f"/mnt/{local_dataset_}"]
+    if not task_["snapshot"]:
+        assert first_snapshot["paths"] == [f"/mnt/{local_dataset_}"]
 
     ssh(f"mkdir /mnt/{local_dataset_}/dir1")
     ssh(f"dd if=/dev/urandom of=/mnt/{local_dataset_}/dir1/blob2 bs=1M count=1")
 
     run_task(task_)
 
-    validate_log(task_id_, files_new=1, files_changed=0, files_unmodified=1)
+    if not task_["snapshot"]:
+        validate_log(task_id_, files_new=1, files_changed=0, files_unmodified=1)
 
     snapshots = call("cloud_backup.list_snapshots", task_id_)
     assert len(snapshots) == 2
