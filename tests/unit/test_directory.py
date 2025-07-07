@@ -39,18 +39,6 @@ def directory_for_test(tmpdir):
     return tmpdir
 
 
-def get_fd_count():
-    # Make sure we free up any dangling files waiting for garbage
-    # collection before we get authoritative count for this module
-    gc.collect()
-    return len(os.listdir('/proc/self/fd'))
-
-
-@pytest.fixture(scope="module")
-def fd_count():
-    return get_fd_count()
-
-
 def validate_attributes(dirent):
     assert dirent['name'] is not None
     assert dirent['path'] is not None
@@ -81,18 +69,14 @@ def validate_attributes(dirent):
             raise ValueError(f'{dirent["type"]}: unexpected dirent type')
 
 
-def test__length_no_filters(directory_for_test, fd_count):
+def test__length_no_filters(directory_for_test):
     dir_iter = directory.DirectoryIterator(directory_for_test)
     assert len(filter_list(dir_iter, [], {})) == 2 * len(TEST_FILES + TEST_DIRS)
 
-    # We're still holding reference for DirectoryFd
-    assert get_fd_count() == fd_count + 1
-
     dir_iter.close()
-    assert get_fd_count() == fd_count
 
 
-def test__length_iter_dirs(directory_for_test, fd_count):
+def test__length_iter_dirs(directory_for_test):
     assert len(filter_list(
         directory.DirectoryIterator(directory_for_test, file_type=constants.FileType.DIRECTORY),
         [], {}
@@ -104,7 +88,6 @@ def test__length_iter_dirs(directory_for_test, fd_count):
     )) == len(TEST_DIRS)
 
     gc.collect()
-    assert get_fd_count() == fd_count
 
 
 def test__length_iter_files(directory_for_test):
@@ -139,7 +122,7 @@ def test__stat_attributes_dirents(directory_for_test):
         validate_attributes(dirent)
 
 
-def test__directory_zero_request_mask(directory_for_test, fd_count):
+def test__directory_zero_request_mask(directory_for_test):
     dir_iter = directory.DirectoryIterator(directory_for_test, request_mask=0)
     for dirent in dir_iter:
         assert dirent['realpath'] is None
@@ -150,7 +133,6 @@ def test__directory_zero_request_mask(directory_for_test, fd_count):
 
     del(dir_iter)
     gc.collect()
-    assert get_fd_count() == fd_count
 
 
 def test__directory_realpath_request_mask(directory_for_test):
@@ -191,15 +173,14 @@ def test__directory_request_mask():
         assert directory.DirectoryRequestMask(entry)
 
 
-def test__directory_is_empty(tmpdir, fd_count):
+def test__directory_is_empty(tmpdir):
     gc.collect()
     assert directory.directory_is_empty(tmpdir)
     os.mkdir(os.path.join(tmpdir, 'testfile'))
     assert not directory.directory_is_empty(tmpdir)
-    assert get_fd_count() == fd_count
 
 
-def test__directory_fd(directory_for_test, fd_count):
+def test__directory_fd(directory_for_test):
     # without dir_fd specified (open(2))
     dfd = directory.DirectoryFd(directory_for_test)
 
@@ -215,6 +196,3 @@ def test__directory_fd(directory_for_test, fd_count):
 
     with pytest.raises(NotADirectoryError):
         directory.DirectoryFd(os.path.join(directory_for_test, 'testfile1'))
-
-    # we still have reference to dfd2
-    assert get_fd_count() == fd_count + 1

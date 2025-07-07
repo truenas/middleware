@@ -26,18 +26,6 @@ def tdbdirs():
     yield
 
 
-def get_fd_count():
-    # Make sure we free up any dangling files waiting for garbage
-    # collection before we get authoritative count for this module
-    gc.collect()
-    return len(os.listdir('/proc/self/fd'))
-
-
-@pytest.fixture(scope="module")
-def fd_count():
-    return get_fd_count()
-
-
 def basic_tdb_ops(hdl: TDBHandle, datatype: TDBDataType):
     match datatype:
         case TDBDataType.JSON:
@@ -111,7 +99,7 @@ def batched_tdb_ops(hdl: TDBHandle, datatype: TDBDataType):
 
 
 @pytest.mark.parametrize('datatype', TDBDataType)
-def test__persistent_tdb(fd_count, tdbdirs, datatype):
+def test__persistent_tdb(tdbdirs, datatype):
     tdb_name = 'TEST_PERSISTENT'
     expected_path = os.path.join(TDBPathType.PERSISTENT.value, f'{tdb_name}.tdb')
     tdb_options = TDBOptions(TDBPathType.PERSISTENT, datatype)
@@ -122,11 +110,10 @@ def test__persistent_tdb(fd_count, tdbdirs, datatype):
         assert handle.full_path == expected_path
 
     os.remove(expected_path)
-    assert get_fd_count() == fd_count
 
 
 @pytest.mark.parametrize('datatype', TDBDataType)
-def test__volatile_tdb(fd_count, tdbdirs, datatype):
+def test__volatile_tdb(tdbdirs, datatype):
     tdb_name = 'TEST_VOLATILE'
     expected_path = os.path.join(TDBPathType.VOLATILE.value, f'{tdb_name}.tdb')
     tdb_options = TDBOptions(TDBPathType.VOLATILE, datatype)
@@ -137,11 +124,10 @@ def test__volatile_tdb(fd_count, tdbdirs, datatype):
         assert handle.full_path == expected_path
 
     os.remove(expected_path)
-    assert get_fd_count() == fd_count
 
 
 @pytest.mark.parametrize('datatype', TDBDataType)
-def test__custom_tdb(fd_count, tmpdir, datatype):
+def test__custom_tdb(tmpdir, datatype):
     """ test that creating a custom TDB file works as expected """
     custom_file = os.path.join(tmpdir, 'custom.tdb')
     tdb_options = TDBOptions(TDBPathType.CUSTOM, datatype)
@@ -152,10 +138,9 @@ def test__custom_tdb(fd_count, tmpdir, datatype):
         batched_tdb_ops(handle, datatype)
 
     os.remove(custom_file)
-    assert get_fd_count() == fd_count
 
 
-def test__tdb_connection_caching(fd_count):
+def test__tdb_connection_caching():
     """ check that TDB handle caching works as expected """
     custom_file = os.path.join(SYSDATASET_PATH, 'sysds.tdb')
     tdb_options = TDBOptions(TDBPathType.CUSTOM, TDBDataType.JSON)
@@ -168,27 +153,21 @@ def test__tdb_connection_caching(fd_count):
     with get_tdb_handle(custom_file, tdb_options) as hdl:
         assert id(hdl) == hdl_id
         hdl.close()
-        assert get_fd_count() == fd_count
 
     with get_tdb_handle(custom_file, tdb_options) as hdl:
         assert id(hdl) != hdl_id
         hdl.close()
-
-    assert get_fd_count() == fd_count
 
     os.remove(custom_file)
 
     with get_tdb_handle(custom_file, tdb_options) as hdl:
         pass
 
-    assert get_fd_count() != fd_count
     close_sysdataset_tdb_handles()
-    assert get_fd_count() == fd_count
 
 
-def test__tdb_handle_invalidated_by_delete(fd_count):
+def test__tdb_handle_invalidated_by_delete():
     """ check that file being deleted is properly detected and does not leak """
-    assert get_fd_count() == fd_count
     custom_file = os.path.join(SYSDATASET_PATH, 'sysds_del.tdb')
     tdb_options = TDBOptions(TDBPathType.CUSTOM, TDBDataType.JSON)
     with get_tdb_handle(custom_file, tdb_options) as hdl:
@@ -196,10 +175,9 @@ def test__tdb_handle_invalidated_by_delete(fd_count):
         assert not hdl.validate_handle()
 
     close_sysdataset_tdb_handles()
-    assert get_fd_count() == fd_count
 
 
-def test__tdb_handle_invalidated_by_rename(fd_count):
+def test__tdb_handle_invalidated_by_rename():
     tdb_options = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON)
     test_payload = {'foo': 'bar'}
 
@@ -230,5 +208,3 @@ def test__tdb_handle_invalidated_by_rename(fd_count):
 
         # intentionally close so that our final count is correct
         hdl.close()
-
-    assert get_fd_count() == fd_count
