@@ -70,7 +70,5 @@ from .virt_device import *  # noqa
 from .virt_global import *  # noqa
 from .virt_instance import *  # noqa
 from .virt_volume import *  # noqa
-from .vm import *  # noqa
-from .vm_device import *  # noqa
 from .webui_enclosure import *  # noqa
 from .webui_main_dashboard import *  # noqa
