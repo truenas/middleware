@@ -51,14 +51,14 @@ BASE_SMB_SHARE = {
     'name': 'TEST_HOME',
     'comment': 'canary',
     'browsable': True,
-    'ro': False,
+    'readonly': False,
     'guestok': False,
     'recyclebin': False,
     'hostsallow': [],
     'hostsdeny': [],
     'auxsmbconf': '',
     'aapl_name_manging': False,
-    'abe': False,
+    'access_based_share_enumeration': False,
     'acl': True,
     'durablehandle': True,
     'streams': True,
@@ -131,21 +131,6 @@ ADDITIONAL_DOMAIN = {
     'certificate': None
 }
 
-AUTORID_DOMAIN = {
-    'id': 1,
-    'name': 'DS_TYPE_ACTIVEDIRECTORY',
-    'dns_domain_name': None,
-    'range_low': 10000,
-    'range_high': 200000000,
-    'idmap_backend': 'AUTORID',
-    'options': {
-        'rangesize': 100000,
-        'readonly': False,
-        'ignore_builtin': False,
-    },
-    'certificate': None
-}
-
 BASE_AD_CONFIG = {
     'id': 1,
     'domainname': 'TESTDOMAIN.IXSYSTEMS.COM',
@@ -209,13 +194,25 @@ BASE_IPA_CONFIG = {
     }
 }
 
+DISABLED_DS_CONFIG = {
+    'id': 1,
+    'service_type': None,
+    'credential': None,
+    'enable': False,
+    'enable_account_cache': True,
+    'enable_dns_updates': True,
+    'timeout': 10,
+    'kerberos_realm': None,
+    'configuration': None,
+}
+
 BIND_IP_CHOICES = {"192.168.0.250": "192.168.0.250"}
 
 
 def test__base_smb():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['netbios name'] == 'TESTSERVER'
     assert conf['netbios aliases'] == 'BOB LARRY'
@@ -239,8 +236,8 @@ def test__base_smb():
 
 def test__base_smb_enterprise():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, True, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, True, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['zfs_core:zfs_integrity_streams'] is True
     assert conf['zfs_core:zfs_block_cloning'] is True
@@ -248,56 +245,56 @@ def test__base_smb_enterprise():
 
 def test__syslog():
     conf = generate_smb_conf_dict(
-        None, None, SMB_SYSLOG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_SYSLOG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['logging'] == ('syslog@1 file')
 
 
 def test__localmaster():
     conf = generate_smb_conf_dict(
-        None, None, SMB_LOCALMASTER, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_LOCALMASTER, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['local master'] is True
 
 
 def test__guestaccount():
     conf = generate_smb_conf_dict(
-        None, None, SMB_GUEST, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_GUEST, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['guest account'] == 'mike'
 
 
 def test__bindip():
     conf = generate_smb_conf_dict(
-        None, None, SMB_BINDIP, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_BINDIP, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert set(conf['interfaces'].split(' ')) == set(['192.168.0.250', '127.0.0.1'])
 
 
 def test__ntlmv1auth():
     conf = generate_smb_conf_dict(
-        None, None, SMB_NTLMV1, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_NTLMV1, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['ntlm auth'] is True
 
 
 def test__smb1_enable():
     conf = generate_smb_conf_dict(
-        None, None, SMB_SMB1, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_SMB1, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server min protocol'] == 'NT1'
 
 
 def test__smb_options():
     conf = generate_smb_conf_dict(
-        None, None, SMB_OPTIONS, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_OPTIONS, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['canary'] == 'bob'
     assert conf['canary2'] == 'bob2'
@@ -305,16 +302,16 @@ def test__smb_options():
 
 def test__multichannel():
     conf = generate_smb_conf_dict(
-        None, None, SMB_MULTICHANNEL, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_MULTICHANNEL, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server multichannel support'] is True
 
 
 def test__homes_share():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [HOMES_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [HOMES_SHARE],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert 'obey pam restrictions' in conf
     assert conf['obey pam restrictions'] is True
@@ -322,16 +319,16 @@ def test__homes_share():
 
 def test__guest_share():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [GUEST_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [GUEST_SHARE],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['restrict anonymous'] == 0
 
 
 def test__fsrvp_share():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [FSRVP_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [FSRVP_SHARE],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['rpc_daemon:fssd'] == 'fork'
     assert conf['fss:prune stale'] is True
@@ -341,7 +338,7 @@ def test__ad_base():
     conf = generate_smb_conf_dict(
         DSType.AD, BASE_AD_CONFIG,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['realm'] == 'TESTDOMAIN.IXSYSTEMS.COM'
     assert conf['winbind use default domain'] is False
@@ -361,7 +358,7 @@ def test__ad_homes_share():
     conf = generate_smb_conf_dict(
         DSType.AD, BASE_AD_CONFIG,
         BASE_SMB_CONFIG, [HOMES_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert 'obey pam restrictions' in conf
     assert conf['obey pam restrictions'] is True
@@ -374,7 +371,7 @@ def test__ad_enumeration():
     conf = generate_smb_conf_dict(
         DSType.AD, DISABLE_ENUM,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['winbind enum users'] is False
     assert conf['winbind enum groups'] is False
@@ -384,7 +381,7 @@ def test__ad_trusted_doms():
     conf = generate_smb_conf_dict(
         DSType.AD, TRUSTED_DOMS,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['allow trusted domains'] is True
 
@@ -393,7 +390,7 @@ def test__ad_default_domain():
     conf = generate_smb_conf_dict(
         DSType.AD, USE_DEFAULT_DOM,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['winbind use default domain'] is True
 
@@ -421,24 +418,24 @@ def test__ad_autorid():
 
 def test__encryption_negotiate():
     conf = generate_smb_conf_dict(
-        None, None, SMB_ENCRYPTION_NEGOTIATE, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_ENCRYPTION_NEGOTIATE, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'if_required'
 
 
 def test__encryption_desired():
     conf = generate_smb_conf_dict(
-        None, None, SMB_ENCRYPTION_DESIRED, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_ENCRYPTION_DESIRED, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'desired'
 
 
 def test__encryption_required():
     conf = generate_smb_conf_dict(
-        None, None, SMB_ENCRYPTION_REQUIRED, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_ENCRYPTION_REQUIRED, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'required'
 
@@ -447,7 +444,7 @@ def test__ipa_base():
     conf = generate_smb_conf_dict(
         DSType.IPA, BASE_IPA_CONFIG,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['workgroup'] == 'TN'
     assert conf['server role'] == 'member server'
@@ -460,8 +457,8 @@ def test__ipa_base():
 
 def test__enable_stig():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, True, SYSTEM_SECURITY_GPOS_STIG
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, True, SYSTEM_SECURITY_GPOS_STIG
     )
     assert conf['client use kerberos'] == 'required'
     assert conf['ntlm auth'] == 'disabled'
@@ -469,7 +466,7 @@ def test__enable_stig():
 
 def test__multiprotocol_share_leases():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [BASE_SMB_SHARE | {'purpose': 'MULTI_PROTOCOL_NFS'}],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [BASE_SMB_SHARE | {'purpose': 'MULTI_PROTOCOL_NFS'}],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['smb2 leases'] is False
