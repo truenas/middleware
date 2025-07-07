@@ -128,6 +128,14 @@ def get_ip_addr(ip):
 
 
 @contextlib.contextmanager
+def assert_validation_errors(attribute: str, errmsg: str):
+    with pytest.raises(ValidationErrors) as ve:
+        yield
+    assert ve.value.errors[0].attribute == attribute
+    assert ve.value.errors[0].errmsg.startswith(errmsg)
+
+
+@contextlib.contextmanager
 def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None, discovery_auth=None):
     payload = {
         'tag': tag,
