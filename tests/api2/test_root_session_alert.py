@@ -29,9 +29,14 @@ def check_session_alert(call_fn):
 
 
 def test_root_session(set_product_type):
-    # first check with our regular persistent session
-    check_session_alert(call)
+    # In full CI runs cannot first check with our regular
+    # persistent session, as it may be more than 100 sessions
+    # ago.  However, we can check that the alert has already
+    # been raised.
+    alert = call('alert.run_source', 'AdminSession')
+    assert alert
 
+    # However, *can* ensure that a new session gets recorded
+    # as part of the Alert
     with client(host_ip=truenas_server.ip) as c:
-        # check that we also pick up second alert
         check_session_alert(c.call)
