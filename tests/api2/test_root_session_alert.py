@@ -15,7 +15,10 @@ def set_product_type(request):
 
 def get_session_alert(call_fn, session_id):
     # sleep a little while to let auth event get logged
-    sleep(10)
+    for _ in range(20):
+        if call('audit.query', {'query-filters': [['session', '=', session_id]]}):
+            break
+        sleep(1)
 
     alert = call_fn('alert.run_source', 'AdminSession')
     assert alert
