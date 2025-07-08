@@ -134,7 +134,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             'enabled': data['enabled'],
             'ips': data['ips'],
             'interfaces': data.get('interfaces', []),
-            'use_all_interfaces': data.get('use_all_interfaces', True),
+            'use_all_interfaces': data['use_all_interfaces'],
         } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
 
         # Extract IPs from interfaces using ip_in_use method
