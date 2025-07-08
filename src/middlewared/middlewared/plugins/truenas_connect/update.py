@@ -100,13 +100,14 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         ips_changed = set(old_config['ips']) != set(data['ips'])
         interfaces_changed = set(old_config.get('interfaces', [])) != set(data.get('interfaces', []))
+        interfaces_changed |= old_config['use_all_interfaces'] != data['use_all_interfaces']
 
         if (ips_changed or interfaces_changed) and (
             data['enabled'] is True and old_config['status'] not in (Status.DISABLED.name, Status.CONFIGURED.name)
         ):
             verrors.add(
                 'tn_connect_update',
-                'IPs and interfaces cannot be changed when TrueNAS Connect is in a state '
+                'IPs and interfaces settings cannot be changed when TrueNAS Connect is in a state '
                 'other than disabled or completely configured'
             )
 
