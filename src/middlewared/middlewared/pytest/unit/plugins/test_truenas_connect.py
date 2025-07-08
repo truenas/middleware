@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from middlewared.service import ValidationErrors
 from middlewared.plugins.truenas_connect.update import TrueNASConnectService
+from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 from truenas_connect_utils.status import Status
 
 
@@ -150,6 +151,134 @@ class TestTNCInterfacesValidation:
             await tnc_service.validate_data(old_config, data)
 
         assert 'cannot be changed when TrueNAS Connect is in a state' in str(exc_info.value)
+
+
+class TestTNCUseAllInterfaces:
+    """Test use_all_interfaces functionality."""
+
+    @pytest.mark.asyncio
+    async def test_validate_data_use_all_interfaces_no_ips_or_interfaces(self, tnc_service, mock_interfaces):
+        """Test that use_all_interfaces=True allows enabling without specific IPs or interfaces."""
+        tnc_service.middleware.call = AsyncMock()
+
+        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
+        data = {'enabled': True, 'ips': [], 'interfaces': [], 'use_all_interfaces': True}
+
+        # Should not raise any errors
+        await tnc_service.validate_data(old_config, data)
+
+    @pytest.mark.asyncio
+    async def test_validate_data_use_all_interfaces_false_requires_ips_or_interfaces(self, tnc_service):
+        """Test that use_all_interfaces=False requires at least one IP or interface."""
+        tnc_service.middleware.call = AsyncMock()
+
+        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
+        data = {'enabled': True, 'ips': [], 'interfaces': [], 'use_all_interfaces': False}
+
+        with pytest.raises(ValidationErrors) as exc_info:
+            await tnc_service.validate_data(old_config, data)
+
+        assert 'At least one IP or interface must be provided' in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_get_all_interface_ips(self, tnc_service, mock_interfaces):
+        """Test that get_all_interface_ips retrieves IPs from all interfaces."""
+        # Mock interface.query to return all interfaces
+        mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
+
+        # Mock interface.ip_in_use to return IPs
+        mock_ips = [
+            {'type': 'INET', 'address': '192.168.1.10'},
+            {'type': 'INET6', 'address': '2001:db8::1'},
+            {'type': 'INET', 'address': '10.0.0.10'},
+        ]
+
+        async def mock_middleware_call(method, *args, **kwargs):
+            if method == 'interface.query':
+                return mock_interface_names
+            elif method == 'interface.ip_in_use':
+                # Check that all interfaces were requested
+                # The interfaces are passed as the first positional argument in a dict
+                if args and 'interfaces' in args[0]:
+                    assert set(args[0]['interfaces']) == {'ens3', 'ens4', 'ens5'}
+                return mock_ips
+            else:
+                raise ValueError(f"Unexpected middleware.call: {method}")
+
+        tnc_service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+
+        result = await tnc_service.get_all_interface_ips()
+        assert set(result) == {'192.168.1.10', '2001:db8::1', '10.0.0.10'}
+
+    @pytest.mark.asyncio
+    async def test_do_update_use_all_interfaces_true(self, tnc_service):
+        """Test that do_update uses all interfaces when use_all_interfaces=True."""
+        # Mock the config method
+        tnc_service.config = AsyncMock(return_value={
+            'id': 1,
+            'enabled': False,
+            'ips': [],
+            'interfaces': ['ens3'],  # Has configured interface
+            'use_all_interfaces': False,
+            'status': Status.DISABLED.name,
+            'interfaces_ips': [],
+            'account_service_base_url': 'https://example.com/',
+            'leca_service_base_url': 'https://example.com/',
+            'tnc_base_url': 'https://example.com/',
+            'heartbeat_url': 'https://example.com/'
+        })
+
+        # Keep track of which method was called and with what parameters
+        interface_query_called = False
+        interface_ip_in_use_called = False
+        requested_interfaces = None
+
+        async def mock_middleware_call(method, *args, **kwargs):
+            nonlocal interface_query_called, interface_ip_in_use_called, requested_interfaces
+
+            if method == 'interface.query':
+                # This is called by get_all_interface_ips
+                interface_query_called = True
+                return [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
+            elif method == 'interface.ip_in_use':
+                # This is called by get_interface_ips
+                interface_ip_in_use_called = True
+                if args and 'interfaces' in args[0]:
+                    requested_interfaces = args[0]['interfaces']
+                return [
+                    {'type': 'INET', 'address': '192.168.1.10'},
+                    {'type': 'INET', 'address': '10.0.0.10'},
+                    {'type': 'INET', 'address': '172.16.0.10'},
+                ]
+            elif method in ['cache.pop', 'alert.oneshot_delete']:
+                return None
+            elif method == 'datastore.update':
+                # Verify that interfaces_ips was updated with all IPs
+                assert args[2]['interfaces_ips'] == ['192.168.1.10', '10.0.0.10', '172.16.0.10']
+                return None
+            else:
+                return None
+
+        tnc_service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+        tnc_service.validate_data = AsyncMock()
+
+        # Update with use_all_interfaces=True
+        await tnc_service.do_update({
+            'enabled': True,
+            'ips': [],
+            'interfaces': ['ens3'],
+            'use_all_interfaces': True,
+            'account_service_base_url': 'https://example.com/',
+            'leca_service_base_url': 'https://example.com/',
+            'tnc_base_url': 'https://example.com/',
+            'heartbeat_url': 'https://example.com/'
+        })
+
+        # Verify that get_all_interface_ips was called (which calls interface.query)
+        assert interface_query_called
+        assert interface_ip_in_use_called
+        # Verify that all interfaces were requested
+        assert set(requested_interfaces) == {'ens3', 'ens4', 'ens5'}
 
 
 class TestTNCInterfacesUpdate:
@@ -377,6 +506,7 @@ class TestTNCInterfacesUpdate:
             'interfaces': ['ens3'],
             'interfaces_ips': ['192.168.1.10'],
             'status': Status.CONFIGURED.name,
+            'use_all_interfaces': False,  # Set to False to use specific interfaces
             'account_service_base_url': 'https://example.com/',
             'leca_service_base_url': 'https://example.com/',
             'tnc_base_url': 'https://example.com/',
@@ -404,7 +534,8 @@ class TestTNCInterfacesUpdate:
         data = {
             'enabled': True,
             'ips': ['192.168.1.100'],
-            'interfaces': ['ens4']
+            'interfaces': ['ens4'],
+            'use_all_interfaces': False  # Explicitly set to False
         }
 
         await tnc_service.do_update(data)
@@ -418,6 +549,89 @@ class TestTNCInterfacesUpdate:
 
 class TestTNCHostnameService:
     """Test hostname service updates."""
+
+    @pytest.mark.asyncio
+    async def test_sync_interface_ips_use_all_interfaces_true(self):
+        """Test that sync_interface_ips uses all interfaces when use_all_interfaces=True."""
+        service = TNCHostnameService(None)
+        service.middleware = MagicMock()
+
+        # Track which methods were called
+        get_all_called = False
+        get_interfaces_called = False
+
+        async def mock_middleware_call(method, *args, **kwargs):
+            nonlocal get_all_called, get_interfaces_called
+
+            if method == 'tn_connect.config':
+                return {
+                    'id': 1,
+                    'interfaces': ['ens3'],
+                    'use_all_interfaces': True
+                }
+            elif method == 'tn_connect.get_all_interface_ips':
+                get_all_called = True
+                return ['192.168.1.10', '10.0.0.10', '172.16.0.10']
+            elif method == 'tn_connect.get_interface_ips':
+                get_interfaces_called = True
+                return ['192.168.1.10']
+            elif method == 'datastore.update':
+                # Verify all IPs were stored
+                assert args[2]['interfaces_ips'] == ['192.168.1.10', '10.0.0.10', '172.16.0.10']
+                return None
+            elif method == 'tn_connect.hostname.register_update_ips':
+                return {'error': None}
+            else:
+                return None
+
+        service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+
+        await service.sync_interface_ips()
+
+        assert get_all_called
+        assert not get_interfaces_called
+
+    @pytest.mark.asyncio
+    async def test_sync_interface_ips_use_all_interfaces_false(self):
+        """Test that sync_interface_ips uses configured interfaces when use_all_interfaces=False."""
+        service = TNCHostnameService(None)
+        service.middleware = MagicMock()
+
+        # Track which methods were called
+        get_all_called = False
+        get_interfaces_called = False
+
+        async def mock_middleware_call(method, *args, **kwargs):
+            nonlocal get_all_called, get_interfaces_called
+
+            if method == 'tn_connect.config':
+                return {
+                    'id': 1,
+                    'interfaces': ['ens3', 'ens4'],
+                    'use_all_interfaces': False
+                }
+            elif method == 'tn_connect.get_all_interface_ips':
+                get_all_called = True
+                return ['192.168.1.10', '10.0.0.10', '172.16.0.10']
+            elif method == 'tn_connect.get_interface_ips':
+                get_interfaces_called = True
+                assert args[0] == ['ens3', 'ens4']  # Verify correct interfaces passed
+                return ['192.168.1.10', '10.0.0.10']
+            elif method == 'datastore.update':
+                # Verify only configured interface IPs were stored
+                assert args[2]['interfaces_ips'] == ['192.168.1.10', '10.0.0.10']
+                return None
+            elif method == 'tn_connect.hostname.register_update_ips':
+                return {'error': None}
+            else:
+                return None
+
+        service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+
+        await service.sync_interface_ips()
+
+        assert not get_all_called
+        assert get_interfaces_called
 
     @pytest.mark.asyncio
     async def test_register_update_ips_uses_combined_ips(self):
