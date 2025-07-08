@@ -15,7 +15,7 @@ def set_product_type(request):
 
 def get_session_alert(call_fn, session_id):
     # sleep a little while to let auth event get logged
-    sleep(5)
+    sleep(10)
 
     alert = call_fn('alert.run_source', 'AdminSession')
     assert alert
