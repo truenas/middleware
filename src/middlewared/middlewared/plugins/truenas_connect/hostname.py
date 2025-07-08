@@ -33,9 +33,17 @@ class TNCHostnameService(Service):
     async def sync_interface_ips(self):
         logger.debug('Syncing interface IPs for TrueNAS Connect')
         tnc_config = await self.middleware.call('tn_connect.config')
+
+        # Get interface IPs based on use_all_interfaces flag
+        if tnc_config['use_all_interfaces']:
+            interfaces_ips = await self.middleware.call('tn_connect.get_all_interface_ips')
+        else:
+            interfaces_ips = await self.middleware.call('tn_connect.get_interface_ips', tnc_config['interfaces'])
+
+        logger.debug('Updating TrueNAS Connect with interface IPs: %r', ', '.join(interfaces_ips))
         await self.middleware.call(
             'datastore.update', 'truenas_connect', tnc_config['id'], {
-                'interfaces_ips': await self.middleware.call('tn_connect.get_interface_ips', tnc_config['interfaces']),
+                'interfaces_ips': interfaces_ips,
             }
         )
         response = await self.middleware.call('tn_connect.hostname.register_update_ips')
@@ -45,9 +53,11 @@ class TNCHostnameService(Service):
 
 async def update_ips(middleware, event_type, args):
     tnc_config = await middleware.call('tn_connect.config')
-    if tnc_config['status'] not in CONFIGURED_TNC_STATES or args['fields']['iface'] not in tnc_config['interfaces']:
-        # We don't want to do anything if we are not watching for the interface
-        # where the IP address change occurred or if TNC is not configured
+    if tnc_config['status'] not in CONFIGURED_TNC_STATES or (
+        tnc_config['use_all_interfaces'] is False and args['fields']['iface'] not in tnc_config['interfaces']
+    ):
+        # We don't want to do anything if TNC is not configured or if we
+        # are not watching for the interface where the IP address change occurred
         return
 
     logger.info(
