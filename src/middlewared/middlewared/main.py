@@ -1033,7 +1033,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__audit_logger.info(message)
 
     async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-                   profile=False):
+                   profile=False) -> typing.Any:
         serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
         if profile:
@@ -1044,7 +1044,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False):
+    def call_sync(
+        self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False
+    ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot use call_sync from main thread')
 
