@@ -21,6 +21,7 @@ class TNCEntry(BaseModel):
     ips: list[NonEmptyString]
     interfaces: list[str]
     interfaces_ips: list[str]
+    use_all_interfaces: bool
     status: NonEmptyString
     status_reason: NonEmptyString
     certificate: int | None
@@ -35,6 +36,7 @@ class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     ips: list[IPvAnyAddress]
     interfaces: list[str]
+    use_all_interfaces: bool
     account_service_base_url: HttpsOnlyURL
     leca_service_base_url: HttpsOnlyURL
     tnc_base_url: HttpsOnlyURL
