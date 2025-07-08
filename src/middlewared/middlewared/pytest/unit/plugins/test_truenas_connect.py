@@ -52,8 +52,11 @@ class TestTNCInterfacesValidation:
     @pytest.mark.asyncio
     async def test_validate_data_requires_ip_or_interface(self, tnc_service):
         """Test that at least one IP or interface is required when enabled."""
-        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
-        data = {'enabled': True, 'ips': [], 'interfaces': []}
+        old_config = {
+            'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
+            'use_all_interfaces': True
+        }
+        data = {'enabled': True, 'ips': [], 'interfaces': [], 'use_all_interfaces': False}
 
         with pytest.raises(ValidationErrors) as exc_info:
             await tnc_service.validate_data(old_config, data)
@@ -78,8 +81,11 @@ class TestTNCInterfacesValidation:
 
         tnc_service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
 
-        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
-        data = {'enabled': True, 'ips': [], 'interfaces': ['ens3', 'invalid_interface']}
+        old_config = {
+            'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
+            'use_all_interfaces': True
+        }
+        data = {'enabled': True, 'ips': [], 'interfaces': ['ens3', 'invalid_interface'], 'use_all_interfaces': False}
 
         with pytest.raises(ValidationErrors) as exc_info:
             await tnc_service.validate_data(old_config, data)
@@ -99,8 +105,11 @@ class TestTNCInterfacesValidation:
             [],
         ]
 
-        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
-        data = {'enabled': True, 'ips': [], 'interfaces': ['ens5']}  # ens5 has no IPs
+        old_config = {
+            'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
+            'use_all_interfaces': True
+        }
+        data = {'enabled': True, 'ips': [], 'interfaces': ['ens5'], 'use_all_interfaces': False}  # ens5 has no IPs
 
         with pytest.raises(ValidationErrors) as exc_info:
             await tnc_service.validate_data(old_config, data)
@@ -114,8 +123,14 @@ class TestTNCInterfacesValidation:
         mock_interface_names = [{'name': 'ens3'}, {'name': 'ens4'}, {'name': 'ens5'}]
         tnc_service.middleware.call = AsyncMock(return_value=mock_interface_names)
 
-        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
-        data = {'enabled': True, 'ips': ['192.168.1.100'], 'interfaces': ['ens5']}  # ens5 has no IPs
+        old_config = {
+            'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
+            'use_all_interfaces': True
+        }
+        data = {
+            'enabled': True, 'ips': ['192.168.1.100'], 'interfaces': ['ens5'],
+            'use_all_interfaces': False
+        }  # ens5 has no IPs
 
         # Should not raise any errors
         await tnc_service.validate_data(old_config, data)
@@ -132,6 +147,7 @@ class TestTNCInterfacesValidation:
             'ips': ['192.168.1.10'],
             'interfaces': [],
             'status': Status.CERT_GENERATION_IN_PROGRESS.name,
+            'use_all_interfaces': True,
             'account_service_base_url': 'https://example.com/',
             'leca_service_base_url': 'https://example.com/',
             'tnc_base_url': 'https://example.com/',
@@ -141,6 +157,7 @@ class TestTNCInterfacesValidation:
             'enabled': True,
             'ips': ['192.168.1.10'],
             'interfaces': ['ens3'],
+            'use_all_interfaces': True,
             'account_service_base_url': 'https://example.com/',
             'leca_service_base_url': 'https://example.com/',
             'tnc_base_url': 'https://example.com/',
@@ -161,7 +178,10 @@ class TestTNCUseAllInterfaces:
         """Test that use_all_interfaces=True allows enabling without specific IPs or interfaces."""
         tnc_service.middleware.call = AsyncMock()
 
-        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
+        old_config = {
+            'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
+            'use_all_interfaces': True
+        }
         data = {'enabled': True, 'ips': [], 'interfaces': [], 'use_all_interfaces': True}
 
         # Should not raise any errors
@@ -172,7 +192,10 @@ class TestTNCUseAllInterfaces:
         """Test that use_all_interfaces=False requires at least one IP or interface."""
         tnc_service.middleware.call = AsyncMock()
 
-        old_config = {'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name}
+        old_config = {
+            'enabled': False, 'ips': [], 'interfaces': [], 'status': Status.DISABLED.name,
+            'use_all_interfaces': True
+        }
         data = {'enabled': True, 'ips': [], 'interfaces': [], 'use_all_interfaces': False}
 
         with pytest.raises(ValidationErrors) as exc_info:
@@ -297,6 +320,7 @@ class TestTNCInterfacesUpdate:
             'interfaces': [],
             'status': Status.DISABLED.name,
             'interfaces_ips': [],
+            'use_all_interfaces': True,
             'account_service_base_url': 'https://example.com/',
             'leca_service_base_url': 'https://example.com/',
             'tnc_base_url': 'https://example.com/',
@@ -339,6 +363,7 @@ class TestTNCInterfacesUpdate:
                 'interfaces': [],
                 'status': Status.DISABLED.name,
                 'interfaces_ips': [],
+                'use_all_interfaces': True,
                 'account_service_base_url': 'https://example.com/',
                 'leca_service_base_url': 'https://example.com/',
                 'tnc_base_url': 'https://example.com/',
@@ -354,6 +379,7 @@ class TestTNCInterfacesUpdate:
                 'status': 'CLAIM_TOKEN_MISSING',
                 'status_reason': 'Claim token is missing',
                 'certificate': None,
+                'use_all_interfaces': False,
                 'account_service_base_url': 'https://example.com/',
                 'leca_service_base_url': 'https://example.com/',
                 'tnc_base_url': 'https://example.com/',
@@ -366,7 +392,8 @@ class TestTNCInterfacesUpdate:
         data = {
             'enabled': True,
             'ips': [],
-            'interfaces': ['ens3', 'ens4']
+            'interfaces': ['ens3', 'ens4'],
+            'use_all_interfaces': False
         }
 
         # Track the datastore.update call
@@ -402,6 +429,7 @@ class TestTNCInterfacesUpdate:
             'interfaces': [],
             'status': Status.DISABLED.name,
             'interfaces_ips': [],
+            'use_all_interfaces': True,
             'account_service_base_url': 'https://example.com/',
             'leca_service_base_url': 'https://example.com/',
             'tnc_base_url': 'https://example.com/',
@@ -443,6 +471,7 @@ class TestTNCInterfacesUpdate:
                 'interfaces': [],
                 'status': Status.DISABLED.name,
                 'interfaces_ips': [],
+                'use_all_interfaces': True,
                 'account_service_base_url': 'https://example.com/',
                 'leca_service_base_url': 'https://example.com/',
                 'tnc_base_url': 'https://example.com/',
@@ -458,6 +487,7 @@ class TestTNCInterfacesUpdate:
                 'status': 'CLAIM_TOKEN_MISSING',
                 'status_reason': 'Claim token is missing',
                 'certificate': None,
+                'use_all_interfaces': False,
                 'account_service_base_url': 'https://example.com/',
                 'leca_service_base_url': 'https://example.com/',
                 'tnc_base_url': 'https://example.com/',
@@ -470,7 +500,8 @@ class TestTNCInterfacesUpdate:
         data = {
             'enabled': True,
             'ips': [],
-            'interfaces': ['ens6']
+            'interfaces': ['ens6'],
+            'use_all_interfaces': False
         }
 
         # Track the datastore.update call
