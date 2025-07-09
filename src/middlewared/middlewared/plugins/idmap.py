@@ -193,7 +193,7 @@ class IdmapDomainService(Service):
     @private
     async def backend_options(self):
         """ legacy wrapper currently maintained to avoid breaking the UI """
-        return {'AD': 'AD', 'AUTORID': 'AUTORID', 'RID': 'RID', 'LDAP': 'LDAP', 'RFC2307': 'RFC2307'}
+        return {'AD': 'AD', 'RID': 'RID', 'LDAP': 'LDAP', 'RFC2307': 'RFC2307'}
 
     @private
     def convert_sids(self, sidlist):
