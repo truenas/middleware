@@ -18,7 +18,7 @@ __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item
            "NotRequired", "model_subset"]
 
 
-class _NotRequired:...
+class _NotRequired(Any): ...
 
 
 NotRequired = _NotRequired()

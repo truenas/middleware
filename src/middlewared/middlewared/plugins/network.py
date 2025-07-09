@@ -15,7 +15,7 @@ from middlewared.api.current import (
     InterfaceDeleteResult, InterfaceHasPendingChangesArgs, InterfaceHasPendingChangesResult,
     InterfaceIpInUseArgs, InterfaceIpInUseResult, InterfaceLacpduRateChoicesArgs, InterfaceLacpduRateChoicesResult,
     InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, InterfaceRollbackArgs, InterfaceRollbackResult,
-    InterfaceSaveDefaultRouteArgs, InterfaceSaveDefaultRouteResult, InterfaceUpdateArgs, InterfaceUpdateResult,
+    InterfaceSaveNetworkConfigArgs, InterfaceSaveNetworkConfigResult, InterfaceUpdateArgs, InterfaceUpdateResult,
     InterfaceVlanParentInterfaceChoicesArgs, InterfaceVlanParentInterfaceChoicesResult,
     InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIpArgs,
     InterfaceWebsocketLocalIpResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
@@ -400,28 +400,28 @@ class InterfaceService(CRUDService):
 
         return will_be_removed
 
-    @api_method(InterfaceSaveDefaultRouteArgs, InterfaceSaveDefaultRouteResult, roles=['NETWORK_INTERFACE_WRITE'])
-    async def save_default_route(self, gw):
-        """
-        This method exists _solely_ to provide a "warning" and therefore
-        a path for remediation for when an end-user modifies an interface
-        and we rip the default gateway out from underneath them without
-        any type of warning.
+    @api_method(InterfaceSaveNetworkConfigArgs, InterfaceSaveNetworkConfigResult, roles=['NETWORK_INTERFACE_WRITE'])
+    async def save_network_config(self, config):
+        """Saves network configuration settings to prevent network isolation during interface changes.
 
-        NOTE: This makes 2 assumptions
-        1. interface.create/update/delete must have been called before
-            calling this method
-        2. this method must be called before `interface.sync` is called
+        This method provides a path for remediation when interface modifications would remove
+        network connectivity. It accepts a configuration object containing network settings
+        that will be validated and applied to the global network configuration.
 
-        This method exists for the predominant scenario for new users...
-        1. fresh install SCALE
-        2. all interfaces start DHCPv4 (v6 is ignored for now)
-        3. 1 of the interfaces receives an IP address
-        4. along with the IP, the kernel receives a default route
-            (by design, of course)
-        5. user goes to configure this interface as having a static
-            IP address
-        6. as we go through and "sync" the changes, we remove the default
+        This makes 2 assumptions:
+        1. `interface.create`/`update`/`delete` must have been called before
+            calling this method.
+        2. This method must be called before `interface.commit` is called.
+
+        This method exists for the predominant scenario for new users:
+        1. Fresh install SCALE.
+        2. All interfaces start DHCPv4 (v6 is ignored for now).
+        3. One of the interfaces receives an IP address.
+        4. Along with the IP, the kernel receives a default route
+            (by design, of course).
+        5. User goes to configure this interface as having a static
+            IP address.
+        6. As we go through and "commit" the changes, we remove the default
             route because it exists in the kernel FIB but doesn't exist
             in the database.
         7. IF the user is connecting via layer3, then they will lose all
@@ -431,32 +431,36 @@ class InterfaceService(CRUDService):
 
         In the above scenario, we're going to try and prevent this by doing
         the following:
-        1. fresh install SCALE
-        2. all interfaces start DHCPv4
-        3. default route is received
-        4. user configures an interface
-        5. When user pushes "Test Changes" (interface.sync), webUI will call
-            network.configuration.default_route_will_be_removed BEFORE interface.sync
-        6. if network.configuration.default_route_will_be_removed returns True,
+        1. Fresh install SCALE.
+        2. All interfaces start DHCPv4.
+        3. Default route is received.
+        4. User configures an interface.
+        5. When user pushes "Test Changes" (`interface.commit`), webUI will call
+            `interface.network_config_to_be_removed` BEFORE `interface.commit`.
+        6. If `interface.network_config_to_be_removed` returns any fields,
             then webUI will open a new modal dialog that gives the end-user
-            ample warning/verbiage describing the situation. Furthermore, the
-            modal will allow the user to input a default gateway
-        7. if user gives gateway, webUI will call this method providing the info
-            and we'll validate accordingly
+            ample warning describing the situation. Furthermore, the
+            modal will allow the user to input a default gateway.
+        7. If user gives gateway, webUI will call this method providing the info
+            and we'll validate accordingly.
         8. OR if user doesn't give gateway, they will need to "confirm" this is
-            desired
-        9. the default gateway provided to us (if given by end-user) will be stored
+            desired.
+        9. The network configuration provided (gateway and nameservers) will be stored
             in the same in-memory cache that we use for storing the interface changes
-            and will be rolledback accordingly in this plugin just like everything else
+            and will be rolled back accordingly in this plugin just like everything else.
 
         There are a few other scenarios where this is beneficial, but the one listed above
         is seen most often by end-users/support team.
+
         """
         if not self._original_datastores:
             raise CallError('There are no pending interface changes.')
 
-        gw = ip_address(gw)
-        defgw = {'gc_ipv4gateway': gw.exploded}
+        gw = ip_address(config.pop('ipv4gateway'))
+        new_config = {
+            'gc_ipv4gateway': gw.exploded,
+            **{'gc_' + k: v for k, v in config.items()},
+        }
         for iface in await self.middleware.call('datastore.query', 'network.interfaces'):
             gw_reachable = False
             try:
@@ -467,12 +471,12 @@ class InterfaceService(CRUDService):
                 continue
             else:
                 if gw_reachable:
-                    await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, defgw)
+                    await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, new_config)
                     return
 
         for iface in await self.middleware.call('datastore.query', 'network.alias'):
             if gw in ip_interface(f'{iface["alias_address"]}/{iface["alias_netmask"]}').network:
-                await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, defgw)
+                await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, new_config)
                 return
 
         raise CallError(f'{str(gw)!r} is not reachable from any interface on the system.')

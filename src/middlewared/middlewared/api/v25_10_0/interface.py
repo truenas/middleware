@@ -4,7 +4,7 @@ from pydantic import Field
 
 from middlewared.api.base import (
     BaseModel, IPv4Address, UniqueList, IPvAnyAddress, Excluded, excluded_field, ForUpdateMetaclass,
-    single_argument_result, NotRequired, NonEmptyString,
+    single_argument_args, single_argument_result, NotRequired, NonEmptyString,
 )
 
 
@@ -17,8 +17,8 @@ __all__ = [
     "InterfaceDeleteResult", "InterfaceHasPendingChangesArgs", "InterfaceHasPendingChangesResult",
     "InterfaceIpInUseArgs", "InterfaceIpInUseResult", "InterfaceLacpduRateChoicesArgs",
     "InterfaceLacpduRateChoicesResult", "InterfaceLagPortsChoicesArgs", "InterfaceLagPortsChoicesResult",
-    "InterfaceRollbackArgs", "InterfaceRollbackResult", "InterfaceSaveDefaultRouteArgs",
-    "InterfaceSaveDefaultRouteResult", "InterfaceServicesRestartedOnSyncArgs",
+    "InterfaceRollbackArgs", "InterfaceRollbackResult", "InterfaceSaveNetworkConfigArgs",
+    "InterfaceSaveNetworkConfigResult", "InterfaceServicesRestartedOnSyncArgs",
     "InterfaceServicesRestartedOnSyncResult", "InterfaceUpdateArgs", "InterfaceUpdateResult",
     "InterfaceVlanParentInterfaceChoicesArgs", "InterfaceVlanParentInterfaceChoicesResult",
     "InterfaceWebsocketInterfaceArgs", "InterfaceWebsocketInterfaceResult", "InterfaceWebsocketLocalIpArgs",
@@ -443,12 +443,19 @@ class InterfaceRollbackResult(BaseModel):
     """No return value for successful rollback operation."""
 
 
-class InterfaceSaveDefaultRouteArgs(BaseModel):
-    gateway: IPv4Address
+@single_argument_args("config")
+class InterfaceSaveNetworkConfigArgs(BaseModel):
+    ipv4gateway: IPv4Address
     """IPv4 address of the default gateway to save."""
+    nameserver1: IPvAnyAddress = NotRequired
+    """Primary DNS server."""
+    nameserver2: IPvAnyAddress = NotRequired
+    """Secondary DNS server."""
+    nameserver3: IPvAnyAddress = NotRequired
+    """Tertiary DNS server."""
 
 
-class InterfaceSaveDefaultRouteResult(BaseModel):
+class InterfaceSaveNetworkConfigResult(BaseModel):
     result: None
     """No return value for successful save default route operation."""
 
