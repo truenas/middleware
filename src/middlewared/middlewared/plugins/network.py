@@ -440,7 +440,7 @@ class InterfaceService(CRUDService):
         6. If `interface.network_config_to_be_removed` returns any fields,
             then webUI will open a new modal dialog that gives the end-user
             ample warning describing the situation. Furthermore, the
-            modal will allow the user to input a default gateway.
+            modal will allow the user to input a default gateway and nameservers.
         7. If user gives gateway, webUI will call this method providing the info
             and we'll validate accordingly.
         8. OR if user doesn't give gateway, they will need to "confirm" this is
