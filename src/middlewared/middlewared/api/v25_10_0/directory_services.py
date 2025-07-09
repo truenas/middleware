@@ -102,25 +102,12 @@ class AD_Idmap(IdmapDomainBase):
     Windows Server 2003 R2. """
     unix_primary_group: bool = False
     """ Defines if the user's primary group is fetched from SFU attributes or the Active Directory primary group. \
-    If True, the TrueNAS server uses the gidNumber LDAP attribute. If False, it uses the primaryGroupID LDAP attribute.
+    If True, the TrueNAS server uses the `gidNumber` LDAP attribute. If False, it uses the `primaryGroupID` LDAP \
+    attribute.
     """
     unix_nss_info: bool = False
     """ If True, the login shell and home directory are retrieved from LDAP attributes. If False, or if the Active \
     Directory LDAP entry lacks SFU attributes, the home directory defaults to `/var/empty`. """
-
-
-class Autorid_Idmap(IdmapDomainBase):
-    """ The AUTORID backend uses an algorithmic mapping scheme to map UIDs and GIDs to SIDs. It works like the RID \
-    backend, but automatically configures the range for each domain in the forest. """
-    idmap_backend: Literal['AUTORID']
-    rangesize: int = Field(default=100000, ge=10000, le=1000000000)
-    """ Defines the number of uids / gids available per domain range. SIDs with RIDs larger than this value will be \
-    mapped into extension ranges depending on the number of available ranges."""
-    readonly: bool = False
-    """ Sets the module to read-only mode. The TrueNAS server will not create new ranges or mappings in the idmap \
-    pool. """
-    ignore_builtin: bool = False
-    """ Do not process mapping requests for the BUILTIN domain. """
 
 
 class LDAP_Idmap(IdmapDomainBase):
@@ -203,10 +190,6 @@ class PrimaryDomainIdmap(BaseModel):
     LDAP schema attributes that assign explicit UID and GID numbers to accounts. """
 
 
-class PrimaryDomainIdmapAutoRid(BaseModel):
-    idmap_domain: Autorid_Idmap
-
-
 class CredKRBPrincipal(BaseModel):
     credential_type: Literal[DSCredType.KERBEROS_PRINCIPAL]
     principal: NonEmptyString
@@ -251,7 +234,7 @@ class ActiveDirectoryConfig(BaseModel):
     domain: NonEmptyString
     """ The full DNS domain name of the Active Directory domain. This must not be a domain controller. \
     Example: "mydomain.internal".  """
-    idmap: PrimaryDomainIdmap | PrimaryDomainIdmapAutoRid = Field(default=PrimaryDomainIdmap(), examples=[
+    idmap: PrimaryDomainIdmap = Field(default=PrimaryDomainIdmap(), examples=[
         {
             'builtin': {'range_low': 90000001, 'range_high': 100000000},
             'idmap_domain': {
@@ -261,14 +244,6 @@ class ActiveDirectoryConfig(BaseModel):
                 'range_high': 200000000,
             },
         },
-        {
-            'idmap_domain': {
-                'name': 'MYDOMAIN',
-                'idmap_backend': 'AUTORID',
-                'range_low': 90000001,
-                'range_high': 2000000000
-            }
-        }
     ])
     """ Configuration for mapping Active Directory accounts to accounts on the TrueNAS server. The exact settings may \
     vary based on other servers and Linux clients in the domain. Defaults are suitable for new deployments without \

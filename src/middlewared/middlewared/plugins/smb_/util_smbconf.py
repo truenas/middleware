@@ -457,6 +457,9 @@ def generate_smb_conf_dict(
         # AD configuration can override this
         'idmap config * : backend': 'tdb',
         'idmap config * : range': '90000001 - 90010001',
+        # We are setting this to read-only to prevent misconfiguration of trusted
+        # domains from accidentally setting mappings in the tdb file.
+        'idmap config * : read only': True,
     }
 
     """
@@ -559,18 +562,12 @@ def generate_smb_conf_dict(
         })
 
         idmap = ds_config['configuration']['idmap']['idmap_domain']
-        if ds_config['configuration']['idmap']['idmap_domain']['idmap_backend'] == 'AUTORID':
-            idmap_prefix = 'idmap config * :'
-        else:
-            builtin = ds_config['configuration']['idmap']['builtin']
-            idmap_prefix = f'idmap config {idmap["name"]}'
-
-            smbconf.update({
-                'idmap config * : backend': 'tdb',
-                'idmap config * : range': f'{builtin["range_low"]} - {builtin["range_high"]}'
-            })
+        builtin = ds_config['configuration']['idmap']['builtin']
+        idmap_prefix = f'idmap config {idmap["name"]}'
 
         smbconf.update({
+            'idmap config * : backend': 'tdb',
+            'idmap config * : range': f'{builtin["range_low"]} - {builtin["range_high"]}',
             f'{idmap_prefix} : backend': idmap['idmap_backend'].lower(),
             f'{idmap_prefix} : range': f'{idmap["range_low"]} - {idmap["range_high"]}',
         })

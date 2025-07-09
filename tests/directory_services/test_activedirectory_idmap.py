@@ -71,6 +71,26 @@ def update_trusted_domains(ds_config, trusted_doms):
         set_ds_config(ds_config)
 
 
+@contextmanager
+def set_idmap_ad(ds_config):
+    try:
+        new_config = ds_config['configuration'] | {'idmap': {
+            'builtin': {'range_low': 90000, 'range_high': 100000},
+            'idmap_domain': {
+                'name': ds_config['configuration']['idmap']['idmap_domain']['name'],
+                'idmap_backend': 'AD',
+                'range_low': 10000,
+                'range_high': 80000,
+                'unix_primary_group': True,
+                'schema_mode': 'RFC2307',
+            }
+        }}
+        yield set_ds_config(ds_config | {'configuration': new_config})
+    finally:
+        # restore original configuration
+        set_ds_config(ds_config)
+
+
 @pytest.mark.parametrize('trusted_doms, error', (
     ([
         {
@@ -167,3 +187,13 @@ def test_trusted_domain_configuration(set_product_type, join_ad, trusted_doms, e
             # Make sure idmap config applied
             for dom in trusted_doms:
                 check_idmap_config(dom)
+
+
+def test_idmap_ad(join_ad):
+    with set_idmap_ad(join_ad['config']) as config:
+        # uid + gid should now be offset from RID value by 10K (based on how we provisioned IDs
+        # on the test server)
+        user_obj = call('user.get_user_obj', {'username': join_ad['account'].user_obj['pw_name'], 'sid_info': True})
+        rid = int(user_obj['sid'].split('-')[-1])
+        assert user_obj['pw_uid'] == rid + 10000
+        assert user_obj['pw_gid'] == 10513  # RID 513 + 10000 (offset)

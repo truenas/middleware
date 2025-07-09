@@ -395,15 +395,7 @@ class SMBService(Service):
 
         # Because the beginning range is determined by the range of IDs allocated for BUILTIN
         # users we have to request from the samba running configuration
-        idmap_backend = self.middleware.call_sync("smb.getparm", "idmap config * : backend", "GLOBAL")
         idmap_range = self.middleware.call_sync("smb.getparm", "idmap config * : range", "GLOBAL")
-
-        if idmap_backend != "tdb":
-            """
-            idmap_autorid and potentially other allocating idmap backends may be used for
-            the default domain. We do not want to touch how these are allocated.
-            """
-            return False
 
         low_range = int(idmap_range.split("-")[0].strip())
         for b in (SMBBuiltin.ADMINISTRATORS, SMBBuiltin.USERS, SMBBuiltin.GUESTS):
