@@ -13,7 +13,7 @@ __all__ = [
     "InterfaceCancelRollbackArgs", "InterfaceCancelRollbackResult", "InterfaceCheckinArgs", "InterfaceCheckinResult",
     "InterfaceCheckinWaitingArgs", "InterfaceCheckinWaitingResult", "InterfaceChoicesArgs", "InterfaceChoicesResult",
     "InterfaceCommitArgs", "InterfaceCommitResult", "InterfaceCreateArgs", "InterfaceCreateResult",
-    "InterfaceDefaultRouteWillBeRemovedArgs", "InterfaceDefaultRouteWillBeRemovedResult", "InterfaceDeleteArgs",
+    "InterfaceNetworkConfigToBeRemovedArgs", "InterfaceNetworkConfigToBeRemovedResult", "InterfaceDeleteArgs",
     "InterfaceDeleteResult", "InterfaceHasPendingChangesArgs", "InterfaceHasPendingChangesResult",
     "InterfaceIpInUseArgs", "InterfaceIpInUseResult", "InterfaceLacpduRateChoicesArgs",
     "InterfaceLacpduRateChoicesResult", "InterfaceLagPortsChoicesArgs", "InterfaceLagPortsChoicesResult",
@@ -250,12 +250,14 @@ class InterfaceCreateResult(BaseModel):
     result: InterfaceEntry
 
 
-class InterfaceDefaultRouteWillBeRemovedArgs(BaseModel):
+class InterfaceNetworkConfigToBeRemovedArgs(BaseModel):
     pass
 
 
-class InterfaceDefaultRouteWillBeRemovedResult(BaseModel):
-    result: bool
+class InterfaceNetworkConfigToBeRemovedResult(BaseModel):
+    result: list[Literal["ipv4gateway", "nameserver1", "nameserver2", "nameserver3"]]
+    """The network configuration fields that will be wiped on the next `interface.checkin` call. The current values of \
+    these fields can be retrieved by calling `network.configuration.config`."""
 
 
 class InterfaceDeleteArgs(BaseModel):

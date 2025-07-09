@@ -11,7 +11,7 @@ from middlewared.api.current import (
     InterfaceCancelRollbackArgs, InterfaceCancelRollbackResult, InterfaceCheckinArgs, InterfaceCheckinResult,
     InterfaceCheckinWaitingArgs, InterfaceCheckinWaitingResult, InterfaceChoicesArgs, InterfaceChoicesResult,
     InterfaceCommitArgs, InterfaceCommitResult, InterfaceCreateArgs, InterfaceCreateResult,
-    InterfaceDefaultRouteWillBeRemovedArgs, InterfaceDefaultRouteWillBeRemovedResult, InterfaceDeleteArgs,
+    InterfaceNetworkConfigToBeRemovedArgs, InterfaceNetworkConfigToBeRemovedResult, InterfaceDeleteArgs,
     InterfaceDeleteResult, InterfaceHasPendingChangesArgs, InterfaceHasPendingChangesResult,
     InterfaceIpInUseArgs, InterfaceIpInUseResult, InterfaceLacpduRateChoicesArgs, InterfaceLacpduRateChoicesResult,
     InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, InterfaceRollbackArgs, InterfaceRollbackResult,
@@ -361,30 +361,44 @@ class InterfaceService(CRUDService):
         return iface
 
     @api_method(
-        InterfaceDefaultRouteWillBeRemovedArgs,
-        InterfaceDefaultRouteWillBeRemovedResult,
+        InterfaceNetworkConfigToBeRemovedArgs,
+        InterfaceNetworkConfigToBeRemovedResult,
         roles=['NETWORK_INTERFACE_READ']
     )
-    def default_route_will_be_removed(self):
-        """
+    def network_config_to_be_removed(self):
+        """Determines which network configuration items will be removed during interface setup.
+
         On a fresh install of SCALE, dhclient is started for every interface so IP
         addresses/routes could be installed via that program. However, when the
         end-user goes to configure the first interface we tear down all other interfaces
         configs AND delete the default route. We also remove the default route if the
         configured gateway doesn't match the one currently installed in kernel.
+
+        Additionally, this checks for nameserver configurations that exist in the current
+        network state but are not configured in the database, indicating they will be
+        removed during reconfiguration.
+
         """
         # FIXME: What about IPv6??
         rtgw = netif.RoutingTable().default_route_ipv4
+        netconfig = self.middleware.call_sync('network.configuration.config')
+
         if rtgw is None:
-            return False
+            ipv4gateway = False
+        elif not self.middleware.call_sync('datastore.query', 'network.interfaces'):
+            ipv4gateway = True
+        else:
+            # we have a default route in kernel and we have a route specified in the db
+            # and they do not match
+            ipv4gateway = netconfig['ipv4gateway'] != rtgw.gateway.exploded
 
-        if not self.middleware.call_sync('datastore.query', 'network.interfaces'):
-            return True
+        will_be_removed = ['ipv4gateway'] * ipv4gateway
+        will_be_removed.extend(filter(
+            lambda ns: bool(netconfig['state'][ns]) and not netconfig[ns],
+            ('nameserver1', 'nameserver2', 'nameserver3')
+        ))
 
-        # we have a default route in kernel and we have a route specified in the db
-        # and they do not match
-        dbgw = self.middleware.call_sync('network.configuration.config')['ipv4gateway']
-        return dbgw != rtgw.gateway.exploded
+        return will_be_removed
 
     @api_method(InterfaceSaveDefaultRouteArgs, InterfaceSaveDefaultRouteResult, roles=['NETWORK_INTERFACE_WRITE'])
     async def save_default_route(self, gw):
