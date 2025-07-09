@@ -231,6 +231,11 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
             return False
 
     @private
+    async def reload(self):
+        if await self.running():
+            await self._service_change('nvmet', 'reload')
+
+    @private
     async def start(self):
         await self.middleware.call('nvmet.global.load_kernel_modules')
         await self.middleware.call('etc.generate', 'nvmet')

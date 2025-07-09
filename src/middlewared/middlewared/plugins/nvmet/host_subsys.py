@@ -51,7 +51,7 @@ class NVMetHostSubsysService(CRUDService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self._service_change('nvmet', 'reload')
+        await self.middleware.call('nvmet.global.reload')
         return await self.get_instance(data['id'])
 
     @private
@@ -89,7 +89,7 @@ class NVMetHostSubsysService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('nvmet', 'reload')
+        await self.middleware.call('nvmet.global.reload')
         return await self.get_instance(id_)
 
     @api_method(
@@ -110,7 +110,7 @@ class NVMetHostSubsysService(CRUDService):
 
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
-        await self._service_change('nvmet', 'reload')
+        await self.middleware.call('nvmet.global.reload')
         return rv
 
     @private
