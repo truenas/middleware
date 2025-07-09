@@ -2,7 +2,7 @@ from xml.etree import ElementTree as etree
 
 
 ACTIVE_STATES = ['RUNNING', 'SUSPENDED']
-SYSTEM_NVRAM_FOLDER_PATH = '/data/subsystems/vm/nvram'
+SYSTEM_NVRAM_FOLDER_PATH = '/var/db/system/vm/nvram'
 LIBVIRT_QEMU_UID = 986
 LIBVIRT_QEMU_GID = 986
 LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'

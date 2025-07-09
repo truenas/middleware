@@ -1,17 +1,16 @@
 import os
 import shutil
 
-from middlewared.plugins.vm.utils import (
-    get_vm_nvram_file_name, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID, SYSTEM_NVRAM_FOLDER_PATH,
-)
+from middlewared.plugins.vm.utils import get_vm_nvram_file_name, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
 
 
 DEFAULT_NVRAM_FOLDER_PATH = '/var/lib/libvirt/qemu/nvram'
+SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA = '/data/subsystems/vm/nvram'
 
 
 def migrate(middleware):
-    os.makedirs(SYSTEM_NVRAM_FOLDER_PATH, exist_ok=True)
-    os.chown(SYSTEM_NVRAM_FOLDER_PATH, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID)
+    os.makedirs(SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA, exist_ok=True)
+    os.chown(SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID)
 
     if middleware.call_sync('system.is_ha_capable'):
         middleware.logger.debug('Skipping nvram migration as system is HA capable')
@@ -26,7 +25,7 @@ def migrate(middleware):
 
 def migrate_vm_nvram_file(middleware, vm):
     file_name = get_vm_nvram_file_name(vm)
-    new_path = os.path.join(SYSTEM_NVRAM_FOLDER_PATH, file_name)
+    new_path = os.path.join(SYSTEM_NVRAM_FOLDER_PATH_OLD_DATA, file_name)
     to_copy_path = os.path.join(DEFAULT_NVRAM_FOLDER_PATH, file_name)
     if os.path.exists(to_copy_path):
         shutil.copy2(to_copy_path, new_path)

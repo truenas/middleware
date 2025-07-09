@@ -774,6 +774,7 @@ class FailoverEventsService(Service):
             self.run_call('kmip.initialize_keys')
             logger.info('Done syncing encryption keys with KMIP server')
 
+        self.start_vms()
         self.start_apps()
         self.start_virt()
 
@@ -843,6 +844,8 @@ class FailoverEventsService(Service):
             name='failover_stop_docker',
         )
         stop_docker_thread.start()
+        stop_vm_thread = threading.Thread(target=self.stop_vms, name='failover_stop_vms')
+        stop_vm_thread.start()
 
         # We will try to give some time to containers to gracefully stop before zpools will be forcefully
         # exported. This is to avoid any potential data corruption.
@@ -1015,6 +1018,17 @@ class FailoverEventsService(Service):
         self.FAILOVER_RESULT = 'SUCCESS'
 
         return self.FAILOVER_RESULT
+
+    def start_vms(self):
+        logger.info('Starting VMs which are set to start on boot')
+        self.middleware.create_task(self.middleware.call('vm.start_on_boot'))
+
+    def stop_vms(self):
+        logger.info('Trying to gracefully stop VMs')
+        try:
+            self.run_call('vm.handle_shutdown')
+        except Exception:
+            logger.error('Failed to gracefully stop VMs', exc_info=True)
 
     def start_apps(self):
         self.start_apps_impl()
