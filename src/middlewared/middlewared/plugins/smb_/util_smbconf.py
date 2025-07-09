@@ -625,7 +625,7 @@ def generate_smb_conf_dict(
             'kerberos method': 'dedicated keytab',
             'dedicated keytab file': 'FILE:/etc/ipa/smb.keytab',
             'workgroup': domain_short,
-            'realm': domain_name,
+            'realm': domain_name.upper(),
             f'idmap config {domain_short} : backend': 'sss',
             f'idmap config {domain_short} : range': f'{range_low} - {range_high}',
         })

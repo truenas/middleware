@@ -40,173 +40,139 @@ SMB_ENCRYPTION_DESIRED = BASE_SMB_CONFIG | {'encryption': 'DESIRED'}
 SMB_ENCRYPTION_REQUIRED = BASE_SMB_CONFIG | {'encryption': 'REQUIRED'}
 SYSTEM_SECURITY_DEFAULT = {'id': 1, 'enable_fips': False, 'enable_gpos_stig': False}
 SYSTEM_SECURITY_GPOS_STIG = {'id': 1, 'enable_fips': True, 'enable_gpos_stig': True}
-
+DEFAULT_SHARE_OPTIONS = {'aapl_name_mangling': False}
 
 BASE_SMB_SHARE = {
     'id': 1,
-    'purpose': 'NO_PRESET',
+    'purpose': 'DEFAULT_SHARE',
     'path': '/mnt/dozer/BASE',
-    'path_suffix': '',
-    'home': False,
     'name': 'TEST_HOME',
-    'comment': 'canary',
-    'browsable': True,
-    'ro': False,
-    'guestok': False,
-    'recyclebin': False,
-    'hostsallow': [],
-    'hostsdeny': [],
-    'auxsmbconf': '',
-    'aapl_name_manging': False,
-    'abe': False,
-    'acl': True,
-    'durablehandle': True,
-    'streams': True,
-    'timemachine': False,
-    'timemachine_quota': 0,
-    'vuid': '',
-    'shadowcopy': True,
-    'fsrvp': False,
     'enabled': True,
-    'afp': False,
+    'comment': 'canary',
+    'readonly': False,
+    'browsable': True,
+    'access_based_share_enumeration': False,
+    'locked': False,
     'audit': {
         'enable': False,
         'watch_list': [],
         'ignore_list': []
     },
-    'path_local': '/mnt/dozer/BASE',
-    'locked': False
+    'options': DEFAULT_SHARE_OPTIONS
 }
 
-HOMES_SHARE = BASE_SMB_SHARE | {'path_suffix': '%U', 'home': True}
-FSRVP_SHARE = BASE_SMB_SHARE | {'fsrvp': True}
-GUEST_SHARE = BASE_SMB_SHARE | {'guestok': True}
+LEGACY_OPTIONS = {
+    'path_suffix': None,
+    'hostsallow': [],
+    'hostsdeny': [],
+    'guestok': False,
+    'streams': True,
+    'durablehandle': True,
+    'shadowcopy': True,
+    'fsrvp': False,
+    'home': False,
+    'acl': True,
+    'afp': False,
+    'timemachine': False,
+    'recyclebin': False,
+    'timemachine_quota': 0,
+    'aapl_name_mangling': False,
+    'vuid': None,
+    'auxsmbconf': ''
+}
 
-BASE_IDMAP = [
-    {
-        'id': 1,
-        'name': 'DS_TYPE_ACTIVEDIRECTORY',
-        'dns_domain_name': None,
-        'range_low': 100000001,
-        'range_high': 200000000,
+HOMES_SHARE = BASE_SMB_SHARE | {'purpose': 'LEGACY_SHARE', 'options': LEGACY_OPTIONS | {'path_suffix': '%U', 'home': True}}
+FSRVP_SHARE = BASE_SMB_SHARE | {'purpose': 'LEGACY_SHARE', 'options': LEGACY_OPTIONS | {'fsrvp': True}}
+GUEST_SHARE = BASE_SMB_SHARE | {'purpose': 'LEGACY_SHARE', 'options': LEGACY_OPTIONS | {'guestok': True}}
+
+BASE_AD_IDMAP = {
+    'builtin': {'range_low': 90000001, 'range_high': 100000000},
+    'idmap_domain': {
+        'name': 'TESTDOMAIN',
         'idmap_backend': 'RID',
-        'options': {},
-        'certificate': None
-    },
-    {
-        'id': 2,
-        'name': 'DS_TYPE_LDAP',
-        'dns_domain_name': None,
-        'range_low': 10000,
-        'range_high': 90000000,
-        'idmap_backend': 'LDAP',
-        'options': {
-            'ldap_base_dn': '',
-            'ldap_user_dn': '',
-            'ldap_url': '',
-            'ssl': 'OFF'
-        },
-        'certificate': None
-    },
-    {
-        'id': 5,
-        'name': 'DS_TYPE_DEFAULT_DOMAIN',
-        'dns_domain_name': None,
-        'range_low': 90000001,
-        'range_high': 100000000,
-        'idmap_backend': 'TDB',
-        'options': {},
-        'certificate': None
+        'range_low': 100000001,
+        'range_high': 200000000
     }
-]
+}
 
-ADDITIONAL_DOMAIN = {
-    'id': 6,
+ADDITIONAL_AD_DOMAIN = {
     'name': 'BOBDOM',
-    'dns_domain_name': None,
     'range_low': 200000001,
     'range_high': 300000000,
     'idmap_backend': 'RID',
-    'options': {},
-    'certificate': None
-}
-
-AUTORID_DOMAIN = {
-    'id': 1,
-    'name': 'DS_TYPE_ACTIVEDIRECTORY',
-    'dns_domain_name': None,
-    'range_low': 10000,
-    'range_high': 200000000,
-    'idmap_backend': 'AUTORID',
-    'options': {
-        'rangesize': 100000,
-        'readonly': False,
-        'ignore_builtin': False,
-    },
-    'certificate': None
 }
 
 BASE_AD_CONFIG = {
     'id': 1,
-    'domainname': 'TESTDOMAIN.IXSYSTEMS.COM',
-    'bindname': '',
-    'verbose_logging': False,
-    'allow_trusted_doms': False,
-    'use_default_domain': False,
-    'allow_dns_updates': True,
-    'disable_freenas_cache': False,
-    'restrict_pam': False,
-    'site': None,
-    'timeout': 60,
-    'dns_timeout': 10,
-    'nss_info': 'TEMPLATE',
+    'service_type': 'ACTIVEDIRECTORY',
+    'credential': {
+        'credential_type': 'KERBEROS_PRINCIPAL',
+        'principal': 'TESTSERVER$@TESTDOMAIN.IXSYSTEMS.COM'
+    },
     'enable': True,
-    'kerberos_principal': 'TESTSERVER$@TESTDOMAIN.IXSYSTEMS.COM',
-    'create_computer': None,
-    'kerberos_realm': 1,
-    'netbiosname': 'TESTSERVER',
-    'netbiosalias': [],
+    'enable_account_cache': True,
+    'enable_dns_updates': True,
+    'timeout': 10,
+    'kerberos_realm': 'TESTDOMAIN.IXSYSTEMS.COM',
+    'configuration': {
+        'hostname': 'TESTSERVER',
+        'domain': 'TESTDOMAIN.IXSYSTEMS.COM',
+        'idmap': BASE_AD_IDMAP,
+        'site': None,
+        'computer_account_ou': None,
+        'use_default_domain': False,
+        'enable_trusted_domains': False,
+        'trusted_domains': []
+    }
 }
-TRUSTED_DOMS = BASE_AD_CONFIG | {'allow_trusted_doms': True}
-USE_DEFAULT_DOM = BASE_AD_CONFIG | {'use_default_domain': True}
-DISABLE_ENUM = BASE_AD_CONFIG | {'disable_freenas_cache': True}
+TRUSTED_DOMS = BASE_AD_CONFIG | {'configuration': BASE_AD_CONFIG['configuration'] | {
+    'enable_trusted_domains': True,
+    'trusted_domains': [ADDITIONAL_AD_DOMAIN]
+}}
+USE_DEFAULT_DOM = BASE_AD_CONFIG | {'configuration': BASE_AD_CONFIG['configuration'] | {
+    'use_default_domain': True,
+}}
+DISABLE_ENUM = BASE_AD_CONFIG | {'enable_account_cache': False}
 
 BASE_IPA_CONFIG = {
     'id': 1,
-    'hostname': ['ipatest1.testdom.test'],
-    'basedn': 'dc=testdom,dc=test',
-    'binddn': 'uid=ipaadmin,cn=users,cn=accounts,dc=testdom,dc=test',
-    'bindpw': '',
-    'anonbind': False,
-    'ssl': 'ON', 'timeout': 30,
-    'dns_timeout': 5,
-    'has_samba_schema': False,
-    'auxiliary_parameters': '',
-    'schema': 'RFC2307',
+    'service_type': 'IPA',
+    'credential': {
+        'credential_type': 'KERBEROS_PRINCIPAL',
+        'principal': 'host/awalkertest5.tn.ixsystems.net@TN.IXSYSTEMS.NET'
+    },
     'enable': True,
-    'kerberos_principal': 'host/awalkertest5.tn.ixsystems.net@TN.IXSYSTEMS.NET',
-    'validate_certificates': True,
-    'disable_freenas_cache': False,
-    'server_type': 'FREEIPA',
-    'certificate': None,
-    'kerberos_realm': 1,
-    'cert_name': None,
-    'uri_list': ['ldaps://ipatest1.testdom.test:636'],
-    'ipa_config': {
-        'realm': 'TESTDOM.TEST',
+    'enable_account_cache': True,
+    'enable_dns_updates': True,
+    'timeout': 10,
+    'kerberos_realm': 'TESTDOM.TEST',
+    'configuration': {
+        'target_server': 'ipatest1.testdom.test',
+        'hostname': 'awalkertest5',
         'domain': 'testdom.test',
         'basedn': 'dc=testdom,dc=test',
-        'host': 'awalkertest5.testdom.test',
-        'target_server': 'ipatest1.testdom.test',
-        'username': 'ipaadmin'
-    },
-    'ipa_domain': {
-        'netbios_name': 'TN',
-        'domain_sid': 'S-1-5-21-157882827-213361071-3806343854',
-        'domain_name': 'testdom.test',
-        'range_id_min': 925000000,
-        'range_id_max': 925199999
+        'smb_domain': {
+            'name': 'TN',
+            'idmap_backend': 'SSS',
+            'range_low': 925000000,
+            'range_high': 925199999,
+            'domain_name': 'testdom.test',
+            'domain_sid': 'S-1-5-21-157882827-213361071-3806343854',
+        },
+        'validate_certificates': True
     }
+}
+
+DISABLED_DS_CONFIG = {
+    'id': 1,
+    'service_type': None,
+    'credential': None,
+    'enable': False,
+    'enable_account_cache': True,
+    'enable_dns_updates': True,
+    'timeout': 10,
+    'kerberos_realm': None,
+    'configuration': None,
 }
 
 BIND_IP_CHOICES = {"192.168.0.250": "192.168.0.250"}
@@ -214,8 +180,8 @@ BIND_IP_CHOICES = {"192.168.0.250": "192.168.0.250"}
 
 def test__base_smb():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['netbios name'] == 'TESTSERVER'
     assert conf['netbios aliases'] == 'BOB LARRY'
@@ -229,7 +195,7 @@ def test__base_smb():
     assert 'server min protocol' not in conf
     assert conf['server multichannel support'] is False
     assert conf['idmap config * : backend'] == 'tdb'
-    assert conf['idmap config * : range'] == '90000001 - 100000000'
+    assert conf['idmap config * : range'] == '90000001 - 90010001'
     assert conf['server smb encrypt'] == 'default'
     assert conf['directory mask'] == '0775'
     assert conf['create mask'] == '0664'
@@ -239,8 +205,8 @@ def test__base_smb():
 
 def test__base_smb_enterprise():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, True, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, True, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['zfs_core:zfs_integrity_streams'] is True
     assert conf['zfs_core:zfs_block_cloning'] is True
@@ -248,56 +214,56 @@ def test__base_smb_enterprise():
 
 def test__syslog():
     conf = generate_smb_conf_dict(
-        None, None, SMB_SYSLOG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_SYSLOG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['logging'] == ('syslog@1 file')
 
 
 def test__localmaster():
     conf = generate_smb_conf_dict(
-        None, None, SMB_LOCALMASTER, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_LOCALMASTER, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['local master'] is True
 
 
 def test__guestaccount():
     conf = generate_smb_conf_dict(
-        None, None, SMB_GUEST, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_GUEST, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['guest account'] == 'mike'
 
 
 def test__bindip():
     conf = generate_smb_conf_dict(
-        None, None, SMB_BINDIP, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_BINDIP, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert set(conf['interfaces'].split(' ')) == set(['192.168.0.250', '127.0.0.1'])
 
 
 def test__ntlmv1auth():
     conf = generate_smb_conf_dict(
-        None, None, SMB_NTLMV1, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_NTLMV1, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['ntlm auth'] is True
 
 
 def test__smb1_enable():
     conf = generate_smb_conf_dict(
-        None, None, SMB_SMB1, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_SMB1, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server min protocol'] == 'NT1'
 
 
 def test__smb_options():
     conf = generate_smb_conf_dict(
-        None, None, SMB_OPTIONS, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_OPTIONS, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['canary'] == 'bob'
     assert conf['canary2'] == 'bob2'
@@ -305,16 +271,16 @@ def test__smb_options():
 
 def test__multichannel():
     conf = generate_smb_conf_dict(
-        None, None, SMB_MULTICHANNEL, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_MULTICHANNEL, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server multichannel support'] is True
 
 
 def test__homes_share():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [HOMES_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [HOMES_SHARE],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert 'obey pam restrictions' in conf
     assert conf['obey pam restrictions'] is True
@@ -322,16 +288,16 @@ def test__homes_share():
 
 def test__guest_share():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [GUEST_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [GUEST_SHARE],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['restrict anonymous'] == 0
 
 
 def test__fsrvp_share():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [FSRVP_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [FSRVP_SHARE],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['rpc_daemon:fssd'] == 'fork'
     assert conf['fss:prune stale'] is True
@@ -339,9 +305,9 @@ def test__fsrvp_share():
 
 def test__ad_base():
     conf = generate_smb_conf_dict(
-        DSType.AD, BASE_AD_CONFIG,
+        BASE_AD_CONFIG,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['realm'] == 'TESTDOMAIN.IXSYSTEMS.COM'
     assert conf['winbind use default domain'] is False
@@ -353,15 +319,16 @@ def test__ad_base():
     assert conf['domain master'] is False
     assert conf['idmap config * : backend'] == 'tdb'
     assert conf['idmap config * : range'] == '90000001 - 100000000'
+    assert 'idmap config TESTDOMAIN : backend' in conf, str([x for x in conf.keys() if x.startswith('idmap')])
     assert conf['idmap config TESTDOMAIN : backend'] == 'rid'
     assert conf['idmap config TESTDOMAIN : range'] == '100000001 - 200000000'
 
 
 def test__ad_homes_share():
     conf = generate_smb_conf_dict(
-        DSType.AD, BASE_AD_CONFIG,
+        BASE_AD_CONFIG,
         BASE_SMB_CONFIG, [HOMES_SHARE],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert 'obey pam restrictions' in conf
     assert conf['obey pam restrictions'] is True
@@ -372,9 +339,9 @@ def test__ad_homes_share():
 
 def test__ad_enumeration():
     conf = generate_smb_conf_dict(
-        DSType.AD, DISABLE_ENUM,
+        DISABLE_ENUM,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['winbind enum users'] is False
     assert conf['winbind enum groups'] is False
@@ -382,72 +349,61 @@ def test__ad_enumeration():
 
 def test__ad_trusted_doms():
     conf = generate_smb_conf_dict(
-        DSType.AD, TRUSTED_DOMS,
+        TRUSTED_DOMS,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['allow trusted domains'] is True
 
 
 def test__ad_default_domain():
     conf = generate_smb_conf_dict(
-        DSType.AD, USE_DEFAULT_DOM,
+        USE_DEFAULT_DOM,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['winbind use default domain'] is True
 
 
 def test__ad_additional_domain():
     conf = generate_smb_conf_dict(
-        DSType.AD, TRUSTED_DOMS,
+        TRUSTED_DOMS,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP + [ADDITIONAL_DOMAIN], False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['idmap config BOBDOM : backend'] == 'rid'
     assert conf['idmap config BOBDOM : range'] == '200000001 - 300000000'
 
 
-def test__ad_autorid():
-    conf = generate_smb_conf_dict(
-        DSType.AD, BASE_AD_CONFIG,
-        BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, [AUTORID_DOMAIN, BASE_IDMAP[1], BASE_IDMAP[2]],
-        False, SYSTEM_SECURITY_DEFAULT
-    )
-    assert conf['idmap config * : backend'] == 'autorid'
-    assert conf['idmap config * : range'] == '10000 - 200000000'
-
-
 def test__encryption_negotiate():
     conf = generate_smb_conf_dict(
-        None, None, SMB_ENCRYPTION_NEGOTIATE, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_ENCRYPTION_NEGOTIATE, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'if_required'
 
 
 def test__encryption_desired():
     conf = generate_smb_conf_dict(
-        None, None, SMB_ENCRYPTION_DESIRED, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_ENCRYPTION_DESIRED, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'desired'
 
 
 def test__encryption_required():
     conf = generate_smb_conf_dict(
-        None, None, SMB_ENCRYPTION_REQUIRED, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        DISABLED_DS_CONFIG, SMB_ENCRYPTION_REQUIRED, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['server smb encrypt'] == 'required'
 
 
 def test__ipa_base():
     conf = generate_smb_conf_dict(
-        DSType.IPA, BASE_IPA_CONFIG,
+        BASE_IPA_CONFIG,
         BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['workgroup'] == 'TN'
     assert conf['server role'] == 'member server'
@@ -460,16 +416,8 @@ def test__ipa_base():
 
 def test__enable_stig():
     conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [],
-        BIND_IP_CHOICES, BASE_IDMAP, True, SYSTEM_SECURITY_GPOS_STIG
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, True, SYSTEM_SECURITY_GPOS_STIG
     )
     assert conf['client use kerberos'] == 'required'
     assert conf['ntlm auth'] == 'disabled'
-
-
-def test__multiprotocol_share_leases():
-    conf = generate_smb_conf_dict(
-        None, None, BASE_SMB_CONFIG, [BASE_SMB_SHARE | {'purpose': 'MULTI_PROTOCOL_NFS'}],
-        BIND_IP_CHOICES, BASE_IDMAP, False, SYSTEM_SECURITY_DEFAULT
-    )
-    assert conf['smb2 leases'] is False
