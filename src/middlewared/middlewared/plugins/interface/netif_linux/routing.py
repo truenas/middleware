@@ -140,7 +140,7 @@ class RoutingTable:
     def routes(self):
         return self.routes_internal()
 
-    def routes_internal(self, table_filter=None) -> list[Route]:
+    def routes_internal(self, table_filter=None):
         interfaces = self._interfaces()
 
         result = []
@@ -186,13 +186,13 @@ class RoutingTable:
             }
 
     @property
-    def default_route_ipv4(self) -> Route | None:
+    def default_route_ipv4(self):
         f = list(filter(lambda r: int(r.network) == 0 and int(r.netmask) == 0 and r.af == AddressFamily.INET,
                         self.routes_internal(DEFAULT_TABLE_ID)))
         return f[0] if len(f) > 0 else None
 
     @property
-    def default_route_ipv6(self) -> Route | None:
+    def default_route_ipv6(self):
         f = list(filter(lambda r: int(r.network) == 0 and int(r.netmask) == 0 and r.af == AddressFamily.INET6,
                         self.routes_internal(DEFAULT_TABLE_ID)))
         return f[0] if len(f) > 0 else None
