@@ -382,21 +382,21 @@ class InterfaceService(CRUDService):
         # FIXME: What about IPv6??
         rtgw = netif.RoutingTable().default_route_ipv4
         netconfig = self.middleware.call_sync('network.configuration.config')
+        will_be_removed = []
 
-        if rtgw is None:
-            ipv4gateway = False
-        elif not self.middleware.call_sync('datastore.query', 'network.interfaces'):
-            ipv4gateway = True
-        else:
-            # we have a default route in kernel and we have a route specified in the db
-            # and they do not match
-            ipv4gateway = netconfig['ipv4gateway'] != rtgw.gateway.exploded
+        if rtgw:
+            # default route in kernel
+            if not self.middleware.call_sync('datastore.query', 'network.interfaces'):
+                # no interfaces in database
+                will_be_removed.append('ipv4gateway')
+            elif netconfig['ipv4gateway'] != rtgw.gateway.exploded:
+                # route specified in the database does not match the default route in the kernel
+                will_be_removed.append('ipv4gateway')
 
-        will_be_removed = ['ipv4gateway'] * ipv4gateway
-        will_be_removed.extend(filter(
-            lambda ns: bool(netconfig['state'][ns]) and not netconfig[ns],
-            ('nameserver1', 'nameserver2', 'nameserver3')
-        ))
+        for ns in ('nameserver1', 'nameserver2', 'nameserver3'):
+            if bool(netconfig['state'][ns]) and not netconfig[ns]:
+                # nameserver is set at the OS level (via DHCP) but is not set in the database
+                will_be_removed.append(ns)
 
         return will_be_removed
 
