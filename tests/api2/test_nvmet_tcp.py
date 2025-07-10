@@ -3,6 +3,7 @@ import itertools
 import json
 import random
 import string
+import time
 from collections import defaultdict
 from functools import cache
 
@@ -18,7 +19,7 @@ from middlewared.test.integration.assets.nvmet import (NVME_DEFAULT_TCP_PORT, nv
                                                        nvmet_xport_referral)
 from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.client import truenas_server, host as init_truenas_server
 
 digits = ''.join(random.choices(string.digits, k=3))
 
@@ -53,6 +54,7 @@ ZVOL_RESIZE_END_MB = 150
 
 FAKE_HOSTNQN = 'nqn.2014-08.org.nvmexpress:uuid:48747223-7535-4f8e-a789-b8af8bfdea54'
 DEVICE_TYPE_FILE = 'FILE'
+MB_10 = 100 * MB
 MB_100 = 100 * MB
 MB_150 = 150 * MB
 MB_200 = 200 * MB
@@ -1617,3 +1619,45 @@ class TestForceDelete(NVMeRunning):
 
                 # Ensure that the associated namespace has also been deleted
                 assert 0 == call('nvmet.namespace.query', [['subsys.id', '=', subsys_id]], {'count': True})
+
+
+class TestManySubsystems:
+    SUBSYS_COUNT = 100
+    TIME_LIMIT_SECONDS = 15
+    DELAY_SECONDS = 3
+
+    @pytest.fixture(scope='class')
+    def fixture_port(self):
+        if truenas_server.ip is None:
+            init_truenas_server()
+        assert truenas_server.ip in call('nvmet.port.transport_address_choices', 'TCP')
+        with nvmet_port(truenas_server.ip) as port:
+            yield port
+
+    @pytest.fixture(scope='class')
+    def fixture_100_nvme_subsystems(self, fixture_port):
+        with contextlib.ExitStack() as es:
+            for i in range(self.SUBSYS_COUNT):
+                filename = f'/mnt/{pool_name}/file{i}'
+                subsys_config = es.enter_context(nvmet_subsys(f'bar{i}', allow_any_host=True))
+                es.enter_context(nvmet_port_subsys(subsys_config['id'], fixture_port['id']))
+                es.enter_context(nvmet_namespace(subsys_config['id'],
+                                                 filename,
+                                                 DEVICE_TYPE_FILE,
+                                                 filesize=MB_10,
+                                                 delete_options={'remove': True}))
+            yield
+
+    def test__start_many_nvme(self, loopback_client: NVMeCLIClient, fixture_100_nvme_subsystems):
+        nc = loopback_client
+        with pytest.raises(AssertionError, match='Connection refused'):
+            nc.discover()
+        # We want to be sure that the service starts in a reasonable amount of time.
+        start_time = time.time()
+        with ensure_service_started(SERVICE_NAME, self.DELAY_SECONDS):
+            end_time = time.time()
+            assert end_time - start_time < self.TIME_LIMIT_SECONDS + self.DELAY_SECONDS
+            # Even if we started, let's make sure can see all the subsystems
+            # One extra for the discovery target.
+            res = nc.discover()
+            assert len(res['records']) == self.SUBSYS_COUNT + 1

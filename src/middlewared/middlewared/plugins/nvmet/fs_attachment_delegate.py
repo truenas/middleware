@@ -10,7 +10,7 @@ class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
     resource_name = 'device_path'
 
     async def restart_reload_services(self, attachments):
-        await self._service_change('nvmet', 'reload')
+        await self.middleware.call('nvmet.global.reload')
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
