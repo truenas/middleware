@@ -311,7 +311,9 @@ class UpdateService(Service):
         try:
             try:
                 self.middleware.call_sync(
-                    'update.install', job, str(update_file.absolute()), options,
+                    # We use 90 as max progress here because we will set it to 95 after this completes
+                    # in cleanup - otherwise scale build will give 100 and then we will go back to 95
+                    'update.install', job, str(update_file.absolute()), options, 90,
                 )
             except Exception as e:
                 if isinstance(e, CallError):
@@ -334,6 +336,7 @@ class UpdateService(Service):
             self.middleware.call_sync('update.destroy_upload_location')
 
         self.middleware.call_hook_sync('update.post_update')
+        job.set_progress(100, 'Update completed')
 
     @private
     def file_impl(self, job, options):
@@ -370,7 +373,9 @@ class UpdateService(Service):
                     shutil.copyfileobj(job.pipes.input.r, f, 1048576)
 
             try:
-                self.middleware.call_sync('update.install', job, destfile, update_options)
+                # We use 90 as max progress here because we will set it to 95 after this completes
+                # in cleanup - otherwise scale build will give 100 and then we will go back to 95
+                self.middleware.call_sync('update.install', job, destfile, update_options, 90)
             except CallError as e:
                 if e.errno == errno.EAGAIN:
                     unlink_destfile = False

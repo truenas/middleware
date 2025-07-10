@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class UpdateService(Service):
     @private
-    def install(self, job, path, options):
+    def install(self, job, path, options, max_progress=100):
         if os.path.exists(UPLOADED_DB_PATH):
             raise CallError(
                 "An unapplied uploaded configuration exists. Please, reboot the system to apply this configuration "
@@ -33,7 +33,7 @@ class UpdateService(Service):
             )
 
         def progress_callback(progress, description):
-            job.set_progress((0.5 + 0.5 * progress) * 100, description)
+            job.set_progress((0.5 + 0.5 * progress) * max_progress, description)
 
         progress_callback(0, "Reading update file")
         with mount_update(path) as mounted:
