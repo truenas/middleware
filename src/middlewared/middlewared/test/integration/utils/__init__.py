@@ -2,6 +2,7 @@ from .call import *  # noqa
 from .client import *  # noqa
 from .failover import * # noqa
 from .filesystem import * # noqa
+from .ha import * # noqa
 from .job import *  # noqa
 from .mock import *  # noqa
 from .pool import *  # noqa

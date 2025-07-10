@@ -2,7 +2,7 @@ import os
 import time
 
 from auto_config import domain, gateway, ha, ha_license, hostname, interface, netmask
-from middlewared.test.integration.utils import call, fail, pool, truenas_server
+from middlewared.test.integration.utils import call, fail, pool, settle_ha, truenas_server
 
 
 def setup_ssh():
@@ -134,6 +134,7 @@ def setup_server_ha():
         set_interfaces()
         stage = 'SETUP_POOL'
         create_permanent_pool()
+        settle_ha()
     except Exception as exc:
         fail(f'{stage}: failed to set up truenas server: {exc}')
 
