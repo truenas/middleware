@@ -40,6 +40,7 @@ from .fcport import *
 from .filesystem import *
 from .ftp import *
 from .group import *
+from .hardware_virtualization import *
 from .idmap import *
 from .initshutdownscript import *
 from .interface import *
