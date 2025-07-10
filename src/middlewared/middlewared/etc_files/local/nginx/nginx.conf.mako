@@ -251,32 +251,16 @@ http {
             try_files $uri $uri/ @index;
         }
 
-        location = /webshare/ {
-            allow all;
-
-            # Enforce HTTPS only
-            if ($https != "on") {
-                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
-            }
-
-            add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate";
-            add_header Pragma "no-cache";
-            add_header Expires "0";
-            expires -1;
-
-            # Security Headers
-            add_header Strict-Transport-Security "max-age=0; includeSubDomains; preload" always;
-            add_header X-Content-Type-Options "nosniff" always;
-            add_header X-XSS-Protection "1; mode=block" always;
-            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
-            add_header Referrer-Policy "strict-origin" always;
-            add_header X-Frame-Options "SAMEORIGIN" always;
-
-            root /usr/share/truenas-webshare/truenas-webshare-auth-ui/browser;
-            try_files /index.html =404;
+        # Handle download file requests directly - MUST come BEFORE the general /webshare/ location
+        location ~ ^/webshare/download/([^/]+)/file$ {
+            proxy_pass http://unix:/var/run/webshare/auth.sock:/download/$1/file;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
         }
 
-        location /webshare {
+        location /webshare/ {
             allow all;
 
             # Enforce HTTPS only
@@ -299,8 +283,8 @@ http {
             add_header Referrer-Policy "strict-origin" always;
             add_header X-Frame-Options "SAMEORIGIN" always;
 
-            alias /usr/share/truenas-webshare/truenas-webshare-auth-ui/browser;
-            try_files $uri $uri/ @index;
+            alias /usr/share/truenas-webshare/truenas-webshare-auth-ui/browser/;
+            try_files $uri $uri/ /webshare/@index;
         }
 
         location = /webshare/browser/ {
@@ -378,6 +362,15 @@ http {
             proxy_read_timeout 86400;
             proxy_connect_timeout 86400;
             proxy_send_timeout 86400;
+        }
+
+        # API endpoints - strip /webshare prefix when proxying
+        location ~ ^/webshare/api/(.*)$ {
+                proxy_pass http://unix:/var/run/webshare/auth.sock:/api/$1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
         }
 
         # Health check endpoint
