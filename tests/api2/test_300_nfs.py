@@ -8,7 +8,7 @@ from time import sleep
 import pytest
 
 from middlewared.service_exception import (
-    ValidationError, ValidationErrors, CallError, InstanceNotFound
+    ValidationError, ValidationErrors, InstanceNotFound
 )
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.account import user as create_user
@@ -22,6 +22,7 @@ from middlewared.test.integration.utils.system import reset_systemd_svcs as rese
 
 from auto_config import hostname, password, pool_name, user, ha
 from protocols import SSH_NFS, nfs_share
+from truenas_api_client import ClientException
 
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
@@ -207,7 +208,7 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=False):
         call('service.control', do_what.upper(), 'nfs', {'silent': False}, job=True)
         sleep(1)
     else:
-        with pytest.raises(CallError) as e:
+        with pytest.raises(ClientException) as e:
             call('service.control', do_what.upper(), 'nfs', {'silent': False}, job=True)
         if fail_check:
             assert fail_check in str(e.value)
@@ -1199,8 +1200,8 @@ class TestNFSops:
 
         with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
                      user=user, password=password, ip=truenas_server.ip):
-            res = call('nfs.get_nfs4_clients', [], {'count': True})
-            assert int(res) == 1, f"Expected to find 1, but found {int(res)}"
+            res = call('nfs.get_nfs4_clients')
+            assert len(res) == 1, f"Expected to find 1, but found {len(res)}"
 
         # # Enable this when CI environment supports IPv6
         # # NAS-130437: Confirm IPv6 support
