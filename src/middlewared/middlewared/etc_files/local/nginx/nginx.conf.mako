@@ -287,6 +287,33 @@ http {
             try_files $uri $uri/ /webshare/@index;
         }
 
+        location /webshare {
+            allow all;
+
+            # Enforce HTTPS only
+            if ($https != "on") {
+                return 301 https://$host:${general_settings['ui_httpsport']}$request_uri;
+            }
+
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
+
+            add_header Cache-Control "must-revalidate";
+            add_header Etag "${system_version}";
+
+            # Security Headers
+            add_header Strict-Transport-Security "max-age=0; includeSubDomains; preload" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+            add_header Referrer-Policy "strict-origin" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+
+            alias /usr/share/truenas-webshare/truenas-webshare-auth-ui/browser/;
+            try_files $uri $uri/ /webshare/@index;
+        }
+
         location = /webshare/browser/ {
             allow all;
 
