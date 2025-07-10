@@ -1,7 +1,7 @@
 """New update system
 
 Revision ID: 4465da1dbb37
-Revises: 3693df62fd6f
+Revises: 4f3a2b5c6d7e
 Create Date: 2025-05-14 10:24:38.261189+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '4465da1dbb37'
-down_revision = '3693df62fd6f'
+down_revision = '4f3a2b5c6d7e'
 branch_labels = None
 depends_on = None
 
