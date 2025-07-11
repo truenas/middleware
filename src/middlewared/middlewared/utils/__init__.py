@@ -7,9 +7,9 @@ import re
 import subprocess
 import time
 import json
-from collections import namedtuple
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Callable, Iterable, NamedTuple, overload, Protocol, Sequence, TypeVar
 
 from middlewared.service_exception import MatchNotFound
 from .lang import undefined
@@ -47,16 +47,27 @@ MAX_FILTERS_DEPTH = 3
 TIMESTAMP_DESIGNATOR = '.$date'
 
 logger = logging.getLogger(__name__)
+_T = TypeVar('_T', str, list[str], None)
+_V = TypeVar('_V')
+_SelectList = Iterable[str | list[str]]
+_Entry = dict[str, Any]
 
 
 class UnexpectedFailure(Exception):
     pass
 
 
-FilterGetResult = namedtuple('FilterGetResult', 'result,key,done', defaults=(None, True))
+class FilterGetResult(NamedTuple):
+    result: Any
+    key: Any = None
+    done: bool = True
 
 
-def bisect(condition, iterable):
+class GetterProtocol(Protocol):
+    def __call__(self, obj: object, path: str) -> FilterGetResult: ...
+
+
+def bisect(condition: Callable[[_V], Any], iterable: Iterable[_V]) -> tuple[list[_V], list[_V]]:
     a = []
     b = []
     for val in iterable:
@@ -68,8 +79,7 @@ def bisect(condition, iterable):
     return a, b
 
 
-def Popen(args, **kwargs):
-    shell = kwargs.pop('shell', None)
+def Popen(args, *, shell: bool = False, **kwargs):
     if shell:
         return asyncio.create_subprocess_shell(args, **kwargs)
     else:
@@ -96,7 +106,10 @@ async def run(*args, **kwargs):
     try:
         currently_running_subprocesses.add(subprocess_identifier)
         try:
-            return await loop.run_in_executor(io_thread_pool_executor, functools.partial(subprocess.run, args, **kwargs))
+            return await loop.run_in_executor(
+                io_thread_pool_executor,
+                functools.partial(subprocess.run, args, **kwargs),
+            )
         finally:
             currently_running_subprocesses.discard(subprocess_identifier)
     except OSError as e:
@@ -106,7 +119,7 @@ async def run(*args, **kwargs):
         raise
 
 
-def partition(s):
+def partition(s: str) -> tuple[str, str]:
     rv = ''
     while True:
         left, sep, right = s.partition('.')
@@ -119,7 +132,7 @@ def partition(s):
             return rv + left, right
 
 
-def get_impl(obj, path):
+def get_impl(obj: object, path: str) -> FilterGetResult:
     right = path
     cur = obj
     while right:
@@ -140,7 +153,7 @@ def get_impl(obj, path):
     return FilterGetResult(cur)
 
 
-def get_attr(obj, path):
+def get_attr(obj: object, path: str) -> FilterGetResult:
     """
     Simple wrapper around getattr to ensure that internal filtering methods return consistent
     types.
@@ -148,7 +161,7 @@ def get_attr(obj, path):
     return FilterGetResult(getattr(obj, path))
 
 
-def get(obj, path):
+def get(obj: Any, path: str) -> Any:
     """
     Get a path in obj using dot notation. In case of nested list or tuple, item may be specified by
     numeric index, otherwise the contents of the array are returned along with the unresolved path
@@ -165,7 +178,7 @@ def get(obj, path):
     return data.result if data.result is not undefined else None
 
 
-def select_path(obj, path):
+def select_path(obj: _Entry, path: str) -> tuple[list[str], Any]:
     keys = []
     right = path
     cur = obj
@@ -180,7 +193,15 @@ def select_path(obj, path):
     return (keys, cur)
 
 
-def casefold(obj):
+@overload
+def casefold(obj: _T) -> _T: ...
+
+
+@overload
+def casefold(obj: tuple[str]) -> list[str]: ...
+
+
+def casefold(obj: str | list[str] | tuple[str] | None) -> str | list[str] | None:
     if obj is None:
         return None
 
@@ -193,51 +214,60 @@ def casefold(obj):
     raise ValueError(f'{type(obj)}: support for casefolding object type not implemented.')
 
 
-class filters(object):
+class filters:
+    @staticmethod
     def op_in(x, y):
         return operator.contains(y, x)
 
+    @staticmethod
     def op_rin(x, y):
         if x is None:
             return False
 
         return operator.contains(x, y)
 
+    @staticmethod
     def op_nin(x, y):
         if x is None:
             return False
 
         return not operator.contains(y, x)
 
+    @staticmethod
     def op_rnin(x, y):
         if x is None:
             return False
 
         return not operator.contains(x, y)
 
+    @staticmethod
     def op_re(x, y):
         # Some string fields are nullable. If this is the case then we will treat the null as an empty string
         # so that the regex match doesn't raise an exception.
         return re.match(y, x or '')
 
+    @staticmethod
     def op_startswith(x, y):
         if x is None:
             return False
 
         return x.startswith(y)
 
+    @staticmethod
     def op_notstartswith(x, y):
         if x is None:
             return False
 
         return not x.startswith(y)
 
+    @staticmethod
     def op_endswith(x, y):
         if x is None:
             return False
 
         return x.endswith(y)
 
+    @staticmethod
     def op_notendswith(x, y):
         if x is None:
             return False
@@ -262,7 +292,7 @@ class filters(object):
         '!$': op_notendswith,
     }
 
-    def validate_filters(self, filters, recursion_depth=0, value_maps=None):
+    def validate_filters(self, filters: Iterable[Sequence], recursion_depth: int = 0, value_maps: dict | None = None):
         """
         This method gets called when `query-filters` gets validated in
         the accepts() decorator of public API endpoints. It is generally
@@ -320,7 +350,7 @@ class filters(object):
                 if value_maps is not None:
                     value_maps[other] = ts
 
-    def validate_select(self, select):
+    def validate_select(self, select: _SelectList) -> None:
         for s in select:
             if isinstance(s, str):
                 continue
@@ -349,7 +379,7 @@ class filters(object):
                 'SELECT <parameter name> AS <as name>.'
             )
 
-    def validate_order_by(self, order_by):
+    def validate_order_by(self, order_by: Iterable[str]) -> None:
         for idx, o in enumerate(order_by):
             if isinstance(o, str):
                 continue
@@ -358,7 +388,7 @@ class filters(object):
                 f'{order_by}: parameter at index {idx} [{o}] is not a string.'
             )
 
-    def validate_options(self, options):
+    def validate_options(self, options: dict | None) -> tuple[dict, _SelectList, Iterable[str]]:
         if options is None:
             return ({}, [], [])
 
@@ -379,7 +409,7 @@ class filters(object):
 
         return (options, select, order_by)
 
-    def filterop(self, i, f, source_getter):
+    def filterop(self, i: object, f: Sequence, source_getter: GetterProtocol) -> bool:
         name, op, value = f
         data = source_getter(i, name)
         if data.result is undefined:
@@ -407,22 +437,19 @@ class filters(object):
 
         return False
 
-    def getter_fn(self, entry):
+    def getter_fn(self, entry: Any) -> GetterProtocol:
         """
         Evaluate the type of objects returned by iterable and return an
         appropriate function to retrieve attributes so that we can apply filters
 
         This allows us to filter objects that are not dictionaries.
         """
-        if not entry:
-            return None
-
         if isinstance(entry, dict):
             return get_impl
 
         return get_attr
 
-    def eval_filter(self, list_item, the_filter, getter, value_maps):
+    def eval_filter(self, list_item: _Entry, the_filter: Sequence, getter: GetterProtocol, value_maps: dict):
         """
         `the_filter` in this case will be a single condition of either the form
         [<a>, <opcode>, <b>] or ["OR", [<condition>, <condition>, ...]
@@ -462,18 +489,25 @@ class filters(object):
             return self.filterop(list_item, the_filter, getter)
 
         if (operand_1 := value_maps.get(the_filter[0])):
-            operand_2.rstrip(TIMESTAMP_DESIGNATOR)
+            operand_1 = operand_1.rstrip(TIMESTAMP_DESIGNATOR)
         else:
             operand_1 = the_filter[0]
 
         if (operand_2 := value_maps.get(the_filter[2])):
-            operand_1.rstrip(TIMESTAMP_DESIGNATOR)
+            operand_2 = operand_2.rstrip(TIMESTAMP_DESIGNATOR)
         else:
             operand_2 = the_filter[2]
 
         return self.filterop(list_item, (operand_1, the_filter[1], operand_2), getter)
 
-    def do_filters(self, _list, filters, select, shortcircuit, value_maps):
+    def do_filters(
+        self,
+        _list: Iterable[_Entry],
+        filters: Iterable[Sequence],
+        select: _SelectList,
+        shortcircuit: bool,
+        value_maps: dict,
+    ) -> list[_Entry]:
         rv = []
 
         # we may be filtering output from a generator and so delay
@@ -503,7 +537,7 @@ class filters(object):
 
         return rv
 
-    def do_select(self, _list, select):
+    def do_select(self, _list: Iterable[_Entry], select: _SelectList) -> list[_Entry]:
         rv = []
         for i in _list:
             entry = {}
@@ -533,10 +567,10 @@ class filters(object):
 
         return rv
 
-    def do_count(self, rv):
+    def do_count(self, rv: list[_Entry]) -> int:
         return len(rv)
 
-    def order_nulls(self, _list, order):
+    def order_nulls(self, _list: list[_Entry], order: str) -> tuple[list[_Entry], list[_Entry]]:
         if order.startswith(REVERSE_CHAR):
             order = order[1:]
             reverse = True
@@ -554,7 +588,7 @@ class filters(object):
         non_nulls = sorted(non_nulls, key=lambda x: get(x, order), reverse=reverse)
         return (nulls, non_nulls)
 
-    def order_no_null(self, _list, order):
+    def order_no_null(self, _list: list[_Entry], order: str) -> list[_Entry]:
         if order.startswith(REVERSE_CHAR):
             order = order[1:]
             reverse = True
@@ -563,7 +597,7 @@ class filters(object):
 
         return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
 
-    def do_order(self, rv, order_by):
+    def do_order(self, rv: list[_Entry], order_by: Iterable[str]) -> list[_Entry]:
         for o in order_by:
             if o.startswith(NULLS_FIRST):
                 nulls, non_nulls = self.order_nulls(rv, o[len(NULLS_FIRST):])
@@ -576,13 +610,18 @@ class filters(object):
 
         return rv
 
-    def do_get(self, rv):
+    def do_get(self, rv: list[_Entry]) -> _Entry:
         try:
             return rv[0]
         except IndexError:
             raise MatchNotFound() from None
 
-    def filter_list(self, _list, filters=None, options=None):
+    def filter_list(
+        self,
+        _list: Iterable[_Entry],
+        filters: Iterable[Sequence] | None = None,
+        options: dict | None = None
+    ) -> list[_Entry] | _Entry | int:
         options, select, order_by = self.validate_options(options)
 
         do_shortcircuit = options.get('get') and not order_by
@@ -621,7 +660,7 @@ class filters(object):
 filter_list = filters().filter_list
 
 
-def filter_getattrs(filters):
+def filter_getattrs(filters: list[Sequence]) -> set:
     """
     Get a set of attributes in a filter list.
     """
@@ -656,31 +695,15 @@ def sw_info():
         }
 
 
-def sw_codename():
-    return sw_info()['codename']
-
-
 def sw_buildtime():
     return sw_info()['buildtime']
 
 
-def sw_version():
+def sw_version() -> str:
     return sw_info()['fullname']
 
 
-def sw_version_is_stable():
-    return sw_info()['stable']
-
-
-def is_empty(val):
-    """
-    A small utility function that check if the provided string is either None, '',
-    or just a string containing only spaces
-    """
-    return val in [None, ''] or val.isspace()
-
-
-def are_indices_in_consecutive_order(arr: list[int]) -> bool:
+def are_indices_in_consecutive_order(arr: Sequence[int]) -> bool:
     """
     Determine if the integers in an array form a consecutive sequence 
     with respect to their indices.
@@ -727,12 +750,12 @@ def are_indices_in_consecutive_order(arr: list[int]) -> bool:
     return True
 
 
-class Nid(object):
+class Nid:
 
-    def __init__(self, _id):
+    def __init__(self, _id: int):
         self._id = _id
 
-    def __call__(self):
+    def __call__(self) -> int:
         num = self._id
         self._id += 1
         return num
