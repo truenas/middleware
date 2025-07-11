@@ -21,6 +21,8 @@ from middlewared.api.current import (
     SystemVersionResult,
     SystemVersionShortArgs,
     SystemVersionShortResult,
+    SystemSupportedArgs,
+    SystemSupportedResult,
 )
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.service import CallError, private, Service, ValidationError
@@ -223,6 +225,17 @@ class SystemService(Service):
         if license_ and name in license_['features']:
             return True
         return False
+
+    @api_method(
+        SystemSupportedArgs,
+        SystemSupportedResult,
+        roles=['SYSTEM_PRODUCT_READ']
+    )
+    async def supported(self):
+        """
+        Return whether the current product is supported
+        """
+        return sw_info()['supported']
 
 
 async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
