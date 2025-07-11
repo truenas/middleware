@@ -54,14 +54,13 @@ class LibvirtConnectionMixin:
             return {domain.name(): domain.state() for domain in self.LIBVIRT_CONNECTION.listAllDomains()}
 
     def _is_connection_alive(self):
-        return self._is_kvm_supported() and self._is_libvirt_connection_alive()
+        return self._is_libvirt_connection_alive()
 
     def _system_supports_virtualization(self):
         if not self._is_kvm_supported():
             raise CallError('This system does not support virtualization.')
 
     def _check_connection_alive(self):
-        self._system_supports_virtualization()
         if not self._is_libvirt_connection_alive():
             raise CallError('Failed to connect to libvirt')
 

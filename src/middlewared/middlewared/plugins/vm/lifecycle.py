@@ -21,7 +21,6 @@ class VMService(Service, VMSupervisorMixin):
                 await asyncio.sleep(2)
 
         try:
-            self._system_supports_virtualization()
             if not await self.middleware.call('service.started', 'libvirtd'):
                 await asyncio.wait_for(self.middleware.create_task(libvirtd_started(self.middleware)), timeout=timeout)
             # We want to do this before initializing libvirt connection
@@ -51,7 +50,7 @@ class VMService(Service, VMSupervisorMixin):
         if self._is_connection_alive():
             for vm_data in vms:
                 try:
-                    self._add_with_vm_data(vm_data)
+                    self._add_with_data(vm_data)
                 except Exception as e:
                     # Whatever happens, we don't want middlewared not booting
                     self.middleware.logger.error(

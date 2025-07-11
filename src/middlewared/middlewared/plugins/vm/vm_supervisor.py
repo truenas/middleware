@@ -11,12 +11,12 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
 
     vms = {}
 
-    def _add(self, vm_id):
-        vm = self.middleware.call_sync('vm.get_instance', vm_id)
-        self._add_with_vm_data(vm)
+    def _add(self, id_, plugin='vm'):
+        vm = self.middleware.call_sync(f'{plugin}.get_instance', id_)
+        self._add_with_data(vm, plugin)
 
-    def _add_with_vm_data(self, vm):
-        self.vms[vm['name']] = VMSupervisor(vm, self.middleware)
+    def _add_with_data(self, vm, plugin='vm'):
+        self.vms[vm['name']] = VMSupervisor(plugin, vm, self.middleware)
 
     def _has_domain(self, vm_name):
         return vm_name in self.vms and self.vms[vm_name].domain
@@ -29,22 +29,24 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
     def _clear(self):
         VMSupervisorMixin.vms = {}
 
-    def _vm_from_name(self, vm_name):
-        return self.middleware.call_sync('vm.query', [['name', '=', vm_name]], {'get': True, 'force_sql_filters': True})
+    def _from_name(self, vm_name, plugin='vm'):
+        return self.middleware.call_sync(
+            f'{plugin}.query', [['name', '=', vm_name]], {'get': True, 'force_sql_filters': True},
+        )
 
     def _undefine_domain(self, vm_name):
         domain = self.vms.pop(vm_name, None)
         if domain and domain.domain:
             domain.undefine_domain()
         else:
-            VMSupervisor(self._vm_from_name(vm_name), self.middleware).undefine_domain()
+            VMSupervisor(self._from_name(vm_name), self.middleware).undefine_domain()
 
-    def _check_add_domain(self, vm_name):
+    def _check_add_domain(self, vm_name, plugin='vm'):
         if not self._has_domain(vm_name):
             try:
-                self._add(self._vm_from_name(vm_name)['id'])
+                self._add(self._from_name(vm_name, plugin)['id'], plugin)
             except Exception as e:
-                raise CallError(f'Unable to define domain for {vm_name}: {e}')
+                raise CallError(f'Unable to define domain for {plugin} {vm_name}: {e}')
         if not self._has_domain(vm_name):
             raise CallError(f'Libvirt domain for {vm_name} does not exist')
 
@@ -63,9 +65,9 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
         if configured_status not in desired_status:
             raise CallError(f'VM state is currently not {" / ".join(desired_status)!r}')
 
-    def _start(self, vm_name):
-        self._check_add_domain(vm_name)
-        self.vms[vm_name].start(vm_data=self._vm_from_name(vm_name))
+    def _start(self, vm_name, plugin='vm'):
+        self._check_add_domain(vm_name, plugin)
+        self.vms[vm_name].start(vm_data=self._from_name(vm_name, plugin))
 
     def _poweroff(self, vm_name):
         self._check_domain_status(vm_name, ACTIVE_STATES)

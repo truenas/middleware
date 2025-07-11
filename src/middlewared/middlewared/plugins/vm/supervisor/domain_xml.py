@@ -9,27 +9,30 @@ from middlewared.utils import Nid
 from .utils import create_element
 
 
-def domain_children(vm_data, context):
+def domain_children(plugin, vm_data, context):
     children = [
         create_element('name', attribute_dict={'text': f'{vm_data["id"]}_{vm_data["name"]}'}),
         create_element('uuid', attribute_dict={'text': vm_data['uuid']}),
         create_element('title', attribute_dict={'text': vm_data['name']}),
         create_element('description', attribute_dict={'text': vm_data['description']}),
         # OS/boot related xml - returns an iterable
-        os_xml(vm_data),
+        os_xml(plugin, vm_data),
         # CPU related xml
-        *cpu_xml(vm_data, context),
+        *cpu_xml(plugin, vm_data, context),
         # Memory related xml
-        *memory_xml(vm_data),
-        # Add features
-        features_xml(vm_data),
+        *memory_xml(plugin, vm_data),
         # Clock offset
-        clock_xml(vm_data),
-        # Command line args
-        commandline_xml(vm_data),
+        clock_xml(plugin, vm_data),
         # Devices
-        devices_xml(vm_data, context),
+        devices_xml(plugin, vm_data, context),
     ]
+    if plugin == 'vm':
+        children.extend([
+            # Add features
+            features_xml(vm_data),
+            # Command line args
+            commandline_xml(vm_data),
+        ])
 
     # Wire memory if PCI passthru device is configured
     #   Implicit configuration for now.
@@ -52,9 +55,9 @@ def domain_children(vm_data, context):
     return children
 
 
-def clock_xml(vm_data):
+def clock_xml(plugin, vm_data):
     timers = []
-    if vm_data['hyperv_enlightenments']:
+    if plugin == 'vm' and vm_data['hyperv_enlightenments']:
         timers = [create_element('timer', name='hypervclock', present='yes')]
 
     return create_element(
@@ -71,15 +74,16 @@ def commandline_xml(vm_data):
     )
 
 
-def cpu_xml(vm_data, context):
+def cpu_xml(plugin, vm_data, context):
     features = []
-    if vm_data['cpu_mode'] == 'HOST-PASSTHROUGH':
+    if plugin == 'vm' and vm_data['cpu_mode'] == 'HOST-PASSTHROUGH':
         features.append(create_element('cache', mode='passthrough'))
         if vm_data['enable_cpu_topology_extension']:
             features.append(create_element('feature', policy='require', name='topoext'))
 
-    cpu_nodes = [
-        create_element(
+    cpu_nodes = []
+    if plugin == 'vm':
+        cpu_nodes.append(create_element(
             'cpu', attribute_dict={
                 'children': [
                     create_element(
@@ -98,44 +102,47 @@ def cpu_xml(vm_data, context):
                     vm_data['cpu_model']
                 ) else []) + features,
             }, mode=vm_data['cpu_mode'].lower(),
-        ),
-        # VCPU related xml
+        ))
+
+    # VCPU related xml
+    cpu_nodes.append(
         create_element(
             'vcpu',
             attribute_dict={
                 'text': str(vm_data['vcpus'] * vm_data['cores'] * vm_data['threads']),
             }, **({'cpuset': vm_data['cpuset']} if vm_data['cpuset'] else {}),
         )
-    ]
+    )
 
-    if vm_data['pin_vcpus'] and vm_data['cpuset']:
-        cpu_nodes.append(create_element('cputune', attribute_dict={
-            'children': [
-                create_element('vcpupin', vcpu=str(i), cpuset=str(cpu))
-                for i, cpu in enumerate(parse_numeric_set(vm_data['cpuset']))
-            ]
-        }))
-
-    if vm_data['nodeset']:
-        cpu_nodes.append(create_element(
-            'numatune', attribute_dict={
+    if plugin == 'vm':
+        if vm_data['pin_vcpus'] and vm_data['cpuset']:
+            cpu_nodes.append(create_element('cputune', attribute_dict={
                 'children': [
-                    create_element('memory', nodeset=vm_data['nodeset']),
+                    create_element('vcpupin', vcpu=str(i), cpuset=str(cpu))
+                    for i, cpu in enumerate(parse_numeric_set(vm_data['cpuset']))
                 ]
-            },
-        ))
+            }))
+
+        if vm_data['nodeset']:
+            cpu_nodes.append(create_element(
+                'numatune', attribute_dict={
+                    'children': [
+                        create_element('memory', nodeset=vm_data['nodeset']),
+                    ]
+                },
+            ))
 
     return cpu_nodes
 
 
-def devices_xml(vm_data, context):
+def devices_xml(plugin, vm_data, context):
+    devices = []
     boot_no = Nid(1)
     scsi_device_no = Nid(1)
     usb_controller_no = Nid(1)
     # nec-xhci is added by default for each domain by libvirt so we update our mapping accordingly
     usb_controllers = {'nec-xhci': 0}
     virtual_device_no = Nid(1)
-    devices = []
     for device in context['devices']:
         if isinstance(device, (DISK, CDROM, RAW)):
             if device.data['attributes'].get('type') == 'VIRTIO':
@@ -167,7 +174,7 @@ def devices_xml(vm_data, context):
             spice_server_available = True
             break
 
-    if vm_data['ensure_display_device'] and not display_device_available:
+    if plugin == 'vm' and vm_data['ensure_display_device'] and not display_device_available:
         # We should add a video device if there is no display device configured because most by
         # default if not all headless servers like ubuntu etc require it to boot
         devices.append(create_element('video'))
@@ -181,20 +188,34 @@ def devices_xml(vm_data, context):
             }
         ))
 
-    if vm_data['trusted_platform_module']:
+    if plugin == 'vm' and vm_data['trusted_platform_module']:
         devices.append(create_element(
             'tpm', model='tpm-crb', attribute_dict={
                 'children': [create_element('backend', type='emulator', version='2.0')]
             },
         ))
 
-    devices.append(create_element('channel', type='unix', attribute_dict={
-        'children': [create_element('target', type='virtio', name='org.qemu.guest_agent.0')]
-    }))
-    devices.append(create_element('serial', type='pty'))
-    if vm_data['min_memory']:
-        # memballoon device needs to be added if memory ballooning is enabled
-        devices.append(create_element('memballoon', model='virtio', autodeflate='on'))
+    if plugin == 'vm':
+        devices.append(create_element('channel', type='unix', attribute_dict={
+            'children': [create_element('target', type='virtio', name='org.qemu.guest_agent.0')]
+        }))
+        devices.append(create_element('serial', type='pty'))
+        if vm_data['min_memory']:
+            # memballoon device needs to be added if memory ballooning is enabled
+            devices.append(create_element('memballoon', model='virtio', autodeflate='on'))
+
+    if plugin == 'container':
+        devices.append(create_element('emulator', attribute_dict={'text': '/usr/lib/libvirt/libvirt_lxc'}))
+        devices.append(create_element('console', type='pty'))
+        devices.append(
+            create_element('filesystem', type='mount', attribute_dict={
+                'children': [
+                    create_element('source', dir=f'/mnt/{vm_data["dataset"]}'),
+                    create_element('target', dir='/'),
+                ],
+            })
+        )
+
     return create_element('devices', attribute_dict={'children': devices})
 
 
@@ -244,33 +265,47 @@ def get_hyperv_xml():
     )
 
 
-def memory_xml(vm_data):
+def memory_xml(plugin, vm_data):
     memory_xml_nodes = [create_element('memory', unit='M', attribute_dict={'text': str(vm_data['memory'])})]
     # Memory Ballooning - this will be memory which will always be allocated to the VM
     # If not specified, this defaults to `memory`
-    if vm_data['min_memory']:
+    if plugin == 'vm' and vm_data['min_memory']:
         memory_xml_nodes.append(
             create_element('currentMemory', unit='M', attribute_dict={'text': str(vm_data['min_memory'])})
         )
     return memory_xml_nodes
 
 
-def os_xml(vm_data):
-    children = [create_element(
-        'type',
-        attribute_dict={'text': 'hvm'}, **{
-            k[:-5]: vm_data[k] for k in filter(lambda t: vm_data[t], ('arch_type', 'machine_type'))
-        }
-    )]
-    if vm_data['bootloader'] == 'UEFI':
-        children.extend([
-            create_element(
-                'loader', attribute_dict={'text': f'/usr/share/OVMF/{vm_data["bootloader_ovmf"]}'},
-                readonly='yes', type='pflash', secure='yes' if vm_data['enable_secure_boot'] else 'no',
-            ),
-            create_element('nvram', attribute_dict={
-                'text': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(vm_data)),
-            })
-        ])
+def os_xml(plugin, vm_data):
+    match plugin:
+        case 'container':
+            init = shlex.split(vm_data['init'])
+            children = [
+                create_element('type', attribute_dict={'text': 'exe'}),
+                create_element('init', attribute_dict={'text': init[0]}),
+            ]
+            for arg in init[1:]:
+                children.append(create_element('initarg', attribute_dict={'text': arg}))
+
+        case 'vm':
+            children = [create_element(
+                'type',
+                attribute_dict={'text': 'hvm'}, **{
+                    k[:-5]: vm_data[k] for k in filter(lambda t: vm_data[t], ('arch_type', 'machine_type'))
+                }
+            )]
+            if vm_data['bootloader'] == 'UEFI':
+                children.extend([
+                    create_element(
+                        'loader', attribute_dict={'text': f'/usr/share/OVMF/{vm_data["bootloader_ovmf"]}'},
+                        readonly='yes', type='pflash', secure='yes' if vm_data['enable_secure_boot'] else 'no',
+                    ),
+                    create_element('nvram', attribute_dict={
+                        'text': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(vm_data)),
+                    })
+                ])
+
+        case _:
+            raise ValueError(plugin)
 
     return create_element('os', attribute_dict={'children': children})

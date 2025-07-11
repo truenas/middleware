@@ -18,7 +18,8 @@ from .utils import create_element, DomainState
 
 class VMSupervisor(LibvirtConnectionMixin):
 
-    def __init__(self, vm_data, middleware=None):
+    def __init__(self, plugin, vm_data, middleware=None):
+        self.plugin = plugin
         self.vm_data = vm_data
         self.middleware = middleware
         self.devices = []
@@ -68,7 +69,11 @@ class VMSupervisor(LibvirtConnectionMixin):
     def status(self):
         domain = self.domain
         domain_state = DomainState(domain.state()[0])
-        pid_path = os.path.join('/var/run/libvirt', 'qemu', f'{self.libvirt_domain_name}.pid')
+        pid_path = os.path.join(
+            '/var/run/libvirt',
+            {'container': 'lxc', 'vm': 'qemu'}[self.plugin],
+            f'{self.libvirt_domain_name}.pid',
+        )
         if domain.isActive():
             state = 'SUSPENDED' if domain_state == DomainState.PAUSED else 'RUNNING'
         else:
@@ -83,7 +88,13 @@ class VMSupervisor(LibvirtConnectionMixin):
             with contextlib.suppress(FileNotFoundError):
                 # Do not make a stat call to check if file exists or not
                 with open(pid_path, 'r') as f:
-                    data['pid'] = int(f.read())
+                    pid = int(f.read())
+
+                if self.plugin == 'container':
+                    with open(f'/proc/{pid}/task/{pid}/children') as f:
+                        pid = int(f.read().split()[0])
+
+                data['pid'] = pid
 
         return data
 
@@ -107,10 +118,11 @@ class VMSupervisor(LibvirtConnectionMixin):
 
         flags = 0
 
-        if for_update:
-            flags |= libvirt.VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
-        else:
-            flags |= libvirt.VIR_DOMAIN_UNDEFINE_NVRAM
+        if self.plugin == 'vm':
+            if for_update:
+                flags |= libvirt.VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
+            else:
+                flags |= libvirt.VIR_DOMAIN_UNDEFINE_NVRAM
 
         self._domain.undefineFlags(flags)
         self._domain = None
@@ -128,7 +140,7 @@ class VMSupervisor(LibvirtConnectionMixin):
         self.vm_data = vm_data or self.vm_data
         self.devices = [
             getattr(sys.modules[__name__], device['attributes']['dtype'])(device, self.middleware)
-            for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
+            for device in sorted(self.vm_data.get('devices', []), key=lambda x: (x['order'], x['id']))
         ]
 
     def unavailable_devices(self):
@@ -270,9 +282,10 @@ class VMSupervisor(LibvirtConnectionMixin):
             'cpu_model_choices': self.middleware.call_sync('vm.cpu_model_choices'),
             'devices': self.devices,
         }
-        return domain_children(self.vm_data, context)
+        return domain_children(self.plugin, self.vm_data, context)
 
     def construct_xml(self):
         return create_element(
-            'domain', type='kvm', id=str(self.vm_data['id']), attribute_dict={'children': self.get_domain_children()}
+            'domain', type={'container': 'lxc', 'vm': 'kvm'}[self.plugin],
+            id=str(self.vm_data['id']), attribute_dict={'children': self.get_domain_children()}
         )
