@@ -106,7 +106,7 @@ class VirtGlobalService(ConfigService):
         if new['pool'] and (mapping := (await self.middleware.call('port.ports_mapping')).get(53)):
             port_usages = set()
             for usages in map(lambda i: mapping.get(i, {}).get('port_details', []), ('0.0.0.0', '::')):
-                for u in usages:
+                for u in filter(lambda j: 53 in [i[1] for i in j['ports']], usages):
                     port_usages.add(u['description'])
 
             if port_usages:
