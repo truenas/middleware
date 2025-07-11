@@ -253,7 +253,10 @@ http {
 
         # Handle download file requests directly - MUST come BEFORE the general /webshare/ location
         location ~ ^/webshare/download/([^/]+)/file$ {
-            proxy_pass http://unix:/var/run/webshare/auth.sock:/download/$1/file;
+            # Rewrite to remove /webshare prefix before passing to backend
+            rewrite ^/webshare(.*)$ $1 break;
+
+            proxy_pass http://unix:/var/run/webshare/auth.sock;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
