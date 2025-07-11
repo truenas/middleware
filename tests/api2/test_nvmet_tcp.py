@@ -129,6 +129,17 @@ def assert_validation_errors(attribute: str, errmsg: str):
     assert ve.value.errors[0].errmsg.startswith(errmsg)
 
 
+def wait_for_session_count(count: int, retries: int = 5, delay: int = 1, raise_error: bool = False):
+    sessions = []
+    for i in range(retries):
+        sessions = call('nvmet.global.sessions')
+        if len(sessions) == count:
+            return
+        time.sleep(delay)
+    if raise_error:
+        raise ValueError(f'Expected {count} sessions, but have {len(sessions)}')
+
+
 class NVMeCLIClient:
     DEBUG = False
 
@@ -1407,6 +1418,7 @@ class TestNVMe(NVMeRunning):
                         assert_session(sessions[0], fixture_port['id'], subsys2['id'])
 
                     # Back to only having one session
+                    wait_for_session_count(1)
                     sessions = call('nvmet.global.sessions')
                     assert len(sessions) == 1
                     assert_session(sessions[0], fixture_port['id'], subsys1['id'])
@@ -1419,6 +1431,7 @@ class TestNVMe(NVMeRunning):
                     assert len(sessions) == 0
 
                 # back to having no sessions
+                wait_for_session_count(0)
                 assert call('nvmet.global.sessions') == []
                 assert call('nvmet.global.sessions', [['subsys_id', '=', subsys1['id']]]) == []
                 assert call('nvmet.global.sessions', [['subsys_id', '=', subsys2['id']]]) == []
