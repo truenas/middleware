@@ -223,3 +223,10 @@ class NVMETargetService(PseudoServiceBase):
             (await self.middleware.call('nvmet.global.running')),
             [],
         )
+
+
+class NVMfService(SimpleService):
+    name = "nvmf"
+    reloadable = True
+    etc = ["nvmet"]
+    systemd_unit = "ix-nvmf"
