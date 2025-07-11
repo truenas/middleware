@@ -134,6 +134,7 @@ def setup_server_ha():
         set_interfaces()
         stage = 'SETUP_POOL'
         create_permanent_pool()
+        settle_ha()
     except Exception as exc:
         fail(f'{stage}: failed to set up truenas server: {exc}')
 
@@ -147,7 +148,6 @@ def setup_server_single():
         set_netinfo_single()
         stage = 'SETUP_POOL'
         create_permanent_pool()
-        settle_ha()
     except Exception as exc:
         fail(f'{stage}: failed to set up truenas server: {exc}')
 
