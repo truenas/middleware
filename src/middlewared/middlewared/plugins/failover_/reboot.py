@@ -13,7 +13,7 @@ from middlewared.api.current import (
     FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult,
 )
 from middlewared.plugins.system.reboot import RebootReason
-from middlewared.plugins.update import SYSTEM_UPGRADE_REBOOT_REASON
+from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.service import CallError, job, private, Service
 
 

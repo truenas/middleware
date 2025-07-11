@@ -4,6 +4,15 @@ from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel,
 from middlewared.alert.schedule import IntervalSchedule
 
 
+class CurrentlyRunningVersionDoesNotMatchProfileAlertClass(AlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.WARNING
+    title = "Currently Running System Version Does Not Match Selected Update Profile"
+    text = (
+        "Currently running system version profile %(running)s does not match selected update profile %(selected)s."
+    )
+
+
 class HasUpdateAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.INFO
@@ -17,7 +26,20 @@ class HasUpdateAlertSource(AlertSource):
 
     async def check(self):
         try:
-            if (await self.middleware.call("update.check_available"))["status"] == "AVAILABLE":
-                return Alert(HasUpdateAlertClass)
+            update_status = await self.middleware.call("update.status")
+            if update_status["status"]:
+                if not update_status["status"]["current_train"]["matches_profile"]:
+                    config = await self.middleware.call("update.config")
+                    profile_choices = await self.middleware.call("update.profile_choices")
+                    return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlertClass, {
+                        "running": (
+                            profile_choices.get(update_status["status"]["current_train"]["profile"], {}).
+                            get("name", "<Unknown>")
+                        ),
+                        "selected": profile_choices.get(config["profile"], {}).get("name", "<Unknown>"),
+                    })
+
+                if update_status["status"]["new_version"]:
+                    return Alert(HasUpdateAlertClass)
         except Exception:
             pass
