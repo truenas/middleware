@@ -277,7 +277,10 @@ class UserService(CRUDService):
 
     @private
     def _read_authorized_keys(self, homedir):
-        with suppress(FileNotFoundError):
+        # Extravagant zpool / hardware errors may manifest as IO errors during filesystem operations (even though the
+        # pool itself imports). Since this is a hot codepath in the user_extend method (which *must not* fail) we
+        # suppress the IOError here, and allow other filesystem operations to complain loudly at the user.
+        with suppress(FileNotFoundError, IOError):
             with open(f'{homedir}/.ssh/authorized_keys') as f:
                 try:
                     return f.read().strip()
