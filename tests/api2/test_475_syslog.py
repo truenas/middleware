@@ -6,7 +6,6 @@ from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.assets.system import standby_syslog_to_remote_syslog
 
-
 # Alias
 pp = pytest.param
 
@@ -58,6 +57,11 @@ def check_syslog(log_path, message,
             return found
 
 
+def check_syslog_state(expected_state='active'):
+    # Confirm syslog-ng is in requested state
+    syslog_state = ssh('systemctl is-active syslog-ng').strip()
+    assert syslog_state == expected_state
+
 # -----------------------------------
 # ------------ fixtures -------------
 # -----------------------------------
@@ -76,7 +80,7 @@ def tls_cert():
             "syslog_transport": "UDP",
             "syslog_tls_certificate": None,
         })
-
+        check_syslog_state()
 
 # -----------------------------------
 # -------------- tests --------------
@@ -107,6 +111,7 @@ def test_local_syslog_filter(request, params):
         params.get('priority', 'syslog.LOG_INFO')
     )
     assert check_syslog(params['path'], params['msg'], timeout=10)
+    check_syslog_state()
 
 
 @pytest.mark.parametrize('log_path', [
@@ -121,6 +126,7 @@ def test_filter_leak(request, log_path):
     """
     results = ssh(f'grep -R "ZZZZ:" {log_path}', complete_response=True, check=False)
     assert results['result'] is False, str(results['result'])
+    check_syslog_state()
 
 
 def test_set_remote_syslog(request):
@@ -134,6 +140,7 @@ def test_set_remote_syslog(request):
         call('service.control', 'RESTART', 'syslogd', {'silent': False}, job=True)
     finally:
         call('system.advanced.update', {'syslogserver': ''})
+        check_syslog_state()
 
 
 @pytest.mark.skip(reason="Test is unstable running from Jenkins")
@@ -187,6 +194,7 @@ def test_remote_syslog_function():
     finally:
         # Restore active node
         call('system.advanced.update', {"syslogserver": "", "syslog_transport": "UDP"})
+        check_syslog_state()
 
 
 class TestTLS:
@@ -228,3 +236,4 @@ class TestTLS:
 
         for item in test_tls:
             assert list(filter(lambda s: item in s, conf['output'].splitlines())) is not []
+        check_syslog_state()
