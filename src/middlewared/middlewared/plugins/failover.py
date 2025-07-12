@@ -475,10 +475,17 @@ class FailoverService(ConfigService):
 
                 # Physical NICs can't be just matched by name, because names can change due to OS kernel upgrades.
                 # Match them by hardware addresses instead.
+                _local_macs_to_remote_macs = await self.middleware.call('interface.local_macs_to_remote_macs')
+                if not _local_macs_to_remote_macs and await self.middleware.call('failover.status') == 'MASTER':
+                    # We might have not yet had a successful persist_link_addresses, but we know that now we
+                    # can communicate with the remote node, so try again.
+                    await self.middleware.call("interface.persist_link_addresses")
+                    if _local_macs_to_remote_macs := await self.middleware.call('interface.local_macs_to_remote_macs'):
+                        self.logger.debug('Repaired local_macs_to_remote_macs')
                 missing_local, missing_remote = mismatch_nics(
                     local_physical_mac_to_name,
                     remote_physical_mac_to_name,
-                    await self.middleware.call('interface.local_macs_to_remote_macs'),
+                    _local_macs_to_remote_macs
                 )
 
                 missing_local += list(remote_nonphysical_names - local_nonphysical_names)
