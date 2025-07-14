@@ -84,16 +84,18 @@ def test_002_configure_interface(request, ws_client, get_payload):
     # send the request to configure the interface
     ws_client.call("interface.update", interface, get_payload[0])
 
-    # 1. verify there are pending changes
-    # 2. commit the changes specifying the rollback timer
-    # 3. verify that the changes that were committed, need to be "checked" in (finalized)
-    # 4. finalize the changes (before the temporary changes are rolled back) (i.e. checkin)
-    # 5. verify that there are no more pending interface changes
+    # 1. Verify there are pending changes
     assert ws_client.call("interface.has_pending_changes")
+    # 2. Verify no network configuration will be wiped by the changes
+    assert ws_client.call("interface.network_config_to_be_removed") == []
+    # 3. Commit the changes, specifying the rollback timer
     ws_client.call("interface.commit", {"rollback": True, "checkin_timeout": 10})
+    # 4. Verify the changes that were committed need to be "checked in" (finalized)
     assert ws_client.call("interface.checkin_waiting")
+    # 5. Finalize the changes before they are rolled back (i.e. checkin)
     ws_client.call("interface.checkin")
     assert ws_client.call("interface.checkin_waiting") is None
+    # 6. Verify there are no more pending interface changes
     assert ws_client.call("interface.has_pending_changes") is False
 
     if ha:
