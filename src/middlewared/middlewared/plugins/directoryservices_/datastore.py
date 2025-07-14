@@ -6,6 +6,7 @@ from middlewared.api.current import (
     DirectoryServicesEntry,
     DirectoryServicesUpdateArgs, DirectoryServicesUpdateResult,
     DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
+    DirectoryServicesCertificateChoicesArgs, DirectoryServicesCertificateChoicesResult,
 )
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
@@ -768,3 +769,18 @@ class DirectoryServices(ConfigService):
 
         self.middleware.call_sync('directoryservices.restart_dependent_services')
         job.set_progress(description=f'Successfully left {ds_config["configuration"]["domain"]}')
+
+    @api_method(
+        DirectoryServicesCertificateChoicesArgs, DirectoryServicesCertificateChoicesResult,
+        roles=['DIRECTORY_SERVICE_READ']
+    )
+    async def certificate_choices(self):
+        """ Available certificate choices for use with the `LDAP_MTLS` `credential_type`.
+        Note that prior configuration of LDAP server is required and uploading a custom
+        certificate to TrueNAS may also be required. """
+        return {
+            i['id']: i['name']
+            for i in await self.middleware.call(
+                'certificate.query', [['cert_type', '=', 'CERTIFICATE'], ['cert_type_CSR', '=', False]]
+            )
+        }
