@@ -56,7 +56,11 @@ def migrate_autorid_to_rid(conn, config: dict) -> None:
 
 def upgrade():
     conn = op.get_bind()
-    ds = dict(conn.execute('SELECT * FROM directoryservices').fetchone())
+    row = conn.execute('SELECT * FROM directoryservices').fetchone()
+    if not row:
+        return
+
+    ds = dict(row)
 
     if ds['service_type'] != 'ACTIVEDIRECTORY':
         return
