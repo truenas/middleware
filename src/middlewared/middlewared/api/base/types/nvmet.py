@@ -22,7 +22,7 @@ DOMAIN_PATTERN = re.compile(r'^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,}$')
 
 
 def _validate_nqn(nqn: str):
-    if nqn == NVMET_NQN_UUID_PREFIX:
+    if nqn == NVMET_DISCOVERY_NQN:
         return nqn
     elif nqn.startswith(NVMET_NQN_UUID_PREFIX):
         # Check for "nqn.2014-08.org.nvmexpress:uuid:11111111-2222-3333-4444-555555555555"
