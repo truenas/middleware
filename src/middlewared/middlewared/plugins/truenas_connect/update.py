@@ -209,7 +209,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         return await self.get_interface_ips(interface_names)
 
     @private
-    async def unset_registration_details(self):
+    async def unset_registration_details(self, skip_revoking_cert_and_account=False):
         logger.debug('Unsetting registration details')
         with contextlib.suppress(KeyError):
             await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
@@ -228,8 +228,14 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             await self.middleware.call('certificate.setup_self_signed_cert_for_ui')
             logger.debug('Restarting nginx to consume self generated cert')
             await self.middleware.call('system.general.ui_restart', 2)
-            logger.debug('Revoking existing TNC cert')
-            await self.middleware.call('tn_connect.acme.revoke_cert')
+            if skip_revoking_cert_and_account is False:
+                logger.debug('Revoking existing TNC cert')
+                await self.middleware.call('tn_connect.acme.revoke_cert')
+
+        if skip_revoking_cert_and_account:
+            # This happens when we get 401 from heartbeat as TNC will already have caatered to these cases
+            logger.debug('Skipping revoking TNC user account')
+            return
 
         logger.debug('Revoking TNC user account')
         # We need to revoke the user account now
