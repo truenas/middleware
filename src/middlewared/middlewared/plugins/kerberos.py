@@ -542,7 +542,7 @@ class KerberosKeytabService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-        netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
+        netbiosname = self.middleware.call_sync('smb.config')['netbiosname'].upper()
         machine_acct = f'{netbiosname}$@{ds_config["configuration"]["domain"]}'
 
         ds_cred = ds_config['credential']
