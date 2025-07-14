@@ -59,7 +59,7 @@ class UnexpectedFailure(Exception):
 
 class FilterGetResult(NamedTuple):
     result: Any
-    key: Any = None
+    key: str | None = None
     done: bool = True
 
 
@@ -449,7 +449,7 @@ class filters:
 
         return get_attr
 
-    def eval_filter(self, list_item: _Entry, the_filter: Sequence, getter: GetterProtocol, value_maps: dict):
+    def eval_filter(self, list_item: _Entry, the_filter: Sequence, getter: GetterProtocol, value_maps: dict[str, datetime]):
         """
         `the_filter` in this case will be a single condition of either the form
         [<a>, <opcode>, <b>] or ["OR", [<condition>, <condition>, ...]
@@ -470,11 +470,7 @@ class filters:
                     # This branch of OR is a conjunction of
                     # multiple conditions. All of them must be
                     # True in order for branch to be True.
-                    hit = True
-                    for i in branch:
-                        if not self.eval_filter(list_item, i, getter, value_maps):
-                            hit = False
-                            break
+                    hit = all(self.eval_filter(list_item, i, getter, value_maps) for i in branch)
                 else:
                     hit = self.eval_filter(list_item, branch, getter, value_maps)
 
@@ -488,15 +484,8 @@ class filters:
         if not value_maps:
             return self.filterop(list_item, the_filter, getter)
 
-        if (operand_1 := value_maps.get(the_filter[0])):
-            operand_1 = operand_1.rstrip(TIMESTAMP_DESIGNATOR)
-        else:
-            operand_1 = the_filter[0]
-
-        if (operand_2 := value_maps.get(the_filter[2])):
-            operand_2 = operand_2.rstrip(TIMESTAMP_DESIGNATOR)
-        else:
-            operand_2 = the_filter[2]
+        operand_1 = value_maps.get(the_filter[0]) or the_filter[0]
+        operand_2 = value_maps.get(the_filter[2]) or the_filter[2]
 
         return self.filterop(list_item, (operand_1, the_filter[1], operand_2), getter)
 
@@ -506,7 +495,7 @@ class filters:
         filters: Iterable[Sequence],
         select: _SelectList,
         shortcircuit: bool,
-        value_maps: dict,
+        value_maps: dict[str, datetime],
     ) -> list[_Entry]:
         rv = []
 
