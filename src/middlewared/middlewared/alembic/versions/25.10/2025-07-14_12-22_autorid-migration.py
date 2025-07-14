@@ -20,7 +20,7 @@ depends_on = None
 
 def migrate_autorid_to_rid(conn, config: dict) -> None:
     """ This function converts an idmap_autorid configuration into a roughly equivalent idmap_rid configuration.
-    Trusted domains are also disabled (if enabled) to allow admin to make set up any relevant configuration before
+    Trusted domains are also disabled (if enabled) to allow admin to set up any relevant configuration before
     re-enabling. """
     idmap = loads(decrypt(config['ad_idmap']))
     if idmap['idmap_domain']['idmap_backend'] != 'AUTORID':
