@@ -515,6 +515,11 @@ class DirectoryServices(ConfigService):
 
             return self.middleware.call_sync('directoryservices.config')
 
+        if not old['enable'] and new['service_type'] == DSType.AD.value:
+            # There may be a stale server affinity in the samba gencache and stale idmappings
+            # We should clear these before trying to enable AD
+            self.middleware.call_sync('idmap.clear_idmap_cache').wait_sync()
+
         # First check that our credential is functional. If the credential type is
         # KERBEROS_USER or KERBEROS_PRINCIPAL then this will also perform a kinit and
         # ensure we have a basic kerberos configuration for a potential domain join
