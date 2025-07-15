@@ -267,7 +267,7 @@ class AppUsedHostIpsArgs(BaseModel):
 
 
 class AppUsedHostIpsResult(BaseModel):
-    result: list[str]
+    result: dict[str, list[str]]
 
 
 class AppIpChoicesArgs(BaseModel):

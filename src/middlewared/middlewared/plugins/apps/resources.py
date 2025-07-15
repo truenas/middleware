@@ -73,11 +73,23 @@ class AppService(Service):
         """
         Returns host IPs in use by applications.
         """
-        return sorted(list(set({
+        apps = await self.middleware.call('app.query')
+        # First, collect all unique host IPs
+        all_host_ips = sorted(set(
             host_ip
-            for app in await self.middleware.call('app.query')
+            for app in apps
             for host_ip in app['active_workloads']['used_host_ips']
-        })))
+        ))
+
+        # Then, map each IP to the list of apps using it
+        return {
+            host_ip: [
+                app['name']
+                for app in apps
+                if host_ip in app['active_workloads']['used_host_ips']
+            ]
+            for host_ip in all_host_ips
+        }
 
     @api_method(AppIpChoicesArgs, AppIpChoicesResult, roles=['APPS_READ'])
     async def ip_choices(self):
