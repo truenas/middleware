@@ -60,6 +60,8 @@ class TNCPostInstallService(Service):
                 'interfaces_ips', 'use_all_interfaces', 'interfaces',
             )}
         )
+        logger.debug('TNC Post Install: Syncing interface IPs')
+        await self.middleware.call('tn_connect.hostname.sync_interface_ips')
         logger.debug('TNC Post Install: Configuring nginx to consume TNC certificate')
         await self.middleware.call('tn_connect.acme.update_ui_impl')
 
