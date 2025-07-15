@@ -57,9 +57,9 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                     case 401:
                         logger.debug('TNC Heartbeat: Received 401, unsetting TNC')
                         with contextlib.suppress(Exception):
-                            # It is expected that cert revocation and account revocation will fail because
-                            # account has already been revoked, so we just call this to clear stale alerts etc
-                            await self.middleware.call('tn_connect.unset_registration_details')
+                            # This is called to just make sure that we setup a self-signed certificate and
+                            # remove any alerts which might be there as we are going to unset TNC
+                            await self.middleware.call('tn_connect.unset_registration_details', False)
                         await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
                             'enabled': False,
                         } | get_unset_payload())
