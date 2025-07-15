@@ -295,6 +295,7 @@ def generate_smb_share_conf_dict(
         'fruit:resource': 'stream',
         'comment': share_config[share_field.COMMENT],
         'browseable': share_config[share_field.BROWSEABLE],
+        'ea support': False,
     }
 
     acl_check = __transform_share_path(ds_type, share_config, config_out)
