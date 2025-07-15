@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NQN, excluded_field, single_argument_args
 
 __all__ = [
     "NVMetGlobalEntry",
@@ -44,6 +44,7 @@ class NVMetGlobalEntry(BaseModel):
 @single_argument_args('nvmet_update')
 class NVMetGlobalUpdateArgs(NVMetGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+    basenqn: NQN
 
 
 class NVMetGlobalUpdateResult(BaseModel):

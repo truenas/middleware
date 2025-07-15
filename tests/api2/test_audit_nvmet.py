@@ -7,7 +7,7 @@ from middlewared.test.integration.utils.client import truenas_server
 REDACTED_SECRET = '********'
 MB = 1024 * 1024
 MB_100 = 100 * MB
-HOST1_NQN = 'nqn.host1'
+HOST1_NQN = 'nqn.2011-06.com.truenas:uuid-68bf9433-63ef-49f5-a921-4c0f8190fd94:host1'
 HOST1_KEY = 'DHHC-1:01:rxc6XaoJgTSN7GID7gPQidMAskFym01wNHdw5B3RA33UFFIc:'
 REDACTED_SECRET = '********'
 SUBSYS_NAME = 'subsys1'
