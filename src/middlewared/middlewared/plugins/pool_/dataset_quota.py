@@ -20,44 +20,45 @@ except ImportError:
 
 
 def quota_cb(quota, state):
-    ZFSQuota = truenas_pylibzfs.ZFSUserQuota
-    match quota.quota_type:
-        case ZFSQuota.USER_USED | ZFSQuota.GROUP_USED:
-            value_key = 'used_bytes'
-        case ZFSQuota.USER_QUOTA | ZFSQuota.GROUP_QUOTA:
-            value_key = 'quota'
-        case ZFSQuota.USEROBJ_USED | ZFSQuota.GROUPOBJ_USED:
-            value_key = 'obj_used'
-        case ZFSQuota.USEROBJ_QUOTA | ZFSQuota.GROUPOBJ_QUOTA:
-            value_key = 'obj_quota'
-        case _:
-            # shouldn't be reachable but return early
-            # to be safe
-            return True
-
-    xid = quota.xid
-    quotas_ = state['quotas']
-    qt_ = state['qt']
-
-    if xid in quotas_:
-        name = quotas_[xid]['name']
+    if quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USER_USED,
+        truenas_pylibzfs.ZFSUserQuota.GROUP_USED,
+    ):
+        value_key = 'used_bytes'
+    elif quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USER_QUOTA,
+        truenas_pylibzfs.ZFSUserQuota.GROUP_QUOTA,
+    ):
+        value_key = 'quota'
+    elif quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USEROBJ_USED,
+        truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_USED,
+    ):
+        value_key = 'obj_used'
+    elif quota.quota_type in (
+        truenas_pylibzfs.ZFSUserQuota.USEROBJ_QUOTA,
+        truenas_pylibzfs.ZFSUserQuota.GROUPOBJ_QUOTA,
+    ):
+        value_key = 'obj_quota'
     else:
+        # shouldn't be reachable but return early
+        # to be safe
+        return True
+
+    entry = {'quota_type': state['qt'], 'id': quota.xid, 'name': quota.xid, value_key: quota.value}
+    if quota.xid not in state['quotas']:
         # only resolve the xid once
         try:
-            if qt_ == 'USER':
-                name = pwd.getpwuid(xid, as_dict=True)['pw_name']
+            if state['qt'] == 'USER':
+                entry['name'] = pwd.getpwuid(quota.xid, as_dict=True)['pw_name']
             else:
-                name = grp.getgrgid(xid, as_dict=True)['gr_name']
+                entry['name'] = grp.getgrgid(quota.xid, as_dict=True)['gr_name']
         except Exception:
-            # use default name in case name resolution fails
-            name = xid
+            pass
+    else:
+        entry.update({'name': state['quotas'][quota.xid]['name']})
 
-    quotas_[xid].update({
-        'quota_type': qt_,
-        'id': xid,
-        'name': name,
-        value_key: quota.value,
-    })
+    state['quotas'][quota.xid].update(entry)
     return True
 
 
