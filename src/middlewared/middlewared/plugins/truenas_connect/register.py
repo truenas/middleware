@@ -36,10 +36,9 @@ class TrueNASConnectService(Service):
         if config['enabled'] is False:
             raise CallError('TrueNAS Connect is not enabled')
 
-        if config['status'] != Status.CLAIM_TOKEN_MISSING.name:
+        if config['status'] not in (Status.CLAIM_TOKEN_MISSING.name, Status.REGISTRATION_FINALIZATION_TIMEOUT.name):
             raise CallError(
-                'Claim token has already been generated, either finalize registration '
-                'or re-enable TNC to reset claim token'
+                'Claim token has already been generated, please finalize registration before generating a new one',
             )
 
         claim_token = str(uuid.uuid4())
