@@ -71,7 +71,7 @@ class CertificateService(CRUDService):
             if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR'] or cert['cert_type_CA']:
                 verrors.add(
                     schema_name,
-                    'Selected certificate id is not a valid certificate'
+                    'Selected certificate must be a valid certificate and not a CSR or CA'
                 )
             else:
                 await self.cert_checks(cert, verrors, schema_name)
