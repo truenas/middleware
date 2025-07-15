@@ -68,7 +68,7 @@ class CertificateService(CRUDService):
         verrors = ValidationErrors()
         if cert:
             cert = cert[0]
-            if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR']:
+            if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR'] or cert['cert_type_CA']:
                 verrors.add(
                     schema_name,
                     'Selected certificate id is not a valid certificate'
