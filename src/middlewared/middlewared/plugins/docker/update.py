@@ -14,7 +14,7 @@ from middlewared.service import CallError, ConfigService, job, private
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.zfs import query_imported_fast_impl
 
-from .state_utils import Status
+from .state_utils import IX_APPS_MOUNT_PATH, Status
 from .utils import applications_ds_name
 from .validation_utils import validate_address_pools
 
@@ -71,6 +71,24 @@ class DockerService(ConfigService):
         if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
             verrors.add(f'{schema}.pool', 'Pool not found.')
 
+        # Query ix-apps dataset once for reuse in multiple validations
+        new_pool_ix_apps_ds = None
+        if config['pool']:
+            new_pool_ix_apps_ds = await self.middleware.call(
+                'zfs.dataset.query', [['id', '=', applications_ds_name(config['pool'])]], {
+                    'extra': {'retrieve_children': False, 'retrieve_properties': True}
+                }
+            )
+            # Check if ix-apps dataset exists with unexpected mountpoint
+            if new_pool_ix_apps_ds:
+                mountpoint = new_pool_ix_apps_ds[0]['properties']['mountpoint']['parsed']
+                if mountpoint != IX_APPS_MOUNT_PATH:
+                    verrors.add(
+                        f'{schema}.pool',
+                        f'Dataset {applications_ds_name(config["pool"])!r} already exists with mountpoint '
+                        f'{mountpoint!r} instead of expected {IX_APPS_MOUNT_PATH!r}'
+                    )
+
         if config['address_pools'] != old_config['address_pools']:
             validate_address_pools(
                 await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
@@ -113,11 +131,7 @@ class DockerService(ConfigService):
                     'A pool must have been configured previously for ix-apps dataset migration.'
                 )
             else:
-                if await self.middleware.call(
-                    'zfs.dataset.query', [['id', '=', applications_ds_name(config['pool'])]], {
-                        'extra': {'retrieve_children': False, 'retrieve_properties': False}
-                    }
-                ):
+                if new_pool_ix_apps_ds:
                     verrors.add(
                         f'{schema}.migrate_applications',
                         f'Migration of {applications_ds_name(old_config["pool"])!r} to {config["pool"]!r} not '
