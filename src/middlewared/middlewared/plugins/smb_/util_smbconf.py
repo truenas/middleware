@@ -129,7 +129,7 @@ def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict
     path = share_config[share_field.PATH]
     opts = share_config[share_field.OPTS]
     path_suffix = None
-    default_path_suffix = '%D/%u' if ds_type is DSType.AD else '%u'
+    default_path_suffix = '%D/%U' if ds_type is DSType.AD else '%U'
 
     if path == 'EXTERNAL':
         config_out.update({

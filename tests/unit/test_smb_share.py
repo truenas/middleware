@@ -385,7 +385,7 @@ def test__timemachine_preset(nfsacl_dataset, tmopts):
 
     if 'auto_dataset_creation' in tmopts:
         assert conf['zfs_core:zfs_auto_create'] is True
-        suffix = tmopts.get('dataset_naming_schema', '%u')
+        suffix = tmopts.get('dataset_naming_schema', '%U')
         assert conf['path'] == f'{nfsacl_dataset}/{suffix}'
 
     if 'timemachine_quota' in tmopts:
@@ -486,7 +486,7 @@ def test__homes_standalone(nfsacl_dataset, path_suffix):
     }
     conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
 
-    expected_suffix = path_suffix or '%u'
+    expected_suffix = path_suffix or '%U'
     assert conf['path'] == os.path.join(nfsacl_dataset, expected_suffix)
 
 
@@ -499,7 +499,7 @@ def test__homes_ad(nfsacl_dataset, path_suffix):
     })
     conf = generate_smb_share_conf_dict(DSType.AD, smb, BASE_SMB_CONFIG)
 
-    expected_suffix = path_suffix or '%D/%u'
+    expected_suffix = path_suffix or '%D/%U'
     assert conf['path'] == os.path.join(nfsacl_dataset, expected_suffix)
 
 

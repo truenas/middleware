@@ -290,7 +290,7 @@ class LegacyOpt(BaseModel):
     NOTE: This feature does not work with recycle bin features in client operating systems.
 
     WARNING: Do not use this feature instead of backups or ZFS snapshots. """
-    path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
+    path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%U"])
     hostsallow: list[str] = Field(default=[], examples=[
         ['192.168.0.200', '150.203.'],
         ['150.203.15.0/255.255.255.0'],
@@ -386,14 +386,15 @@ class TimeMachineOpt(BaseModel):
     """ If set, the server uses the `dataset_naming_schema` to make a new ZFS dataset when the client connects. \
     The server uses this dataset as the share path during the SMB session.
 
-    NOTE: This setting requires the share path to be a dataset mountpoint."""
-    dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
+    NOTE: this setting requires the share path to be a dataset mountpoint."""
+    dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%U"])
     """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema, \
-    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to \
-    Active Directory it uses `%D/%u` (domain/username). See the `VARIABLE SUBSTITUTIONS` section in the smb.conf \
+    the server uses `%U` (username) if it is not joined to Active Directory. If the server is joined to \
+    Active Directory it uses `%D/%U` (domain/username). See the `VARIABLE SUBSTITUTIONS` section in the smb.conf \
     manpage for valid strings.
 
-    WARNING: ZFS dataset naming rules are more restrictive than normal path rules."""
+    WARNING: ZFS dataset naming rules are more restrictive than normal path rules. For example, if `%u` is specified \
+    then the character `\\` may be inserted in the username (which is not supported in ZFS)."""
     vuid: NonEmptyString | None = Field(default=None, examples=['d12aafdc-a7ac-4e3c-8bbd-6001f7f19819'])
     """ This value is the Time Machine volume UUID for the SMB share. The TrueNAS server uses this value in the mDNS \
     advertisement for the Time Machine share. MacOS clients may use it to identify the volume. When you create or \
@@ -429,10 +430,9 @@ class TimeLockedOpt(BaseModel):
 class PrivateDatasetOpt(BaseModel):
     """ These configuration options apply to shares with the `PRIVATE_DATASETS_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.PRIVATE_DATASETS_SHARE] = Field(exclude=True, repr=False)
-    dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%u"])
-    """ The naming schema to use when `auto_dataset_creation` is specified. If you do not set a schema, \
-    the server uses `%u` (username) if it is not joined to Active Directory. If the server is joined to \
-    Active Directory it uses `%D/%u` (domain/username).
+    dataset_naming_schema: SmbNamingSchema | None = Field(default=None, examples=["%D/%U"])
+    """ The naming schema to use. If you do not set a schema, the server uses `%U` (username) if it is not joined to \
+    Active Directory. If the server is joined to Active Directory it uses `%D/%U` (domain/username).
 
     WARNING: ZFS dataset naming rules are more restrictive than normal path rules."""
     auto_quota: int = Field(default=0, examples=[10], ge=0)
