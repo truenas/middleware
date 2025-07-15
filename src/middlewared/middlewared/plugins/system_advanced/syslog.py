@@ -25,7 +25,6 @@ class SystemAdvancedService(Service):
             i['id']: i['name']
             for i in await self.middleware.call(
                 'certificate.query', [
-                    ['revoked', '=', False],
                     ['cert_type_CSR', '=', False],
                     ['cert_type_CA', '=', False]
                 ]
