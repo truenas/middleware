@@ -49,16 +49,16 @@ class TrueNASConnectService(Service):
         await self.middleware.call('tn_connect.set_status', Status.REGISTRATION_FINALIZATION_WAITING.name)
         logger.debug(
             'Claim token for TNC generation has been generated, kicking off registration '
-            'process to finalize registration after 1 minute'
+            'process to finalize registration after 30 seconds'
         )
         # Triggering the job now to finalize registration
+        # It will start after 30 seconds
         asyncio.get_event_loop().call_later(
-            1 * 60,
+            30,
             lambda: self.middleware.create_task(
                 self.middleware.call('tn_connect.finalize.registration')
             ),
         )
-        await self.middleware.call('tn_connect.finalize.registration')
         return claim_token
 
 
