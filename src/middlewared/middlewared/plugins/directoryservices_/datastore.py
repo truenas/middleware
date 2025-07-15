@@ -786,6 +786,10 @@ class DirectoryServices(ConfigService):
         return {
             i['id']: i['name']
             for i in await self.middleware.call(
-                'certificate.query', [['cert_type', '=', 'CERTIFICATE'], ['cert_type_CSR', '=', False]]
+                'certificate.query', [
+                    ['cert_type', '=', 'CERTIFICATE'],
+                    ['cert_type_CSR', '=', False],
+                    ['cert_type_CA', '=', False]
+                ]
             )
         }

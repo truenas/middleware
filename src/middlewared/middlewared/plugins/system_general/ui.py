@@ -81,7 +81,7 @@ class SystemGeneralService(Service):
         return {
             i["id"]: i["name"]
             for i in await self.middleware.call(
-                "certificate.query", [("cert_type_CSR", "=", False)]
+                "certificate.query", [("cert_type_CSR", "=", False), ("cert_type_CA", "=", False)]
             )
         }
 

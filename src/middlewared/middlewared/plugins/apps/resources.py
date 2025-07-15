@@ -51,7 +51,7 @@ class AppService(Service):
         Returns certificates which can be used by applications.
         """
         return await self.middleware.call(
-            'certificate.query', [['cert_type_CSR', '=', False], ['parsed', '=', True]],
+            'certificate.query', [['cert_type_CSR', '=', False], ['cert_type_CA', '=', False], ['parsed', '=', True]],
             {'select': ['name', 'id']}
         )
 
