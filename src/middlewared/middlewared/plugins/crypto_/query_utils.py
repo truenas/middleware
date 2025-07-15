@@ -29,6 +29,7 @@ def normalize_cert_attrs(cert: dict) -> None:
         'cert_type': 'CERTIFICATE',
         'cert_type_existing': bool(cert['type'] & CERT_TYPE_EXISTING),
         'cert_type_CSR': bool(cert['type'] & CERT_TYPE_CSR),
+        'cert_type_CA': False,
         'chain_list': [],
         'key_length': None,
         'key_type': None,
@@ -60,6 +61,11 @@ def normalize_cert_attrs(cert: dict) -> None:
         if not cert_data:
             failed_parsing = True
             cert_extend_report_error('certificate', cert)
+        else:
+            # Check if this is a CA certificate by examining BasicConstraints
+            basic_constraints = cert.get('extensions', {}).get('BasicConstraints')
+            if basic_constraints and 'CA:TRUE' in basic_constraints:
+                cert['cert_type_CA'] = True
 
     if cert['privatekey']:
         key_obj = load_private_key(cert['privatekey'])
