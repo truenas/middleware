@@ -136,7 +136,7 @@ def test__change_sharing_smd_home_to_true(smb_info):
     share = call('sharing.smb.update', smb_id, {'purpose': 'LEGACY_SHARE', 'options': {'home': True}})
     try:
         share_path = call('smb.getparm', 'path', 'homes')
-        assert share_path == f'{share["path"]}/%u'
+        assert share_path == f'{share["path"]}/%U'
     finally:
         new_info = call('sharing.smb.update', smb_id, {'purpose': 'LEGACY_SHARE', 'options': {'home': False}})
 
