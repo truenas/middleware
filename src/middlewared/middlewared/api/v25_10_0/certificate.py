@@ -56,6 +56,7 @@ class CertificateEntry(BaseModel):
     cert_type: NonEmptyString
     cert_type_existing: bool
     cert_type_CSR: bool
+    cert_type_CA: bool
     chain_list: list[LongString]
     key_length: int | None
     key_type: NonEmptyString | None
