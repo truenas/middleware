@@ -566,8 +566,14 @@ class SmbShareEntry(BaseModel):
     access_based_share_enumeration: bool = False
     """ If set, the share is only included when an SMB client requests a list of shares on the SMB server if \
     the share (not filesystem) access control list (see `sharing.smb.getacl`) grants access to the user. """
-    locked: bool
-    """ Read-only value showing if the share is in a locked dataset. """
+    locked: bool | None
+    """ Read-only value indicating whether the share is located on a locked dataset.
+
+    Returns:
+        - True: The share is in a locked dataset.
+        - False: The share is not in a locked dataset.
+        - None: Lock status is not available because path locking information was not requested.
+    """
     audit: SmbAuditConfig = Field(default_factory=SmbAuditConfig, examples=[
         {'enable': True, 'watch_list': ['interns'], 'ignore_list': []},
         {'enable': True, 'watch_list': [], 'ignore_list': ['automation']}

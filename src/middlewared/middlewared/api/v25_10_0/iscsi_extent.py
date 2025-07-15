@@ -40,6 +40,13 @@ class IscsiExtentEntry(BaseModel):
     enabled: bool = True
     vendor: str
     locked: bool | None
+    """ Read-only value indicating whether the iscsi extent is located on a locked dataset.
+
+    Returns:
+        - True: The extent is in a locked dataset.
+        - False: The extent is not in a locked dataset.
+        - None: Lock status is not available because path locking information was not requested.
+    """
 
 
 class IscsiExtentCreate(IscsiExtentEntry):

@@ -153,7 +153,13 @@ class NfsShareEntry(BaseModel):
     enabled: bool = True
     """ Enable or disable the share. """
     locked: bool | None
-    """ Lock state of the dataset (if encrypted). """
+    """ Read-only value indicating whether the share is located on a locked dataset.
+
+    Returns:
+        - True: The share is in a locked dataset.
+        - False: The share is not in a locked dataset.
+        - None: Lock status is not available because path locking information was not requested.
+    """
     expose_snapshots: bool = False
     """
     Enterprise feature to enable access to the ZFS snapshot directory for the export.
