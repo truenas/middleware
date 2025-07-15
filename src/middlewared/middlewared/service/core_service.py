@@ -388,13 +388,20 @@ class CoreService(Service):
         kwargs = kwargs or {}
         self.middleware.send_event(name, event_type, **kwargs)
 
-    @api_method(CorePingArgs, CorePingResult, authorization_required=False)
+    @api_method(CorePingArgs, CorePingResult, authentication_required=False)
     def ping(self):
         """
-        Utility method which just returns "pong".
-        Can be used to keep connection/authtoken alive instead of using
-        "ping" protocol message.
+        Respond to WebSocket ping frames with "pong".
+
+        This endpoint can be used to keep connections alive as outlined \
+        in the WebSocket specification. It does not require authentication \
+        but is rate limited to prevent abuse.
+
+        Returns:
+            str: Always returns "pong"
         """
+        # NOTE: The UI uses this endpoint to maintain the WebSocket
+        # connection on the login page.
         return 'pong'
 
     def _ping_host(self, version, host, timeout, count=None, interface=None, interval=None):
