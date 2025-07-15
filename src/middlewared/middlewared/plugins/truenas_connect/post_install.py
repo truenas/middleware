@@ -57,6 +57,7 @@ class TNCPostInstallService(Service):
             } | {k: tnc_config[k] for k in (
                 'ips', 'jwt_token', 'registration_details', 'account_service_base_url',
                 'leca_service_base_url', 'tnc_base_url', 'heartbeat_service_base_url',
+                'interfaces_ips', 'use_all_interfaces', 'interfaces',
             )}
         )
         logger.debug('TNC Post Install: Configuring nginx to consume TNC certificate')
