@@ -523,7 +523,7 @@ class DirectoryServices(ConfigService):
         # First check that our credential is functional. If the credential type is
         # KERBEROS_USER or KERBEROS_PRINCIPAL then this will also perform a kinit and
         # ensure we have a basic kerberos configuration for a potential domain join
-        validate_credential(f'{SCHEMA}.credential', new, verrors, revert)
+        validate_credential(SCHEMA, new, verrors, revert)
         if verrors:
             self.__revert_changes(revert)
 
