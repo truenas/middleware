@@ -1,4 +1,4 @@
-from middlewared.service import CallError, periodic, Service, private
+from middlewared.service import CallError, periodic, Service
 
 from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
 
