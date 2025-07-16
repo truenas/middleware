@@ -126,11 +126,31 @@ class DiskEntry:
         """The disk's serial number as reported by sysfs"""
         if not (serial := self.__opener(relative_path="device/serial")):
             if serial := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
-                serial = (
-                    "".join(chr(b) if 32 <= b <= 126 else "\ufffd" for b in serial)
-                    .replace("\ufffd", "")
-                    .strip()
-                )
+                # VPD page 0x80 (Unit Serial Number) structure:
+                #   Byte 0: Peripheral qualifier & device type
+                #   Byte 1: Page code (0x80)
+                #   Byte 2: Reserved (0x00)
+                #   Byte 3: Page length (number of following data bytes)
+                #   Bytes 4+: ASCII serial-number data
+                #
+                # IMPORTANT: VPD page 0x80 uses a single-byte length field (byte 3),
+                # unlike page 0x83 which uses a 16-bit big-endian length.
+                # Page 0x80 is limited to 255 bytes of serial data.
+                #
+                # Reference: IBM System Storage DS3500 Storage System SCSI Reference
+                # Section 4.7.5.12 INQUIRY Unit Serial Number Page 0x80:
+                # "The PAGE LENGTH field indicates the number of bytes that follow
+                # in the unit serial number page." (single byte at offset 3)
+                if len(serial) > 4:
+                    # Page length is a single byte value at byte 3
+                    page_length = serial[3]
+                    # Guard against devices that report a length larger than the buffer
+                    page_length = min(page_length, len(serial) - 4)
+                    # Extract only the serial number data, skipping the 4-byte header
+                    serial_data = serial[4:4 + page_length]
+                    serial = serial_data.decode('ascii', errors='ignore').rstrip('\x00').strip()
+                else:
+                    serial = ""
 
         if not serial:
             # pmem devices have a uuid attribute that we use as serial
