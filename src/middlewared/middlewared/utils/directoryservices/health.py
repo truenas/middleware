@@ -4,6 +4,7 @@ from .constants import DSStatus, DSType
 from threading import Lock
 
 MAX_RECOVER_ATTEMPTS = 5
+HEALTH_EVENT_NAME = 'directoryservices.status'
 
 
 class KRB5HealthCheckFailReason(enum.IntEnum):
