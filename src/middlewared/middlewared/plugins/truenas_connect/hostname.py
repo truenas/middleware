@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from truenas_connect_utils.exceptions import CallError as TNCCallError
@@ -50,20 +51,39 @@ class TNCHostnameService(Service):
         if response['error']:
             logger.error('Failed to update IPs with TrueNAS Connect: %s', response['error'])
 
+    async def handle_update_ips(self, event_type, args):
+        """
+        Handle IP address changes for TrueNAS Connect.
+        This method is called when an IP address change event occurs.
+        """
+        tnc_config = await self.middleware.call('tn_connect.config')
+        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
+
+        if args['fields']['iface'] is None or tnc_config['status'] not in CONFIGURED_TNC_STATES or (
+            tnc_config['use_all_interfaces'] is False and args['fields']['iface'] not in tnc_config['interfaces']
+        ) or args['fields']['iface'].startswith(internal_interfaces):
+            # We don't want to do anything if TNC is not configured or if we
+            # are not watching for the interface where the IP address change occurred
+            # or if the interface is internal
+            return
+
+        logger.info(
+            'Updating IPs for TrueNAS Connect due to %s change on interface %s', event_type, args['fields']['iface']
+        )
+        await self.sync_interface_ips()
+
 
 async def update_ips(middleware, event_type, args):
-    tnc_config = await middleware.call('tn_connect.config')
-    if tnc_config['status'] not in CONFIGURED_TNC_STATES or (
-        tnc_config['use_all_interfaces'] is False and args['fields']['iface'] not in tnc_config['interfaces']
-    ):
-        # We don't want to do anything if TNC is not configured or if we
-        # are not watching for the interface where the IP address change occurred
-        return
-
-    logger.info(
-        'Updating IPs for TrueNAS Connect due to %s change on interface %s', event_type, args['fields']['iface']
+    # We want to call the handle ips method after a 5 second delay because what happens when an app is started
+    # or stopped is that the IP address change event is triggered before docker actually registers the new interface
+    # it created which means we are not successfully able to isolate the docker interface as an internal interface
+    # This helps us save on an unnecessary IP sync with TNC
+    asyncio.get_event_loop().call_later(
+        5,
+        lambda: middleware.create_task(
+            middleware.call('tn_connect.hostname.handle_update_ips', event_type, args)
+        ),
     )
-    middleware.create_task(middleware.call('tn_connect.hostname.sync_interface_ips'))
 
 
 async def setup(middleware):
