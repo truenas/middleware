@@ -17,7 +17,7 @@ from middlewared.utils.lang import undefined
 from middlewared.plugins.idmap_.idmap_constants import TRUENAS_IDMAP_MAX, TRUENAS_IDMAP_MIN
 
 from pydantic import Field, Secret, model_validator, field_validator
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 __all__ = [
     'DirectoryServicesCacheRefreshArgs', 'DirectoryServicesCacheRefreshResult',
@@ -230,6 +230,7 @@ DSCred = Annotated[
 
 
 class ActiveDirectoryConfig(BaseModel):
+    service_type: Literal['ACTIVEDIRECTORY'] = Field(exclude=True, repr=False)
     hostname: NonEmptyString
     """ Hostname of TrueNAS server to register in Active Directory. Example: "truenasnyc". """
     domain: NonEmptyString
@@ -381,6 +382,7 @@ class LDAPAttributeMaps(BaseModel):
 
 
 class LDAPConfig(BaseModel):
+    service_type: Literal['LDAP'] = Field(exclude=True, repr=False)
     server_urls: list[LDAP_URL]
     """ List of LDAP server URIs used for LDAP binds. Each URI must begin with ldap:// or ldaps:// and may use either \
     a DNS name or an IP address. Example: `['ldaps://myldap.domain.internal']`."""
@@ -409,6 +411,7 @@ class LDAPConfig(BaseModel):
 
 
 class IPAConfig(BaseModel):
+    service_type: Literal['IPA'] = Field(exclude=True, repr=False)
     target_server: NonEmptyString
     """ The name of the IPA server that TrueNAS uses to build URLs when it joins or leaves the IPA domain. \
     Example: "ipa.example.internal". """
@@ -508,8 +511,24 @@ class DirectoryServicesEntry(BaseModel):
             'server_urls': ['ldap.ipadom.internal'],
             'basedn': 'dc=ipadom,dc=internal',
         }
-    ])
+    ], discriminator='service_type')
     """ The service_type specific configuration for the directory sevices plugin. """
+
+    @model_validator(mode='before')
+    @classmethod
+    def parse_configuration(cls, data_in: Any) -> Any:
+        if not isinstance(data_in, dict):
+            return data_in
+
+        # insert the currently-configured service_type into the configuration
+        # dict so that the discriminator works as expected.
+        if 'configuration' in data_in:
+            if 'service_type' in data_in:
+                data_in['configuration']['service_type'] = data_in['service_type']
+            else:
+                raise ValueError('"service_type" field is required if "configuration" field is specified')
+
+        return data_in
 
 
 @single_argument_args('directoryservices_update')
