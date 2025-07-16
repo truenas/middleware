@@ -16,7 +16,9 @@ from .util_cache import (
     DSCacheFill,
     insert_cache_entry,
     query_cache_entries,
-    retrieve_cache_entry
+    retrieve_cache_entry,
+    check_cache_expired,
+    check_cache_version
 )
 
 from time import sleep
@@ -277,7 +279,7 @@ class DSCache(Service):
         raise CallError('Timed out while waiting for domain to come online')
 
     @job(lock="directoryservices_cache_fill", lock_queue_size=1)
-    def refresh_impl(self, job):
+    def refresh_impl(self, job, force=False):
         """
         Rebuild the directory services cache. This is performed in the following
         situations:
@@ -285,18 +287,26 @@ class DSCache(Service):
         1. User starts a directory service
         2. User triggers manually through API or webui
         3. Once every 24 hours via cronjob
+
+        Returns:
+            True - cache was refreshed / replaced
+            False - cache was not refreshed. This can happen if:
+                * directory services are disabled or unhealthy
+                * cache is not expired and force was not specified
         """
 
         ds = self.middleware.call_sync('directoryservices.status')
         if ds['type'] is None:
-            return
+            job.set_progress(100, 'Directory services not enabled.')
+            return False
 
         if ds['status'] not in (DSStatus.HEALTHY.name, DSStatus.JOINING.name):
             self.logger.warning(
                 'Unable to refresh [%s] cache, state is: %s',
                 ds['type'], ds['status']
             )
-            return
+            job.set_progress(100, 'Directory services not healthy.')
+            return False
 
         ds_type = DSType(ds['type'])
         match ds_type:
@@ -308,10 +318,20 @@ class DSCache(Service):
                 raise ValueError(f'{ds_type}: unexpected DSType')
 
         vers = self.middleware.call_sync('system.version_short')
+        if not force:
+            # Checking cache version will forcibly remove cache if it
+            # is the wrong version, which will allow check_cache_expired()
+            # to fail and trigger cache rebuild.
+            check_cache_version(vers)
+            if not check_cache_expired():
+                job.set_progress(100, 'Cache is not expired. Skipping refresh.')
+                return False
 
         with DSCacheFill() as dc:
             job.set_progress(15, 'Filling cache')
             dc.fill_cache(job, ds_type, vers)
+
+        return True
 
     async def abort_refresh(self):
         cache_job = await self.middleware.call('core.get_jobs', [

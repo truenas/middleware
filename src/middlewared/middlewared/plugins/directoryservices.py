@@ -72,7 +72,7 @@ class DirectoryServices(Service):
         permissions and ACL related methods. Likewise, a cache refresh will not resolve issues
         with users being unable to authenticate to shares.
         """
-        return await job.wrap(await self.middleware.call('directoryservices.cache.refresh_impl'))
+        return await job.wrap(await self.middleware.call('directoryservices.cache.refresh_impl', True))
 
     @private
     async def get_last_password_change(self, domain=None):
@@ -148,6 +148,8 @@ class DirectoryServices(Service):
         # load on remote servers.
         if self.middleware.call_sync('failover.is_single_master_node'):
             job.set_progress(10, 'Refreshing cache'),
+            # NOTE: we're deliberately not specifying `force` here because we want to avoid
+            # unnecessary cache rebuilds during HA failover events.
             cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
             cache_refresh.wait_sync()
 

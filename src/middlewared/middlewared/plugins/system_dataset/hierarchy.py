@@ -53,7 +53,8 @@ SYSTEM_DATASET_JSON_SCHEMA = {
                     'properties': {
                         'path': {'type': 'string'},
                         'uid': {'type': 'integer'},
-                        'gid': {'type': 'integer'}
+                        'gid': {'type': 'integer'},
+                        'mode': {'type': 'integer'}
                     },
                     'required': ['path', 'uid', 'gid']
                 }
@@ -94,6 +95,14 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'gid': 0,
                 'mode': 0o755,
             },
+            'create_paths': [
+                {
+                    'path': '/var/db/system/directory_services',
+                    'uid': 0,
+                    'gid': 0,
+                    'mode': 0o700
+                },
+            ],
         },
         {
             'name': os.path.join(pool_name, '.system/cores'),

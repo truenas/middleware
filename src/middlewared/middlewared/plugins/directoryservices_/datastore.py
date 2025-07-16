@@ -8,6 +8,7 @@ from middlewared.api.current import (
     DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
     DirectoryServicesCertificateChoicesArgs, DirectoryServicesCertificateChoicesResult,
 )
+from middlewared.plugins.directoryservices_.util_cache import expire_cache
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
@@ -519,6 +520,10 @@ class DirectoryServices(ConfigService):
             # There may be a stale server affinity in the samba gencache and stale idmappings
             # We should clear these before trying to enable AD
             self.middleware.call_sync('idmap.clear_idmap_cache').wait_sync()
+
+            if old['configuration'] and old['configuration'].get('idmap') != new['configuration']['idmap']:
+                # We've changed idmap configuration so we need to expire the directory services cache
+                expire_cache()
 
         # First check that our credential is functional. If the credential type is
         # KERBEROS_USER or KERBEROS_PRINCIPAL then this will also perform a kinit and

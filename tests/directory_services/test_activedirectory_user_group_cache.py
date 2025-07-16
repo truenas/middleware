@@ -68,9 +68,9 @@ def get_tdb_version_data(filename):
 
 def check_cache_version():
     tn_version = call('system.version_short')
-    tdb_v_usr = get_tdb_version_data('/root/tdb/persistent/directoryservice_cache_user.tdb')
+    tdb_v_usr = get_tdb_version_data('/var/db/system/directory_services/directoryservice_cache_user.tdb')
     assert tdb_v_usr['truenas_version'] == tn_version
-    tdb_v_grp = get_tdb_version_data('/root/tdb/persistent/directoryservice_cache_group.tdb')
+    tdb_v_grp = get_tdb_version_data('/var/db/system/directory_services/directoryservice_cache_group.tdb')
     assert tdb_v_grp['truenas_version'] == tn_version
 
 
@@ -111,7 +111,7 @@ def test_check_directoryservices_cache_refresh(do_ad_connection):
     """
 
     # Cache resides in tdb files. Remove the files to clear cache.
-    ssh('rm -f /root/tdb/persistent/*')
+    ssh('rm -f /var/db/system/directory_services/*')
 
     # directoryservices.cache_refresh job causes us to rebuild / refresh LDAP / AD users.
     call('directoryservices.cache.refresh_impl', job=True)
@@ -141,7 +141,7 @@ def test_check_lazy_initialization_of_users_and_groups_by_name(do_ad_connection)
     by id or by name and so they are tested separately.
     """
 
-    ssh('rm -f /root/tdb/persistent/*')
+    ssh('rm -f /var/db/system/directory_services/*')
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
 
     assert ad_user['immutable'] is True
@@ -173,7 +173,7 @@ def test_check_lazy_initialization_of_users_and_groups_by_id(do_ad_connection):
     """
 
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
-    ssh('rm -f /root/tdb/persistent/*')
+    ssh('rm -f /var/db/system/directory_services/*')
     call('user.query', [['uid', '=', ad_user['uid']]], {'get': True})
     call('group.query', [['gid', '=', ad_group['gid']]], {'get': True})
     cache_names = set([x['username'] for x in call(
@@ -201,3 +201,19 @@ def test_update_delete_failures(do_ad_connection, op_type):
                 call(f'{prefix}.delete', acct['id'])
 
         assert ce.value.errno == errno.EPERM
+
+
+def test_check_cache_expiration(do_ad_connection):
+    # Make sure cache is up to date
+    call('directoryservices.cache.refresh_impl', job=True)
+
+    # Verify that we don't refresh when not expired
+    assert call('directoryservices.cache.refresh_impl', job=True) is False
+
+    # Forcibly expire the cache by setting the expiration timestamp to a past date
+    cmd = 'python3 -c "from middlewared.plugins.directoryservices_.util_cache import expire_cache;'
+    cmd += 'expire_cache()"'
+    ssh(cmd)
+
+    # Now verify that cache is rebuilt as expected
+    assert call('directoryservices.cache.refresh_impl', job=True) is True
