@@ -189,7 +189,7 @@ class DomainSecrets(Service):
 
     async def restore(self, netbios_name=None):
         """ Restore the contents of secrets.tdb from a stored backup of the node.
-        This is allowed if standby controller as it preps winbindd for failover. """
+        This is allowed on standby controller as it preps winbindd for failover. """
         if netbios_name is None:
             netbios_name = (await self.middleware.call('smb.config'))['netbiosname']
 
