@@ -551,8 +551,10 @@ class NvmetBdevConfig(NvmetConfig):
                                            )
 
             case NAMESPACE_DEVICE_TYPE.FILE.api:
+                _path = config_item['device_path']
                 rpc.bdev.bdev_aio_create(client,
-                                         filename=config_item['device_path'],
+                                         filename=_path,
+                                         block_size=render_ctx.get('path_to_recordsize', {}).get(_path, 512),
                                          name=name
                                          )
 
