@@ -57,14 +57,22 @@ class TNCHostnameService(Service):
         This method is called when an IP address change event occurs.
         """
         tnc_config = await self.middleware.call('tn_connect.config')
-        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
 
-        if args['fields']['iface'] is None or tnc_config['status'] not in CONFIGURED_TNC_STATES or (
-            tnc_config['use_all_interfaces'] is False and args['fields']['iface'] not in tnc_config['interfaces']
-        ) or args['fields']['iface'].startswith(internal_interfaces):
-            # We don't want to do anything if TNC is not configured or if we
-            # are not watching for the interface where the IP address change occurred
-            # or if the interface is internal
+        # Skip if interface is None (can happen in some edge cases)
+        if args['fields']['iface'] is None:
+            return
+
+        # Skip if TrueNAS Connect is not properly configured
+        if tnc_config['status'] not in CONFIGURED_TNC_STATES:
+            return
+
+        # Skip if we're not monitoring all interfaces and this interface is not in our watch list
+        if tnc_config['use_all_interfaces'] is False and args['fields']['iface'] not in tnc_config['interfaces']:
+            return
+
+        # Skip internal interfaces (docker, veth, tun, tap, etc.) as they are not meant for external connectivity
+        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
+        if args['fields']['iface'].startswith(internal_interfaces):
             return
 
         logger.info(
