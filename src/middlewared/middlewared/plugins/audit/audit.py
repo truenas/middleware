@@ -400,6 +400,16 @@ class AuditService(ConfigService):
         await self.middleware.call(
             'zfs.dataset.update', ds['id'], {'properties': payload}
         )
+        # HA: Update remote node
+        if await self.middleware.call('failover.status') == 'MASTER':
+            try:
+                await self.middleware.call(
+                    'failover.call_remote', 'zfs.dataset.update', [ds['id'], {'properties': payload}]
+                )
+            except Exception:
+                self.middleware.logger.exception(
+                    "Unexpected failure to update audit dataset settings on standby node."
+                )
 
     @api_method(AuditUpdateArgs, AuditUpdateResult, audit='Update Audit Configuration')
     async def update(self, data):

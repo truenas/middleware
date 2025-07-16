@@ -219,6 +219,18 @@ class TestAuditConfig:
         new_config = call('audit.update', {'quota': 0})
         assert new_config['quota'] == 0
 
+    @pytest.mark.skipif(not ha, reason="Skip HA tests")
+    def test_audit_remote_node_config(self, init_audit):
+        """ Confirm audit dataset changes are mirrored to the remote node"""
+        (unused, ds_config) = init_audit
+        # New temporary setting that's different from current
+        new_setting = ds_config['org.freenas:refquota_warning'] + 5
+
+        old = call('failover.call_remote', 'audit.get_audit_dataset')
+        call('audit.update', {'quota_fill_warning': new_setting})
+        new = call('failover.call_remote', 'audit.get_audit_dataset')
+        assert new['org.freenas:refquota_warning'] == old['org.freenas:refquota_warning']
+
 
 class TestAuditOps:
     def test_audit_query(self, initialize_for_smb_tests):
