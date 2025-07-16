@@ -520,6 +520,9 @@ class SystemDatasetService(ConfigService):
             ):
                 os.chown(create_path_config['path'], create_path_config['uid'], create_path_config['gid'])
 
+            if (mode := create_path_config.get('mode')) and (cpath_stat.st_mode & 0o777) != mode:
+                os.chmod(create_path_config['path'], mode)
+
     def __mount(self, pool, uuid, path=SYSDATASET_PATH):
         """
         Mount group of datasets associated with our system dataset.

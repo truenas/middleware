@@ -573,6 +573,9 @@ class KerberosKeytabService(CRUDService):
         if not await self.middleware.call('system.ready'):
             return
 
+        if not await self.middleware.call('failover.is_single_master_node'):
+            return
+
         ds_config = await self.middleware.call('directoryservices.config')
         if not ds_config['enable'] or ds_config['service_type'] != 'ACTIVEDIRECTORY':
             return

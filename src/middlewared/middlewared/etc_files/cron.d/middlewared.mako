@@ -9,7 +9,7 @@
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
-30 3 * * * root midclt call directoryservices.cache.refresh_impl > /dev/null 2>&1
+30 3 * * * root midclt call directoryservices.cache_refresh > /dev/null 2>&1
 45 3 * * * root midclt call config.backup >/dev/null 2>&1
 
 45 3 * * * root midclt call pool.scrub.run ${boot_pool} ${system_advanced['boot_scrub']} > /dev/null 2>&1

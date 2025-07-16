@@ -3,6 +3,7 @@ import os
 
 from collections import defaultdict
 from collections.abc import Iterable
+from datetime import datetime, timedelta
 from middlewared.utils.directoryservices.constants import (
     DSType
 )
@@ -11,6 +12,7 @@ from middlewared.utils import filter_list
 from middlewared.utils.itertools import batched
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
+from middlewared.utils.time_utils import utc_now
 from middlewared.plugins.idmap_ import idmap_winbind, idmap_sss
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
@@ -41,9 +43,12 @@ LOG_CACHE_ENTRY_INTERVAL = 10  # Update progress of job every nth user / group
 
 TDB_LOCKS = defaultdict(Lock)
 
-CACHE_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON)
+CACHE_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.JSON)
+CACHE_DIR = '/var/db/system/directory_services'
 
 TRUENAS_CACHE_VERSION_KEY = 'TRUENAS_VERSION'
+CACHE_EXPIRATION_KEY = 'CACHE_EXPIRATION'
+CACHE_LIFETIME = timedelta(days=1)
 
 
 class DSCacheFile(enum.Enum):
@@ -52,7 +57,7 @@ class DSCacheFile(enum.Enum):
 
     @property
     def path(self):
-        return os.path.join(TDBPathType.PERSISTENT.value, f'{self.value}.tdb')
+        return os.path.join(CACHE_DIR, f'{self.value}.tdb')
 
 
 class DSCacheFill:
@@ -71,9 +76,10 @@ class DSCacheFill:
     groups_handle = None
 
     def __enter__(self):
+        os.makedirs(CACHE_DIR, mode=0o700, exist_ok=True)
         file_prefix = f'directory_service_cache_tmp_{uuid4()}'
-        self.users_handle = TDBHandle(f'{file_prefix}_user', CACHE_OPTIONS)
-        self.groups_handle = TDBHandle(f'{file_prefix}_group', CACHE_OPTIONS)
+        self.users_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_user.tdb'), CACHE_OPTIONS)
+        self.groups_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_group.tdb'), CACHE_OPTIONS)
         # Ensure we have clean initial state and restrictive permissions
         self.users_handle.clear()
         os.chmod(self.users_handle.full_path, 0o600)
@@ -244,10 +250,12 @@ class DSCacheFill:
 
         user_count = 0
         group_count = 0
+        expiration = utc_now(naive=False) + CACHE_LIFETIME
 
         job.set_progress(40, 'Preparing to add users to cache')
         for hdl in (self.users_handle, self.groups_handle):
             _tdb_add_version(hdl, truenas_version)
+            _tdb_add_expiration(hdl, expiration)
 
         # First grab batches of 100 entries
         for users in self._get_entries_for_cache(
@@ -338,6 +346,11 @@ def _tdb_add_version(
     handle.store(TRUENAS_CACHE_VERSION_KEY, {'truenas_version': version})
 
 
+def _tdb_add_expiration(handle: TDBHandle, timestamp: datetime) -> None:
+    """ Add expiration timestamp to TDB handle. """
+    handle.store(CACHE_EXPIRATION_KEY, {'expiration': timestamp})
+
+
 def _tdb_add_entry(
     handle: TDBHandle,
     xid: int,
@@ -368,7 +381,7 @@ def insert_cache_entry(
     Raises:
         RuntimeError via `tdb` library
     """
-    with get_tdb_handle(DSCacheFile[id_type.name].value, CACHE_OPTIONS) as handle:
+    with get_tdb_handle(DSCacheFile[id_type.name].path, CACHE_OPTIONS) as handle:
         handle.batch_op([
             TDBBatchOperation(action=TDBBatchAction.SET, key=f'ID_{xid}', value=entry),
             TDBBatchOperation(action=TDBBatchAction.SET, key=f'NAME_{xid}', value=entry),
@@ -392,7 +405,7 @@ def retrieve_cache_entry(
     else:
         key = f'NAME_{name}'
 
-    with get_tdb_handle(DSCacheFile[id_type.name].value, CACHE_OPTIONS) as handle:
+    with get_tdb_handle(DSCacheFile[id_type.name].path, CACHE_OPTIONS) as handle:
         return handle.get(key)
 
 
@@ -401,7 +414,7 @@ def query_cache_entries(
     filters: list,
     options: dict
 ) -> list:
-    with get_tdb_handle(DSCacheFile[id_type.name].value, CACHE_OPTIONS) as handle:
+    with get_tdb_handle(DSCacheFile[id_type.name].path, CACHE_OPTIONS) as handle:
         return filter_list(handle.entries(include_keys=False, key_prefix='ID_'), filters, options)
 
 
@@ -412,9 +425,11 @@ def check_cache_version(truenas_version: str) -> None:
     initialize after the system.ready event."""
     is_valid = True
 
+    os.makedirs(CACHE_DIR, mode=0o700, exist_ok=True)
+
     for cache_file in DSCacheFile:
         try:
-            with get_tdb_handle(cache_file.value, CACHE_OPTIONS) as hdl:
+            with get_tdb_handle(cache_file.path, CACHE_OPTIONS) as hdl:
                 try:
                     vers_data = hdl.get(TRUENAS_CACHE_VERSION_KEY)
                     if vers_data['truenas_version'] == truenas_version:
@@ -435,3 +450,53 @@ def check_cache_version(truenas_version: str) -> None:
                 os.remove(cache_file.path)
             except Exception:
                 pass
+
+
+def check_cache_expired() -> bool:
+    """ Check that cache files aren't expired. This prevents backend tasks from running
+    unnecessary refresh jobs.
+
+    Returns:
+        True - one or more cache files is expired (or error encountered requiring refresh)
+        False - no cache files are expired
+    """
+    now = utc_now(naive=False)
+
+    for cache_file in DSCacheFile:
+        if not os.path.exists(cache_file.path):
+            # cache file is missing, we need to regenerate
+            return True
+
+        try:
+            with get_tdb_handle(cache_file.path, CACHE_OPTIONS) as hdl:
+                try:
+                    vers_data = hdl.get(CACHE_EXPIRATION_KEY)
+                    if vers_data['expiration'] > now:
+                        # We have timestamp and it isn't expired. Move on to next file.
+                        continue
+                except Exception:
+                    pass
+
+                # If we get here, then the cache expiration key is missing or invalid
+                # and so we fall through to flagging as expired so that the cache can be
+                # regenerated.
+        except Exception:
+            # Possibly a corrupted tdb file or garbage that was inserted into our persistent tdb directory.
+            pass
+
+        return True
+
+    # All cache files have expiration key and are not expired.
+    return False
+
+
+def expire_cache() -> None:
+    """ Forcibly expire the directory services caches.
+    NOTE: this is used in the CI pipeline for tests/directory_services. """
+
+    # generate a timestamp in the past that's old enough to definitely trigger rebuild
+    ts = utc_now(naive=True) - timedelta(days=2)
+
+    for cache_file in DSCacheFile:
+        with get_tdb_handle(cache_file.path, CACHE_OPTIONS) as hdl:
+            _tdb_add_expiration(hdl, ts)
