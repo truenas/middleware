@@ -10,7 +10,7 @@ from middlewared.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.directoryservices.health import (
-    ADHealthError, DSHealthObj, IPAHealthError, KRB5HealthError,
+    ADHealthError, DSHealthObj, HEALTH_EVENT_NAME, IPAHealthError, KRB5HealthError,
     LDAPHealthError, MAX_RECOVER_ATTEMPTS,
 )
 
@@ -112,7 +112,7 @@ class DomainHealth(
             # Update our stored status to reflect reason for it being faulted
             # then re-raise
             DSHealthObj.update(enabled_ds, DSStatus.FAULTED, e.errmsg)
-            self.middleware.send_event('directoryservices.status', 'CHANGED', fields=DSHealthObj.dump())
+            self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
             raise
         except Exception:
             # Not a health related exception and so simply log it to prevent accidentally
@@ -122,7 +122,7 @@ class DomainHealth(
         DSHealthObj.update(enabled_ds, DSStatus.HEALTHY, None)
         if initial_status != DSStatus.HEALTHY:
             # We've recovered since last status check
-            self.middleware.send_event('directoryservices.status', 'CHANGED', fields=DSHealthObj.dump())
+            self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
 
         return True
 
@@ -186,6 +186,8 @@ class DomainHealth(
                     raise CallError('status_msg is required when setting state to FAULTED')
             case DSStatus.DISABLED:
                 DSHealthObj.update(None, None, None)
+                self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
                 return
 
         DSHealthObj.update(ds, status, status_msg)
+        self.middleware.send_event(HEALTH_EVENT_NAME, 'CHANGED', fields=DSHealthObj.dump())
