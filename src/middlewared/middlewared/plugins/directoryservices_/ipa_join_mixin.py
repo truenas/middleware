@@ -23,6 +23,9 @@ from middlewared.service_exception import CallError
 from tempfile import NamedTemporaryFile
 
 IPACTL = ipa_constants.IPACmd.IPACTL.value
+# We have seen at least in one instance with libldap hung indefinitely while requesting the IPA ca certificate.
+# It's better to timeout the subprocess call than block the directoryservices.update job forever.
+IPACTL_OP_TIMEOUT = 180
 
 
 def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
@@ -91,7 +94,7 @@ class IPAJoinMixin:
         try:
             join = subprocess.run([
                 IPACTL, '-a', IpaOperation.LEAVE.name
-            ], check=False, capture_output=True)
+            ], check=False, capture_output=True, timeout=IPACTL_OP_TIMEOUT)
             _parse_ipa_response(join)
         except Exception:
             self.logger.warning(
@@ -214,7 +217,9 @@ class IPAJoinMixin:
             (IpaOperation.SET_SMB_PRINCIPAL, ipa_constants.IpaConfigName.IPA_SMB_KEYTAB),
             (IpaOperation.SET_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
         ):
-            setspn = subprocess.run([IPACTL, '-a', op.name], check=False, capture_output=True)
+            setspn = subprocess.run(
+                [IPACTL, '-a', op.name], check=False, capture_output=True, timeout=IPACTL_OP_TIMEOUT
+            )
 
             try:
                 resp = _parse_ipa_response(setspn)
@@ -238,7 +243,9 @@ class IPAJoinMixin:
             (IpaOperation.DEL_SMB_PRINCIPAL, ipa_constants.IpaConfigName.IPA_SMB_KEYTAB),
             (IpaOperation.DEL_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
         ):
-            setspn = subprocess.run([IPACTL, '-a', op.name], check=False, capture_output=True)
+            setspn = subprocess.run(
+                [IPACTL, '-a', op.name], check=False, capture_output=True, timeout=IPACTL_OP_TIMEOUT
+            )
             try:
                 _parse_ipa_response(setspn)
             except Exception:
@@ -329,7 +336,7 @@ class IPAJoinMixin:
 
         getdom = subprocess.run([
             IPACTL, '-a', IpaOperation.SMB_DOMAIN_INFO.name,
-        ], check=False, capture_output=True)
+        ], check=False, capture_output=True, timeout=IPACTL_OP_TIMEOUT)
 
         resp = _parse_ipa_response(getdom)
         if not resp:
@@ -350,7 +357,7 @@ class IPAJoinMixin:
         """ retrieve PEM-encoded CACERT from IPA LDAP server """
         getca = subprocess.run([
             IPACTL, '-a', IpaOperation.GET_CACERT_FROM_LDAP.name,
-        ], check=False, capture_output=True)
+        ], check=False, capture_output=True, timeout=IPACTL_OP_TIMEOUT)
 
         resp = _parse_ipa_response(getca)
         return resp['cacert']
@@ -378,7 +385,7 @@ class IPAJoinMixin:
             # Now we should be able to join
             join = subprocess.run([
                 IPACTL, '-a', IpaOperation.JOIN.name
-            ], check=False, capture_output=True)
+            ], check=False, capture_output=True, timeout=IPACTL_OP_TIMEOUT)
             resp = _parse_ipa_response(join)
             resp['cacert'] = ipa_cacert
         except Exception as e:
