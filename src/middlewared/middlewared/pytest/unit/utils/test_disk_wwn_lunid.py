@@ -1,8 +1,9 @@
 """Test WWN/LUNID handling in DiskEntry.
 
 These tests validate that DiskEntry.lunid properly handles WWN values
-to match udev's ID_WWN behavior. For NAA/0x WWNs we return first 16 hex
-chars; for eui./t10 identifiers lunid is None (udev exposes them elsewhere).
+to match udev's ID_WWN behavior. For NAA/0x/eui WWNs we strip the prefix
+and return first 16 hex chars if applicable. For t10 identifiers lunid
+is None (udev doesn't use them for ID_WWN).
 """
 from contextlib import contextmanager
 from unittest.mock import patch
@@ -111,6 +112,22 @@ def mock_sysfs(tmp_path):
         # mixed-case hex, should lower-case + truncate
         ({"sda/device/wwid": "0x6001ABCDEF1234567890"},
          "6001abcdef123456"),
+
+        # EUI-64 identifier (common for NVMe) - should strip prefix
+        ({"sda/device/wwid": "eui.6479a7939a303551"},
+         "6479a7939a303551"),
+
+        # EUI-64 with more than 16 hex chars - should truncate
+        ({"sda/device/wwid": "eui.6479a7939a3035510123456789abcdef"},
+         "6479a7939a303551"),
+
+        # EUI-64 upper case - should lowercase and strip
+        ({"sda/device/wwid": "EUI.6479A7939A303551"},
+         "6479a7939a303551"),
+
+        # EUI-64 from NVMe wwid file (not device/wwid)
+        ({"nvme0n1/wwid": "eui.6479a7939a303551"},
+         "6479a7939a303551"),
     ],
 )
 def test_lunid_truncation(mock_sysfs, files, expected):
@@ -120,7 +137,11 @@ def test_lunid_truncation(mock_sysfs, files, expected):
     Non-hex identifiers (like t10 format) are preserved in full.
     """
     with mock_sysfs(files):
-        disk = DiskEntry(name="sda", devpath="/dev/sda")
+        # Use appropriate device name based on the files provided
+        if "nvme0n1" in str(files):
+            disk = DiskEntry(name="nvme0n1", devpath="/dev/nvme0n1")
+        else:
+            disk = DiskEntry(name="sda", devpath="/dev/sda")
         assert disk.lunid == expected
 
 

@@ -172,24 +172,20 @@ class DiskEntry:
             # Normalize: strip whitespace and convert to lowercase
             wwid = wwid.strip().lower()
 
-            # udev (systemd/src/udev/scsi_id/scsi_serial.c)
-            # sets ID_WWN only for NAA descriptors or raw 0x-prefixed WWNs.
-            # EUI-64 and t10 vendor IDs are exposed via other properties
-            # (ID_WWN_WITH_EXTENSION, ID_SERIAL_SHORT). We replicate that
-            # behaviour here to keep identifiers consistent with udev.
-            # For reference, udev ignores EUI‑64 and T10 descriptors when populating
-            # ID_WWN – see scsi_serial.c check_fill_0x83_id() function:
-            # https://github.com/systemd/systemd/blob/e65455feade65c798fd1742220768eba7f81755b/
-            # src/udev/scsi_id/scsi_serial.c#L615-L623
-            for prefix in ("naa.", "0x"):
+            # udev handling of WWN identifiers:
+            # - For SCSI devices: ID_WWN is set only for NAA descriptors (via scsi_id)
+            # - For NVMe devices: ID_WWN is set to the wwid sysfs value, which includes eui. prefix
+            #   (see /usr/lib/udev/rules.d/60-persistent-storage.rules)
+            # - For both: The middleware strips prefixes to get a consistent format
+            #
+            # We strip naa., 0x, and eui. prefixes to match middleware behavior.
+            # t10 identifiers are not used for ID_WWN and return None.
+            for prefix in ("naa.", "0x", "eui."):
                 if wwid.startswith(prefix):
                     wwid = wwid[len(prefix):]
                     break
             else:
-                # eui.*, t10.*, and others are not used for ID_WWN in udev
-                # Reference: https://github.com/systemd/systemd/blob/e65455feade65c798fd1742220768eba7f81755b/
-                # src/udev/scsi_id/scsi_serial.c#L605-L623
-                # udev exposes these via ID_WWN_WITH_EXTENSION instead of ID_WWN
+                # t10.* and others are not used for ID_WWN in udev
                 return None
 
             # Remove spaces after prefix stripping
