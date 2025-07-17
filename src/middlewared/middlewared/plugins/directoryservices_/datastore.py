@@ -516,6 +516,12 @@ class DirectoryServices(ConfigService):
 
             return self.middleware.call_sync('directoryservices.config')
 
+        # Configuration from a different service type should not by default carry over to the new service_type
+        # This is a somewhat artificial situation that manual testing can encounter because testers can switch
+        # between IPA / AD / OpenLDAP, and we should minimally ensure that invalid config doesn't get carried over.
+        if old['service_type'] and old['service_type'] != new['service_type']:
+            self.middleware.call_sync('directoryservices.reset')
+
         if not old['enable'] and new['service_type'] == DSType.AD.value:
             # There may be a stale server affinity in the samba gencache and stale idmappings
             # We should clear these before trying to enable AD
@@ -718,6 +724,7 @@ class DirectoryServices(ConfigService):
                 config[key] = None
 
         await self.middleware.call('datastore.update', 'directoryservices', pk, config)
+        await self.middleware.run_in_thread(expire_cache)
 
     @api_method(
         DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
