@@ -5,9 +5,8 @@ These tests validate the DiskEntry.serial property's handling of SCSI VPD
 ensure correct parsing of the 4-byte header structure and proper extraction
 of serial data, guarding against regressions in header parsing.
 
-The implementation follows SPC-7 rev 1 specification where VPD page 0x80 uses
-a 16-bit big-endian page length field at bytes 2-3, while maintaining backward
-compatibility with legacy devices that may use single-byte length at byte 3.
+Per SCSI specifications, VPD page 0x80 (Unit Serial Number) is limited to
+255 bytes of serial data, using a single-byte length field at byte 3.
 """
 import builtins
 from collections import Counter
@@ -142,10 +141,6 @@ def mock_sysfs(tmp_path):
         # VPD with trailing spaces that should be stripped
         ({"sda/device/vpd_pg80": b"\x00\x80\x00\x08" + b"SERIAL  "},
          "SERIAL"),
-
-        # Length > 255 bytes (testing 16-bit support)
-        ({"sda/device/vpd_pg80": b"\x00\x80\x02\x00" + b"A" * 0x200},
-         "A" * 0x200),
 
         # Legacy device with non-zero byte 2 but length in byte 3 (backward compatibility)
         ({"sda/device/vpd_pg80": b"\x00\x80\xff\x10" + b"LEGACY_SERIAL123"},

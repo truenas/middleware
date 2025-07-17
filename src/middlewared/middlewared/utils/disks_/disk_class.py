@@ -4,7 +4,6 @@ import functools
 import json
 import os
 import re
-import struct
 import subprocess
 import typing
 import uuid
@@ -135,15 +134,10 @@ class DiskEntry:
                 #
                 # Reference: SCSI Primary Commands (SPC-7 rev 1) — Unit Serial Number VPD page 0x80, Table 599
                 if len(raw) >= 4:
-                    # SPC-7: 16-bit big-endian length at bytes 2-3
-                    page_len = struct.unpack(">H", raw[2:4])[0]
-
-                    # Back-compat: some devices still put an 8-bit length in byte 3
-                    if page_len == 0 and len(raw) > 4:
-                        page_len = raw[3]
-
+                    # unit serial page (vpd_pg80) command can never be > 255 characters
+                    # So we will grab page length from 3
                     # Guard against devices that report a length larger than the buffer
-                    page_len = min(page_len, len(raw) - 4)
+                    page_len = min(raw[3], len(raw) - 4)
 
                     # Extract only the serial number data, skipping the 4-byte header
                     serial_txt = raw[4:4 + page_len].decode('ascii', errors='ignore')
