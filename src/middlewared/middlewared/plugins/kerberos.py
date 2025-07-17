@@ -198,6 +198,7 @@ class KerberosRealmModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     krb_realm = sa.Column(sa.String(120))
+    krb_primary_kdc = sa.Column(sa.String(120), nullable=True)
     krb_kdc = sa.Column(sa.String(120))
     krb_admin_server = sa.Column(sa.String(120))
     krb_kpasswd_server = sa.Column(sa.String(120))

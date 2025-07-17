@@ -89,6 +89,10 @@ class KRB_RealmProperty(enum.Enum):
     KPASSWD_SERVER = ('kpasswd_server', 'string')
     PRIMARY_KDC = ('primary_kdc', 'string')
 
+    @property
+    def parm(self):
+        return self.value[0]
+
 
 class KRB_ETYPE(enum.Enum):
     DES_CBC_CRC = 'des-cbc-crc'  # weak
