@@ -37,13 +37,13 @@ def builtin_admins_dbid():
     ('sudo_commands_nopasswd', ['/usr/sbin/zpool']),
 ))
 def test__builtin_group_immutable(key, value, incus_admin_dbid):
-    with pytest.raises(ClientException, match='may not be changed for builtin groups'):
+    with pytest.raises(ClientException, match='Immutable groups cannot be changed'):
         with Client() as c:
             c.call('group.update', incus_admin_dbid, {key: value})
 
 
 def test__builtin_group_deny_member_change(incus_admin_dbid, local_user):
-    with pytest.raises(ClientException, match='Group membership for this builtin group may not be changed.'):
+    with pytest.raises(ClientException, match='Immutable groups cannot be changed'):
         with Client() as c:
             c.call('group.update', incus_admin_dbid, {'users': [local_user['id']]})
 

@@ -63,11 +63,15 @@ class GroupEntry(BaseModel):
     from `user.query`.
 
     NOTE: This field is empty for groups that come from directory services (`local` is `False`). """
+    immutable: bool
+    """ This is a read-only field showing if the group entry can be changed. If `True`, the group is immutable and \
+    cannot be changed. If `False`, the group can be changed. """
 
 
 class GroupCreate(GroupEntry):
     id: Excluded = excluded_field()
     builtin: Excluded = excluded_field()
+    immutable: Excluded = excluded_field()
     group: Excluded = excluded_field()
     local: Excluded = excluded_field()
     sid: Excluded = excluded_field()
