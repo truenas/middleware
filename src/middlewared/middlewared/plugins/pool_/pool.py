@@ -336,7 +336,7 @@ class PoolService(CRUDService):
         for topology_type in ('data', 'special', 'dedup'):
             lastdatatype = None
             topology_data = list(data['topology'].get(topology_type) or [])
-            if old:
+            if old and old['topology']:
                 topology_data += disk_to_stripe(topology_type)
             for i, vdev in enumerate(topology_data):
                 numdisks = len(vdev['disks'])
