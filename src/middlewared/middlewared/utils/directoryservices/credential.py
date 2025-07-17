@@ -172,6 +172,7 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
 
     realms = [{
         'realm': realm,
+        'primary_kdc': None,
         'admin_server': [],
         'kdc': kdc,
         'kpasswd_server': []

@@ -15,6 +15,7 @@ SAMPLE_KEYTAB = "BQIAAABTAAIAC0hPTUVET00uRlVOABFyZXN0cmljdGVka3JiaG9zdAASdGVzdDQ
 SAMPLEDOM_NAME = "CANARY.FUN"
 SAMPLEDOM_REALM = {
     "realm": SAMPLEDOM_NAME,
+    "primary_kdc": None,
     "kdc": ["169.254.100.1", "169.254.100.2", "169.254.100.3"],
     "admin_server": ["169.254.100.10", "169.254.100.11", "169.254.100.12"],
     "kpasswd_server": ["169.254.100.20", "169.254.100.21", "169.254.100.22"],

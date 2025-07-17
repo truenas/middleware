@@ -260,9 +260,10 @@ class KRB5Conf():
 
         return {realm_info['realm']: {
             'realm': realm_info['realm'],
-            'admin_server': realm_info[KRB_RealmProperty.ADMIN_SERVER.value[0]].copy(),
-            'kdc': realm_info[KRB_RealmProperty.KDC.value[0]].copy(),
-            'kpasswd_server': realm_info[KRB_RealmProperty.KPASSWD_SERVER.value[0]].copy(),
+            'primary_kdc': realm_info[KRB_RealmProperty.PRIMARY_KDC.parm],
+            'admin_server': realm_info[KRB_RealmProperty.ADMIN_SERVER.parm].copy(),
+            'kdc': realm_info[KRB_RealmProperty.KDC.parm].copy(),
+            'kpasswd_server': realm_info[KRB_RealmProperty.KPASSWD_SERVER.parm].copy(),
         }}
 
     def add_realms(self, realms: list) -> None:
@@ -290,6 +291,9 @@ class KRB5Conf():
         self.realms = clean_realms
 
     def __dump_a_parameter(self, parm: str, value):
+        if value is None:
+            return
+
         if isinstance(value, dict):
             out = f'\t{parm} = {KRB5_VALUE_BEGIN}\n'
             for k, v in value.items():

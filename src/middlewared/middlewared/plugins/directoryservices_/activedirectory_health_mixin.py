@@ -47,6 +47,7 @@ class ADHealthMixin:
         })
         krbconf.add_realms([{
             'realm': ds_config['kerberos_realm'] or ds_config['configuration']['domain'],
+            'primary_kdc': None,
             'admin_server': [],
             'kdc': [kdc],
             'kpasswd_server': [],

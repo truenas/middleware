@@ -62,6 +62,7 @@ REALMS = [
     {
         'id': 1,
         'realm': 'AD02.TN.IXSYSTEMS.NET',
+        'primary_kdc': '10.238.238.2',
         'kdc': ['10.238.238.2', '10.238.238.3'],
         'admin_server': ['10.238.238.2'],
         'kpasswd_server': ['10.238.238.2'],
@@ -69,6 +70,7 @@ REALMS = [
     {
         'id': 2,
         'realm': 'AD03.TN.IXSYSTEMS.NET',
+        'primary_kdc': None,
         'kdc': [],
         'admin_server': [],
         'kpasswd_server': [],
@@ -277,6 +279,8 @@ def validate_realms_section(data):
                     match key:
                         case 'kdc' | 'admin_server' | 'kpasswd_server':
                             assert val.strip() in this[key]
+                        case 'primary_kdc':
+                            assert val.strip() == this[key]
                         case _:
                             raise ValueError(f'{key}: unexpected key in realm config')
 
