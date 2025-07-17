@@ -10,11 +10,10 @@ from middlewared.service_exception import CallError
 
 class Profile(enum.IntEnum):
     DEVELOPER = 0
-    TESTER = 1
-    EARLY_ADOPTER = 2
-    GENERAL = 3
-    CONSERVATIVE = 4
-    MISSION_CRITICAL = 5
+    EARLY_ADOPTER = 1
+    GENERAL = 2
+    CONSERVATIVE = 3
+    MISSION_CRITICAL = 4
 
 
 class UpdateService(Service):
@@ -34,14 +33,6 @@ class UpdateService(Service):
                 'description': (
                     'Latest software with new features and bugs alike.  There is an opportunity to contribute '
                     'directly to the development process.'
-                ),
-            }
-            profiles[Profile.TESTER] = {
-                'name': 'Tester',
-                'footnote': '',
-                'description': (
-                    'New software with recent features. Some bugs are expected and there is a willingness to provide '
-                    'bug reports and feedback to the developers.'
                 ),
             }
             profiles[Profile.EARLY_ADOPTER] = {
