@@ -32,6 +32,7 @@ class FailoverRebootService(Service):
 
     remote_reboot_reasons_key: str
     remote_reboot_reasons: dict[str, RemoteRebootReason]
+    loaded = False
 
     @private
     async def add_remote_reason(self, code: str, reason: str):
@@ -41,6 +42,9 @@ class FailoverRebootService(Service):
         :param code: unique identifier for the reason.
         :param reason: text explanation for the reason.
         """
+        if not self.loaded:
+            raise CallError(f'Cannot add remote reboot reason before they are loaded: ({code},{reason})')
+
         try:
             boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id', [], {
                 'raise_connect_error': False,
@@ -111,7 +115,7 @@ class FailoverRebootService(Service):
                             }
 
         if other_node is not None:
-            for remote_reboot_reason_code, remote_reboot_reason in list(self.remote_reboot_reasons.items()):
+            for remote_reboot_reason_code, remote_reboot_reason in list(self._remote_reboot_reasons_items()):
                 if remote_reboot_reason.boot_id is None:
                     # This reboot reason was added while the remote node was not functional.
                     # In that case, when the remote system comes online, an additional reboot is required.
@@ -224,6 +228,11 @@ class FailoverRebootService(Service):
 
         job.set_progress(100, 'Other controller rebooted successfully')
 
+    def _remote_reboot_reasons_items(self):
+        if self.loaded:
+            return self.remote_reboot_reasons.items()
+        return {}
+
     async def _ensure_remote_be(self, id_: str):
         try:
             remote_be_id = (await self.middleware.call(
@@ -275,6 +284,7 @@ class FailoverRebootService(Service):
             k: RemoteRebootReason(**v)
             for k, v in (await self.middleware.call('keyvalue.get', self.remote_reboot_reasons_key, {})).items()
         }
+        self.loaded = True
 
     @private
     async def persist_remote_reboot_reasons(self):
