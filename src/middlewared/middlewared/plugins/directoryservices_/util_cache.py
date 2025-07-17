@@ -319,6 +319,7 @@ class DSCacheFill:
                     'name': group_data.gr_name,
                     'group': group_data.gr_name,
                     'builtin': False,
+                    'immutable': True,
                     'sudo_commands': [],
                     'sudo_commands_nopasswd': [],
                     'users': [],

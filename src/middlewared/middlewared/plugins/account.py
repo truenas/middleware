@@ -1948,9 +1948,12 @@ class GroupService(CRUDService):
                 else:
                     sid = None
 
+        is_immutable = group['builtin'] and group['gid'] not in ALLOWED_BUILTIN_GIDS
+
         group.update({
             'local': True,
             'sid': sid,
+            'immutable': is_immutable,
             'roles': privilege_mappings['roles']
         })
         return group
@@ -1960,6 +1963,7 @@ class GroupService(CRUDService):
         to_remove = [
             'name',
             'local',
+            'immutable',
             'sid',
             'roles'
         ]
@@ -2074,20 +2078,16 @@ class GroupService(CRUDService):
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
-        if group['builtin']:
+        if group['immutable']:
+            verrors.add('group_update.id', 'Immutable groups cannot be changed')
+
+        elif group['builtin']:
             # Generally many features of builtin groups should be immutable
             for key in ('sudo_commands', 'sudo_commands_nopasswd', 'smb', 'name'):
                 if data.get(key, None) is not None and data[key] != group[key]:
                     verrors.add(
                         f'group_update.{key}',
                         'This configuration parameter may not be changed for builtin groups.'
-                    )
-
-            if data.get('users', None) is not None and data['users'] != group['users']:
-                if group['gid'] not in ALLOWED_BUILTIN_GIDS:
-                    verrors.add(
-                        'group_update.users',
-                        'Group membership for this builtin group may not be changed.'
                     )
 
         verrors.check()
