@@ -23,21 +23,8 @@ class UpdateService(ConfigService):
         role_prefix = 'SYSTEM_UPDATE'
         entry = UpdateEntry
 
-    async def config(self, *, _allow_null_profile=False):
-        data = await super().config()
-
-        if data['profile'] is None and not _allow_null_profile:
-            await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                data['id'],
-                {'profile': await self.middleware.call('update.current_version_profile')},
-                {'prefix': self._config.datastore_prefix},
-            )
-
-            return await super().config()
-        else:
-            return data
+    async def config(self):
+        return await self.config_internal(allow_null_profile=False)
 
     @api_method(UpdateUpdateArgs, UpdateUpdateResult)
     async def do_update(self, data):
@@ -78,7 +65,7 @@ class UpdateService(ConfigService):
     async def set_profile(self, name):
         # This must be used for setting update profile when internet connection might be unavailable.
 
-        old = await self.config(_allow_null_profile=True)
+        old = await self.config_internal()
 
         await self.middleware.call(
             'datastore.update',
@@ -87,6 +74,22 @@ class UpdateService(ConfigService):
             {'profile': Profile[name].name},
             {'prefix': self._config.datastore_prefix},
         )
+
+    @private
+    async def config_internal(self, *, allow_null_profile=True):
+        data = await super().config()
+
+        if data['profile'] is None and not allow_null_profile:
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                data['id'],
+                {'profile': await self.middleware.call('update.current_version_profile')},
+                {'prefix': self._config.datastore_prefix},
+            )
+            return await super().config()
+
+        return data
 
 
 async def setup(middleware):
