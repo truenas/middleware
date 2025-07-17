@@ -125,12 +125,25 @@ class DiskEntry:
     def serial(self) -> str | None:
         """The disk's serial number as reported by sysfs"""
         if not (serial := self.__opener(relative_path="device/serial")):
-            if serial := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
-                serial = (
-                    "".join(chr(b) if 32 <= b <= 126 else "\ufffd" for b in serial)
-                    .replace("\ufffd", "")
-                    .strip()
-                )
+            if raw := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
+                # VPD page 0x80 (Unit Serial Number) structure:
+                #   Byte 0: Peripheral qualifier & device type
+                #   Byte 1: Page code (0x80)
+                #   Bytes 2-3: Page length (16-bit big-endian)
+                #   Bytes 4+: ASCII serial-number data
+                #
+                # Reference: SCSI Primary Commands (SPC-7 rev 1) — Unit Serial Number VPD page 0x80, Table 599
+                if len(raw) >= 4:
+                    # unit serial page (vpd_pg80) command can never be > 255 characters
+                    # So we will grab page length from 3
+                    # Guard against devices that report a length larger than the buffer
+                    page_len = min(raw[3], len(raw) - 4)
+
+                    # Extract only the serial number data, skipping the 4-byte header
+                    serial_txt = raw[4:4 + page_len].decode('ascii', errors='ignore')
+                    serial = serial_txt.rstrip('\x00').strip()
+                else:
+                    serial = ""
 
         if not serial:
             # pmem devices have a uuid attribute that we use as serial
