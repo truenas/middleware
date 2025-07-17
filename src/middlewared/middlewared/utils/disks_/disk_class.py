@@ -4,6 +4,7 @@ import functools
 import json
 import os
 import re
+import string
 import subprocess
 import typing
 import uuid
@@ -161,18 +162,50 @@ class DiskEntry:
             we're using the 'wwid' property of the disk
             but it is the same principle and it allows us
             to use common terms that most recognize."""
+        HEX = set(string.hexdigits.lower())
+
         wwid = self.__opener(relative_path="device/wwid")
         if wwid is None:
             wwid = self.__opener(relative_path="wwid")
 
         if wwid is not None:
-            wwid = wwid.removeprefix("naa.").removeprefix("0x").removeprefix("eui.")
+            # Normalize: strip whitespace and convert to lowercase
+            wwid = wwid.strip().lower()
 
-        # Doing a replace here because we have seen cases where this value
-        # gets reported -> 't10.ATA     QEMU HARDDISK                           QM00003'
-        # It is like this in the file itself, it could just perhaps be isolated only to VMs
-        # but there is no harm to remove empty spaces
-        return wwid.replace(" ", "") if wwid else wwid
+            # udev (systemd/src/udev/scsi_id/scsi_serial.c)
+            # sets ID_WWN only for NAA descriptors or raw 0x-prefixed WWNs.
+            # EUI-64 and t10 vendor IDs are exposed via other properties
+            # (ID_WWN_WITH_EXTENSION, ID_SERIAL_SHORT). We replicate that
+            # behaviour here to keep identifiers consistent with udev.
+            # For reference, udev ignores EUI‑64 and T10 descriptors when populating
+            # ID_WWN – see scsi_serial.c check_fill_0x83_id() function:
+            # https://github.com/systemd/systemd/blob/e65455feade65c798fd1742220768eba7f81755b/
+            # src/udev/scsi_id/scsi_serial.c#L615-L623
+            for prefix in ("naa.", "0x"):
+                if wwid.startswith(prefix):
+                    wwid = wwid[len(prefix):]
+                    break
+            else:
+                # eui.*, t10.*, and others are not used for ID_WWN in udev
+                # Reference: https://github.com/systemd/systemd/blob/e65455feade65c798fd1742220768eba7f81755b/
+                # src/udev/scsi_id/scsi_serial.c#L605-L623
+                # udev exposes these via ID_WWN_WITH_EXTENSION instead of ID_WWN
+                return None
+
+            # Remove spaces after prefix stripping
+            wwid = wwid.replace(" ", "")
+
+            # Truncate to 16 characters ONLY if they are valid hex characters.
+            # This matches udev's ID_WWN behavior for NAA WWNs.
+            #
+            # Reference: https://github.com/systemd/systemd/blob/e65455feade65c798fd1742220768eba7f81755b/
+            # src/udev/scsi_id/scsi_serial.c
+            # check_fill_0x83_id(): if (id_search->id_type == SCSI_ID_NAA && wwn != NULL)
+            #                       strncpy(wwn, serial + s, 16);
+            if len(wwid) > 16 and set(wwid[:16]) <= HEX:
+                wwid = wwid[:16]
+
+        return wwid if wwid else None
 
     @functools.cached_property
     def model(self) -> str | None:
