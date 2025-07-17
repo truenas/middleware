@@ -14,12 +14,14 @@ import subprocess
 import time
 
 from contextlib import contextmanager
+from datetime import timedelta
 from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.service_exception import CallError
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
+from middlewared.utils import filter_list
 from middlewared.utils.io import write_if_changed
+from middlewared.utils.time_utils import utc_now
 from tempfile import NamedTemporaryFile
-from time import monotonic
 from typing import Optional
 
 # See lib/krb5/keytab/kt_file.c in MIT kerberos source
@@ -28,8 +30,8 @@ KRB5_KT_VNO = b'\x05\x02'  # KRB v5 keytab version 2, (last changed in 2009)
 # Some environments may have very slow replication between KDCs. When we first join
 # we need to lock in the KDC we used to join for a period of time
 
-SAF_CACHE_TIMEOUT = 3600  # 1 hour
-SAF_CACHE_FILE = os.path.join(MIDDLEWARE_RUN_DIR, '.KDC_SERVER_AFFINITY')
+SAF_CACHE_TIMEOUT = timedelta(hours=1)
+SAF_CACHE_FILE = os.path.join(SYSDATASET_PATH, 'directory_services', '.KDC_SERVER_AFFINITY')
 
 
 # The following schemas are used for validation of klist / ktutil_list output
@@ -531,7 +533,7 @@ def kdc_saf_cache_get() -> str | None:
     try:
         with open(SAF_CACHE_FILE, 'r') as f:
             kdc, timeout = f.read().split()
-            if monotonic() > int(timeout.strip()):
+            if utc_now(naive=False).timestamp() > int(timeout.strip()):
                 # Expired
                 return None
 
@@ -543,4 +545,6 @@ def kdc_saf_cache_get() -> str | None:
 def kdc_saf_cache_set(kdc: str) -> None:
     if not isinstance(kdc, str):
         raise TypeError(f'{kdc}: not a string')
-    write_if_changed(SAF_CACHE_FILE, f'{kdc} {int(monotonic()) + SAF_CACHE_TIMEOUT}')
+
+    expiration = int((utc_now(naive=False) + SAF_CACHE_TIMEOUT).timestamp())
+    write_if_changed(SAF_CACHE_FILE, f'{kdc} {expiration}')
