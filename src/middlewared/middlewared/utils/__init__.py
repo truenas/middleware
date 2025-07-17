@@ -111,6 +111,7 @@ def sw_info():
             'version': version,
             'fullname': f'{BRAND}-{version}',
             'buildtime': manifest['buildtime'],
+            'experimental': manifest['experimental'],
         }
 
 

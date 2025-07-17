@@ -164,10 +164,12 @@ class SupportService(ConfigService):
         For Community Edition, `criticality`, `environment`, `phone`, `name`, and `email` attributes are not required.
         For Enterprise, `token` and `type` attributes are not required.
         """
-
         vendor = await self.middleware.call('system.vendor.name')
         if vendor:
             raise CallError(f'Support is not available for this product ({vendor})', errno.EINVAL)
+
+        if await self.middleware.call('system.experimental'):
+            raise CallError('This TrueNAS build is experimental', errno.EINVAL)
 
         await self.middleware.call('network.general.will_perform_activity', 'support')
 

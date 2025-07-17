@@ -21,6 +21,8 @@ from middlewared.api.current import (
     SystemVersionResult,
     SystemVersionShortArgs,
     SystemVersionShortResult,
+    SystemExperimentalArgs,
+    SystemExperimentalResult,
 )
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.service import CallError, private, Service, ValidationError
@@ -223,6 +225,17 @@ class SystemService(Service):
         if license_ and name in license_['features']:
             return True
         return False
+
+    @api_method(
+        SystemExperimentalArgs,
+        SystemExperimentalResult,
+        roles=['SYSTEM_PRODUCT_READ']
+    )
+    async def experimental(self):
+        """
+        Return whether the current product is experimental
+        """
+        return sw_info()['experimental']
 
 
 async def hook_license_update(middleware, prev_license, *args, **kwargs):

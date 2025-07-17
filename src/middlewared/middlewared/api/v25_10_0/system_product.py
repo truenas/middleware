@@ -16,6 +16,8 @@ __all__ = (
     "SystemVersionResult",
     "SystemVersionShortArgs",
     "SystemVersionShortResult",
+    "SystemExperimentalArgs",
+    "SystemExperimentalResult",
 )
 
 
@@ -65,3 +67,11 @@ class SystemVersionShortArgs(BaseModel):
 
 class SystemVersionShortResult(BaseModel):
     result: str
+
+
+class SystemExperimentalArgs(BaseModel):
+    pass
+
+
+class SystemExperimentalResult(BaseModel):
+    result: bool
