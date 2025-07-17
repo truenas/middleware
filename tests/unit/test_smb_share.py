@@ -127,6 +127,7 @@ def test__base_parameters(nfsacl_dataset):
     assert conf['smbd max xattr size'] == 2097152
     assert conf['comment'] == BASE_SMB_SHARE['comment']
     assert conf['browseable'] == BASE_SMB_SHARE['browsable']
+    assert conf['ea support'] is False
 
 
 def test__base_smb_nfs4acl(nfsacl_dataset):
