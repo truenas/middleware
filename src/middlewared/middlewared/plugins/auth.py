@@ -168,7 +168,7 @@ class SessionManager:
 
             del self.sessions[app.session_id]
 
-            session.credentials.logout()
+            await self.middleware.run_in_thread(session.credentials.logout)
 
             if not internal_session:
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
