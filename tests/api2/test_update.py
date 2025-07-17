@@ -1,5 +1,6 @@
 import pytest
 
+from auto_config import ha
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, mock
 
@@ -20,12 +21,16 @@ def offline():
 
 def test_update():
     # `update.config` should set the profile
-    profile_setting = "GENERAL"
-    with mock("update.current_version_profile", return_value=profile_setting):
-        original_config = call("update.config")
+    profile_setting = "DEVELOPER"  # default profile on nightly builds (including HA)
+    original_config = call("update.config")
     assert original_config["profile"] == profile_setting
 
-    updated_config = call("update.update", {})
+    if ha:
+        with mock("update.profile_choices", return_value={profile_setting: {"available": True}}):
+            # "DEVELOPER" profile not normally available on HA
+            updated_config = call("update.update", {})
+    else:
+        updated_config = call("update.update", {})
     assert updated_config == original_config
 
 
