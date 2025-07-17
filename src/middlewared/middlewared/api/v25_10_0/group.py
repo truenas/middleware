@@ -4,7 +4,7 @@ from pydantic import Field
 
 from middlewared.api.base import (
     BaseModel, ContainerXID, Excluded, excluded_field, ForUpdateMetaclass, LocalUID, GroupName, NonEmptyString,
-    single_argument_args, single_argument_result
+    single_argument_result
 )
 
 __all__ = ["GroupEntry",
@@ -51,7 +51,7 @@ class GroupEntry(BaseModel):
     group: NonEmptyString
     """ A string used to identify a group. Identical to the `name` key. """
     local: bool
-    """ If `True`, the group is local to the TrueNAS server. If `False`, the group is provided by a directory service. """
+    """If `True`, the group is local to the TrueNAS server. If `False`, the group is provided by a directory service."""
     sid: str | None
     """ The Security Identifier (SID) of the user if the account an `smb` account. The SMB server uses this value to \
     check share access and for other purposes. """
