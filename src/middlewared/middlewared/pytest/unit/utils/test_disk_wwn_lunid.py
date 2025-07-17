@@ -117,9 +117,9 @@ def mock_sysfs(tmp_path):
         ({"sda/device/wwid": "eui.6479a7939a303551"},
          "6479a7939a303551"),
 
-        # EUI-64 with more than 16 hex chars - should truncate
-        ({"sda/device/wwid": "eui.6479a7939a3035510123456789abcdef"},
-         "6479a7939a303551"),
+        # EUI-64 with 32 chars - should NOT truncate (NVMe devices can have long EUI)
+        ({"sda/device/wwid": "eui.e8238fa6bf530001001b448b417d0659"},
+         "e8238fa6bf530001001b448b417d0659"),
 
         # EUI-64 upper case - should lowercase and strip
         ({"sda/device/wwid": "EUI.6479A7939A303551"},
@@ -128,13 +128,18 @@ def mock_sysfs(tmp_path):
         # EUI-64 from NVMe wwid file (not device/wwid)
         ({"nvme0n1/wwid": "eui.6479a7939a303551"},
          "6479a7939a303551"),
+
+        # EUI-64 32-char from NVMe (real example from m60-100)
+        ({"nvme0n1/wwid": "eui.e8238fa6bf530001001b448b417d0659"},
+         "e8238fa6bf530001001b448b417d0659"),
     ],
 )
 def test_lunid_truncation(mock_sysfs, files, expected):
     """Test that lunid properly handles various WWN formats.
 
-    Truncation to 16 characters only occurs when those characters are valid hex.
-    Non-hex identifiers (like t10 format) are preserved in full.
+    Truncation to 16 characters only occurs for NAA/0x WWNs with valid hex.
+    EUI identifiers are NOT truncated (can be 32+ chars for NVMe).
+    Non-hex identifiers (like t10 format) return None.
     """
     with mock_sysfs(files):
         # Use appropriate device name based on the files provided
@@ -209,3 +214,20 @@ def test_lunid_matches_udev_behavior(mock_sysfs):
         # Verify it's the first 16 chars of the full WWN
         assert full_wwn.startswith(disk.lunid)
         assert full_wwn[16:] == expected_vendor_ext
+
+
+def test_eui_vs_naa_truncation(mock_sysfs):
+    """Test that EUI WWNs are NOT truncated while NAA WWNs are."""
+    # NAA with 32 chars - should truncate to 16
+    files_naa = {"sda/device/wwid": "naa.60014055f10d56d85874876b24dbf26b"}
+    with mock_sysfs(files_naa):
+        disk = DiskEntry(name="sda", devpath="/dev/sda")
+        assert disk.lunid == "60014055f10d56d8"
+        assert len(disk.lunid) == 16
+
+    # EUI with 32 chars - should NOT truncate
+    files_eui = {"nvme0n1/wwid": "eui.e8238fa6bf530001001b448b417d0659"}
+    with mock_sysfs(files_eui):
+        disk = DiskEntry(name="nvme0n1", devpath="/dev/nvme0n1")
+        assert disk.lunid == "e8238fa6bf530001001b448b417d0659"
+        assert len(disk.lunid) == 32

@@ -180,8 +180,10 @@ class DiskEntry:
             #
             # We strip naa., 0x, and eui. prefixes to match middleware behavior.
             # t10 identifiers are not used for ID_WWN and return None.
+            original_prefix = None
             for prefix in ("naa.", "0x", "eui."):
                 if wwid.startswith(prefix):
+                    original_prefix = prefix
                     wwid = wwid[len(prefix):]
                     break
             else:
@@ -191,14 +193,15 @@ class DiskEntry:
             # Remove spaces after prefix stripping
             wwid = wwid.replace(" ", "")
 
-            # Truncate to 16 characters ONLY if they are valid hex characters.
-            # This matches udev's ID_WWN behavior for NAA WWNs.
+            # Truncate to 16 characters ONLY for NAA WWNs with valid hex characters.
+            # This matches udev's ID_WWN behavior for NAA WWNs specifically.
+            # EUI identifiers (common for NVMe) are NOT truncated.
             #
             # Reference: https://github.com/systemd/systemd/blob/e65455feade65c798fd1742220768eba7f81755b/
             # src/udev/scsi_id/scsi_serial.c
             # check_fill_0x83_id(): if (id_search->id_type == SCSI_ID_NAA && wwn != NULL)
             #                       strncpy(wwn, serial + s, 16);
-            if len(wwid) > 16 and set(wwid[:16]) <= HEX:
+            if original_prefix in ("naa.", "0x") and len(wwid) > 16 and set(wwid[:16]) <= HEX:
                 wwid = wwid[:16]
 
         return wwid if wwid else None
