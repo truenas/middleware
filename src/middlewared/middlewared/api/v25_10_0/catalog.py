@@ -95,12 +95,15 @@ class CatalogAppInfo(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
-@single_argument_args('catalog_apps_options')
-class CatalogAppsArgs(BaseModel):
+class CatalogApps(BaseModel):
     cache: bool = True
     cache_only: bool = False
     retrieve_all_trains: bool = True
-    trains: list[NonEmptyString] = Field(default_factory=list)
+    trains: list[NonEmptyString] = []
+
+
+class CatalogAppsArgs(BaseModel):
+    catalog_apps_options: CatalogApps = CatalogApps()
 
 
 class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):

@@ -125,11 +125,14 @@ class GroupGetNextGidResult(BaseModel):
     result: int
 
 
-@single_argument_args("get_group_obj")
-class GroupGetGroupObjArgs(BaseModel):
+class GroupGetGroupObj(BaseModel):
     groupname: str | None = None
     gid: int | None = None
     sid_info: bool = False
+
+
+class GroupGetGroupObjArgs(BaseModel):
+    get_group_obj: GroupGetGroupObj = GroupGetGroupObj()
 
 
 @single_argument_result

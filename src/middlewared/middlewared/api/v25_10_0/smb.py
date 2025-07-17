@@ -240,9 +240,12 @@ class SharingSMBPresetsResult(BaseModel):
     result: dict[str, dict]
 
 
-@single_argument_args('smb_share_precheck')
-class SharingSMBSharePrecheckArgs(BaseModel):
+class SharingSMBSharePrecheck(BaseModel):
     name: SmbShareName | None = None
+
+
+class SharingSMBSharePrecheckArgs(BaseModel):
+    smb_share_precheck: SharingSMBSharePrecheck = SharingSMBSharePrecheck()
 
 
 class SharingSMBSharePrecheckResult(BaseModel):
