@@ -521,7 +521,6 @@ class DirectoryServices(ConfigService):
         # between IPA / AD / OpenLDAP, and we should minimally ensure that invalid config doesn't get carried over.
         if old['service_type'] and old['service_type'] != new['service_type']:
             self.middleware.call_sync('directoryservices.reset')
-            expire_cache()
 
         if not old['enable'] and new['service_type'] == DSType.AD.value:
             # There may be a stale server affinity in the samba gencache and stale idmappings
@@ -725,6 +724,7 @@ class DirectoryServices(ConfigService):
                 config[key] = None
 
         await self.middleware.call('datastore.update', 'directoryservices', pk, config)
+        await self.middleware.run_in_thread(expire_cache)
 
     @api_method(
         DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
