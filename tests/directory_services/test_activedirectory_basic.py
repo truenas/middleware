@@ -372,3 +372,10 @@ def test_keytab_restore():
 
         # verify that it was recreated during health check
         call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})
+
+
+def test_reset_directory_services():
+    """ Verify that resetting the directory services config to NULL values doesn't break
+    the schema parser. """
+    call('directoryservices.reset')
+    call('directoryservices.config')

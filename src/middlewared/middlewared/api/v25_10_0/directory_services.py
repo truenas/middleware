@@ -522,8 +522,8 @@ class DirectoryServicesEntry(BaseModel):
 
         # insert the currently-configured service_type into the configuration
         # dict so that the discriminator works as expected.
-        if 'configuration' in data_in:
-            if 'service_type' in data_in:
+        if 'configuration' in data_in and isinstance(data_in['configuration'], dict):
+            if 'service_type' in data_in and data_in['service_type'] is not None:
                 data_in['configuration']['service_type'] = data_in['service_type']
             else:
                 raise ValueError('"service_type" field is required if "configuration" field is specified')
