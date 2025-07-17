@@ -32,6 +32,7 @@ from .utmp import login, logout, PyUtmpEntry, PyUtmpExit, PyUtmpType, UTMP_LOCK,
 MIDDLEWARE_HOST_PREFIX = 'tn-mw'
 UTMP_MAX_SESSIONS = 10000
 libc = ctypes.CDLL('libc.so.6', use_errno=True)
+PAM_OBJ = pam.pam()  # dlopen PAM libraries and define ctypes
 
 
 # utmp is basically treated as a key-value store based on the tn_line field. We
@@ -177,10 +178,26 @@ class UserPamAuthenticator(pam.PamAuthenticator):
     separate global threading lock.
     """
     def __init__(self):
-        super().__init__()
+        # We intentionally don't super().init() here because we python-pam will
+        # search for libraries every time the object is created. We just use references
+        # to ctype functions that we looked up once
         self.truenas_state = TrueNASAuthenticatorState()
         self.TRUENAS_LOCK = threading.Lock()
         self.truenas_pam_conv = None  # reference to initialized pam_conv object
+        self.libc = libc
+        self.handle = None
+        self.pam_start = PAM_OBJ.pam_start
+        self.pam_acct_mgmt = PAM_OBJ.pam_acct_mgmt
+        self.pam_set_item = PAM_OBJ.pam_set_item
+        self.pam_setcred = PAM_OBJ.pam_setcred
+        self.pam_strerror = PAM_OBJ.pam_strerror
+        self.pam_authenticate = PAM_OBJ.pam_authenticate
+        self.pam_open_session = PAM_OBJ.pam_open_session
+        self.pam_close_session = PAM_OBJ.pam_close_session
+        self.pam_put_env = PAM_OBJ.pam_put_env
+        self.pam_misc_setenv = PAM_OBJ.pam_misc_setenv
+        self.pam_getenv = PAM_OBJ.pam_getenv
+        self.pam_getenvlist = PAM_OBJ.getenvlist
 
     def _get_user_obj(self, username):
         # populate our internal passwd reference. This should only be called once during authentication
