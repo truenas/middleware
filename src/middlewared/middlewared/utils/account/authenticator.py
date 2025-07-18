@@ -32,7 +32,13 @@ from .utmp import login, logout, PyUtmpEntry, PyUtmpExit, PyUtmpType, UTMP_LOCK,
 MIDDLEWARE_HOST_PREFIX = 'tn-mw'
 UTMP_MAX_SESSIONS = 10000
 libc = ctypes.CDLL('libc.so.6', use_errno=True)
-PAM_REF = pam.pam()  # dlopen PAM libraries and define ctypes
+try:
+    PAM_REF = pam.pam()  # dlopen PAM libraries and define ctypes
+except AttributeError:
+    # The dlopen may fail when this file is imported into python script running
+    # in squashfs filesystem during upgrades. We'll just initialize PAM_REF to None
+    # here since the upgrade doesn't need to create authenticated middleware sessions
+    PAM_REF = None
 
 
 # utmp is basically treated as a key-value store based on the tn_line field. We
