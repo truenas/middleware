@@ -1,7 +1,7 @@
 import contextlib
 import os
 import sys
-from time import sleep
+from time import montonic, sleep
 
 try:
     apifolder = os.getcwd()
@@ -13,7 +13,7 @@ except ImportError:
 
 from .call import call
 
-__all__ = ["disable_failover"]
+__all__ = ["disable_failover", "do_failover"]
 
 
 @contextlib.contextmanager
@@ -69,3 +69,51 @@ def wait_for_standby():
         pass
     else:
         pass
+
+
+def do_failover(delay=900, description=''):
+    orig_master_node = call('failover.node')
+    new_master = False
+    failover_complete = False
+    timeout = monotonic() + delay
+
+    # First check that server is in expected failover state
+    # This node is MASTER, remote is BACKUP, and no failover in progress
+    assert call('failover.status') == 'MASTER'
+    assert not call('failover.in_progress')
+    assert call('failover.call_remote', 'failover.status') == 'BACKUP'
+
+    call('system.reboot', f'do_failover(): {description}')
+
+    while not new_master:
+        try:
+            new_master = call('failover.node') != orig_master_node:
+        except Exception:
+            pass
+
+        if not new_master:
+            if monotonic() > timeout:
+                break
+
+            print("Waiting for backup")
+            sleep(5)
+
+    assert new_master, f'Did not switch to new controller after {delay} seconds.'
+
+    # We have new controller, wait for standby to settle
+    wait_for_standby()
+
+    while not failover_complete:
+        failover_complete = not call('failover.in_progress')
+        if failover_complete:
+            assert call('failover.status') == 'MASTER'
+            assert call('failover.call_remote', 'failover.status') == 'BACKUP'
+
+        else:
+            if monotonic() > timeout:
+                break
+
+            print("Waiting for failover to complete")
+            sleep(5)
+
+    assert failover_complete, f'Did not complete failover after {delay} seconds.'
