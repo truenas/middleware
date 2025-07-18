@@ -1019,7 +1019,7 @@ class InterfaceService(CRUDService):
                             )
             except Exception:
                 # If app check fails, log but don't block interface update
-                self.logger.warning('Failed to check apps using IPs during interface validation', exc_info=True)
+                self.logger.exception('Failed to check apps using IPs during interface validation')
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         used_networks_ipv4 = []

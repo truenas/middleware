@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppContainerIdsArgs, AppContainerIdsResult, AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult,
@@ -73,23 +75,12 @@ class AppService(Service):
         """
         Returns host IPs in use by applications.
         """
-        apps = await self.middleware.call('app.query')
-        # First, collect all unique host IPs
-        all_host_ips = sorted(set(
-            host_ip
-            for app in apps
-            for host_ip in app['active_workloads']['used_host_ips']
-        ))
+        app_ip_info = defaultdict(list)
+        for app in await self.middleware.call('app.query'):
+            for host_ip in app['active_workloads']['used_host_ips']:
+                app_ip_info[host_ip].append(app['name'])
 
-        # Then, map each IP to the list of apps using it
-        return {
-            host_ip: [
-                app['name']
-                for app in apps
-                if host_ip in app['active_workloads']['used_host_ips']
-            ]
-            for host_ip in all_host_ips
-        }
+        return app_ip_info
 
     @api_method(AppIpChoicesArgs, AppIpChoicesResult, roles=['APPS_READ'])
     async def ip_choices(self):
