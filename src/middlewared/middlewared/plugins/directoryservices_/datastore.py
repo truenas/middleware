@@ -690,6 +690,8 @@ class DirectoryServices(ConfigService):
                 self.middleware.call_sync('failover.call_remote', 'directoryservices.health.recover')
             except Exception:
                 self.logger.warning('Failed to activate directory servics on standby controller', exc_info=True)
+        else:
+            self.logger.debug("XXX: not HA")
 
         return self.middleware.call_sync('directoryservices.config')
 
