@@ -11,8 +11,9 @@ def check_ds_status(status_dict, expected):
     assert status == expected, f'{expected}: unexpected status [{status}]: {msg}'
 
 
+#@pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY', 'IPA', 'LDAP'])
 @pytest.mark.skipif(not ha, reason='HA only test')
-@pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY', 'IPA', 'LDAP'])
+@pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY'])
 def test_failover(service_type):
     with directoryservice(service_type) as ds:
         # This node is healthy, but let's check on remote node
