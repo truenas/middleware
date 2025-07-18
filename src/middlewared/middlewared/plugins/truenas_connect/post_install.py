@@ -49,16 +49,25 @@ class TNCPostInstallService(Service):
         await self.middleware.call('etc.generate', 'ssl')
 
         logger.debug('TNC Post Install: TNC certificate saved to database successfully, updating configuration')
+        payload = {
+            'certificate': cert_id,
+            'enabled': True,
+            'heartbeat_url': tnc_config['heartbeat_service_base_url'],
+        }
+        for k in (
+            'ips', 'jwt_token', 'registration_details', 'account_service_base_url',
+            'leca_service_base_url', 'tnc_base_url',
+            'interfaces_ips', 'use_all_interfaces', 'interfaces',
+        ):
+            payload[k] = tnc_config[k]
+
         await self.middleware.call(
             'tn_connect.set_status',
-            Status.CONFIGURED.name, {
-                'certificate': cert_id,
-                'enabled': True,
-            } | {k: tnc_config[k] for k in (
-                'ips', 'jwt_token', 'registration_details', 'account_service_base_url',
-                'leca_service_base_url', 'tnc_base_url', 'heartbeat_service_base_url',
-            )}
+            Status.CONFIGURED.name,
+            payload,
         )
+        logger.debug('TNC Post Install: Syncing interface IPs')
+        await self.middleware.call('tn_connect.hostname.sync_interface_ips')
         logger.debug('TNC Post Install: Configuring nginx to consume TNC certificate')
         await self.middleware.call('tn_connect.acme.update_ui_impl')
 
