@@ -87,6 +87,7 @@ class UpdateStatusStatus(BaseModel):
 class UpdateDownloadProgress(BaseModel):
     percent: float
     description: LongString
+    version: str
 
 
 class UpdateStatus(BaseModel):
