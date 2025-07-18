@@ -42,7 +42,7 @@ class DomainConnection(
             case _:
                 raise ValueError(f'{enabled_ds}: unknown directory service')
 
-        if self.middleware.call_sync('failover.is_master_or_single'):
+        if self.middleware.call_sync('failover.is_single_master_node'):
             return self.middleware.call_sync('directoryservices.cache.refresh_impl').id
         else:
             return 0
