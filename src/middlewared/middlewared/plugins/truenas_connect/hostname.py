@@ -21,13 +21,13 @@ class TNCHostnameService(Service):
     async def config(self):
         return await hostname_config(await self.middleware.call('tn_connect.config_internal'))
 
-    async def register_update_ips(self, ips=None):
+    async def register_update_ips(self, ips=None, create_wildcard=False):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
         # If no IPs provided, use combined IPs from config (direct IPs + interface IPs)
         if ips is None:
             ips = tnc_config['ips'] + tnc_config.get('interfaces_ips', [])
         try:
-            return await register_update_ips(tnc_config, ips)
+            return await register_update_ips(tnc_config, ips, create_wildcard)
         except TNCCallError as e:
             raise CallError(str(e))
 
