@@ -49,7 +49,7 @@ def render(service, middleware, render_ctx):
 
     for dkno, share in enumerate(shares):
         txt_records.append(
-            f'dk{dkno}=adVN={share["name"]},adVF=0x82,adVU={share["vuid"]}'
+            f'dk{dkno}=adVN={share["name"]},adVF=0x82,adVU={share["options"]["vuid"]}'
         )
 
     try:
