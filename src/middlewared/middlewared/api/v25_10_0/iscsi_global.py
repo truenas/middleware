@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
-from .common import QueryFilters, QueryOptions
+
 
 __all__ = [
     "IscsiGlobalEntry",
@@ -13,8 +13,7 @@ __all__ = [
     "ISCSIGlobalIserEnabledResult",
     "ISCSIGlobalClientCountArgs",
     "ISCSIGlobalClientCountResult",
-    "ISCSIGlobalSessionsArgs",
-    "ISCSIGlobalSessionsResult"
+    "ISCSIGlobalSessionsItem",
 ]
 
 
@@ -61,7 +60,7 @@ class ISCSIGlobalClientCountResult(BaseModel):
     result: int
 
 
-class IscsiSession(BaseModel):
+class ISCSIGlobalSessionsItem(BaseModel):
     initiator: str
     initiator_addr: str
     initiator_alias: str | None
@@ -77,12 +76,3 @@ class IscsiSession(BaseModel):
     immediate_data: bool
     iser: bool
     offload: bool
-
-
-class ISCSIGlobalSessionsArgs(BaseModel):
-    query_filters: QueryFilters = []
-    query_options: QueryOptions = QueryOptions()
-
-
-class ISCSIGlobalSessionsResult(BaseModel):
-    result: list[IscsiSession]

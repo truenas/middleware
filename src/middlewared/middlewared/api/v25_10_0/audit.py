@@ -3,7 +3,9 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, single_argument_args, ForUpdateMetaclass, Excluded, excluded_field
+from middlewared.api.base import (
+    BaseModel, single_argument_args, ForUpdateMetaclass, Excluded, excluded_field, query_result
+)
 from .common import QueryFilters, QueryOptions
 
 
@@ -62,7 +64,7 @@ class AuditEntry(BaseModel):
 class AuditQuery(BaseModel):
     services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = ['MIDDLEWARE', 'SUDO']
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
-    query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+    query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
     """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form for \
     better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
     remote_controller: bool = False
@@ -70,11 +72,20 @@ class AuditQuery(BaseModel):
     is the 'current' controller."""
 
 
+class AuditExportQueryOptions(QueryOptions):
+    extra: Excluded = excluded_field()
+    count: Excluded = excluded_field()
+    get: Excluded = excluded_field()
+
+
 class AuditExport(AuditQuery):
+    query_options: AuditExportQueryOptions = Field(alias='query-options', default=AuditExportQueryOptions())
+    """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form for \
+    better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
     export_format: Literal['CSV', 'JSON', 'YAML'] = 'JSON'
 
 
-class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
+class AuditQueryResultItem(BaseModel):
     audit_id: UUID | None
     """GUID uniquely identifying this specific audit event."""
     message_timestamp: int
@@ -118,7 +129,7 @@ class AuditDownloadReportResult(BaseModel):
 
 
 class AuditExportArgs(BaseModel):
-    data: AuditExport = Field(default_factory=AuditExport)
+    data: AuditExport = AuditExport()
 
 
 class AuditExportResult(BaseModel):
@@ -126,11 +137,10 @@ class AuditExportResult(BaseModel):
 
 
 class AuditQueryArgs(BaseModel):
-    data: AuditQuery = Field(default_factory=AuditQuery)
+    data: AuditQuery = AuditQuery()
 
 
-class AuditQueryResult(BaseModel):
-    result: int | AuditQueryResultItem | list[AuditQueryResultItem]
+AuditQueryResult = query_result(AuditQueryResultItem, name="AuditQueryResult")
 
 
 class AuditUpdateArgs(BaseModel):
