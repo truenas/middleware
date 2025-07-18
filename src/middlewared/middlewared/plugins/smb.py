@@ -1144,8 +1144,12 @@ class SharingSMBService(SharingService):
                 raise
 
     @private
-    async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
-        if not exist_ok and await self.query([['name', 'C=', name]], {'select': ['name']}):
+    async def validate_share_name(self, name, schema_name, verrors, exist_ok=True, old=None):
+        filters = [['name', 'C=', name]]
+        if old:
+            filters.append(['id', '!=', old['id']])
+
+        if not exist_ok and await self.query(filters, {'select': ['name']}):
             verrors.add(
                 f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
             )
@@ -1192,7 +1196,7 @@ class SharingSMBService(SharingService):
                     )
 
         if data.get(share_field.NAME) is not None:
-            await self.validate_share_name(share_field.NAME, schema_name, verrors)
+            await self.validate_share_name(share_field.NAME, schema_name, verrors, True, old)
 
         if timemachine and data[share_field.ENABLED]:
             ngc = await self.middleware.call('network.configuration.config')
