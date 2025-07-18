@@ -108,7 +108,7 @@ class TNCACMEService(Service):
             await self.update_ui()
 
     async def initiate_cert_generation_impl(self):
-        await self.middleware.call('tn_connect.hostname.register_update_ips')
+        await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         cert_job = await self.middleware.call('tn_connect.acme.create_cert')
         await cert_job.wait()
         if cert_job.error:
