@@ -682,6 +682,8 @@ class DirectoryServices(ConfigService):
             self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
 
         if self.middleware.call('failover.status') == 'MASTER':
+            remote_config = self.middleware.call_sync('failover.call_remote', 'directoryservices.config')
+            self.logger.debug("REMOTE: %s - %s", remote_config['service_type'], remote_config['enable'])
             self.middleware.call_sync('failover.call_remote', 'directoryservices.connection.activate')
             try:
                 # Perform a recover op to forcibly reset the state
