@@ -333,6 +333,8 @@ class DirectoryServices(ConfigService):
 
     @private
     def common_validation(self, old, new, verrors):
+        if not self.middleware.call_sync('failover.is_single_master_node'):
+            raise CallError('Directory services configuration changes must be made on active storage controller')
 
         # Most changes should not be done while we're enabled as they can result
         # in a production outage that is unacceptable in enterprise environments
@@ -681,7 +683,7 @@ class DirectoryServices(ConfigService):
             compressed = self.compress(new)
             self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
 
-        if self.middleware.call('failover.status') == 'MASTER':
+        if self.middleware.call_sync('failover.status') == 'MASTER':
             remote_config = self.middleware.call_sync('failover.call_remote', 'directoryservices.config')
             self.logger.debug("REMOTE: %s - %s", remote_config['service_type'], remote_config['enable'])
             self.middleware.call_sync('failover.call_remote', 'directoryservices.connection.activate')
