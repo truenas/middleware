@@ -415,7 +415,7 @@ def test_003_mdns_smb_share(request):
                     props = _get_tm_props(tm, b'dk0')
                     assert props['adVN'] == SMB_NAME1, props
                     assert props['adVF'] == '0x82', props
-                    assert props['adVU'] == share1['vuid'], props
+                    assert props['adVU'] == share1['options']['vuid'], props
                     # Now make another time machine share
                     with dataset(dataset_name2):
                         with smb_share(SMB_PATH2, {'name': SMB_NAME2,
@@ -433,17 +433,17 @@ def test_003_mdns_smb_share(request):
                             # Let's not make any assumption about which share is which
                             if props0['adVN'] == SMB_NAME1:
                                 # SHARE 1 in props0
-                                assert props0['adVU'] == share1['vuid'], props0
+                                assert props0['adVU'] == share1['options']['vuid'], props0
                                 # SHARE 2 in props1
                                 assert props1['adVN'] == SMB_NAME2, props1
-                                assert props1['adVU'] == share2['vuid'], props1
+                                assert props1['adVU'] == share2['options']['vuid'], props1
                             else:
                                 # SHARE 1 in props1
                                 assert props1['adVN'] == SMB_NAME1, props1
-                                assert props1['adVU'] == share1['vuid'], props1
+                                assert props1['adVU'] == share1['options']['vuid'], props1
                                 # SHARE 2 in props0
                                 assert props0['adVN'] == SMB_NAME2, props0
-                                assert props0['adVU'] == share2['vuid'], props0
+                                assert props0['adVU'] == share2['options']['vuid'], props0
                     # Still have one TM share
                     allow_settle()
                     ac.find_items()
