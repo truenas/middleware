@@ -681,6 +681,14 @@ class DirectoryServices(ConfigService):
             compressed = self.compress(new)
             self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
 
+        if self.middleware.call('failover.status') == 'MASTER':
+            self.middleware.call_sync('failover.call_remote', 'directoryservices.connection.activate')
+            try:
+                # Perform a recover op to forcibly reset the state
+                self.middleware.call_sync('failover.call_remote', 'directoryservices.health.recover')
+            except Exception:
+                self.logger.warning('Failed to activate directory servics on standby controller', exc_info=True)
+
         return self.middleware.call_sync('directoryservices.config')
 
     @private

@@ -42,7 +42,10 @@ class DomainConnection(
             case _:
                 raise ValueError(f'{enabled_ds}: unknown directory service')
 
-        return self.middleware.call_sync('directoryservices.cache.refresh_impl').id
+        if self.middleware.call_sync('failover.is_master_or_single'):
+            return self.middleware.call_sync('directoryservices.cache.refresh_impl').id
+        else:
+            return 0
 
     def _create_nsupdate_payload(self, fqdn: str, cmd_type: str, do_ptr: bool = False):
         if fqdn.startswith('localhost'):
