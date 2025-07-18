@@ -31,7 +31,7 @@ def render(service, middleware, render_ctx):
         raise FileShouldNotExist()
 
     shares = middleware.call_sync('sharing.smb.query', [
-        ['OR', [['purpose', '=', ['TIMEMACHINE_SHARE']], ['options.timemachine', '=', True]]],
+        ['OR', [['purpose', '=', 'TIMEMACHINE_SHARE'], ['options.timemachine', '=', True]]],
         ['enabled', '=', True], ['locked', '=', False]
     ])
 
