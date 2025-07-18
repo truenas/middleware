@@ -54,9 +54,10 @@ class TNCPostInstallService(Service):
             Status.CONFIGURED.name, {
                 'certificate': cert_id,
                 'enabled': True,
+                'heartbeat_url': tnc_config['heartbeat_service_base_url']
             } | {k: tnc_config[k] for k in (
                 'ips', 'jwt_token', 'registration_details', 'account_service_base_url',
-                'leca_service_base_url', 'tnc_base_url', 'heartbeat_service_base_url',
+                'leca_service_base_url', 'tnc_base_url',
                 'interfaces_ips', 'use_all_interfaces', 'interfaces',
             )}
         )
