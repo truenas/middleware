@@ -87,7 +87,7 @@ def do_failover(delay=900, description=''):
 
     while not new_master:
         try:
-            new_master = call('failover.node') != orig_master_node:
+            new_master = call('failover.node') != orig_master_node
         except Exception:
             pass
 
