@@ -114,7 +114,10 @@ class DSCache(Service):
         """
         try:
             entry = retrieve_cache_entry(IDType[data['idtype']], data.get('who'), data.get('id'))
-        except MatchNotFound:
+        # MatchNotFound means TDB file exists but doesn't contain an entry
+        # FileNotFoundError means TDB file has not been created yet. This may occur on standby
+        # controller
+        except (MatchNotFound, FileNotFoundError):
             entry = None
 
         if not entry:
@@ -156,7 +159,10 @@ class DSCache(Service):
                     if entry is None:
                         return None
 
-                self._insert(data['idtype'], entry)
+                try:
+                    self._insert(data['idtype'], entry)
+                except Exception:
+                    self.logger.warning('Failed to insert %s into directory services cache', entry)
             except KeyError:
                 entry = None
 

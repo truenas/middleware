@@ -12,7 +12,7 @@ from middlewared.utils.directoryservices.health import (
     ADHealthCheckFailReason,
     ADHealthError,
 )
-from middlewared.utils.directoryservices.krb5 import krb5ccache
+from middlewared.utils.directoryservices.krb5 import kdc_saf_cache_get, krb5ccache
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
 from middlewared.utils.directoryservices.krb5_constants import (
     KRB_LibDefaults,
@@ -107,13 +107,17 @@ class ADHealthMixin:
             smb_config['workgroup']
         )
 
+        # libads may select a different KDC than the one we used for join. This can happen if we fail over shortly
+        # after joining AD or a machine account password change.
+        kdc_override = kdc_saf_cache_get() or domain_info['kdc_server']
+
         try:
-            self._test_machine_account_password(domain_info['kdc_server'], machine_pass)
+            self._test_machine_account_password(kdc_override, machine_pass)
         except KRB5Error as krberr:
             match krberr.krb5_code:
                 case KRB5ErrCode.KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
                     faulted_reason = (
-                        f"The domain controller at {domain_info['kdc_server']} said that the "
+                        f"The domain controller at {kdc_override} said that the "
                         "TrueNAS computer account does not exist. This happened after the "
                         "TrueNAS server tried to recover the secret from a saved backup. "
                         "This means that the TrueNAS account was deleted or that the domain "
@@ -122,7 +126,7 @@ class ADHealthMixin:
                     )
                 case KRB5ErrCode.KRB5_PREAUTH_FAILED:
                     faulted_reason = (
-                        f"The domain controller at {domain_info['kdc_server']} said that the "
+                        f"The domain controller at {kdc_override} said that the "
                         "TrueNAS computer account credentials are not valid. This means that "
                         "saved credentials on TrueNAS do not match the credentials expected by"
                         "the domain controller. This can happen if the TrueNAS configuration was "

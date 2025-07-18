@@ -280,4 +280,4 @@ def directoryservice(
                 if service_type in ('ACTIVEDIRECTORY', 'IPA'):
                     call('directoryservices.leave', {'credential': credential}, job=True)
                 else:
-                    call('directoryservices.reset')
+                    call('directoryservices.update', {'service_type': None, 'enable': False})

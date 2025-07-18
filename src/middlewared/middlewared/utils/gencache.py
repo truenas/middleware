@@ -10,6 +10,9 @@ from middlewared.utils.tdb import (
 
 GENCACHE_FILE = '/var/run/samba-lock/gencache.tdb'
 GENCACHE_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+SAFKEY_PREFIX = 'SAF/DOMAIN'
+SAFJOIN_PREFIX = 'SAFJOIN/DOMAIN'
+
 
 
 class IDMAPCacheType(enum.Enum):
@@ -41,7 +44,7 @@ def wipe_gencache_entries() -> None:
         return hdl.clear()
 
 
-def flush_gencache_entries() -> None:
+def flush_gencache_entries(keep_saf=False) -> None:
     """
     delete all keys in gencache
 
@@ -51,6 +54,9 @@ def flush_gencache_entries() -> None:
     """
     with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
         for entry in hdl.entries():
+            if keep_saf and entry['key'].startswith((SAFKEY_PREFIX, SAFJOIN_PREFIX)):
+                continue
+
             hdl.delete(entry['key'])
 
 
