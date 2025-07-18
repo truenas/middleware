@@ -1,4 +1,6 @@
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.alert.base import (
+    Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass,
+)
 from middlewared.api import api_method
 from middlewared.api.current import (CloudCredentialEntry,
                                      CredentialsCreateArgs, CredentialsCreateResult,
@@ -490,6 +492,17 @@ class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
     async def load(self, alerts):
         task_ids = {str(task["id"]) for task in await self.middleware.call("cloudsync.query")}
         return [alert for alert in alerts if alert.key in task_ids]
+
+
+class CloudProviderRemovedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    level = AlertLevel.WARNING
+    category = AlertCategory.TASKS
+    title = "Cloud Provider Was Removed"
+    text = (
+        "%(provider)s is no longer a supported Cloud Credential. All previously configured Cloud Tasks have been "
+        "deleted."
+    )
+    deleted_automatically = False
 
 
 def lsjson_error_excerpt(error):
