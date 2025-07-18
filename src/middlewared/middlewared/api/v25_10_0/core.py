@@ -154,10 +154,13 @@ class CorePingRemoteResult(BaseModel):
     result: bool
 
 
-@single_argument_args("options")
-class CoreArpArgs(BaseModel):
+class CoreArp(BaseModel):
     ip: str | None = None
     interface: str | None = None
+
+
+class CoreArpArgs(BaseModel):
+    options: CoreArp = CoreArp()
 
 
 class CoreArpResult(BaseModel):
@@ -179,11 +182,14 @@ class CoreDownloadResult(BaseModel):
     """Job ID and the URL for download."""
 
 
-@single_argument_args("options")
-class CoreDebugArgs(BaseModel):
+class CoreDebug(BaseModel):
     bind_address: str = "0.0.0.0"
     bind_port: int = 3000
     threaded: bool = False
+
+
+class CoreDebugArgs(BaseModel):
+    options: CoreDebug = CoreDebug()
 
 
 class CoreDebugResult(BaseModel):
