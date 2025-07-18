@@ -1,4 +1,5 @@
 import collections
+import contextlib
 import dataclasses
 import functools
 import json
@@ -10,7 +11,7 @@ import typing
 import uuid
 
 from .disk_io import read_gpt, wipe_disk_quick, create_gpt_partition
-from .gpt_parts import GptPartEntry
+from .gpt_parts import GptPartEntry, PART_TYPES
 
 __all__ = ("DiskEntry", "iterate_disks")
 
@@ -241,8 +242,17 @@ class DiskEntry:
             return f"{{serial_lunid}}{self.serial}_{self.lunid}"
         elif self.serial:
             return f"{{serial}}{self.serial}"
-        else:
-            return f"{{devicename}}{self.name}"
+        elif partitions := self.partitions():
+            with contextlib.suppress(Exception):
+                # We don't want to crash if we can't read partitions
+                for part in filter(
+                    lambda p: PART_TYPES.get(p.partition_type_guid, "UNKNOWN") == "ZFS",
+                    partitions
+                ):
+                    return f"{{uuid}}{part.unique_partition_guid}"
+
+        # If we reach here, we have no serial or partitions
+        return f"{{devicename}}{self.name}"
 
     @functools.cached_property
     def translation(self) -> typing.Literal["SATL", "SNTL", None]:
