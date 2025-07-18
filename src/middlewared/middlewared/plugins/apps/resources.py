@@ -1,8 +1,11 @@
+from collections import defaultdict
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppContainerIdsArgs, AppContainerIdsResult, AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult,
     AppCertificateChoicesArgs, AppCertificateChoicesResult,
-    AppUsedPortsArgs, AppUsedPortsResult, AppIpChoicesArgs, AppIpChoicesResult, AppAvailableSpaceArgs,
+    AppUsedPortsArgs, AppUsedPortsResult, AppUsedHostIpsArgs, AppUsedHostIpsResult,
+    AppIpChoicesArgs, AppIpChoicesResult, AppAvailableSpaceArgs,
     AppAvailableSpaceResult, AppGpuChoicesArgs, AppGpuChoicesResult,
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
@@ -66,6 +69,18 @@ class AppService(Service):
             for port_entry in app['active_workloads']['used_ports']
             for host_port in port_entry['host_ports']
         })))
+
+    @api_method(AppUsedHostIpsArgs, AppUsedHostIpsResult, roles=['APPS_READ'])
+    async def used_host_ips(self):
+        """
+        Returns host IPs in use by applications.
+        """
+        app_ip_info = defaultdict(list)
+        for app in await self.middleware.call('app.query'):
+            for host_ip in app['active_workloads']['used_host_ips']:
+                app_ip_info[host_ip].append(app['name'])
+
+        return app_ip_info
 
     @api_method(AppIpChoicesArgs, AppIpChoicesResult, roles=['APPS_READ'])
     async def ip_choices(self):

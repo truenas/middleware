@@ -13,8 +13,9 @@ __all__ = [
     'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
     'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult',
-    'AppCertificateChoicesArgs', 'AppCertificateChoicesResult', 'AppUsedPortsArgs', 'AppUsedPortsResult',
+    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs',
+    'AppContainerConsoleChoicesResult', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
+    'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
     'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
     'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
@@ -65,6 +66,7 @@ class AppNetworks(BaseModel):
 class AppActiveWorkloads(BaseModel):
     containers: int
     used_ports: list[UsedPorts]
+    used_host_ips: list[str]
     container_details: list[AppContainerDetails]
     volumes: list[AppVolumes]
     images: list[NonEmptyString]
@@ -258,6 +260,14 @@ class AppUsedPortsArgs(BaseModel):
 
 class AppUsedPortsResult(BaseModel):
     result: list[int]
+
+
+class AppUsedHostIpsArgs(BaseModel):
+    pass
+
+
+class AppUsedHostIpsResult(BaseModel):
+    result: dict[str, list[str]]
 
 
 class AppIpChoicesArgs(BaseModel):

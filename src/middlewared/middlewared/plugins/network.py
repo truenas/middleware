@@ -991,6 +991,36 @@ class InterfaceService(CRUDService):
                         msg += ' have ip addresses configured.'
                         verrors.add(f'{schema_name}.failover_critical', msg)
 
+        # Check if any IPs being removed are used by apps
+        if update:
+            try:
+                # Get current aliases
+                current_aliases = set()
+                for alias in update.get('aliases', []):
+                    current_aliases.add(alias['address'])
+
+                # Get new aliases
+                new_aliases = set()
+                for alias in data.get('aliases', []):
+                    new_aliases.add(alias['address'])
+
+                # Find removed aliases
+                removed_aliases = current_aliases - new_aliases
+
+                if removed_aliases:
+                    # Check if any removed IPs are used by apps
+                    apps_using_ips = await self.middleware.call('app.used_host_ips')
+                    for removed_ip in removed_aliases:
+                        if removed_ip in apps_using_ips:
+                            apps_list = ', '.join(apps_using_ips[removed_ip])
+                            verrors.add(
+                                f'{schema_name}.aliases',
+                                f'IP address {removed_ip} cannot be removed as it is being used by apps: {apps_list}'
+                            )
+            except Exception:
+                # If app check fails, log but don't block interface update
+                self.logger.exception('Failed to check apps using IPs during interface validation')
+
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
         used_networks_ipv4 = []
         used_networks_ipv6 = []
