@@ -474,11 +474,11 @@ class PoolDatasetGetQuotaArgs(BaseModel):
     dataset: str
     quota_type: Literal['USER', 'GROUP', 'DATASET', 'PROJECT']
     filters: QueryFilters = []
-    options: QueryOptions = Field(default_factory=QueryOptions)
+    options: QueryOptions = QueryOptions()
 
 
 class PoolDatasetGetQuotaResult(BaseModel):
-    result: list[PoolDatasetQuota]
+    result: list[PoolDatasetQuota] | PoolDatasetQuota | int
 
 
 class PoolDatasetInheritParentEncryptionPropertiesArgs(BaseModel):
