@@ -25,12 +25,23 @@ class SystemAdvancedService(Service):
         This endpoint gives all the gpu pci ids/slots that can be isolated.
         """
         configured_value = self.middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
-        gpus = {
-            f'{gpu["description"]} [{gpu["addr"]["pci_slot"]}]': gpu['addr']['pci_slot']
-            for gpu in get_gpus() if not gpu['uses_system_critical_devices']
-        }
-        for slot in filter(lambda gpu: gpu not in gpus.values(), configured_value):
-            gpus[f'Unknown {slot!r} slot'] = slot
+        gpus = {}
+        gpu_slots = []
+        for gpu in get_gpus():
+            gpus[f'{gpu["description"]} [{gpu["addr"]["pci_slot"]}]'] = {
+                'pci_slot': gpu['addr']['pci_slot'],
+                'uses_system_critical_devices': gpu['uses_system_critical_devices'],
+                'critical_reason': gpu['critical_reason'],
+            }
+            gpu_slots.append(gpu['addr']['pci_slot'])
+
+        # uses_system_critical_devices
+        for slot in filter(lambda gpu: gpu not in gpu_slots, configured_value):
+            gpus[f'Unknown {slot!r} slot'] = {
+                'pci_slot': slot,
+                'uses_system_critical_devices': False,
+                'critical_reason': None,
+            }
 
         return gpus
 
