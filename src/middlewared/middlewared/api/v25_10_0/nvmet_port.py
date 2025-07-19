@@ -48,6 +48,12 @@ class NVMetPortEntry(BaseModel):
     # """ Transport Requirements codes for Discovery Log Page entry TREQ field. """
     enabled: bool = True
     """ Port enabled.  When NVMe target is running, cannot make changes to an enabled port. """
+    dedicated_nic: bool = False
+    """
+    NIC dedicated.  If supported by the underlying NVMe-oF implementation, then
+    the NIC will be dedicated to NVMe-oF, and not available for use by other
+    protocols.
+    """
 
 
 class NVMetPortCreateTemplate(NVMetPortEntry, ABC):
