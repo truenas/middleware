@@ -45,7 +45,7 @@ def quota_cb(quota, state):
         # to be safe
         return True
 
-    entry = {'quota_type': state['qt'], 'id': quota.xid, 'name': quota.xid, value_key: quota.value}
+    entry = {'quota_type': state['qt'], 'id': quota.xid, 'name': None, value_key: quota.value}
     if quota.xid not in state['quotas']:
         # only resolve the xid once
         try:
