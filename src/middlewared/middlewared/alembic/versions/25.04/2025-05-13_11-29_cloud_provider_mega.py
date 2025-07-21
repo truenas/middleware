@@ -5,15 +5,14 @@ Revises: 249b95f63f76
 Create Date: 2025-05-13 11:29:12.009530+00:00
 
 """
-from datetime import datetime
 import json
 import uuid
 
 from alembic import op
-import pytz
 import sqlalchemy as sa
 
 from middlewared.plugins.cloud_sync import CloudProviderRemovedAlertClass
+from middlewared.utils.time_utils import utc_now
 
 
 # revision identifiers, used by Alembic.
@@ -32,7 +31,7 @@ def upgrade():
         )
     """).rowcount > 0:
         args = {"provider": "MEGA"}
-        now = datetime.now().astimezone(pytz.UTC).replace(tzinfo=None)
+        now = utc_now()
         conn.execute(
             'INSERT INTO system_alert (node, source, "key", datetime, text, args, dismissed, uuid, klass, '
             "last_occurrence) VALUES ('A', '', :key, :datetime, :text, :args, 0, :uuid, 'CloudProviderRemoved', "

@@ -495,7 +495,7 @@ class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
 
 
 class CloudProviderRemovedAlertClass(AlertClass, SimpleOneShotAlertClass):
-    level = AlertLevel.WARNING
+    level = AlertLevel.INFO
     category = AlertCategory.TASKS
     title = "Cloud Provider Was Removed"
     text = (
