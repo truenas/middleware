@@ -292,7 +292,7 @@ class JBOFService(CRUDService):
 
     @private
     def alt_mgmt_ip(self, mgmt_ip):
-        other_mgmt_ips = filter(lambda x: x != mgmt_ip, self.get_mgmt_ips(mgmt_ip))
+        other_mgmt_ips = list(filter(lambda x: x != mgmt_ip, self.get_mgmt_ips(mgmt_ip)))
         for ip in other_mgmt_ips:
             if RedfishClient.is_redfish(ip):
                 return ip
