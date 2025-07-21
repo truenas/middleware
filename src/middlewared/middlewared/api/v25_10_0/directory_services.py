@@ -44,7 +44,7 @@ class DirectoryServicesStatusResult(BaseModel):
     status: DSStatus | None = None
     """ This field shows the directory service status from the last health check. The status is null if directory \
     services are disabled. """
-    status_msg: str | None = None
+    status_msg: LongNonEmptyString | None = None
     """ This field shows the reason why the directory service is FAULTED after a failed health check. If the directory \
     service is not faulted, the field is null. """
 
