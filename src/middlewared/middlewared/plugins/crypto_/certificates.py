@@ -108,7 +108,7 @@ class CertificateService(CRUDService):
         elif cert['key_length'] < valid_key_size[cert['key_type']]:
             verrors.add(
                 schema_name,
-                f'{cert["name"]}\'s private key size is less then {valid_key_size[cert["key_type"]]} bits'
+                f'{cert["name"]}\'s private key size is less than {valid_key_size[cert["key_type"]]} bits'
             )
 
         if cert['until'] and datetime.datetime.strptime(

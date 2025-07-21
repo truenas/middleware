@@ -212,7 +212,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                     f'{schema_name}.vcpus',
                     f'Maximum {max_vcpus} vcpus are supported.'
                     f'Please ensure the product of "{schema_name}.vcpus", "{schema_name}.cores" and '
-                    f'"{schema_name}.threads" is less then {max_vcpus}.'
+                    f'"{schema_name}.threads" is less than {max_vcpus}.'
                 )
             elif flags['intel_vmx']:
                 if vcpus > 1 and flags['unrestricted_guest'] is False:
