@@ -23,10 +23,16 @@ class JBOFEntry(BaseModel):
     """Redfish administrative username."""
     mgmt_password: Secret[str]
     """Redfish administrative password."""
+    index: int
+    """Index of the JBOF.  Used to determine data plane IP addresses."""
+    uuid: str
+    """UUID of the JBOF as reported by the enclosure firmware."""
 
 
 class JBOFCreate(JBOFEntry):
     id: Excluded = excluded_field()
+    index: Excluded = excluded_field()
+    uuid: Excluded = excluded_field()
 
 
 class JBOFUpdate(JBOFCreate, metaclass=ForUpdateMetaclass):
