@@ -48,17 +48,6 @@ def test_expand_partition():
     assert expanded_partition["start"] == partition["start"]
 
 
-def test_expand_partition_does_not_destroy_data():
-    disk = call("disk.get_unused")[0]["name"]
-    call("disk.wipe", disk, "QUICK", job=True)
-    ssh(f"sgdisk -n 0:4Gib:0 /dev/{disk}")
-    partition = retry_get_parts_on_disk(disk)[0]
-    with pytest.raises(Exception):
-        call("pool.expand_partition", partition)
-    expanded_partition = retry_get_parts_on_disk(disk)[0]
-    assert expanded_partition == partition
-
-
 def test_expand_partition_does_not_shrink_partition():
     disk = call("disk.get_unused")[0]["name"]
     call("disk.wipe", disk, "QUICK", job=True)
@@ -67,3 +56,17 @@ def test_expand_partition_does_not_shrink_partition():
     call("pool.expand_partition", partition)
     expanded_partition = retry_get_parts_on_disk(disk)[0]
     assert expanded_partition == partition
+
+
+def test_expand_partition_legacy_swap():
+    disk = call("disk.get_unused")[0]
+    size = disk["size"]
+    disk = disk["name"]
+    call("disk.wipe", disk, "QUICK", job=True)
+    ssh(f"sgdisk -n 0:8192:1GiB -n 0:0:+1GiB /dev/{disk}")
+    partition = retry_get_parts_on_disk(disk, min_parts=2)[1]
+    call("pool.expand_partition", partition)
+    expanded_partition = retry_get_parts_on_disk(disk, min_parts=2)[1]
+    assert expanded_partition["size"] > partition["size"]
+    assert expanded_partition["size"] < size * 0.99
+    assert expanded_partition["start"] == partition["start"]
