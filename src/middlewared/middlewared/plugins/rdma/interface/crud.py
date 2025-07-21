@@ -10,7 +10,7 @@ import middlewared.sqlalchemy as sa
 
 
 class RdmaInterfaceEntry(BaseModel):
-    id: str
+    id: int
     node: str = ''
     ifname: str
     address: IPvAnyAddress
