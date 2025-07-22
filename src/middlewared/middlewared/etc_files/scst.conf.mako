@@ -45,9 +45,9 @@
         return cml
 
     targets = render_ctx['iscsi.target.query']
-    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
-    portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
-    initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
+    extents = {d['id']: d for d in render_ctx['iscsi.extent.query']}
+    portals = {d['id']: d for d in render_ctx['iscsi.portal.query']}
+    initiators = {d['id']: d for d in render_ctx['iscsi.initiator.query']}
     fcports_by_target_id = defaultdict(list)
     for fcport in render_ctx['fcport.query']:
         fcports_by_target_id[fcport['target']['id']].append(fcport)
@@ -279,14 +279,14 @@
         if alua_enabled:
             for a_tgt in filter(
                 lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
-                middleware.call_sync('iscsi.targetextent.query')
+                render_ctx['iscsi.targetextent.query']
             ):
                 associated_targets[a_tgt['target']].append(a_tgt)
         # If ALUA not enabled then keep associated_targets as empty
     else:
         for a_tgt in filter(
             lambda a: a['extent'] in extents and not extents[a['extent']]['locked'] and a['extent'] not in missing_extents,
-            middleware.call_sync('iscsi.targetextent.query')
+            render_ctx['iscsi.targetextent.query']
         ):
             associated_targets[a_tgt['target']].append(a_tgt)
 
