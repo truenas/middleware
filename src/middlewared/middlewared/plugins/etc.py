@@ -281,9 +281,13 @@ class EtcService(Service):
                 {'method': 'fc.capable'},
                 {'method': 'fcport.query'},
                 {'method': 'iscsi.auth.query'},
+                {'method': 'iscsi.extent.query', 'args': [[['enabled', '=', True]]]},
                 {'method': 'iscsi.global.alua_enabled'},
                 {'method': 'iscsi.global.config'},
+                {'method': 'iscsi.initiator.query'},
+                {'method': 'iscsi.portal.query'},
                 {'method': 'iscsi.target.query'},
+                {'method': 'iscsi.targetextent.query'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import', 'mode': 0o600},
