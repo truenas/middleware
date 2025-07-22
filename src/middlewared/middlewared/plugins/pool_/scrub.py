@@ -256,6 +256,7 @@ class PoolScrubService(CRUDService):
             'sh', '-c', f'zpool history {shlex.quote(name)} | grep -E "zpool (scrub|create|import)"',
             encoding='utf-8',
             errors='ignore',
+            check=False,
         )).stdout
         for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB_CREATE.finditer(last_scrubs))):
             last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
