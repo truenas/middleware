@@ -1144,10 +1144,10 @@ class SharingSMBService(SharingService):
                 raise
 
     @private
-    async def validate_share_name(self, name, schema_name, verrors, old_id=None):
+    async def validate_share_name(self, name, schema_name, verrors, old=None):
         filters = [['name', 'C=', name]]
-        if old_id:
-            filters.append(['id', '!=', old_id]])
+        if old:
+            filters.append(['id', '!=', old['id']])
 
         if await self.query(filters, {'select': ['name']}):
             verrors.add(
@@ -1196,7 +1196,7 @@ class SharingSMBService(SharingService):
                     )
 
         if data.get(share_field.NAME) is not None:
-            await self.validate_share_name(share_field.NAME, schema_name, verrors, old['id'])
+            await self.validate_share_name(share_field.NAME, schema_name, verrors, old)
 
         if timemachine and data[share_field.ENABLED]:
             ngc = await self.middleware.call('network.configuration.config')
@@ -1241,6 +1241,8 @@ class SharingSMBService(SharingService):
 
     @api_method(SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
+        # This endpoint provides the UI a mechanism to determine whether popup prompting to create
+        # SMB users should occur when auto-creating an SMB share in the datasets form.
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
         if not ds_enabled:
