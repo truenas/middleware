@@ -742,7 +742,7 @@ class DirectoryServices(ConfigService):
         ds_config = self.middleware.call_sync('directoryservices.config')
         if not ds_config['enable']:
             raise CallError(
-                'The directory service must be enabled and healthy before the TrueNAS server can leave the domain.'
+                'The directory service must be enabled before the TrueNAS server can leave the domain.'
             )
 
         # overwrite cred with admin-provided one. We need elevated permissions to do this
@@ -754,9 +754,11 @@ class DirectoryServices(ConfigService):
 
         # Set our directory services health state to LEAVING so that automatic health checks are disabled
         # and we don't try to recover while leaving the domain.
+        orig_state = self.middleware.call_sync('directoryservices.status')['status']
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
         if verrors:
+            self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, orig_state)
             self.__revert_changes(revert)
 
         verrors.check()
