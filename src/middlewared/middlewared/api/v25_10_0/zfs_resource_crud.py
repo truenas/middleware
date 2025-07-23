@@ -301,6 +301,7 @@ class ZFSResourceQuery(BaseModel):
                 ],
             },
         ]
+    The default is True (return a flat object).
     """
     get_children: bool = False
     """Retrieve children information for the zfs resource."""
