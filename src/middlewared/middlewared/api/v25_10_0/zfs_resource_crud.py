@@ -266,43 +266,7 @@ class ZFSResourceQuery(BaseModel):
     NOTE: This should only ever be toggled by internal consumers and \
     you should know what you're doing by toggling this to False."""
     flat: bool = True
-    """Return a "flat" object representing the zfs resource(s). For \
-    example, a flat response will look like so:
-        [
-            {
-                "name": "tank/foo",
-                "pool": "tank",
-                "children": [],
-            },
-            {
-                "name": "tank/foo/boo",
-                "pool": "tank",
-                "children": [],
-            }
-        ]
-
-    If flat is False, a response will look like so:
-        [
-            {
-                "name": "tank/foo",
-                "pool": "tank",
-                "children": [
-                    {
-                        "name": "tank/foo/boo",
-                        "pool": "tank",
-                        "children": [
-                            {
-                                "name": "tank/foo/boo/you",
-                                "pool": "tank",
-                                "children": [],
-                            }
-                        ],
-                    }
-                ],
-            },
-        ]
-    The default is True (return a flat object).
-    """
+    """Return a "flat" object representing the zfs resource(s)."""
     get_children: bool = False
     """Retrieve children information for the zfs resource."""
 
