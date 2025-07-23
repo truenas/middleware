@@ -39,6 +39,7 @@ class IscsiExtentEntry(BaseModel):
     ro: bool = False
     enabled: bool = True
     vendor: str
+    product_id: Annotated[NonEmptyString, StringConstraints(max_length=16)] | None = None
     locked: bool | None
     """ Read-only value indicating whether the iscsi extent is located on a locked dataset.
 
