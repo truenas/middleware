@@ -138,4 +138,35 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_READ"],
     )
     def query(self, data):
+        """
+        Query ZFS resources (datasets and volumes) with flexible filtering options.
+
+        This method provides a high-performance interface for retrieving information \
+        about ZFS resources, including their properties, hierarchical relationships, \
+        and metadata. The query can be customized to retrieve specific resources, \
+        properties, and control the output format.
+
+        Raises:
+            ValidationError: If:
+                - Snapshot paths are provided (snapshots not currently supported)
+                - Overlapping paths are provided with get_children=True
+                - Requested paths don't exist (errno.ENOENT)
+
+        Examples:
+            # Query all resources with default properties
+            query()
+
+            # Query specific resources with all properties
+            query({"paths": ["tank/documents", "tank/media"]})
+
+            # Query with specific properties and children
+            query({
+                "paths": ["tank"],
+                "properties": ["mounted", "compression", "used"],
+                "get_children": True
+            })
+
+            # Get hierarchical view of resources
+            query({"paths": ["tank"], "flat": False, "get_children": True})
+        """
         return self.middleware.call_sync("zfs.resource.query_impl", data)
