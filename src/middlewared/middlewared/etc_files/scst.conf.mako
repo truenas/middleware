@@ -378,7 +378,7 @@ HANDLER ${handler} {
         read_only ${'1' if extent['ro'] else '0'}
         usn ${extent['serial']}
         naa_id ${extent['naa']}
-        prod_id "iSCSI Disk"
+        prod_id "${extent['product_id']}"
 %       if extent['rpm'] != 'SSD':
         rotational 1
 %       else:
