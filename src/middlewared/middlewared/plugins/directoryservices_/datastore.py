@@ -758,7 +758,7 @@ class DirectoryServices(ConfigService):
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
         if verrors:
-            self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, orig_status)
+            self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, orig_state)
             self.__revert_changes(revert)
 
         verrors.check()
