@@ -30,7 +30,7 @@ class UpdateService(Service):
                 if await self.can_update_to(version):
                     versions.append({
                         'train': train,
-                        'version': await self.version_from_manifest({**manifest, 'version': version}),
+                        'version': await self.version_from_manifest({**manifest, 'train': train, 'version': version}),
                     })
 
         return versions
@@ -44,6 +44,9 @@ class UpdateService(Service):
         return {
             'version': manifest['version'],
             'manifest': manifest,
+            'release_notes': await self.middleware.call(
+                "update.release_notes", manifest["train"], manifest["filename"],
+            ),
             'release_notes_url': (
                 await self.middleware.call("system.release_notes_url", manifest["version"])
             ),
