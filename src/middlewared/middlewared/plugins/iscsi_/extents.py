@@ -8,14 +8,23 @@ from collections import defaultdict
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (iSCSITargetExtentCreateArgs, iSCSITargetExtentCreateResult, iSCSITargetExtentDeleteArgs,
-                                     iSCSITargetExtentDeleteResult, iSCSITargetExtentDiskChoicesArgs, iSCSITargetExtentDiskChoicesResult,
-                                     IscsiExtentEntry, iSCSITargetExtentUpdateArgs, iSCSITargetExtentUpdateResult)
+from middlewared.api.current import (iSCSITargetExtentCreateArgs,
+                                     iSCSITargetExtentCreateResult,
+                                     iSCSITargetExtentDeleteArgs,
+                                     iSCSITargetExtentDeleteResult,
+                                     iSCSITargetExtentDiskChoicesArgs,
+                                     iSCSITargetExtentDiskChoicesResult,
+                                     IscsiExtentEntry,
+                                     iSCSITargetExtentUpdateArgs,
+                                     iSCSITargetExtentUpdateResult)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
+
+EXTENT_DEFAULT_VENDOR = 'TrueNAS'
+EXTENT_DEFAULT_PRODUCT_ID = 'iSCSI Disk'
 
 
 def remove_extent_file(data: dict) -> str | bool:
@@ -50,6 +59,7 @@ class iSCSITargetExtentModel(sa.Model):
     iscsi_target_extent_ro = sa.Column(sa.Boolean(), default=False)
     iscsi_target_extent_enabled = sa.Column(sa.Boolean(), default=True)
     iscsi_target_extent_vendor = sa.Column(sa.Text(), nullable=True)
+    iscsi_target_extent_product_id = sa.Column(sa.Text(), nullable=True)
 
 
 class iSCSITargetExtentService(SharingService):
@@ -117,7 +127,7 @@ class iSCSITargetExtentService(SharingService):
             )
 
         data['id'] = await self.middleware.call(
-            'datastore.insert', self._config.datastore, {**data, 'vendor': 'TrueNAS'},
+            'datastore.insert', self._config.datastore, {**data, 'vendor': EXTENT_DEFAULT_VENDOR},
             {'prefix': self._config.datastore_prefix}
         )
 
@@ -259,6 +269,9 @@ class iSCSITargetExtentService(SharingService):
                         extent_size = int(extent_size) * suffixes[x]
 
                         data['filesize'] = extent_size
+
+        if not data['product_id']:
+            data['product_id'] = EXTENT_DEFAULT_PRODUCT_ID
 
         return data
 

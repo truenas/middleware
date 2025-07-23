@@ -160,12 +160,13 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None, discovery_auth
 
 
 @contextlib.contextmanager
-def file_extent(pool_name, dataset_name, file_name, filesize_mb=512, extent_name='extent', serial=None):
+def file_extent(pool_name, dataset_name, file_name, filesize_mb=512, extent_name='extent', serial=None, **kwargs):
     payload = {
         'type': 'FILE',
         'name': extent_name,
         'filesize': filesize_mb * MB,
-        'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}'
+        'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}',
+        **kwargs,
     }
     # We want to allow any non-None serial to be specified (even '')
     if serial is not None:
@@ -427,7 +428,7 @@ def raises_check_condition(sense_key, ascq):
     assert f"Check Condition: {sense_key_dict[sense_key]}(0x{sense_key:02X}) ASC+Q:{sense_ascq_dict[ascq]}(0x{ascq:04X})" == str(e)
 
 
-def _verify_inquiry(s):
+def _verify_inquiry(s, vendor="TrueNAS", product_id="iSCSI Disk"):
     """
     Verify that the supplied SCSI has the expected INQUIRY response.
 
@@ -436,8 +437,8 @@ def _verify_inquiry(s):
     TUR(s)
     r = s.inquiry()
     data = r.result
-    assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
-    assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
+    assert data['t10_vendor_identification'].decode('utf-8').startswith(vendor), str(data)
+    assert data['product_identification'].decode('utf-8').startswith(product_id), str(data)
 
 
 def get_target(targetid):
@@ -484,23 +485,28 @@ def iscsi_running():
             yield
 
 
-def test__inquiry(iscsi_running):
+@pytest.mark.parametrize('product_id', [None, 'Virtual Disk'])
+def test__inquiry(iscsi_running, product_id):
     """
     This tests the Vendor and Product information in an INQUIRY response
     are 'TrueNAS' and 'iSCSI Disk' respectively.
     """
+    kwargs = {'product_id': product_id} if product_id else {}
     with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
                 with dataset(dataset_name):
-                    with file_extent(pool_name, dataset_name, file_name) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, **kwargs) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
-                                _verify_inquiry(s)
+                                if product_id:
+                                    _verify_inquiry(s, product_id=product_id)
+                                else:
+                                    _verify_inquiry(s)
 
 
 def test__read_capacity16(iscsi_running):
