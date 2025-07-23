@@ -48,40 +48,6 @@ class IdmapDomainService(Service):
         namespace = 'idmap'
         cli_private = True
 
-    @filterable_api_method(private=True)
-    async def query(self, filters, options):
-        """ This is a temporary compatibility method to prevent breaking the UI during transition
-        to the new directory services APIs """
-        return filter_list([
-            {
-                'id': 1,
-                'name': 'DS_TYPE_ACTIVEDIRECTORY',
-                'range_low': 100000001,
-                'range_high': 200000001,
-                'idmap_backend': 'RID',
-                'options': {},
-                'certificate': None,
-            },
-            {
-                'id': 2,
-                'name': 'DS_TYPE_LDAP',
-                'range_low': 100000001,
-                'range_high': 200000001,
-                'idmap_backend': 'LDAP',
-                'options': {},
-                'certificate': None,
-            },
-            {
-                'id': 5,
-                'name': 'DS_TYPE_DEFAULT_DOMAIN',
-                'range_low': 90000001,
-                'range_high': 100000000,
-                'idmap_backend': 'TDB',
-                'options': {},
-                'certificate': None,
-            },
-        ], filters, options)
-
     def __wbclient_ctx(self, retry=True):
         """
         Wrapper around setting up a temporary winbindd client context
