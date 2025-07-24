@@ -73,6 +73,8 @@ class UpdateStatusNewVersion(BaseModel):
     version: str
     """Newly available version number."""
     manifest: dict
+    release_notes: LongString | None
+    """Release notes."""
     release_notes_url: LongString
     """Release notes URL."""
 

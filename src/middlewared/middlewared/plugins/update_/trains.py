@@ -1,4 +1,5 @@
 import json
+import time
 
 from aiohttp import ClientResponseError, ClientSession, ClientTimeout
 
@@ -95,3 +96,35 @@ class UpdateService(Service):
         next_trains_names.append(current_train_name)
 
         return next_trains_names
+
+    release_notes_cache = {}
+
+    @private
+    async def release_notes(self, train, filename):
+        """
+        Fetch release notes from the update server.
+
+        The release notes are cached for one day per release.
+        :param train: train name
+        :param filename: filename of the update file (from the release manifest)
+        :return: release notes or `null` if not available.
+        """
+        await self.middleware.call('network.general.will_perform_activity', 'update')
+
+        for key, (release_notes, expires_at) in list(self.release_notes_cache.items()):
+            if time.monotonic() > expires_at:
+                self.release_notes_cache.pop(key)
+
+        url = f"{self.update_srv}/{train}/{filename.removesuffix('.update')}.release-notes.txt"
+        if url in self.release_notes_cache:
+            return self.release_notes_cache[url][0]
+
+        async with ClientSession(**self.opts) as client:
+            try:
+                async with client.get(url) as resp:
+                    release_notes = await resp.text()
+            except ClientResponseError:
+                release_notes = None
+
+        self.release_notes_cache[url] = (release_notes, time.monotonic() + 86400)
+        return release_notes
