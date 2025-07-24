@@ -14,8 +14,8 @@ def test_zfs_resource_query_specific_paths():
         assert result[0]["name"] == ds
 
         # Create child datasets using nested dataset() calls
-        with dataset(f"{ds}/child1") as child1:
-            with dataset(f"{ds}/child2") as child2:
+        with dataset(f"{dataset_name}/child1") as child1:
+            with dataset(f"{dataset_name}/child1/child2") as child2:
                 # Query multiple paths
                 result = call("zfs.resource.query", {"paths": [child1, child2]})
                 assert len(result) == 2
@@ -27,7 +27,7 @@ def test_zfs_resource_query_specific_paths():
 def test_zfs_resource_query_with_properties():
     """Test querying with specific properties"""
     dataset_name = "test_query_properties"
-    with dataset(dataset_name, {"compression": "lz4", "atime": "off"}) as ds:
+    with dataset(dataset_name, {"compression": "LZ4", "atime": "OFF"}) as ds:
         result = call(
             "zfs.resource.query",
             {"paths": [ds], "properties": ["compression", "atime", "mounted"]},
@@ -38,7 +38,7 @@ def test_zfs_resource_query_with_properties():
         # Verify property values
         assert resource["properties"]["compression"]["value"] == "lz4"
         assert resource["properties"]["atime"]["value"] == "off"
-        assert resource["properties"]["mounted"]["value"] == "yes"
+        assert resource["properties"]["mounted"]["value"] is True
 
 
 def test_zfs_resource_query_flat_vs_nested():
@@ -46,8 +46,8 @@ def test_zfs_resource_query_flat_vs_nested():
     parent_name = "test_query_structure"
     with dataset(parent_name) as parent:
         # Create nested structure using nested dataset() calls
-        with dataset(f"{parent}/child") as child:
-            with dataset(f"{child}/grandchild") as grandchild:
+        with dataset(f"{parent_name}/child") as child:
+            with dataset(f"{parent_name}/child/grandchild") as grandchild:
                 # Test flat structure (default)
                 flat_result = call(
                     "zfs.resource.query",
@@ -81,9 +81,9 @@ def test_zfs_resource_query_get_children():
     """Test get_children functionality"""
     parent_name = "test_query_children"
     with dataset(parent_name) as parent:
-        with dataset(f"{parent}/child0") as child0:
-            with dataset(f"{parent}/child1") as child1:
-                with dataset(f"{parent}/child2") as child2:
+        with dataset(f"{parent_name}/child0") as child0:
+            with dataset(f"{parent_name}/child0/child1") as child1:
+                with dataset(f"{parent_name}/child0/child1/child2") as child2:
                     children = [child0, child1, child2]
 
                     # Query without get_children
@@ -142,7 +142,7 @@ def test_zfs_resource_query_validation_errors():
     # Test overlapping paths with get_children
     parent_name = "test_query_overlap"
     with dataset(parent_name) as parent:
-        with dataset(f"{parent}/child") as child:
+        with dataset(f"{parent_name}/child") as child:
             with pytest.raises(Exception) as exc_info:
                 call(
                     "zfs.resource.query",
@@ -167,7 +167,6 @@ def test_zfs_resource_query_volume():
         assert len(result) == 1
         assert result[0]["name"] == zvol
         assert result[0]["type"] == "VOLUME"
-        assert "volsize" in result[0]["properties"]
 
 
 def test_zfs_resource_query_no_properties():

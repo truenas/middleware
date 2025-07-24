@@ -103,10 +103,10 @@ class ZFSResourceService(Service):
         for item in flat_list:
             if item["name"] == item["pool"]:
                 continue
-
             for parent in pathlib.PosixPath(item["name"]).parents:
-                if parent.name != "." and parent.name in node_map:
-                    node_map[parent.name]["children"].append(item)
+                pap = parent.as_posix()
+                if pap in node_map:
+                    node_map[pap]["children"].append(item)
                     break
             else:
                 # If no parent exists, this is a root
