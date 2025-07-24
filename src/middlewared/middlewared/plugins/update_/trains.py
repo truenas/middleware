@@ -101,12 +101,19 @@ class UpdateService(Service):
 
     @private
     async def release_notes(self, train, filename):
+        """
+        Fetch release notes from the update server.
+
+        The release notes are cached for one day per release.
+        :param train: train name
+        :param filename: filename of the update file (from the release manifest)
+        :return: release notes or `null` if not available.
+        """
         await self.middleware.call('network.general.will_perform_activity', 'update')
 
         for key, (release_notes, expires_at) in list(self.release_notes_cache.items()):
             if time.monotonic() > expires_at:
                 self.release_notes_cache.pop(key)
-                continue
 
         url = f"{self.update_srv}/{train}/{filename.removesuffix('.update')}.release-notes.txt"
         if url in self.release_notes_cache:
