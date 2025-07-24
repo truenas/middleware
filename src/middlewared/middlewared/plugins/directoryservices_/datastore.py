@@ -185,6 +185,11 @@ class DirectoryServices(ConfigService):
             # strip off `ipa_` prefix
             config_out['configuration'][key.removeprefix('ipa_')] = data[key]
 
+        if not config_out['configuration']['smb_domain']:
+            # sa.JSON will convert null to empty dict, but our pydantic model expects None in this
+            # situation (rather than empty dict)
+            config_out['configuration']['smb_domain'] = None
+
     @private
     async def extend_ldap(self, data, config_out):
         """ Extend with LDAP columns if service_type is LDAP """
