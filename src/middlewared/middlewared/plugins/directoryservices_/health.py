@@ -9,7 +9,6 @@ from .ldap_health_mixin import LDAPHealthMixin
 from middlewared.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
-from middlewared.utils.directoryservices.krb5_constants import KRB_Keytab
 from middlewared.utils.directoryservices.health import (
     ADHealthError, DSHealthObj, HEALTH_EVENT_NAME, IPAHealthError, KRB5HealthError,
     LDAPHealthError, MAX_RECOVER_ATTEMPTS,

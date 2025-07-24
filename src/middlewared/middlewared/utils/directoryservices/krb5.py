@@ -16,9 +16,7 @@ import time
 from contextlib import contextmanager
 from datetime import timedelta
 from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
-from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.service_exception import CallError
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.io import write_if_changed
 from middlewared.utils.time_utils import utc_now
 from tempfile import NamedTemporaryFile
@@ -548,6 +546,7 @@ def kdc_saf_cache_set(kdc: str) -> None:
 
     expiration = int((utc_now(naive=False) + SAF_CACHE_TIMEOUT).timestamp())
     write_if_changed(SAF_CACHE_FILE, f'{kdc} {expiration}')
+
 
 def kdc_saf_cache_remove() -> None:
     try:

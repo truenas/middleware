@@ -14,7 +14,6 @@ SAFKEY_PREFIX = 'SAF/DOMAIN'
 SAFJOIN_PREFIX = 'SAFJOIN/DOMAIN'
 
 
-
 class IDMAPCacheType(enum.Enum):
     UID2SID = 'IDMAP/UID2SID'
     GID2SID = 'IDMAP/GID2SID'
@@ -51,6 +50,12 @@ def flush_gencache_entries(keep_saf=False) -> None:
     This matches behavior of "net cache flush" which iterates and
     deletes entries. If we fail due to corrupt TDB file then it will
     be wiped.
+
+    keep_saf: the winbindd connection manager uses gencache keys to
+    keep track of the last DC it successfully talked to. Keeping the
+    winbindd saf cache across flushing other entries will help to
+    avoid service disruptions if we need to only wipe user / group
+    entries.
     """
     with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
         for entry in hdl.entries():

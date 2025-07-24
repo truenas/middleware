@@ -25,7 +25,7 @@ def disable_failover():
     try:
         yield
     finally:
-        if ha:
+        if ha_enabled:
             call("failover.update", {"disabled": False, "master": True})
 
 

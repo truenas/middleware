@@ -686,7 +686,6 @@ class DirectoryServices(ConfigService):
             self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
 
         if self.middleware.call_sync('failover.status') == 'MASTER':
-            remote_config = self.middleware.call_sync('failover.call_remote', 'directoryservices.config')
             self.middleware.call_sync(
                 'failover.call_remote', 'directoryservices.connection.activate_standby', [kdc_saf_cache_get()]
             )
@@ -695,8 +694,6 @@ class DirectoryServices(ConfigService):
                 self.middleware.call_sync('failover.call_remote', 'directoryservices.health.recover')
             except Exception:
                 self.logger.warning('Failed to activate directory servics on standby controller', exc_info=True)
-        else:
-            self.logger.debug("XXX: not HA")
 
         return self.middleware.call_sync('directoryservices.config')
 
