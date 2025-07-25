@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 
 from truenas_connect_utils.exceptions import CallError as TNCCallError
@@ -46,6 +47,15 @@ class TNCHostnameService(Service):
                 'interfaces_ips': interfaces_ips,
             }
         )
+
+        cached_ips = []
+        with contextlib.suppress(KeyError):
+            cached_ips = await self.middleware.call('cache.get', TNC_IPS_CACHE_KEY)
+
+        # If cached IPs are the same as current, skip syncing
+        if set(cached_ips) == set(interfaces_ips):
+            logger.debug('No changes in interface IPs, skipping sync with TrueNAS Connect')
+            return
 
         logger.debug('Syncing interface IPs for TrueNAS Connect')
         response = await self.middleware.call('tn_connect.hostname.register_update_ips')
