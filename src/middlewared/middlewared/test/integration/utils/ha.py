@@ -16,6 +16,7 @@ def settle_ha(delay=5, retries=24):
         try:
             reasons = call('failover.disabled.reasons')
             if not reasons:
+                assert not call('failover.call_remote', 'failover.in_progress')
                 return
         except Exception:
             pass

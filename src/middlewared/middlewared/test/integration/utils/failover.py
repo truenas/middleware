@@ -6,66 +6,49 @@ from time import sleep
 try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
-    from auto_config import ha, hostname
+    from auto_config import ha as ha_enabled
 except ImportError:
-    ha = False
-    hostname = None
+    ha_enabled = False
 
 from .call import call
+from .ha import settle_ha
+from .ssh import ssh
 
-__all__ = ["disable_failover"]
+__all__ = ["disable_failover", "do_failover"]
 
 
 @contextlib.contextmanager
 def disable_failover():
-    if ha:
+    if ha_enabled:
         call("failover.update", {"disabled": True, "master": True})
 
     try:
         yield
     finally:
-        if ha:
+        if ha_enabled:
             call("failover.update", {"disabled": False, "master": True})
 
 
-def wait_for_standby():
-    '''
-    NOTE:
-       1) This routine is for dual-controller (ha) only
-       2) This is nearly identical to 'wait_for_standby' in test_006_pool_and_sysds
+def wait_for_standby(delay=5, retries=60):
+    """ TODO: this is a wrapper around settle_ha, consumers should be fixed """
+    if not ha_enabled:
+        return
 
-    This routine will wait for the standby controller to return from a reboot.
-    '''
-    if ha:
-        sleep(5)
+    settle_ha(delay, retries)
 
-        sleep_time = 1
-        max_wait_time = 300
-        rebooted = False
-        waited_time = 0
 
-        while waited_time < max_wait_time and not rebooted:
-            if call('failover.remote_connected'):
-                rebooted = True
-            else:
-                waited_time += sleep_time
-                sleep(sleep_time)
+def do_failover(delay=5, settle_retries=180, description='', abusive=False):
+    orig_master_node = call('failover.node')
 
-        assert rebooted, f'Standby did not connect after {max_wait_time} seconds'
+    # This node is MASTER and failover isn't disabled for some reason
+    assert call('failover.status') == 'MASTER'
+    assert not call('failover.disabled.reasons')
 
-        waited_time = 0  # need to reset this
-        is_backup = False
-        while waited_time < max_wait_time and not is_backup:
-            try:
-                is_backup = call('failover.call_remote', 'failover.status') == 'BACKUP'
-            except Exception:
-                pass
-
-            if not is_backup:
-                waited_time += sleep_time
-                sleep(sleep_time)
-
-        assert is_backup, f'Standby node did not become BACKUP after {max_wait_time} seconds'
-        pass
+    if abusive:
+        ssh('echo 1 > /proc/sys/kernel/sysrq && echo b > /proc/sysrq-trigger', check=False)
     else:
-        pass
+        call('system.reboot', f'do_failover(): {description}')
+
+    sleep(delay)
+    settle_ha(delay, settle_retries)
+    assert call('failover.node') != orig_master_node

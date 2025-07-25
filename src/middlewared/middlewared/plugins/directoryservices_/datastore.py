@@ -12,7 +12,9 @@ from middlewared.plugins.directoryservices_.util_cache import expire_cache
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
-from middlewared.utils.directoryservices.krb5 import ktutil_list_impl
+from middlewared.utils.directoryservices.krb5 import (
+    ktutil_list_impl, kdc_saf_cache_get, kdc_saf_cache_remove
+)
 from middlewared.utils.directoryservices.constants import (
     DSCredType, DomainJoinResponse, DSStatus, DSType, DEF_SVC_OPTS
 )
@@ -338,6 +340,8 @@ class DirectoryServices(ConfigService):
 
     @private
     def common_validation(self, old, new, verrors):
+        if not self.middleware.call_sync('failover.is_single_master_node'):
+            raise CallError('Directory services configuration changes must be made on active storage controller')
 
         # Most changes should not be done while we're enabled as they can result
         # in a production outage that is unacceptable in enterprise environments
@@ -686,6 +690,21 @@ class DirectoryServices(ConfigService):
             compressed = self.compress(new)
             self.middleware.call_sync('datastore.update', 'directoryservices', old['id'], compressed)
 
+        if self.middleware.call_sync('failover.status') == 'MASTER':
+            try:
+                self.middleware.call_sync(
+                    'failover.call_remote', 'directoryservices.connection.activate_standby', [kdc_saf_cache_get()]
+                )
+            except Exception:
+                self.logger.warning('Failed to activate directory services on standby controller', exc_info=True)
+            else:
+                try:
+                    # Perform a recover op to forcibly reset the state
+                    self.middleware.call_sync('failover.call_remote', 'directoryservices.health.recover')
+                except Exception:
+                    self.logger.warning('Failed to make directory services healthy on standby controller',
+                                        exc_info=True)
+
         return self.middleware.call_sync('directoryservices.config')
 
     @private
@@ -730,6 +749,7 @@ class DirectoryServices(ConfigService):
 
         await self.middleware.call('datastore.update', 'directoryservices', pk, config)
         await self.middleware.run_in_thread(expire_cache)
+        await self.middleware.run_in_thread(kdc_saf_cache_remove)
 
     @api_method(
         DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
@@ -744,11 +764,16 @@ class DirectoryServices(ConfigService):
         revert = []
         verrors = ValidationErrors()
 
+        failover_status = self.middleware.call_sync('failover.status')
+
         ds_config = self.middleware.call_sync('directoryservices.config')
         if not ds_config['enable']:
             raise CallError(
                 'The directory service must be enabled before the TrueNAS server can leave the domain.'
             )
+
+        if failover_status not in ('SINGLE', 'MASTER'):
+            raise CallError('Cannot leave directory services from the standby controller.')
 
         # overwrite cred with admin-provided one. We need elevated permissions to do this
         ds_config['credential'] = cred['credential']
@@ -784,7 +809,16 @@ class DirectoryServices(ConfigService):
         for etc_file in ds_type.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        # These service changes need to be propagated to the remote node since join will cease working
+        if failover_status == 'MASTER':
+            try:
+                self.middleware.call_sync(
+                    'failover.call_remote',
+                    'directoryservices.connection.deactivate_standby',
+                    [ds_type.value]
+                )
+            except Exception:
+                self.logger.warning('Failed to deactivate directory services on standby controller', exc_info=True)
+
         if ds_type is DSType.IPA:
             self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
         else:

@@ -62,7 +62,8 @@ class ADJoinMixin:
         for etc_file in DSType.AD.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        self.middleware.call_sync('service.control', 'RESTART', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
+        self.middleware.call_sync('service.control', 'STOP', 'idmap', DEF_SVC_OPTS).wait_sync()
+        self.middleware.call_sync('service.control', 'START', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
 
         # Wait for winbind to come online to provide some time for sysvol replication
         self._ad_wait_wbclient()
@@ -342,7 +343,7 @@ class ADJoinMixin:
                     if not retries or 'Server not found in Kerberos database' not in exc.errmsg:
                         raise
 
-                    self.logger.debug('%s: Failed to perform nsupdate due to potentially slow sysvol replication.',
+                    self.logger.debug('%s: Failed to perform nsupdate due to potentially slow sysvol replication. Retrying.',
                                       conf['dns_name'])
                     sleep(5)
                     retries -= 1
