@@ -691,7 +691,7 @@ class DirectoryServices(ConfigService):
                     'failover.call_remote', 'directoryservices.connection.activate_standby', [kdc_saf_cache_get()]
                 )
             except Exception:
-                self.logger.warning('Failed to active directory services on standby controller', exc_info=True)
+                self.logger.warning('Failed to activate directory services on standby controller', exc_info=True)
             else:
                 try:
                     # Perform a recover op to forcibly reset the state
@@ -768,7 +768,7 @@ class DirectoryServices(ConfigService):
             )
 
         if failover_status not in ('SINGLE', 'MASTER'):
-            raise CallError('Directory services must be left from the active storage controller')
+            raise CallError('Cannot leave directory services from the standby controller.')
 
         # overwrite cred with admin-provided one. We need elevated permissions to do this
         ds_config['credential'] = cred['credential']
