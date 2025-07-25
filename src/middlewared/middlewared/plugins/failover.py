@@ -863,7 +863,7 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    def upgrade_waitstandby(self, seconds=1200, await_failover=False):
+    def upgrade_waitstandby(self, seconds=1200, wait_for_failover=False):
         """
         We will wait up to 20 minutes by default for the Standby Controller to reboot.
         This values come from observation from support of how long a M-series can take.
@@ -891,8 +891,8 @@ class FailoverService(ConfigService):
                     time.sleep(5)
                     continue
 
-                if await_failover and (DisabledReasonsEnum.REM_FAILOVER_ONGOING.name in
-                                       self.middleware.call_sync('failover.disabled.reasons')):
+                if wait_for_failover and (DisabledReasonsEnum.REM_FAILOVER_ONGOING.name in
+                                          self.middleware.call_sync('failover.disabled.reasons')):
                     time.sleep(5)
                     continue
 
@@ -908,7 +908,7 @@ class FailoverService(ConfigService):
     @private
     @job(lock='failover_wait_other_node', lock_queue_size=1)
     def wait_other_node(self, job):
-        return self.upgrade_waitstandby(await_failover=True)
+        return self.upgrade_waitstandby(wait_for_failover=True)
 
     @private
     async def sync_keys_from_remote_node(self):
