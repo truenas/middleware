@@ -19,9 +19,13 @@ __all__ = [
 
 class ReportingEntry(BaseModel):
     id: int
+    """Unique identifier for the reporting configuration."""
     tier0_days: int = Field(ge=1)
+    """Number of days to keep high-resolution reporting data."""
     tier1_days: int = Field(ge=1)
+    """Number of days to keep lower-resolution aggregated reporting data."""
     tier1_update_interval: int = Field(ge=1)
+    """Interval in seconds for updating aggregated tier1 data."""
 
 
 @single_argument_args('reporting_update')
@@ -31,6 +35,7 @@ class ReportingUpdateArgs(ReportingEntry, metaclass=ForUpdateMetaclass):
 
 class ReportingUpdateResult(BaseModel):
     result: ReportingEntry
+    """The updated reporting configuration."""
 
 
 timestamp: typing.TypeAlias = typing.Annotated[int, Field(gt=0)]
@@ -38,10 +43,15 @@ timestamp: typing.TypeAlias = typing.Annotated[int, Field(gt=0)]
 
 class ReportingQuery(BaseModel):
     unit: typing.Literal['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] | None = None
+    """Time unit for data aggregation. `null` for default aggregation."""
     page: int = Field(default=1, ge=1)
+    """Page number for paginated results."""
     aggregate: bool = True
+    """Whether to return aggregated data or raw data points."""
     start: timestamp | None = None
+    """Start timestamp for the data range. `null` for default start time."""
     end: timestamp | None = None
+    """End timestamp for the data range. `null` for current time."""
 
 
 class GraphIdentifier(BaseModel):
@@ -50,38 +60,78 @@ class GraphIdentifier(BaseModel):
         'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
         'upsload', 'upstemperature',
     ]
+    """Type of performance metric to retrieve.
+
+    * `cpu`: CPU usage statistics
+    * `cputemp`: CPU temperature readings
+    * `disk`: Disk I/O statistics
+    * `interface`: Network interface statistics
+    * `load`: System load averages
+    * `processes`: Process count and statistics
+    * `memory`: Memory usage statistics
+    * `uptime`: System uptime
+    * `arcactualrate`: ZFS ARC actual hit rate
+    * `arcrate`: ZFS ARC hit rate
+    * `arcsize`: ZFS ARC cache size
+    * `arcresult`: ZFS ARC operation results
+    * `disktemp`: Disk temperature readings
+    * `upscharge`: UPS battery charge level
+    * `upsruntime`: UPS estimated runtime
+    * `upsvoltage`: UPS voltage readings
+    * `upscurrent`: UPS current readings
+    * `upsfrequency`: UPS frequency readings
+    * `upsload`: UPS load percentage
+    * `upstemperature`: UPS temperature readings
+    """
     identifier: NonEmptyString | None = None
+    """Specific instance identifier for the metric (e.g., device name, interface name). `null` for system-wide metrics."""
 
 
 class ReportingNetdataGetDataArgs(BaseModel):
     graphs: list[GraphIdentifier] = Field(min_length=1)
+    """Array of graph identifiers specifying which metrics to retrieve."""
     query: ReportingQuery = Field(default_factory=lambda: ReportingQuery())
+    """Query parameters for filtering and formatting the returned data."""
 
 
 class Aggregations(BaseModel):
     min: dict
+    """Minimum values for each data series over the time period."""
     mean: dict
+    """Average values for each data series over the time period."""
     max: dict
+    """Maximum values for each data series over the time period."""
 
 
 class ReportingGetDataResponse(BaseModel):
     name: NonEmptyString
+    """Name of the performance metric."""
     identifier: str | None
+    """Specific instance identifier for the metric. `null` for system-wide metrics."""
     data: list
+    """Array of time-series data points for the requested time period."""
     aggregations: Aggregations
+    """Statistical aggregations of the data over the time period."""
     start: timestamp
+    """Actual start timestamp of the returned data."""
     end: timestamp
+    """Actual end timestamp of the returned data."""
     legend: list[str]
+    """Array of labels describing each data series in the results."""
 
 
 class ReportingNetdataGraphResult(BaseModel):
     result: list[ReportingGetDataResponse]
+    """Array of performance data responses for each requested graph."""
 
 
 class ReportingGraphsItem(BaseModel):
     name: NonEmptyString
+    """Unique name identifier for the graph type."""
     title: NonEmptyString
+    """Human-readable title for display purposes."""
     vertical_label: NonEmptyString
+    """Label for the vertical (Y) axis of the graph."""
     identifiers: list[str] | None
 
 

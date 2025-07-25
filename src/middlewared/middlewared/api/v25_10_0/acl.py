@@ -66,31 +66,57 @@ NFS4ACE_EntryTypes = Literal[
 
 class NFS4ACE_AdvancedPerms(BaseModel):
     READ_DATA: bool = False
+    """Permission to read file data or list directory contents."""
     WRITE_DATA: bool = False
+    """Permission to write file data or create files in directory."""
     APPEND_DATA: bool = False
+    """Permission to append data to files or create subdirectories."""
     READ_NAMED_ATTRS: bool = False
+    """Permission to read named attributes (extended attributes)."""
     WRITE_NAMED_ATTRS: bool = False
+    """Permission to write named attributes (extended attributes)."""
     EXECUTE: bool = False
+    """Permission to execute files or traverse directories."""
     DELETE: bool = False
+    """Permission to delete the file or directory."""
     DELETE_CHILD: bool = False
+    """Permission to delete child files within a directory."""
     READ_ATTRIBUTES: bool = False
+    """Permission to read basic file attributes (size, timestamps, etc.)."""
     WRITE_ATTRIBUTES: bool = False
+    """Permission to write basic file attributes."""
     READ_ACL: bool = False
+    """Permission to read the Access Control List."""
     WRITE_ACL: bool = False
+    """Permission to modify the Access Control List."""
     WRITE_OWNER: bool = False
+    """Permission to change the file owner."""
     SYNCHRONIZE: bool = False
+    """Permission to use the file/directory as a synchronization primitive."""
 
 
 class NFS4ACE_BasicPerms(BaseModel):
     BASIC: NFS4ACE_BasicPermset
+    """Basic permission level for NFS4 ACE.
+
+    * `FULL_CONTROL`: Full read, write, execute, and administrative permissions
+    * `MODIFY`: Read, write, and execute permissions
+    * `READ`: Read-only permissions
+    * `TRAVERSE`: Execute/traverse permissions only
+    """
 
 
 class NFS4ACE_AdvancedFlags(BaseModel):
     FILE_INHERIT: bool = False
+    """Apply this ACE to files within directories."""
     DIRECTORY_INHERIT: bool = False
+    """Apply this ACE to subdirectories within directories."""
     NO_PROPAGATE_INHERIT: bool = False
+    """Do not propagate inheritance beyond immediate children."""
     INHERIT_ONLY: bool = False
+    """This ACE only affects inheritance, not the object itself."""
     INHERITED: bool = False
+    """This ACE was inherited from a parent directory."""
 
     @model_validator(mode='after')
     def check_inherit_only(self) -> Self:
@@ -108,15 +134,37 @@ class NFS4ACE_AdvancedFlags(BaseModel):
 
 class NFS4ACE_BasicFlags(BaseModel):
     BASIC: NFS4ACE_BasicFlagset
+    """Basic inheritance behavior for NFS4 ACE.
+
+    * `INHERIT`: Apply to child files and directories
+    * `NOINHERIT`: Do not apply to child objects
+    """
 
 
 class NFS4ACE(BaseModel):
     tag: NFS4ACE_Tags
+    """Subject type for this ACE.
+
+    * `SPECIAL_OWNER`: File/directory owner
+    * `SPECIAL_GROUP`: File/directory primary group
+    * `SPECIAL_EVERYONE`: All users
+    * `USER`: Specific user account
+    * `GROUP`: Specific group
+    """
     type: NFS4ACE_EntryTypes
+    """Access control type.
+
+    * `ALLOW`: Grant the specified permissions
+    * `DENY`: Explicitly deny the specified permissions
+    """
     perms: NFS4ACE_AdvancedPerms | NFS4ACE_BasicPerms
+    """Permissions granted or denied by this ACE."""
     flags: NFS4ACE_AdvancedFlags | NFS4ACE_BasicFlags
+    """Inheritance and other behavioral flags for this ACE."""
     id: AceWhoId | None = None
+    """Numeric user or group ID when tag is `USER` or `GROUP`. `null` for special entries."""
     who: LocalUsername | RemoteUsername | None = None
+    """Username or group name when tag is `USER` or `GROUP`. `null` for special entries."""
 
     @model_validator(mode='after')
     def check_ace_valid(self) -> Self:
@@ -137,8 +185,11 @@ class NFS4ACE(BaseModel):
 
 class NFS4ACL_Flags(BaseModel):
     autoinherit: bool = False
+    """Whether inheritance is automatically applied from parent directories."""
     protected: bool = False
+    """Whether the ACL is protected from inheritance modifications."""
     defaulted: bool = False
+    """Whether this ACL was created by default rules rather than explicit configuration."""
 
 
 POSIXACE_Tags = Literal[
@@ -153,16 +204,32 @@ POSIXACE_Tags = Literal[
 
 class POSIXACE_Perms(BaseModel):
     READ: bool
+    """Permission to read file contents or list directory contents."""
     WRITE: bool
+    """Permission to write file contents or create/delete files in directory."""
     EXECUTE: bool
+    """Permission to execute files or traverse directories."""
 
 
 class POSIXACE(BaseModel):
     tag: POSIXACE_Tags
+    """Subject type for this POSIX ACE.
+
+    * `USER_OBJ`: File/directory owner
+    * `GROUP_OBJ`: File/directory primary group  
+    * `OTHER`: All other users
+    * `MASK`: Maximum permissions for named users and groups
+    * `USER`: Specific user account
+    * `GROUP`: Specific group
+    """
     perms: POSIXACE_Perms
+    """Read, write, and execute permissions for this ACE."""
     default: bool
+    """Whether this is a default ACE that applies to newly created child objects."""
     id: AceWhoId | None = None
+    """Numeric user or group ID when tag is `USER` or `GROUP`. `null` for object entries."""
     who: LocalUsername | RemoteUsername | None = None
+    """Username or group name when tag is `USER` or `GROUP`. `null` for object entries."""
 
     @model_validator(mode='after')
     def check_ace_valid(self) -> Self:
