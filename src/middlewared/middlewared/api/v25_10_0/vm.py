@@ -33,44 +33,84 @@ __all__ = [
 
 
 class VMStatus(BaseModel):
-    state: NonEmptyString
+    state: NonEmptyString = Field(examples=["RUNNING", "STOPPED", "SUSPENDED"])
+    """Current state of the virtual machine."""
     pid: int | None
+    """Process ID of the running VM. `null` if not running."""
     domain_state: NonEmptyString
+    """Hypervisor-specific domain state."""
 
 
 class VMEntry(BaseModel):
     command_line_args: str = ''
+    """Additional command line arguments passed to the VM hypervisor."""
     cpu_mode: Literal['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH'] = 'CUSTOM'
+    """CPU virtualization mode.
+
+    * `CUSTOM`: Use specified model.
+    * `HOST-MODEL`: Mirror host CPU.
+    * `HOST-PASSTHROUGH`: Provide direct access to host CPU features.
+
+    """
     cpu_model: str | None = None
+    """Specific CPU model to emulate. `null` to use hypervisor default."""
     name: NonEmptyString
+    """Display name of the virtual machine."""
     description: str = ''
+    """Optional description or notes about the virtual machine."""
     vcpus: int = Field(ge=1, default=1)
+    """Number of virtual CPUs allocated to the VM."""
     cores: int = Field(ge=1, default=1)
+    """Number of CPU cores per socket."""
     threads: int = Field(ge=1, default=1)
+    """Number of threads per CPU core."""
     cpuset: str | None = None  # TODO: Add validation for numeric set
+    """Set of host CPU cores to pin VM CPUs to. `null` for no pinning."""
     nodeset: str | None = None  # TODO: Same as above
+    """Set of NUMA nodes to constrain VM memory allocation. `null` for no constraints."""
     enable_cpu_topology_extension: bool = False
+    """Whether to expose detailed CPU topology information to the guest OS."""
     pin_vcpus: bool = False
+    """Whether to pin virtual CPUs to specific host CPU cores."""
     suspend_on_snapshot: bool = False
+    """Whether to suspend the VM when taking snapshots."""
     trusted_platform_module: bool = False
+    """Whether to enable virtual Trusted Platform Module (TPM) for the VM."""
     memory: int = Field(ge=20)
+    """Amount of memory allocated to the VM in megabytes."""
     min_memory: int | None = Field(ge=20, default=None)
+    """Minimum memory allocation for dynamic memory ballooning in megabytes. `null` to disable."""
     hyperv_enlightenments: bool = False
+    """Whether to enable Hyper-V enlightenments for improved Windows guest performance."""
     bootloader: Literal['UEFI_CSM', 'UEFI'] = 'UEFI'
-    bootloader_ovmf: str = 'OVMF_CODE.fd'
+    """Boot firmware type. `UEFI` for modern UEFI, `UEFI_CSM` for legacy BIOS compatibility."""
+    bootloader_ovmf: str = Field(default='OVMF_CODE.fd', examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'])
+    """OVMF firmware file to use for UEFI boot."""
     autostart: bool = True
+    """Whether to automatically start the VM when the host system boots."""
     hide_from_msr: bool = False
+    """Whether to hide hypervisor signatures from guest OS MSR access."""
     ensure_display_device: bool = True
+    """Whether to ensure at least one display device is configured for the VM."""
     time: Literal['LOCAL', 'UTC'] = 'LOCAL'
+    """Guest OS time zone reference. `LOCAL` uses host timezone, `UTC` uses coordinated universal time."""
     shutdown_timeout: int = Field(ge=5, le=300, default=90)
+    """Maximum time in seconds to wait for graceful shutdown before forcing power off."""
     arch_type: str | None = None
+    """Guest architecture type. `null` to use hypervisor default."""
     machine_type: str | None = None
+    """Virtual machine type/chipset. `null` to use hypervisor default."""
     uuid: str | None = None
+    """Unique UUID for the VM. `null` to auto-generate."""
     devices: list[VMDeviceEntry]
+    """Array of virtual devices attached to this VM."""
     display_available: bool
+    """Whether at least one display device is available for this VM."""
     id: int
     status: VMStatus
+    """Current runtime status information for the VM."""
     enable_secure_boot: bool = False
+    """Whether to enable UEFI Secure Boot for enhanced security."""
 
 
 class VMCreate(VMEntry):

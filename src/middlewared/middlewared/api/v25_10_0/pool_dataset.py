@@ -72,9 +72,9 @@ class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     encrypted: bool
     """Whether the dataset is encrypted."""
     encryption_root: str | None
-    """The root dataset where encryption is enabled. Null if the dataset is not encrypted."""
+    """The root dataset where encryption is enabled. `null` if the dataset is not encrypted."""
     key_loaded: bool | None
-    """Whether the encryption key is currently loaded for encrypted datasets. Null for unencrypted datasets."""
+    """Whether the encryption key is currently loaded for encrypted datasets. `null` for unencrypted datasets."""
     children: list
     """Array of child dataset objects nested under this dataset."""
     user_properties: dict
@@ -82,10 +82,15 @@ class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     locked: bool
     """Whether an encrypted dataset is currently locked (key not loaded)."""
     comments: PoolDatasetEntryProperty
+    """ZFS comments property for storing descriptive text about the dataset."""
     quota_warning: PoolDatasetEntryProperty
+    """ZFS quota warning threshold property as a percentage."""
     quota_critical: PoolDatasetEntryProperty
+    """ZFS quota critical threshold property as a percentage."""
     refquota_warning: PoolDatasetEntryProperty
+    """ZFS reference quota warning threshold property as a percentage."""
     refquota_critical: PoolDatasetEntryProperty
+    """ZFS reference quota critical threshold property as a percentage."""
     managedby: PoolDatasetEntryProperty
     """Identifies which service or system manages this dataset."""
     deduplication: PoolDatasetEntryProperty

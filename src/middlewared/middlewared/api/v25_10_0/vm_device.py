@@ -26,41 +26,58 @@ __all__ = [
 
 class VMCDROMDevice(BaseModel):
     dtype: Literal['CDROM']
+    """Device type identifier for CD-ROM/DVD devices."""
     path: NonEmptyString = Field(pattern='^/mnt/[^{}]*$')
     """Path must not contain "{", "}" characters, and it should start with "/mnt/"."""
 
 
 class VMDisplayDevice(BaseModel):
     dtype: Literal['DISPLAY']
+    """Device type identifier for display/graphics devices."""
     resolution: Literal[
         '1920x1200', '1920x1080', '1600x1200', '1600x900',
         '1400x1050', '1280x1024', '1280x720',
         '1024x768', '800x600', '640x480',
     ] = '1024x768'
     port: int | None = Field(default=None, ge=5900, le=65535)
+    """VNC/SPICE port number for remote display access. `null` for auto-assignment."""
     web_port: int | None = Field(default=None, ge=5900, le=65535)
+    """Web-based display access port number. `null` for auto-assignment."""
     bind: NonEmptyString = '127.0.0.1'
+    """IP address to bind the display server to."""
     wait: bool = False
+    """Whether to wait for a client connection before starting the VM."""
     password: Secret[NonEmptyString]
+    """Password for display server authentication."""
     web: bool = True
+    """Whether to enable web-based display access."""
     type_: Literal['SPICE'] = Field(alias='type', default='SPICE')
+    """Display protocol type."""
 
 
 class VMNICDevice(BaseModel):
     dtype: Literal['NIC']
+    """Device type identifier for network interface cards."""
     trust_guest_rx_filters: bool = False
+    """Whether to trust guest OS receive filter settings for better performance."""
     type_: Literal['E1000', 'VIRTIO'] = Field(alias='type', default='E1000')
+    """Network interface controller type. `E1000` for Intel compatibility, `VIRTIO` for performance."""
     nic_attach: str | None = None
+    """Host network interface or bridge to attach to. `null` for no attachment."""
     mac: str | None = Field(default=None, pattern='^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$')
+    """MAC address for the virtual network interface. `null` for auto-generation."""
 
 
 class VMPCIDevice(BaseModel):
     dtype: Literal['PCI']
+    """Device type identifier for PCI passthrough devices."""
     pptdev: NonEmptyString
+    """Host PCI device identifier to pass through to the VM."""
 
 
 class VMRAWDevice(BaseModel):
     dtype: Literal['RAW']
+    """Device type identifier for raw disk devices."""
     path: NonEmptyString = Field(pattern='^[^{}]*$', description='Path must not contain "{", "}" characters.')
     type_: Literal['AHCI', 'VIRTIO'] = Field(alias='type', default='AHCI')
     exists: bool = False
