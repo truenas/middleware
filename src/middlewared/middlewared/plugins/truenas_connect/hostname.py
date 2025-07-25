@@ -32,7 +32,6 @@ class TNCHostnameService(Service):
             raise CallError(str(e))
 
     async def sync_interface_ips(self):
-        logger.debug('Syncing interface IPs for TrueNAS Connect')
         tnc_config = await self.middleware.call('tn_connect.config')
 
         # Get interface IPs based on use_all_interfaces flag
@@ -47,6 +46,8 @@ class TNCHostnameService(Service):
                 'interfaces_ips': interfaces_ips,
             }
         )
+
+        logger.debug('Syncing interface IPs for TrueNAS Connect')
         response = await self.middleware.call('tn_connect.hostname.register_update_ips')
         if response['error']:
             logger.error('Failed to update IPs with TrueNAS Connect: %s', response['error'])
