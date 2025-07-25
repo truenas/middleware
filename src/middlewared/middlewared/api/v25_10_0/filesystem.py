@@ -37,6 +37,7 @@ UNSET_ENTRY = frozenset([ACL_UNDEFINED_ID, None])
 
 class FilesystemRecursionOptions(BaseModel):
     recursive: bool = False
+    """Whether to apply the operation recursively to subdirectories."""
     traverse: bool = False
     """If set do not limit to single dataset / filesystem."""
 
@@ -47,19 +48,26 @@ class FilesystemChownOptions(FilesystemRecursionOptions):
 
 class FilesystemSetpermOptions(FilesystemRecursionOptions):
     stripacl: bool = False
+    """Whether to remove existing Access Control Lists when setting permissions."""
 
 
 class FilesystemPermChownBase(BaseModel):
     path: NonEmptyString
+    """Filesystem path to modify."""
     uid: AceWhoId | None = None
+    """Numeric user ID to set as owner. `null` to leave unchanged."""
     user: NonEmptyString | None = None
+    """Username to set as owner. `null` to leave unchanged."""
     gid: AceWhoId | None = None
+    """Numeric group ID to set as group owner. `null` to leave unchanged."""
     group: NonEmptyString | None = None
+    """Group name to set as group owner. `null` to leave unchanged."""
 
 
 @single_argument_args('filesystem_chown')
 class FilesystemChownArgs(FilesystemPermChownBase):
     options: FilesystemChownOptions = Field(default=FilesystemChownOptions())
+    """Additional options for the ownership change operation."""
 
     @model_validator(mode='after')
     def user_group_present(self) -> Self:
@@ -78,7 +86,9 @@ class FilesystemChownResult(BaseModel):
 @single_argument_args('filesystem_setperm')
 class FilesystemSetpermArgs(FilesystemPermChownBase):
     mode: UnixPerm | None = None
+    """Unix permissions to set (octal format). `null` to leave unchanged."""
     options: FilesystemSetpermOptions = Field(default=FilesystemSetpermOptions())
+    """Additional options for the permission change operation."""
 
     @model_validator(mode='after')
     def payload_is_actionable(self) -> Self:
@@ -142,8 +152,16 @@ class FilesystemDirEntry(BaseModel):
     realpath: NonEmptyString
     """ Canonical path of the entry, eliminating any symbolic links. """
     type: FileType
+    """Type of filesystem entry.
+
+    * `DIRECTORY`: Directory/folder
+    * `FILE`: Regular file
+    * `SYMLINK`: Symbolic link
+    * `OTHER`: Other file types (device, pipe, socket, etc.)
+    """
     size: int
-    """ Size in bytes of a plain file. This corresonds with stx_size. """
+    """Size of the file in bytes. For directories, this may not represent total content size. Corresonds with \
+    stx_size."""
     allocation_size: int
     """ Allocated size of file. Calculated by multiplying stx_blocks by 512. """
     mode: int

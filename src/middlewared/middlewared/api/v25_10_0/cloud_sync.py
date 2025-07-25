@@ -55,17 +55,35 @@ class CloudSyncEntry(BaseCloudEntry):
     bwlimit: list[CloudSyncBwlimit] = Field(default_factory=list)
     """Schedule of bandwidth limits."""
     transfers: PositiveInt | None = None
+    """Maximum number of parallel file transfers. `null` for default."""
 
     direction: Literal["PUSH", "PULL"]
+    """Direction of the cloud sync operation.
+
+    * `PUSH`: Upload local files to cloud storage
+    * `PULL`: Download files from cloud storage to local storage
+    """
     transfer_mode: Literal["SYNC", "COPY", "MOVE"]
+    """How files are transferred between local and cloud storage.
+
+    * `SYNC`: Synchronize directories (add new, update changed, remove deleted)
+    * `COPY`: Copy files without removing any existing files
+    * `MOVE`: Move files (copy then delete from source)
+    """
 
     encryption: bool = False
+    """Whether to encrypt files before uploading to cloud storage."""
     filename_encryption: bool = False
+    """Whether to encrypt filenames in addition to file contents."""
     encryption_password: Secret[str] = ""
+    """Password for client-side encryption. Empty string if encryption is disabled."""
     encryption_salt: Secret[str] = ""
+    """Salt value for encryption key derivation. Empty string if encryption is disabled."""
 
     create_empty_src_dirs: bool = False
+    """Whether to create empty directories in the destination that exist in the source."""
     follow_symlinks: bool = False
+    """Whether to follow symbolic links and sync the files they point to."""
 
 
 class CloudSyncCreate(CloudSyncEntry):
@@ -78,6 +96,7 @@ class CloudSyncCreate(CloudSyncEntry):
 
 class CloudSyncCreateArgs(BaseModel):
     cloud_sync_create: CloudSyncCreate
+    """Cloud sync task configuration data."""
 
 
 class CloudSyncCreateResult(BaseModel):

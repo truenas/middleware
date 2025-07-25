@@ -20,37 +20,53 @@ __all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
 class SSHKeyPair(BaseModel):
     """At least one of the two keys must be provided on creation."""
     private_key: LongString | None = None
+    """SSH private key in OpenSSH format. `null` if only public key is provided."""
     public_key: LongString | None = None
     """Can be omitted and automatically derived from the private key."""
 
 
 class SSHCredentials(BaseModel):
     host: str
+    """SSH server hostname or IP address."""
     port: int = 22
+    """SSH server port number."""
     username: str = "root"
+    """SSH username for authentication."""
     private_key: int
     """Keychain Credential ID."""
     remote_host_key: str
     """Can be discovered with keychaincredential.remote_ssh_host_key_scan."""
     connect_timeout: int = 10
+    """Connection timeout in seconds for SSH connections."""
 
 
 class KeychainCredentialEntry(BaseModel, abc.ABC):
     id: int
+    """Unique identifier for this keychain credential."""
     name: NonEmptyString
     """Distinguishes this Keychain Credential from others."""
     type: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"]
+    """Type of credential stored in the keychain.
+
+    * `SSH_KEY_PAIR`: SSH public/private key pair
+    * `SSH_CREDENTIALS`: SSH connection credentials including host and authentication
+    """
     attributes: Secret[SSHKeyPair | SSHCredentials]
+    """Credential-specific configuration and authentication data."""
 
 
 class SSHKeyPairEntry(KeychainCredentialEntry):
     type: Literal["SSH_KEY_PAIR"]
+    """Keychain credential type identifier for SSH key pairs."""
     attributes: Secret[SSHKeyPair]
+    """SSH key pair attributes including public and private keys."""
 
 
 class SSHCredentialsEntry(KeychainCredentialEntry):
     type: Literal["SSH_CREDENTIALS"]
+    """Keychain credential type identifier for SSH connection credentials."""
     attributes: Secret[SSHCredentials]
+    """SSH connection attributes including host, authentication, and connection settings."""
 
 
 class KeychainCredentialCreateSSHKeyPairEntry(SSHKeyPairEntry):
@@ -78,28 +94,36 @@ KeychainCredentialUpdate = KeychainCredentialUpdateSSHKeyPairEntry | KeychainCre
 
 class KeychainCredentialCreateArgs(BaseModel):
     keychain_credential_create: KeychainCredentialCreate
+    """Credential configuration data for the new keychain entry."""
 
 
 class KeychainCredentialCreateResult(BaseModel):
     result: SSHKeyPairEntry | SSHCredentialsEntry
+    """The newly created keychain credential entry."""
 
 
 class KeychainCredentialUpdateArgs(BaseModel):
     id: int
+    """Unique identifier of the keychain credential to update."""
     keychain_credential_update: KeychainCredentialUpdate
+    """Updated credential configuration data."""
 
 
 class KeychainCredentialUpdateResult(BaseModel):
     result: SSHKeyPairEntry | SSHCredentialsEntry
+    """The updated keychain credential entry."""
 
 
 class KeychainCredentialDeleteOptions(BaseModel):
     cascade: bool = False
+    """Whether to force deletion even if the credential is in use by other services."""
 
 
 class KeychainCredentialDeleteArgs(BaseModel):
     id: int
+    """Unique identifier of the keychain credential to delete."""
     options: KeychainCredentialDeleteOptions = KeychainCredentialDeleteOptions()
+    """Options controlling the deletion behavior."""
 
 
 class KeychainCredentialDeleteResult(BaseModel):
@@ -108,11 +132,18 @@ class KeychainCredentialDeleteResult(BaseModel):
 
 class KeychainCredentialUsedByArgs(BaseModel):
     id: int
+    """Unique identifier of the keychain credential to check usage for."""
 
 
 class UsedKeychainCredential(BaseModel):
     title: str
+    """Human-readable description of where the credential is being used."""
     unbind_method: Literal["delete", "disable"]
+    """How to remove the credential dependency.
+
+    * `delete`: Delete the dependent configuration
+    * `disable`: Disable the dependent service or feature
+    """
 
 
 class KeychainCredentialUsedByResult(BaseModel):

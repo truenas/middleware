@@ -25,16 +25,21 @@ __all__ = ["ReplicationEntry",
 
 class ReplicationTimeCronModel(TimeCronModel):
     minute: str = "00"
+    """"00" - "59\""""
 
 
 class ReplicationLifetimeModel(BaseModel):
     schedule: CronModel
+    """Cron schedule for when snapshot retention policies are applied."""
     lifetime_value: int = Field(ge=1)
+    """Number of time units to retain snapshots."""
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]
+    """Time unit for snapshot retention."""
 
 
 class ReplicationEntry(BaseModel):
     id: int
+    """Unique identifier for this replication task."""
     name: NonEmptyString
     """Name for replication task."""
     direction: Literal["PUSH", "PULL"]
@@ -53,10 +58,20 @@ class ReplicationEntry(BaseModel):
     ssh_credentials: KeychainCredentialEntry | None = None
     """Keychain Credential of type `SSH_CREDENTIALS`."""
     netcat_active_side: Literal["LOCAL", "REMOTE"] | None = None
+    """Which side actively establishes the netcat connection for `SSH+NETCAT` transport.
+
+    * `LOCAL`: Local system initiates the connection
+    * `REMOTE`: Remote system initiates the connection
+    * `null`: Not applicable for other transport types
+    """
     netcat_active_side_listen_address: str | None = None
+    """IP address for the active side to listen on for `SSH+NETCAT` transport. `null` if not applicable."""
     netcat_active_side_port_min: TcpPort | None = None
+    """Minimum port number in the range for netcat connections. `null` if not applicable."""
     netcat_active_side_port_max: TcpPort | None = None
+    """Maximum port number in the range for netcat connections. `null` if not applicable."""
     netcat_passive_side_connect_address: str | None = None
+    """IP address for the passive side to connect to for `SSH+NETCAT` transport. `null` if not applicable."""
     sudo: bool = False
     """`SSH` and `SSH+NETCAT` transports should use sudo (which is expected to be passwordless) to run `zfs` \
     command on the remote machine."""
@@ -65,17 +80,32 @@ class ReplicationEntry(BaseModel):
     target_dataset: str
     """Dataset to put snapshots into."""
     recursive: bool
+    """Whether to recursively replicate child datasets."""
     exclude: list[str] = []
+    """Array of dataset patterns to exclude from replication."""
     properties: bool = True
     """Send dataset properties along with snapshots."""
     properties_exclude: list[NonEmptyString] = []
+    """Array of dataset property names to exclude from replication."""
     properties_override: dict[str, str] = {}
+    """Object mapping dataset property names to override values during replication."""
     replicate: bool = False
+    """Whether to use ZFS replication streams for more efficient transfer."""
     encryption: bool = False
+    """Whether to enable encryption for the replicated datasets."""
     encryption_inherit: bool | None = None
+    """Whether replicated datasets should inherit encryption from parent. `null` if encryption is disabled."""
     encryption_key: str | None = None
+    """Encryption key for replicated datasets. `null` if not specified."""
     encryption_key_format: Literal["HEX", "PASSPHRASE"] | None = None
+    """Format of the encryption key.
+
+    * `HEX`: Hexadecimal-encoded key
+    * `PASSPHRASE`: Text passphrase
+    * `null`: Not applicable when encryption is disabled
+    """
     encryption_key_location: str | None = None
+    """Filesystem path where encryption key is stored. `null` if not using key file."""
     periodic_snapshot_tasks: list[PoolSnapshotTaskDBEntry]
     """List of periodic snapshot tasks that are sources of snapshots for this replication task. Only push replication \
     tasks can be bound to periodic snapshot tasks."""

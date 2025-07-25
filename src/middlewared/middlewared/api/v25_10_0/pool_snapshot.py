@@ -39,9 +39,21 @@ UserPropertyKey = Annotated[str, Field(pattern='.*:.*')]
 
 class PoolSnapshotEntryPropertyFields(BaseModel):
     value: str
+    """Current effective value of the ZFS property as a string."""
     rawvalue: str
+    """Raw string value of the ZFS property as stored."""
     source: Literal["NONE", "DEFAULT", "LOCAL", "TEMPORARY", "INHERITED", "RECEIVED"]
+    """Source of the property value.
+
+    * `NONE`: Property is not set
+    * `DEFAULT`: Using ZFS default value
+    * `LOCAL`: Set locally on this snapshot
+    * `TEMPORARY`: Temporary override value
+    * `INHERITED`: Inherited from parent dataset
+    * `RECEIVED`: Set by ZFS receive operation
+    """
     parsed: Any
+    """Property value parsed into the appropriate type (string, boolean, integer, etc.)."""
 
 
 class PoolSnapshotHoldTag(BaseModel):
@@ -51,24 +63,37 @@ class PoolSnapshotHoldTag(BaseModel):
 
 class PoolSnapshotRetentionPST(BaseModel):
     datetime_: datetime = Field(alias="datetime")
+    """Timestamp when the snapshot will be eligible for removal."""
     source: Literal["periodic_snapshot_task"]
+    """Indicates retention is managed by a periodic snapshot task."""
     periodic_snapshot_task_id: int
+    """ID of the periodic snapshot task managing this retention."""
 
 
 class PoolSnapshotRetentionProperty(BaseModel):
     datetime_: datetime = Field(alias="datetime")
+    """Timestamp when the snapshot will be eligible for removal."""
     source: Literal["property"]
+    """Indicates retention is managed by ZFS properties."""
 
 
 class PoolSnapshotEntry(BaseModel):
     id: str
+    """Full snapshot identifier including dataset and snapshot name."""
     properties: dict[str, PoolSnapshotEntryPropertyFields]
+    """Object mapping ZFS property names to their values and metadata."""
     pool: str
+    """Name of the ZFS pool containing this snapshot."""
     name: str
+    """Full name of the snapshot including dataset path."""
     type: Literal["SNAPSHOT"]
+    """Type identifier indicating this is a ZFS snapshot."""
     snapshot_name: str
+    """Just the snapshot name portion without the dataset path."""
     dataset: str
+    """Name of the dataset this snapshot was taken from."""
     createtxg: str
+    """Transaction group ID when the snapshot was created."""
     holds: PoolSnapshotHoldTag = NotRequired
     """Returned when options.extra.holds is set."""
     retention: Annotated[
@@ -85,24 +110,32 @@ class PoolSnapshotCreateUpdateEntry(PoolSnapshotEntry):
 
 class PoolSnapshotCreateTemplate(BaseModel, ABC):
     dataset: NonEmptyString
+    """Name of the dataset to create a snapshot of."""
     recursive: bool = False
+    """Whether to recursively snapshot child datasets."""
     exclude: list[str] = []
+    """Array of dataset patterns to exclude from recursive snapshots."""
     vmware_sync: bool = False
+    """Whether to sync VMware VMs before taking the snapshot."""
     properties: dict = {}
+    """Object mapping ZFS property names to values to set on the snapshot."""
 
 
 class PoolSnapshotCreateWithName(PoolSnapshotCreateTemplate):
     name: NonEmptyString
+    """Explicit name for the snapshot."""
 
 
 class PoolSnapshotCreateWithSchema(PoolSnapshotCreateTemplate):
     naming_schema: ReplicationSnapshotNamingSchema
+    """Naming schema pattern to generate the snapshot name automatically."""
 
 
 class PoolSnapshotDeleteOptions(BaseModel):
     defer: bool = False
     """Defer deletion of the snapshot."""
     recursive: bool = False
+    """Whether to recursively delete child snapshots."""
 
 
 class PoolSnapshotHoldOptions(BaseModel):
@@ -112,7 +145,8 @@ class PoolSnapshotHoldOptions(BaseModel):
 
 class PoolSnapshotReleaseOptions(BaseModel):
     recursive: bool = False
-    """Release snapshots recursively. Only the tags that are present on the parent snapshot will be removed."""
+    """Whether to recursively release holds on child snapshots. Only the tags that are present on the parent snapshot \
+    will be removed."""
 
 
 class PoolSnapshotRollbackOptions(BaseModel):
