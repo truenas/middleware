@@ -75,26 +75,24 @@ class MailSendMessage(BaseModel):
     * content *(string)*
 
     Example:
-    ```json
     [
       {
-        \"headers\": [
+        "headers": [
           {
-            \"name\": \"Content-Transfer-Encoding\",
-            \"value\": \"base64\"
+            "name": "Content-Transfer-Encoding",
+            "value": "base64"
           },
           {
-            \"name\": \"Content-Type\",
-            \"value\": \"application/octet-stream\",
-            \"params\": {
-              \"name\": \"test.txt\"
+            "name": "Content-Type",
+            "value": "application/octet-stream",
+            "params": {
+              "name": "test.txt"
             }
           }
         ],
-        \"content\": \"dGVzdAo=\"
+        "content": "dGVzdAo="
       }
     ]
-    ```
     """
     queue: bool = True
     """Queue the message to be sent later if it fails to send."""

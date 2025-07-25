@@ -30,6 +30,7 @@ FilePathStr = Annotated[
 
 class ACMECustomDNSAuthenticatorReturns(BaseModel):
     result: dict
+    """Custom DNS authenticator schema configuration."""
 
 
 class TrueNASConnectSchema(BaseModel):
@@ -43,6 +44,7 @@ class TrueNASConnectSchemaArgs(TrueNASConnectSchema):
 
 class CloudFlareSchema(BaseModel):
     authenticator: Literal['cloudflare']
+    """DNS authenticator type identifier for Cloudflare."""
     cloudflare_email: NonEmptyString | None = None
     """Cloudflare Email."""
     api_key: Secret[NonEmptyString | None] = None
@@ -58,6 +60,7 @@ class CloudFlareSchemaArgs(CloudFlareSchema):
 
 class DigitalOceanSchema(BaseModel):
     authenticator: Literal['digitalocean']
+    """DNS authenticator type identifier for DigitalOcean."""
     digitalocean_token: Secret[NonEmptyString]
     """DigitalOcean Token."""
 
@@ -69,6 +72,7 @@ class DigitalOceanSchemaArgs(DigitalOceanSchema):
 
 class OVHSchema(BaseModel):
     authenticator: Literal['OVH']
+    """DNS authenticator type identifier for OVH."""
     application_key: NonEmptyString
     """OVH Application Key."""
     application_secret: NonEmptyString
@@ -86,6 +90,7 @@ class OVHSchemaArgs(OVHSchema):
 
 class Route53Schema(BaseModel):
     authenticator: Literal['route53']
+    """DNS authenticator type identifier for AWS Route 53."""
     access_key_id: NonEmptyString
     """AWS Access Key ID."""
     secret_access_key: NonEmptyString
@@ -99,6 +104,7 @@ class Route53SchemaArgs(Route53Schema):
 
 class ShellSchema(BaseModel):
     authenticator: Literal['shell']
+    """DNS authenticator type identifier for custom shell scripts."""
     script: FilePathStr
     """Authentication Script."""
     user: NonEmptyString = 'nobody'
@@ -125,13 +131,18 @@ AuthType: TypeAlias = Annotated[
 
 class ACMEDNSAuthenticatorEntry(BaseModel):
     id: int
+    """Unique identifier for the DNS authenticator."""
     attributes: Secret[AuthType]
+    """Authentication credentials and configuration (masked for security)."""
     name: str
+    """Human-readable name for the DNS authenticator."""
 
 
 class ACMEDNSAuthenticatorCreate(BaseModel):
     attributes: AuthType
+    """Authentication credentials and configuration for the DNS provider."""
     name: str
+    """Human-readable name for the DNS authenticator."""
 
 
 @single_argument_args('dns_authenticator_create')
@@ -141,6 +152,7 @@ class DNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorCreate):
 
 class DNSAuthenticatorCreateResult(BaseModel):
     result: ACMEDNSAuthenticatorEntry
+    """The created DNS authenticator configuration."""
 
 
 class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorCreate, metaclass=ForUpdateMetaclass):
@@ -149,32 +161,42 @@ class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorCreate, metaclass=ForUpdate
 
 class DNSAuthenticatorUpdateArgs(BaseModel):
     id: int
+    """ID of the DNS authenticator to update."""
     dns_authenticator_update: ACMEDNSAuthenticatorUpdate
+    """Updated DNS authenticator configuration data."""
 
 
 class DNSAuthenticatorUpdateResult(BaseModel):
     result: ACMEDNSAuthenticatorEntry
+    """The updated DNS authenticator configuration."""
 
 
 class DNSAuthenticatorDeleteArgs(BaseModel):
     id: int
+    """ID of the DNS authenticator to delete."""
 
 
 class DNSAuthenticatorDeleteResult(BaseModel):
     result: bool
+    """Returns `true` when the DNS authenticator is successfully deleted."""
 
 
 class ACMEDNSAuthenticatorAttributeSchema(BaseModel):
     name: str = Field(alias='_name_')
+    """Internal name of the schema attribute."""
     title: str
+    """Human-readable title for the schema attribute."""
     required: bool = Field(alias='_required_')
+    """Whether this attribute is required for the authenticator."""
 
     model_config = ConfigDict(extra='allow')
 
 
 class ACMEDNSAuthenticatorSchema(BaseModel):
     key: str
+    """Unique identifier for the DNS authenticator type."""
     schema_: ACMEDNSAuthenticatorAttributeSchema = Field(alias='schema')
+    """Schema definition for the authenticator's required attributes."""
 
 
 class DNSAuthenticatorAuthenticatorSchemasArgs(BaseModel):
@@ -183,3 +205,4 @@ class DNSAuthenticatorAuthenticatorSchemasArgs(BaseModel):
 
 class DNSAuthenticatorAuthenticatorSchemasResult(BaseModel):
     result: list[ACMEDNSAuthenticatorSchema]
+    """Available DNS authenticator schemas with their configuration requirements."""
