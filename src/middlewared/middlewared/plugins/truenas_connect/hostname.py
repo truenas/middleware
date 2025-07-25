@@ -6,7 +6,7 @@ from truenas_connect_utils.hostname import hostname_config, register_update_ips
 
 from middlewared.service import CallError, Service
 
-from .utils import CONFIGURED_TNC_STATES
+from .utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
 
 
 logger = logging.getLogger('truenas_connect')
@@ -50,6 +50,8 @@ class TNCHostnameService(Service):
         response = await self.middleware.call('tn_connect.hostname.register_update_ips')
         if response['error']:
             logger.error('Failed to update IPs with TrueNAS Connect: %s', response['error'])
+        else:
+            await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, interfaces_ips, 30 * 60)
 
     async def handle_update_ips(self, event_type, args):
         """
