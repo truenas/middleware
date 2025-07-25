@@ -210,11 +210,14 @@ class CredKRBUser(BaseModel):
 class CredLDAPPlain(BaseModel):
     credential_type: Literal[DSCredType.LDAP_PLAIN]
     binddn: LDAP_DN
+    """Distinguished name to use for LDAP authentication."""
     bindpw: Secret[NonEmptyString]
+    """Password for the bind DN used for LDAP authentication."""
 
 
 class CredLDAPAnonymous(BaseModel):
     credential_type: Literal[DSCredType.LDAP_ANONYMOUS]
+    """Anonymous LDAP authentication with no credentials required."""
 
 
 class CredLDAPMTLS(BaseModel):
@@ -376,9 +379,13 @@ class LDAPMapNetgroup(BaseModel):
 
 class LDAPAttributeMaps(BaseModel):
     passwd: LDAPMapPasswd = Field(default=LDAPMapPasswd())
+    """LDAP attribute mappings for passwd/user entries."""
     shadow: LDAPMapShadow = Field(default=LDAPMapShadow())
+    """LDAP attribute mappings for shadow password entries."""
     group: LDAPMapGroup = Field(default=LDAPMapGroup())
+    """LDAP attribute mappings for group entries."""
     netgroup: LDAPMapNetgroup = Field(default=LDAPMapNetgroup())
+    """LDAP attribute mappings for netgroup entries."""
 
 
 class LDAPConfig(BaseModel):
@@ -431,6 +438,7 @@ class IPAConfig(BaseModel):
 
 class DirectoryServicesEntry(BaseModel):
     id: int
+    """Unique identifier for the directory services configuration."""
     service_type: DSType | None
     """ The pre-existing directory service type to which to bind TrueNAS. Select ACTIVEDIRECTORY to join an Active \
     Directory domain. Select IPA to join a FreeIPA domain. Select LDAP to bind to one or more OpenLDAP-compatible \
@@ -613,11 +621,13 @@ class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMet
 
 class DirectoryServicesUpdateResult(BaseModel):
     result: DirectoryServicesEntry
+    """The updated directory services configuration."""
 
 
 @single_argument_args('credential')
 class DirectoryServicesLeaveArgs(BaseModel):
     credential: CredKRBUser
+    """Kerberos user credentials with administrative privileges to leave the domain."""
 
 
 class DirectoryServicesLeaveResult(BaseModel):

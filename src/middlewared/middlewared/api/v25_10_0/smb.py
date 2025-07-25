@@ -113,11 +113,13 @@ class SharingSMBSetaclArgs(SMBShareAcl):
 
 class SharingSMBSetaclResult(BaseModel):
     result: SMBShareAcl
+    """The updated SMB share ACL configuration."""
 
 
 @single_argument_args('smb_getacl')
 class SharingSMBGetaclArgs(BaseModel):
     share_name: NonEmptyString
+    """Name of the SMB share to retrieve ACL for."""
 
 
 class SharingSMBGetaclResult(SharingSMBSetaclResult):
@@ -214,6 +216,7 @@ class SMBUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
 
 class SMBUpdateResult(BaseModel):
     result: SmbServiceEntry
+    """The updated SMB service configuration."""
 
 
 class SMBUnixcharsetChoicesArgs(BaseModel):
@@ -222,6 +225,7 @@ class SMBUnixcharsetChoicesArgs(BaseModel):
 
 class SMBUnixcharsetChoicesResult(BaseModel):
     result: dict[str, SMBCharsetType]
+    """Available character set choices for Unix charset configuration."""
 
 
 class SMBBindipChoicesArgs(BaseModel):
@@ -230,6 +234,7 @@ class SMBBindipChoicesArgs(BaseModel):
 
 class SMBBindipChoicesResult(BaseModel):
     result: dict[str, str]
+    """Available IP addresses that the SMB service can bind to."""
 
 
 class SharingSMBPresetsArgs(BaseModel):
@@ -238,11 +243,13 @@ class SharingSMBPresetsArgs(BaseModel):
 
 class SharingSMBPresetsResult(BaseModel):
     result: dict[str, dict]
+    """Available SMB share preset configurations by purpose."""
 
 
 @single_argument_args('smb_share_precheck')
 class SharingSMBSharePrecheckArgs(BaseModel):
     name: SmbShareName | None = None
+    """Name of the SMB share to validate (optional)."""
 
 
 class SharingSMBSharePrecheckResult(BaseModel):
@@ -707,10 +714,12 @@ class SmbShareCreate(SmbShareEntry):
 
 class SharingSMBCreateArgs(BaseModel):
     data: SmbShareCreate
+    """SMB share configuration data for the new share."""
 
 
 class SharingSMBCreateResult(BaseModel):
     result: SmbShareEntry
+    """The created SMB share configuration."""
 
 
 class SmbShareUpdate(SmbShareCreate, metaclass=ForUpdateMetaclass):
@@ -719,16 +728,21 @@ class SmbShareUpdate(SmbShareCreate, metaclass=ForUpdateMetaclass):
 
 class SharingSMBUpdateArgs(BaseModel):
     id: int
+    """ID of the SMB share to update."""
     data: SmbShareUpdate
+    """Updated SMB share configuration data."""
 
 
 class SharingSMBUpdateResult(BaseModel):
     result: SmbShareEntry
+    """The updated SMB share configuration."""
 
 
 class SharingSMBDeleteArgs(BaseModel):
     id: int
+    """ID of the SMB share to delete."""
 
 
 class SharingSMBDeleteResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the SMB share is successfully deleted."""
