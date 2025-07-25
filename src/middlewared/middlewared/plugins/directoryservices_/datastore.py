@@ -185,6 +185,11 @@ class DirectoryServices(ConfigService):
             # strip off `ipa_` prefix
             config_out['configuration'][key.removeprefix('ipa_')] = data[key]
 
+        if not config_out['configuration']['smb_domain']:
+            # sa.JSON will convert null to empty dict, but our pydantic model expects None in this
+            # situation (rather than empty dict)
+            config_out['configuration']['smb_domain'] = None
+
     @private
     async def extend_ldap(self, data, config_out):
         """ Extend with LDAP columns if service_type is LDAP """
@@ -742,7 +747,7 @@ class DirectoryServices(ConfigService):
         ds_config = self.middleware.call_sync('directoryservices.config')
         if not ds_config['enable']:
             raise CallError(
-                'The directory service must be enabled and healthy before the TrueNAS server can leave the domain.'
+                'The directory service must be enabled before the TrueNAS server can leave the domain.'
             )
 
         # overwrite cred with admin-provided one. We need elevated permissions to do this
@@ -754,9 +759,11 @@ class DirectoryServices(ConfigService):
 
         # Set our directory services health state to LEAVING so that automatic health checks are disabled
         # and we don't try to recover while leaving the domain.
+        orig_state = self.middleware.call_sync('directoryservices.status')['status']
         self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         validate_credential('directoryservices.leave_domain', ds_config, verrors, revert)
         if verrors:
+            self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, orig_state)
             self.__revert_changes(revert)
 
         verrors.check()

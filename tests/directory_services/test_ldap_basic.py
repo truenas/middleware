@@ -18,32 +18,15 @@ def test_ldap_initial_state():
     assert ds["type"] is None
     assert ds["status"] is None
 
-    ldap_config = call("ldap.config")
-    assert not ldap_config["enable"]
-
-
-def test_ldap_schema_choices():
-    expected = {"RFC2307", "RFC2307BIS"}
-
-    choices = call("ldap.schema_choices")
-    assert set(choices) == expected
-
-
-def test_get_ldap_ssl_choices():
-    expected = {"OFF", "ON", "START_TLS"}
-
-    choices = call("ldap.ssl_choices")
-    assert set(choices) == expected
-
 
 def test_ldap_connection(do_ldap_connection):
     ds = call("directoryservices.status")
     assert ds["type"] == "LDAP"
     assert ds["status"] == "HEALTHY"
 
-    ldap_config = call("ldap.config")
-    assert ldap_config["enable"]
-    assert ldap_config["server_type"] == "OPENLDAP"
+    ds_config = call("directoryservices.config")
+    assert ds_config["enable"]
+    assert ds_config["service_type"] == "LDAP"
 
 
 def test_ldap_user_group_cache(do_ldap_connection):

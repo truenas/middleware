@@ -1144,8 +1144,12 @@ class SharingSMBService(SharingService):
                 raise
 
     @private
-    async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
-        if not exist_ok and await self.query([['name', 'C=', name]], {'select': ['name']}):
+    async def validate_share_name(self, name, schema_name, verrors, old=None):
+        filters = [['name', 'C=', name]]
+        if old:
+            filters.append(['id', '!=', old['id']])
+
+        if await self.query(filters, {'select': ['name']}):
             verrors.add(
                 f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
             )
@@ -1192,7 +1196,7 @@ class SharingSMBService(SharingService):
                     )
 
         if data.get(share_field.NAME) is not None:
-            await self.validate_share_name(share_field.NAME, schema_name, verrors)
+            await self.validate_share_name(share_field.NAME, schema_name, verrors, old)
 
         if timemachine and data[share_field.ENABLED]:
             ngc = await self.middleware.call('network.configuration.config')
@@ -1237,6 +1241,8 @@ class SharingSMBService(SharingService):
 
     @api_method(SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
+        # This endpoint provides the UI a mechanism to determine whether popup prompting to create
+        # SMB users should occur when auto-creating an SMB share in the datasets form.
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
         if not ds_enabled:
@@ -1253,7 +1259,7 @@ class SharingSMBService(SharingService):
                 )
 
         if data.get(share_field.NAME) is not None:
-            await self.validate_share_name(data[share_field.NAME], 'sharing.smb.share_precheck', verrors, False)
+            await self.validate_share_name(data[share_field.NAME], 'sharing.smb.share_precheck', verrors)
 
         verrors.check()
 

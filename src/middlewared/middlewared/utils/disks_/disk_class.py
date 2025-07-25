@@ -126,7 +126,13 @@ class DiskEntry:
     @functools.cached_property
     def serial(self) -> str | None:
         """The disk's serial number as reported by sysfs"""
-        if not (serial := self.__opener(relative_path="device/serial")):
+        # nvme devices
+        serial = self.__opener(relative_path="device/serial")
+        if not serial:
+            # virtio-blk devices (vd)
+            serial = self.__opener(relative_path="serial")
+
+        if not serial:
             if raw := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
                 # VPD page 0x80 (Unit Serial Number) structure:
                 #   Byte 0: Peripheral qualifier & device type
