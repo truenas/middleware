@@ -47,6 +47,7 @@ from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
+from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.plugins.update_.install import STARTING_INSTALLER
@@ -862,7 +863,7 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    def upgrade_waitstandby(self, seconds=1200):
+    def upgrade_waitstandby(self, seconds=1200, await_failover=False):
         """
         We will wait up to 20 minutes by default for the Standby Controller to reboot.
         This values come from observation from support of how long a M-series can take.
@@ -890,6 +891,11 @@ class FailoverService(ConfigService):
                     time.sleep(5)
                     continue
 
+                if await_failover and (DisabledReasonsEnum.REM_FAILOVER_ONGOING.name in
+                                       self.middleware.call_sync('failover.disabled.reasons')):
+                    time.sleep(5)
+                    continue
+
             except CallError as e:
                 if e.errno in NETWORK_ERRORS:
                     time.sleep(5)
@@ -898,6 +904,11 @@ class FailoverService(ConfigService):
             else:
                 return True
         return False
+
+    @private
+    @job(lock='failover_wait_other_node', lock_queue_size=1)
+    def wait_other_node(self, job):
+        return self.upgrade_waitstandby(await_failover=True)
 
     @private
     async def sync_keys_from_remote_node(self):
