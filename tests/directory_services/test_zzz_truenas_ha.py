@@ -3,7 +3,6 @@ import pytest
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.utils import call, ssh, truenas_server
 from middlewared.test.integration.utils.failover import do_failover, ha_enabled
-from time import sleep
 
 
 SAF_PATH = '/root/.KDC_SERVER_AFFINITY'
@@ -38,7 +37,7 @@ def check_status_ad_impl():
 @pytest.mark.skipif(not ha_enabled, reason='HA only test')
 @pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY', 'IPA', 'LDAP'])
 def test_failover(service_type):
-    with directoryservice(service_type) as ds:
+    with directoryservice(service_type):
         # This node is healthy, but let's check on remote node
         check_ds_status(call('failover.call_remote', 'directoryservices.status'), 'HEALTHY')
 
