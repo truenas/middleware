@@ -384,12 +384,18 @@ class AppGpuChoicesArgs(BaseModel):
 
 
 class GPU(BaseModel):
-    vendor: NonEmptyString | None
+    vendor: NonEmptyString | None = Field(examples=["NVIDIA", "AMD", "Intel"])
+    """GPU vendor name. `null` if not detected."""
     description: LongString | None
+    """Human-readable description of the GPU device. `null` if not available."""
     error: NonEmptyString | None
+    """Error message if the GPU cannot be accessed or configured. `null` if no errors."""
     vendor_specific_config: dict
+    """Configuration options specific to the GPU vendor."""
     gpu_details: dict
+    """Detailed information about the GPU hardware and capabilities."""
     pci_slot: NonEmptyString | None
+    """PCI slot identifier where the GPU is installed. `null` if not available."""
 
 
 class AppGPUResponse(RootModel[dict[str, GPU]]):
@@ -398,11 +404,14 @@ class AppGPUResponse(RootModel[dict[str, GPU]]):
 
 class AppGpuChoicesResult(BaseModel):
     result: AppGPUResponse
+    """Object mapping GPU identifiers to their detailed information."""
 
 
 class AppRollbackOptions(BaseModel):
     app_version: NonEmptyString
+    """Target version to rollback to."""
     rollback_snapshot: bool = True
+    """Whether to create a snapshot before performing the rollback."""
 
 
 class AppRollbackArgs(BaseModel):
@@ -412,6 +421,7 @@ class AppRollbackArgs(BaseModel):
 
 class AppRollbackResult(BaseModel):
     result: AppEntry
+    """The application entry after successful rollback."""
 
 
 class AppRollbackVersionsArgs(BaseModel):

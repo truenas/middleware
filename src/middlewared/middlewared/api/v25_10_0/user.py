@@ -81,7 +81,7 @@ class UserEntry(BaseModel):
     group: dict
     """ The primary group of the user account. """
     groups: list[int] = Field(default_factory=list)
-    """ List of additional groups to which the user belongs. NOTE: Groups are identified by their group entry `id`, \
+    """Array of additional groups to which the user belongs. NOTE: Groups are identified by their group entry `id`, \
     not their Unix group ID (`gid`). """
     password_disabled: bool = False
     """ If set to `true` password authentication for the user account is disabled.
@@ -100,11 +100,11 @@ class UserEntry(BaseModel):
     locked: bool = False
     """ If set to `true` the account is locked. The account cannot be used to authenticate to the TrueNAS server. """
     sudo_commands: list[NonEmptyString] = Field(default_factory=list)
-    """ A list of commands the user may execute with elevated privileges. User is prompted for password \
-    when executing any command from the list. """
+    """ An array of commands the user may execute with elevated privileges. User is prompted for password \
+    when executing any command from the array. """
     sudo_commands_nopasswd: list[NonEmptyString] = Field(default_factory=list)
-    """ A list of commands the user may execute with elevated privileges. User is *not* prompted for password \
-    when executing any command from the list. """
+    """ An array of commands the user may execute with elevated privileges. User is *not* prompted for password \
+    when executing any command from the array. """
     email: EmailStr | None = None
     """ Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and \
     notifications. """
@@ -132,9 +132,10 @@ class UserEntry(BaseModel):
     password_change_required: bool
     """Password change for local user account is required on next login."""
     roles: list[str]
-    """ List of roles assigned to this user's groups. Roles control administrative access to TrueNAS through \
-    the web UI and API. """
+    """Array of roles assigned to this user's groups. Roles control administrative access to TrueNAS through \
+    the web UI and API."""
     api_keys: list[int]
+    """Array of API key IDs associated with this user account for programmatic access."""
 
 
 class UserCreateUpdateResult(UserEntry):
@@ -202,8 +203,8 @@ class UserGetUserObj(BaseModel):
     """Numerical group id for the user's primary group."""
     grouplist: list[int] | None
     """
-    Optional list of group IDs for groups of which this account is a member. If `get_groups` is not specified, \
-    this value will be null.
+    Optional array of group IDs for groups of which this account is a member. If `get_groups` is not specified, \
+    this value will be `null`.
     """
     sid: str | None
     """Optional SID value for the account that is present if `sid_info` is specified in payload."""

@@ -48,10 +48,15 @@ class PoolTopology(BaseModel):
 
 class PoolEntry(BaseModel):
     id: int
+    """Unique identifier for this storage pool."""
     name: str
+    """Name of the storage pool."""
     guid: str
-    status: str
+    """Globally unique identifier (GUID) for this pool."""
+    status: str = Field(examples=["ONLINE", "DEGRADED", "FAULTED"])
+    """Current status of the pool."""
     path: str
+    """Filesystem path where the pool is mounted."""
     scan: Annotated[
         dict,
         Field(examples=[{
@@ -83,14 +88,23 @@ class PoolEntry(BaseModel):
         }])
     ] | None
     is_upgraded: bool = False
+    """Whether this pool has been upgraded to the latest feature flags."""
     healthy: bool
+    """Whether the pool is in a healthy state with no errors or warnings."""
     warning: bool
+    """Whether the pool has warning conditions that require attention."""
     status_code: str | None
+    """Detailed status code for the pool condition. `null` if not applicable."""
     status_detail: str | None
+    """Human-readable description of the pool status. `null` if not available."""
     size: int | None
+    """Total size of the pool in bytes. `null` if not available."""
     allocated: int | None
+    """Amount of space currently allocated in the pool in bytes. `null` if not available."""
     free: int | None
+    """Amount of free space available in the pool in bytes. `null` if not available."""
     freeing: int | None
+    """Amount of space being freed (in bytes) by ongoing operations. `null` if not available."""
     dedup_table_size: int | None
     dedup_table_quota: str | None
     fragmentation: str | None
@@ -105,6 +119,7 @@ class PoolEntry(BaseModel):
         'value': 'off',
     }])
     topology: PoolTopology | None
+    """Physical topology and structure of the pool including vdevs. `null` if not available."""
 
 
 class PoolAttach(BaseModel):

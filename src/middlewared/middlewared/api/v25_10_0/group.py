@@ -88,6 +88,7 @@ class GroupCreateArgs(BaseModel):
 
 class GroupCreateResult(BaseModel):
     result: int
+    """The API identifier of the newly created group."""
 
 
 class GroupUpdate(GroupCreate, metaclass=ForUpdateMetaclass):
@@ -96,6 +97,7 @@ class GroupUpdate(GroupCreate, metaclass=ForUpdateMetaclass):
 
 class GroupUpdateArgs(BaseModel):
     id: int
+    """The API identifier of the group to update."""
     group_update: GroupUpdate
 
 

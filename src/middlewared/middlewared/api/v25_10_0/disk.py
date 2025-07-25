@@ -27,30 +27,42 @@ __all__ = (
 
 class DiskEntryEnclosure(BaseModel):
     number: int
+    """Enclosure number where the disk is located."""
     slot: int
+    """Physical slot position within the enclosure."""
 
 
 class DiskEntry(BaseModel):
     identifier: str
+    """Unique identifier for the disk device."""
     name: str
-    subsystem: str
+    """System name of the disk device."""
+    subsystem: str = Field(examples=["SCSI", "ATA"])
+    """Storage subsystem type."""
     number: int
+    """Numeric identifier assigned to the disk."""
     serial: str
+    """Manufacturer serial number of the disk."""
     lunid: str | None
     size: int | None
+    """Total size of the disk in bytes. `null` if not available."""
     description: str
+    """Human-readable description of the disk device."""
     transfermode: str
     hddstandby: Literal["ALWAYS ON", "5", "10", "20", "30", "60", "120", "180", "240", "300", "330"]
     advpowermgmt: Literal["DISABLED", "1", "64", "127", "128", "192", "254"]
     expiretime: datetime | None
     model: str | None
+    """Manufacturer model name/number of the disk. `null` if not available."""
     rotationrate: int | None
     type: str | None
     zfs_guid: str | None
     bus: str
-    devname: str
+    devname: str = Field(examples=["/dev/sda"])
+    """Device name in the operating system."""
     enclosure: DiskEntryEnclosure | None
     pool: str | None
+    """Name of the storage pool this disk belongs to. `null` if not part of any pool."""
     passwd: Secret[str] = NotRequired
     kmip_uid: str | None = NotRequired
 
