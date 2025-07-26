@@ -554,6 +554,8 @@ class TestTNCInterfacesUpdate:
             [
                 {'type': 'INET', 'address': '10.0.0.10', 'netmask': 24},
             ],
+            # cache.pop() call for TNC_IPS_CACHE_KEY
+            None,
             # hostname.register_update_ips() call
             {'error': None},
             # datastore.update() call
@@ -572,7 +574,7 @@ class TestTNCInterfacesUpdate:
         await tnc_service.do_update(data)
 
         # Verify hostname.register_update_ips was called with combined IPs
-        register_call = tnc_service.middleware.call.call_args_list[2]
+        register_call = tnc_service.middleware.call.call_args_list[3]  # Updated index after cache.pop
         assert register_call[0][0] == 'tn_connect.hostname.register_update_ips'
         combined_ips = register_call[0][1]
         assert set(combined_ips) == {'192.168.1.100', '10.0.0.10'}
@@ -612,6 +614,10 @@ class TestTNCHostnameService:
                 return None
             elif method == 'tn_connect.hostname.register_update_ips':
                 return {'error': None}
+            elif method == 'cache.get':
+                raise KeyError('Key not found')  # Simulate cache miss
+            elif method == 'cache.put':
+                return None
             else:
                 return None
 
@@ -654,6 +660,10 @@ class TestTNCHostnameService:
                 return None
             elif method == 'tn_connect.hostname.register_update_ips':
                 return {'error': None}
+            elif method == 'cache.get':
+                raise KeyError('Key not found')  # Simulate cache miss
+            elif method == 'cache.put':
+                return None
             else:
                 return None
 
