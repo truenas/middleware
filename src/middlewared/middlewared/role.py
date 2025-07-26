@@ -254,6 +254,8 @@ ROLES = {
     'VIRT_IMAGE_READ': Role(),
     'VIRT_IMAGE_WRITE': Role(includes=['VIRT_IMAGE_READ'], stig=None),
 
+    # ZFS Resources (query, create/update/delete)
+    'ZFS_RESOURCE_READ': Role(),
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
