@@ -52,6 +52,12 @@ class iSCSITargetToExtentService(CRUDService):
 
         `lunid` will be automatically assigned if it is not provided based on the `target`.
         """
+        defer = False
+        try:
+            defer = data.pop('defer')
+        except KeyError:
+            pass
+
         # It is unusual to do a audit_callback on a do_create, but we want to perform
         # more extensive operations than is usual for a create ... because the parameters
         # supplied as so opaque to the user.
@@ -68,7 +74,9 @@ class iSCSITargetToExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+        if not defer:
+            await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             await self.middleware.call(
                 'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
@@ -106,6 +114,12 @@ class iSCSITargetToExtentService(CRUDService):
         """
         Update Associated Target of `id`.
         """
+        defer = False
+        try:
+            defer = data.pop('defer')
+        except KeyError:
+            pass
+
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
         audit_callback(await self._mapping_summary(old))
@@ -121,7 +135,8 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self._service_change('iscsitarget', 'reload')
+        if not defer:
+            await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
 
@@ -131,7 +146,7 @@ class iSCSITargetToExtentService(CRUDService):
         audit='Delete iSCSI target/LUN/extent mapping',
         audit_callback=True
     )
-    async def do_delete(self, audit_callback, id_, force):
+    async def do_delete(self, audit_callback, id_, force, defer):
         """
         Delete Associated Target of `id`.
         """
@@ -150,9 +165,10 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.delete', self._config.datastore, id_
         )
 
-        # Reload the target, so that the LUN is removed from what is being offered ... including
-        # on the internal target, if this is an ALUA system.
-        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+        if not defer:
+            # Reload the target, so that the LUN is removed from what is being offered ... including
+            # on the internal target, if this is an ALUA system.
+            await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Next, perform any necessary fixup on the STANDBY system if ALUA is enabled.
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):

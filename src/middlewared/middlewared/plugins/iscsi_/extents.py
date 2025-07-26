@@ -105,6 +105,12 @@ class iSCSITargetExtentService(SharingService):
 
         `ro` when set to true prevents the initiator from writing to this LUN.
         """
+        defer = False
+        try:
+            defer = data.pop('defer')
+        except KeyError:
+            pass
+
         await self.validate(data)
         verrors = ValidationErrors()
         await self.clean(data, 'iscsi_extent_create', verrors)
@@ -143,6 +149,12 @@ class iSCSITargetExtentService(SharingService):
         """
         Update iSCSI Extent of `id`.
         """
+        defer = False
+        try:
+            defer = data.pop('defer')
+        except KeyError:
+            pass
+
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
         audit_callback(old['name'])
@@ -179,10 +191,11 @@ class iSCSITargetExtentService(SharingService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('iscsitarget', 'reload')
+        if not defer:
+            await self._service_change('iscsitarget', 'reload')
 
-        # scstadmin can have issues when modifying an existing extent, re-run
-        await self._service_change('iscsitarget', 'reload')
+            # scstadmin can have issues when modifying an existing extent, re-run
+            await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
 
@@ -192,7 +205,7 @@ class iSCSITargetExtentService(SharingService):
         audit='Delete iSCSI extent',
         audit_callback=True
     )
-    async def do_delete(self, audit_callback, id_, remove, force):
+    async def do_delete(self, audit_callback, id_, remove, force, defer):
         """
         Delete iSCSI Extent of `id`.
 
@@ -220,7 +233,7 @@ class iSCSITargetExtentService(SharingService):
                 raise CallError(f'Failed to remove extent file: {delete!r}')
 
         for target_to_extent in target_to_extents:
-            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
+            await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force, defer)
 
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
@@ -236,7 +249,8 @@ class iSCSITargetExtentService(SharingService):
                 'datastore.delete', self._config.datastore, id_
             )
         finally:
-            await self._service_change('iscsitarget', 'reload')
+            if not defer:
+                await self._service_change('iscsitarget', 'reload')
             if all([await self.middleware.call("iscsi.global.alua_enabled"),
                     await self.middleware.call('failover.remote_connected')]):
                 await self.middleware.call('iscsi.alua.wait_for_alua_settled')
