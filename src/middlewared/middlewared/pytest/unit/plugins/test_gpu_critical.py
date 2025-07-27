@@ -79,7 +79,8 @@ DEVICE_DATA = {
                 },
             },
             True,
-            'Critical devices found: 0000:00:1f.4\nCritical devices found in same IOMMU group: 0000:00:1f.4'
+            ('Devices sharing memory management: SMBus (0000:00:1f.4)\n'
+             'Devices sharing memory management in same IOMMU group: SMBus (0000:00:1f.4)')
         ),
         (
             textwrap.dedent('''
@@ -107,7 +108,7 @@ DEVICE_DATA = {
                 },
             },
             True,
-            'Critical devices found in same IOMMU group: 0000:17:00.0'
+            'Devices sharing memory management in same IOMMU group: VGA compatible controller (0000:17:00.0)'
         ),
         (
             textwrap.dedent('''
@@ -135,7 +136,7 @@ DEVICE_DATA = {
                 },
             },
             True,
-            'Critical devices found in same IOMMU group: 0000:17:00.1'
+            'Devices sharing memory management in same IOMMU group: Audio device (0000:17:00.1)'
         )
     ]
 )

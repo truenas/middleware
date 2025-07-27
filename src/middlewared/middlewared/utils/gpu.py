@@ -13,6 +13,27 @@ from .iommu import get_iommu_groups_info, SENSITIVE_PCI_DEVICE_TYPES
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
 
 
+def get_pci_device_description(pci_slot: str, subclass: str = None, model: str = None) -> str:
+    """
+    Get human-readable device description with PCI slot.
+    Uses caching to avoid repeated lookups for the same device.
+
+    Args:
+        pci_slot: PCI slot address (e.g., "0000:00:1f.4")
+        subclass: ID_PCI_SUBCLASS_FROM_DATABASE value
+        model: ID_MODEL_FROM_DATABASE value
+
+    Returns:
+        Human-readable description like "SMBus (0000:00:1f.4)"
+    """
+    if model and model != 'Not Available':
+        return f'{model} ({pci_slot})'
+    elif subclass:
+        return f'{subclass} ({pci_slot})'
+    else:
+        return pci_slot
+
+
 def parse_nvidia_info_file(file_obj: TextIO) -> tuple[dict, str]:
     gpu, bus_loc = dict(), None
     for line in file_obj:
@@ -94,36 +115,55 @@ def get_gpus() -> list:
 
         devices = []
         critical_reason = None
-        critical_devices = set()
+        critical_devices = {}
+        critical_devices_based_on_iommu = {}
 
         # So we will try to mark those gpu's as critical which meet following criteria:
         # 1) Have a device which belongs to sensitive pci devices group
         # 2) Have a device which is in same iommu group as a device which belongs to sensitive pci devices group
+
+        # Check if the GPU itself is in a critical IOMMU group
         if critical_iommu_mapping[iommu_groups.get(addr, {}).get('number')]:
-            critical_devices_based_on_iommu = {addr}
-        else:
-            critical_devices_based_on_iommu = set()
+            # Get GPU device info for description
+            gpu_subclass = gpu_dev.get('ID_PCI_SUBCLASS_FROM_DATABASE', '')
+            gpu_model = gpu_dev.get('ID_MODEL_FROM_DATABASE', '')
+            device_desc = get_pci_device_description(addr, gpu_subclass, gpu_model)
+            critical_devices_based_on_iommu[addr] = device_desc
 
         for child in filter(lambda c: all(k in c for k in ('PCI_SLOT_NAME', 'PCI_ID')), gpu_dev.parent.children):
+            pci_slot = child['PCI_SLOT_NAME']
+            subclass = child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '')
+            model = child.get('ID_MODEL_FROM_DATABASE', '')
+
             devices.append({
                 'pci_id': child['PCI_ID'],
-                'pci_slot': child['PCI_SLOT_NAME'],
-                'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
+                'pci_slot': pci_slot,
+                'vm_pci_slot': f'pci_{pci_slot.replace(".", "_").replace(":", "_")}',
             })
+
+            # Check if it's a critical device type
             for k in SENSITIVE_PCI_DEVICE_TYPES.values():
-                if k.lower() in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower():
-                    critical_devices.add(child['PCI_SLOT_NAME'])
+                if k.lower() in subclass.lower():
+                    device_desc = get_pci_device_description(pci_slot, subclass, model)
+                    critical_devices[pci_slot] = device_desc
                     break
-            if critical_iommu_mapping[iommu_groups.get(child['PCI_SLOT_NAME'], {}).get('number')]:
-                critical_devices_based_on_iommu.add(child['PCI_SLOT_NAME'])
+
+            # Check IOMMU group
+            if critical_iommu_mapping[iommu_groups.get(pci_slot, {}).get('number')]:
+                device_desc = get_pci_device_description(pci_slot, subclass, model)
+                critical_devices_based_on_iommu[pci_slot] = device_desc
 
         if critical_devices:
-            critical_reason = f'Critical devices found: {", ".join(critical_devices)}'
+            device_list = ', '.join(critical_devices.values())
+            critical_reason = f'Devices sharing memory management: {device_list}'
 
         if critical_devices_based_on_iommu:
-            critical_reason = f'{critical_reason}\n' if critical_reason else ''
-            critical_reason += ('Critical devices found in same IOMMU group: '
-                                f'{", ".join(critical_devices_based_on_iommu)}')
+            device_list = ', '.join(critical_devices_based_on_iommu.values())
+            if critical_reason:
+                critical_reason += '\n'
+            else:
+                critical_reason = ''
+            critical_reason += f'Devices sharing memory management in same IOMMU group: {device_list}'
 
         gpus.append({
             'addr': {
