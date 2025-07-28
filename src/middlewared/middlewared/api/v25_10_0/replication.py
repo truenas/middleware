@@ -147,7 +147,8 @@ class ReplicationEntry(BaseModel):
     * `NONE`: Do not delete any snapshots.
     """
     lifetime_value: int | None = Field(default=None, ge=1)
-    """Number of time units to retain snapshots for custom retention policy. Only applies when `retention_policy` is CUSTOM."""
+    """Number of time units to retain snapshots for custom retention policy. Only applies when `retention_policy` is \
+    CUSTOM."""
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] | None = None
     """Time unit for snapshot retention for custom retention policy. Only applies when `retention_policy` is CUSTOM."""
     lifetimes: list[ReplicationLifetimeModel] = []

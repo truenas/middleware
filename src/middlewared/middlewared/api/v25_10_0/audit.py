@@ -73,8 +73,8 @@ class AuditQuery(BaseModel):
     """Array of services to include in the audit query."""
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
     query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
-    """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form for \
-    better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
+    """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form \
+    for better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""
     remote_controller: bool = False
     """HA systems may direct the query to the 'remote' controller by including 'remote_controller=True'. The default \
     is the 'current' controller."""
@@ -101,8 +101,8 @@ class AuditQueryResultItem(BaseModel, metaclass=ForUpdateMetaclass):
     service: Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']
     """Name of the service that generated the message. This will be one of the names specified in `services`."""
     service_data: dict | None
-    """JSON object containing variable data depending on the particular service. See TrueNAS auditing documentation for \
-    the service in question."""
+    """JSON object containing variable data depending on the particular service. See TrueNAS auditing documentation \
+    for the service in question."""
     event: str
     """Name of the event type that generated the audit record. Each service has its own unique event identifiers."""
     event_data: dict | None

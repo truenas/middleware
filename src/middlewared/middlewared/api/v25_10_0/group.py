@@ -51,7 +51,7 @@ class GroupEntry(BaseModel):
     group: NonEmptyString
     """ A string used to identify a group. Identical to the `name` key. """
     local: bool
-    """ If `True`, the group is local to the TrueNAS server. If `False`, the group is provided by a directory service. """
+    """If `True`, the group is local to the TrueNAS server. If `False`, the group is provided by a directory service."""
     sid: str | None
     """ The Security Identifier (SID) of the user if the account an `smb` account. The SMB server uses this value to \
     check share access and for other purposes. """

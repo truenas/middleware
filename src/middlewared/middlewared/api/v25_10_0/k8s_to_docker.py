@@ -4,7 +4,8 @@ from middlewared.api.base import BaseModel, single_argument_result
 
 
 __all__ = [
-    'K8stoDockerMigrationListBackupsArgs', 'K8stoDockerMigrationListBackupsResult', 'K8stoDockerMigrationMigrateArgs', 'K8stoDockerMigrationMigrateResult',
+    'K8stoDockerMigrationListBackupsArgs', 'K8stoDockerMigrationListBackupsResult', 'K8stoDockerMigrationMigrateArgs',
+    'K8stoDockerMigrationMigrateResult',
 ]
 
 

@@ -216,7 +216,7 @@ class POSIXACE(BaseModel):
     """Subject type for this POSIX ACE.
 
     * `USER_OBJ`: File/directory owner
-    * `GROUP_OBJ`: File/directory primary group  
+    * `GROUP_OBJ`: File/directory primary group
     * `OTHER`: All other users
     * `MASK`: Maximum permissions for named users and groups
     * `USER`: Specific user account

@@ -9,11 +9,11 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem', 'ReportingNetdataGetDataArgs',
-    'ReportingNetdataGraphResult', 'ReportingNetdataGraphArgs', 'ReportingGeneratePasswordArgs',
-    'ReportingGeneratePasswordResult', 'ReportingRealtimeEventSourceArgs', 'ReportingRealtimeEventSourceEvent',
-    'ReportingGetDataArgs', 'ReportingGetDataResult', 'ReportingGraphArgs', 'ReportingGraphResult',
-    'ReportingNetdataGetDataResult', 'ReportingNetdataGraphsItem',
+    'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',
+    'ReportingNetdataGetDataArgs', 'ReportingNetdataGraphResult', 'ReportingNetdataGraphArgs',
+    'ReportingGeneratePasswordArgs', 'ReportingGeneratePasswordResult', 'ReportingRealtimeEventSourceArgs',
+    'ReportingRealtimeEventSourceEvent', 'ReportingGetDataArgs', 'ReportingGetDataResult', 'ReportingGraphArgs',
+    'ReportingGraphResult', 'ReportingNetdataGetDataResult', 'ReportingNetdataGraphsItem',
 ]
 
 
@@ -84,7 +84,8 @@ class GraphIdentifier(BaseModel):
     * `upstemperature`: UPS temperature readings
     """
     identifier: NonEmptyString | None = None
-    """Specific instance identifier for the metric (e.g., device name, interface name). `null` for system-wide metrics."""
+    """Specific instance identifier for the metric (e.g., device name, interface name). `null` for system-wide \
+    metrics."""
 
 
 class ReportingNetdataGetDataArgs(BaseModel):

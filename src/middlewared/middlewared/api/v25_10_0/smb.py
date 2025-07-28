@@ -459,9 +459,9 @@ class ExternalOpt(BaseModel):
     """ These configuration options apply to shares with the `EXTERNAL_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.EXTERNAL_SHARE] = Field(exclude=True, repr=False)
     remote_path: list[NonEmptyString] = Field(examples=[
-        ['192.168.0.200\\SHARE'],
-        ['SERVER1.MYDOM.INTERNAL\\SHARE'],
-        ['SERVER1.MYDOM.INTERNAL\\SHARE, SERVER2.MYDOM.INTERNAL\\SHARE']
+        [r'192.168.0.200\SHARE'],
+        [r'SERVER1.MYDOM.INTERNAL\SHARE'],
+        [r'SERVER1.MYDOM.INTERNAL\SHARE, SERVER2.MYDOM.INTERNAL\SHARE']
     ])
     """ This is the path to the external server and share. Each server entry must include a full domain name or IP \
     address and share name. Separate the server and share with the `\\` character.

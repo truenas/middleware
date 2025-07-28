@@ -15,8 +15,9 @@ __all__ = [
     'VirtInstanceRestartArgs', 'VirtInstanceRestartResult', 'VirtInstanceImageChoicesArgs',
     'VirtInstanceImageChoicesResult', 'VirtInstanceDeviceDeviceListArgs', 'VirtInstanceDeviceDeviceListResult',
     'VirtInstanceDeviceDeviceAddArgs', 'VirtInstanceDeviceDeviceAddResult', 'VirtInstanceDeviceDeviceUpdateArgs',
-    'VirtInstanceDeviceDeviceUpdateResult', 'VirtInstanceDeviceDeviceDeleteArgs', 'VirtInstanceDeviceDeviceDeleteResult',
-    'VirtInstancesMetricsEventSourceArgs', 'VirtInstancesMetricsEventSourceEvent',
+    'VirtInstanceDeviceDeviceUpdateResult', 'VirtInstanceDeviceDeviceDeleteArgs',
+    'VirtInstanceDeviceDeviceDeleteResult', 'VirtInstancesMetricsEventSourceArgs',
+    'VirtInstancesMetricsEventSourceEvent',
 ]
 
 
@@ -95,7 +96,9 @@ class VirtInstanceEntry(BaseModel):
     """Human-readable name for the virtual instance."""
     type: InstanceType = 'CONTAINER'
     """Type of virtual instance."""
-    status: Literal['RUNNING', 'STOPPED', 'UNKNOWN', 'ERROR', 'FROZEN', 'STARTING', 'STOPPING', 'FREEZING', 'THAWED', 'ABORTING']
+    status: Literal[
+        'RUNNING', 'STOPPED', 'UNKNOWN', 'ERROR', 'FROZEN', 'STARTING', 'STOPPING', 'FREEZING', 'THAWED', 'ABORTING'
+    ]
     """Current operational status of the virtual instance."""
     cpu: str | None
     """CPU configuration string or `null` for default allocation."""

@@ -10,15 +10,15 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    "PoolEntry", "PoolDdtPruneArgs", "PoolDdtPruneResult", "PoolDdtPrefetchArgs", "PoolDdtPrefetchResult", "PoolAttachArgs",
-    "PoolAttachResult", "PoolAttachmentsArgs", "PoolAttachmentsResult", "PoolCreateArgs", "PoolCreateResult",
-    "PoolDetachArgs", "PoolDetachResult", "PoolExpandArgs", "PoolExpandResult", "PoolExportArgs", "PoolExportResult",
-    "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs", "PoolGetDisksResult",
-    "PoolImportFindArgs", "PoolImportFindResult", "PoolImportPoolArgs", "PoolImportPoolResult", "PoolIsUpgradedArgs",
-    "PoolIsUpgradedResult", "PoolOfflineArgs", "PoolOfflineResult", "PoolOnlineArgs", "PoolOnlineResult",
-    "PoolProcessesArgs", "PoolProcessesResult", "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult",
-    "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs", "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult",
-    "PoolUpgradeArgs", "PoolUpgradeResult", "PoolValidateNameArgs", "PoolValidateNameResult",
+    "PoolEntry", "PoolDdtPruneArgs", "PoolDdtPruneResult", "PoolDdtPrefetchArgs", "PoolDdtPrefetchResult",
+    "PoolAttachArgs", "PoolAttachResult", "PoolAttachmentsArgs", "PoolAttachmentsResult", "PoolCreateArgs",
+    "PoolCreateResult", "PoolDetachArgs", "PoolDetachResult", "PoolExpandArgs", "PoolExpandResult", "PoolExportArgs",
+    "PoolExportResult", "PoolFilesystemChoicesArgs", "PoolFilesystemChoicesResult", "PoolGetDisksArgs",
+    "PoolGetDisksResult", "PoolImportFindArgs", "PoolImportFindResult", "PoolImportPoolArgs", "PoolImportPoolResult",
+    "PoolIsUpgradedArgs", "PoolIsUpgradedResult", "PoolOfflineArgs", "PoolOfflineResult", "PoolOnlineArgs",
+    "PoolOnlineResult", "PoolProcessesArgs", "PoolProcessesResult", "PoolRemoveArgs", "PoolRemoveArgs",
+    "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs", "PoolScrubResult", "PoolUpdateArgs",
+    "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult", "PoolValidateNameArgs", "PoolValidateNameResult",
     "PoolCreateEncryptionOptions",
 ]
 
