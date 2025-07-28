@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 
@@ -66,8 +67,11 @@ class TNCPostInstallService(Service):
             Status.CONFIGURED.name,
             payload,
         )
-        logger.debug('TNC Post Install: Syncing interface IPs')
-        await self.middleware.call('tn_connect.hostname.sync_interface_ips')
+        logger.debug('TNC Post Install: Triggering task for syncing interface IPs to run after 5 minutes')
+        asyncio.get_event_loop().call_later(
+            5 * 60,
+            lambda: self.middleware.create_task(self.middleware.call('tn_connect.hostname.sync_interface_ips')),
+        )
         logger.debug('TNC Post Install: Configuring nginx to consume TNC certificate')
         await self.middleware.call('tn_connect.acme.update_ui_impl')
 
