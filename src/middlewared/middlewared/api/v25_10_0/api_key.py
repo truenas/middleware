@@ -30,7 +30,7 @@ class ApiKeyEntry(BaseModel):
     username: LocalUsername | RemoteUsername | None
     """Username associated with the API key or `null` for system keys."""
     user_identifier: int | str
-    """User ID (numeric) or username (string) that owns this API key."""
+    """User ID (numeric) or SID (string) that owns this API key."""
     keyhash: Secret[str]
     """Hashed representation of the API key (masked for security)."""
     created_at: datetime

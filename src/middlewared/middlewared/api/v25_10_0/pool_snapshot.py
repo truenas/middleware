@@ -92,7 +92,7 @@ class PoolSnapshotEntry(BaseModel):
     snapshot_name: str
     """Just the snapshot name portion without the dataset path."""
     dataset: str
-    """Name of the dataset this snapshot was taken from. See PoolDatasetEntry for dataset details."""
+    """Name of the dataset this snapshot was taken from."""
     createtxg: str
     """Transaction group ID when the snapshot was created."""
     holds: PoolSnapshotHoldTag = NotRequired
