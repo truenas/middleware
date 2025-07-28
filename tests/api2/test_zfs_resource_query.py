@@ -51,7 +51,7 @@ def test_zfs_resource_query_flat_vs_nested():
                 # Test flat structure (default)
                 flat_result = call(
                     "zfs.resource.query",
-                    {"paths": [parent], "get_children": True, "flat": True},
+                    {"paths": [parent], "get_children": True, "nest_results": False},
                 )
                 assert len(flat_result) == 3  # parent, child, grandchild
                 # All should have empty children in flat mode
@@ -61,7 +61,7 @@ def test_zfs_resource_query_flat_vs_nested():
                 # Test nested structure
                 nested_result = call(
                     "zfs.resource.query",
-                    {"paths": [parent], "get_children": True, "flat": False},
+                    {"paths": [parent], "get_children": True, "nest_results": True},
                 )
                 assert len(nested_result) == 1  # Only parent at root level
                 parent_resource = nested_result[0]

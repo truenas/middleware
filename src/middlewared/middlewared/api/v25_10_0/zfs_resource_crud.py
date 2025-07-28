@@ -265,8 +265,11 @@ class ZFSResourceQuery(BaseModel):
 
     NOTE: This should only ever be toggled by internal consumers and \
     you should know what you're doing by toggling this to False."""
-    flat: bool = True
-    """Return a "flat" object representing the zfs resource(s)."""
+    nest_results: bool = False
+    """Return a nested object that associates all children to their \
+    respective parents in the filesystem. By default, each zfs resource \
+    is returned as a separate item in the array and is not associated \
+    to its parent."""
     get_children: bool = False
     """Retrieve children information for the zfs resource."""
 

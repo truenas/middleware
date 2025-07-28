@@ -125,7 +125,7 @@ class ZFSResourceService(Service):
 
         try:
             results = query_impl(tls.lzh, final)
-            if not final["flat"]:
+            if final["nest_results"]:
                 return self.nest_paths(results)
             else:
                 return results
@@ -167,6 +167,6 @@ class ZFSResourceService(Service):
             })
 
             # Get hierarchical view of resources
-            query({"paths": ["tank"], "flat": False, "get_children": True})
+            query({"paths": ["tank"], "nest_results": True, "get_children": True})
         """
         return self.middleware.call_sync("zfs.resource.query_impl", data)
