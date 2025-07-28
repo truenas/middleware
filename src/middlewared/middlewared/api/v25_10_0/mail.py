@@ -39,6 +39,7 @@ class MailEntry(BaseModel):
     pass_: Secret[str | None] = Field(alias="pass")
     """SMTP password."""
     oauth: Secret[MailEntryOAuth | EmptyDict | None]
+    """OAuth configuration for email providers that support it or `null` for basic authentication."""
     id: int
     """Unique identifier for this mail configuration."""
 
@@ -112,7 +113,9 @@ class MailUpdateResult(BaseModel):
 
 class MailSendArgs(BaseModel):
     message: MailSendMessage
+    """Email message content and configuration."""
     config: MailUpdate = Field(default_factory=MailUpdate)
+    """Optional mail configuration overrides for this message."""
 
 
 class MailSendResult(BaseModel):
@@ -126,3 +129,4 @@ class MailLocalAdministratorEmailArgs(BaseModel):
 
 class MailLocalAdministratorEmailResult(BaseModel):
     result: str | None
+    """Email address of the local administrator or `null` if not configured."""

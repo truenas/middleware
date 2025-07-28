@@ -44,27 +44,39 @@ class DiskEntry(BaseModel):
     serial: str
     """Manufacturer serial number of the disk."""
     lunid: str | None
+    """Logical unit number identifier or `null` if not applicable."""
     size: int | None
     """Total size of the disk in bytes. `null` if not available."""
     description: str
     """Human-readable description of the disk device."""
     transfermode: str
+    """Data transfer mode and capabilities of the disk."""
     hddstandby: Literal["ALWAYS ON", "5", "10", "20", "30", "60", "120", "180", "240", "300", "330"]
+    """Hard disk standby timer in minutes or `ALWAYS ON` to disable standby."""
     advpowermgmt: Literal["DISABLED", "1", "64", "127", "128", "192", "254"]
+    """Advanced power management level or `DISABLED` to turn off power management."""
     expiretime: datetime | None
+    """Expiration timestamp for disk data or `null` if not applicable."""
     model: str | None
     """Manufacturer model name/number of the disk. `null` if not available."""
     rotationrate: int | None
+    """Disk rotation speed in RPM or `null` for SSDs and unknown devices."""
     type: str | None
+    """Disk type classification or `null` if not determined."""
     zfs_guid: str | None
+    """ZFS globally unique identifier for this disk or `null` if not used in ZFS."""
     bus: str
+    """System bus type the disk is connected to."""
     devname: str = Field(examples=["/dev/sda"])
     """Device name in the operating system."""
     enclosure: DiskEntryEnclosure | None
+    """Physical enclosure information or `null` if not in an enclosure."""
     pool: str | None
     """Name of the storage pool this disk belongs to. `null` if not part of any pool."""
     passwd: Secret[str] = NotRequired
+    """Disk encryption password (masked for security)."""
     kmip_uid: str | None = NotRequired
+    """KMIP (Key Management Interoperability Protocol) unique identifier or `null`."""
 
 
 class DiskDetails(BaseModel):
@@ -99,10 +111,12 @@ class DiskUpdate(DiskEntry, metaclass=ForUpdateMetaclass):
 
 class DiskDetailsArgs(BaseModel):
     data: DiskDetails = Field(default_factory=DiskDetails)
+    """Disk query parameters specifying which disks to return and options."""
 
 
 class DiskDetailsResult(BaseModel):
     result: list | dict
+    """Array of disk information or object with disk details depending on query options."""
 
 
 class DiskGetUsedArgs(BaseModel):
@@ -115,6 +129,7 @@ class DiskGetUsedArgs(BaseModel):
 
 class DiskGetUsedResult(BaseModel):
     result: list
+    """Array of disks that are currently in use by the system."""
 
 
 class DiskTemperaturesArgs(BaseModel):
@@ -128,38 +143,50 @@ class DiskTemperaturesArgs(BaseModel):
 
 class DiskTemperaturesResult(BaseModel):
     result: dict
+    """Object mapping disk names to their current temperature information."""
 
 
 class DiskTemperatureAggArgs(BaseModel):
     names: list[str]
+    """Array of disk names to retrieve temperature aggregates for."""
     days: int = 7
+    """Number of days to aggregate temperature data over."""
 
 
 class DiskTemperatureAggEntry(BaseModel):
     min_: int | float | None = Field(alias="min")
+    """Minimum temperature recorded during the time period or `null`."""
     max_: int | float | None = Field(alias="max")
+    """Maximum temperature recorded during the time period or `null`."""
     avg: int | float | None
+    """Average temperature during the time period or `null`."""
 
 
 class DiskTemperatureAggResult(BaseModel):
     result: dict[str, DiskTemperatureAggEntry]
+    """Object mapping disk names to their aggregated temperature statistics."""
 
 
 class DiskTemperatureAlertsArgs(BaseModel):
     names: list[str]
+    """Array of disk names to check for temperature-related alerts."""
 
 
 class DiskTemperatureAlertsResult(BaseModel):
     result: list[Alert]
+    """Array of active temperature alerts for the specified disks."""
 
 
 class DiskUpdateArgs(BaseModel):
     id: str
+    """Disk identifier to update."""
     data: DiskUpdate
+    """Updated disk configuration data."""
 
 
 class DiskUpdateResult(BaseModel):
     result: DiskEntry
+    """The updated disk configuration."""
 
 
 class DiskWipeArgs(BaseModel):
@@ -177,3 +204,4 @@ class DiskWipeArgs(BaseModel):
 
 class DiskWipeResult(BaseModel):
     result: None
+    """Returns `null` when the disk wipe operation is successfully started."""

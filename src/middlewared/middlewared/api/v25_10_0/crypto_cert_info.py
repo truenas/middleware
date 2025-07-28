@@ -18,6 +18,7 @@ class CertificateCountryChoicesArgs(BaseModel):
 
 class CertificateCountryChoicesResult(BaseModel):
     result: dict[str, str]
+    """Object mapping country codes to country names for certificate creation."""
 
 
 class CertificateAcmeServerChoicesArgs(BaseModel):
@@ -26,6 +27,7 @@ class CertificateAcmeServerChoicesArgs(BaseModel):
 
 class CertificateAcmeServerChoicesResult(BaseModel):
     result: dict[str, str]
+    """Object mapping ACME server identifiers to their directory URLs."""
 
 
 class CertificateEcCurveChoicesArgs(BaseModel):
@@ -34,6 +36,7 @@ class CertificateEcCurveChoicesArgs(BaseModel):
 
 class CertificateEcCurveChoicesResult(BaseModel):
     result: dict[str, str]
+    """Object mapping elliptic curve identifiers to their descriptions."""
 
 
 class CertificateExtendedKeyUsageChoicesArgs(BaseModel):
@@ -42,3 +45,4 @@ class CertificateExtendedKeyUsageChoicesArgs(BaseModel):
 
 class CertificateExtendedKeyUsageChoicesResult(BaseModel):
     result: dict[str, str]
+    """Object mapping extended key usage OIDs to their descriptions."""

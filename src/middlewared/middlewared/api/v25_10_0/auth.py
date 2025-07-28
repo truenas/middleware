@@ -165,14 +165,20 @@ class AuthUserInfo(UserGetUserObj):
 
 class AuthRespSuccess(BaseModel):
     response_type: Literal[AuthResp.SUCCESS]
+    """Authentication response type indicating successful login."""
     user_info: AuthUserInfo | None
+    """Authenticated user information or `null` if not available."""
     authenticator: Literal['LEVEL_1', 'LEVEL_2']
+    """Authentication level achieved (LEVEL_1 for password, LEVEL_2 for two-factor)."""
 
 
 class AuthTokenPlain(BaseModel):
     mechanism: Literal[AuthMech.TOKEN_PLAIN]
+    """Authentication mechanism type for plain token login."""
     token: Secret[str]
+    """Authentication token (masked for security)."""
     login_options: AuthCommonOptions = AuthCommonOptions()
+    """Common authentication options and settings."""
 
 
 class TokenParentCredentialsData(BaseModel):
@@ -184,71 +190,90 @@ class TokenParentCredentialsData(BaseModel):
         'TOKEN',
         'TRUENAS_NODE',
     ]
+    """Type of credentials used to generate this token."""
     credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | TokenCredentialData
+    """Credential data used to authenticate the token request."""
 
 
 @single_argument_args('generate_single_use_password')
 class AuthGenerateOnetimePasswordArgs(BaseModel):
     username: str
+    """Username to generate a one-time password for."""
 
 
 class AuthGenerateOnetimePasswordResult(BaseModel):
     result: str
+    """Generated one-time password for the specified user."""
 
 
 class AuthGenerateTokenArgs(BaseModel):
     ttl: int | None = 600
+    """Time-to-live for the token in seconds or `null` for no expiration (default 600)."""
     attrs: dict = {}  # XXX should we have some actual validation here?
+    """Additional attributes to embed in the token."""
     match_origin: bool = True  # NOTE: this is change in default from before 25.04
+    """Whether the token must be used from the same origin that created it."""
     single_use: bool = False
+    """Whether the token can only be used once."""
 
 
 class AuthGenerateTokenResult(BaseModel):
     result: str
+    """Generated authentication token."""
 
 
 class AuthLoginArgs(AuthLegacyUsernamePassword):
     otp_token: Secret[str | None] = None
+    """One-time password token for two-factor authentication or `null`."""
 
 
 class AuthLoginResult(BaseModel):
     result: bool
+    """Returns `true` if login was successful, `false` otherwise."""
 
 
 class AuthLoginExArgs(BaseModel):
     login_data: AuthApiKeyPlain | AuthPasswordPlain | AuthTokenPlain | AuthOTPToken = Field(discriminator='mechanism')
+    """Authentication data specifying mechanism and credentials."""
 
 
 class AuthLoginExResult(BaseModel):
     result: Union[
         AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect
     ] = Field(discriminator='response_type')
+    """Authentication response indicating success, failure, or additional steps required."""
 
 
 class AuthLoginExContinueArgs(BaseModel):
     login_data: AuthOTPToken
+    """OTP token data to continue two-factor authentication flow."""
 
 
 class AuthLoginExContinueResult(BaseModel):
     result: Union[
         AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect
     ] = Field(discriminator='response_type')
+    """Authentication response after continuing with OTP token."""
 
 
 class AuthLoginWithApiKeyArgs(BaseModel):
     api_key: Secret[str]
+    """API key for authentication (masked for security)."""
 
 
 class AuthLoginWithApiKeyResult(BaseModel):
     result: bool
+    """Returns `true` if API key login was successful, `false` otherwise."""
 
 
 class AuthLoginWithTokenArgs(BaseModel):
     token: Secret[str]
+    """Authentication token (masked for security)."""
 
 
 class AuthLoginWithTokenResult(BaseModel):
     result: bool
+    """Returns `true` if token login was successful, `false` otherwise."""
 
 
 class AuthMeArgs(BaseModel):
@@ -266,6 +291,7 @@ class AuthMechanismChoicesArgs(BaseModel):
 
 class AuthMechanismChoicesResult(BaseModel):
     result: list[str]
+    """Array of available authentication mechanisms."""
 
 
 class AuthLogoutArgs(BaseModel):
@@ -274,16 +300,20 @@ class AuthLogoutArgs(BaseModel):
 
 class AuthLogoutResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when logout is successful."""
 
 
 class AuthSetAttributeArgs(BaseModel):
     """WebUI attributes."""
     key: str
+    """Attribute key name."""
     value: Any
+    """Attribute value to set."""
 
 
 class AuthSetAttributeResult(BaseModel):
     result: Literal[None]
+    """Returns `null` when the attribute is successfully set."""
 
 
 class AuthTerminateOtherSessionsArgs(BaseModel):
@@ -292,11 +322,14 @@ class AuthTerminateOtherSessionsArgs(BaseModel):
 
 class AuthTerminateOtherSessionsResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when other sessions are successfully terminated."""
 
 
 class AuthTerminateSessionArgs(BaseModel):
     id: str
+    """Session ID to terminate."""
 
 
 class AuthTerminateSessionResult(BaseModel):
     result: bool
+    """Returns `true` if the session was successfully terminated, `false` otherwise."""

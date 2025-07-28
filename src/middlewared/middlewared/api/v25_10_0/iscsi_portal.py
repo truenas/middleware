@@ -19,6 +19,7 @@ __all__ = [
 
 class IscsiPortalIP(BaseModel):
     ip: NonEmptyString
+    """IP address for the iSCSI portal to listen on."""
 
     @field_validator('ip')
     @classmethod
@@ -29,13 +30,18 @@ class IscsiPortalIP(BaseModel):
 
 class IscsiPortalIPInfo(IscsiPortalIP):
     port: int
+    """TCP port number for the iSCSI portal."""
 
 
 class IscsiPortalEntry(BaseModel):
     id: int
+    """Unique identifier for the iSCSI portal."""
     listen: list[IscsiPortalIPInfo]
+    """Array of IP address and port combinations for the portal to listen on."""
     tag: int
+    """Numeric tag used to associate this portal with iSCSI targets."""
     comment: str = ''
+    """Optional comment describing the portal."""
 
 
 class ISCSIPortalListenIpChoicesArgs(BaseModel):
@@ -44,20 +50,24 @@ class ISCSIPortalListenIpChoicesArgs(BaseModel):
 
 class ISCSIPortalListenIpChoicesResult(BaseModel):
     result: dict[str, str]
+    """Dictionary mapping IP addresses to their interface descriptions."""
 
 
 class IscsiPortalCreate(IscsiPortalEntry):
     id: Excluded = excluded_field()
     tag: Excluded = excluded_field()
     listen: list[IscsiPortalIP]
+    """Array of IP addresses for the portal to listen on."""
 
 
 class ISCSIPortalCreateArgs(BaseModel):
     iscsi_portal_create: IscsiPortalCreate
+    """iSCSI portal configuration data for creation."""
 
 
 class ISCSIPortalCreateResult(BaseModel):
     result: IscsiPortalEntry
+    """The created iSCSI portal configuration."""
 
 
 class IscsiPortalUpdate(IscsiPortalCreate, metaclass=ForUpdateMetaclass):
@@ -66,16 +76,21 @@ class IscsiPortalUpdate(IscsiPortalCreate, metaclass=ForUpdateMetaclass):
 
 class ISCSIPortalUpdateArgs(BaseModel):
     id: int
+    """ID of the iSCSI portal to update."""
     iscsi_portal_update: IscsiPortalUpdate
+    """Updated iSCSI portal configuration data."""
 
 
 class ISCSIPortalUpdateResult(BaseModel):
     result: IscsiPortalEntry
+    """The updated iSCSI portal configuration."""
 
 
 class ISCSIPortalDeleteArgs(BaseModel):
     id: int
+    """ID of the iSCSI portal to delete."""
 
 
 class ISCSIPortalDeleteResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the iSCSI portal is successfully deleted."""

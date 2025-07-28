@@ -163,7 +163,9 @@ class PoolSnapshotRollbackOptions(BaseModel):
 
 class PoolSnapshotUserPropertyUpdate(BaseModel):
     key: UserPropertyKey
+    """The property name in namespace:property format."""
     value: str
+    """The new value to assign to the user property."""
 
 
 class PoolSnapshotUpdate(BaseModel):
@@ -176,8 +178,11 @@ class PoolSnapshotUpdate(BaseModel):
 @single_argument_args("data")
 class PoolSnapshotCloneArgs(BaseModel):
     snapshot: NonEmptyString
+    """Full name of the snapshot to clone from."""
     dataset_dst: NonEmptyString
+    """Name for the new dataset created from the snapshot."""
     dataset_properties: dict = {}
+    """Object mapping ZFS property names to values to set on the cloned dataset."""
 
 
 class PoolSnapshotCloneResult(BaseModel):
@@ -187,63 +192,77 @@ class PoolSnapshotCloneResult(BaseModel):
 
 class PoolSnapshotCreateArgs(BaseModel):
     data: PoolSnapshotCreateWithName | PoolSnapshotCreateWithSchema
+    """Configuration for creating a snapshot with either an explicit name or naming schema."""
 
 
 class PoolSnapshotCreateResult(BaseModel):
     result: PoolSnapshotCreateUpdateEntry
+    """Information about the newly created snapshot."""
 
 
 class PoolSnapshotDeleteArgs(BaseModel):
     id: str
     """ID of the snapshot to delete."""
     options: PoolSnapshotDeleteOptions = Field(default_factory=PoolSnapshotDeleteOptions)
+    """Options for controlling snapshot deletion behavior."""
 
 
 class PoolSnapshotDeleteResult(BaseModel):
     result: Literal[True]
+    """Indicates successful snapshot deletion."""
 
 
 class PoolSnapshotHoldArgs(BaseModel):
     id: str
     """ID of the snapshot to hold."""
     options: PoolSnapshotHoldOptions = Field(default_factory=PoolSnapshotHoldOptions)
+    """Options for controlling snapshot hold behavior."""
 
 
 class PoolSnapshotHoldResult(BaseModel):
     result: None
+    """Returns `null` on successful snapshot hold."""
 
 
 class PoolSnapshotReleaseArgs(BaseModel):
     id: str
     """ID of the held snapshot to release."""
     options: PoolSnapshotReleaseOptions = Field(default_factory=PoolSnapshotReleaseOptions)
+    """Options for controlling snapshot release behavior."""
 
 
 class PoolSnapshotReleaseResult(BaseModel):
     result: None
+    """Returns `null` on successful snapshot release."""
 
 
 class PoolSnapshotRollbackArgs(BaseModel):
     id: str
     """ID of the snapshot to rollback to."""
     options: PoolSnapshotRollbackOptions = Field(default_factory=PoolSnapshotRollbackOptions)
+    """Options for controlling snapshot rollback behavior."""
 
 
 class PoolSnapshotRollbackResult(BaseModel):
     result: None
+    """Returns `null` on successful snapshot rollback."""
 
 
 class PoolSnapshotUpdateArgs(BaseModel):
     id: str
+    """ID of the snapshot to update."""
     data: PoolSnapshotUpdate
+    """The property updates to apply to the snapshot."""
 
 
 class PoolSnapshotUpdateResult(BaseModel):
     result: PoolSnapshotCreateUpdateEntry
+    """Information about the updated snapshot."""
 
 
 class PoolSnapshotRenameOptions(BaseModel):
     new_name: SNAPSHOT_NAME
+    """The new name for the snapshot."""
     force: bool = False
     """
     This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt \
@@ -255,8 +274,11 @@ class PoolSnapshotRenameOptions(BaseModel):
 
 class PoolSnapshotRenameArgs(BaseModel):
     id: NonEmptyString
+    """Current ID of the snapshot to rename."""
     options: PoolSnapshotRenameOptions
+    """The rename operation options including the new name and force flag."""
 
 
 class PoolSnapshotRenameResult(BaseModel):
     result: None
+    """Returns `null` on successful snapshot rename."""

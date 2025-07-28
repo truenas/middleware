@@ -62,7 +62,7 @@ class DirectoryServicesCacheRefreshResult(BaseModel):
 # strings.
 
 class IdmapDomainBase(BaseModel):
-    name: NetbiosDomain | None = Field(default=None, example='IXDOM')
+    name: NetbiosDomain | None = Field(default=None, examples=['IXDOM'])
     """ Short name for the domain. This should match the NetBIOS domain name for Active Directory domains. \
     It may be null if the domain is configured as the base idmap for Active Directory. """
     range_low: IdmapId = 100000001
@@ -85,9 +85,9 @@ class IPA_SMBDomain(IdmapDomainBase):
     """ This is a special idmap backend used when TrueNAS joins an IPA domain. The remote IPA server provides the \
     configuration information during the domain join process."""
     idmap_backend: Literal['SSS']
-    domain_name: NonEmptyString | None = Field(default=None, example='IXDOM.INTERNAL')
+    domain_name: NonEmptyString | None = Field(default=None, examples=['IXDOM.INTERNAL'])
     """ Name of the SMB domain as defined in the IPA configuration for the IPA domain to which TrueNAS is joined. """
-    domain_sid: SID | None = Field(default=None, example='S-1-5-21-3696504179-2855309571-923743039')
+    domain_sid: SID | None = Field(default=None, examples=['S-1-5-21-3696504179-2855309571-923743039'])
     """ The domain SID for the IPA domain to which TrueNAS is joined. """
 
 
@@ -256,7 +256,7 @@ class ActiveDirectoryConfig(BaseModel):
     site: NonEmptyString | None = None
     """ The Active Directory site where the TrueNAS server is located. TrueNAS detects this automatically during the \
     domain join process. """
-    computer_account_ou: NonEmptyString | None = Field(default=None, example='TRUENAS_SERVERS/NYC')
+    computer_account_ou: NonEmptyString | None = Field(default=None, examples=['TRUENAS_SERVERS/NYC'])
     """ Use this setting to override the default organizational unit (OU) in which the TrueNAS computer account is \
     created during the domain join. Use it to set a custom location for TrueNAS computer accounts. """
     use_default_domain: bool = False

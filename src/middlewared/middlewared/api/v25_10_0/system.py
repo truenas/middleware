@@ -66,8 +66,14 @@ class SystemInfoResult(BaseModel):
     system_product_version: str | None
     """System product version from hardware manufacturer. `null` if not available."""
     license: dict | None
+    """System license information. `null` if no license is installed."""
     boottime: datetime
+    """System boot time."""
     datetime_: datetime = Field(alias="datetime")
+    """Current system date and time."""
     timezone: str
+    """System timezone identifier."""
     system_manufacturer: str | None
+    """System manufacturer name from hardware. `null` if not available."""
     ecc_memory: bool
+    """Whether the system has ECC (Error Correcting Code) memory."""

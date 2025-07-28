@@ -148,6 +148,7 @@ class UsedKeychainCredential(BaseModel):
 
 class KeychainCredentialUsedByResult(BaseModel):
     result: list[UsedKeychainCredential]
+    """Array of services or features using this keychain credential."""
 
 
 class KeychainCredentialGenerateSshKeyPairArgs(BaseModel):
@@ -157,50 +158,73 @@ class KeychainCredentialGenerateSshKeyPairArgs(BaseModel):
 @single_argument_result
 class KeychainCredentialGenerateSshKeyPairResult(BaseModel):
     private_key: LongString
+    """Generated SSH private key in PEM format."""
     public_key: LongString
+    """Generated SSH public key in OpenSSH format."""
 
 
 @single_argument_args("keychain_remote_ssh_host_key_scan")
 class KeychainCredentialRemoteSshHostKeyScanArgs(BaseModel):
     host: NonEmptyString
+    """Hostname or IP address of the remote SSH server to scan."""
     port: int = 22
+    """TCP port number for the SSH connection."""
     connect_timeout: int = 10
+    """Connection timeout in seconds."""
 
 
 class KeychainCredentialRemoteSshHostKeyScanResult(BaseModel):
     result: LongString
+    """SSH host public key retrieved from the remote server."""
 
 
 class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):
     name: NonEmptyString
+    """Name for the SSH connection credential."""
     url: HttpUrl
+    """URL of the remote TrueNAS system for semi-automatic setup."""
     verify_ssl: bool = True
+    """Whether to verify SSL certificates when connecting to the remote system."""
     token: Secret[str | None] = None
+    """API token for authentication with the remote system or `null`."""
     admin_username: str = "root"
+    """Administrative username for the remote system."""
     password: Secret[str | None] = None
+    """Password for the administrative user or `null`."""
     otp_token: Secret[str | None] = None
+    """One-time password token for 2FA authentication or `null`."""
     username: str = "root"
+    """Username for the SSH connection."""
     private_key: Secret[int]
+    """ID of the existing private key credential to use for SSH authentication."""
     connect_timeout: int = 10
+    """SSH connection timeout in seconds."""
     sudo: bool = False
+    """Whether the SSH user should use sudo for elevated privileges."""
 
 
 class KeychainCredentialRemoteSshSemiautomaticSetupArgs(BaseModel):
     data: KeychainCredentialRemoteSSHSemiautomaticSetup
+    """Configuration data for semi-automatic SSH credential setup."""
 
 
 class KeychainCredentialRemoteSshSemiautomaticSetupResult(BaseModel):
     result: SSHCredentialsEntry
+    """The created SSH credential configuration."""
 
 
 class KeychainCredentialSetupSSHConnectionKeyNew(BaseModel):
     generate_key: Literal[True] = True
+    """Indicates a new SSH key pair should be generated."""
     name: NonEmptyString
+    """Name for the new SSH key credential."""
 
 
 class KeychainCredentialSetupSSHConnectionKeyExisting(BaseModel):
     generate_key: Literal[False] = False
+    """Indicates an existing SSH key should be used."""
     existing_key_id: int
+    """ID of the existing SSH private key credential to use."""
 
 
 class KeychainCredentialSetupSSHConnectionSemiAutomaticSetup(KeychainCredentialRemoteSSHSemiautomaticSetup):
@@ -217,14 +241,20 @@ class SetupSSHConnectionManual(BaseModel):
         Union[KeychainCredentialSetupSSHConnectionKeyNew, KeychainCredentialSetupSSHConnectionKeyExisting],
         Discriminator("generate_key"),
     ]
+    """SSH private key configuration (new or existing)."""
     connection_name: NonEmptyString
+    """Name for the SSH connection credential."""
     setup_type: Literal["MANUAL"] = "MANUAL"
+    """Setup method for the SSH connection."""
     manual_setup: SetupSSHConnectionManualSetup
+    """Manual SSH connection configuration parameters."""
 
 
 class SetupSSHConnectionSemiautomatic(SetupSSHConnectionManual):
     setup_type: Literal["SEMI-AUTOMATIC"] = "SEMI-AUTOMATIC"
+    """Setup method for the SSH connection."""
     semi_automatic_setup: KeychainCredentialSetupSSHConnectionSemiAutomaticSetup
+    """Semi-automatic SSH connection configuration parameters."""
     manual_setup: Excluded = excluded_field()
 
 
@@ -233,7 +263,9 @@ class KeychainCredentialSetupSshConnectionArgs(BaseModel):
         Union[SetupSSHConnectionManual, SetupSSHConnectionSemiautomatic],
         Discriminator("setup_type"),
     ]
+    """SSH connection setup configuration (manual or semi-automatic)."""
 
 
 class KeychainCredentialSetupSshConnectionResult(BaseModel):
     result: SSHCredentialsEntry
+    """The created SSH connection credential."""

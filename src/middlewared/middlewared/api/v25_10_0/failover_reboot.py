@@ -16,7 +16,9 @@ class FailoverRebootInfoArgs(BaseModel):
 @single_argument_result
 class FailoverRebootInfoResult(BaseModel):
     this_node: RebootInfo
+    """Reboot information for the current node."""
     other_node: RebootInfo | None
+    """Reboot information for the other node in the failover pair or `null` if not available."""
 
 
 class FailoverRebootOtherNodeArgs(BaseModel):
@@ -25,3 +27,4 @@ class FailoverRebootOtherNodeArgs(BaseModel):
 
 class FailoverRebootOtherNodeResult(BaseModel):
     result: None
+    """Returns `null` when the other node reboot is successfully initiated."""

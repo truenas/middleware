@@ -81,6 +81,7 @@ class FilesystemChownArgs(FilesystemPermChownBase):
 
 class FilesystemChownResult(BaseModel):
     result: Literal[None]
+    """Returns `null` when the ownership change is successfully completed."""
 
 
 @single_argument_args('filesystem_setperm')
@@ -104,6 +105,7 @@ class FilesystemSetpermArgs(FilesystemPermChownBase):
 
 class FilesystemSetpermResult(BaseModel):
     result: Literal[None]
+    """Returns `null` when the permission change is successfully completed."""
 
 
 FILESYSTEM_STATX_ATTRS = Literal[
@@ -190,8 +192,11 @@ class FilesystemDirEntry(BaseModel):
 
 class FilesystemListdirArgs(BaseModel):
     path: NonEmptyString
+    """Directory path to list contents of."""
     query_filters: QueryFilters = []
+    """Query filters to apply to the directory listing."""
     query_options: QueryOptions = QueryOptions()
+    """Query options for sorting and pagination."""
 
 
 FilesystemListdirResult = query_result(FilesystemDirEntry, "FilesystemListdirResult")
@@ -199,17 +204,22 @@ FilesystemListdirResult = query_result(FilesystemDirEntry, "FilesystemListdirRes
 
 class FilesystemMkdirOptions(BaseModel):
     mode: UnixPerm = '755'
+    """Unix permissions for the new directory."""
     raise_chmod_error: bool = True
+    """Whether to raise an error if chmod fails."""
 
 
 @single_argument_args('filesystem_mkdir')
 class FilesystemMkdirArgs(BaseModel):
     path: NonEmptyString
+    """Path where the new directory should be created."""
     options: FilesystemMkdirOptions = Field(default=FilesystemMkdirOptions())
+    """Options controlling directory creation behavior."""
 
 
 class FilesystemMkdirResult(BaseModel):
     result: FilesystemDirEntry
+    """Information about the created directory."""
 
 
 class FilesystemStatData(BaseModel):
@@ -261,10 +271,12 @@ class FilesystemStatData(BaseModel):
 
 class FilesystemStatArgs(BaseModel):
     path: NonEmptyString
+    """Absolute filesystem path to get statistics for."""
 
 
 class FilesystemStatResult(BaseModel):
     result: FilesystemStatData
+    """File or directory statistics information."""
 
 
 StatfsFlags = Literal[
@@ -318,10 +330,12 @@ class FilesystemStatfsData(BaseModel):
 
 class FilesystemStatfsArgs(BaseModel):
     path: NonEmptyString
+    """Path on the filesystem to get statistics for."""
 
 
 class FilesystemStatfsResult(BaseModel):
     result: FilesystemStatfsData
+    """Filesystem statistics and mount information."""
 
 
 class ZFSFileAttrsData(BaseModel):
@@ -352,47 +366,61 @@ class ZFSFileAttrsData(BaseModel):
 @single_argument_args('set_zfs_file_attributes')
 class FilesystemSetZfsAttributesArgs(BaseModel):
     path: NonEmptyString
+    """Path to the file to set ZFS attributes on."""
     zfs_file_attributes: ZFSFileAttrsData
+    """ZFS file attributes to set."""
 
 
 class FilesystemSetZfsAttributesResult(BaseModel):
     result: ZFSFileAttrsData
+    """The updated ZFS file attributes."""
 
 
 class FilesystemGetZfsAttributesArgs(BaseModel):
     path: NonEmptyString
+    """Path to the file to get ZFS attributes for."""
 
 
 class FilesystemGetZfsAttributesResult(BaseModel):
     result: ZFSFileAttrsData
+    """The current ZFS file attributes."""
 
 
 class FilesystemGetArgs(BaseModel):
     path: NonEmptyString
+    """Path of the file to read."""
 
 
 class FilesystemGetResult(BaseModel):
     result: Literal[None]
+    """Returns `null` when the file is successfully read."""
 
 
 class FilesystemPutOptions(BaseModel):
     append: bool = False
+    """Whether to append to the file instead of overwriting."""
     mode: int | None = None
+    """Unix permissions to set on the file or `null` to use default."""
 
 
 class FilesystemPutArgs(BaseModel):
     path: NonEmptyString
+    """Path where the file should be written."""
     options: FilesystemPutOptions = FilesystemPutOptions()
+    """Options controlling file writing behavior."""
 
 
 class FilesystemPutResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the file is successfully written."""
 
 
 class FileFollowTailEventSourceArgs(BaseModel):
     path: str
+    """Path to the file to follow/tail."""
 
 
 @single_argument_result
 class FileFollowTailEventSourceEvent(BaseModel):
     data: str
+    """New data appended to the file being followed."""

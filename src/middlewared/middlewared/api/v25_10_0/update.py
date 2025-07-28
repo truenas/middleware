@@ -19,6 +19,7 @@ __all__ = [
 
 class UpdateEntry(BaseModel):
     id: int
+    """Unique identifier for the update configuration."""
     autocheck: bool
     """Automatically check and download updates every night."""
     profile: str
@@ -31,10 +32,12 @@ class UpdateUpdate(UpdateEntry, metaclass=ForUpdateMetaclass):
 
 class UpdateUpdateArgs(BaseModel):
     data: UpdateUpdate
+    """Updated configuration for system update settings."""
 
 
 class UpdateUpdateResult(BaseModel):
     result: UpdateEntry
+    """The updated system update configuration."""
 
 
 class UpdateProfileChoicesArgs(BaseModel):
@@ -43,6 +46,7 @@ class UpdateProfileChoicesArgs(BaseModel):
 
 class UpdateProfileChoicesResult(BaseModel):
     result: dict[str, "UpdateProfileChoice"]
+    """Object of available update profiles with their configuration details."""
 
 
 class UpdateProfileChoice(BaseModel):
@@ -73,6 +77,7 @@ class UpdateStatusNewVersion(BaseModel):
     version: str
     """Newly available version number."""
     manifest: dict
+    """Object containing detailed version information and metadata."""
     release_notes: LongString | None
     """Release notes."""
     release_notes_url: LongString
@@ -88,8 +93,11 @@ class UpdateStatusStatus(BaseModel):
 
 class UpdateDownloadProgress(BaseModel):
     percent: float
+    """Download completion percentage (0.0 to 100.0)."""
     description: LongString
+    """Human-readable description of the current download activity."""
     version: str
+    """Version number being downloaded."""
 
 
 class UpdateStatus(BaseModel):
@@ -102,17 +110,21 @@ class UpdateStatus(BaseModel):
     * HA_UNAVAILABLE - HA is configured but currently unavailable.
     """
     status: UpdateStatusStatus | None
+    """Detailed update status information. `null` if code is ERROR."""
     error: LongString | None
+    """Error message if code is ERROR. `null` otherwise."""
     update_download_progress: UpdateDownloadProgress | None
     """Current update download progress."""
 
 
 class UpdateStatusResult(BaseModel):
     result: UpdateStatus
+    """Current system update status and availability information."""
 
 
 class UpdateStatusChangedEvent(BaseModel):
     status: UpdateStatus
+    """Updated system update status information."""
 
 
 class UpdateAvailableVersionsArgs(BaseModel):
@@ -121,12 +133,14 @@ class UpdateAvailableVersionsArgs(BaseModel):
 
 class UpdateAvailableVersionsResult(BaseModel):
     result: list["UpdateAvailableVersion"]
+    """Array of available system update versions across all trains."""
 
 
 class UpdateAvailableVersion(BaseModel):
     train: str
     """Train that provides this version."""
     version: UpdateStatusNewVersion
+    """Detailed information about this available version."""
 
 
 class UpdateDownloadArgs(BaseModel):
@@ -134,10 +148,12 @@ class UpdateDownloadArgs(BaseModel):
     """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most \
     recent version that matches the currently selected update profile is used."""
     version: str | None = None
+    """Specific version to download. `null` to download the latest version from the specified train."""
 
 
 class UpdateDownloadResult(BaseModel):
     result: bool
+    """Whether the update download was successfully initiated."""
 
 
 class UpdateFileOptions(BaseModel):
@@ -151,10 +167,12 @@ class UpdateFileOptions(BaseModel):
 
 class UpdateFileArgs(BaseModel):
     options: UpdateFileOptions = UpdateFileOptions()
+    """Options for controlling the manual update file upload process."""
 
 
 class UpdateFileResult(BaseModel):
     result: None
+    """Returns `null` on successful update file upload and validation."""
 
 
 class UpdateManualOptions(BaseModel):
@@ -171,14 +189,17 @@ class UpdateManualArgs(BaseModel):
     path: str
     """The absolute path to the update file."""
     options: UpdateManualOptions = UpdateManualOptions()
+    """Options for controlling the manual update process."""
 
 
 class UpdateManualResult(BaseModel):
     result: None
+    """Returns `null` on successful manual update initiation."""
 
 
 class UpdateRunAttrs(BaseModel):
     dataset_name: str | None = None
+    """Name of the ZFS dataset to use for the new boot environment. `null` for automatic naming."""
     resume: bool = False
     """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning \
     that an upgrade can be performed with a warning and that warning is accepted. In that case, update process will \
@@ -187,12 +208,16 @@ class UpdateRunAttrs(BaseModel):
     """Specifies the train from which to download the update. If both `train` and `version` are `null``, the most \
     recent version that matches the currently selected update profile is used."""
     version: str | None = None
+    """Specific version to update to. `null` to use the latest version from the specified train."""
     reboot: bool = False
+    """Whether to automatically reboot the system after applying the update."""
 
 
 class UpdateRunArgs(BaseModel):
     attrs: UpdateRunAttrs = UpdateRunAttrs()
+    """Attributes controlling the system update execution process."""
 
 
 class UpdateRunResult(BaseModel):
     result: Literal[True]
+    """Always returns true on successful update process initiation."""

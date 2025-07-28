@@ -13,19 +13,33 @@ __all__ = ["SnmpEntry",
 
 class SnmpEntry(BaseModel):
     location: str
+    """Physical location of the SNMP agent."""
     contact: EmailStr | Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')]
+    """Contact information for the system administrator (email or name)."""
     traps: bool
+    """Whether SNMP traps are enabled."""
     v3: bool
+    """Whether SNMP version 3 is enabled."""
     community: str = Field(pattern=r'^[-_a-zA-Z0-9\s]*$', default='public')
+    """SNMP community string for version 1 and 2c access."""
     v3_username: str = Field(max_length=20)
+    """Username for SNMP version 3 authentication."""
     v3_authtype: Literal['', 'MD5', 'SHA']
+    """Authentication type for SNMP version 3 (empty string means no authentication)."""
     v3_password: Secret[str]
+    """Password for SNMP version 3 authentication."""
     v3_privproto: Literal[None, 'AES', 'DES'] | None
+    """Privacy protocol for SNMP version 3 encryption. `null` means no privacy."""
     v3_privpassphrase: Secret[str | None] = None
+    """Privacy passphrase for SNMP version 3 encryption. `null` if no privacy is configured."""
     loglevel: int = Field(ge=0, le=7)
+    """Logging level for SNMP daemon (0=emergency to 7=debug)."""
     options: str
+    """Additional SNMP daemon configuration options."""
     zilstat: bool
+    """Whether to enable ZFS dataset statistics collection for SNMP."""
     id: int
+    """Unique identifier for the SNMP configuration."""
 
 
 @single_argument_args('snmp_update')
@@ -35,3 +49,4 @@ class SNMPUpdateArgs(SnmpEntry, metaclass=ForUpdateMetaclass):
 
 class SNMPUpdateResult(BaseModel):
     result: SnmpEntry
+    """The updated SNMP service configuration."""

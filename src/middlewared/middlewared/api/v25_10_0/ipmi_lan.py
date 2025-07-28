@@ -16,28 +16,45 @@ __all__ = [
 
 class IPMILanEntry(BaseModel, metaclass=ForUpdateMetaclass):
     channel: int
+    """IPMI LAN channel number."""
     id_: int = Field(alias="id")
+    """Unique identifier for the IPMI LAN configuration."""
     ip_address_source: str
+    """Source type for IP address assignment (e.g., "DHCP", "Static")."""
     ip_address: str
+    """Current IP address assigned to the IPMI interface."""
     mac_address: str
+    """MAC address of the IPMI network interface."""
     subnet_mask: str
+    """Subnet mask for the IPMI network interface."""
     default_gateway_ip_address: str
+    """IP address of the default gateway."""
     default_gateway_mac_address: str
+    """MAC address of the default gateway."""
     backup_gateway_ip_address: str
+    """IP address of the backup gateway."""
     backup_gateway_mac_address: str
+    """MAC address of the backup gateway."""
     vlan_id: int | None
+    """VLAN ID number or `null` if VLAN is not configured."""
     vlan_id_enable: bool
+    """Whether VLAN tagging is enabled for this interface."""
     vlan_priority: int
+    """VLAN priority level for tagged packets."""
 
 
 class IPMILanQueryOptions(BaseModel):
     query_remote: bool = Field(alias='query-remote', default=False)
+    """Whether to query remote IPMI LAN configuration on HA systems."""
 
 
 class IPMILanQuery(BaseModel):
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    """Query filters to apply to IPMI LAN configuration results."""
     query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
+    """Query options for sorting and pagination."""
     ipmi_options: IPMILanQueryOptions = Field(alias='ipmi-options', default_factory=IPMILanQueryOptions)
+    """IPMI-specific query options."""
 
 
 class IPMILanUpdateOptionsDHCP(BaseModel):
@@ -76,6 +93,7 @@ class IPMILanUpdateOptionsStatic(IPMILanUpdateOptionsDHCP):
 
 class IPMILanQueryArgs(BaseModel):
     data: IPMILanQuery = Field(default_factory=IPMILanQuery)
+    """Query parameters for IPMI LAN configuration."""
 
 
 IPMILanQueryResult = query_result(IPMILanEntry)
@@ -87,12 +105,16 @@ class IPMILanChannelsArgs(BaseModel):
 
 class IPMILanChannelsResult(BaseModel):
     result: list[int]
+    """Array of available IPMI LAN channel numbers."""
 
 
 class IPMILanUpdateArgs(BaseModel):
     channel: int
+    """IPMI LAN channel number to update."""
     data: IPMILanUpdateOptionsDHCP | IPMILanUpdateOptionsStatic = Field(discriminator="dhcp")
+    """IPMI LAN configuration data (DHCP or static IP)."""
 
 
 class IPMILanUpdateResult(BaseModel):
     result: int
+    """Returns the channel number that was updated."""

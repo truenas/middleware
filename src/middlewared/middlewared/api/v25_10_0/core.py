@@ -124,48 +124,64 @@ class CoreGetJobsItem(BaseModel):
 
 class CoreGetJobsAddedEvent(BaseModel):
     id: int
+    """ID of the job that was added."""
     fields: CoreGetJobsItem
+    """Complete job information for the newly added job."""
 
 
 class CoreGetJobsChangedEvent(BaseModel):
     id: int
+    """ID of the job that was updated."""
     fields: CoreGetJobsItem
+    """Updated job information with changes."""
 
 
 class CoreResizeShellArgs(BaseModel):
     id: str
+    """Shell session identifier."""
     cols: int
+    """New terminal width in columns."""
     rows: int
+    """New terminal height in rows."""
 
 
 class CoreResizeShellResult(BaseModel):
     result: None
+    """Returns `null` when the shell is successfully resized."""
 
 
 class CoreJobDownloadLogsArgs(BaseModel):
     id: int
+    """ID of the job to download logs for."""
     filename: str
+    """Filename for the downloaded log file."""
     buffered: bool = False
+    """Whether to buffer the entire log file before download."""
 
 
 class CoreJobDownloadLogsResult(BaseModel):
     result: str
+    """URL for downloading the job log file."""
 
 
 class CoreJobWaitArgs(BaseModel):
     id: int
+    """ID of the job to wait for completion."""
 
 
 class CoreJobWaitResult(BaseModel):
     result: Any
+    """The result data returned by the completed job."""
 
 
 class CoreJobAbortArgs(BaseModel):
     id: int
+    """ID of the job to abort."""
 
 
 class CoreJobAbortResult(BaseModel):
     result: None
+    """Returns `null` when the job is successfully aborted."""
 
 
 class CorePingArgs(BaseModel):
@@ -174,36 +190,55 @@ class CorePingArgs(BaseModel):
 
 class CorePingResult(BaseModel):
     result: Literal["pong"]
+    """Always returns `pong` to confirm system responsiveness."""
 
 
 @single_argument_args("options")
 class CorePingRemoteArgs(BaseModel):
     type: Literal["ICMP", "ICMPV4", "ICMPV6"] = "ICMP"
+    """Ping protocol type to use.
+
+    * `ICMP`: Auto-detect IPv4 or IPv6 based on hostname
+    * `ICMPV4`: Force IPv4 ping
+    * `ICMPV6`: Force IPv6 ping
+    """
     hostname: str
+    """Target hostname or IP address to ping."""
     timeout: int = Field(default=4, ge=1, le=60)
+    """Timeout in seconds for each ping attempt."""
     count: int | None = None
+    """Number of ping packets to send or `null` for default."""
     interface: str | None = None
+    """Network interface to use for pinging or `null` for default."""
     interval: str | None = None
+    """Interval between ping packets or `null` for default."""
 
 
 class CorePingRemoteResult(BaseModel):
     result: bool
+    """Returns `true` if the remote host responded to ping, `false` otherwise."""
 
 
 @single_argument_args("options")
 class CoreArpArgs(BaseModel):
     ip: str | None = None
+    """IP address to look up in ARP table or `null` for all entries."""
     interface: str | None = None
+    """Network interface to query or `null` for all interfaces."""
 
 
 class CoreArpResult(BaseModel):
     result: dict[str, str]
+    """Object mapping IP addresses to MAC addresses from the ARP table."""
 
 
 class CoreDownloadArgs(BaseModel):
     method: str
+    """Method name to execute for generating download content."""
     args: list
+    """Array of arguments to pass to the method."""
     filename: str
+    """Filename for the downloaded file."""
     buffered: bool = False
     """Non-`buffered` downloads will allow job to write to pipe as soon as download URL is requested, job will stay \
     blocked meanwhile. `buffered` downloads must wait for job to complete before requesting download URL, job's \
@@ -218,29 +253,39 @@ class CoreDownloadResult(BaseModel):
 @single_argument_args("options")
 class CoreDebugArgs(BaseModel):
     bind_address: str = "0.0.0.0"
+    """IP address to bind the debug server to."""
     bind_port: int = 3000
+    """Port number to bind the debug server to."""
     threaded: bool = False
+    """Whether to enable threaded debugging support."""
 
 
 class CoreDebugResult(BaseModel):
     result: None
+    """Returns `null` when the debug server is successfully started."""
 
 
 class CoreBulkArgs(BaseModel):
     method: str
+    """Method name to execute for each parameter set."""
     params: list[list]
+    """Array of parameter arrays, each representing one method call."""
     description: str | None = None
     """Format string for job progress (e.g. \"Deleting snapshot {0[dataset]}@{0[name]}\")."""
 
 
 class CoreBulkResultItem(BaseModel):
     job_id: int | None
+    """Job ID for this bulk operation item or `null` if it failed to start."""
     error: str | None
+    """Error message if this item failed or `null` on success."""
     result: Any
+    """Result data returned by this bulk operation item."""
 
 
 class CoreBulkResult(BaseModel):
     result: list[CoreBulkResultItem]
+    """Array of results for each bulk operation item."""
 
 
 class CoreOptions(BaseModel, metaclass=ForUpdateMetaclass):
@@ -253,16 +298,21 @@ class CoreOptions(BaseModel, metaclass=ForUpdateMetaclass):
     )
 
     legacy_jobs: bool
+    """Whether to enable legacy job behavior for backward compatibility."""
     private_methods: bool
+    """Whether to expose private methods in API introspection."""
     py_exceptions: bool
+    """Whether to include Python exception details in error responses."""
 
 
 class CoreSetOptionsArgs(BaseModel):
     options: CoreOptions
+    """Core system options to update."""
 
 
 class CoreSetOptionsResult(BaseModel):
     result: CoreOptions
+    """The updated core system options."""
 
     @classmethod
     def to_previous(cls, value):
@@ -271,6 +321,7 @@ class CoreSetOptionsResult(BaseModel):
 
 class CoreSubscribeArgs(BaseModel):
     event: str
+    """Event name to subscribe to for real-time updates."""
 
 
 CoreSubscribeResult = single_argument_result(str, "CoreSubscribeResult")
@@ -278,6 +329,7 @@ CoreSubscribeResult = single_argument_result(str, "CoreSubscribeResult")
 
 class CoreUnsubscribeArgs(BaseModel):
     id_: str
+    """Subscription ID to cancel."""
 
 
 CoreUnsubscribeResult = single_argument_result(None, "CoreUnsubscribeResult")

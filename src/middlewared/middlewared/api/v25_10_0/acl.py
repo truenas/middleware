@@ -250,39 +250,57 @@ class POSIXACE(BaseModel):
 
 class AclBaseInfo(BaseModel):
     uid: AceWhoId | None
+    """Numeric user ID for file/directory ownership or `null` to preserve existing."""
     gid: AceWhoId | None
+    """Numeric group ID for file/directory ownership or `null` to preserve existing."""
 
 
 class NFS4ACL(AclBaseInfo):
     acltype: Literal[FS_ACL_Type.NFS4]
+    """ACL type identifier for NFS4 access control lists."""
     acl: list[NFS4ACE]
+    """Array of NFS4 Access Control Entries defining permissions."""
     aclflags: NFS4ACL_Flags
+    """NFS4 ACL behavioral flags for inheritance and protection."""
     trivial: bool
+    """Whether this ACL is a simple/trivial ACL equivalent to POSIX permissions."""
 
 
 class POSIXACL(AclBaseInfo):
     acltype: Literal[FS_ACL_Type.POSIX1E]
+    """ACL type identifier for POSIX.1e access control lists."""
     acl: list[POSIXACE]
+    """Array of POSIX Access Control Entries defining permissions."""
     trivial: bool
+    """Whether this ACL is a simple/trivial ACL equivalent to standard POSIX permissions."""
 
 
 class DISABLED_ACL(AclBaseInfo):
     # ACL response paths with ACL entirely disabled
     acltype: Literal[FS_ACL_Type.DISABLED]
+    """ACL type identifier indicating access control lists are disabled."""
     acl: Literal[None]
+    """Always `null` when ACLs are disabled on the filesystem."""
     trivial: Literal[True]
+    """Always `true` when ACLs are disabled - only basic POSIX permissions apply."""
 
 
 class FilesystemGetaclArgs(BaseModel):
     path: NonEmptyString
+    """Absolute filesystem path to get ACL information for."""
     simplified: bool = True
+    """Whether to return simplified/basic permission sets instead of advanced permissions."""
     resolve_ids: bool = False
+    """Whether to resolve numeric user/group IDs to names in the response."""
 
 
 class AclBaseResult(BaseModel):
     path: NonEmptyString
+    """Absolute filesystem path this ACL information applies to."""
     user: NonEmptyString | None
+    """Username of the file/directory owner or `null` if unresolved."""
     group: NonEmptyString | None
+    """Group name of the file/directory group or `null` if unresolved."""
 
 
 class NFS4ACLResult(NFS4ACL, AclBaseResult):
@@ -299,29 +317,44 @@ class DISABLED_ACLResult(DISABLED_ACL, AclBaseResult):
 
 class FilesystemGetaclResult(BaseModel):
     result: NFS4ACLResult | POSIXACLResult | DISABLED_ACLResult
+    """ACL information for the requested filesystem path."""
 
 
 class FilesystemSetAclOptions(BaseModel):
     stripacl: bool = False
+    """Whether to remove the ACL entirely and revert to basic POSIX permissions."""
     recursive: bool = False
+    """Whether to apply ACL changes recursively to all child files and directories."""
     traverse: bool = False
+    """Whether to traverse filesystem boundaries during recursive operations."""
     canonicalize: bool = True
+    """Whether to normalize and canonicalize ACL entries for consistency."""
     validate_effective_acl: bool = True
+    """Whether to validate that the resulting ACL provides effective access controls."""
 
 
 @single_argument_args('filesystem_acl')
 class FilesystemSetaclArgs(BaseModel):
     path: NonEmptyString
+    """Absolute filesystem path to set ACL on."""
     dacl: list[NFS4ACE] | list[POSIXACE]
+    """Array of Access Control Entries to apply to the filesystem object."""
     options: FilesystemSetAclOptions = Field(default=FilesystemSetAclOptions())
+    """Configuration options for ACL setting behavior."""
     nfs41_flags: NFS4ACL_Flags = Field(default=NFS4ACL_Flags())
+    """NFS4 ACL flags for inheritance and protection behavior."""
     uid: AceWhoId | None = ACL_UNDEFINED_ID
+    """Numeric user ID to set as owner or `null` to preserve existing."""
     user: str | None = None
+    """Username to set as owner or `null` to preserve existing."""
     gid: AceWhoId | None = ACL_UNDEFINED_ID
+    """Numeric group ID to set as group or `null` to preserve existing."""
     group: str | None = None
+    """Group name to set as group or `null` to preserve existing."""
 
     # acltype is explicitly added to preserve compatibility with older setacl API
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] | None = None
+    """ACL type to use or `null` to auto-detect from filesystem capabilities."""
 
     @model_validator(mode='after')
     def check_setacl_valid(self) -> Self:
@@ -339,11 +372,17 @@ class FilesystemSetaclResult(FilesystemGetaclResult):
 
 class AclTemplateEntry(BaseModel):
     id: int
+    """Unique identifier for the ACL template."""
     builtin: bool
+    """Whether this is a built-in system template or user-created."""
     name: str
+    """Human-readable name for the ACL template."""
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E]
+    """ACL type this template provides."""
     acl: list[NFS4ACE] | list[POSIXACE]
+    """Array of Access Control Entries defined by this template."""
     comment: str = ''
+    """Optional descriptive comment about the template's purpose."""
 
 
 class AclTemplateCreate(AclTemplateEntry):
@@ -353,10 +392,12 @@ class AclTemplateCreate(AclTemplateEntry):
 
 class ACLTemplateCreateArgs(BaseModel):
     acltemplate_create: AclTemplateCreate
+    """ACL template configuration data for the new template."""
 
 
 class ACLTemplateCreateResult(BaseModel):
     result: AclTemplateEntry
+    """The created ACL template configuration."""
 
 
 class AclTemplateUpdate(AclTemplateCreate, metaclass=ForUpdateMetaclass):
@@ -365,34 +406,47 @@ class AclTemplateUpdate(AclTemplateCreate, metaclass=ForUpdateMetaclass):
 
 class ACLTemplateUpdateArgs(BaseModel):
     id: int
+    """ID of the ACL template to update."""
     acltemplate_update: AclTemplateUpdate
+    """Updated ACL template configuration data."""
 
 
 class ACLTemplateUpdateResult(BaseModel):
     result: AclTemplateEntry
+    """The updated ACL template configuration."""
 
 
 class ACLTemplateDeleteArgs(BaseModel):
     id: int
+    """ID of the ACL template to delete."""
 
 
 class ACLTemplateDeleteResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the ACL template is successfully deleted."""
 
 
 class AclTemplateFormatOptions(BaseModel):
     canonicalize: bool = False
+    """Whether to normalize and canonicalize ACL entries in the response."""
     ensure_builtins: bool = False
+    """Whether to ensure built-in templates are included in the response."""
     resolve_names: bool = False
+    """Whether to resolve numeric user/group IDs to names in ACL entries."""
 
 
 @single_argument_args('filesystem_acl')
 class ACLTemplateByPathArgs(BaseModel):
     path: str = ""
+    """Filesystem path to filter templates by compatibility or empty string for all."""
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    """Query filters to apply when selecting templates."""
     query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
+    """Query options for pagination and ordering of results."""
     format_options: AclTemplateFormatOptions = Field(alias='format-options', default=AclTemplateFormatOptions())
+    """Formatting options for how template data is returned."""
 
 
 class ACLTemplateByPathResult(BaseModel):
     result: list[AclTemplateEntry]
+    """Array of ACL templates matching the query criteria."""

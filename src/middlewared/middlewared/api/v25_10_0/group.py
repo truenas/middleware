@@ -84,6 +84,7 @@ class GroupCreate(GroupEntry):
 
 class GroupCreateArgs(BaseModel):
     group_create: GroupCreate
+    """Group configuration data for the new group."""
 
 
 class GroupCreateResult(BaseModel):
@@ -99,10 +100,12 @@ class GroupUpdateArgs(BaseModel):
     id: int
     """The API identifier of the group to update."""
     group_update: GroupUpdate
+    """Updated group configuration data."""
 
 
 class GroupUpdateResult(BaseModel):
     result: int
+    """The API identifier of the updated group."""
 
 
 class GroupDeleteOptions(BaseModel):
@@ -112,11 +115,14 @@ class GroupDeleteOptions(BaseModel):
 
 class GroupDeleteArgs(BaseModel):
     id: int
+    """API identifier of the group to delete."""
     options: GroupDeleteOptions = Field(default=GroupDeleteOptions())
+    """Options controlling group deletion behavior."""
 
 
 class GroupDeleteResult(BaseModel):
     result: int
+    """The API identifier of the deleted group."""
 
 
 class GroupGetNextGidArgs(BaseModel):
@@ -125,13 +131,17 @@ class GroupGetNextGidArgs(BaseModel):
 
 class GroupGetNextGidResult(BaseModel):
     result: int
+    """The next available group ID number."""
 
 
 @single_argument_args("get_group_obj")
 class GroupGetGroupObjArgs(BaseModel):
     groupname: str | None = None
+    """Name of the group to look up or `null`."""
     gid: int | None = None
+    """Group ID to look up or `null`."""
     sid_info: bool = False
+    """Whether to include SID information in the response."""
 
 
 @single_argument_result
@@ -158,8 +168,11 @@ class GroupGetGroupObjResult(BaseModel):
 
 class GroupHasPasswordEnabledUserArgs(BaseModel):
     gids: list[int]
+    """Array of group IDs to check for password-enabled users."""
     exclude_user_ids: list[int] = []
+    """Array of user IDs to exclude from the check."""
 
 
 class GroupHasPasswordEnabledUserResult(BaseModel):
     result: bool
+    """Returns `true` if any of the groups contain password-enabled users."""

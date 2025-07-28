@@ -254,6 +254,7 @@ class SharingSMBSharePrecheckArgs(BaseModel):
 
 class SharingSMBSharePrecheckResult(BaseModel):
     result: None
+    """Returns `null` when the SMB share configuration passes validation checks."""
 
 
 SmbNamingSchema = Annotated[str, AfterValidator(validate_smb_path_suffix)]

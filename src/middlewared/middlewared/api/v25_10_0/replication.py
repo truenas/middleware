@@ -75,7 +75,7 @@ class ReplicationEntry(BaseModel):
     sudo: bool = False
     """`SSH` and `SSH+NETCAT` transports should use sudo (which is expected to be passwordless) to run `zfs` \
     command on the remote machine."""
-    source_datasets: list[str] = Field(min_items=1)
+    source_datasets: list[str] = Field(min_length=1)
     """List of datasets to replicate snapshots from."""
     target_dataset: str
     """Dataset to put snapshots into."""
@@ -147,22 +147,32 @@ class ReplicationEntry(BaseModel):
     * `NONE`: Do not delete any snapshots.
     """
     lifetime_value: int | None = Field(default=None, ge=1)
+    """Number of time units to retain snapshots for custom retention policy. Only applies when `retention_policy` is CUSTOM."""
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] | None = None
+    """Time unit for snapshot retention for custom retention policy. Only applies when `retention_policy` is CUSTOM."""
     lifetimes: list[ReplicationLifetimeModel] = []
+    """Array of different retention schedules with their own cron schedules and lifetime settings."""
     compression: Literal["LZ4", "PIGZ", "PLZIP"] | None = None
     """Compresses SSH stream. Available only for SSH transport."""
     speed_limit: int | None = Field(default=None, ge=1)
     """Limits speed of SSH stream. Available only for SSH transport."""
     large_block: bool = True
+    """Enable large block support for ZFS send streams."""
     embed: bool = False
+    """Enable embedded block support for ZFS send streams."""
     compressed: bool = True
+    """Enable compressed ZFS send streams."""
     retries: int = Field(default=5, ge=1)
     """Number of retries before considering replication failed."""
     logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] | None = None
     enabled: bool = True
+    """Whether this replication task is enabled."""
     state: dict
+    """Current state information for the replication task."""
     job: dict | None
+    """Information about the currently running job. `null` if no job is running."""
     has_encrypted_dataset_keys: bool
+    """Whether this replication task has encrypted dataset keys available."""
 
 
 class ReplicationCreate(ReplicationEntry):
@@ -179,10 +189,12 @@ class ReplicationCreate(ReplicationEntry):
 
 class ReplicationCreateArgs(BaseModel):
     replication_create: ReplicationCreate
+    """Configuration for creating a new replication task."""
 
 
 class ReplicationCreateResult(BaseModel):
     result: ReplicationEntry
+    """The newly created replication task configuration."""
 
 
 class ReplicationUpdate(ReplicationCreate, metaclass=ForUpdateMetaclass):
@@ -191,28 +203,36 @@ class ReplicationUpdate(ReplicationCreate, metaclass=ForUpdateMetaclass):
 
 class ReplicationUpdateArgs(BaseModel):
     id: int
+    """ID of the replication task to update."""
     replication_update: ReplicationUpdate
+    """Updated configuration for the replication task."""
 
 
 class ReplicationUpdateResult(BaseModel):
     result: ReplicationEntry
+    """The updated replication task configuration."""
 
 
 class ReplicationDeleteArgs(BaseModel):
     id: int
+    """ID of the replication task to delete."""
 
 
 class ReplicationDeleteResult(BaseModel):
     result: bool
+    """Whether the replication task was successfully deleted."""
 
 
 class ReplicationRunArgs(BaseModel):
     id: int
+    """ID of the replication task to run."""
     really_run: SkipJsonSchema[bool] = True
+    """Internal flag to confirm the operation should proceed."""
 
 
 class ReplicationRunResult(BaseModel):
     result: None
+    """Returns `null` on successful replication task execution."""
 
 
 @single_argument_args("replication_run_onetime")
@@ -223,6 +243,7 @@ class ReplicationRunOnetimeArgs(ReplicationCreate):
     only_matching_schedule: Excluded = excluded_field()
     enabled: Excluded = excluded_field()
     exclude_mountpoint_property: bool = True
+    """Whether to exclude the mountpoint property from replication."""
     only_from_scratch: bool = False
     """If `true` then replication will fail if target dataset already exists."""
     mount: bool = True
@@ -231,25 +252,33 @@ class ReplicationRunOnetimeArgs(ReplicationCreate):
 
 class ReplicationRunOnetimeResult(BaseModel):
     result: None
+    """Returns `null` on successful one-time replication execution."""
 
 
 class ReplicationListDatasetsArgs(BaseModel):
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"]
+    """Transport method to use for listing datasets."""
     ssh_credentials: int | None = None
+    """Keychain credential ID for SSH access. `null` for local transport."""
 
 
 class ReplicationListDatasetsResult(BaseModel):
     result: list[str]
+    """Array of dataset names available for replication."""
 
 
 class ReplicationCreateDatasetArgs(BaseModel):
     dataset: str
+    """Name of the dataset to create."""
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"]
+    """Transport method to use for dataset creation."""
     ssh_credentials: int | None = None
+    """Keychain credential ID for SSH access. `null` for local transport."""
 
 
 class ReplicationCreateDatasetResult(BaseModel):
     result: None
+    """Returns `null` on successful dataset creation."""
 
 
 class ReplicationListNamingSchemasArgs(BaseModel):
@@ -258,29 +287,42 @@ class ReplicationListNamingSchemasArgs(BaseModel):
 
 class ReplicationListNamingSchemasResult(BaseModel):
     result: list[str]
+    """Array of available snapshot naming schema patterns."""
 
 
 @single_argument_args("count_eligible_manual_snapshots")
 class ReplicationCountEligibleManualSnapshotsArgs(BaseModel):
-    datasets: list[str] = Field(min_items=1)
+    datasets: list[str] = Field(min_length=1)
+    """Array of dataset names to count snapshots for."""
     naming_schema: list[SnapshotNameSchema] = []
+    """Array of naming schema patterns to match against."""
     name_regex: NonEmptyString | None = None
+    """Regular expression to match snapshot names. `null` to match all names."""
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"]
+    """Transport method to use for accessing snapshots."""
     ssh_credentials: int | None = None
+    """Keychain credential ID for SSH access. `null` for local transport."""
 
 
 @single_argument_result
 class ReplicationCountEligibleManualSnapshotsResult(BaseModel):
     total: int
+    """Total number of snapshots found."""
     eligible: int
+    """Number of snapshots eligible for replication."""
 
 
 class ReplicationTargetUnmatchedSnapshotsArgs(BaseModel):
     direction: Literal["PUSH", "PULL"]
-    source_datasets: list[str] = Field(min_items=1)
+    """Direction of replication to check for unmatched snapshots."""
+    source_datasets: list[str] = Field(min_length=1)
+    """Array of source dataset names."""
     target_dataset: str
+    """Target dataset name to check for unmatched snapshots."""
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"]
+    """Transport method to use for accessing snapshots."""
     ssh_credentials: int | None = None
+    """Keychain credential ID for SSH access. `null` for local transport."""
 
 
 class ReplicationTargetUnmatchedSnapshotsResult(BaseModel):
@@ -290,3 +332,4 @@ class ReplicationTargetUnmatchedSnapshotsResult(BaseModel):
             "backup/games": ["auto-2019-10-15_13-00"],
         },
     ])
+    """Object mapping dataset names to arrays of unmatched snapshot names on the target side."""

@@ -45,6 +45,11 @@ class NVMetGlobalEntry(BaseModel):
 class NVMetGlobalUpdateArgs(NVMetGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     basenqn: NQN
+    """
+    NQN to be used as the prefix on the creation of a subsystem, if a subnqn is not supplied to `nvmet.subsys.create`.
+
+    Modifying this value will *not* change the subnqn of any existing subsystems.
+    """
 
 
 class NVMetGlobalUpdateResult(BaseModel):
