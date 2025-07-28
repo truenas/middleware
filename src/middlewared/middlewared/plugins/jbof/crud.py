@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 import time
 
@@ -876,7 +877,8 @@ class JBOFService(CRUDService):
 
     @private
     def load_modules(self):
-        subprocess.run(['modprobe', 'nvme_rdma'])
+        if not os.path.exists('/dev/nvme-fabrics'):
+            subprocess.run(['modprobe', 'nvme_rdma'])
 
     @private
     @job(lock='configure_job')
