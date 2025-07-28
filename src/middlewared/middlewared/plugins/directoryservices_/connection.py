@@ -4,11 +4,13 @@ import ipaddress
 from .activedirectory_join_mixin import ADJoinMixin
 from .ipa_join_mixin import IPAJoinMixin
 from .ldap_join_mixin import LDAPJoinMixin
+from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.job import Job
-from middlewared.service import job, Service
+from middlewared.service import job, pass_app, Service
 from middlewared.service_exception import CallError
-from middlewared.utils.directoryservices.constants import DomainJoinResponse, DSType
-from middlewared.utils.directoryservices.krb5 import kerberos_ticket
+from middlewared.utils.directoryservices.constants import DomainJoinResponse, DSStatus, DSType
+from middlewared.utils.directoryservices.krb5 import kerberos_ticket, kdc_saf_cache_set
+from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from os import curdir as dot
 
 
@@ -27,6 +29,67 @@ class DomainConnection(
     def _get_enabled_ds(self):
         server_type = self.middleware.call_sync('directoryservices.config')['service_type']
         return DSType(server_type)
+
+    @pass_app()
+    def deactivate_standby(self, app, service_type) -> None:
+        if app and not isinstance(app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
+            raise CallError(f'{type(app.authenticated_credentials)}: unexpected credential type for endpoint.')
+
+        if self.middleware.call_sync('failover.is_single_master_node'):
+            self.logger.warning('deactivate_standby() called on controller that is not standby.')
+            return
+
+        ds_type = DSType(service_type)
+        self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
+        self.middleware.call_sync('kerberos.stop')
+        for etc_file in ds_type.etc_files:
+            self.middleware.call_sync('etc.generate', etc_file)
+
+    @pass_app()
+    def activate_standby(self, app, kdc_affinity) -> None:
+        """ Activate the standby controller. This should be called through failover.call_remote. This
+        should be used after successfully setting up directory services on the active controller. """
+        if app and not isinstance(app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
+            raise CallError(f'{type(app.authenticated_credentials)}: unexpected credential type for endpoint.')
+
+        if self.middleware.call_sync('failover.is_single_master_node'):
+            self.logger.warning('activate_standby() called on controller that is not standby.')
+            return
+
+        if kdc_affinity:
+            kdc_saf_cache_set(kdc_affinity)
+
+        # This is largely the same as normal `activate()` with addition of clearing local caches
+        # and replacing state file (secrets.tdb).
+
+        close_sysdataset_tdb_handles()
+        match (enabled_ds := self._get_enabled_ds()):
+            case None:
+                self.logger.debug('activate_standby() called on controller that is not joined to a'
+                                  'directory service.')
+                return
+            case DSType.IPA:
+                self.middleware.call_sync('directoryservices.secrets.restore')
+                activate_fn = self._ipa_activate
+            case DSType.AD:
+                self.middleware.call_sync('directoryservices.secrets.restore')
+                activate_fn = self._ad_activate
+            case DSType.LDAP:
+                activate_fn = self._ldap_activate
+            case _:
+                raise ValueError(f'{enabled_ds}: unknown directory service')
+
+        try:
+            activate_fn()
+        except Exception:
+            # We'll squash the exception here since we may still have some hope of recovery in
+            # next call
+            self.logger.warning('%s: failed to activate directory service', enabled_ds, exc_info=True)
+
+        try:
+            self.middleware.call_sync('directoryservices.health.recover')
+        except Exception:
+            self.logger.warning('Failed to become healthy on standby controller', exc_info=True)
 
     def activate(self) -> int:
         """ Generate etc files and start services, then start cache fill job and return job id """

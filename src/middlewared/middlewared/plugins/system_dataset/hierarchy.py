@@ -148,6 +148,12 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'gid': 0,
                 'mode': 0o755,
             },
+            'post_mount_actions': [
+                {
+                    'method': 'smb.setup_directories',
+                    'args': [],
+                }
+            ]
         },
         {
             'name': os.path.join(pool_name, '.system/vm'),

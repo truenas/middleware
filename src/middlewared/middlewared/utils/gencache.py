@@ -10,6 +10,8 @@ from middlewared.utils.tdb import (
 
 GENCACHE_FILE = '/var/run/samba-lock/gencache.tdb'
 GENCACHE_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+SAFKEY_PREFIX = 'SAF/DOMAIN'
+SAFJOIN_PREFIX = 'SAFJOIN/DOMAIN'
 
 
 class IDMAPCacheType(enum.Enum):
@@ -41,16 +43,25 @@ def wipe_gencache_entries() -> None:
         return hdl.clear()
 
 
-def flush_gencache_entries() -> None:
+def flush_gencache_entries(keep_saf=False) -> None:
     """
     delete all keys in gencache
 
     This matches behavior of "net cache flush" which iterates and
     deletes entries. If we fail due to corrupt TDB file then it will
     be wiped.
+
+    keep_saf: the winbindd connection manager uses gencache keys to
+    keep track of the last DC it successfully talked to. Keeping the
+    winbindd saf cache across flushing other entries will help to
+    avoid service disruptions if we need to only wipe user / group
+    entries.
     """
     with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
         for entry in hdl.entries():
+            if keep_saf and entry['key'].startswith((SAFKEY_PREFIX, SAFJOIN_PREFIX)):
+                continue
+
             hdl.delete(entry['key'])
 
 

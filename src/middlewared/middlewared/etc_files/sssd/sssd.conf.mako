@@ -7,8 +7,8 @@
     from middlewared.utils.directoryservices.common import ds_config_to_fqdn
     from middlewared.utils.directoryservices.constants import DSCredType, DSType
 
-    ds_type = middleware.call_sync('directoryservices.status')['type']
     ds_config = middleware.call_sync('directoryservices.config')
+    ds_type = ds_config['service_type']
     if ds_type == DSType.LDAP.value:
         kerberos_realm = ds_config['kerberos_realm'] 
         aux = []
