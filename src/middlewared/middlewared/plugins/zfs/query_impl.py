@@ -1,5 +1,4 @@
 import dataclasses
-import itertools
 
 try:
     from truenas_pylibzfs import ZFSError, ZFSException
@@ -45,10 +44,11 @@ def __is_internal_path(path):
     Returns:
         bool: True if the path is internal, False otherwise
     """
-    for a, b in itertools.zip_longest(BOOT_POOL_NAME_VALID, INTERNAL_FILESYSTEMS):
-        if a and (path == a or path.startswith(f"{a}/")):
+    for i in BOOT_POOL_NAME_VALID:
+        if path == i or path.startswith(f"{i}/"):
             return True
-        if b and (f"/{b}" in path):
+    for i in INTERNAL_FILESYSTEMS:
+        if f"/{i}" in path:
             return True
     return False
 
