@@ -88,8 +88,7 @@ def normalize_asdict_result(result: dict, *, normalize_source: bool) -> dict:
     # the data that is already included
     result.pop("crypto", None)
 
-    # type has prefix of ZFS_TYPE_
-    result["type"] = result["type"][9:]
+    result["type"] = result["type"].removeprefix("ZFS_TYPE_")
 
     # always add children key.
     # NOTE: this will get dynamically
