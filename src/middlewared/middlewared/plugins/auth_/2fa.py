@@ -98,8 +98,9 @@ class TwoFactorAuthService(ConfigService):
         if not config['enabled']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
 
-        await (await self.middleware.call('service.control', 'RELOAD', 'ssh')).wait(raise_error=True)
-        await self.middleware.call('etc.generate', 'user')
+        for svc in ('ssh', 'user'):
+            # Going through service.control ensures HA is handled.
+            await (await self.middleware.call('service.control', 'RELOAD', svc)).wait(raise_error=True)
 
         return await self.config()
 
