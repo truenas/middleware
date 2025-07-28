@@ -46,7 +46,7 @@ def check_docstring(docstr: str | None):
         return
 
     docstr = docstr.strip()
-    if docstr[0].islower():
+    if docstr[0].islower() and docstr.partition(" ")[0] not in ("pCloud", "iSCSI"):
         return "Docstring cannot start with lowercase letter"
     if not docstr.endswith("."):
         return "Docstring must end with a period"
