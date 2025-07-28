@@ -112,13 +112,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'other than disabled or completely configured'
             )
 
-        if data['enabled'] and old_config['enabled']:
-            for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url'):
-                if data[k] != old_config[k]:
-                    verrors.add(
-                        f'tn_connect_update.{k}', 'This field cannot be changed when TrueNAS Connect is enabled'
-                    )
-
         verrors.check()
 
     @api_method(TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult)
@@ -136,7 +129,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             'ips': data['ips'],
             'interfaces': data.get('interfaces', []),
             'use_all_interfaces': data['use_all_interfaces'],
-        } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
+        }
 
         # Extract IPs from interfaces using ip_in_use method
         # If use_all_interfaces is True, get IPs from all interfaces
