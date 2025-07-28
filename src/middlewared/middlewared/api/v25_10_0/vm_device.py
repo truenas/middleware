@@ -244,6 +244,7 @@ class VMDeviceIOMMUGroupAddress(BaseModel):
 class VMDeviceIOMMUGroup(BaseModel):
     number: int
     addresses: list[VMDeviceIOMMUGroupAddress]
+    critical: bool
 
 
 class VMDevicePassthroughDevice(BaseModel):

@@ -72,8 +72,19 @@ def get_bridge_bus_range(bridge_path: str) -> tuple[int, int]:
     Returns:
         Tuple of (secondary_bus, subordinate_bus) or (-1, -1) if not found
     """
-    secondary = read_sysfs_hex(os.path.join(bridge_path, 'secondary_bus_number'), -1)
-    subordinate = read_sysfs_hex(os.path.join(bridge_path, 'subordinate_bus_number'), -1)
+    # Note: These sysfs files contain decimal numbers as ASCII strings, not hex
+    try:
+        with open(os.path.join(bridge_path, 'secondary_bus_number'), 'r') as f:
+            secondary = int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        secondary = -1
+
+    try:
+        with open(os.path.join(bridge_path, 'subordinate_bus_number'), 'r') as f:
+            subordinate = int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        subordinate = -1
+
     return secondary, subordinate
 
 
@@ -86,7 +97,6 @@ def get_devices_behind_bridge(
     Args:
         bridge_addr: PCI address of the bridge
         bus_to_devices: Optional pre-built bus mapping
-        device_to_class: Optional pre-built device class mapping (unused)
     Returns:
         List of PCI addresses behind the bridge (excluding the bridge itself)
     """
