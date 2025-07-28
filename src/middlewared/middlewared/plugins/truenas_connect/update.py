@@ -14,6 +14,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
 from .mixin import TNCAPIMixin
+from .private_models import TrueNASConnectUpdateEnvironmentArgs
 from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload, TNC_IPS_CACHE_KEY
 
 
@@ -180,6 +181,28 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=new_config)
 
         return new_config
+
+    @api_method(TrueNASConnectUpdateEnvironmentArgs, TNCEntry, private=True)
+    async def update_environment(self, data):
+        config = await self.middleware.call('tn_connect.config')
+        verrors = ValidationErrors()
+        if config['enabled']:
+            for k in filter(
+                lambda k: k in data,
+                ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')
+            ):
+                if data[k] != config[k]:
+                    verrors.add(
+                        f'tn_connect_update_environment.{k}',
+                        'This field cannot be changed when TrueNAS Connect is enabled'
+                    )
+
+        verrors.check()
+
+        # Update the config with the new data
+        await self.middleware.call('datastore.update', self._config.datastore, config['id'], data)
+
+        return await self.middleware.call('tn_connect.config')
 
     @private
     async def get_interface_ips(self, interfaces):
