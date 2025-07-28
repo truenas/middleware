@@ -76,7 +76,9 @@ class VMDeviceService(Service):
         data['capability']['product'] = obj.properties.get('ID_MODEL_FROM_DATABASE', 'Not Available')
         data['capability']['vendor'] = obj.properties.get('ID_VENDOR_FROM_DATABASE', 'Not Available')
         data['controller_type'] = controller_type
-        data['critical'] = bool(not cap_class or SENSITIVE_PCI_DEVICE_TYPES.get(cap_class[:6]))
+        # Use critical information from iommu_info if available
+        # If we cannot find the iommu entry, we mark the device as critical by default
+        data['critical'] = igi['critical'] if igi else True
         data['iommu_group'] = igi
         data['available'] = all(i == 'vfio-pci' for i in drivers) and not data['critical']
         data['drivers'] = drivers
@@ -96,7 +98,7 @@ class VMDeviceService(Service):
     @private
     def get_all_pci_devices_details(self):
         result = dict()
-        iommu_info = get_iommu_groups_info()
+        iommu_info = get_iommu_groups_info(get_critical_info=True)
         for i in Context().list_devices(subsystem='pci'):
             key = f"pci_{i.sys_name.replace(':', '_').replace('.', '_')}"
             result[key] = self.get_pci_device_details(i, iommu_info)
@@ -105,7 +107,7 @@ class VMDeviceService(Service):
     @private
     def get_single_pci_device_details(self, pcidev):
         result = dict()
-        iommu_info = get_iommu_groups_info()
+        iommu_info = get_iommu_groups_info(get_critical_info=True)
         for i in filter(lambda x: x.sys_name == pcidev, Context().list_devices(subsystem='pci')):
             key = f"pci_{i.sys_name.replace(':', '_').replace('.', '_')}"
             result[key] = self.get_pci_device_details(i, iommu_info)

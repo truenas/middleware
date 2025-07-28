@@ -6,6 +6,7 @@ from .iommu import (
     get_iommu_groups_info, get_pci_device_class, SENSITIVE_PCI_DEVICE_TYPES,
 )
 
+
 def get_pci_device_default_data() -> dict:
     return {
         'capability': {
@@ -45,7 +46,8 @@ def get_pci_device_details(obj: pyudev.Device, iommu_info: dict) -> dict:
     if driver := obj.properties.get('DRIVER'):
         drivers.append(driver)
 
-    data['critical'] = bool(not cap_class or SENSITIVE_PCI_DEVICE_TYPES.get(cap_class[:6]))
+    # Use critical information from iommu_info if available
+    data['critical'] = igi['critical'] if igi else True
     data['capability'].update({
         'class': cap_class or None,
         'domain': f'{int(dom, base=16)}',
@@ -76,7 +78,7 @@ def get_pci_device_details(obj: pyudev.Device, iommu_info: dict) -> dict:
 
 def get_all_pci_devices_details() -> dict:
     result = dict()
-    iommu_info = get_iommu_groups_info()
+    iommu_info = get_iommu_groups_info(get_critical_info=True)
     for i in pyudev.Context().list_devices(subsystem='pci'):
         result[i.sys_name] = get_pci_device_details(i, iommu_info)
     return result
