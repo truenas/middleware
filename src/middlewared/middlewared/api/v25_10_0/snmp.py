@@ -21,7 +21,7 @@ class SnmpEntry(BaseModel):
     v3: bool
     """Whether SNMP version 3 is enabled."""
     community: str = Field(pattern=r'^[-_a-zA-Z0-9\s]*$', default='public')
-    """SNMP community string for version 1 and 2c access."""
+    """SNMP community string for v1/v2c access. Allows letters, numbers, hyphens, underscores, and spaces."""
     v3_username: str = Field(max_length=20)
     """Username for SNMP version 3 authentication."""
     v3_authtype: Literal['', 'MD5', 'SHA']

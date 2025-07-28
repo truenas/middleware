@@ -34,7 +34,8 @@ SNAPSHOT_NAME = Annotated[
     NonEmptyString,
     BeforeValidator(_validate_snapshot_name),
 ]
-UserPropertyKey = Annotated[str, Field(pattern='.*:.*')]
+UserPropertyKey = Annotated[str, Field(description="ZFS user property key in namespace:property format (e.g., "
+                                       "'custom:backup_policy', 'org:created_by').", pattern='.*:.*')]
 
 
 class PoolSnapshotEntryPropertyFields(BaseModel):
@@ -91,7 +92,7 @@ class PoolSnapshotEntry(BaseModel):
     snapshot_name: str
     """Just the snapshot name portion without the dataset path."""
     dataset: str
-    """Name of the dataset this snapshot was taken from."""
+    """Name of the dataset this snapshot was taken from. See PoolDatasetEntry for dataset details."""
     createtxg: str
     """Transaction group ID when the snapshot was created."""
     holds: PoolSnapshotHoldTag = NotRequired

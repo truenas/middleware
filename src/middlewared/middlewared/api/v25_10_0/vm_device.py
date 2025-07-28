@@ -135,9 +135,9 @@ class VMDiskDevice(BaseModel):
 
 class USBAttributes(BaseModel):
     vendor_id: NonEmptyString = Field(pattern='^0x.*')
-    """Vendor id must start with "0x" prefix e.g 0x16a8."""
+    """USB vendor identifier in hexadecimal format (e.g., '0x1d6b' for Linux Foundation)."""
     product_id: NonEmptyString = Field(pattern='^0x.*')
-    """Product id must start with "0x" prefix e.g 0x16a8."""
+    """USB product identifier in hexadecimal format (e.g., '0x0002' for 2.0 root hub)."""
 
 
 class VMUSBDevice(BaseModel):

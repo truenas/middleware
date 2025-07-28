@@ -157,11 +157,14 @@ class PoolAttachment(BaseModel):
 
 
 class PoolCreateEncryptionOptions(BaseModel):
-    """Keys are stored by the system for automatic locking/unlocking on import/export of encrypted datasets. If that \
-    is not desired, dataset should be created with a passphrase as a key."""
+    """Encryption options for pool creation. Keys are stored by the system for automatic locking/unlocking on \
+    import/export of encrypted datasets. If that is not desired, datasets should be created with a passphrase as a \
+    key."""
     generate_key: bool = False
     """Automatically generate the key to be used for dataset encryption."""
     pbkdf2iters: int = Field(ge=100000, default=350000)
+    """Number of PBKDF2 iterations for key derivation from passphrase. Higher iterations improve security \
+    against brute force attacks but increase unlock time. Default 350,000 balances security and performance."""
     algorithm: Literal[
         "AES-128-CCM", "AES-192-CCM", "AES-256-CCM", "AES-128-GCM", "AES-192-GCM", "AES-256-GCM"
     ] = "AES-256-GCM"

@@ -16,7 +16,7 @@ class CatalogEntry(BaseModel):
     id: NonEmptyString
     """Unique identifier for the catalog."""
     label: NonEmptyString = Field(pattern=r'^\w+[\w.-]*$')
-    """Human-readable label for the catalog."""
+    """Catalog identifier. Must start with alphanumeric, then allow alphanumeric, periods, and hyphens."""
     preferred_trains: list[NonEmptyString]
     """Array of preferred train names for this catalog."""
     location: NonEmptyString

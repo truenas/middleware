@@ -71,7 +71,7 @@ class VMEntry(BaseModel):
     enable_cpu_topology_extension: bool = False
     """Whether to expose detailed CPU topology information to the guest OS."""
     pin_vcpus: bool = False
-    """Whether to pin virtual CPUs to specific host CPU cores."""
+    """Whether to pin virtual CPUs to specific host CPU cores. Improves performance but reduces host flexibility."""
     suspend_on_snapshot: bool = False
     """Whether to suspend the VM when taking snapshots."""
     trusted_platform_module: bool = False
@@ -79,7 +79,8 @@ class VMEntry(BaseModel):
     memory: int = Field(ge=20)
     """Amount of memory allocated to the VM in megabytes."""
     min_memory: int | None = Field(ge=20, default=None)
-    """Minimum memory allocation for dynamic memory ballooning in megabytes. `null` to disable."""
+    """Minimum memory allocation for dynamic memory ballooning in megabytes. Allows VM memory to shrink \
+    during low usage but guarantees this minimum. `null` to disable ballooning."""
     hyperv_enlightenments: bool = False
     """Whether to enable Hyper-V enlightenments for improved Windows guest performance."""
     bootloader: Literal['UEFI_CSM', 'UEFI'] = 'UEFI'
@@ -95,7 +96,8 @@ class VMEntry(BaseModel):
     time: Literal['LOCAL', 'UTC'] = 'LOCAL'
     """Guest OS time zone reference. `LOCAL` uses host timezone, `UTC` uses coordinated universal time."""
     shutdown_timeout: int = Field(ge=5, le=300, default=90)
-    """Maximum time in seconds to wait for graceful shutdown before forcing power off."""
+    """Maximum time in seconds to wait for graceful shutdown before forcing power off. Default 90s balances \
+    allowing sufficient time for clean shutdown while avoiding indefinite hangs."""
     arch_type: str | None = None
     """Guest architecture type. `null` to use hypervisor default."""
     machine_type: str | None = None

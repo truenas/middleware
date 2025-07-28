@@ -173,7 +173,8 @@ class PoolDatasetChangeKeyOptions(BaseModel):
     key_file: bool = False
     """Whether the provided key is from a key file rather than entered directly."""
     pbkdf2iters: int = Field(default=350000, ge=100000)
-    """Number of PBKDF2 iterations for passphrase-based keys."""
+    """Number of PBKDF2 iterations for passphrase-based keys. Higher values improve security against \
+    brute force attacks but increase unlock time. Default 350,000 balances security and performance."""
     passphrase: Secret[NonEmptyString | None] = None
     """Passphrase to use for encryption key derivation."""
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
@@ -181,8 +182,8 @@ class PoolDatasetChangeKeyOptions(BaseModel):
 
 
 class PoolDatasetCreateUserProperty(BaseModel):
-    key: Annotated[str, Field(pattern=".*:.*")]
-    """The property name in namespace:property format (must contain a colon)."""
+    key: Annotated[str, Field(examples=["custom:backup_policy", "org:created_by"], pattern=".*:.*")]
+    """User property key in namespace:property format."""
     value: str
     """The value to assign to the user property."""
 
