@@ -112,8 +112,9 @@ class TwoFactorAuthService(ConfigService):
         if not config['enabled']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
 
+        # service.reload ensures changes propagate to standby on HA
         await self.middleware.call('service.reload', 'ssh')
-        await self.middleware.call('etc.generate', 'user')
+        await self.middleware.call('service.reload', 'user')
 
         return await self.config()
 
