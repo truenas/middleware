@@ -14,7 +14,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
 from .mixin import TNCAPIMixin
-from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload
+from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload, TNC_IPS_CACHE_KEY
 
 
 logger = logging.getLogger('truenas_connect')
@@ -165,6 +165,10 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'status', Status.CONFIGURED.name
             ) == Status.CONFIGURED.name
         ) and set(combined_ips_old) != set(combined_ips_new):
+            # Make sure we remove TNC IPs cache if IPs have changed
+            with contextlib.suppress(KeyError):
+                await self.middleware.call('cache.pop', TNC_IPS_CACHE_KEY)
+
             # Send combined IPs to TNC service
             response = await self.middleware.call('tn_connect.hostname.register_update_ips', combined_ips_new)
             if response['error']:
@@ -211,8 +215,9 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     @private
     async def unset_registration_details(self, revoke_cert_and_account=True):
         logger.debug('Unsetting registration details')
-        with contextlib.suppress(KeyError):
-            await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
+        for k in (CLAIM_TOKEN_CACHE_KEY, TNC_IPS_CACHE_KEY):
+            with contextlib.suppress(KeyError):
+                await self.middleware.call('cache.pop', k)
 
         logger.debug('TNC is being disabled, removing any stale TNC heartbeat failure alert')
         await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')

@@ -6,7 +6,7 @@ from truenas_connect_utils.hostname import hostname_config, register_update_ips
 
 from middlewared.service import CallError, Service
 
-from .utils import CONFIGURED_TNC_STATES
+from .utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
 
 
 logger = logging.getLogger('truenas_connect')
@@ -31,8 +31,7 @@ class TNCHostnameService(Service):
         except TNCCallError as e:
             raise CallError(str(e))
 
-    async def sync_interface_ips(self):
-        logger.debug('Syncing interface IPs for TrueNAS Connect')
+    async def sync_interface_ips(self, event_details=None):
         tnc_config = await self.middleware.call('tn_connect.config')
 
         # Get interface IPs based on use_all_interfaces flag
@@ -41,15 +40,36 @@ class TNCHostnameService(Service):
         else:
             interfaces_ips = await self.middleware.call('tn_connect.get_interface_ips', tnc_config['interfaces'])
 
-        logger.debug('Updating TrueNAS Connect with interface IPs: %r', ', '.join(interfaces_ips))
+        try:
+            cached_ips = await self.middleware.call('cache.get', TNC_IPS_CACHE_KEY)
+        except KeyError:
+            skip_syncing = False
+        else:
+            skip_syncing = set(cached_ips) == set(interfaces_ips)
+
+        # If cached IPs are the same as current, skip syncing
+        if skip_syncing:
+            return
+
+        if event_details:
+            logger.info(
+                'Updating IPs for TrueNAS Connect due to %s change on interface %s',
+                event_details['type'], event_details['iface'],
+            )
+
+        logger.debug('Updating TrueNAS Connect database with interface IPs: %r', ', '.join(interfaces_ips))
         await self.middleware.call(
             'datastore.update', 'truenas_connect', tnc_config['id'], {
                 'interfaces_ips': interfaces_ips,
             }
         )
+
+        logger.debug('Syncing interface IPs for TrueNAS Connect')
         response = await self.middleware.call('tn_connect.hostname.register_update_ips')
         if response['error']:
             logger.error('Failed to update IPs with TrueNAS Connect: %s', response['error'])
+        else:
+            await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, interfaces_ips, 60 * 60)
 
     async def handle_update_ips(self, event_type, args):
         """
@@ -75,10 +95,7 @@ class TNCHostnameService(Service):
         if args['fields']['iface'].startswith(internal_interfaces):
             return
 
-        logger.info(
-            'Updating IPs for TrueNAS Connect due to %s change on interface %s', event_type, args['fields']['iface']
-        )
-        await self.sync_interface_ips()
+        await self.sync_interface_ips({'type': event_type, 'iface': args['fields']['iface']})
 
 
 async def update_ips(middleware, event_type, args):
