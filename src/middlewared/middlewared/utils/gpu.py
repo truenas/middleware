@@ -1,14 +1,11 @@
 import collections
 import os
 import re
-import subprocess
 from typing import TextIO
 
 import pyudev
 
-from middlewared.service_exception import CallError
-
-from .iommu import get_iommu_groups_info
+from .iommu import build_pci_device_cache, get_iommu_groups_info, GPU_CLASS_CODES
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
@@ -66,28 +63,26 @@ def get_nvidia_gpus() -> dict[str, dict]:
     return gpus
 
 
-def _parse_gpu_description(gpu_line: str, device_type: str) -> str:
+def _get_gpu_description(gpu_dev: pyudev.Device, controller_type: str) -> str:
     """
-    Safely parse GPU description from lspci output.
+    Get GPU description from pyudev device.
     Args:
-        gpu_line: Line from lspci output
-        device_type: Device type string (e.g., 'VGA compatible controller')
+        gpu_dev: pyudev Device object
+        controller_type: Device type string (e.g., 'VGA compatible controller')
     Returns:
-        Parsed description or fallback string
+        GPU description string
     """
-    try:
-        # Split by device type
-        if device_type in gpu_line:
-            desc_part = gpu_line.split(f'{device_type}:')[-1]
-            # Remove revision info if present
-            if '(rev' in desc_part:
-                desc_part = desc_part.split('(rev')[0]
-            return desc_part.strip()
-    except (IndexError, ValueError):
-        pass
-    # Fallback: return everything after the PCI address
-    parts = gpu_line.split(None, 1)
-    return parts[1] if len(parts) > 1 else 'Unknown GPU'
+    vendor = gpu_dev.get('ID_VENDOR_FROM_DATABASE', '')
+    model = gpu_dev.get('ID_MODEL_FROM_DATABASE', '')
+
+    if vendor and model:
+        return f"{vendor} {model}"
+    elif model:
+        return model
+    elif vendor:
+        return f"{vendor} {controller_type}"
+    else:
+        return controller_type
 
 
 def get_critical_devices_in_iommu_group_mapping(iommu_groups: dict) -> dict[str, set[str]]:
@@ -99,30 +94,25 @@ def get_critical_devices_in_iommu_group_mapping(iommu_groups: dict) -> dict[str,
 
 
 def get_gpus() -> list:
-    cp = subprocess.Popen(['lspci', '-D'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = cp.communicate()
-    if cp.returncode:
-        raise CallError(f'Unable to list available gpus: {stderr.decode()}')
-    gpus = []
+    # Build PCI device cache once
+    device_to_class, bus_to_devices = build_pci_device_cache()
+
+    # Find all GPU devices by class code
     gpu_slots = []
-    for line in stdout.decode().splitlines():
-        for k in (
-            'VGA compatible controller',
-            'Display controller',
-            '3D controller',
-        ):
-            if k in line:
-                gpu_slots.append((line.strip(), k))
-                break
-    iommu_groups = get_iommu_groups_info(get_critical_info=True)
+    for device_addr, class_code in device_to_class.items():
+        class_id = (class_code >> 8) & 0xFFFF  # Extract 16-bit class ID
+        if class_id in GPU_CLASS_CODES:
+            gpu_slots.append((device_addr, GPU_CLASS_CODES[class_id]))
+
+    gpus = []
+    iommu_groups = get_iommu_groups_info(get_critical_info=True, pci_build_cache=(device_to_class, bus_to_devices))
     # Precompute group_id -> [devices] mapping for efficiency
     group_to_devices = collections.defaultdict(list)
     for device_addr, device_info in iommu_groups.items():
         group_to_devices[device_info['number']].append(device_addr)
 
     udev_context = pyudev.Context()
-    for gpu_line, key in gpu_slots:
-        addr = gpu_line.split()[0]
+    for addr, controller_type in gpu_slots:
         addr_re = RE_PCI_ADDR.match(addr)
         gpu_dev = pyudev.Devices.from_name(udev_context, 'pci', addr)
         # Let's normalise vendor for consistency
@@ -177,7 +167,7 @@ def get_gpus() -> list:
                 'pci_slot': addr,
                 **{k: addr_re.group(k) for k in ('domain', 'bus', 'slot')},
             },
-            'description': _parse_gpu_description(gpu_line, key),
+            'description': _get_gpu_description(gpu_dev, controller_type),
             'devices': devices,
             'vendor': vendor,
             'uses_system_critical_devices': bool(critical_reason),

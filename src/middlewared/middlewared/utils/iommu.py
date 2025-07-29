@@ -21,6 +21,13 @@ _SENSITIVE_PCI_CLASS_CODES_NUMERIC = {
     int(k, 16): v for k, v in SENSITIVE_PCI_DEVICE_TYPES.items()
 }
 
+# GPU device class codes (upper 16 bits)
+GPU_CLASS_CODES = {
+    0x0300: 'VGA compatible controller',    # Standard VGA
+    0x0302: '3D controller',                # 3D graphics controller
+    0x0380: 'Display controller',           # Other display controller
+}
+
 
 def read_sysfs_hex(path: str, default: int = 0) -> int:
     """Read a hex value from sysfs file."""
@@ -175,7 +182,7 @@ def _is_bridge_critical_recursive(
     return False
 
 
-def get_iommu_groups_info(get_critical_info: bool = False) -> dict[str, dict]:
+def get_iommu_groups_info(get_critical_info: bool = False, pci_build_cache: tuple = None) -> dict[str, dict]:
     addresses = collections.defaultdict(list)
     final = dict()
     with contextlib.suppress(FileNotFoundError):
@@ -198,7 +205,7 @@ def get_iommu_groups_info(get_critical_info: bool = False) -> dict[str, dict]:
             }
             if get_critical_info:
                 # Build efficient caches upfront if we need critical info
-                device_to_class, bus_to_devices = build_pci_device_cache()
+                device_to_class, bus_to_devices = pci_build_cache if pci_build_cache else build_pci_device_cache()
                 # Get device class from cache
                 class_code = device_to_class.get(i.name, 0)
                 class_id = (class_code >> 8) & 0xFFFF  # Extract 16-bit class ID

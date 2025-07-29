@@ -276,46 +276,45 @@ def test_gpu_pci_topology(topology_name):
             'critical': False,  # Will be determined by get_iommu_groups_info logic
         }
 
-    # Mock subprocess for lspci
-    with patch('middlewared.utils.gpu.subprocess.Popen') as mock_popen:
-        mock_popen.return_value.communicate.return_value = (
-            topology['lspci'].strip().encode(), b''
-        )
-        mock_popen.return_value.returncode = 0
+    # No longer need to mock subprocess since we're using direct sysfs reading
 
-        # Mock pyudev
-        def mock_from_name(context, subsystem, device_addr):
-            if device_addr in topology['devices']:
-                device_info = topology['devices'][device_addr].copy()
-                device_info['address'] = device_addr
-                return create_mock_pyudev_device(device_info)
-            return create_mock_pyudev_device({})
+    # Mock pyudev
+    def mock_from_name(context, subsystem, device_addr):
+        if device_addr in topology['devices']:
+            device_info = topology['devices'][device_addr].copy()
+            device_info['address'] = device_addr
+            return create_mock_pyudev_device(device_info)
+        return create_mock_pyudev_device({})
 
-        with patch('middlewared.utils.gpu.pyudev.Devices.from_name', side_effect=mock_from_name):
+    with patch('middlewared.utils.gpu.pyudev.Devices.from_name', side_effect=mock_from_name):
+        # Mock both get_pci_device_class and build_pci_device_cache
+        with patch('middlewared.utils.iommu.get_pci_device_class') as mock_get_class:
+            def mock_get_class_code(path):
+                for addr, info in topology['devices'].items():
+                    if addr in path:
+                        return info['class']  # Return string as expected
+                return '0x000000'
+            mock_get_class.side_effect = mock_get_class_code
 
-            # Mock both get_pci_device_class and build_pci_device_cache
-            with patch('middlewared.utils.iommu.get_pci_device_class') as mock_get_class:
-                def mock_get_class_code(path):
-                    for addr, info in topology['devices'].items():
-                        if addr in path:
-                            return info['class']  # Return string as expected
-                    return '0x000000'
-                mock_get_class.side_effect = mock_get_class_code
+            # Build the cache data from topology
+            device_to_class = {}
+            bus_to_devices = collections.defaultdict(list)
+            for addr, info in topology['devices'].items():
+                device_to_class[addr] = int(info['class'], 16)
+                try:
+                    parts = addr.split(':')
+                    domain = int(parts[0], 16)
+                    bus = int(parts[1], 16)
+                    bus_to_devices[(domain, bus)].append(addr)
+                except (IndexError, ValueError):
+                    pass
 
-                with patch('middlewared.utils.iommu.build_pci_device_cache') as mock_build_cache:
-                    # Build the cache data from topology
-                    device_to_class = {}
-                    bus_to_devices = collections.defaultdict(list)
-                    for addr, info in topology['devices'].items():
-                        device_to_class[addr] = int(info['class'], 16)
-                        try:
-                            parts = addr.split(':')
-                            domain = int(parts[0], 16)
-                            bus = int(parts[1], 16)
-                            bus_to_devices[(domain, bus)].append(addr)
-                        except (IndexError, ValueError):
-                            pass
-                    mock_build_cache.return_value = (device_to_class, bus_to_devices)
+            # Mock build_pci_device_cache for both iommu.py and gpu.py
+            with patch('middlewared.utils.iommu.build_pci_device_cache') as mock_build_cache_iommu:
+                mock_build_cache_iommu.return_value = (device_to_class, bus_to_devices)
+
+                with patch('middlewared.utils.gpu.build_pci_device_cache') as mock_build_cache_gpu:
+                    mock_build_cache_gpu.return_value = (device_to_class, bus_to_devices)
 
                     # Mock bridge device detection with new signature
                     def mock_get_devices_behind_bridge(bridge_addr, bus_to_devices=None, device_to_class=None):
@@ -338,9 +337,12 @@ def test_gpu_pci_topology(topology_name):
                             # Get IOMMU groups with critical info
                             iommu_groups = get_iommu_groups_info(get_critical_info=True)
 
-                            # Mock the IOMMU groups for get_gpus
+                            # Mock the IOMMU groups for get_gpus - need to handle the pci_build_cache parameter
+                            def mock_get_iommu_groups_info(get_critical_info=False, pci_build_cache=None):
+                                return iommu_groups
+
                             with patch('middlewared.utils.gpu.get_iommu_groups_info',
-                                       return_value=iommu_groups):
+                                       side_effect=mock_get_iommu_groups_info):
 
                                 # Get GPUs
                                 gpus = get_gpus()
@@ -367,9 +369,9 @@ def test_gpu_pci_topology(topology_name):
 def test_error_handling():
     """Test error handling for invalid configurations."""
     # Test with no GPUs
-    with patch('middlewared.utils.gpu.subprocess.Popen') as mock_popen:
-        mock_popen.return_value.communicate.return_value = (b'', b'')
-        mock_popen.return_value.returncode = 0
+    with patch('middlewared.utils.gpu.build_pci_device_cache') as mock_build_cache:
+        # Return empty caches (no devices)
+        mock_build_cache.return_value = ({}, {})
 
         with patch('middlewared.utils.gpu.get_iommu_groups_info', return_value={}):
             gpus = get_gpus()
