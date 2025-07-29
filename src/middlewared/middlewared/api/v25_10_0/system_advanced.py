@@ -65,7 +65,9 @@ class SystemAdvancedEntry(BaseModel):
     sysloglevel: Literal['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG']
     """Minimum log level for syslog messages. F_EMERG is most critical, F_DEBUG is least critical."""
     syslogserver: str = NotRequired
-    """When defined, logs of `sysloglevel` or higher are sent."""
+    """Remote syslog server DNS hostname or IP address. Nonstandard port numbers can be used by adding \
+    a colon and the port number to the hostname, like mysyslogserver:1928.  Setting this field enables \
+    the remote syslog function."""
     syslog_transport: Literal['UDP', 'TCP', 'TLS']
     """Transport protocol for remote syslog transmission. TLS provides encryption."""
     syslog_tls_certificate: int | None
