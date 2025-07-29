@@ -63,7 +63,7 @@ class FtpEntry(BaseModel):
     passiveportsmax: int
     """Maximum port number for passive mode data connections. Must be 0 or between 1024-65535."""
     localuserbw: Annotated[int, Field(ge=0)]
-    """Maximum upload bandwidth in bytes per second for local users. 0 means unlimited."""
+    """Maximum upload bandwidth in KiB/s for local users. 0 means unlimited."""
     localuserdlbw: Annotated[int, Field(ge=0)]
     """Maximum download bandwidth in bytes per second for local users. 0 means unlimited."""
     anonuserbw: Annotated[int, Field(ge=0)]
