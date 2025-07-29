@@ -21,7 +21,7 @@ TLS_PolicyOptions = Literal[
 
 class FtpEntry(BaseModel):
     id: int
-    """Unique identifier for the FTP service configuration."""
+    """Placeholder identifier.  Not used as there is only one."""
     port: Annotated[int, Field(ge=1, le=65535)]
     """TCP port number on which the FTP service listens for incoming connections."""
     clients: Annotated[int, Field(ge=1, le=10000)]
