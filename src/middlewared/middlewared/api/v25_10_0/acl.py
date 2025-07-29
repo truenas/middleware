@@ -145,9 +145,9 @@ class NFS4ACE(BaseModel):
     tag: NFS4ACE_Tags
     """Subject type for this ACE.
 
-    * `SPECIAL_OWNER`: File/directory owner
-    * `SPECIAL_GROUP`: File/directory primary group
-    * `SPECIAL_EVERYONE`: All users
+    * `owner@`: File/directory owner
+    * `group@`: File/directory primary group
+    * `everyone@`: All users
     * `USER`: Specific user account
     * `GROUP`: Specific group
     """
@@ -162,9 +162,9 @@ class NFS4ACE(BaseModel):
     flags: NFS4ACE_AdvancedFlags | NFS4ACE_BasicFlags
     """Inheritance and other behavioral flags for this ACE."""
     id: AceWhoId | None = None
-    """Numeric user or group ID when tag is `USER` or `GROUP`. `null` for special entries."""
+    """UID or GID when `tag` is "USER" or "GROUP". `null` for special entries."""
     who: LocalUsername | RemoteUsername | None = None
-    """Username or group name when tag is `USER` or `GROUP`. `null` for special entries."""
+    """Username or group name when `tag` is "USER" or "GROUP". `null` for special entries."""
 
     @model_validator(mode='after')
     def check_ace_valid(self) -> Self:
@@ -328,9 +328,10 @@ class FilesystemSetAclOptions(BaseModel):
     traverse: bool = False
     """Whether to traverse filesystem boundaries during recursive operations."""
     canonicalize: bool = True
-    """Whether to normalize and canonicalize ACL entries for consistency."""
+    """Whether to reorder ACL entries in Windows canonical order."""
     validate_effective_acl: bool = True
-    """Whether to validate that the resulting ACL provides effective access controls."""
+    """Whether to validate that the users/groups granted access in the ACL can actually access the path or parent \
+    path."""
 
 
 @single_argument_args('filesystem_acl')
