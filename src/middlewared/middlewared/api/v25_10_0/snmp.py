@@ -13,7 +13,7 @@ __all__ = ["SnmpEntry",
 
 class SnmpEntry(BaseModel):
     location: str
-    """Physical location of the SNMP agent."""
+    """A comment describing the physical location of the server."""
     contact: EmailStr | Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')]
     """Contact information for the system administrator (email or name)."""
     traps: bool
