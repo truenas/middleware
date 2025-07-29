@@ -21,7 +21,7 @@ __all__ = [
 
 class SystemAdvancedEntry(BaseModel):
     id: int
-    """Unique identifier for the system advanced configuration."""
+    """Placeholder identifier.  Not used as there is only one."""
     advancedmode: bool
     """Enable advanced mode to show additional configuration options in the web interface."""
     autotune: bool
