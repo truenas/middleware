@@ -29,7 +29,8 @@ class SnmpEntry(BaseModel):
     v3_password: Secret[str]
     """Password for SNMP version 3 authentication."""
     v3_privproto: Literal[None, 'AES', 'DES'] | None
-    """Privacy protocol for SNMP version 3 encryption. `null` means no privacy."""
+    """Privacy protocol for SNMP version 3 encryption. `null` means no encryption.  \
+    If set, ['AES'|'DES'], a `privpassphrase` must be supplied."""
     v3_privpassphrase: Secret[str | None] = None
     """Privacy passphrase for SNMP version 3 encryption. This field is required when `privproto` is set."""
     loglevel: int = Field(ge=0, le=7)
