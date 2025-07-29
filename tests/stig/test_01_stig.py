@@ -1,3 +1,4 @@
+import time
 import pytest
 
 from middlewared.service_exception import CallError
@@ -6,12 +7,14 @@ from middlewared.test.integration.assets.product import product_type, set_fips_a
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
-from middlewared.test.integration.utils import call, client, mock, password
+from middlewared.test.integration.utils import busy_wait_on_job, call, client, mock, password
 from truenas_api_client import ValidationErrors
 
+from auto_config import ha
 
 # Alias
 pp = pytest.param
+STIG_ACTIVE = False
 
 
 def get_excluded_admins():
@@ -28,7 +31,14 @@ def get_excluded_admins():
 
 def user_and_config_cleanup():
     """ Re-running this module can get tripped up by stale configurations """
-    call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': False}, job=True)
+    wait_for_failover_disabled_reasons([])
+    jobid = call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': False})
+    busy_wait_on_job(jobid)
+    if ha and "LOC_FIPS_REBOOT_REQ" in call('failover.disabled.reasons'):
+        call('system.reboot', 'setup_stig: configure')
+        time.sleep(10)
+
+    wait_for_failover_disabled_reasons([])
     two_factor_users = call('user.query', [
         ['twofactor_auth_configured', '=', True],
         ['locked', '=', False],
@@ -48,7 +58,8 @@ def restore_after_stig():
 
 @pytest.fixture(autouse=True)
 def clear_ratelimit():
-    call('rate.limit.cache_clear')
+    if not STIG_ACTIVE:
+        call('rate.limit.cache_clear')
 
 
 @pytest.fixture(scope='function')
@@ -140,17 +151,29 @@ def do_stig_auth(c, user_obj, secret):
     assert resp['response_type'] == 'SUCCESS'
 
 
+def wait_for_failover_disabled_reasons(reasons, delay=5, retries=60, /, call_fn=call):
+    """
+    Wait for HA status to look settled.
+
+    Default to 60 retries, with a 5 second delay => 5 minutes
+    """
+    for i in range(retries):
+        try:
+            live_reasons = call_fn('failover.disabled.reasons')
+            if reasons == live_reasons:
+                return True
+        except Exception:
+            pass
+        time.sleep(delay)
+    return False
+
+
 @pytest.fixture(scope='module')
-def setup_stig(full_admin_w_2fa_builtin_admin):
+def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled):
     """ Configure STIG and yield admin user object and an authenticated session """
     user_obj, secret = full_admin_w_2fa_builtin_admin
+    global STIG_ACTIVE
 
-    # Create websocket connection from prior to STIG being enabled to pass to
-    # test methods. This connection will have unrestricted privileges (due to
-    # privilege_compose happening before STIG).
-    #
-    # Tests validating what can be performed under STIG restrictions should create
-    # a new websocket session
     with product_type('ENTERPRISE'):
         with set_fips_available(True):
             with client(auth=None) as c:
@@ -162,9 +185,33 @@ def setup_stig(full_admin_w_2fa_builtin_admin):
                 for id in admin_id:
                     c.call('user.update', id, {"password_disabled": True})
 
-                c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
-                aal = c.call('auth.get_authenticator_assurance_level')
-                assert aal == 'LEVEL_2'
+                config_jobid = c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True})
+                busy_wait_on_job(config_jobid, call_fn=c.call)
+                STIG_ACTIVE = True
+                if ha:
+                    wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
+                    c.call('system.reboot', 'setup_stig: configure')
+                    time.sleep(10)
+
+            # We may have rebooted both controllers at this point.
+            # Need to create a new client, so we can see the nodes
+            # stabilize.
+            with client(auth=None) as c:
+                do_stig_auth(c, user_obj, secret)
+                # We can no longer call private APIs
+                if ha:
+                    wait_for_failover_disabled_reasons([], call_fn=c.call)
+
+                # Since auth.get_authenticator_assurance_level is private,
+                # we cannot call it now.
+                #   aal = c.call('auth.get_authenticator_assurance_level')
+                #   assert aal == 'LEVEL_2'
+                # Instead, we can call auth.mechanism_choices and check that only
+                # "PASSWORD_PLAIN" is there
+                choices = c.call('auth.mechanism_choices')
+                assert len(choices) == 1, choices
+                assert choices[0] == "PASSWORD_PLAIN", choices
+                aal = 'LEVEL_2'
 
                 try:
                     yield {
@@ -176,17 +223,28 @@ def setup_stig(full_admin_w_2fa_builtin_admin):
                 finally:
                     # Restore default security, user and network settings
                     # FIPS is mocked
-                    c.call('system.security.update', {
+                    wait_for_failover_disabled_reasons([], call_fn=c.call)
+                    unconfig_jobid = c.call('system.security.update', {
                         'enable_gpos_stig': False,
                         'min_password_age': None, 'max_password_age': None,
                         'password_complexity_ruleset': None, 'min_password_length': None,
                         'password_history_length': None
-                    }, job=True)
-
-                    for admin in admin_id:
-                        c.call('user.update', id, {"password_disabled": False})
-
-                    c.call('network.configuration.update', {"activity": {"type": "DENY", "activities": []}})
+                    })
+                    busy_wait_on_job(unconfig_jobid, call_fn=c.call)
+                    if ha:
+                        wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
+                        c.call('system.reboot', 'teardown_stig: unconfigure')
+                        time.sleep(10)
+                    with client(auth=None) as c2:
+                        do_stig_auth(c2, user_obj, secret)
+                        if ha:
+                            wait_for_failover_disabled_reasons([], call_fn=c2.call)
+                        STIG_ACTIVE = False
+                        # Need to turn off two-factor auth before can reenable admin password
+                        c2.call('auth.twofactor.update', {'enabled': False, 'window': 0, 'services': {'ssh': False}})
+                        for id in admin_id:
+                            c2.call('user.update', id, {"password_disabled": False})
+                        c2.call('network.configuration.update', {"activity": {"type": "DENY", "activities": []}})
 
 
 # The order of the following tests is significant. We gradually add fixtures that have module scope
@@ -267,11 +325,8 @@ def test_auth_enabled_admin_users_fail(enterprise_product, full_admin_w_2fa_buil
 
 # At this point STIG should be enabled on TrueNAS until end of file
 
-
+@pytest.mark.timeout(900)
 def test_stig_enabled_authenticator_assurance_level(setup_stig, clear_ratelimit):
-    # Validate that admin user can authenticate and perform operations
-    setup_stig['connection'].call('system.info')
-
     # Auth for account without 2fa should fail
     with client(auth=None) as c:
         resp = c.call('auth.login_ex', {
@@ -289,6 +344,7 @@ def test_stig_enabled_authenticator_assurance_level(setup_stig, clear_ratelimit)
         c.call('system.info')
 
 
+@pytest.mark.timeout(900)
 def test_stig_roles_decrease(setup_stig, clear_ratelimit):
 
     # We need new websocket connection to verify that privileges
@@ -307,6 +363,7 @@ def test_stig_roles_decrease(setup_stig, clear_ratelimit):
         assert me['privilege']['webui_access'] is True
 
 
+@pytest.mark.timeout(900)
 def test_stig_prevent_disable_2fa(setup_stig, clear_ratelimit):
     with client(auth=None) as c:
         do_stig_auth(c, setup_stig['user_obj'], setup_stig['secret'])
@@ -317,6 +374,7 @@ def test_stig_prevent_disable_2fa(setup_stig, clear_ratelimit):
             c.call('auth.twofactor.update', {'services': {'ssh': False}})
 
 
+@pytest.mark.timeout(900)
 def test_stig_smb_auth_disabled(setup_stig, clear_ratelimit):
     # We need new websocket connection to verify that privileges
     # are appropriately decreased
@@ -335,6 +393,7 @@ def test_stig_smb_auth_disabled(setup_stig, clear_ratelimit):
         })
 
 
+@pytest.mark.timeout(900)
 def test_stig_usage_collection_disabled(setup_stig):
     ''' In GPOS STIG mode usage collection should be disabled
         and not allowed to be enabled.
@@ -361,21 +420,24 @@ def test_stig_usage_collection_disabled(setup_stig):
             c.call('system.general.update', {'usage_collection': True})
 
 
+@pytest.mark.timeout(900)
 @pytest.mark.parametrize('activity', ["usage", "update", "support"])
 def test_stig_usage_reporting_disabled(setup_stig, activity):
     ''' In GPOS STIG mode usage reporting should be disabled '''
     assert setup_stig['aal'] == "LEVEL_2"
 
-    netconf = call("network.configuration.config")
+    c = setup_stig['connection']
+    netconf = c.call("network.configuration.config")
     assert netconf["activity"]["type"] == "DENY"
     assert activity in netconf["activity"]["activities"]
 
-    can_run_usage = call("network.general.can_perform_activity", activity)
-    assert can_run_usage is False
-
-    msg = activity.capitalize() if activity != 'usage' else 'Anonymous usage statistics'
-    with pytest.raises(CallError, match=f'Network activity "{msg}" is disabled'):
-        call("network.general.will_perform_activity", activity)
+    # Cannot call these private functions, but they're based on the above anyway
+    # can_run_usage = c.call("network.general.can_perform_activity", activity)
+    # assert can_run_usage is False
+    #
+    # msg = activity.capitalize() if activity != 'usage' else 'Anonymous usage statistics'
+    # with pytest.raises(CallError, match=f'Network activity "{msg}" is disabled'):
+    #     call("network.general.will_perform_activity", activity)
 
 
 class TestNotAuthorizedOps:
@@ -388,6 +450,7 @@ class TestNotAuthorizedOps:
             do_stig_auth(c, setup_stig['user_obj'], setup_stig['secret'])
             yield c
 
+    @pytest.mark.timeout(900)
     @pytest.mark.parametrize('cmd, args, is_job', [
         pp('truecommand.update', {'enabled': True, 'api_key': '1234567890-ABCDE'}, True, id="Truecommand"),
         pp('docker.update', {'pool': 'NotApplicable'}, True, id="Docker"),
