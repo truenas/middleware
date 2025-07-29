@@ -95,7 +95,8 @@ class FtpEntry(BaseModel):
     tls_opt_stdenvvars: bool
     """Whether to export standard TLS environment variables for use by external programs."""
     tls_opt_dns_name_required: bool
-    """Whether to require client certificates to contain a DNS name in the Subject Alternative Name extension."""
+    """Whether to require client certificates to contain a DNS name in the Subject Alternative Name extension. \
+    The `reversedns` setting must also be enabled."""
     tls_opt_ip_address_required: bool
     """Whether to require client certificates to contain an IP address in the Subject Alternative Name extension."""
     ssltls_certificate: int | None
