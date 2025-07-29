@@ -60,7 +60,7 @@ class NFSGetNfs4ClientsEntry(BaseModel):
 
 class NfsEntry(BaseModel):
     id: int
-    """Unique identifier for the NFS service configuration."""
+    """Placeholder identifier.  Not used as there is only one."""
     servers: Annotated[int | None, Field(ge=1, le=256)]
     """ Specify the number of nfsd. Default: Number of nfsd is equal number of CPU. """
     allow_nonroot: bool

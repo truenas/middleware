@@ -21,7 +21,7 @@ __all__ = [
 
 class SystemAdvancedEntry(BaseModel):
     id: int
-    """Unique identifier for the system advanced configuration."""
+    """Placeholder identifier.  Not used as there is only one."""
     advancedmode: bool
     """Enable advanced mode to show additional configuration options in the web interface."""
     autotune: bool
@@ -65,9 +65,12 @@ class SystemAdvancedEntry(BaseModel):
     sysloglevel: Literal['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG']
     """Minimum log level for syslog messages. F_EMERG is most critical, F_DEBUG is least critical."""
     syslogserver: str = NotRequired
-    """When defined, logs of `sysloglevel` or higher are sent."""
+    """Remote syslog server DNS hostname or IP address. Nonstandard port numbers can be used by adding \
+    a colon and the port number to the hostname, like mysyslogserver:1928.  Setting this field enables \
+    the remote syslog function."""
     syslog_transport: Literal['UDP', 'TCP', 'TLS']
-    """Transport protocol for remote syslog transmission. TLS provides encryption."""
+    """Transport Protocol for the remote system log server connection. \
+    Choosing Transport Layer Security (TLS) also requires selecting a preconfigured system Certificate."""
     syslog_tls_certificate: int | None
     """Certificate ID for TLS-encrypted syslog connections or `null` for no certificate."""
     syslog_audit: bool = NotRequired
