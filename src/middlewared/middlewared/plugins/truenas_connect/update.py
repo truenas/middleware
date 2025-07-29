@@ -14,7 +14,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
 from .mixin import TNCAPIMixin
-from .private_models import TrueNASConnectUpdateEnvironmentArgs
+from .private_models import TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult
 from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload, TNC_IPS_CACHE_KEY
 
 
@@ -175,7 +175,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         return new_config
 
-    @api_method(TrueNASConnectUpdateEnvironmentArgs, TNCEntry, private=True)
+    @api_method(TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult, private=True)
     async def update_environment(self, data):
         config = await self.middleware.call('tn_connect.config')
         verrors = ValidationErrors()

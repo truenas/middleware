@@ -290,11 +290,7 @@ class TestTNCUseAllInterfaces:
             'enabled': True,
             'ips': [],
             'interfaces': ['ens3'],
-            'use_all_interfaces': True,
-            'account_service_base_url': 'https://example.com/',
-            'leca_service_base_url': 'https://example.com/',
-            'tnc_base_url': 'https://example.com/',
-            'heartbeat_url': 'https://example.com/'
+            'use_all_interfaces': True
         })
 
         # Verify that get_all_interface_ips was called (which calls interface.query)
