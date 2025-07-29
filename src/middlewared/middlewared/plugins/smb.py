@@ -1173,13 +1173,19 @@ class SharingSMBService(SharingService):
         timemachine = is_time_machine_share(data)
 
         if data.get(share_field.PATH) and data[share_field.PURPOSE] != SMBSharePurpose.EXTERNAL_SHARE:
-            stat_info = await self.middleware.call('filesystem.stat', data[share_field.PATH])
-            if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info['acl']:
+            if data[share_field.PATH].startswith('EXTERNAL'):
                 verrors.add(
-                    f'{schema_name}.acl',
-                    f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
-                    'of SMB share.'
+                    f'{schema_name}.path',
+                    'External paths may only be set for shares with an EXTERNAL_SHARE purpose'
                 )
+            else:
+                stat_info = await self.middleware.call('filesystem.stat', data[share_field.PATH])
+                if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info['acl']:
+                    verrors.add(
+                        f'{schema_name}.acl',
+                        f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
+                        'of SMB share.'
+                    )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
                 if not await self.middleware.call('system.is_enterprise'):
