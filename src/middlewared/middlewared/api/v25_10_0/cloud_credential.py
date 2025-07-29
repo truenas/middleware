@@ -70,4 +70,4 @@ class CredentialsVerifyResult(BaseModel):
     error: LongString | None = None
     """Error message if credential verification failed or `null` on success."""
     excerpt: LongString | None = None
-    """Sample of data from the cloud provider or `null` if not available."""
+    """Logs excerpt (or `null` if no error occurred)."""

@@ -44,9 +44,9 @@ class Alert(BaseModel):
     level: str
     """Severity level of the alert (INFO, WARNING, ERROR, etc.)."""
     formatted: LongString | None
-    """Formatted alert message with HTML or rich text or `null` for plain text."""
+    """Formatted alert message with HTML."""
     one_shot: bool
-    """Whether this alert fires only once and does not repeat."""
+    """Whether this alert will not be dismissed automatically."""
 
 
 class AlertCategoryClass(BaseModel):
