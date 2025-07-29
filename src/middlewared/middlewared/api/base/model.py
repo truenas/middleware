@@ -167,6 +167,8 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
                             f"Model {cls.__name__} has field {k} defined as {dump(v.annotation)}. {dump(option)} "
                             "cannot be a member of an Optional or a Union, please make the whole field Private."
                         )
+            if not v.description and (parent_field := cls.__base__.model_fields.get(k)):
+                v.description = parent_field.description
 
     def model_dump(
         self,

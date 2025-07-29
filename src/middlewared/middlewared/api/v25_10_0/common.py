@@ -56,6 +56,7 @@ class QueryOptions(BaseModel):
     WARNING: Some query methods provide volatile results and the onus is on the developer to understand whether \
     pagination is appropriate for a particular query API method. """
     force_sql_filters: bool = False
+    """Force use of SQL for result filtering to reduce response time. May not work for all methods."""
 
     @model_validator(mode='after')
     def validate_query_options(self) -> Self:
