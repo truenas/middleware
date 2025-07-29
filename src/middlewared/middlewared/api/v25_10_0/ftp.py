@@ -102,7 +102,8 @@ class FtpEntry(BaseModel):
     ssltls_certificate: int | None
     """ID of the certificate to use for TLS/SSL connections. `null` to use the default system certificate."""
     options: str
-    """Additional ProFTPD configuration directives to include in the server configuration."""
+    """Additional ProFTPD configuration directives to include in the server configuration. \
+    Manual directives may render the FTP service non-functional and should be used with caution."""
 
     @field_validator("passiveportsmin", "passiveportsmax")
     @classmethod
