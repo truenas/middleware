@@ -49,19 +49,19 @@ def build_pci_device_cache() -> tuple[dict[str, int], dict[tuple[int, int], list
     """
     device_to_class = {}
     bus_to_devices = collections.defaultdict(list)
-    pci_devices_path = pathlib.Path('/sys/bus/pci/devices')
-    if pci_devices_path.exists():
-        for device_path in pci_devices_path.iterdir():
-            if device_path.is_dir() and RE_DEVICE_NAME.fullmatch(device_path.name):
-                device_addr = device_path.name
-                # Cache class code
-                device_to_class[device_addr] = read_sysfs_hex(os.path.join(str(device_path), 'class'))
-                # Extract domain and bus number for mapping
-                with contextlib.suppress(IndexError, ValueError):
-                    parts = device_addr.split(':')
-                    domain = int(parts[0], 16)
-                    bus = int(parts[1], 16)
-                    bus_to_devices[(domain, bus)].append(device_addr)
+    with contextlib.suppress(FileNotFoundError):
+        with os.scandir('/sys/bus/pci/devices') as it:
+            for entry in it:
+                if entry.is_dir() and RE_DEVICE_NAME.fullmatch(entry.name):
+                    device_addr = entry.name
+                    # Cache class code
+                    device_to_class[device_addr] = read_sysfs_hex(os.path.join(entry.path, 'class'))
+                    # Extract domain and bus number for mapping
+                    with contextlib.suppress(IndexError, ValueError):
+                        parts = device_addr.split(':')
+                        domain = int(parts[0], 16)
+                        bus = int(parts[1], 16)
+                        bus_to_devices[(domain, bus)].append(device_addr)
 
     return device_to_class, bus_to_devices
 

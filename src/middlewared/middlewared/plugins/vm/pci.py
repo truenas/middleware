@@ -78,13 +78,22 @@ class VMDeviceService(Service):
         data['controller_type'] = controller_type
         # Use critical information from iommu_info if available
         # If we cannot find the iommu entry, we mark the device as critical by default
-        data['critical'] = igi['critical'] if igi else True
+        data['critical'] = True
         # Only include number and addresses in iommu_group for API compatibility
-        data['iommu_group'] = {k: v for k, v in igi.items() if k in ('number', 'addresses')} if igi else None
+        data['iommu_group'] = None
         data['available'] = all(i == 'vfio-pci' for i in drivers) and not data['critical']
         data['drivers'] = drivers
         data['device_path'] = os.path.join('/sys/bus/pci/devices', obj.sys_name)
         data['reset_mechanism_defined'] = os.path.exists(os.path.join(data['device_path'], 'reset'))
+
+        if igi:
+            data.update({
+                'critical': igi['critical'],
+                'iommu_group': {
+                    'number': igi['number'],
+                    'addresses': igi['addresses'],
+                },
+            })
 
         prefix = obj.sys_name + (f' {controller_type!r}' if controller_type else '')
         vendor = data['capability']['vendor'].strip()
