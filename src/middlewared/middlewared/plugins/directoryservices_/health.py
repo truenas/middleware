@@ -172,9 +172,9 @@ class DomainHealth(
             return self.recover(attempts + 1, reason)
 
         self.check()
-        # If we're here we've recovered. Since the users.oath file for
-        # directory services users requires that we have functional SID resolution
-        # we have to regenerate the users file here.
+        # If we're here we've recovered. Since the users.oath file for directory services users requires that we have
+        # functional SID resolution we have to regenerate the users file here. We are not calling service.control
+        # for the USER service because the other node in HA is responsible for its own health checks.
         self.middleware.call_sync('etc.generate', 'user')
 
     def set_state(self, ds_type, ds_status, status_msg=None):
