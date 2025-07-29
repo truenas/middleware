@@ -1,16 +1,33 @@
 import collections
 import os
 import re
-import subprocess
 from typing import TextIO
 
 import pyudev
 
-from middlewared.service_exception import CallError
-from .iommu import get_iommu_groups_info, SENSITIVE_PCI_DEVICE_TYPES
+from .iommu import build_pci_device_cache, get_iommu_groups_info, GPU_CLASS_CODES
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
+
+
+def get_pci_device_description(pci_slot: str, subclass: str = None, model: str = None) -> str:
+    """
+    Get human-readable device description with PCI slot.
+    Uses caching to avoid repeated lookups for the same device.
+    Args:
+        pci_slot: PCI slot address (e.g., "0000:00:1f.4")
+        subclass: ID_PCI_SUBCLASS_FROM_DATABASE value
+        model: ID_MODEL_FROM_DATABASE value
+    Returns:
+        Human-readable description like "SMBus (0000:00:1f.4)"
+    """
+    if model and model != 'Not Available':
+        return f'{model} ({pci_slot})'
+    elif subclass:
+        return f'{subclass} ({pci_slot})'
+    else:
+        return pci_slot
 
 
 def parse_nvidia_info_file(file_obj: TextIO) -> tuple[dict, str]:
@@ -43,8 +60,29 @@ def get_nvidia_gpus() -> dict[str, dict]:
                         gpus[i.name] = gpu
     except (FileNotFoundError, ValueError):
         pass
-
     return gpus
+
+
+def _get_gpu_description(gpu_dev: pyudev.Device, controller_type: str) -> str:
+    """
+    Get GPU description from pyudev device.
+    Args:
+        gpu_dev: pyudev Device object
+        controller_type: Device type string (e.g., 'VGA compatible controller')
+    Returns:
+        GPU description string
+    """
+    vendor = gpu_dev.get('ID_VENDOR_FROM_DATABASE', '')
+    model = gpu_dev.get('ID_MODEL_FROM_DATABASE', '')
+
+    if vendor and model:
+        return f"{vendor} {model}"
+    elif model:
+        return model
+    elif vendor:
+        return f"{vendor} {controller_type}"
+    else:
+        return controller_type
 
 
 def get_critical_devices_in_iommu_group_mapping(iommu_groups: dict) -> dict[str, set[str]]:
@@ -52,36 +90,31 @@ def get_critical_devices_in_iommu_group_mapping(iommu_groups: dict) -> dict[str,
     for pci_slot, pci_details in iommu_groups.items():
         if pci_details['critical']:
             iommu_groups_mapping_with_critical_devices[pci_details['number']].add(pci_slot)
-
     return iommu_groups_mapping_with_critical_devices
 
 
 def get_gpus() -> list:
-    cp = subprocess.Popen(['lspci', '-D'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = cp.communicate()
-    if cp.returncode:
-        raise CallError(f'Unable to list available gpus: {stderr.decode()}')
+    # Build PCI device cache once
+    device_to_class, bus_to_devices = build_pci_device_cache()
+
+    # Find all GPU devices by class code
+    gpu_slots = []
+    for device_addr, class_code in device_to_class.items():
+        class_id = (class_code >> 8) & 0xFFFF  # Extract 16-bit class ID
+        if class_id in GPU_CLASS_CODES:
+            gpu_slots.append((device_addr, GPU_CLASS_CODES[class_id]))
 
     gpus = []
-    gpu_slots = []
-    for line in stdout.decode().splitlines():
-        for k in (
-            'VGA compatible controller',
-            'Display controller',
-            '3D controller',
-        ):
-            if k in line:
-                gpu_slots.append((line.strip(), k))
-                break
+    iommu_groups = get_iommu_groups_info(get_critical_info=True, pci_build_cache=(device_to_class, bus_to_devices))
+    # Precompute group_id -> [devices] mapping for efficiency
+    group_to_devices = collections.defaultdict(list)
+    for device_addr, device_info in iommu_groups.items():
+        group_to_devices[device_info['number']].append(device_addr)
 
-    iommu_groups = get_iommu_groups_info(get_critical_info=True)
-    critical_iommu_mapping = get_critical_devices_in_iommu_group_mapping(iommu_groups)
-
-    for gpu_line, key in gpu_slots:
-        addr = gpu_line.split()[0]
+    udev_context = pyudev.Context()
+    for addr, controller_type in gpu_slots:
         addr_re = RE_PCI_ADDR.match(addr)
-
-        gpu_dev = pyudev.Devices.from_name(pyudev.Context(), 'pci', addr)
+        gpu_dev = pyudev.Devices.from_name(udev_context, 'pci', addr)
         # Let's normalise vendor for consistency
         vendor = None
         vendor_id_from_db = gpu_dev.get('ID_VENDOR_FROM_DATABASE', '').lower()
@@ -91,50 +124,53 @@ def get_gpus() -> list:
             vendor = 'INTEL'
         elif 'amd' in vendor_id_from_db:
             vendor = 'AMD'
-
         devices = []
         critical_reason = None
-        critical_devices = set()
+        critical_devices = []
+        # Get the GPU's IOMMU group number
+        gpu_iommu_group = iommu_groups.get(addr, {}).get('number')
+        # Get all devices in the same IOMMU group as the GPU (using precomputed mapping)
+        devices_in_group = group_to_devices.get(gpu_iommu_group, []) if gpu_iommu_group is not None else []
+        # Process each device in the same IOMMU group
+        for device_addr in devices_in_group:
+            try:
+                # Get device information
+                device = pyudev.Devices.from_name(udev_context, 'pci', device_addr)
+                pci_id = device.get('PCI_ID', '')
+                subclass = device.get('ID_PCI_SUBCLASS_FROM_DATABASE', '')
+                model = device.get('ID_MODEL_FROM_DATABASE', '')
+                # Add to devices list
+                devices.append({
+                    'pci_id': pci_id,
+                    'pci_slot': device_addr,
+                    'vm_pci_slot': f'pci_{device_addr.replace(".", "_").replace(":", "_")}',
+                })
+                # Check if this device is critical
+                if iommu_groups.get(device_addr, {}).get('critical', False):
+                    device_desc = get_pci_device_description(device_addr, subclass, model)
+                    critical_devices.append(device_desc)
+            except (OSError, IOError, ValueError):
+                # If we can't get device info due to permission or I/O issues,
+                # still add it to the list with minimal information
+                devices.append({
+                    'pci_id': '',
+                    'pci_slot': device_addr,
+                    'vm_pci_slot': f'pci_{device_addr.replace(".", "_").replace(":", "_")}',
+                })
 
-        # So we will try to mark those gpu's as critical which meet following criteria:
-        # 1) Have a device which belongs to sensitive pci devices group
-        # 2) Have a device which is in same iommu group as a device which belongs to sensitive pci devices group
-        if critical_iommu_mapping[iommu_groups.get(addr, {}).get('number')]:
-            critical_devices_based_on_iommu = {addr}
-        else:
-            critical_devices_based_on_iommu = set()
-
-        for child in filter(lambda c: all(k in c for k in ('PCI_SLOT_NAME', 'PCI_ID')), gpu_dev.parent.children):
-            devices.append({
-                'pci_id': child['PCI_ID'],
-                'pci_slot': child['PCI_SLOT_NAME'],
-                'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
-            })
-            for k in SENSITIVE_PCI_DEVICE_TYPES.values():
-                if k.lower() in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower():
-                    critical_devices.add(child['PCI_SLOT_NAME'])
-                    break
-            if critical_iommu_mapping[iommu_groups.get(child['PCI_SLOT_NAME'], {}).get('number')]:
-                critical_devices_based_on_iommu.add(child['PCI_SLOT_NAME'])
-
+        # Build critical reason if there are critical devices in the group
         if critical_devices:
-            critical_reason = f'Critical devices found: {", ".join(critical_devices)}'
-
-        if critical_devices_based_on_iommu:
-            critical_reason = f'{critical_reason}\n' if critical_reason else ''
-            critical_reason += ('Critical devices found in same IOMMU group: '
-                                f'{", ".join(critical_devices_based_on_iommu)}')
-
+            device_list = ', '.join(critical_devices)
+            critical_reason = f'Devices sharing memory management: {device_list}'
         gpus.append({
             'addr': {
                 'pci_slot': addr,
                 **{k: addr_re.group(k) for k in ('domain', 'bus', 'slot')},
             },
-            'description': gpu_line.split(f'{key}:')[-1].split('(rev')[0].strip(),
+            'description': _get_gpu_description(gpu_dev, controller_type),
             'devices': devices,
             'vendor': vendor,
             'uses_system_critical_devices': bool(critical_reason),
             'critical_reason': critical_reason,
         })
-
     return gpus
