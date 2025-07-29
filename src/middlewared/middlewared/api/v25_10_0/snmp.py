@@ -35,7 +35,8 @@ class SnmpEntry(BaseModel):
     loglevel: int = Field(ge=0, le=7)
     """Logging level for SNMP daemon (0=emergency to 7=debug)."""
     options: str
-    """Additional SNMP daemon configuration options."""
+    """Additional SNMP daemon configuration options. \
+    Manual settings should be used with caution as they may render the SNMP service non-functional."""
     zilstat: bool
     """Whether to enable ZFS dataset statistics collection for SNMP."""
     id: int
