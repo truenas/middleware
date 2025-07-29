@@ -39,7 +39,7 @@ class SnmpEntry(BaseModel):
     zilstat: bool
     """Whether to enable ZFS dataset statistics collection for SNMP."""
     id: int
-    """Unique identifier for the SNMP configuration."""
+    """Placeholder identifier.  Not used as there is only one."""
 
 
 @single_argument_args('snmp_update')
