@@ -69,7 +69,7 @@ class FtpEntry(BaseModel):
     anonuserbw: Annotated[int, Field(ge=0)]
     """Maximum upload bandwidth in KiB/s for anonymous users. 0 means unlimited."""
     anonuserdlbw: Annotated[int, Field(ge=0)]
-    """Maximum download bandwidth in bytes per second for anonymous users. 0 means unlimited."""
+    """Maximum download bandwidth in KiB/s for anonymous users. 0 means unlimited."""
     tls: bool
     """Whether to enable TLS/SSL encryption for FTP connections."""
     tls_policy: TLS_PolicyOptions
