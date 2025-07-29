@@ -416,7 +416,9 @@ class AppRollbackOptions(BaseModel):
 
 class AppRollbackArgs(BaseModel):
     app_name: NonEmptyString
+    """Name of the application to rollback."""
     options: AppRollbackOptions
+    """Rollback options."""
 
 
 class AppRollbackResult(BaseModel):

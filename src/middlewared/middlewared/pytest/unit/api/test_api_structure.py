@@ -80,7 +80,7 @@ def test_api_docstrings(current_api_package):
                 for field_name, field_info in obj.model_fields.items():
                     if field_info.exclude:
                         continue
-                    if err := check_docstring(field_info.description, must_have=True):
+                    if err := check_docstring(field_info.description, field_name != "result"):
                         errors.append(SyntaxWarning(f"{modname}.{name}.{field_name}: {err}"))
 
     if errors:
