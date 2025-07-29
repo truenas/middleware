@@ -69,7 +69,8 @@ class SystemAdvancedEntry(BaseModel):
     a colon and the port number to the hostname, like mysyslogserver:1928.  Setting this field enables \
     the remote syslog function."""
     syslog_transport: Literal['UDP', 'TCP', 'TLS']
-    """Transport protocol for remote syslog transmission. TLS provides encryption."""
+    """Transport Protocol for the remote system log server connection. \
+    Choosing Transport Layer Security (TLS) also requires selecting a preconfigured system Certificate."""
     syslog_tls_certificate: int | None
     """Certificate ID for TLS-encrypted syslog connections or `null` for no certificate."""
     syslog_audit: bool = NotRequired
