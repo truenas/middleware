@@ -50,7 +50,9 @@ class ISCSIPortalListenIpChoicesArgs(BaseModel):
 
 class ISCSIPortalListenIpChoicesResult(BaseModel):
     result: dict[str, str]
-    """Dictionary mapping IP addresses to their interface descriptions."""
+    """Object mapping IP addresses to their underlying constituents. Only static IP addresses will be included. On \
+    ALUA-enabled high availability systems, VIPs will be mapped to the pair of corresponding underlying addresses, one \
+    per node."""
 
 
 class IscsiPortalCreate(IscsiPortalEntry):

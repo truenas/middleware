@@ -29,7 +29,8 @@ class IscsiAuthEntry(BaseModel):
     peersecret: Secret[str] = ''
     """Password/secret for mutual CHAP authentication or empty string if not configured."""
     discovery_auth: IscsiAuthType = 'NONE'
-    """Authentication method for target discovery."""
+    """Authentication method for target discovery. If "CHAP_MUTUAL" is selected for target discovery, it is only \
+    permitted for a single entry systemwide."""
 
 
 class IscsiAuthCreate(IscsiAuthEntry):

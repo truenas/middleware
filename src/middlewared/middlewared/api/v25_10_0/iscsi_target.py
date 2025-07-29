@@ -62,6 +62,8 @@ class IscsiTargetEntry(BaseModel):
     * `ISCSI`: iSCSI protocol only
     * `FC`: Fibre Channel protocol only
     * `BOTH`: Both iSCSI and Fibre Channel protocols
+
+    Fibre Channel may only be selected on TrueNAS Enterprise-licensed systems with a suitable Fibre Channel HBA.
     """
     groups: list[IscsiGroup] = []
     """Array of portal-initiator group associations for this target."""

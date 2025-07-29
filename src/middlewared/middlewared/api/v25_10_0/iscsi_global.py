@@ -30,9 +30,11 @@ class IscsiGlobalEntry(BaseModel):
     pool_avail_threshold: int | None = Field(ge=1, le=99, default=None)
     """Pool available space threshold percentage or `null` to disable."""
     alua: bool
-    """Whether Asymmetric Logical Unit Access (ALUA) is enabled."""
+    """Whether Asymmetric Logical Unit Access (ALUA) is enabled. Enabling is limited to TrueNAS Enterprise-licensed \
+    high availability systems. ALUA only works when configured on both the client and server."""
     iser: bool
-    """Whether iSCSI Extensions for RDMA (iSER) is enabled."""
+    """Whether iSCSI Extensions for RDMA (iSER) are enabled. Enabling is limited to TrueNAS Enterprise-licensed \
+    systems and requires the system and network environment have Remote Direct Memory Access (RDMA)-capable hardware."""
 
 
 @single_argument_args('iscsi_update')
