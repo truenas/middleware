@@ -19,7 +19,7 @@ class SnmpEntry(BaseModel):
     traps: bool
     """Whether SNMP traps are enabled."""
     v3: bool
-    """Whether SNMP version 3 is enabled."""
+    """Whether SNMP version 3 is enabled.  Enabling version 3 also requires username, authtype and password."""
     community: str = Field(pattern=r'^[-_a-zA-Z0-9\s]*$', default='public')
     """SNMP community string for v1/v2c access. Allows letters, numbers, hyphens, underscores, and spaces."""
     v3_username: str = Field(max_length=20)
