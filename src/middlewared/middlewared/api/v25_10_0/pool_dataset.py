@@ -205,14 +205,20 @@ class PoolDatasetCreate(BaseModel):
         "ZSTD-FAST-10", "ZSTD-FAST-20", "ZSTD-FAST-30", "ZSTD-FAST-40", "ZSTD-FAST-50", "ZSTD-FAST-60", "ZSTD-FAST-70",
         "ZSTD-FAST-80", "ZSTD-FAST-90", "ZSTD-FAST-100", "ZSTD-FAST-500", "ZSTD-FAST-1000", "INHERIT"
     ] = "INHERIT"
+    """Compression algorithm to use for the dataset. Higher numbered variants provide better compression \
+    but use more CPU. 'INHERIT' uses the parent dataset's setting."""
     exec: Literal["ON", "OFF", "INHERIT"] = "INHERIT"
     """Whether files in this dataset can be executed."""
     managedby: NonEmptyString = "INHERIT"
     """Identifies which service or system manages this dataset."""
     quota_warning: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of dataset quota at which to issue a warning. 0-100 or 'INHERIT'."""
     quota_critical: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of dataset quota at which to issue a critical alert. 0-100 or 'INHERIT'."""
     refquota_warning: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of reference quota at which to issue a warning. 0-100 or 'INHERIT'."""
     refquota_critical: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of reference quota at which to issue a critical alert. 0-100 or 'INHERIT'."""
     reservation: int = NotRequired
     """Minimum disk space guaranteed to this dataset and its children in bytes."""
     refreservation: int = NotRequired
@@ -222,10 +228,15 @@ class PoolDatasetCreate(BaseModel):
     copies: int | Literal["INHERIT"] = "INHERIT"
     """Number of copies of data blocks to maintain for redundancy."""
     snapdir: Literal["DISABLED", "VISIBLE", "HIDDEN", "INHERIT"] = "INHERIT"
+    """Controls visibility of the `.zfs/snapshot` directory. 'DISABLED' hides snapshots, 'VISIBLE' shows them, \
+    'HIDDEN' makes them accessible but not listed."""
     deduplication: Literal["ON", "VERIFY", "OFF", "INHERIT"] = "INHERIT"
+    """Deduplication setting. 'ON' enables dedup, 'VERIFY' enables with checksum verification, 'OFF' disables."""
     checksum: Literal[
         "ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3", "INHERIT"
     ] = "INHERIT"
+    """Checksum algorithm to verify data integrity. Higher security algorithms like SHA256 provide better \
+    protection but use more CPU."""
     readonly: Literal["ON", "OFF", "INHERIT"] = "INHERIT"
     """Whether the dataset is read-only."""
     share_type: Literal["GENERIC", "MULTIPROTOCOL", "NFS", "SMB", "APPS"] = "GENERIC"
@@ -356,6 +367,7 @@ class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
 
 class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
     quota_type: Literal['USER', 'GROUP']
+    """Type identifier for user or group quotas."""
     id: int
     """The UID or GID to which the quota applies."""
     name: str | None
@@ -370,6 +382,7 @@ class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
 
 class PoolDatasetDatasetQuota(_PoolDatasetQuota):
     quota_type: Literal['DATASET']
+    """Type identifier for dataset quotas."""
     id: str
     """Name of the dataset."""
     name: str
@@ -380,6 +393,7 @@ class PoolDatasetDatasetQuota(_PoolDatasetQuota):
 
 class PoolDatasetProjectQuota(_PoolDatasetQuota):
     quota_type: Literal['PROJECT']
+    """Type identifier for project quotas."""
     id: int
     """The project ID."""
     obj_used: int
@@ -427,7 +441,9 @@ class PoolDatasetUnlockOptions(BaseModel):
     these flags are set, system will rename the existing directory/file path where the dataset should be mounted \
     resulting in successful unlock of the dataset."""
     key_file: bool = False
+    """Whether to use a key file instead of a passphrase for unlocking encrypted datasets."""
     recursive: bool = False
+    """Whether to recursively unlock child datasets."""
     toggle_attachments: bool = True
     """Whether attachments should be put in action after unlocking the dataset(s). Toggling attachments can \
     theoretically lead to service interruption when daemons configurations are reloaded (this should not happen, and \
@@ -435,6 +451,7 @@ class PoolDatasetUnlockOptions(BaseModel):
     unlocked but are still locked, disabling this option will put the system into an inconsistent state so it should \
     really never be disabled."""
     datasets: list[PoolDatasetUnlockOptionsDataset] = []
+    """List of specific datasets with their individual unlock options."""
 
 
 class PoolDatasetUnlock(BaseModel):
@@ -517,6 +534,7 @@ class PoolDatasetCompressionChoicesResult(BaseModel):
 
 class PoolDatasetCreateArgs(BaseModel):
     data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume
+    """Configuration data for creating a new ZFS dataset."""
 
 
 class PoolDatasetCreateResult(BaseModel):
@@ -526,7 +544,9 @@ class PoolDatasetCreateResult(BaseModel):
 
 class PoolDatasetDeleteArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to delete."""
     options: PoolDatasetDeleteOptions = Field(default_factory=PoolDatasetDeleteOptions)
+    """Options controlling the deletion behavior such as recursive and force flags."""
 
 
 class PoolDatasetDeleteResult(BaseModel):

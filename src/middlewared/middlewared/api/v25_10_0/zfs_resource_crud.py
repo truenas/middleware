@@ -5,7 +5,7 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, NotRequired, UniqueList
 
 __all__ = ("ZFSResourceEntry", "ZFSResourceQueryArgs", "ZFSResourceQueryResult")
-READ_ONLY = "(READ-ONLY):"
+
 PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIVED"]
 
 
@@ -59,13 +59,13 @@ class ZFSPropertiesEntry(BaseModel):
     exec: PropertyValue = NotRequired
     """Controls whether programs can be executed from filesystem."""
     filesystem_count: PropertyValue = NotRequired
-    f"""{READ_ONLY} count of child filesystems."""
+    """(READ-ONLY): Count of child filesystems."""
     filesystem_limit: PropertyValue = NotRequired
     """Maximum number of child filesystems allowed."""
     longname: PropertyValue = NotRequired
     """Controls support for long filenames."""
     mounted: PropertyValue = NotRequired
-    f"""{READ_ONLY} property indicating if filesystem is mounted."""
+    """(READ-ONLY): Property indicating if filesystem is mounted."""
     mountpoint: PropertyValue = NotRequired
     """Controls mount point used for this filesystem."""
     nbmand: PropertyValue = NotRequired
@@ -97,7 +97,7 @@ class ZFSPropertiesEntry(BaseModel):
     utf8only: PropertyValue = NotRequired
     """Controls whether only UTF-8 filenames are allowed."""
     version: PropertyValue = NotRequired
-    f"""{READ_ONLY} filesystem version number."""
+    """(READ-ONLY): Filesystem version number."""
     volmode: PropertyValue = NotRequired
     """Controls volume mode (default, geom, dev, none)."""
     vscan: PropertyValue = NotRequired
@@ -113,15 +113,15 @@ class ZFSPropertiesEntry(BaseModel):
     compression: PropertyValue = NotRequired
     """Controls compression algorithm used for this dataset."""
     compressratio: PropertyValue = NotRequired
-    f"""{READ_ONLY} property showing achieved compression ratio."""
+    """(READ-ONLY): Property showing achieved compression ratio."""
     context: PropertyValue = NotRequired
     """SELinux security context for the dataset."""
     copies: PropertyValue = NotRequired
     """Controls number of copies of data stored (1, 2, or 3)."""
     createtxg: PropertyValue = NotRequired
-    f"""{READ_ONLY} transaction group when dataset was created."""
+    """(READ-ONLY): Transaction group when dataset was created."""
     creation: PropertyValue = NotRequired
-    f"""{READ_ONLY} timestamp when dataset was created."""
+    """(READ-ONLY): Timestamp when dataset was created."""
     dedup: PropertyValue = NotRequired
     """Controls data deduplication for the dataset."""
     defcontext: PropertyValue = NotRequired
@@ -129,29 +129,29 @@ class ZFSPropertiesEntry(BaseModel):
     encryption: PropertyValue = NotRequired
     """Controls encryption cipher suite for the dataset."""
     encryptionroot: PropertyValue = NotRequired
-    f"""{READ_ONLY} property showing encryption root dataset."""
+    """(READ-ONLY): Property showing encryption root dataset."""
     fscontext: PropertyValue = NotRequired
     """SELinux filesystem security context."""
     guid: PropertyValue = NotRequired
-    f"""{READ_ONLY} globally unique identifier for the dataset."""
+    """(READ-ONLY): Globally unique identifier for the dataset."""
     keyformat: PropertyValue = NotRequired
     """Encryption key format (raw, hex, or passphrase)."""
     keylocation: PropertyValue = NotRequired
     """Location where encryption key is stored."""
     keystatus: PropertyValue = NotRequired
-    f"""{READ_ONLY} encryption key status (available/unavailable)."""
+    """(READ-ONLY): Encryption key status (available/unavailable)."""
     logbias: PropertyValue = NotRequired
     """Controls ZIL write behavior (latency or throughput)."""
     logicalreferenced: PropertyValue = NotRequired
-    f"""{READ_ONLY} logical space referenced by dataset."""
+    """(READ-ONLY): Logical space referenced by dataset."""
     logicalused: PropertyValue = NotRequired
-    f"""{READ_ONLY} logical space used by dataset and descendants."""
+    """(READ-ONLY): Logical space used by dataset and descendants."""
     mlslabel: PropertyValue = NotRequired
     """Multi-level security label for the dataset."""
     objsetid: PropertyValue = NotRequired
-    f"""{READ_ONLY} object set identifier for the dataset."""
+    """(READ-ONLY): Object set identifier for the dataset."""
     origin: PropertyValue = NotRequired
-    f"""{READ_ONLY} snapshot this dataset was cloned from."""
+    """(READ-ONLY): Snapshot this dataset was cloned from."""
     pbkdf2iters: PropertyValue = NotRequired
     """Number of PBKDF2 iterations for key derivation."""
     prefetch: PropertyValue = NotRequired
@@ -161,15 +161,15 @@ class ZFSPropertiesEntry(BaseModel):
     readonly: PropertyValue = NotRequired
     """Controls whether dataset can be modified."""
     receive_resume_token: PropertyValue = NotRequired
-    f"""{READ_ONLY} token for resuming interrupted zfs receive."""
+    """(READ-ONLY): Token for resuming interrupted zfs receive."""
     redact_snaps: PropertyValue = NotRequired
-    f"""{READ_ONLY} list of redaction snapshots."""
+    """(READ-ONLY): List of redaction snapshots."""
     redundant_metadata: PropertyValue = NotRequired
     """Controls redundant metadata storage (all or most)."""
     refcompressratio: PropertyValue = NotRequired
-    f"""{READ_ONLY} compression ratio for referenced data."""
+    """(READ-ONLY): Compression ratio for referenced data."""
     referenced: PropertyValue = NotRequired
-    f"""{READ_ONLY} space referenced by this dataset."""
+    """(READ-ONLY): Space referenced by this dataset."""
     reservation: PropertyValue = NotRequired
     """Minimum space reserved for dataset and descendants."""
     rootcontext: PropertyValue = NotRequired
@@ -179,27 +179,27 @@ class ZFSPropertiesEntry(BaseModel):
     snapdev: PropertyValue = NotRequired
     """Controls snapshot device visibility (hidden or visible)."""
     snapshot_count: PropertyValue = NotRequired
-    f"""{READ_ONLY} count of snapshots in this dataset."""
+    """(READ-ONLY): Count of snapshots in this dataset."""
     snapshot_limit: PropertyValue = NotRequired
     """Maximum number of snapshots allowed."""
     snapshots_changed: PropertyValue = NotRequired
-    f"""{READ_ONLY} property indicating snapshot changes."""
+    """(READ-ONLY): Property indicating snapshot changes."""
     sync: PropertyValue = NotRequired
     """Controls synchronous write behavior (standard, always, disabled)."""
     type: PropertyValue | None = NotRequired
-    f"""{READ_ONLY} type of ZFS dataset (filesystem, volume, etc)."""
+    """(READ-ONLY): Type of ZFS dataset (filesystem, volume, etc)."""
     used: PropertyValue = NotRequired
-    f"""{READ_ONLY} space used by dataset and descendants."""
+    """(READ-ONLY): Space used by dataset and descendants."""
     usedbychildren: PropertyValue = NotRequired
-    f"""{READ_ONLY} space used by child datasets."""
+    """(READ-ONLY): Space used by child datasets."""
     usedbydataset: PropertyValue = NotRequired
-    f"""{READ_ONLY} space used by this dataset itself."""
+    """(READ-ONLY): Space used by this dataset itself."""
     usedbyrefreservation: PropertyValue = NotRequired
-    f"""{READ_ONLY} space used by refreservation."""
+    """(READ-ONLY): Space used by refreservation."""
     usedbysnapshots: PropertyValue = NotRequired
-    f"""{READ_ONLY} space used by snapshots."""
+    """(READ-ONLY): Space used by snapshots."""
     written: PropertyValue = NotRequired
-    f"""{READ_ONLY} space referenced since previous snapshot."""
+    """(READ-ONLY): Space referenced since previous snapshot."""
     refreservation: PropertyValue = NotRequired
     """Minimum space reserved for volume itself."""
     volblocksize: PropertyValue = NotRequired
@@ -276,6 +276,7 @@ class ZFSResourceQuery(BaseModel):
 
 class ZFSResourceQueryArgs(BaseModel):
     data: ZFSResourceQuery = ZFSResourceQuery()
+    """Query parameters for retrieving ZFS resource information."""
 
 
 class ZFSResourceQueryResult(BaseModel):

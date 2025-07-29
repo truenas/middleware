@@ -237,6 +237,7 @@ class AppStopArgs(BaseModel):
 
 class AppStopResult(BaseModel):
     result: None
+    """Returns `null` when the application is successfully stopped."""
 
 
 class AppStartArgs(BaseModel):
@@ -246,6 +247,7 @@ class AppStartArgs(BaseModel):
 
 class AppStartResult(BaseModel):
     result: None
+    """Returns `null` when the application is successfully started."""
 
 
 class AppRedeployArgs(BaseModel):
@@ -282,6 +284,7 @@ class AppPullImagesArgs(BaseModel):
 
 class AppPullImagesResult(BaseModel):
     result: None
+    """Returns `null` when the application images are successfully pulled."""
 
 
 class AppContainerIDOptions(BaseModel):

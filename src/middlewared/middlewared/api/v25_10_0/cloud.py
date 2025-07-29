@@ -15,7 +15,9 @@ class CloudCron(CronModel):
 
 class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     bucket: NonEmptyString
+    """Name of the cloud storage bucket or container."""
     folder: str
+    """Path within the cloud storage bucket to use as the root directory for operations."""
     fast_list: bool = False
     """Valid only for some providers. Use fewer transactions in exchange for more RAM. This may also speed up or slow \
     down your transfer. See https://rclone.org/docs/#fast-list for more details."""
@@ -47,6 +49,7 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
 
 class BaseCloudEntry(BaseModel):
     id: int
+    """Unique identifier for this cloud storage configuration."""
     description: str = ""
     """The name of the task to display in the UI."""
     path: str

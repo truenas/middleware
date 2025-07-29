@@ -231,8 +231,11 @@ class PoolCreateTopology(BaseModel):
     data: list[PoolCreateTopologyDataVdev] = Field(min_length=1)
     """All vdevs must be of the same `type`."""
     special: list[PoolCreateTopologySpecialVdev] = []
+    """Array of special vdev configurations for metadata storage."""
     dedup: list[PoolCreateTopologyDedupVdev] = []
+    """Array of deduplication table vdev configurations."""
     cache: list[PoolCreateTopologyCacheVdev] = []
+    """Array of L2ARC cache vdev configurations."""
     log: list[PoolCreateTopologyLogVdev] = []
     """Array of ZFS Intent Log (ZIL) vdev configurations."""
     spares: list[str] = []
@@ -499,7 +502,9 @@ class PoolIsUpgradedResult(BaseModel):
 
 class PoolOfflineArgs(BaseModel):
     id: int
+    """ID of the pool to modify."""
     options: PoolLabel
+    """Disk identifier to take offline."""
 
 
 class PoolOfflineResult(BaseModel):
@@ -508,37 +513,48 @@ class PoolOfflineResult(BaseModel):
 
 class PoolOnlineArgs(BaseModel):
     id: int
+    """ID of the pool to bring a disk online in."""
     options: PoolLabel
+    """Disk identifier to bring online."""
 
 
 class PoolOnlineResult(BaseModel):
     result: Literal[True]
+    """Indicates successful disk online operation."""
 
 
 class PoolProcessesArgs(BaseModel):
     id: int
+    """ID of the pool to get processes for."""
 
 
 class PoolProcessesResult(BaseModel):
     result: list[PoolProcess]
+    """Array of processes currently using the pool."""
 
 
 class PoolRemoveArgs(BaseModel):
     id: int
+    """ID of the pool to remove a disk from."""
     options: PoolLabel
+    """Disk identifier to remove from the pool."""
 
 
 class PoolRemoveResult(BaseModel):
     result: None
+    """Returns `null` on successful disk removal."""
 
 
 class PoolReplaceArgs(BaseModel):
     id: int
+    """ID of the pool to replace a disk in."""
     options: PoolReplace
+    """Configuration for the disk replacement operation."""
 
 
 class PoolReplaceResult(BaseModel):
     result: Literal[True]
+    """Indicates successful disk replacement initiation."""
 
 
 class PoolScrubArgs(BaseModel):

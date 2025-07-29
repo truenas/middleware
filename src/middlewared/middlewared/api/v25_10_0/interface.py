@@ -38,6 +38,7 @@ class InterfaceEntryAlias(BaseModel):
 class InterfaceEntryStateAlias(InterfaceEntryAlias):
     netmask: str | int = NotRequired
     broadcast: str = NotRequired
+    """Broadcast address for the network interface."""
 
 
 class InterfaceEntryStatePort(BaseModel):

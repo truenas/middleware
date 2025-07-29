@@ -177,6 +177,7 @@ class UpdateFileResult(BaseModel):
 
 class UpdateManualOptions(BaseModel):
     dataset_name: str | None = None
+    """Name of the ZFS dataset to use for the new boot environment. `null` for automatic naming."""
     resume: bool = False
     """Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning \
     that an upgrade can be performed with a warning and that warning is accepted."""

@@ -67,6 +67,7 @@ class SMBShareAclEntryWhoId(BaseModel):
     If the type is `USER`, the `xid` value refers to a Unix UID.
     If the type is `GROUP`, the `xid` value refers to a Unix GID."""
     xid: int = Field(alias='id', ge=0, le=2147483647)
+    """Unix user ID (UID) or group ID (GID) depending on the `id_type` field."""
 
 
 class SMBShareAclEntry(BaseModel):
@@ -132,6 +133,7 @@ SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
 class SmbServiceEntry(BaseModel):
     """ TrueNAS SMB server configuration. """
     id: int
+    """Unique identifier for the SMB service configuration."""
     netbiosname: NetbiosName
     """ The NetBIOS name of this server. """
     netbiosalias: list[NetbiosName]
@@ -299,6 +301,8 @@ class LegacyOpt(BaseModel):
 
     WARNING: Do not use this feature instead of backups or ZFS snapshots. """
     path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%U"])
+    """Path suffix template for dynamic path generation. Uses SMB variable substitution patterns like `%D` (domain) \
+    and `%U` (username)."""
     hostsallow: list[str] = Field(default=[], examples=[
         ['192.168.0.200', '150.203.'],
         ['150.203.15.0/255.255.255.0'],
@@ -499,6 +503,7 @@ SmbShareOptions = Annotated[
 class SmbShareEntry(BaseModel):
     """ SMB share entry on the TrueNAS server. """
     id: int
+    """Unique identifier for this SMB share."""
     purpose: Literal[
         SMBSharePurpose.DEFAULT_SHARE,
         SMBSharePurpose.LEGACY_SHARE,
@@ -586,6 +591,7 @@ class SmbShareEntry(BaseModel):
         {'enable': True, 'watch_list': ['interns'], 'ignore_list': []},
         {'enable': True, 'watch_list': [], 'ignore_list': ['automation']}
     ])
+    """Audit configuration for monitoring SMB share access and operations."""
     options: SmbShareOptions | None = Field(default=None, examples=[
         {'auto_snapshot': True},
         {'auto_quota': 100},

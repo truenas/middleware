@@ -67,6 +67,7 @@ class QueryOptions(BaseModel):
 class QueryArgs(BaseModel):
     filters: QueryFilters = []
     options: QueryOptions = QueryOptions()
+    """Query options including pagination, ordering, and additional parameters."""
 
 
 class GenericQueryResult(BaseModel):
@@ -101,7 +102,9 @@ class CronModel(BaseModel):
 
 class TimeCronModel(CronModel):
     begin: TimeString = "00:00"
+    """Start time for the time window in HH:MM format."""
     end: TimeString = "23:59"
+    """End time for the time window in HH:MM format."""
 
     @model_validator(mode="after")
     def validate_time(self):

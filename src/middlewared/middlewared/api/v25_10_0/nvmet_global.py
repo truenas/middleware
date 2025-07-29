@@ -14,6 +14,7 @@ __all__ = [
 
 class NVMetGlobalEntry(BaseModel):
     id: int
+    """Unique identifier for the NVMe-oF global configuration."""
     basenqn: str
     """
     NQN to be used as the prefix on the creation of a subsystem, if a subnqn is not supplied to `nvmet.subsys.create`.
@@ -54,6 +55,7 @@ class NVMetGlobalUpdateArgs(NVMetGlobalEntry, metaclass=ForUpdateMetaclass):
 
 class NVMetGlobalUpdateResult(BaseModel):
     result: NVMetGlobalEntry
+    """The updated NVMe-oF global configuration."""
 
 
 class NVMetGlobalAnaEnabledArgs(BaseModel):

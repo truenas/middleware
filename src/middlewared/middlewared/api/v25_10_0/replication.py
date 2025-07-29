@@ -166,6 +166,7 @@ class ReplicationEntry(BaseModel):
     retries: int = Field(default=5, ge=1)
     """Number of retries before considering replication failed."""
     logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] | None = None
+    """Log level for replication task execution. Controls verbosity of replication logs."""
     enabled: bool = True
     """Whether this replication task is enabled."""
     state: dict

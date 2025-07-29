@@ -85,10 +85,12 @@ class NVMetSubsysCreate(NVMetSubsysEntry):
 
 class NVMetSubsysCreateArgs(BaseModel):
     nvmet_subsys_create: NVMetSubsysCreate
+    """Configuration data for creating a new NVMe-oF subsystem."""
 
 
 class NVMetSubsysCreateResult(BaseModel):
     result: NVMetSubsysEntry
+    """The newly created NVMe-oF subsystem configuration."""
 
 
 class NVMetSubsysUpdate(NVMetSubsysCreate, metaclass=ForUpdateMetaclass):
@@ -99,10 +101,12 @@ class NVMetSubsysUpdateArgs(BaseModel):
     id: int
     """ID of the subsystem to update."""
     nvmet_subsys_update: NVMetSubsysUpdate
+    """Updated configuration data for the NVMe-oF subsystem."""
 
 
 class NVMetSubsysUpdateResult(BaseModel):
     result: NVMetSubsysEntry
+    """The updated NVMe-oF subsystem configuration."""
 
 
 class NVMetSubsysDeleteOptions(BaseModel):
@@ -114,6 +118,7 @@ class NVMetSubsysDeleteArgs(BaseModel):
     id: int
     """ID of the subsystem to delete."""
     options: NVMetSubsysDeleteOptions = Field(default_factory=NVMetSubsysDeleteOptions)
+    """Options for subsystem deletion behavior."""
 
 
 class NVMetSubsysDeleteResult(BaseModel):

@@ -226,6 +226,7 @@ class FilesystemStatData(BaseModel):
     realpath: NonEmptyString
     """ Canonical path of the entry, eliminating any symbolic links. """
     type: FileType
+    """Type of filesystem entry."""
     size: int
     """ Size in bytes of a plain file. This corresonds with stx_size. """
     allocation_size: int
@@ -312,8 +313,11 @@ class FilesystemStatfsData(BaseModel):
     avail_blocks: int
     """ Number of available blocks as reported by statvfs. """
     total_blocks_str: NonEmptyString
+    """Total filesystem size in blocks as a human-readable string."""
     free_blocks_str: NonEmptyString
+    """Free blocks available as a human-readable string."""
     avail_blocks_str: NonEmptyString
+    """Available blocks for unprivileged users as a human-readable string."""
     files: int
     """ Number of inodes in use as reported by statvfs. """
     free_files: int
@@ -321,11 +325,17 @@ class FilesystemStatfsData(BaseModel):
     name_max: int
     """ Maximum filename length as reported by statvfs. """
     total_bytes: int
+    """Total filesystem size in bytes."""
     free_bytes: int
+    """Free space available in bytes."""
     avail_bytes: int
+    """Available space for unprivileged users in bytes."""
     total_bytes_str: NonEmptyString
+    """Total filesystem size in bytes as a human-readable string."""
     free_bytes_str: NonEmptyString
+    """Free space available in bytes as a human-readable string."""
     avail_bytes_str: NonEmptyString
+    """Available space for unprivileged users in bytes as a human-readable string."""
 
 
 class FilesystemStatfsArgs(BaseModel):

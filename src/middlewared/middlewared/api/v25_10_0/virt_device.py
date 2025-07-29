@@ -39,6 +39,7 @@ class Device(BaseModel):
 
 class Disk(Device):
     dev_type: Literal['DISK']
+    """Device type identifier for virtual disk devices."""
     source: NonEmptyString | None = None
     """
     For CONTAINER instances, this would be a valid pool path. For VM instances, it \

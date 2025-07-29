@@ -72,6 +72,7 @@ class AuditQuery(BaseModel):
     services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = ['MIDDLEWARE', 'SUDO']
     """Array of services to include in the audit query."""
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
+    """Array of filters to apply to the audit query results."""
     query_options: QueryOptions = Field(alias='query-options', default_factory=QueryOptions)
     """If the query-option `force_sql_filters` is true, then the query will be converted into a more efficient form \
     for better performance. This will not be possible if filters use keys within `svc_data` and `event_data`."""

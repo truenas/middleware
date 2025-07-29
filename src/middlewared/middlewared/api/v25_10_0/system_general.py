@@ -27,6 +27,7 @@ __all__ = [
 
 class SystemGeneralEntry(BaseModel):
     id: int
+    """Unique identifier for the system general configuration."""
     ui_certificate: Secret[dict | None]  # FIXME: Make reference to the certificate model when we move it to new API
     """Used to enable HTTPS access to the system. If `ui_certificate` is not configured on boot, it is automatically \
     created by the system."""
