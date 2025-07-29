@@ -46,7 +46,7 @@ class Alert(BaseModel):
     formatted: LongString | None
     """Formatted alert message with HTML."""
     one_shot: bool
-    """Whether this alert fires only once and does not repeat."""
+    """Whether this alert will not be dismissed automatically."""
 
 
 class AlertCategoryClass(BaseModel):

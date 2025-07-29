@@ -90,7 +90,7 @@ class ReplicationEntry(BaseModel):
     properties_override: dict[str, str] = {}
     """Object mapping dataset property names to override values during replication."""
     replicate: bool = False
-    """Whether to use ZFS replication streams for more efficient transfer."""
+    """Whether to use full ZFS replication."""
     encryption: bool = False
     """Whether to enable encryption for the replicated datasets."""
     encryption_inherit: bool | None = None

@@ -17,7 +17,7 @@ __all__ = [
 
 class AllowListItem(BaseModel):
     method: HttpVerb
-    """HTTP method allowed for this API endpoint."""
+    """Method allowed for this API endpoint."""
     resource: NonEmptyString
     """API resource path or endpoint this permission applies to."""
 
