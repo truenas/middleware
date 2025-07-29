@@ -88,7 +88,8 @@ class FtpEntry(BaseModel):
     tls_opt_export_cert_data: bool
     """Whether to export client certificate data to environment variables."""
     tls_opt_no_empty_fragments: bool
-    """Whether to disable empty TLS record fragments to improve compatibility with some clients."""
+    """Whether to disable empty TLS record fragments to improve compatibility with some clients.  \
+    Disabling increases vulnerability to some attack vectors."""
     tls_opt_no_session_reuse_required: bool
     """Whether to disable the requirement for TLS session reuse."""
     tls_opt_stdenvvars: bool
