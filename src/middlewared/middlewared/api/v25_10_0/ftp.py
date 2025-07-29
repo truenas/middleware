@@ -65,7 +65,7 @@ class FtpEntry(BaseModel):
     localuserbw: Annotated[int, Field(ge=0)]
     """Maximum upload bandwidth in KiB/s for local users. 0 means unlimited."""
     localuserdlbw: Annotated[int, Field(ge=0)]
-    """Maximum download bandwidth in bytes per second for local users. 0 means unlimited."""
+    """Maximum download bandwidth in KiB/s for local users. 0 means unlimited."""
     anonuserbw: Annotated[int, Field(ge=0)]
     """Maximum upload bandwidth in bytes per second for anonymous users. 0 means unlimited."""
     anonuserdlbw: Annotated[int, Field(ge=0)]
