@@ -60,7 +60,7 @@ class ReplicationEntry(BaseModel):
     sudo: bool = False
     """`SSH` and `SSH+NETCAT` transports should use sudo (which is expected to be passwordless) to run `zfs` \
     command on the remote machine."""
-    source_datasets: list[str] = Field(min_length=1)
+    source_datasets: list[str] = Field(min_items=1)
     """List of datasets to replicate snapshots from."""
     target_dataset: str
     """Dataset to put snapshots into."""
@@ -232,7 +232,7 @@ class ReplicationListNamingSchemasResult(BaseModel):
 
 @single_argument_args("count_eligible_manual_snapshots")
 class ReplicationCountEligibleManualSnapshotsArgs(BaseModel):
-    datasets: list[str] = Field(min_length=1)
+    datasets: list[str] = Field(min_items=1)
     naming_schema: list[SnapshotNameSchema] = []
     name_regex: NonEmptyString | None = None
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"]
@@ -247,7 +247,7 @@ class ReplicationCountEligibleManualSnapshotsResult(BaseModel):
 
 class ReplicationTargetUnmatchedSnapshotsArgs(BaseModel):
     direction: Literal["PUSH", "PULL"]
-    source_datasets: list[str] = Field(min_length=1)
+    source_datasets: list[str] = Field(min_items=1)
     target_dataset: str
     transport: Literal["SSH", "SSH+NETCAT", "LOCAL"]
     ssh_credentials: int | None = None

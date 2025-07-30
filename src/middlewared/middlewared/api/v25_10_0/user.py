@@ -267,17 +267,14 @@ class UserShellChoicesResult(BaseModel):
     ])
 
 
-class UserGetUserObjOptions(BaseModel):
+@single_argument_args("get_user_obj")
+class UserGetUserObjArgs(BaseModel):
     username: str | None = None
     uid: int | None = None
     get_groups: bool = False
     """Retrieve group list for the specified user."""
     sid_info: bool = False
     """Retrieve SID and domain information for the user."""
-
-
-class UserGetUserObjArgs(BaseModel):
-    get_user_obj: UserGetUserObjOptions = UserGetUserObjOptions()
 
 
 class UserGetUserObjResult(BaseModel):
