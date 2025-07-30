@@ -114,7 +114,7 @@ class AppEntry(BaseModel):
     custom_app: bool
     """Whether this is a custom application (`true`) or from a catalog (`false`)."""
     migrated: bool
-    """Whether this application has been migrated from a previous version or installation."""
+    """Whether this application has been migrated from kubernetes."""
     human_version: NonEmptyString
     """Human-readable version string for display purposes."""
     version: NonEmptyString
@@ -130,7 +130,7 @@ class AppEntry(BaseModel):
     version_details: dict | None = None
     """Detailed version information including changelog and upgrade notes. `null` if not available."""
     config: dict | None = None
-    """Current configuration values for the application. `null` if configuration is not available."""
+    """Current configuration values for the application. `null` if configuration is not requested."""
 
 
 @single_argument_args('app_create')
