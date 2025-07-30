@@ -36,7 +36,7 @@ class CertificateEcCurveChoicesArgs(BaseModel):
 
 class CertificateEcCurveChoicesResult(BaseModel):
     result: dict[str, str]
-    """Object mapping elliptic curve identifiers to their descriptions."""
+    """Object mapping elliptic curve identifiers"""
 
 
 class CertificateExtendedKeyUsageChoicesArgs(BaseModel):
@@ -45,4 +45,4 @@ class CertificateExtendedKeyUsageChoicesArgs(BaseModel):
 
 class CertificateExtendedKeyUsageChoicesResult(BaseModel):
     result: dict[str, str]
-    """Object mapping extended key usage OIDs to their descriptions."""
+    """Object mapping extended key usage OIDs"""
