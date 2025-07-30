@@ -127,7 +127,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         db_payload = {
             'enabled': data['enabled'],
             'ips': data['ips'],
-            'interfaces': data.get('interfaces', []),
+            'interfaces': data['interfaces'],
             'use_all_interfaces': data['use_all_interfaces'],
         }
 
