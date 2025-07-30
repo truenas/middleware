@@ -14,6 +14,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
 from .mixin import TNCAPIMixin
+from .private_models import TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult
 from .utils import CLAIM_TOKEN_CACHE_KEY, get_unset_payload, TNC_IPS_CACHE_KEY
 
 
@@ -111,13 +112,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'other than disabled or completely configured'
             )
 
-        if data['enabled'] and old_config['enabled']:
-            for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url'):
-                if data[k] != old_config[k]:
-                    verrors.add(
-                        f'tn_connect_update.{k}', 'This field cannot be changed when TrueNAS Connect is enabled'
-                    )
-
         verrors.check()
 
     @api_method(TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult)
@@ -133,9 +127,9 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         db_payload = {
             'enabled': data['enabled'],
             'ips': data['ips'],
-            'interfaces': data.get('interfaces', []),
+            'interfaces': data['interfaces'],
             'use_all_interfaces': data['use_all_interfaces'],
-        } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')}
+        }
 
         # Extract IPs from interfaces using ip_in_use method
         # If use_all_interfaces is True, get IPs from all interfaces
@@ -180,6 +174,28 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=new_config)
 
         return new_config
+
+    @api_method(TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult, private=True)
+    async def update_environment(self, data):
+        config = await self.middleware.call('tn_connect.config')
+        verrors = ValidationErrors()
+        if config['enabled']:
+            for k in filter(
+                lambda k: k in data,
+                ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url', 'heartbeat_url')
+            ):
+                if data[k] != config[k]:
+                    verrors.add(
+                        f'tn_connect_update_environment.{k}',
+                        'This field cannot be changed when TrueNAS Connect is enabled'
+                    )
+
+        verrors.check()
+
+        # Update the config with the new data
+        await self.middleware.call('datastore.update', self._config.datastore, config['id'], data)
+
+        return await self.middleware.call('tn_connect.config')
 
     @private
     async def get_interface_ips(self, interfaces):

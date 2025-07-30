@@ -55,14 +55,6 @@ class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     """Array of network interface names that TrueNAS Connect should use."""
     use_all_interfaces: bool
     """Whether to automatically use all available network interfaces."""
-    account_service_base_url: HttpsOnlyURL
-    """Base URL for the TrueNAS Connect account service API."""
-    leca_service_base_url: HttpsOnlyURL
-    """Base URL for the Let's Encrypt Certificate Authority service."""
-    tnc_base_url: HttpsOnlyURL
-    """Base URL for the TrueNAS Connect service."""
-    heartbeat_url: HttpsOnlyURL
-    """URL endpoint for sending heartbeat signals to maintain connection status."""
 
 
 class TrueNASConnectUpdateResult(BaseModel):
