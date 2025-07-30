@@ -6,10 +6,10 @@ from middlewared.plugins.update_.status import UpdateService
 from middlewared.plugins.update_.version import UpdateService as VersionUpdateService
 from middlewared.pytest.unit.middleware import Middleware
 
-CURRENT_CONFIG = {"profile": "CONSERVATIVE"}
+CURRENT_CONFIG = {"profile": "MISSION_CRITICAL"}
 CURRENT_VERSION = "25.04.1"
 CURRENT_TRAIN_NAME = "TrueNAS-SCALE-Fangtooth"
-CURRENT_VERSION_PROFILE = "CONSERVATIVE"
+CURRENT_VERSION_PROFILE = "MISSION_CRITICAL"
 NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
 
 
@@ -20,7 +20,7 @@ NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
         {
             "TrueNAS-SCALE-Fangtooth": {
                 "25.04.1": {"profile": "MISSION_CRITICAL"},
-                "25.04.2": {"profile": "CONSERVATIVE"},
+                "25.04.2": {"profile": "MISSION_CRITICAL"},
             },
             "TrueNAS-SCALE-Goldfish": {
                 "25.10.0": {"profile": "GENERAL"},
@@ -32,13 +32,13 @@ NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
             "status": {
                 "current_version": {
                     "train": "TrueNAS-SCALE-Fangtooth",
-                    "profile": "CONSERVATIVE",
+                    "profile": "MISSION_CRITICAL",
                     "matches_profile": True,
                 },
                 "new_version": {
                     "train": "TrueNAS-SCALE-Fangtooth",
                     "version": "25.04.2",
-                    "profile": "CONSERVATIVE",
+                    "profile": "MISSION_CRITICAL",
                 },
             },
             "update_download_progress": None,
@@ -49,10 +49,10 @@ NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
         {
             "TrueNAS-SCALE-Fangtooth": {
                 "25.04.1": {"profile": "MISSION_CRITICAL"},
-                "25.04.2": {"profile": "CONSERVATIVE"},
+                "25.04.2": {"profile": "MISSION_CRITICAL"},
             },
             "TrueNAS-SCALE-Goldfish": {
-                "25.10.0": {"profile": "CONSERVATIVE"},
+                "25.10.0": {"profile": "MISSION_CRITICAL"},
                 "25.10.1": {"profile": "GENERAL"},
             },
         },
@@ -62,13 +62,13 @@ NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
             "status": {
                 "current_version": {
                     "train": "TrueNAS-SCALE-Fangtooth",
-                    "profile": "CONSERVATIVE",
+                    "profile": "MISSION_CRITICAL",
                     "matches_profile": True,
                 },
                 "new_version": {
                     "train": "TrueNAS-SCALE-Goldfish",
                     "version": "25.10.0",
-                    "profile": "CONSERVATIVE",
+                    "profile": "MISSION_CRITICAL",
                 },
             },
             "update_download_progress": None,
@@ -91,7 +91,7 @@ NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
             "status": {
                 "current_version": {
                     "train": "TrueNAS-SCALE-Fangtooth",
-                    "profile": "CONSERVATIVE",
+                    "profile": "MISSION_CRITICAL",
                     "matches_profile": True,
                 },
                 "new_version": None,
@@ -103,7 +103,7 @@ NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
     (
         {
             "TrueNAS-SCALE-Fangtooth": {
-                "25.04.0": {"profile": "CONSERVATIVE"},
+                "25.04.0": {"profile": "MISSION_CRITICAL"},
             },
             "TrueNAS-SCALE-Goldfish": {
                 "25.10.0": {"profile": "GENERAL"},
