@@ -319,11 +319,18 @@ class AclTemplateFormatOptions(BaseModel):
     resolve_names: bool = False
 
 
+class ACLTemplateByPathQueryOptions(QueryOptions):
+    extra: Excluded = excluded_field()
+    select: Excluded = excluded_field()
+    count: Excluded = excluded_field()
+    get: Excluded = excluded_field()
+
+
 @single_argument_args('filesystem_acl')
 class ACLTemplateByPathArgs(BaseModel):
     path: str = ""
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
-    query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
+    query_options: ACLTemplateByPathQueryOptions = Field(alias='query-options', default=ACLTemplateByPathQueryOptions())
     format_options: AclTemplateFormatOptions = Field(alias='format-options', default=AclTemplateFormatOptions())
 
 
