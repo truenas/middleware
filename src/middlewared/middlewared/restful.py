@@ -12,7 +12,10 @@ from aiohttp import web
 
 from truenas_api_client import json
 
-from .auth import ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials
+from .auth import (
+    ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
+    dump_credentials
+)
 from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
@@ -565,15 +568,17 @@ class Resource(object):
                                                                        method.upper(), resource)
                     except web.HTTPException as e:
                         credentials['credentials_data'].pop('password', None)
+                        credentials['credentials_data'].pop('api_key', None)
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': credentials,
                             'error': e.text,
                         }, False)
                         raise
+
                     app = create_application(req, authenticated_credentials)
                     credentials['credentials_data'].pop('password', None)
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                        'credentials': credentials,
+                        'credentials': dump_credentials(authenticated_credentials),
                         'error': None,
                     }, True)
                 if auth_required:
