@@ -250,12 +250,18 @@ def single_argument_args(name: str):
     :return: a model class that consists of unique `name` field that is represented by a class being decorated.
         Class name will be preserved.
     """
-    def wrapper(klass):
+    def wrapper(klass: type[BaseModel]) -> type[BaseModel]:
+        if any(field.is_required() for field in klass.model_fields.values()):
+            factory = None
+        else:
+            # All fields have defaults so we don't have to require the single argument
+            factory = klass
+
         model = create_model(
             klass.__name__,
             __base__=(BaseModel,),
             __module__=klass.__module__,
-            **{name: Annotated[klass, Field(description=f"{klass.__name__} parameters.")]},
+            **{name: Annotated[klass, Field(default_factory=factory, description=f"{klass.__name__} parameters.")]},
         )
         model.from_previous = klass.from_previous
         model.to_previous = klass.to_previous
