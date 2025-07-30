@@ -424,9 +424,6 @@ class SMBService(Service):
         4) flush various caches if required.
         """
         entries = []
-        if (status := self.middleware.call_sync('failover.status')) not in ('SINGLE', 'MASTER'):
-            self.middleware.logger.debug('%s: skipping groupmap sync due to failover status', status)
-            return
 
         if not bypass_sentinel_check and not self.middleware.call_sync('smb.is_configured'):
             raise CallError(

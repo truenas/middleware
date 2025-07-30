@@ -14,18 +14,24 @@ __all__ = [
 
 class CatalogEntry(BaseModel):
     id: NonEmptyString
+    """Unique identifier for the catalog."""
     label: NonEmptyString = Field(pattern=r'^\w+[\w.-]*$')
+    """Catalog identifier. Must start with alphanumeric, then allow alphanumeric, periods, and hyphens."""
     preferred_trains: list[NonEmptyString]
+    """Array of preferred train names for this catalog."""
     location: NonEmptyString
+    """Git repository URL or local path to the catalog."""
 
 
 @single_argument_args('catalog_update')
 class CatalogUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     preferred_trains: list[NonEmptyString]
+    """Updated array of preferred train names for the catalog."""
 
 
 class CatalogUpdateResult(BaseModel):
     result: CatalogEntry
+    """The updated catalog configuration."""
 
 
 class CatalogTrainsArgs(BaseModel):
@@ -34,6 +40,7 @@ class CatalogTrainsArgs(BaseModel):
 
 class CatalogTrainsResult(BaseModel):
     result: list[NonEmptyString]
+    """Array of available train names in the catalog."""
 
 
 class CatalogSyncArgs(BaseModel):
@@ -42,12 +49,16 @@ class CatalogSyncArgs(BaseModel):
 
 class CatalogSyncResult(BaseModel):
     result: None
+    """Returns `null` when the catalog sync is successfully completed."""
 
 
 class Maintainer(BaseModel):
     name: str
+    """Name of the app maintainer."""
     email: str
+    """Email address of the app maintainer."""
     url: str | None
+    """Website URL of the app maintainer or `null`."""
 
 
 class CatalogAppInfo(BaseModel):
@@ -98,9 +109,13 @@ class CatalogAppInfo(BaseModel):
 @single_argument_args('catalog_apps_options')
 class CatalogAppsArgs(BaseModel):
     cache: bool = True
+    """Whether to use cached catalog data if available."""
     cache_only: bool = False
+    """Whether to only return cached data without fetching updates."""
     retrieve_all_trains: bool = True
+    """Whether to retrieve apps from all available trains."""
     trains: list[NonEmptyString] = Field(default_factory=list)
+    """Specific train names to retrieve apps from (empty array means all trains)."""
 
 
 class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):
@@ -109,16 +124,21 @@ class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):
 
 class CatalogAppsResult(BaseModel):
     result: dict[str, CatalogTrainInfo]
+    """Object mapping train names to their app information."""
 
 
 class CatalogAppVersionDetails(BaseModel):
     train: NonEmptyString
+    """Train name where the app version is located."""
 
 
 class CatalogGetAppDetailsArgs(BaseModel):
     app_name: NonEmptyString
+    """Name of the app to get details for."""
     app_version_details: CatalogAppVersionDetails
+    """Version and train information for the specific app."""
 
 
 class CatalogGetAppDetailsResult(BaseModel):
     result: CatalogAppInfo
+    """Detailed information about the requested app."""

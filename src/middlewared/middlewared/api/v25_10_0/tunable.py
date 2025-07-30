@@ -19,9 +19,13 @@ class TunableCreate(BaseModel):
     (e.g. `783091712`).
     """
     var: str
+    """Name or identifier of the system parameter to tune."""
     value: str
+    """Value to assign to the tunable parameter."""
     comment: str = ''
+    """Optional descriptive comment explaining the purpose of this tunable."""
     enabled: bool = True
+    """Whether this tunable is active and should be applied."""
     update_initramfs: bool = True
     """If `false`, then initramfs will not be updated after creating a ZFS tunable and you will need to run \
     `system boot update_initramfs` manually."""
@@ -29,13 +33,18 @@ class TunableCreate(BaseModel):
 
 class TunableEntry(TunableCreate):
     id: int
+    """Unique identifier for the tunable configuration."""
     orig_value: str
+    """Original system value of the parameter before this tunable was applied."""
 
 
 class TunableTunableTypeChoices(BaseModel):
     SYSCTL: Literal['SYSCTL']
+    """System control parameters that affect kernel behavior."""
     UDEV: Literal['UDEV']
+    """Device management rules for hardware detection and configuration."""
     ZFS: Literal['ZFS']
+    """ZFS filesystem kernel module parameters."""
 
 
 class TunableUpdate(TunableCreate, metaclass=ForUpdateMetaclass):
@@ -45,18 +54,22 @@ class TunableUpdate(TunableCreate, metaclass=ForUpdateMetaclass):
 
 class TunableCreateArgs(BaseModel):
     data: TunableCreate
+    """Configuration for creating a new system tunable."""
 
 
 class TunableCreateResult(BaseModel):
     result: TunableEntry
+    """The newly created tunable configuration."""
 
 
 class TunableDeleteArgs(BaseModel):
     id: int
+    """ID of the tunable to delete."""
 
 
 class TunableDeleteResult(BaseModel):
     result: None
+    """Returns `null` on successful tunable deletion."""
 
 
 class TunableTunableTypeChoicesArgs(BaseModel):
@@ -65,12 +78,16 @@ class TunableTunableTypeChoicesArgs(BaseModel):
 
 class TunableTunableTypeChoicesResult(BaseModel):
     result: TunableTunableTypeChoices
+    """Available tunable types with their identifiers."""
 
 
 class TunableUpdateArgs(BaseModel):
     id: int
+    """ID of the tunable to update."""
     data: TunableUpdate
+    """Updated configuration for the tunable."""
 
 
 class TunableUpdateResult(BaseModel):
     result: TunableEntry
+    """The updated tunable configuration."""

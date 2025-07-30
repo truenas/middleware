@@ -73,7 +73,7 @@ class PoolService(Service):
 
     @private
     async def expand_partition(self, part_data):
-        size = await self.middleware.call('disk.get_data_partition_size', part_data['disk'])
+        size = await self.middleware.call('disk.get_data_partition_size', part_data['disk'], part_data['start'])
         if size <= part_data['size']:
             return
 

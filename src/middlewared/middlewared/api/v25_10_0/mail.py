@@ -14,17 +14,22 @@ class MailEntryOAuth(BaseModel):
     provider: str
     """An email provider, e.g. "gmail", "outlook"."""
     client_id: str
+    """OAuth client ID provided by the email provider."""
     client_secret: str
+    """OAuth client secret provided by the email provider."""
     refresh_token: LongString
+    """OAuth refresh token used to obtain new access tokens for email authentication."""
 
 
 class MailEntry(BaseModel):
     fromemail: EmailString
     """The sending address that the mail server will use for sending emails."""
     fromname: str
+    """Display name that will appear as the sender name in outgoing emails."""
     outgoingserver: str
     """Hostname or IP address of the SMTP server used for sending emails."""
     port: int
+    """TCP port number for the SMTP server connection."""
     security: Literal["PLAIN", "SSL", "TLS"]
     """Type of encryption."""
     smtp: bool
@@ -34,7 +39,9 @@ class MailEntry(BaseModel):
     pass_: Secret[str | None] = Field(alias="pass")
     """SMTP password."""
     oauth: Secret[MailEntryOAuth | EmptyDict | None]
+    """OAuth configuration for email providers that support it or `null` for basic authentication."""
     id: int
+    """Unique identifier for this mail configuration."""
 
 
 class MailUpdate(MailEntry, metaclass=ForUpdateMetaclass):
@@ -43,6 +50,7 @@ class MailUpdate(MailEntry, metaclass=ForUpdateMetaclass):
 
 class MailSendMessage(BaseModel):
     subject: str
+    """Subject line for the email message."""
     text: LongString = NotRequired
     """Formatted to HTML using Markdown and rendered using default email template."""
     html: LongString | None = NotRequired
@@ -61,33 +69,31 @@ class MailSendMessage(BaseModel):
     """If set to true, an array compromised of the following object is required via HTTP upload:
 
     * headers *(array)*
-
         * name *(string)*
         * value *(string)*
         * params *(object)*
 
     * content *(string)*
 
-    .. code-block:: json
-
-        [
+    Example:
+    [
+      {
+        "headers": [
           {
-            "headers": [
-              {
-                "name": "Content-Transfer-Encoding",
-                "value": "base64"
-              },
-              {
-                "name": "Content-Type",
-                "value": "application/octet-stream",
-                "params": {
-                  "name": "test.txt"
-                }
-              }
-            ],
-            "content": "dGVzdAo="
+            "name": "Content-Transfer-Encoding",
+            "value": "base64"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/octet-stream",
+            "params": {
+              "name": "test.txt"
+            }
           }
-        ]
+        ],
+        "content": "dGVzdAo="
+      }
+    ]
     """
     queue: bool = True
     """Queue the message to be sent later if it fails to send."""
@@ -107,7 +113,9 @@ class MailUpdateResult(BaseModel):
 
 class MailSendArgs(BaseModel):
     message: MailSendMessage
+    """Email message content and configuration."""
     config: MailUpdate = Field(default_factory=MailUpdate)
+    """Optional mail configuration overrides for this message."""
 
 
 class MailSendResult(BaseModel):
@@ -121,3 +129,4 @@ class MailLocalAdministratorEmailArgs(BaseModel):
 
 class MailLocalAdministratorEmailResult(BaseModel):
     result: str | None
+    """Email address of the local administrator or `null` if not configured."""

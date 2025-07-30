@@ -16,6 +16,10 @@ from middlewared.test.integration.assets.account import test_user  # noqa
 
 pytest.register_assert_rewrite("middlewared.test")
 
+# When STIG is active we are not able to call test.notify_test_start
+# or test.notify_test_end
+STIG_ENABLED = False
+
 
 @pytest.fixture(autouse=True)
 def fail_fixture():
@@ -39,19 +43,22 @@ def pytest_sessionfinish(session, exitstatus):
 def log_test_name_to_middlewared_log(request):
     # Beware that this is executed after session/package/module/class fixtures
     # are applied so the logs will still not be exactly precise.
-    test_name = request.node.name
-    truenas_server.client.call("test.notify_test_start", test_name)
+    if not STIG_ENABLED:
+        test_name = request.node.name
+        truenas_server.client.call("test.notify_test_start", test_name)
     yield
 
     # That's why we also notify test ends. What happens between a test end
     # and the next test start is caused by session/package/module/class
     # fixtures setup code.
-    truenas_server.client.call("test.notify_test_end", test_name)
+    if not STIG_ENABLED:
+        truenas_server.client.call("test.notify_test_end", test_name)
 
 
 @pytest.fixture(autouse=True)
 def mock_role():
-    truenas_server.client.call("test.add_mock_role")
+    if not STIG_ENABLED:
+        truenas_server.client.call("test.add_mock_role")
     yield
 
 
@@ -88,3 +95,11 @@ def legacy_api_client(request):
 @pytest.fixture
 def query_method(request):
     yield request.param
+
+
+@pytest.fixture(scope="module")
+def module_stig_enabled():
+    global STIG_ENABLED
+    STIG_ENABLED = True
+    yield
+    STIG_ENABLED = False

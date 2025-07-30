@@ -15,7 +15,9 @@ class CloudCron(CronModel):
 
 class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     bucket: NonEmptyString
+    """Name of the cloud storage bucket or container."""
     folder: str
+    """Path within the cloud storage bucket to use as the root directory for operations."""
     fast_list: bool = False
     """Valid only for some providers. Use fewer transactions in exchange for more RAM. This may also speed up or slow \
     down your transfer. See https://rclone.org/docs/#fast-list for more details."""
@@ -25,7 +27,7 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     b2_chunk_size: int = Field(alias="chunk_size", default=96, ge=5)
     """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
     memory and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be \
-    split in no more than 10 000 chunks."""
+    split in no more than 10,000 chunks."""
     dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lt=150)
     """Valid only for DROPBOX provider. Upload chunk size in MiB. Must fit in memory. Note that these chunks are \
     buffered in memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business \
@@ -47,6 +49,7 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
 
 class BaseCloudEntry(BaseModel):
     id: int
+    """Unique identifier for this cloud storage configuration."""
     description: str = ""
     """The name of the task to display in the UI."""
     path: str

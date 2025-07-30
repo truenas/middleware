@@ -104,6 +104,7 @@ def test__get_pci_device_details(pcidevs, results):
                     'function': '0x0'
                 }
             ],
+            'critical': True,  # Host bridge is critical
         },
         '0000:00:04.0': {
             'number': 28,
@@ -115,6 +116,7 @@ def test__get_pci_device_details(pcidevs, results):
                     'function': '0x0'
                 }
             ],
+            'critical': False,  # System peripheral is not critical
         }
     }
     assert VMDeviceService(Middleware()).get_pci_device_details(pcidevs, iommu_info) == results

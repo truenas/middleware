@@ -214,9 +214,7 @@ class FailoverRebootService(Service):
             )
 
         job.set_progress(60, 'Waiting for the other controller to come back online')
-        if not await self.middleware.call('failover.upgrade_waitstandby'):
-            # FIXME: `upgrade_waitstandby` is a really poor name for a method that
-            # just waits on the other controller to come back online and be ready
+        if not (await (await self.middleware.call('failover.wait_other_node')).wait(raise_error=True)):
             raise CallError('Timed out waiting for the other controller to come online', errno.ETIMEDOUT)
 
         # We captured the boot_id of the standby controller before we rebooted it

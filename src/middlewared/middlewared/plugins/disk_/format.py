@@ -7,11 +7,13 @@ from middlewared.service import CallError, private, Service
 class DiskService(Service):
 
     @private
-    def get_data_partition_size(self, disk):
+    def get_data_partition_size(self, disk, partition_start=0):
         size = self.middleware.call_sync('disk.get_dev_size', disk)
         # Reserve 2 GiB or disk space (but no more than 1%) to allow this disk to be replaced with a slightly
         # smaller one in the future.
         size = size - int(min(2 * 1024 ** 3, size * 0.01))
+        # Subtract any preceding partition sizes
+        size -= partition_start
         # Align the partition size to the even number of MiB
         align = 1024 ** 2
         size = size // align * align

@@ -24,6 +24,7 @@ __all__ = [
 
 class KerberosEntry(BaseModel):
     id: int
+    """Unique identifier for the Kerberos configuration."""
     appdefaults_aux: str
     """
     Advanced field for manually setting additional parameters inside the \
@@ -54,6 +55,7 @@ class KerberosEntry(BaseModel):
 
 class KerberosRealmEntry(BaseModel):
     id: int
+    """Unique identifier for the Kerberos realm configuration."""
     realm: NonEmptyString
     """
     Kerberos realm name. This is external to TrueNAS and is case-sensitive. \
@@ -84,6 +86,7 @@ class KerberosRealmEntry(BaseModel):
 
 class KerberosKeytabEntry(BaseModel):
     id: int
+    """Unique identifier for the Kerberos keytab entry."""
     name: NonEmptyString
     """
     Name of the kerberos keytab entry. This is an identifier for the keytab and not \
@@ -101,6 +104,7 @@ class KerberosUpdateArgs(KerberosEntry, metaclass=ForUpdateMetaclass):
 
 class KerberosUpdateResult(BaseModel):
     result: KerberosEntry
+    """The updated Kerberos configuration."""
 
 
 class KerberosRealmCreate(KerberosRealmEntry):
@@ -109,10 +113,12 @@ class KerberosRealmCreate(KerberosRealmEntry):
 
 class KerberosRealmCreateArgs(BaseModel):
     data: KerberosRealmCreate
+    """Kerberos realm configuration data for creation."""
 
 
 class KerberosRealmCreateResult(BaseModel):
     result: KerberosRealmEntry
+    """The created Kerberos realm configuration."""
 
 
 class KerberosRealmUpdate(KerberosRealmCreate, metaclass=ForUpdateMetaclass):
@@ -121,19 +127,24 @@ class KerberosRealmUpdate(KerberosRealmCreate, metaclass=ForUpdateMetaclass):
 
 class KerberosRealmUpdateArgs(BaseModel):
     id: int
+    """ID of the Kerberos realm to update."""
     data: KerberosRealmUpdate
+    """Updated Kerberos realm configuration data."""
 
 
 class KerberosRealmUpdateResult(BaseModel):
     result: KerberosRealmEntry
+    """The updated Kerberos realm configuration."""
 
 
 class KerberosRealmDeleteArgs(BaseModel):
     id: int
+    """ID of the Kerberos realm to delete."""
 
 
 class KerberosRealmDeleteResult(BaseModel):
     result: None
+    """Returns `null` when the Kerberos realm is successfully deleted."""
 
 
 class KerberosKeytabCreate(KerberosKeytabEntry):
@@ -142,10 +153,12 @@ class KerberosKeytabCreate(KerberosKeytabEntry):
 
 class KerberosKeytabCreateArgs(BaseModel):
     data: KerberosKeytabCreate
+    """Kerberos keytab configuration data for creation."""
 
 
 class KerberosKeytabCreateResult(BaseModel):
     result: KerberosKeytabEntry
+    """The created Kerberos keytab entry."""
 
 
 class KerberosKeytabUpdate(KerberosKeytabCreate, metaclass=ForUpdateMetaclass):
@@ -154,16 +167,21 @@ class KerberosKeytabUpdate(KerberosKeytabCreate, metaclass=ForUpdateMetaclass):
 
 class KerberosKeytabUpdateArgs(BaseModel):
     id: int
+    """ID of the Kerberos keytab entry to update."""
     data: KerberosKeytabUpdate
+    """Updated Kerberos keytab configuration data."""
 
 
 class KerberosKeytabUpdateResult(BaseModel):
     result: KerberosKeytabEntry
+    """The updated Kerberos keytab entry."""
 
 
 class KerberosKeytabDeleteArgs(BaseModel):
     id: int
+    """ID of the Kerberos keytab entry to delete."""
 
 
 class KerberosKeytabDeleteResult(BaseModel):
     result: None
+    """Returns `null` when the Kerberos keytab entry is successfully deleted."""

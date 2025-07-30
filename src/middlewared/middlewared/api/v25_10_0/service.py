@@ -15,17 +15,24 @@ __all__ = [
 
 class ServiceEntry(BaseModel):
     id: int
+    """Unique identifier for the service."""
     service: str
+    """Name of the system service."""
     enable: bool
+    """Whether the service is enabled to start on boot."""
     state: str
+    """Current state of the service (e.g., 'RUNNING', 'STOPPED')."""
     pids: list[int]
+    """Array of process IDs associated with this service."""
 
 
 class ServiceOptions(BaseModel):
     ha_propagate: bool = True
+    """Whether to propagate the service operation to the HA peer in a high-availability setup."""
     silent: bool = True
     """Return `false` instead of an error if the operation fails."""
     timeout: int | None = 120
+    """Maximum time in seconds to wait for the service operation to complete. `null` for no timeout."""
 
 
 class ServiceUpdate(BaseModel):
@@ -35,8 +42,11 @@ class ServiceUpdate(BaseModel):
 
 class ServiceControlArgs(BaseModel):
     verb: Literal["START", "STOP", "RESTART", "RELOAD"]
+    """The service operation to perform."""
     service: str
+    """Name of the service to control."""
     options: ServiceOptions = Field(default_factory=ServiceOptions)
+    """Options for controlling the service operation behavior."""
 
 
 class ServiceControlResult(BaseModel):
@@ -49,7 +59,9 @@ class ServiceControlResult(BaseModel):
 
 class ServiceReloadArgs(BaseModel):
     service: str
+    """Name of the service to reload."""
     options: ServiceOptions = Field(default_factory=ServiceOptions)
+    """Options for controlling the reload operation behavior."""
 
 
 class ServiceReloadResult(BaseModel):
@@ -59,7 +71,9 @@ class ServiceReloadResult(BaseModel):
 
 class ServiceRestartArgs(BaseModel):
     service: str
+    """Name of the service to restart."""
     options: ServiceOptions = Field(default_factory=ServiceOptions)
+    """Options for controlling the restart operation behavior."""
 
 
 class ServiceRestartResult(BaseModel):
@@ -69,7 +83,9 @@ class ServiceRestartResult(BaseModel):
 
 class ServiceStartArgs(BaseModel):
     service: str
+    """Name of the service to start."""
     options: ServiceOptions = Field(default_factory=ServiceOptions)
+    """Options for controlling the start operation behavior."""
 
 
 class ServiceStartResult(BaseModel):
@@ -79,6 +95,7 @@ class ServiceStartResult(BaseModel):
 
 class ServiceStartedArgs(BaseModel):
     service: str
+    """Name of the service to check if running."""
 
 
 class ServiceStartedResult(BaseModel):
@@ -88,6 +105,7 @@ class ServiceStartedResult(BaseModel):
 
 class ServiceStartedOrEnabledArgs(BaseModel):
     service: str
+    """Name of the service to check if running or enabled."""
 
 
 class ServiceStartedOrEnabledResult(BaseModel):
@@ -97,7 +115,9 @@ class ServiceStartedOrEnabledResult(BaseModel):
 
 class ServiceStopArgs(BaseModel):
     service: str
+    """Name of the service to stop."""
     options: ServiceOptions = Field(default_factory=ServiceOptions)
+    """Options for controlling the stop operation behavior."""
 
 
 class ServiceStopResult(BaseModel):
@@ -109,6 +129,7 @@ class ServiceUpdateArgs(BaseModel):
     id_or_name: int | str
     """ID or name of the service to update."""
     service_update: ServiceUpdate
+    """Updated configuration for the service."""
 
 
 class ServiceUpdateResult(BaseModel):

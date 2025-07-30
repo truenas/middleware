@@ -81,7 +81,7 @@ class UserEntry(BaseModel):
     group: dict
     """ The primary group of the user account. """
     groups: list[int] = Field(default_factory=list)
-    """ List of additional groups to which the user belongs. NOTE: Groups are identified by their group entry `id`, \
+    """Array of additional groups to which the user belongs. NOTE: Groups are identified by their group entry `id`, \
     not their Unix group ID (`gid`). """
     password_disabled: bool = False
     """ If set to `true` password authentication for the user account is disabled.
@@ -100,11 +100,11 @@ class UserEntry(BaseModel):
     locked: bool = False
     """ If set to `true` the account is locked. The account cannot be used to authenticate to the TrueNAS server. """
     sudo_commands: list[NonEmptyString] = Field(default_factory=list)
-    """ A list of commands the user may execute with elevated privileges. User is prompted for password \
-    when executing any command from the list. """
+    """ An array of commands the user may execute with elevated privileges. User is prompted for password \
+    when executing any command from the array. """
     sudo_commands_nopasswd: list[NonEmptyString] = Field(default_factory=list)
-    """ A list of commands the user may execute with elevated privileges. User is *not* prompted for password \
-    when executing any command from the list. """
+    """ An array of commands the user may execute with elevated privileges. User is *not* prompted for password \
+    when executing any command from the array. """
     email: EmailStr | None = None
     """ Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and \
     notifications. """
@@ -132,9 +132,10 @@ class UserEntry(BaseModel):
     password_change_required: bool
     """Password change for local user account is required on next login."""
     roles: list[str]
-    """ List of roles assigned to this user's groups. Roles control administrative access to TrueNAS through \
-    the web UI and API. """
+    """Array of roles assigned to this user's groups. Roles control administrative access to TrueNAS through \
+    the web UI and API."""
     api_keys: list[int]
+    """Array of API key IDs associated with this user account for programmatic access."""
 
 
 class UserCreateUpdateResult(UserEntry):
@@ -202,8 +203,8 @@ class UserGetUserObj(BaseModel):
     """Numerical group id for the user's primary group."""
     grouplist: list[int] | None
     """
-    Optional list of group IDs for groups of which this account is a member. If `get_groups` is not specified, \
-    this value will be null.
+    Optional array of group IDs for groups of which this account is a member. If `get_groups` is not specified, \
+    this value will be `null`.
     """
     sid: str | None
     """Optional SID value for the account that is present if `sid_info` is specified in payload."""
@@ -220,19 +221,24 @@ class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
 
 class UserCreateArgs(BaseModel):
     user_create: UserCreate
+    """Configuration for creating a new user account."""
 
 
 class UserCreateResult(BaseModel):
     result: UserCreateUpdateResult
+    """The newly created user account with password information."""
 
 
 class UserUpdateArgs(BaseModel):
     id: int
+    """ID of the user account to update."""
     user_update: UserUpdate
+    """Updated configuration for the user account."""
 
 
 class UserUpdateResult(BaseModel):
     result: UserCreateUpdateResult
+    """The updated user account with password information."""
 
 
 class UserDeleteOptions(BaseModel):
@@ -242,15 +248,19 @@ class UserDeleteOptions(BaseModel):
 
 class UserDeleteArgs(BaseModel):
     id: int
+    """ID of the user account to delete."""
     options: UserDeleteOptions = Field(default_factory=UserDeleteOptions)
+    """Options controlling the user deletion process."""
 
 
 class UserDeleteResult(BaseModel):
     result: int
+    """ID of the deleted user account."""
 
 
 class UserShellChoicesArgs(BaseModel):
     group_ids: list[int] = []
+    """Array of group IDs to filter shell choices. Empty array returns all shells."""
 
 
 class UserShellChoicesResult(BaseModel):
@@ -265,12 +275,15 @@ class UserShellChoicesResult(BaseModel):
             '/usr/sbin/nologin': 'nologin'
         },
     ])
+    """Object of available shell paths and their descriptive names."""
 
 
 @single_argument_args("get_user_obj")
 class UserGetUserObjArgs(BaseModel):
     username: str | None = None
+    """Username to lookup. Either `username` or `uid` must be specified."""
     uid: int | None = None
+    """User ID to lookup. Either `username` or `uid` must be specified."""
     get_groups: bool = False
     """Retrieve group list for the specified user."""
     sid_info: bool = False
@@ -279,6 +292,7 @@ class UserGetUserObjArgs(BaseModel):
 
 class UserGetUserObjResult(BaseModel):
     result: UserGetUserObj
+    """User account information in Unix passwd format."""
 
 
 class UserGetNextUidArgs(BaseModel):
@@ -287,6 +301,7 @@ class UserGetNextUidArgs(BaseModel):
 
 class UserGetNextUidResult(BaseModel):
     result: int
+    """Next available UID for creating a new local user account."""
 
 
 class UserHasLocalAdministratorSetUpArgs(BaseModel):
@@ -295,50 +310,67 @@ class UserHasLocalAdministratorSetUpArgs(BaseModel):
 
 class UserHasLocalAdministratorSetUpResult(BaseModel):
     result: bool
+    """Whether a local administrator account has been configured on this system."""
 
 
 class UserSetupLocalAdministratorEC2Options(BaseModel):
     instance_id: NonEmptyString
+    """EC2 instance identifier for cloud-specific administrator setup."""
 
 
 class UserSetupLocalAdministratorOptions(BaseModel):
     ec2: UserSetupLocalAdministratorEC2Options | None = None
+    """Cloud platform-specific options for administrator setup. `null` for standard setup."""
 
 
 class UserSetupLocalAdministratorArgs(BaseModel):
     username: Literal['root', 'truenas_admin']
+    """Administrator username to configure."""
     password: Secret[str]
+    """Password for the administrator account."""
     options: UserSetupLocalAdministratorOptions = Field(default_factory=UserSetupLocalAdministratorOptions)
+    """Additional options for cloud or specialized administrator setup."""
 
 
 class UserSetupLocalAdministratorResult(BaseModel):
     result: None
+    """Returns `null` on successful administrator account setup."""
 
 
 @single_argument_args("set_password_data")
 class UserSetPasswordArgs(BaseModel):
     username: str
+    """Username of the account to change password for."""
     old_password: Secret[str | None] = None
+    """Current password for verification. `null` if changing password as administrator."""
     new_password: Secret[NonEmptyString]
+    """New password to set for the user account."""
 
 
 class UserSetPasswordResult(BaseModel):
     result: None
+    """Returns `null` on successful password change."""
 
 
 class UserTwofactorConfigEntry(BaseModel):
     provisioning_uri: str | None
+    """QR code URI for setting up two-factor authentication in authenticator apps. `null` if not available."""
     secret_configured: bool
+    """Whether a two-factor authentication secret has been configured for this user."""
     interval: int
+    """Time interval in seconds for OTP validity period."""
     otp_digits: int
+    """Number of digits in the generated one-time password codes."""
 
 
 class UserUnset2faSecretArgs(BaseModel):
     username: str
+    """Username to disable two-factor authentication for."""
 
 
 class UserUnset2faSecretResult(BaseModel):
     result: None
+    """Returns `null` on successful two-factor authentication removal."""
 
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
@@ -350,9 +382,12 @@ class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
 
 class UserRenew2faSecretArgs(BaseModel):
     username: str
+    """Username to renew two-factor authentication secret for."""
     twofactor_options: TwofactorOptions
+    """Configuration options for the new two-factor authentication setup."""
 
 
 @single_argument_result
 class UserRenew2faSecretResult(UserEntry):
     twofactor_config: UserTwofactorConfigEntry
+    """New two-factor authentication configuration with provisioning details."""

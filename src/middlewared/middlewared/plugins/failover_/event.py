@@ -1014,6 +1014,13 @@ class FailoverEventsService(Service):
         self.run_call('disk.retaste')
         logger.info('Done retasting disks (if required)')
 
+        logger.info('Activating directory services')
+        try:
+            self.run_call('directoryservices.connection.activate_standby', None)
+        except Exception:
+            logger.warning('Failed to activate directory services', exc_info=True)
+        logger.info('Done activating directory services')
+
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'
 

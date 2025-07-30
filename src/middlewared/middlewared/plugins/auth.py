@@ -764,10 +764,25 @@ class AuthService(Service):
         """
         if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'BACKUP':
-                return {
-                    'response_type': AuthResp.REDIRECT,
-                    'urls': await self.middleware.call('failover.call_remote', 'failover.get_ips'),
-                }
+                try:
+                    rem_status = await self.middleware.call(
+                        'failover.call_remote', 'failover.status', [], {'connect_timeout': 2}
+                    )
+                    if rem_status == 'MASTER':
+                        return {
+                            'response_type': AuthResp.REDIRECT,
+                            'urls': await self.middleware.call(
+                                'failover.call_remote', 'failover.get_ips'),
+                        }
+                except Exception:
+                    self.logger.exception('Unhandled exception checking remote system')
+
+            # NOTE: It's okay to fall through here on HA systems. If the creds are
+            # correct then the caller can check the various failover endpoints to check
+            # the overall HA status. Without falling through here, a user won't be able
+            # to login via our API on an HA system. This puts the responsibiility of
+            # the end-user (in this example, it's the local UI) on whether to show the
+            # web page contents.
 
         mechanism = AuthMech[data['mechanism']]
         if app.authentication_context is None:

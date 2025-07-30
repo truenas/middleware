@@ -40,6 +40,9 @@ systemctl disable openipmi
 systemctl disable nfs-server
 systemctl disable rpcbind
 
+# This service will be started from middleware as needed
+systemctl disable ix-nvmf
+
 # NAS-123024: disable proftpd.socket, if it starts it will block proftpd.service
 # proftpd.socket is used in conjunction with xinetd
 # NOTE: This should be reviewed on next update where the startup issue is fixed via a new systemd unit file.

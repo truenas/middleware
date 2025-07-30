@@ -77,6 +77,7 @@ class CloudBackupRestoreOptions(BaseModel):
 
 class CloudBackupSnapshot(BaseModel):
     id: str
+    """Unique identifier for this cloud backup snapshot."""
     hostname: str
     """Host that created the snapshot."""
     time: datetime
@@ -124,6 +125,7 @@ class CloudBackupTransferSettingChoicesResult(BaseModel):
 
 class CloudBackupCreateArgs(BaseModel):
     cloud_backup: CloudBackupCreate
+    """Configuration for the new cloud backup task."""
 
 
 class CloudBackupCreateResult(BaseModel):
@@ -135,6 +137,7 @@ class CloudBackupUpdateArgs(BaseModel):
     id: int
     """ID of the cloud backup task to update."""
     data: CloudBackupUpdate
+    """Updated configuration data for the cloud backup task."""
 
 
 class CloudBackupUpdateResult(BaseModel):

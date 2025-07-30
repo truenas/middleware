@@ -44,17 +44,23 @@ NfsTcpPort: TypeAlias = Annotated[
 
 class NFSGetNfs3ClientsEntry(BaseModel):
     ip: str
+    """IP address of the NFSv3 client."""
     export: str
+    """NFS export path being accessed by the client."""
 
 
 class NFSGetNfs4ClientsEntry(BaseModel):
     id: str
+    """Unique identifier for the NFSv4 client."""
     info: dict
+    """Client information including connection details and capabilities."""
     states: list[dict]
+    """Array of client state information including open files and locks."""
 
 
 class NfsEntry(BaseModel):
     id: int
+    """Placeholder identifier.  Not used as there is only one."""
     servers: Annotated[int | None, Field(ge=1, le=256)]
     """ Specify the number of nfsd. Default: Number of nfsd is equal number of CPU. """
     allow_nonroot: bool
@@ -100,6 +106,7 @@ class NFSUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
 
 class NFSUpdateResult(BaseModel):
     result: NfsEntry
+    """The updated NFS service configuration."""
 
 
 class NFSBindipChoicesArgs(BaseModel):
@@ -110,6 +117,7 @@ class NFSBindipChoicesResult(BaseModel):
     """Return a dictionary of IP addresses."""
 
     result: dict[str, str]
+    """Available IP addresses that the NFS service can bind to."""
 
 
 class NFSClientCountArgs(BaseModel):
@@ -118,10 +126,12 @@ class NFSClientCountArgs(BaseModel):
 
 class NFSClientCountResult(BaseModel):
     result: int
+    """Current number of connected NFS clients."""
 
 
 class NfsShareEntry(BaseModel):
     id: int
+    """Unique identifier for the NFS share."""
     path: NonEmptyString
     """ Local path to be exported. """
     aliases: list[NonEmptyString] = []
@@ -174,10 +184,12 @@ class NfsShareCreate(NfsShareEntry):
 
 class SharingNFSCreateArgs(BaseModel):
     data: NfsShareCreate
+    """NFS share configuration data for the new share."""
 
 
 class SharingNFSCreateResult(BaseModel):
     result: NfsShareEntry
+    """The created NFS share configuration."""
 
 
 class NfsShareUpdate(NfsShareCreate, metaclass=ForUpdateMetaclass):
@@ -186,16 +198,21 @@ class NfsShareUpdate(NfsShareCreate, metaclass=ForUpdateMetaclass):
 
 class SharingNFSUpdateArgs(BaseModel):
     id: int
+    """ID of the NFS share to update."""
     data: NfsShareUpdate
+    """Updated NFS share configuration data."""
 
 
 class SharingNFSUpdateResult(BaseModel):
     result: NfsShareEntry
+    """The updated NFS share configuration."""
 
 
 class SharingNFSDeleteArgs(BaseModel):
     id: int
+    """ID of the NFS share to delete."""
 
 
 class SharingNFSDeleteResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the NFS share is successfully deleted."""

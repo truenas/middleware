@@ -167,6 +167,8 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
                             f"Model {cls.__name__} has field {k} defined as {dump(v.annotation)}. {dump(option)} "
                             "cannot be a member of an Optional or a Union, please make the whole field Private."
                         )
+            if not v.description and (parent_field := cls.__base__.model_fields.get(k)):
+                v.description = parent_field.description
 
     def model_dump(
         self,
@@ -253,7 +255,7 @@ def single_argument_args(name: str):
             klass.__name__,
             __base__=(BaseModel,),
             __module__=klass.__module__,
-            **{name: Annotated[klass, Field()]},
+            **{name: Annotated[klass, Field(description=f"{klass.__name__} parameters.")]},
         )
         model.from_previous = klass.from_previous
         model.to_previous = klass.to_previous
@@ -294,7 +296,7 @@ def single_argument_result(klass, klass_name=None):
         klass_name,
         __base__=(BaseModel,),
         __module__=module_name,
-        result=Annotated[klass, Field()],
+        result=Annotated[klass, Field(description=f"{klass_name} return fields.")],
     )
     if issubclass(klass, BaseModel):
         model.from_previous = klass.from_previous

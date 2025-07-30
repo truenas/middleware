@@ -2,7 +2,7 @@ from middlewared.service_exception import ValidationError, CallError
 from middlewared.test.integration.assets.account import user, unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call, url
+from middlewared.test.integration.utils import busy_wait_on_job, call, url
 from middlewared.test.integration.utils.audit import get_audit_entry
 
 from auto_config import ha
@@ -356,8 +356,8 @@ class TestAuditOpsHA:
                 call('audit.query', audit_payload)
             assert "failed to communicate" in str(e.value)
 
-            # Wait for the remote to return
-            call("core.job_wait", job_id, job=True)
+            # Wait for the remote to return.  This can take a long time
+            busy_wait_on_job(job_id)
         else:
             # Handle delays in the audit database
             remote_audit_entry = []

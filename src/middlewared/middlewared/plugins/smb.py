@@ -1144,8 +1144,12 @@ class SharingSMBService(SharingService):
                 raise
 
     @private
-    async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
-        if not exist_ok and await self.query([['name', 'C=', name]], {'select': ['name']}):
+    async def validate_share_name(self, name, schema_name, verrors, old=None):
+        filters = [['name', 'C=', name]]
+        if old:
+            filters.append(['id', '!=', old['id']])
+
+        if await self.query(filters, {'select': ['name']}):
             verrors.add(
                 f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
             )
@@ -1169,13 +1173,19 @@ class SharingSMBService(SharingService):
         timemachine = is_time_machine_share(data)
 
         if data.get(share_field.PATH) and data[share_field.PURPOSE] != SMBSharePurpose.EXTERNAL_SHARE:
-            stat_info = await self.middleware.call('filesystem.stat', data[share_field.PATH])
-            if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info['acl']:
+            if data[share_field.PATH].startswith('EXTERNAL'):
                 verrors.add(
-                    f'{schema_name}.acl',
-                    f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
-                    'of SMB share.'
+                    f'{schema_name}.path',
+                    'External paths may only be set for shares with an EXTERNAL_SHARE purpose'
                 )
+            else:
+                stat_info = await self.middleware.call('filesystem.stat', data[share_field.PATH])
+                if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info['acl']:
+                    verrors.add(
+                        f'{schema_name}.acl',
+                        f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
+                        'of SMB share.'
+                    )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
                 if not await self.middleware.call('system.is_enterprise'):
@@ -1192,7 +1202,7 @@ class SharingSMBService(SharingService):
                     )
 
         if data.get(share_field.NAME) is not None:
-            await self.validate_share_name(share_field.NAME, schema_name, verrors)
+            await self.validate_share_name(share_field.NAME, schema_name, verrors, old)
 
         if timemachine and data[share_field.ENABLED]:
             ngc = await self.middleware.call('network.configuration.config')
@@ -1237,6 +1247,8 @@ class SharingSMBService(SharingService):
 
     @api_method(SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
+        # This endpoint provides the UI a mechanism to determine whether popup prompting to create
+        # SMB users should occur when auto-creating an SMB share in the datasets form.
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
         if not ds_enabled:
@@ -1253,7 +1265,7 @@ class SharingSMBService(SharingService):
                 )
 
         if data.get(share_field.NAME) is not None:
-            await self.validate_share_name(data[share_field.NAME], 'sharing.smb.share_precheck', verrors, False)
+            await self.validate_share_name(data[share_field.NAME], 'sharing.smb.share_precheck', verrors)
 
         verrors.check()
 

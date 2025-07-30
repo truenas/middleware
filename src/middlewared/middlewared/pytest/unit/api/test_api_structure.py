@@ -30,7 +30,7 @@ def current_api_package():
     return importlib.import_module(module_name)
 
 
-def check_docstring(docstr: str | None):
+def check_docstring(docstr: str | None, must_have: bool = False):
     """Enforce API docstring rules.
 
     Rules are skipped if the docstring contains any asterisks (*) or hyphens (-).
@@ -40,13 +40,16 @@ def check_docstring(docstr: str | None):
 
     """
     if not docstr:
+        if must_have:
+            # Either a docstring or `Field(description=...)` will do
+            return "Must have description"
         return
     if any(c in docstr for c in ["*", "-"]):
         # Just assume Markdown and skip rules check
         return
 
     docstr = docstr.strip()
-    if docstr[0].islower():
+    if docstr[0].islower() and docstr.partition(" ")[0] not in {"pCloud", "iSCSI"}:
         return "Docstring cannot start with lowercase letter"
     if not docstr.endswith("."):
         return "Docstring must end with a period"
@@ -75,8 +78,10 @@ def test_api_docstrings(current_api_package):
 
                 # Iterate over field docstrings
                 for field_name, field_info in obj.model_fields.items():
-                    if err := check_docstring(field_info.description):
-                        errors.append(SyntaxWarning(f"{name}.{field_name}: {err}"))
+                    if field_info.exclude:
+                        continue
+                    if err := check_docstring(field_info.description, field_name != "result"):
+                        errors.append(SyntaxWarning(f"{modname}.{name}.{field_name}: {err}"))
 
     if errors:
         raise ExceptionGroup(f"Improper docstring(s) detected in {current_api_package.__name__}", errors)

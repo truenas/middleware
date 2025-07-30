@@ -10,3 +10,4 @@ class SystemGeneralKbdmapChoicesArgs(BaseModel):
 
 class SystemGeneralKbdmapChoicesResult(BaseModel):
     result: dict[str, str]
+    """Object of available keyboard layout codes and their descriptive names."""

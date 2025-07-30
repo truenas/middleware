@@ -170,6 +170,7 @@ def get_default_workload_values() -> dict:
     return {
         'containers': 0,
         'used_ports': [],
+        'used_host_ips': [],
         'container_details': [],  # This would contain service name and image in use
         'volumes': [],  # This would be docker volumes
         'images': [],
@@ -187,6 +188,7 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
     workloads = get_default_workload_values()
     volumes = set()
     images = set()
+    host_ips = set()
     workloads['containers'] = len(app_resources['containers'])
     for container in app_resources['containers']:
         service_name = container['Config']['Labels'][COMPOSE_SERVICE_KEY]
@@ -200,7 +202,10 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
             for host_port in host_config:
                 try:
                     # We have seen that docker can report host port as an empty string or null
-                    host_ports.append({'host_port': int(host_port['HostPort']), 'host_ip': host_port['HostIp']})
+                    host_ip = host_port['HostIp']
+                    host_ports.append({'host_port': int(host_port['HostPort']), 'host_ip': host_ip})
+                    if host_ip:
+                        host_ips.add(host_ip)
                 except (TypeError, ValueError):
                     continue
 
@@ -250,5 +255,6 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
         'images': list(images),
         'volumes': [v.__dict__ for v in volumes],
         'networks': app_resources['networks'],
+        'used_host_ips': list(host_ips),
     })
     return workloads

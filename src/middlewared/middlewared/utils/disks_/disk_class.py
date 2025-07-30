@@ -1,15 +1,17 @@
 import collections
+import contextlib
 import dataclasses
 import functools
 import json
 import os
 import re
+import string
 import subprocess
 import typing
 import uuid
 
 from .disk_io import read_gpt, wipe_disk_quick, create_gpt_partition
-from .gpt_parts import GptPartEntry
+from .gpt_parts import GptPartEntry, PART_TYPES
 
 __all__ = ("DiskEntry", "iterate_disks")
 
@@ -124,13 +126,32 @@ class DiskEntry:
     @functools.cached_property
     def serial(self) -> str | None:
         """The disk's serial number as reported by sysfs"""
-        if not (serial := self.__opener(relative_path="device/serial")):
-            if serial := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
-                serial = (
-                    "".join(chr(b) if 32 <= b <= 126 else "\ufffd" for b in serial)
-                    .replace("\ufffd", "")
-                    .strip()
-                )
+        # nvme devices
+        serial = self.__opener(relative_path="device/serial")
+        if not serial:
+            # virtio-blk devices (vd)
+            serial = self.__opener(relative_path="serial")
+
+        if not serial:
+            if raw := self.__opener(relative_path="device/vpd_pg80", mode="rb"):
+                # VPD page 0x80 (Unit Serial Number) structure:
+                #   Byte 0: Peripheral qualifier & device type
+                #   Byte 1: Page code (0x80)
+                #   Bytes 2-3: Page length (16-bit big-endian)
+                #   Bytes 4+: ASCII serial-number data
+                #
+                # Reference: SCSI Primary Commands (SPC-7 rev 1) — Unit Serial Number VPD page 0x80, Table 599
+                if len(raw) >= 4:
+                    # unit serial page (vpd_pg80) command can never be > 255 characters
+                    # So we will grab page length from 3
+                    # Guard against devices that report a length larger than the buffer
+                    page_len = min(raw[3], len(raw) - 4)
+
+                    # Extract only the serial number data, skipping the 4-byte header
+                    serial_txt = raw[4:4 + page_len].decode('ascii', errors='ignore')
+                    serial = serial_txt.rstrip('\x00').strip()
+                else:
+                    serial = ""
 
         if not serial:
             # pmem devices have a uuid attribute that we use as serial
@@ -148,18 +169,49 @@ class DiskEntry:
             we're using the 'wwid' property of the disk
             but it is the same principle and it allows us
             to use common terms that most recognize."""
+        HEX = set(string.hexdigits.lower())
+
         wwid = self.__opener(relative_path="device/wwid")
         if wwid is None:
             wwid = self.__opener(relative_path="wwid")
 
         if wwid is not None:
-            wwid = wwid.removeprefix("naa.").removeprefix("0x").removeprefix("eui.")
+            # Normalize: strip whitespace and convert to lowercase
+            wwid = wwid.strip().lower()
 
-        # Doing a replace here because we have seen cases where this value
-        # gets reported -> 't10.ATA     QEMU HARDDISK                           QM00003'
-        # It is like this in the file itself, it could just perhaps be isolated only to VMs
-        # but there is no harm to remove empty spaces
-        return wwid.replace(" ", "") if wwid else wwid
+            # udev handling of WWN identifiers:
+            # - For SCSI devices: ID_WWN is set only for NAA descriptors (via scsi_id)
+            # - For NVMe devices: ID_WWN is set to the wwid sysfs value, which includes eui. prefix
+            #   (see /usr/lib/udev/rules.d/60-persistent-storage.rules)
+            # - For both: The middleware strips prefixes to get a consistent format
+            #
+            # We strip naa., 0x, and eui. prefixes to match middleware behavior.
+            # t10 identifiers are not used for ID_WWN and return None.
+            original_prefix = None
+            for prefix in ("naa.", "0x", "eui."):
+                if wwid.startswith(prefix):
+                    original_prefix = prefix
+                    wwid = wwid[len(prefix):]
+                    break
+            else:
+                # t10.* and others are not used for ID_WWN in udev
+                return None
+
+            # Remove spaces after prefix stripping
+            wwid = wwid.replace(" ", "")
+
+            # Truncate to 16 characters ONLY for NAA WWNs with valid hex characters.
+            # This matches udev's ID_WWN behavior for NAA WWNs specifically.
+            # EUI identifiers (common for NVMe) are NOT truncated.
+            #
+            # Reference: https://github.com/systemd/systemd/blob/e65455feade65c798fd1742220768eba7f81755b/
+            # src/udev/scsi_id/scsi_serial.c
+            # check_fill_0x83_id(): if (id_search->id_type == SCSI_ID_NAA && wwn != NULL)
+            #                       strncpy(wwn, serial + s, 16);
+            if original_prefix in ("naa.", "0x") and len(wwid) > 16 and set(wwid[:16]) <= HEX:
+                wwid = wwid[:16]
+
+        return wwid if wwid else None
 
     @functools.cached_property
     def model(self) -> str | None:
@@ -196,8 +248,17 @@ class DiskEntry:
             return f"{{serial_lunid}}{self.serial}_{self.lunid}"
         elif self.serial:
             return f"{{serial}}{self.serial}"
-        else:
-            return f"{{devicename}}{self.name}"
+        elif partitions := self.partitions():
+            with contextlib.suppress(Exception):
+                # We don't want to crash if we can't read partitions
+                for part in filter(
+                    lambda p: PART_TYPES.get(p.partition_type_guid, "UNKNOWN") == "ZFS",
+                    partitions
+                ):
+                    return f"{{uuid}}{part.unique_partition_guid}"
+
+        # If we reach here, we have no serial or partitions
+        return f"{{devicename}}{self.name}"
 
     @functools.cached_property
     def translation(self) -> typing.Literal["SATL", "SNTL", None]:

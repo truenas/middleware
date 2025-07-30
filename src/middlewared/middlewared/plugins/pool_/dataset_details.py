@@ -42,6 +42,7 @@ class PoolDatasetService(Service):
                     'refreservation',
                     'reservation',
                     'mountpoint',
+                    'mounted',
                     'encryption',
                     'encryptionroot',
                     'keyformat',

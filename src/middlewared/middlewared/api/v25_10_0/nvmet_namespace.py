@@ -21,6 +21,7 @@ DeviceType: TypeAlias = Literal['ZVOL', 'FILE']
 
 class NVMetNamespaceEntry(BaseModel):
     id: int
+    """Unique identifier for the NVMe-oF namespace."""
     nsid: Annotated[int, Field(ge=1, lt=0xFFFFFFFF)] | None = None
     """ Namespace ID (NSID).
 
@@ -29,6 +30,7 @@ class NVMetNamespaceEntry(BaseModel):
     If not supplied during `namespace` creation then the next available NSID will be used.
     """
     subsys: NVMetSubsysEntry
+    """NVMe-oF subsystem that contains this namespace."""
     device_type: DeviceType
     """ Type of device (or file) used to implement the namespace. """
     device_path: NonEmptyString
@@ -43,7 +45,9 @@ class NVMetNamespaceEntry(BaseModel):
     filesize: int | None = None
     """When `device_type` is "FILE" then this will be the size of the file in bytes."""
     device_uuid: NonEmptyString
+    """Unique device identifier for the namespace."""
     device_nguid: NonEmptyString
+    """Namespace Globally Unique Identifier for the namespace."""
     enabled: bool = True
     """
     If `enabled` is `False` then the namespace will not be accessible.
@@ -66,15 +70,19 @@ class NVMetNamespaceCreate(NVMetNamespaceEntry):
     device_nguid: Excluded = excluded_field()
     locked: Excluded = excluded_field()
     subsys_id: int
+    """ID of the NVMe-oF subsystem to contain this namespace."""
     device_path: NormalPath
+    """Normalized path to the device or file for the namespace."""
 
 
 class NVMetNamespaceCreateArgs(BaseModel):
     nvmet_namespace_create: NVMetNamespaceCreate
+    """NVMe-oF namespace configuration data for creation."""
 
 
 class NVMetNamespaceCreateResult(BaseModel):
     result: NVMetNamespaceEntry
+    """The created NVMe-oF namespace configuration."""
 
 
 class NVMetNamespaceUpdate(NVMetNamespaceCreate, metaclass=ForUpdateMetaclass):
@@ -83,11 +91,14 @@ class NVMetNamespaceUpdate(NVMetNamespaceCreate, metaclass=ForUpdateMetaclass):
 
 class NVMetNamespaceUpdateArgs(BaseModel):
     id: int
+    """ID of the NVMe-oF namespace to update."""
     nvmet_namespace_update: NVMetNamespaceUpdate
+    """Updated NVMe-oF namespace configuration data."""
 
 
 class NVMetNamespaceUpdateResult(BaseModel):
     result: NVMetNamespaceEntry
+    """The updated NVMe-oF namespace configuration."""
 
 
 class NVMetNamespaceDeleteOptions(BaseModel):
@@ -97,8 +108,11 @@ class NVMetNamespaceDeleteOptions(BaseModel):
 
 class NVMetNamespaceDeleteArgs(BaseModel):
     id: int
+    """ID of the NVMe-oF namespace to delete."""
     options: NVMetNamespaceDeleteOptions = Field(default_factory=NVMetNamespaceDeleteOptions)
+    """Options controlling namespace deletion behavior."""
 
 
 class NVMetNamespaceDeleteResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the NVMe-oF namespace is successfully deleted."""
