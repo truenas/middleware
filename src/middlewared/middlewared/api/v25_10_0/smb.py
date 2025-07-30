@@ -454,9 +454,9 @@ class ExternalOpt(BaseModel):
     """ These configuration options apply to shares with the `EXTERNAL_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.EXTERNAL_SHARE] = Field(exclude=True, repr=False)
     remote_path: list[NonEmptyString] = Field(examples=[
-        [r'192.168.0.200\SHARE'],
-        [r'SERVER1.MYDOM.INTERNAL\SHARE'],
-        [r'SERVER1.MYDOM.INTERNAL\SHARE, SERVER2.MYDOM.INTERNAL\SHARE']
+        ['192.168.0.200\\SHARE'],
+        ['SERVER1.MYDOM.INTERNAL\\SHARE'],
+        ['SERVER1.MYDOM.INTERNAL\\SHARE, SERVER2.MYDOM.INTERNAL\\SHARE']
     ])
     """ This is the path to the external server and share. Each server entry must include a full domain name or IP \
     address and share name. Separate the server and share with the `\\` character.
@@ -469,10 +469,10 @@ class ExternalOpt(BaseModel):
         """ Validate that our proxy addresses are not malformed. """
         for proxy in remote_path:
             if len(proxy.split('\\')) != 2:
-                raise ValueError(rf'{proxy}: DFS proxy must be of format SERVER\SHARE')
+                raise ValueError(f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
 
             if proxy.startswith('\\') or proxy.endswith('\\'):
-                raise ValueError(rf'{proxy}: DFS proxy must be of format SERVER\SHARE')
+                raise ValueError(f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
 
         return remote_path
 
