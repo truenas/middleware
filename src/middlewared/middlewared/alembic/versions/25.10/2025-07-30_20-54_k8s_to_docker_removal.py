@@ -1,5 +1,5 @@
 """
-Remove CA plugin
+Remove kubernetes services table
 
 Revision ID: 7767afd88989
 Revises: 3298b9ae612b
