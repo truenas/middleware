@@ -12,8 +12,7 @@ class Profile(enum.IntEnum):
     DEVELOPER = 0
     EARLY_ADOPTER = 1
     GENERAL = 2
-    CONSERVATIVE = 3
-    MISSION_CRITICAL = 4
+    MISSION_CRITICAL = 3
 
 
 class UpdateService(Service):
@@ -58,13 +57,6 @@ class UpdateService(Service):
                     'Field tested software with mature features. Few issues are expected.'
                 ),
             }
-            profiles[Profile.CONSERVATIVE] = {
-                'name': 'Conservative',
-                'footnote': '(Default)',
-                'description': (
-                    'Mature software with well documented limitations. Software updates are infrequent.'
-                ),
-            }
             profiles[Profile.MISSION_CRITICAL] = {
                 'name': 'Mission Critical',
                 'footnote': '',
@@ -106,8 +98,8 @@ class UpdateService(Service):
 async def post_license_update(middleware, prev_license, *args, **kwargs):
     if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
         current_profile = Profile[(await middleware.call('update.config'))['profile']]
-        if current_profile < Profile.CONSERVATIVE:
-            await middleware.call('update.set_profile', Profile.CONSERVATIVE.name)
+        if current_profile < Profile.MISSION_CRITICAL:
+            await middleware.call('update.set_profile', Profile.MISSION_CRITICAL.name)
 
 
 async def setup(middleware):

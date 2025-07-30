@@ -11,10 +11,9 @@ async def test_profile_choices():
     middleware["system.is_enterprise"] = Mock(return_value=True)
 
     service = UpdateService(middleware)
-    service.current_version_profile = AsyncMock(return_value="CONSERVATIVE")
+    service.current_version_profile = AsyncMock(return_value="GENERAL")
 
     choices = await service.profile_choices()
-    assert list(choices.keys()) == ["GENERAL", "CONSERVATIVE", "MISSION_CRITICAL"]
+    assert list(choices.keys()) == ["GENERAL", "MISSION_CRITICAL"]
     assert choices["GENERAL"]["available"]
-    assert choices["CONSERVATIVE"]["available"]
     assert not choices["MISSION_CRITICAL"]["available"]
