@@ -248,7 +248,6 @@ class AppService(Service):
         if apps_with_updates:
             await self.middleware.call('alert.oneshot_create', 'AppUpdate', {
                 'apps': apps_with_updates,
-                'count': len(apps_with_updates),
             })
 
     @private
