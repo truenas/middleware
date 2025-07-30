@@ -56,6 +56,7 @@ class QueryOptions(BaseModel):
     WARNING: Some query methods provide volatile results and the onus is on the developer to understand whether \
     pagination is appropriate for a particular query API method. """
     force_sql_filters: bool = False
+    """Force use of SQL for result filtering to reduce response time. May not work for all methods."""
 
     @model_validator(mode='after')
     def validate_query_options(self) -> Self:
@@ -66,6 +67,7 @@ class QueryOptions(BaseModel):
 class QueryArgs(BaseModel):
     filters: QueryFilters = []
     options: QueryOptions = QueryOptions()
+    """Query options including pagination, ordering, and additional parameters."""
 
 
 class GenericQueryResult(BaseModel):
@@ -100,7 +102,9 @@ class CronModel(BaseModel):
 
 class TimeCronModel(CronModel):
     begin: TimeString = "00:00"
+    """Start time for the time window in HH:MM format."""
     end: TimeString = "23:59"
+    """End time for the time window in HH:MM format."""
 
     @model_validator(mode="after")
     def validate_time(self):

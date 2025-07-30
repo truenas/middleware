@@ -29,6 +29,7 @@ PASSWORD_COMPLEXITY_CHOICES = Literal[
 
 class SystemSecurityEntry(BaseModel):
     id: int
+    """Unique identifier for the system security configuration."""
     enable_fips: bool
     """ When set, enables FIPS mode. """
     enable_gpos_stig: bool
@@ -72,6 +73,7 @@ class SystemSecurityUpdateArgs(SystemSecurityEntry, metaclass=ForUpdateMetaclass
 
 class SystemSecurityUpdateResult(BaseModel):
     result: SystemSecurityEntry
+    """The updated system security configuration."""
 
 
 class SystemSecurityInfoFipsAvailableArgs(BaseModel):
@@ -80,6 +82,7 @@ class SystemSecurityInfoFipsAvailableArgs(BaseModel):
 
 class SystemSecurityInfoFipsAvailableResult(BaseModel):
     result: bool
+    """Whether FIPS mode is available on this system."""
 
 
 class SystemSecurityInfoFipsEnabledArgs(BaseModel):
@@ -88,3 +91,4 @@ class SystemSecurityInfoFipsEnabledArgs(BaseModel):
 
 class SystemSecurityInfoFipsEnabledResult(BaseModel):
     result: bool
+    """Whether FIPS mode is currently enabled on this system."""

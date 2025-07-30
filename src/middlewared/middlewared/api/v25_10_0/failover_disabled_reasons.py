@@ -10,3 +10,4 @@ class FailoverDisabledReasonsReasonsArgs(BaseModel):
 
 class FailoverDisabledReasonsReasonsResult(BaseModel):
     result: list[str]
+    """Array of reasons why failover is currently disabled."""

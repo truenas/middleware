@@ -62,7 +62,7 @@ class DirectoryServicesCacheRefreshResult(BaseModel):
 # strings.
 
 class IdmapDomainBase(BaseModel):
-    name: NetbiosDomain | None = Field(default=None, example='IXDOM')
+    name: NetbiosDomain | None = Field(default=None, examples=['IXDOM'])
     """ Short name for the domain. This should match the NetBIOS domain name for Active Directory domains. \
     It may be null if the domain is configured as the base idmap for Active Directory. """
     range_low: IdmapId = 100000001
@@ -85,9 +85,10 @@ class IPA_SMBDomain(IdmapDomainBase):
     """ This is a special idmap backend used when TrueNAS joins an IPA domain. The remote IPA server provides the \
     configuration information during the domain join process."""
     idmap_backend: Literal['SSS']
-    domain_name: NonEmptyString | None = Field(default=None, example='IXDOM.INTERNAL')
+    """Idmap backend type identifier for System Security Services Daemon integration."""
+    domain_name: NonEmptyString | None = Field(default=None, examples=['IXDOM.INTERNAL'])
     """ Name of the SMB domain as defined in the IPA configuration for the IPA domain to which TrueNAS is joined. """
-    domain_sid: SID | None = Field(default=None, example='S-1-5-21-3696504179-2855309571-923743039')
+    domain_sid: SID | None = Field(default=None, examples=['S-1-5-21-3696504179-2855309571-923743039'])
     """ The domain SID for the IPA domain to which TrueNAS is joined. """
 
 
@@ -97,6 +98,7 @@ class AD_Idmap(IdmapDomainBase):
 
     NOTE: these schema extensions are not present by default in Active Directory."""
     idmap_backend: Literal['AD']
+    """Idmap backend type identifier for Active Directory RFC2307 schema integration."""
     schema_mode: Literal['RFC2307', 'SFU', 'SFU20']
     """ The schema mode the idmap backend uses to query Active Directory for user and group information. The RFC2307 \
     schema applies to Windows Server 2003 R2 and newer. The Services for Unix (SFU) schema applies to versions before \
@@ -114,6 +116,7 @@ class AD_Idmap(IdmapDomainBase):
 class LDAP_Idmap(IdmapDomainBase):
     """ The LDAP backend reads and writes UID / GID mapping tables from an external LDAP server. """
     idmap_backend: Literal['LDAP']
+    """Idmap backend type identifier for external LDAP server mapping."""
     ldap_base_dn: LDAP_DN
     """ Directory base suffix to use for mapping UIDs and GIDs to SIDs. """
     ldap_user_dn: LDAP_DN
@@ -133,6 +136,7 @@ class RFC2307_Idmap(IdmapDomainBase):
     """ The RFC2307 backend reads ID mappings from RFC2307 attributes on a standalone LDAP server. This backend is \
     read-only. Use the `AD` idmap backend if the server is an Active Directory domain controller. """
     idmap_backend: Literal['RFC2307']
+    """Idmap backend type identifier for RFC2307 LDAP attribute mapping."""
     ldap_url: LDAP_URL
     """ The LDAP URL used to access the LDAP server. """
     ldap_user_dn: LDAP_DN
@@ -160,6 +164,7 @@ class RID_Idmap(IdmapDomainBase):
     Active Directory. For example, if the RID is 500000, the range must include at least 500000 Unix IDs (for example, \
     1000000 to 2000000). """
     idmap_backend: Literal['RID']
+    """Idmap backend type identifier for RID-based algorithmic mapping."""
     sssd_compat: bool = False
     """ Generate an idmap low range using the algorithm from SSSD. This works if the domain uses only a single SSSD \
     idmap slice, and is sufficient if the domain uses only a single SSSD idmap slice. """
@@ -193,6 +198,7 @@ class PrimaryDomainIdmap(BaseModel):
 
 class CredKRBPrincipal(BaseModel):
     credential_type: Literal[DSCredType.KERBEROS_PRINCIPAL]
+    """Credential type identifier for Kerberos principal authentication."""
     principal: NonEmptyString
     """ A kerberos principal is a unique identity to which Kerberos can assign tickets. The specified kerberos \
     principal must have an entry within a keytab on the TrueNAS server. """
@@ -200,6 +206,7 @@ class CredKRBPrincipal(BaseModel):
 
 class CredKRBUser(BaseModel):
     credential_type: Literal[DSCredType.KERBEROS_USER]
+    """Credential type identifier for Kerberos user authentication."""
     username: NonEmptyString
     """ Username of the account to use to create a kerberos ticket for authentication to directory services. This \
     account must exist on the domain controller. """
@@ -209,16 +216,21 @@ class CredKRBUser(BaseModel):
 
 class CredLDAPPlain(BaseModel):
     credential_type: Literal[DSCredType.LDAP_PLAIN]
+    """Credential type identifier for LDAP plain text authentication."""
     binddn: LDAP_DN
+    """Distinguished name to use for LDAP authentication."""
     bindpw: Secret[NonEmptyString]
+    """Password for the bind DN used for LDAP authentication."""
 
 
 class CredLDAPAnonymous(BaseModel):
     credential_type: Literal[DSCredType.LDAP_ANONYMOUS]
+    """Anonymous LDAP authentication with no credentials required."""
 
 
 class CredLDAPMTLS(BaseModel):
     credential_type: Literal[DSCredType.LDAP_MTLS]
+    """Credential type identifier for LDAP mutual TLS authentication."""
     client_certificate: NonEmptyString
     """ The client certificate name used for mutual TLS authentication to the remote LDAP server. """
 
@@ -253,7 +265,7 @@ class ActiveDirectoryConfig(BaseModel):
     site: NonEmptyString | None = None
     """ The Active Directory site where the TrueNAS server is located. TrueNAS detects this automatically during the \
     domain join process. """
-    computer_account_ou: NonEmptyString | None = Field(default=None, example='TRUENAS_SERVERS/NYC')
+    computer_account_ou: NonEmptyString | None = Field(default=None, examples=['TRUENAS_SERVERS/NYC'])
     """ Use this setting to override the default organizational unit (OU) in which the TrueNAS computer account is \
     created during the domain join. Use it to set a custom location for TrueNAS computer accounts. """
     use_default_domain: bool = False
@@ -376,9 +388,13 @@ class LDAPMapNetgroup(BaseModel):
 
 class LDAPAttributeMaps(BaseModel):
     passwd: LDAPMapPasswd = Field(default=LDAPMapPasswd())
+    """LDAP attribute mappings for passwd/user entries."""
     shadow: LDAPMapShadow = Field(default=LDAPMapShadow())
+    """LDAP attribute mappings for shadow password entries."""
     group: LDAPMapGroup = Field(default=LDAPMapGroup())
+    """LDAP attribute mappings for group entries."""
     netgroup: LDAPMapNetgroup = Field(default=LDAPMapNetgroup())
+    """LDAP attribute mappings for netgroup entries."""
 
 
 class LDAPConfig(BaseModel):
@@ -431,6 +447,7 @@ class IPAConfig(BaseModel):
 
 class DirectoryServicesEntry(BaseModel):
     id: int
+    """Unique identifier for the directory services configuration."""
     service_type: DSType | None
     """ The pre-existing directory service type to which to bind TrueNAS. Select ACTIVEDIRECTORY to join an Active \
     Directory domain. Select IPA to join a FreeIPA domain. Select LDAP to bind to one or more OpenLDAP-compatible \
@@ -613,11 +630,13 @@ class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMet
 
 class DirectoryServicesUpdateResult(BaseModel):
     result: DirectoryServicesEntry
+    """The updated directory services configuration."""
 
 
 @single_argument_args('credential')
 class DirectoryServicesLeaveArgs(BaseModel):
     credential: CredKRBUser
+    """Kerberos user credentials with administrative privileges to leave the domain."""
 
 
 class DirectoryServicesLeaveResult(BaseModel):

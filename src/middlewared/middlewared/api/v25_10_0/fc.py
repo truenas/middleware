@@ -10,3 +10,4 @@ class FCCapableArgs(BaseModel):
 
 class FCCapableResult(BaseModel):
     result: bool
+    """Returns `true` if the system has Fibre Channel capabilities, `false` otherwise."""

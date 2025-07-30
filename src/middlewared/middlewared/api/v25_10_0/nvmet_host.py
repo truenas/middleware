@@ -26,6 +26,7 @@ DHChapDHGroupType: TypeAlias = Literal['2048-BIT', '3072-BIT', '4096-BIT', '6144
 
 class NVMetHostEntry(BaseModel):
     id: int
+    """Unique identifier for the NVMe-oF host."""
     hostnqn: NonEmptyString
     """ NQN of the host that will connect to this TrueNAS. """
     dhchap_key: Secret[NonEmptyString | None] = None
@@ -61,10 +62,12 @@ class NVMetHostCreate(NVMetHostEntry):
 
 class NVMetHostCreateArgs(BaseModel):
     nvmet_host_create: NVMetHostCreate
+    """NVMe-oF host configuration data for creation."""
 
 
 class NVMetHostCreateResult(BaseModel):
     result: NVMetHostEntry
+    """The created NVMe-oF host configuration."""
 
 
 class NVMetHostUpdate(NVMetHostCreate, metaclass=ForUpdateMetaclass):
@@ -73,11 +76,14 @@ class NVMetHostUpdate(NVMetHostCreate, metaclass=ForUpdateMetaclass):
 
 class NVMetHostUpdateArgs(BaseModel):
     id: int
+    """ID of the NVMe-oF host to update."""
     nvmet_host_update: NVMetHostUpdate
+    """Updated NVMe-oF host configuration data."""
 
 
 class NVMetHostUpdateResult(BaseModel):
     result: NVMetHostEntry
+    """The updated NVMe-oF host configuration."""
 
 
 class NVMetHostDeleteOptions(BaseModel):
@@ -87,11 +93,14 @@ class NVMetHostDeleteOptions(BaseModel):
 
 class NVMetHostDeleteArgs(BaseModel):
     id: int
+    """ID of the NVMe-oF host to delete."""
     options: NVMetHostDeleteOptions = Field(default_factory=NVMetHostDeleteOptions)
+    """Options controlling host deletion behavior."""
 
 
 class NVMetHostDeleteResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the NVMe-oF host is successfully deleted."""
 
 
 class NVMetHostGenerateKeyArgs(BaseModel):
@@ -103,6 +112,7 @@ class NVMetHostGenerateKeyArgs(BaseModel):
 
 class NVMetHostGenerateKeyResult(BaseModel):
     result: str
+    """Generated DH-CHAP key for NVMe-oF authentication."""
 
 
 class NVMetHostDhchapDhgroupChoicesArgs(BaseModel):
@@ -111,6 +121,7 @@ class NVMetHostDhchapDhgroupChoicesArgs(BaseModel):
 
 class NVMetHostDhchapDhgroupChoicesResult(BaseModel):
     result: list[DHChapDHGroupType]
+    """Array of available DH-CHAP Diffie-Hellman group options."""
 
 
 class NVMetHostDhchapHashChoicesArgs(BaseModel):
@@ -119,3 +130,4 @@ class NVMetHostDhchapHashChoicesArgs(BaseModel):
 
 class NVMetHostDhchapHashChoicesResult(BaseModel):
     result: list[DHChapHashType]
+    """Array of available DH-CHAP hash algorithm options."""

@@ -10,3 +10,4 @@ class SystemGeneralTimezoneChoicesArgs(BaseModel):
 
 class SystemGeneralTimezoneChoicesResult(BaseModel):
     result: dict[str, str]
+    """Object of available timezone identifiers and their descriptive names."""

@@ -48,86 +48,155 @@ DATASET_NAME = Annotated[
 
 class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
     parsed: Any
+    """The ZFS property value parsed into the appropriate type (string, boolean, integer, etc.)."""
     rawvalue: str | None
+    """The raw string value of the ZFS property as stored in the pool. Can be null if not set."""
     value: str | None
-    source: str | None
+    """The current effective value of the ZFS property as a string. Can be null if inherited or not set."""
+    source: str | None = Field(examples=['LOCAL', 'INHERITED', 'DEFAULT'])
+    """Indicates where the property value originates from."""
     source_info: Any
+    """Additional metadata about the property source, such as the parent dataset for inherited values."""
 
 
 class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     model_config = ConfigDict(extra="allow", strict=False)
-    id: str
-    type: str
+    id: str = Field(examples=['tank/dataset/child'])
+    """The full dataset path including pool name."""
+    type: str = Field(examples=['FILESYSTEM', 'VOLUME'])
+    """The dataset type."""
     name: str
+    """The dataset name without the pool prefix."""
     pool: str
+    """The name of the ZFS pool containing this dataset."""
     encrypted: bool
+    """Whether the dataset is encrypted."""
     encryption_root: str | None
+    """The root dataset where encryption is enabled. `null` if the dataset is not encrypted."""
     key_loaded: bool | None
+    """Whether the encryption key is currently loaded for encrypted datasets. `null` for unencrypted datasets."""
     children: list
+    """Array of child dataset objects nested under this dataset."""
     user_properties: dict
+    """Custom user-defined ZFS properties set on this dataset as key-value pairs."""
     locked: bool
+    """Whether an encrypted dataset is currently locked (key not loaded)."""
     comments: PoolDatasetEntryProperty
+    """ZFS comments property for storing descriptive text about the dataset."""
     quota_warning: PoolDatasetEntryProperty
+    """ZFS quota warning threshold property as a percentage."""
     quota_critical: PoolDatasetEntryProperty
+    """ZFS quota critical threshold property as a percentage."""
     refquota_warning: PoolDatasetEntryProperty
+    """ZFS reference quota warning threshold property as a percentage."""
     refquota_critical: PoolDatasetEntryProperty
+    """ZFS reference quota critical threshold property as a percentage."""
     managedby: PoolDatasetEntryProperty
+    """Identifies which service or system manages this dataset."""
     deduplication: PoolDatasetEntryProperty
+    """ZFS deduplication setting - whether identical data blocks are stored only once."""
     aclmode: PoolDatasetEntryProperty
+    """How Access Control Lists (ACLs) are handled when chmod is used."""
     acltype: PoolDatasetEntryProperty
+    """The type of Access Control List system used (NFSV4, POSIX, or OFF)."""
     xattr: PoolDatasetEntryProperty
+    """Extended attributes storage method (on/off)."""
     atime: PoolDatasetEntryProperty
+    """Whether file access times are updated when files are accessed."""
     casesensitivity: PoolDatasetEntryProperty
+    """File name case sensitivity setting (sensitive/insensitive)."""
     checksum: PoolDatasetEntryProperty
+    """Data integrity checksum algorithm used for this dataset."""
     exec: PoolDatasetEntryProperty
+    """Whether files in this dataset can be executed."""
     sync: PoolDatasetEntryProperty
+    """Synchronous write behavior (standard/always/disabled)."""
     compression: PoolDatasetEntryProperty
+    """Compression algorithm and level applied to data in this dataset."""
     compressratio: PoolDatasetEntryProperty
+    """The achieved compression ratio as a decimal (e.g., '2.50x')."""
     origin: PoolDatasetEntryProperty
+    """The snapshot from which this clone was created. Empty for non-clone datasets."""
     quota: PoolDatasetEntryProperty
+    """Maximum amount of disk space this dataset and its children can consume."""
     refquota: PoolDatasetEntryProperty
+    """Maximum amount of disk space this dataset itself can consume (excluding children)."""
     reservation: PoolDatasetEntryProperty
+    """Minimum amount of disk space guaranteed to be available to this dataset and its children."""
     refreservation: PoolDatasetEntryProperty
+    """Minimum amount of disk space guaranteed to be available to this dataset itself."""
     copies: PoolDatasetEntryProperty
+    """Number of copies of data blocks to maintain for redundancy (1-3)."""
     snapdir: PoolDatasetEntryProperty
+    """Visibility of the .zfs/snapshot directory (visible/hidden)."""
     readonly: PoolDatasetEntryProperty
+    """Whether the dataset is read-only."""
     recordsize: PoolDatasetEntryProperty
+    """The suggested block size for files in this filesystem dataset."""
     sparse: PoolDatasetEntryProperty
+    """For volumes, whether to use sparse (thin) provisioning."""
     volsize: PoolDatasetEntryProperty
+    """For volumes, the logical size of the volume."""
     volblocksize: PoolDatasetEntryProperty
+    """For volumes, the block size used by the volume."""
     key_format: PoolDatasetEntryProperty
+    """Format of the encryption key (hex/raw/passphrase). Only relevant for encrypted datasets."""
     encryption_algorithm: PoolDatasetEntryProperty
+    """Encryption algorithm used (e.g., AES-256-GCM). Only relevant for encrypted datasets."""
     used: PoolDatasetEntryProperty
+    """Total amount of disk space consumed by this dataset and all its children."""
     usedbychildren: PoolDatasetEntryProperty
+    """Amount of disk space consumed by child datasets."""
     usedbydataset: PoolDatasetEntryProperty
+    """Amount of disk space consumed by this dataset itself, excluding children and snapshots."""
     usedbyrefreservation: PoolDatasetEntryProperty
+    """Amount of disk space consumed by the refreservation of this dataset."""
     usedbysnapshots: PoolDatasetEntryProperty
+    """Amount of disk space consumed by snapshots of this dataset."""
     available: PoolDatasetEntryProperty
+    """Amount of disk space available to this dataset and its children."""
     special_small_block_size: PoolDatasetEntryProperty
+    """Size threshold below which blocks are stored on special vdevs if configured."""
     pbkdf2iters: PoolDatasetEntryProperty
+    """Number of PBKDF2 iterations used for passphrase-based encryption keys."""
     creation: PoolDatasetEntryProperty
+    """Timestamp when this dataset was created."""
     snapdev: PoolDatasetEntryProperty
+    """Controls visibility of volume snapshots under /dev/zvol/<pool>/."""
     mountpoint: str | None
+    """Filesystem path where this dataset is mounted. Null for unmounted datasets or volumes."""
 
 
 class PoolDatasetChangeKeyOptions(BaseModel):
     generate_key: bool = False
+    """Generate a new random encryption key instead of using a provided key or passphrase."""
     key_file: bool = False
+    """Whether the provided key is from a key file rather than entered directly."""
     pbkdf2iters: int = Field(default=350000, ge=100000)
+    """Number of PBKDF2 iterations for passphrase-based keys. Higher values improve security against \
+    brute force attacks but increase unlock time. Default 350,000 balances security and performance."""
     passphrase: Secret[NonEmptyString | None] = None
+    """Passphrase to use for encryption key derivation."""
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
+    """Raw hex-encoded encryption key."""
 
 
 class PoolDatasetCreateUserProperty(BaseModel):
-    key: Annotated[str, Field(pattern=".*:.*")]
+    key: Annotated[str, Field(examples=["custom:backup_policy", "org:created_by"], pattern=".*:.*")]
+    """User property key in namespace:property format."""
     value: str
+    """The value to assign to the user property."""
 
 
 class PoolDatasetCreate(BaseModel):
     name: DATASET_NAME
+    """The name of the dataset to create."""
     comments: str = "INHERIT"
+    """Comments or description for the dataset."""
     sync: Literal["STANDARD", "ALWAYS", "DISABLED", "INHERIT"] = "INHERIT"
+    """Synchronous write behavior for the dataset."""
     snapdev: Literal["HIDDEN", "VISIBLE", "INHERIT"] = NotRequired
+    """Controls visibility of volume snapshots under /dev/zvol/."""
     compression: Literal[
         "ON", "OFF", "LZ4", "GZIP", "GZIP-1", "GZIP-9", "ZSTD", "ZSTD-FAST", "ZLE", "LZJB", "ZSTD-1", "ZSTD-2",
         "ZSTD-3", "ZSTD-4", "ZSTD-5", "ZSTD-6", "ZSTD-7", "ZSTD-8", "ZSTD-9", "ZSTD-10", "ZSTD-11", "ZSTD-12",
@@ -136,23 +205,42 @@ class PoolDatasetCreate(BaseModel):
         "ZSTD-FAST-10", "ZSTD-FAST-20", "ZSTD-FAST-30", "ZSTD-FAST-40", "ZSTD-FAST-50", "ZSTD-FAST-60", "ZSTD-FAST-70",
         "ZSTD-FAST-80", "ZSTD-FAST-90", "ZSTD-FAST-100", "ZSTD-FAST-500", "ZSTD-FAST-1000", "INHERIT"
     ] = "INHERIT"
+    """Compression algorithm to use for the dataset. Higher numbered variants provide better compression \
+    but use more CPU. 'INHERIT' uses the parent dataset's setting."""
     exec: Literal["ON", "OFF", "INHERIT"] = "INHERIT"
+    """Whether files in this dataset can be executed."""
     managedby: NonEmptyString = "INHERIT"
+    """Identifies which service or system manages this dataset."""
     quota_warning: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of dataset quota at which to issue a warning. 0-100 or 'INHERIT'."""
     quota_critical: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of dataset quota at which to issue a critical alert. 0-100 or 'INHERIT'."""
     refquota_warning: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of reference quota at which to issue a warning. 0-100 or 'INHERIT'."""
     refquota_critical: Annotated[int, Field(ge=0, le=100)] | Literal["INHERIT"] = "INHERIT"
+    """Percentage of reference quota at which to issue a critical alert. 0-100 or 'INHERIT'."""
     reservation: int = NotRequired
+    """Minimum disk space guaranteed to this dataset and its children in bytes."""
     refreservation: int = NotRequired
+    """Minimum disk space guaranteed to this dataset itself in bytes."""
     special_small_block_size: int | Literal["INHERIT"] = NotRequired
+    """Size threshold below which blocks are stored on special vdevs."""
     copies: int | Literal["INHERIT"] = "INHERIT"
+    """Number of copies of data blocks to maintain for redundancy."""
     snapdir: Literal["DISABLED", "VISIBLE", "HIDDEN", "INHERIT"] = "INHERIT"
+    """Controls visibility of the `.zfs/snapshot` directory. 'DISABLED' hides snapshots, 'VISIBLE' shows them, \
+    'HIDDEN' makes them accessible but not listed."""
     deduplication: Literal["ON", "VERIFY", "OFF", "INHERIT"] = "INHERIT"
+    """Deduplication setting. 'ON' enables dedup, 'VERIFY' enables with checksum verification, 'OFF' disables."""
     checksum: Literal[
         "ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3", "INHERIT"
     ] = "INHERIT"
+    """Checksum algorithm to verify data integrity. Higher security algorithms like SHA256 provide better \
+    protection but use more CPU."""
     readonly: Literal["ON", "OFF", "INHERIT"] = "INHERIT"
+    """Whether the dataset is read-only."""
     share_type: Literal["GENERIC", "MULTIPROTOCOL", "NFS", "SMB", "APPS"] = "GENERIC"
+    """Optimization type for the dataset based on its intended use."""
     encryption_options: PoolCreateEncryptionOptions = Field(default_factory=PoolCreateEncryptionOptions)
     """Configuration for encryption of dataset for `name` pool."""
     encryption: bool = False
@@ -162,25 +250,39 @@ class PoolDatasetCreate(BaseModel):
        dataset.
     """
     inherit_encryption: bool = True
+    """Whether to inherit encryption settings from the parent dataset."""
     user_properties: list[PoolDatasetCreateUserProperty] = []
+    """Custom user-defined properties to set on the dataset."""
     create_ancestors: bool = False
+    """Whether to create any missing parent datasets."""
 
 
 class PoolDatasetCreateFilesystem(PoolDatasetCreate):
     type: Literal["FILESYSTEM"] = "FILESYSTEM"
+    """Type of dataset to create - filesystem."""
     aclmode: Literal["PASSTHROUGH", "RESTRICTED", "DISCARD", "INHERIT"] = NotRequired
+    """How Access Control Lists are handled when chmod is used."""
     acltype: Literal["OFF", "NFSV4", "POSIX", "INHERIT"] = NotRequired
+    """The type of Access Control List system to use."""
     atime: Literal["ON", "OFF", "INHERIT"] = NotRequired
+    """Whether file access times are updated when files are accessed."""
     casesensitivity: Literal["SENSITIVE", "INSENSITIVE", "INHERIT"] = NotRequired
+    """File name case sensitivity setting."""
     quota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None] = NotRequired
+    """Maximum disk space this dataset and its children can consume in bytes."""
     refquota: Annotated[int, Field(ge=1024 ** 3)] | Literal[0, None] = NotRequired
+    """Maximum disk space this dataset itself can consume in bytes."""
     recordsize: str = NotRequired
+    """The suggested block size for files in this filesystem dataset."""
 
 
 class PoolDatasetCreateVolume(PoolDatasetCreate):
     type: Literal["VOLUME"] = "VOLUME"
+    """Type of dataset to create - volume (zvol)."""
     force_size: bool = NotRequired
+    """Force creation even if the size is not optimal."""
     sparse: bool = NotRequired
+    """Whether to use sparse (thin) provisioning for the volume."""
     volsize: int
     """The volume size in bytes; supposed to be a multiple of the block size."""
     volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"] = NotRequired
@@ -197,15 +299,22 @@ class PoolDatasetDeleteOptions(BaseModel):
 
 class PoolDatasetEncryptionSummaryOptionsDataset(BaseModel):
     force: bool = False
+    """Force unlock even if the mount path already exists and is not empty."""
     name: NonEmptyString
+    """The dataset name to unlock."""
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)]] = NotRequired
+    """Raw hex-encoded encryption key for this dataset."""
     passphrase: Secret[NonEmptyString] = NotRequired
+    """Passphrase for this dataset if using passphrase-based encryption."""
 
 
 class PoolDatasetEncryptionSummaryOptions(BaseModel):
     key_file: bool = False
+    """Whether keys are provided via key files rather than directly."""
     force: bool = False
+    """Force unlock operations even if mount paths already exist."""
     datasets: list[PoolDatasetEncryptionSummaryOptionsDataset] = []
+    """Array of dataset-specific unlock options and credentials."""
 
 
 class PoolDatasetEncryptionSummary(BaseModel):
@@ -228,16 +337,24 @@ class PoolDatasetEncryptionSummary(BaseModel):
     for the dataset.
     """
     name: str
+    """The dataset name."""
     key_format: str
+    """The format of the encryption key (hex, raw, or passphrase)."""
     key_present_in_database: bool
+    """Whether an encryption key for this dataset exists in the system database."""
     valid_key: bool
+    """Whether the provided key is valid for this dataset."""
     locked: bool
+    """Whether the dataset is currently locked."""
     unlock_error: str | None
+    """Error message if unlock would fail, or `null` if unlock would succeed."""
     unlock_successful: bool
+    """Whether an unlock operation would be successful."""
 
 
 class PoolDatasetLockOptions(BaseModel):
     force_umount: bool = False
+    """Force unmounting of the dataset before locking."""
 
 
 class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
@@ -250,6 +367,7 @@ class _PoolDatasetQuota(BaseModel, metaclass=ForUpdateMetaclass):
 
 class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
     quota_type: Literal['USER', 'GROUP']
+    """Type identifier for user or group quotas."""
     id: int
     """The UID or GID to which the quota applies."""
     name: str | None
@@ -264,16 +382,20 @@ class PoolDatasetUserGroupQuota(_PoolDatasetQuota):
 
 class PoolDatasetDatasetQuota(_PoolDatasetQuota):
     quota_type: Literal['DATASET']
+    """Type identifier for dataset quotas."""
     id: str
     """Name of the dataset."""
     name: str
     """Name of the dataset."""
     refquota: int
+    """The dataset's reference quota in bytes."""
 
 
 class PoolDatasetProjectQuota(_PoolDatasetQuota):
     quota_type: Literal['PROJECT']
+    """Type identifier for project quotas."""
     id: int
+    """The project ID."""
     obj_used: int
     """The number of objects currently owned by `id`."""
     obj_quota: int
@@ -319,7 +441,9 @@ class PoolDatasetUnlockOptions(BaseModel):
     these flags are set, system will rename the existing directory/file path where the dataset should be mounted \
     resulting in successful unlock of the dataset."""
     key_file: bool = False
+    """Whether to use a key file instead of a passphrase for unlocking encrypted datasets."""
     recursive: bool = False
+    """Whether to recursively unlock child datasets."""
     toggle_attachments: bool = True
     """Whether attachments should be put in action after unlocking the dataset(s). Toggling attachments can \
     theoretically lead to service interruption when daemons configurations are reloaded (this should not happen, and \
@@ -327,16 +451,21 @@ class PoolDatasetUnlockOptions(BaseModel):
     unlocked but are still locked, disabling this option will put the system into an inconsistent state so it should \
     really never be disabled."""
     datasets: list[PoolDatasetUnlockOptionsDataset] = []
+    """List of specific datasets with their individual unlock options."""
 
 
 class PoolDatasetUnlock(BaseModel):
     unlocked: list[str]
+    """Array of dataset names that were successfully unlocked."""
     failed: dict
+    """Object containing datasets that failed to unlock and their respective error messages."""
 
 
 class PoolDatasetUpdateUserProperty(PoolDatasetCreateUserProperty):
     value: str = NotRequired
+    """New value for the user property. Not required if removing the property."""
     remove: bool = NotRequired
+    """Whether to remove this user property from the dataset."""
 
 
 class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, metaclass=ForUpdateMetaclass):
@@ -350,6 +479,7 @@ class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, me
     encryption_options: Excluded = excluded_field()
     inherit_encryption: Excluded = excluded_field()
     user_properties_update: list[PoolDatasetUpdateUserProperty]
+    """Array of user property updates to apply to the dataset."""
 
 
 # --------------------   Args and Results   ------------------------ #
@@ -357,19 +487,24 @@ class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, me
 
 class PoolDatasetAttachmentsArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to retrieve attachments for."""
 
 
 class PoolDatasetAttachmentsResult(BaseModel):
     result: list[PoolAttachment]
+    """Array of services and resources attached to the dataset."""
 
 
 class PoolDatasetChangeKeyArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to change the encryption key for."""
     options: PoolDatasetChangeKeyOptions = Field(default_factory=PoolDatasetChangeKeyOptions)
+    """Configuration options for changing the encryption key."""
 
 
 class PoolDatasetChangeKeyResult(BaseModel):
     result: None
+    """Returns `null` on successful key change."""
 
 
 class PoolDatasetChecksumChoicesArgs(BaseModel):
@@ -394,19 +529,24 @@ class PoolDatasetCompressionChoicesArgs(BaseModel):
 
 class PoolDatasetCompressionChoicesResult(BaseModel):
     result: dict[str, str]
+    """Object mapping compression algorithm names to their descriptions."""
 
 
 class PoolDatasetCreateArgs(BaseModel):
     data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume
+    """Configuration data for creating a new ZFS dataset."""
 
 
 class PoolDatasetCreateResult(BaseModel):
     result: PoolDatasetEntry
+    """The newly created dataset information."""
 
 
 class PoolDatasetDeleteArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to delete."""
     options: PoolDatasetDeleteOptions = Field(default_factory=PoolDatasetDeleteOptions)
+    """Options controlling the deletion behavior such as recursive and force flags."""
 
 
 class PoolDatasetDeleteResult(BaseModel):
@@ -415,11 +555,13 @@ class PoolDatasetDeleteResult(BaseModel):
 
 
 class PoolDatasetDetailsArgs(BaseModel):
+    """Get detailed information about all datasets."""
     pass
 
 
 class PoolDatasetDetailsResult(BaseModel):
     result: list[dict]
+    """Array of detailed dataset information objects."""
 
 
 class PoolDatasetEncryptionAlgorithmChoicesArgs(BaseModel):
@@ -438,32 +580,41 @@ class PoolDatasetEncryptionAlgorithmChoicesResult(BaseModel):
 
 class PoolDatasetEncryptionSummaryArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to generate an encryption summary for."""
     options: PoolDatasetEncryptionSummaryOptions = Field(default_factory=PoolDatasetEncryptionSummaryOptions)
+    """Options for generating the encryption summary including force settings and datasets."""
 
 
 class PoolDatasetEncryptionSummaryResult(BaseModel):
     result: list[PoolDatasetEncryptionSummary]
+    """Array of encryption status information for datasets that would be affected by an unlock operation."""
 
 
 class PoolDatasetExportKeyArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to export the encryption key from."""
     download: bool = False
+    """Whether to prepare the key for download as a file."""
 
 
 class PoolDatasetExportKeyResult(BaseModel):
     result: Secret[str | None]
+    """The exported encryption key as a hex string, or `null` if no key is available."""
 
 
 class PoolDatasetExportKeysArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to export keys from recursively."""
 
 
 class PoolDatasetExportKeysResult(BaseModel):
     result: None
+    """Returns `null` on successful key export."""
 
 
 class PoolDatasetExportKeysForReplicationArgs(BaseModel):
     id: int
+    """The pool ID to export dataset keys for replication purposes."""
 
 
 class PoolDatasetExportKeysForReplicationResult(BaseModel):
@@ -472,38 +623,52 @@ class PoolDatasetExportKeysForReplicationResult(BaseModel):
 
 class PoolDatasetGetQuotaArgs(BaseModel):
     dataset: str
+    """The dataset path to retrieve quotas for."""
     quota_type: Literal['USER', 'GROUP', 'DATASET', 'PROJECT']
+    """The type of quotas to retrieve."""
     filters: QueryFilters = []
+    """Query filters to limit the results returned."""
     options: QueryOptions = Field(default_factory=QueryOptions)
+    """Query options such as sorting and pagination."""
 
 
 class PoolDatasetGetQuotaResult(BaseModel):
     result: list[PoolDatasetQuota]
+    """Array of quota information for the specified quota type."""
 
 
 class PoolDatasetInheritParentEncryptionPropertiesArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to inherit encryption properties from its parent."""
 
 
 class PoolDatasetInheritParentEncryptionPropertiesResult(BaseModel):
     result: None
+    """Returns `null` on successful inheritance of parent encryption properties."""
 
 
 @single_argument_args("data")
 class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
     encryption_key: Any = None
+    """The encryption key data to insert or update."""
     id: int | None = None
+    """The record ID for updates, or null for new records."""
     name: NonEmptyString
-    key_format: str | None
+    """The dataset name for the encryption record."""
+    key_format: str | None = Field(examples=['hex', 'raw', 'passphrase'])
+    """The format of the encryption key."""
 
 
 class PoolDatasetInsertOrUpdateEncryptedRecordResult(BaseModel):
     result: str | None
+    """Returns a success message or `null` on successful record update."""
 
 
 class PoolDatasetLockArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to lock."""
     options: PoolDatasetLockOptions = Field(default_factory=PoolDatasetLockOptions)
+    """Options for locking the dataset, such as force unmount settings."""
 
 
 class PoolDatasetLockResult(BaseModel):
@@ -513,34 +678,42 @@ class PoolDatasetLockResult(BaseModel):
 
 class PoolDatasetProcessesArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to list processes for."""
 
 
 class PoolDatasetProcessesResult(BaseModel):
     result: list[PoolProcess]
+    """Array of processes currently using the dataset."""
 
 
 class PoolDatasetPromoteArgs(BaseModel):
     id: str
+    """The clone dataset ID (full path) to promote to become the parent."""
 
 
 class PoolDatasetPromoteResult(BaseModel):
     result: None
+    """Returns `null` on successful clone promotion."""
 
 
 class PoolDatasetRecommendedZvolBlocksizeArgs(BaseModel):
     pool: str
+    """The pool name to get the recommended volume block size for."""
 
 
 class PoolDatasetRecommendedZvolBlocksizeResult(BaseModel):
     result: str
+    """The recommended block size for volumes on this pool."""
 
 
 class PoolDatasetRecordsizeChoicesArgs(BaseModel):
     pool_name: str | None = None
+    """Optional pool name to get record size choices for. If not provided, returns general choices."""
 
 
 class PoolDatasetRecordsizeChoicesResult(BaseModel):
     result: list[str]
+    """Array of available record size options for filesystem datasets."""
 
 
 class PoolDatasetSetQuotaArgs(BaseModel):
@@ -555,49 +728,66 @@ class PoolDatasetSetQuotaArgs(BaseModel):
 
 class PoolDatasetSetQuotaResult(BaseModel):
     result: None
+    """Returns `null` on successful quota update."""
 
 
 class PoolDatasetUnlockArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to unlock."""
     options: PoolDatasetUnlockOptions = Field(default_factory=PoolDatasetUnlockOptions)
+    """Options for unlocking including force settings, recursion, and dataset-specific keys."""
 
 
 class PoolDatasetUnlockResult(BaseModel):
     result: PoolDatasetUnlock
+    """Results of the unlock operation including successful and failed datasets."""
 
 
 class PoolDatasetDestroySnapshotsArgs(BaseModel):
     name: str
+    """The dataset name to destroy snapshots for."""
     snapshots: "PoolDatasetDestroySnapshotsArgsSnapshots"
+    """Specification of which snapshots to destroy (all, specific ones, or ranges)."""
 
 
 class PoolDatasetDestroySnapshotsArgsSnapshots(BaseModel):
     all: bool = False
+    """Whether to destroy all snapshots for the dataset."""
     recursive: bool = False
+    """Whether to recursively destroy snapshots of child datasets."""
     snapshots: list[Union["PoolDatasetDestroySnapshotsArgsSnapshotSpec", str]] = []
+    """Array of specific snapshot names or snapshot range specifications to destroy."""
 
 
 class PoolDatasetDestroySnapshotsArgsSnapshotSpec(BaseModel):
     start: str | None = None
+    """Starting snapshot name for the range. Null to start from the beginning."""
     end: str | None = None
+    """Ending snapshot name for the range. Null to continue to the end."""
 
 
 class PoolDatasetDestroySnapshotsResult(BaseModel):
     result: list[str]
+    """Array of snapshot names that were successfully destroyed."""
 
 
 class PoolDatasetUpdateArgs(BaseModel):
     id: str
+    """The dataset ID (full path) to update."""
     data: PoolDatasetUpdate
+    """The dataset properties to update."""
 
 
 class PoolDatasetUpdateResult(BaseModel):
     result: PoolDatasetEntry
+    """The updated dataset information."""
 
 
 class PoolDatasetRenameOptions(BaseModel):
     new_name: DATASET_NAME
+    """The new name for the dataset."""
     recursive: bool = False
+    """Whether to recursively rename child datasets."""
     force: bool = False
     """
     This operation does not check whether the dataset is currently in use. Renaming an active dataset may disrupt \
@@ -609,8 +799,11 @@ class PoolDatasetRenameOptions(BaseModel):
 
 class PoolDatasetRenameArgs(BaseModel):
     id: NonEmptyString
+    """The current dataset ID (full path) to rename."""
     data: PoolDatasetRenameOptions
+    """The rename operation options including the new name and safety flags."""
 
 
 class PoolDatasetRenameResult(BaseModel):
     result: None
+    """Returns `null` on successful dataset rename."""

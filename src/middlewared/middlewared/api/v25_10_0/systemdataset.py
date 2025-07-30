@@ -9,11 +9,17 @@ __all__ = [
 
 class SystemDatasetEntry(BaseModel):
     id: int
+    """Unique identifier for the system dataset configuration."""
     pool: str
+    """Name of the pool hosting the system dataset."""
     pool_set: bool
+    """Whether a pool has been explicitly set for the system dataset."""
     uuid: str
+    """UUID of the system dataset."""
     basename: str
+    """Base name of the system dataset."""
     path: str | None
+    """Filesystem path to the system dataset. `null` if not mounted."""
 
 
 class SystemDatasetUpdate(BaseModel, metaclass=ForUpdateMetaclass):
@@ -35,7 +41,9 @@ class SystemDatasetPoolChoicesResult(BaseModel):
 
 class SystemDatasetUpdateArgs(BaseModel):
     data: SystemDatasetUpdate
+    """Updated configuration for the system dataset."""
 
 
 class SystemDatasetUpdateResult(BaseModel):
     result: SystemDatasetEntry
+    """The updated system dataset configuration."""

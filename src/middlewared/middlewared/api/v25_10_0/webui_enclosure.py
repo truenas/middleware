@@ -10,3 +10,4 @@ class WebUIEnclosureDashboardArgs(BaseModel):
 
 class WebUIEnclosureDashboardResult(BaseModel):
     result: list[dict]
+    """Array of enclosure information objects for the web UI dashboard display."""

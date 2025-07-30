@@ -9,3 +9,4 @@ class SystemGlobalIDIdArgs(BaseModel):
 
 class SystemGlobalIDIdResult(BaseModel):
     result: str
+    """Unique system identifier."""

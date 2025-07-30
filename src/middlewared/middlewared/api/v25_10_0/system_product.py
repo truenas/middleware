@@ -23,26 +23,32 @@ __all__ = (
 
 class SystemFeatureEnabledArgs(BaseModel):
     feature: Literal["DEDUP", "FIBRECHANNEL", "VM"]
+    """Feature to check for availability on this system."""
 
 
 class SystemFeatureEnabledResult(BaseModel):
     result: bool
+    """Whether the specified feature is enabled on this system."""
 
 
 class SystemLicenseUpdateArgs(BaseModel):
     license: NonEmptyString
+    """License key to apply to the system."""
 
 
 class SystemLicenseUpdateResult(BaseModel):
     result: None
+    """Returns `null` on successful license update."""
 
 
 class SystemReleaseNotesUrlArgs(BaseModel):
     version_str: NonEmptyString | None = None
+    """Version string to get release notes for. `null` for current version."""
 
 
 class SystemReleaseNotesUrlResult(BaseModel):
     result: str
+    """URL to the release notes for the specified version."""
 
 
 class SystemProductTypeArgs(BaseModel):
@@ -51,6 +57,7 @@ class SystemProductTypeArgs(BaseModel):
 
 class SystemProductTypeResult(BaseModel):
     result: Literal["COMMUNITY_EDITION", "ENTERPRISE"]
+    """Product type of this TrueNAS system."""
 
 
 class SystemVersionArgs(BaseModel):
@@ -59,6 +66,7 @@ class SystemVersionArgs(BaseModel):
 
 class SystemVersionResult(BaseModel):
     result: str
+    """Full version string of the TrueNAS system."""
 
 
 class SystemVersionShortArgs(BaseModel):
@@ -67,6 +75,7 @@ class SystemVersionShortArgs(BaseModel):
 
 class SystemVersionShortResult(BaseModel):
     result: str
+    """Short version string of the TrueNAS system."""
 
 
 class SystemExperimentalArgs(BaseModel):
@@ -75,3 +84,4 @@ class SystemExperimentalArgs(BaseModel):
 
 class SystemExperimentalResult(BaseModel):
     result: bool
+    """Whether experimental features are enabled on this system."""

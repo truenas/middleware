@@ -67,6 +67,7 @@ class SMBShareAclEntryWhoId(BaseModel):
     If the type is `USER`, the `xid` value refers to a Unix UID.
     If the type is `GROUP`, the `xid` value refers to a Unix GID."""
     xid: int = Field(alias='id', ge=0, le=2147483647)
+    """Unix user ID (UID) or group ID (GID) depending on the `id_type` field."""
 
 
 class SMBShareAclEntry(BaseModel):
@@ -113,11 +114,13 @@ class SharingSMBSetaclArgs(SMBShareAcl):
 
 class SharingSMBSetaclResult(BaseModel):
     result: SMBShareAcl
+    """The updated SMB share ACL configuration."""
 
 
 @single_argument_args('smb_getacl')
 class SharingSMBGetaclArgs(BaseModel):
     share_name: NonEmptyString
+    """Name of the SMB share to retrieve ACL for."""
 
 
 class SharingSMBGetaclResult(SharingSMBSetaclResult):
@@ -130,6 +133,7 @@ SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
 class SmbServiceEntry(BaseModel):
     """ TrueNAS SMB server configuration. """
     id: int
+    """Unique identifier for the SMB service configuration."""
     netbiosname: NetbiosName
     """ The NetBIOS name of this server. """
     netbiosalias: list[NetbiosName]
@@ -214,6 +218,7 @@ class SMBUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
 
 class SMBUpdateResult(BaseModel):
     result: SmbServiceEntry
+    """The updated SMB service configuration."""
 
 
 class SMBUnixcharsetChoicesArgs(BaseModel):
@@ -222,6 +227,7 @@ class SMBUnixcharsetChoicesArgs(BaseModel):
 
 class SMBUnixcharsetChoicesResult(BaseModel):
     result: dict[str, SMBCharsetType]
+    """Available character set choices for Unix charset configuration."""
 
 
 class SMBBindipChoicesArgs(BaseModel):
@@ -230,6 +236,7 @@ class SMBBindipChoicesArgs(BaseModel):
 
 class SMBBindipChoicesResult(BaseModel):
     result: dict[str, str]
+    """Available IP addresses that the SMB service can bind to."""
 
 
 class SharingSMBPresetsArgs(BaseModel):
@@ -238,15 +245,18 @@ class SharingSMBPresetsArgs(BaseModel):
 
 class SharingSMBPresetsResult(BaseModel):
     result: dict[str, dict]
+    """Available SMB share preset configurations by purpose."""
 
 
 @single_argument_args('smb_share_precheck')
 class SharingSMBSharePrecheckArgs(BaseModel):
     name: SmbShareName | None = None
+    """Name of the SMB share to validate (optional)."""
 
 
 class SharingSMBSharePrecheckResult(BaseModel):
     result: None
+    """Returns `null` when the SMB share configuration passes validation checks."""
 
 
 SmbNamingSchema = Annotated[str, AfterValidator(validate_smb_path_suffix)]
@@ -291,6 +301,8 @@ class LegacyOpt(BaseModel):
 
     WARNING: Do not use this feature instead of backups or ZFS snapshots. """
     path_suffix: SmbNamingSchema | None = Field(default=None, examples=["%D/%U"])
+    """Path suffix template for dynamic path generation. Uses SMB variable substitution patterns like `%D` (domain) \
+    and `%U` (username)."""
     hostsallow: list[str] = Field(default=[], examples=[
         ['192.168.0.200', '150.203.'],
         ['150.203.15.0/255.255.255.0'],
@@ -451,9 +463,9 @@ class ExternalOpt(BaseModel):
     """ These configuration options apply to shares with the `EXTERNAL_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.EXTERNAL_SHARE] = Field(exclude=True, repr=False)
     remote_path: list[NonEmptyString] = Field(examples=[
-        ['192.168.0.200\\SHARE'],
-        ['SERVER1.MYDOM.INTERNAL\\SHARE'],
-        ['SERVER1.MYDOM.INTERNAL\\SHARE, SERVER2.MYDOM.INTERNAL\\SHARE']
+        [r'192.168.0.200\SHARE'],
+        [r'SERVER1.MYDOM.INTERNAL\SHARE'],
+        [r'SERVER1.MYDOM.INTERNAL\SHARE, SERVER2.MYDOM.INTERNAL\SHARE']
     ])
     """ This is the path to the external server and share. Each server entry must include a full domain name or IP \
     address and share name. Separate the server and share with the `\\` character.
@@ -491,6 +503,7 @@ SmbShareOptions = Annotated[
 class SmbShareEntry(BaseModel):
     """ SMB share entry on the TrueNAS server. """
     id: int
+    """Unique identifier for this SMB share."""
     purpose: Literal[
         SMBSharePurpose.DEFAULT_SHARE,
         SMBSharePurpose.LEGACY_SHARE,
@@ -578,6 +591,7 @@ class SmbShareEntry(BaseModel):
         {'enable': True, 'watch_list': ['interns'], 'ignore_list': []},
         {'enable': True, 'watch_list': [], 'ignore_list': ['automation']}
     ])
+    """Audit configuration for monitoring SMB share access and operations."""
     options: SmbShareOptions | None = Field(default=None, examples=[
         {'auto_snapshot': True},
         {'auto_quota': 100},
@@ -707,10 +721,12 @@ class SmbShareCreate(SmbShareEntry):
 
 class SharingSMBCreateArgs(BaseModel):
     data: SmbShareCreate
+    """SMB share configuration data for the new share."""
 
 
 class SharingSMBCreateResult(BaseModel):
     result: SmbShareEntry
+    """The created SMB share configuration."""
 
 
 class SmbShareUpdate(SmbShareCreate, metaclass=ForUpdateMetaclass):
@@ -719,16 +735,21 @@ class SmbShareUpdate(SmbShareCreate, metaclass=ForUpdateMetaclass):
 
 class SharingSMBUpdateArgs(BaseModel):
     id: int
+    """ID of the SMB share to update."""
     data: SmbShareUpdate
+    """Updated SMB share configuration data."""
 
 
 class SharingSMBUpdateResult(BaseModel):
     result: SmbShareEntry
+    """The updated SMB share configuration."""
 
 
 class SharingSMBDeleteArgs(BaseModel):
     id: int
+    """ID of the SMB share to delete."""
 
 
 class SharingSMBDeleteResult(BaseModel):
     result: Literal[True]
+    """Returns `true` when the SMB share is successfully deleted."""

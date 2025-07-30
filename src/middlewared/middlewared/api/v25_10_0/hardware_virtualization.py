@@ -9,3 +9,4 @@ class HardwareVirtualizationVariantArgs(BaseModel):
 
 class HardwareVirtualizationVariantResult(BaseModel):
     result: str
+    """The hardware virtualization variant available on this system."""

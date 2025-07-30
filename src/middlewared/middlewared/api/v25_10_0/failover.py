@@ -18,6 +18,7 @@ __all__ = [
 
 class FailoverEntry(BaseModel):
     id: int
+    """Unique identifier for the failover configuration."""
     disabled: bool
     """When true, HA will be administratively disabled."""
     master: bool
@@ -44,7 +45,9 @@ class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
 
 class FailoverUpgrade(BaseModel):
     train: NonEmptyString | None = None
+    """Update train to use for the upgrade or `null` for default."""
     version: str | None = None
+    """Specific version to upgrade to or `null` for latest."""
     resume: bool = False
     """Should be set to true if a previous call to this method returned a \
     `CallError` with `errno=EAGAIN` meaning that an upgrade can be performed \
@@ -52,6 +55,7 @@ class FailoverUpgrade(BaseModel):
     to set `resume_manual` to `true` if a previous call to this method was \
     performed using update file upload."""
     resume_manual: bool = False
+    """Whether to resume a manual upgrade operation."""
 
 
 class FailoverBecomePassiveArgs(BaseModel):
@@ -60,6 +64,7 @@ class FailoverBecomePassiveArgs(BaseModel):
 
 class FailoverBecomePassiveResult(BaseModel):
     result: None
+    """Returns `null` when the node successfully becomes passive."""
 
 
 class FailoverGetIpsArgs(BaseModel):
@@ -68,6 +73,7 @@ class FailoverGetIpsArgs(BaseModel):
 
 class FailoverGetIpsResult(BaseModel):
     result: list[str]
+    """Array of IP addresses configured for failover."""
 
 
 class FailoverLicensedArgs(BaseModel):
@@ -76,6 +82,7 @@ class FailoverLicensedArgs(BaseModel):
 
 class FailoverLicensedResult(BaseModel):
     result: bool
+    """Returns `true` if the system is licensed for high availability, `false` otherwise."""
 
 
 class FailoverNodeArgs(BaseModel):
@@ -84,6 +91,7 @@ class FailoverNodeArgs(BaseModel):
 
 class FailoverNodeResult(BaseModel):
     result: str
+    """Identifier of the current failover node (A or B)."""
 
 
 class FailoverStatusArgs(BaseModel):
@@ -92,6 +100,7 @@ class FailoverStatusArgs(BaseModel):
 
 class FailoverStatusResult(BaseModel):
     result: str
+    """Current status of the failover system."""
 
 
 class FailoverSyncFromPeerArgs(BaseModel):
@@ -100,27 +109,34 @@ class FailoverSyncFromPeerArgs(BaseModel):
 
 class FailoverSyncFromPeerResult(BaseModel):
     result: None
+    """Returns `null` when the sync from peer operation is successfully started."""
 
 
 class FailoverSyncToPeerArgs(BaseModel):
     options: FailoverSyncToPeer = FailoverSyncToPeer()
+    """Options for syncing configuration to the peer node."""
 
 
 class FailoverSyncToPeerResult(BaseModel):
     result: None
+    """Returns `null` when the sync to peer operation is successfully started."""
 
 
 class FailoverUpdateArgs(BaseModel):
     data: FailoverUpdate
+    """Updated failover configuration data."""
 
 
 class FailoverUpdateResult(BaseModel):
     result: FailoverEntry
+    """The updated failover configuration."""
 
 
 class FailoverUpgradeArgs(BaseModel):
     failover_upgrade: FailoverUpgrade = FailoverUpgrade()
+    """Failover upgrade configuration options."""
 
 
 class FailoverUpgradeResult(BaseModel):
     result: bool
+    """Returns `true` when the failover upgrade is successfully initiated."""

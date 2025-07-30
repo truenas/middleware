@@ -10,3 +10,4 @@ class IPMIIsLoadedArgs(BaseModel):
 
 class IPMIIsLoadedResult(BaseModel):
     result: bool
+    """Returns `true` if IPMI modules are loaded and available, `false` otherwise."""

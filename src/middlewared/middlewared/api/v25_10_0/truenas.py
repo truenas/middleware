@@ -19,6 +19,7 @@ class TrueNASManagedByTruecommandArgs(BaseModel):
 
 class TrueNASManagedByTruecommandResult(BaseModel):
     result: bool
+    """Whether this TrueNAS system is currently managed by TrueCommand."""
 
 
 class TrueNASGetChassisHardwareArgs(BaseModel):
@@ -27,6 +28,7 @@ class TrueNASGetChassisHardwareArgs(BaseModel):
 
 class TrueNASGetChassisHardwareResult(BaseModel):
     result: str
+    """Hardware chassis model identifier for this TrueNAS system."""
 
 
 class TrueNASIsIxHardwareArgs(BaseModel):
@@ -35,6 +37,7 @@ class TrueNASIsIxHardwareArgs(BaseModel):
 
 class TrueNASIsIxHardwareResult(BaseModel):
     result: bool
+    """Whether this system is running on iXsystems hardware."""
 
 
 class TrueNASGetEulaArgs(BaseModel):
@@ -43,6 +46,7 @@ class TrueNASGetEulaArgs(BaseModel):
 
 class TrueNASGetEulaResult(BaseModel):
     result: LongString | None
+    """Full text of the End User License Agreement. `null` if no EULA is required."""
 
 
 class TrueNASIsEulaAcceptedArgs(BaseModel):
@@ -51,6 +55,7 @@ class TrueNASIsEulaAcceptedArgs(BaseModel):
 
 class TrueNASIsEulaAcceptedResult(BaseModel):
     result: bool
+    """Whether the End User License Agreement has been formally accepted."""
 
 
 class TrueNASAcceptEulaArgs(BaseModel):
@@ -59,6 +64,7 @@ class TrueNASAcceptEulaArgs(BaseModel):
 
 class TrueNASAcceptEulaResult(BaseModel):
     result: None
+    """Returns `null` on successful EULA acceptance."""
 
 
 class TrueNASIsProductionArgs(BaseModel):
@@ -67,12 +73,16 @@ class TrueNASIsProductionArgs(BaseModel):
 
 class TrueNASIsProductionResult(BaseModel):
     result: bool
+    """Whether this TrueNAS system is configured for production use."""
 
 
 class TrueNASSetProductionArgs(BaseModel):
     production: bool
+    """Whether to configure the system for production use."""
     attach_debug: bool = False
+    """Whether to attach debug information when transitioning to production mode."""
 
 
 class TrueNASSetProductionResult(BaseModel):
     result: dict | None
+    """Result object containing production configuration details. `null` if transition failed."""
