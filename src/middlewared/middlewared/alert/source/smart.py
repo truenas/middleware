@@ -41,7 +41,7 @@ class SMARTAlertSource(ThreadedAlertSource):
                 break
 
         if ata_tests := data.get("ata_smart_self_test_log", {}).get("table", []):
-            test_failed = ata_tests[-1]["status"]["passed"]
+            test_failed = not ata_tests[-1]["status"]["passed"]
 
         return uncorrected, test_failed
 
