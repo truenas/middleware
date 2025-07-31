@@ -220,7 +220,7 @@ def test_api_key_auth():
                         "credentials": "API_KEY",
                         "credentials_data": {
                             "username": "root",
-                            "login_at": ANY
+                            "login_at": ANY,
                             "api_key": {
                                 "id": ANY,
                                 "name": "RESTAUTH",
@@ -234,7 +234,7 @@ def test_api_key_auth():
                         "credentials": "API_KEY",
                         "credentials_data": {
                             "username": "root",
-                            "login_at": ANY
+                            "login_at": ANY,
                             "api_key": {
                                 "id": ANY,
                                 "name": "RESTAUTH",
