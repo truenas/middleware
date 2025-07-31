@@ -77,6 +77,9 @@ class CoreService(Service):
 
     @private
     def get_tasks(self):
+        # WARNING: frame locals for tasks may contain sensitive information such as headers for REST requests. This
+        # method exists for debugging purposes only and information should not be presented as part of a public
+        # API response.
         for task in asyncio.all_tasks(loop=self.middleware.loop):
             formatted = None
             frame = None
