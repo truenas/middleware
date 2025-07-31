@@ -10,6 +10,7 @@ import requests
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, url
 from middlewared.test.integration.utils.audit import expect_audit_log
+from middlewared.test.integration.assets.api_key import api_key
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -203,3 +204,52 @@ def test_bogus_call():
     ]):
         response = POST("/user", {})
         assert response.status_code == 422
+
+
+def test_api_key_auth():
+    with api_key(name="RESTAUTH") as key:
+        with expect_audit_log([
+            {
+                "service_data": {
+                    "vers": {
+                        "major": 0,
+                        "minor": 1,
+                    },
+                    "origin": ANY,
+                    "protocol": "REST",
+                    "credentials": {
+                        "credentials": "API_KEY",
+                        "credentials_data": {
+                            "username": "root",
+                            "api_key": {
+                                "id": ANY,
+                                "name": "RESTAUTH",
+                            }
+                        },
+                    },
+                },
+                "event": "AUTHENTICATION",
+                "event_data": {
+                    "credentials": {
+                        "credentials": "API_KEY",
+                        "credentials_data": {
+                            "username": "root",
+                            "api_key": {
+                                "id": ANY,
+                                "name": "RESTAUTH",
+                            }
+                        }
+                    },
+                    "error": None,
+                },
+                "success": True,
+            },
+        ], include_logins=True):
+            r = requests.get(
+                f"{url()}/api/v2.0/smb",
+                headers={
+                    "Content-type": "application/json",
+                    "Authorization": f"Bearer {key}"
+                },
+            )
+            assert r.status_code == 200, r.text
