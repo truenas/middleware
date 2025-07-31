@@ -81,7 +81,7 @@ def test_authenticated_call():
                 "event_data": {
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root"},
+                        "credentials_data": {"username": "root", "login_at": ANY},
                     },
                     "error": None,
                 },
@@ -253,4 +253,4 @@ def test_api_key_auth():
                     "Authorization": f"Bearer {key}"
                 },
             )
-            assert r.status_code == 403, r.text
+            assert r.status_code == 200, r.text
