@@ -50,14 +50,16 @@ class AppUpdateAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.APPLICATIONS
     level = AlertLevel.INFO
     title = 'Application Update Available'
-    text = 'An update is available for "%(name)s" application.'
+    text = 'Updates are available for %(count)d application%(plural)s: %(apps)s'
 
     async def create(self, args):
-        return Alert(AppUpdateAlertClass, args, _key=args['name'])
+        # Format the text based on number of apps
+        count = len(args['apps'])
+        return Alert(AppUpdateAlertClass, {
+            'count': count,
+            'plural': 's' if count != 1 else '',
+            'apps': ', '.join(args['apps']),
+        })
 
     async def delete(self, alerts, query):
-        # If query is None, it means we are deleting all alerts
-        return list(filter(
-            lambda alert: alert.key != query and query is not None,
-            alerts
-        ))
+        return []

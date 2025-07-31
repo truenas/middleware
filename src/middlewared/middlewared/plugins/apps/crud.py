@@ -334,7 +334,7 @@ class AppService(CRUDService):
         if options.get('send_event', True):
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
 
-        self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
+        self.middleware.call_sync('app.update_app_upgrade_alert')
         job.set_progress(100, f'Deleted {app_name!r} app')
         return True
 

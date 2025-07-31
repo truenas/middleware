@@ -47,7 +47,8 @@ class AppService(Service):
             if not dataset:
                 if host_path.startswith('/mnt/') is False:
                     logger.debug(
-                        'Skipping %r host path for %r app\'s snapshot as it is not under /mnt', host_path, app_info['name']
+                        'Skipping %r host path for %r app\'s snapshot as it is not under /mnt', host_path,
+                        app_info['name']
                     )
                 else:
                     logger.debug(
@@ -96,7 +97,7 @@ class AppService(Service):
                     # This conditional is for the case that maybe pull was successful but redeploy failed,
                     # so we make sure that when we are returning from here, we don't have any alert left
                     # if the image has actually been updated
-                    self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
+                    self.middleware.call_sync('app.update_app_upgrade_alert')
 
             self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
             job.set_progress(100, 'App successfully upgraded and redeployed')
@@ -161,7 +162,7 @@ class AppService(Service):
         if new_app_instance['upgrade_available'] is False:
             # We have this conditional for the case if user chose not to upgrade to latest version
             # and jump to some intermediate version which is not latest
-            self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
+            self.middleware.call_sync('app.update_app_upgrade_alert')
 
         return new_app_instance
 
@@ -230,12 +231,28 @@ class AppService(Service):
         await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
 
     @private
+    async def update_app_upgrade_alert(self):
+        """
+        Deletes existing app update alerts and creates a single consolidated alert
+        if any apps have updates available.
+        """
+        # Delete all existing AppUpdate alerts
+        await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
+
+        # Get all apps with updates
+        apps_with_updates = [
+            app['id'] for app in await self.middleware.call('app.query', [['upgrade_available', '=', True]])
+        ]
+
+        # Create single alert if updates exist
+        if apps_with_updates:
+            await self.middleware.call('alert.oneshot_create', 'AppUpdate', {
+                'apps': apps_with_updates,
+            })
+
+    @private
     async def check_upgrade_alerts(self):
-        for app in await self.middleware.call('app.query'):
-            if app['upgrade_available']:
-                await self.middleware.call('alert.oneshot_create', 'AppUpdate', {'name': app['id']})
-            else:
-                await self.middleware.call('alert.oneshot_delete', 'AppUpdate', app['id'])
+        await self.update_app_upgrade_alert()
 
     @private
     def get_data_for_upgrade_values(self, app, upgrade_version):
