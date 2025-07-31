@@ -1182,6 +1182,21 @@ async def service_remote(middleware, service, verb, options):
         return
     elif await middleware.call('failover.status') != 'MASTER':
         return
+    elif dr := await middleware.call('failover.disabled.reasons'):
+        # if we're here, it means both controllers return MASTER
+        # but we have reasons why failover isn't healthy. An
+        # edge-case with nasty fall-out. Let's forgo replicating
+        # the operation to the other controller since, minimally,
+        # it'll cause a failover.call_remote loop between the
+        # controllers.
+        middleware.logger.warning(
+            'skipping service_remote action %s(%s) options %s because HA is unhealthy: %s',
+            verb,
+            service,
+            options,
+            ', '.join([DisabledReasonsEnum[i] for i in dr])
+        )
+        return
 
     try:
         await middleware.call('failover.call_remote', 'core.bulk', [
