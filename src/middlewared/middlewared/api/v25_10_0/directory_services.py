@@ -326,41 +326,41 @@ class LDAPSearchBases(BaseModel):
 class LDAPMapPasswd(BaseModel):
     """ Optional attribute mappings for non-compliant LDAP servers to generate passwd entries. \
     A value of null means to use the default according to the selected LDAP `schema`. """
-    user_object_class: LDAP_DN | None = None
+    user_object_class: NonEmptyString | None = None
     """ The user entry object class in LDAP. """
-    user_name: LDAP_DN | None = None
+    user_name: NonEmptyString | None = None
     """ The LDAP attribute for the user's login name. """
-    user_uid: LDAP_DN | None = None
+    user_uid: NonEmptyString | None = None
     """ The LDAP attribute for the user's id. """
-    user_gid: LDAP_DN | None = None
+    user_gid: NonEmptyString | None = None
     """ The LDAP attribute for the user's primary group id. """
-    user_gecos: LDAP_DN | None = None
+    user_gecos: NonEmptyString | None = None
     """ The LDAP attribute for the user's gecos field. """
-    user_home_directory: LDAP_DN | None = None
+    user_home_directory: NonEmptyString | None = None
     """ The LDAP attribute for the user's home directory. """
-    user_shell: LDAP_DN | None = None
+    user_shell: NonEmptyString | None = None
     """ The LDAP attribute for the path to the user's default shell. """
 
 
 class LDAPMapShadow(BaseModel):
     """ Optional attribute mappings for non-compliant LDAP servers to generate shadow entries. \
     A value of null means to use the default according to the selected LDAP `schema`. """
-    shadow_last_change: LDAP_DN | None = None
+    shadow_last_change: NonEmptyString | None = None
     """ This parameter contains the name of an LDAP attribute for its shadow(5) counterpart (date of the \
     last password change)."""
-    shadow_min: LDAP_DN | None = None
+    shadow_min: NonEmptyString | None = None
     """ This parameter contains the name of an LDAP attribute for its shadow(5) counterpart (minimum \
     password age). """
-    shadow_max: LDAP_DN | None = None
+    shadow_max: NonEmptyString | None = None
     """ This parameter contains the name of an LDAP attribute for its shadow(5) counterpart (maximum \
     password age). """
-    shadow_warning: LDAP_DN | None = None
+    shadow_warning: NonEmptyString | None = None
     """ This parameter contains the name of an LDAP attribute for its shadow(5) counterpart (password \
     warning period). """
-    shadow_inactive: LDAP_DN | None = None
+    shadow_inactive: NonEmptyString | None = None
     """ This parameter contains the name of an LDAP attribute for its shadow(5) counterpart (password \
     inactivity period). """
-    shadow_expire: LDAP_DN | None = None
+    shadow_expire: NonEmptyString | None = None
     """ This parameter contains the name of an LDAP attribute for its shadow(5) counterpart (account \
     expiration date). """
 
@@ -368,21 +368,21 @@ class LDAPMapShadow(BaseModel):
 class LDAPMapGroup(BaseModel):
     """ Optional attribute mappings for non-compliant LDAP servers to generate group entries. \
     A value of null means to use the default according to the selected LDAP `schema`. """
-    group_object_class: LDAP_DN | None = None
+    group_object_class: NonEmptyString | None = None
     """ The LDAP object class for group entries. """
-    group_gid: LDAP_DN | None = None
+    group_gid: NonEmptyString | None = None
     """ The LDAP attribute for the group's id. """
-    group_member: LDAP_DN | None = None
+    group_member: NonEmptyString | None = None
     """ The LDAP attribute for the names of the group's members. """
 
 
 class LDAPMapNetgroup(BaseModel):
     """ Optional attribute mappings for non-compliant LDAP servers to generate netgroup entries """
-    netgroup_object_class: LDAP_DN | None = None
+    netgroup_object_class: NonEmptyString | None = None
     """ The LDAP object class for netgroup entries. """
-    netgroup_member: LDAP_DN | None = None
+    netgroup_member: NonEmptyString | None = None
     """ The LDAP attribute for the netgroup's members. """
-    netgroup_triple: LDAP_DN | None = None
+    netgroup_triple: NonEmptyString | None = None
     """ The LDAP attribute for netgroup triples (host, user, domain). """
 
 
