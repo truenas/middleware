@@ -7,6 +7,7 @@ import shutil
 import time
 import uuid
 import yaml
+from collections import defaultdict
 
 from truenas_api_client import json as ejson
 
@@ -508,3 +509,52 @@ class AuditService(ConfigService):
             filters,
             options
         )
+
+    @private
+    async def get_method_stats(self, timestamp=None):
+        """
+        Get statistics for all method calls from the audit log.
+
+        Parameters:
+        - timestamp: Optional Unix timestamp to filter calls after this time
+
+        Returns:
+        Dictionary mapping method names to their statistics
+        """
+        # Build query filters
+        query_filters = [['event', '=', 'METHOD_CALL']]
+        if timestamp is not None:
+            query_filters.append(['message_timestamp', '>=', timestamp])
+
+        # Query audit log for method calls
+        audit_entries = await self.middleware.call(
+            'audit.query',
+            {
+                'services': ['MIDDLEWARE'],
+                'query-filters': query_filters,
+                'query-options': {}
+            }
+        )
+
+        # Aggregate statistics by method
+        method_stats = defaultdict(lambda: {
+            'total_calls': 0,
+            'successful_calls': 0,
+            'failed_calls': 0,
+        })
+
+        for entry in audit_entries:
+            method = entry.get('event_data', {}).get('method')
+            if not method:
+                continue
+
+            stats = method_stats[method]
+            stats['total_calls'] += 1
+
+            # Check if the call was successful
+            if entry.get('success', True):
+                stats['successful_calls'] += 1
+            else:
+                stats['failed_calls'] += 1
+
+        return method_stats
