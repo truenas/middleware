@@ -1339,7 +1339,7 @@ async def service_remote(middleware, service, verb, options):
         # it'll cause a failover.call_remote loop between the
         # controllers.
         middleware.logger.warning(
-            'skipping service_remote action %s(%s) options %s because HA is unhealthy: %s',
+            'skipping %s(%s) with options %r because HA is unhealthy: %s',
             verb,
             service,
             options,
