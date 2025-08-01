@@ -42,7 +42,7 @@
         raise FileShouldNotExist
 
     if credential['credential_type'] == DSCredType.LDAP_MTLS:
-        cert = middleware.call_sync('certificate.query', [['cert_name', '=', credential['client_certificate']]], {'get': True})
+        cert = middleware.call_sync('certificate.query', [['name', '=', credential['client_certificate']]], {'get': True})
         tls_certfile = cert['certificate_path']
         tls_keyfile = cert['privatekey_path']
 
