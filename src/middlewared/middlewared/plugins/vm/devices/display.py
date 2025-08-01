@@ -109,6 +109,10 @@ class DISPLAY(Device):
 
             self.middleware.call_sync('vm.device.validate_display_devices', verrors, vm_instance)
 
+        password = device['attributes']['password']
+        if not password or not password.strip():
+            verrors.add('attributes.password', 'Password is required for display devices')
+
         verrors = self.validate_port_attrs(device, verrors)
 
         if device['attributes']['bind'] not in self.middleware.call_sync('vm.device.bind_choices'):
@@ -126,6 +130,11 @@ class DISPLAY(Device):
 
         for key in ('port', 'web_port'):
             if device['attributes'].get(key):
+                if not (5900 <= dev_attrs[key] <= 65535):
+                    verrors.add(
+                        f'attributes.{key}',
+                        'Specified port must be between 5900 and 65535, inclusive'
+                    )
                 if dev_attrs[key] in display_devices_ports:
                     verrors.add(
                         f'attributes.{key}',

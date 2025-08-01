@@ -42,13 +42,13 @@ class VMDisplayDevice(BaseModel):
     """Screen resolution for the virtual display."""
     port: int | None = Field(default=None, ge=5900, le=65535)
     """VNC/SPICE port number for remote display access. `null` for auto-assignment."""
-    web_port: int | None = Field(default=None, ge=5900, le=65535)
+    web_port: int | None = None
     """Web-based display access port number. `null` for auto-assignment."""
     bind: NonEmptyString = '127.0.0.1'
     """IP address to bind the display server to."""
     wait: bool = False
     """Whether to wait for a client connection before starting the VM."""
-    password: Secret[NonEmptyString]
+    password: Secret[str | None] = None
     """Password for display server authentication."""
     web: bool = True
     """Whether to enable web-based display access."""
