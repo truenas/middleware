@@ -47,6 +47,25 @@ def test_single_argument_args():
     assert accept_params(MethodArgs, [{"name": "ivan"}]) == [{"name": "ivan", "count": 1}]
 
 
+def test_single_argument_args_required():
+    @single_argument_args("param")
+    class MethodArgs(BaseModel):
+        name: str
+        count: int = 1
+
+    with pytest.raises(ValidationErrors, match="param: Field required"):
+        accept_params(MethodArgs, [])
+
+
+def test_single_argument_args_not_required():
+    @single_argument_args("param")
+    class MethodArgs(BaseModel):
+        name: str = Field(default_factory=lambda: "not required")
+        count: int = 1
+
+    assert accept_params(MethodArgs, []) == [{"name": "not required", "count": 1}]
+
+
 def test_single_argument_args_error():
     @single_argument_args("param")
     class MethodArgs(BaseModel):
