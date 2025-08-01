@@ -89,8 +89,10 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, self.systemd_unit_timeout, unit=unit)
 
     def _unit_action_sync(self, action, wait, timeout, unit=None):
+        unit_passed_to_us = True
         if unit is None:
             unit = self._get_systemd_unit()
+            unit_passed_to_us = False
 
         try:
             job = getattr(unit.Unit, action)(b"replace")
@@ -137,7 +139,8 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
                 del callback
                 del job_object
         finally:
-            del unit
+            if unit_passed_to_us is False:
+                del unit
 
     async def _systemd_unit(self, unit, verb):
         await systemd_unit(unit, verb)
