@@ -17,7 +17,7 @@ class DSCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
         match ds_config['service_type']:
             case DSType.IPA.value:
                 # IPA bind may rely on the presence of the IPA server's cacert
-                cert_name = (await self.middleware.call('certificate.get_instance', cert_id))['cert_name']
+                cert_name = (await self.middleware.call('certificate.get_instance', cert_id))['name']
                 return cert_name == IpaConfigName.IPA_CACERT
             case DSType.LDAP.value:
                 # Check is below
