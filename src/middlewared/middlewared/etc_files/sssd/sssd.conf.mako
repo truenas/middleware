@@ -81,6 +81,8 @@ ldap_sasl_authid = ${ds_config['credential']['principal']}
 % endif
 % endif
 timeout = ${ds_config['timeout']}
+ldap_search_timeout = ${ds_config['timeout']}
+ldap_network_timeout = ${ds_config['timeout']}
 ldap_schema = ${ds_config['configuration']['schema'].lower()}
 min_id = ${min_uid}
 ${'\n    '.join(search_params)}
