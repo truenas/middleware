@@ -39,20 +39,25 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
 
     def _get_state_sync(self):
         unit = self._get_systemd_unit()
-
-        state = unit.Unit.ActiveState
-        if state == b"active" or (self.systemd_async_start and state == b"activating"):
-            return ServiceState(True, list(filter(None, [unit.MainPID])))
-        else:
-            return ServiceState(False, [])
+        try:
+            state = unit.Unit.ActiveState
+            if state == b"active" or (self.systemd_async_start and state == b"activating"):
+                return ServiceState(True, list(filter(None, [unit.MainPID])))
+            else:
+                return ServiceState(False, [])
+        finally:
+            del unit
 
     async def get_unit_state(self):
         return await self.middleware.run_in_thread(self._get_unit_state_sync)
 
     def _get_unit_state_sync(self):
         unit = self._get_systemd_unit()
-        state = unit.Unit.ActiveState
-        return state.decode("utf-8")
+        try:
+            state = unit.Unit.ActiveState
+            return state.decode("utf-8")
+        finally:
+            del unit
 
     async def start(self):
         await self._unit_action("Start")
@@ -86,46 +91,53 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     def _unit_action_sync(self, action, wait, timeout, unit=None):
         if unit is None:
             unit = self._get_systemd_unit()
-        job = getattr(unit.Unit, action)(b"replace")
 
-        if wait:
-            with DBus() as bus:
-                done = False
+        try:
+            job = getattr(unit.Unit, action)(b"replace")
 
-                def callback(msg, error=None, userdata=None):
-                    nonlocal done
+            if wait:
+                with DBus() as bus:
+                    done = False
 
-                    msg.process_reply(True)
+                    def callback(msg, error=None, userdata=None):
+                        nonlocal done
 
-                    if msg.body[1] == job:
-                        done = True
+                        msg.process_reply(True)
 
-                bus.match_signal(
-                    b"org.freedesktop.systemd1",
-                    b"/org/freedesktop/systemd1",
-                    b"org.freedesktop.systemd1.Manager",
-                    b"JobRemoved",
-                    callback,
-                    None,
-                )
+                        if msg.body[1] == job:
+                            done = True
 
-                job_object = Job(job, bus)
-                try:
-                    job_object.load()
-                except DBusUnknownObjectError:
-                    # Job has already completed
-                    return
+                    bus.match_signal(
+                        b"org.freedesktop.systemd1",
+                        b"/org/freedesktop/systemd1",
+                        b"org.freedesktop.systemd1.Manager",
+                        b"JobRemoved",
+                        callback,
+                        None,
+                    )
 
-                fd = bus.get_fd()
-                while True:
-                    fds = select.select([fd], [], [], timeout)
-                    if not any(fds):
-                        break
+                    job_object = Job(job, bus)
+                    try:
+                        job_object.load()
+                    except DBusUnknownObjectError:
+                        # Job has already completed
+                        return
 
-                    bus.process()
+                    fd = bus.get_fd()
+                    while True:
+                        fds = select.select([fd], [], [], timeout)
+                        if not any(fds):
+                            break
 
-                    if done:
-                        break
+                        bus.process()
+
+                        if done:
+                            break
+
+                del callback
+                del job_object
+        finally:
+            del unit
 
     async def _systemd_unit(self, unit, verb):
         await systemd_unit(unit, verb)
@@ -134,36 +146,39 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         unit = self._get_systemd_unit()
         unit_name = self._get_systemd_unit_name()
 
-        j = journal.Reader()
-        j.seek_monotonic(unit.Unit.InactiveExitTimestampMonotonic / 1e6)
+        try:
+            j = journal.Reader()
+            j.seek_monotonic(unit.Unit.InactiveExitTimestampMonotonic / 1e6)
 
-        # copied from `https://github.com/systemd/systemd/blob/main/src/shared/logs-show.c`,
-        # `add_matches_for_unit` function
+            # copied from `https://github.com/systemd/systemd/blob/main/src/shared/logs-show.c`,
+            # `add_matches_for_unit` function
 
-        # Look for messages from the service itself
-        j.add_match(_SYSTEMD_UNIT=unit_name)
+            # Look for messages from the service itself
+            j.add_match(_SYSTEMD_UNIT=unit_name)
 
-        # Look for coredumps of the service
-        j.add_disjunction()
-        j.add_match(MESSAGE_ID=b"fc2e22bc6ee647b6b90729ab34a250b1")
-        j.add_match(_UID=0)
-        j.add_match(COREDUMP_UNIT=unit_name)
+            # Look for coredumps of the service
+            j.add_disjunction()
+            j.add_match(MESSAGE_ID=b"fc2e22bc6ee647b6b90729ab34a250b1")
+            j.add_match(_UID=0)
+            j.add_match(COREDUMP_UNIT=unit_name)
 
-        # Look for messages from PID 1 about this service
-        j.add_disjunction()
-        j.add_match(_PID=1)
-        j.add_match(UNIT=unit_name)
+            # Look for messages from PID 1 about this service
+            j.add_disjunction()
+            j.add_match(_PID=1)
+            j.add_match(UNIT=unit_name)
 
-        # Look for messages from authorized daemons about this service
-        j.add_disjunction()
-        j.add_match(_UID=0)
-        j.add_match(OBJECT_SYSTEMD_UNIT=unit_name)
+            # Look for messages from authorized daemons about this service
+            j.add_disjunction()
+            j.add_match(_UID=0)
+            j.add_match(OBJECT_SYSTEMD_UNIT=unit_name)
 
-        return "\n".join([
-            f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
-            f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
-            for record in j
-        ])
+            return "\n".join([
+                f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
+                f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
+                for record in j
+            ])
+        finally:
+            del unit
 
 
 async def systemd_unit(unit, verb):
