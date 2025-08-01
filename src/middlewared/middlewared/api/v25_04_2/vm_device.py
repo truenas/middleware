@@ -25,7 +25,7 @@ __all__ = [
 
 class VMCDROMDevice(BaseModel):
     dtype: Literal['CDROM']
-    path: NonEmptyString = Field(pattern=r'^/mnt/[^{}]*$')
+    path: NonEmptyString = Field(pattern=r'^[^{}]*$')
     '''Path must not contain "{", "}" characters, and it should start with "/mnt/"'''
 
 
