@@ -1,8 +1,8 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppCategoriesArgs, AppCategoriesResult, AppAvailableItem, AppLatestItem,
+    AppSimilarArgs, AppSimilarResult,
 )
-from middlewared.api.v25_04_0 import AppSimilarArgs, AppSimilarResult
 from middlewared.service import filterable_api_method, Service
 from middlewared.utils import filter_list
 
