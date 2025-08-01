@@ -21,6 +21,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
+from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
@@ -1330,6 +1331,21 @@ async def service_remote(middleware, service, verb, options):
     if not options['ha_propagate'] or service in ignore or service == 'nginx' and verb == 'stop':
         return
     elif await middleware.call('failover.status') != 'MASTER':
+        return
+    elif dr := await middleware.call('failover.disabled.reasons'):
+        # if we're here, it means both controllers return MASTER
+        # but we have reasons why failover isn't healthy. An
+        # edge-case with nasty fall-out. Let's forgo replicating
+        # the operation to the other controller since, minimally,
+        # it'll cause a failover.call_remote loop between the
+        # controllers.
+        middleware.logger.warning(
+            'skipping %s(%s) with options %r because HA is unhealthy: %s',
+            verb,
+            service,
+            options,
+            ', '.join([DisabledReasonsEnum[i] for i in dr])
+        )
         return
 
     try:
