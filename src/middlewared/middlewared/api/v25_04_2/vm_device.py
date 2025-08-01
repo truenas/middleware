@@ -37,10 +37,10 @@ class VMDisplayDevice(BaseModel):
         '1024x768', '800x600', '640x480',
     ] = '1024x768'
     port: int | None = Field(default=None, ge=5900, le=65535)
-    web_port: int | None = Field(default=None, ge=5900, le=65535)
+    web_port: int | None = None
     bind: NonEmptyString = '127.0.0.1'
     wait: bool = False
-    password: Secret[NonEmptyString]
+    password: Secret[str | None] = None
     web: bool = True
     type_: Literal['SPICE'] = Field(alias='type', default='SPICE')
 
