@@ -26,13 +26,17 @@ class AppsIxVolumeService(Service):
 
         docker_ds = (await self.middleware.call('docker.config'))['dataset']
         datasets = await self.middleware.call(
-            'zfs.dataset.query', [['id', '^', f'{get_app_mounts_ds(docker_ds)}/']], {
-                'extra': {'retrieve_properties': False, 'flat': True}
+            'zfs.resource.query_impl',
+            {
+                'paths': [get_app_mounts_ds(docker_ds)],
+                'get_children': True,
+                'get_source': False,
+                'properties': None
             }
         )
         apps = collections.defaultdict(list)
-        for ds_name in filter(lambda d: d.count('/') > 3, map(lambda d: d['id'], datasets)):
-            name_split = ds_name.split('/', 4)
+        for ds in filter(lambda x: x['name'].count('/') > 3, datasets):
+            name_split = ds['name'].split('/', 4)
             apps[name_split[3]].append(name_split[-1])
 
         volumes = []
