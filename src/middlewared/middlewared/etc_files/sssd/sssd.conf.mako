@@ -19,7 +19,7 @@
         if ds_config['credential']['credential_type'] == DSCredType.LDAP_MTLS:
             try:
                 cert = middleware.call_sync('certificate.query', [
-                    ('cert_name', '=', ds_config['credential']['client_certificate'])
+                    ('name', '=', ds_config['credential']['client_certificate'])
                 ], {'get': True})
             except Exception:
                 middleware.logger.error('Failed to retrieve client certificate', exc_info=True)

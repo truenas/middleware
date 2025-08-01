@@ -268,9 +268,9 @@ class DirectoryServices(ConfigService):
             case DSCredType.LDAP_ANONYMOUS:
                 pass
             case DSCredType.LDAP_MTLS:
-                cert_id = self.middleware.call('certificate.query', [
-                    ['cert_name', '=', data['credential']['client_certificate']]
-                ], {'get': True})
+                cert_id = self.middleware.call_sync('certificate.query', [
+                    ['name', '=', data['credential']['client_certificate']]
+                ], {'get': True})['id']
                 datastore_cred['cred_ldap_mtls_cert'] = cert_id
             case _:
                 raise ValueError(f'{data["credential"]["credential_type"]}: unhandled credential type')
@@ -375,7 +375,7 @@ class DirectoryServices(ConfigService):
         if new['credential'] and new['credential']['credential_type'] == DSCredType.LDAP_MTLS:
             cert_name = new['credential']['client_certificate']
             try:
-                self.middleware.call_sync('certificate.query', [['cert_name', '=', cert_name]], {'get': True})
+                self.middleware.call_sync('certificate.query', [['name', '=', cert_name]], {'get': True})
             except MatchNotFound:
                 verrors.add(f'{SCHEMA}.credential.client_certificate', 'Unknown client certificate.')
 
