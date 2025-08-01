@@ -1177,12 +1177,28 @@ async def service_remote(middleware, service, verb, options):
 
     This is the middleware side of what legacy UI did on service changes.
     """
+    if not options['ha_propagate']:
+        # the service action was explicitly requested
+        # to not replicate to the remote controller
+        return
+
     ignore = ('system', 'nfs', 'netdata', 'truecommand', 'docker')
-    if not options['ha_propagate'] or service in ignore or service == 'nginx' and verb == 'stop':
+    if service in ignore:
+        # doesn't matter what's going on, no reason to do
+        # any type of service action on the remote controller
+        # for these services
         return
-    elif await middleware.call('failover.status') != 'MASTER':
+
+    if service == 'nginx' and verb == 'stop':
+        # no reason we should allow stopping the reverse
+        # proxy on the remote controller...ever.
         return
-    elif dr := await middleware.call('failover.disabled.reasons'):
+
+    if await middleware.call('failover.status') != 'MASTER':
+        # we're not the MASTER controller so ignore
+        return
+
+    if dr := await middleware.call('failover.disabled.reasons'):
         # if we're here, it means both controllers return MASTER
         # but we have reasons why failover isn't healthy. An
         # edge-case with nasty fall-out. Let's forgo replicating
@@ -1199,9 +1215,12 @@ async def service_remote(middleware, service, verb, options):
         return
 
     try:
-        await middleware.call('failover.call_remote', 'core.bulk', [
-            'service.control', [[verb.upper(), service, options]]
-        ], {'raise_connect_error': False})
+        await middleware.call(
+            'failover.call_remote',
+            'core.bulk',
+            ['service.control', [[verb.upper(), service, options]]],
+            {'raise_connect_error': False}
+        )
     except Exception:
         middleware.logger.warning('Failed to run %s(%s)', verb, service, exc_info=True)
 
