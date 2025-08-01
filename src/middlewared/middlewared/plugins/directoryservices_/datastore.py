@@ -837,7 +837,7 @@ class DirectoryServices(ConfigService):
         Note that prior configuration of LDAP server is required and uploading a custom
         certificate to TrueNAS may also be required. """
         return {
-            i['id']: i['name']
+            i['name']: i['name']
             for i in await self.middleware.call(
                 'certificate.query', [
                     ['cert_type', '=', 'CERTIFICATE'],
