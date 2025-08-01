@@ -21,6 +21,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
+from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
