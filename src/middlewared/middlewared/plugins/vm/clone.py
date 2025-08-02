@@ -1,5 +1,5 @@
 import errno
-import re
+import itertools
 import uuid
 
 from middlewared.api import api_method
@@ -10,7 +10,6 @@ from middlewared.service_exception import ValidationErrors
 
 
 ZVOL_CLONE_SUFFIX = '_clone'
-ZVOL_CLONE_RE = re.compile(rf'^(.*){ZVOL_CLONE_SUFFIX}\d+$')
 
 
 class VMService(Service):
@@ -34,34 +33,26 @@ class VMService(Service):
         if not await self.middleware.call('zfs.dataset.query', [('id', '=', zvol)]):
             raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
-        snapshot_name = name
-        i = 0
-        while True:
+        # Generate a unique snapshot name
+        # First try: {zvol}@{name}
+        # Then: {zvol}@{name}_clone0, {zvol}@{name}_clone1, etc.
+        for i in itertools.count():
+            snapshot_name = name if i == 0 else f'{name}{ZVOL_CLONE_SUFFIX}{i-1}'
             zvol_snapshot = f'{zvol}@{snapshot_name}'
-            if await self.middleware.call('zfs.snapshot.query', [('id', '=', zvol_snapshot)]):
-                if ZVOL_CLONE_RE.search(snapshot_name):
-                    snapshot_name = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', snapshot_name)
-                else:
-                    snapshot_name = f'{name}{ZVOL_CLONE_SUFFIX}{i}'
-                i += 1
-                continue
-            break
+            if not await self.middleware.call('zfs.snapshot.query', [('id', '=', zvol_snapshot)]):
+                break
 
         await self.middleware.call('zfs.snapshot.create', {'dataset': zvol, 'name': snapshot_name})
         created_snaps.append(zvol_snapshot)
 
-        clone_suffix = name
-        i = 0
-        while True:
+        # Generate a unique clone destination name
+        # First try: {zvol}_{name}
+        # Then: {zvol}_{name}_clone0, {zvol}_{name}_clone1, etc.
+        for i in itertools.count():
+            clone_suffix = name if i == 0 else f'{name}{ZVOL_CLONE_SUFFIX}{i-1}'
             clone_dst = f'{zvol}_{clone_suffix}'
-            if await self.middleware.call('zfs.dataset.query', [('id', '=', clone_dst)]):
-                if ZVOL_CLONE_RE.search(clone_suffix):
-                    clone_suffix = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', clone_suffix)
-                else:
-                    clone_suffix = f'{name}{ZVOL_CLONE_SUFFIX}{i}'
-                i += 1
-                continue
-            break
+            if not await self.middleware.call('zfs.dataset.query', [('id', '=', clone_dst)]):
+                break
 
         await self.middleware.call('zfs.snapshot.clone', {'snapshot': zvol_snapshot, 'dataset_dst': clone_dst})
 
