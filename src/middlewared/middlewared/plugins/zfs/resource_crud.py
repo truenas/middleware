@@ -116,7 +116,7 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def query_impl(self, tls, data: dict | None = None):
-        base = ZFSResourceQueryArgs().model_dump()
+        base = ZFSResourceQueryArgs().model_dump()['data']
         if data is None:
             final = base
         else:
