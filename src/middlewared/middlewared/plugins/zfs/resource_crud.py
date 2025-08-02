@@ -123,14 +123,11 @@ class ZFSResourceService(Service):
             final = base | data
             self.validate_query_args(final)
 
-        try:
-            results = query_impl(tls.lzh, final)
-            if final["nest_results"]:
-                return self.nest_paths(results)
-            else:
-                return results
-        except ZFSPathNotFoundException as e:
-            raise ValidationError("zfs.resource.query", str(e), errno.ENOENT)
+        results = query_impl(tls.lzh, final)
+        if final["nest_results"]:
+            return self.nest_paths(results)
+        else:
+            return results
 
     @api_method(
         ZFSResourceQueryArgs,
@@ -169,4 +166,7 @@ class ZFSResourceService(Service):
             # Get hierarchical view of resources
             query({"paths": ["tank"], "nest_results": True, "get_children": True})
         """
-        return self.middleware.call_sync("zfs.resource.query_impl", data)
+        try:
+            return self.middleware.call_sync("zfs.resource.query_impl", data)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError("zfs.resource.query", str(e), errno.ENOENT)
