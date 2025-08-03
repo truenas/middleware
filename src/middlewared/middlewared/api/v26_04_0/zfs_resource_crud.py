@@ -1,7 +1,5 @@
 from typing import Literal
 
-from pydantic import Field
-
 from middlewared.api.base import BaseModel, NotRequired, UniqueList
 
 __all__ = ("ZFSResourceEntry", "ZFSResourceQueryArgs", "ZFSResourceQueryResult")
@@ -260,11 +258,8 @@ class ZFSResourceQuery(BaseModel):
     Setting this to None will retrieve no zfs properties."""
     get_user_properties: bool = False
     """Retrieve user properties for zfs resource(s)."""
-    get_source: bool = Field(default=True, exclude_json_schema=True)
-    """Hidden field to retrieve source information for a zfs property.
-
-    NOTE: This should only ever be toggled by internal consumers and \
-    you should know what you're doing by toggling this to False."""
+    get_source: bool = False
+    """Retrieve source information for a zfs property."""
     nest_results: bool = False
     """Return a nested object that associates all children to their \
     respective parents in the filesystem. By default, each zfs resource \
