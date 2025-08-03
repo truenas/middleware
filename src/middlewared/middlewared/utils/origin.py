@@ -9,7 +9,7 @@ from pyroute2 import DiagSocket
 
 from .auth import get_login_uid, AUID_UNSET
 
-__all__ = ('ConnectionOrigin',)
+__all__ = ('ConnectionOrigin', 'is_external_call')
 
 HA_HEARTBEAT_IPS = ('169.254.10.1', '169.254.10.2')
 UIDS_TO_CHECK = (33, 0)
@@ -220,3 +220,36 @@ def get_tcp_ip_info(sock, request) -> tuple:
                     return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
 
     return None, None, None, None, None
+
+
+def is_external_call(app):
+    """
+    Determine if this is an external API call that should be tracked.
+    External calls are those which the system is not generating internally i.e self.middleware.call().
+
+    Note: We intentionally track midclt calls (Unix socket) as they can be
+    initiated by users and we want to track their usage patterns.
+
+    Returns True for external calls, False for internal calls.
+    """
+    if app is None or app.origin is None:
+        # No origin info, assume internal
+        return False
+
+    origin = app.origin
+
+    # HA connections between nodes are internal
+    if origin.is_ha_connection:
+        return False
+
+    # TCP/IP connections - check if it's loopback
+    if origin.is_tcp_ip_family and origin.rem_addr:
+        try:
+            # Loopback addresses are internal
+            if ip_address(origin.rem_addr).is_loopback:
+                return False
+        except Exception:
+            pass
+
+    # Unix socket connections (midclt) and non-loopback TCP/IP are external
+    return True
