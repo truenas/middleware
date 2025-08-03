@@ -238,7 +238,7 @@ class iSCSITargetExtentService(SharingService):
                     # Only try to set volthreading if:
                     # 1. volume still exists
                     # 2. is a volume
-                    # 3. volthreading is currently set to on
+                    # 3. volthreading is currently off
                     await self.middleware.call(
                         'zfs.dataset.update',
                         zvolname,
