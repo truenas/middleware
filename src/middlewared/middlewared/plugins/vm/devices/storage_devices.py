@@ -140,13 +140,14 @@ class DISK(StorageDevice):
             device['attributes']['path'] = zvol_name_to_path(device['attributes']['zvol_name'])
 
             if zvol := self.middleware.call_sync(
-                'zvol.resource.query', {'paths': [device['attributes']['zvol_name']], 'properties': None}
+                'zvol.resource.query_impl',
+                {'paths': [device['attributes']['zvol_name']], 'properties': None}
             ):
                 verrors.add('attributes.zvol_name', f'{zvol[0]["name"]!r} already exists.')
 
             parentzvol = device['attributes']['zvol_name'].rsplit('/', 1)[0]
             if parentzvol and not self.middleware.call_sync(
-                'zfs.resource.query', {'paths': [parentzvol], 'properties': None}
+                'zfs.resource.query_impl', {'paths': [parentzvol], 'properties': None}
             ):
                 verrors.add(
                     'attributes.zvol_name',
@@ -164,7 +165,7 @@ class DISK(StorageDevice):
                 verrors.add('attributes.path', 'Disk residing in boot pool cannot be consumed and is not supported')
             else:
                 zvol = self.middleware.call_sync(
-                    'zfs.resource.query', {'paths': [zvol_path_to_name(path)], 'properties': None}
+                    'zfs.resource.query_impl', {'paths': [zvol_path_to_name(path)], 'properties': None}
                 )
                 if not zvol:
                     verrors.add('attributes.path', 'Zvol referenced by path does not exist', errno.ENOENT)
