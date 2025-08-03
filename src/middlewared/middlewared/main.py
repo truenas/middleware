@@ -135,6 +135,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.api_versions = None
         self.api_versions_adapter = None
         self.__audit_logger = setup_audit_logging()
+        self.external_method_calls = defaultdict(int)  # Track external API method calls
 
     def get_method(self, name, *, mocks=False, params=None):
         serviceobj, methodobj = super().get_method(name)

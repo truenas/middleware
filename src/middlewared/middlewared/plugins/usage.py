@@ -3,7 +3,6 @@ import json
 import os
 import random
 import subprocess
-import time
 from collections import defaultdict
 
 import aiohttp
@@ -255,10 +254,8 @@ class UsageService(Service):
         }
 
     async def gather_method_stats(self, context):
-        # Get stats for the last 24 hours only
-        last_24_hours = int(time.time()) - 86400  # 86400 seconds = 24 hours
         return {
-            'method_stats': await self.middleware.call('audit.get_method_stats', last_24_hours),
+            'method_stats': self.middleware.external_method_calls,
         }
 
     async def gather_network(self, context):
