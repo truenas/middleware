@@ -114,9 +114,8 @@ class DockerService(ConfigService):
                 )
             else:
                 if await self.middleware.call(
-                    'zfs.dataset.query', [['id', '=', applications_ds_name(config['pool'])]], {
-                        'extra': {'retrieve_children': False, 'retrieve_properties': False}
-                    }
+                    'zfs.resource.query_impl',
+                    {'paths': [applications_ds_name(config['pool'])], 'properties': None}
                 ):
                     verrors.add(
                         f'{schema}.migrate_applications',
@@ -125,8 +124,10 @@ class DockerService(ConfigService):
                     )
 
                 ix_apps_ds = await self.middleware.call(
-                    'zfs.dataset.query', [['id', '=', applications_ds_name(old_config['pool'])]], {
-                        'extra': {'retrieve_children': False, 'retrieve_properties': True}
+                    'zfs.resource.query_impl',
+                    {
+                        'paths': [applications_ds_name(old_config['pool'])],
+                        'properties': ['encryption']
                     }
                 )
                 if not ix_apps_ds:
@@ -135,30 +136,30 @@ class DockerService(ConfigService):
                         f'{schema}.migrate_applications',
                         f'{applications_ds_name(old_config["pool"])!r} does not exist, migration not possible.'
                     )
-                elif ix_apps_ds[0]['encrypted']:
+                elif ix_apps_ds[0]['properties']['encryption']['raw'] != 'off':
                     # This should never happen but better be safe with extra validation
                     verrors.add(
                         f'{schema}.migrate_applications',
-                        f'{ix_apps_ds[0]["id"]!r} is encrypted which is not a supported configuration'
+                        f'{ix_apps_ds[0]["name"]!r} is encrypted which is not a supported configuration'
                     )
 
                 # Now let's add some validation for destination
                 destination_root_ds = await self.middleware.call(
-                    'pool.dataset.get_instance_quick', config['pool'], {
-                        'encryption': True,
-                    }
+                    'zfs.resource.query_impl',
+                    {'paths': [config['pool']], 'properties': ['encryption']}
                 )
-                if destination_root_ds['key_format']['value'] == 'PASSPHRASE':
-                    verrors.add(
-                        f'{schema}.migrate_applications',
-                        f'{ix_apps_ds[0]["id"]!r} can only be migrated to a destination pool '
-                        'which is "KEY" encrypted.'
-                    )
-                if destination_root_ds['locked']:
-                    verrors.add(
-                        f'{schema}.migrate_applications',
-                        f'Migration not possible as {config["pool"]!r} is locked'
-                    )
+                if destination_root_ds[0]['properties']['encryption']['raw'] != 'off':
+                    if destination_root_ds[0]['properties']['keyformat']['raw'] == 'passphrase':
+                        verrors.add(
+                            f'{schema}.migrate_applications',
+                            f'{ix_apps_ds[0]["name"]!r} can only be migrated to a destination pool '
+                            'which is "KEY" encrypted.'
+                        )
+                    elif destination_root_ds[0]['properties']['keystatus']['raw'] != 'available':
+                        verrors.add(
+                            f'{schema}.migrate_applications',
+                            f'Migration not possible as {config["pool"]!r} is locked'
+                        )
                     if not await self.middleware.call(
                         'datastore.query', 'storage.encrypteddataset', [['name', '=', config['pool']]]
                     ):

@@ -5,23 +5,81 @@ import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.plugins.docker.update import DockerService
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils import filter_list
+
+
+def mock_zfs_resource_query_impl(system_state):
+    """Create a mock function for zfs.resource.query_impl."""
+    def _query_impl(args):
+        paths = args.get('paths', [])
+        if not paths:
+            return []
+
+        path = paths[0]
+        requested_properties = args.get('properties', [])
+
+        # Check if it's querying for ix-apps dataset
+        if path.endswith('/ix-apps'):
+            # Look for matching dataset in available_dataset
+            for ds in system_state.get('available_dataset', []):
+                if ds['name'] == path:
+                    # If specific properties are requested, ensure they exist
+                    if requested_properties and 'encryption' in requested_properties:
+                        if 'encryption' not in ds.get('properties', {}):
+                            ds['properties']['encryption'] = {'raw': 'off'}
+                    return [ds]
+            return []
+
+        # Check if it's querying for a pool
+        if '/' not in path and 'pool_resources' in system_state:
+            for pool in system_state['pool_resources']:
+                if pool['name'] == path:
+                    # If specific properties are requested, ensure they exist
+                    if requested_properties:
+                        for prop in requested_properties:
+                            if prop not in pool.get('properties', {}):
+                                # Add default values for missing properties
+                                if prop == 'encryption':
+                                    pool['properties']['encryption'] = {'raw': 'off'}
+                                elif prop == 'keyformat':
+                                    pool['properties']['keyformat'] = {'raw': 'none'}
+                                elif prop == 'keystatus':
+                                    pool['properties']['keystatus'] = {'raw': 'available'}
+                    return [pool]
+            return []
+
+        return []
+
+    return _query_impl
 
 
 SYSTEM_STATE = {
     'available_pool': ['test', 'tank'],
     'available_dataset': [
         {
-            'id': 'tank/ix-apps',
-            'encrypted': False,
+            'name': 'tank/ix-apps',
+            'properties': {
+                'encryption': {'raw': 'off'},
+            }
         }
     ],
-    'pool_quick_info': {
-        'key_format': {
-            'value': None,
+    'pool_resources': [
+        {
+            'name': 'test',
+            'properties': {
+                'encryption': {'raw': 'off'},
+                'keyformat': {'raw': 'none'},
+                'keystatus': {'raw': 'available'},
+            }
         },
-        'locked': False
-    },
+        {
+            'name': 'tank',
+            'properties': {
+                'encryption': {'raw': 'off'},
+                'keyformat': {'raw': 'none'},
+                'keystatus': {'raw': 'available'},
+            }
+        }
+    ],
     'import_query_pool': {'5714764211007133142': {'name': 'tank', 'state': 'ONLINE'}},
     'available_keys': []
 }
@@ -87,8 +145,18 @@ SYSTEM_STATE = {
         {
             **SYSTEM_STATE,
             'available_dataset': [
-                {'id': 'tank/ix-apps', 'encrypted': False},
-                {'id': 'test/ix-apps', 'encrypted': False}
+                {
+                    'name': 'tank/ix-apps',
+                    'properties': {
+                        'encryption': {'raw': 'off'},
+                    }
+                },
+                {
+                    'name': 'test/ix-apps',
+                    'properties': {
+                        'encryption': {'raw': 'off'},
+                    }
+                }
             ],
 
         },
@@ -124,7 +192,12 @@ SYSTEM_STATE = {
         {
             **SYSTEM_STATE,
             'available_dataset': [
-                {'id': 'tank/ix-apps', 'encrypted': True},
+                {
+                    'name': 'tank/ix-apps',
+                    'properties': {
+                        'encryption': {'raw': 'aes-256-gcm'},
+                    }
+                },
             ],
 
         },
@@ -142,12 +215,16 @@ SYSTEM_STATE = {
     (
         {
             **SYSTEM_STATE,
-            'pool_quick_info': {
-                'key_format': {
-                    'value': 'PASSPHRASE',
-                },
-                'locked': False
-            },
+            'pool_resources': [
+                {
+                    'name': 'test',
+                    'properties': {
+                        'encryption': {'raw': 'aes-256-gcm'},
+                        'keyformat': {'raw': 'passphrase'},
+                        'keystatus': {'raw': 'available'},
+                    }
+                }
+            ],
         },
         {
             'pool': 'test',
@@ -163,12 +240,24 @@ SYSTEM_STATE = {
     (
         {
             **SYSTEM_STATE,
-            'pool_quick_info': {
-                'key_format': {
-                    'value': 'AES-256-GCM',
-                },
-                'locked': False
-            },
+            'pool_resources': [
+                {
+                    'name': 'test',
+                    'properties': {
+                        'encryption': {'raw': 'aes-256-gcm'},
+                        'keyformat': {'raw': 'hex'},
+                        'keystatus': {'raw': 'available'},
+                    }
+                }
+            ],
+            'available_keys': [
+                {
+                    'id': 1,
+                    'name': 'test',
+                    'encryption_key': 'de06572a58e834985cafecb0e56756a24db77a6512817d1f8f93b4346b7979e0',
+                    'kmip_uid': None
+                }
+            ]
         },
         {
             'pool': 'test',
@@ -184,12 +273,16 @@ SYSTEM_STATE = {
     (
         {
             **SYSTEM_STATE,
-            'pool_quick_info': {
-                'key_format': {
-                    'value': 'AES-256-GCM',
-                },
-                'locked': True
-            },
+            'pool_resources': [
+                {
+                    'name': 'test',
+                    'properties': {
+                        'encryption': {'raw': 'aes-256-gcm'},
+                        'keyformat': {'raw': 'hex'},
+                        'keystatus': {'raw': 'unavailable'},
+                    }
+                }
+            ],
             'available_keys': [
                 {
                     'id': 2,
@@ -213,12 +306,16 @@ SYSTEM_STATE = {
     (
         {
             **SYSTEM_STATE,
-            'pool_quick_info': {
-                'key_format': {
-                    'value': 'AES-256-GCM',
-                },
-                'locked': True
-            },
+            'pool_resources': [
+                {
+                    'name': 'test',
+                    'properties': {
+                        'encryption': {'raw': 'aes-256-gcm'},
+                        'keyformat': {'raw': 'hex'},
+                        'keystatus': {'raw': 'unavailable'},
+                    }
+                }
+            ],
         },
         {
             'pool': 'test',
@@ -240,8 +337,7 @@ async def test_docker_update_validation(system_state, new_values, old_values, er
     m = Middleware()
     m['interface.ip_in_use'] = lambda *arg: []
     m['datastore.query'] = lambda *arg: system_state['available_keys']
-    m['zfs.dataset.query'] = lambda *arg: filter_list(system_state['available_dataset'], arg[0])
-    m['pool.dataset.get_instance_quick'] = lambda *arg: system_state['pool_quick_info']
+    m['zfs.resource.query_impl'] = mock_zfs_resource_query_impl(system_state)
     m['system.is_ha_capable'] = lambda *arg: False
     with patch('middlewared.plugins.docker.update.query_imported_fast_impl') as run:
         run.return_value = system_state['import_query_pool']
