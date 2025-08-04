@@ -82,6 +82,7 @@ class UpdateService(Service):
                 'update_download_progress': self.update_download_progress,
             })
         except Exception as e:
+            self.logger.exception('Failed to get update status')
             return self._result('ERROR', {
                 'error': repr(e),
             })
