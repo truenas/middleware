@@ -225,15 +225,6 @@ class AuditService(ConfigService):
         Supported export_formats are CSV, JSON, and YAML. The endpoint returns a
         local filesystem path where the resulting audit report is located.
         """
-        if data['query-options'].get('count') is True:
-            raise CallError('Raw row count may not be exported', errno.EINVAL)
-
-        if data['query-options'].get('get') is True:
-            raise CallError(
-                'Use of "get" query-option is not supported for export',
-                errno.EINVAL
-            )
-
         export_format = data.pop('export_format')
         job.set_progress(0, f'Quering data for {export_format} audit report')
         if not (res := self.middleware.call_sync('audit.query', data)):

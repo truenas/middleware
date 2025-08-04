@@ -344,27 +344,7 @@ class FilesystemService(Service):
         For example {"select": ["path", "type"]} will avoid querying an xattr list and
         ZFS attributes for files in a directory.
 
-        NOTE: an empty list for select (default) is treated as requesting all information.
-
-        Each entry of the list consists of:
-          name(str): name of the file
-          path(str): absolute path of the entry
-          realpath(str): absolute real path of the entry (if SYMLINK)
-          type(str): DIRECTORY | FILE | SYMLINK | OTHER
-          size(int): size of the entry
-          allocation_size(int): on-disk size of entry
-          mode(int): file mode/permission
-          uid(int): user id of entry owner
-          gid(int): group id of entry owner
-          acl(bool): extended ACL is present on file
-          is_mountpoint(bool): path is a mountpoint
-          is_ctldir(bool): path is within special .zfs directory
-          attributes(list): list of statx file attributes that apply to the
-          file. See statx(2) manpage for more details.
-          xattrs(list): list of extended attribute names.
-          zfs_attrs(list): list of ZFS file attributes on file
         """
-
         path = pathlib.Path(path)
         if not path.exists():
             raise CallError(f'Directory {path} does not exist', errno.ENOENT)

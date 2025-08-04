@@ -628,12 +628,12 @@ class PoolDatasetGetQuotaArgs(BaseModel):
     """The type of quotas to retrieve."""
     filters: QueryFilters = []
     """Query filters to limit the results returned."""
-    options: QueryOptions = Field(default_factory=QueryOptions)
+    options: QueryOptions = QueryOptions()
     """Query options such as sorting and pagination."""
 
 
 class PoolDatasetGetQuotaResult(BaseModel):
-    result: list[PoolDatasetQuota]
+    result: list[PoolDatasetQuota] | PoolDatasetQuota | int
     """Array of quota information for the specified quota type."""
 
 
