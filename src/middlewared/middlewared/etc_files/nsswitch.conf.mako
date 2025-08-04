@@ -1,5 +1,9 @@
 <%
-    enabled_ds = middleware.call_sync('directoryservices.status')['type']
+    if middleware.call_sync('failover.is_single_master_node'):
+        enabled_ds = middleware.call_sync('directoryservices.status')['type']
+    else:
+        enabled_ds = None
+
 %>
 #
 # nsswitch.conf(5) - name service switch configuration file
