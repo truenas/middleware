@@ -66,7 +66,7 @@ class DockerService(Service):
             )
         finally:
             # We do this in try/finally block to ensure that docker service is started back
-            await self.middleware.call('service.start', 'docker')
+            await (await self.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)
 
         job.set_progress(45, 'Incrementally replicating apps dataset')
 

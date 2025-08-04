@@ -16,7 +16,7 @@ class VMService(Service, VMSupervisorMixin):
     @private
     async def wait_for_libvirtd(self, timeout):
         async def libvirtd_started(middleware):
-            await middleware.call('service.start', 'libvirtd', {'ha_propagate': False})
+            await (await middleware.call('service.control', 'START', 'libvirtd', {'ha_propagate': False})).wait(raise_error=True)
             while not await middleware.call('service.started', 'libvirtd'):
                 await asyncio.sleep(2)
 
