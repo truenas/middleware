@@ -73,9 +73,9 @@ class VMService(Service, VMSupervisorMixin):
     async def deinitialize_vms(self, options):
         await self.middleware.call('vm.close_libvirt_connection')
         if options.get('reload_ui'):
-            await self.middleware.call('service.reload', 'http')
+            await (await self.middleware.call('service.control', 'RELOAD', 'http')).wait(raise_error=True)
         if options.get('stop_libvirt'):
-            await self.middleware.call('service.stop', 'libvirtd')
+            await (await self.middleware.call('service.control', 'STOP', 'libvirtd')).wait(raise_error=True)
 
     @private
     def close_libvirt_connection(self):

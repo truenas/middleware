@@ -134,7 +134,7 @@ async def _event_system_shutdown(middleware, event_type, args):
 async def handle_license_update(middleware, *args, **kwargs):
     if not await middleware.call('docker.license_active'):
         # We will like to stop docker in this case
-        middleware.create_task(middleware.call('service.stop', 'docker'))
+        await middleware.call('service.control', 'STOP', 'docker')
 
 
 async def setup(middleware):
