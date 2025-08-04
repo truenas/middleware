@@ -8,15 +8,17 @@ from collections import defaultdict
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (iSCSITargetExtentCreateArgs,
-                                     iSCSITargetExtentCreateResult,
-                                     iSCSITargetExtentDeleteArgs,
-                                     iSCSITargetExtentDeleteResult,
-                                     iSCSITargetExtentDiskChoicesArgs,
-                                     iSCSITargetExtentDiskChoicesResult,
-                                     IscsiExtentEntry,
-                                     iSCSITargetExtentUpdateArgs,
-                                     iSCSITargetExtentUpdateResult)
+from middlewared.api.current import (
+    iSCSITargetExtentCreateArgs,
+    iSCSITargetExtentCreateResult,
+    iSCSITargetExtentDeleteArgs,
+    iSCSITargetExtentDeleteResult,
+    iSCSITargetExtentDiskChoicesArgs,
+    iSCSITargetExtentDiskChoicesResult,
+    IscsiExtentEntry,
+    iSCSITargetExtentUpdateArgs,
+    iSCSITargetExtentUpdateResult
+)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
@@ -225,11 +227,23 @@ class iSCSITargetExtentService(SharingService):
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            # Only try to set volthreading if the volume still exists.
-            if await self.middleware.call('pool.dataset.query', [['name', '=', zvolname], ['type', '=', 'VOLUME']]):
-                await self.middleware.call('zfs.dataset.update',
-                                           zvolname,
-                                           {'properties': {'volthreading': {'value': 'on'}}})
+            if zvol := await self.middleware.call(
+                'zfs.resource.query_impl',
+                {'paths': [zvolname], 'properties': ['volthreading']}
+            ):
+                if (
+                    zvol[0]['type'] == 'VOLUME'
+                    and zvol[0]['properties']['volthreading']['raw'] == 'off'
+                ):
+                    # Only try to set volthreading if:
+                    # 1. volume still exists
+                    # 2. is a volume
+                    # 3. volthreading is currently off
+                    await self.middleware.call(
+                        'zfs.dataset.update',
+                        zvolname,
+                        {'properties': {'volthreading': {'value': 'on'}}}
+                    )
 
         try:
             return await self.middleware.call(
@@ -608,17 +622,27 @@ class iSCSITargetExtentService(SharingService):
         necessary properties set (i.e. turn off volthreading).
         """
         filters = [['type', '=', 'DISK']]
-        options = {'select': ['path']}
         if pool is not None:
             filters.append(['path', '^', f'zvol/{pool["name"]}/'])
-        zvols = [extent['path'][5:] for extent in await self.middleware.call('iscsi.extent.query', filters, options)]
 
-        filters = [['name', 'in', zvols], ['properties.volthreading.value', '=', 'on']]
-        options = {'select': ['name']}
-        for zvol in await self.middleware.call('zfs.dataset.query', filters, options):
-            await self.middleware.call('zfs.dataset.update',
-                                       zvol['name'],
-                                       {'properties': {'volthreading': {'value': 'off'}}})
+        zvols = [
+            extent['path'][5:] for extent in await self.middleware.call(
+                'iscsi.extent.query',
+                filters,
+                {'select': ['path']}
+            )
+        ]
+        if not zvols:
+            return
+
+        args = {'paths': zvols, 'properties': ['volthreading']}
+        for zvol in await self.middleware.call('zfs.resource.query_impl', args):
+            if zvol['properties']['volthreading']['raw'] == 'on':
+                await self.middleware.call(
+                    'zfs.dataset.update',
+                    zvol['name'],
+                    {'properties': {'volthreading': {'value': 'off'}}}
+                )
 
 
 async def pool_post_import(middleware, pool):
