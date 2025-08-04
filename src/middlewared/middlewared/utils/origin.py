@@ -132,6 +132,16 @@ class ConnectionOrigin:
         )
 
     @property
+    def is_loopback(self) -> bool:
+        """Check if this is a loopback TCP/IP connection"""
+        if self.is_tcp_ip_family and self.rem_addr:
+            try:
+                return ip_address(self.rem_addr).is_loopback
+            except Exception:
+                pass
+        return False
+
+    @property
     def secure_transport(self) -> bool:
         """Indicates whether we should treat the connection as having
         secure transport for purposes of invalidation of API keys.
@@ -141,11 +151,8 @@ class ConnectionOrigin:
         if self.ssl or self.is_unix_family or self.is_ha_connection:
             return True
 
-        if self.is_tcp_ip_family:
-            try:
-                return ip_address(self.rem_addr).is_loopback
-            except Exception:
-                pass
+        if self.is_loopback:
+            return True
 
         # By default assume that transport is insecure
         return False
@@ -242,14 +249,9 @@ def is_external_call(app):
     if origin.is_ha_connection:
         return False
 
-    # TCP/IP connections - check if it's loopback
-    if origin.is_tcp_ip_family and origin.rem_addr:
-        try:
-            # Loopback addresses are internal
-            if ip_address(origin.rem_addr).is_loopback:
-                return False
-        except Exception:
-            pass
+    # Loopback TCP/IP connections are internal
+    if origin.is_loopback:
+        return False
 
     # Unix socket connections (midclt) and non-loopback TCP/IP are external
     return True
