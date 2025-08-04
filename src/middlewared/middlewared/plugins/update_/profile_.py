@@ -64,8 +64,9 @@ class UpdateService(Service):
         current_profile = UpdateProfiles[await self.current_version_profile()]
         for profile in UpdateProfiles:
             info = profile.describe(is_enterprise) | {'available': profile <= current_profile}
-            if is_enterprise and profile >= UpdateProfiles.GENERAL:
-                profiles[profile.name] = info
+            if is_enterprise:
+                if profile >= UpdateProfiles.GENERAL:
+                    profiles[profile.name] = info
             else:
                 profiles[profile.name] = info
         return profiles
