@@ -16,6 +16,7 @@ from .event import Events
 from .job import Job, JobsQueue, State
 from .logger import Logger, setup_audit_logging, setup_logging
 from .pipe import Pipe
+from .pylibvirt import create_pylibvirt_domains_manager
 from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
 from .schema import OROperator
@@ -151,6 +152,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.mocks: defaultdict[str, list[tuple[list, typing.Callable]]] = defaultdict(list)
         self.tasks: set[asyncio.Task] = set()
         self.__audit_logger = setup_audit_logging()
+        self.libvirt_domains_manager = create_pylibvirt_domains_manager(self)
 
     def get_method(self, name, *, mocks=False, params=None):
         serviceobj, methodobj = super().get_method(name)
