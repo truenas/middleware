@@ -517,10 +517,8 @@ class VirtGlobalService(ConfigService):
             # a singe storage pool, we keep a local cache and check if it already exists or if it
             # needs to be created
             if new_ds_parent not in misconfigured_parent_datasets and not await self.middleware.call(
-                'zfs.dataset.query', [['id', '=', new_ds_parent]], {'extra': {
-                    'retrieve_properties': False,
-                    'retrieve_children': False,
-                }}
+                'zfs.resource.query_impl',
+                {'paths': [new_ds_parent], 'properties': None},
             ):
                 await self.middleware.call(
                     'zfs.dataset.create', {'name': new_ds_parent, 'type': 'FILESYSTEM'}
@@ -533,10 +531,8 @@ class VirtGlobalService(ConfigService):
             # exist there
             for i in range(1, 5):
                 if await self.middleware.call(
-                    'zfs.dataset.query', [['id', '=', new_ds]], {'extra': {
-                        'retrieve_properties': False,
-                        'retrieve_children': False,
-                    }}
+                    'zfs.resource.query_impl',
+                    {'paths': [new_ds], 'properties': None}
                 ):
                     new_ds = f'{new_ds}_{i}'
                 else:
