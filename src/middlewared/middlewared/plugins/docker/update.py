@@ -146,7 +146,7 @@ class DockerService(ConfigService):
                 # Now let's add some validation for destination
                 destination_root_ds = await self.middleware.call(
                     'zfs.resource.query_impl',
-                    {'paths': config['pool'], 'properties': ['encryption']}
+                    {'paths': [config['pool']], 'properties': ['encryption']}
                 )
                 if destination_root_ds[0]['properties']['encryption']['raw'] != 'off':
                     if destination_root_ds[0]['properties']['keyformat']['raw'] == 'passphrase':
