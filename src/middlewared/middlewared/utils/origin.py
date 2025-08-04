@@ -132,16 +132,6 @@ class ConnectionOrigin:
         )
 
     @property
-    def is_loopback(self) -> bool:
-        """Check if this is a loopback TCP/IP connection"""
-        if self.is_tcp_ip_family and self.rem_addr:
-            try:
-                return ip_address(self.rem_addr).is_loopback
-            except Exception:
-                pass
-        return False
-
-    @property
     def secure_transport(self) -> bool:
         """Indicates whether we should treat the connection as having
         secure transport for purposes of invalidation of API keys.
@@ -151,8 +141,11 @@ class ConnectionOrigin:
         if self.ssl or self.is_unix_family or self.is_ha_connection:
             return True
 
-        if self.is_loopback:
-            return True
+        if self.is_tcp_ip_family:
+            try:
+                return ip_address(self.rem_addr).is_loopback
+            except Exception:
+                pass
 
         # By default assume that transport is insecure
         return False
