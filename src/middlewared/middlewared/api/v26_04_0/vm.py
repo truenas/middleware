@@ -17,8 +17,8 @@ __all__ = [
     'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult', 'VMBootloaderOptionsArgs',
     'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
     'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureAndMachineChoicesArgs',
-    'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult', 'VMImportDiskImageArgs',
-    'VMImportDiskImageResult', 'VMExportDiskImageArgs', 'VMExportDiskImageResult', 'VMSupportsVirtualizationArgs',
+    'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult',
+    'VMSupportsVirtualizationArgs',
     'VMSupportsVirtualizationResult', 'VMVirtualizationDetailsArgs', 'VMVirtualizationDetailsResult',
     'VMMaximumSupportedVcpusArgs', 'VMMaximumSupportedVcpusResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
     'VMGetConsoleResult', 'VMCpuModelChoicesArgs', 'VMCpuModelChoicesResult', 'VMGetMemoryUsageArgs',
@@ -247,34 +247,6 @@ class VMCloneArgs(BaseModel):
 class VMCloneResult(BaseModel):
     result: bool
     """Whether the virtual machine was successfully cloned."""
-
-
-@single_argument_args('vm_import_disk_image')
-class VMImportDiskImageArgs(BaseModel):
-    diskimg: NonEmptyString
-    """Path to the disk image file to import."""
-    zvol: NonEmptyString
-    """Target ZFS volume path where the disk image will be imported."""
-
-
-class VMImportDiskImageResult(BaseModel):
-    result: bool
-    """Whether the disk image import operation was successful."""
-
-
-@single_argument_args('vm_export_disk_image')
-class VMExportDiskImageArgs(BaseModel):
-    format: NonEmptyString
-    """Output format for the exported disk image (e.g., 'qcow2', 'raw')."""
-    directory: NonEmptyString
-    """Directory path where the exported disk image will be saved."""
-    zvol: NonEmptyString
-    """Source ZFS volume to export as a disk image."""
-
-
-class VMExportDiskImageResult(BaseModel):
-    result: bool
-    """Whether the disk image export operation was successful."""
 
 
 class VMSupportsVirtualizationArgs(BaseModel):
