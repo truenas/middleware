@@ -622,7 +622,6 @@ class iSCSITargetExtentService(SharingService):
         necessary properties set (i.e. turn off volthreading).
         """
         filters = [['type', '=', 'DISK']]
-        options = {'select': ['path']}
         if pool is not None:
             filters.append(['path', '^', f'zvol/{pool["name"]}/'])
 
@@ -630,9 +629,12 @@ class iSCSITargetExtentService(SharingService):
             extent['path'][5:] for extent in await self.middleware.call(
                 'iscsi.extent.query',
                 filters,
-                options
+                {'select': ['path']}
             )
         ]
+        if not zvols:
+            return
+
         args = {'paths': zvols, 'properties': ['volthreading']}
         for zvol in await self.middleware.call('zfs.resource.query_impl', args):
             if zvol['properties']['volthreading']['raw'] == 'on':
