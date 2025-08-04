@@ -27,7 +27,7 @@ __all__ = [
 class VMCDROMDevice(BaseModel):
     dtype: Literal['CDROM']
     """Device type identifier for CD-ROM/DVD devices."""
-    path: NonEmptyString = Field(pattern='^/mnt/[^{}]*$')
+    path: NonEmptyString = Field(pattern=r'^[^{}]*$')
     """Path must not contain "{", "}" characters, and it should start with "/mnt/"."""
 
 
