@@ -140,7 +140,7 @@ class DISK(StorageDevice):
             device['attributes']['path'] = zvol_name_to_path(device['attributes']['zvol_name'])
 
             if zvol := self.middleware.call_sync(
-                'zvol.resource.query_impl',
+                'zfs.resource.query_impl',
                 {'paths': [device['attributes']['zvol_name']], 'properties': None}
             ):
                 verrors.add('attributes.zvol_name', f'{zvol[0]["name"]!r} already exists.')
