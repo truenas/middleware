@@ -238,17 +238,16 @@ class PoolService(Service):
     @private
     def normalize_root_dataset_properties(self, vol_name, vol_guid):
         try:
-            self.logger.debug('Calling zfs.dataset.query on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug('Calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
             ds = self.middleware.call_sync(
-                'zfs.dataset.query',
-                [['id', '=', vol_name]],
-                {'get': True, 'extra': {'retrieve_children': False}}
-            )['properties']
+                'zfs.resource.query_impl',
+                {'paths': [vol_name], 'properties': ['acltype', 'aclinherit', 'aclmode', 'sharenfs', 'sharesmb']}
+            )[0]['properties']
         except Exception:
             self.logger.warning('Unexpected failure querying root-level properties for %r', vol_name, exc_info=True)
             return True
         else:
-            self.logger.debug('Done calling zfs.dataset.query on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug('Done calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
 
         opts = {'properties': dict()}
         if ds['acltype']['value'] == 'nfsv4':
