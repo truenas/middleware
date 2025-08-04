@@ -14,6 +14,7 @@ from .apps import FileApplication, ShellApplication, WebSocketApplication
 from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue, State
+from .logger import Logger, setup_audit_logging, setup_logging
 from .pipe import Pipe
 from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
@@ -39,6 +40,7 @@ from .utils.threading import (
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
 from .worker import main_worker, worker_init
+
 from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
@@ -71,18 +73,25 @@ import uuid
 
 from pydantic import create_model, Field
 from systemd.daemon import notify as systemd_notify
-
 from truenas_api_client import json
 
-from .logger import Logger, setup_audit_logging, setup_logging
+if typing.TYPE_CHECKING:
+    from .api.base.server.ws_handler.rpc import RpcWebSocketApp
+    from .utils.origin import ConnectionOrigin
+    from aiohttp.web_request import Request
 
+
+_SubHandler = typing.Callable[
+    ['Middleware', typing.Literal['ADDED', 'CHANGED', 'REMOVED'], dict],
+    typing.Awaitable[None],
+]
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
 @dataclass
 class LoopMonitorIgnoreFrame:
     regex: typing.Pattern
-    substitute: str = None
+    substitute: str | None = None
     cut_below: bool = False
 
 
@@ -98,11 +107,21 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     CONSOLE_ONCE_PATH = f'{MIDDLEWARE_RUN_DIR}/.middlewared-console-once'
 
     def __init__(
-        self, loop_debug=False, loop_monitor=True, debug_level=None,
-        log_handler=None,
-        log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
-        print_version=True,
+        self,
+        loop_debug: bool = False,
+        loop_monitor: bool = True,
+        debug_level: typing.Literal['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR'] = 'DEBUG',
+        log_handler: typing.Literal['console', 'file'] = 'file',
+        log_format: str = '[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
+        print_version: bool = True,
     ):
+        # Initialized in self.run()
+        self.app: web.Application
+        self.loop: asyncio.AbstractEventLoop
+        self.runner: web.AppRunner
+        self.api_versions: list[APIVersion]
+        self.api_versions_adapter: APIVersionsAdapter
+
         super().__init__()
         self.logger = Logger('middlewared', debug_level, log_format).getLogger()
         if print_version:
@@ -112,28 +131,25 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.log_format = log_format
-        self.app = None
-        self.loop = None
-        self.runner = None
         self.__thread_id = threading.get_ident()
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
-        self.__wsclients = {}
+        self.__wsclients: dict[str, 'RpcWebSocketApp'] = {}
         self.role_manager = RoleManager(ROLES)
         self.events = Events(self.role_manager)
         self.event_source_manager = EventSourceManager(self)
-        self.__event_subs = defaultdict(list)
-        self.__hooks = defaultdict(list)
-        self.__blocked_hooks = defaultdict(lambda: 0)
+        self.__event_subs: defaultdict[str, list[_SubHandler]] = defaultdict(list)
+        self.__hooks: defaultdict[str, list[dict]] = defaultdict(list)
+        self.__blocked_hooks: defaultdict[str, int] = defaultdict(int)  # int() -> 0
         self.__blocked_hooks_lock = threading.Lock()
         self.__init_services()
-        self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
-        self.__terminate_task = None
+        self.__console_io: typing.TextIO | typing.Literal[False, None] = (
+            False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
+        )
+        self.__terminate_task: asyncio.Task | None = None
         self.jobs = JobsQueue(self)
-        self.mocks: typing.Dict[str, list[tuple[list, typing.Callable]]] = defaultdict(list)
-        self.tasks = set()
-        self.api_versions = None
-        self.api_versions_adapter = None
+        self.mocks: defaultdict[str, list[tuple[list, typing.Callable]]] = defaultdict(list)
+        self.tasks: set[asyncio.Task] = set()
         self.__audit_logger = setup_audit_logging()
 
     def get_method(self, name, *, mocks=False, params=None):
@@ -533,7 +549,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
-    def register_wsclient(self, client):
+    def register_wsclient(self, client: 'RpcWebSocketApp'):
         self.__wsclients[client.session_id] = client
 
     def unregister_wsclient(self, client):
@@ -1103,7 +1119,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 raise RuntimeError('Middleware is terminating')
         return fut.result()
 
-    def event_subscribe(self, name, handler):
+    def event_subscribe(self, name: str, handler: _SubHandler):
         """
         Internal way for middleware/plugins to subscribe to events.
         """
@@ -1137,7 +1153,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             except Exception:
                 self.logger.warning('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
 
-        async def wrap(handler):
+        async def wrap(handler: _SubHandler):
             try:
                 await handler(self, event_type, kwargs)
             except Exception:
@@ -1190,7 +1206,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 if args is None:
                     return mock
 
-    async def create_and_prepare_ws(self, request):
+    async def create_and_prepare_ws(self, request: 'Request') -> tuple[web.WebSocketResponse, bool]:
         ws = web.WebSocketResponse()
         prepared = False
         try:
@@ -1205,7 +1221,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return ws, prepared
 
-    async def ws_handler(self, request):
+    async def ws_handler(self, request: 'Request') -> web.WebSocketResponse:
         ws, prepared = await self.create_and_prepare_ws(request)
         if not prepared:
             return ws
@@ -1273,14 +1289,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return ws
 
-    async def ws_can_access(self, ws, origin):
-        if not await BaseWebSocketHandler(self).can_access(origin):
-            await ws.close(
-                code=WSCloseCode.POLICY_VIOLATION,
-                message='You are not allowed to access this resource'.encode('utf-8'),
-            )
-            return False
-        return True
+    async def ws_can_access(self, ws: web.WebSocketResponse, origin: 'ConnectionOrigin | None') -> bool:
+        if await BaseWebSocketHandler(self).can_access(origin):
+            return True
+
+        await ws.close(
+            code=WSCloseCode.POLICY_VIOLATION,
+            message='You are not allowed to access this resource'.encode('utf-8'),
+        )
+        return False
 
     async def boot_id_handler(self, request):
         return web.Response(
@@ -1334,7 +1351,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         continue
 
                     if ignore.substitute:
-                        self.logger.warn('%s seems to be blocking event loop', ignore.substitute)
+                        self.logger.warning('%s seems to be blocking event loop', ignore.substitute)
                         skip = True
                     elif ignore.cut_below:
                         stack = stack[:i + 1] + [f'  ... + {len(stack)} lines below ...']
@@ -1342,7 +1359,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     break
 
                 if not skip:
-                    self.logger.warn(''.join(['Task seems blocked:\n'] + stack))
+                    self.logger.warning(''.join(['Task seems blocked:\n'] + stack))
 
             last = current
 
@@ -1408,7 +1425,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             # Start monitor thread after plugins have been loaded
             # because of the time spent doing I/O
             t = threading.Thread(target=self._loop_monitor_thread)
-            t.setDaemon(True)
+            t.daemon = True
             t.start()
 
         self.loop.add_signal_handler(signal.SIGINT, self.terminate)
