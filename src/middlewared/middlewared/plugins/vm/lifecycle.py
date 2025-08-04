@@ -16,7 +16,8 @@ class VMService(Service, VMSupervisorMixin):
     @private
     async def wait_for_libvirtd(self, timeout):
         async def libvirtd_started(middleware):
-            await middleware.call('service.start', 'libvirtd', {'ha_propagate': False})
+            job = await middleware.call('service.control', 'START', 'libvirtd', {'ha_propagate': False})
+            await job.wait(raise_error=True)
             while not await middleware.call('service.started', 'libvirtd'):
                 await asyncio.sleep(2)
 
@@ -57,7 +58,7 @@ class VMService(Service, VMSupervisorMixin):
                     self.middleware.logger.error(
                         'Unable to setup %r VM object: %s', vm_data['name'], str(e), exc_info=True
                     )
-            self.middleware.call_sync('service.reload', 'http')
+            self.middleware.call_sync('service.control', 'RELOAD', 'http').wait_sync(raise_error=True)
         else:
             self.middleware.logger.error('Failed to establish libvirt connection')
 
@@ -73,9 +74,9 @@ class VMService(Service, VMSupervisorMixin):
     async def deinitialize_vms(self, options):
         await self.middleware.call('vm.close_libvirt_connection')
         if options.get('reload_ui'):
-            await self.middleware.call('service.reload', 'http')
+            await (await self.middleware.call('service.control', 'RELOAD', 'http')).wait(raise_error=True)
         if options.get('stop_libvirt'):
-            await self.middleware.call('service.stop', 'libvirtd')
+            await (await self.middleware.call('service.control', 'STOP', 'libvirtd')).wait(raise_error=True)
 
     @private
     def close_libvirt_connection(self):

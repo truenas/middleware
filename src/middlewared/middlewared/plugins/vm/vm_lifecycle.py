@@ -60,7 +60,7 @@ class VMService(Service, VMSupervisorMixin):
                 await self.middleware.call('vm.teardown_guest_vmemory', id_)
             raise
 
-        await self.middleware.call('service.reload', 'http')
+        await (await self.middleware.call('service.control', 'RELOAD', 'http')).wait(raise_error=True)
 
     @item_method
     @api_method(VMStopArgs, VMStopResult, roles=['VM_WRITE'])

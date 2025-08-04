@@ -7,10 +7,14 @@ class LibvirtdService(SimpleService):
     etc = ["libvirt"]
 
     async def after_start(self):
-        await self.middleware.call("service.start", "libvirt-guests", {"ha_propagate": False})
+        job = await self.middleware.call(
+            "service.control", "START", "libvirt-guests", {"ha_propagate": False}
+        )
+        await job.wait(raise_error=True)
 
     async def before_stop(self):
-        await self.middleware.call("service.stop", "libvirt-guests")
+        job = await self.middleware.call("service.control", "STOP", "libvirt-guests")
+        await job.wait(raise_error=True)
 
 
 class LibvirtGuestService(SimpleService):

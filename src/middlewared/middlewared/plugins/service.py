@@ -6,9 +6,8 @@ from typing import TYPE_CHECKING
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ServiceEntry, ServiceReloadArgs, ServiceReloadResult, ServiceRestartArgs, ServiceRestartResult, ServiceStartArgs,
-    ServiceStartResult, ServiceStartedArgs, ServiceStartedResult, ServiceStartedOrEnabledArgs,
-    ServiceStartedOrEnabledResult, ServiceStopArgs, ServiceStopResult, ServiceUpdateArgs, ServiceUpdateResult,
+    ServiceEntry, ServiceStartedArgs, ServiceStartedResult, ServiceStartedOrEnabledArgs,
+    ServiceStartedOrEnabledResult, ServiceUpdateArgs, ServiceUpdateResult,
     ServiceControlArgs, ServiceControlResult,
 )
 from middlewared.plugins.service_.services.all import all_services
@@ -154,26 +153,17 @@ class ServiceService(CRUDService):
     )
     @job(lock=lambda args: f'service_{args[1]}')
     async def control(self, app, job, verb, service, options):
-        return await getattr(self, verb.lower())(app, service, options)
+        # Check permissions before calling the private method
+        if not app_has_write_privilege_for_service(app, service):
+            raise CallError(f'{service}: authenticated session lacks privilege to {verb.lower()} service', errno.EPERM)
+        return await getattr(self, verb.lower())(service, options)
 
-    @api_method(
-        ServiceStartArgs,
-        ServiceStartResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
-        pass_app=True,
-        pass_app_rest=True,
-        removed_in="v26.04",
-        audit='Service: start',
-        audit_extended=lambda service: service,
-    )
-    async def start(self, app, service, options):
+    @private
+    async def start(self, service, options):
         """
         Start the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        if not app_has_write_privilege_for_service(app, service):
-            raise CallError(f'{service}: authenticated session lacks privilege to start service', errno.EPERM)
 
         try:
             async with asyncio.timeout(options['timeout']):
@@ -246,24 +236,12 @@ class ServiceService(CRUDService):
         svc = await self.middleware.call('service.query', [['service', '=', service]], {'get': True})
         return svc['state'] == 'RUNNING' or svc['enable']
 
-    @api_method(
-        ServiceStopArgs,
-        ServiceStopResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
-        pass_app=True,
-        pass_app_rest=True,
-        removed_in="v26.04",
-        audit='Service: stop',
-        audit_extended=lambda service: service,
-    )
-    async def stop(self, app, service, options):
+    @private
+    async def stop(self, service, options):
         """
         Stop the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        if not app_has_write_privilege_for_service(app, service):
-            raise CallError(f'{service}: authenticated session lacks privilege to stop service')
 
         try:
             async with asyncio.timeout(options['timeout']):
@@ -294,24 +272,12 @@ class ServiceService(CRUDService):
 
             raise CallError('Timed out while stopping the service', errno.ETIMEDOUT)
 
-    @api_method(
-        ServiceRestartArgs,
-        ServiceRestartResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
-        pass_app=True,
-        pass_app_rest=True,
-        removed_in="v26.04",
-        audit='Service: restart',
-        audit_extended=lambda service: service,
-    )
-    async def restart(self, app, service, options):
+    @private
+    async def restart(self, service, options):
         """
         Restart the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        if not app_has_write_privilege_for_service(app, service):
-            raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
 
         try:
             async with asyncio.timeout(options['timeout']):
@@ -366,24 +332,12 @@ class ServiceService(CRUDService):
 
         return True
 
-    @api_method(
-        ServiceReloadArgs,
-        ServiceReloadResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
-        pass_app=True,
-        pass_app_rest=True,
-        removed_in="v26.04",
-        audit='Service: reload',
-        audit_extended=lambda service: service,
-    )
-    async def reload(self, app, service, options):
+    @private
+    async def reload(self, service, options):
         """
         Reload the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
-
-        if not app_has_write_privilege_for_service(app, service):
-            raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
 
         try:
             async with asyncio.timeout(options['timeout']):

@@ -8,7 +8,7 @@ from middlewared.test.integration.utils import call, fail, pool, settle_ha, true
 def setup_ssh():
     root_id = call('user.query', [['username', '=', 'root']], {'get': True})['id']
     call('user.update', root_id, {'ssh_password_enabled': True})
-    call('service.start', 'ssh')
+    call('service.control', 'START', 'ssh', job=True)
     call('service.update', 'ssh', {'enable': True})
     call('ssh.update', {'passwordauth': True})
 

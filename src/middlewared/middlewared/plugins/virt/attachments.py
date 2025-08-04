@@ -147,7 +147,7 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
             # So let's make sure to stop them separately
             await self.stop_running_instances()
             try:
-                await self.middleware.call('service.stop', self.service)
+                await (await self.middleware.call('service.control', 'STOP', self.service)).wait(raise_error=True)
             except Exception:
                 self.middleware.logger.error('Failed to stop incus', exc_info=True)
             finally:
