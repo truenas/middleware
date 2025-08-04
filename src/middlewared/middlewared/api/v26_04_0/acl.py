@@ -436,13 +436,20 @@ class AclTemplateFormatOptions(BaseModel):
     """Whether to resolve numeric user/group IDs to names in ACL entries."""
 
 
+class ACLTemplateByPathQueryOptions(QueryOptions):
+    extra: Excluded = excluded_field()
+    select: Excluded = excluded_field()
+    count: Excluded = excluded_field()
+    get: Excluded = excluded_field()
+
+
 @single_argument_args('filesystem_acl')
 class ACLTemplateByPathArgs(BaseModel):
     path: str = ""
     """Filesystem path to filter templates by compatibility or empty string for all."""
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
     """Query filters to apply when selecting templates."""
-    query_options: QueryOptions = Field(alias='query-options', default=QueryOptions())
+    query_options: ACLTemplateByPathQueryOptions = Field(alias='query-options', default=ACLTemplateByPathQueryOptions())
     """Query options for pagination and ordering of results."""
     format_options: AclTemplateFormatOptions = Field(alias='format-options', default=AclTemplateFormatOptions())
     """Formatting options for how template data is returned."""

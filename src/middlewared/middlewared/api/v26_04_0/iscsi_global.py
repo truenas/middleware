@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
-from .common import QueryFilters, QueryOptions
+
 
 __all__ = [
     "IscsiGlobalEntry",
@@ -13,8 +13,7 @@ __all__ = [
     "ISCSIGlobalIserEnabledResult",
     "ISCSIGlobalClientCountArgs",
     "ISCSIGlobalClientCountResult",
-    "ISCSIGlobalSessionsArgs",
-    "ISCSIGlobalSessionsResult"
+    "ISCSIGlobalSessionsItem",
 ]
 
 
@@ -74,7 +73,7 @@ class ISCSIGlobalClientCountResult(BaseModel):
     """Number of currently connected iSCSI clients."""
 
 
-class IscsiSession(BaseModel):
+class ISCSIGlobalSessionsItem(BaseModel):
     initiator: str
     """iSCSI Qualified Name (IQN) of the initiator."""
     initiator_addr: str
@@ -105,15 +104,3 @@ class IscsiSession(BaseModel):
     """Whether this session is using iSER (iSCSI Extensions for RDMA)."""
     offload: bool
     """Whether hardware offload is enabled for this session."""
-
-
-class ISCSIGlobalSessionsArgs(BaseModel):
-    query_filters: QueryFilters = []
-    """Query filters to apply to the session listing."""
-    query_options: QueryOptions = QueryOptions()
-    """Query options for sorting and pagination."""
-
-
-class ISCSIGlobalSessionsResult(BaseModel):
-    result: list[IscsiSession]
-    """Array of active iSCSI sessions."""
