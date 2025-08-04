@@ -235,7 +235,8 @@ def is_external_call(app):
     External calls are those which the system is not generating internally i.e self.middleware.call().
 
     Note: We intentionally track midclt calls (Unix socket) as they can be
-    initiated by users and we want to track their usage patterns.
+    initiated by users and we want to track their usage patterns (this only applies to midclt calls
+    where user has logged in to a shell and not internal calls made by scripts).
 
     Returns True for external calls, False for internal calls.
     """
@@ -249,9 +250,4 @@ def is_external_call(app):
     if origin.is_ha_connection:
         return False
 
-    # Loopback TCP/IP connections are internal
-    if origin.is_loopback:
-        return False
-
-    # Unix socket connections (midclt) and non-loopback TCP/IP are external
-    return True
+    return origin.session_is_interactive
