@@ -7,7 +7,7 @@ from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, F
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.json_schema import SkipJsonSchema
-from pydantic.main import IncEx, Model
+from pydantic.main import IncEx, ModelT
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
@@ -320,7 +320,7 @@ def query_result(item: type[PydanticBaseModel], name: str | None = None) -> type
     )
 
 
-def query_result_item(item: type[Model]) -> type[Model]:
+def query_result_item(item: type[ModelT]) -> type[ModelT]:
     # All fields must be non-required since we can query subsets of fields
     return create_model(
         item.__name__.removesuffix("Entry") + "QueryResultItem",
