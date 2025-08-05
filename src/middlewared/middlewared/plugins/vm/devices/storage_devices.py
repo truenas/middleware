@@ -133,14 +133,14 @@ class DISK(StorageDevice):
                 if not device['attributes'].get(attr):
                     verrors.add(f'attributes.{attr}', 'This field is required.')
             if device['attributes'].get('path'):
-                verrors.add('attributes.path', 'Must not be specified when creating zvol')
+                verrors.add('attributes.path', 'The "path" attribute must not be specified when creating a zvol.')
 
             if has_internal_path(device['attributes']['zvol_name']):
                 # before doing anything, let's make sure the zvol
                 # being created isn't within an internal path
                 verrors.add(
                     'attributes.zvol_name',
-                    f'invalid location specified for {device["attributes"]["zvol_name"]!r}'
+                    f'Invalid location specified for {device["attributes"]["zvol_name"]!r}.'
                 )
 
             verrors.check()
@@ -163,7 +163,7 @@ class DISK(StorageDevice):
                 ):
                     verrors.add(
                         'attributes.zvol_name',
-                        f'parent {parentzvol!r} does not exist.', errno.ENOENT
+                        f'Parent {parentzvol!r} does not exist.', errno.ENOENT
                     )
         else:
             for attr in filter(lambda k: device['attributes'].get(k), ('zvol_name', 'zvol_volsize')):
@@ -172,9 +172,9 @@ class DISK(StorageDevice):
             if not path:
                 verrors.add('attributes.path', 'Disk path is required.')
             elif not path.startswith('/dev/zvol/'):
-                verrors.add('attributes.path', 'Disk path must start with "/dev/zvol/"')
+                verrors.add('attributes.path', 'Disk path must start with "/dev/zvol/".')
             elif check_zvol_in_boot_pool_using_path(path):
-                verrors.add('attributes.path', 'Disk residing in boot pool cannot be consumed and is not supported')
+                verrors.add('attributes.path', 'Disk residing in boot pool cannot be consumed and is not supported.')
             else:
                 zvol_name = zvol_path_to_name(path)
                 zvol = self.middleware.call_sync(
@@ -183,10 +183,15 @@ class DISK(StorageDevice):
                 if not zvol:
                     verrors.add(
                         'attributes.path',
-                        f'zvol ({zvol_name}) path ({path}) does not exist',
+                        f'Zvol ({zvol_name}) path ({path}) does not exist.',
                         errno.ENOENT
                     )
                 elif zvol[0]['type'] != 'VOLUME':
-                    verrors.add('attributes.path', f'{path!r} ({zvol_name}) is not a volume')
+                    verrors.add('attributes.path', f'Path {path!r} ({zvol_name}) is not a volume.')
+                elif has_internal_path(zvol_name):
+                    verrors.add(
+                        'attributes.path',
+                        'Disk resides in an invalid location and is not supported.'
+                    )
 
         super()._validate(device, verrors, old, vm_instance, update)
