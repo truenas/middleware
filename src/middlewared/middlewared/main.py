@@ -151,6 +151,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.mocks: defaultdict[str, list[tuple[list, typing.Callable]]] = defaultdict(list)
         self.tasks: set[asyncio.Task] = set()
         self.__audit_logger = setup_audit_logging()
+        self.external_method_calls = defaultdict(int)  # Track external API method calls
 
     def get_method(self, name, *, mocks=False, params=None):
         serviceobj, methodobj = super().get_method(name)
