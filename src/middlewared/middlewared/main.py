@@ -76,6 +76,7 @@ from systemd.daemon import notify as systemd_notify
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
+    from .api.base.server.app import App
     from .api.base.server.ws_handler.rpc import RpcWebSocketApp
     from .utils.origin import ConnectionOrigin
     from aiohttp.web_request import Request
@@ -552,7 +553,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def register_wsclient(self, client: 'RpcWebSocketApp'):
         self.__wsclients[client.session_id] = client
 
-    def unregister_wsclient(self, client):
+    def unregister_wsclient(self, client: 'RpcWebSocketApp'):
         self.__wsclients.pop(client.session_id)
 
     def register_hook(self, name, method, *, blockable=False, inline=False, order=0, raise_error=False, sync=True):
@@ -979,8 +980,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if job is None:
                 await log_audit_message_for_method(success)
 
-    async def log_audit_message_for_method(self, method, methodobj, params, app, authenticated, authorized, success,
-                                           callback_messages=None):
+    async def log_audit_message_for_method(
+        self, method, methodobj, params, app: 'App', authenticated, authorized, success: bool, callback_messages=None
+    ):
         callback_messages = callback_messages or []
 
         audit = getattr(methodobj, 'audit', None)
@@ -1009,7 +1011,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     'authorized': authorized,
                 }, success)
 
-    async def log_audit_message(self, app, event, event_data, success):
+    async def log_audit_message(
+        self,
+        app: 'App',
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN'],
+        event_data: dict,
+        success: bool,
+    ):
         remote_addr, origin = "127.0.0.1", None
         if app is not None and app.origin is not None:
             origin = app.origin.repr
