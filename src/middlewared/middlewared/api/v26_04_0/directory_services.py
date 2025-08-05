@@ -648,5 +648,5 @@ class DirectoryServicesCertificateChoicesArgs(BaseModel):
 
 
 class DirectoryServicesCertificateChoicesResult(BaseModel):
-    result: dict[int, NonEmptyString]
+    result: dict[NonEmptyString, NonEmptyString]
     """IDs of certificates mapped to their names."""
