@@ -104,7 +104,8 @@ def test_volume_name_dataset_existing_validation_error(virt_pool):
         with pytest.raises(ClientValidationErrors):
             call('virt.volume.create', {'name': vol_name, 'storage_pool': pool_name})
 
-        assert call('zfs.dataset.query', [['id', '=', ds_name]], {'count': True}) == 1
+        ds = call('zfs.resource.query', {'paths': [ds_name], 'properties': None})
+        assert len(ds) == 1
     finally:
         ssh(f'zfs destroy {ds_name}')
 
