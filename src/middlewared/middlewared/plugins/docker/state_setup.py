@@ -25,13 +25,14 @@ class DockerSetupService(Service):
         if not config['pool']:
             raise CallError(f'{config["pool"]!r} pool not found.')
 
-        if missing_datasets := missing_required_datasets({
-            d['id'] for d in await self.middleware.call(
-                'zfs.dataset.query', [['id', 'in', docker_datasets(config['dataset'])]], {
-                    'extra': {'retrieve_properties': False, 'retrieve_children': False}
-                }
+        ds = {
+            i['name']
+            for i in await self.middleware.call(
+                'zfs.resource.query_impl',
+                {'paths': docker_datasets(config['dataset']), 'properties': None}
             )
-        }, config['dataset']):
+        }
+        if missing_datasets := missing_required_datasets(ds, config['dataset']):
             raise CallError(f'Missing "{", ".join(missing_datasets)}" dataset(s) required for starting docker.')
 
         await self.create_update_docker_datasets(config['dataset'])
@@ -86,20 +87,18 @@ class DockerSetupService(Service):
     def create_update_docker_datasets_impl(self, docker_ds):
         expected_docker_datasets = docker_datasets(docker_ds)
         actual_docker_datasets = {
-            k['id']: k['properties'] for k in self.middleware.call_sync(
-                'zfs.dataset.query', [['id', 'in', expected_docker_datasets]], {
-                    'extra': {
-                        'properties': list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
-                        'retrieve_children': False,
-                        'user_properties': False,
-                    }
+            i['name']: i['properties'] for i in self.middleware.call_sync(
+                'zfs.resource.query_impl',
+                {
+                    'paths': expected_docker_datasets,
+                    'properties': list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
                 }
             )
         }
         for dataset_name in expected_docker_datasets:
             if existing_dataset := actual_docker_datasets.get(dataset_name):
                 update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
-                if any(val['value'] != update_props[name] for name, val in existing_dataset.items()):
+                if any(val['raw'] != update_props[name] for name, val in existing_dataset.items()):
                     # if any of the zfs properties don't match what we expect we'll update all properties
                     self.middleware.call_sync(
                         'zfs.dataset.update', dataset_name, {
