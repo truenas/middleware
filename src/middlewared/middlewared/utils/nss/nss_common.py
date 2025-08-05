@@ -12,6 +12,8 @@ WINBIND_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_winbind.so.2')
 
 
 class NSSModuleFN(defaultdict):
+    """ Default dictionary containing references to C function pointers for a specific NSS module.
+    Example: '_nss_files_getpwnam_r' """
     cddl = None
     module_name = None
 
@@ -22,6 +24,9 @@ class NSSModuleFN(defaultdict):
 
 
 class NSSModuleCDLL(defaultdict):
+    """ A default dictionary that holds references loaded shared libaries for the NSS modules above.
+    For example, '/usr/lib/x86_64-linux-gnu/libnss_files.so.2'. The returned value is an NSSModuleFN
+    that will hold references to lazy-initialized C function pointers."""
     def __missing__(self, key):
         mod, path = key.split('.', 1)
         cdll = ctypes.CDLL(path, use_errno=True)
@@ -80,7 +85,10 @@ class NssError(Exception):
         return errmsg
 
 
-def get_nss_func(nss_op, nss_module):
+def get_nss_func(nss_op: NssOperation, nss_module: NssModule):
+    """ Get the C function pointer for the particular NSS operation for the NSS module. The cache
+    is lazy-initialized as different modules are used. Standalone servers will only ever use the
+    files module. """
     if nss_module == NssModule.ALL:
         raise ValueError('ALL module may not be explicitly used')
 
