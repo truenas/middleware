@@ -15,7 +15,8 @@ from middlewared.pytest.unit.middleware import Middleware
         {"trains": {"TrueNAS-SCALE-Fangtooth": {}},
          "trains_redirection": {"TrueNAS-Fangtooth-RC": "TrueNAS-SCALE-Fangtooth"}},
     ),
-    # Inserts current train as DEVELOPER profile if it does not exist in `trains.json`
+    # Inserts current train as DEVELOPER profile if it does not exist
+    # in the update trains file
     (
         {"train": "TrueNAS-SCALE-Goldeye-Nightlies"},
         {"trains": {"TrueNAS-SCALE-Fangtooth": {}},
