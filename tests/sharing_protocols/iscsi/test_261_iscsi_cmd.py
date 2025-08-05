@@ -230,7 +230,10 @@ def get_client_count():
 
 
 def get_zvol_property(zvolid, property_name):
-    return call('zfs.dataset.query', [['id', '=', zvolid]], {'get': True})['properties'][property_name]['value']
+    return call(
+        'zfs.resource.query',
+        {'paths': [zvolid], 'properties': [property_name]}
+    )[0]['properties'][property_name]['value']
 
 
 def get_volthreading(zvolid):
