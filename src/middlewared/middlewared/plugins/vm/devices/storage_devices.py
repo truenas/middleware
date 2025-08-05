@@ -183,7 +183,7 @@ class DISK(StorageDevice):
                 if not zvol:
                     verrors.add(
                         'attributes.path',
-                        f'zvol\'s ({zvol_name}) path ({path}) does not exist',
+                        f'zvol ({zvol_name}) path ({path}) does not exist',
                         errno.ENOENT
                     )
                 elif zvol[0]['type'] != 'VOLUME':
