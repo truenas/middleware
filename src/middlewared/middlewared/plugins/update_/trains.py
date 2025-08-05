@@ -4,7 +4,7 @@ import time
 from aiohttp import ClientResponseError, ClientSession, ClientTimeout
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils import MANIFEST_FILE
+from middlewared.utils import MANIFEST_FILE, UPDATE_TRAINS_FILE_NAME
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.utils.functools_ import cache
 from .utils import scale_update_server
@@ -49,8 +49,7 @@ class UpdateService(Service):
             }
         ```
         """
-        trains = await self.fetch(f"{self.update_srv}/trains.json")
-
+        trains = await self.fetch(f"{self.update_srv}/{UPDATE_TRAINS_FILE_NAME}")
         current_train_name = await self.get_current_train_name(trains)
         if current_train_name not in trains['trains']:
             trains['trains'][current_train_name] = {}
