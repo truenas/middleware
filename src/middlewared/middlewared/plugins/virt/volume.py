@@ -1,3 +1,4 @@
+import datetime
 import errno
 import os.path
 from time import time
@@ -347,7 +348,9 @@ class VirtVolumeService(CRUDService):
                     'config': {
                         'size': str(entry['volsize']),
                     },
-                    'created_at': entry['creation'].isoformat()
+                    'created_at': datetime.datetime.fromtimestamp(
+                        entry['creation'], datetime.UTC
+                    ).isoformat()
                 },
             })
             if result.get('error') != '':
