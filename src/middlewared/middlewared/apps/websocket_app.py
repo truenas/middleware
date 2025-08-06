@@ -5,7 +5,7 @@ from pickle import dumps as pdumps
 from sys import exc_info
 from traceback import format_exception
 from typing import Any
-from types import AsyncGeneratorType, GeneratorType, TracebackType
+from types import AsyncGeneratorType, GeneratorType
 
 from middlewared.api.base.server.legacy_api_method import LegacyAPIMethod
 from middlewared.api.base.server.ws_handler.rpc import (
@@ -24,16 +24,13 @@ from middlewared.service_exception import (
     ValidationErrors,
     get_errname,
 )
+from middlewared.types import OptExcInfo
 from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin
 from truenas_api_client import json
 
 __all__ = ("WebSocketApplication",)
-
-ExcInfoType = (
-    tuple[type[BaseException], BaseException, TracebackType] | tuple[None, None, None]
-)
 
 
 class WebSocketApplication(RpcWebSocketApp):
@@ -60,7 +57,7 @@ class WebSocketApplication(RpcWebSocketApp):
     def _send(self, data: dict[str, Any]):
         run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
-    def _tb_error(self, exc_info: ExcInfoType) -> dict[str, str | list[dict]]:
+    def _tb_error(self, exc_info: OptExcInfo) -> dict:
         klass, exc, trace = exc_info
         frames = []
         cur_tb = trace
@@ -82,7 +79,7 @@ class WebSocketApplication(RpcWebSocketApp):
         self,
         errno: int,
         reason: str | None = None,
-        exc_info: ExcInfoType | None = None,
+        exc_info: OptExcInfo | None = None,
         etype: str | None = None,
         extra: list | None = None,
     ) -> dict[str, Any]:
@@ -106,7 +103,7 @@ class WebSocketApplication(RpcWebSocketApp):
         message: dict[str, Any],
         errno: int,
         reason: str | None = None,
-        exc_info: ExcInfoType | None = None,
+        exc_info: OptExcInfo | None = None,
         etype: str | None = None,
         extra: list | None = None,
     ):

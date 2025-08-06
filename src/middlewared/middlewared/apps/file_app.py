@@ -54,7 +54,7 @@ class FileApplication:
         job = self.middleware.jobs[job_id]
         await job.pipes.close()
 
-    async def download(self, request):
+    async def download(self, request: "Request") -> web.Response | web.StreamResponse:
         path = request.path.split("/")
         if not request.path[-1].isdigit():
             resp = web.Response()
@@ -122,7 +122,7 @@ class FileApplication:
         await resp.drain()
         return resp
 
-    async def upload(self, request: "Request"):
+    async def upload(self, request: "Request") -> web.Response:
         reader = await request.multipart()
 
         part = await reader.next()

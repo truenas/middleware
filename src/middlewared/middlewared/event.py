@@ -12,8 +12,8 @@ from middlewared.service import ValidationErrors
 class Events:
     def __init__(self, role_manager: RoleManager):
         self.role_manager = role_manager
-        self._events: typing.Dict[str, dict[str, typing.Any]] = {}
-        self.__events_private: typing.Set[str] = set()
+        self._events: dict[str, dict[str, typing.Any]] = {}
+        self.__events_private: set[str] = set()
 
     def register(self, name: str, description: str, private: bool, returns, models, no_auth_required,
                  no_authz_required, roles: typing.Iterable[str]):

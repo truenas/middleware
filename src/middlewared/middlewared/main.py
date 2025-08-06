@@ -1147,7 +1147,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         roles = roles or []
         self.events.register(name, description, private, returns, models, no_auth_required, no_authz_required, roles)
 
-    def send_event(self, name, event_type: str, **kwargs):
+    def send_event(self, name: str, event_type: typing.Literal['ADDED', 'CHANGED', 'REMOVED'], **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)
 
         if name not in self.events:
