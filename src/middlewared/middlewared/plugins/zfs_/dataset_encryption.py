@@ -142,8 +142,8 @@ class ZFSDatasetService(Service):
 
         force = options.pop('force_umount')
         if options.pop('umount') and self.middleware.call_sync(
-                'zfs.dataset.query', [['id', '=', id_]], {'extra': {'retrieve_children': False}, 'get': True}
-        )['properties'].get('mountpoint', {}).get('value', 'none') != 'none':
+            'zfs.resource.query_impl', {'paths': [id_], 'properties': ['mounted']}
+        )[0]['properties']['mounted']['raw'] == 'yes':
             self.middleware.call_sync('zfs.dataset.umount', id_, {'force': force})
         try:
             with libzfs.ZFS() as zfs:
