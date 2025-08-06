@@ -1,15 +1,33 @@
+import os
+
 import pytest
 
 from middlewared.test.integration.assets.apps import app
 from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.utils.docker import dataset_props, IX_APPS_MOUNT_PATH
+from middlewared.test.integration.utils.docker import IX_APPS_MOUNT_PATH
 
 
 APP_NAME = 'actual-budget'
 BACKUP_NAME = 'test_backup'
 ENC_POOL_PASSWORD = 'test1234'
+DOCKER_DATASET_PROPS = {
+    'aclmode': 'discard',
+    'acltype': 'posix',
+    'atime': 'off',
+    'casesensitivity': 'sensitive',
+    'canmount': 'noauto',
+    'dedup': 'off',
+    'encryption': 'off',
+    'exec': 'on',
+    'normalization': 'none',
+    'overlay': 'on',
+    'setuid': 'on',
+    'snapdir': 'hidden',
+    'xattr': 'on',
+    'mountpoint': None,  # will be filled in dynamically
+}
 
 
 @pytest.fixture(scope='module')
@@ -33,13 +51,27 @@ def docker_encrypted_pool():
 def test_docker_datasets_properties(docker_pool):
     docker_config = call('docker.config')
     datasets = {
-        ds['name']: ds['properties'] for ds in call('zfs.dataset.query', [['id', '^', docker_config['dataset']]])
+        ds['name']: ds['properties']
+        for ds in call(
+            'zfs.resource.query',
+            {
+                'paths': [docker_config['dataset']],
+                'properties': list(DOCKER_DATASET_PROPS.keys()),
+                'get_children': True,
+            }
+        )
     }
     for ds_name, current_props in datasets.items():
         invalid_props = {}
-        for to_check_prop, to_check_prop_value in dataset_props(ds_name).items():
-            if current_props[to_check_prop]['value'] != to_check_prop_value:
-                invalid_props[to_check_prop] = current_props[to_check_prop]['value']
+        for to_check_prop, to_check_prop_value in DOCKER_DATASET_PROPS.items():
+            if to_check_prop == 'mountpoint':
+                if ds_name.endswith('/ix-apps'):
+                    to_check_prop_value = IX_APPS_MOUNT_PATH
+                else:
+                    to_check_prop_value = os.path.join(IX_APPS_MOUNT_PATH, ds_name.split('/', 2)[-1])
+
+            if current_props[to_check_prop]['raw'] != to_check_prop_value:
+                invalid_props[to_check_prop] = current_props[to_check_prop]['raw']
 
         assert invalid_props == {}, f'{ds_name} has invalid properties: {invalid_props}'
 

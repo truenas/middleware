@@ -141,6 +141,6 @@ class UpdateService(Service):
         )
 
     def _space_left(self, pool_name):
-        filters = [["name", "=", pool_name]]
-        options = {"get": True, "extra": {"flat": False, "retrieve_children": False, "properties": ["available"]}}
-        return self.middleware.call_sync('zfs.dataset.query', filters, options)['properties']['available']['parsed']
+        return self.middleware.call_sync(
+            'zfs.resource.query_impl', {'paths': [pool_name], 'properties': ['available']}
+        )[0]['properties']['available']['value']

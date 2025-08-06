@@ -253,6 +253,11 @@ class UsageService(Service):
             }
         }
 
+    async def gather_method_stats(self, context):
+        return {
+            'method_stats': self.middleware.external_method_calls,
+        }
+
     async def gather_network(self, context):
         info = {'network': {'bridges': [], 'lags': [], 'phys': [], 'vlans': []}}
         for i in context['network']:

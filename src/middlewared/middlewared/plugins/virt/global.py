@@ -774,7 +774,11 @@ class VirtGlobalService(ConfigService):
         await self.middleware.call(
             'core.bulk', 'virt.instance.start', [
                 [instance['name']] for instance in await self.middleware.call(
-                    'virt.instance.query', [['autostart', '=', True], ['status', '=', 'STOPPED']]
+                    'virt.instance.query', [
+                        ['autostart', '=', True],
+                        ['status', '=', 'STOPPED'],
+                        ['type', '=', 'CONTAINER']  # Only autostart CONTAINER type instances
+                    ]
                 )
                 # We have an explicit filter for STOPPED because old virt instances would still have
                 # incus autostart enabled and we don't want to attempt to start them again.

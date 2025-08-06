@@ -126,7 +126,6 @@ class VMDeviceService(Service):
     @api_method(VMDevicePassthroughDeviceArgs, VMDevicePassthroughDeviceResult, roles=['VM_DEVICE_READ'])
     def passthrough_device(self, device):
         """Retrieve details about `device` PCI device"""
-        self.middleware.call_sync('vm.check_setup_libvirt')
         if device_details := self.get_single_pci_device_details(RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)):
             return device_details[device]
         else:
