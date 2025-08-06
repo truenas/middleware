@@ -817,7 +817,10 @@ class PoolDatasetService(CRUDService):
             }
         """
 
-        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id_}/']]):
+        if not options['recursive'] and await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'paths': [id_], 'properties': None, 'get_children': True}
+        ):
             raise CallError(
                 f'Failed to delete dataset: cannot destroy {id_!r}: filesystem has children', errno.ENOTEMPTY
             )
@@ -892,7 +895,9 @@ class PoolDatasetService(CRUDService):
         """
         Promote the cloned dataset `id`.
         """
-        dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id_)])
+        dataset = await self.middleware.call(
+            'zfs.resource.query_impl', {'paths': [id_], 'properties': ['origin']}
+        )
         if not dataset:
             raise CallError(f'Dataset "{id_}" does not exist.', errno.ENOENT)
         if not dataset[0]['properties']['origin']['value']:
