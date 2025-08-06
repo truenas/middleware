@@ -296,7 +296,7 @@ class JobsDeque:
         self.__dict[job.id] = job
 
 
-OnFinishCallback: typing.TypeAlias = typing.Callable[[Job], typing.Awaitable] | None
+OnFinishCallback: typing.TypeAlias = typing.Callable[['Job'], typing.Awaitable] | None
 
 
 class Job:
@@ -309,7 +309,7 @@ class Job:
     """
 
     pipes: Pipes
-    logs_fd: None
+    logs_fd: typing.BinaryIO | None
 
     def __init__(
         self,
@@ -362,7 +362,7 @@ class Job:
         self.on_finish_cb_called: bool = False
 
         self.logs_path: str | None = None
-        self.logs_fd: typing.BinaryIO | None = None
+        self.logs_fd = None
         self.logs_excerpt: str | None = None
 
         if self.options["check_pipes"]:
