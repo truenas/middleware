@@ -1,5 +1,6 @@
 import pam
 import re
+import typing
 
 from dataclasses import dataclass
 from datetime import datetime, UTC
@@ -13,6 +14,9 @@ from middlewared.utils.account.authenticator import (
 from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.auth import AuthMech, AuthenticatorAssuranceLevel
 from time import monotonic
+
+if typing.TYPE_CHECKING:
+    from middlewared.plugins.auth import TokenManager, Token
 
 
 class SessionManagerCredentials:
@@ -200,8 +204,8 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     initially generated the token. """
     def __init__(
         self,
-        token_manager,
-        token,
+        token_manager: 'TokenManager',
+        token: 'Token',
         authenticator: UnixPamAuthenticator,
         origin: ConnectionOrigin,
     ):

@@ -78,6 +78,7 @@ from truenas_api_client import json
 if typing.TYPE_CHECKING:
     from .api.base.server.app import App
     from .api.base.server.ws_handler.rpc import RpcWebSocketApp
+    from .service import Service
     from .utils.origin import ConnectionOrigin
     from aiohttp.web_request import Request
 
@@ -818,12 +819,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def dump_result(
         self,
-        serviceobj,
+        serviceobj: 'Service',
         methodobj: Method,
-        app: object | None,
+        app: 'App | None',
         result: dict | str | int | list | None | Job,
         *,
-        new_style_returns_model: object | None = None,
+        new_style_returns_model: BaseModel | None = None,
         expose_secrets: bool = True,
     ):
         """
@@ -1056,8 +1057,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         self.__audit_logger.info(message)
 
-    async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-                   profile=False):
+    async def call(
+        self, name, *params, app: 'App | None' = None, audit_callback=None, job_on_progress_cb=None, pipes=None,
+        profile=False
+    ) -> typing.Any:
         serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
         if profile:
@@ -1068,7 +1071,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False):
+    def call_sync(
+        self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False
+    ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot use call_sync from main thread')
 

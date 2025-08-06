@@ -4,6 +4,7 @@ from datetime import timedelta
 import errno
 import pam
 import time
+import typing
 
 from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
@@ -45,14 +46,28 @@ from middlewared.utils.auth import (
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
 
+if typing.TYPE_CHECKING:
+    from middlewared.auth import SessionManagerCredentials
+    from middlewared.main import Middleware
+    from middlewared.utils.origin import ConnectionOrigin
+
+
 PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
 
 
 class TokenManager:
     def __init__(self):
-        self.tokens = {}
+        self.tokens: dict[str, Token] = {}
 
-    def create(self, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
+    def create(
+        self,
+        ttl: int,
+        attributes: dict,
+        match_origin: 'ConnectionOrigin | None',
+        parent_credentials: 'SessionManagerCredentials',
+        session_id: str,
+        single_use: bool,
+    ):
         credentials = parent_credentials
         if isinstance(credentials, TokenSessionManagerCredentials):
             if root_credentials := credentials.token.root_credentials():
@@ -87,7 +102,17 @@ class TokenManager:
 
 
 class Token:
-    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
+    def __init__(
+        self,
+        manager: TokenManager,
+        token: str,
+        ttl: int,
+        attributes: dict,
+        match_origin: 'ConnectionOrigin | None',
+        parent_credentials: 'SessionManagerCredentials',
+        session_id: str,
+        single_use: bool,
+    ):
         self.manager = manager
         self.token = token
         self.ttl = ttl
@@ -105,7 +130,7 @@ class Token:
     def notify_used(self):
         self.last_used_at = time.monotonic()
 
-    def root_credentials(self):
+    def root_credentials(self) -> 'SessionManagerCredentials | None':
         credentials = self.parent_credentials
         while True:
             if isinstance(credentials, TokenSessionManagerCredentials):
@@ -119,7 +144,7 @@ class Token:
 class SessionManager:
     def __init__(self):
         self.sessions = {}
-        self.middleware = None
+        self.middleware: 'Middleware'
 
     async def login(self, app, credentials):
         if app.authenticated:
@@ -452,7 +477,7 @@ class AuthService(Service):
 
     @private
     @pass_app(require=True)
-    def get_token_for_action(self, app, token_id, origin, method, resource):
+    def get_token_for_action(self, app, token_id, origin, method, resource) -> TokenSessionManagerCredentials | None:
         if (token := self.token_manager.get(token_id, origin)) is None:
             return None
 
