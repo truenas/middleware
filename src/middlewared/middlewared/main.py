@@ -1015,7 +1015,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     async def log_audit_message(
         self,
         app: 'App',
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN'],
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
         event_data: dict,
         success: bool,
     ):
