@@ -31,7 +31,9 @@ class VMService(Service):
         return clone_name
 
     async def __clone_zvol(self, name, zvol, created_snaps, created_clones):
-        if not await self.middleware.call('zfs.dataset.query', [('id', '=', zvol)]):
+        if not await self.middleware.call(
+            'zfs.resource.query_impl', {'paths': [zvol], 'properties': None}
+        ):
             raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
         snapshot_name = name
@@ -54,7 +56,9 @@ class VMService(Service):
         i = 0
         while True:
             clone_dst = f'{zvol}_{clone_suffix}'
-            if await self.middleware.call('zfs.dataset.query', [('id', '=', clone_dst)]):
+            if await self.middleware.call(
+                'zfs.resource.query_impl', {'paths': [clone_dst], 'properties': None}
+            ):
                 if ZVOL_CLONE_RE.search(clone_suffix):
                     clone_suffix = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', clone_suffix)
                 else:
