@@ -15,6 +15,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
+from middlewared.utils.zfs.utils import has_internal_path
 
 from .dataset_query_utils import generic_query
 from .utils import (
@@ -816,14 +817,18 @@ class PoolDatasetService(CRUDService):
                 "params": ["tank/myuser"]
             }
         """
+        if has_internal_path(id_):
+            raise ValidationError('pool.dataset.delete', f'{id_} is an invalid location')
 
-        if not options['recursive'] and await self.middleware.call(
-            'zfs.resource.query_impl',
-            {'paths': [id_], 'properties': None, 'get_children': True}
-        ):
-            raise CallError(
-                f'Failed to delete dataset: cannot destroy {id_!r}: filesystem has children', errno.ENOTEMPTY
+        if not options['recursive']:
+            ds = await self.middleware.call(
+                'zfs.resource.query_impl',
+                {'paths': [id_], 'properties': None, 'get_children': True}
             )
+            if len(ds) > 1:
+                raise CallError(
+                    f'Failed to delete dataset: cannot destroy {id_!r}: filesystem has children', errno.ENOTEMPTY
+                )
 
         dataset = await self.get_instance(id_)
         audit_callback(dataset['name'])
