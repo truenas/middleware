@@ -6,7 +6,7 @@ Create Date: 2025-05-07 12:57:43.575785+00:00
 
 """
 from alembic import op
-from json import dumps
+from json import dumps, loads
 from middlewared.plugins.pwenc import encrypt, decrypt
 import sqlalchemy as sa
 
@@ -212,7 +212,9 @@ def migrate_idmap_domain(dom, netbios_domain_name) -> dict | None:
         'range_high': dom['idmap_domain_range_high']
     }
 
-    orig_opts = dom.get('idmap_domain_options', {})
+    # idmap_domain_options may be something like "{"sssd_compat": false}" or empty string ""
+    # the original field had a NOT NULL constraint.
+    orig_opts = loads(dom.get('idmap_domain_options') or '{}')
 
     match out['idmap_backend']:
         case 'AUTORID' | 'RID' | 'AD':
