@@ -9,13 +9,13 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
-from middlewared.utils.zfs.utils import has_internal_path
 
 from .dataset_query_utils import generic_query
 from .utils import (
