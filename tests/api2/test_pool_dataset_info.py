@@ -72,13 +72,19 @@ def test_pool_filesystem_choices(pool_dataset_zvol_snapshot_app):
     should_contain = dict(filter(lambda item: item[0] not in ['apps', 'snaps'], created_items.items()))
     expected_set = set([item for sl in should_contain.values() for item in sl])
     assert sorted(fc_set_all) == sorted(expected_set)
+    assert 'boot-pool' not in fc_set_all
+    assert f'{pool}.system' not in fc_set_all
 
     # Test request for volumes
     fc_vol_list = call('pool.filesystem_choices', ["VOLUME"])
     assert sorted(fc_vol_list) == sorted(created_items['zvols'])
+    assert 'boot-pool' not in fc_vol_list
+    assert f'{pool}.system' not in fc_vol_list
 
     # Make sure we get only filesystem items and only ones we expect
     fc_fs_set = set(call('pool.filesystem_choices', ["FILESYSTEM"]))
     should_contain_fs = dict(filter(lambda item: 'zvols' not in item[0], should_contain.items()))
     expected_fs_set = set([item for sl in should_contain_fs.values() for item in sl])
     assert sorted(fc_fs_set) == sorted(expected_fs_set)
+    assert 'boot-pool' not in fc_fs_set
+    assert f'{pool}.system' not in fc_fs_set
