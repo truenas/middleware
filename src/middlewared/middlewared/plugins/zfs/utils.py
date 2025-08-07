@@ -3,7 +3,7 @@ from typing import Literal
 
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
-__all__ = ("get_encryption_info","has_internal_path",)
+__all__ = ("get_encryption_info", "has_internal_path",)
 
 
 INTERNAL_PATHS = (
