@@ -337,7 +337,10 @@ class SystemDatasetService(ConfigService):
         mntinfo = self.middleware.call_sync('filesystem.mount_info')
         if config['pool'] != boot_pool:
             if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
-                ds = self.middleware.call_sync('zfs.dataset.query', [['id', '=', config['basename']]])
+                ds = self.middleware.call_sync(
+                    'zfs.resource.query_impl',
+                    {'paths': [config['basename']], 'properties': ['encryption']}
+                )
                 if not ds:
                     # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
                     msg = 'Root dataset for pool %r is not available, and dataset %r does not exist, '
@@ -345,7 +348,11 @@ class SystemDatasetService(ConfigService):
                     self.logger.debug(msg, config['pool'], config['basename'])
                     self.force_pool = boot_pool
                     config = self.middleware.call_sync('systemdataset.config')
-                elif ds[0]['encrypted'] and ds[0]['locked'] and ds[0]['key_format']['value'] != 'PASSPHRASE':
+                elif (
+                    ds[0]['properties']['encryption']['raw'] != 'off'
+                    and ds[0]['properties']['keystatus']['raw'] != 'available'
+                    and ds[0]['properties']['keyformat']['raw'] != 'passphrase'
+                ):
                     self.logger.debug(
                         'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
                         config['pool'],
@@ -384,8 +391,11 @@ class SystemDatasetService(ConfigService):
         if ds_mntinfo:
             acl_enabled = 'POSIXACL' in ds_mntinfo[0]['super_opts'] or 'NFSV4ACL' in ds_mntinfo[0]['super_opts']
         else:
-            ds = self.middleware.call_sync('zfs.dataset.query', [('id', '=', config['basename'])])
-            acl_enabled = ds and ds[0]['properties']['acltype']['value'] != 'off'
+            ds = self.middleware.call_sync(
+                'zfs.resource.query_impl',
+                {'paths': [config['basename']], 'properties': ['acltype']}
+            )
+            acl_enabled = ds and ds[0]['properties']['acltype']['raw'] != 'off'
 
         if acl_enabled:
             self.middleware.call_sync(
@@ -468,8 +478,14 @@ class SystemDatasetService(ConfigService):
         )
         datasets = {i['name']: i for i in get_system_dataset_spec(pool, uuid)}
         datasets_prop = {
-            i['id']: i['properties']
-            for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', list(datasets))])
+            i['name']: i['properties']
+            for i in await self.middleware.call(
+                'zfs.resource.query_impl',
+                {
+                    'paths': list(datasets),
+                    'properties': ['used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
+                }
+            )
         }
         for dataset, config in datasets.items():
             props = config['props']
@@ -481,23 +497,17 @@ class SystemDatasetService(ConfigService):
             if is_cores_ds:
                 props['quota'] = '1G'
             if dataset not in datasets_prop:
-                await self.middleware.call('zfs.dataset.create', {
-                    'name': dataset,
-                    'properties': props,
-                })
-            elif is_cores_ds and datasets_prop[dataset]['used']['parsed'] >= 1024 ** 3:
+                await self.middleware.call('zfs.dataset.create', {'name': dataset, 'properties': props})
+            elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
                     await self.middleware.call('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
-                    await self.middleware.call('zfs.dataset.create', {
-                        'name': dataset,
-                        'properties': props,
-                    })
+                    await self.middleware.call('zfs.dataset.create', {'name': dataset, 'properties': props})
                 except Exception:
                     self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
                 update_props_dict = {
                     k: {'value': v} for k, v in props.items()
-                    if datasets_prop[dataset][k]['value'] != v
+                    if datasets_prop[dataset][k]['raw'] != v
                 }
                 if update_props_dict:
                     await self.middleware.call(
@@ -590,7 +600,11 @@ class SystemDatasetService(ConfigService):
             except KeyError:
                 pass
 
-        if not (mntinfo := self.middleware.call_sync('filesystem.mount_info', [['mount_source', '=', f'{pool}/.system']])):
+        mntinfo = self.middleware.call_sync(
+            'filesystem.mount_info',
+            [['mount_source', '=', f'{pool}/.system']]
+        )
+        if not mntinfo:
             # Pool's system dataset not mounted
             return
 
