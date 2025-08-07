@@ -784,7 +784,7 @@ class FilesystemService(Service):
                 case POSIXACE_Tag.USER_OBJ | POSIXACE_Tag.GROUP_OBJ | POSIXACE_Tag.OTHER | POSIXACE_Tag.MASK:
                     # these tags don't require an explicit uid/gid
                     continue
-                case NFS4ACE_Tag.SPECIAL_OWNER | NFS4ACE_Tag.SPECIAL_GROUP | NFS4ACE_Tag.EVERYONE:
+                case NFS4ACE_Tag.SPECIAL_OWNER | NFS4ACE_Tag.SPECIAL_GROUP | NFS4ACE_Tag.SPECIAL_EVERYONE:
                     # these tags don't require an explicit uid/gid
                     continue
                 case _:
