@@ -353,6 +353,7 @@ class SystemDatasetService(ConfigService):
                     and ds[0]['properties']['keystatus']['raw'] != 'available'
                     and ds[0]['properties']['keyformat']['raw'] != 'passphrase'
                 ):
+                    # Pool is encrypted with a key and is locked
                     self.logger.debug(
                         'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
                         config['pool'],
@@ -360,8 +361,11 @@ class SystemDatasetService(ConfigService):
                     self.force_pool = boot_pool
                     config = self.middleware.call_sync('systemdataset.config')
                 else:
-                    self.logger.debug('Root dataset for pool %r is not available, but system dataset may be manually '
-                                      'mounted. Proceeding with normal setup.', config['pool'])
+                    self.logger.debug(
+                        'Root dataset for pool %r is not available, but system dataset may be manually '
+                        'mounted. Proceeding with normal setup.',
+                        config['pool']
+                    )
 
         mounted_pool = mounted = None
 
@@ -483,7 +487,7 @@ class SystemDatasetService(ConfigService):
                 'zfs.resource.query_impl',
                 {
                     'paths': list(datasets),
-                    'properties': ['used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
+                    'properties': ['quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
                 }
             )
         }
@@ -507,6 +511,10 @@ class SystemDatasetService(ConfigService):
             else:
                 update_props_dict = {
                     k: {'value': v} for k, v in props.items()
+                    # use `raw` key instead of `value` since
+                    # the latter will do some fancy translation
+                    # depending on the property.
+                    # (i.e. if raw == "on" value == True)
                     if datasets_prop[dataset][k]['raw'] != v
                 }
                 if update_props_dict:
