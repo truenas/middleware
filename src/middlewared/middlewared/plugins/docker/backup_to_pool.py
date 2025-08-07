@@ -1,6 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import DockerBackupToPoolArgs, DockerBackupToPoolResult
 from middlewared.service import job, private, Service, ValidationErrors
+from middlewared.plugins.zfs.utils import get_encryption_info
 
 from .utils import applications_ds_name
 
@@ -31,19 +32,17 @@ class DockerService(Service):
         docker_config = await self.middleware.call('docker.config')
         if docker_config['pool'] is None:
             verrors.add('pool', 'Docker is not configured to use a pool')
-
         if target_pool == docker_config['pool']:
             verrors.add('target_pool', 'Target pool cannot be the same as the current Docker pool')
+        verrors.check()
 
-        target_root_ds = await self.middleware.call('pool.dataset.query', [['id', '=', target_pool]], {
-            'extra': {
-                'retrieve_children': False,
-                'properties': ['encryption', 'keystatus', 'mountpoint', 'keyformat', 'encryptionroot'],
-            }
-        })
+        target_root_ds = await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'paths': [target_pool], 'properties': ['encryption']}
+        )
         if not target_root_ds:
             verrors.add('target_pool', 'Target pool does not exist')
-        elif target_root_ds[0]['encrypted']:
+        elif get_encryption_info(target_root_ds[0]['properties']).encrypted:
             # This is not allowed because destination root if encrypted means that docker datasets would be
             # not encrypted and by design we don't allow this to happen to keep it simple / straight forward.
             # https://github.com/truenas/zettarepl/blob/52d3b7a00fa4630c3428ae4e70bc33cf41a6d768/zettarepl/
