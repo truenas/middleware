@@ -18,6 +18,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
@@ -348,11 +349,8 @@ class SystemDatasetService(ConfigService):
                     self.logger.debug(msg, config['pool'], config['basename'])
                     self.force_pool = boot_pool
                     config = self.middleware.call_sync('systemdataset.config')
-                elif (
-                    ds[0]['properties']['encryption']['raw'] != 'off'
-                    and ds[0]['properties']['keystatus']['raw'] != 'available'
-                    and ds[0]['properties']['keyformat']['raw'] != 'passphrase'
-                ):
+                enc = get_encryption_info(ds[0]['properties'])
+                if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
                     # Pool is encrypted with a key and is locked
                     self.logger.debug(
                         'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
