@@ -50,19 +50,19 @@ def get_zfs(data_type, key, zfs_config):
 
     types = {
         'zfs': {
-            'reservation': zfs_config['properties']['refreservation']['parsed'] or 0,
-            'quota': zfs_config['properties']['refquota']['parsed'] or 0,  # audit quota == ZFS refquota
-            'refquota': zfs_config['properties']['refquota']['parsed'] or 0,
+            'reservation': zfs_config['properties']['refreservation']['value'] or 0,
+            'quota': zfs_config['properties']['refquota']['value'] or 0,  # audit quota == ZFS refquota
+            'refquota': zfs_config['properties']['refquota']['value'] or 0,
             'quota_fill_warning': zfs_config['org.freenas:quota_warning'],
             'quota_fill_critical': zfs_config['org.freenas:quota_critical']
         },
         'space': {
-            'used': zfs_config['properties']['used']['parsed'],
-            'used_by_snapshots': zfs_config['properties']['usedbysnapshots']['parsed'],
-            'available': zfs_config['properties']['available']['parsed'],
-            'used_by_dataset': zfs_config['properties']['usedbydataset']['parsed'],
+            'used': zfs_config['properties']['used']['value'],
+            'used_by_snapshots': zfs_config['properties']['usedbysnapshots']['value'],
+            'available': zfs_config['properties']['available']['value'],
+            'used_by_dataset': zfs_config['properties']['usedbydataset']['value'],
             # We set 'refreservation' and there is no 'usedbyreservation'
-            'used_by_reservation': zfs_config['properties']['usedbyrefreservation']['parsed']
+            'used_by_reservation': zfs_config['properties']['usedbyrefreservation']['value']
         }
     }
     return types[data_type][key]
