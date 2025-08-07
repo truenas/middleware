@@ -91,23 +91,12 @@ class NetworkConfigurationService(ConfigService):
             data['hosts'] = []
 
         data['state'] = {
-            'ipv4gateway': '',
-            'ipv6gateway': '',
             'nameserver1': '',
             'nameserver2': '',
             'nameserver3': '',
             'hosts': self.read_etc_hosts_file(),
         }
         summary = self.middleware.call_sync('network.general.summary')
-        for default_route in summary['default_routes']:
-            try:
-                ipaddress.IPv4Address(default_route)
-            except ValueError:
-                if not data['state']['ipv6gateway']:
-                    data['state']['ipv6gateway'] = default_route
-            else:
-                if not data['state']['ipv4gateway']:
-                    data['state']['ipv4gateway'] = default_route
         for i, nameserver in enumerate(summary['nameservers'][:3]):
             data['state'][f'nameserver{i + 1}'] = nameserver
 
