@@ -32,7 +32,7 @@ from middlewared.api.current import (
     AuditEntry, AuditDownloadReportArgs, AuditDownloadReportResult, AuditQueryArgs, AuditQueryResult,
     AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
 )
-from middlewared.plugins.zfs_.utils import TNUserProp
+from middlewared.plugins.zfs_.utils import LEGACY_USERPROP_PREFIX, TNUserProp
 from middlewared.service import filterable_api_method, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils import filter_list
@@ -79,14 +79,26 @@ class AuditService(ConfigService):
     def get_audit_dataset(self):
         ds_name = self.audit_dataset_name()
         ds = self.middleware.call_sync(
-            'zfs.dataset.query',
-            [['id', '=', ds_name]],
-            {'extra': {'retrieve_children': False}, 'get': True}
-        )
+            'zfs.resource.query_impl',
+            {
+                'paths': [ds_name],
+                'properties': [
+                    'available',
+                    'refreservation',
+                    'refquota',
+                    'used',
+                    'usedbydataset',
+                    'usedbyrefreservation',
+                    'usedbysnapshots',
+                ],
+                'get_user_properties': True
+            }
+        )[0]
 
         for k, default in TNUserProp.quotas():
+            no_prefix = k.removeprefix(f'{LEGACY_USERPROP_PREFIX}:')
             try:
-                ds[k] = int(ds['properties'][k]["rawvalue"])
+                ds[k] = int(ds['user_properties'][no_prefix])
             except (KeyError, ValueError):
                 ds[k] = default
 
@@ -98,11 +110,11 @@ class AuditService(ConfigService):
         data['remote_logging_enabled'] = bool(sys_adv['syslogserver']) and sys_adv['syslog_audit']
         ds_info = self.get_audit_dataset()
         data['space'] = {'used': None, 'used_by_snapshots': None, 'available': None}
-        data['space']['used'] = ds_info['properties']['used']['parsed']
-        data['space']['used_by_dataset'] = ds_info['properties']['usedbydataset']['parsed']
-        data['space']['used_by_reservation'] = ds_info['properties']['usedbyrefreservation']['parsed']
-        data['space']['used_by_snapshots'] = ds_info['properties']['usedbysnapshots']['parsed']
-        data['space']['available'] = ds_info['properties']['available']['parsed']
+        data['space']['used'] = ds_info['properties']['used']['value']
+        data['space']['used_by_dataset'] = ds_info['properties']['usedbydataset']['value']
+        data['space']['used_by_reservation'] = ds_info['properties']['usedbyrefreservation']['value']
+        data['space']['used_by_snapshots'] = ds_info['properties']['usedbysnapshots']['value']
+        data['space']['available'] = ds_info['properties']['available']['value']
         data['enabled_services'] = {'MIDDLEWARE': [], 'SMB': [], 'SUDO': []}
         audited_smb_shares = self.middleware.call_sync(
             'sharing.smb.query',
@@ -363,10 +375,10 @@ class AuditService(ConfigService):
     async def update_audit_dataset(self, new):
         ds = await self.middleware.call('audit.get_audit_dataset')
         ds_props = ds['properties']
-        old_reservation = ds_props['refreservation']['parsed'] or 0
-        old_quota = ds_props['refquota']['parsed'] or 0
-        old_warn = int(ds_props.get(QUOTA_WARN, {}).get('rawvalue', '0'))
-        old_crit = int(ds_props.get(QUOTA_CRIT, {}).get('rawvalue', '0'))
+        old_reservation = ds_props['refreservation']['value'] or 0
+        old_quota = ds_props['refquota']['value'] or 0
+        old_warn = int(ds_props.get(QUOTA_WARN, '0'))
+        old_crit = int(ds_props.get(QUOTA_CRIT, '0'))
 
         payload = {}
         # Using floor division for conversion from bytes to GiB
@@ -389,13 +401,13 @@ class AuditService(ConfigService):
             return
 
         await self.middleware.call(
-            'zfs.dataset.update', ds['id'], {'properties': payload}
+            'zfs.dataset.update', ds['name'], {'properties': payload}
         )
         # HA: Update remote node
         if await self.middleware.call('failover.status') == 'MASTER':
             try:
                 await self.middleware.call(
-                    'failover.call_remote', 'zfs.dataset.update', [ds['id'], {'properties': payload}]
+                    'failover.call_remote', 'zfs.dataset.update', [ds['name'], {'properties': payload}]
                 )
             except Exception:
                 self.middleware.logger.exception(
@@ -440,7 +452,7 @@ class AuditService(ConfigService):
             await self.middleware.run_in_thread(os.chmod, AUDIT_REPORTS_DIR, 0o700)
 
         cur = await self.middleware.call('audit.get_audit_dataset')
-        parent = os.path.dirname(cur['id'])
+        parent = os.path.dirname(cur['name'])
 
         # Explicitly look up pool name. If somehow audit dataset ends up being
         # on a pool that isn't the boot-pool, we don't want to recursively
@@ -449,29 +461,34 @@ class AuditService(ConfigService):
 
         # Get dataset names of any dataset on boot pool that isn't on the current
         # activated boot environment.
-        to_remove = await self.middleware.call('zfs.dataset.query', [
-            ['id', '!=', cur['id']],
-            ['id', '!^', f'{parent}/'],
-            ['pool', '=', boot_pool],
-            ['properties.refreservation.parsed', '!=', None]
-        ], {'select': ['id']})
+        to_remove = []
+        for i in await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'paths': [boot_pool], 'properties': ['refreservation'], 'get_children': True}
+        ):
+            if i['name'] == cur['name'] or i['name'].startswith(f'{parent}/'):
+                continue
+            elif i['properties']['refreservation']['value'] is None:
+                continue
+            else:
+                to_remove.add(i['name'])
 
         if to_remove:
             self.logger.debug(
                 'Removing refreservations from the following datasets: %s',
-                ', '.join([ds['id'] for ds in to_remove])
+                ', '.join([ds['name'] for ds in to_remove])
             )
 
         payload = {'refreservation': {'parsed': None}}
         for ds in to_remove:
             try:
                 await self.middleware.call(
-                    'zfs.dataset.update', ds['id'], {'properties': payload}
+                    'zfs.dataset.update', ds['name'], {'properties': payload}
                 )
             except Exception:
                 self.logger.error(
                     '%s: failed to remove refreservation from dataset. Manual '
-                    'cleanup may be required', ds['id'], exc_info=True
+                    'cleanup may be required', ds['name'], exc_info=True
                 )
 
         audit_config = await self.middleware.call('audit.config')
