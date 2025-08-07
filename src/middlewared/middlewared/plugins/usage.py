@@ -75,14 +75,6 @@ class UsageService(Service):
             )
 
     def get_gather_context(self):
-        opts = {'extra': {
-            'properties': [
-                'type', 'name', 'available',
-                'used', 'usedbydataset', 'usedbysnapshots',
-                'usedbychildren', 'usedbyrefreservation',
-            ],
-            'snapshots_count': True
-        }}
         context = {
             'network': self.middleware.call_sync('interface.query'),
             'root_datasets': {},
@@ -92,7 +84,6 @@ class UsageService(Service):
             'zvols_total_size': 0,
             'zvols': [],
             'datasets': {},
-            'total_snapshots': 0,
             'total_datasets': 0,
             'total_zvols': 0,
             'services': [],
@@ -101,24 +92,24 @@ class UsageService(Service):
         for i in self.middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'}):
             context['services'].append({'name': i['service'], 'enabled': i['enable']})
 
-        for ds in self.middleware.call_sync('zfs.dataset.query', [], opts):
-            context['total_snapshots'] += ds['snapshot_count']
-            if '/' not in ds['id']:
-                context['root_datasets'][ds['id']] = ds
+        qry_ops = {'get_children': True, 'exclude_internal_paths': False}
+        for ds in self.middleware.call_sync('zfs.resource.query_impl', qry_ops):
+            if ds['name'] == ds['pool']:
+                context['root_datasets'][ds['pool']] = ds
                 context['total_datasets'] += 1
-                context['datasets_total_size'] += ds['properties']['used']['parsed']
+                context['datasets_total_size'] += ds['properties']['used']['value']
                 context['total_capacity'] += (
-                    ds['properties']['used']['parsed'] + ds['properties']['available']['parsed']
+                    ds['properties']['used']['value'] + ds['properties']['available']['value']
                 )
             elif ds['type'] == 'VOLUME':
                 context['zvols'].append(ds)
                 context['total_zvols'] += 1
-                context['zvols_total_size'] += ds['properties']['used']['parsed']
+                context['zvols_total_size'] += ds['properties']['used']['value']
             elif ds['type'] == 'FILESYSTEM':
                 context['total_datasets'] += 1
 
-            context['datasets_total_size_recursive'] += ds['properties']['used']['parsed']
-            context['datasets'][ds['id']] = ds
+            context['datasets_total_size_recursive'] += ds['properties']['used']['value']
+            context['datasets'][ds['name']] = ds
 
         return context
 
@@ -159,7 +150,7 @@ class UsageService(Service):
                 else:
                     if (task_ds and task_ds in context['datasets']) and (task_ds not in tasks_found[namespace]):
                         # dataset for the task was found, and exists and hasn't already been calculated
-                        size = context['datasets'][task_ds]['properties']['used']['parsed']
+                        size = context['datasets'][task_ds]['properties']['used']['value']
                         backed[namespace] += size
                         if task_ds not in tasks_found[opposite_namespace]:
                             # a "task" (cloudsync, rsync, replication) can be backing up the same dataset
@@ -174,7 +165,7 @@ class UsageService(Service):
         filters = [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
         for task in self.middleware.call_sync('replication.query', filters):
             for source in filter(lambda s: s in context['datasets'] and s not in repls_found, task['source_datasets']):
-                size = context['datasets'][source]['properties']['used']['parsed']
+                size = context['datasets'][source]['properties']['used']['value']
                 backed['zfs_replication'] += size
                 repls_found.add(source)
                 if source not in tasks_found['cloudsync'] and source not in tasks_found['rsynctask']:
@@ -292,7 +283,6 @@ class UsageService(Service):
             'usage_version': 1,
             'system': [{
                 'users': await self.middleware.call('user.query', [['local', '=', True]], {'count': True}),
-                'snapshots': context['total_snapshots'],
                 'zvols': context['total_zvols'],
                 'datasets': context['total_datasets'],
             }]
@@ -321,14 +311,14 @@ class UsageService(Service):
                     _type = 'STRIPE'
 
             pool_list.append({
-                'capacity': pd['used']['parsed'] + pd['available']['parsed'],
+                'capacity': pd['used']['value'] + pd['available']['value'],
                 'disks': disks,
                 'l2arc': bool(p['topology']['cache']),
                 'type': _type.lower(),
-                'usedbydataset': pd['usedbydataset']['parsed'],
-                'usedbysnapshots': pd['usedbysnapshots']['parsed'],
-                'usedbychildren': pd['usedbychildren']['parsed'],
-                'usedbyrefreservation': pd['usedbyrefreservation']['parsed'],
+                'usedbydataset': pd['usedbydataset']['value'],
+                'usedbysnapshots': pd['usedbysnapshots']['value'],
+                'usedbychildren': pd['usedbychildren']['value'],
+                'usedbyrefreservation': pd['usedbyrefreservation']['value'],
                 'vdevs': vdevs if vdevs else disks,
                 'zil': bool(p['topology']['log'])
             })
