@@ -74,9 +74,13 @@ def __should_exclude_internal_paths(data):
             # somone is explicilty querying an
             # internal path
             return False
-    # no paths specified or none of the paths
-    # specified are an internal path
-    return True
+    # 1. no paths specified are internal path
+    # 2. no paths specified at all (empty query)
+    # 3. or someone exclusively asks for internal paths
+    #   NOTE: (the `exclude_internal_paths` is a private
+    #   internal argument that is set internally within
+    #   middleware. It's not exposed to public.)
+    return data.get('exclude_internal_paths', True)
 
 
 def query_impl(hdl, data):
