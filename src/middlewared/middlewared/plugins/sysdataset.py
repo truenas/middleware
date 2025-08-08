@@ -19,7 +19,7 @@ from middlewared.api.current import (
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.plugins.zfs.utils import get_encryption_info
-from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
+from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.size import format_size
@@ -465,10 +465,22 @@ class SystemDatasetService(ConfigService):
         Make sure system datasets for `pool` exist and have the right mountpoint property
         """
         boot_pool = await self.middleware.call('boot.pool_name')
-        root_dataset_is_passphrase_encrypted = (
-            pool != boot_pool and
-            (await self.middleware.call('pool.dataset.get_instance', pool))['key_format']['value'] == 'PASSPHRASE'
-        )
+        root_dataset_is_passphrase_encrypted = False
+        if pool != boot_pool:
+            p = await self.middleware.call(
+                'zfs.resource.query_impl',
+                {'paths': [pool], 'properties': ['encryption']}
+            )
+            if not p:
+                raise ValidationError(
+                    'sysdataset_setup_datasets.pool',
+                    f'Pool {pool!r} does not exist.',
+                    errno.ENOENT,
+                )
+            else:
+                enc = get_encryption_info(p[0]['properties'])
+                root_dataset_is_passphrase_encrypted = enc.encryption_type == 'passphrase'
+
         datasets = {i['name']: i for i in get_system_dataset_spec(pool, uuid)}
         datasets_prop = {
             i['name']: i['properties']
