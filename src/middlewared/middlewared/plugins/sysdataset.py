@@ -322,13 +322,12 @@ class SystemDatasetService(ConfigService):
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
-        filters = [('name', '=', config['pool'])]
-        if config['pool'] != boot_pool and not self.middleware.call_sync('pool.query', filters):
+        if config['pool'] != boot_pool and not self.middleware.call_sync(
+            'zfs.resource.query_impl', {'paths': [config['pool']], 'properties': None}
+        ):
             self.logger.debug('Pool %r does not exist, moving system dataset to another pool', config['pool'])
             job = self.middleware.call_sync('systemdataset.update', {'pool': None, 'pool_exclude': exclude_pool})
-            job.wait_sync()
-            if job.error:
-                raise CallError(job.error)
+            job.wait_sync(raise_error=True)
             return
 
         # If we dont have a pool configured in the database try to find the first data pool
