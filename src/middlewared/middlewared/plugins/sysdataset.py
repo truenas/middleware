@@ -485,7 +485,7 @@ class SystemDatasetService(ConfigService):
                 'zfs.resource.query_impl',
                 {
                     'paths': list(datasets),
-                    'properties': ['quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
+                    'properties': ['encryption', 'quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
                 }
             )
         }
