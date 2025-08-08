@@ -37,6 +37,20 @@ while [ -s $queue ]; do
     counter=0
     local_nqns=$(echo -e "$local_nqns" | tr -s '\n' | sort)
 
+    # Handle power recovery: start for empty shelf or extend for hotplug events
+    # during active recovery timeframe
+    power_recovery_queue="/var/run/${discovery_dev}-power-recovery-queue"
+    if [[ -z "$local_nqns" || -f "$power_recovery_queue" ]]; then
+      if systemctl is-active --quiet ${discovery_dev}-power-recovery.service; then
+        echo "RESET" > $power_recovery_queue
+      else
+        echo "START" > $power_recovery_queue
+        systemd-run --unit=${discovery_dev}-power-recovery.service \
+          /bin/bash -c "/usr/local/bin/nvmf-power-recovery.sh $args"
+      fi
+      continue
+    fi
+
     while [ $counter -lt $RECONNECT_TIMEOUT_SEC ]; do
       connect_nqns=$(nvme discover $args | grep subnqn: | awk '{gsub(/^subnqn: */,"")}1' \
           | tr -s '\n' | sort)
