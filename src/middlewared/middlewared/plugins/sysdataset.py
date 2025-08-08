@@ -293,8 +293,8 @@ class SystemDatasetService(ConfigService):
         elif not new_dataset:
             return f'Dataset {new_pool} does not exist'
         else:
-            used = existing_dataset[0]['properties']['used']['value']
-            available = new_dataset[0]['properties']['available']['value']
+            used = existing_dataset['properties']['used']['value']
+            available = new_dataset['properties']['available']['value']
 
         # 1.1 is a safety margin because same files won't
         # take exactly the same amount of space on a different pool
