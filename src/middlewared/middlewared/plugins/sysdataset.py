@@ -278,20 +278,22 @@ class SystemDatasetService(ConfigService):
     @private
     async def destination_pool_error(self, new_pool):
         config = await self.config()
-        existing_dataset = await self.middleware.call(
-            'zfs.resource.query_impl', {'paths': [config['basename']], 'properties': ['used']}
-        )
+        existing_dataset, new_dataset = None, None
+        for i in await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'paths': [config['basename'], new_pool], 'properties': ['used', 'available']}
+        ):
+            if i['name'] == config['basename']:
+                existing_dataset = i
+            elif i['name'] == new_pool:
+                new_dataset = i
+
         if not existing_dataset:
             return
-        else:
-            used = existing_dataset[0]['properties']['used']['value']
-
-        new_dataset = await self.middleware.call(
-            'zfs.resource.query_impl', {'paths': [new_pool], 'properties': ['available']}
-        )
-        if not new_dataset:
+        elif not new_dataset:
             return f'Dataset {new_pool} does not exist'
         else:
+            used = existing_dataset[0]['properties']['used']['value']
             available = new_dataset[0]['properties']['available']['value']
 
         # 1.1 is a safety margin because same files won't
