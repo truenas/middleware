@@ -36,6 +36,7 @@ class NVMetPortModel(sa.Model):
     nvmet_port_max_queue_size = sa.Column(sa.Integer(), nullable=True, default=None)
     nvmet_port_pi_enable = sa.Column(sa.Boolean(), nullable=True, default=None)
     nvmet_port_enabled = sa.Column(sa.Boolean())
+    nvmet_port_dedicated_nic = sa.Column(sa.Boolean(), default=False)
 
 
 class NVMetPortService(CRUDService):
@@ -276,6 +277,25 @@ class NVMetPortService(CRUDService):
         except MatchNotFound:
             existing = None
 
+        # Dedicate NIC checks only apply if SPDK is running:
+        if running := await self.middleware.call('nvmet.global.running'):
+            if not (await self.middleware.call('nvmet.global.config'))['kernel']:
+                # SPDK is running
+                if data['dedicated_nic'] and not old:
+                    # Cannot add a *new* dedicated NIC
+                    # Check to see if any ports already have this NIC as dedicated
+                    filters = [
+                        ['addr_trtype', '=', data['addr_trtype']],
+                        ['addr_traddr', '=', data['addr_traddr']],
+                        ['dedicated_nic', '=', True],
+                    ]
+                    if not await self.middleware.call('nvmet.port.query', filters):
+                        verrors.add(f'{schema_name}.dedicated_nic',
+                                    'Cannot add dedicated_nic when service is running.')
+                elif old and old['dedicated_nic'] != data['dedicated_nic']:
+                    verrors.add(f'{schema_name}.dedicated_nic',
+                                'Cannot modify dedicated_nic when service is running')
+
         if old is None:
             # Create
             # Ensure that we're not duplicating an existing entry
@@ -295,11 +315,11 @@ class NVMetPortService(CRUDService):
                                           [['port.id', '=', old['id']]],
                                           {'count': True}):
                 # Have some subsystems attached to the port
-                if old['enabled'] and await self.middleware.call('nvmet.global.running'):
-                    # port is enabled and running
-                    # Ensure we're only changing enabled
+                if old['enabled'] and running:
+                    # port is enabled and running. Ensure we're only changing enabled
+                    # (or dedicated_nic which is checked separately above)
                     for key, oldvalue in old.items():
-                        if key == 'enabled':
+                        if key in ['enabled', 'dedicated_nic']:
                             continue
                         if data[key] == oldvalue:
                             continue
