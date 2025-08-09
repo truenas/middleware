@@ -99,8 +99,10 @@ def test_002_create_permanent_zpool(request, ws_client):
         fail(f"Unable to create test pool: {e!r}. Aborting tests.")
     else:
         results = ws_client.call('systemdataset.config')
-        assert results['pool'] == pool_name
-        assert results['basename'] == f'{pool_name}/.system'
+        if results['pool'] != pool_name:
+            fail(f"System dataset didn't migrate to first created zpool")
+        if results['basename'] != f'{pool_name}/.system':
+            fail(f"basename in config does not match")
 
     try:
         sysdataset_update = ws_client.call('core.get_jobs', [
