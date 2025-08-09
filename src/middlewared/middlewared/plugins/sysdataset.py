@@ -440,13 +440,11 @@ class SystemDatasetService(ConfigService):
         Key format is only exposed via libzfs and so reading mountinfo here is
         insufficient.
         """
-        if exclude_pool:
-            nf = [exclude_pool]
-        else:
-            nf = exclude_pool
-
         rv = list()
-        for i in query_imported_fast_impl(name_filters=nf).values():
+        for i in query_imported_fast_impl().values():
+            if exclude_pool and exclude_pool == i['name']:
+                continue
+
             ds = self.middleware.call_sync(
                 'zfs.resource.query_impl',
                 {'paths': [i['name']], 'properties': ['encryption']}
