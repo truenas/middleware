@@ -2,13 +2,11 @@ import os
 import shutil
 import textwrap
 
-import yaml
-
 from middlewared.utils.io import write_if_changed
 
 from .metadata import update_app_yaml_for_last_update
 from .path import get_app_parent_config_path, get_installed_app_version_path
-from .utils import QuotedStrDumper
+from .utils import dump_yaml
 
 
 def setup_install_app_dir(app_name: str, app_version_details: dict, custom_app: bool = False):
@@ -28,7 +26,7 @@ def setup_install_app_dir(app_name: str, app_version_details: dict, custom_app: 
 
         write_if_changed(
             os.path.join(destination, 'app.yaml'),
-            yaml.dump(app_version_details['app_metadata'], Dumper=QuotedStrDumper),
+            dump_yaml(app_version_details['app_metadata']),
             perms=0o600,
             raise_error=False
         )
