@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.model_provider import ModuleModelProvider, LazyModuleModelProvider
 from .api.base.handler.result import serialize_result
@@ -76,8 +77,10 @@ from systemd.daemon import notify as systemd_notify
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
+    from types import MethodType
     from .api.base.server.app import App
     from .api.base.server.ws_handler.rpc import RpcWebSocketApp
+    from .pipe import Pipes
     from .service import Service
     from .utils.origin import ConnectionOrigin
     from aiohttp.web_request import Request
@@ -87,6 +90,8 @@ _SubHandler = typing.Callable[
     ['Middleware', typing.Literal['ADDED', 'CHANGED', 'REMOVED'], dict],
     typing.Awaitable[None],
 ]
+_OptAuditCallback = typing.Callable[[str], None] | None
+_OptJobProgressCallback = typing.Callable[[dict], None] | None
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
@@ -154,7 +159,19 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.tasks: set[asyncio.Task] = set()
         self.__audit_logger = setup_audit_logging()
 
-    def get_method(self, name, *, mocks=False, params=None):
+    @typing.overload
+    def get_method(
+        self, name: str, *, mocks: typing.Literal[True], params: typing.Iterable
+    ) -> tuple[Service, typing.Callable]: ...
+
+    @typing.overload
+    def get_method(
+        self, name: str, *, mocks: typing.Literal[False] = False, params: None = None
+    ) -> tuple[Service, MethodType]: ...
+
+    def get_method(
+        self, name: str, *, mocks: bool = False, params: typing.Iterable | None = None
+    ) -> tuple[Service, typing.Callable]:
         serviceobj, methodobj = super().get_method(name)
 
         if mocks:
@@ -232,7 +249,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return apis
 
-    def _create_api(self, version: str, method_factory: typing.Callable[["Middleware", str], Method]) -> API:
+    def _create_api(self, version: str, method_factory: typing.Callable[[Middleware, str], Method]) -> API:
         methods = []
         for method_name, method in self._get_methods():
             if removed_in := getattr(method, "_removed_in", None):
@@ -244,7 +261,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         events = []
 
         for name, event in self.events:
-            events.append(Event(self, name, self.events.get_event(name)))
+            events.append(Event(self, name, event))
 
         for name, event_source in self.event_source_manager.event_sources.items():
             description = ''
@@ -709,9 +726,19 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return Pipe(self, buffered)
 
     def _call_prepare(
-        self, name, serviceobj, methodobj, params, *, app=None, audit_callback=None, job_on_progress_cb=None,
-        message_id=None, pipes=None, in_event_loop: bool = True,
-    ):
+        self,
+        name: str,
+        serviceobj: Service,
+        methodobj: typing.Callable,
+        params: typing.Iterable,
+        *,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        message_id: str | None = None,
+        pipes: Pipes | None = None,
+        in_event_loop: bool = True,
+    ) -> PreparedCall:
         """
         :param in_event_loop: Whether we are in the event loop thread.
         :return:
@@ -777,8 +804,24 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return PreparedCall(args=args, executor=executor, is_coroutine=is_coroutine)
 
-    async def _call(self, name, serviceobj, methodobj, params, **kwargs):
-        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, **kwargs)
+    async def _call(
+        self,
+        name: str,
+        serviceobj: Service,
+        methodobj: typing.Callable,
+        params: typing.Iterable,
+        *,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        message_id: str | None = None,
+        pipes: Pipes | None = None,
+        in_event_loop: bool = True,
+    ) -> typing.Any:
+        prepared_call = self._call_prepare(
+            name, serviceobj, methodobj, params, app=app, audit_callback=audit_callback,
+            job_on_progress_cb=job_on_progress_cb, message_id=message_id, pipes=pipes, in_event_loop=in_event_loop
+        )
 
         if prepared_call.job:
             return prepared_call.job
@@ -819,9 +862,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def dump_result(
         self,
-        serviceobj: 'Service',
+        serviceobj: Service,
         methodobj: Method,
-        app: 'App | None',
+        app: App | None,
         result: dict | str | int | list | None | Job,
         *,
         new_style_returns_model: BaseModel | None = None,
@@ -955,7 +998,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return app.authenticated_credentials.authorize('SUBSCRIBE', short_name)
 
-    async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
+    async def call_with_audit(
+        self, method: str, serviceobj: Service, methodobj: typing.Callable, params: typing.Iterable, app: App, **kwargs
+    ) -> typing.Any:
         audit_callback_messages = []
 
         async def log_audit_message_for_method(success):
@@ -982,8 +1027,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 await log_audit_message_for_method(success)
 
     async def log_audit_message_for_method(
-        self, method, methodobj, params, app: 'App', authenticated, authorized, success: bool, callback_messages=None
-    ):
+        self,
+        method,
+        methodobj,
+        params: typing.Iterable,
+        app: App,
+        authenticated: bool,
+        authorized: bool,
+        success: bool,
+        callback_messages: typing.Iterable | None = None,
+    ) -> None:
         callback_messages = callback_messages or []
 
         audit = getattr(methodobj, 'audit', None)
@@ -1014,11 +1067,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     async def log_audit_message(
         self,
-        app: 'App',
+        app: App,
         event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
         event_data: dict,
         success: bool,
-    ):
+    ) -> None:
         remote_addr, origin = "127.0.0.1", None
         if app is not None and app.origin is not None:
             origin = app.origin.repr
@@ -1058,8 +1111,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__audit_logger.info(message)
 
     async def call(
-        self, name, *params, app: 'App | None' = None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-        profile=False
+        self,
+        name: str,
+        *params,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
     ) -> typing.Any:
         serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
@@ -1072,7 +1131,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         )
 
     def call_sync(
-        self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False
+        self,
+        name: str,
+        *params,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        background: bool = False,
     ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot use call_sync from main thread')
@@ -1210,7 +1275,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 del self.mocks[name][i]
                 break
 
-    def _mock_method(self, name, params):
+    def _mock_method(self, name: str, params: typing.Iterable) -> typing.Callable | None:
         if mocks := self.mocks.get(name):
             for args, mock in mocks:
                 if args == list(params):

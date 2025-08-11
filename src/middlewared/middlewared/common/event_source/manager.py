@@ -1,12 +1,21 @@
+from __future__ import annotations
 import asyncio
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 import functools
+from typing import NamedTuple, TYPE_CHECKING
 from uuid import uuid4
 
 from middlewared.event import EventSource
 from middlewared.schema import ValidationErrors
+if TYPE_CHECKING:
+    from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
+    from middlewared.main import Middleware
 
-IdentData = namedtuple("IdentData", ["subscriber", "name", "arg"])
+
+class IdentData(NamedTuple):
+    subscriber: Subscriber
+    name: str
+    arg: str | None
 
 
 class Subscriber:
@@ -18,7 +27,7 @@ class Subscriber:
 
 
 class AppSubscriber(Subscriber):
-    def __init__(self, app, collection):
+    def __init__(self, app: RpcWebSocketApp, collection: str):
         self.app = app
         self.collection = collection
 
@@ -64,15 +73,15 @@ class InternalSubscriberIterator:
 
 
 class EventSourceManager:
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware):
         self.middleware = middleware
 
-        self.event_sources = {}
-        self.instances = defaultdict(dict)
-        self.idents = {}
-        self.subscriptions = defaultdict(lambda: defaultdict(set))
+        self.event_sources: dict[str, type[EventSource]] = {}
+        self.instances: defaultdict[str, dict] = defaultdict(dict)
+        self.idents: dict[str, IdentData] = {}
+        self.subscriptions: defaultdict[str, defaultdict[str | None, set[str]]] = defaultdict(lambda: defaultdict(set))
 
-    def short_name_arg(self, name):
+    def short_name_arg(self, name: str) -> tuple[str, str | None]:
         if ':' in name:
             shortname, arg = name.split(':', 1)
         else:
@@ -80,13 +89,13 @@ class EventSourceManager:
             arg = None
         return shortname, arg
 
-    def get_full_name(self, name, arg):
+    def get_full_name(self, name: str, arg: str | None) -> str:
         if arg is None:
             return name
         else:
             return f'{name}:{arg}'
 
-    def register(self, name, event_source):
+    def register(self, name: str, event_source: type[EventSource]):
         if not issubclass(event_source, EventSource):
             raise RuntimeError(f"{event_source} is not EventSource subclass")
 
@@ -94,7 +103,7 @@ class EventSourceManager:
 
         self.middleware.role_manager.register_event(name, event_source.roles)
 
-    async def subscribe(self, subscriber, ident, name, arg):
+    async def subscribe(self, subscriber: Subscriber, ident: str, name: str, arg: str | None):
         if ident in self.idents:
             raise ValueError(f"Ident {ident} is already used")
 
@@ -133,7 +142,7 @@ class EventSourceManager:
     def terminate(self, ident, error=None):
         ident.subscriber.terminate(error)
 
-    async def subscribe_app(self, app, ident, name, arg):
+    async def subscribe_app(self, app: RpcWebSocketApp, ident: str, name: str, arg: str | None):
         await self.subscribe(AppSubscriber(app, self.get_full_name(name, arg)), ident, name, arg)
 
     async def unsubscribe_app(self, app):

@@ -24,7 +24,6 @@ from middlewared.utils.time_utils import utc_now
 if typing.TYPE_CHECKING:
     from asyncio import Task
     from datetime import datetime
-    from types import MethodType
     from middlewared.api.base.server.app import App
     from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
     from middlewared.auth import SessionManagerCredentials
@@ -316,7 +315,7 @@ class Job:
         middleware: Middleware,
         method_name: str,
         serviceobj: Service,
-        method: MethodType,
+        method: typing.Callable,
         args: list,
         options: dict,
         pipes: Pipes | None = None,

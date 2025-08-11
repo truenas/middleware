@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import binascii
 from collections import defaultdict
@@ -29,6 +30,7 @@ from ..method import Method
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+    from middlewared.types import ExcInfo
 
 
 class RpcWebSocketAppEvent(enum.Enum):
@@ -37,7 +39,7 @@ class RpcWebSocketAppEvent(enum.Enum):
 
 
 class RpcWebSocketApp(App):
-    def __init__(self, middleware: "Middleware", origin: ConnectionOrigin, ws: WebSocketResponse):
+    def __init__(self, middleware: Middleware, origin: ConnectionOrigin, ws: WebSocketResponse):
         super().__init__(origin)
 
         self.websocket = True
@@ -45,8 +47,8 @@ class RpcWebSocketApp(App):
         self.middleware = middleware
         self.ws = ws
         self.softhardsemaphore = SoftHardSemaphore(10, 20)
-        self.callbacks = defaultdict(list)
-        self.subscriptions = {}
+        self.callbacks: defaultdict[int, list[Callable]] = defaultdict(list)
+        self.subscriptions: dict[str, str] = {}
 
     def send(self, data):
         try:
@@ -78,22 +80,35 @@ class RpcWebSocketApp(App):
 
         self.send(error)
 
-    def send_truenas_error(self, id_: Any, code: int, message: str, errno_: int, reason: str,
-                           exc_info=None, extra: list | None = None):
+    def send_truenas_error(
+        self,
+        id_: Any,
+        code: int,
+        message: str,
+        errno_: int,
+        reason: str,
+        exc_info: ExcInfo | None = None,
+        extra: list | None = None,
+    ):
         self.send_error(id_, code, message, self.format_truenas_error(errno_, reason, exc_info, extra))
 
-    def format_truenas_error(self, errno_: int, reason: str, exc_info=None, extra: list | None = None):
+    def format_truenas_error(
+        self, errno_: int, reason: str, exc_info: ExcInfo | None = None, extra: list | None = None
+    ) -> dict:
         return {
             "error": errno_,
             "errname": get_errname(errno_),
             "reason": reason,
             "trace": self.truenas_error_traceback(exc_info) if exc_info else None,
             "extra": extra,
-            **({"py_exception": binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()}
-               if self.py_exceptions and exc_info else {}),
+            **(
+                {"py_exception": binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()}
+                if self.py_exceptions and exc_info
+                else {}
+            ),
         }
 
-    def truenas_error_traceback(self, exc_info):
+    def truenas_error_traceback(self, exc_info: ExcInfo) -> dict:
         etype, value, tb = exc_info
 
         frames = []
@@ -113,17 +128,23 @@ class RpcWebSocketApp(App):
             "repr": repr(value),
         }
 
-    def send_truenas_validation_error(self, id_: Any, exc_info, errors: list):
-        self.send_error(id_, JSONRPCError.INVALID_PARAMS.value, "Invalid params",
-                        self.format_truenas_validation_error(exc_info[1], exc_info, errors))
+    def send_truenas_validation_error(self, id_: Any, exc_info: ExcInfo, errors: list):
+        self.send_error(
+            id_,
+            JSONRPCError.INVALID_PARAMS.value,
+            "Invalid params",
+            self.format_truenas_validation_error(exc_info[1], exc_info, errors),
+        )
 
-    def format_truenas_validation_error(self, exception, exc_info=None, errors: list | None = None):
+    def format_truenas_validation_error(
+        self, exception: BaseException, exc_info: ExcInfo | None = None, errors: list | None = None
+    ) -> dict:
         return self.format_truenas_error(errno.EINVAL, str(exception), exc_info, errors)
 
     def register_callback(self, event: RpcWebSocketAppEvent, callback: Callable):
         self.callbacks[event.value].append(callback)
 
-    async def run_callback(self, event, *args, **kwargs):
+    async def run_callback(self, event: RpcWebSocketAppEvent, *args, **kwargs):
         for callback in self.callbacks[event.value]:
             try:
                 if asyncio.iscoroutinefunction(callback):
@@ -146,16 +167,14 @@ class RpcWebSocketApp(App):
         elif self.__esm_ident(ident) in self.middleware.event_source_manager.idents:
             await self.middleware.event_source_manager.unsubscribe(self.__esm_ident(ident))
 
-    def __esm_ident(self, ident):
+    def __esm_ident(self, ident: str):
         return self.session_id + ident
 
     def send_event(self, name: str, event_type: str, **kwargs):
+        esm_ = self.middleware.event_source_manager
         if (
-            not any(i in [name, "*"] for i in self.subscriptions.values()) and
-            (
-                self.middleware.event_source_manager.short_name_arg(name)[0] not in
-                self.middleware.event_source_manager.event_sources
-            )
+            not any(i in [name, "*"] for i in self.subscriptions.values())
+            and esm_.short_name_arg(name)[0] not in esm_.event_sources
         ):
             return
 
@@ -195,7 +214,7 @@ class RpcWebSocketApp(App):
 
 
 class RpcWebSocketHandler(BaseWebSocketHandler):
-    def __init__(self, middleware: "Middleware", methods: list[Method]):
+    def __init__(self, middleware: Middleware, methods: list[Method]):
         super().__init__(middleware)
         self.methods = {method.name: method for method in methods}
 
@@ -324,7 +343,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             self.process_method_call(app, id_, method, message["params"])
         )
 
-    def _can_call_private_methods(self, app: RpcWebSocketApp):
+    def _can_call_private_methods(self, app: RpcWebSocketApp) -> bool:
         if app.origin.uid == 33:
             # Calls made via WebSocket API
             return False
