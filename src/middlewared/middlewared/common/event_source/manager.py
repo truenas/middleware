@@ -2,7 +2,7 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 import functools
-from typing import NamedTuple, TYPE_CHECKING
+from typing import Literal, NamedTuple, TypeAlias, TYPE_CHECKING
 from uuid import uuid4
 
 from middlewared.event import EventSource
@@ -19,10 +19,10 @@ class IdentData(NamedTuple):
 
 
 class Subscriber:
-    def send_event(self, event_type, **kwargs):
+    def send_event(self, event_type: str, **kwargs):
         raise NotImplementedError
 
-    def terminate(self, error):
+    def terminate(self, error: Exception | None):
         raise NotImplementedError
 
 
@@ -52,14 +52,23 @@ class InternalSubscriber(Subscriber):
             self.iterator.queue.put_nowait(None)
 
 
+_IteratorItem: TypeAlias = tuple[str, dict]
+"""Event type and kwargs"""
+_InternalIteratorItem: TypeAlias = tuple[Literal[True], Exception] | tuple[Literal[False], _IteratorItem] | None
+"""Queue item type for InternalSubscriberIterator:
+- (`True`, Exception): Error to be raised during iteration
+- (`False`, _IteratorItem): Event data to be yielded to consumer
+- `None`: End of iteration signal (StopAsyncIteration)"""
+
+
 class InternalSubscriberIterator:
     def __init__(self):
-        self.queue = asyncio.Queue()
+        self.queue: asyncio.Queue[_InternalIteratorItem] = asyncio.Queue()
 
     def __aiter__(self):
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> _IteratorItem:
         item = await self.queue.get()
 
         if item is None:
@@ -72,14 +81,24 @@ class InternalSubscriberIterator:
             return value
 
 
+_EventSourceDict: TypeAlias = dict[str | None, EventSource]
+"""Maps event source arguments to their corresponding EventSource instances.
+Key is the argument string passed to the event source (None for parameterless sources).
+Value is the active EventSource instance for that argument."""
+_SubscriptionsDict: TypeAlias = defaultdict[str | None, set[str]]
+"""Maps event source arguments to sets of subscriber identifiers.
+Key is the argument string passed to the event source (None for parameterless sources).
+Value is a set of subscriber identifiers (idents) currently subscribed to that argument."""
+
+
 class EventSourceManager:
     def __init__(self, middleware: Middleware):
         self.middleware = middleware
 
         self.event_sources: dict[str, type[EventSource]] = {}
-        self.instances: defaultdict[str, dict] = defaultdict(dict)
+        self.instances: defaultdict[str, _EventSourceDict] = defaultdict(dict)
         self.idents: dict[str, IdentData] = {}
-        self.subscriptions: defaultdict[str, defaultdict[str | None, set[str]]] = defaultdict(lambda: defaultdict(set))
+        self.subscriptions: defaultdict[str, _SubscriptionsDict] = defaultdict(lambda: defaultdict(set))
 
     def short_name_arg(self, name: str) -> tuple[str, str | None]:
         if ':' in name:
@@ -127,7 +146,7 @@ class EventSourceManager:
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
-    async def unsubscribe(self, ident, error=None):
+    async def unsubscribe(self, ident: str, error: Exception | None = None):
         ident_data = self.idents.pop(ident)
         self.terminate(ident_data, error)
 
@@ -139,24 +158,24 @@ class EventSourceManager:
             instance = self.instances[ident_data.name].pop(ident_data.arg)
             await instance.cancel()
 
-    def terminate(self, ident, error=None):
+    def terminate(self, ident: IdentData, error: Exception | None = None):
         ident.subscriber.terminate(error)
 
     async def subscribe_app(self, app: RpcWebSocketApp, ident: str, name: str, arg: str | None):
         await self.subscribe(AppSubscriber(app, self.get_full_name(name, arg)), ident, name, arg)
 
-    async def unsubscribe_app(self, app):
+    async def unsubscribe_app(self, app: RpcWebSocketApp):
         for ident, ident_data in list(self.idents.items()):
             if isinstance(ident_data.subscriber, AppSubscriber) and ident_data.subscriber.app == app:
                 await self.unsubscribe(ident)
 
-    async def iterate(self, name, arg):
+    async def iterate(self, name: str, arg: str | None) -> InternalSubscriberIterator:
         ident = str(uuid4())
         subscriber = InternalSubscriber()
         await self.subscribe(subscriber, ident, name, arg)
         return subscriber.iterator
 
-    def _send_event(self, name, arg, event_type, **kwargs):
+    def _send_event(self, name: str, arg: str | None, event_type: str, **kwargs):
         for ident in list(self.subscriptions[name][arg]):
             try:
                 ident_data = self.idents[ident]
@@ -166,7 +185,7 @@ class EventSourceManager:
 
             ident_data.subscriber.send_event(event_type, **kwargs)
 
-    async def _unsubscribe_all(self, name, arg, error=None):
+    async def _unsubscribe_all(self, name: str, arg: str | None, error: Exception | None = None):
         for ident in self.subscriptions[name][arg]:
             self.terminate(self.idents.pop(ident), error)
 

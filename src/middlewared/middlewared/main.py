@@ -863,7 +863,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def dump_result(
         self,
         serviceobj: Service,
-        methodobj: Method,
+        methodobj: typing.Callable,
         app: App | None,
         result: dict | str | int | list | None | Job,
         *,
