@@ -150,8 +150,8 @@ def test_strings_with_quotes():
         'single': "it's",
         'double': 'say "hello"',
         'both': '''it's "fine"''',
-        'escaped_single': "it\\'s",
-        'escaped_double': 'say \\"hello\\"',
+        'escaped_single': "it\\'s",  # noqa: LIT102,LIT013
+        'escaped_double': 'say \\"hello\\"',  # noqa: LIT102
         'backtick': '`command`',
     }
     result = yaml.dump(data, Dumper=QuotedStrDumper)
@@ -198,7 +198,7 @@ def test_strings_with_escape_sequences():
         'newline': 'before\nafter',
         'carriage': 'before\rafter',
         'tab': 'before\tafter',
-        'backslash': 'path\\to\\file',
+        'backslash': 'path\\to\\file',  # noqa: LIT102
         'null_char': 'null\0char',
         'unicode': 'emoji 😀',
         'form_feed': 'page\fbreak',
@@ -217,8 +217,8 @@ def test_path_strings():
     data = {
         'unix_path': '/usr/local/bin',
         'unix_home': '~/documents',
-        'windows_path': 'C:\\Program Files\\App',
-        'unc_path': '\\\\server\\share',
+        'windows_path': 'C:\\Program Files\\App',  # noqa: LIT102
+        'unc_path': '\\\\server\\share',  # noqa: LIT102
         'relative': '../parent/child',
         'current': './current',
     }
