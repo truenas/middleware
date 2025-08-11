@@ -17,7 +17,7 @@ from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
-from .ix_apps.utils import QuotedStrDumper
+from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name
@@ -285,7 +285,7 @@ class AppService(Service):
         for migration_file_path in migration_file_paths:
             with tempfile.NamedTemporaryFile(mode='w+') as f:
                 try:
-                    yaml.dump(config, f, default_flow_style=False, Dumper=QuotedStrDumper)
+                    f.write(dump_yaml(config, default_flow_style=False))
                 except yaml.YAMLError as e:
                     raise CallError(f'Failed to dump config for {app["name"]}: {e}')
 

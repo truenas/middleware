@@ -37,5 +37,24 @@ def _repr_str(dumper, data: str):
 QuotedStrDumper.add_representer(str, _repr_str)
 
 
+def dump_yaml(data, **kwargs):
+    """
+    Helper function to dump YAML with proper string quoting.
+
+    This ensures all strings are quoted to prevent unintended type conversions
+    (e.g., '8E1' becoming 80.0, 'true' becoming boolean True, etc.)
+
+    Args:
+        data: The data structure to serialize to YAML
+        **kwargs: Additional arguments to pass to yaml.dump()
+                  (e.g., default_flow_style, sort_keys, etc.)
+
+    Returns:
+        The YAML string representation of the data
+    """
+    kwargs['Dumper'] = QuotedStrDumper
+    return yaml.dump(data, **kwargs)
+
+
 def get_app_name_from_project_name(project_name: str) -> str:
     return project_name[len(PROJECT_PREFIX):]

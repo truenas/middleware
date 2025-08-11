@@ -1,6 +1,6 @@
 import yaml
 
-from middlewared.plugins.apps.ix_apps.utils import QuotedStrDumper
+from middlewared.plugins.apps.ix_apps.utils import QuotedStrDumper, dump_yaml
 
 
 def test_basic_string_quoting():
@@ -420,6 +420,41 @@ def test_consistent_output():
     output1 = yaml.dump(data, Dumper=QuotedStrDumper)
     output2 = yaml.dump(data, Dumper=QuotedStrDumper)
     assert output1 == output2
+
+
+def test_dump_yaml_helper():
+    """Test the dump_yaml helper function."""
+    data = {
+        'string': 'value',
+        'number_string': '42',
+        'scientific': '8E1',
+        'boolean_string': 'true',
+        'actual_number': 42,
+        'actual_bool': True,
+        'actual_null': None,
+    }
+
+    # Test basic usage
+    result = dump_yaml(data)
+    assert '"string": "value"' in result
+    assert '"number_string": "42"' in result
+    assert '"scientific": "8E1"' in result
+    assert '"boolean_string": "true"' in result
+    assert '"actual_number": 42' in result
+    assert '"actual_bool": true' in result
+    assert '"actual_null": null' in result
+
+    # Test with additional kwargs
+    result_with_flow = dump_yaml(data, default_flow_style=False)
+    assert '"string": "value"' in result_with_flow
+
+    # Verify round-trip
+    loaded = yaml.safe_load(result)
+    assert loaded == data
+
+    # Test that it uses QuotedStrDumper by default
+    manual_result = yaml.dump(data, Dumper=QuotedStrDumper)
+    assert result == manual_result
 
 
 def test_empty_collections():
