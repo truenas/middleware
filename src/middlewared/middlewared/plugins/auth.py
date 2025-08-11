@@ -5,7 +5,7 @@ from datetime import timedelta
 import errno
 import pam
 import time
-import typing
+from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
@@ -47,7 +47,7 @@ from middlewared.utils.auth import (
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
     from middlewared.auth import SessionManagerCredentials

@@ -568,10 +568,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
-    def register_wsclient(self, client: 'RpcWebSocketApp'):
+    def register_wsclient(self, client: RpcWebSocketApp):
         self.__wsclients[client.session_id] = client
 
-    def unregister_wsclient(self, client: 'RpcWebSocketApp'):
+    def unregister_wsclient(self, client: RpcWebSocketApp):
         self.__wsclients.pop(client.session_id)
 
     def register_hook(self, name, method, *, blockable=False, inline=False, order=0, raise_error=False, sync=True):
@@ -600,7 +600,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if inline:
             if asyncio.iscoroutinefunction(method):
-                raise RuntimeError('You can\'t register coroutine function as inline hook')
+                raise RuntimeError("You can't register coroutine function as inline hook")
 
             if not sync:
                 raise RuntimeError('Inline hooks are always called in a sync way')

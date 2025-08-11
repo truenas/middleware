@@ -263,7 +263,7 @@ class JobsDeque:
     def __getitem__(self, item: int) -> Job:
         return self.__dict[item]
 
-    def get(self, item: int) -> 'Job | None':
+    def get(self, item: int) -> Job | None:
         return self.__dict.get(item)
 
     def all(self) -> OrderedDict[int, Job]:

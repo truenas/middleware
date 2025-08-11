@@ -1,6 +1,6 @@
 import pam
 import re
-import typing
+from typing import TYPE_CHECKING
 
 from dataclasses import dataclass
 from datetime import datetime, UTC
@@ -15,7 +15,7 @@ from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.auth import AuthMech, AuthenticatorAssuranceLevel
 from time import monotonic
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from middlewared.plugins.auth import TokenManager, Token
 
 
