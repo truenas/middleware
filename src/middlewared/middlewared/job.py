@@ -29,7 +29,7 @@ if typing.TYPE_CHECKING:
     from middlewared.auth import SessionManagerCredentials
     from middlewared.main import Middleware
     from middlewared.service import Service
-    from middlewared.types import ExcInfo
+    from middlewared.types import EventType, ExcInfo
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ LOGS_DIR = '/var/log/jobs'
 
 
 def send_job_event(
-    middleware: Middleware, event_type: typing.Literal['ADDED', 'CHANGED', 'REMOVED'], job: Job, fields: dict
+    middleware: Middleware, event_type: EventType, job: Job, fields: dict
 ) -> None:
     middleware.send_event(
         'core.get_jobs',

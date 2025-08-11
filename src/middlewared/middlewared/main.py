@@ -78,18 +78,16 @@ from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
     from types import MethodType
+    from aiohttp.web_request import Request
     from .api.base.server.app import App
     from .api.base.server.ws_handler.rpc import RpcWebSocketApp
     from .pipe import Pipes
     from .service import Service
+    from .types import EventType
     from .utils.origin import ConnectionOrigin
-    from aiohttp.web_request import Request
 
 
-_SubHandler = typing.Callable[
-    ['Middleware', typing.Literal['ADDED', 'CHANGED', 'REMOVED'], dict],
-    typing.Awaitable[None],
-]
+_SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
 _OptAuditCallback = typing.Callable[[str], None] | None
 _OptJobProgressCallback = typing.Callable[[dict], None] | None
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
@@ -1203,8 +1201,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, *, private=False, returns=None, models=None, no_auth_required=False,
-                       no_authz_required=False, roles=None):
+    def event_register(
+        self,
+        name: str,
+        description: str,
+        *,
+        private: bool = False,
+        returns = None,
+        models: dict[EventType, type[BaseModel]] | None = None,
+        no_auth_required: bool = False,
+        no_authz_required: bool = False,
+        roles: typing.Iterable[str] | None = None,
+    ):
         """
         All middleware events should be registered, so they are properly documented
         and can be browsed in the API documentation without having to inspect source code.
@@ -1212,7 +1220,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         roles = roles or []
         self.events.register(name, description, private, returns, models, no_auth_required, no_authz_required, roles)
 
-    def send_event(self, name: str, event_type: typing.Literal['ADDED', 'CHANGED', 'REMOVED'], **kwargs):
+    def send_event(self, name: str, event_type: EventType, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)
 
         if name not in self.events:
