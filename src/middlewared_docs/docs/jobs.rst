@@ -1,5 +1,5 @@
 Jobs
-----
+====
 
 Tasks that require significant time to execute or process a large amount of input or output are categorized as jobs.
 Job execution can be time-consuming, but its progress can be monitored.
@@ -12,7 +12,7 @@ Additionally, the client should monitor `changed` events because a `changed` eve
 may be emitted if a method call triggers a job that has already been scheduled.
 
 Example of Calling a Job Method
-###############################
+-------------------------------
 
 The client initiates a method call:
 
@@ -75,58 +75,91 @@ Finally, it sends the method execution result as usual:
     }
 
 Query Job Status
-################
+----------------
 
 Job status can be queried with the `core.get_jobs` method.
 
 Request:
+""""""""
 
-    :::javascript
+.. code:: json
+
     {
-      "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
-      "msg": "method",
-      "method": "core.get_jobs",
-      "params": [[["id", "=", 53]]]
+        "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
+        "msg": "method",
+        "method": "core.get_jobs",
+        "params": [
+            [["id", "=", 53]]
+        ]
     }
 
 Response:
+"""""""""
 
-    :::javascript
+.. code:: json
+
     {
-      "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
-      "msg": "result",
-      "result": [{"id": 53, "method": "catalog.sync_all", "arguments": [], "logs_path": null, "logs_excerpt": null, "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null}, "result": null, "error": null, "exception": null, "exc_info": null, "state": "SUCCESS", "time_started": {"$date": 1571300596053}, "time_finished": null}]
+        "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
+        "msg": "result",
+        "result": [
+            {
+                "id": 53,
+                "method": "catalog.sync_all",
+                "arguments": [],
+                "logs_path": null,
+                "logs_excerpt": null,
+                "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null},
+                "result": null,
+                "error": null,
+                "exception": null,
+                "exc_info": null,
+                "state": "SUCCESS",
+                "time_started": {"$date": 1571300596053},
+                "time_finished": null
+            }
+        ]
     }
 
 Uploading / Downloading Files
-#############################
+-----------------------------
 
 There are some jobs which require input or output as files which can
 be uploaded or downloaded.
 
 Downloading a File
-******************
+^^^^^^^^^^^^^^^^^^
 
 If a job gives a file as an output, this endpoint is to be used to download
 the output file.
 
 Request:
+""""""""
 
-    :::javascript
+.. code:: json
     {
         "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
         "msg": "method",
         "method": "core.download",
-        "params": ["config.save", [{}], "freenas-FreeNAS-11.3-MASTER-201910090828-20191017122016.db"]
+        "params": [
+            "config.save",
+            [
+                {}
+            ],
+            "freenas-FreeNAS-11.3-MASTER-201910090828-20191017122016.db"
+        ]
     }
 
 Response:
+"""""""""
 
-    :::javascript
+.. code:: json
     {
         "id": "cdc8740a-336b-b0cd-b850-47568fe94223",
         "msg": "result",
-        "result": [86, "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M"]
+        "result": [
+            86,
+            "/_download/86?auth_token=9WIqYg4jAYEOGQ4g319Bkr64Oj8CZk1VACfyN68M7hgjGTdeSSgZjSf5lJEshS8M"
+        ]
     }
 
 In the response, the first value `86` is the job id for `config.save`. This can be used to query
@@ -146,7 +179,7 @@ Note:
 3) The file can only be downloaded once.
 
 Uploading a File
-****************
+^^^^^^^^^^^^^^^^
 
 Files can be uploaded via HTTP POST request only. The upload endpoint is:
 
@@ -156,7 +189,7 @@ It expects two values as form data, `data` and `file`.
 
 `data` is JSON-encoded data. It must be the first parameter provided and in this format:
 
-    ::: json
+.. code:: json
     {
         "method": "config.upload",
         "params": []
@@ -164,12 +197,19 @@ It expects two values as form data, `data` and `file`.
 
 `file` is the URI of the file to download.
 
-This example uses `curl`,
+This example uses `curl`:
 
 Request:
+""""""""
+
+.. code:: console
 
     curl -X POST -u root:freenas -H "Content-Type: multipart/form-data" -F 'data={"method": "config.upload", "params": []}' -F "file=@/home/user/Desktop/config" http://system_ip/_upload/
 
- Response:
+Response:
+"""""""""
 
-    {"job_id": 20}
+.. code:: json
+    {
+        "job_id": 20
+    }

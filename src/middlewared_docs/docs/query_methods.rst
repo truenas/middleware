@@ -21,7 +21,7 @@ For example, to filter the data returned by `disk.query`, we provide a list of c
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["name","=","ada1"]
     ]
@@ -30,23 +30,25 @@ Javascript:
 Supported Operators
 *******************
 
-| Operator       | Description     |
-| :------------- | :----------: |
-| '=' |  x == y |
-| '!=' |  x != y |
-| '>' |  x > y |
-| '>=' |  x >= y |
-| '<' |  x < y |
-| '<=' |  x <= y |
-| '~' |  re.match(y, x) |
-| 'in' |  x in y |
-| 'nin' |  x not in y |
-| 'rin' |  x is not None and y in x |
-| 'rnin' |  x is not None and y not in x |
-| '^' |  x is not None and x.startswith(y) |
-| '!^' |  x is not None and not x.startswith(y) |
-| '$' |  x is not None and x.endswith(y) |
-| '!$' |  x is not None and not x.endswith(y) |
+========  =====================
+Operator  Javascript equivalent
+========  =====================
+``=``     ``x === y``
+``!=``    ``x !== y``
+``>``     ``x > y``
+``>=``    ``x >= y``
+``<``     ``x < y``
+``<=``    ``x <= y``
+``~``     ``y.test(x)``
+``in``    ``y.includes(x)``
+``nin``   ``!y.includes(x)``
+``rin``   ``x != null && x.includes(y)``
+``rnin``  ``x != null && !x.includes(y)``
+``^``     ``x != null && x.startsWith(y)``
+``!^``    ``x != null && !x.startsWith(y)``
+``$``     ``x != null && x.endsWith(y)``
+``!$``    ``x != null && !x.endsWith(y)``
+========  =====================
 
 Specifing the prefix 'C' will perform a case-insensitive version of the filter, e.g. `C=`.
 
@@ -57,10 +59,10 @@ We can use `disk.query` with the "type" and "rotationrate" filters to find hard 
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["type","=","HDD"],
-      ["rotationrate",">",5400] // Note that the value should be the correct type
+      ["rotationrate",">",5400]  // Note that the value should be the correct type
     ]
 
 
@@ -72,20 +74,22 @@ Queries with no explicitly defined logical connectives assume conjunction `AND`.
 The following is a valid example.
 Javascript:
 
-    :::javascript
-    ["OR",
+.. code:: javascript
+    [
+      "OR",
       [
-        ["name","=", "first"],
-        ["name","=", "second"],
+        ["name", "=", "first"],
+        ["name", "=", "second"],
       ]
     ]
 
 The following is also a valid example that returns users that are unlocked and either have password-based authentication for SSH enabled or are SMB users.
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
-      ["OR",
+      [
+        "OR",
         [
           ["ssh_password_enabled", "=", true],
           ["smb", "=", true]
@@ -98,11 +102,15 @@ The following is valid example that returns users who are either enabled or have
 
 Javascript:
 
-    :::javascript
-    ["OR",
+.. code:: javascript
+    [
+      "OR",
       [
-        [["ssh_password_enabled", "=", true], ["twofactor_auth_configured", "=", false]],
-        ["enabled","=", true],
+        [
+          ["ssh_password_enabled", "=", true],
+          ["twofactor_auth_configured", "=", false]
+        ],
+        ["enabled", "=", true],
       ]
     ]
 
@@ -112,7 +120,7 @@ These filters when used with `user.query` finds unlocked users with password aut
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["ssh_password_enabled", "=", true],
       ["twofactor_auth_configured", "=", false],
@@ -124,7 +132,7 @@ Sub-keys in complex JSON objects may be specified by using dot (".") to indicate
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["group.bsdgrp_gid", "=", 3000],
     ]
@@ -133,7 +141,7 @@ If a key contains a literal dot (".") in its name, then it must be escaped via a
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["foo\\.bar", "=", 42],
     ]
@@ -145,7 +153,7 @@ of "myuser".
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["local_groups.0.name", "=", "myuser"],
     ]
@@ -154,7 +162,7 @@ Alternatively, an asterisk (`*`) may be substituted for the array index, which m
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["local_groups.*.name", "=", "myuser"],
     ]
@@ -169,7 +177,7 @@ timestamp may be used. For example:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ['timestamp.$date', '>', '2023-12-18T16:15:35+00:00']
     ]
@@ -189,7 +197,7 @@ Use the `count` option to get the number of results returned.
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "count": true
     }
@@ -202,7 +210,7 @@ Use the `limit` option to limit the number of results returned.
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "limit": 5
     }
@@ -215,9 +223,9 @@ Use the `offset` option to remove the first items from a returned list.
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
-      "offset": 1 // Omits the first item from the query result
+      "offset": 1  // Omits the first item from the query result
     }
 
 
@@ -230,15 +238,15 @@ Fields returned may be renamed by specifing an array containing two strings with
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
-      "select": ["devname","size","rotationrate"]
+      "select": ["devname", "size", "rotationrate"]
     }
 
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "select": [
         "Authentication.status",
@@ -250,7 +258,7 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "select": [
         ["Authentication.status", "status"],
@@ -276,7 +284,7 @@ The following prefixes may be applied to the field name:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "order_by": ["size", "-devname", "nulls_first:-expiretime"]
     }
@@ -296,7 +304,7 @@ to perform on the TrueNAS server.
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     []
 
 
@@ -304,7 +312,7 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {}
 
 
@@ -315,7 +323,7 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["builtin", "=", false],
     ]
@@ -324,7 +332,7 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "select": [
         "username",
@@ -343,7 +351,7 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
       ["builtin", "=", false],
       ["locked", "=", true]
@@ -353,7 +361,7 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "select": [
         [
@@ -372,12 +380,16 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     [
-      ["OR",
+      [
+        "OR",
         [
           ["builtin", "=", false],
-          [["locked", "=", false], ["ssh", "=" true]]
+          [
+            ["locked", "=", false],
+            ["ssh", "=" true]
+          ]
         ]
       ],
     ]
@@ -386,7 +398,7 @@ Javascript:
 
 Javascript:
 
-    :::javascript
+.. code:: javascript
     {
       "select": [
         "username"
