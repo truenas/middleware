@@ -1,3 +1,4 @@
+import textwrap
 import yaml
 
 from middlewared.plugins.apps.ix_apps.utils import QuotedStrDumper, dump_yaml
@@ -455,6 +456,42 @@ def test_dump_yaml_helper():
     # Test that it uses QuotedStrDumper by default
     manual_result = yaml.dump(data, Dumper=QuotedStrDumper)
     assert result == manual_result
+
+
+def test_literal_backslash_n_vs_actual_newline():
+    """Test strings containing literal newline vs actual newline characters."""
+    data = {
+        'actual_newline': 'line1\nline2',
+        'literal_backslash_n': r'line1\nline2',
+        'mixed_case': r'start\nactual' '\n' r'middle\nend',
+        'escaped_backslash': r'line1\\nline2',  # Double escaped
+        'multiple_literal': r'first\nsecond\nthird',
+    }
+    result = dump_yaml(data)
+
+    # Assert complete YAML output
+    expected_yaml = textwrap.dedent(r'''
+        "actual_newline": |-
+          line1
+          line2
+        "escaped_backslash": "line1\\\\nline2"
+        "literal_backslash_n": "line1\\nline2"
+        "mixed_case": |-
+          start\nactual
+          middle\nend
+        "multiple_literal": "first\\nsecond\\nthird"
+    ''').strip()
+
+    assert result.strip() == expected_yaml
+
+    # Verify round-trip preserves exact strings
+    loaded = yaml.safe_load(result)
+    assert loaded == data
+    assert loaded['actual_newline'] == 'line1\nline2'  # Actual newline preserved
+    assert loaded['literal_backslash_n'] == r'line1\nline2'  # Literal \n preserved
+    assert loaded['mixed_case'] == r'start\nactual' + '\n' + r'middle\nend'
+    assert loaded['escaped_backslash'] == r'line1\\nline2'
+    assert loaded['multiple_literal'] == r'first\nsecond\nthird'
 
 
 def test_empty_collections():
