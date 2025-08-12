@@ -136,6 +136,7 @@ Request:
 """"""""
 
 .. code:: json
+
     {
         "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
         "msg": "method",
@@ -153,6 +154,7 @@ Response:
 """""""""
 
 .. code:: json
+
     {
         "id": "cdc8740a-336b-b0cd-b850-47568fe94223",
         "msg": "result",
@@ -190,6 +192,7 @@ It expects two values as form data, `data` and `file`.
 `data` is JSON-encoded data. It must be the first parameter provided and in this format:
 
 .. code:: json
+
     {
         "method": "config.upload",
         "params": []
@@ -210,6 +213,7 @@ Response:
 """""""""
 
 .. code:: json
+
     {
         "job_id": 20
     }
