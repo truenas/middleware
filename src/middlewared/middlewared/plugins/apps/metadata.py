@@ -1,11 +1,11 @@
 import os
-import yaml
 
 from middlewared.service import job, Service
 
 from .ix_apps.lifecycle import get_current_app_config
 from .ix_apps.metadata import get_app_metadata
 from .ix_apps.path import get_app_parent_config_path, get_collective_config_path, get_collective_metadata_path
+from .ix_apps.utils import dump_yaml
 
 
 class AppMetadataService(Service):
@@ -29,10 +29,10 @@ class AppMetadataService(Service):
                 config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
 
         with open(get_collective_metadata_path(), 'w') as f:
-            f.write(yaml.safe_dump(metadata))
+            f.write(dump_yaml(metadata))
 
         with open(get_collective_config_path(), 'w') as f:
             os.fchmod(f.fileno(), 0o600)
-            f.write(yaml.safe_dump(config))
+            f.write(dump_yaml(config))
 
         job.set_progress(100, 'Updated metadata configuration for apps')
