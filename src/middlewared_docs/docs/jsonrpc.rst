@@ -138,7 +138,7 @@ If the server needs to notify a connected client of an event, it sends a
 JSON-RPC Notification Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: json
+.. code-block:: javascript
    :caption: collection_update
 
     {
@@ -169,7 +169,7 @@ JSON-RPC Notification Structure
     }
 
 
-.. code-block:: json
+.. code-block:: javascript
    :caption: notify_unsubscribed
 
     {
