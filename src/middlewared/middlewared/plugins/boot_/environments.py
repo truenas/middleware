@@ -44,24 +44,22 @@ class BootEnvironmentService(Service):
 
     @private
     def zfs_get_props(self):
-        zget = "zfs get -r -d 1"
-        zget += " truenas:kernel_version,zectl:keep,used,creation"
-        bp_name = self.middleware.call_sync("boot.pool_name")
-        root = f"{bp_name}/ROOT"
-        json_flags = "-j --json-int"  # json format, raw numbers
-        try:
-            cp = subprocess.run(
-                " ".join([zget, root, json_flags]),
-                shell=True,
-                check=True,
-                capture_output=True,
-            )
-        except subprocess.CalledProcessError as cpe:
-            self.logger.error("getting zfs properties failed: %r", cpe.stderr)
-        except Exception:
-            self.logger.exception("Unexpected failure getting zfs properties")
-        else:
-            return json.loads(cp.stdout), bp_name
+        rv = list()
+        bp_name = self.middleware.call_sync('boot.pool_name')
+        for i in self.middleware.call_sync(
+            "zfs.resource.query_impl",
+            {
+                "paths": [f"{bp_name}/ROOT"],
+                "get_children": True,
+                "properties": ["used", "creation"],
+                "get_user_properties": True,
+            }
+        ):
+            if i["name"].count("/") == 2:
+                # boot-pool/ROOT/25.04.1
+                # and not boot-pool/ROOT/25.04.1/blah
+                rv.append(i)
+        return rv, bp_name
 
     @private
     def validate_be(self, schema_name, name, should_exist=True):
@@ -97,7 +95,7 @@ class BootEnvironmentService(Service):
         results = list()
         try:
             info, bp_name = self.zfs_get_props()
-        except TypeError:
+        except Exception:
             return results
 
         active_be = self.middleware.call_sync(
@@ -106,27 +104,23 @@ class BootEnvironmentService(Service):
         activated_be = self.middleware.call_sync(
             "zfs.pool.query", [["name", "=", bp_name]], {"get": True}
         )["properties"]["bootfs"]["value"]
-        for ds_name, ds_info in info["datasets"].items():
-            if ds_name == f"{bp_name}/ROOT":
-                continue
-
-            props = ds_info["properties"]
+        for i in info:
+            props = i["properties"]
             results.append(
                 {
-                    "id": os.path.basename(ds_name),
-                    "dataset": ds_name,
-                    "active": active_be == ds_name,
-                    "activated": activated_be == ds_name,
+                    "id": os.path.basename(i["name"]),
+                    "dataset": i["name"],
+                    "active": active_be == i["name"],
+                    "activated": activated_be == i["name"],
                     "created": datetime.datetime.utcfromtimestamp(
                         props["creation"]["value"]
                     ),
                     "used_bytes": props["used"]["value"],
                     "used": format_size(props["used"]["value"]),
-                    "keep": props["zectl:keep"]["value"] == "True",
-                    "can_activate": props["truenas:kernel_version"]["value"] != "-",
+                    "keep": i["user_properties"].get("zectl:keep") == "True",
+                    "can_activate": i["user_properties"].get("truenas:kernel_version") != "-",
                 }
             )
-
         return filter_list(results, filters, options)
 
     @api_method(BootEnvironmentActivateArgs, BootEnvironmentActivateResult, roles=["BOOT_ENV_WRITE"])
