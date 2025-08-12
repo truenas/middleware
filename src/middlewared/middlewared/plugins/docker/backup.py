@@ -11,6 +11,7 @@ from middlewared.api.current import (
     DockerDeleteBackupArgs, DockerDeleteBackupResult,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
+from middlewared.plugins.apps.ix_apps.utils import dump_yaml
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, job, Service
 
@@ -65,10 +66,12 @@ class DockerService(Service):
         shutil.copy(get_collective_config_path(), os.path.join(backup_dir, 'collective_config.yaml'))
 
         with open(backup_apps_state_file_path(name), 'w') as f:
-            f.write(yaml.safe_dump({app['name']: app for app in self.middleware.call_sync('app.query')}))
+            f.write(dump_yaml(
+                {app['name']: app for app in self.middleware.call_sync('app.query')})
+            )
 
         with open(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
-            f.write(yaml.safe_dump(docker_config))
+            f.write(dump_yaml(docker_config))
 
         job.set_progress(95, 'Taking snapshot of ix-applications')
 
