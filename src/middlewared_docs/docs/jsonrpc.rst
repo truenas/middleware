@@ -14,11 +14,11 @@ JSON-RPC 2.0 Protocol
 Communication Mechanism
 ~~~~~~~~~~~~~~~~~~~~~~~
 
--  Messages are exchanged using the **WebSocket protocol**.
--  The client initiates a WebSocket connection to the TrueNAS API
-   endpoint.
--  The API follows the `JSON-RPC 2.0 <https://www.jsonrpc.org/specification>`_ specification for
-   request-response messaging.
+- Messages are exchanged using the **WebSocket protocol**.
+- The client initiates a WebSocket connection to the TrueNAS API
+  endpoint.
+- The API follows the `JSON-RPC 2.0 <https://www.jsonrpc.org/specification>`_ specification for
+  request-response messaging.
 
 Request and Response Format
 ---------------------------
@@ -31,12 +31,12 @@ this structure:
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "method": "<method_name>",
-     "params": [<parameters>]
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "<method_name>",
+      "params": [<parameters>]
+    }
 
 Example Request:
 ^^^^^^^^^^^^^^^^
@@ -45,12 +45,12 @@ Calling the ``system.info`` method:
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "method": "system.info",
-     "params": []
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "system.info",
+      "params": []
+    }
 
 JSON-RPC Response Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,25 +59,25 @@ The TrueNAS API will respond with a standard JSON-RPC response:
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "result": {<result_data>}
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {<result_data>}
+    }
 
 Example Response:
 ^^^^^^^^^^^^^^^^^
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "result": {
-       "version": "TrueNAS-25.04",
-       "uptime": "15 days"
-     }
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "version": "TrueNAS-25.04",
+        "uptime": "15 days"
+      }
+    }
 
 Error Response
 ~~~~~~~~~~~~~~
@@ -86,18 +86,32 @@ If an error occurs, the response format is:
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "id": 1,
-     "error": {
-       "code": -32001,
-       "message": "method call error",
-       "data": {<error_details>}
-     }
-   }
+    {
+      "jsonrpc": "2.0",
+      "id": string,
+      "error": {
+        "code": number,
+        "message": string | null,
+        "data": {
+          "error": number,
+          "errname": string,
+          "reason": string,
+          "trace": {
+            "class": string,
+            "frames": array,
+            "formatted": string,
+            "repr": string
+          } | null,
+          "extra": array,
+          "py_exception": string
+        }
+      }
+    }
 
 Custom Error Codes
 ^^^^^^^^^^^^^^^^^^
+
+The following custom error codes can be returned in addition to the codes defined by the JSON-RPC 2.0 specification.
 
 +---------------+-------------------------------------+----------------+
 | Error Code    | Message                             | Description    |
@@ -125,30 +139,78 @@ JSON-RPC Notification Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: json
+   :caption: collection_update
 
-   {
-     "jsonrpc": "2.0",
-     "method": "collection_update",
-     "params": [<update_data>]
-   }
+    {
+      "jsonrpc": "2.0",
+      "method": "collection_update",
+      "params": {
+        "msg": string,
+        "collection": string,
+        "id": any,
+        "fields": {
+          "id": string,
+          "state": string,
+          "progress": {
+            "percent": number,
+            "description": string
+          },
+          "result": any,
+          "exc_info": {
+            "type": string,
+            "extra": array | null,
+            "repr": string
+          },
+          "error": string,
+          "exception": string
+        },
+        "extra": object
+      }
+    }
+
+
+.. code:: json
+   :caption: notify_unsubscribed
+
+    {
+      "jsonrpc": "2.0",
+      "method": "notify_unsubscribed",
+      "params": {
+        "collection": string,
+        "error": {
+          "error": number,
+          "errname": string,
+          "reason": string,
+          "trace": {
+            "class": string,
+            "frames": array,
+            "formatted": string,
+            "repr": string
+          } | null,
+          "extra": array,
+          "py_exception": string
+        }
+      }
+    }
+
 
 Example Notification:
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: json
 
-   {
-     "jsonrpc": "2.0",
-     "method": "collection_update",
-     "params": {
-       "collection": "disk.query",
-       "event": "CHANGED",
-       "fields": {
-         "name": "sda",
-         "status": "HEALTHY"
-       }
-     }
-   }
+    {
+      "jsonrpc": "2.0",
+      "method": "collection_update",
+      "params": {
+        "collection": "disk.query",
+        "event": "CHANGED",
+        "fields": {
+          "name": "sda",
+          "status": "HEALTHY"
+        }
+      }
+    }
 
 Important Notes on Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
