@@ -27,11 +27,21 @@ class KMIPService(Service, KMIPServerMixin):
         return False
 
     @private
+    def get_datasets(self):
+        existing_datasets = set()
+        for i in self.middleware.call_sync(
+            'zfs.resource.query_impl',
+            {'get_children': True, 'properties': None}
+        ):
+            existing_datasets.add(i['name'])
+        return existing_datasets
+
+    @private
     def push_zfs_keys(self, ids=None):
         datasets = self.middleware.call_sync(
             'datastore.query', 'storage.encrypteddataset', [['id', 'in', ids]] if ids else []
         )
-        existing_datasets = {ds['name']: ds for ds in self.middleware.call_sync('pool.dataset.query')}
+        existing_datasets = self.get_datasets()
         failed = []
         with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
             for ds in filter(lambda d: d['name'] in existing_datasets, datasets):
@@ -72,7 +82,7 @@ class KMIPService(Service, KMIPServerMixin):
     @private
     def pull_zfs_keys(self):
         datasets = self.middleware.call_sync('datastore.query', 'storage.encrypteddataset', [['kmip_uid', '!=', None]])
-        existing_datasets = {ds['name']: ds for ds in self.middleware.call_sync('pool.dataset.query')}
+        existing_datasets = self.get_datasets()
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
         for ds in filter(lambda d: d['name'] in existing_datasets, datasets):
