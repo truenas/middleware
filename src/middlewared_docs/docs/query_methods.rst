@@ -29,25 +29,42 @@ For example, to filter the data returned by `disk.query`, we provide a list of c
 Supported Operators
 ^^^^^^^^^^^^^^^^^^^
 
-==================  =====================
-Operation           Javascript equivalent
-==================  =====================
-``[x, "=", y]``     ``x === y``
-``[x, "!=", y]``    ``x !== y``
-``[x, ">", y]``     ``x > y``
-``[x, ">=", y]``    ``x >= y``
-``[x, "<", y]``     ``x < y``
-``[x, "<=", y]``    ``x <= y``
-``[x, "~", y]``     ``y.test(x)``
-``[x, "in", y]``    ``y.includes(x)``
-``[x, "nin", y]``   ``!y.includes(x)``
-``[x, "rin", y]``   ``x != null && x.includes(y)``
-``[x, "rnin", y]``  ``x != null && !x.includes(y)``
-``[x, "^", y]``     ``x != null && x.startsWith(y)``
-``[x, "!^", y]``    ``x != null && !x.startsWith(y)``
-``[x, "$", y]``     ``x != null && x.endsWith(y)``
-``[x, "!$", y]``    ``x != null && !x.endsWith(y)``
-==================  =====================
+.. list-table::
+   :header-rows: 1
+   :widths: 30 40
+
+   * - Operation
+     - Javascript equivalent
+   * - ``[x, "=", y]``
+     - ``x === y``
+   * - ``[x, "!=", y]``
+     - ``x !== y``
+   * - ``[x, ">", y]``
+     - ``x > y``
+   * - ``[x, ">=", y]``
+     - ``x >= y``
+   * - ``[x, "<", y]``
+     - ``x < y``
+   * - ``[x, "<=", y]``
+     - ``x <= y``
+   * - ``[x, "~", y]``
+     - ``y.test(x)``
+   * - ``[x, "in", y]``
+     - ``y.includes(x)``
+   * - ``[x, "nin", y]``
+     - ``!y.includes(x)``
+   * - ``[x, "rin", y]``
+     - ``x != null && x.includes(y)``
+   * - ``[x, "rnin", y]``
+     - ``x != null && !x.includes(y)``
+   * - ``[x, "^", y]``
+     - ``x != null && x.startsWith(y)``
+   * - ``[x, "!^", y]``
+     - ``x != null && !x.startsWith(y)``
+   * - ``[x, "$", y]``
+     - ``x != null && x.endsWith(y)``
+   * - ``[x, "!$", y]``
+     - ``x != null && !x.endsWith(y)``
 
 Specifing the prefix "C" will perform a case-insensitive version of the filter, e.g. `C=`.
 
@@ -275,110 +292,110 @@ Sample SQL Statements Translated Into Query Filters and Query Options
 
 NOTE: These are examples of syntax translation. They are not intended to be executed on the TrueNAS server.
 
-#. Example 1
+Example 1
 
-    .. code-block:: sql
+.. code-block:: sql
 
-        SELECT * FROM table;
-
-
-    .. code-block:: javascript
-        :caption: query-filters
-
-        []
+    SELECT * FROM table;
 
 
-    .. code-block:: javascript
-        :caption: query-options
+.. code-block:: javascript
+    :caption: query-filters
 
-        {}
-
-#. Example 2
-
-    .. code-block:: sql
-
-        SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;
+    []
 
 
-    .. code-block:: javascript
-        :caption: query-filters
+.. code-block:: javascript
+    :caption: query-options
 
+    {}
+
+Example 2
+
+.. code-block:: sql
+
+    SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;
+
+
+.. code-block:: javascript
+    :caption: query-filters
+
+    [
+      ["builtin", "=", false],
+    ]
+
+
+.. code-block:: javascript
+    :caption: query-options
+
+    {
+      "select": [
+        "username",
+        "uid"
+      ],
+      "order_by": [
+        "-uid"
+      ]
+    }
+
+Example 3
+
+.. code-block:: sql
+
+    SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;
+
+
+.. code-block:: javascript
+    :caption: query-filters
+
+    [
+      ["builtin", "=", false],
+      ["locked", "=", true]
+    ]
+
+
+.. code-block:: javascript
+    :caption: query-options
+
+    {
+      "select": [
+        [
+          "username",
+          "locked_user"
+        ],
+        "uid"
+      ],
+    }
+
+Example 4
+
+.. code-block:: sql
+
+    SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);
+
+
+.. code-block:: javascript
+    :caption: query-filters
+
+    [
+      [
+        "OR",
         [
           ["builtin", "=", false],
-        ]
-
-
-    .. code-block:: javascript
-        :caption: query-options
-
-        {
-          "select": [
-            "username",
-            "uid"
-          ],
-          "order_by": [
-            "-uid"
-          ]
-        }
-
-#. Example 3
-
-    .. code-block:: sql
-
-        SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;
-
-
-    .. code-block:: javascript
-        :caption: query-filters
-
-        [
-          ["builtin", "=", false],
-          ["locked", "=", true]
-        ]
-
-
-    .. code-block:: javascript
-        :caption: query-options
-
-        {
-          "select": [
-            [
-              "username",
-              "locked_user"
-            ],
-            "uid"
-          ],
-        }
-
-#. Example 4
-
-    .. code-block:: sql
-
-        SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);
-
-
-    .. code-block:: javascript
-        :caption: query-filters
-
-        [
           [
-            "OR",
-            [
-              ["builtin", "=", false],
-              [
-                ["locked", "=", false],
-                ["ssh", "=", true]
-              ]
-            ]
-          ],
+            ["locked", "=", false],
+            ["ssh", "=", true]
+          ]
         ]
+      ],
+    ]
 
 
-    .. code-block:: javascript
-        :caption: query-options
+.. code-block:: javascript
+    :caption: query-options
 
-        {
-          "select": [
-            "username"
-          ],
-        }
+    {
+      "select": [
+        "username"
+      ],
+    }
