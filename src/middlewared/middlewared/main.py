@@ -1208,7 +1208,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         description: str,
         *,
         private: bool = False,
-        returns = None,
+        returns=None,
         models: dict[EventType, type[BaseModel]] | None = None,
         no_auth_required: bool = False,
         no_authz_required: bool = False,
