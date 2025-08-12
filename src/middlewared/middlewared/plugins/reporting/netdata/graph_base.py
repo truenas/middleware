@@ -166,6 +166,8 @@ class GraphBase(metaclass=GraphMeta):
             }
             if self.aggregations and aggregate:
                 data = self.aggregate_metrics(data)
+            else:
+                data['aggregations'] = None
 
             results.append(data)
 
