@@ -1,0 +1,19 @@
+[Unit]
+Description=Execute UPS shutdown tasks early
+DefaultDependencies=no
+After=
+Before=ix-shutdown.service nut.target shutdown.target umount.target final.target
+Conflicts=shutdown.target umount.target final.target
+RequiresMountsFor=/etc /run
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/lib/systemd/system-shutdown/nutshutdown service-shutdown
+StandardOutput=journal+console
+StandardError=journal+console
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
