@@ -1,4 +1,5 @@
 from asyncio import run_coroutine_threadsafe
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs
 
 from aiohttp import web
@@ -14,13 +15,19 @@ from middlewared.restful import (
 from middlewared.service_exception import CallError
 from truenas_api_client import json
 
+if TYPE_CHECKING:
+    from aiohttp.web_request import Request
+    from asyncio import AbstractEventLoop
+    from middlewared.main import Middleware
+
+
 __all__ = ("FileApplication",)
 
 MAX_UPLOADED_FILES = 5
 
 
 class FileApplication:
-    def __init__(self, middleware, loop):
+    def __init__(self, middleware: "Middleware", loop: "AbstractEventLoop"):
         self.middleware = middleware
         self.loop = loop
         self.jobs = {}
@@ -47,7 +54,7 @@ class FileApplication:
         job = self.middleware.jobs[job_id]
         await job.pipes.close()
 
-    async def download(self, request):
+    async def download(self, request: "Request") -> web.Response | web.StreamResponse:
         path = request.path.split("/")
         if not request.path[-1].isdigit():
             resp = web.Response()
@@ -63,7 +70,7 @@ class FileApplication:
             denied = True
         else:
             origin = await self.middleware.run_in_thread(ConnectionOrigin.create, request)
-            auth_token = qs.get("auth_token")[0]
+            auth_token = qs["auth_token"][0]
             token = await self.middleware.call("auth.get_token", auth_token, origin)
             if not token:
                 denied = True
@@ -115,7 +122,7 @@ class FileApplication:
         await resp.drain()
         return resp
 
-    async def upload(self, request):
+    async def upload(self, request: "Request") -> web.Response:
         reader = await request.multipart()
 
         part = await reader.next()

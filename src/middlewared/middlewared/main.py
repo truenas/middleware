@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.model_provider import ModuleModelProvider, LazyModuleModelProvider
 from .api.base.handler.result import serialize_result
@@ -76,15 +77,19 @@ from systemd.daemon import notify as systemd_notify
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
-    from .api.base.server.ws_handler.rpc import RpcWebSocketApp
-    from .utils.origin import ConnectionOrigin
+    from types import MethodType
     from aiohttp.web_request import Request
+    from .api.base.server.app import App
+    from .api.base.server.ws_handler.rpc import RpcWebSocketApp
+    from .pipe import Pipes
+    from .service import Service
+    from .types import EventType
+    from .utils.origin import ConnectionOrigin
 
 
-_SubHandler = typing.Callable[
-    ['Middleware', typing.Literal['ADDED', 'CHANGED', 'REMOVED'], dict],
-    typing.Awaitable[None],
-]
+_SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
+_OptAuditCallback = typing.Callable[[str], None] | None
+_OptJobProgressCallback = typing.Callable[[dict], None] | None
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
@@ -153,7 +158,19 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__audit_logger = setup_audit_logging()
         self.external_method_calls = defaultdict(int)  # Track external API method calls
 
-    def get_method(self, name, *, mocks=False, params=None):
+    @typing.overload
+    def get_method(
+        self, name: str, *, mocks: typing.Literal[True], params: typing.Iterable
+    ) -> tuple[Service, typing.Callable]: ...
+
+    @typing.overload
+    def get_method(
+        self, name: str, *, mocks: typing.Literal[False] = False, params: None = None
+    ) -> tuple[Service, MethodType]: ...
+
+    def get_method(
+        self, name: str, *, mocks: bool = False, params: typing.Iterable | None = None
+    ) -> tuple[Service, typing.Callable]:
         serviceobj, methodobj = super().get_method(name)
 
         if mocks:
@@ -231,7 +248,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return apis
 
-    def _create_api(self, version: str, method_factory: typing.Callable[["Middleware", str], Method]) -> API:
+    def _create_api(self, version: str, method_factory: typing.Callable[[Middleware, str], Method]) -> API:
         methods = []
         for method_name, method in self._get_methods():
             if removed_in := getattr(method, "_removed_in", None):
@@ -243,7 +260,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         events = []
 
         for name, event in self.events:
-            events.append(Event(self, name, self.events.get_event(name)))
+            events.append(Event(self, name, event))
 
         for name, event_source in self.event_source_manager.event_sources.items():
             description = ''
@@ -550,10 +567,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
-    def register_wsclient(self, client: 'RpcWebSocketApp'):
+    def register_wsclient(self, client: RpcWebSocketApp):
         self.__wsclients[client.session_id] = client
 
-    def unregister_wsclient(self, client):
+    def unregister_wsclient(self, client: RpcWebSocketApp):
         self.__wsclients.pop(client.session_id)
 
     def register_hook(self, name, method, *, blockable=False, inline=False, order=0, raise_error=False, sync=True):
@@ -582,7 +599,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if inline:
             if asyncio.iscoroutinefunction(method):
-                raise RuntimeError('You can\'t register coroutine function as inline hook')
+                raise RuntimeError("You can't register coroutine function as inline hook")
 
             if not sync:
                 raise RuntimeError('Inline hooks are always called in a sync way')
@@ -708,9 +725,19 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return Pipe(self, buffered)
 
     def _call_prepare(
-        self, name, serviceobj, methodobj, params, *, app=None, audit_callback=None, job_on_progress_cb=None,
-        message_id=None, pipes=None, in_event_loop: bool = True,
-    ):
+        self,
+        name: str,
+        serviceobj: Service,
+        methodobj: typing.Callable,
+        params: typing.Iterable,
+        *,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        message_id: str | None = None,
+        pipes: Pipes | None = None,
+        in_event_loop: bool = True,
+    ) -> PreparedCall:
         """
         :param in_event_loop: Whether we are in the event loop thread.
         :return:
@@ -776,8 +803,24 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return PreparedCall(args=args, executor=executor, is_coroutine=is_coroutine)
 
-    async def _call(self, name, serviceobj, methodobj, params, **kwargs):
-        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, **kwargs)
+    async def _call(
+        self,
+        name: str,
+        serviceobj: Service,
+        methodobj: typing.Callable,
+        params: typing.Iterable,
+        *,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        message_id: str | None = None,
+        pipes: Pipes | None = None,
+        in_event_loop: bool = True,
+    ) -> typing.Any:
+        prepared_call = self._call_prepare(
+            name, serviceobj, methodobj, params, app=app, audit_callback=audit_callback,
+            job_on_progress_cb=job_on_progress_cb, message_id=message_id, pipes=pipes, in_event_loop=in_event_loop
+        )
 
         if prepared_call.job:
             return prepared_call.job
@@ -818,12 +861,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def dump_result(
         self,
-        serviceobj,
-        methodobj: Method,
-        app: object | None,
+        serviceobj: Service,
+        methodobj: typing.Callable,
+        app: App | None,
         result: dict | str | int | list | None | Job,
         *,
-        new_style_returns_model: object | None = None,
+        new_style_returns_model: BaseModel | None = None,
         expose_secrets: bool = True,
     ):
         """
@@ -954,7 +997,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return app.authenticated_credentials.authorize('SUBSCRIBE', short_name)
 
-    async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
+    async def call_with_audit(
+        self, method: str, serviceobj: Service, methodobj: typing.Callable, params: typing.Iterable, app: App, **kwargs
+    ) -> typing.Any:
         audit_callback_messages = []
 
         async def log_audit_message_for_method(success):
@@ -980,8 +1025,17 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if job is None:
                 await log_audit_message_for_method(success)
 
-    async def log_audit_message_for_method(self, method, methodobj, params, app, authenticated, authorized, success,
-                                           callback_messages=None):
+    async def log_audit_message_for_method(
+        self,
+        method,
+        methodobj,
+        params: typing.Iterable,
+        app: App,
+        authenticated: bool,
+        authorized: bool,
+        success: bool,
+        callback_messages: typing.Iterable | None = None,
+    ) -> None:
         callback_messages = callback_messages or []
 
         audit = getattr(methodobj, 'audit', None)
@@ -1010,7 +1064,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     'authorized': authorized,
                 }, success)
 
-    async def log_audit_message(self, app, event, event_data, success):
+    async def log_audit_message(
+        self,
+        app: App,
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event_data: dict,
+        success: bool,
+    ) -> None:
         remote_addr, origin = "127.0.0.1", None
         if app is not None and app.origin is not None:
             origin = app.origin.repr
@@ -1049,8 +1109,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         self.__audit_logger.info(message)
 
-    async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-                   profile=False):
+    async def call(
+        self,
+        name: str,
+        *params,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        pipes: Pipes | None = None,
+        profile: bool = False,
+    ) -> typing.Any:
         serviceobj, methodobj = self.get_method(name, mocks=True, params=params)
 
         if profile:
@@ -1061,7 +1129,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False):
+    def call_sync(
+        self,
+        name: str,
+        *params,
+        job_on_progress_cb: _OptJobProgressCallback = None,
+        app: App | None = None,
+        audit_callback: _OptAuditCallback = None,
+        background: bool = False,
+    ) -> typing.Any:
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot use call_sync from main thread')
 
@@ -1126,8 +1202,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, *, private=False, returns=None, models=None, no_auth_required=False,
-                       no_authz_required=False, roles=None):
+    def event_register(
+        self,
+        name: str,
+        description: str,
+        *,
+        private: bool = False,
+        returns=None,
+        models: dict[EventType, type[BaseModel]] | None = None,
+        no_auth_required: bool = False,
+        no_authz_required: bool = False,
+        roles: typing.Iterable[str] | None = None,
+    ):
         """
         All middleware events should be registered, so they are properly documented
         and can be browsed in the API documentation without having to inspect source code.
@@ -1135,7 +1221,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         roles = roles or []
         self.events.register(name, description, private, returns, models, no_auth_required, no_authz_required, roles)
 
-    def send_event(self, name, event_type: str, **kwargs):
+    def send_event(self, name: str, event_type: EventType, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)
 
         if name not in self.events:
@@ -1198,7 +1284,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 del self.mocks[name][i]
                 break
 
-    def _mock_method(self, name, params):
+    def _mock_method(self, name: str, params: typing.Iterable) -> typing.Callable | None:
         if mocks := self.mocks.get(name):
             for args, mock in mocks:
                 if args == list(params):

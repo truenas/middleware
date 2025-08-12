@@ -1,8 +1,13 @@
 # -*- coding=utf-8 -*-
 import errno
 import logging
+from typing import TYPE_CHECKING
 
 from middlewared.service_exception import CallError
+if TYPE_CHECKING:
+    from types import MethodType
+    from middlewared.service import Service
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +20,7 @@ class MethodNotFoundError(CallError):
 
 
 class ServiceCallMixin:
-    def get_method(self, name):
+    def get_method(self, name: str) -> tuple['Service', 'MethodType']:
         if '.' not in name:
             raise CallError('Invalid method name', errno.EBADMSG)
 

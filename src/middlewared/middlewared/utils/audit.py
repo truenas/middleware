@@ -1,4 +1,5 @@
 from middlewared.auth import (
+    SessionManagerCredentials,
     TokenSessionManagerCredentials,
     TruenasNodeSessionManagerCredentials
 )
@@ -11,7 +12,7 @@ UNAUTHENTICATED = '.UNAUTHENTICATED'
 UNKNOWN_SESSION = '.UNKNOWN'
 
 
-def audit_username_from_session(cred) -> str:
+def audit_username_from_session(cred: SessionManagerCredentials | None) -> str:
     if cred is None:
         return UNAUTHENTICATED
 

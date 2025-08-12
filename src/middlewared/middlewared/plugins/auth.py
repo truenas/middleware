@@ -1,9 +1,11 @@
+from __future__ import annotations
 import asyncio
 import random
 from datetime import timedelta
 import errno
 import pam
 import time
+from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
@@ -45,14 +47,30 @@ from middlewared.utils.auth import (
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
 
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
+    from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
+    from middlewared.auth import SessionManagerCredentials
+    from middlewared.main import Middleware
+    from middlewared.utils.origin import ConnectionOrigin
+
+
 PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
 
 
 class TokenManager:
     def __init__(self):
-        self.tokens = {}
+        self.tokens: dict[str, Token] = {}
 
-    def create(self, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
+    def create(
+        self,
+        ttl: int,
+        attributes: dict,
+        match_origin: ConnectionOrigin | None,
+        parent_credentials: SessionManagerCredentials,
+        session_id: str,
+        single_use: bool,
+    ) -> Token:
         credentials = parent_credentials
         if isinstance(credentials, TokenSessionManagerCredentials):
             if root_credentials := credentials.token.root_credentials():
@@ -62,32 +80,42 @@ class TokenManager:
         self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials, session_id, single_use)
         return self.tokens[token]
 
-    def get(self, token, origin):
-        token = self.tokens.get(token)
-        if token is None:
+    def get(self, token: str, origin: ConnectionOrigin) -> Token | None:
+        token_ = self.tokens.get(token)
+        if token_ is None:
             return None
 
-        if not token.is_valid():
-            self.tokens.pop(token.token)
+        if not token_.is_valid():
+            self.tokens.pop(token_.token)
             return None
 
-        if token.match_origin:
-            if not isinstance(origin, type(token.match_origin)):
+        if token_.match_origin:
+            if not isinstance(origin, type(token_.match_origin)):
                 return None
-            if not token.match_origin.match(origin):
+            if not token_.match_origin.match(origin):
                 return None
 
-        return token
+        return token_
 
-    def destroy(self, token):
+    def destroy(self, token: Token) -> None:
         self.tokens.pop(token.token, None)
 
-    def destroy_by_session_id(self, session_id):
+    def destroy_by_session_id(self, session_id: str) -> None:
         self.tokens = {k: v for k, v in self.tokens.items() if session_id not in v.session_ids}
 
 
 class Token:
-    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
+    def __init__(
+        self,
+        manager: TokenManager,
+        token: str,
+        ttl: int,
+        attributes: dict,
+        match_origin: ConnectionOrigin | None,
+        parent_credentials: SessionManagerCredentials,
+        session_id: str,
+        single_use: bool,
+    ):
         self.manager = manager
         self.token = token
         self.ttl = ttl
@@ -105,7 +133,7 @@ class Token:
     def notify_used(self):
         self.last_used_at = time.monotonic()
 
-    def root_credentials(self):
+    def root_credentials(self) -> SessionManagerCredentials | None:
         credentials = self.parent_credentials
         while True:
             if isinstance(credentials, TokenSessionManagerCredentials):
@@ -118,10 +146,10 @@ class Token:
 
 class SessionManager:
     def __init__(self):
-        self.sessions = {}
-        self.middleware = None
+        self.sessions: dict[str, Session] = {}
+        self.middleware: Middleware
 
-    async def login(self, app, credentials):
+    async def login(self, app: RpcWebSocketApp, credentials: SessionManagerCredentials) -> None:
         if app.authenticated:
             await self.middleware.run_in_thread(credentials.login, app.session_id)
             # If previous credential had associated utmp entry then it will be automatically
@@ -161,7 +189,7 @@ class SessionManager:
                 "error": None,
             }, True)
 
-    async def logout(self, app):
+    async def logout(self, app: App) -> None:
         if session := self.sessions.get(app.session_id):
             if not (internal_session := is_internal_session(session)):
                 await self.middleware.log_audit_message(app, "LOGOUT", {
@@ -177,7 +205,7 @@ class SessionManager:
 
         app.authenticated = False
 
-    async def _app_on_message(self, app, message):
+    async def _app_on_message(self, app: App, message) -> None:
         session = self.sessions.get(app.session_id)
         if session is None:
             app.authenticated = False
@@ -189,12 +217,12 @@ class SessionManager:
 
         session.credentials.notify_used()
 
-    async def _app_on_close(self, app):
+    async def _app_on_close(self, app: App) -> None:
         await self.logout(app)
 
 
 class Session:
-    def __init__(self, manager, credentials, app):
+    def __init__(self, manager: SessionManager, credentials: SessionManagerCredentials, app: RpcWebSocketApp):
         self.manager = manager
         self.credentials = credentials
         self.app = app
@@ -210,7 +238,7 @@ class Session:
         }
 
 
-def is_internal_session(session) -> bool:
+def is_internal_session(session: Session) -> bool:
     try:
         is_root_sock = session.app.origin.is_unix_family and session.app.origin.uid == 0
         if is_root_sock:
@@ -242,9 +270,9 @@ class AuthService(Service):
 
     token_manager = TokenManager()
 
-    def __init__(self, *args, **kwargs):
-        super(AuthService, self).__init__(*args, **kwargs)
-        self.session_manager.middleware = self.middleware
+    def __init__(self, middleware: Middleware):
+        super(AuthService, self).__init__(middleware)
+        self.session_manager.middleware = middleware
 
     @filterable_api_method(item=AuthSessionsEntry, roles=['AUTH_SESSIONS_READ'])
     @pass_app(require=True)
@@ -452,7 +480,7 @@ class AuthService(Service):
 
     @private
     @pass_app(require=True)
-    def get_token_for_action(self, app, token_id, origin, method, resource):
+    def get_token_for_action(self, app, token_id, origin, method, resource) -> TokenSessionManagerCredentials | None:
         if (token := self.token_manager.get(token_id, origin)) is None:
             return None
 
@@ -1296,7 +1324,7 @@ class AuthService(Service):
             return None
 
 
-async def check_permission(middleware, app):
+async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None:
     """Authenticates connections coming from loopback and from root user."""
     origin = app.origin
     if origin is None:
@@ -1336,6 +1364,6 @@ async def check_permission(middleware, app):
         await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user, authenticator))
 
 
-def setup(middleware):
+def setup(middleware: Middleware):
     middleware.event_register('auth.sessions', 'Notification of new and removed sessions.', roles=['FULL_ADMIN'])
     middleware.register_hook('core.on_connect', check_permission)

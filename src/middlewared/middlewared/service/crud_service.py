@@ -116,18 +116,16 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             else:
                 roles = ['READONLY_ADMIN']
 
-            kwargs = dict(models={
-                'ADDED': added_event_model(self._config.entry),
-                'CHANGED': changed_event_model(self._config.entry),
-                'REMOVED': removed_event_model(self._config.entry),
-            })
-
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
                 private=self._config.private,
+                models={
+                    'ADDED': added_event_model(self._config.entry),
+                    'CHANGED': changed_event_model(self._config.entry),
+                    'REMOVED': removed_event_model(self._config.entry),
+                },
                 roles=roles,
-                **kwargs,
             )
 
     @private

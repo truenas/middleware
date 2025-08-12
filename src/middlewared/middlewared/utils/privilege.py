@@ -1,5 +1,10 @@
+from typing import TYPE_CHECKING
+
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.role import ROLES
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
+    from middlewared.auth import SessionManagerCredentials
 
 
 def privilege_has_webui_access(privilege: dict) -> bool:
@@ -19,7 +24,7 @@ def privilege_has_webui_access(privilege: dict) -> bool:
     return any(ROLES[role].builtin is False for role in privilege['roles'])
 
 
-def credential_has_full_admin(credential: object) -> bool:
+def credential_has_full_admin(credential: 'SessionManagerCredentials') -> bool:
     if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:
         return True
 
@@ -33,7 +38,7 @@ def credential_has_full_admin(credential: object) -> bool:
 
 
 def credential_full_admin_or_user(
-    credential: object,
+    credential: 'SessionManagerCredentials | None',
     username: str
 ) -> bool:
     if credential is None:
@@ -46,7 +51,7 @@ def credential_full_admin_or_user(
 
 
 def app_credential_full_admin_or_user(
-    app: object,
+    app: 'App',
     username: str
 ) -> bool:
     """
@@ -68,16 +73,16 @@ def app_credential_full_admin_or_user(
 
 
 def privileges_group_mapping(
-    privileges: list,
+    privileges: list[dict],
     group_ids: list,
     groups_key: str,
 ) -> dict:
     roles = set()
     privileges_out = []
 
-    group_ids = set(group_ids)
+    group_ids_ = set(group_ids)
     for privilege in privileges:
-        if set(privilege[groups_key]) & group_ids:
+        if set(privilege[groups_key]) & group_ids_:
             roles |= set(privilege['roles'])
             privileges_out.append(privilege)
 
@@ -87,14 +92,14 @@ def privileges_group_mapping(
     }
 
 
-def credential_is_limited_to_own_jobs(credential: object | None) -> bool:
+def credential_is_limited_to_own_jobs(credential: 'SessionManagerCredentials | None') -> bool:
     if credential is None or not credential.is_user_session:
         return False
 
     return not credential_has_full_admin(credential)
 
 
-def credential_is_root_or_equivalent(credential: object | None) -> bool:
+def credential_is_root_or_equivalent(credential: 'SessionManagerCredentials | None') -> bool:
     if credential is None or not credential.is_user_session:
         return False
 

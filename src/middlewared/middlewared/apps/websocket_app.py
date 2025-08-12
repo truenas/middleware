@@ -4,8 +4,8 @@ from errno import EACCES, EAGAIN, EINVAL, ETOOMANYREFS
 from pickle import dumps as pdumps
 from sys import exc_info
 from traceback import format_exception
-from typing import Any
-from types import AsyncGeneratorType, GeneratorType, TracebackType
+from typing import Any, Callable, TYPE_CHECKING
+from types import AsyncGeneratorType, GeneratorType
 
 from middlewared.api.base.server.legacy_api_method import LegacyAPIMethod
 from middlewared.api.base.server.ws_handler.rpc import (
@@ -14,7 +14,6 @@ from middlewared.api.base.server.ws_handler.rpc import (
 )
 from middlewared.job import Job
 from middlewared.logger import Logger
-
 from middlewared.schema import Error as SchemaError
 from middlewared.service_exception import (
     adapt_exception,
@@ -24,26 +23,28 @@ from middlewared.service_exception import (
     ValidationErrors,
     get_errname,
 )
+from middlewared.types import OptExcInfo
 from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin
 from truenas_api_client import json
+if TYPE_CHECKING:
+    from aiohttp.web import WebSocketResponse, Request
+    from middlewared.main import Middleware
+    from middlewared.service import Service
+
 
 __all__ = ("WebSocketApplication",)
-
-ExcInfoType = (
-    tuple[type[BaseException], BaseException, TracebackType] | tuple[None, None, None]
-)
 
 
 class WebSocketApplication(RpcWebSocketApp):
     def __init__(
         self,
-        middleware,
+        middleware: "Middleware",
         origin: ConnectionOrigin,
         loop: AbstractEventLoop,
-        request,
-        response,
+        request: "Request",
+        response: "WebSocketResponse",
     ):
         super().__init__(middleware, origin, response)
         self.websocket = True
@@ -55,12 +56,12 @@ class WebSocketApplication(RpcWebSocketApp):
         # Allow atmost 10 concurrent calls and only queue up until 20
         self._softhardsemaphore = SoftHardSemaphore(10, 20)
         self._py_exceptions = False
-        self.__subscribed = {}
+        self.__subscribed: dict[str, str] = {}
 
     def _send(self, data: dict[str, Any]):
         run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
-    def _tb_error(self, exc_info: ExcInfoType) -> dict[str, str | list[dict]]:
+    def _tb_error(self, exc_info: OptExcInfo) -> dict:
         klass, exc, trace = exc_info
         frames = []
         cur_tb = trace
@@ -82,7 +83,7 @@ class WebSocketApplication(RpcWebSocketApp):
         self,
         errno: int,
         reason: str | None = None,
-        exc_info: ExcInfoType | None = None,
+        exc_info: OptExcInfo | None = None,
         etype: str | None = None,
         extra: list | None = None,
     ) -> dict[str, Any]:
@@ -106,7 +107,7 @@ class WebSocketApplication(RpcWebSocketApp):
         message: dict[str, Any],
         errno: int,
         reason: str | None = None,
-        exc_info: ExcInfoType | None = None,
+        exc_info: OptExcInfo | None = None,
         etype: str | None = None,
         extra: list | None = None,
     ):
@@ -118,7 +119,7 @@ class WebSocketApplication(RpcWebSocketApp):
             }
         )
 
-    async def call_method(self, message, serviceobj, methodobj):
+    async def call_method(self, message: dict, serviceobj: "Service", methodobj: Callable):
         params = message.get("params") or []
         if not isinstance(params, list):
             self.send_error(message, EINVAL, "`params` must be a list.")

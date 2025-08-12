@@ -3,9 +3,23 @@ import cProfile
 import io
 import pstats
 from pstats import SortKey
+from typing import Any, Callable, Coroutine, ParamSpec, overload
 
 
-def profile_wrap(func):
+# Preserve order of args and kwargs with ParamSpec
+P = ParamSpec('P')
+
+
+# First matching overload is chosen
+@overload
+def profile_wrap(func: Callable[P, Coroutine]) -> Callable[P, Coroutine[None, None, str]]: ...
+
+
+@overload
+def profile_wrap(func: Callable[P, Any]) -> Callable[P, str]: ...
+
+
+def profile_wrap(func: Callable[P, Any]) -> Callable[P, Coroutine[None, None, str]] | Callable[P, str]:
     if asyncio.iscoroutinefunction(func):
         async def wrapper(*args, **kwargs):
             pr = cProfile.Profile()

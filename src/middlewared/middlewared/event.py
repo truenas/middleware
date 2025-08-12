@@ -7,16 +7,28 @@ from middlewared.api.base.handler.accept import validate_model
 from middlewared.role import RoleManager
 from middlewared.schema import Any
 from middlewared.service import ValidationErrors
+if typing.TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
+    from middlewared.types import EventType
 
 
 class Events:
     def __init__(self, role_manager: RoleManager):
         self.role_manager = role_manager
-        self._events: typing.Dict[str, dict[str, typing.Any]] = {}
-        self.__events_private: typing.Set[str] = set()
+        self._events: dict[str, dict[str, typing.Any]] = {}
+        self.__events_private: set[str] = set()
 
-    def register(self, name: str, description: str, private: bool, returns, models, no_auth_required,
-                 no_authz_required, roles: typing.Iterable[str]):
+    def register(
+        self,
+        name: str,
+        description: str,
+        private: bool,
+        returns,
+        models: dict['EventType', type['BaseModel']] | None,
+        no_auth_required: bool,
+        no_authz_required: bool,
+        roles: typing.Iterable[str],
+    ):
         if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
         self.role_manager.register_event(name, roles)

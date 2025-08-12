@@ -1,4 +1,5 @@
 import socket
+from typing import TYPE_CHECKING
 
 from dataclasses import dataclass
 from ipaddress import ip_address
@@ -8,6 +9,9 @@ from struct import calcsize, unpack
 from pyroute2 import DiagSocket
 
 from .auth import get_login_uid, AUID_UNSET
+if TYPE_CHECKING:
+    from aiohttp.web import Request
+
 
 __all__ = ('ConnectionOrigin', 'is_external_call')
 
@@ -49,7 +53,7 @@ class ConnectionOrigin:
     """Nginx reports that https was used for connection"""
 
     @classmethod
-    def create(cls, request):
+    def create(cls, request: "Request") -> "ConnectionOrigin | None":
         try:
             sock = request.transport.get_extra_info("socket")
             if sock.family == AF_UNIX:
@@ -79,7 +83,7 @@ class ConnectionOrigin:
             # have been rebooted
             return
 
-    def __str__(self) -> str:
+    def __str__(self):
         if self.is_unix_family:
             return f"UNIX socket (pid={self.pid} uid={self.uid} gid={self.gid})"
         elif self.family == AF_INET:
@@ -87,14 +91,14 @@ class ConnectionOrigin:
         elif self.family == AF_INET6:
             return f"[{self.rem_addr}]:{self.rem_port}"
 
-    def match(self, origin) -> bool:
+    def match(self, origin: "ConnectionOrigin") -> bool:
         if self.is_unix_family:
             return self.uid == origin.uid and self.gid == origin.gid
         else:
             return self.rem_addr == origin.rem_addr
 
     @property
-    def repr(self) -> str:
+    def repr(self):
         return f"pid:{self.pid}" if self.is_unix_family else self.rem_addr
 
     @property
@@ -124,7 +128,7 @@ class ConnectionOrigin:
         return self.family == AF_UNIX
 
     @property
-    def is_ha_connection(self) -> bool:
+    def is_ha_connection(self):
         return (
             self.family in (AF_INET, AF_INET6) and
             self.rem_port and self.rem_port <= 1024 and
@@ -182,7 +186,7 @@ class ConnectionOrigin:
         return ppids
 
 
-def get_tcp_ip_info(sock, request) -> tuple:
+def get_tcp_ip_info(sock: socket.socket, request: "Request") -> tuple:
     # All API connections are terminated by nginx reverse
     # proxy so the remote address is always 127.0.0.1. The
     # only exceptions to this are:
