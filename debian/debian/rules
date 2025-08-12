@@ -20,6 +20,7 @@ override_dh_installsystemd:
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-shutdown
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-ssh-keys
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-syncdisks
+	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-upsshutdown
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-vendor
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-wait-on-disks
 	dh_installsystemd --no-start -r --no-restart-after-upgrade --name=ix-zfs

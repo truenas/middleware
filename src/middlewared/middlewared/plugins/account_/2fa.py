@@ -144,12 +144,6 @@ class UserService(Service):
             # in this case we don't do anything and the secret is already unset
             return
 
-        twofactor_config = await self.middleware.call('auth.twofactor.config')
-        if twofactor_config['enabled']:
-            # TODO: Let's try to stream line exception behaviour where we change this to either validation error
-            #  when this starts being used in a form or UI changes how they handle call errors
-            raise CallError('Please disable Two Factor Authentication first')
-
         await self.middleware.call(
             'datastore.update',
             'account.twofactor_user_auth',

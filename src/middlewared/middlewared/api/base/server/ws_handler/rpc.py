@@ -23,7 +23,7 @@ from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lang import undefined
 from middlewared.utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from middlewared.utils.origin import ConnectionOrigin
+from middlewared.utils.origin import ConnectionOrigin, is_external_call
 from .base import BaseWebSocketHandler
 from ..app import App
 from ..method import Method
@@ -364,6 +364,10 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
         return False
 
     async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: list):
+        # Track external method calls
+        if is_external_call(app):
+            self.middleware.external_method_calls[method.name] += 1
+
         try:
             async with app.softhardsemaphore:
                 result = await method.call(app, id_, params)

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from aiohttp.web import Request
 
 
-__all__ = ('ConnectionOrigin',)
+__all__ = ('ConnectionOrigin', 'is_external_call')
 
 HA_HEARTBEAT_IPS = ('169.254.10.1', '169.254.10.2')
 UIDS_TO_CHECK = (33, 0)
@@ -224,3 +224,27 @@ def get_tcp_ip_info(sock: socket.socket, request: "Request") -> tuple:
                     return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
 
     return None, None, None, None, None
+
+
+def is_external_call(app):
+    """
+    Determine if this is an external API call that should be tracked.
+    External calls are those which the system is not generating internally i.e self.middleware.call().
+
+    Note: We intentionally track midclt calls (Unix socket) as they can be
+    initiated by users and we want to track their usage patterns (this only applies to midclt calls
+    where user has logged in to a shell and not internal calls made by scripts).
+
+    Returns True for external calls, False for internal calls.
+    """
+    if app is None or app.origin is None:
+        # No origin info, assume internal
+        return False
+
+    origin = app.origin
+
+    # HA connections between nodes are internal
+    if origin.is_ha_connection:
+        return False
+
+    return origin.session_is_interactive

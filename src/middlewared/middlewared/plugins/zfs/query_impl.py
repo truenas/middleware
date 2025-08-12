@@ -5,18 +5,11 @@ try:
 except ImportError:
     ZFSError = ZFSException = None
 
-from middlewared.utils import BOOT_POOL_NAME_VALID
 from .normalization import normalize_asdict_result
 from .property_management import build_set_of_zfs_props, DeterminedProperties
+from .utils import has_internal_path
 
 __all__ = ("query_impl", "ZFSPathNotFoundException")
-
-INTERNAL_FILESYSTEMS = (
-    ".system",
-    "ix-applications",
-    "ix-apps",
-    ".ix-virt",
-)
 
 
 class ZFSPathNotFoundException(Exception):
@@ -34,27 +27,8 @@ class CallbackState:
     will exclude them."""
 
 
-def __is_internal_path(path):
-    """
-    Check if a path is an internal filesystem.
-
-    Args:
-        path: relative path representing the zfs filesystem
-
-    Returns:
-        bool: True if the path is internal, False otherwise
-    """
-    for i in BOOT_POOL_NAME_VALID:
-        if path == i or path.startswith(f"{i}/"):
-            return True
-    for i in INTERNAL_FILESYSTEMS:
-        if f"/{i}" in path:
-            return True
-    return False
-
-
 def __query_impl_callback(hdl, state):
-    if state.eip and __is_internal_path(hdl.name):
+    if state.eip and has_internal_path(hdl.name):
         # returning False here will halt the iteration
         # entirely which is not what we want to do
         return True
@@ -96,13 +70,17 @@ def __query_impl_roots(hdl, state):
 
 def __should_exclude_internal_paths(data):
     for path in data["paths"]:
-        if __is_internal_path(path):
+        if has_internal_path(path):
             # somone is explicilty querying an
             # internal path
             return False
-    # no paths specified or none of the paths
-    # specified are an internal path
-    return True
+    # 1. no paths specified are internal path
+    # 2. no paths specified at all (empty query)
+    # 3. or someone exclusively asks for internal paths
+    #   NOTE: (the `exclude_internal_paths` is a private
+    #   internal argument that is set internally within
+    #   middleware. It's not exposed to public.)
+    return data.get('exclude_internal_paths', True)
 
 
 def query_impl(hdl, data):

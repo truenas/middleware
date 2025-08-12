@@ -18,12 +18,13 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
-from middlewared.service_exception import InstanceNotFound
+from middlewared.plugins.zfs.utils import get_encryption_info
+from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
+from middlewared.utils.zfs import query_imported_fast_impl
 
 
 class SystemDatasetModel(sa.Model):
@@ -183,7 +184,9 @@ class SystemDatasetService(ConfigService):
         """
         boot_pool = await self.middleware.call('boot.pool_name')
         current_pool = (await self.config())['pool']
-        valid_pools = await self.query_pools_names_for_system_dataset()
+        valid_pools = await self.middleware.call(
+            'systemdataset.query_pools_for_system_dataset'
+        )
 
         pools = [boot_pool]
         if include_current_pool:
@@ -229,7 +232,9 @@ class SystemDatasetService(ConfigService):
                     'The system dataset cannot be placed on this pool.'
                 )
         else:
-            for pool in await self.query_pools_names_for_system_dataset(data['pool_exclude']):
+            for pool in await self.middleware.call(
+                'systemdataset.query_pools_for_system_dataset', data['pool_exclude']
+            ):
                 if await self.destination_pool_error(pool):
                     continue
 
@@ -273,22 +278,26 @@ class SystemDatasetService(ConfigService):
     @private
     async def destination_pool_error(self, new_pool):
         config = await self.config()
+        existing_dataset, new_dataset = None, None
+        for i in await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'paths': [config['basename'], new_pool], 'properties': ['used', 'available']}
+        ):
+            if i['name'] == config['basename']:
+                existing_dataset = i
+            elif i['name'] == new_pool:
+                new_dataset = i
 
-        try:
-            existing_dataset = await self.middleware.call('zfs.dataset.get_instance', config['basename'])
-        except InstanceNotFound:
+        if not existing_dataset:
             return
-
-        used = existing_dataset['properties']['used']['parsed']
-
-        try:
-            new_dataset = await self.middleware.call('zfs.dataset.get_instance', new_pool)
-        except InstanceNotFound:
+        elif not new_dataset:
             return f'Dataset {new_pool} does not exist'
+        else:
+            used = existing_dataset['properties']['used']['value']
+            available = new_dataset['properties']['available']['value']
 
-        available = new_dataset['properties']['available']['parsed']
-
-        # 1.1 is a safety margin because same files won't take exactly the same amount of space on a different pool
+        # 1.1 is a safety margin because same files won't
+        # take exactly the same amount of space on a different pool
         used = int(used * 1.1)
         if available < used:
             return (
@@ -313,31 +322,33 @@ class SystemDatasetService(ConfigService):
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
-        filters = [('name', '=', config['pool'])]
-        if config['pool'] != boot_pool and not self.middleware.call_sync('pool.query', filters):
+        if config['pool'] != boot_pool and not self.middleware.call_sync(
+            'zfs.resource.query_impl', {'paths': [config['pool']], 'properties': None}
+        ):
             self.logger.debug('Pool %r does not exist, moving system dataset to another pool', config['pool'])
             job = self.middleware.call_sync('systemdataset.update', {'pool': None, 'pool_exclude': exclude_pool})
-            job.wait_sync()
-            if job.error:
-                raise CallError(job.error)
+            job.wait_sync(raise_error=True)
             return
 
         # If we dont have a pool configured in the database try to find the first data pool
         # to put it on.
         if not config['pool_set']:
-            if pool := self.query_pool_for_system_dataset(exclude_pool):
-                self.logger.debug('Sysdataset pool was not set, moving it to first available pool %r', pool['name'])
-                job = self.middleware.call_sync('systemdataset.update', {'pool': pool['name']})
-                job.wait_sync()
-                if job.error:
-                    raise CallError(job.error)
-
+            if pools := self.query_pools_for_system_dataset(exclude_pool):
+                self.logger.debug(
+                    'System dataset pool was not set, moving it to first available pool %r',
+                    pools[0]
+                )
+                job = self.middleware.call_sync('systemdataset.update', {'pool': pools[0]})
+                job.wait_sync(raise_error=True)
                 return
 
         mntinfo = self.middleware.call_sync('filesystem.mount_info')
         if config['pool'] != boot_pool:
             if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
-                ds = self.middleware.call_sync('zfs.dataset.query', [['id', '=', config['basename']]])
+                ds = self.middleware.call_sync(
+                    'zfs.resource.query_impl',
+                    {'paths': [config['basename']], 'properties': ['encryption']}
+                )
                 if not ds:
                     # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
                     msg = 'Root dataset for pool %r is not available, and dataset %r does not exist, '
@@ -345,7 +356,9 @@ class SystemDatasetService(ConfigService):
                     self.logger.debug(msg, config['pool'], config['basename'])
                     self.force_pool = boot_pool
                     config = self.middleware.call_sync('systemdataset.config')
-                elif ds[0]['encrypted'] and ds[0]['locked'] and ds[0]['key_format']['value'] != 'PASSPHRASE':
+                enc = get_encryption_info(ds[0]['properties'])
+                if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
+                    # Pool is encrypted with a key and is locked
                     self.logger.debug(
                         'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
                         config['pool'],
@@ -353,8 +366,11 @@ class SystemDatasetService(ConfigService):
                     self.force_pool = boot_pool
                     config = self.middleware.call_sync('systemdataset.config')
                 else:
-                    self.logger.debug('Root dataset for pool %r is not available, but system dataset may be manually '
-                                      'mounted. Proceeding with normal setup.', config['pool'])
+                    self.logger.debug(
+                        'Root dataset for pool %r is not available, but system dataset may be manually '
+                        'mounted. Proceeding with normal setup.',
+                        config['pool']
+                    )
 
         mounted_pool = mounted = None
 
@@ -384,8 +400,11 @@ class SystemDatasetService(ConfigService):
         if ds_mntinfo:
             acl_enabled = 'POSIXACL' in ds_mntinfo[0]['super_opts'] or 'NFSV4ACL' in ds_mntinfo[0]['super_opts']
         else:
-            ds = self.middleware.call_sync('zfs.dataset.query', [('id', '=', config['basename'])])
-            acl_enabled = ds and ds[0]['properties']['acltype']['value'] != 'off'
+            ds = self.middleware.call_sync(
+                'zfs.resource.query_impl',
+                {'paths': [config['basename']], 'properties': ['acltype']}
+            )
+            acl_enabled = ds and ds[0]['properties']['acltype']['raw'] != 'off'
 
         if acl_enabled:
             self.middleware.call_sync(
@@ -412,49 +431,33 @@ class SystemDatasetService(ConfigService):
         return self.middleware.call_sync('systemdataset.config')
 
     @private
-    def query_pool_for_system_dataset(self, exclude_pool):
-        for p in self.middleware.call_sync('zfs.pool.query_imported_fast').values():
-            if exclude_pool and p['name'] == exclude_pool:
-                continue
-
-            ds = self.middleware.call_sync(
-                'pool.dataset.query',
-                [['id', '=', p['name']]],
-                {'extra': {'retrieve_children': False}}
-            )
-            if not ds:
-                continue
-
-            if not ds[0]['encrypted'] or not ds[0]['locked'] or ds[0]['key_format']['value'] == 'PASSPHRASE':
-                return p
-
-    @private
-    async def query_pools_names_for_system_dataset(self, exclude_pool=None):
+    def query_pools_for_system_dataset(self, exclude_pool=None):
         """
         Pools with passphrase-locked root level datasets are permitted as system
         dataset targets. This is because ZFS encryption is at the dataset level
         rather than pool level, and we use a legacy mount for the system dataset.
-
         Key format is only exposed via libzfs and so reading mountinfo here is
         insufficient.
         """
-        pools = []
-        for p in (await self.middleware.call('zfs.pool.query_imported_fast')).values():
-            if exclude_pool and p['name'] == exclude_pool:
+        rv = list()
+        for i in query_imported_fast_impl().values():
+            if (
+                exclude_pool and exclude_pool == i['name']
+                or i['name'] in BOOT_POOL_NAME_VALID
+            ):
                 continue
 
-            ds = await self.middleware.call(
-                'pool.dataset.query',
-                [['id', '=', p['name']]],
-                {'extra': {'retrieve_children': False}}
+            ds = self.middleware.call_sync(
+                'zfs.resource.query_impl',
+                {'paths': [i['name']], 'properties': ['encryption']}
             )
             if not ds:
                 continue
 
-            if not ds[0]['encrypted'] or not ds[0]['locked'] or ds[0]['key_format']['value'] == 'PASSPHRASE':
-                pools.append(p['name'])
-
-        return pools
+            enc = get_encryption_info(ds[0]['properties'])
+            if not enc.encrypted or not enc.locked or enc.encryption_type == 'passphrase':
+                rv.append(i['name'])
+        return rv
 
     @private
     async def setup_datasets(self, pool, uuid):
@@ -462,14 +465,32 @@ class SystemDatasetService(ConfigService):
         Make sure system datasets for `pool` exist and have the right mountpoint property
         """
         boot_pool = await self.middleware.call('boot.pool_name')
-        root_dataset_is_passphrase_encrypted = (
-            pool != boot_pool and
-            (await self.middleware.call('pool.dataset.get_instance', pool))['key_format']['value'] == 'PASSPHRASE'
-        )
+        root_dataset_is_passphrase_encrypted = False
+        if pool != boot_pool:
+            p = await self.middleware.call(
+                'zfs.resource.query_impl',
+                {'paths': [pool], 'properties': ['encryption']}
+            )
+            if not p:
+                raise ValidationError(
+                    'sysdataset_setup_datasets.pool',
+                    f'Pool {pool!r} does not exist.',
+                    errno.ENOENT,
+                )
+            else:
+                enc = get_encryption_info(p[0]['properties'])
+                root_dataset_is_passphrase_encrypted = enc.encryption_type == 'passphrase'
+
         datasets = {i['name']: i for i in get_system_dataset_spec(pool, uuid)}
         datasets_prop = {
-            i['id']: i['properties']
-            for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', list(datasets))])
+            i['name']: i['properties']
+            for i in await self.middleware.call(
+                'zfs.resource.query_impl',
+                {
+                    'paths': list(datasets),
+                    'properties': ['encryption', 'quota', 'used', 'mountpoint', 'readonly', 'snapdir', 'canmount']
+                }
+            )
         }
         for dataset, config in datasets.items():
             props = config['props']
@@ -481,23 +502,21 @@ class SystemDatasetService(ConfigService):
             if is_cores_ds:
                 props['quota'] = '1G'
             if dataset not in datasets_prop:
-                await self.middleware.call('zfs.dataset.create', {
-                    'name': dataset,
-                    'properties': props,
-                })
-            elif is_cores_ds and datasets_prop[dataset]['used']['parsed'] >= 1024 ** 3:
+                await self.middleware.call('zfs.dataset.create', {'name': dataset, 'properties': props})
+            elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
                     await self.middleware.call('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
-                    await self.middleware.call('zfs.dataset.create', {
-                        'name': dataset,
-                        'properties': props,
-                    })
+                    await self.middleware.call('zfs.dataset.create', {'name': dataset, 'properties': props})
                 except Exception:
                     self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
                 update_props_dict = {
                     k: {'value': v} for k, v in props.items()
-                    if datasets_prop[dataset][k]['value'] != v
+                    # use `raw` key instead of `value` since
+                    # the latter will do some fancy translation
+                    # depending on the property.
+                    # (i.e. if raw == "on" value == True)
+                    if datasets_prop[dataset][k]['raw'] != v
                 }
                 if update_props_dict:
                     await self.middleware.call(
@@ -590,7 +609,11 @@ class SystemDatasetService(ConfigService):
             except KeyError:
                 pass
 
-        if not (mntinfo := self.middleware.call_sync('filesystem.mount_info', [['mount_source', '=', f'{pool}/.system']])):
+        mntinfo = self.middleware.call_sync(
+            'filesystem.mount_info',
+            [['mount_source', '=', f'{pool}/.system']]
+        )
+        if not mntinfo:
             # Pool's system dataset not mounted
             return
 

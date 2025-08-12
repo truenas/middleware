@@ -61,11 +61,12 @@ class ZFSSnapshotService(Service):
 
         if options.get('recursive_rollback'):
             dataset, snap_name = id_.rsplit('@', 1)
-            datasets = set({
-                f'{ds["id"]}@{snap_name}' for ds in self.middleware.call_sync(
-                    'zfs.dataset.query', [['OR', [['id', '^', f'{dataset}/'], ['id', '=', dataset]]]]
-                )
-            })
+            datasets = set()
+            for i in self.middleware.call_sync(
+                "zfs.resource.query_impl",
+                {"paths": [dataset], "get_children": True, "properties": None}
+            ):
+                datasets.add(f'{i["name"]}@{snap_name}')
 
             for snap in filter(lambda sn: self.middleware.call_sync('zfs.snapshot.query', [['id', '=', sn]]), datasets):
                 self.rollback_impl(args, snap)

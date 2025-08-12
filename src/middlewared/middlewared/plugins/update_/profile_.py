@@ -8,11 +8,48 @@ from middlewared.service import private, Service
 from middlewared.service_exception import CallError
 
 
-class Profile(enum.IntEnum):
+class UpdateProfiles(enum.IntEnum):
     DEVELOPER = 0
     EARLY_ADOPTER = 1
     GENERAL = 2
     MISSION_CRITICAL = 3
+
+    def describe(self, is_enterprise=False):
+        return {
+            UpdateProfiles.DEVELOPER: {
+                'name': 'Developer',
+                'footnote': '',
+                'description': (
+                    'Developer software with new features and bugs alike. '
+                    'Allows users to contribute directly to the development process.'
+                ),
+            },
+            UpdateProfiles.EARLY_ADOPTER: {
+                'name': 'Early Adopter',
+                'footnote': '',
+                'description': (
+                    'Pre-release access to new features and functionality of '
+                    'TrueNAS software. Some issues may need workarounds, bug '
+                    'reports or patience.'
+                ),
+            },
+            UpdateProfiles.GENERAL: {
+                'name': 'General',
+                'footnote': '(not recommended)' if is_enterprise else '(Default)',
+                'description': (
+                    'Field tested software with mature features. Few issues are expected.'
+                ),
+            },
+            UpdateProfiles.MISSION_CRITICAL: {
+                'name': 'Mission Critical',
+                'footnote': '',
+                'description': (
+                    'Mature software that enables 24×7 operations with high availability '
+                    'for a very clearly defined use case. Software updates are very '
+                    'infrequent and based on need.'
+                )
+            }
+        }.get(self, {'name': '', 'footnote': '', 'description': ''})
 
 
 class UpdateService(Service):
@@ -24,57 +61,19 @@ class UpdateService(Service):
         """
         profiles = {}
         is_enterprise = await self.middleware.call('system.is_enterprise')
-
-        if not is_enterprise:
-            profiles[Profile.DEVELOPER] = {
-                'name': 'Developer',
-                'footnote': '',
-                'description': (
-                    'Latest software with new features and bugs alike.  There is an opportunity to contribute '
-                    'directly to the development process.'
-                ),
-            }
-            profiles[Profile.EARLY_ADOPTER] = {
-                'name': 'Early Adopter',
-                'footnote': '',
-                'description': (
-                    'Released software with new features. Data is protected, but some issues may need workarounds or '
-                    'patience.'
-                ),
-            }
-            profiles[Profile.GENERAL] = {
-                'name': 'General',
-                'footnote': '(Default)',
-                'description': (
-                    'Field tested software with mature features. Few issues are expected.'
-                ),
-            }
-        else:
-            profiles[Profile.GENERAL] = {
-                'name': 'General',
-                'footnote': '(not recommended)',
-                'description': (
-                    'Field tested software with mature features. Few issues are expected.'
-                ),
-            }
-            profiles[Profile.MISSION_CRITICAL] = {
-                'name': 'Mission Critical',
-                'footnote': '',
-                'description': (
-                    'Mature software that enables 24×7 operations with high availability for a very clearly defined '
-                    'use case. Software updates are very infrequent and based on need.'
-                ),
-            }
-
-        current_profile = Profile[await self.current_version_profile()]
-        for profile, data in profiles.items():
-            data['available'] = profile <= current_profile
-
-        return {k.name: v for k, v in profiles.items()}
+        current_profile = UpdateProfiles[await self.current_version_profile()]
+        for profile in UpdateProfiles:
+            info = profile.describe(is_enterprise) | {'available': profile <= current_profile}
+            if is_enterprise:
+                if profile >= UpdateProfiles.GENERAL:
+                    profiles[profile.name] = info
+            else:
+                profiles[profile.name] = info
+        return profiles
 
     @private
     async def profile_matches(self, name, selected_name):
-        return Profile[name] >= Profile[selected_name]
+        return UpdateProfiles[name] >= UpdateProfiles[selected_name]
 
     @private
     async def current_version_profile(self, trains=None):
@@ -97,9 +96,9 @@ class UpdateService(Service):
 
 async def post_license_update(middleware, prev_license, *args, **kwargs):
     if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
-        current_profile = Profile[(await middleware.call('update.config'))['profile']]
-        if current_profile < Profile.MISSION_CRITICAL:
-            await middleware.call('update.set_profile', Profile.MISSION_CRITICAL.name)
+        current_profile = UpdateProfiles[(await middleware.call('update.config'))['profile']]
+        if current_profile < UpdateProfiles.MISSION_CRITICAL:
+            await middleware.call('update.set_profile', UpdateProfiles.MISSION_CRITICAL.name)
 
 
 async def setup(middleware):

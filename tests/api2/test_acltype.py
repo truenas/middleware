@@ -20,7 +20,9 @@ def test_default_acltype_on_zpool():
 
 
 def test_acltype_inheritance(temp_ds):
-    assert call('zfs.dataset.query', *query_filters(temp_ds))['properties']['acltype']['rawvalue'] == 'posix'
+    tds = call('zfs.resource.query', {'paths': [temp_ds], 'properties': ['acltype']})
+    assert tds
+    assert tds[0]['properties']['acltype']['raw'] == 'posix'
 
 
 @pytest.mark.parametrize(
@@ -38,6 +40,9 @@ def test_acltype_inheritance(temp_ds):
 )
 def test_change_acltype_and_aclmode_to_(temp_ds, change, expected):
     call('pool.dataset.update', temp_ds, change)
-    props = call('zfs.dataset.query', *query_filters(temp_ds))['properties']
+    props = call(
+        'zfs.resource.query',
+        {'paths': [temp_ds], 'properties': ['acltype', 'aclmode', 'aclinherit']}
+    )[0]['properties']
     for tkey, skey, value in expected:
         assert props[tkey][skey] == value, props[tkey][skey]

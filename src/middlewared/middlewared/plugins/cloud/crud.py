@@ -6,6 +6,7 @@ from middlewared.api.base.model import model_subset
 from middlewared.api.current import CloudTaskAttributes
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, private
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.utils.privilege import credential_has_full_admin
@@ -73,8 +74,13 @@ class CloudTaskServiceMixin:
 
         if self.allow_zvol and (path := await self.get_path_field(data)).startswith("/dev/zvol/"):
             zvol = zvol_path_to_name(path)
-            if not await self.middleware.call('pool.dataset.query', [['name', '=', zvol], ['type', '=', 'VOLUME']]):
+            zz = await self.middleware.call('zfs.resource.query_impl', {'paths': [zvol], 'properties': None})
+            if not zz:
                 verrors.add(f'{name}.{self.path_field}', 'Volume does not exist')
+            elif not zz[0]['type'] == 'VOLUME':
+                verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is not a volume')
+            elif has_internal_path(zz[0]['name']):
+                verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is an invalid location')
             else:
                 try:
                     await self.middleware.call(f'{self._config.namespace}.validate_zvol', path)
