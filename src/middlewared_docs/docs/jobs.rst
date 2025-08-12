@@ -37,8 +37,7 @@ The server responds with the newly added job (e.g. id 101):
             "collection": "core.get_jobs",
             "fields": {
                 "id": 101,
-                "message_ids": ["6841f242-840a-11e6-a437-00e04d680384"],
-                ...
+                "message_ids": ["6841f242-840a-11e6-a437-00e04d680384"]
             }
         }
     }
@@ -58,8 +57,7 @@ Then, it updates the progress:
                 "progress": {
                     "percent": 50,
                     "description": "Copied 1000000 of 2000000 bytes"
-                },
-                ...
+                }
             }
         }
     }
@@ -79,10 +77,8 @@ Query Job Status
 
 Job status can be queried with the `core.get_jobs` method.
 
-Request:
-""""""""
-
-.. code:: json
+.. code-block:: json
+    :caption: Request
 
     {
         "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
@@ -93,10 +89,9 @@ Request:
         ]
     }
 
-Response:
-"""""""""
 
-.. code:: json
+.. code-block:: json
+    :caption: Response
 
     {
         "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
@@ -132,10 +127,8 @@ Downloading a File
 If a job gives a file as an output, this endpoint is to be used to download
 the output file.
 
-Request:
-""""""""
-
-.. code:: json
+.. code-block:: json
+    :caption: Request
 
     {
         "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
@@ -150,10 +143,8 @@ Request:
         ]
     }
 
-Response:
-"""""""""
-
-.. code:: json
+.. code-block:: json
+    :caption: Response
 
     {
         "id": "cdc8740a-336b-b0cd-b850-47568fe94223",
@@ -183,9 +174,7 @@ Note:
 Uploading a File
 ^^^^^^^^^^^^^^^^
 
-Files can be uploaded via HTTP POST request only. The upload endpoint is:
-
-`http://system_ip/_upload`
+Files can be uploaded via HTTP POST request only. The upload endpoint is `http://system_ip/_upload`.
 
 It expects two values as form data, `data` and `file`.
 
@@ -202,17 +191,14 @@ It expects two values as form data, `data` and `file`.
 
 This example uses `curl`:
 
-Request:
-""""""""
-
-.. code:: console
+.. code-block:: console
+    :caption: Request
 
     curl -X POST -u root:freenas -H "Content-Type: multipart/form-data" -F 'data={"method": "config.upload", "params": []}' -F "file=@/home/user/Desktop/config" http://system_ip/_upload/
 
-Response:
-"""""""""
 
-.. code:: json
+.. code-block:: json
+    :caption: Response
 
     {
         "job_id": 20

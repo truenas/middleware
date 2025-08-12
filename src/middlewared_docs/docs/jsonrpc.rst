@@ -29,13 +29,13 @@ JSON-RPC Request Structure
 A typical **method call** request from the client to TrueNAS follows
 this structure:
 
-.. code:: json
+.. code:: javascript
 
     {
       "jsonrpc": "2.0",
-      "id": 1,
-      "method": "<method_name>",
-      "params": [<parameters>]
+      "id": number,
+      "method": string,
+      "params": array
     }
 
 Example Request:
@@ -57,12 +57,12 @@ JSON-RPC Response Structure
 
 The TrueNAS API will respond with a standard JSON-RPC response:
 
-.. code:: json
+.. code:: javascript
 
     {
       "jsonrpc": "2.0",
-      "id": 1,
-      "result": {<result_data>}
+      "id": number,
+      "result": any
     }
 
 Example Response:
@@ -84,7 +84,7 @@ Error Response
 
 If an error occurs, the response format is:
 
-.. code:: json
+.. code:: javascript
 
     {
       "jsonrpc": "2.0",
@@ -138,7 +138,7 @@ If the server needs to notify a connected client of an event, it sends a
 JSON-RPC Notification Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: json
+.. code-block:: json
    :caption: collection_update
 
     {
@@ -169,7 +169,7 @@ JSON-RPC Notification Structure
     }
 
 
-.. code:: json
+.. code-block:: json
    :caption: notify_unsubscribed
 
     {
