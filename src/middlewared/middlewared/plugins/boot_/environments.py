@@ -51,7 +51,7 @@ class BootEnvironmentService(Service):
             {
                 "paths": [f"{bp_name}/ROOT"],
                 "get_children": True,
-                "properties": ["used", "creation", "origin"],
+                "properties": ["used", "creation"],
                 "get_user_properties": True,
             }
         ):
