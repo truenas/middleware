@@ -3,7 +3,10 @@ from typing import Literal
 
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
-__all__ = ("get_encryption_info", "has_internal_path",)
+__all__ = (
+    "get_encryption_info",
+    "has_internal_path",
+)
 
 
 INTERNAL_PATHS = (
@@ -11,7 +14,7 @@ INTERNAL_PATHS = (
     ".ix-virt",
     "ix-applications",
     ".system"
-) + tuple(BOOT_POOL_NAME_VALID)
+)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -33,15 +36,22 @@ class EncryptionInfo:
 
 def has_internal_path(path):
     """
-    Check if the given path contains, is, or is under any internal system path.
+    Check if a ZFS resource path is an internal path.
+
+    Internal paths include:
+    - Boot pools themselves ('boot-pool', 'freenas-boot') and any dataset under them
+    - System datasets directly under a data pool (e.g., 'tank/ix-apps', 'tank/.system')
 
     Args:
-        path: A relative path string (e.g., 'tank/ix-apps/foo')
+        path: A ZFS resource relative path string (e.g., 'tank/ix-apps/foo', 'boot-pool/grub')
 
     Returns:
-        bool: True if path has any internal component, False otherwise
+        bool: True if the path represents an internal path, False otherwise
     """
-    return any(i in INTERNAL_PATHS for i in path.split("/"))
+    components = path.split("/")
+    if components[0] in BOOT_POOL_NAME_VALID:
+        return True
+    return len(components) > 1 and components[1] in INTERNAL_PATHS
 
 
 def get_encryption_info(data: dict) -> EncryptionInfo:
