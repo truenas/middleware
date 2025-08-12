@@ -26,10 +26,7 @@ For example, to filter the data returned by ``disk.query``, we provide a list of
     ]
 
 
-Supported Operators
-^^^^^^^^^^^^^^^^^^^
-
-.. list-table::
+.. list-table:: Supported Operators
    :header-rows: 1
    :widths: 30 40
 

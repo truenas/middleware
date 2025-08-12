@@ -163,7 +163,8 @@ where ``job_id`` and ``token`` are parameters being passed.
 
 ``core.download`` takes responsibility for providing the download URI with the ``job_id`` and ``token`` values.
 
-Note:
+Notes:
+
 #. Job output is not buffered, so execution would be blocked if a file download is not started.
 #. File download must begin within 60 seconds or the job is canceled.
 #. The file can only be downloaded once.
