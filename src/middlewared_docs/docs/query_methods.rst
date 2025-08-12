@@ -1,7 +1,7 @@
 Query Methods
 =============
 
-TrueNAS API has multiple query methods including `pool.query`, `disk.query`, `vm.query`, and many more.
+TrueNAS API has multiple query methods including ``pool.query``, ``disk.query``, ``vm.query``, and many more.
 
 The arguments for these methods support multiple options and filters that are similar to SQL queries.
 
@@ -15,9 +15,9 @@ Query filters are primarily an array of conditions, with each condition also rep
 
 Each condition in the filter list should compare a field with a value.
 
-Filter Syntax: `["field", "operator", value]`
+Filter Syntax: ``["field", "operator", value]``
 
-For example, to filter the data returned by `disk.query`, we provide a list of conditions:
+For example, to filter the data returned by ``disk.query``, we provide a list of conditions:
 
 .. code:: javascript
 
@@ -66,12 +66,12 @@ Supported Operators
    * - ``[x, "!$", y]``
      - ``x != null && !x.endsWith(y)``
 
-Specifing the prefix "C" will perform a case-insensitive version of the filter, e.g. `C=`.
+Specifing the prefix "C" will perform a case-insensitive version of the filter, e.g. ``C=``.
 
 Multiple Filters
 ^^^^^^^^^^^^^^^^
 
-We can use `disk.query` with the "type" and "rotationrate" filters to find hard drives with a rotation rate higher than 5400 RPM:
+We can use ``disk.query`` with the "type" and "rotationrate" filters to find hard drives with a rotation rate higher than 5400 RPM:
 
 .. code:: javascript
 
@@ -84,7 +84,7 @@ We can use `disk.query` with the "type" and "rotationrate" filters to find hard 
 Connectives
 ^^^^^^^^^^^
 
-Queries with no explicitly defined logical connectives assume conjunction `AND`. The disjunction `OR` is also supported by using the syntax illustrated below. We can use `disk.query` with `OR` to filter disks by name. Note that the operand for the disjunction contains an array of conditions.
+Queries with no explicitly defined logical connectives assume conjunction ``AND``. The disjunction ``OR`` is also supported by using the syntax illustrated below. We can use ``disk.query`` with ``OR`` to filter disks by name. Note that the operand for the disjunction contains an array of conditions.
 
 The following is a valid example.
 
@@ -130,7 +130,7 @@ The following is valid example that returns users who are either enabled or have
 
 Some additional examples of connective use are as follows.
 
-When used with `user.query`, these filters find unlocked users with password authentication enabled and two-factor authentication disabled.
+When used with ``user.query``, these filters find unlocked users with password authentication enabled and two-factor authentication disabled.
 
 .. code:: javascript
 
@@ -140,7 +140,7 @@ When used with `user.query`, these filters find unlocked users with password aut
       ["locked", "=", false]
     ]
 
-Sub-keys in complex JSON objects may be specified by using dot notation to indicate the key. When passed to the `user.query` endpoint, the following query filters will return entries with a primary group ID of 3000.
+Sub-keys in complex JSON objects may be specified by using dot notation to indicate the key. When passed to the ``user.query`` endpoint, the following query filters will return entries with a primary group ID of 3000.
 
 .. code:: javascript
 
@@ -156,7 +156,7 @@ If a key contains a literal dot (".") in its name, then it must be escaped via a
       ["foo\\.bar", "=", 42]
     ]
 
-When the path to the key contains an array, an array index may be manually specified. When passed to the `privilege.query` endpoint, the following query filters
+When the path to the key contains an array, an array index may be manually specified. When passed to the ``privilege.query`` endpoint, the following query filters
 will return entries where the first element of the local groups array has a name of "myuser".
 
 .. code:: javascript
@@ -165,7 +165,7 @@ will return entries where the first element of the local groups array has a name
       ["local_groups.0.name", "=", "myuser"]
     ]
 
-Alternatively, an asterisk (`*`) may be substituted for the array index to match any array entry. When passed to the `privilege.query` endpoint, the following query filters will return entries where any member of the local groups array has a `name` key with the value of `myuser`.
+Alternatively, an asterisk ("*") may be substituted for the array index to match any array entry. When passed to the ``privilege.query`` endpoint, the following query filters will return entries where any member of the local groups array has a ``name`` key with the value of "myuser".
 
 .. code:: javascript
 
@@ -178,7 +178,7 @@ Datetime information
 ^^^^^^^^^^^^^^^^^^^^
 
 Some query results may include datetime information encoded in JSON object via
-key with designator `.$date`. In this case, query filter using an ISO-8601
+key with designator ``.$date``. In this case, query filter using an ISO-8601
 timestamp may be used. For example:
 
 .. code:: javascript
@@ -193,12 +193,12 @@ Query Options
 
 Query Options are objects that can further customize the results returned by a Query Method.
 
-Properties of a Query Option include `extend | extend_context | prefix | extra | order_by | select | count | get | limit | offset`
+Properties of a Query Option include ``extend | extend_context | prefix | extra | order_by | select | count | get | limit | offset``
 
 Count
 ^^^^^
 
-Use the `count` option to get the number of results returned.
+Use the ``count`` option to get the number of results returned.
 
 .. code:: javascript
 
@@ -210,7 +210,7 @@ Use the `count` option to get the number of results returned.
 Limit
 ^^^^^
 
-Use the `limit` option to limit the number of results returned.
+Use the ``limit`` option to limit the number of results returned.
 
 .. code:: javascript
 
@@ -222,7 +222,7 @@ Use the `limit` option to limit the number of results returned.
 Offset
 ^^^^^^
 
-Use the `offset` option to remove the first items from a returned list.
+Use the ``offset`` option to remove the first items from a returned list.
 
 .. code:: javascript
 
@@ -234,7 +234,7 @@ Use the `offset` option to remove the first items from a returned list.
 Select
 ^^^^^^
 
-Use the `select` option to specify the exact fields to return. Fields must be provided in an array of strings. The dot character (".") may be used to explicitly select only subkeys of the query result.
+Use the ``select`` option to specify the exact fields to return. Fields must be provided in an array of strings. The dot character may be used to explicitly select only subkeys of the query result.
 
 Fields returned may be renamed by specifing an array containing two strings with the first string being the field to select from results list and the second string indicating the new name to provide it.
 
@@ -270,14 +270,14 @@ Fields returned may be renamed by specifing an array containing two strings with
 Order By
 ^^^^^^^^
 
-Use the `order_by` option to specify which field determines the sort order. Fields must be provided in an
+Use the ``order_by`` option to specify which field determines the sort order. Fields must be provided in an
 array of strings.
 
 The following prefixes may be applied to the field name:
 
-* `-` reverse sort direction.
-* `nulls_first:` place any NULL values at head of results list.
-* `nulls_last:` place any NULL values at tail of results list.
+* ``-`` reverse sort direction.
+* ``nulls_first:`` place any NULL values at head of results list.
+* ``nulls_last:`` place any NULL values at tail of results list.
 
 
 .. code:: javascript
@@ -287,12 +287,13 @@ The following prefixes may be applied to the field name:
     }
 
 
-Sample SQL Statements Translated Into Query Filters and Query Options
----------------------------------------------------------------------
+SQL Statements Translated Into Filters and Options
+--------------------------------------------------
 
 NOTE: These are examples of syntax translation. They are not intended to be executed on the TrueNAS server.
 
 Example 1
+^^^^^^^^^
 
 .. code-block:: sql
 
@@ -311,6 +312,7 @@ Example 1
     {}
 
 Example 2
+^^^^^^^^^
 
 .. code-block:: sql
 
@@ -339,6 +341,7 @@ Example 2
     }
 
 Example 3
+^^^^^^^^^
 
 .. code-block:: sql
 
@@ -368,6 +371,7 @@ Example 3
     }
 
 Example 4
+^^^^^^^^^
 
 .. code-block:: sql
 

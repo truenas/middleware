@@ -33,7 +33,7 @@ this structure:
 
     {
       "jsonrpc": "2.0",
-      "id": number,
+      "id": number | string,
       "method": string,
       "params": array
     }
@@ -61,7 +61,7 @@ The TrueNAS API will respond with a standard JSON-RPC response:
 
     {
       "jsonrpc": "2.0",
-      "id": number,
+      "id": number | string,
       "result": any
     }
 
@@ -88,7 +88,7 @@ If an error occurs, the response format is:
 
     {
       "jsonrpc": "2.0",
-      "id": string,
+      "id": number | string,
       "error": {
         "code": number,
         "message": string | null,
@@ -111,7 +111,7 @@ If an error occurs, the response format is:
 Custom Error Codes
 ^^^^^^^^^^^^^^^^^^
 
-The following custom error codes can be returned in addition to the codes defined by the JSON-RPC 2.0 specification.
+The following custom error codes can be returned in addition to the codes defined by the `JSON-RPC 2.0 specification <https://www.jsonrpc.org/specification#:~:text=NOT%20be%20included.-,5.1%20Error%20object,-When%20a%20rpc>`_.
 
 +---------------+-------------------------------------+----------------+
 | Error Code    | Message                             | Description    |

@@ -6,9 +6,9 @@ Job execution can be time-consuming, but its progress can be monitored.
 
 To monitor the progress of running jobs, subscribe to the `core.get_jobs event <api_events_core.get_jobs.html>`_.
 
-When a new job is initiated through a JSON-RPC 2.0 API call, its `message_ids` field will include the `id` of the call.
-Therefore, when starting a new job, the client should listen for the `added` event in the `core.get_jobs` subscription.
-Additionally, the client should monitor `changed` events because a `changed` event with a new `message_ids` field value
+When a new job is initiated through a JSON-RPC 2.0 API call, its ``message_ids`` field will include the ``id`` of the call.
+Therefore, when starting a new job, the client should listen for the "added" event in the ``core.get_jobs`` subscription.
+Additionally, the client should monitor "changed" events because a "changed" event with a new ``message_ids`` field value
 may be emitted if a method call triggers a job that has already been scheduled.
 
 Example of Calling a Job Method
@@ -75,7 +75,7 @@ Finally, it sends the method execution result as usual:
 Query Job Status
 ----------------
 
-Job status can be queried with the `core.get_jobs` method.
+Job status can be queried with the ``core.get_jobs`` method.
 
 .. code-block:: json
     :caption: Request
@@ -155,41 +155,38 @@ the output file.
         ]
     }
 
-In the response, the first value `86` is the job id for `config.save`. This can be used to query
+In the response, the first value "86" is the job ID for ``config.save``. This can be used to query
 the status of the job. The second value is a REST endpoint used to download the file.
 
-The download endpoint has a special format:
+The download endpoint has the special format ``http://system_ip/_download/{job_id}?auth_token={token}``
+where ``job_id`` and ``token`` are parameters being passed.
 
-`http://system_ip/_download/{job_id}?auth_token={token}`
-
-`job_id` and `token` are parameters being passed.
-
-`core.download` takes responsibility for providing the download URI with the `job_id` and `token` values.
+``core.download`` takes responsibility for providing the download URI with the ``job_id`` and ``token`` values.
 
 Note:
-1) Job output is not buffered, so execution would be blocked if a file download is not started.
-2) File download must begin within 60 seconds or the job is canceled.
-3) The file can only be downloaded once.
+#. Job output is not buffered, so execution would be blocked if a file download is not started.
+#. File download must begin within 60 seconds or the job is canceled.
+#. The file can only be downloaded once.
 
 Uploading a File
 ^^^^^^^^^^^^^^^^
 
-Files can be uploaded via HTTP POST request only. The upload endpoint is `http://system_ip/_upload`.
+Files can be uploaded via HTTP POST request only. The upload endpoint is ``http://system_ip/_upload``.
 
-It expects two values as form data, `data` and `file`.
+It expects two values as form data: ``data`` and ``file``.
 
-`data` is JSON-encoded data. It must be the first parameter provided and in this format:
+- ``data`` is JSON-encoded data. It must be the first parameter provided and in this format:
 
-.. code:: json
+    .. code:: json
 
-    {
-        "method": "config.upload",
-        "params": []
-    }
+        {
+            "method": "config.upload",
+            "params": []
+        }
 
-`file` is the URI of the file to download.
+- ``file`` is the URI of the file to download.
 
-This example uses `curl`:
+This example uses curl:
 
 .. code-block:: console
     :caption: Request
