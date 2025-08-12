@@ -442,7 +442,10 @@ class SystemDatasetService(ConfigService):
         """
         rv = list()
         for i in query_imported_fast_impl().values():
-            if exclude_pool and exclude_pool == i['name']:
+            if (
+                exclude_pool and exclude_pool == i['name']
+                or i['name'] in BOOT_POOL_NAME_VALID
+            ):
                 continue
 
             ds = self.middleware.call_sync(
