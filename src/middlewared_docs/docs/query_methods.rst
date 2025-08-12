@@ -48,7 +48,7 @@ Operation           Javascript equivalent
 ``[x, "!$", y]``    ``x != null && !x.endsWith(y)``
 ==================  =====================
 
-Specifing the prefix 'C' will perform a case-insensitive version of the filter, e.g. `C=`.
+Specifing the prefix "C" will perform a case-insensitive version of the filter, e.g. `C=`.
 
 Multiple Filters
 ^^^^^^^^^^^^^^^^
@@ -121,14 +121,14 @@ Sub-keys in complex JSON objects may be specified by using dot notation to indic
 
 .. code:: javascript
     [
-      ["group.bsdgrp_gid", "=", 3000],
+      ["group.bsdgrp_gid", "=", 3000]
     ]
 
 If a key contains a literal dot (".") in its name, then it must be escaped via a double backslash.
 
 .. code:: javascript
     [
-      ["foo\\.bar", "=", 42],
+      ["foo\\.bar", "=", 42]
     ]
 
 When the path to the key contains an array, an array index may be manually specified. When passed to the `privilege.query` endpoint, the following query filters
@@ -136,14 +136,14 @@ will return entries where the first element of the local groups array has a name
 
 .. code:: javascript
     [
-      ["local_groups.0.name", "=", "myuser"],
+      ["local_groups.0.name", "=", "myuser"]
     ]
 
 Alternatively, an asterisk (`*`) may be substituted for the array index to match any array entry. When passed to the `privilege.query` endpoint, the following query filters will return entries where any member of the local groups array has a `name` key with the value of `myuser`.
 
 .. code:: javascript
     [
-      ["local_groups.*.name", "=", "myuser"],
+      ["local_groups.*.name", "=", "myuser"]
     ]
 
 
@@ -156,7 +156,7 @@ timestamp may be used. For example:
 
 .. code:: javascript
     [
-      ['timestamp.$date', '>', '2023-12-18T16:15:35+00:00']
+      ["timestamp.$date", ">", "2023-12-18T16:15:35+00:00"]
     ]
 
 
@@ -259,7 +259,7 @@ NOTE: These are examples of syntax translation. They are not intended to be exec
 
 #. Example 1
 
-    .. code-block:: SQL
+    .. code-block:: sql
         SELECT * FROM table;
 
 
@@ -274,7 +274,7 @@ NOTE: These are examples of syntax translation. They are not intended to be exec
 
 #. Example 2
 
-    .. code-block:: SQL
+    .. code-block:: sql
         SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;
 
 
@@ -299,7 +299,7 @@ NOTE: These are examples of syntax translation. They are not intended to be exec
 
 #. Example 3
 
-    .. code-block:: SQL
+    .. code-block:: sql
         SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;
 
 
@@ -325,7 +325,7 @@ NOTE: These are examples of syntax translation. They are not intended to be exec
 
 #. Example 4
 
-    .. code-block:: SQL
+    .. code-block:: sql
         SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);
 
 
@@ -338,7 +338,7 @@ NOTE: These are examples of syntax translation. They are not intended to be exec
               ["builtin", "=", false],
               [
                 ["locked", "=", false],
-                ["ssh", "=" true]
+                ["ssh", "=", true]
               ]
             ]
           ],

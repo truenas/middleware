@@ -215,15 +215,15 @@ Example Notification:
 Important Notes on Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  **No Response Required**: These notifications do not require a
-   response from the client.
--  **Event-Driven**: Notifications are used for updates such as status
-   changes, new log entries, or alerts.
+- **No Response Required**: These notifications do not require a
+  response from the client.
+- **Event-Driven**: Notifications are used for updates such as status
+  changes, new log entries, or alerts.
 
 Limitations
 -----------
 
--  **Batch Requests Are Not Supported**: Each request must be sent
-   individually; batch calls are not allowed.
--  **Error Handling**: Custom error codes are provided for handling
-   specific issues.
+- **Batch Requests Are Not Supported**: Each request must be sent
+  individually; batch calls are not allowed.
+- **Error Handling**: Custom error codes are provided for handling
+  specific issues.
