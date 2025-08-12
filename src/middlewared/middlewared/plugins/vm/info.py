@@ -1,7 +1,5 @@
 import os
 import re
-import subprocess
-from xml.etree import ElementTree as etree
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -13,7 +11,7 @@ from middlewared.service import private, Service
 from middlewared.utils import run
 
 from .connection import LibvirtConnectionMixin
-from .utils import get_virsh_command_args
+from .utils import get_cpu_model_choices
 
 
 RE_AMD_NASID = re.compile(r'NASID:.*\((.*)\)')
@@ -22,8 +20,6 @@ RE_VENDOR_INTEL = re.compile(r'GenuineIntel')
 
 
 class VMService(Service, LibvirtConnectionMixin):
-
-    CPU_MODEL_CHOICES = {}
 
     @api_method(VMSupportsVirtualizationArgs, VMSupportsVirtualizationResult, roles=['VM_READ'])
     def supports_virtualization(self):
@@ -111,24 +107,4 @@ class VMService(Service, LibvirtConnectionMixin):
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.
         """
-        self.middleware.call_sync('vm.check_setup_libvirt')
-        base_path = '/usr/share/libvirt/cpu_map'
-        if self.CPU_MODEL_CHOICES or not os.path.exists(base_path):
-            return self.CPU_MODEL_CHOICES
-
-        mapping = {}
-        with open(os.path.join(base_path, 'index.xml'), 'r') as f:
-            index_xml = etree.fromstring(f.read().strip())
-
-        for arch in filter(lambda a: a.tag == 'arch' and a.get('name'), list(index_xml)):
-            cp = subprocess.Popen(
-                get_virsh_command_args() + ['cpu-models', arch.get('name') if arch.get('name') != 'x86' else 'x86_64'],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            stdout = cp.communicate()[0]
-            if cp.returncode:
-                continue
-            mapping.update({m: m for m in filter(bool, stdout.decode().strip().split('\n'))})
-
-        self.CPU_MODEL_CHOICES.update(mapping)
-        return self.CPU_MODEL_CHOICES
+        return get_cpu_model_choices()

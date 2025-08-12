@@ -9,6 +9,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
@@ -816,11 +817,18 @@ class PoolDatasetService(CRUDService):
                 "params": ["tank/myuser"]
             }
         """
+        if has_internal_path(id_):
+            raise ValidationError('pool.dataset.delete', f'{id_} is an invalid location')
 
-        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id_}/']]):
-            raise CallError(
-                f'Failed to delete dataset: cannot destroy {id_!r}: filesystem has children', errno.ENOTEMPTY
+        if not options['recursive']:
+            ds = await self.middleware.call(
+                'zfs.resource.query_impl',
+                {'paths': [id_], 'properties': None, 'get_children': True}
             )
+            if len(ds) > 1:
+                raise CallError(
+                    f'Failed to delete dataset: cannot destroy {id_!r}: filesystem has children', errno.ENOTEMPTY
+                )
 
         dataset = await self.get_instance(id_)
         audit_callback(dataset['name'])
@@ -892,7 +900,9 @@ class PoolDatasetService(CRUDService):
         """
         Promote the cloned dataset `id`.
         """
-        dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id_)])
+        dataset = await self.middleware.call(
+            'zfs.resource.query_impl', {'paths': [id_], 'properties': ['origin']}
+        )
         if not dataset:
             raise CallError(f'Dataset "{id_}" does not exist.', errno.ENOENT)
         if not dataset[0]['properties']['origin']['value']:

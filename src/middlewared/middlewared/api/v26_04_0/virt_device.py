@@ -2,7 +2,7 @@ from typing import Annotated, Literal, TypeAlias
 
 from pydantic import AfterValidator, Field, field_validator
 
-from middlewared.api.base import BaseModel, LocalGID, LocalUID, match_validator, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, LocalGID, LocalUID, match_validator, NonEmptyString
 from middlewared.validators import RE_MAC_ADDRESS
 
 
@@ -10,8 +10,7 @@ __all__ = [
     'DeviceType', 'InstanceType', 'VirtDeviceUsbChoicesArgs', 'VirtDeviceUsbChoicesResult',
     'VirtDeviceGpuChoicesArgs', 'VirtDeviceGpuChoicesResult', 'VirtDeviceDiskChoicesArgs',
     'VirtDeviceDiskChoicesResult', 'VirtDeviceNicChoicesArgs', 'VirtDeviceNicChoicesResult',
-    'VirtDeviceExportDiskImageArgs', 'VirtDeviceExportDiskImageResult', 'VirtDeviceImportDiskImageArgs',
-    'VirtDeviceImportDiskImageResult', 'VirtDevicePciChoicesArgs', 'VirtDevicePciChoicesResult',
+    'VirtDevicePciChoicesArgs', 'VirtDevicePciChoicesResult',
     'VirtInstanceDeviceSetBootableDiskArgs', 'VirtInstanceDeviceSetBootableDiskResult',
 ]
 
@@ -243,34 +242,6 @@ class VirtDeviceNicChoicesArgs(BaseModel):
 class VirtDeviceNicChoicesResult(BaseModel):
     result: dict[str, str]
     """Object of available network interfaces for the specified NIC type."""
-
-
-@single_argument_args('virt_device_import_disk_image')
-class VirtDeviceImportDiskImageArgs(BaseModel):
-    diskimg: NonEmptyString
-    """Path to the disk image file to import."""
-    zvol: NonEmptyString
-    """Target ZFS volume path where the disk image will be imported."""
-
-
-class VirtDeviceImportDiskImageResult(BaseModel):
-    result: bool
-    """Whether the disk image import operation was successful."""
-
-
-@single_argument_args('virt_device_export_disk_image')
-class VirtDeviceExportDiskImageArgs(BaseModel):
-    format: NonEmptyString
-    """Output format for the exported disk image (e.g., 'qcow2', 'raw')."""
-    directory: NonEmptyString
-    """Directory path where the exported disk image will be saved."""
-    zvol: NonEmptyString
-    """Source ZFS volume to export as a disk image."""
-
-
-class VirtDeviceExportDiskImageResult(BaseModel):
-    result: bool
-    """Whether the disk image export operation was successful."""
 
 
 class VirtDevicePciChoicesArgs(BaseModel):

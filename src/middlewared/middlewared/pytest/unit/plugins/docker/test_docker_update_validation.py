@@ -59,6 +59,9 @@ SYSTEM_STATE = {
             'name': 'tank/ix-apps',
             'properties': {
                 'encryption': {'raw': 'off'},
+                'keyformat': {'raw': 'none'},
+                'keystatus': {'raw': 'available'},
+                'keylocation': {'raw': 'prompt'},
             }
         }
     ],
@@ -69,6 +72,7 @@ SYSTEM_STATE = {
                 'encryption': {'raw': 'off'},
                 'keyformat': {'raw': 'none'},
                 'keystatus': {'raw': 'available'},
+                'keylocation': {'raw': 'prompt'},
             }
         },
         {
@@ -77,6 +81,7 @@ SYSTEM_STATE = {
                 'encryption': {'raw': 'off'},
                 'keyformat': {'raw': 'none'},
                 'keystatus': {'raw': 'available'},
+                'keylocation': {'raw': 'prompt'},
             }
         }
     ],
@@ -149,12 +154,18 @@ SYSTEM_STATE = {
                     'name': 'tank/ix-apps',
                     'properties': {
                         'encryption': {'raw': 'off'},
+                        'keyformat': {'raw': 'none'},
+                        'keystatus': {'raw': 'available'},
+                        'keylocation': {'raw': 'prompt'},
                     }
                 },
                 {
                     'name': 'test/ix-apps',
                     'properties': {
                         'encryption': {'raw': 'off'},
+                        'keyformat': {'raw': 'none'},
+                        'keystatus': {'raw': 'available'},
+                        'keylocation': {'raw': 'prompt'},
                     }
                 }
             ],
@@ -196,6 +207,9 @@ SYSTEM_STATE = {
                     'name': 'tank/ix-apps',
                     'properties': {
                         'encryption': {'raw': 'aes-256-gcm'},
+                        'keyformat': {'raw': 'none'},
+                        'keystatus': {'raw': 'available'},
+                        'keylocation': {'raw': 'prompt'},
                     }
                 },
             ],
@@ -222,6 +236,7 @@ SYSTEM_STATE = {
                         'encryption': {'raw': 'aes-256-gcm'},
                         'keyformat': {'raw': 'passphrase'},
                         'keystatus': {'raw': 'available'},
+                        'keylocation': {'raw': 'prompt'},
                     }
                 }
             ],
@@ -247,6 +262,7 @@ SYSTEM_STATE = {
                         'encryption': {'raw': 'aes-256-gcm'},
                         'keyformat': {'raw': 'hex'},
                         'keystatus': {'raw': 'available'},
+                        'keylocation': {'raw': 'prompt'},
                     }
                 }
             ],
@@ -280,6 +296,7 @@ SYSTEM_STATE = {
                         'encryption': {'raw': 'aes-256-gcm'},
                         'keyformat': {'raw': 'hex'},
                         'keystatus': {'raw': 'unavailable'},
+                        'keylocation': {'raw': 'prompt'},
                     }
                 }
             ],
@@ -313,6 +330,7 @@ SYSTEM_STATE = {
                         'encryption': {'raw': 'aes-256-gcm'},
                         'keyformat': {'raw': 'hex'},
                         'keystatus': {'raw': 'unavailable'},
+                        'keylocation': {'raw': 'prompt'},
                     }
                 }
             ],

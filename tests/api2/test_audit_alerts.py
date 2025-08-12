@@ -16,7 +16,6 @@ def setup_state(request):
     if alert_key is not None:
         path += f"/{alert_key}.db"
     alert_class = request.param[1]
-    restore_data = None
     try:
         # Remove any pre-existing alert cruft
         call('alert.oneshot_delete', alert_class, alert_key if alert_key is None else {'service': alert_key})
@@ -26,13 +25,9 @@ def setup_state(request):
         assert len(class_alerts) == 0, class_alerts
         match alert_class:
             case 'AuditBackendSetup':
-                # A file in the dataset: set it immutable
-                ssh(f'chattr +i {path}')
-                lsattr = ssh(f'lsattr {path}')
-                assert lsattr[4] == 'i', lsattr
-                restore_data = path
+                ssh(f"mv {path} {path}.save")
+                ssh(f"echo 'Corrupted DB' > {path}")
             case 'AuditDatasetCleanup':
-                # Directly tweak the zfs settings
                 call(
                     "zfs.dataset.update",
                     "boot-pool/ROOT/24.10.0-MASTER-20240709-021413/audit",
@@ -44,11 +39,8 @@ def setup_state(request):
     finally:
         match alert_class:
             case 'AuditBackendSetup':
-                # Remove immutable flag from file
-                assert restore_data != ""
-                ssh(f'chattr -i {restore_data}')
-                lsattr = ssh(f'lsattr {restore_data}')
-                assert lsattr[4] == '-', lsattr
+                ssh(f"mv {path}.save {path}")
+                assert ssh(f"head -c 15 {path}") == "SQLite format 3"
                 # Restore backend file descriptors and dismiss alerts
                 call('auditbackend.setup')
             case 'AuditSetup':
@@ -71,8 +63,12 @@ def setup_state(request):
 )
 def test_audit_backend_alert(setup_state):
     db_path, alert_class, audit_method = setup_state
+
+    # Generate the audit alert
     call(audit_method)
     sleep(1)
+
+    # Get the alerts and filter on the desired enties
     alerts = call("alert.list")
     class_alerts = [alert for alert in alerts if alert['klass'] == alert_class]
     assert len(class_alerts) > 0, class_alerts

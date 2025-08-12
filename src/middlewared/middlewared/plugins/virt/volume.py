@@ -1,3 +1,4 @@
+import datetime
 import errno
 import os.path
 from time import time
@@ -70,9 +71,7 @@ class VirtVolumeService(CRUDService):
         if await self.middleware.call('virt.volume.query', [['id', '=', data['name']]]):
             verrors.add('virt_volume_create.name', 'Volume with this name already exists')
         elif await self.middleware.call(
-            'zfs.dataset.query', [['id', '=', ds_name]], {
-                'extra': {'retrieve_children': False, 'retrieve_properties': False}
-            }
+            'zfs.resource.query_impl', {'paths': [ds_name], 'properties': None}
         ):
             # We will kick off recover here so that incus recognizes
             # this dataset as a volume already
@@ -300,9 +299,12 @@ class VirtVolumeService(CRUDService):
                 await self.middleware.call('zfs.dataset.update', new_name, {"properties": {
                     'incus:content_type': {'value': 'block'},
                 }})
-                ds = await self.middleware.call('zfs.dataset.query', [['name', '=', new_name]], {'get': True})
-                entry['volsize'] = ds['properties']['volsize']['parsed']
-                entry['creation'] = ds['properties']['creation']['parsed']
+                ds = await self.middleware.call(
+                    'zfs.resource.query_impl',
+                    {'paths': [new_name], 'properties': ['volsize', 'creation']}
+                )[0]['properties']
+                entry['volsize'] = ds['volsize']['value']
+                entry['creation'] = ds['creation']['value']
             except Exception:
                 self.logger.error('%s: failed to import zvol', orig_name, exc_info=True)
 
@@ -346,7 +348,9 @@ class VirtVolumeService(CRUDService):
                     'config': {
                         'size': str(entry['volsize']),
                     },
-                    'created_at': entry['creation'].isoformat()
+                    'created_at': datetime.datetime.fromtimestamp(
+                        entry['creation'], datetime.UTC
+                    ).isoformat()
                 },
             })
             if result.get('error') != '':

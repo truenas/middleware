@@ -13,6 +13,7 @@ from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.zfs import query_imported_fast_impl
+from middlewared.plugins.zfs.utils import get_encryption_info
 
 from .state_utils import Status
 from .utils import applications_ds_name
@@ -136,7 +137,7 @@ class DockerService(ConfigService):
                         f'{schema}.migrate_applications',
                         f'{applications_ds_name(old_config["pool"])!r} does not exist, migration not possible.'
                     )
-                elif ix_apps_ds[0]['properties']['encryption']['raw'] != 'off':
+                elif get_encryption_info(ix_apps_ds[0]['properties']).encrypted:
                     # This should never happen but better be safe with extra validation
                     verrors.add(
                         f'{schema}.migrate_applications',
@@ -148,14 +149,15 @@ class DockerService(ConfigService):
                     'zfs.resource.query_impl',
                     {'paths': [config['pool']], 'properties': ['encryption']}
                 )
-                if destination_root_ds[0]['properties']['encryption']['raw'] != 'off':
-                    if destination_root_ds[0]['properties']['keyformat']['raw'] == 'passphrase':
+                enc = get_encryption_info(destination_root_ds[0]['properties'])
+                if enc.encrypted:
+                    if enc.encryption_type == 'passphrase':
                         verrors.add(
                             f'{schema}.migrate_applications',
                             f'{ix_apps_ds[0]["name"]!r} can only be migrated to a destination pool '
                             'which is "KEY" encrypted.'
                         )
-                    elif destination_root_ds[0]['properties']['keystatus']['raw'] != 'available':
+                    elif enc.locked:
                         verrors.add(
                             f'{schema}.migrate_applications',
                             f'Migration not possible as {config["pool"]!r} is locked'

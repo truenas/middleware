@@ -3,7 +3,7 @@ from middlewared.api.current import UpdateEntry, UpdateUpdateArgs, UpdateUpdateR
 from middlewared.service import ConfigService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
-from .profile_ import Profile
+from .profile_ import UpdateProfiles
 
 
 class UpdateModel(sa.Model):
@@ -71,7 +71,7 @@ class UpdateService(ConfigService):
             'datastore.update',
             self._config.datastore,
             old['id'],
-            {'profile': Profile[name].name},
+            {'profile': UpdateProfiles[name].name},
             {'prefix': self._config.datastore_prefix},
         )
 

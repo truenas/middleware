@@ -33,7 +33,13 @@ def target_pool():
 
 def test_docker_backup_to_another_pool(docker_pool, target_pool):
     call('docker.backup_to_pool', TARGET_POOL_NAME, job=True)
-    assert call('zfs.dataset.query', [['id', 'rin', f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP_NAME}']]) != []
+    assert call(
+        'zfs.resource.query',
+        {
+            'paths': [f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP_NAME}'],
+            'properties': None,
+        }
+    ) != []
 
 
 def test_docker_incremental_backup(docker_pool, target_pool):
@@ -42,17 +48,25 @@ def test_docker_incremental_backup(docker_pool, target_pool):
         'train': 'stable',
         'catalog_app': 'syncthing',
     }, job=True)
-
     assert call('docker.config')['pool'] == SOURCE_POOL_NAME
     assert call('app.get_instance', APP2_NAME)['name'] == APP2_NAME
-
     call('app.delete', APP_NAME, {'remove_ix_volumes': True}, job=True)
-
     assert call('app.query', [['name', '=', APP_NAME]]) == []
-
     call('docker.backup_to_pool', TARGET_POOL_NAME, job=True)
-    assert call('zfs.dataset.query', [['id', 'rin', f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP_NAME}']]) == []
-    assert call('zfs.dataset.query', [['id', 'rin', f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP2_NAME}']]) != []
+    assert call(
+        'zfs.resource.query',
+        {
+            'paths': [f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP_NAME}'],
+            'properties': None,
+        }
+    ) == []
+    assert call(
+        'zfs.resource.query',
+        {
+            'paths': [f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP2_NAME}'],
+            'properties': None,
+        }
+    ) != []
 
 
 def test_docker_on_replicated_pool(docker_pool, target_pool):

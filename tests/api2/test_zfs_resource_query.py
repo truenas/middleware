@@ -153,8 +153,7 @@ def test_zfs_resource_query_validation_errors():
 
 def test_zfs_resource_query_nonexistent_path():
     """Test querying non-existent paths"""
-    with pytest.raises(Exception):
-        call("zfs.resource.query", {"paths": ["nonexistent/dataset"]})
+    assert call("zfs.resource.query", {"paths": ["nonexistent/dataset"]}) == []
 
 
 def test_zfs_resource_query_volume():

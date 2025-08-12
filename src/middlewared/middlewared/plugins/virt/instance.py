@@ -162,6 +162,13 @@ class VirtInstanceService(CRUDService):
                 f'{schema_name}.instance_type', f'System is not licensed to manage {instance_type!r} instances'
             )
 
+        # Prevent VMs from having autostart enabled for security reasons
+        if new.get('autostart') is True and instance_type == 'VM':
+            verrors.add(
+                f'{schema_name}.autostart',
+                'Autostart cannot be enabled for VM instances'
+            )
+
         if instance_type == 'CONTAINER' and new.get('image_os'):
             verrors.add(f'{schema_name}.image_os', 'This attribute is only valid for VMs')
 
@@ -263,7 +270,11 @@ class VirtInstanceService(CRUDService):
 
         config['boot.autostart'] = 'false'
         if data.get('autostart') is not None:
-            config['user.autostart'] = str(data['autostart']).lower()
+            # We do not want VMs to have autostart enabled by default
+            if instance_type == 'VM' and data['autostart']:
+                config['user.autostart'] = 'false'
+            else:
+                config['user.autostart'] = str(data['autostart']).lower()
 
         if instance_type == 'VM':
             if data.get('image_os'):

@@ -62,8 +62,8 @@ class DiskService(Service):
         # we only keep 7 days of historical data because we keep per second information
         # which adds up to lots of used disk space quickly depending on the size of the
         # system
-        start = datetime.now()
-        end = start + timedelta(days=min(days, 7))
+        end = datetime.now()
+        start = end - timedelta(days=min(days, 7))
         opts = {'start': round(start.timestamp()), 'end': round(end.timestamp())}
         final = dict()
         for disk in self.middleware.call_sync('reporting.netdata_graph', 'disktemp', opts):

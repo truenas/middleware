@@ -86,44 +86,15 @@ class PoolService(Service):
 
     @api_method(PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, roles=['DATASET_READ'])
     async def filesystem_choices(self, types):
-        """
-        Returns all available datasets, except the following:
-            1. system datasets
-            2. application(s) internal datasets
-
-        .. examples(websocket)::
-
-          Get all datasets.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.filesystem_choices",
-                "params": []
-            }
-
-          Get only filesystems (exclude volumes).
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.filesystem_choices",
-                "params": [["FILESYSTEM"]]
-            }
-        """
-        vol_names = [vol['name'] for vol in await self.middleware.call('pool.query')]
-        return [
-            y['name'] for y in await self.middleware.call(
-                'zfs.dataset.query',
-                [
-                    ('pool', 'in', vol_names),
-                    ('type', 'in', types),
-                ] + await self.middleware.call('pool.dataset.internal_datasets_filters'),
-                {'extra': {'retrieve_properties': False}, 'order_by': ['name']},
-            )
-        ]
+        """Returns all available zfs resources based on `types`."""
+        info = []
+        for i in await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'get_children': True, 'properties': None}
+        ):
+            if i['type'] in types:
+                info.append(i['name'])
+        return info
 
     @api_method(PoolIsUpgradedArgs, PoolIsUpgradedResult, roles=['POOL_READ'])
     @item_method
