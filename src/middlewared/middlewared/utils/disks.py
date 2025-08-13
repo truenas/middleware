@@ -6,7 +6,7 @@ import pyudev
 
 DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
-# sda, vda, xvda, nvme0n1 but not sda1/vda1/nvme0n1p1
+# sda, vda, xvda, nvme0n1 but not sda1/vda1/xvda1/nvme0n1p1
 VALID_WHOLE_DISK = re.compile(r'^sd[a-z]+$|^vd[a-z]+$|^xvd[a-z]+$|^nvme\d+n\d+$')
 
 
