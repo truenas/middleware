@@ -7,7 +7,7 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
-
+from middlewared.utils.zfs import query_imported_fast_impl
 from .utils import ZPOOL_CACHE_FILE
 
 
@@ -79,7 +79,7 @@ class PoolService(Service):
         new_name = data.get('name')
 
         # validate
-        imported_pools = await self.middleware.call('zfs.pool.query_imported_fast')
+        imported_pools = await self.middleware.run_in_thread(query_imported_fast_impl)
         if guid in imported_pools:
             raise CallError(f'Pool with guid: "{guid}" already imported', errno.EEXIST)
         elif new_name and new_name in imported_pools.values():
@@ -94,7 +94,8 @@ class PoolService(Service):
 
         # get the zpool name
         if not new_name:
-            pool_name = (await self.middleware.call('zfs.pool.query_imported_fast'))[guid]['name']
+            pool_name = await self.middleware.run_in_thread(query_imported_fast_impl)
+            pool_name = pool_name[guid]['name']
         else:
             pool_name = new_name
 

@@ -6,6 +6,7 @@ import functools
 from middlewared.service import CallError, Service
 from middlewared.service_exception import ValidationError
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.zfs import query_imported_fast_impl
 from .pool_utils import find_vdev, SEARCH_PATHS
 
 
@@ -236,7 +237,7 @@ class ZFSPoolService(Service):
 
     def ddt_prefetch_pools(self):
         # We have this method so to avoid making excessive calls to process pool service
-        for pool_info in (self.middleware.call_sync('zfs.pool.query_imported_fast')).values():
+        for pool_info in query_imported_fast_impl().values():
             if pool_info['name'] in BOOT_POOL_NAME_VALID:
                 continue
 

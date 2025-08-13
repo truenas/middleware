@@ -21,7 +21,7 @@ from middlewared.service import job, private
 from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
-
+from middlewared.utils.zfs import query_imported_fast_impl
 from .utils import (
     VirtGlobalStatus, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_BRIDGE, INCUS_STORAGE
 )
@@ -228,7 +228,8 @@ class VirtGlobalService(ConfigService):
         Pool choices for virtualization purposes.
         """
         pools = {POOL_DISABLED: '[Disabled]'}
-        for p in (await self.middleware.call('zfs.pool.query_imported_fast')).values():
+        imported_pools = await self.middleware.run_in_thread(query_imported_fast_impl)
+        for p in imported_pools.values():
             # Do not show boot pools or pools with spaces in their name
             # Incus is not gracefully able to handle pools which have spaces in their names
             # https://ixsystems.atlassian.net/browse/NAS-134244

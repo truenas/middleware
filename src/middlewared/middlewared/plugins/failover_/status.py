@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.service import Service
+from middlewared.utils.zfs import query_imported_fast_impl
 
 
 class DetectFailoverStatusService(Service):
@@ -47,7 +48,8 @@ class DetectFailoverStatusService(Service):
             return 'BACKUP'
 
         fenced_running = (await self.middleware.call('failover.fenced.run_info'))['running']
-        only_boot_pool = len((await self.middleware.call('zfs.pool.query_imported_fast'))) <= 1
+        only_boot_pool = await self.middleware.run_in_thread(query_imported_fast_impl)
+        only_boot_pool = len(only_boot_pool) <= 1
         if not fenced_running:
             if only_boot_pool:
                 # we only have boot pool, fenced is not running, and we're licensed
