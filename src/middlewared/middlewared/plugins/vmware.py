@@ -25,6 +25,7 @@ from middlewared.async_validators import resolve_hostname
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.time_utils import utc_now
+from middlewared.utils.zfs import query_imported_fast_impl
 
 NFS_VOLUME_TYPES = ('NFS', 'NFS41')
 
@@ -209,7 +210,7 @@ class VMWareService(CRUDService):
                 zvol = extent["path"][len("zvol/"):]
                 iscsi_extents[zvol].append(f"naa.{extent['naa'][2:]}")
         filesystems = []
-        zpools = [v["name"] for k, v in self.middleware.call_sync("zfs.pool.query_imported_fast").items()]
+        zpools = [i["name"] for i in query_imported_fast_impl().values()]
         options = {"extra": {"retrieve_properties": False}}
         for fs in self.middleware.call_sync("pool.dataset.query", [("pool", "in", zpools)], options):
             if fs["type"] == "FILESYSTEM":
