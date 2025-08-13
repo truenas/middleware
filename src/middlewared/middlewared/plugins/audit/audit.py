@@ -461,7 +461,7 @@ class AuditService(ConfigService):
 
         # Get dataset names of any dataset on boot pool that isn't on the current
         # activated boot environment.
-        to_remove = []
+        to_remove = set()
         for i in await self.middleware.call(
             'zfs.resource.query_impl',
             {'paths': [boot_pool], 'properties': ['refreservation'], 'get_children': True}
@@ -476,19 +476,19 @@ class AuditService(ConfigService):
         if to_remove:
             self.logger.debug(
                 'Removing refreservations from the following datasets: %s',
-                ', '.join([ds['name'] for ds in to_remove])
+                ', '.join(to_remove)
             )
 
         payload = {'refreservation': {'parsed': None}}
-        for ds in to_remove:
+        for ds_name in to_remove:
             try:
                 await self.middleware.call(
-                    'zfs.dataset.update', ds['name'], {'properties': payload}
+                    'zfs.dataset.update', ds_name, {'properties': payload}
                 )
             except Exception:
                 self.logger.error(
                     '%s: failed to remove refreservation from dataset. Manual '
-                    'cleanup may be required', ds['name'], exc_info=True
+                    'cleanup may be required', ds_name, exc_info=True
                 )
 
         audit_config = await self.middleware.call('audit.config')
