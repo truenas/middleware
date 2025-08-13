@@ -949,12 +949,8 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
             # If snapshot iteration fails, initialized values remain
             pass
 
-    if state.select:
-        data = state.select_fn([info], state.select)[0]
-    else:
-        data = info
-
-    # Note: Filtering will be applied at the end in generic_query function
+    data = info
+    # Note: Filtering and select will be applied at the end in generic_query function
 
     if state.count_only:
         state.count += 1
@@ -1110,7 +1106,10 @@ def generic_query(
     if order_by:
         state.results = GENERIC_FILTERS.do_order(state.results, order_by)
 
-    # Apply get=True AFTER filtering and ordering
+    # Apply selection AFTER all business logic (hierarchy, filtering, ordering)
+    if select:
+        state.results = GENERIC_FILTERS.do_select(state.results, select)
+
     if options["get"]:
         if not state.results:
             raise MatchNotFound()
