@@ -21,6 +21,7 @@ TEST_DIR_TO_RESULT = {
     'stig': 'results/stig_tests_result.xml',
     'sharing_protocols': 'results/sharing_protocols_tests_result.xml',
     'cloud': 'results/cloud_tests_result.xml',
+    'sharing_protocols/iscsi': 'results/sharing_protocols_iscsi_tests_result.xml',
 }
 
 workdir = os.getcwd()
