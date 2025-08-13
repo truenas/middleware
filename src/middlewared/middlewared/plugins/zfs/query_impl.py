@@ -27,24 +27,33 @@ class CallbackState:
     will exclude them."""
 
 
+def __query_impl_snapshots_callback(hdl, info):
+    info["snapshots"].append(hdl.name)
+    info["snapshots_count"] += 1
+
+
 def __query_impl_callback(hdl, state):
     if state.eip and has_internal_path(hdl.name):
         # returning False here will halt the iteration
         # entirely which is not what we want to do
         return True
 
-    state.results.append(
-        normalize_asdict_result(
-            hdl.asdict(
-                properties=build_set_of_zfs_props(
-                    hdl.type, state.dp, state.query_args["properties"]
-                ),
-                get_user_properties=state.query_args["get_user_properties"],
-                get_source=state.query_args["get_source"],
+    info = normalize_asdict_result(
+        hdl.asdict(
+            properties=build_set_of_zfs_props(
+                hdl.type, state.dp, state.query_args["properties"]
             ),
-            normalize_source=state.query_args["get_source"],
-        )
+            get_user_properties=state.query_args["get_user_properties"],
+            get_source=state.query_args["get_source"],
+        ),
+        normalize_source=state.query_args["get_source"],
     )
+    if state.query_args["get_snapshots"]:
+        hdl.iter_snapshots(
+            callback=__query_impl_snapshots_callback, state=info, fast=True
+        )
+
+    state.results.append(info)
     if state.query_args["get_children"]:
         hdl.iter_filesystems(callback=__query_impl_callback, state=state)
     return True
@@ -80,7 +89,7 @@ def __should_exclude_internal_paths(data):
     #   NOTE: (the `exclude_internal_paths` is a private
     #   internal argument that is set internally within
     #   middleware. It's not exposed to public.)
-    return data.get('exclude_internal_paths', True)
+    return data.get("exclude_internal_paths", True)
 
 
 def query_impl(hdl, data):
