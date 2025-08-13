@@ -27,24 +27,34 @@ class KMIPService(Service, KMIPServerMixin):
         return False
 
     @private
-    def get_datasets(self):
-        existing_datasets = set()
+    def get_encrypted_datasets(self, filters):
+        rv = list()
+        ds_in_db = dict()
+        for i in self.middleware.call_sync(
+            'datastore.query',
+            'storage.encrypteddataset',
+            filters
+        ):
+            ds_in_db[i['name']] = i
+
+        if not ds_in_db:
+            return rv
+
         for i in self.middleware.call_sync(
             'zfs.resource.query_impl',
-            {'get_children': True, 'properties': None}
+            {'paths': list(ds_in_db), 'get_children': True, 'properties': None}
         ):
-            existing_datasets.add(i['name'])
-        return existing_datasets
+            if i['name'] in ds_in_db:
+                rv.append(ds_in_db[i['name']])
+        return rv
 
     @private
     def push_zfs_keys(self, ids=None):
-        datasets = self.middleware.call_sync(
-            'datastore.query', 'storage.encrypteddataset', [['id', 'in', ids]] if ids else []
-        )
-        existing_datasets = self.get_datasets()
         failed = []
+        filters = [] if ids is None else [['id', 'in', ids]]
+        existing_datasets = self.get_encrypted_datasets(filters)
         with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
-            for ds in filter(lambda d: d['name'] in existing_datasets, datasets):
+            for ds in existing_datasets:
                 if not ds['encryption_key']:
                     # We want to make sure we have the KMIP server's keys and in-memory keys in sync
                     try:
@@ -81,11 +91,10 @@ class KMIPService(Service, KMIPServerMixin):
 
     @private
     def pull_zfs_keys(self):
-        datasets = self.middleware.call_sync('datastore.query', 'storage.encrypteddataset', [['kmip_uid', '!=', None]])
-        existing_datasets = self.get_datasets()
+        existing_datasets = self.get_encrypted_datasets([['kmip_uid', '!=', None]])
         failed = []
         connection_successful = self.middleware.call_sync('kmip.test_connection')
-        for ds in filter(lambda d: d['name'] in existing_datasets, datasets):
+        for ds in existing_datasets:
             try:
                 if ds['encryption_key']:
                     key = ds['encryption_key']
