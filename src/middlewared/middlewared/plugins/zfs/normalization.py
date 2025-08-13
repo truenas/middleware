@@ -95,6 +95,13 @@ def normalize_asdict_result(result: dict, *, normalize_source: bool) -> dict:
     # populated by caller
     result["children"] = list()
 
+    # always add snapshots, snapshots_count keys
+    # NOTE: this will be populated
+    # by caller based on arguments
+    # given at call time
+    result["snapshots"] = list()
+    result["snapshots_count"] = 0
+
     if normalize_source:
         # update zfs properties
         for i in result["properties"].values():
