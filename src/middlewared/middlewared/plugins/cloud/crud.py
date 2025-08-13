@@ -90,11 +90,20 @@ class CloudTaskServiceMixin:
             await self.validate_path_field(data, name, verrors)
 
         if data["snapshot"]:
-            if await self.middleware.call("pool.dataset.query",
-                                            [["name", "^", os.path.relpath(data["path"], "/mnt") + "/"],
-                                             ["type", "=", "FILESYSTEM"]]):
-                verrors.add(f"{name}.snapshot", "This option is only available for datasets that have no further "
-                                                "nesting")
+            for i in await self.middleware.call(
+                "zfs.resource.query_impl",
+                {
+                    "paths": [data["path"].removeprefix("/mnt/")],
+                    "properties": None,
+                    "get_children": True
+                },
+            ):
+                if i["type"] == "FILESYSTEM":
+                    verrors.add(
+                        f"{name}.snapshot",
+                        "This option is only available for datasets that have no further nesting"
+                    )
+                    break
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
             for k in ["pre_script", "post_script"]:
