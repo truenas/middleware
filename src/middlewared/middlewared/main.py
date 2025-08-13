@@ -670,7 +670,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def __init_procpool(self):
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
             max_workers=5,
-            max_tasks_per_child=20,
+            max_tasks_per_child=100,
             initializer=functools.partial(worker_init, self.debug_level, self.log_handler)
         )
 
