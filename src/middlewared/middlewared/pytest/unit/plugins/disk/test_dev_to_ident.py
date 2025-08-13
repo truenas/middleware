@@ -53,8 +53,21 @@ BY_SERIAL = (
     },
     "{serial}AAAAAAAA",
 )
+BY_XEN_DEVICENAME = (
+    "xvdc",
+    {
+        "xvdc": {
+            "serial": None,
+            "serial_lunid": None,
+            "parts": []
+        }
+    },
+    "{devicename}xvdc",
+)
 
 
-@pytest.mark.parametrize('disk_name, sys_disks, result', [BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL])
+@pytest.mark.parametrize('disk_name, sys_disks, result', [
+    BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL, BY_XEN_DEVICENAME
+])
 def test_dev_to_ident(disk_name, sys_disks, result):
     assert result == OBJ.dev_to_ident(disk_name, sys_disks)
