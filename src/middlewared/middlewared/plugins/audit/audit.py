@@ -466,7 +466,7 @@ class AuditService(ConfigService):
             'zfs.resource.query_impl',
             {'paths': [boot_pool], 'properties': ['refreservation'], 'get_children': True}
         ):
-            if i['name'] == cur['name'] or i['name'].startswith(f'{parent}/'):
+            if i['name'] == cur['name'] or i['name'] == parent or i['name'].startswith(f'{parent}/'):
                 continue
             elif i['properties']['refreservation']['value'] is None:
                 continue
