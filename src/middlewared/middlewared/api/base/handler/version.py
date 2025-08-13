@@ -162,68 +162,68 @@ class APIVersionsAdapter:
         new_model: type[BaseModel],
         direction: Direction,
     ):
-        # Create mapping from aliases to field names for both models
-        current_alias_to_field = {}
-        current_field_to_alias = {}
-        for field_name, field_info in current_model.model_fields.items():
-            alias = field_info.alias or field_name
-            current_alias_to_field[alias] = field_name
-            current_field_to_alias[field_name] = alias
+        def _build_field_mapping(model: type[BaseModel]) -> tuple[dict[str, str], dict[str, str]]:
+            """Build bidirectional mapping between field names and aliases."""
+            alias_to_field = {}
+            field_to_alias = {}
+            for field_name, field_info in model.model_fields.items():
+                alias = field_info.alias or field_name
+                alias_to_field[alias] = field_name
+                field_to_alias[field_name] = alias
+            return alias_to_field, field_to_alias
 
-        new_alias_to_field = {}
-        new_field_to_alias = {}
-        for field_name, field_info in new_model.model_fields.items():
-            alias = field_info.alias or field_name
-            new_alias_to_field[alias] = field_name
-            new_field_to_alias[field_name] = alias
+        def _adapt_nested_value(val, current_field, new_field):
+            """Adapt nested model values (dict or list of models)."""
+            if isinstance(val, dict):
+                if (
+                    (current_nested := model_field_is_model(current_field, value_hint=val))
+                    and (new_nested := model_field_is_model(new_field, name_hint=current_nested.__name__))
+                    and current_nested.__name__ == new_nested.__name__
+                ):
+                    return self._adapt_value(val, current_nested, new_nested, direction)
+            elif isinstance(val, list):
+                if (
+                    (current_nested := model_field_is_list_of_models(current_field))
+                    and (current_nested := model_field_is_model(current_nested))
+                    and (new_nested := model_field_is_list_of_models(new_field))
+                    and (new_nested := model_field_is_model(new_nested))
+                    and current_nested.__name__ == new_nested.__name__
+                ):
+                    return [self._adapt_value(v, current_nested, new_nested, direction) for v in val]
+            return val
 
-        # Process existing keys in value, handling both field names and aliases
+        # Build field mappings once
+        current_alias_to_field, _ = _build_field_mapping(current_model)
+        new_alias_to_field, new_field_to_alias = _build_field_mapping(new_model)
+
+        # Track which fields are present to avoid duplicates
+        present_fields = set()
+
+        # Process existing keys in value
         for k in list(value.keys()):
-            # Map the key to actual field names
             current_field_name = current_alias_to_field.get(k, k)
             new_field_name = new_alias_to_field.get(k, k)
-            
-            # Check if the field exists in both models (by field name)
+
+            # Check if field exists in both models
             if current_field_name in current_model.model_fields and new_field_name in new_model.model_fields:
-                current_model_field = current_model.model_fields[current_field_name].annotation
-                new_model_field = new_model.model_fields[new_field_name].annotation
-                
-                if (
-                    isinstance(value[k], dict) and
-                    (current_nested_model := model_field_is_model(current_model_field, value_hint=value[k])) and
-                    (new_nested_model := model_field_is_model(new_model_field,
-                                                              name_hint=current_nested_model.__name__)) and
-                    current_nested_model.__name__ == new_nested_model.__name__
-                ):
-                    value[k] = self._adapt_value(value[k], current_nested_model, new_nested_model, direction)
-                elif (
-                    isinstance(value[k], list) and
-                    (current_nested_model := model_field_is_list_of_models(current_model_field)) and
-                    (current_nested_model := model_field_is_model(current_nested_model)) and
-                    (new_nested_model := model_field_is_list_of_models(new_model_field)) and
-                    (new_nested_model := model_field_is_model(new_nested_model)) and
-                    current_nested_model.__name__ == new_nested_model.__name__
-                ):
-                    value[k] = [
-                        self._adapt_value(v, current_nested_model, new_nested_model, direction)
-                        for v in value[k]
-                    ]
-                
-                # If the key in value is an alias but the field name is different, update the key
+                present_fields.add(new_field_name)
+
+                # Adapt nested values
+                current_field_info = current_model.model_fields[current_field_name]
+                new_field_info = new_model.model_fields[new_field_name]
+                value[k] = _adapt_nested_value(value[k], current_field_info.annotation, new_field_info.annotation)
+
+                # Normalize key to preferred format for new model
                 new_preferred_key = new_field_to_alias[new_field_name]
                 if k != new_preferred_key and new_preferred_key not in value:
                     value[new_preferred_key] = value.pop(k)
 
+        # Add missing fields with defaults (only for non-ForUpdate models)
         if new_model.__class__ is not ForUpdateMetaclass:
-            for k, field in new_model.model_fields.items():
-                # Check if field is missing by both field name and alias
-                alias = field.alias or k
-                field_exists = k in value or alias in value
-                
-                if not field_exists and not field.is_required():
-                    # Use the alias as the key if it exists, otherwise use field name
-                    key_to_use = alias if field.alias else k
-                    value[key_to_use] = field.get_default()
+            for field_name, field_info in new_model.model_fields.items():
+                if field_name not in present_fields and not field_info.is_required():
+                    key_to_use = field_info.alias or field_name
+                    value[key_to_use] = field_info.get_default()
 
         match direction:
             case Direction.DOWNGRADE:
@@ -231,12 +231,10 @@ class APIVersionsAdapter:
             case Direction.UPGRADE:
                 value = new_model.from_previous(value)
 
-        for k in list(value):
+        for k, v in list(value.items()):
             if k in current_model.model_fields and k not in new_model.model_fields:
                 value.pop(k)
-
-        for k, v in list(value.items()):
-            if isinstance(v, Undefined):
+            elif isinstance(v, Undefined):
                 value.pop(k)
 
         return value
