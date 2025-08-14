@@ -35,6 +35,8 @@ async def udev_block_devices_hook(middleware, data):
         await added_disk(middleware, data['SYS_NAME'])
     elif data['ACTION'] == 'remove':
         await remove_disk(middleware, data['SYS_NAME'])
+    elif data['ACTION'] == 'change':
+        await middleware.call('disk.sync_size_if_changed', data['SYS_NAME'])
 
 
 def setup(middleware):

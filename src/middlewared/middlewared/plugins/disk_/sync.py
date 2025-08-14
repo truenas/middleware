@@ -248,6 +248,28 @@ class DiskService(Service, ServiceChangeMixin):
             db_disk[f'disk_{key}'] = disk[key]
 
     @private
+    async def sync_size_if_changed(self, name: str):
+        try:
+            with open(f'/sys/block/{name}/size') as f:
+                current_size = int(f.read().strip()) * 512
+        except (FileNotFoundError, ValueError, OSError):
+            return
+
+        try:
+            disk = await self.middleware.call(
+                'datastore.query', 'storage.disk',
+                [('disk_name', '=', name)], {'get': True}
+            )
+        except IndexError:
+            return
+
+        if int(disk.get('disk_size')) != current_size:
+            await self.middleware.call(
+                'datastore.update', 'storage.disk',
+                disk['disk_identifier'], {'disk_size': current_size}
+            )
+
+    @private
     async def restart_services_after_sync(self):
         await self._service_change('snmp', 'restart')
 
