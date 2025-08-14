@@ -37,5 +37,17 @@ async def udev_block_devices_hook(middleware, data):
         await remove_disk(middleware, data['SYS_NAME'])
 
 
+def udev_disk_change_sync_hook(middleware, data):
+    if data.get('SUBSYSTEM') != 'block':
+        return
+    elif data.get('DEVTYPE') != 'disk':
+        return
+    elif data['SYS_NAME'].startswith(DISKS_TO_IGNORE):
+        return
+    elif data['ACTION'] == 'change':
+        middleware.call_sync('disk.sync_size_if_changed', data['SYS_NAME'])
+
+
 def setup(middleware):
     middleware.register_hook('udev.block', udev_block_devices_hook)
+    middleware.register_hook('udev.block', udev_disk_change_sync_hook)
