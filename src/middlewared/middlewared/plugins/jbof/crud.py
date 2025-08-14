@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 import time
 
@@ -875,6 +876,11 @@ class JBOFService(CRUDService):
                 return
 
     @private
+    def load_modules(self):
+        if not os.path.exists('/dev/nvme-fabrics'):
+            subprocess.run(['modprobe', 'nvme_rdma'])
+
+    @private
     @job(lock='configure_job')
     async def configure_job(self, job, reload_fenced=False):
         """Bring up any previously configured JBOF NVMe/RoCE configuration.
@@ -896,6 +902,9 @@ class JBOFService(CRUDService):
             err = 'No JBOFs need to be configured'
             job.set_progress(100, err)
             return {'failed': failed, 'message': err}
+
+        # Just in case this hasn't already been loaded.
+        await self.middleware.call('jbof.load_modules')
 
         # Bring up the JBOFs in parallel.
         exceptions = await asyncio.gather(
