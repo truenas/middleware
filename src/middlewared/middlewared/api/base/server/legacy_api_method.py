@@ -99,7 +99,7 @@ class LegacyAPIMethod(Method):
                     return await super()._dump_result(app, methodobj, result)
 
                 raise
-
+            self.middleware.logger("Here!")
             return self.middleware.dump_result(self.serviceobj, methodobj, app, result["result"],
                                                new_style_returns_model=model)
 
