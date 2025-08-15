@@ -3,11 +3,10 @@ import re
 
 import pyudev
 
+from .disks_.disk_class import VALID_WHOLE_DISK
 
 DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
-# sda, vda, xvda, nvme0n1 but not sda1/vda1/xvda1/nvme0n1p1
-VALID_WHOLE_DISK = re.compile(r'^sd[a-z]+$|^vd[a-z]+$|^xvd[a-z]+$|^nvme\d+n\d+$')
 
 
 def safe_retrieval(prop, key, default, as_int=False):
