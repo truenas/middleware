@@ -1308,7 +1308,7 @@ class SharingSMBService(SharingService):
                 }
             case SMBSharePurpose.TIME_LOCKED_SHARE:
                 out[share_field.OPTS] = {
-                    share_field.WORM_GRACE: data['worm_grace_period'],
+                    share_field.WORM_GRACE: data['worm_grace_period'] or 900,
                     share_field.AAPL_MANGLING: data[share_field.AAPL_MANGLING],
                 }
             case SMBSharePurpose.PRIVATE_DATASETS_SHARE:
