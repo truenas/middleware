@@ -505,7 +505,7 @@ class DirectoryServicesEntry(BaseModel):
     server when necessary. """
     enable_dns_updates: bool = Field(default=True)
     """ Enable automatic DNS updates for the TrueNAS server in the domain via nsupdate and gssapi / TSIG. """
-    timeout: int = Field(default=10, ge=5, le=40)
+    timeout: int = Field(default=10, ge=5, le=60)
     """ The timeout value for DNS queries that are performed as part of the join process and NETWORK_TIMEOUT for LDAP \
     requests. """
     kerberos_realm: NonEmptyString | None = Field(default=None)
