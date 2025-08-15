@@ -917,7 +917,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             # FIXME: When all models become new style, this should be passed explicitly
             if new_style_returns_model is None:
                 new_style_returns_model = methodobj.new_style_returns
-
+            self.logger.debug(new_style_returns_model)
+            self.logger.debug(result)
             return serialize_result(new_style_returns_model, result, expose_secrets)
 
         if not expose_secrets and hasattr(methodobj, "returns") and methodobj.returns:
