@@ -51,7 +51,7 @@ class MattermostServiceModel(BaseModel):
     """Username to display when posting alerts to Mattermost."""
     channel: str = ""
     """Mattermost channel name to post alerts to. Empty string uses webhook default."""
-    icon_url: HttpUrl = ""
+    icon_url: Literal[""] | HttpUrl = ""
     """URL of icon image to display with alert messages. Empty string uses default."""
 
 
@@ -60,7 +60,7 @@ class OpsGenieServiceModel(BaseModel):
     """Alert service type identifier for OpsGenie."""
     api_key: Secret[NonEmptyString]
     """OpsGenie API key for authentication."""
-    api_url: HttpUrl = ""
+    api_url: Literal[""] | HttpUrl = ""
     """OpsGenie API URL. Empty string uses default OpsGenie endpoint."""
 
 
