@@ -86,6 +86,7 @@ class LegacyAPIMethod(Method):
         return [adapted_params_dict[field] for field in self.current_accepts_model.model_fields]
 
     async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
+        self.middleware.logger.debug(result)
         if self.current_accepts_model:  # FIXME: Remove this check when all models become new style
             try:
                 model, result = await self.adapter.adapt_model(
@@ -99,7 +100,7 @@ class LegacyAPIMethod(Method):
                     return await super()._dump_result(app, methodobj, result)
 
                 raise
-            self.middleware.logger.debug("Here!")
+            self.middleware.logger.debug(result)
             return self.middleware.dump_result(self.serviceobj, methodobj, app, result["result"],
                                                new_style_returns_model=model)
 
