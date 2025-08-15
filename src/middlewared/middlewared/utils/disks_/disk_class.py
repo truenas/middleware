@@ -13,10 +13,10 @@ import uuid
 from .disk_io import read_gpt, wipe_disk_quick, create_gpt_partition
 from .gpt_parts import GptPartEntry, PART_TYPES
 
-__all__ = ("DiskEntry", "iterate_disks")
+__all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
-# sda, pmem0, vda, nvme0n1 but not sda1/vda1/nvme0n1p1
-VALID_WHOLE_DISK = re.compile(r"^pmem\d+$|^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$")
+# sda, pmem0, vda, xvda, nvme0n1 but not sda1/vda1/xvda1/nvme0n1p1
+VALID_WHOLE_DISK = re.compile(r"^pmem\d+$|sd[a-z]+$|^vd[a-z]+$|^xvd[a-z]+$|^nvme\d+n\d+$")
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
