@@ -170,6 +170,7 @@ class EtcService(Service):
                     'args': [[('enabled', '=', True), ('locked', '=', False)]],
                 },
                 {'method': 'nfs.config'},
+                {'method': 'system.global.id'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'nfs.conf'},
