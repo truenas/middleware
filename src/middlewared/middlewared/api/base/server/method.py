@@ -69,6 +69,7 @@ class Method:
         return await self._dump_result(app, methodobj, result)
 
     async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
+        self.middleware.logger.debug(result)
         return self.middleware.dump_result(self.serviceobj, methodobj, app, result)
 
     def dump_args(self, params: list) -> list:
