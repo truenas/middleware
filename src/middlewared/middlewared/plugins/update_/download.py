@@ -121,6 +121,12 @@ class UpdateService(Service):
                                     )
 
                                     f.write(chunk)
+
+                                size = os.path.getsize(dst)
+                                if size != total:
+                                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})',
+                                                    errno.ECONNRESET)
+
                                 break
                         except Exception as e:
                             if i < 5 and progress and any(ee in str(e) for ee in ("ECONNRESET", "ETIMEDOUT")):
@@ -133,7 +139,7 @@ class UpdateService(Service):
                 size = os.path.getsize(dst)
                 if size != total:
                     os.unlink(dst)
-                    raise CallError(f'Downloaded update file mismatch ({size} != {total})')
+                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})')
 
                 set_progress(1, "Update downloaded.")
                 return True
