@@ -1,9 +1,9 @@
 import dataclasses
 
 try:
-    from truenas_pylibzfs import ZFSError, ZFSException
+    from truenas_pylibzfs import ZFSError, ZFSException, ZFSProperty
 except ImportError:
-    ZFSError = ZFSException = None
+    ZFSError = ZFSException = ZFSProperty = None
 
 from .normalization import normalize_asdict_result
 from .property_management import build_set_of_zfs_props, DeterminedProperties
@@ -28,8 +28,13 @@ class CallbackState:
 
 
 def __query_impl_snapshots_callback(hdl, info):
-    info["snapshots"].append(hdl.name)
+    info["snapshots"].append(
+        hdl.asdict(
+            properties={ZFSProperty.CREATION}
+        )
+    )
     info["snapshots_count"] += 1
+    return True
 
 
 def __query_impl_callback(hdl, state):
