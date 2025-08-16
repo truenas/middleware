@@ -7,6 +7,9 @@
     cltrack_storedir = NFSServicePathInfo.CLDTRKDIR.path()
     config = render_ctx["nfs.config"]
 
+    # HA requirement: Consistent server scope value between controllers
+    scope = render_ctx["system.global.id"]
+
     # Fail-safe setting is two nfsd
     num_nfsd = config['servers'] if config['servers'] > 0 else 2
 
@@ -35,6 +38,7 @@
 # TrueNAS configuration file for NFS
 #
 [nfsd]
+scope = ${scope}
 syslog = 1
 vers2 = n
 threads = ${num_nfsd}
