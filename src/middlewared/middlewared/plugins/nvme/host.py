@@ -80,6 +80,9 @@ class NVMeHost(ConfigService):
         )
 
         await self.middleware.call('etc.generate', 'nvme')
+        if await self.middleware.call('failover.status') == 'MASTER':
+            if await self.middleware.call('failover.remote_connected'):
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['nvme'])
 
         return await self.config()
 
@@ -107,22 +110,18 @@ class NVMeHost(ConfigService):
         if data['hostnqn_a'] == data['hostnqn_b']:
             verrors.add(f'{schema_name}.hostnqn_b', 'Cannot use same hostnqn for both nodes')
 
+    async def setup(self):
+        payload = {}
+        cfg = await self.middleware.call('nvme.host.config')
+        for hostid_key in ['hostid_a', 'hostid_b']:
+            if not cfg[hostid_key]:
+                payload = payload | {hostid_key: str(uuid.uuid4())}
+        for hostnqn_key in ['hostnqn_a', 'hostnqn_b']:
+            if not cfg[hostnqn_key]:
+                payload = payload | {hostnqn_key: f"{NQN_UUID_PREFIX}{uuid.uuid4()}"}
+        if payload:
+            await self.middleware.call('nvme.host.update', payload)
+
 
 async def setup(middleware):
-    node = await middleware.call('failover.node')
-    cfg = await middleware.call('nvme.host.config')
-    match node:
-        case 'A' | 'MANUAL':
-            hostid_key = 'hostid_a'
-            hostnqn_key = 'hostnqn_a'
-        case 'B':
-            hostid_key = 'hostid_b'
-            hostnqn_key = 'hostnqn_b'
-
-    payload = {}
-    if not cfg[hostid_key]:
-        payload = {hostid_key: str(uuid.uuid4())}
-    if not cfg[hostnqn_key]:
-        payload = payload | {hostnqn_key: f"{NQN_UUID_PREFIX}{uuid.uuid4()}"}
-    if payload:
-        await middleware.call('nvme.host.update', payload)
+    await middleware.call('nvme.host.setup')
