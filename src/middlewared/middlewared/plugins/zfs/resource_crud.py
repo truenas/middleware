@@ -55,13 +55,6 @@ class ZFSResourceService(Service):
 
     @private
     def validate_query_args(self, data):
-        for path in data["paths"]:
-            if "@" in path:
-                raise ValidationError(
-                    "zfs.resource.query",
-                    "Querying snapshot information is unsupported at this time.",
-                )
-
         if data["get_children"] and self.group_paths_by_parents(data["paths"]):
             raise ValidationError(
                 "zfs.resource.query",
@@ -142,12 +135,6 @@ class ZFSResourceService(Service):
         about ZFS resources, including their properties, hierarchical relationships, \
         and metadata. The query can be customized to retrieve specific resources, \
         properties, and control the output format.
-
-        Raises:
-            ValidationError: If:
-                - Snapshot paths are provided (snapshots not currently supported)
-                - Overlapping paths are provided with get_children=True
-                - Requested paths don't exist (errno.ENOENT)
 
         Examples:
             # Query all resources with default properties
