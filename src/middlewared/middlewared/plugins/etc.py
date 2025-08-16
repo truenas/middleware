@@ -304,6 +304,10 @@ class EtcService(Service):
         'nss': [
             {'type': 'mako', 'path': 'nsswitch.conf'},
         ],
+        'nvme': [
+            {'type': 'mako', 'path': 'nvme/hostid'},
+            {'type': 'mako', 'path': 'nvme/hostnqn'},
+        ],
         'wsd': [
             {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},
         ],
