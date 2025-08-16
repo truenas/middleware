@@ -17,9 +17,9 @@ from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import SharingService, ValidationErrors, private
 from middlewared.service_exception import CallError, MatchNotFound
 from .constants import NAMESPACE_DEVICE_TYPE
-from .kernel import lock_namespace as kernel_lock_namespace
-from .kernel import unlock_namespace as kernel_unlock_namespace
-from .kernel import resize_namespace as kernel_resize_namespace
+from middlewared.utils.nvmet.kernel import lock_namespace as kernel_lock_namespace
+from middlewared.utils.nvmet.kernel import unlock_namespace as kernel_unlock_namespace
+from middlewared.utils.nvmet.kernel import resize_namespace as kernel_resize_namespace
 
 UUID_GENERATE_RETRIES = 10
 NSID_SEARCH_RANGE = 0xFFFF  # This is much less than NSID, but good enough for practical purposes.
