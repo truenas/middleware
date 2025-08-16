@@ -28,10 +28,15 @@ class CallbackState:
 
 
 def __query_impl_snapshots_callback(hdl, info):
-    info["snapshots"].append(
-        hdl.asdict(
-            properties={ZFSProperty.CREATION}
-        )
+    si = hdl.asdict(properties={ZFSProperty.CREATION})
+    info["snapshots"].update(
+        {
+            si["name"]: {
+                "guid": si["guid"],
+                "createtxg": si["createtxg"],
+                "properties": si["properties"]
+            }
+        }
     )
     info["snapshots_count"] += 1
     return True

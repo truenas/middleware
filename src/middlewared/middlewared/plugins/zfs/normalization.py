@@ -99,7 +99,7 @@ def normalize_asdict_result(result: dict, *, normalize_source: bool) -> dict:
     # NOTE: this will be populated
     # by caller based on arguments
     # given at call time
-    result["snapshots"] = list()
+    result["snapshots"] = dict()
     result["snapshots_count"] = 0
 
     if normalize_source:

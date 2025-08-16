@@ -227,7 +227,7 @@ class ZFSResourceEntry(BaseModel):
     """Custom metadata properties with colon-separated names (max 256 chars)."""
     children: list
     """The children of this zfs resource."""
-    snapshots: list[dict]
+    snapshots: dict[str, dict]
     """Snapshots for this zfs resource."""
     snapshots_count: int
     """The total number of snapshots for this zfs resource."""
