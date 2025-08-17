@@ -12,6 +12,8 @@ import subprocess
 import typing
 import uuid
 
+import libsgio
+
 from .disk_io import read_gpt, wipe_disk_quick, create_gpt_partition
 from .gpt_parts import GptPartEntry, PART_TYPES
 
@@ -19,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
+
+DISK_ROTATION_ERROR_LOG_CACHE = set()
 # sda, pmem0, vda, xvda, nvme0n1 but not sda1/vda1/xvda1/nvme0n1p1
 VALID_WHOLE_DISK = re.compile(r"^pmem\d+$|sd[a-z]+$|^vd[a-z]+$|^xvd[a-z]+$|^nvme\d+n\d+$")
 
@@ -286,6 +290,130 @@ class DiskEntry:
         elif self.name.startswith("sd") and self.vendor == "NVMe":
             return "SNTL"
         return None
+
+    @functools.cached_property
+    def device_number(self) -> int | None:
+        """
+        Device number calculated from major:minor
+        Uses the same encoding as pyudev: (major << 8) | minor
+        """
+        with contextlib.suppress(Exception):
+            dev = self.__opener(relative_path="dev")
+            major, minor = dev.split(':')
+            return (int(major) << 8) | int(minor)
+
+    @functools.cached_property
+    def subsystem(self) -> str:
+        """Parent device subsystem (e.g., 'scsi', 'nvme', 'virtio')
+
+        Returns the subsystem of the parent device, not the block subsystem.
+        """
+        with contextlib.suppress(Exception):
+            # Use device/subsystem to get parent device's subsystem (scsi, nvme, etc)
+            # not /sys/block/{name}/subsystem which always returns 'block'
+            subsystem_link = f"/sys/block/{self.name}/device/subsystem"
+            return os.path.basename(os.readlink(subsystem_link))
+
+        return ''
+
+    @functools.cached_property
+    def driver(self) -> str:
+        """Driver type (e.g., 'sd', 'nvme')"""
+        # Special case for NVMe
+        if self.name and self.name.startswith('nvme'):
+            return 'nvme'
+
+        with contextlib.suppress(Exception):
+            driver_link = f"/sys/block/{self.name}/device/driver"
+            return os.path.basename(os.readlink(driver_link))
+
+        return ''
+
+    @functools.cached_property
+    def hctl(self) -> str:
+        """SCSI Host:Channel:Target:LUN identifier"""
+        with contextlib.suppress(Exception):
+            return os.path.realpath(f"/sys/block/{self.name}/device").split("/")[-1]
+
+        return ''
+
+    @functools.cached_property
+    def bus(self) -> str:
+        """Bus type (e.g., 'ATA', 'SCSI', 'NVME')"""
+        with contextlib.suppress(Exception):
+            if self.name and self.name.startswith('nvme'):
+                return 'NVME'
+
+            device_path = os.path.realpath(f"/sys/block/{self.name}/device")
+
+            # Check vendor for ATA
+            if self.vendor and self.vendor.upper() == 'ATA':
+                return 'ATA'
+
+            # Check path patterns
+            if '/ata' in device_path:
+                return 'ATA'
+            elif '/usb' in device_path:
+                return 'USB'
+            elif '/virtio' in device_path:
+                return 'VIRTIO'
+            elif '/scsi' in device_path:
+                return 'SCSI'
+
+        return 'UNKNOWN'
+
+    def rotation_rate(self) -> int | None:
+        """Get rotation rate in RPM for HDD devices
+
+        Returns None for SSDs or when unable to determine.
+        Matches _get_rotation_rate behavior from device_info.py
+        """
+        if self.media_type != 'HDD':
+            return None
+
+        try:
+            disk = libsgio.SCSIDevice(self.devpath)
+            rotation_rate = disk.rotation_rate()
+        except Exception:
+            if self.devpath not in DISK_ROTATION_ERROR_LOG_CACHE:
+                DISK_ROTATION_ERROR_LOG_CACHE.add(self.devpath)
+                logger.warning("Failed to get rotation rate for device: %r", self.devpath, exc_info=True)
+            return None
+        else:
+            DISK_ROTATION_ERROR_LOG_CACHE.discard(self.devpath)
+            if rotation_rate in (0, 1):
+                # 0 = not reported
+                # 1 = SSD (shouldn't happen for HDD)
+                return None
+
+            return rotation_rate
+
+    def is_dif_formatted(self) -> bool:
+        """
+        DIF is a feature added to the SCSI Standard. It adds 8 bytes to the end of each sector on disk.
+        It increases the size of the commonly-used 512-byte disk block from 512 to 520 bytes. The extra bytes comprise
+        the Data Integrity Field (DIF). The basic idea is that the HBA will calculate a checksum value for the data
+        block on writes, and store it in the DIF. The storage device will confirm the checksum on receive, and store
+        the data plus checksum. On a read, the checksum will be checked by the storage device and by the receiving HBA.
+
+        The Data Integrity Extension (DIX) allows this check to move up the stack: the application calculates the
+        checksum and passes it to the HBA, to be appended to the 512 byte data block. This provides a full end-to-end
+        data integrity check.
+
+        With support from the HBA, this means checksums will be computed/verified by the HBA for every block. This is
+        redundant and a waste of bus bandwidth with ZFS. These disks should be reformatted to use a normal sector size
+        without protection information before a pool can be created.
+        """
+        if self.subsystem != 'scsi' or not self.hctl or self.hctl.count(':') != 3:
+            return False
+
+        with contextlib.suppress(Exception):
+            protection_file = f"/sys/class/scsi_disk/{self.hctl}/protection_type"
+            with open(protection_file, 'r') as f:
+                protection_type = int(f.read().strip())
+                return bool(protection_type)
+
+        return False
 
     def __run_smartctl_cmd_impl(self, cmd: list[str], raise_alert: bool = True) -> str:
         if tl := self.translation:
