@@ -43,7 +43,7 @@ class CertificateService(Service):
 
             if not (
                 datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()
-            ).days < cert.get('renew_days', 5):
+            ).days < (cert.get('renew_days') or 10):
                 continue
 
             # renew cert
