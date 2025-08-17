@@ -105,7 +105,7 @@ class UserEntry(BaseModel):
     sudo_commands_nopasswd: list[NonEmptyString] = Field(default_factory=list)
     """ An array of commands the user may execute with elevated privileges. User is *not* prompted for password \
     when executing any command from the array. """
-    email: EmailStr | None = None
+    email: NonEmptyString | None = None
     """ Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and \
     notifications. """
     local: bool
@@ -173,6 +173,9 @@ class UserCreate(UserEntry):
     """ Comment field to provide additional information about the user account. Typically, this is \
     the full name of the user or a short description of a service account. There are no character set restrictions \
     for this field. This field is for information only. """
+    email: EmailStr | None = None
+    """ Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and \
+    notifications. """
     group_create: bool = False
     """ If set to `true`, the TrueNAS server automatically creates a new local group as the user's primary group. """
     group: int | None = None
