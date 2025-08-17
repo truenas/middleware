@@ -64,7 +64,7 @@ class CertificateChecksAlertSource(AlertSource):
                 # check the parsed certificate(s) for expiration
                 if cert['cert_type'] == 'CERTIFICATE':
                     diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()).days
-                    alert_threshold = cert.get('renew_days', 10) - 1
+                    alert_threshold = (cert.get('renew_days') or 10) - 1
                     if diff < alert_threshold:
                         if diff >= 0:
                             alerts.append(Alert(
