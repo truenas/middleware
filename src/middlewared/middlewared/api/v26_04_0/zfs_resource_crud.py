@@ -219,7 +219,7 @@ class ZFSResourceEntry(BaseModel):
     """The name of the zfs resource."""
     pool: str
     """The name of the zpool that the zfs resouce is associated to."""
-    properties: ZFSPropertiesEntry
+    properties: ZFSPropertiesEntry | None
     """The zfs properties for the resource."""
     type: Literal["FILESYSTEM", "VOLUME"]
     """The type of ZFS resource."""

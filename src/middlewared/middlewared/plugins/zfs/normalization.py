@@ -90,17 +90,6 @@ def normalize_asdict_result(result: dict, *, normalize_source: bool) -> dict:
 
     result["type"] = result["type"].removeprefix("ZFS_TYPE_")
 
-    # always add children key.
-    # NOTE: this will get dynamically
-    # populated by caller
-    result["children"] = list()
-
-    # always add snapshots, snapshots_count keys
-    # NOTE: this will be populated
-    # by caller based on arguments
-    # given at call time
-    result["snapshots"] = dict()
-
     if normalize_source:
         # update zfs properties
         for i in result["properties"].values():
