@@ -55,6 +55,13 @@ class ZFSResourceService(Service):
 
     @private
     def validate_query_args(self, data):
+        for path in data["paths"]:
+            if "@" in path:
+                raise ValidationError(
+                    "zfs.resource.query",
+                    "Set `get_snapshots = True` when wanting to query snapshot information."
+                )
+
         if data["get_children"] and self.group_paths_by_parents(data["paths"]):
             raise ValidationError(
                 "zfs.resource.query",
