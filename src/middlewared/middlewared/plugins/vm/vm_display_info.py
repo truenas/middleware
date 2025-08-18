@@ -81,7 +81,11 @@ class VMService(Service):
         if display_devices := await self.get_display_devices(id_):
             for device in map(lambda d: DISPLAY(d, middleware=self.middleware), display_devices):
                 if device.data['attributes'].get('web'):
-                    uri_data['uri'] = device.web_uri(host, protocol=protocol)
+                    uri_data.update({
+                        'uri': device.web_uri(host, protocol=protocol),
+                        'error': None,
+                    })
+                    break
                 else:
                     uri_data['error'] = 'Web display is not configured'
         else:

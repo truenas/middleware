@@ -52,7 +52,7 @@ class VMDisplayDevice(BaseModel):
     """Password for display server authentication."""
     web: bool = True
     """Whether to enable web-based display access."""
-    type_: Literal['SPICE'] = Field(alias='type', default='SPICE')
+    type_: Literal['SPICE', 'VNC'] = Field(alias='type', default='SPICE')
     """Display protocol type."""
 
 
