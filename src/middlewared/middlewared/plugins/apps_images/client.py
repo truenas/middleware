@@ -50,6 +50,8 @@ class ContainerRegistryClientMixin:
                     response['error'] = f'Unable to parse response: {e}'
                 except asyncio.TimeoutError:
                     response['error'] = 'Timed out waiting for a response'
+                except RuntimeError as e:
+                    response['error'] = f'Connection closed before the response could be fully read ({e})'
         return response
 
     async def _get_token(self, scope, auth_url=DOCKER_AUTH_URL, service=DOCKER_AUTH_SERVICE, auth=None):
