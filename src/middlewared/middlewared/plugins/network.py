@@ -1370,10 +1370,6 @@ class InterfaceService(CRUDService):
             filters = [('type', '=', 'VLAN'), ('vlan_parent_interface', '=', iface['id'])]
             if vlans := ', '.join([i['name'] for i in await self.middleware.call('interface.query', filters)]):
                 verrors.add(schema, f'The following VLANs depend on this interface: {vlans}')
-            elif iface['type'] == 'BRIDGE' and (
-                iface['name'] == (await self.middleware.call('virt.global.config'))['bridge']
-            ):
-                verrors.add(schema, 'Virt is using this interface as its bridge interface.')
 
         verrors.check()
         audit_callback(iface['name'])
