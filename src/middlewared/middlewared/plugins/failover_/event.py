@@ -19,7 +19,6 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
-from middlewared.plugins.virt.utils import VirtGlobalStatus as VirtStatus
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 logger = logging.getLogger('failover')
@@ -781,7 +780,6 @@ class FailoverEventsService(Service):
         self.start_vms()
         self.start_containers()
         self.start_apps()
-        self.start_virt()
 
         logger.info('Migrating interface information (if required)')
         self.run_call('interface.persist_link_addresses')
@@ -853,14 +851,6 @@ class FailoverEventsService(Service):
         stop_vm_thread.start()
         stop_container_thread = threading.Thread(target=self.stop_containers, name='failover_stop_containers')
         stop_container_thread.start()
-
-        # We will try to give some time to containers to gracefully stop before zpools will be forcefully
-        # exported. This is to avoid any potential data corruption.
-        stop_virt_thread = threading.Thread(
-            target=self.stop_virt,
-            name='failover_stop_virt',
-        )
-        stop_virt_thread.start()
 
         # We stop netdata before exporting pools because otherwise we might have erroneous stuff
         # getting logged and causing spam
@@ -1084,29 +1074,6 @@ class FailoverEventsService(Service):
             logger.error('Failed to stop docker service gracefully', exc_info=True)
         else:
             logger.info('Docker service stopped gracefully')
-
-    def start_virt(self):
-        logger.info('Going to initialize virt plugin')
-        job = self.run_call('virt.global.setup')
-        job.wait_sync(timeout=10)
-        if job.error:
-            logger.info('Failed to setup virtualization: %r', job.error)
-        else:
-            config = self.run_call('virt.global.config')
-            if config['state'] == VirtStatus.INITIALIZED.value:
-                logger.info('Virtualization initalized.')
-            elif config['state'] != VirtStatus.NO_POOL.value:
-                logger.warning('Virtualization failed to initialize with state %r.', config['state'])
-
-    def stop_virt(self):
-        logger.info('Going to stop virt plugin')
-        job = self.run_call('virt.global.reset')
-        # virt instances have a timeout of 10 seconds to stop
-        job.wait_sync(timeout=15)
-        if job.error:
-            logger.warning('Failed to reset virtualization state.')
-        else:
-            logger.info('Virtualization has been successfully resetted.')
 
 
 async def vrrp_fifo_hook(middleware, data):
