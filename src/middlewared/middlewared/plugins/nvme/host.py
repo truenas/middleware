@@ -1,6 +1,7 @@
 import filecmp
 import shutil
 import uuid
+import os
 import pathlib
 
 NQN_UUID_PREFIX = 'nqn.2011-06.com.truenas:uuid:'
@@ -23,7 +24,7 @@ def setup(middleware):
             data = f'{NQN_UUID_PREFIX}{uuid.uuid4()}'
             data_hostnqn.write_text(f'{data}\n')
             middleware.logger.debug("Generated hostnqn: %s", data)
-        if not filecmp.cmp(data_hostnqn, LIVE_NVMENQN_PATH):
+        if not os.path.exists(LIVE_NVMENQN_PATH) or not filecmp.cmp(data_hostnqn, LIVE_NVMENQN_PATH):
             shutil.copy2(data_hostnqn, LIVE_NVMENQN_PATH)
             middleware.logger.debug("Wrote %s", LIVE_NVMENQN_PATH)
 
@@ -33,7 +34,7 @@ def setup(middleware):
             data = f'{uuid.uuid4()}'
             data_hostid.write_text(f'{data}\n')
             middleware.logger.debug("Generated hostid: %s", data)
-        if not filecmp.cmp(data_hostid, LIVE_NVMEID_PATH):
+        if not os.path.exists(LIVE_NVMEID_PATH) or not filecmp.cmp(data_hostid, LIVE_NVMEID_PATH):
             shutil.copy2(data_hostid, LIVE_NVMEID_PATH)
             middleware.logger.debug("Wrote %s", LIVE_NVMEID_PATH)
     except Exception:
