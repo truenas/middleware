@@ -513,6 +513,9 @@ class ReplicationService(CRUDService):
             except Exception as e:
                 verrors.add("name_regex", f"Invalid regex: {e}")
 
+            if snapshot_tasks:
+                verrors.add("name_regex", "Naming regex can't be used with periodic snapshot tasks")
+
             if data["naming_schema"] or data["also_include_naming_schema"]:
                 verrors.add("name_regex", "Naming regex can't be used with Naming schema")
 
