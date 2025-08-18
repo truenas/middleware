@@ -37,4 +37,4 @@ def setup(middleware):
             shutil.copy2(data_hostid, LIVE_NVMEID_PATH)
             middleware.logger.debug("Wrote %s", LIVE_NVMEID_PATH)
     except Exception:
-        middleware.logger.debug("Failed to generate nvme host info", exc_info=True)
+        middleware.logger.critical("Failed to generate nvme host info", exc_info=True)
