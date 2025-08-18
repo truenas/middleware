@@ -143,6 +143,11 @@ class ZFSResourceService(Service):
         and metadata. The query can be customized to retrieve specific resources, \
         properties, and control the output format.
 
+        Raises:
+            ValidationError: If:
+                - Snapshot paths are provided (must use `get_snapshots = True`)
+                - Overlapping paths are provided with get_children=True
+
         Examples:
             # Query all resources with default properties
             query()
