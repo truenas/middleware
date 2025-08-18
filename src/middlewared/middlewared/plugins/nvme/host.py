@@ -9,7 +9,7 @@ from middlewared.api.current import NVMeHostEntry
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
 
 
-NQN_UUID_PREFIX = 'nqn.2014-08.org.nvmexpress:uuid:'
+NQN_UUID_PREFIX = 'nqn.2011-06.com.truenas:uuid:'
 
 
 @single_argument_args('nvme_host_update')
