@@ -38,7 +38,6 @@ def __query_impl_snapshots_callback(hdl, info):
             }
         }
     )
-    info["snapshots_count"] += 1
     return True
 
 
@@ -58,13 +57,17 @@ def __query_impl_callback(hdl, state):
         ),
         normalize_source=state.query_args["get_source"],
     )
+    info["snapshots"] = None
     if state.query_args["get_snapshots"]:
+        info["snapshots"] = dict()
         hdl.iter_snapshots(
             callback=__query_impl_snapshots_callback, state=info, fast=True
         )
 
+    info["children"] = None
     state.results.append(info)
     if state.query_args["get_children"]:
+        info["children"] = list()
         hdl.iter_filesystems(callback=__query_impl_callback, state=state)
     return True
 
