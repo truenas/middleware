@@ -191,7 +191,9 @@ class VMDeviceCreateResult(BaseModel):
 
 
 class VMDeviceUpdate(VMDeviceCreate, metaclass=ForUpdateMetaclass):
-    pass
+    # This will still get validated when update itself is called based off how we have
+    # logic to validate different device types
+    attributes: dict
 
 
 class VMDeviceUpdateArgs(BaseModel):
