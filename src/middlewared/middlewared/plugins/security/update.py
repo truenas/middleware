@@ -121,6 +121,13 @@ class SystemSecurityService(ConfigService):
                 'TrueCommand is not supported under General Purpose OS STIG compatibility mode.'
             )
 
+        vms = await self.middleware.call('datastore.query', 'vm.vm')
+        if vms:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Please remove all virtual machines, as they are not supported in General Purpose OS STIG compatibility mode.'
+            )
+
         if (await self.middleware.call('docker.config'))['pool']:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
