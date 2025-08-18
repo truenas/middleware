@@ -3,9 +3,10 @@ import functools
 from typing import Awaitable, Callable
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
-from .accept import validate_model
-from .inspect import model_field_is_model, model_field_is_list_of_models
-from .model_provider import ModelProvider, ModelFactory
+from middlewared.api.base.handler.accept import validate_model
+from middlewared.api.base.handler.inspect import model_field_is_model, model_field_is_list_of_models
+from middlewared.api.base.handler.model_provider import ModelProvider, ModelFactory
+from middlewared.api.base.model import _NotRequired
 from middlewared.utils.lang import Undefined
 
 
@@ -200,7 +201,7 @@ class APIVersionsAdapter:
         present_fields = set()
 
         # Process existing keys in value
-        for k in list(value.keys()):
+        for k in value.keys():
             current_field_name = current_alias_to_field.get(k, k)
             new_field_name = new_alias_to_field.get(k, k)
 
@@ -223,7 +224,7 @@ class APIVersionsAdapter:
             for field_name, field_info in new_model.model_fields.items():
                 if field_name not in present_fields and not field_info.is_required():
                     key_to_use = field_info.alias or field_name
-                    value[key_to_use] = field_info.get_default()
+                    value[key_to_use] = field_info.get_default(call_default_factory=True)
 
         match direction:
             case Direction.DOWNGRADE:
@@ -234,7 +235,7 @@ class APIVersionsAdapter:
         for k, v in list(value.items()):
             if k in current_model.model_fields and k not in new_model.model_fields:
                 value.pop(k)
-            elif isinstance(v, Undefined):
+            elif isinstance(v, (Undefined, _NotRequired)):
                 value.pop(k)
 
         return value
