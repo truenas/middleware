@@ -121,7 +121,3 @@ class NVMeHost(ConfigService):
                 payload = payload | {hostnqn_key: f"{NQN_UUID_PREFIX}{uuid.uuid4()}"}
         if payload:
             await self.middleware.call('nvme.host.update', payload)
-
-
-async def setup(middleware):
-    await middleware.call('nvme.host.setup')

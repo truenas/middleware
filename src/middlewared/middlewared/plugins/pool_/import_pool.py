@@ -467,6 +467,9 @@ class PoolService(Service):
                     self.logger.info('Done bring up of NVMe/RoCE')
             except Exception:
                 self.logger.error('Unexpected error', exc_info=True)
+        else:
+            # If not ix hardware still want setup nvme host (called from jbof.configure_id)
+            self.middleware.call_sync('nvme.host.setup')
 
         set_cachefile_property = True
         dir_name = os.path.dirname(ZPOOL_CACHE_FILE)

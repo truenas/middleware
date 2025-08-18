@@ -892,6 +892,11 @@ class JBOFService(CRUDService):
         job.set_progress(0, 'Configure RDMA interfaces')
         failed = False
 
+        try:
+            await self.middleware.call('nvme.host.setup')
+        except Exception:
+            self.logger.error('Unhandled exception setting up nvme host', exc_info=True)
+
         if await self.middleware.call('failover.licensed'):
             node = await self.middleware.call('failover.node')
         else:
