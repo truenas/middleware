@@ -42,7 +42,7 @@ class ShellWorkerThread(threading.Thread):
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def get_command(self, username, as_root, options):
-        allowed_options = ("vm_id", "app_name", "virt_instance_id", "container_id")
+        allowed_options = ("vm_id", "app_name", "container_id")
         if all(options.get(k) for k in allowed_options):
             raise CallError(
                 f'Only one option is supported from {", ".join(allowed_options)}'
@@ -67,22 +67,6 @@ class ShellWorkerThread(threading.Thread):
                 options["container_id"],
                 options.get("command", "/bin/bash"),
             ]
-            if not as_root:
-                command = ["/usr/bin/sudo", "-H", "-u", username] + command
-            return command, not as_root
-        elif options.get("virt_instance_id"):
-            command = [
-                "/usr/bin/incus",
-                "console" if options.get("use_console") else "exec",
-                options["virt_instance_id"]
-            ]
-            if options.get("command"):
-                command.append(options["command"])
-            if not as_root:
-                command = ["/usr/bin/sudo", "-H", "-u", username] + command
-            return command, not as_root
-        elif options.get("container_id"):
-            command = options["nsenter"] + [options["command"]]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root
@@ -281,33 +265,14 @@ class ShellApplication:
                     options["vm_data"] = await self.middleware.call(
                         "vm.get_instance", options["vm_id"]
                     )
+
                 if options.get("container_id"):
                     options["nsenter"] = await self.middleware.call(
                         "container.nsenter",
                         await self.middleware.call("container.get_instance", options["container_id"]),
                     )
                     options["command"] = options.get("command") or "/bin/sh"
-                if options.get("virt_instance_id"):
-                    try:
-                        virt_instance = await self.middleware.call(
-                            "virt.instance.get_instance", options["virt_instance_id"]
-                        )
-                        options["instance_type"] = virt_instance["type"]
-                        if virt_instance["type"] == "VM":
-                            if virt_instance["status"] != "RUNNING":
-                                raise CallError("Virt instance must be running.")
-                            options.setdefault("use_console", True)
-                            if options["use_console"]:
-                                options["command"] = None
-                            else:
-                                options["command"] = options.get("command") or "/bin/sh"
-                        elif not options.get("command"):
-                            command = await self.middleware.call("virt.instance.get_shell", options["virt_instance_id"])
-                            if not command:
-                                command = "/bin/sh"
-                            options["command"] = command
-                    except InstanceNotFound:
-                        raise CallError("Provided instance id is not valid")
+
                 if options.get("app_name"):
                     if not options.get("container_id"):
                         raise CallError("Container id must be specified")

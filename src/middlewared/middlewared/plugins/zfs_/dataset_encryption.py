@@ -45,16 +45,6 @@ class ZFSDatasetService(Service):
                 zvol_path_to_name(i['attributes']['path']): i for i in vm_devices
             }
 
-            instance_zvols = {}
-            for instance in self.middleware.call_sync('virt.instance.query'):
-                for device in self.middleware.call_sync('virt.instance.device_list', instance['id']):
-                    if device['dev_type'] != 'DISK':
-                        continue
-                    if not device['source'] or not device['source'].startswith('/dev/zvol/'):
-                        continue
-                    # Remove /dev/zvol/ from source
-                    instance_zvols[device['source'][10:]] = instance
-
             namespaces = self.middleware.call_sync(
                 'nvmet.namespace.query', [['device_type', '=', 'ZVOL']], {'select': ['device_path']}
             )
@@ -64,7 +54,6 @@ class ZFSDatasetService(Service):
             return {
                 'iscsi.extent.query': iscsi_zvols,
                 'vm.devices.query': vm_zvols,
-                'virt.instance.query': instance_zvols,
                 'nvmet.namespace.query': nvmet_zvols,
             }
 

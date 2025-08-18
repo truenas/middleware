@@ -85,7 +85,6 @@ class PoolDatasetService(Service):
         dataset['vms'] = self.get_vms(dataset, info['vm'])
         dataset['containers'] = self.get_containers(dataset, info['container'])
         dataset['apps'] = self.get_apps(dataset, info['app'])
-        dataset['virt_instances'] = self.get_virt_instances(dataset, info['virt_instance'])
         dataset['replication_tasks_count'] = self.get_repl_tasks_count(dataset, info['repl'])
         dataset['snapshot_tasks_count'] = self.get_snapshot_tasks_count(dataset, info['snap'])
         dataset['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(dataset, info['cloud'])
@@ -133,7 +132,6 @@ class PoolDatasetService(Service):
             'iscsi': [], 'nfs': [], 'nvmet': [], 'smb': [], 'webshare': [],
             'repl': [], 'snap': [], 'cloud': [],
             'rsync': [], 'vm': [], 'app': [], 'container': [],
-            'virt_instance': [],
         }
 
         # iscsi
@@ -217,22 +215,6 @@ class PoolDatasetService(Service):
                     'path': path_config['source'],
                     'mount_info': self.get_mount_info(path_config['source'], mntinfo),
                 })
-
-        # virt instance
-        for instance in self.middleware.call_sync('virt.instance.query'):
-            for device in self.middleware.call_sync('virt.instance.device_list', instance['id']):
-                if device['dev_type'] != 'DISK':
-                    continue
-                if not device['source']:
-                    continue
-                device['instance'] = instance['id']
-                if device['source'].startswith('/dev/zvol/'):
-                    # disk type is always a zvol
-                    device['zvol'] = zvol_path_to_name(device['source'])
-                else:
-                    # raw type is always a file
-                    device['mount_info'] = self.get_mount_info(device['source'], mntinfo)
-                results['virt_instance'].append(device)
 
         return results
 
@@ -382,19 +364,6 @@ class PoolDatasetService(Service):
                 )
 
         return containers
-
-    @private
-    def get_virt_instances(self, ds, _instances):
-        instances = []
-        for i in _instances:
-            if (
-                'zvol' in i and i['zvol'] == ds['id'] or
-                i['source'] == ds['mountpoint'] or
-                i.get('mount_info', {}).get('mount_source') == ds['id']
-            ):
-                instances.append({'name': i['instance'], 'path': i['source']})
-
-        return instances
 
     @private
     def get_apps(self, ds, _apps):
