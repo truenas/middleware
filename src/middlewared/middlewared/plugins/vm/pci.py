@@ -81,7 +81,6 @@ class VMDeviceService(Service):
         data['critical'] = True
         # Only include number and addresses in iommu_group for API compatibility
         data['iommu_group'] = None
-        data['available'] = all(i == 'vfio-pci' for i in drivers) and not data['critical']
         data['drivers'] = drivers
         data['device_path'] = os.path.join('/sys/bus/pci/devices', obj.sys_name)
         data['reset_mechanism_defined'] = os.path.exists(os.path.join(data['device_path'], 'reset'))
@@ -94,6 +93,8 @@ class VMDeviceService(Service):
                     'addresses': igi['addresses'],
                 },
             })
+
+        data['available'] = all(i == 'vfio-pci' for i in drivers) and not data['critical']
 
         prefix = obj.sys_name + (f' {controller_type!r}' if controller_type else '')
         vendor = data['capability']['vendor'].strip()
