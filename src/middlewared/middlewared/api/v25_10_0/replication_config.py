@@ -16,7 +16,7 @@ __all__ = [
 class ReplicationConfigEntry(BaseModel):
     id: int
     """Unique identifier for the replication configuration."""
-    max_parallel_replication_tasks: int = Field(ge=1)
+    max_parallel_replication_tasks: int | None = Field(ge=1)
     """A maximum number of parallel replication tasks running."""
 
 
