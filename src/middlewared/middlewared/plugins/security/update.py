@@ -125,7 +125,7 @@ class SystemSecurityService(ConfigService):
         if vms:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
-                'Please remove all VMs as VMs are not supported under General Purpose OS STIG compatibility mode.'
+                'Please remove all virtual machines, as they are not supported in General Purpose OS STIG compatibility mode.'
             )
 
         if (await self.middleware.call('docker.config'))['pool']:
