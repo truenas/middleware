@@ -52,7 +52,7 @@ class DISPLAY(Device):
         #  video element to a graphic element
         attrs = self.data['attributes']
         return create_element(
-            'graphics', type='spice', port=str(self.data['attributes']['port']),
+            'graphics', type='spice' if self.is_spice_type() else 'vnc', port=str(self.data['attributes']['port']),
             attribute_dict={
                 'children': [
                     create_element('listen', type='address', address=self.data['attributes']['bind']),
@@ -81,12 +81,13 @@ class DISPLAY(Device):
 
     def post_start_vm(self, *args, **kwargs):
         start_args = self.get_start_attrs()
-        self.web_process = subprocess.Popen(
-            [
-                'websockify', '--web', '/usr/share/spice-html5/',
-                '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
+        if self.is_spice_type():
+            self.web_process = subprocess.Popen(
+                [
+                    'websockify', '--web', '/usr/share/spice-html5/',
+                    '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
+                ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
 
     def post_stop_vm(self, *args, **kwargs):
         if self.web_process:
@@ -104,14 +105,34 @@ class DISPLAY(Device):
 
     def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
         if vm_instance:
-            if not update:
-                vm_instance['devices'].append(device)
+            if update:
+                # we will remove the device from the list of devices as that reflects db state
+                # and not the state of the modified device in question
+                vm_instance['devices'] = [
+                    d for d in vm_instance['devices']
+                    if d.get('id') != device.get('id')
+                ]
 
+            vm_instance['devices'].append(device)
             self.middleware.call_sync('vm.device.validate_display_devices', verrors, vm_instance)
 
         password = device['attributes']['password']
         if not password or not password.strip():
             verrors.add('attributes.password', 'Password is required for display devices')
+
+        if device['attributes']['type'] == 'VNC':
+            if device['attributes']['web'] is True:
+                verrors.add(
+                    'attributes.web',
+                    'Web access is not supported for VNC display devices, please use SPICE instead'
+                )
+            if password and len(password) > 8:
+                # libvirt error otherwise i.e
+                # libvirt.libvirtError: unsupported configuration: VNC password is 11 characters long, only 8 permitted
+                verrors.add(
+                    'attributes.password',
+                    'Password for VNC display devices must be 8 characters or less'
+                )
 
         verrors = self.validate_port_attrs(device, verrors)
 

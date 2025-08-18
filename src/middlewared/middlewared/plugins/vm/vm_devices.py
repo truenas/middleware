@@ -281,11 +281,15 @@ class VMDeviceService(CRUDService):
         devs = await self.get_display_devices(vm_instance)
         if len(devs['spice']) > 1:
             verrors.add('attributes.type', 'Only one SPICE Display device is supported')
+        if len(devs['vnc']) > 1:
+            verrors.add('attributes.type', 'Only one VNC Display device is supported')
 
     @private
     async def get_display_devices(self, vm_instance):
-        devs = {'spice': []}
+        devs = {'spice': [], 'vnc': []}
         for dev in filter(lambda d: d['attributes']['dtype'] == 'DISPLAY', vm_instance['devices']):
             if dev['attributes']['type'] == 'SPICE':
                 devs['spice'].append(dev)
+            else:
+                devs['vnc'].append(dev)
         return devs
