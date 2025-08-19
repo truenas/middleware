@@ -609,7 +609,7 @@ class DirectoryServicesUpdateArgs(DirectoryServicesEntry, metaclass=ForUpdateMet
         if self.service_type == undefined and self.enable is not False:
             raise ValueError('service_type is required in update payloads')
 
-        if self.enable is True and self.service_type is not None:
+        if self.service_type not in (None, undefined):
             if self.configuration in (None, undefined):
                 raise ValueError('Explicit configuration is required when service_type is specified')
 
