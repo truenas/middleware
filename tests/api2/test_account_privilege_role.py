@@ -17,7 +17,11 @@ def test_can_read_with_read_or_write_role(role):
     with dataset("test_snapshot_read") as ds:
         with snapshot(ds, "test"):
             with unprivileged_user_client([role]) as c:
-                assert len(c.call("pool.snapshot.query", [["dataset", "=", ds]])) == 1
+                snaps = c.call(
+                    "zfs.resource.query",
+                    {"paths": [ds], "properties": None, "get_snapshots": True}
+                )[0]["snapshots"]
+                assert len(snaps) == 1
 
 
 def test_can_not_write_with_read_role():

@@ -84,5 +84,5 @@ class DockerService(Service):
         finally:
             await self.middleware.call('zfs.snapshot.delete', snap_details['id'], {'recursive': True})
             snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
-            if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
+            if await self.middleware.call('zfs.resource.snapshot_exists', snap_name):
                 await self.middleware.call('zfs.snapshot.delete', snap_name, {'recursive': True})
