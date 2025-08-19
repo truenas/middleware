@@ -161,7 +161,7 @@ class MailService(ConfigService):
 
         if add_html and 'html' not in message:
             template = get_template('assets/templates/mail.html')
-            message['html'] = template.render(body=html.escape(message['text']).replace('\n', '<br>\n'))
+            message['html'] = template.render(body=html.escape(message['text']).replace('\n', '<br>\n').replace(' ', '&nbsp;'))
 
         return self.send_raw(job, message, config)
 
