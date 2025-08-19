@@ -50,11 +50,7 @@ class DockerService(Service):
             raise CallError(f'{name!r} is not a valid snapshot name. It should be a valid ZFS snapshot name')
 
         snap_name = BACKUP_NAME_PREFIX + name
-        ds = self.middleware.call_sync(
-            'zfs.resource.query_impl',
-            {'paths': [docker_config['dataset']], 'properties': None, 'get_snapshots': True}
-        )
-        if ds and snap_name in ds[0]['snapshots']:
+        if self.middleware.call_sync('zfs.resource.snapshot_exists', snap_name):
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
         if name in self.list_backups():
