@@ -1,7 +1,6 @@
 from .cifs import CIFSService
 from .docker import DockerService
 from .ftp import FTPService
-from .incus import IncusService
 from .iscsitarget import ISCSITargetService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
@@ -68,7 +67,6 @@ all_services = [
     LibvirtGuestService,
     CronService,
     KmipService,
-    IncusService,
     LoaderService,
     HostnameService,
     HttpService,
