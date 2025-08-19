@@ -59,12 +59,8 @@ class AppService(Service):
 
                 continue
 
-            ds = self.middleware.call_sync(
-                'zfs.resource.query_impl',
-                {'paths': [dataset], 'properties': None, 'get_snapshots': True}
-            )
             snap_name = f'{dataset}@{get_upgrade_snap_name(app_info["name"], app_info["version"])}'
-            if ds and snap_name in ds[0]['snapshots']:
+            if self.middleware.call_sync('zfs.resource.snapshot_exists', snap_name):
                 logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
                 continue
 
