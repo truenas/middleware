@@ -139,13 +139,6 @@ def unlocked_zvols_fast(options=None, data=None):
             for file in files:
                 path = root + '/' + file
 
-                # zvols located within ix-virt are managed by incus and should
-                # never be presented as choices in middleware. Removing this
-                # check may introduce data corruption bugs by allowing zvols
-                # to be simultaneously used by multiple VMs.
-                if '.ix-virt' in path:
-                    continue
-
                 zvol_name = zvol_path_to_name(path)
 
                 try:
