@@ -127,7 +127,7 @@ def build_set_of_zfs_props(
     hdl_type: ZFSResourceType,
     det_props: DeterminedProperties,
     req_props: list[str] | None,
-) -> frozenset["ZFSProperty"]:
+) -> frozenset["ZFSProperty"] | None:
     """Build a set of ZFS properties to retrieve for a given ZFS resource.
 
     This function determines which ZFS properties should be retrieved based on
@@ -149,7 +149,7 @@ def build_set_of_zfs_props(
     if req_props is None:
         # If the req_props (requested properties) is None, then
         # the user explicitly requested no zfs properties be retrieved
-        return frozenset()
+        return None
     elif req_props == [] or hdl_type not in (
         ZFSType.ZFS_TYPE_FILESYSTEM,
         ZFSType.ZFS_TYPE_VOLUME,

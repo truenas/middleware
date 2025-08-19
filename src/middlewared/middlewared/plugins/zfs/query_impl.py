@@ -1,9 +1,9 @@
 import dataclasses
 
 try:
-    from truenas_pylibzfs import ZFSError, ZFSException
+    from truenas_pylibzfs import ZFSError, ZFSException, ZFSProperty
 except ImportError:
-    ZFSError = ZFSException = None
+    ZFSError = ZFSException = ZFSProperty = None
 
 from .normalization import normalize_asdict_result
 from .property_management import build_set_of_zfs_props, DeterminedProperties
@@ -27,25 +27,47 @@ class CallbackState:
     will exclude them."""
 
 
+def __query_impl_snapshots_callback(hdl, info):
+    si = hdl.asdict(properties={ZFSProperty.CREATION})
+    info["snapshots"].update(
+        {
+            si["name"]: {
+                "guid": si["guid"],
+                "createtxg": si["createtxg"],
+                "properties": si["properties"]
+            }
+        }
+    )
+    return True
+
+
 def __query_impl_callback(hdl, state):
     if state.eip and has_internal_path(hdl.name):
         # returning False here will halt the iteration
         # entirely which is not what we want to do
         return True
 
-    state.results.append(
-        normalize_asdict_result(
-            hdl.asdict(
-                properties=build_set_of_zfs_props(
-                    hdl.type, state.dp, state.query_args["properties"]
-                ),
-                get_user_properties=state.query_args["get_user_properties"],
-                get_source=state.query_args["get_source"],
+    info = normalize_asdict_result(
+        hdl.asdict(
+            properties=build_set_of_zfs_props(
+                hdl.type, state.dp, state.query_args["properties"]
             ),
-            normalize_source=state.query_args["get_source"],
-        )
+            get_user_properties=state.query_args["get_user_properties"],
+            get_source=state.query_args["get_source"],
+        ),
+        normalize_source=state.query_args["get_source"],
     )
+    info["snapshots"] = None
+    if state.query_args["get_snapshots"]:
+        info["snapshots"] = dict()
+        hdl.iter_snapshots(
+            callback=__query_impl_snapshots_callback, state=info, fast=True
+        )
+
+    info["children"] = None
+    state.results.append(info)
     if state.query_args["get_children"]:
+        info["children"] = list()
         hdl.iter_filesystems(callback=__query_impl_callback, state=state)
     return True
 
@@ -80,7 +102,7 @@ def __should_exclude_internal_paths(data):
     #   NOTE: (the `exclude_internal_paths` is a private
     #   internal argument that is set internally within
     #   middleware. It's not exposed to public.)
-    return data.get('exclude_internal_paths', True)
+    return data.get("exclude_internal_paths", True)
 
 
 def query_impl(hdl, data):

@@ -59,7 +59,7 @@ class ZFSResourceService(Service):
             if "@" in path:
                 raise ValidationError(
                     "zfs.resource.query",
-                    "Querying snapshot information is unsupported at this time.",
+                    "Set `get_snapshots = True` when wanting to query snapshot information."
                 )
 
         if data["get_children"] and self.group_paths_by_parents(data["paths"]):
@@ -145,9 +145,8 @@ class ZFSResourceService(Service):
 
         Raises:
             ValidationError: If:
-                - Snapshot paths are provided (snapshots not currently supported)
+                - Snapshot paths are provided (must use `get_snapshots = True`)
                 - Overlapping paths are provided with get_children=True
-                - Requested paths don't exist (errno.ENOENT)
 
         Examples:
             # Query all resources with default properties
