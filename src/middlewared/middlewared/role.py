@@ -259,15 +259,6 @@ ROLES = {
     'SYSTEM_UPDATE_READ': Role(),
     'SYSTEM_UPDATE_WRITE': Role(includes=['SYSTEM_UPDATE_READ']),
 
-    # Virtualization
-    'VIRT_GLOBAL_READ': Role(),
-    'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ'], stig=None),
-    'VIRT_INSTANCE_READ': Role(),
-    'VIRT_INSTANCE_WRITE': Role(includes=['VIRT_INSTANCE_READ'], stig=None),
-    'VIRT_INSTANCE_DELETE': Role(stig=None),
-    'VIRT_IMAGE_READ': Role(),
-    'VIRT_IMAGE_WRITE': Role(includes=['VIRT_IMAGE_READ'], stig=None),
-
     # ZFS Resources (query, create/update/delete)
     'ZFS_RESOURCE_READ': Role(),
     'ZFS_RESOURCE_WRITE': Role(includes=['ZFS_RESOURCE_READ']),
