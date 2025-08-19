@@ -19,6 +19,7 @@ class ConfigServiceMetabase(ServiceBase):
 
     def __new__(cls, name, bases, attrs):
         klass = super().__new__(cls, name, bases, attrs)
+        # Skip public config method for ConfigService and SystemServiceService
         if any(
             name == c_name and len(bases) == len(c_bases) and all(
                 b.__name__ == c_b for b, c_b in zip(bases, c_bases)
@@ -30,29 +31,35 @@ class ConfigServiceMetabase(ServiceBase):
         ):
             return klass
 
-        namespace = klass._config.namespace.replace('.', '_')
-        config_model_name = f'{namespace.capitalize()}Config'
+        config = klass._config
+        private = config.private
+        entry = config.entry
+        namespace = config.namespace
 
-        if not klass._config.private and not klass._config.role_prefix:
-            raise ValueError(f'{klass._config.namespace}: public ConfigService must have role_prefix defined')
+        if not private and not config.role_prefix:
+            raise ValueError(f'{namespace}: public ConfigService must have role_prefix defined')
 
-        if klass._config.entry is None:
-            if not klass._config.private:
-                raise ValueError(f'{klass._config.namespace}: public ConfigService must have entry defined')
+        if entry is None:
+            if not private:
+                raise ValueError(f'{namespace}: public ConfigService must have entry defined')
         else:
-            result_model = create_model(
-                klass._config.entry.__name__.removesuffix('Entry') + 'ConfigResult',
+            # Decorate config method with api_method
+            accepts_model = create_model(
+                namespace.replace(".", "_").capitalize() + 'Config',
                 __base__=(BaseModel,),
-                __module__=klass._config.entry.__module__,
-                result=Annotated[klass._config.entry, Field()]
+                __module__=entry.__module__,
+            )
+            result_model = create_model(
+                entry.__name__.removesuffix('Entry') + 'ConfigResult',
+                __base__=(BaseModel,),
+                __module__=entry.__module__,
+                result=Annotated[entry, Field()],
             )
             klass.config = api_method(
-                create_model(
-                    config_model_name,
-                    __base__=(BaseModel,),
-                    __module__=klass._config.entry.__module__,
-                ),
-                result_model
+                accepts_model,
+                result_model,
+                private=private,
+                cli_private=config.cli_private,
             )(klass.config)
 
         return klass
