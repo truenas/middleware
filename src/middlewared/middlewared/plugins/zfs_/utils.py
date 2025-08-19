@@ -44,7 +44,6 @@ class TNUserProp(enum.Enum):
     REFQUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:refquota_warning'
     REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critical'
     MANAGED_BY = f'{USERPROP_PREFIX}:managedby'
-    INCUS_POOL = f'{USERPROP_PREFIX}:incus_storage_pool'  # used only in virt/global.py
 
     def default(self):
         match self:

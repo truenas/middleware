@@ -115,7 +115,7 @@ def test__check_readonly_role():
     """
     We _really_ shouldn't be directly assigning resources to FULL_ADMIN. The reason for this
     is that it provides no granularity for restricting what FA can do when STIG is enabled.
-    Mostly we don't want methods like "virt.global.update" being populated here.
+    Mostly we don't want methods like "docker.update" being populated here.
     """
     with Client() as c:
         method_allowlists = c.call('privilege.dump_role_manager')['method_allowlists']
