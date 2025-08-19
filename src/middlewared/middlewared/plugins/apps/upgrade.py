@@ -138,12 +138,8 @@ class AppService(Service):
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
             if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
-                ds = self.middleware.call_sync(
-                    'zfs.resource.query_impl',
-                    {'paths': [app_volume_ds], 'properties': None, 'get_snapshots': True}
-                )
                 snap_name = f'{app_volume_ds}@{app["version"]}'
-                if ds and snap_name in ds[0]['snapshots']:
+                if self.middleware.call_sync('zfs.resource.snapshot_exists', snap_name):
                     self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
 
                 self.middleware.call_sync(
