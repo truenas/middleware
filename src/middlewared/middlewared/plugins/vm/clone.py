@@ -31,16 +31,18 @@ class VMService(Service):
         return clone_name
 
     async def __clone_zvol(self, name, zvol, created_snaps, created_clones):
-        if not await self.middleware.call(
-            'zfs.resource.query_impl', {'paths': [zvol], 'properties': None}
-        ):
+        zz = await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'paths': [zvol], 'properties': None, 'get_snapshots': True}
+        )
+        if not zz:
             raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
         snapshot_name = name
         i = 0
         while True:
             zvol_snapshot = f'{zvol}@{snapshot_name}'
-            if await self.middleware.call('zfs.snapshot.query', [('id', '=', zvol_snapshot)]):
+            if zvol_snapshot in zz[0]['snapshots']:
                 if ZVOL_CLONE_RE.search(snapshot_name):
                     snapshot_name = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', snapshot_name)
                 else:

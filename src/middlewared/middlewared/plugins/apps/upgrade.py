@@ -59,8 +59,12 @@ class AppService(Service):
 
                 continue
 
+            ds = self.middleware.call_sync(
+                'zfs.resource.query_impl',
+                {'paths': [dataset], 'properties': None, 'get_snapshots': True}
+            )
             snap_name = f'{dataset}@{get_upgrade_snap_name(app_info["name"], app_info["version"])}'
-            if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+            if ds and snap_name in ds[0]['snapshots']:
                 logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
                 continue
 
@@ -138,8 +142,12 @@ class AppService(Service):
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
             if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
+                ds = self.middleware.call_sync(
+                    'zfs.resource.query_impl',
+                    {'paths': [app_volume_ds], 'properties': None, 'get_snapshots': True}
+                )
                 snap_name = f'{app_volume_ds}@{app["version"]}'
-                if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                if ds and snap_name in ds[0]['snapshots']:
                     self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
 
                 self.middleware.call_sync(

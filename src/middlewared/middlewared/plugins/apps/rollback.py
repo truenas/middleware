@@ -71,10 +71,13 @@ class AppService(Service):
             if options['rollback_snapshot'] and (
                 app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)
             ):
+                ds = self.middleware.call_sync(
+                    'zfs.resource.query_impl',
+                    {'paths': [app_volume_ds], 'properties': None, 'get_snapshots': True}
+                )
                 snap_name = f'{app_volume_ds}@{options["app_version"]}'
-                if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                if ds and snap_name in ds[0]['snapshots']:
                     job.set_progress(40, f'Rolling back {app_name!r} app to {options["app_version"]!r} version')
-
                     self.middleware.call_sync(
                         'zfs.snapshot.rollback', snap_name, {
                             'force': True,

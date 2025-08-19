@@ -1,9 +1,10 @@
+import datetime
 import errno
 import logging
 import os
 import shutil
+
 import yaml
-from datetime import datetime
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -42,14 +43,18 @@ class DockerService(Service):
         """
         self.middleware.call_sync('docker.state.validate')
         docker_config = self.middleware.call_sync('docker.config')
-        name = backup_name or datetime.now().strftime('%F_%T')
+        name = backup_name or datetime.datetime.now().strftime('%F_%T')
         if not validate_snapshot_name(f'a@{name}'):
             # The a@ added is just cosmetic as the function requires a complete snapshot name
             # with the dataset name included in it
             raise CallError(f'{name!r} is not a valid snapshot name. It should be a valid ZFS snapshot name')
 
         snap_name = BACKUP_NAME_PREFIX + name
-        if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', f'{docker_config["dataset"]}@{snap_name}']]):
+        ds = self.middleware.call_sync(
+            'zfs.resource.query_impl',
+            {'paths': [docker_config['dataset']], 'properties': None, 'get_snapshots': True}
+        )
+        if ds and snap_name in ds[0]['snapshots']:
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
         if name in self.list_backups():
@@ -95,13 +100,21 @@ class DockerService(Service):
 
         backups_base_dir = backup_ds_path()
         backups = {}
-        snapshots = self.middleware.call_sync(
-            'zfs.snapshot.query', [
-                ['name', '^', f'{docker_config["dataset"]}@{BACKUP_NAME_PREFIX}']
-            ], {'select': ['name']}
+        ds = self.middleware.call_sync(
+            'zfs.resource.query_impl',
+            {'paths': [docker_config['dataset']], 'properties': None, 'get_snapshots': True}
         )
-        for snapshot in snapshots:
-            backup_name = snapshot['name'].split('@', 1)[-1].split(BACKUP_NAME_PREFIX, 1)[-1]
+        if not ds:
+            return backups
+        elif not ds[0]["snapshots"]:
+            return backups
+
+        prefix = f'{docker_config["dataset"]}@{BACKUP_NAME_PREFIX}'
+        for snap_name, snap_info in ds[0]['snapshots'].items():
+            if not snap_name.startswith(prefix):
+                continue
+
+            backup_name = snap_name.split('@', 1)[-1].split(BACKUP_NAME_PREFIX, 1)[-1]
             backup_path = os.path.join(backups_base_dir, backup_name)
             if not os.path.exists(backup_path):
                 continue
@@ -115,10 +128,13 @@ class DockerService(Service):
             backups[backup_name] = {
                 'name': backup_name,
                 'apps': [{k: app[k] for k in ('id', 'name', 'state')} for app in apps.values()],
-                'snapshot_name': snapshot['name'],
-                'created_on': str(self.middleware.call_sync(
-                    'zfs.snapshot.get_instance', snapshot['name']
-                )['properties']['creation']['parsed']),
+                'snapshot_name': snap_name,
+                'created_on': str(
+                    datetime.datetime.fromtimestamp(
+                        snap_info["properties"]["creation"]["value"],
+                        datetime.UTC
+                    )
+                ),
                 'backup_path': backup_path,
             }
 
@@ -168,7 +184,7 @@ async def post_system_update_hook(middleware):
                 break
 
     backup_job = await middleware.call(
-        'docker.backup', f'{UPDATE_BACKUP_PREFIX}-{datetime.now().strftime("%F_%T")}'
+        'docker.backup', f'{UPDATE_BACKUP_PREFIX}-{datetime.datetime.now().strftime("%F_%T")}'
     )
     await backup_job.wait()
     if backup_job.error:
