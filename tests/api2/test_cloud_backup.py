@@ -451,7 +451,11 @@ def test_snapshot(s3_credential):
                 ]) == ["blob", "blob2"]
 
         time.sleep(1)
-        assert call("pool.snapshot.query", [["dataset", "=", ds]]) == []
+        snaps = call(
+            "zfs.resource.query",
+            {"paths": [ds], "properties": None, "get_snapshots": True}
+        )[0]["snapshots"]
+        assert len(snaps) == 0
 
 
 @pytest.mark.parametrize("cloud_backup_task, expected", [(
