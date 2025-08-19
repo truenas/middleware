@@ -511,11 +511,18 @@ class CoreService(Service):
             method, serviceobj, methodobj, args, app=app,
             pipes=Pipes(output=self.middleware.pipe(buffered))
         )
+        if app.origin.is_unix_family:
+            # If `core.download` is called via UNIX socket, `match_origin` will not have sense as we don't serve
+            # HTTP connections via UNIX sockets.
+            match_origin = False
+        else:
+            match_origin = True
+
         token = await self.middleware.call(
             'auth.generate_token',
             300,  # ttl
             {'filename': filename, 'job': job.id},  # attrs
-            True,  # match origin
+            match_origin,
             True,  # single-use token
             app=app
         )
