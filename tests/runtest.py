@@ -20,6 +20,7 @@ TEST_DIR_TO_RESULT = {
     'directory_services': 'results/directoryservices_tests_result.xml',
     'stig': 'results/stig_tests_result.xml',
     'sharing_protocols': 'results/sharing_protocols_tests_result.xml',
+    'cloud': 'results/cloud_tests_result.xml',
 }
 
 workdir = os.getcwd()
