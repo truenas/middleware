@@ -248,10 +248,22 @@ class FCPortService(CRUDService):
 
     async def _validate(self, schema_name: str, data: dict, id_: int = None):
         verrors = ValidationErrors()
-        # Make sure we don't reuse either port or target_id.  Need to special case
-        # map "target_id" to "target.id" because of how query is nesting target.
+        # Make sure we don't reuse either port.
         await self._ensure_unique(verrors, schema_name, 'port', data['port'], id_)
-        await self._ensure_unique(verrors, schema_name, 'target_id', data['target_id'], id_, 'target.id')
+
+        # We are allowed to reused the target_id, but only once per physical port
+        # i.e. fc0 and fc1/3 would be a valid combination, but fc1 and fc1/3 would not.
+        filters = [['target.id', '=', data['target_id']]]
+        if id_ is not None:
+            filters.append(['id', '!=', id_])
+        ports = [fcp['port'] for fcp in await self.middleware.call('fcport.query', filters)]
+        ports_set = {fcp.split('/')[0] for fcp in ports}
+
+        if data['port'].split('/')[0] in ports_set:
+            verrors.add(
+                f'{schema_name}.port',
+                f'Invalid FC port ({data["port"]}) supplied, target already mapped to {",".join(ports)}'
+            )
 
         # Make sure that the port base is a valid fc_host alias
         fc_hosts = {host['alias']: host for host in await self.middleware.call('fc.fc_host.query')}

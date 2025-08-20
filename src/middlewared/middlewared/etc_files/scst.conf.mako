@@ -48,7 +48,9 @@
     extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
     portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
     initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
-    fcports_by_target_id = {d['target']['id']: d for d in render_ctx['fcport.query']}
+    fcports_by_target_id = defaultdict(list)
+    for fcport in render_ctx['fcport.query']:
+        fcports_by_target_id[fcport['target']['id']].append(fcport)
     fcports_by_port_name = {d['port']: d for d in render_ctx['fcport.query']}
     targets_by_id = {d['id']: d for d in targets}
     authenticators = defaultdict(list)
@@ -79,12 +81,27 @@
             return wwn_as_colon_hex(fcport['wwpn_b'])
 
     def ha_node_wwpn_for_target(target, node):
+        """Iterator that yields wwpn, fcport pairs"""
         if target['id'] in fcports_by_target_id:
-            fcport = fcports_by_target_id[target['id']]
-            if not is_ha or node == 'A':
-                return wwn_as_colon_hex(fcport['wwpn'])
-            elif node == 'B':
-                return wwn_as_colon_hex(fcport['wwpn_b'])
+            for fcport in fcports_by_target_id[target['id']]:
+                if not is_ha or node == 'A':
+                    wwpn = wwn_as_colon_hex(fcport['wwpn'])
+                elif node == 'B':
+                    wwpn = wwn_as_colon_hex(fcport['wwpn_b'])
+                if wwpn:
+                    yield wwpn, fcport
+
+    def fc_target_rel_tgt_id(target, fcport):
+        """
+        Return a rel_tgt_id for a target attached to a particular fcport.
+
+        It does NOT take the possible offset for HA Node B into account.
+        """
+        try:
+            per_hba = int(fcport['port'].split('/')[0][2:]) * 1000
+        except Exception:
+            per_hba = 0
+        return target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET + per_hba
 
     def is_iscsi_target(target):
         return target['mode'] in ['ISCSI', 'BOTH']
@@ -636,10 +653,10 @@ TARGET_DRIVER qla2x00t {
         parent_host ${parent_host}
 % endif  ## parent_host
 % if node == "A":
-        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+        rel_tgt_id ${fc_target_rel_tgt_id(target, fcport)}
 % endif
 % if node == "B":
-        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET + REL_TGT_ID_NODEB_OFFSET}
+        rel_tgt_id ${fc_target_rel_tgt_id(target, fcport) + REL_TGT_ID_NODEB_OFFSET}
 % endif
 % if failover_status == "MASTER":
         enabled 1
@@ -689,7 +706,7 @@ TARGET_DRIVER qla2x00t {
         node_name ${parent_host}
         parent_host ${parent_host}
 % endif  ## parent_host
-        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+        rel_tgt_id ${fc_target_rel_tgt_id(target, fcport)}
         enabled 1
 ## Before we write the LUNs, we may write a security_group
 % if fc_initiator_access:
@@ -726,7 +743,7 @@ TARGET_DRIVER qla2x00t {
         node_name ${parent_host}
         parent_host ${parent_host}
 % endif  ## parent_host
-        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+        rel_tgt_id ${fc_target_rel_tgt_id(target, fcport)}
         enabled 1
         % for associated_target in associated_targets[fcport['target']['id']]:
         LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
@@ -779,10 +796,9 @@ DEVICE_GROUP targets {
                 TARGET ${global_config['basename']}:${target['name']}
 % endif
 % if is_fc_target(target):
-<% wwpn = ha_node_wwpn_for_target(target, node) %>\
-% if wwpn:
+% for wwpn, fcport in ha_node_wwpn_for_target(target, node):
                 TARGET ${wwpn}
-% endif
+% endfor  ## ha_node_wwpn_for_target
 % endif
 % endfor
         }
@@ -794,17 +810,16 @@ DEVICE_GROUP targets {
 % for target in targets:
                 TARGET ${global_config['basename']}:HA:${target['name']}
 % if is_fc_target(target):
-<% wwpn = ha_node_wwpn_for_target(target, other_node) %>\
-% if wwpn:
+% for wwpn, fcport in ha_node_wwpn_for_target(target, other_node):
                 TARGET ${wwpn} {
 % if other_node == "A":
-                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+                    rel_tgt_id ${fc_target_rel_tgt_id(target, fcport)}
 % endif
 % if other_node == "B":
-                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET+ REL_TGT_ID_NODEB_OFFSET}
+                    rel_tgt_id ${fc_target_rel_tgt_id(target, fcport) + REL_TGT_ID_NODEB_OFFSET}
 % endif
                 }
-% endif  ## wwpn
+% endfor  ## ha_node_wwpn_for_target
 % endif  ## is_fc_target
 % endfor  ## target
         }
@@ -841,17 +856,16 @@ DEVICE_GROUP targets {
                 }
 % endif  ## is_iscsi_target
 % if is_fc_target(target):
-<% wwpn = ha_node_wwpn_for_target(target, other_node) %>\
-% if wwpn:
+% for wwpn, fcport in ha_node_wwpn_for_target(target, other_node):
                 TARGET ${wwpn} {
 % if other_node == "A":
-                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+                    rel_tgt_id ${fc_target_rel_tgt_id(target, fcport)}
 % endif
 % if other_node == "B":
-                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET + REL_TGT_ID_NODEB_OFFSET}
+                    rel_tgt_id ${fc_target_rel_tgt_id(target, fcport) + REL_TGT_ID_NODEB_OFFSET}
 % endif
                 }
-% endif  ## wwpn
+% endfor  ## ha_node_wwpn_for_target
 % endif  ## is_fc_target
 % endfor
 
@@ -866,10 +880,11 @@ DEVICE_GROUP targets {
                 TARGET ${global_config['basename']}:${target['name']}
 % endif  ## is_iscsi_target
 % if is_fc_target(target):
-<% wwpn = ha_node_wwpn_for_target(target, node) %>\
+% for wwpn, fcport in ha_node_wwpn_for_target(target, node):
 % if wwpn and not wwpn in skipped_wwpns:
                 TARGET ${wwpn}
 % endif  ## wwpn
+% endfor  ## ha_node_wwpn_for_target
 % endif  ## is_fc_target
 % endfor ## target
         }
