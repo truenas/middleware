@@ -56,7 +56,7 @@ class SMARTAlertSource(ThreadedAlertSource):
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(minutes=90))
 
-    def parse_ata_smart_info(self, data: dict, disk) -> SmartInfo:
+    def parse_ata_smart_info(self, data: dict) -> SmartInfo:
         ue, test_failed, sbr, ec = 0, False, 0, 0
         for attr in data.get("ata_smart_attributes", {}).get("table", []):
             if attr["id"] == 187:
