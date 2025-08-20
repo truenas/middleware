@@ -21,6 +21,7 @@ from middlewared.test.integration.utils.failover import wait_for_standby
 from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
 
 from auto_config import hostname, password, pool_name, user, ha
+from functions import async_SSH_done, async_SSH_start
 from protocols import SSH_NFS, nfs_share
 from truenas_api_client import ClientException
 
@@ -609,6 +610,40 @@ class TestNFSops:
             contents = n.ls('.')
             assert 'testdir' not in contents
             assert 'testfile' not in contents
+
+    def test_nfs_scope_setting(self, start_nfs, nfs_dataset_and_share):
+        """
+        Test NFS share with scope configuration
+        Confirm the scope setting is correctd.
+        Capture the network transaction on a mount
+        confirm the expected scope value is in the EXCHANGE_ID
+        TODO: Add HA failover test
+        """
+        assert start_nfs is True
+        assert nfs_dataset_and_share['nfsid'] is not None
+        hostip = truenas_server.ip
+        outs = ""
+        errs = ""
+        expected_scope_value = call('system.global.id')
+
+        # Confirm /etc/nfs.conf
+        conf = parse_server_config()
+        assert conf['nfsd']['scope'] == expected_scope_value
+
+        # Confirm NFS reports the expected scope value
+        p = async_SSH_start("tcpdump -A -v -t -i lo -s 1514 port nfs -c12", user, password, hostip)
+        # Give some time so that the tcpdump has started before we proceed
+        sleep(2)
+        with SSH_NFS(hostip, NFS_PATH, vers=4, user=user, password=password, ip=hostip):
+            # Wait a couple seconds then collect
+            outs, errs = async_SSH_done(p, 2)
+
+        # Process the results
+        output = outs.strip()
+        assert len(output), f"No output from tcpdump:'{outs}', errs: {errs}"
+        lines = output.split("\n")
+        assert len(lines) > 12, f"Unexpected number of lines output by tcpdump: {outs}, errs: {errs}"
+        assert expected_scope_value in output, {errs}
 
     def test_server_side_copy(self, start_nfs, nfs_dataset_and_share):
         assert start_nfs is True
