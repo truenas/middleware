@@ -40,7 +40,7 @@ class CompoundService(Service):
             config_specified.update(config1)
             config_specified.update(config2)
 
-        self._config = service_config(parts[0].__class__, config_specified)
+        self._config = service_config(type(parts[0]).__name__, config_specified)
 
         self.parts = parts
 

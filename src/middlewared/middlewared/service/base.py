@@ -1,8 +1,8 @@
 import inspect
 
 
-def service_config(klass, config):
-    namespace = klass.__name__
+def service_config(name: str, config):
+    namespace = name
     if namespace.endswith('Service'):
         namespace = namespace[:-7]
     namespace = namespace.lower()
@@ -33,7 +33,7 @@ def service_config(klass, config):
         'cli_description': None,
         'role_prefix': None,
         'role_separate_delete': False,
-        'verbose_name': klass.__name__.replace('Service', ''),
+        'verbose_name': name.replace('Service', ''),
     }
     config_attrs.update({
         k: v
@@ -139,21 +139,25 @@ class ServiceBase(type):
       - cli_private: if the service is not private, this flags whether or not the service is visible in the CLI
     """
 
-    def __new__(cls, name, bases, attrs):
+    def __new__(cls, name, bases, attrs: dict, **kwargs):
         super_new = super(ServiceBase, cls).__new__
-        if name == 'Service' and bases == ():
-            return super_new(cls, name, bases, attrs)
+        if name in ('Service', 'CRUDService'):
+            return super_new(cls, name, bases, attrs, **kwargs)
 
         config = attrs.pop('Config', None)
-        klass = super_new(cls, name, bases, attrs)
 
         if config:
-            klass._config_specified = {k: v for k, v in config.__dict__.items() if not k.startswith('_')}
+            config_specified = {k: v for k, v in config.__dict__.items() if not k.startswith('_')}
         else:
-            klass._config_specified = {}
+            config_specified = {}
 
-        klass._config = service_config(klass, klass._config_specified)
-        klass._register_models = sum([getattr(getattr(klass, m), '_register_models', []) for m in dir(klass)], [])
+        attrs.update(
+            _config_specified=config_specified,
+            _config=service_config(name, config_specified),
+            _register_models=sum([getattr(attrs[m], '_register_models', []) for m in attrs], []),
+        )
+
+        klass = super_new(cls, name, bases, attrs, **kwargs)
 
         # Validate API method argument class names
         validate_api_method_schema_class_names(klass)
