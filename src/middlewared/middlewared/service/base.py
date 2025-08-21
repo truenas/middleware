@@ -141,7 +141,7 @@ class ServiceBase(type):
 
     def __new__(cls, name, bases, attrs: dict, **kwargs):
         super_new = super(ServiceBase, cls).__new__
-        if name in ('Service', 'CRUDService'):
+        if name in {'Service', 'CRUDService', 'ConfigService'}:
             return super_new(cls, name, bases, attrs, **kwargs)
 
         config = attrs.pop('Config', None)

@@ -6,7 +6,6 @@ from pydantic import create_model, Field
 from middlewared.api import api_method
 from middlewared.api.base.model import BaseModel
 
-from .base import ServiceBase
 from .decorators import pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
@@ -15,23 +14,20 @@ from .service_mixin import ServiceChangeMixin
 get_or_insert_lock = asyncio.Lock()
 
 
-class ConfigServiceMetabase(ServiceBase):
+class ConfigService(ServiceChangeMixin, Service):
+    """
+    Config service abstract class
 
-    def __new__(cls, name, bases, attrs):
-        klass = super().__new__(cls, name, bases, attrs)
-        # Skip public config method for ConfigService and SystemServiceService
-        if any(
-            name == c_name and len(bases) == len(c_bases) and all(
-                b.__name__ == c_b for b, c_b in zip(bases, c_bases)
-            )
-            for c_name, c_bases in (
-                ('ConfigService', ('ServiceChangeMixin', 'Service')),
-                ('SystemServiceService', ('ConfigService',)),
-            )
-        ):
-            return klass
+    Meant for services that provide a single set of attributes which can be
+    updated or not.
+    """
 
-        config = klass._config
+    def __init_subclass__(cls, /, no_config=False):
+        super().__init_subclass__()
+        if no_config:
+            return
+
+        config = cls._config
         private = config.private
         entry = config.entry
         namespace = config.namespace
@@ -42,36 +38,26 @@ class ConfigServiceMetabase(ServiceBase):
         if entry is None:
             if not private:
                 raise ValueError(f'{namespace}: public ConfigService must have entry defined')
-        else:
-            # Decorate config method with api_method
-            accepts_model = create_model(
-                namespace.replace(".", "_").capitalize() + 'Config',
-                __base__=(BaseModel,),
-                __module__=entry.__module__,
-            )
-            result_model = create_model(
-                entry.__name__.removesuffix('Entry') + 'ConfigResult',
-                __base__=(BaseModel,),
-                __module__=entry.__module__,
-                result=Annotated[entry, Field()],
-            )
-            klass.config = api_method(
-                accepts_model,
-                result_model,
-                private=private,
-                cli_private=config.cli_private,
-            )(klass.config)
+            return
 
-        return klass
-
-
-class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase):
-    """
-    Config service abstract class
-
-    Meant for services that provide a single set of attributes which can be
-    updated or not.
-    """
+        # Decorate config method with api_method
+        accepts_model = create_model(
+            namespace.replace(".", "_").capitalize() + 'Config',
+            __base__=(BaseModel,),
+            __module__=entry.__module__,
+        )
+        result_model = create_model(
+            entry.__name__.removesuffix('Entry') + 'ConfigResult',
+            __base__=(BaseModel,),
+            __module__=entry.__module__,
+            result=Annotated[entry, Field()],
+        )
+        cls.config = api_method(
+            accepts_model,
+            result_model,
+            private=private,
+            cli_private=config.cli_private,
+        )(cls.config)
 
     async def config(self):
         options = {}
