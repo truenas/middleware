@@ -19,6 +19,7 @@ from middlewared.api.current import (iSCSITargetExtentCreateArgs,
                                      iSCSITargetExtentUpdateResult)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
@@ -78,9 +79,18 @@ class iSCSITargetExtentService(SharingService):
     @private
     async def sharing_task_determine_locked(self, data):
         """Determine if this extent is in a locked path"""
+        path = await self.get_path_field(data)
+        if data['type'] == 'FILE' and path.startswith('/mnt'):
+            # Sanitize the path, remove non ds components that are invalid names
+            path_ = path.removeprefix('/mnt/')
+            while path_:
+                if validate_dataset_name(path_):
+                    path = path_
+                    break
+                path_ = os.path.dirname(path_)
         return await self.middleware.call(
             'pool.dataset.path_in_locked_datasets',
-            await self.get_path_field(data)
+            path
         )
 
     @api_method(
