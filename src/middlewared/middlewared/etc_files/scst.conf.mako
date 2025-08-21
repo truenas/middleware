@@ -83,11 +83,9 @@
     def ha_node_wwpn_for_target(target, node):
         """Iterator that yields wwpn, fcport pairs"""
         if target['id'] in fcports_by_target_id:
+            key = 'wwpn' if not is_ha or node == 'A' else 'wwpn_b'
             for fcport in fcports_by_target_id[target['id']]:
-                if not is_ha or node == 'A':
-                    wwpn = wwn_as_colon_hex(fcport['wwpn'])
-                elif node == 'B':
-                    wwpn = wwn_as_colon_hex(fcport['wwpn_b'])
+                wwpn = wwn_as_colon_hex(fcport[key])
                 if wwpn:
                     yield wwpn, fcport
 
