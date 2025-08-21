@@ -420,6 +420,12 @@ class iSCSITargetExtentService(SharingService):
                 verrors, f'{schema_name}.path', path
             )
 
+            if ' ' in path:
+                verrors.add(
+                    f'{schema_name}.path',
+                    'Filepath may not contain space characters'
+                )
+
         return data
 
     @private
