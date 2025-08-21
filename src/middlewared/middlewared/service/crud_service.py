@@ -40,7 +40,7 @@ def get_instance_result(entry):
     )
 
 
-class CRUDService(ServiceChangeMixin, Service):
+class CRUDService(ServiceChangeMixin, Service, no_config=True):
     """
     CRUD service abstract class.
 

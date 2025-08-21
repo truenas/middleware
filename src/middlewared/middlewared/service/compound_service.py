@@ -1,7 +1,6 @@
 import itertools
 
-from .base import service_config
-from .service import Service
+from .service import service_config, Service
 
 
 class CompoundService(Service):
