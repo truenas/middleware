@@ -202,6 +202,7 @@ class EtcService(Service):
             ],
             'entries': [
                 {'type': 'py', 'path': 'nvmet_kernel'},
+                {'type': 'py', 'path': 'nvmet_spdk'},
             ]
         },
         'pam': {
