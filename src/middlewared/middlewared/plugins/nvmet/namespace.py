@@ -14,6 +14,7 @@ from middlewared.api.current import (NVMetNamespaceCreateArgs,
                                      NVMetNamespaceUpdateArgs,
                                      NVMetNamespaceUpdateResult)
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import SharingService, ValidationErrors, private
 from middlewared.service_exception import CallError, MatchNotFound
 from .constants import NAMESPACE_DEVICE_TYPE
@@ -378,7 +379,16 @@ class NVMetNamespaceService(SharingService):
     @private
     async def sharing_task_determine_locked(self, data):
         """Determine if this namespace is in a locked path"""
+        path = await self.get_path_field(data)
+        if data['device_type'] == 'FILE' and path.startswith('/mnt'):
+            # Sanitize the path, remove non ds components that are invalid names
+            path_ = path.removeprefix('/mnt/')
+            while path_:
+                if validate_dataset_name(path_):
+                    path = path_
+                    break
+                path_ = os.path.dirname(path_)
         return await self.middleware.call(
             'pool.dataset.path_in_locked_datasets',
-            await self.get_path_field(data)
+            path
         )
