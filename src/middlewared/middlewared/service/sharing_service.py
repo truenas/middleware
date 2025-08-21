@@ -6,7 +6,7 @@ from .crud_service import CRUDService
 from .decorators import pass_app, private
 
 
-class SharingTaskService(CRUDService):
+class SharingTaskService(CRUDService, no_config=True):
 
     path_field = 'path'
     allowed_path_types = [FSLocation.LOCAL]
@@ -149,7 +149,7 @@ class SharingTaskService(CRUDService):
     delete.audit_callback = True
 
 
-class SharingService(SharingTaskService):
+class SharingService(SharingTaskService, no_config=True):
     locked_alert_class = 'ShareLocked'
 
     @private
@@ -157,7 +157,7 @@ class SharingService(SharingTaskService):
         return share_task['name']
 
 
-class TaskPathService(SharingTaskService):
+class TaskPathService(SharingTaskService, no_config=True):
     locked_alert_class = 'TaskLocked'
 
     @private

@@ -14,7 +14,6 @@ from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.utils import filter_list
 from middlewared.utils.type import copy_function_metadata
 
-from .base import ServiceBase
 from .decorators import pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
@@ -41,22 +40,27 @@ def get_instance_result(entry):
     )
 
 
-class CRUDServiceMetabase(ServiceBase):
+class CRUDService(ServiceChangeMixin, Service):
+    """
+    CRUD service abstract class.
 
-    def __new__(cls, name, bases, attrs):
-        klass = super().__new__(cls, name, bases, attrs)
-        if any(
-            name == c_name and len(bases) == len(c_bases) and all(b.__name__ == c_b for b, c_b in zip(bases, c_bases))
-            for c_name, c_bases in (
-                ('CRUDService', ('ServiceChangeMixin', 'Service')),
-                ('SharingTaskService', ('CRUDService',)),
-                ('SharingService', ('SharingTaskService',)),
-                ('TaskPathService', ('SharingTaskService',)),
-            )
-        ):
-            return klass
+    Meant for services in that a set of entries can be queried, new entry
+    create, updated and/or deleted.
 
-        config = klass._config
+    CRUD stands for Create Retrieve Update Delete.
+    """
+
+    def __init_subclass__(cls, /, no_config=False):
+        """Validate `Config` and construct `get_instance` and `query` methods for the subclass.
+
+        :param no_config: Subclass does not have a `Config` class and should not implement `query` or `get_instance`.
+
+        """
+        super().__init_subclass__()
+        if no_config:
+            return
+
+        config = cls._config
         entry = config.entry
         private = config.private
         cli_private = config.cli_private
@@ -67,46 +71,35 @@ class CRUDServiceMetabase(ServiceBase):
             if not config.entry:
                 raise ValueError(f'{config.namespace}: public CRUDService must have entry defined')
 
-        if entry is not None:
-            query_result_model = query_result(entry)
-            if (
-                any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
-                not hasattr(klass.query, 'new_style_accepts')
-            ):
-                # No need to inject api method if filterable has been explicitly specified
-                klass.query = api_method(
-                    QueryArgs, query_result_model, private=private, cli_private=cli_private
-                )(klass.query)
+        if entry is None:
+            return
 
-            get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)
-            get_instance_result_model = get_instance_result(entry)
-            klass.get_instance = api_method(
-                get_instance_args_model,
-                get_instance_result_model,
-                private=private,
-                cli_private=cli_private,
-            )(klass.get_instance)
+        query_result_model = query_result(entry)
+        if (
+            any(cls.query == getattr(parent, 'query', None) for parent in cls.__mro__[1:])
+            or not hasattr(cls.query, 'new_style_accepts')
+        ):
+            # Inject API method unless filterable has been explicitly specified
+            cls.query = api_method(
+                QueryArgs, query_result_model, private=private, cli_private=cli_private
+            )(cls.query)
 
-            klass._register_models = [
-                (query_result_model, query_result, entry.__name__),
-                (query_result_model.__annotations__["result"].__args__[1],
-                 query_result_item, entry.__name__),
-                (get_instance_args_model, get_instance_args, entry.__name__),
-                (get_instance_result_model, get_instance_result, entry.__name__),
-            ]
+        get_instance_args_model = get_instance_args(entry, primary_key=config.datastore_primary_key)
+        get_instance_result_model = get_instance_result(entry)
+        cls.get_instance = api_method(
+            get_instance_args_model,
+            get_instance_result_model,
+            private=private,
+            cli_private=cli_private,
+        )(cls.get_instance)
 
-        return klass
-
-
-class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
-    """
-    CRUD service abstract class
-
-    Meant for services in that a set of entries can be queried, new entry
-    create, updated and/or deleted.
-
-    CRUD stands for Create Retrieve Update Delete.
-    """
+        cls._register_models = [
+            (query_result_model, query_result, entry.__name__),
+            (query_result_model.__annotations__["result"].__args__[1],
+                query_result_item, entry.__name__),
+            (get_instance_args_model, get_instance_args, entry.__name__),
+            (get_instance_result_model, get_instance_result, entry.__name__),
+        ]
 
     def __init__(self, middleware):
         super().__init__(middleware)
