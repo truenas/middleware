@@ -248,10 +248,10 @@ class FCPortService(CRUDService):
 
     async def _validate(self, schema_name: str, data: dict, id_: int = None):
         verrors = ValidationErrors()
-        # Make sure we don't reuse either port.
+        # Make sure we don't reuse port.
         await self._ensure_unique(verrors, schema_name, 'port', data['port'], id_)
 
-        # We are allowed to reused the target_id, but only once per physical port
+        # We are allowed to reuse the target_id, but only once per physical port
         # i.e. fc0 and fc1/3 would be a valid combination, but fc1 and fc1/3 would not.
         filters = [['target.id', '=', data['target_id']]]
         if id_ is not None:
