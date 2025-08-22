@@ -5,8 +5,6 @@ from .service import service_config, Service
 
 class CompoundService(Service, no_config=True):
     def __init__(self, middleware, parts):
-        super().__init__(middleware)
-
         self._register_models = []
         for part in parts:
             self._register_models += getattr(part, '_register_models', [])
@@ -40,7 +38,7 @@ class CompoundService(Service, no_config=True):
             config_specified.update(config2)
 
         self._config = service_config(type(parts[0]).__name__, config_specified)
-
+        super().__init__(middleware)
         self.parts = parts
 
         methods_parts = {}
