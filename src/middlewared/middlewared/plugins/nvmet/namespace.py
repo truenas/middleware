@@ -381,13 +381,18 @@ class NVMetNamespaceService(SharingService):
         """Determine if this namespace is in a locked path"""
         path = await self.get_path_field(data)
         if data['device_type'] == 'FILE':
-            # Sanitize the path, remove non ds components that are invalid names
-            path_ = path.removeprefix('/mnt/')
-            while path_:
-                if validate_dataset_name(path_):
-                    path = path_
-                    break
-                path_ = os.path.dirname(path_)
+            for component in pathlib.Path(path.removeprefix('/mnt/')).parents:
+                c = component.as_posix()
+                # walk up the path starting from right to left
+                # if the component of the path isn't a valid
+                # zfs filesystem name, then we make the
+                # assumption that it _CANT_ be a filesystem
+                # and so we move up to the next path.
+                if validate_dataset_name(c):
+                    return await self.middleware.call(
+                        'pool.dataset.path_in_locked_datasets',
+                        c
+                    )
         return await self.middleware.call(
             'pool.dataset.path_in_locked_datasets',
             path
