@@ -213,13 +213,19 @@ class NVMETargetService(PseudoServiceBase):
         pass
 
     async def become_active(self):
-        # If necessary we can optimize to *just* poke the
-        # 1. port ANA group state
-        # 2. namespace enabled
-        await self.middleware.call('etc.generate', self.name)
+        if await self.middleware.call('nvmet.global.running'):
+            # If necessary we can optimize to *just* poke the
+            # 1. port ANA group state
+            # 2. namespace enabled
+            await self.middleware.call('etc.generate', self.name)
+        else:
+            await self.start()
 
     async def get_state(self):
         return ServiceState(
             (await self.middleware.call('nvmet.global.running')),
             [],
         )
+
+    async def failure_logs(self):
+        return None
