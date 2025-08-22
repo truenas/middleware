@@ -1,17 +1,18 @@
+import asyncio
 import contextlib
 import os
 import time
+import pytest
 
-from pysnmp.hlapi import (
+from pysnmp.hlapi.v3arch.asyncio import (
     CommunityData,
     ContextData,
-    ObjectIdentity,
-    ObjectType,
     SnmpEngine,
     UdpTransportTarget,
-    getCmd
+    get_cmd
 )
-import pytest
+from pysnmp.smi.rfc1902 import ObjectIdentity, ObjectType
+
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
@@ -176,13 +177,16 @@ def get_systemctl_status(service):
     return "RUNNING" if action[0].split()[2] == "(running)" else "STOPPED"
 
 
-def get_sysname(hostip, community):
-    iterator = getCmd(SnmpEngine(),
-                      CommunityData(community),
-                      UdpTransportTarget((hostip, 161)),
-                      ContextData(),
-                      ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysName', 0)))
-    errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
+async def get_sysname(hostip, community):
+    snmpEngine = SnmpEngine()
+    errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
+        snmpEngine,
+        CommunityData(community),
+        await UdpTransportTarget.create((hostip, 161)),
+        ContextData(),
+        ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysName', 0))
+    )
+
     assert errorIndication is None, errorIndication
     assert errorStatus == 0, errorStatus
     value = str(varBinds[0])
@@ -197,12 +201,12 @@ def validate_snmp_get_sysname_uses_same_ip(hostip):
     # Write the test in a manner that is portable between Linux and FreeBSD ... which means
     # *not* using 'any' as the interface name.  We will use the interface supplied by the
     # test runner instead.
-    print(f"Testing {hostip} ", end='')
+
     p = async_SSH_start(f"tcpdump -t -i {interface} -n udp port 161 -c2", user, password, hostip)
     # Give some time so that the tcpdump has started before we proceed
     time.sleep(5)
 
-    get_sysname(hostip, COMMUNITY)
+    asyncio.run(get_sysname(hostip, COMMUNITY))
 
     # Now collect and process the tcpdump output
     outs, errs = async_SSH_done(p, 20)
@@ -212,7 +216,6 @@ def validate_snmp_get_sysname_uses_same_ip(hostip):
     assert len(lines) == 2, f"Unexpected number of lines output by tcpdump: {outs}"
     for line in lines:
         assert line.split()[0] == 'IP'
-    # print(errs)
     get_dst = lines[0].split()[3].rstrip(':')
     reply_src = lines[1].split()[1]
     assert get_dst == reply_src
@@ -293,11 +296,11 @@ class TestSNMP:
         assert data['contact'] == CONTACT
         assert data['location'] == LOCATION
 
-    def test_sysname_reply_uses_same_ip(self):
+    def test_sysname_reply_uses_same_ip(self, initialize_and_start_snmp):
         validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
 
     @skip_ha_tests
-    def test_ha_sysname_reply_uses_same_ip(self):
+    async def test_ha_sysname_reply_uses_same_ip(self):
         validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
         validate_snmp_get_sysname_uses_same_ip(truenas_server.nodea_ip)
         validate_snmp_get_sysname_uses_same_ip(truenas_server.nodeb_ip)
