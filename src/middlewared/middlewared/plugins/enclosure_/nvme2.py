@@ -231,8 +231,8 @@ def map_r30_r60_or_fseries(model, ctx):
         internal_slots = 4
     elif model == ControllerModels.R60.value:
         webui_map = {
-            '1': 1, '3': 2, '5': 3, '7': 4, '9': 5, '11': 6,
-            '2': 7, '4': 8, '6': 9, '8': 10, '10': 11, '12': 12,
+            '51': 1, '53': 2, '55': 3, '57': 4, '59': 5, '61': 6,
+            '52': 7, '54': 8, '56': 9, '58': 10, '60': 11, '62': 12,
         }
         num_of_nvme_slots = front_slots = len(webui_map)
     else:
