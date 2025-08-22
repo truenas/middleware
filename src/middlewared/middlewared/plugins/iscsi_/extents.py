@@ -19,6 +19,7 @@ from middlewared.api.current import (iSCSITargetExtentCreateArgs,
                                      iSCSITargetExtentUpdateResult)
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
@@ -78,9 +79,23 @@ class iSCSITargetExtentService(SharingService):
     @private
     async def sharing_task_determine_locked(self, data):
         """Determine if this extent is in a locked path"""
+        path = await self.get_path_field(data)
+        if data['type'] == 'FILE':
+            for component in pathlib.Path(path.removeprefix('/mnt/')).parents:
+                c = component.as_posix()
+                # walk up the path starting from right to left
+                # if the component of the path isn't a valid
+                # zfs filesystem name, then we make the
+                # assumption that it _CANT_ be a filesystem
+                # and so we move up to the next path.
+                if validate_dataset_name(c):
+                    return await self.middleware.call(
+                        'pool.dataset.path_in_locked_datasets',
+                        c
+                    )
         return await self.middleware.call(
             'pool.dataset.path_in_locked_datasets',
-            await self.get_path_field(data)
+            path
         )
 
     @api_method(
@@ -409,6 +424,12 @@ class iSCSITargetExtentService(SharingService):
                 'iscsi.extent.validate_path_resides_in_volume',
                 verrors, f'{schema_name}.path', path
             )
+
+            if ' ' in path:
+                verrors.add(
+                    f'{schema_name}.path',
+                    'Filepath may not contain space characters'
+                )
 
         return data
 
