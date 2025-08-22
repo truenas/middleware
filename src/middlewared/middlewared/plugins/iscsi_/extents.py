@@ -80,7 +80,7 @@ class iSCSITargetExtentService(SharingService):
     async def sharing_task_determine_locked(self, data):
         """Determine if this extent is in a locked path"""
         path = await self.get_path_field(data)
-        if data['type'] == 'FILE' and path.startswith('/mnt'):
+        if data['type'] == 'FILE':
             # Sanitize the path, remove non ds components that are invalid names
             path_ = path.removeprefix('/mnt/')
             while path_:
