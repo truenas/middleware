@@ -5,16 +5,20 @@ import itertools
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING
+from types import ModuleType
+from typing import TYPE_CHECKING, Callable, Collection, Iterable, TypeVar
 
 from middlewared.schema import Schemas
 if TYPE_CHECKING:
     from middlewared.service import Service
 
+
 logger = logging.getLogger(__name__)
+T = TypeVar('T', bound=type)
+ModuleCallback = Callable[[ModuleType], None]
 
 
-def load_modules(directory, base=None, depth=0, whitelist=None):
+def load_modules(directory: str, base: str | None = None, depth: int = 0, whitelist: Iterable[str] | None = None):
     directory = os.path.normpath(directory)
     if base is None:
         middlewared_root = os.path.dirname(os.path.dirname(__file__))
@@ -46,7 +50,7 @@ def load_modules(directory, base=None, depth=0, whitelist=None):
             yield from load_modules(path, f'{base}.{f}', depth - 1, whitelist)
 
 
-def load_classes(module, base, blacklist):
+def load_classes(module: object, base: T, blacklist: Collection[T]) -> list[T]:
     classes = []
     for attr in dir(module):
         attr = getattr(module, attr)
@@ -62,7 +66,7 @@ class SchemasMixin:
     def __init__(self):
         self._schemas = Schemas()
 
-    def _resolve_methods(self, services, events):
+    def _resolve_methods(self, services: Iterable[object], events: Iterable):
         from middlewared.schema import resolve_methods  # Lazy import so namespace match
         to_resolve = []
         for service in services:
@@ -97,10 +101,16 @@ class LoadPluginsMixin(SchemasMixin):
         self._services_aliases: dict[str, 'Service'] = {}
         super().__init__()
 
-    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None, whitelist=None):
+    def _load_plugins(
+        self,
+        on_module_begin: ModuleCallback | None = None,
+        on_module_end: ModuleCallback | None = None,
+        on_modules_loaded: Callable[[], None] | None = None,
+        whitelist: Iterable[str] | None = None,
+    ):
         from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
 
-        services = []
+        services: list[type[Service]] = []
         plugins_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'plugins'))
         if not os.path.exists(plugins_dir):
             raise ValueError(f'plugins dir not found: {plugins_dir}')
@@ -148,5 +158,5 @@ class LoadPluginsMixin(SchemasMixin):
             return service
         return self._services_aliases[name]
 
-    def get_services(self):
+    def get_services(self) -> dict[str, 'Service']:
         return self._services
