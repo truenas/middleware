@@ -11,6 +11,8 @@ from middlewared.service_exception import InstanceNotFound, ValidationError, Val
 from middlewared.test.integration.assets.alert import AlertMixin
 from middlewared.test.integration.utils import call, mock, ssh
 
+REL_TGT_ID_FC_OFFSET = 5000
+
 SLOT_0 = 'CPU SLOT4 PCI-E 3.0 X16 / PCI Function 0'
 SLOT_1 = 'CPU SLOT4 PCI-E 3.0 X16 / PCI Function 1'
 SLOT_2 = 'CPU SLOT5 PCI-E 3.0 X16 / PCI Function 0'
@@ -465,6 +467,24 @@ def mock_ports(node_a_physical_ports, node_b_physical_ports):
             yield
 
 
+@contextlib.contextmanager
+def set_fchost_npiv(id_: int, value: int):
+    original_value = call('fc.fc_host.query', [['id', '=', id_]], {'get': True})['npiv']
+    try:
+        call('fc.fc_host.update', id_, {'npiv': value})
+        yield
+    finally:
+        call('fc.fc_host.update', id_, {'npiv': original_value})
+
+
+def fc_target_rel_tgt_id(rel_tgt_id, alias):
+    try:
+        per_hba = int(alias.split('/')[0][2:]) * 1000
+    except Exception:
+        per_hba = 0
+    return rel_tgt_id + REL_TGT_ID_FC_OFFSET + per_hba
+
+
 def unmock_ports():
     physical_port_filter = [['physical', '=', True]]
     call('test.remove_mock', 'fc.fc_hosts', None)
@@ -570,6 +590,7 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
     def test_target(self, fc_hosts):
         with target_lun_zero('fctarget0', 'fcextent0', 100) as config:
             target_id = config['target']['id']
+            rel_tgt_id = config['target']['rel_tgt_id']
 
             # The target was created with mode ISCSI.  Ensure we can't use that.
             with pytest.raises(ValidationErrors) as ve:
@@ -587,6 +608,7 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
 
             # Now we should be able to successfully map the target
             with fcport_create(fc_hosts[0]['alias'], target_id) as map0:
+                mapped_rel_tgt_id = fc_target_rel_tgt_id(rel_tgt_id, fc_hosts[0]['alias'])
                 maps = call('fcport.query')
                 assert len(maps) == 1
                 assert maps[0] == map0
@@ -615,7 +637,7 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                 assert scst_qla_targets[key0] == {
                     'LUN': {'0': 'fcextent0'},
                     'enabled': '1',
-                    'rel_tgt_id': str(5001 + rel_tgt_id_node_offset)
+                    'rel_tgt_id': str(mapped_rel_tgt_id + rel_tgt_id_node_offset)
                 }
                 assert key1 in scst_qla_targets
                 assert scst_qla_targets[key1] == {
@@ -627,6 +649,8 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                 # OK, now let's create another FC target
                 with target_lun_zero('fctarget2', 'fcextent2', 200) as config2:
                     target2_id = config2['target']['id']
+                    rel_tgt_id2 = config2['target']['rel_tgt_id']
+
                     # Change the mode of the target
                     call('iscsi.target.update', target2_id, {'mode': 'BOTH'})
 
@@ -641,19 +665,28 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                         )
                     ]
 
-                    # Make sure we can't create a new fcport using the in-use target
-                    with pytest.raises(ValidationErrors) as ve:
-                        call('fcport.create', {'port': fc_hosts[1]['alias'], 'target_id': target_id})
-                    assert ve.value.errors == [
-                        ValidationError(
-                            'fcport_create.target_id',
-                            'Object with this target_id already exists',
-                            errno.EINVAL,
-                        )
-                    ]
+                    # NAS-137249 / 26.04 / Support Fibre Channel MPIO changed what
+                    # is permitted wrt mapping targets
+                    # - Can map the same target out another port
+                    # - Cannot map the same target twice to the same physical dev
+                    with fcport_create(fc_hosts[1]['alias'], target_id) as map1:
+                        pass
+                    with set_fchost_npiv(fc_hosts[0]['id'], 1):
+                        alias = fc_hosts[0]['alias']
+                        npivalias = f'{alias}/1'
+                        with pytest.raises(ValidationErrors) as ve:
+                            call('fcport.create', {'port': npivalias, 'target_id': target_id})
+                        assert ve.value.errors == [
+                            ValidationError(
+                                'fcport_create.port',
+                                f'Invalid FC port ({npivalias}) supplied, target already mapped to {alias}',
+                                errno.EINVAL,
+                            )
+                        ]
 
                     # OK, now map the 2nd target
                     with fcport_create(fc_hosts[1]['alias'], target2_id) as map1:
+                        mapped_rel_tgt_id2 = fc_target_rel_tgt_id(rel_tgt_id2, fc_hosts[1]['alias'])
                         maps = call('fcport.query')
                         assert len(maps) == 2
                         assert (maps[0] == map0 and maps[1] == map1) or (maps[0] == map1 and maps[1] == map0)
@@ -668,13 +701,13 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                         assert scst_qla_targets[key0] == {
                             'LUN': {'0': 'fcextent0'},
                             'enabled': '1',
-                            'rel_tgt_id': str(5001 + rel_tgt_id_node_offset)
+                            'rel_tgt_id': str(mapped_rel_tgt_id + rel_tgt_id_node_offset)
                         }
                         assert key1 in scst_qla_targets
                         assert scst_qla_targets[key1] == {
                             'LUN': {'0': 'fcextent2'},
                             'enabled': '1',
-                            'rel_tgt_id': str(5002 + rel_tgt_id_node_offset)
+                            'rel_tgt_id': str(mapped_rel_tgt_id2 + rel_tgt_id_node_offset)
                         }
                         # Check iSCSI target
                         iqn2 = 'iqn.2005-10.org.freenas.ctl:fctarget2'
@@ -683,7 +716,7 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                         assert iqn2 in iscsi_targets
                         assert iscsi_targets[iqn2] == {
                             'LUN': {'0': 'fcextent2'},
-                            'rel_tgt_id': str(2 + rel_tgt_id_node_offset),
+                            'rel_tgt_id': str(rel_tgt_id2 + rel_tgt_id_node_offset),
                             'enabled': '1',
                             'per_portal_acl': '1'
                         }
@@ -699,16 +732,11 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                             )
                         ]
 
-                        # Make sure we can't update the old fcport using the in-use target
-                        with pytest.raises(ValidationErrors) as ve:
-                            call('fcport.update', map0['id'], {'target_id': target2_id})
-                        assert ve.value.errors == [
-                            ValidationError(
-                                'fcport_update.target_id',
-                                'Object with this target_id already exists',
-                                errno.EINVAL,
-                            )
-                        ]
+                        # After NAS-137249 make sure we CAN update the old fcport using the
+                        # in-use target
+                        call('fcport.update', map0['id'], {'target_id': target2_id})
+                        # And restore things again afterwards.
+                        call('fcport.update', map0['id'], {'target_id': target_id})
 
                         # OK, now let's create a third FC target
                         with target_lun_zero('fctarget3', 'fcextent3', 300) as config3:
