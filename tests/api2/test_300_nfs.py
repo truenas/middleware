@@ -1115,13 +1115,13 @@ class TestNFSops:
                     f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
 
             # Confirm we block mounts from 'non-root' ports
-            with pytest.raises(RuntimeError) as re:
+            # Cannot use pytest.raises because it messes with the output text
+            try:
                 with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, options=['noresvport'],
                              user=user, password=password, ip=truenas_server.ip):
-                    pass
-                # We should not get to this assert
-                assert False, "Unexpected success with mount"
-            assert 'Operation not permitted' in str(re), re
+                    assert False, "Unexpected success with mount"
+            except Exception as e:
+                assert 'Operation not permitted' in str(e), e
 
             # --- Test: allow_nonroot is True ---
             new_nfs_conf = call('nfs.update', {"allow_nonroot": True})
