@@ -67,11 +67,9 @@ def test_mutable_idmaps():
             'password': 'test1234',
             'group': g['id'],
         }) as u:
-            # Adding user and group to Incus mapping
             call('user.update', u['id'], {'userns_idmap': 'DIRECT'})
             call('group.update', g['id'], {'userns_idmap': 'DIRECT'})
 
-            # Removing user from Incus mapping
             user_response = call('user.update', u['id'], {'userns_idmap': None})
             group_response = call('group.update', g['id'], {'userns_idmap': None})
 

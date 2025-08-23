@@ -44,7 +44,6 @@ class TNUserProp(enum.Enum):
     REFQUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:refquota_warning'
     REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critical'
     MANAGED_BY = f'{USERPROP_PREFIX}:managedby'
-    INCUS_POOL = f'{USERPROP_PREFIX}:incus_storage_pool'  # used only in virt/global.py
 
     def default(self):
         match self:
@@ -139,13 +138,6 @@ def unlocked_zvols_fast(options=None, data=None):
 
             for file in files:
                 path = root + '/' + file
-
-                # zvols located within ix-virt are managed by incus and should
-                # never be presented as choices in middleware. Removing this
-                # check may introduce data corruption bugs by allowing zvols
-                # to be simultaneously used by multiple VMs.
-                if '.ix-virt' in path:
-                    continue
 
                 zvol_name = zvol_path_to_name(path)
 
