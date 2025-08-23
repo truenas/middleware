@@ -2,7 +2,13 @@ from typing import Literal
 
 from middlewared.api.base import BaseModel, NotRequired, UniqueList
 
-__all__ = ("ZFSResourceEntry", "ZFSResourceQueryArgs", "ZFSResourceQueryResult")
+__all__ = (
+    "ZFSResourceEntry",
+    "ZFSResourceQueryArgs",
+    "ZFSResourceQueryResult",
+    "ZFSResourceDestroyArgs",
+    "ZFSResourceDestroyResult",
+)
 
 PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIVED"]
 
@@ -21,6 +27,40 @@ class PropertyValue(BaseModel):
     """The source from where this property received its value."""
     value: int | float | str | bool | None
     """The parsed raw value of the property."""
+
+
+class ZFSResourceDestroy(BaseModel):
+    paths: UniqueList[str]
+    """List of ZFS resources (filesystems/volumes/snapshots) to destroy. \
+
+    If specifying snapshots, a few things to consider:
+        1. to delete a SINGULAR snapshot for a resource specify it \
+            like "tank/foo@snap1" and leave recursive False.
+        2. to delete ONLY snapshots named "snap1" RECURSIVELY for "tank/foo" \
+            specify the args like "tank/foo@snap1" and set recursive True.
+        3. to delete all snapshots for "tank/foo", NON-RECURSIVE specify it \
+            like "tank/foo@*" and leave recursive False.
+        4. to delete all snapshots for "tank/foo" RECURSIVELY, specify it \
+            like "tank/foo@*" and set recursive True.
+    """
+    recursive: bool = False
+    """Recursively destroy all children of the specified resources."""
+    force: bool = False
+    """Force unmount and destroy even if the resource is busy."""
+    defer: bool = False
+    """Defer the destroy operation if the resource is busy. \
+    The resource will be destroyed when it is no longer in use."""
+
+
+class ZFSResourceDestroyArgs(BaseModel):
+    data: ZFSResourceDestroy = ZFSResourceDestroy(paths=list())
+    """Parameters for destroying ZFS resources."""
+
+
+class ZFSResourceDestroyResult(BaseModel):
+    result: dict[str, str | None]
+    """Dictionary mapping each path to its destruction result. \
+    Null if successfully destroyed, error message string if failed."""
 
 
 class ZFSPropertiesEntry(BaseModel):
