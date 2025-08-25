@@ -109,7 +109,7 @@ class TimeCronModel(CronModel):
     @model_validator(mode="after")
     def validate_time(self):
         begin = time(*map(int, self.begin.split(":")))
-        end = time(*map(int, self.begin.split(":")))
+        end = time(*map(int, self.end.split(":")))
 
         assert begin <= end, "Begin time should be less than or equal to end time"
 
