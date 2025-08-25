@@ -1,12 +1,7 @@
+from copy import deepcopy
 import enum
 
-from copy import deepcopy
-from middlewared.schema import (
-    Dict,
-    Int,
-    List,
-    Str,
-)
+from middlewared.schema import Dict, Int
 
 
 class AuditEnum(enum.Enum):
@@ -59,70 +54,10 @@ class AuditEventParam(AuditEnum):
     SUCCESS = 'success'
 
 
-class AuditFileHandleType(AuditEnum):
-    DEV_INO = 'DEV_INO'
-    UUID = 'UUID'
-
-
-class AuditResultType(AuditEnum):
-    UNIX = 'UNIX'
-    NTSTATUS = 'NTSTATUS'
-
-
-class AuditFileType(AuditEnum):
-    BLOCK = 'BLOCK'
-    CHARACTER = 'CHARACTER'
-    FIFO = 'FIFO'
-    REGULAR = 'REGULAR'
-    DIRECTORY = 'DIRECTORY'
-    SYMLINK = 'SYMLINK'
-
-
 AUDIT_VERS = Dict(
     'vers',
     Int('major', required=True),
     Int('minor', required=True)
-)
-
-
-AUDIT_RESULT_NTSTATUS = Dict(
-    'result',
-    Str('type', enum=[AuditResultType.NTSTATUS.name]),
-    Int('value_raw'),
-    Str('value_parsed')
-)
-
-
-AUDIT_RESULT_UNIX = Dict(
-    'result',
-    Str('type', enum=[AuditResultType.UNIX.name]),
-    Int('value_raw'),
-    Str('value_parsed')
-)
-
-
-AUDIT_FILE_HANDLE = Dict(
-    'handle',
-    Str('type', enum=[x.name for x in AuditFileHandleType]),
-    Str('value')
-)
-
-
-AUDIT_FILE = Dict(
-    'file',
-    Str('type', enum=[x.name for x in AuditFileType]),
-    Str('name'),
-    Str('stream'),
-    Str('path'),
-    Str('snap')
-)
-
-
-AUDIT_UNIX_TOKEN = Dict(
-    'unix_token',
-    Int('uid'),
-    Int('gid'),
-    List('groups', items=[Int('group_id')]),
 )
 
 

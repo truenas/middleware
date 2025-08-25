@@ -1,418 +1,278 @@
-from .common import (
-    AuditEnum,
-    AuditEventParam,
-    AuditSchema,
-    AUDIT_VERS,
-    AUDIT_RESULT_NTSTATUS,
-    AUDIT_RESULT_UNIX,
-    AuditFileType,
-    AUDIT_FILE,
-    AUDIT_FILE_HANDLE,
-    audit_schema_from_base,
-    AUDIT_UNIX_TOKEN,
-    convert_schema_to_set
-)
-from middlewared.schema import (
-    Bool,
-    Dict,
-    Int,
-    IPAddr,
-    Str,
-    UUID
-)
-
-
-class AuditSmbCreateDisp(AuditEnum):
-    """
-    This enum contains all possible values of the SMB2 CREATE CreateDisposition.
-    """
-    SUPERSEDE = 'SUPERSEDE'
-    OVERWRITE_IF = 'OVERWRITE_IF'
-    OPEN = 'OPEN'
-    CREATE = 'CREATE'
-    OPEN_IF = 'OPEN_IF'
-    UNKNOWN = 'UNKNOWN'
-
-
-class AuditSmbEventType(AuditEnum):
-    """
-    This enum contains all possible SMB audit events. Values correspond with
-    `event` written to auditing SQLite database.
-    """
-    AUTHENTICATION = 'AUTHENTICATION'
-    CONNECT = 'CONNECT'
-    DISCONNECT = 'DISCONNECT'
-    CREATE = 'CREATE'
-    CLOSE = 'CLOSE'
-    READ = 'READ'
-    WRITE = 'WRITE'
-    OFFLOAD_READ = 'OFFLOAD_READ'
-    OFFLOAD_WRITE = 'OFFLOAD_WRITE'
-    RENAME = 'RENAME'
-    UNLINK = 'UNLINK'
-    SET_ACL = 'SET_ACL'
-    SET_ATTR = 'SET_ATTR'
-    SET_QUOTA = 'SET_QUOTA'
-    FSCTL = 'FSCTL'
-
-
-class AuditSetattrType(AuditEnum):
-    DOSMODE = 'DOSMODE'
-    TIMESTAMP = 'TIMESTAMP'
-
-
-"""
-Below are schema class instances for `event_data` for SMB audit events.
-"""
-
-
-AUDIT_EVENT_DATA_SMB_AUTHENTICATION = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Str('logonId'),
-    Int('logonType'),
-    Str('localAddress'),
-    Str('remoteAddress'),
-    Str('serviceDescription'),
-    Str('authDescription'),
-    Str('clientDomain'),
-    Str('clientAccount'),
-    Str('workstation'),
-    Str('becameAccount'),
-    Str('becameDomain'),
-    Str('becameSid'),
-    Str('mappedAccount'),
-    Str('mappedDomain'),
-    Str('netlogonComputer'),
-    Str('netlogonTrustAccount'),
-    Str('netlogonNegotiateFlags'),
-    Str('netlogonSecureChannelType'),
-    Str('netlogonTrustAccountSid'),
-    Str('passwordType'),
-    AUDIT_RESULT_NTSTATUS,
-    AUDIT_VERS,
-)
-
-
-AUDIT_EVENT_DATA_SMB_CONNECT = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Str('host'),
-    AUDIT_UNIX_TOKEN,
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_DISCONNECT = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Str('host'),
-    AUDIT_UNIX_TOKEN,
-    Dict(
-        'operations',
-        Str('create'),
-        Str('close'),
-        Str('read'),
-        Str('write')
-    ),
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_CREATE = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict(
-        'parameters',
-        Str('DesiredAccess'),
-        Str('FileAttributes'),
-        Str('ShareAccess'),
-        Str('CreateDisposition', enum=[x.name for x in AuditSmbCreateDisp]),
-        Str('CreateOptions')
-    ),
-    Str('file_type', enum=[x.name for x in AuditFileType]),
-    AUDIT_FILE,
-    AUDIT_RESULT_NTSTATUS,
-    AUDIT_VERS,
-)
-
-
-AUDIT_EVENT_DATA_SMB_CLOSE = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict('file', AUDIT_FILE_HANDLE),
-    Dict(
-        'operations',
-        Str('read_cnt'),
-        Str('read_bytes'),
-        Str('write_cnt'),
-        Str('write_bytes')
-    ),
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_SET_ATTR = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Str('attr_type', enum=[x.name for x in AuditSetattrType]),
-    Str('dosmode'),
-    Dict('ts'),
-    Dict('file', AUDIT_FILE_HANDLE),
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_RENAME = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict(
-        'src_file',
-        Str('file_type', enum=[x.name for x in AuditFileType]),
-        Str('path'),
-        Str('stream'),
-        Str('snap')
-    ),
-    Dict(
-        'dst_file',
-        Str('path'),
-        Str('stream'),
-        Str('snap'),
-    ),
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_UNLINK = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    AUDIT_FILE,
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_READ = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict('file', AUDIT_FILE_HANDLE),
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_WRITE = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict('file', AUDIT_FILE_HANDLE),
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_OFFLOAD_READ = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict('file', AUDIT_FILE_HANDLE),
-    AUDIT_RESULT_NTSTATUS,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_OFFLOAD_WRITE = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict('file', AUDIT_FILE_HANDLE),
-    AUDIT_RESULT_NTSTATUS,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_SET_ACL = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    AUDIT_FILE,
-    Str('secinfo'),
-    Str('sd'),
-    AUDIT_RESULT_NTSTATUS,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_FSCTL = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict(
-        'function',
-        Str('raw'),
-        Str('parsed')
-    ),
-    Dict('file', AUDIT_FILE_HANDLE),
-    AUDIT_RESULT_NTSTATUS,
-    AUDIT_VERS
-)
-
-
-AUDIT_EVENT_DATA_SMB_SET_QUOTA = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict(
-        'qt',
-        Str('type', enum=['USER', 'GROUP']),
-        Str('bsize'),
-        Str('soflimit'),
-        Str('hardlimit'),
-        Str('isoftlimit'),
-        Str('ihardlimit')
-    ),
-    AUDIT_RESULT_UNIX,
-    AUDIT_VERS
-)
-
-
-"""
-Below are schema classes for the full SMB audit events that are written to the
-auditing database and returned in `audit.query` requests. We start with a generic
-base instance and then extend a copy of the generalized event with event-specific
-`event_data` defined above.
-"""
-
-
-AUDIT_EVENT_SMB_SCHEMAS = []
-
-
-AUDIT_EVENT_SMB_BASE_SCHEMA = AuditSchema(
-    'audit_entry_smb',
-    UUID(AuditEventParam.AUDIT_ID.value),
-    Int(AuditEventParam.MESSAGE_TIMESTAMP.value),
-    Dict(AuditEventParam.TIMESTAMP.value),
-    IPAddr(AuditEventParam.ADDRESS.value),
-    Str(AuditEventParam.USERNAME.value),
-    UUID(AuditEventParam.SESSION.value),
-    Str(AuditEventParam.SERVICE.value, enum=['SMB']),
-    Dict(
-        AuditEventParam.SERVICE_DATA.value,
-        AUDIT_VERS,
-        Str('service'),
-        Str('session_id'),
-        Str('tcon_id')
-    ),
-    Bool('success')
-)
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_authentication',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.AUTHENTICATION.name]),
-    AUDIT_EVENT_DATA_SMB_AUTHENTICATION
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_connect',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.CONNECT.name]),
-    AUDIT_EVENT_DATA_SMB_CONNECT
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_disconnect',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.DISCONNECT.name]),
-    AUDIT_EVENT_DATA_SMB_DISCONNECT
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_create',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.CREATE.name]),
-    AUDIT_EVENT_DATA_SMB_CREATE
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_close',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.CLOSE.name]),
-    AUDIT_EVENT_DATA_SMB_CLOSE
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_set_attr',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.SET_ATTR.name]),
-    AUDIT_EVENT_DATA_SMB_SET_ATTR
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_rename',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.RENAME.name]),
-    AUDIT_EVENT_DATA_SMB_RENAME
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_unlink',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.UNLINK.name]),
-    AUDIT_EVENT_DATA_SMB_UNLINK
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_read',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.READ.name]),
-    AUDIT_EVENT_DATA_SMB_READ
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_write',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.WRITE.name]),
-    AUDIT_EVENT_DATA_SMB_WRITE
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_offload_read',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.OFFLOAD_READ.name]),
-    AUDIT_EVENT_DATA_SMB_OFFLOAD_READ
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_offload_write',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.OFFLOAD_WRITE.name]),
-    AUDIT_EVENT_DATA_SMB_OFFLOAD_WRITE
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_set_acl',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.SET_ACL.name]),
-    AUDIT_EVENT_DATA_SMB_SET_ACL
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_fsctl',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.FSCTL.name]),
-    AUDIT_EVENT_DATA_SMB_FSCTL
-))
-
-
-AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_set_quota',
-    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.SET_QUOTA.name]),
-    AUDIT_EVENT_DATA_SMB_SET_QUOTA
-))
+from typing import Literal
+
+from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
+from .common import convert_schema_to_set
+
+
+class AuditVersion(BaseModel):
+    major: int
+    minor: int
+
+
+class AuditEventSMBServiceData(BaseModel):
+    vers: AuditVersion
+    service: str
+    session_id: str
+    tcon_id: str
+
+
+class AuditEventSMB(BaseModel):
+    audit_id: UUID
+    message_timestamp: int
+    timestamp: dict
+    address: IPvAnyAddress
+    username: str
+    session: UUID
+    service: Literal['SMB']
+    service_data: AuditEventSMBServiceData
+    success: bool
+
+
+class AuditResult(BaseModel):
+    type: Literal['NTSTATUS', 'UNIX']
+    value_raw: int
+    value_parsed: str
+
+
+class AuditResultNTStatus(AuditResult):
+    type: Literal['NTSTATUS']
+
+
+class AuditUnixToken(BaseModel):
+    uid: int
+    gid: int
+    groups: list[int]
+
+
+class AuditResultUnix(AuditResult):
+    type: Literal['UNIX']
+
+
+class AuditEventDataSMBRenameDstFile(BaseModel):
+    path: str
+    stream: str
+    snap: str
+
+
+class AuditEventDataSMBRenameSrcFile(AuditEventDataSMBRenameDstFile):
+    file_type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
+
+
+class AuditFile(AuditEventDataSMBRenameDstFile):
+    type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
+    name: str
+
+
+class AuditFileHandle(BaseModel):
+    type: Literal['DEV_INO', 'UUID']
+    value: str
+
+
+class AuditFileHandleOuter(BaseModel):
+    handle: AuditFileHandle
+
+
+# Below are schema class instances for `event_data` for SMB audit events.
+
+
+class AuditEventDataSMBAuthentication(AuditEventSMB):
+    event: Literal['AUTHENTICATION']
+    logonId: str
+    logonType: int
+    localAddress: str
+    remoteAddress: str
+    serviceDescription: str
+    authDescription: str
+    clientDomain: str
+    clientAccount: str
+    workstation: str
+    becameAccount: str
+    becameDomain: str
+    becameSid: str
+    mappedAccount: str
+    mappedDomain: str
+    netlogonComputer: str
+    netlogonTrustAccount: str
+    netlogonNegotiateFlags: str
+    netlogonSecureChannelType: str
+    netlogonTrustAccountSid: str
+    passwordType: str
+    result: AuditResultNTStatus
+    vers: AuditVersion
+
+
+class AuditEventDataSMBConnect(AuditEventSMB):
+    event: Literal['CONNECT']
+    host: str
+    unix_token: AuditUnixToken
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBDisconnectOperations(BaseModel):
+    create: str
+    close: str
+    read: str
+    write: str
+
+
+class AuditEventDataSMBDisconnect(AuditEventSMB):
+    event: Literal['DISCONNECT']
+    host: str
+    unix_token: AuditUnixToken
+    operations: AuditEventDataSMBDisconnectOperations
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBCreateParameters(BaseModel):
+    DesiredAccess: str
+    FileAttributes: str
+    ShareAccess: str
+    CreateDisposition: Literal['SUPERSEDE', 'OVERWRITE_IF', 'OPEN', 'CREATE', 'OPEN_IF', 'UNKNOWN']
+    CreateOptions: str
+
+
+class AuditEventDataSMBCreate(AuditEventSMB):
+    event: Literal['CREATE']
+    parameters: AuditEventDataSMBCreateParameters
+    file_type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
+    file: AuditFile
+    result: AuditResultNTStatus
+    vers: AuditVersion
+
+
+class AuditEventDataSMBCloseOperations(BaseModel):
+    read_cnt: str
+    read_bytes: str
+    write_cnt: str
+    write_bytes: str
+
+
+class AuditEventDataSMBClose(AuditEventSMB):
+    event: Literal['CLOSE']
+    file: AuditFileHandleOuter
+    operations: AuditEventDataSMBCloseOperations
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBSetAttr(AuditEventSMB):
+    event: Literal['SET_ATTR']
+    attr_type: Literal['DOSMODE', 'TIMESTAMP']
+    dosmode: str
+    ts: dict
+    file: AuditFileHandleOuter
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBRename(AuditEventSMB):
+    event: Literal['RENAME']
+    src_file: AuditEventDataSMBRenameSrcFile
+    dst_file: AuditEventDataSMBRenameDstFile
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBUnlink(AuditEventSMB):
+    event: Literal['UNLINK']
+    file: AuditFile
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBRead(AuditEventSMB):
+    event: Literal['READ']
+    file: AuditFileHandleOuter
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBWrite(AuditEventSMB):
+    event: Literal['WRITE']
+    file: AuditFileHandleOuter
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+class AuditEventDataSMBOffloadRead(AuditEventSMB):
+    event: Literal['OFFLOAD_READ']
+    file: AuditFileHandleOuter
+    result: AuditResultNTStatus
+    vers: AuditVersion
+
+
+class AuditEventDataSMBOffloadWrite(AuditEventSMB):
+    event: Literal['OFFLOAD_WRITE']
+    file: AuditFileHandleOuter
+    result: AuditResultNTStatus
+    vers: AuditVersion
+
+
+class AuditEventDataSMBSetACL(AuditEventSMB):
+    event: Literal['SET_ACL']
+    file: AuditFile
+    secinfo: str
+    sd: str
+    result: AuditResultNTStatus
+    vers: AuditVersion
+
+
+class AuditEventDataSMBFSCTLFunction(BaseModel):
+    raw: str
+    parsed: str
+
+
+class AuditEventDataSMBFSCTL(AuditEventSMB):
+    event: Literal['FSCTL']
+    function: AuditEventDataSMBFSCTLFunction
+    file: AuditFileHandleOuter
+    result: AuditResultNTStatus
+    vers: AuditVersion
+
+
+class AuditEventDataSMBSetQuotaQt(BaseModel):
+    type: Literal['USER', 'GROUP']
+    bsize: str
+    soflimit: str
+    hardlimit: str
+    isoftlimit: str
+    ihardlimit: str
+
+
+class AuditEventDataSMBSetQuota(AuditEventSMB):
+    event: Literal['SET_QUOTA']
+    qt: AuditEventDataSMBSetQuotaQt
+    result: AuditResultUnix
+    vers: AuditVersion
+
+
+# Below are schema classes for the full SMB audit events that are written to the
+# auditing database and returned in `audit.query` requests. We start with a generic
+# base instance and then extend a copy of the generalized event with event-specific
+# `event_data` defined above.
 
 
 AUDIT_EVENT_SMB_JSON_SCHEMAS = [
-    schema.to_json_schema() for schema in AUDIT_EVENT_SMB_SCHEMAS
+    event_model.model_json_schema()
+    for event_model in (
+        AuditEventDataSMBAuthentication,
+        AuditEventDataSMBConnect,
+        AuditEventDataSMBDisconnect,
+        AuditEventDataSMBCreate,
+        AuditEventDataSMBClose,
+        AuditEventDataSMBSetAttr,
+        AuditEventDataSMBRename,
+        AuditEventDataSMBUnlink,
+        AuditEventDataSMBRead,
+        AuditEventDataSMBWrite,
+        AuditEventDataSMBOffloadRead,
+        AuditEventDataSMBOffloadWrite,
+        AuditEventDataSMBSetACL,
+        AuditEventDataSMBFSCTL,
+        AuditEventDataSMBSetQuota,
+    )
 ]
 
 
