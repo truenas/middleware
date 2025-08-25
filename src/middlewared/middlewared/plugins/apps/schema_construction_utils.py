@@ -217,39 +217,84 @@ def process_schema_field(
         case 'list':
             annotated_items = []
             if list_items := schema_def.get('items', []):
+                # Get the single item schema (we assume only 1 or 0 items)
+                item_schema = list_items[0]['schema']
+
+                # Get actual list values for model generation
+                actual_list_values = []
+                if isinstance(new_values, list):
+                    actual_list_values = new_values
+                elif 'default' in schema_def and isinstance(schema_def['default'], list):
+                    actual_list_values = schema_def['default']
+
                 # Check if any item has immutable fields
                 has_immutable_fields = False
-                for item in list_items:
-                    if item['schema']['type'] == 'dict' and 'attrs' in item['schema']:
-                        for attr in item['schema']['attrs']:
-                            if attr['schema'].get('immutable'):
-                                has_immutable_fields = True
-                                break
-                    if has_immutable_fields:
-                        break
+                if item_schema['type'] == 'dict' and 'attrs' in item_schema:
+                    for attr in item_schema['attrs']:
+                        if attr['schema'].get('immutable'):
+                            has_immutable_fields = True
+                            break
 
-                # If we have immutable fields and old values, create a custom validator
-                if has_immutable_fields and old_values is not NOT_PROVIDED and isinstance(old_values, list):
-                    # Process items normally but without old values for type generation
-                    for item in list_items:
-                        item_type, item_info, _ = process_schema_field(
-                            item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                # Generate models based on actual values if we have them and it's a dict type
+                if actual_list_values and item_schema['type'] == 'dict' and 'attrs' in item_schema:
+                    # Generate a model for each actual list value
+                    item_models = []
+                    for idx, item_value in enumerate(actual_list_values):
+                        # Get old value for immutability checks
+                        old_item = (
+                            old_values[idx] if isinstance(old_values, list) and idx < len(old_values)
+                            else NOT_PROVIDED
                         )
-                        annotated_items.append(Annotated[item_type, item_info])
-                    # Apply the validator to the list type
-                    field_type = Annotated[
-                        list[Union[*annotated_items]],
-                        AfterValidator(create_list_immutable_validator(list_items, old_values))
-                    ]
+
+                        # Generate model with this specific item's values for proper show_if evaluation
+                        item_model = generate_pydantic_model(
+                            item_schema['attrs'],
+                            f"{model_name}_item_{idx}",
+                            item_value if isinstance(item_value, dict) else {},
+                            old_item,
+                            parent_hidden=field_hidden
+                        )
+                        item_models.append(item_model)
+
+                    # Create union of all models
+                    if item_models:
+                        if len(set(item_models)) == 1:
+                            # All items generated the same model
+                            field_type = list[item_models[0]]
+                        else:
+                            # Different models (different show_if evaluations)
+                            field_type = list[Union[*item_models]]
+
+                        # Apply immutability validator if needed
+                        if has_immutable_fields and isinstance(old_values, list):
+                            field_type = Annotated[
+                                field_type,
+                                AfterValidator(create_list_immutable_validator(list_items, old_values))
+                            ]
                 else:
-                    # Normal processing without immutability checks
-                    for item in list_items:
-                        item_type, item_info, _ = process_schema_field(
-                            item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
-                        )
-                        annotated_items.append(Annotated[item_type, item_info])
-
-                    field_type = list[Union[*annotated_items]]
+                    # No actual values or non-dict items - fallback to existing behavior
+                    if has_immutable_fields and old_values is not NOT_PROVIDED and isinstance(old_values, list):
+                        # Process items normally but without old values for type generation
+                        for item in list_items:
+                            item_type, item_info, _ = process_schema_field(
+                                item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                                field_hidden=field_hidden
+                            )
+                            annotated_items.append(Annotated[item_type, item_info])
+                        # Apply the validator to the list type
+                        field_type = Annotated[
+                            list[Union[*annotated_items]],
+                            AfterValidator(create_list_immutable_validator(list_items, old_values))
+                        ]
+                    else:
+                        # Normal processing without immutability checks
+                        for item in list_items:
+                            item_type, item_info, _ = process_schema_field(
+                                item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                                field_hidden=field_hidden
+                            )
+                            annotated_items.append(Annotated[item_type, item_info])
+                        field_type = list[Union[*annotated_items]]
             else:
                 # We have a generic list type without specific items
                 field_type = list
