@@ -241,13 +241,13 @@ def test_mixed_show_if_evaluations_in_list():
 
     model = generate_pydantic_model(schema, 'TestMixed', values, NOT_PROVIDED)
     m = model(**values)
-    
+
     assert m.volumes[0].type == 'host_path'
     assert m.volumes[0].host_config.path == '/mnt/vol1'
-    
+
     assert m.volumes[1].type == 'volume'
     assert m.volumes[1].volume_config.size == '10G'
-    
+
     assert m.volumes[2].type == 'host_path'
     assert m.volumes[2].host_config.path == '/mnt/vol3'
 
@@ -340,11 +340,11 @@ def test_list_with_show_if_and_immutable():
 
     model = generate_pydantic_model(schema, 'TestUpdate', new_values, old_values)
     m = model(**new_values)
-    
+
     assert m.services[0].id == 'svc1'
     assert m.services[0].type == 'db'
     assert m.services[0].db_config.engine == 'mysql'
-    
+
     # Try to change immutable field - should fail
     bad_values = {
         'services': [
@@ -352,7 +352,7 @@ def test_list_with_show_if_and_immutable():
             {'id': 'svc2', 'type': 'db', 'db_config': {'engine': 'postgres'}}
         ]
     }
-    
+
     with pytest.raises(ValidationError) as exc_info:
         model(**bad_values)
     assert "Cannot change immutable field 'id'" in str(exc_info.value)
@@ -607,13 +607,13 @@ def test_nested_show_if_in_list_items():
 
     model = generate_pydantic_model(schema, 'TestNested', values, NOT_PROVIDED)
     m = model(**values)
-    
+
     assert m.rules[0].filter_config.pattern == '*.txt'
     assert m.rules[0].filter_config.regex_options.case_sensitive is False
-    
+
     assert m.rules[1].filter_config.pattern == '*.log'
     # regex_options should not be present or should be optional
-    
+
     assert m.rules[2].type == 'other'
     # filter_config should not be required
 
