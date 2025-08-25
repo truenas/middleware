@@ -19,22 +19,32 @@ async def added_disk(middleware, disk_name):
                 )
 
 
+async def change_disk(middleware, disk_name):
+    await middleware.call('disk.sync_size_if_changed', disk_name)
+
+
 async def remove_disk(middleware, disk_name):
     await (await middleware.call('disk.sync_all')).wait()
 
 
+async def should_ignore(data):
+    return (
+        data.get('SUBSYSTEM') != 'block'
+        or data.get('DEVTYPE') != 'disk'
+        or data['SYS_NAME'].startswith(DISKS_TO_IGNORE)
+    )
+
+
 async def udev_block_devices_hook(middleware, data):
-    if data.get('SUBSYSTEM') != 'block':
-        return
-    elif data.get('DEVTYPE') != 'disk':
-        return
-    elif data['SYS_NAME'].startswith(DISKS_TO_IGNORE):
+    if await should_ignore(data):
         return
 
     if data['ACTION'] == 'add':
         await added_disk(middleware, data['SYS_NAME'])
     elif data['ACTION'] == 'remove':
         await remove_disk(middleware, data['SYS_NAME'])
+    elif data['ACTION'] == 'change':
+        await change_disk(middleware, data['SYS_NAME'])
 
 
 def setup(middleware):
