@@ -585,7 +585,7 @@ class JBOFService(CRUDService):
         if await self.middleware.call('failover.licensed'):
             # HA system
             if not await self.middleware.call('failover.remote_connected'):
-                verrors.add(schema, 'Unable to contact remote controller')
+                verrors.add(schema, 'Unable to contact other TrueNAS HA node')
                 return
 
             this_node = await self.middleware.call('failover.node')
@@ -703,7 +703,7 @@ class JBOFService(CRUDService):
         if await self.middleware.call('failover.licensed'):
             # HA system
             if not await self.middleware.call('failover.remote_connected'):
-                verrors.add(schema, 'Unable to contact remote controller')
+                verrors.add(schema, 'Unable to contact other TrueNAS HA node')
                 return
 
             this_node = await self.middleware.call('failover.node')
