@@ -12,6 +12,7 @@ def test_query_method(legacy_api_client, query_method):
         "audit.query",
         "certificate.query",
         "cloudsync.query",
+        "container.query",
         "disk.query",
         "dns.query",
         "interface.query",
