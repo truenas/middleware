@@ -77,7 +77,7 @@ def convert_schema_to_set(schema_list):
         current_name += val['title']
         schema_set.add(current_name)
 
-        if val['type'] == 'object':
+        if val.get('type') == 'object':  # May have anyOf instead of type
             for subkey, subval in val['properties'].items():
                 add_to_set(subkey, subval, current_name)
 
