@@ -425,19 +425,17 @@ def test_immutable_list_items_with_enum():
 
 
 def test_immutable_list_items_mixed_types():
-    """Test list with multiple item types where some have immutable fields"""
+    """Test list with dict items that have immutable fields
+
+    Note: We now only support single item schema per list, so this test
+    has been updated to use only dict items (not mixed string/dict).
+    """
     schema = [
         {
             'variable': 'mixed_items',
             'schema': {
                 'type': 'list',
                 'items': [
-                    {
-                        'variable': 'stringItem',
-                        'schema': {
-                            'type': 'string'
-                        }
-                    },
                     {
                         'variable': 'dictItem',
                         'schema': {
@@ -468,40 +466,40 @@ def test_immutable_list_items_mixed_types():
     # Create mode
     model_create = generate_pydantic_model(schema, 'TestMixedCreate', NOT_PROVIDED, NOT_PROVIDED)
     m1 = model_create(mixed_items=[
-        'simple string',
         {'id': 'item1', 'value': 'value1'},
-        'another string'
+        {'id': 'item2', 'value': 'value2'},
+        {'id': 'item3', 'value': 'value3'}
     ])
     assert len(m1.mixed_items) == 3
-    assert m1.mixed_items[0] == 'simple string'
-    assert m1.mixed_items[1].id == 'item1'
+    assert m1.mixed_items[0].id == 'item1'
+    assert m1.mixed_items[1].id == 'item2'
 
     # Update mode
     old_values = {
         'mixed_items': [
-            'simple string',
             {'id': 'item1', 'value': 'value1'},
-            'another string'
+            {'id': 'item2', 'value': 'value2'},
+            {'id': 'item3', 'value': 'value3'}
         ]
     }
 
     model_update = generate_pydantic_model(schema, 'TestMixedUpdate', NOT_PROVIDED, old_values)
 
-    # Can update string items and dict values
+    # Can update dict values but not immutable fields
     m2 = model_update(mixed_items=[
-        'updated string',
-        {'id': 'item1', 'value': 'updated_value'},
-        'updated another string'
+        {'id': 'item1', 'value': 'updated_value1'},
+        {'id': 'item2', 'value': 'updated_value2'},
+        {'id': 'item3', 'value': 'updated_value3'}
     ])
-    assert m2.mixed_items[0] == 'updated string'
-    assert m2.mixed_items[1].value == 'updated_value'
+    assert m2.mixed_items[0].value == 'updated_value1'
+    assert m2.mixed_items[1].value == 'updated_value2'
 
     # Cannot change immutable field in dict item
     with pytest.raises(ValidationError):
         model_update(mixed_items=[
-            'simple string',
             {'id': 'changed_id', 'value': 'value1'},  # id changed
-            'another string'
+            {'id': 'item2', 'value': 'value2'},
+            {'id': 'item3', 'value': 'value3'}
         ])
 
 
