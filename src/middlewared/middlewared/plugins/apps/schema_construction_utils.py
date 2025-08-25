@@ -258,12 +258,8 @@ def process_schema_field(
 
                     # Create union of all models
                     if item_models:
-                        if len(set(item_models)) == 1:
-                            # All items generated the same model
-                            field_type = list[item_models[0]]
-                        else:
-                            # Different models (different show_if evaluations)
-                            field_type = list[Union[*item_models]]
+                        # Use Union for all item models since each has a unique name
+                        field_type = list[Union[*item_models]]
 
                         # Apply immutability validator if needed
                         if has_immutable_fields and isinstance(old_values, list):
