@@ -1,12 +1,13 @@
 from typing import Literal
 
 from datetime import datetime
-from pydantic import EmailStr, Field, Secret
+from pydantic import Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
     ContainerXID,
     Excluded,
+    EmailString,
     excluded_field,
     ForUpdateMetaclass,
     LocalUsername,
@@ -173,9 +174,7 @@ class UserCreate(UserEntry):
     """ Comment field to provide additional information about the user account. Typically, this is \
     the full name of the user or a short description of a service account. There are no character set restrictions \
     for this field. This field is for information only. """
-    email: EmailStr | None = None
-    """ Email address of the user. If the user has the `FULL_ADMIN` role, they will receive email alerts and \
-    notifications. """
+    email: EmailString | None = None
     group_create: bool = False
     """ If set to `true`, the TrueNAS server automatically creates a new local group as the user's primary group. """
     group: int | None = None
