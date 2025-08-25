@@ -525,22 +525,22 @@ class SystemDatasetService(ConfigService):
                         {'properties': update_props_dict},
                     )
 
-            try:
-                await self.middleware.run_in_thread(self.__create_relevant_paths, config.get('create_paths', []))
-            except Exception:
-                self.logger.error('Failed to create relevant paths for %r', dataset, exc_info=True)
-
-    def __create_relevant_paths(self, create_paths):
+    def __create_relevant_paths(self, ds_name, create_paths):
         for create_path_config in create_paths:
-            os.makedirs(create_path_config['path'], exist_ok=True)
-            cpath_stat = os.stat(create_path_config['path'])
-            if all(create_path_config[k] for k in ('uid', 'gid')) and (
-                cpath_stat.st_uid != create_path_config['uid'] or cpath_stat.st_gid != create_path_config['gid']
-            ):
-                os.chown(create_path_config['path'], create_path_config['uid'], create_path_config['gid'])
+            try:
+                os.makedirs(create_path_config['path'], exist_ok=True)
+                cpath_stat = os.stat(create_path_config['path'])
+                if all(create_path_config[k] for k in ('uid', 'gid')) and (
+                    cpath_stat.st_uid != create_path_config['uid'] or cpath_stat.st_gid != create_path_config['gid']
+                ):
+                    os.chown(create_path_config['path'], create_path_config['uid'], create_path_config['gid'])
 
-            if (mode := create_path_config.get('mode')) and (cpath_stat.st_mode & 0o777) != mode:
-                os.chmod(create_path_config['path'], mode)
+                if (mode := create_path_config.get('mode')) and (cpath_stat.st_mode & 0o777) != mode:
+                    os.chmod(create_path_config['path'], mode)
+            except Exception:
+                self.logger.exception(
+                    'Failed to ensure %r path for %r dataset', create_path_config['path'], ds_name,
+                )
 
     def __mount(self, pool, uuid, path=SYSDATASET_PATH):
         """
@@ -572,6 +572,7 @@ class SystemDatasetService(ConfigService):
 
             mounted = True
             if path == SYSDATASET_PATH:
+                self.__create_relevant_paths(ds_config['name'], ds_config.get('create_paths', []))
                 self.__post_mount_actions(ds_config['name'], ds_config.get('post_mount_actions', []))
 
         if mounted and path == SYSDATASET_PATH:
