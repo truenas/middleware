@@ -83,13 +83,14 @@ def test__query_file_regions_with_holes(setup_smb_tests):
         password='Abcd1234',
         smb1=False
     ) as c:
-        fd = c.create_file("file_regions_normal", "w")
+        fd = c.create_file("file_regions_with_holes", "w")
         buf = random.randbytes(4096)
 
         # insert some holes in file
         for offset in range(0, 130):
             if offset % 2 == 0:
-                c.write(fd, offset=offset * 4096, data=buf)
+                pwrite_offset = offset * 262144  # make sure hole is past record boundary
+                c.write(fd, offset=pwrite_offset, data=buf)
 
         fsctl_request_null_region = FsctlQueryFileRegionsRequest(region_info=None)
         fsctl_resp = c.fsctl(fd, fsctl_request_null_region, QFR_MAX_OUT)
@@ -125,7 +126,7 @@ def test__query_file_regions_trailing_zeroes(setup_smb_tests):
         password='Abcd1234',
         smb1=False
     ) as c:
-        fd = c.create_file("file_regions_normal", "w")
+        fd = c.create_file("file_regions_trailing_zeroes", "w")
         buf = random.randbytes(4096)
 
         # insert a hole in file
@@ -145,6 +146,7 @@ def test__query_file_regions_trailing_zeroes(setup_smb_tests):
         assert fsctl_resp.region.length == 4096
 
 
+@pytest.mark.skipif(True, reason='Skipping to to pending SMB fix in NAS-137095')
 def test__query_file_regions_alternate_data_stream(setup_smb_tests):
     ds, share, smbuser = setup_smb_tests
     with smb_connection(
