@@ -388,7 +388,7 @@ def process_schema_field(
     ) and old_values is not NOT_PROVIDED:
         # If we have a value for this field in old_values, we should not allow it to be changed
         field_type = Literal[old_values]
-    elif schema_def.get('enum') and schema_type == 'string':
+    elif schema_def.get('enum') and schema_type in ('boolean', 'string'):
         enum_values = [v['value'] for v in schema_def['enum']]
         if enum_values:  # Only create Literal if there are actual enum values
             field_type = Literal[*enum_values]
