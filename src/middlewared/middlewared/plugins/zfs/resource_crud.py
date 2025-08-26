@@ -305,9 +305,11 @@ class ZFSResourceService(Service):
     @api_method(
         ZFSResourceDestroyArgs,
         ZFSResourceDestroyResult,
+        audit="ZFS Resource Destroy",
+        audit_callback=True,
         roles=["ZFS_RESOURCE_WRITE"]
     )
-    def destroy(self, data):
+    def destroy(self, audit_callback, data):
         """
         Destroy ZFS resources (filesystems, volumes, snapshots).
 
@@ -363,4 +365,5 @@ class ZFSResourceService(Service):
             # Destroy ALL snapshots with out recursing to children
             destroy({"paths": ["tank/temp@*"]})
         """
+        audit_callback(data)
         return self.middleware.call_sync("zfs.resource.destroy_impl", data)
