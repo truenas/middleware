@@ -237,6 +237,24 @@ def process_schema_field(
 
                 # Generate models based on actual values if we have them and it's a dict type
                 if actual_list_values and item_schema['type'] == 'dict' and 'attrs' in item_schema:
+                    # Check for single discriminator field
+                    discriminator = None
+                    # Collect all fields referenced in show_if conditions
+                    show_if_fields = set()
+                    for attr in item_schema['attrs']:
+                        if show_if := attr['schema'].get('show_if'):
+                            for condition in show_if:
+                                if len(condition) == 3 and condition[1] == '=':
+                                    show_if_fields.add(condition[0])
+
+                    # Only use discriminator if ALL show_ifs reference the SAME field
+                    if len(show_if_fields) == 1:
+                        discriminator = show_if_fields.pop()
+                    elif len(show_if_fields) > 1:
+                        # This should not be the case and should be ensured by apps validation
+                        # If this happens, then we don't use any discriminator
+                        discriminator = None
+
                     # Generate a model for each actual list value
                     item_models = []
                     for idx, item_value in enumerate(actual_list_values):
@@ -246,9 +264,28 @@ def process_schema_field(
                             else NOT_PROVIDED
                         )
 
-                        # Generate model with this specific item's values for proper show_if evaluation
+                        # Apply discriminator logic if we have a single clear discriminator
+                        attrs_to_use = item_schema['attrs']
+                        if discriminator and isinstance(item_value, dict) and discriminator in item_value:
+                            # Single discriminator found, using Literal type for proper Union discrimination
+                            attrs_to_use = []
+                            disc_value = item_value[discriminator]
+
+                            for attr in item_schema['attrs']:
+                                if attr['variable'] == discriminator:
+                                    # Force Literal type for this specific value
+                                    attr_copy = {
+                                        'variable': attr['variable'],
+                                        'schema': {**attr['schema'], 'enum': [{'value': disc_value}]}
+                                    }
+                                    attrs_to_use.append(attr_copy)
+                                else:
+                                    attrs_to_use.append(attr)
+
+                        # Generate model with actual values for proper show_if evaluation
+                        # This ensures nested show_if conditions work correctly
                         item_model = generate_pydantic_model(
-                            item_schema['attrs'],
+                            attrs_to_use,
                             f"{model_name}_item_{idx}",
                             item_value if isinstance(item_value, dict) else {},
                             old_item,
