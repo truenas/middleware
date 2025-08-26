@@ -197,6 +197,8 @@ class SessionManager:
                 }, True)
 
             del self.sessions[app.session_id]
+            app.authentication_context = None
+            app.authenticated_credentials = None
 
             await self.middleware.run_in_thread(session.credentials.logout)
 
