@@ -227,7 +227,7 @@ class ZFSResourceEntry(BaseModel):
     """The type of ZFS resource."""
     user_properties: dict[str, str] | None
     """Custom metadata properties with colon-separated names (max 256 chars)."""
-    children: list
+    children: list | None
     """The children of this zfs resource."""
 
 
