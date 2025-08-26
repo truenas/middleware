@@ -12,7 +12,7 @@ from middlewared.test.integration.utils import client
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("role", ["SNAPSHOT_READ", "SNAPSHOT_WRITE"])
+@pytest.mark.parametrize("role", ["ZFS_RESOURCE_READ"])
 def test_can_read_with_read_or_write_role(role):
     with dataset("test_snapshot_read") as ds:
         with snapshot(ds, "test"):
