@@ -181,4 +181,4 @@ def test_zfs_resource_query_no_properties():
         assert "pool" in resource
         assert "type" in resource
         # But properties should be empty
-        assert resource["properties"] == {}
+        assert resource["properties"] is None
