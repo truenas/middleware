@@ -4,10 +4,6 @@ __all__ = [
     "NVMetGlobalEntry",
     "NVMetGlobalUpdateArgs",
     "NVMetGlobalUpdateResult",
-    "NVMetGlobalAnaEnabledArgs",
-    "NVMetGlobalAnaEnabledResult",
-    "NVMetGlobalRdmaEnabledArgs",
-    "NVMetGlobalRdmaEnabledResult",
     "NVMetGlobalSessionsItem"
 ]
 
@@ -56,24 +52,6 @@ class NVMetGlobalUpdateArgs(NVMetGlobalEntry, metaclass=ForUpdateMetaclass):
 class NVMetGlobalUpdateResult(BaseModel):
     result: NVMetGlobalEntry
     """The updated NVMe-oF global configuration."""
-
-
-class NVMetGlobalAnaEnabledArgs(BaseModel):
-    pass
-
-
-class NVMetGlobalAnaEnabledResult(BaseModel):
-    result: bool
-    """ `True` if Asymmetric Namespace Access (ANA) is enabled. """
-
-
-class NVMetGlobalRdmaEnabledArgs(BaseModel):
-    pass
-
-
-class NVMetGlobalRdmaEnabledResult(BaseModel):
-    result: bool
-    """ `True` if Remote Direct Memory Access (RDMA) is enabled for NVMe-oF. """
 
 
 class NVMetGlobalSessionsItem(BaseModel):
