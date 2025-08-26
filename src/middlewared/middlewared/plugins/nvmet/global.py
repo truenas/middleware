@@ -2,11 +2,7 @@ import pathlib
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (NVMetGlobalAnaEnabledArgs,
-                                     NVMetGlobalAnaEnabledResult,
-                                     NVMetGlobalEntry,
-                                     NVMetGlobalRdmaEnabledArgs,
-                                     NVMetGlobalRdmaEnabledResult,
+from middlewared.api.current import (NVMetGlobalEntry,
                                      NVMetGlobalUpdateArgs,
                                      NVMetGlobalUpdateResult,
                                      NVMetGlobalSessionsItem)
@@ -86,11 +82,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                     'This platform does not support Asymmetric Namespace Access(ANA).'
                 )
 
-    @api_method(
-        NVMetGlobalAnaEnabledArgs,
-        NVMetGlobalAnaEnabledResult,
-        roles=['SHARING_NVME_TARGET_READ']
-    )
+    @private
     async def ana_enabled(self):
         """
         Returns whether NVMe target ANA is enabled or not.
@@ -115,11 +107,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
         return False
 
-    @api_method(
-        NVMetGlobalRdmaEnabledArgs,
-        NVMetGlobalRdmaEnabledResult,
-        roles=['SHARING_NVME_TARGET_READ']
-    )
+    @private
     async def rdma_enabled(self):
         """
         Returns whether RDMA is enabled or not.
