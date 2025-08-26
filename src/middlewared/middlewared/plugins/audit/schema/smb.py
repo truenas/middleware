@@ -1,6 +1,7 @@
 from typing import Literal
 
 from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
+from middlewared.api.base.jsonschema import replace_refs
 from .common import convert_schema_to_set
 
 
@@ -255,7 +256,7 @@ class AuditEventDataSMBSetQuota(AuditEventSMB):
 
 
 AUDIT_EVENT_SMB_JSON_SCHEMAS = [
-    event_model.model_json_schema()
+    replace_refs(event_model.model_json_schema())
     for event_model in (
         AuditEventDataSMBAuthentication,
         AuditEventDataSMBConnect,
