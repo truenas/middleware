@@ -255,25 +255,33 @@ def process_schema_field(
                         # If this happens, then we don't use any discriminator
                         discriminator = None
 
-                    # Generate a model for each actual list value
                     item_models = []
-                    for idx, item_value in enumerate(actual_list_values):
-                        # Get old value for immutability checks
-                        old_item = (
-                            old_values[idx] if isinstance(old_values, list) and idx < len(old_values)
-                            else NOT_PROVIDED
-                        )
 
-                        # Apply discriminator logic if we have a single clear discriminator
-                        attrs_to_use = item_schema['attrs']
-                        if discriminator and isinstance(item_value, dict) and discriminator in item_value:
-                            # Single discriminator found, using Literal type for proper Union discrimination
+                    if discriminator:
+                        # Generate ONE model per unique discriminator value
+                        # This avoids duplicate models and ensures proper Union discrimination
+                        discriminator_values_seen = {}
+
+                        for idx, item_value in enumerate(actual_list_values):
+                            if not isinstance(item_value, dict):
+                                continue
+
+                            disc_value = item_value.get(discriminator)
+                            if disc_value is None:
+                                continue
+
+                            # If we've already generated a model for this discriminator value, skip
+                            if disc_value in discriminator_values_seen:
+                                continue
+
+                            # Mark this discriminator value as seen
+                            discriminator_values_seen[disc_value] = True
+
+                            # Build attrs with Literal type for the discriminator
                             attrs_to_use = []
-                            disc_value = item_value[discriminator]
-
                             for attr in item_schema['attrs']:
                                 if attr['variable'] == discriminator:
-                                    # Force Literal type for this specific value
+                                    # Force Literal type for this specific discriminator value
                                     attr_copy = {
                                         'variable': attr['variable'],
                                         'schema': {**attr['schema'], 'enum': [{'value': disc_value}]}
@@ -282,21 +290,57 @@ def process_schema_field(
                                 else:
                                     attrs_to_use.append(attr)
 
-                        # Generate model with actual values for proper show_if evaluation
-                        # This ensures nested show_if conditions work correctly
-                        item_model = generate_pydantic_model(
-                            attrs_to_use,
-                            f"{model_name}_item_{idx}",
-                            item_value if isinstance(item_value, dict) else {},
-                            old_item,
-                            parent_hidden=field_hidden
-                        )
-                        item_models.append(item_model)
+                            # Generate model with minimal context (just the discriminator value)
+                            # This ensures show_if conditions are evaluated correctly
+                            context_values = {discriminator: disc_value}
+
+                            # Get old value for immutability checks (use first matching old item)
+                            old_item = NOT_PROVIDED
+                            if isinstance(old_values, list):
+                                for old_idx, old_val in enumerate(old_values):
+                                    if isinstance(old_val, dict) and old_val.get(discriminator) == disc_value:
+                                        old_item = old_val
+                                        break
+
+                            item_model = generate_pydantic_model(
+                                attrs_to_use,
+                                f"{model_name}_{discriminator}_{disc_value}",
+                                context_values,  # Just discriminator for show_if evaluation
+                                old_item,
+                                parent_hidden=field_hidden
+                            )
+                            item_models.append(item_model)
+                    else:
+                        # No discriminator - fall back to original behavior
+                        # Generate a model for each actual list value
+                        for idx, item_value in enumerate(actual_list_values):
+                            # Get old value for immutability checks
+                            old_item = (
+                                old_values[idx] if isinstance(old_values, list) and idx < len(old_values)
+                                else NOT_PROVIDED
+                            )
+
+                            # Generate model with actual values for proper show_if evaluation
+                            # This ensures nested show_if conditions work correctly
+                            item_model = generate_pydantic_model(
+                                item_schema['attrs'],
+                                f"{model_name}_item_{idx}",
+                                item_value if isinstance(item_value, dict) else {},
+                                old_item,
+                                parent_hidden=field_hidden
+                            )
+                            item_models.append(item_model)
 
                     # Create union of all models
                     if item_models:
-                        # Use Union for all item models since each has a unique name
-                        field_type = list[Union[*item_models]]
+                        if discriminator:
+                            # Use discriminated union for better performance and validation
+                            from pydantic import Field as PydanticField
+                            union_type = Union[*item_models]
+                            field_type = list[Annotated[union_type, PydanticField(discriminator=discriminator)]]
+                        else:
+                            # Use regular Union when no discriminator
+                            field_type = list[Union[*item_models]]
 
                         # Apply immutability validator if needed
                         if has_immutable_fields and isinstance(old_values, list):
