@@ -1,23 +1,20 @@
 from typing import Literal
 
 from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
-from middlewared.api.base.jsonschema import replace_refs
-from .common import convert_schema_to_set
-
-
-class AuditVersion(BaseModel):
-    major: int
-    minor: int
+from middlewared.api.base.jsonschema import add_attrs, replace_refs
+from .common import AuditEventVersion, convert_schema_to_set
 
 
 class AuditEventSMBServiceData(BaseModel):
-    vers: AuditVersion
+    vers: AuditEventVersion
     service: str
     session_id: str
     tcon_id: str
 
 
 class AuditEventSMB(BaseModel):
+    event: str
+    event_data: BaseModel
     audit_id: UUID
     message_timestamp: int
     timestamp: dict
@@ -29,55 +26,51 @@ class AuditEventSMB(BaseModel):
     success: bool
 
 
-class AuditResult(BaseModel):
+class AuditEventSMBResult(BaseModel):
     type: Literal['NTSTATUS', 'UNIX']
     value_raw: int
     value_parsed: str
 
 
-class AuditResultNTStatus(AuditResult):
+class AuditEventSMBResultNTStatus(AuditEventSMBResult):
     type: Literal['NTSTATUS']
 
 
-class AuditUnixToken(BaseModel):
+class AuditEventSMBResultUnix(AuditEventSMBResult):
+    type: Literal['UNIX']
+
+
+class AuditEventSMBUnixToken(BaseModel):
     uid: int
     gid: int
     groups: list[int]
 
 
-class AuditResultUnix(AuditResult):
-    type: Literal['UNIX']
-
-
-class AuditEventDataSMBRenameDstFile(BaseModel):
+class AuditEventSMBRenameDstFile(BaseModel):
     path: str
     stream: str
     snap: str
 
 
-class AuditEventDataSMBRenameSrcFile(AuditEventDataSMBRenameDstFile):
+class AuditEventSMBRenameSrcFile(AuditEventSMBRenameDstFile):
     file_type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
 
 
-class AuditFile(AuditEventDataSMBRenameDstFile):
+class AuditEventSMBFile(AuditEventSMBRenameDstFile):
     type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
     name: str
 
 
-class AuditFileHandle(BaseModel):
+class AuditEventDataSMBFileHandle(BaseModel):
     type: Literal['DEV_INO', 'UUID']
     value: str
 
 
-class AuditFileHandleOuter(BaseModel):
-    handle: AuditFileHandle
+class AuditEventSMBFileHandleOuter(BaseModel):
+    handle: AuditEventDataSMBFileHandle
 
 
-# Below are schema class instances for `event_data` for SMB audit events.
-
-
-class AuditEventDataSMBAuthentication(AuditEventSMB):
-    event: Literal['AUTHENTICATION']
+class AuditEventSMBAuthenticationEventData(BaseModel):
     logonId: str
     logonType: int
     localAddress: str
@@ -98,35 +91,48 @@ class AuditEventDataSMBAuthentication(AuditEventSMB):
     netlogonSecureChannelType: str
     netlogonTrustAccountSid: str
     passwordType: str
-    result: AuditResultNTStatus
-    vers: AuditVersion
+    result: AuditEventSMBResultNTStatus
+    vers: AuditEventVersion
 
 
-class AuditEventDataSMBConnect(AuditEventSMB):
-    event: Literal['CONNECT']
+class AuditEventSMBAuthentication(AuditEventSMB):
+    event: Literal['AUTHENTICATION']
+    event_data: AuditEventSMBAuthenticationEventData
+
+
+class AuditEventSMBConnectEventData(BaseModel):
     host: str
-    unix_token: AuditUnixToken
-    result: AuditResultUnix
-    vers: AuditVersion
+    unix_token: AuditEventSMBUnixToken
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
 
 
-class AuditEventDataSMBDisconnectOperations(BaseModel):
+class AuditEventSMBConnect(AuditEventSMB):
+    event: Literal['CONNECT']
+    event_data: AuditEventSMBConnectEventData
+
+
+class AuditEventSMBDisconnectOperations(BaseModel):
     create: str
     close: str
     read: str
     write: str
 
 
-class AuditEventDataSMBDisconnect(AuditEventSMB):
-    event: Literal['DISCONNECT']
+class AuditEventSMBDisconnectEventData(BaseModel):
     host: str
-    unix_token: AuditUnixToken
-    operations: AuditEventDataSMBDisconnectOperations
-    result: AuditResultUnix
-    vers: AuditVersion
+    unix_token: AuditEventSMBUnixToken
+    operations: AuditEventSMBDisconnectOperations
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
 
 
-class AuditEventDataSMBCreateParameters(BaseModel):
+class AuditEventSMBDisconnect(AuditEventSMB):
+    event: Literal['DISCONNECT']
+    event_data: AuditEventSMBDisconnectEventData
+
+
+class AuditEventSMBCreateParameters(BaseModel):
     DesiredAccess: str
     FileAttributes: str
     ShareAccess: str
@@ -134,106 +140,150 @@ class AuditEventDataSMBCreateParameters(BaseModel):
     CreateOptions: str
 
 
-class AuditEventDataSMBCreate(AuditEventSMB):
-    event: Literal['CREATE']
-    parameters: AuditEventDataSMBCreateParameters
+class AuditEventSMBCreateEventData(BaseModel):
+    parameters: AuditEventSMBCreateParameters
     file_type: Literal['BLOCK', 'CHARACTER', 'FIFO', 'REGULAR', 'DIRECTORY', 'SYMLINK']
-    file: AuditFile
-    result: AuditResultNTStatus
-    vers: AuditVersion
+    file: AuditEventSMBFile
+    result: AuditEventSMBResultNTStatus
+    vers: AuditEventVersion
 
 
-class AuditEventDataSMBCloseOperations(BaseModel):
+class AuditEventSMBCreate(AuditEventSMB):
+    event: Literal['CREATE']
+    event_data: AuditEventSMBCreateEventData
+
+
+class AuditEventSMBCloseOperations(BaseModel):
     read_cnt: str
     read_bytes: str
     write_cnt: str
     write_bytes: str
 
 
-class AuditEventDataSMBClose(AuditEventSMB):
+class AuditEventSMBCloseEventData(BaseModel):
+    file: AuditEventSMBFileHandleOuter
+    operations: AuditEventSMBCloseOperations
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
+
+
+class AuditEventSMBClose(AuditEventSMB):
     event: Literal['CLOSE']
-    file: AuditFileHandleOuter
-    operations: AuditEventDataSMBCloseOperations
-    result: AuditResultUnix
-    vers: AuditVersion
+    event_data: AuditEventSMBCloseEventData
 
 
-class AuditEventDataSMBSetAttr(AuditEventSMB):
-    event: Literal['SET_ATTR']
+class AuditEventSMBSetAttrEventData(BaseModel):
     attr_type: Literal['DOSMODE', 'TIMESTAMP']
     dosmode: str
     ts: dict
-    file: AuditFileHandleOuter
-    result: AuditResultUnix
-    vers: AuditVersion
+    file: AuditEventSMBFileHandleOuter
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
 
 
-class AuditEventDataSMBRename(AuditEventSMB):
+class AuditEventSMBSetAttr(AuditEventSMB):
+    event: Literal['SET_ATTR']
+    event_data: AuditEventSMBSetAttrEventData
+
+
+class AuditEventSMBRenameEventData(BaseModel):
+    src_file: AuditEventSMBRenameSrcFile
+    dst_file: AuditEventSMBRenameDstFile
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
+
+
+class AuditEventSMBRename(AuditEventSMB):
     event: Literal['RENAME']
-    src_file: AuditEventDataSMBRenameSrcFile
-    dst_file: AuditEventDataSMBRenameDstFile
-    result: AuditResultUnix
-    vers: AuditVersion
+    event_data: AuditEventSMBRenameEventData
 
 
-class AuditEventDataSMBUnlink(AuditEventSMB):
+class AuditEventSMBUnlinkEventData(BaseModel):
+    file: AuditEventSMBFile
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
+
+
+class AuditEventSMBUnlink(AuditEventSMB):
     event: Literal['UNLINK']
-    file: AuditFile
-    result: AuditResultUnix
-    vers: AuditVersion
+    event_data: AuditEventSMBUnlinkEventData
 
 
-class AuditEventDataSMBRead(AuditEventSMB):
+class AuditEventSMBReadEventData(BaseModel):
+    file: AuditEventSMBFileHandleOuter
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
+
+
+class AuditEventSMBRead(AuditEventSMB):
     event: Literal['READ']
-    file: AuditFileHandleOuter
-    result: AuditResultUnix
-    vers: AuditVersion
+    event_data: AuditEventSMBReadEventData
 
 
-class AuditEventDataSMBWrite(AuditEventSMB):
+class AuditEventSMBWriteEventData(BaseModel):
+    file: AuditEventSMBFileHandleOuter
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
+
+
+class AuditEventSMBWrite(AuditEventSMB):
     event: Literal['WRITE']
-    file: AuditFileHandleOuter
-    result: AuditResultUnix
-    vers: AuditVersion
+    event_data: AuditEventSMBWriteEventData
 
 
-class AuditEventDataSMBOffloadRead(AuditEventSMB):
+class AuditEventSMBOffloadReadEventData(BaseModel):
+    file: AuditEventSMBFileHandleOuter
+    result: AuditEventSMBResultNTStatus
+    vers: AuditEventVersion
+
+
+class AuditEventSMBOffloadRead(AuditEventSMB):
     event: Literal['OFFLOAD_READ']
-    file: AuditFileHandleOuter
-    result: AuditResultNTStatus
-    vers: AuditVersion
+    event_data: AuditEventSMBOffloadReadEventData
 
 
-class AuditEventDataSMBOffloadWrite(AuditEventSMB):
+class AuditEventSMBOffloadWriteEventData(BaseModel):
+    file: AuditEventSMBFileHandleOuter
+    result: AuditEventSMBResultNTStatus
+    vers: AuditEventVersion
+
+
+class AuditEventSMBOffloadWrite(AuditEventSMB):
     event: Literal['OFFLOAD_WRITE']
-    file: AuditFileHandleOuter
-    result: AuditResultNTStatus
-    vers: AuditVersion
+    event_data: AuditEventSMBOffloadWriteEventData
 
 
-class AuditEventDataSMBSetACL(AuditEventSMB):
-    event: Literal['SET_ACL']
-    file: AuditFile
+class AuditEventSMBSetACLEventData(BaseModel):
+    file: AuditEventSMBFile
     secinfo: str
     sd: str
-    result: AuditResultNTStatus
-    vers: AuditVersion
+    result: AuditEventSMBResultNTStatus
+    vers: AuditEventVersion
 
 
-class AuditEventDataSMBFSCTLFunction(BaseModel):
+class AuditEventSMBSetACL(AuditEventSMB):
+    event: Literal['SET_ACL']
+    event_data: AuditEventSMBSetACLEventData
+
+
+class AuditEventSMBFSCTLFunction(BaseModel):
     raw: str
     parsed: str
 
 
-class AuditEventDataSMBFSCTL(AuditEventSMB):
+class AuditEventSMBFSCTLEventData(BaseModel):
+    function: AuditEventSMBFSCTLFunction
+    file: AuditEventSMBFileHandleOuter
+    result: AuditEventSMBResultNTStatus
+    vers: AuditEventVersion
+
+
+class AuditEventSMBFSCTL(AuditEventSMB):
     event: Literal['FSCTL']
-    function: AuditEventDataSMBFSCTLFunction
-    file: AuditFileHandleOuter
-    result: AuditResultNTStatus
-    vers: AuditVersion
+    event_data: AuditEventSMBFSCTLEventData
 
 
-class AuditEventDataSMBSetQuotaQt(BaseModel):
+class AuditEventSMBSetQuotaQt(BaseModel):
     type: Literal['USER', 'GROUP']
     bsize: str
     soflimit: str
@@ -242,11 +292,15 @@ class AuditEventDataSMBSetQuotaQt(BaseModel):
     ihardlimit: str
 
 
-class AuditEventDataSMBSetQuota(AuditEventSMB):
+class AuditEventSMBSetQuotaEventData(BaseModel):
+    qt: AuditEventSMBSetQuotaQt
+    result: AuditEventSMBResultUnix
+    vers: AuditEventVersion
+
+
+class AuditEventSMBSetQuota(AuditEventSMB):
     event: Literal['SET_QUOTA']
-    qt: AuditEventDataSMBSetQuotaQt
-    result: AuditResultUnix
-    vers: AuditVersion
+    event_data: AuditEventSMBSetQuotaEventData
 
 
 # Below are schema classes for the full SMB audit events that are written to the
@@ -256,23 +310,23 @@ class AuditEventDataSMBSetQuota(AuditEventSMB):
 
 
 AUDIT_EVENT_SMB_JSON_SCHEMAS = [
-    replace_refs(event_model.model_json_schema())
+    add_attrs(replace_refs(event_model.model_json_schema()))
     for event_model in (
-        AuditEventDataSMBAuthentication,
-        AuditEventDataSMBConnect,
-        AuditEventDataSMBDisconnect,
-        AuditEventDataSMBCreate,
-        AuditEventDataSMBClose,
-        AuditEventDataSMBSetAttr,
-        AuditEventDataSMBRename,
-        AuditEventDataSMBUnlink,
-        AuditEventDataSMBRead,
-        AuditEventDataSMBWrite,
-        AuditEventDataSMBOffloadRead,
-        AuditEventDataSMBOffloadWrite,
-        AuditEventDataSMBSetACL,
-        AuditEventDataSMBFSCTL,
-        AuditEventDataSMBSetQuota,
+        AuditEventSMBAuthentication,
+        AuditEventSMBConnect,
+        AuditEventSMBDisconnect,
+        AuditEventSMBCreate,
+        AuditEventSMBClose,
+        AuditEventSMBSetAttr,
+        AuditEventSMBRename,
+        AuditEventSMBUnlink,
+        AuditEventSMBRead,
+        AuditEventSMBWrite,
+        AuditEventSMBOffloadRead,
+        AuditEventSMBOffloadWrite,
+        AuditEventSMBSetACL,
+        AuditEventSMBFSCTL,
+        AuditEventSMBSetQuota,
     )
 ]
 

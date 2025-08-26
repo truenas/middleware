@@ -1,6 +1,8 @@
 from copy import deepcopy
 import enum
+from typing import Iterable
 
+from middlewared.api.base import BaseModel
 from middlewared.schema import Dict, Int
 
 
@@ -61,6 +63,11 @@ AUDIT_VERS = Dict(
 )
 
 
+class AuditEventVersion(BaseModel):
+    major: int
+    minor: int
+
+
 def audit_schema_from_base(schema, new_name, *args):
     new_schema = deepcopy(schema)
     new_schema.extend(*args)
@@ -69,21 +76,28 @@ def audit_schema_from_base(schema, new_name, *args):
 
 
 
-def convert_schema_to_set(schema_list):
-    def add_to_set(key, val, current_name):
-        if current_name:
-            current_name += '.'
+def convert_schema_to_set(schema_list: Iterable[dict]) -> set[str]:
+    """Generate a set of all dot-notated field names contained in the JSON schema."""
 
-        current_name += val['title']
-        schema_set.add(current_name)
+    def add_to_set(val: dict, current_name: str, skip_title: bool = False):
+        if not skip_title:
+            if current_name:
+                current_name += '.'
 
-        if val.get('type') == 'object':  # May have anyOf instead of type
-            for subkey, subval in val.get('properties', {}).items():  # May not have properties if type is `dict`
-                add_to_set(subkey, subval, current_name)
+            current_name += val['title']
+            schema_set.add(current_name)
+
+        if any_of := val.get('anyOf'):
+            for subval in any_of:
+                # The titles of objects contained in "anyOf" are model names. Don't use those.
+                add_to_set(subval, current_name, skip_title=True)
+        elif val['type'] == 'object':
+            for subval in val.get('properties', {}).values():  # Fields with type `dict` do not have properties.
+                add_to_set(subval, current_name)
 
     schema_set = set()
     for entry in schema_list:
-        for key, val in entry['properties'].items():
-            add_to_set(key, val, '')
+        for val in entry['properties'].values():
+            add_to_set(val, '')
 
     return schema_set
