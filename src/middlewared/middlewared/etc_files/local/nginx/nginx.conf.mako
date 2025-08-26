@@ -93,8 +93,8 @@ http {
     server_tokens off;
 
     gzip  on;
-    access_log off;
-    error_log syslog:server=unix:/dev/log,nohostname;
+    access_log /var/log/nginx/access.log combined buffer=32k flush=5s;
+    error_log /var/log/nginx/error.log;
 
     map $http_upgrade $connection_upgrade {
         default upgrade;
