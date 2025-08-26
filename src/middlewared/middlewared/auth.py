@@ -13,6 +13,7 @@ from middlewared.utils.account.authenticator import (
 )
 from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.auth import AuthMech, AuthenticatorAssuranceLevel
+from middlewared.utils.crypto import ssl_uuid4
 from time import monotonic
 
 if TYPE_CHECKING:
@@ -23,6 +24,7 @@ class SessionManagerCredentials:
     is_user_session = False
     may_create_auth_token = True
     allowlist = None
+    login_id = None
 
     @classmethod
     def class_name(cls):
@@ -95,6 +97,7 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
     def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
         resp = self.authenticator.login(session_id)
         self.login_at = self.authenticator.login_at
+        self.login_id = str(ssl_uuid4())
         return resp
 
     def logout(self) -> TrueNASAuthenticatorResponse:
@@ -130,6 +133,7 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
     def dump(self):
         return {
             "username": self.user["username"],
+            "login_id": self.login_id,
             "login_at": self.login_at
         }
 
@@ -268,6 +272,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
         resp = self.authenticator.login(session_id)
         self.login_at = self.authenticator.login_at
+        self.login_id = str(ssl_uuid4())
         return resp
 
     def logout(self) -> TrueNASAuthenticatorResponse:
@@ -279,6 +284,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     def dump(self):
         data = {
             "parent": dump_credentials(self.token.parent_credentials),
+            "login_id": self.login_id,
             "username": None
         }
         if self.is_user_session:

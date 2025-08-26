@@ -26,6 +26,8 @@ class BaseCredentialData(BaseModel):
 class UserCredentialData(BaseCredentialData):
     username: str
     """Username of the authenticated user."""
+    login_id: str
+    """ Unique identifier for the login. """
     login_at: datetime
     """Timestamp of when the user logged in."""
 
@@ -45,6 +47,8 @@ class APIKeyCredentialData(UserCredentialData):
 class TokenCredentialData(BaseCredentialData):
     parent: 'TokenParentCredentialsData'
     """Parent credential information that generated this token."""
+    login_id: str
+    """ Unique identifier for the login. """
     username: str | None
     """Username associated with the token. `null` if not user-specific."""
 
