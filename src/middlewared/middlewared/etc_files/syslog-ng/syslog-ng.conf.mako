@@ -43,8 +43,8 @@ def generate_syslog_remote_destination(advanced_config):
         remotelog_stanza += '    )\n'
 
     remotelog_stanza += '  );\n};\n'    
-    remotelog_stanza += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
-    remotelog_stanza += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
+    remotelog_stanza += 'log { source(s_tn_middleware); filter(f_tnremote); destination(loghost); };\n'
+    remotelog_stanza += 'log { source(s_tn_auditd); filter(f_tnremote); destination(loghost); };\n'
     remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };'
 
     return remotelog_stanza
@@ -73,11 +73,11 @@ options {
 ##################
 source s_src { system(); internal(); };
 
-source tn_middleware_src {
+source s_tn_middleware {
   unix-stream("${DEFAULT_SYSLOG_PATH}" create-dirs(yes) perm(0600));
 };
 
-source tn_auditd_src {
+source s_tn_auditd {
   unix-stream("/var/run/syslog-ng/auditd.sock" create-dirs(yes) perm(0600));
 };
 
@@ -119,7 +119,7 @@ log {
 ########################
 % for tnlog in ALL_LOG_FILES:
 log {
-  source(tn_middleware_src); filter(f_${tnlog.name or "middleware"});
+  source(s_tn_middleware); filter(f_${tnlog.name or "middleware"});
   destination { file(${tnlog.logfile} ${syslog_template}); };
 };
 % endfor
