@@ -67,7 +67,7 @@ class ADHealthError(DirectoryServiceHealthError):
 
 
 class LDAPHealthError(DirectoryServiceHealthError):
-    reasons = ADHealthCheckFailReason
+    reasons = LDAPHealthCheckFailReason
 
 
 class DirectoryServiceHealth:
