@@ -2,7 +2,7 @@ import contextlib
 import re
 from typing import Annotated, Any, Callable, Literal, TypeAlias, Union
 
-from pydantic import AfterValidator, create_model, Field
+from pydantic import AfterValidator, create_model, Field, ValidationError
 from pydantic.fields import FieldInfo
 
 from middlewared.api.base import LongString, match_validator, NotRequired
@@ -50,21 +50,46 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                 # Use Model() to create an instance instead of validate_model which returns dict
                 validated = Model(**item)
                 out.append(validated)
+            except ValidationError as e:
+                # Re-raise Pydantic ValidationError with adjusted locations
+                # Pydantic will handle adding the parent field name
+                errors = []
+                for err in e.errors():
+                    err_copy = err.copy()
+                    # Prepend the index to the location tuple
+                    loc = (idx,) + err_copy.get('loc', ())
+                    err_copy['loc'] = loc
+                    errors.append(err_copy)
+                raise ValidationError.from_exception_data(e.title, errors)
             except ValidationErrors as e:
-                # Prepend index to error paths
+                # Convert our ValidationErrors to Pydantic ValidationError
+                errors = []
                 for error in e.errors:
-                    error.attribute = f'{idx}.{error.attribute}' if error.attribute else str(idx)
-                raise e
+                    # Create Pydantic-compatible error dict
+                    loc = tuple(error.attribute.split('.')) if error.attribute else ()
+                    loc = (idx,) + loc
+                    errors.append({
+                        'loc': loc,
+                        'msg': error.errmsg,
+                        'type': 'value_error',
+                    })
+                raise ValidationError.from_exception_data('ValidationError', errors)
             except Exception as e:
-                # Convert pydantic validation errors to our ValidationErrors
-                verrors = ValidationErrors()
+                # For other exceptions, create a Pydantic ValidationError
                 if hasattr(e, 'errors'):
+                    errors = []
                     for err in e.errors():
-                        loc = '.'.join(str(x) for x in err.get('loc', ()))
-                        verrors.add(f'{idx}.{loc}' if loc else str(idx), err.get('msg', str(e)))
+                        err_copy = err.copy()
+                        loc = (idx,) + err_copy.get('loc', ())
+                        err_copy['loc'] = loc
+                        errors.append(err_copy)
+                    raise ValidationError.from_exception_data('ValidationError', errors)
                 else:
-                    verrors.add(str(idx), str(e))
-                raise verrors
+                    # Generic error at this index
+                    raise ValidationError.from_exception_data(
+                        'ValidationError',
+                        [{'loc': (idx,), 'msg': str(e), 'type': 'value_error'}]
+                    )
         return out
     return _validate
 
