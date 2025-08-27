@@ -1,6 +1,6 @@
 from middlewared.api import api_method, Event
 from middlewared.api.current import UpdateStatusArgs, UpdateStatusResult, UpdateStatusChangedEvent
-from middlewared.service import private, Service
+from middlewared.service import NetworkActivityDisabled, private, Service
 
 
 class UpdateService(Service):
@@ -80,6 +80,10 @@ class UpdateService(Service):
                     'new_version': new_version,
                 },
                 'update_download_progress': self.update_download_progress,
+            })
+        except NetworkActivityDisabled as e:
+            return self._result('NETWORK_ACTIVITY_DISABLED', {
+                'error': repr(e),
             })
         except Exception as e:
             self.logger.exception('Failed to get update status')
