@@ -2,12 +2,10 @@
 Comprehensive tests for list items with show_if conditions.
 
 These tests verify that list items with conditional fields (show_if) properly
-evaluate conditions based on actual item values, handle discriminator fields,
-support immutability, and work with nested show_if conditions.
+evaluate conditions based on actual item values and handle discriminator fields.
+Note: Immutability in lists is no longer supported and related tests have been disabled.
 """
-import pytest
 from unittest.mock import patch
-from pydantic import ValidationError
 
 from middlewared.plugins.apps.schema_construction_utils import (
     generate_pydantic_model, NOT_PROVIDED, construct_schema
@@ -97,71 +95,6 @@ def _get_minio_schema_with_enum():
         {'value': 'ix_volume', 'description': 'ix Volume'}
     ]
     return schema
-
-
-def _get_immutable_schema():
-    """Get schema with immutable fields."""
-    return [{
-        'variable': 'services',
-        'schema': {
-            'type': 'list',
-            'items': [{
-                'variable': 'service',
-                'schema': {
-                    'type': 'dict',
-                    'attrs': [
-                        {
-                            'variable': 'id',
-                            'schema': {
-                                'type': 'string',
-                                'required': True,
-                                'immutable': True
-                            }
-                        },
-                        {
-                            'variable': 'type',
-                            'schema': {
-                                'type': 'string',
-                                'required': True,
-                                'enum': [
-                                    {'value': 'web'},
-                                    {'value': 'db'}
-                                ]
-                            }
-                        },
-                        {
-                            'variable': 'web_config',
-                            'schema': {
-                                'type': 'dict',
-                                'show_if': [['type', '=', 'web']],
-                                'attrs': [{
-                                    'variable': 'port',
-                                    'schema': {
-                                        'type': 'int',
-                                        'required': True
-                                    }
-                                }]
-                            }
-                        },
-                        {
-                            'variable': 'db_config',
-                            'schema': {
-                                'type': 'dict',
-                                'show_if': [['type', '=', 'db']],
-                                'attrs': [{
-                                    'variable': 'engine',
-                                    'schema': {
-                                        'type': 'string',
-                                        'required': True
-                                    }
-                                }]
-                            }
-                        }
-                    ]
-                }
-            }]
-        }
-    }]
 
 
 # MinIO Enterprise Tests
@@ -267,78 +200,6 @@ def test_minio_mixed_storage_types(mock_isdir, mock_isfile):
     assert instance.storage.data_dirs[0].type == 'host_path'
     assert instance.storage.data_dirs[1].type == 'ix_volume'
     assert instance.storage.data_dirs[2].type == 'host_path'
-
-
-# Immutability Tests
-def test_immutable_field_creation():
-    """Test creating list items with immutable fields."""
-    schema = _get_immutable_schema()
-
-    # Create initial services
-    new_values = {
-        'services': [
-            {'id': 'svc1', 'type': 'web', 'web_config': {'port': 8080}},
-            {'id': 'svc2', 'type': 'db', 'db_config': {'engine': 'postgres'}}
-        ]
-    }
-
-    model = generate_pydantic_model(schema, 'TestCreate', new_values, NOT_PROVIDED)
-    instance = model(**new_values)
-
-    assert instance.services[0].id == 'svc1'
-    assert instance.services[0].type == 'web'
-    assert instance.services[1].id == 'svc2'
-    assert instance.services[1].type == 'db'
-
-
-def test_immutable_field_update_no_change():
-    """Test updating list items without changing immutable fields."""
-    schema = _get_immutable_schema()
-
-    old_values = {
-        'services': [
-            {'id': 'svc1', 'type': 'web', 'web_config': {'port': 8080}}
-        ]
-    }
-
-    # Update type but keep id the same
-    new_values = {
-        'services': [
-            {'id': 'svc1', 'type': 'db', 'db_config': {'engine': 'mysql'}}
-        ]
-    }
-
-    model = generate_pydantic_model(schema, 'TestUpdate', new_values, old_values)
-    instance = model(**new_values)
-
-    assert instance.services[0].id == 'svc1'
-    assert instance.services[0].type == 'db'
-
-
-def test_immutable_field_update_attempt_change():
-    """Test that changing immutable fields raises validation error."""
-    schema = _get_immutable_schema()
-
-    old_values = {
-        'services': [
-            {'id': 'svc1', 'type': 'web', 'web_config': {'port': 8080}}
-        ]
-    }
-
-    # Try to change immutable id
-    new_values = {
-        'services': [
-            {'id': 'svc2', 'type': 'web', 'web_config': {'port': 8080}}
-        ]
-    }
-
-    model = generate_pydantic_model(schema, 'TestUpdate', new_values, old_values)
-
-    with pytest.raises(ValidationError) as exc_info:
-        model(**new_values)
-
-    # With discriminator-based models, the error path includes the discriminator value
-    assert ('services.0.id' in str(exc_info.value) or 'services.0.web.id' in str(exc_info.value))
 
 
 # Nested Show If Tests
