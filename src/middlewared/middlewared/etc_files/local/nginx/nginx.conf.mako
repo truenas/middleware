@@ -31,6 +31,9 @@
 
     system_version = middleware.call_sync('system.version')
 
+    # HSTS max-age calculation (730 days = 63072000 seconds)
+    max_age = 63072000 if general_settings['ui_httpsredirect'] else 0
+
     if not any(i in general_settings['ui_httpsprotocols'] for i in ('TLSv1', 'TLSv1.1')):
         disabled_ciphers = ':!SHA1:!SHA256:!SHA384'
     else:
@@ -83,8 +86,18 @@ http {
 
     # Disable tokens for security (#23684)
     server_tokens off;
+    # Hide server information in error pages
+    # NOTE: This is a DoDin requirement, so don't remove
+    proxy_hide_header X-Powered-By;
+    proxy_hide_header Server;
 
     gzip  on;
+    # Disable gzip for responses with cookies (BREACH attack mitigation)
+    # NOTE: will be controlled per-response based on Set-Cookie header
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_disable "msie6";
+
     access_log /var/log/nginx/access.log combined buffer=32k flush=5s;
     error_log /var/log/nginx/error.log;
 
@@ -96,6 +109,11 @@ http {
     map $http_origin $allow_origin {
         ~^https://truenas.connect.(dev.|staging.)?ixsystems.net$ $http_origin;
         default "";
+    }
+    # Map to detect if response has Set-Cookie header (for disabling gzip)
+    map $sent_http_set_cookie $no_gzip_cookie {
+        ~.+ "1";
+        default "0";
     }
 
     server {
@@ -139,16 +157,27 @@ http {
         deny all;
 % endif
 
-<%def name="security_headers()">
-        # Security Headers
-        add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
-        add_header X-Content-Type-Options "nosniff" always;
-        add_header X-XSS-Protection "1; mode=block" always;
-        add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
-        add_header Referrer-Policy "strict-origin" always;
+<%def name="security_headers(indent=8)">
+<% spaces = ' ' * indent %>\
+${spaces}# Security Headers
+${spaces}add_header Strict-Transport-Security "max-age=${max_age}; includeSubDomains; preload" always;
+${spaces}add_header X-Content-Type-Options "nosniff" always;
+${spaces}add_header X-XSS-Protection "1; mode=block" always;
+${spaces}add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
+${spaces}add_header Referrer-Policy "strict-origin" always;
 % if x_frame_options:
-        add_header X-Frame-Options "${x_frame_options}" always;
+${spaces}add_header X-Frame-Options "${x_frame_options}" always;
 % endif
+</%def>
+
+<%def name="security_headers_enhanced(indent=8)">
+<% spaces = ' ' * indent %>\
+${spaces}# NOTE: These are, generaly, good practice but they
+${spaces}# are also here for DoDin requirements so do not remove.
+${spaces}proxy_cookie_path / "/; Secure; HttpOnly; SameSite=Strict";
+${spaces}proxy_cookie_flags ~ secure httponly;
+${spaces}# Disable gzip for responses with cookies (BREACH attack mitigation)
+${spaces}gzip off;
 </%def>
 
         ${security_headers()}
@@ -190,6 +219,7 @@ http {
             proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            ${security_headers_enhanced(indent=12)}
         }
 
         location ~ ^/api/docs/?$ {
@@ -211,7 +241,7 @@ http {
         location @index {
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
             add_header Expires 0;
-            ${security_headers()}
+            ${security_headers(indent=12)}
 
             root /usr/share/truenas/webui;
             try_files /index.html =404;
@@ -222,7 +252,7 @@ http {
 
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
             add_header Expires 0;
-            ${security_headers()}
+            ${security_headers(indent=12)}
 
             root /usr/share/truenas/webui;
             try_files /index.html =404;
@@ -237,7 +267,7 @@ http {
 
             add_header Cache-Control "must-revalidate";
             add_header Etag "${system_version}";
-            ${security_headers()}
+            ${security_headers(indent=12)}
 
             alias /usr/share/truenas/webui;
             try_files $uri $uri/ @index;
@@ -253,6 +283,7 @@ http {
             proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            ${security_headers_enhanced(indent=12)}
         }
 
         location /websocket/shell {
@@ -267,6 +298,7 @@ http {
             proxy_set_header Connection "upgrade";
             proxy_send_timeout 7d;
             proxy_read_timeout 7d;
+            ${security_headers_enhanced(indent=12)}
         }
 
         location /api/v2.0 {
@@ -282,6 +314,7 @@ http {
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Server-Port $server_port;
             proxy_set_header X-Scheme $Scheme;
+            ${security_headers_enhanced(indent=12)}
         }
 
         location /_download {
@@ -297,6 +330,7 @@ http {
             proxy_set_header X-Real-Remote-Port $remote_port;
             proxy_set_header X-Https $https;
             proxy_read_timeout 10m;
+            ${security_headers_enhanced(indent=12)}
         }
 
         location /_upload {
@@ -309,6 +343,7 @@ http {
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
             proxy_set_header X-Https $https;
+            ${security_headers_enhanced(indent=12)}
         }
 
         location /_plugins {
@@ -319,6 +354,7 @@ http {
             proxy_set_header X-Https $https;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
+            ${security_headers_enhanced(indent=12)}
         }
     }
 % if general_settings['ui_httpsredirect'] and ssl_configuration:
