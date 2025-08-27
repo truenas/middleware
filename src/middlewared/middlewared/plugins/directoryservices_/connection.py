@@ -8,7 +8,11 @@ from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.job import Job
 from middlewared.service import job, pass_app, Service
 from middlewared.service_exception import CallError
+from middlewared.utils.directoryservices.common import ds_config_to_fqdn
 from middlewared.utils.directoryservices.constants import DomainJoinResponse, DSStatus, DSType
+from middlewared.utils.directoryservices.dns import (
+    NSUPDATE_LOCK, dns_record_is_expired, update_dns_record_state, remove_dns_record_state
+)
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket, kdc_saf_cache_set
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from os import curdir as dot
@@ -143,9 +147,7 @@ class DomainConnection(
     @kerberos_ticket
     def register_dns(self, fqdn: str, do_ptr: bool = False):
         """
-        This method performs DNS update via GSS-TSIG using middlewared's current kerberos credential
-        and should only be called within the context initially joining the domain. In the future
-        this can be enhanced to be a periodic job that can also perform dynamic DNS updates.
+        This method performs DNS update via GSS-TSIG using middlewared's current kerberos credential.
 
         Args:
             `fqdn` - should be the fully qualified domain name of the TrueNAS server.
@@ -162,60 +164,103 @@ class DomainConnection(
             ValueError
             CallError
         """
-        if not isinstance(fqdn, str):
-            raise TypeError(f'{type(fqdn)}: must be a string')
-        elif dot not in fqdn:
-            raise ValueError(f'{fqdn}: missing domain component of name')
+        with NSUPDATE_LOCK:
+            if not isinstance(fqdn, str):
+                raise TypeError(f'{type(fqdn)}: must be a string')
+            elif dot not in fqdn:
+                raise ValueError(f'{fqdn}: missing domain component of name')
 
-        ds_config = self.middleware.call_sync('directoryservices.config')
-        if not ds_config['enable']:
-            raise CallError('Directory services must be enabled in order to register DNS')
+            ds_config = self.middleware.call_sync('directoryservices.config')
+            if not ds_config['enable']:
+                raise CallError('Directory services must be enabled in order to register DNS')
 
-        if not ds_config['enable_dns_updates']:
-            raise CallError('DNS updates are disabled for the directory service')
+            if not ds_config['enable_dns_updates']:
+                raise CallError('DNS updates are disabled for the directory service')
 
-        ds_type_str = ds_config['service_type']
-        match ds_type_str:
-            case DSType.AD.value | DSType.IPA.value:
-                pass
-            case _:
-                raise CallError(f'{ds_type_str}: directory service type does not support DNS registration')
+            ds_type_str = ds_config['service_type']
+            match ds_type_str:
+                case DSType.AD.value | DSType.IPA.value:
+                    pass
+                case _:
+                    raise CallError(f'{ds_type_str}: directory service type does not support DNS registration')
 
-        if fqdn.startswith('localhost'):
-            raise CallError(f'{fqdn}: Invalid domain name.')
+            if fqdn.startswith('localhost'):
+                raise CallError(f'{fqdn}: Invalid domain name.')
 
-        if not fqdn.endswith(dot):
-            fqdn += dot
+            if not fqdn.endswith(dot):
+                fqdn += dot
 
-        payload = self._create_nsupdate_payload(fqdn, 'ADD', do_ptr)
-        self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            payload = self._create_nsupdate_payload(fqdn, 'ADD', do_ptr)
+            self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            update_dns_record_state(fqdn)
+
+    def renew_dns(self):
+        """
+        Perform automatic renewal of our expected DNS records through nsupdate / GSS-TSIG using the
+        current kerberos credential.
+        """
+        with NSUPDATE_LOCK:
+            ds_config = self.middleware.call_sync('directoryservices.config')
+            if not ds_config['enable'] or not ds_config['enable_dns_updates']:
+                # Server isn't configured for updates
+                return
+
+            if not ds_config['kerberos_realm']:
+                # We use GSS-TSIG for updates. We can't do this if kerberos isn't configured
+                raise RuntimeError('Unable to perform DNS update due to missing kerberos realm')
+
+            if not self.middleware.call_sync('failover.is_single_master_node'):
+                # We don't want standby controller trying to do nsupdate
+                return
+
+            sysdataset = self.middleware.call_sync('systemdataset.config')
+            if not sysdataset['path']:
+                # Our expected system dataset pool is not actually mounted. This is problematic
+                # for DNS updates because we store some state about last time we attempted to
+                # nsupdate there.
+                raise FileNotFoundError(f'{sysdataset["basename"]}: system dataset not mounted')
+
+            # This check has to happen after system dataset because the state file is stored
+            # on the system dataset.
+            fqdn = ds_config_to_fqdn(ds_config)
+            if not dns_record_is_expired(fqdn):
+                return
+
+            # generate a renew payload. Currently we are only doing ptr updates on AD.
+            # We are not deleting any old / incorrect entries. At least in AD case the outdated
+            # entries will be scavenged within a week or so.
+            payload = self._create_nsupdate_payload(fqdn, 'ADD', ds_config['service_type'] == DSType.AD.value)
+            self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            update_dns_record_state(fqdn)
 
     @kerberos_ticket
     def unregister_dns(self, fqdn: str, do_ptr: bool = False):
-        if not isinstance(fqdn, str):
-            raise TypeError(f'{type(fqdn)}: must be a string')
-        elif dot not in fqdn:
-            raise ValueError(f'{fqdn}: missing domain component of name')
+        with NSUPDATE_LOCK:
+            if not isinstance(fqdn, str):
+                raise TypeError(f'{type(fqdn)}: must be a string')
+            elif dot not in fqdn:
+                raise ValueError(f'{fqdn}: missing domain component of name')
 
-        ds_config = self.middleware.call_sync('directoryservices.config')
-        if not ds_config['enable']:
-            raise CallError('Directory services must be enabled in order to deregister DNS')
+            ds_config = self.middleware.call_sync('directoryservices.config')
+            if not ds_config['enable']:
+                raise CallError('Directory services must be enabled in order to deregister DNS')
 
-        ds_type_str = ds_config['service_type']
-        match ds_type_str:
-            case DSType.AD.value | DSType.IPA.value:
-                pass
-            case _:
-                raise CallError(f'{ds_type_str}: directory service type does not support DNS unregistration')
+            ds_type_str = ds_config['service_type']
+            match ds_type_str:
+                case DSType.AD.value | DSType.IPA.value:
+                    pass
+                case _:
+                    raise CallError(f'{ds_type_str}: directory service type does not support DNS unregistration')
 
-        if fqdn.startswith('localhost'):
-            raise CallError(f'{fqdn}: Invalid domain name.')
+            if fqdn.startswith('localhost'):
+                raise CallError(f'{fqdn}: Invalid domain name.')
 
-        if not fqdn.endswith(dot):
-            fqdn += dot
+            if not fqdn.endswith(dot):
+                fqdn += dot
 
-        payload = self._create_nsupdate_payload(fqdn, 'DELETE', do_ptr)
-        self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            payload = self._create_nsupdate_payload(fqdn, 'DELETE', do_ptr)
+            self.middleware.call_sync('dns.nsupdate', {'ops': payload})
+            remove_dns_record_state()
 
     @kerberos_ticket
     def _test_is_joined(self, ds_type: DSType, domain: str) -> bool:
