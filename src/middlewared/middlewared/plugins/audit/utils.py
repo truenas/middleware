@@ -2,7 +2,6 @@ import os
 
 from sqlalchemy import Table
 from sqlalchemy.orm import declarative_base
-from .schema.common import AuditEventParam
 
 import middlewared.sqlalchemy as sa
 from truenas_verify import mtree_verify
@@ -16,16 +15,16 @@ AUDIT_DEFAULT_QUOTA = 0
 AUDIT_DEFAULT_FILL_CRITICAL = 95
 AUDIT_DEFAULT_FILL_WARNING = 75
 AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, 'reports')
-SQL_SAFE_FIELDS = (
-    AuditEventParam.AUDIT_ID.value,
-    AuditEventParam.MESSAGE_TIMESTAMP.value,
-    AuditEventParam.ADDRESS.value,
-    AuditEventParam.USERNAME.value,
-    AuditEventParam.SESSION.value,
-    AuditEventParam.SERVICE.value,
-    AuditEventParam.EVENT.value,
-    AuditEventParam.SUCCESS.value,
-)
+SQL_SAFE_FIELDS = {
+    'audit_id',
+    'message_timestamp',
+    'address',
+    'username',
+    'session',
+    'service',
+    'event',
+    'success',
+}
 AUDIT_LOG_PATH_NAME = mtree_verify.LOG_PATH_NAME
 
 AuditBase = declarative_base()
@@ -177,7 +176,7 @@ def requires_python_filtering(
         # We will need to do additional filtering after retrieval
         return True
 
-    if (to_investigate := set(options.get('select', [])) - set(SQL_SAFE_FIELDS)):
+    if (to_investigate := set(options.get('select', [])) - SQL_SAFE_FIELDS):
         # Field is being selected that may not be safe for SQL select
         for entry in to_investigate:
             # Selecting subkey in entry is not currently supported
