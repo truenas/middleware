@@ -17,7 +17,12 @@ def test_job_credentials():
 
             job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})
 
-            assert job["credentials"] == {"type": "LOGIN_PASSWORD", "data": {"username": c.username, "login_at": ANY}}
+            expected_creds = {
+                "type": "LOGIN_PASSWORD",
+                "data": {"username": c.username, "login_at": ANY, "login_id": ANY}
+            }
+
+            assert job["credentials"] == expected_creds
 
 
 def test_job_configservice_credentials():

@@ -78,7 +78,7 @@ def test_unauthorized_call():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": ANY, "login_at": ANY},
+                        "credentials_data": {"username": ANY, "login_at": ANY, "login_id": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -109,7 +109,7 @@ def test_bogus_call():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root", "login_at": ANY},
+                        "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -140,7 +140,7 @@ def test_invalid_call():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root", "login_at": ANY},
+                        "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -171,7 +171,7 @@ def test_typo_in_secret_credential_name():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root", "login_at": ANY},
+                        "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -201,7 +201,7 @@ def test_valid_call():
                 "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root", "login_at": ANY},
+                    "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                 },
             },
             "event": "METHOD_CALL",
@@ -245,14 +245,14 @@ def test_password_login():
                 "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root", "login_at": ANY},
+                    "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                 },
             },
             "event": "AUTHENTICATION",
             "event_data": {
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root", "login_at": ANY},
+                    "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                 },
                 "error": None,
             },
@@ -268,14 +268,14 @@ def test_password_login():
                 "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root", "login_at": ANY},
+                    "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                 },
             },
             "event": "LOGOUT",
             "event_data": {
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root", "login_at": ANY},
+                    "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                 },
             },
             "success": True,
@@ -316,8 +316,9 @@ def test_token_login():
                         "credentials_data": {
                             "parent": {
                                 "credentials": "LOGIN_PASSWORD",
-                                "credentials_data": {"username": "root", "login_at": ANY},
+                                "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                             },
+                            "token_id": ANY,
                             "username": "root",
                         },
                     },
@@ -381,6 +382,7 @@ def test_api_key_login():
                             "credentials_data": {
                                 "username": "root",
                                 "login_at": ANY,
+                                "login_id": ANY,
                                 "api_key": {"id": ANY, "name": ANY},
                             },
                         },
@@ -463,6 +465,7 @@ def test_2fa_login(sharing_admin_user):
                             "credentials_data": {
                                 "username": sharing_admin_user.username,
                                 "login_at": ANY,
+                                "login_id": ANY,
                             },
                         },
                         "error": None,
