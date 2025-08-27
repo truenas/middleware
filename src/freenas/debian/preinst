@@ -9,6 +9,7 @@ for file in \
     /usr/share/spice-html5/spice_auto.html \
     /usr/share/spice-html5/spice.css \
     /etc/logrotate.d/netdata \
+    /etc/logrotate.d/nginx \
     /usr/lib/tmpfiles.d/nut-server.conf \
     /usr/lib/tmpfiles.d/nut-client.conf \
     /usr/lib/tmpfiles.d/nut-common.tmpfiles
