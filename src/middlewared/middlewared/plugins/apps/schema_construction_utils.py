@@ -61,6 +61,57 @@ def remove_not_required(data):
     return data
 
 
+def clean_list_item_error_paths(verrors: ValidationErrors) -> ValidationErrors:
+    """
+    Clean up validation error paths by removing intermediate list item model names.
+    Only affects paths with list indices followed by model names containing '_ix_list_item_'.
+
+    Examples:
+    - "servers.0.app_create_servers_ix_list_item_0.name" -> "servers.0.name"
+    - "nested.0.items.1.app_create_ix_list_item_2.value" -> "nested.0.items.1.value"
+    - "database.config.host" -> "database.config.host" (unchanged - no list index)
+    """
+    cleaned_errors = ValidationErrors()
+    seen_errors = set()  # Track (path, message) to avoid duplicates
+
+    for error in verrors.errors:
+        # Clean the error path
+        cleaned_path = clean_single_error_path(error.attribute)
+
+        # Create a key for deduplication
+        error_key = (cleaned_path, error.errmsg, error.errno)
+
+        # Only add if we haven't seen this exact error before
+        if error_key not in seen_errors:
+            seen_errors.add(error_key)
+            cleaned_errors.add(cleaned_path, error.errmsg, error.errno)
+
+    return cleaned_errors
+
+
+def clean_single_error_path(path: str) -> str:
+    """
+    Remove list item model names from a single error path.
+
+    Only removes segments that:
+    1. Follow a numeric index (indicating a list position)
+    2. Contain the '_ix_list_item_' marker
+
+    Examples:
+    - "servers.0.app_create_servers_ix_list_item_0.name" -> "servers.0.name"
+    - "data.0.items.1.app_create_ix_list_item_2.value" -> "data.0.items.1.value"
+    """
+    # Pattern matches: .digit.anything_ix_list_item_anything
+    # Captures only the .digit part and removes the model name
+    # This handles all occurrences including nested lists in a single pass
+    pattern = r'(\.\d+)\.[^.]*_ix_list_item_[^.]*'
+
+    # Replace all occurrences at once - no loop needed
+    cleaned_path = re.sub(pattern, r'\1', path)
+
+    return cleaned_path
+
+
 def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: USER_VALUES = NOT_PROVIDED,
 ) -> dict:
@@ -74,8 +125,10 @@ def construct_schema(
         # Remove any fields that have NotRequired as their value
         new_values = remove_not_required(new_values)
     except ValidationErrors as e:
+        # Clean up list item model names from error paths
+        cleaned_errors = clean_list_item_error_paths(e)
         # Don't add 'values' prefix - just extend the errors directly
-        verrors.extend(e)
+        verrors.extend(cleaned_errors)
 
     return {
         'verrors': verrors,
@@ -304,7 +357,7 @@ def process_schema_field(
 
                             item_model = generate_pydantic_model(
                                 attrs_to_use,
-                                f"{model_name}_{discriminator}_{disc_value}",
+                                f"{model_name}_ix_list_item_{discriminator}_{disc_value}",
                                 context_values,  # Just discriminator for show_if evaluation
                                 old_item,
                                 parent_hidden=field_hidden
@@ -324,7 +377,7 @@ def process_schema_field(
                             # This ensures nested show_if conditions work correctly
                             item_model = generate_pydantic_model(
                                 item_schema['attrs'],
-                                f"{model_name}_item_{idx}",
+                                f"{model_name}_ix_list_item_{idx}",
                                 item_value if isinstance(item_value, dict) else {},
                                 old_item,
                                 parent_hidden=field_hidden
