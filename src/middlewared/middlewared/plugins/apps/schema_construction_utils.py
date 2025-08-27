@@ -1,6 +1,6 @@
 import contextlib
 import re
-from typing import Annotated, Callable, Literal, TypeAlias, Union
+from typing import Annotated, Literal, TypeAlias, Union
 
 from pydantic import AfterValidator, create_model, Field
 from pydantic.fields import FieldInfo
@@ -280,14 +280,6 @@ def process_schema_field(
                 elif 'default' in schema_def and isinstance(schema_def['default'], list):
                     actual_list_values = schema_def['default']
 
-                # Check if any item has immutable fields
-                has_immutable_fields = False
-                if item_schema['type'] == 'dict' and 'attrs' in item_schema:
-                    for attr in item_schema['attrs']:
-                        if attr['schema'].get('immutable'):
-                            has_immutable_fields = True
-                            break
-
                 # Generate models based on actual values if we have them and it's a dict type
                 if actual_list_values and item_schema['type'] == 'dict' and 'attrs' in item_schema:
                     # Check for single discriminator field
@@ -347,19 +339,12 @@ def process_schema_field(
                             # This ensures show_if conditions are evaluated correctly
                             context_values = {discriminator: disc_value}
 
-                            # Get old value for immutability checks (use first matching old item)
-                            old_item = NOT_PROVIDED
-                            if isinstance(old_values, list):
-                                for old_idx, old_val in enumerate(old_values):
-                                    if isinstance(old_val, dict) and old_val.get(discriminator) == disc_value:
-                                        old_item = old_val
-                                        break
-
+                            # Don't pass old values for list items - immutability not supported in lists
                             item_model = generate_pydantic_model(
                                 attrs_to_use,
                                 f"{model_name}_ix_list_item_{discriminator}_{disc_value}",
                                 context_values,  # Just discriminator for show_if evaluation
-                                old_item,
+                                NOT_PROVIDED,  # No old values for list items
                                 parent_hidden=field_hidden
                             )
                             item_models.append(item_model)
@@ -367,19 +352,14 @@ def process_schema_field(
                         # No discriminator - fall back to original behavior
                         # Generate a model for each actual list value
                         for idx, item_value in enumerate(actual_list_values):
-                            # Get old value for immutability checks
-                            old_item = (
-                                old_values[idx] if isinstance(old_values, list) and idx < len(old_values)
-                                else NOT_PROVIDED
-                            )
-
+                            # Don't pass old values for list items - immutability not supported in lists
                             # Generate model with actual values for proper show_if evaluation
                             # This ensures nested show_if conditions work correctly
                             item_model = generate_pydantic_model(
                                 item_schema['attrs'],
                                 f"{model_name}_ix_list_item_{idx}",
                                 item_value if isinstance(item_value, dict) else {},
-                                old_item,
+                                NOT_PROVIDED,  # No old values for list items
                                 parent_hidden=field_hidden
                             )
                             item_models.append(item_model)
@@ -394,37 +374,16 @@ def process_schema_field(
                         else:
                             # Use regular Union when no discriminator
                             field_type = list[Union[*item_models]]
-
-                        # Apply immutability validator if needed
-                        if has_immutable_fields and isinstance(old_values, list):
-                            field_type = Annotated[
-                                field_type,
-                                AfterValidator(create_list_immutable_validator(list_items, old_values))
-                            ]
                 else:
                     # No actual values or non-dict items - fallback to existing behavior
-                    if has_immutable_fields and old_values is not NOT_PROVIDED and isinstance(old_values, list):
-                        # Process items normally but without old values for type generation
-                        for item in list_items:
-                            item_type, item_info, _ = process_schema_field(
-                                item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
-                                field_hidden=field_hidden
-                            )
-                            annotated_items.append(Annotated[item_type, item_info])
-                        # Apply the validator to the list type
-                        field_type = Annotated[
-                            list[Union[*annotated_items]],
-                            AfterValidator(create_list_immutable_validator(list_items, old_values))
-                        ]
-                    else:
-                        # Normal processing without immutability checks
-                        for item in list_items:
-                            item_type, item_info, _ = process_schema_field(
-                                item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
-                                field_hidden=field_hidden
-                            )
-                            annotated_items.append(Annotated[item_type, item_info])
-                        field_type = list[Union[*annotated_items]]
+                    # Process items without old values (immutability not supported in lists)
+                    for item in list_items:
+                        item_type, item_info, _ = process_schema_field(
+                            item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                            field_hidden=field_hidden
+                        )
+                        annotated_items.append(Annotated[item_type, item_info])
+                    field_type = list[Union[*annotated_items]]
             else:
                 # We have a generic list type without specific items
                 field_type = list
@@ -505,37 +464,3 @@ def create_field_info_from_schema(schema_def: dict, field_hidden: bool = False) 
             field_kwargs['le'] = schema_def['max']
 
     return Field(**field_kwargs)
-
-
-def create_list_immutable_validator(item_schemas: list, old_list: list) -> Callable:
-    # Create a validator that will check immutability at runtime
-    def validate_immutable_list(v):
-        if not isinstance(v, list):
-            return v
-
-        # Validate each item against its old value
-        for i, item in enumerate(v):
-            if i < len(old_list) and isinstance(old_list[i], dict):
-                old_item = old_list[i]
-                # Check each field in the item
-                for item_schema in item_schemas:
-                    if item_schema['schema']['type'] == 'dict' and 'attrs' in item_schema['schema']:
-                        for attr in item_schema['schema']['attrs']:
-                            field_name = attr['variable']
-                            if attr['schema'].get('immutable') and field_name in old_item:
-                                # The item might be a Pydantic model, not a dict
-                                if hasattr(item, field_name):
-                                    new_value = getattr(item, field_name)
-                                elif isinstance(item, dict):
-                                    new_value = item.get(field_name)
-                                else:
-                                    continue
-
-                                if new_value != old_item[field_name]:
-                                    raise ValueError(
-                                        f"Cannot change immutable field '{field_name}' "
-                                        f"from '{old_item[field_name]}' to '{new_value}'"
-                                    )
-        return v
-
-    return validate_immutable_list
