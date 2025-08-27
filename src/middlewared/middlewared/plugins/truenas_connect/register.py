@@ -1,7 +1,6 @@
 import asyncio
 import errno
 import logging
-import uuid
 from urllib.parse import urlencode
 
 from truenas_connect_utils.status import Status
@@ -11,6 +10,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     TrueNASConnectGetRegistrationUriArgs, TrueNASConnectGetRegistrationUriResult, TrueNASConnectGenerateClaimTokenArgs, TrueNASConnectGenerateClaimTokenResult,
 )
+from middlewared.utils.crypto import ssl_uuid4
 from middlewared.service import CallError, Service
 
 from .utils import CLAIM_TOKEN_CACHE_KEY
@@ -43,7 +43,7 @@ class TrueNASConnectService(Service):
                 errno=errno.EEXIST,
             )
 
-        claim_token = str(uuid.uuid4())
+        claim_token = str(ssl_uuid4())
         # Claim token is going to be valid for 45 minutes
         await self.middleware.call('cache.put', CLAIM_TOKEN_CACHE_KEY, claim_token, 45 * 60)
         await self.middleware.call('tn_connect.set_status', Status.REGISTRATION_FINALIZATION_WAITING.name)

@@ -74,14 +74,14 @@ def test_authenticated_call():
                     "protocol": "REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root", "login_at": ANY},
+                        "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                     },
                 },
                 "event": "AUTHENTICATION",
                 "event_data": {
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root", "login_at": ANY},
+                        "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                     },
                     "error": None,
                 },
@@ -97,7 +97,7 @@ def test_authenticated_call():
                     "protocol": "REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root", "login_at": ANY},
+                        "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -152,7 +152,7 @@ def test_unauthorized_call():
                     "protocol": "REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": ANY, "login_at": ANY},
+                        "credentials_data": {"username": ANY, "login_at": ANY, "login_id": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -187,7 +187,7 @@ def test_bogus_call():
                 "protocol": "REST",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root", "login_at": ANY},
+                    "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
                 },
             },
             "event": "METHOD_CALL",
@@ -221,6 +221,7 @@ def test_api_key_auth():
                         "credentials_data": {
                             "username": "root",
                             "login_at": ANY,
+                            "login_id": ANY,
                             "api_key": {
                                 "id": ANY,
                                 "name": "RESTAUTH",
@@ -235,6 +236,7 @@ def test_api_key_auth():
                         "credentials_data": {
                             "username": "root",
                             "login_at": ANY,
+                            "login_id": ANY,
                             "api_key": {
                                 "id": ANY,
                                 "name": "RESTAUTH",

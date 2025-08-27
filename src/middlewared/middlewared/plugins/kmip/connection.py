@@ -5,13 +5,13 @@
 
 import contextlib
 import socket
-import uuid
 
 from kmip.core import enums
 from kmip.pie.client import ProxyKmipClient
 from kmip.pie.exceptions import ClientConnectionFailure, ClientConnectionNotOpen, KmipOperationFailure
 from kmip.pie.objects import SecretData
 
+from middlewared.utils.crypto import ssl_uuid4
 from middlewared.service import CallError
 
 
@@ -88,7 +88,7 @@ class KMIPServerMixin:
 
     def _register_secret_data(self, name, key, conn):
         # Create key on the KMIP Server
-        secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD, name=f'{name}-{str(uuid.uuid4())[:7]}')
+        secret_data = SecretData(key.encode(), enums.SecretDataType.PASSWORD, name=f'{name}-{str(ssl_uuid4())[:7]}')
         try:
             uid = conn.register(secret_data)
         except KmipOperationFailure as e:

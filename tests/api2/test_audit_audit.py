@@ -44,7 +44,7 @@ def test_audit_config_audit(payload, success):
             'protocol': 'WEBSOCKET',
             'credentials': {
                 'credentials': 'LOGIN_PASSWORD',
-                'credentials_data': {'username': 'root', 'login_at': ANY},
+                'credentials_data': {'username': 'root', 'login_at': ANY, "login_id": ANY},
             },
         },
         'event': 'METHOD_CALL',

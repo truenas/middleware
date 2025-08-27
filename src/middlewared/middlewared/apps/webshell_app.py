@@ -8,7 +8,6 @@ import struct
 import termios
 import threading
 import time
-import uuid
 
 from middlewared.api.base.server.ws_handler.base import BaseWebSocketHandler
 from middlewared.service_exception import (
@@ -17,6 +16,7 @@ from middlewared.service_exception import (
     InstanceNotFound,
     MatchNotFound,
 )
+from middlewared.utils.crypto import ssl_uuid4
 from middlewared.utils.os import close_fds, terminate_pid
 from truenas_api_client import json
 
@@ -224,7 +224,7 @@ class ShellApplication:
             return ws
 
         conndata = ShellConnectionData()
-        conndata.id = str(uuid.uuid4())
+        conndata.id = str(ssl_uuid4())
 
         try:
             await self.run(ws, origin, conndata)
