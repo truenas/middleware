@@ -1,4 +1,9 @@
 import enum
+import os
+
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+
+DS_HA_STATE_DIR = os.path.join(SYSDATASET_PATH, "directory_services")
 
 
 class DSStatus(enum.StrEnum):
