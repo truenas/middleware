@@ -31,6 +31,9 @@
 
     system_version = middleware.call_sync('system.version')
 
+    # Check if FIPS mode is enabled
+    fips_enabled = middleware.call_sync('system.security.info.fips_enabled')
+
     # HSTS max-age calculation (730 days = 63072000 seconds)
     max_age = 63072000 if general_settings['ui_httpsredirect'] else 0
 
@@ -87,10 +90,12 @@ http {
     # Disable tokens for security (#23684)
     server_tokens off;
 
+% if fips_enabled:
     # Hide server information in error pages
     # NOTE: This is a DoDin requirement, so don't remove
     proxy_hide_header X-Powered-By;
     proxy_hide_header Server;
+% endif
 
     gzip  on;
     # Disable gzip for responses with cookies (BREACH attack mitigation)
@@ -112,11 +117,13 @@ http {
         default "";
     }
 
+% if fips_enabled:
     # Map to detect if response has Set-Cookie header (for disabling gzip)
     map $sent_http_set_cookie $no_gzip_cookie {
         ~.+ "1";
         default "0";
     }
+% endif
 
     server {
         server_name  localhost;
@@ -211,7 +218,9 @@ ${spaces}gzip off;
             proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+% if fips_enabled:
             ${security_headers_enhanced(indent=12)}
+% endif
         }
 
         location ~ ^/api/docs/?$ {
@@ -272,7 +281,9 @@ ${spaces}gzip off;
             proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+% if fips_enabled:
             ${security_headers_enhanced(indent=12)}
+% endif
         }
 
         location /websocket/shell {
@@ -287,7 +298,9 @@ ${spaces}gzip off;
             proxy_set_header Connection "upgrade";
             proxy_send_timeout 7d;
             proxy_read_timeout 7d;
+% if fips_enabled:
             ${security_headers_enhanced(indent=12)}
+% endif
         }
 
         location /api/v2.0 {
@@ -303,7 +316,9 @@ ${spaces}gzip off;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Server-Port $server_port;
             proxy_set_header X-Scheme $Scheme;
+% if fips_enabled:
             ${security_headers_enhanced(indent=12)}
+% endif
         }
 
         location /_download {
@@ -318,7 +333,9 @@ ${spaces}gzip off;
             proxy_set_header X-Real-Remote-Port $remote_port;
             proxy_set_header X-Https $https;
             proxy_read_timeout 10m;
+% if fips_enabled:
             ${security_headers_enhanced(indent=12)}
+% endif
         }
 
         location /_upload {
@@ -331,7 +348,9 @@ ${spaces}gzip off;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
             proxy_set_header X-Https $https;
+% if fips_enabled:
             ${security_headers_enhanced(indent=12)}
+% endif
         }
 
         location /_plugins {
@@ -342,7 +361,9 @@ ${spaces}gzip off;
             proxy_set_header X-Https $https;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
+% if fips_enabled:
             ${security_headers_enhanced(indent=12)}
+% endif
         }
     }
 % if general_settings['ui_httpsredirect'] and ssl_configuration:
