@@ -9,8 +9,7 @@ import google_auth_httplib2
 import httplib2
 
 from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel, OneShotAlertClass
-from middlewared.plugins.mail import DenyNetworkActivity
-from middlewared.service import CallError, private, Service
+from middlewared.service import private, Service
 
 
 class GMailConfigurationDiscardedAlertClass(AlertClass, OneShotAlertClass):
@@ -87,10 +86,7 @@ class MailService(Service):
 
     @private
     def gmail_send(self, message, config, _retry_broken_pipe=True):
-        try:
-            self.middleware.call_sync('network.general.will_perform_activity', 'mail')
-        except CallError:
-            raise DenyNetworkActivity()
+        self.middleware.call_sync('network.general.will_perform_activity', 'mail')
 
         gmail_service = self.middleware.call_sync("mail.gmail_build_service", config)
         if gmail_service == self.gmail_service:

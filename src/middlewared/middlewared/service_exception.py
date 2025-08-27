@@ -121,3 +121,7 @@ class InstanceNotFound(ValidationError):
 class MatchNotFound(IndexError):
     """Raised when there is no matching id eg: filter_utils/datastore.query"""
     pass
+
+
+class NetworkActivityDisabled(CallError):
+    pass
