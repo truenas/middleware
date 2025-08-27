@@ -1,8 +1,8 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
+from middlewared.api.base import BaseModel
 from middlewared.api.base.jsonschema import add_attrs, replace_refs
-from .common import AuditEventVersion, convert_schema_to_set
+from .common import AuditEvent, AuditEventVersion, convert_schema_to_set
 
 
 class AuditEventSMBServiceData(BaseModel):
@@ -12,18 +12,9 @@ class AuditEventSMBServiceData(BaseModel):
     tcon_id: str
 
 
-class AuditEventSMB(BaseModel):
-    event: str
-    event_data: BaseModel
-    audit_id: UUID
-    message_timestamp: int
-    timestamp: dict
-    address: IPvAnyAddress
-    username: str
-    session: UUID
+class AuditEventSMB(AuditEvent):
     service: Literal['SMB']
     service_data: AuditEventSMBServiceData
-    success: bool
 
 
 class AuditEventSMBResult(BaseModel):
