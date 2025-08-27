@@ -19,14 +19,12 @@ import html2text
 from middlewared.api import api_method
 from middlewared.api.current import (MailEntry, MailUpdateArgs, MailUpdateResult, MailSendArgs, MailSendResult,
                                      MailLocalAdministratorEmailArgs, MailLocalAdministratorEmailResult)
-from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
+from middlewared.service import (
+    CallError, ConfigService, NetworkActivityDisabled, ValidationErrors, job, periodic, private,
+)
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductName, BRAND
 from middlewared.utils.mako import get_template
-
-
-class DenyNetworkActivity(Exception):
-    pass
 
 
 class QueueItem:
@@ -291,7 +289,7 @@ class MailService(ConfigService):
                         to,
                         msg.as_string(),
                     )
-        except DenyNetworkActivity:
+        except NetworkActivityDisabled:
             self.logger.warning('Sending email denied')
             return False
         except Exception as e:
@@ -311,10 +309,7 @@ class MailService(ConfigService):
 
     @contextlib.contextmanager
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
-        try:
-            self.middleware.call_sync('network.general.will_perform_activity', 'mail')
-        except CallError:
-            raise DenyNetworkActivity()
+        self.middleware.call_sync('network.general.will_perform_activity', 'mail')
 
         if local_hostname is None:
             local_hostname = self.middleware.call_sync('system.hostname')
@@ -361,7 +356,7 @@ class MailService(ConfigService):
                             server.sendmail(queue.message['From'].encode(),
                                             queue.message['To'].split(', '),
                                             queue.message.as_string())
-                except DenyNetworkActivity:
+                except NetworkActivityDisabled:
                     # no reason to queue up email since network activity was
                     # explicitly denied by end-user
                     mq.queue.remove(queue)

@@ -101,11 +101,12 @@ class UpdateDownloadProgress(BaseModel):
 
 
 class UpdateStatus(BaseModel):
-    code: Literal['NORMAL', 'ERROR', 'REBOOT_REQUIRED', 'HA_UNAVAILABLE']
+    code: Literal['NORMAL', 'ERROR', 'NETWORK_ACTIVITY_DISABLED', 'REBOOT_REQUIRED', 'HA_UNAVAILABLE']
     """
     Status code:
     * NORMAL - normal status, see `status` dictionary for details.
     * ERROR - an error occurred, see `error` for details.
+    * NETWORK_ACTIVITY_DISABLED - network activity is disabled, see `error` for details.
     * REBOOT_REQUIRED - system update was already applied, system reboot is required.
     * HA_UNAVAILABLE - HA is configured but currently unavailable.
     """

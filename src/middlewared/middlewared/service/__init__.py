@@ -1,5 +1,5 @@
 from middlewared.service_exception import ( # noqa
-    CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
+    CallException, CallError, InstanceNotFound, NetworkActivityDisabled, ValidationError, ValidationErrors
 )
 from middlewared.utils import filter_list # noqa
 
