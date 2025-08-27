@@ -65,7 +65,7 @@ class DirectoryServiceDnsUpdateAlertSource(AlertSource):
 
         try:
             # checks for enabled DS and whether DNS updates are enabled occur in this method
-            await self.middleware.call('directoryservices.connection.refresh_dns')
+            await self.middleware.call('directoryservices.connection.renew_dns')
         except RuntimeError as exc:
             # This most likely means somehow someone has cleared the kerberos realm without
             # disabling directory services. Most likely scenario is playing around with datastore
