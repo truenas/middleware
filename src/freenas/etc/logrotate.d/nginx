@@ -1,0 +1,13 @@
+/var/log/nginx/*.log
+{
+	rotate 5
+	size 5M
+	missingok
+	notifempty
+	compress
+	delaycompress
+	create 644 nginx nginx
+	postrotate
+		systemctl reload nginx
+	endscript
+}
