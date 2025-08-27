@@ -1,8 +1,8 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
+from middlewared.api.base import BaseModel
 from middlewared.api.base.jsonschema import add_attrs, replace_refs
-from .common import AuditEventVersion, convert_schema_to_set
+from .common import AuditEvent, AuditEventVersion, convert_schema_to_set
 
 
 class AuditEventMiddlewareAuthenticationEventDataCredentials(BaseModel):
@@ -32,18 +32,11 @@ class AuditEventMiddlewareServiceData(BaseModel):
     credentials: dict | None
 
 
-class AuditEventMiddleware(BaseModel):
+class AuditEventMiddleware(AuditEvent):
     event: Literal['AUTHENTICATION', 'METHOD_CALL']
     event_data: AuditEventMiddlewareAuthenticationEventData | AuditEventMiddlewareMethodCallEventData
-    audit_id: UUID
-    message_timestamp: int
-    timestamp: dict
-    address: IPvAnyAddress
-    username: str
-    session: UUID
     service: Literal['MIDDLEWARE']
     service_data: AuditEventMiddlewareServiceData
-    success: bool
 
 
 class AuditEventMiddlewareAuthentication(AuditEventMiddleware):

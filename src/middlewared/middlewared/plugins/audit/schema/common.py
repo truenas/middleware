@@ -1,11 +1,25 @@
 from typing import Iterable
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
 
 
 class AuditEventVersion(BaseModel):
     major: int
     minor: int
+
+
+class AuditEvent(BaseModel):
+    """Mirrors `middlewared.api.current.AuditQueryResultItem`."""
+    event: str
+    event_data: BaseModel
+    audit_id: UUID
+    message_timestamp: int
+    timestamp: dict
+    address: IPvAnyAddress
+    username: str
+    session: UUID
+    service: str
+    success: bool
 
 
 def convert_schema_to_set(schema_list: Iterable[dict]) -> set[str]:

@@ -15,7 +15,7 @@ AUDIT_DEFAULT_QUOTA = 0
 AUDIT_DEFAULT_FILL_CRITICAL = 95
 AUDIT_DEFAULT_FILL_WARNING = 75
 AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, 'reports')
-SQL_SAFE_FIELDS = {
+SQL_SAFE_FIELDS = frozenset([
     'audit_id',
     'message_timestamp',
     'address',
@@ -24,7 +24,7 @@ SQL_SAFE_FIELDS = {
     'service',
     'event',
     'success',
-}
+])
 AUDIT_LOG_PATH_NAME = mtree_verify.LOG_PATH_NAME
 
 AuditBase = declarative_base()
