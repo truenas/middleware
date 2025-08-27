@@ -1,5 +1,4 @@
 <%
-    import contextlib
     import ipaddress
     import os
 
