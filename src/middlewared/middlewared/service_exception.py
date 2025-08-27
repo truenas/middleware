@@ -124,4 +124,5 @@ class MatchNotFound(IndexError):
 
 
 class NetworkActivityDisabled(CallError):
-    pass
+    def __init__(self, errmsg: str, errno: int = errno.ENONET, extra=None):
+        super().__init__(errmsg, errno, extra)
