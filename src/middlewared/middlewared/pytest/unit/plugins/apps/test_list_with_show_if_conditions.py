@@ -789,3 +789,532 @@ def test_min_max_constraints_with_show_if():
     result = construct_schema(schema, invalid_values, False)
     assert result['verrors']
     assert any('limits' in str(e) for e in result['verrors'])
+
+
+# ============================================================================
+# COMPREHENSIVE TESTS FOR SONARR-LIKE STORAGE BUG
+# ============================================================================
+
+@patch('middlewared.plugins.apps.pydantic_utils.os.path.isfile', return_value=True)
+@patch('middlewared.plugins.apps.pydantic_utils.os.path.isdir', return_value=True)
+def test_sonarr_storage_host_path_with_acl_enabled(mock_isdir, mock_isfile):
+    """Test the exact Sonarr storage scenario with host_path and ACL enabled.
+
+    This reproduces the bug where path is required even when acl_enable=True
+    and the path field has show_if: [['acl_enable', '=', False]].
+    """
+    schema = {
+        'schema': {
+            'questions': [{
+                'variable': 'storage',
+                'schema': {
+                    'type': 'dict',
+                    'attrs': [{
+                        'variable': 'additional_storage',
+                        'schema': {
+                            'type': 'list',
+                            'default': [],
+                            'items': [{
+                                'variable': 'storageEntry',
+                                'schema': {
+                                    'type': 'dict',
+                                    'attrs': [
+                                        {
+                                            'variable': 'type',
+                                            'schema': {
+                                                'type': 'string',
+                                                'required': True,
+                                                'default': 'ix_volume',
+                                                'enum': [
+                                                    {'value': 'host_path'},
+                                                    {'value': 'ix_volume'}
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            'variable': 'mount_path',
+                                            'schema': {
+                                                'type': 'path',
+                                                'required': True
+                                            }
+                                        },
+                                        {
+                                            'variable': 'host_path_config',
+                                            'schema': {
+                                                'type': 'dict',
+                                                'show_if': [['type', '=', 'host_path']],
+                                                'attrs': [
+                                                    {
+                                                        'variable': 'acl_enable',
+                                                        'schema': {
+                                                            'type': 'boolean',
+                                                            'default': False
+                                                        }
+                                                    },
+                                                    {
+                                                        'variable': 'path',
+                                                        'schema': {
+                                                            'type': 'string',
+                                                            'show_if': [['acl_enable', '=', False]],
+                                                            'required': True
+                                                        }
+                                                    },
+                                                    {
+                                                        'variable': 'acl',
+                                                        'schema': {
+                                                            'type': 'dict',
+                                                            'show_if': [['acl_enable', '=', True]],
+                                                            'attrs': [
+                                                                {
+                                                                    'variable': 'path',
+                                                                    'schema': {
+                                                                        'type': 'string',
+                                                                        'required': True
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            'variable': 'ix_volume_config',
+                                            'schema': {
+                                                'type': 'dict',
+                                                'show_if': [['type', '=', 'ix_volume']],
+                                                'attrs': [
+                                                    {
+                                                        'variable': 'dataset_name',
+                                                        'schema': {
+                                                            'type': 'string',
+                                                            'required': True,
+                                                            'default': 'storage'
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }]
+                        }
+                    }]
+                }
+            }]
+        }
+    }
+
+    # Test 1: host_path with acl_enable=True (path should NOT be required)
+    values = {
+        'storage': {
+            'additional_storage': [{
+                'type': 'host_path',
+                'mount_path': '/test',
+                'host_path_config': {
+                    'acl_enable': True,
+                    'acl': {
+                        'path': '/mnt/data'
+                    }
+                }
+            }]
+        }
+    }
+
+    result = construct_schema(schema, values, False)
+    assert len(result['verrors'].errors) == 0, \
+        f"Path should NOT be required when acl_enable=True, but got: {result['verrors'].errors}"
+
+    # Test 2: host_path with acl_enable=False (path should be required)
+    values2 = {
+        'storage': {
+            'additional_storage': [{
+                'type': 'host_path',
+                'mount_path': '/test',
+                'host_path_config': {
+                    'acl_enable': False
+                    # Missing path - should fail
+                }
+            }]
+        }
+    }
+
+    result2 = construct_schema(schema, values2, False)
+    assert len(result2['verrors'].errors) > 0, "Should fail when acl_enable=False and no path"
+
+
+def test_discriminator_with_nested_show_if_different_values():
+    """Test discriminator list items with nested show_if conditions using different values."""
+    schema = [{
+        'variable': 'items',
+        'schema': {
+            'type': 'list',
+            'items': [{
+                'variable': 'entry',
+                'schema': {
+                    'type': 'dict',
+                    'attrs': [
+                        {
+                            'variable': 'type',
+                            'schema': {
+                                'type': 'string',
+                                'required': True,
+                                'default': 'type_a'
+                            }
+                        },
+                        {
+                            'variable': 'config',
+                            'schema': {
+                                'type': 'dict',
+                                'show_if': [['type', '=', 'type_b']],
+                                'attrs': [
+                                    {
+                                        'variable': 'enable',
+                                        'schema': {
+                                            'type': 'boolean',
+                                            'default': False
+                                        }
+                                    },
+                                    {
+                                        'variable': 'field_when_disabled',
+                                        'schema': {
+                                            'type': 'string',
+                                            'show_if': [['enable', '=', False]],
+                                            'required': True
+                                        }
+                                    },
+                                    {
+                                        'variable': 'field_when_enabled',
+                                        'schema': {
+                                            'type': 'string',
+                                            'show_if': [['enable', '=', True]],
+                                            'required': True
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }]
+        }
+    }]
+
+    # Test with multiple items having different enable values
+    values = {
+        'items': [
+            {
+                'type': 'type_b',
+                'config': {
+                    'enable': False,
+                    'field_when_disabled': 'value1'
+                }
+            },
+            {
+                'type': 'type_b',
+                'config': {
+                    'enable': True,
+                    'field_when_enabled': 'value2'
+                }
+            }
+        ]
+    }
+
+    model = generate_pydantic_model(schema, 'TestDiscriminator', values, NOT_PROVIDED)
+    instance = model(**values)
+
+    assert instance.items[0].config.enable is False
+    assert instance.items[0].config.field_when_disabled == 'value1'
+    assert instance.items[1].config.enable is True
+    assert instance.items[1].config.field_when_enabled == 'value2'
+
+
+def test_update_scenario_with_discriminator_list():
+    """Test update scenario where list items have discriminators and nested show_if."""
+    schema = [{
+        'variable': 'storage_list',
+        'schema': {
+            'type': 'list',
+            'items': [{
+                'variable': 'item',
+                'schema': {
+                    'type': 'dict',
+                    'attrs': [
+                        {
+                            'variable': 'type',
+                            'schema': {
+                                'type': 'string',
+                                'required': True,
+                                'immutable': True,
+                                'default': 'type_a'
+                            }
+                        },
+                        {
+                            'variable': 'config_a',
+                            'schema': {
+                                'type': 'dict',
+                                'show_if': [['type', '=', 'type_a']],
+                                'attrs': [
+                                    {
+                                        'variable': 'field_a',
+                                        'schema': {
+                                            'type': 'string',
+                                            'default': 'default_a'
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            'variable': 'config_b',
+                            'schema': {
+                                'type': 'dict',
+                                'show_if': [['type', '=', 'type_b']],
+                                'attrs': [
+                                    {
+                                        'variable': 'toggle',
+                                        'schema': {
+                                            'type': 'boolean',
+                                            'default': False
+                                        }
+                                    },
+                                    {
+                                        'variable': 'required_field',
+                                        'schema': {
+                                            'type': 'string',
+                                            'show_if': [['toggle', '=', False]],
+                                            'required': True
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }]
+        }
+    }]
+
+    # Old values
+    old_values = {
+        'storage_list': [
+            {'type': 'type_a', 'config_a': {'field_a': 'old_value'}},
+            {'type': 'type_b', 'config_b': {'toggle': False, 'required_field': 'old_required'}}
+        ]
+    }
+
+    # New values - changing toggle to True (should not require required_field)
+    new_values = {
+        'storage_list': [
+            {'type': 'type_a', 'config_a': {'field_a': 'new_value'}},
+            {'type': 'type_b', 'config_b': {'toggle': True}}  # No required_field since toggle=True
+        ]
+    }
+
+    model = generate_pydantic_model(schema, 'TestUpdate', new_values, old_values)
+    instance = model(**new_values)
+
+    assert instance.storage_list[0].config_a.field_a == 'new_value'
+    assert instance.storage_list[1].config_b.toggle is True
+
+
+def test_complex_nested_discriminator_with_construct_schema():
+    """Test complex nested discriminators using construct_schema."""
+    schema = {
+        'schema': {
+            'questions': [{
+                'variable': 'services',
+                'schema': {
+                    'type': 'dict',
+                    'attrs': [{
+                        'variable': 'backends',
+                        'schema': {
+                            'type': 'list',
+                            'items': [{
+                                'variable': 'backend',
+                                'schema': {
+                                    'type': 'dict',
+                                    'attrs': [
+                                        {
+                                            'variable': 'type',
+                                            'schema': {
+                                                'type': 'string',
+                                                'required': True,
+                                                'enum': [
+                                                    {'value': 'http'},
+                                                    {'value': 'tcp'}
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            'variable': 'http_config',
+                                            'schema': {
+                                                'type': 'dict',
+                                                'show_if': [['type', '=', 'http']],
+                                                'attrs': [
+                                                    {
+                                                        'variable': 'ssl_enabled',
+                                                        'schema': {
+                                                            'type': 'boolean',
+                                                            'default': False
+                                                        }
+                                                    },
+                                                    {
+                                                        'variable': 'port',
+                                                        'schema': {
+                                                            'type': 'int',
+                                                            'show_if': [['ssl_enabled', '=', False]],
+                                                            'required': True,
+                                                            'default': 80
+                                                        }
+                                                    },
+                                                    {
+                                                        'variable': 'ssl_port',
+                                                        'schema': {
+                                                            'type': 'int',
+                                                            'show_if': [['ssl_enabled', '=', True]],
+                                                            'required': True,
+                                                            'default': 443
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }]
+                        }
+                    }]
+                }
+            }]
+        }
+    }
+
+    # Test with multiple backends with different SSL configurations
+    values = {
+        'services': {
+            'backends': [
+                {
+                    'type': 'http',
+                    'http_config': {
+                        'ssl_enabled': False,
+                        'port': 8080
+                    }
+                },
+                {
+                    'type': 'http',
+                    'http_config': {
+                        'ssl_enabled': True,
+                        'ssl_port': 8443
+                    }
+                }
+            ]
+        }
+    }
+
+    result = construct_schema(schema, values, False)
+    assert len(result['verrors'].errors) == 0, \
+        f"Should handle different SSL configurations correctly, but got: {result['verrors'].errors}"
+
+    # Test missing required field - but since ssl_port has a default (443), it should pass
+    values_with_default = {
+        'services': {
+            'backends': [{
+                'type': 'http',
+                'http_config': {
+                    'ssl_enabled': True
+                    # Missing ssl_port - but has default: 443
+                }
+            }]
+        }
+    }
+
+    result_with_default = construct_schema(schema, values_with_default, False)
+    assert len(result_with_default['verrors'].errors) == 0, \
+        "Should pass when ssl_port is missing but has a default value"
+
+    # Verify the default was applied
+    assert result_with_default['new_values']['services']['backends'][0]['http_config']['ssl_port'] == 443
+
+
+def test_list_items_with_multiple_discriminator_values():
+    """Test handling of multiple list items with the same discriminator value."""
+    schema = [{
+        'variable': 'items',
+        'schema': {
+            'type': 'list',
+            'items': [{
+                'variable': 'item',
+                'schema': {
+                    'type': 'dict',
+                    'attrs': [
+                        {
+                            'variable': 'type',
+                            'schema': {
+                                'type': 'string',
+                                'required': True
+                            }
+                        },
+                        {
+                            'variable': 'name',
+                            'schema': {
+                                'type': 'string',
+                                'required': True
+                            }
+                        },
+                        {
+                            'variable': 'config_a',
+                            'schema': {
+                                'type': 'dict',
+                                'show_if': [['type', '=', 'a']],
+                                'attrs': [
+                                    {
+                                        'variable': 'a_field',
+                                        'schema': {
+                                            'type': 'string',
+                                            'required': True
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            'variable': 'config_b',
+                            'schema': {
+                                'type': 'dict',
+                                'show_if': [['type', '=', 'b']],
+                                'attrs': [
+                                    {
+                                        'variable': 'b_field',
+                                        'schema': {
+                                            'type': 'string',
+                                            'required': True
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }]
+        }
+    }]
+
+    # Multiple items with same type but different names
+    values = {
+        'items': [
+            {'type': 'a', 'name': 'first_a', 'config_a': {'a_field': 'value1'}},
+            {'type': 'a', 'name': 'second_a', 'config_a': {'a_field': 'value2'}},
+            {'type': 'b', 'name': 'first_b', 'config_b': {'b_field': 'value3'}},
+            {'type': 'a', 'name': 'third_a', 'config_a': {'a_field': 'value4'}}
+        ]
+    }
+
+    model = generate_pydantic_model(schema, 'TestMultipleDiscriminator', values, NOT_PROVIDED)
+    instance = model(**values)
+
+    assert len(instance.items) == 4
+    assert instance.items[0].config_a.a_field == 'value1'
+    assert instance.items[1].config_a.a_field == 'value2'
+    assert instance.items[2].config_b.b_field == 'value3'
+    assert instance.items[3].config_a.a_field == 'value4'

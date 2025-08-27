@@ -1,6 +1,6 @@
 import contextlib
 import re
-from typing import Annotated, Literal, TypeAlias, Union
+from typing import Annotated, Any, Callable, Literal, TypeAlias, Union
 
 from pydantic import AfterValidator, create_model, Field
 from pydantic.fields import FieldInfo
@@ -26,6 +26,47 @@ RESERVED_NAMES = [
 ]
 NOT_PROVIDED = NotProvided()
 USER_VALUES: TypeAlias = dict | NotProvided
+
+
+def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -> Callable[[Any], list[Any]]:
+    """
+    Build an index-specific validator for a list field.
+    Validates each list element with the model at the same index.
+    Raises if there are more items than models.
+    """
+    def _validate(value: Any) -> list[Any]:
+        if not isinstance(value, list):
+            raise TypeError(f'{model_name}: expected a list')
+
+        if len(value) > len(item_models):
+            raise ValueError(
+                f'{model_name}: got {len(value)} items but only {len(item_models)} item models were generated'
+            )
+
+        out = []
+        for idx, item in enumerate(value):
+            Model = item_models[idx]
+            try:
+                # Use Model() to create an instance instead of validate_model which returns dict
+                validated = Model(**item)
+                out.append(validated)
+            except ValidationErrors as e:
+                # Prepend index to error paths
+                for error in e.errors:
+                    error.attribute = f'{idx}.{error.attribute}' if error.attribute else str(idx)
+                raise e
+            except Exception as e:
+                # Convert pydantic validation errors to our ValidationErrors
+                verrors = ValidationErrors()
+                if hasattr(e, 'errors'):
+                    for err in e.errors():
+                        loc = '.'.join(str(x) for x in err.get('loc', ()))
+                        verrors.add(f'{idx}.{loc}' if loc else str(idx), err.get('msg', str(e)))
+                else:
+                    verrors.add(str(idx), str(e))
+                raise verrors
+        return out
+    return _validate
 
 
 # Functionality we are concerned about which we would like to port over
@@ -282,98 +323,37 @@ def process_schema_field(
 
                 # Generate models based on actual values if we have them and it's a dict type
                 if actual_list_values and item_schema['type'] == 'dict' and 'attrs' in item_schema:
-                    # Check for single discriminator field
-                    discriminator = None
-                    # Collect all fields referenced in show_if conditions
-                    show_if_fields = set()
-                    for attr in item_schema['attrs']:
-                        if show_if := attr['schema'].get('show_if'):
-                            for condition in show_if:
-                                if len(condition) == 3 and condition[1] == '=':
-                                    show_if_fields.add(condition[0])
-
-                    # Only use discriminator if ALL show_ifs reference the SAME field
-                    if len(show_if_fields) == 1:
-                        discriminator = show_if_fields.pop()
-                    elif len(show_if_fields) > 1:
-                        # This should not be the case and should be ensured by apps validation
-                        # If this happens, then we don't use any discriminator
-                        discriminator = None
-
                     item_models = []
 
-                    if discriminator:
-                        # Generate ONE model per unique discriminator value
-                        # This avoids duplicate models and ensures proper Union discrimination
-                        discriminator_values_seen = {}
+                    # Generate one model per list item
+                    # This avoids discriminator conflicts when items have the same discriminator value
+                    # but different nested configurations (e.g., different acl_enable values)
+                    for idx, item_value in enumerate(actual_list_values):
+                        # Generate model with actual values for proper show_if evaluation
+                        # This ensures nested show_if conditions work correctly
+                        item_model = generate_pydantic_model(
+                            item_schema['attrs'],
+                            f"{model_name}_ix_list_item_{idx}",
+                            item_value if isinstance(item_value, dict) else {},
+                            NOT_PROVIDED,  # No old values for list items
+                            parent_hidden=field_hidden
+                        )
+                        item_models.append(item_model)
 
-                        for idx, item_value in enumerate(actual_list_values):
-                            if not isinstance(item_value, dict):
-                                continue
-
-                            disc_value = item_value.get(discriminator)
-                            if disc_value is None:
-                                continue
-
-                            # If we've already generated a model for this discriminator value, skip
-                            if disc_value in discriminator_values_seen:
-                                continue
-
-                            # Mark this discriminator value as seen
-                            discriminator_values_seen[disc_value] = True
-
-                            # Build attrs with Literal type for the discriminator
-                            attrs_to_use = []
-                            for attr in item_schema['attrs']:
-                                if attr['variable'] == discriminator:
-                                    # Force Literal type for this specific discriminator value
-                                    attr_copy = {
-                                        'variable': attr['variable'],
-                                        'schema': {**attr['schema'], 'enum': [{'value': disc_value}]}
-                                    }
-                                    attrs_to_use.append(attr_copy)
-                                else:
-                                    attrs_to_use.append(attr)
-
-                            # Generate model with minimal context (just the discriminator value)
-                            # This ensures show_if conditions are evaluated correctly
-                            context_values = {discriminator: disc_value}
-
-                            # Don't pass old values for list items - immutability not supported in lists
-                            item_model = generate_pydantic_model(
-                                attrs_to_use,
-                                f"{model_name}_ix_list_item_{discriminator}_{disc_value}",
-                                context_values,  # Just discriminator for show_if evaluation
-                                NOT_PROVIDED,  # No old values for list items
-                                parent_hidden=field_hidden
-                            )
-                            item_models.append(item_model)
-                    else:
-                        # No discriminator - fall back to original behavior
-                        # Generate a model for each actual list value
-                        for idx, item_value in enumerate(actual_list_values):
-                            # Don't pass old values for list items - immutability not supported in lists
-                            # Generate model with actual values for proper show_if evaluation
-                            # This ensures nested show_if conditions work correctly
-                            item_model = generate_pydantic_model(
-                                item_schema['attrs'],
-                                f"{model_name}_ix_list_item_{idx}",
-                                item_value if isinstance(item_value, dict) else {},
-                                NOT_PROVIDED,  # No old values for list items
-                                parent_hidden=field_hidden
-                            )
-                            item_models.append(item_model)
-
-                    # Create union of all models
+                    # Use validator approach instead of Union
                     if item_models:
-                        if discriminator:
-                            # Use discriminated union for better performance and validation
-                            from pydantic import Field as PydanticField
-                            union_type = Union[*item_models]
-                            field_type = list[Annotated[union_type, PydanticField(discriminator=discriminator)]]
-                        else:
-                            # Use regular Union when no discriminator
-                            field_type = list[Union[*item_models]]
+                        # Use validator approach to avoid Union validation bugs
+                        validator = _make_index_validator(item_models, model_name)
+                        field_type = Annotated[list[Any], AfterValidator(validator)]
+                    else:
+                        # No models generated, fall back to regular processing
+                        for item in list_items:
+                            item_type, item_info, _ = process_schema_field(
+                                item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                                field_hidden=field_hidden
+                            )
+                            annotated_items.append(Annotated[item_type, item_info])
+                        field_type = list[Union[*annotated_items]] if annotated_items else list
                 else:
                     # No actual values or non-dict items - fallback to existing behavior
                     # Process items without old values (immutability not supported in lists)
