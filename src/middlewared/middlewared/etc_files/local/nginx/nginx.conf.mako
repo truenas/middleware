@@ -86,6 +86,7 @@ http {
 
     # Disable tokens for security (#23684)
     server_tokens off;
+
     # Hide server information in error pages
     # NOTE: This is a DoDin requirement, so don't remove
     proxy_hide_header X-Powered-By;
@@ -110,6 +111,7 @@ http {
         ~^https://truenas.connect.(dev.|staging.)?ixsystems.net$ $http_origin;
         default "";
     }
+
     # Map to detect if response has Set-Cookie header (for disabling gzip)
     map $sent_http_set_cookie $no_gzip_cookie {
         ~.+ "1";
@@ -126,10 +128,8 @@ http {
         ssl_certificate        "${cert['certificate_path']}";
         ssl_certificate_key    "${cert['privatekey_path']}";
         ssl_dhparam "${dhparams_file}";
-
         ssl_session_timeout    120m;
         ssl_session_cache      shared:ssl:16m;
-
         ssl_protocols ${' '.join(general_settings['ui_httpsprotocols'])};
         ssl_prefer_server_ciphers on;
         ssl_ciphers EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA${"" if disabled_ciphers else "+SHA256"}:EDH+aRSA:EECDH:!RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS${disabled_ciphers};
@@ -143,22 +143,19 @@ http {
         #resolver ;
         #ssl_trusted_certificate ;
 % endif
-
 % if not general_settings['ui_httpsredirect'] or not ssl_configuration:
     % for ip in ip_list:
         listen       ${ip}:${general_settings['ui_port']};
     % endfor
 % endif
-
 % if general_settings['ui_allowlist']:
     % for ip in general_settings['ui_allowlist']:
         allow ${ip};
     % endfor
         deny all;
 % endif
-
 <%def name="security_headers(indent=8)">
-<% spaces = ' ' * indent %>\
+<% spaces = ' ' * indent %>
 ${spaces}# Security Headers
 ${spaces}add_header Strict-Transport-Security "max-age=${max_age}; includeSubDomains; preload" always;
 ${spaces}add_header X-Content-Type-Options "nosniff" always;
@@ -169,9 +166,8 @@ ${spaces}add_header Referrer-Policy "strict-origin" always;
 ${spaces}add_header X-Frame-Options "${x_frame_options}" always;
 % endif
 </%def>
-
 <%def name="security_headers_enhanced(indent=8)">
-<% spaces = ' ' * indent %>\
+<% spaces = ' ' * indent %>
 ${spaces}# NOTE: These are, generaly, good practice but they
 ${spaces}# are also here for DoDin requirements so do not remove.
 ${spaces}proxy_cookie_path / "/; Secure; HttpOnly; SameSite=Strict";
@@ -179,14 +175,11 @@ ${spaces}proxy_cookie_flags ~ secure httponly;
 ${spaces}# Disable gzip for responses with cookies (BREACH attack mitigation)
 ${spaces}gzip off;
 </%def>
-
         ${security_headers()}
-
         location / {
             allow all;
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
-
 % for device in display_devices:
         location ${display_device_path}/${device['id']} {
     % if ":" in device['attributes']['bind']:
@@ -202,7 +195,6 @@ ${spaces}gzip off;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
         }
-
 % endfor
         location /progress {
             # report uploads tracked in the 'proxied' zone
@@ -242,18 +234,15 @@ ${spaces}gzip off;
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
             add_header Expires 0;
             ${security_headers(indent=12)}
-
             root /usr/share/truenas/webui;
             try_files /index.html =404;
         }
 
         location = /ui/ {
             allow all;
-
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
             add_header Expires 0;
             ${security_headers(indent=12)}
-
             root /usr/share/truenas/webui;
             try_files /index.html =404;
         }
@@ -322,7 +311,6 @@ ${spaces}gzip off;
             # Allow all internal origins.
             add_header Access-Control-Allow-Origin $allow_origin always;
             add_header Access-Control-Allow-Headers "*" always;
-
 % endif
             proxy_pass http://127.0.0.1:6000;
             proxy_http_version 1.1;
