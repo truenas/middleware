@@ -3,7 +3,7 @@ import logging
 
 from middlewared.api import api_method
 from middlewared.api.current import NetworkConfigurationActivityChoicesArgs, NetworkConfigurationActivityChoicesResult
-from middlewared.service import CallError, private, Service
+from middlewared.service import NetworkActivityDisabled, private, Service
 
 logger = logging.getLogger(__name__)
 
@@ -55,4 +55,4 @@ class NetworkGeneralService(Service):
     @private
     async def will_perform_activity(self, name):
         if not await self.middleware.call('network.general.can_perform_activity', name):
-            raise CallError(f'Network activity "{self.activities[name]}" is disabled')
+            raise NetworkActivityDisabled(f'Network activity "{self.activities[name]}" is disabled')
