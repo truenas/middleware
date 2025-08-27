@@ -1,11 +1,18 @@
 from base64 import b64encode
 from hashlib import pbkdf2_hmac
 from secrets import choice, compare_digest, token_urlsafe, token_hex
+from ssl import RAND_bytes
 from string import ascii_letters, digits, punctuation
+from uuid import UUID
 
 from cryptit import cryptit
 
 from samba.crypto import md4_hash_blob
+
+
+# NOTE: these are lifted from cpython/Lib/uuid.py
+_RFC_4122_CLEARFLAGS_MASK = ~((0xf000 << 64) | (0xc000 << 48))
+_RFC_4122_VERSION_4_FLAGS = ((4 << 76) | (0x8000 << 48))
 
 
 def generate_string(string_size=8, punctuation_chars=False, extra_chars=None):
@@ -84,3 +91,13 @@ def generate_pbkdf2_512(passwd):
     salt = generate_string(string_size=salt_length, extra_chars='./').encode()
     thehash = pbkdf2_hmac('sha512', passwd.encode(), salt, rounds)
     return f'${prefix}${rounds}${b64encode(salt).decode()}${b64encode(thehash).decode()}'
+
+
+def ssl_uuid4():
+    """
+    Generate a random UUID using SSL RAND_bytes. Based on uuid4 from cpython with os.urandom replaced.
+    """
+    int_uuid_4 = int.from_bytes(RAND_bytes(16))
+    int_uuid_4 &= _RFC_4122_CLEARFLAGS_MASK
+    int_uuid_4 |= _RFC_4122_VERSION_4_FLAGS
+    return UUID(int=int_uuid_4)
