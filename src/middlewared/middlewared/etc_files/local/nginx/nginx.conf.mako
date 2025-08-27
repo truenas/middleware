@@ -98,11 +98,13 @@ http {
 % endif
 
     gzip  on;
+% if fips_enabled:
     # Disable gzip for responses with cookies (BREACH attack mitigation)
     # NOTE: will be controlled per-response based on Set-Cookie header
     gzip_vary on;
     gzip_proxied any;
     gzip_disable "msie6";
+% endif
 
     access_log /var/log/nginx/access.log combined buffer=32k flush=5s;
     error_log /var/log/nginx/error.log;
