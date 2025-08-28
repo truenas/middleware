@@ -7,6 +7,7 @@ from middlewared.api.current import (CloudCredentialEntry,
                                      CredentialsUpdateArgs, CredentialsUpdateResult,
                                      CredentialsDeleteArgs, CredentialsDeleteResult,
                                      CredentialsVerifyArgs, CredentialsVerifyResult,
+                                     CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult,
                                      CloudSyncEntry,
                                      CloudSyncCreateArgs, CloudSyncCreateResult,
                                      CloudSyncUpdateArgs, CloudSyncUpdateResult,
@@ -25,6 +26,7 @@ from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
+from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.schema import Cron
 from middlewared.service import (
@@ -636,6 +638,10 @@ class CredentialsService(CRUDService):
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
 
         verrors.check()
+
+    @api_method(CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult)
+    def s3_provider_choices(self):
+        return S3_PROVIDERS
 
 
 class CloudSyncModel(CloudTaskModelMixin, sa.Model):
