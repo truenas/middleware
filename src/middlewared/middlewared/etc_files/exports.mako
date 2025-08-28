@@ -146,7 +146,6 @@
 
         if 'IMMUTABLE' not in middleware.call_sync('filesystem.stat', '/etc/exports.d')['attributes']:
             middleware.logger.warning('/etc/exports.d: Found in mutable state, expected immutable.')
-            exportsd_is_mutable = True
 
         # The directory /etc/exports.d should be immutable.
         # If the directory contains files, then we need to delete those files
