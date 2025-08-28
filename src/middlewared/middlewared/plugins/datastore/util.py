@@ -38,31 +38,3 @@ class DatastoreService(Service, SchemaMixin):
                 await self.middleware.call('datastore.execute', query, *args)
         except Exception as e:
             raise CallError(e)
-
-    async def dump_json(self):
-        models = []
-        for table, in await self.middleware.call(
-                "datastore.fetchall",
-                "SELECT name FROM sqlite_master WHERE type = 'table'"
-        ):
-            try:
-                entries = await self.middleware.call("datastore.sql", f"SELECT * FROM {table}")
-            except CallError as e:
-                self.logger.debug("%r", e)
-                continue
-
-            models.append({
-                "table_name": table,
-                "verbose_name": table,
-                "fields": [
-                    {
-                        "name": row[1],
-                        "verbose_name": row[1],
-                        "database_type": row[2],
-                    }
-                    for row in await self.middleware.call("datastore.fetchall", "PRAGMA table_info('%s');" % table)
-                ],
-                "entries": entries,
-            })
-
-        return models
