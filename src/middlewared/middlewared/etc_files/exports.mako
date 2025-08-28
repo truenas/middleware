@@ -138,43 +138,61 @@
         return
 
     def disable_exportsd():
-        immutable_disabled = False
+
+        rv = True
 
         with suppress(FileExistsError):
             os.mkdir('/etc/exports.d', mode=0o755)
 
-        for file in os.listdir('/etc/exports.d'):
-            if not immutable_disabled:
-                middleware.call_sync('filesystem.set_zfs_attributes', {
-                    'path': '/etc/exports.d',
-                    'zfs_file_attributes': {'immutable': False}
-                })
-                immutable_disabled = True
+        if 'IMMUTABLE' not in middleware.call_sync('filesystem.stat', '/etc/exports.d')['attributes']:
+            middleware.logger.warning('/etc/exports.d: Found in mutable state, expected immutable.')
 
-            if file == 'zfs.exports':
+        # The directory /etc/exports.d should be immutable.
+        # If the directory contains files, then we need to delete those files
+        # and restore immutable state
+        files_in_exportsd = os.listdir('/etc/exports.d')
+        if len(files_in_exportsd) > 0:
+            middleware.logger.error('Files found in /etc/exports.d: %s', str(files_in_exportsd))
+
+            # Temporary remove immutable to allow file deletion
+            middleware.call_sync('filesystem.set_zfs_attributes', {
+                'path': '/etc/exports.d',
+                'zfs_file_attributes': {'immutable': False}
+            })
+
+        # Remove all files in /etc/exports.d
+        for file in files_in_exportsd:
+
+            if file.startswith('zfs.exports'):
                 middleware.logger.warning("Disabling sharenfs ZFS property on datasets")
                 disable_sharenfs()
             else:
-                middleware.logger.warning("%s: unexpected file found in exports.d", file)
+                middleware.logger.warning("%s: Unexpected file found in exports.d", file)
 
             try:
+                middleware.logger.warning("Removing unexpected file found in exports.d: %s", file)
                 os.remove(os.path.join('/etc/exports.d', file))
             except Exception:
-                middleware.logger.warning(
-                    "%s: failed to remove unexpected file in exports.d",
+                middleware.logger.error(
+                    "%s: Failed to remove unexpected file in exports.d",
                     file, exc_info=True
                 )
-                return False
 
-        if not immutable_disabled:
-            if 'IMMUTABLE' in middleware.call_sync('filesystem.stat', '/etc/exports.d')['attributes']:
-                return True
+                # Block NFS start if we fail to cleanup /etc/exports.d
+                rv = False
 
+
+        # _Always_ exit with /etc/exports.d in immutable state
         middleware.call_sync('filesystem.set_zfs_attributes', {
             'path': '/etc/exports.d',
             'zfs_file_attributes': {'immutable': True}
         })
-        return True
+
+        # Confirmation
+        if 'IMMUTABLE' not in middleware.call_sync('filesystem.stat', '/etc/exports.d')['attributes']:
+            rv = False
+
+        return rv
 
     entries = []
     gaierrors = []
