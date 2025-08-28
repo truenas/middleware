@@ -1,90 +1,60 @@
-from middlewared.schema import (
-    Bool,
-    Dict,
-    Int,
-    IPAddr,
-    List,
-    Str,
-    UUID,
-)
-from .common import (
-    AuditEnum,
-    AuditEventParam,
-    AuditSchema,
-    AUDIT_VERS,
-    audit_schema_from_base,
-    convert_schema_to_set,
-)
+from typing import Literal
+
+from middlewared.api.base import BaseModel
+from middlewared.api.base.jsonschema import add_attrs, replace_refs
+from .common import AuditEvent, AuditEventVersion, convert_schema_to_set
 
 
-class AuditMiddlewareEventType(AuditEnum):
-    AUTHENTICATION = 'AUTHENTICATION'
-    METHOD_CALL = 'METHOD_CALL'
+class AuditEventMiddlewareAuthenticationEventDataCredentials(BaseModel):
+    type: str
+    data: dict
 
 
-AUDIT_EVENT_DATA_MIDDLEWARE_AUTHENTICATION = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Dict('credentials',
-         Str('type'),
-         Dict('data', additional_attrs=True),
-         null=True),
-    Str('error', null=True),
-    AUDIT_VERS,
-)
+class AuditEventMiddlewareAuthenticationEventData(BaseModel):
+    credentials: AuditEventMiddlewareAuthenticationEventDataCredentials | None
+    error: str | None
+    vers: AuditEventVersion
 
 
-AUDIT_EVENT_DATA_MIDDLEWARE_METHOD_CALL = Dict(
-    str(AuditEventParam.EVENT_DATA),
-    Str('method'),
-    List('params'),
-    Str('description', null=True),
-    Bool('authenticated'),
-    Bool('authorized'),
-    AUDIT_VERS,
-)
+class AuditEventMiddlewareMethodCallEventData(BaseModel):
+    method: str
+    params: list
+    description: str | None
+    authenticated: bool
+    authorized: bool
+    vers: AuditEventVersion
 
 
-AUDIT_EVENT_MIDDLEWARE_SCHEMAS = []
+class AuditEventMiddlewareServiceData(BaseModel):
+    vers: AuditEventVersion
+    origin: str | None
+    protocol: Literal['REST', 'WEBSOCKET']
+    credentials: dict | None
 
 
-AUDIT_EVENT_MIDDLEWARE_BASE_SCHEMA = AuditSchema(
-    'audit_entry_middleware',
-    UUID(AuditEventParam.AUDIT_ID.value),
-    Int(AuditEventParam.MESSAGE_TIMESTAMP.value),
-    Dict(AuditEventParam.TIMESTAMP.value),
-    IPAddr(AuditEventParam.ADDRESS.value),
-    Str(AuditEventParam.USERNAME.value),
-    UUID(AuditEventParam.SESSION.value),
-    Str(AuditEventParam.SERVICE.value, enum=['MIDDLEWARE']),
-    Dict(
-        AuditEventParam.SERVICE_DATA.value,
-        AUDIT_VERS,
-        Str('origin', null=True),
-        Str('protocol', enum=['REST', 'WEBSOCKET']),
-        Dict('credentials', null=True, additional_attrs=True),
-    ),
-    Bool('success'),
-)
+class AuditEventMiddleware(AuditEvent):
+    event: Literal['AUTHENTICATION', 'METHOD_CALL']
+    event_data: AuditEventMiddlewareAuthenticationEventData | AuditEventMiddlewareMethodCallEventData
+    service: Literal['MIDDLEWARE']
+    service_data: AuditEventMiddlewareServiceData
 
 
-AUDIT_EVENT_MIDDLEWARE_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_MIDDLEWARE_BASE_SCHEMA,
-    'audit_entry_middleware_authentication',
-    Str(AuditEventParam.EVENT.value, enum=[AuditMiddlewareEventType.AUTHENTICATION.name]),
-    AUDIT_EVENT_DATA_MIDDLEWARE_AUTHENTICATION,
-))
+class AuditEventMiddlewareAuthentication(AuditEventMiddleware):
+    event: Literal['AUTHENTICATION']
+    event_data: AuditEventMiddlewareAuthenticationEventData
 
 
-AUDIT_EVENT_MIDDLEWARE_SCHEMAS.append(audit_schema_from_base(
-    AUDIT_EVENT_MIDDLEWARE_BASE_SCHEMA,
-    'audit_entry_middleware_method_call',
-    Str(AuditEventParam.EVENT.value, enum=[AuditMiddlewareEventType.METHOD_CALL.name]),
-    AUDIT_EVENT_DATA_MIDDLEWARE_METHOD_CALL,
-))
+class AuditEventMiddlewareMethodCall(AuditEventMiddleware):
+    event: Literal['METHOD_CALL']
+    event_data: AuditEventMiddlewareMethodCallEventData
 
 
 AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS = [
-    schema.to_json_schema() for schema in AUDIT_EVENT_MIDDLEWARE_SCHEMAS
+    add_attrs(replace_refs(event_model.model_json_schema()))
+    for event_model in (
+        AuditEventMiddlewareAuthentication,
+        AuditEventMiddlewareMethodCall,
+    )
 ]
 
 

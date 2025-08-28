@@ -317,7 +317,7 @@ def validate_event_data(event_data, schema):
 def validate_audit_op(msg, svc):
     schema = call(
         'audit.json_schemas',
-        [['_name_', '=', f'audit_entry_smb_{msg["event"].lower()}']],
+        [['properties.event.const', '=', msg['event']]],
         {
             'select': [
                 ['_attrs_order_', 'attrs'],
@@ -333,19 +333,21 @@ def validate_audit_op(msg, svc):
         assert key in msg, str(msg)
 
     validate_svc_data(msg, svc)
+    audit_id = msg['audit_id']
     try:
-        aid_guid = uuid.UUID(msg['audit_id'])
+        aid_guid = uuid.UUID(audit_id)
     except ValueError:
-        raise AssertionError(f'{msg["audit_id"]}: malformed UUID')
+        raise AssertionError(f'{audit_id}: malformed UUID')
 
-    assert str(aid_guid) == msg['audit_id']
+    assert str(aid_guid) == audit_id
 
+    session = msg['session']
     try:
-        sess_guid = uuid.UUID(msg['session'])
+        sess_guid = uuid.UUID(session)
     except ValueError:
-        raise AssertionError(f'{msg["session"]}: malformed UUID')
+        raise AssertionError(f'{session}: malformed UUID')
 
-    assert str(sess_guid) == msg['session']
+    assert str(sess_guid) == session
 
     validate_event_data(msg['event_data'], schema['event_data'])
 

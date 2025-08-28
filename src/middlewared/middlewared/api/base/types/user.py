@@ -6,7 +6,7 @@ from pydantic.functional_validators import AfterValidator
 
 from middlewared.utils.sid import sid_is_valid
 
-__all__ = ["LocalUsername", "RemoteUsername", "GroupName", "LocalUID", "LocalGID", "SID", "ContainerXID"]
+__all__ = ["LocalUsername", "RemoteUsername", "GroupName", "LocalUID", "LocalGID", "SID", "ContainerXID", "UUID"]
 
 XID_MAX = 2 ** 32 - 2  # uid_t -1 can have special meaning depending on context
 # TRUENAS_IDMAP_MAX + 1
@@ -82,3 +82,7 @@ LocalGID = Annotated[int, Field(ge=0, le=TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 ContainerXID = Annotated[int, Field(ge=1, le=XID_MAX)]
 
 SID = Annotated[str, AfterValidator(validate_sid)]
+
+UUID = str | int  # FIXME: better validation
+"""In theory, this should be a type to represent the values able to be passed to `uuid.UUID()`. Unfortunately, some
+values we store would fail this validation."""

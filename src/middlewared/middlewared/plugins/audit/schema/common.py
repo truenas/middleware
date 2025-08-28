@@ -1,154 +1,49 @@
-import enum
+from typing import Iterable
 
-from copy import deepcopy
-from middlewared.schema import (
-    Dict,
-    Int,
-    List,
-    Str,
-)
+from middlewared.api.base import BaseModel, IPvAnyAddress, UUID
 
 
-class AuditEnum(enum.Enum):
-    def __str__(self):
-        return str(self.value)
+class AuditEventVersion(BaseModel):
+    major: int
+    minor: int
 
 
-class AuditSchema(Dict):
-    def extend(self, *attrs, **kwargs):
-        for i in attrs:
-            self.attrs[i.name] = i
-
-        for k, v in self.conditional_defaults.items():
-            if k not in self.attrs:
-                raise ValueError(f'Specified attribute {k!r} not found.')
-            for k_v in ('filters', 'attrs'):
-                if k_v not in v:
-                    raise ValueError(f'Conditional defaults must have {k_v} specified.')
-            for attr in v['attrs']:
-                if attr not in self.attrs:
-                    raise ValueError(f'Specified attribute {attr} not found.')
-
-        if self.strict:
-            for attr in self.attrs.values():
-                if attr.required:
-                    if attr.has_default:
-                        raise ValueError(
-                            f'Attribute {attr.name} is required and has default value at the same time, '
-                            'this is forbidden in strict mode'
-                        )
-                else:
-                    if not attr.has_default:
-                        raise ValueError(
-                            f'Attribute {attr.name} is not required and does not have default value, '
-                            'this is forbidden in strict mode'
-                        )
+class AuditEvent(BaseModel):
+    """Mirrors `middlewared.api.current.AuditQueryResultItem`."""
+    event: str
+    event_data: BaseModel
+    audit_id: UUID
+    message_timestamp: int
+    timestamp: dict
+    address: IPvAnyAddress
+    username: str
+    session: UUID
+    service: str
+    success: bool
 
 
-class AuditEventParam(AuditEnum):
-    AUDIT_ID = 'audit_id'
-    TIMESTAMP = 'timestamp'
-    MESSAGE_TIMESTAMP = 'message_timestamp'
-    ADDRESS = 'address'
-    USERNAME = 'username'
-    SESSION = 'session'
-    SERVICE = 'service'
-    SERVICE_DATA = 'service_data'
-    EVENT = 'event'
-    EVENT_DATA = 'event_data'
-    SUCCESS = 'success'
+def convert_schema_to_set(schema_list: Iterable[dict]) -> set[str]:
+    """Generate a set of all dot-notated field names contained in the JSON schema."""
 
+    def add_to_set(val: dict, current_name: str, skip_title: bool = False):
+        if not skip_title:
+            if current_name:
+                current_name += '.'
 
-class AuditFileHandleType(AuditEnum):
-    DEV_INO = 'DEV_INO'
-    UUID = 'UUID'
+            current_name += val['title']
+            schema_set.add(current_name)
 
-
-class AuditResultType(AuditEnum):
-    UNIX = 'UNIX'
-    NTSTATUS = 'NTSTATUS'
-
-
-class AuditFileType(AuditEnum):
-    BLOCK = 'BLOCK'
-    CHARACTER = 'CHARACTER'
-    FIFO = 'FIFO'
-    REGULAR = 'REGULAR'
-    DIRECTORY = 'DIRECTORY'
-    SYMLINK = 'SYMLINK'
-
-
-AUDIT_VERS = Dict(
-    'vers',
-    Int('major', required=True),
-    Int('minor', required=True)
-)
-
-
-AUDIT_RESULT_NTSTATUS = Dict(
-    'result',
-    Str('type', enum=[AuditResultType.NTSTATUS.name]),
-    Int('value_raw'),
-    Str('value_parsed')
-)
-
-
-AUDIT_RESULT_UNIX = Dict(
-    'result',
-    Str('type', enum=[AuditResultType.UNIX.name]),
-    Int('value_raw'),
-    Str('value_parsed')
-)
-
-
-AUDIT_FILE_HANDLE = Dict(
-    'handle',
-    Str('type', enum=[x.name for x in AuditFileHandleType]),
-    Str('value')
-)
-
-
-AUDIT_FILE = Dict(
-    'file',
-    Str('type', enum=[x.name for x in AuditFileType]),
-    Str('name'),
-    Str('stream'),
-    Str('path'),
-    Str('snap')
-)
-
-
-AUDIT_UNIX_TOKEN = Dict(
-    'unix_token',
-    Int('uid'),
-    Int('gid'),
-    List('groups', items=[Int('group_id')]),
-)
-
-
-def audit_schema_from_base(schema, new_name, *args):
-    new_schema = deepcopy(schema)
-    new_schema.extend(*args)
-    new_schema.name = new_name
-    return new_schema
-
-
-
-def convert_schema_to_set(schema_list):
-    def add_to_set(key, val, current_name):
-        if current_name:
-            current_name += '.'
-
-        current_name += val['title']
-        schema_set.add(current_name)
-
-        if val['type'] == 'object':
-            for subkey, subval in val['properties'].items():
-                add_to_set(subkey, subval, current_name)
+        if any_of := val.get('anyOf'):
+            for subval in any_of:
+                # The titles of objects contained in "anyOf" are model names. Don't use those.
+                add_to_set(subval, current_name, skip_title=True)
+        elif val['type'] == 'object':
+            for subval in val.get('properties', {}).values():  # Fields with type `dict` do not have properties.
+                add_to_set(subval, current_name)
 
     schema_set = set()
     for entry in schema_list:
-        for key, val in entry['properties'].items():
-            add_to_set(key, val, '')
+        for val in entry['properties'].values():
+            add_to_set(val, '')
 
     return schema_set
