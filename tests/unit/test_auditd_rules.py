@@ -55,9 +55,9 @@ def test__auditd_enable_gpos_stig(auditd_gpos_stig_enable):
     assert stig_rule_set != 'No rules'
 
     for audit_rule in STIG_ASSERT_IN:
-        assert audit_rule in stig_rule_set, f"stig_rule_set:\n{stig_rule_set}"
+        assert audit_rule in stig_rule_set, f"rule [{audit_rule}] not in stig_rule_set:\n{stig_rule_set}"
     for audit_rule in STIG_ASSERT_NOT_IN:
-        assert audit_rule not in stig_rule_set, f"stig_rule_set:\n{stig_rule_set}"
+        assert audit_rule not in stig_rule_set, f"rule [{audit_rule}] not in stig_rule_set:\n{stig_rule_set}"
 
 
 def test__auditd_disable_gpos_stig(auditd_gpos_stig_disable):
@@ -68,6 +68,6 @@ def test__auditd_disable_gpos_stig(auditd_gpos_stig_disable):
     assert non_stig_rule_set != 'No rules'
 
     for audit_rule in NON_STIG_ASSERT_IN:
-        assert audit_rule in non_stig_rule_set, f"non_stig_rule_set:\n{non_stig_rule_set}"
+        assert audit_rule in non_stig_rule_set, f"rule [{audit_rule}] not in non_stig_rule_set:\n{non_stig_rule_set}"
     for audit_rule in NON_STIG_ASSERT_NOT_IN:
-        assert audit_rule not in non_stig_rule_set, f"non_stig_rule_set:\n{non_stig_rule_set}"
+        assert audit_rule not in non_stig_rule_set, f"rule [{audit_rule}] not in non_stig_rule_set:\n{non_stig_rule_set}"
