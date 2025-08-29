@@ -1,8 +1,8 @@
 import contextlib
 import re
-from typing import Annotated, Callable, Literal, TypeAlias, Union
+from typing import Annotated, Any, Callable, Literal, TypeAlias, Union
 
-from pydantic import AfterValidator, create_model, Field
+from pydantic import AfterValidator, create_model, Field, ValidationError
 from pydantic.fields import FieldInfo
 
 from middlewared.api.base import LongString, match_validator, NotRequired
@@ -26,6 +26,72 @@ RESERVED_NAMES = [
 ]
 NOT_PROVIDED = NotProvided()
 USER_VALUES: TypeAlias = dict | NotProvided
+
+
+def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -> Callable[[Any], list[Any]]:
+    """
+    Build an index-specific validator for a list field.
+    Validates each list element with the model at the same index.
+    Raises if there are more items than models.
+    """
+    def _validate(value: Any) -> list[Any]:
+        if not isinstance(value, list):
+            raise TypeError(f'{model_name}: expected a list')
+
+        if len(value) > len(item_models):
+            raise ValueError(
+                f'{model_name}: got {len(value)} items but only {len(item_models)} item models were generated'
+            )
+
+        out = []
+        for idx, item in enumerate(value):
+            Model = item_models[idx]
+            try:
+                # Use Model() to create an instance instead of validate_model which returns dict
+                validated = Model(**item)
+                out.append(validated)
+            except ValidationError as e:
+                # Re-raise Pydantic ValidationError with adjusted locations
+                # Pydantic will handle adding the parent field name
+                errors = []
+                for err in e.errors():
+                    err_copy = err.copy()
+                    # Prepend the index to the location tuple
+                    loc = (idx,) + err_copy.get('loc', ())
+                    err_copy['loc'] = loc
+                    errors.append(err_copy)
+                raise ValidationError.from_exception_data(e.title, errors)
+            except ValidationErrors as e:
+                # Convert our ValidationErrors to Pydantic ValidationError
+                errors = []
+                for error in e.errors:
+                    # Create Pydantic-compatible error dict
+                    loc = tuple(error.attribute.split('.')) if error.attribute else ()
+                    loc = (idx,) + loc
+                    errors.append({
+                        'loc': loc,
+                        'msg': error.errmsg,
+                        'type': 'value_error',
+                    })
+                raise ValidationError.from_exception_data('ValidationError', errors)
+            except Exception as e:
+                # For other exceptions, create a Pydantic ValidationError
+                if hasattr(e, 'errors'):
+                    errors = []
+                    for err in e.errors():
+                        err_copy = err.copy()
+                        loc = (idx,) + err_copy.get('loc', ())
+                        err_copy['loc'] = loc
+                        errors.append(err_copy)
+                    raise ValidationError.from_exception_data('ValidationError', errors)
+                else:
+                    # Generic error at this index
+                    raise ValidationError.from_exception_data(
+                        'ValidationError',
+                        [{'loc': (idx,), 'msg': str(e), 'type': 'value_error'}]
+                    )
+        return out
+    return _validate
 
 
 # Functionality we are concerned about which we would like to port over
@@ -61,6 +127,57 @@ def remove_not_required(data):
     return data
 
 
+def clean_list_item_error_paths(verrors: ValidationErrors) -> ValidationErrors:
+    """
+    Clean up validation error paths by removing intermediate list item model names.
+    Only affects paths with list indices followed by model names containing '_ix_list_item_'.
+
+    Examples:
+    - "servers.0.app_create_servers_ix_list_item_0.name" -> "servers.0.name"
+    - "nested.0.items.1.app_create_ix_list_item_2.value" -> "nested.0.items.1.value"
+    - "database.config.host" -> "database.config.host" (unchanged - no list index)
+    """
+    cleaned_errors = ValidationErrors()
+    seen_errors = set()  # Track (path, message) to avoid duplicates
+
+    for error in verrors.errors:
+        # Clean the error path
+        cleaned_path = clean_single_error_path(error.attribute)
+
+        # Create a key for deduplication
+        error_key = (cleaned_path, error.errmsg, error.errno)
+
+        # Only add if we haven't seen this exact error before
+        if error_key not in seen_errors:
+            seen_errors.add(error_key)
+            cleaned_errors.add(cleaned_path, error.errmsg, error.errno)
+
+    return cleaned_errors
+
+
+def clean_single_error_path(path: str) -> str:
+    """
+    Remove list item model names from a single error path.
+
+    Only removes segments that:
+    1. Follow a numeric index (indicating a list position)
+    2. Contain the '_ix_list_item_' marker
+
+    Examples:
+    - "servers.0.app_create_servers_ix_list_item_0.name" -> "servers.0.name"
+    - "data.0.items.1.app_create_ix_list_item_2.value" -> "data.0.items.1.value"
+    """
+    # Pattern matches: .digit.anything_ix_list_item_anything
+    # Captures only the .digit part and removes the model name
+    # This handles all occurrences including nested lists in a single pass
+    pattern = r'(\.\d+)\.[^.]*_ix_list_item_[^.]*'
+
+    # Replace all occurrences at once - no loop needed
+    cleaned_path = re.sub(pattern, r'\1', path)
+
+    return cleaned_path
+
+
 def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: USER_VALUES = NOT_PROVIDED,
 ) -> dict:
@@ -74,8 +191,10 @@ def construct_schema(
         # Remove any fields that have NotRequired as their value
         new_values = remove_not_required(new_values)
     except ValidationErrors as e:
+        # Clean up list item model names from error paths
+        cleaned_errors = clean_list_item_error_paths(e)
         # Don't add 'values' prefix - just extend the errors directly
-        verrors.extend(e)
+        verrors.extend(cleaned_errors)
 
     return {
         'verrors': verrors,
@@ -217,38 +336,58 @@ def process_schema_field(
         case 'list':
             annotated_items = []
             if list_items := schema_def.get('items', []):
-                # Check if any item has immutable fields
-                has_immutable_fields = False
-                for item in list_items:
-                    if item['schema']['type'] == 'dict' and 'attrs' in item['schema']:
-                        for attr in item['schema']['attrs']:
-                            if attr['schema'].get('immutable'):
-                                has_immutable_fields = True
-                                break
-                    if has_immutable_fields:
-                        break
+                # Get the single item schema (we assume only 1 or 0 items)
+                item_schema = list_items[0]['schema']
 
-                # If we have immutable fields and old values, create a custom validator
-                if has_immutable_fields and old_values is not NOT_PROVIDED and isinstance(old_values, list):
-                    # Process items normally but without old values for type generation
-                    for item in list_items:
-                        item_type, item_info, _ = process_schema_field(
-                            item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                # Get actual list values for model generation
+                actual_list_values = []
+                if isinstance(new_values, list):
+                    actual_list_values = new_values
+                elif 'default' in schema_def and isinstance(schema_def['default'], list):
+                    actual_list_values = schema_def['default']
+
+                # Generate models based on actual values if we have them and it's a dict type
+                if actual_list_values and item_schema['type'] == 'dict' and 'attrs' in item_schema:
+                    item_models = []
+
+                    # Generate one model per list item
+                    # This avoids discriminator conflicts when items have the same discriminator value
+                    # but different nested configurations (e.g., different acl_enable values)
+                    for idx, item_value in enumerate(actual_list_values):
+                        # Generate model with actual values for proper show_if evaluation
+                        # This ensures nested show_if conditions work correctly
+                        item_model = generate_pydantic_model(
+                            item_schema['attrs'],
+                            f"{model_name}_ix_list_item_{idx}",
+                            item_value if isinstance(item_value, dict) else {},
+                            NOT_PROVIDED,  # No old values for list items
+                            parent_hidden=field_hidden
                         )
-                        annotated_items.append(Annotated[item_type, item_info])
-                    # Apply the validator to the list type
-                    field_type = Annotated[
-                        list[Union[*annotated_items]],
-                        AfterValidator(create_list_immutable_validator(list_items, old_values))
-                    ]
+                        item_models.append(item_model)
+
+                    # Use validator approach instead of Union
+                    if item_models:
+                        # Use validator approach to avoid Union validation bugs
+                        validator = _make_index_validator(item_models, model_name)
+                        field_type = Annotated[list[Any], AfterValidator(validator)]
+                    else:
+                        # No models generated, fall back to regular processing
+                        for item in list_items:
+                            item_type, item_info, _ = process_schema_field(
+                                item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                                field_hidden=field_hidden
+                            )
+                            annotated_items.append(Annotated[item_type, item_info])
+                        field_type = list[Union[*annotated_items]] if annotated_items else list
                 else:
-                    # Normal processing without immutability checks
+                    # No actual values or non-dict items - fallback to existing behavior
+                    # Process items without old values (immutability not supported in lists)
                     for item in list_items:
                         item_type, item_info, _ = process_schema_field(
                             item['schema'], f'{model_name}_{item["variable"]}', NOT_PROVIDED, NOT_PROVIDED,
+                            field_hidden=field_hidden
                         )
                         annotated_items.append(Annotated[item_type, item_info])
-
                     field_type = list[Union[*annotated_items]]
             else:
                 # We have a generic list type without specific items
@@ -266,7 +405,7 @@ def process_schema_field(
     ) and old_values is not NOT_PROVIDED:
         # If we have a value for this field in old_values, we should not allow it to be changed
         field_type = Literal[old_values]
-    elif schema_def.get('enum') and schema_type == 'string':
+    elif schema_def.get('enum') and schema_type in ('boolean', 'string'):
         enum_values = [v['value'] for v in schema_def['enum']]
         if enum_values:  # Only create Literal if there are actual enum values
             field_type = Literal[*enum_values]
@@ -330,37 +469,3 @@ def create_field_info_from_schema(schema_def: dict, field_hidden: bool = False) 
             field_kwargs['le'] = schema_def['max']
 
     return Field(**field_kwargs)
-
-
-def create_list_immutable_validator(item_schemas: list, old_list: list) -> Callable:
-    # Create a validator that will check immutability at runtime
-    def validate_immutable_list(v):
-        if not isinstance(v, list):
-            return v
-
-        # Validate each item against its old value
-        for i, item in enumerate(v):
-            if i < len(old_list) and isinstance(old_list[i], dict):
-                old_item = old_list[i]
-                # Check each field in the item
-                for item_schema in item_schemas:
-                    if item_schema['schema']['type'] == 'dict' and 'attrs' in item_schema['schema']:
-                        for attr in item_schema['schema']['attrs']:
-                            field_name = attr['variable']
-                            if attr['schema'].get('immutable') and field_name in old_item:
-                                # The item might be a Pydantic model, not a dict
-                                if hasattr(item, field_name):
-                                    new_value = getattr(item, field_name)
-                                elif isinstance(item, dict):
-                                    new_value = item.get(field_name)
-                                else:
-                                    continue
-
-                                if new_value != old_item[field_name]:
-                                    raise ValueError(
-                                        f"Cannot change immutable field '{field_name}' "
-                                        f"from '{old_item[field_name]}' to '{new_value}'"
-                                    )
-        return v
-
-    return validate_immutable_list
