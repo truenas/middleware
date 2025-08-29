@@ -71,10 +71,6 @@ class SystemAdvancedService(ConfigService):
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
 
-        for server in data.get('syslogservers', []):
-            if server['tls_certificate'] is not None:
-                server['tls_certificate'] = server['tls_certificate']['id']
-
         data.pop('sed_passwd')
         data.pop('kmip_uid')
 
