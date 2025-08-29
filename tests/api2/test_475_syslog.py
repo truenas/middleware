@@ -69,17 +69,12 @@ def check_syslog_state(expected_state='active'):
 
 @pytest.fixture(scope="class")
 def tls_cert():
-    ''' Placeholder for adding remote certs and
-        Restore syslog to default after testing '''
+    """Placeholder for adding remote certs and Restore syslog to default after testing"""
     truenas_default_id = 1
     try:
         yield truenas_default_id
     finally:
-        call('system.advanced.update', {
-            "syslogserver": "",
-            "syslog_transport": "UDP",
-            "syslog_tls_certificate": None,
-        })
+        call('system.advanced.update', {"syslogservers": []})
         check_syslog_state()
 
 # -----------------------------------
@@ -135,11 +130,11 @@ def test_set_remote_syslog(request):
     doesn't break syslog-ng config
     """
     try:
-        data = call('system.advanced.update', {'syslogserver': '127.0.0.1'})
-        assert data['syslogserver'] == '127.0.0.1'
+        data = call('system.advanced.update', {'syslogservers': [{'host': '127.0.0.1'}]})
+        assert data['syslogservers'][0]['host'] == '127.0.0.1'
         call('service.control', 'RESTART', 'syslogd', {'silent': False}, job=True)
     finally:
-        call('system.advanced.update', {'syslogserver': ''})
+        call('system.advanced.update', {'syslogservers': []})
         check_syslog_state()
 
 
@@ -157,9 +152,9 @@ def test_remote_syslog_function():
     try:
         # Configure for remote syslog on the active node FIRST
         # because it also updates the standby node with the same
-        payload = {"syslogserver": remote_ip, "syslog_transport": "TCP"}
+        payload = {"syslogservers": [{"host": remote_ip, "transport": "TCP"}]}
         data = call('system.advanced.update', payload)
-        assert data['syslogserver'] == remote_ip
+        assert data['syslogservers'] == [{"host": remote_ip, "transport": "TCP", "tls_certificate": None}]
         call('service.control', 'RESTART', 'syslogd', {'silent': False}, job=True)
 
         # Make sure we don't have old test cruft and start with a zero byte file
@@ -193,7 +188,7 @@ def test_remote_syslog_function():
 
     finally:
         # Restore active node
-        call('system.advanced.update', {"syslogserver": "", "syslog_transport": "UDP"})
+        call('system.advanced.update', {"syslogservers": []})
         check_syslog_state()
 
 
@@ -216,17 +211,17 @@ class TestTLS:
         test_tls = [
             f'{remote}', f'port({port})', 'transport("tls")', 'ca-file("/etc/ssl/certs/ca-certificates.crt")'
         ]
-        tls_cmd = {"syslogserver": f"{remote}:{port}", "syslog_transport": f"{transport}"}
+        tls_payload = {"host": f"{remote}:{port}", "transport": transport}
 
         if testing == "Mutual TLS":
             test_tls += [
                 "key-file(\"/etc/certificates/truenas_default.key\")",
                 "cert-file(\"/etc/certificates/truenas_default.crt\")"
             ]
-            tls_cmd.update({"syslog_tls_certificate": tls_cert})
+            tls_payload["tls_certificate"] = tls_cert
 
-        data = call('system.advanced.update', tls_cmd)
-        assert data['syslog_transport'] == 'TLS'
+        data = call('system.advanced.update', {"syslogservers": [tls_payload]})
+        assert data['syslogservers'][0]['transport'] == 'TLS'
 
         conf = ssh(
             'grep -A10 "destination loghost" /etc/syslog-ng/syslog-ng.conf',
