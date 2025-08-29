@@ -8,7 +8,7 @@ logger = middleware.logger
 syslog_template = 'template("${MESSAGE}\\n")'
 
 
-def generate_syslog_remote_destination(server):
+def generate_syslog_remote_destination(server, d_name):
     address = server["host"]
     if "]:" in address or (":" in address and not "]" in address): 
         host, port = address.rsplit(":", 1)
@@ -19,7 +19,7 @@ def generate_syslog_remote_destination(server):
     transport = server["transport"].lower()
     cert_id = server["tls_certificate"]
 
-    remotelog_stanza = 'destination loghost {\n'
+    remotelog_stanza = f'destination {d_name} {{\n'
     remotelog_stanza += '  syslog(\n'
     remotelog_stanza += f'    "{host}"\n'
     remotelog_stanza += f'    port({port})\n'
@@ -43,9 +43,9 @@ def generate_syslog_remote_destination(server):
         remotelog_stanza += '    )\n'
 
     remotelog_stanza += '  );\n};\n'    
-    remotelog_stanza += 'log { source(s_tn_middleware); filter(f_tnremote); destination(loghost); };\n'
-    remotelog_stanza += 'log { source(s_tn_auditd); filter(f_tnremote); destination(loghost); };\n'
-    remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };'
+    remotelog_stanza += f'log {{ source(s_tn_middleware); filter(f_tnremote); destination({d_name}); }};\n'
+    remotelog_stanza += f'log {{ source(s_tn_auditd); filter(f_tnremote); destination({d_name}); }};\n'
+    remotelog_stanza += f'log {{ source(s_src); filter(f_tnremote); destination({d_name}); }};'
 
     return remotelog_stanza
 %>\
@@ -92,13 +92,13 @@ source s_tn_auditd {
 @include "/etc/syslog-ng/conf.d/tndestinations.conf"
 
 ## Remote syslog stanza needs to here _before_ the audit-related configuration
-% for server in render_ctx['system.advanced.config']['syslogservers']:
+% for i, server in enumerate(render_ctx['system.advanced.config']['syslogservers']):
 ##################
 # remote logging
 ##################
-${generate_syslog_remote_destination(server)}
-% endfor
+${generate_syslog_remote_destination(server, 'loghost' + str(i))}
 
+% endfor
 ##################
 # audit-related configuration
 ##################
