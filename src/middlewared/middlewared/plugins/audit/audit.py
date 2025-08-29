@@ -95,7 +95,7 @@ class AuditService(ConfigService):
     @private
     def extend(self, data):
         sys_adv = self.middleware.call_sync('system.advanced.config')
-        data['remote_logging_enabled'] = bool(sys_adv['syslogserver']) and sys_adv['syslog_audit']
+        data['remote_logging_enabled'] = bool(sys_adv['syslogservers']) and sys_adv['syslog_audit']
         ds_info = self.get_audit_dataset()
         data['space'] = {'used': None, 'used_by_snapshots': None, 'available': None}
         data['space']['used'] = ds_info['properties']['used']['parsed']

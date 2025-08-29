@@ -8,16 +8,16 @@ logger = middleware.logger
 syslog_template = 'template("${MESSAGE}\\n")'
 
 
-def generate_syslog_remote_destination(advanced_config):
-    syslog_server = advanced_config["syslogserver"]
-    if "]:" in syslog_server or (":" in syslog_server and not "]" in syslog_server): 
-        host, port = syslog_server.rsplit(":", 1)
+def generate_syslog_remote_destination(server):
+    address = server["host"]
+    if "]:" in address or (":" in address and not "]" in address): 
+        host, port = address.rsplit(":", 1)
     else:
-        host, port = syslog_server, "514"
+        host, port = address, "514"
 
     host = host.replace("[", "").replace("]", "")
-    transport = advanced_config["syslog_transport"].lower()
-    cert_id = advanced_config["syslog_tls_certificate"]
+    transport = server["transport"].lower()
+    cert_id = server["tls_certificate"]
 
     remotelog_stanza = 'destination loghost {\n'
     remotelog_stanza += '  syslog(\n'
@@ -26,7 +26,7 @@ def generate_syslog_remote_destination(advanced_config):
     remotelog_stanza += '    ip-protocol(6)\n'
     remotelog_stanza += f'    transport("{transport}")\n'
 
-    if advanced_config["syslog_transport"] == "TLS":
+    if transport == "tls":
         # Both mutual and one-way TLS require this
         remotelog_stanza += '    tls(\n'
         remotelog_stanza += '      ca-file("/etc/ssl/certs/ca-certificates.crt")\n'
@@ -92,12 +92,12 @@ source s_tn_auditd {
 @include "/etc/syslog-ng/conf.d/tndestinations.conf"
 
 ## Remote syslog stanza needs to here _before_ the audit-related configuration
-% if render_ctx['system.advanced.config']['syslogserver']:
+% for server in render_ctx['system.advanced.config']['syslogservers']:
 ##################
 # remote logging
 ##################
-${generate_syslog_remote_destination(render_ctx['system.advanced.config'])}
-% endif
+${generate_syslog_remote_destination(server)}
+% endfor
 
 ##################
 # audit-related configuration
