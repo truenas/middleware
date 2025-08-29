@@ -170,6 +170,10 @@ class S3CredentialsModel(BaseModel):
     """Whether to use AWS Signature Version 2."""
     max_upload_parts: Secret[int] = 10000
     """Maximum number of parts for multipart uploads."""
+    provider: str = "Other"
+    """S3 provider. See `cloudsync.credentials.s3_provider_choices` for possible values."""
+    force_path_style: bool = True
+    """If true use path style access if false use virtual hosted style."""
 
 
 class SFTPCredentialsModel(BaseModel):
