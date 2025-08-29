@@ -45,9 +45,7 @@ class SystemAdvancedModel(sa.Model):
     adv_sed_user = sa.Column(sa.String(120), default='user')
     adv_sed_passwd = sa.Column(sa.EncryptedText(), default='')
     adv_sysloglevel = sa.Column(sa.String(120), default='f_info')
-    adv_syslogserver = sa.Column(sa.String(120), default='')
-    adv_syslog_transport = sa.Column(sa.String(12), default='UDP')
-    adv_syslog_tls_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    adv_syslogservers = sa.Column(sa.JSON(list), default=[])
     adv_syslog_audit = sa.Column(sa.Boolean(), default=False)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
@@ -72,9 +70,6 @@ class SystemAdvancedService(ConfigService):
 
         if data.get('sed_user'):
             data['sed_user'] = data.get('sed_user').upper()
-
-        if data['syslog_tls_certificate'] is not None:
-            data['syslog_tls_certificate'] = data['syslog_tls_certificate']['id']
 
         data.pop('sed_passwd')
         data.pop('kmip_uid')
@@ -102,31 +97,31 @@ class SystemAdvancedService(ConfigService):
                     'Serial port must be different than the port specified for UPS Service'
                 )
 
-    @settings.fields_validator('syslogserver')
-    async def _validate_syslogserver(self, verrors, syslogserver):
-        if syslogserver:
-            match = re.match(r"^\[?[\w.\-:%]+]?(:\d+)?$", syslogserver)
-            if not match:
-                verrors.add(
-                    'syslogserver',
-                    'Invalid syslog server format'
-                )
-            elif ']:' in syslogserver or (':' in syslogserver and ']' not in syslogserver):
-                port = int(syslogserver.split(':')[-1])
-                if port < 0 or port > 65535:
-                    verrors.add(
-                        'syslogserver',
-                        'Port must be in the range of 0 to 65535.'
-                    )
+    @settings.fields_validator('syslogservers')
+    async def _validate_syslogserver(self, verrors, syslogservers):
+        seen_hosts = set()
+        for i, server in enumerate(syslogservers):
+            host = server['host']
+            if host in seen_hosts:
+                verrors.add(f'syslogservers.{i}.host', 'Duplicate host in syslogservers array')
 
-    @settings.fields_validator('syslog_transport', 'syslog_tls_certificate')
-    async def _validate_syslog(self, verrors, syslog_transport, syslog_tls_certificate):
-        if syslog_transport == 'TLS':
-            if syslog_tls_certificate:
-                verrors.extend(await self.middleware.call(
-                    'certificate.cert_services_validation', syslog_tls_certificate,
-                    'syslog_tls_certificate', False
-                ))
+            elif not re.match(r"^\[?[\w.\-:%]+]?(:\d+)?$", host):
+                verrors.add(f'syslogservers.{i}.host', 'Invalid syslog server format')
+
+            elif ']:' in host or (':' in host and ']' not in host):
+                port = int(host.split(':')[-1])
+                if port < 0 or port > 65535:
+                    verrors.add(f'syslogservers.{i}.host', 'Port must be in the range of 0 to 65535.')
+
+            seen_hosts.add(host)
+
+            cert_id = server['tls_certificate']
+            if server['transport'] == 'TLS' and cert_id:
+                verrors.extend(
+                    await self.middleware.call(
+                        'certificate.cert_services_validation', cert_id, f'syslogservers.{i}.tls_certificate', False
+                    )
+                )
 
     @settings.fields_validator('kernel_extra_options')
     async def _validate_kernel_extra_options(self, verrors, kernel_extra_options):
@@ -152,6 +147,19 @@ class SystemAdvancedService(ConfigService):
             #  foot-shooting
             verrors.add('kernel_extra_options', f'Modifying {invalid_param!r} is not allowed')
 
+    def _syslogd_changes(self, orig_config: dict, new_config: dict) -> bool:
+        """Return `True` if syslogd should be restarted to apply the new configuration."""
+        if (
+            orig_config['fqdn_syslog'] != new_config['fqdn_syslog']
+            or orig_config['sysloglevel'].lower() != new_config['sysloglevel'].lower()
+            or orig_config['syslog_audit'] != new_config['syslog_audit']
+        ):
+            return True
+        # Convert syslogservers to sets to disregard ordering for the comparison
+        orig_items_set = {frozenset(d.items()) for d in orig_config['syslogservers']}
+        new_items_set = {frozenset(d.items()) for d in new_config['syslogservers']}
+        return orig_items_set != new_items_set
+
     @api_method(SystemAdvancedUpdateArgs, SystemAdvancedUpdateResult, audit='System advanced update')
     async def do_update(self, data):
         """
@@ -162,8 +170,9 @@ class SystemAdvancedService(ConfigService):
             consolemsg = data.pop('consolemsg')
             warnings.warn("`consolemsg` has been deprecated and moved to `system.general`", DeprecationWarning)
 
-        if data.get('syslog_transport', 'TLS') != 'TLS':
-            data['syslog_tls_certificate'] = None
+        for server in data.get('syslogservers', []):
+            if server['transport'] != 'TLS':
+                server['tls_certificate'] = None
 
         config_data = await self.config()
         config_data['sed_passwd'] = await self.sed_global_password()
@@ -207,16 +216,7 @@ class SystemAdvancedService(ConfigService):
             if original_data['powerdaemon'] != config_data['powerdaemon']:
                 await (await self.middleware.call('service.control', 'RESTART', 'powerd')).wait(raise_error=True)
 
-            if original_data['fqdn_syslog'] != config_data['fqdn_syslog']:
-                await (await self.middleware.call('service.control', 'RESTART', 'syslogd')).wait(raise_error=True)
-
-            if (
-                original_data['sysloglevel'].lower() != config_data['sysloglevel'].lower() or
-                original_data['syslogserver'] != config_data['syslogserver'] or
-                original_data['syslog_transport'] != config_data['syslog_transport'] or
-                original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate'] or
-                original_data['syslog_audit'] != config_data['syslog_audit']
-            ):
+            if self._syslogd_changes(original_data, config_data):
                 await (await self.middleware.call('service.control', 'RESTART', 'syslogd')).wait(raise_error=True)
 
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
