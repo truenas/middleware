@@ -19,7 +19,6 @@ INTERNAL_DATASETS = (
     ".system",
     "ix-applications",
     "ix-apps",
-    ".ix-virt",
 )
 """
 Tuple of internal dataset name patterns that should be filtered out by default.

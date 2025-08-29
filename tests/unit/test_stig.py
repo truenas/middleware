@@ -10,8 +10,9 @@ def enable_stig():
         finally:
             c.call('datastore.update', 'system.security', 1, {'enable_gpos_stig': False})
 
+
 def test__stig_restrictions_af_unix(enable_stig):
     # STIG RBAC should still be effective despite root session
     with pytest.raises(ClientException, match='Not authorized'):
         with Client() as c:
-            c.call('virt.global.update', {}, job=True)
+            c.call('docker.update', {}, job=True)
