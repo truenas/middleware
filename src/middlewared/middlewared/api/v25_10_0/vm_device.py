@@ -21,6 +21,7 @@ __all__ = [
     'VMDeviceUsbPassthroughDeviceArgs', 'VMDeviceUsbPassthroughDeviceResult',
     'VMDeviceUsbPassthroughChoicesArgs', 'VMDeviceUsbPassthroughChoicesResult',
     'VMDeviceUsbControllerChoicesArgs', 'VMDeviceUsbControllerChoicesResult',
+    'VMDeviceConvertArgs', 'VMDeviceConvertResult',
 ]
 
 
@@ -430,3 +431,16 @@ class VMDeviceUsbControllerChoicesArgs(BaseModel):
 class VMDeviceUsbControllerChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
     """Available USB controller types for virtual machines."""
+
+
+@single_argument_args('vm_convert')
+class VMDeviceConvertArgs(BaseModel):
+    source: NonEmptyString
+    """Source path for the conversion (disk image file or ZFS volume)."""
+    destination: NonEmptyString
+    """Destination path for the conversion (disk image file or ZFS volume)."""
+
+
+class VMDeviceConvertResult(BaseModel):
+    result: bool
+    """Whether the conversion operation was successful."""
