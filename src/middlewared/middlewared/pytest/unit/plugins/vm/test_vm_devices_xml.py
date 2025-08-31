@@ -55,6 +55,45 @@ def test_cdrom_xml(vm_data, expected_xml):
          '<model type="qxl"><resolution x="1024" y="768" /></model></video><channel type="spicevmc">'
          f'<target type="virtio" name="com.redhat.spice.0" /></channel>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'min_memory': None, 'devices': [{
+        'attributes': {
+            'dtype': 'DISPLAY',
+            'bind': '0.0.0.0',
+            'password': '',
+            'web': True,
+            'type': 'SPICE',
+            'resolution': '1920x1080',
+            'port': 5912,
+            'web_port': 5913,
+            'wait': False,
+            'vgamem': 65536,  # 64MB
+        },
+    }]}, '<devices><graphics type="spice" port="5912"><listen type="address" address="0.0.0.0" /></graphics>'
+         '<controller type="usb" model="nec-xhci" /><input type="tablet" bus="usb" /><video>'
+         '<model type="qxl" vgamem="65536"><resolution x="1920" y="1080" /></model></video><channel type="spicevmc">'
+         f'<target type="virtio" name="com.redhat.spice.0" /></channel>{GUEST_CHANEL}<serial type="pty" /></devices>'
+    ),
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'min_memory': None, 'devices': [{
+        'attributes': {
+            'dtype': 'DISPLAY',
+            'bind': '0.0.0.0',
+            'password': '',
+            'web': True,
+            'type': 'SPICE',
+            'resolution': '1920x1080',
+            'port': 5912,
+            'web_port': 5913,
+            'wait': False,
+            'vgamem': 65536,  # 64MB
+            'ram': 131072,    # 128MB
+            'vram': 131072,   # 128MB
+        },
+    }]}, '<devices><graphics type="spice" port="5912"><listen type="address" address="0.0.0.0" /></graphics>'
+         '<controller type="usb" model="nec-xhci" /><input type="tablet" bus="usb" /><video>'
+         '<model type="qxl" vgamem="65536" ram="131072" vram="131072"><resolution x="1920" y="1080" /></model></video>'
+         f'<channel type="spicevmc"><target type="virtio" name="com.redhat.spice.0" /></channel>{GUEST_CHANEL}'
+         '<serial type="pty" /></devices>'
+    ),
 ])
 def test_display_xml(vm_data, expected_xml):
     m = Middleware()

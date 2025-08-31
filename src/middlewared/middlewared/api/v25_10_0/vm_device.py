@@ -54,6 +54,14 @@ class VMDisplayDevice(BaseModel):
     """Whether to enable web-based display access."""
     type_: Literal['SPICE', 'VNC'] = Field(alias='type', default='SPICE')
     """Display protocol type."""
+    vgamem: int | None = Field(default=None, gt=1024)
+    """QXL VGA framebuffer size in KB. If not set, uses libvirt default (16MB).
+    Recommended: 65536 (64MB) for resolutions above 1024x768."""
+    ram: int | None = Field(default=None, gt=0)
+    """QXL primary BAR size in KB. Must be at least 2 * vgamem (QEMU requirement).
+    If not set, uses libvirt default (usually 64MB)."""
+    vram: int | None = Field(default=None, gt=0)
+    """QXL secondary BAR size in KB. If not set, uses libvirt default (usually 64MB)."""
 
 
 class VMNICDevice(BaseModel):

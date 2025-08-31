@@ -51,6 +51,16 @@ class DISPLAY(Device):
         # FIXME: Resolution is not respected when we have more then 1 display device as we are not able to bind
         #  video element to a graphic element
         attrs = self.data['attributes']
+
+        # Build QXL model attributes conditionally - only include if explicitly set
+        qxl_attrs = {}
+        if attrs.get('vgamem') is not None:
+            qxl_attrs['vgamem'] = str(attrs['vgamem'])
+        if attrs.get('ram') is not None:
+            qxl_attrs['ram'] = str(attrs['ram'])
+        if attrs.get('vram') is not None:
+            qxl_attrs['vram'] = str(attrs['vram'])
+
         return create_element(
             'graphics', type='spice' if self.is_spice_type() else 'vnc', port=str(self.data['attributes']['port']),
             attribute_dict={
@@ -66,7 +76,7 @@ class DISPLAY(Device):
                     'children': [create_element(
                         'resolution', x=self.resolution().split('x')[0], y=self.resolution().split('x')[-1]
                     )]
-                })
+                }, **qxl_attrs)
             ]
         })
 
