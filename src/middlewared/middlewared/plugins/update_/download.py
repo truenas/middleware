@@ -40,7 +40,7 @@ class UpdateService(Service):
 
             update_status = self.middleware.call_sync('update.status')
             if update_status['error']:
-                raise CallError(f'Error retrieving update status: {update_status["error"]}')
+                raise CallError(f'Error retrieving update status: {update_status["error"]}', errno.ENETUNREACH)
 
             if train is None and version is None:
                 if update_status['status']['new_version'] is None:
@@ -125,21 +125,27 @@ class UpdateService(Service):
                                 size = os.path.getsize(dst)
                                 if size != total:
                                     raise CallError(f'Downloaded update file size mismatch ({size} != {total})',
-                                                    errno.ECONNRESET)
+                                                    errno.ENETUNREACH)
 
                                 break
                         except Exception as e:
-                            if i < 5 and progress and any(ee in str(e) for ee in ("ECONNRESET", "ETIMEDOUT")):
+                            if i < 5 and progress and isinstance(e, (
+                                requests.exceptions.ConnectionError,
+                                requests.exceptions.Timeout,
+                            )):
                                 self.middleware.logger.warning("Recoverable update download error: %r", e)
                                 time.sleep(2)
                                 continue
 
-                            raise
+                            if isinstance(e, CallError):
+                                raise
+                            else:
+                                raise CallError(f'Error downloading update: {e}', errno.ENETUNREACH)
 
                 size = os.path.getsize(dst)
                 if size != total:
                     os.unlink(dst)
-                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})')
+                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})', errno.ENETUNREACH)
 
                 set_progress(1, "Update downloaded.")
                 return True
