@@ -174,7 +174,9 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @private
     async def common_validation(self, verrors, schema_name, data, old=None):
-        if data['bootloader_ovmf'] not in await self.middleware.call('vm.bootloader_ovmf_choices'):
+        if data['bootloader_ovmf'] and data['bootloader_ovmf'] not in await self.middleware.call(
+            'vm.bootloader_ovmf_choices'
+        ):
             verrors.add(
                 f'{schema_name}.bootloader_ovmf',
                 'Invalid bootloader ovmf choice specified'
@@ -296,6 +298,18 @@ class VMService(CRUDService, VMSupervisorMixin):
                     f'{schema_name}.machine_type',
                     'Secure boot is only available in q35 machine type'
                 )
+
+            if data['bootloader_ovmf'] is None:
+                data['bootloader_ovmf'] = 'OVMF_CODE_4M.secboot.fd'
+
+            if 'secboot' not in data['bootloader_ovmf'].lower():
+                verrors.add(
+                    f'{schema_name}.bootloader_ovmf',
+                    'Select a bootloader_ovmf that supports secure boot i.e OVMF_CODE_4M.secboot.fd'
+                )
+
+        if data['bootloader_ovmf'] is None:
+            data['bootloader_ovmf'] = 'OVMF_CODE.fd'
 
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
