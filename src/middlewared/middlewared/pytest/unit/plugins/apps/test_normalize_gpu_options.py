@@ -114,12 +114,12 @@ from middlewared.pytest.unit.middleware import Middleware
         ],
         {
             'use_all_gpus': True,
-            'kfd_device_exists': False,
+            'kfd_device_exists': True,
             'nvidia_gpu_selection': {}
         },
         {
             'use_all_gpus': True,
-            'kfd_device_exists': False,
+            'kfd_device_exists': True,
             'nvidia_gpu_selection': {}
         }
 
