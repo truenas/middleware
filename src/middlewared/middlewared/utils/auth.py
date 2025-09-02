@@ -13,6 +13,7 @@ AUID_FAULTED = 2 ** 32 - 2
 
 class AuthMech(enum.StrEnum):
     API_KEY_PLAIN = 'API_KEY_PLAIN'
+    API_KEY_SCRAM = 'API_KEY_SCRAM'
     PASSWORD_PLAIN = 'PASSWORD_PLAIN'
     TOKEN_PLAIN = 'TOKEN_PLAIN'
     OTP_TOKEN = 'OTP_TOKEN'
@@ -24,6 +25,7 @@ class AuthResp(enum.StrEnum):
     EXPIRED = 'EXPIRED'
     OTP_REQUIRED = 'OTP_REQUIRED'
     REDIRECT = 'REDIRECT'
+    SCRAM_RESPONSE = 'SCRAM_RESPONSE'
 
 
 # NIST SP 800-63B provides documentation Authenticator Assurance Levels (AAL)
@@ -73,6 +75,7 @@ AA_LEVEL1 = AuthenticatorAssuranceLevel(
     max_inactivity=None,
     mechanisms=(
         AuthMech.API_KEY_PLAIN,
+        AuthMech.API_KEY_SCRAM,
         AuthMech.TOKEN_PLAIN,
         AuthMech.PASSWORD_PLAIN,
     ),
@@ -94,7 +97,7 @@ AA_LEVEL1 = AuthenticatorAssuranceLevel(
 AA_LEVEL2 = AuthenticatorAssuranceLevel(
     max_session_age=12 * 60 * 60,
     max_inactivity=30 * 60,
-    mechanisms=(AuthMech.PASSWORD_PLAIN,),
+    mechanisms=(AuthMech.PASSWORD_PLAIN, AuthMech.API_KEY_SCRAM),
     otp_mandatory=True,
     min_fail_delay=4
 )

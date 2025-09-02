@@ -43,7 +43,7 @@ class ADHealthMixin:
             str(KRB_LibDefaults.DEFAULT_REALM): ds_config['kerberos_realm'],
             str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
             str(KRB_LibDefaults.FORWARDABLE): 'true',
-            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
+            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): krb5ccache.SYSTEM.value
         })
         krbconf.add_realms([{
             'realm': ds_config['kerberos_realm'] or ds_config['configuration']['domain'],

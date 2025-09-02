@@ -130,7 +130,7 @@ def generate_scram_data(passwd: str, rounds: int = 500000, salt: bytes | None = 
     )
 
 
-def pbkdf2_512_api_key_string_to_scram_server_data(hash_str: str) -> TNScramServerData:
+def legacy_api_key_hash_string_to_scram_server_data(hash_str: str) -> TNScramServerData:
     """
     Convert an existing API key hash (created thorugh generate_pkgdf2_512()) to server SCRAM
     data. This method exists primarily for migration of existing API keys to the new format.
