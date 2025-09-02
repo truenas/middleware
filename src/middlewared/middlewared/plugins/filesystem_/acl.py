@@ -548,6 +548,8 @@ class FilesystemService(Service):
             action = AclToolAction.STRIP
             strip_acl_path(data['path'])
 
+        job.set_progress(50, 'Setting NFSv4 ACL.')
+
         else:
             if data['options']['validate_effective_acl']:
                 uid_to_check = current_acl['uid'] if data['uid'] == ACL_UNDEFINED_ID else data['uid']
