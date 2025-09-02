@@ -111,10 +111,20 @@ class DiskService(CRUDService):
             context['disks_keys'] = await self.middleware.call('kmip.retrieve_sed_disks_keys')
 
         if context['real_names']:
-            context['identifier_to_name'] = {
-                disk.identifier: disk.name
-                for disk in await self.middleware.call('disk.get_disks')
-            }
+            context['identifier_to_name'] = dict()
+            for disk in await self.middleware.call('disk.get_disks'):
+                try:
+                    context['identifier_to_name'][disk.identifier] = disk.name
+                except Exception:
+                    # when we access the "identifier" attribute of the disk object
+                    # we try to read partitions on the devices which requires
+                    # opening the underlying device. Our users run TrueNAS
+                    # on extravagant hardware and, sometimes, the devices dont
+                    # respond very well to even opening them in RD_ONLY mode.
+                    # For example, opening an empty sd-card reader device
+                    # raises errno 123 (no medimum found). In this scenario
+                    # and any other, we should not crash here.
+                    context['identifier_to_name'][disk.name] = disk.name
 
         if context['pools']:
             context['boot_pool_disks'] = await self.middleware.call('boot.get_disks')
