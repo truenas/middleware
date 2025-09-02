@@ -62,7 +62,7 @@ class NVMetPortCreateTemplate(NVMetPortEntry, ABC):
 
 class NVMetPortCreateRDMATCP(NVMetPortCreateTemplate):
     addr_trtype: Literal['TCP', 'RDMA']
-    addr_trsvcid: int = Field(ge=1024, le=65535)
+    addr_trsvcid: int = Field(ge=1024, le=65535, default=4420)
     addr_traddr: IPvAnyAddress
 
     @field_validator('addr_traddr')
