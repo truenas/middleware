@@ -322,9 +322,21 @@ class SystemDatasetService(ConfigService):
 
         # If the system dataset is configured in a data pool we need to make sure it exists.
         # In case it does not we need to use another one.
-        if config['pool'] != boot_pool and not self.middleware.call_sync(
-            'zfs.resource.query_impl', {'paths': [config['pool']], 'properties': None}
+        pools_in_db = {
+            i['vol_name']: i for i in self.middleware.call_sync(
+                'datastore.query', 'storage_volume'
+            )
+        }
+        if (
+            config['pool'] != boot_pool
+            and config['pool'] not in pools_in_db
+            and not self.middleware.call_sync(
+                'zfs.resource.query_impl', {'paths': [config['pool']], 'properties': None}
+            )
         ):
+            # FIXME: this is badddddd. It's a DEADLOCK because this method (setup_impl)
+            # is called by sysdataset.update and sysdataset.update calls this method which
+            # calls sysdataset.update.......yikes
             self.logger.debug('Pool %r does not exist, moving system dataset to another pool', config['pool'])
             job = self.middleware.call_sync('systemdataset.update', {'pool': None, 'pool_exclude': exclude_pool})
             job.wait_sync(raise_error=True)
