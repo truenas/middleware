@@ -19,12 +19,12 @@ def generate_syslog_remote_destination(server, d_name):
     transport = server["transport"].lower()
     cert_id = server["tls_certificate"]
 
-    remotelog_stanza = f'destination {d_name} {{\n'
-    remotelog_stanza += '  syslog(\n'
+    remotelog_stanza =  f'destination {d_name} {{\n'
+    remotelog_stanza +=  '  syslog(\n'
     remotelog_stanza += f'    "{host}"\n'
     remotelog_stanza += f'    port({port})\n'
-    remotelog_stanza += '    ip-protocol(6)\n'
-    remotelog_stanza += f'    transport("{transport}")\n'
+    remotelog_stanza +=  '    ip-protocol(6)\n'
+    remotelog_stanza += f'    transport({transport})\n'
 
     if transport == "tls":
         # Both mutual and one-way TLS require this
