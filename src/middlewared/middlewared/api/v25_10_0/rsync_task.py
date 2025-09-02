@@ -36,10 +36,10 @@ class RsyncTaskEntry(BaseModel):
     """Port number for SSH connection. Only applies when `mode` is SSH."""
     remotemodule: str | None = None
     """Name of remote module, this attribute should be specified when `mode` is set to MODULE."""
-    ssh_credentials: KeychainCredentialEntry | None
+    ssh_credentials: KeychainCredentialEntry | None = None
     """In SSH mode, if `ssh_credentials` (a keychain credential of `SSH_CREDENTIALS` type) is specified then it is \
     used to connect to the remote host. If it is not specified, then keys in `user`'s .ssh directory are used."""
-    remotepath: str
+    remotepath: str = ""
     """Path on the remote system to synchronize with."""
     direction: Literal["PULL", "PUSH"] = "PUSH"
     """Specify if data should be PULLED or PUSHED from the remote system."""
