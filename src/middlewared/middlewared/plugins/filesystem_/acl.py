@@ -543,6 +543,7 @@ class FilesystemService(Service):
             validate_nfs4_ace_full(ace, f'filesystem.setacl.dacl.{idx}', verrors)
 
         verrors.check()
+        job.set_progress(50, 'Setting NFSv4 ACL.')
 
         if do_strip:
             action = AclToolAction.STRIP
