@@ -112,7 +112,7 @@ class DiskService(CRUDService):
 
         if context['real_names']:
             context['identifier_to_name'] = dict()
-            for i in await self.middleware.call('disk.get_disks'):
+            for disk in await self.middleware.call('disk.get_disks'):
                 try:
                     context['identifier_to_name'][disk.identifier] = disk.name
                 except Exception:
