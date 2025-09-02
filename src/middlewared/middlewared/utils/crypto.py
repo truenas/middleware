@@ -1,4 +1,6 @@
 from base64 import b64encode
+from dataclasses import dataclass
+from enum import StrEnum
 from hashlib import pbkdf2_hmac
 from secrets import choice, compare_digest, token_urlsafe, token_hex
 from ssl import RAND_bytes
@@ -8,6 +10,8 @@ from uuid import UUID
 from cryptit import cryptit
 
 from samba.crypto import md4_hash_blob
+
+from truenas_api_client import scram_impl
 
 
 # NOTE: these are lifted from cpython/Lib/uuid.py
@@ -101,3 +105,55 @@ def ssl_uuid4():
     int_uuid_4 &= _RFC_4122_CLEARFLAGS_MASK
     int_uuid_4 |= _RFC_4122_VERSION_4_FLAGS
     return UUID(int=int_uuid_4)
+
+
+def generate_scram_data(passwd: str, rounds: int = 500000, salt: bytes | None = None) -> dict:
+    """
+    Generate SCRAM server data and client key based on provided password and salt / rounds.
+    If salt is None then new salt will be generated.
+    """
+    if salt is None:
+        salt = generate_string(string_size=16, extra_chars='./').encode()
+
+    thehash = pbkdf2_hmac('sha512', passwd.encode(), salt, rounds)
+    server_key = scram_impl.create_scram_server_key(thehash)
+    client_key = scram_impl.create_scram_client_key(thehash)
+    stored_key = scram_impl.h(client_key)) 
+
+    return TNScramData(
+        algorithm='sha-512',
+        salt=salt,
+        iteration_count=rounds,
+        stored_key=stored_key,
+        server_key=server_key,
+        client_key=client_key
+    )
+
+
+def pbkdf2_512_api_key_string_to_scram_server_data(hash_str: str) -> TNScramServerData:
+    """
+    Convert an existing API key hash (created thorugh generate_pkgdf2_512()) to server SCRAM
+    data. This method exists primarily for migration of existing API keys to the new format.
+    """
+    prefix, rounds, salt, thehash = hash_str.split('$')[1:]
+    salted_key = b64decode(thehash)
+    server_key = scram_impl.create_scram_server_key(thehash)
+    stored_key = scram_impl.h(scram_impl.create_scram_client_key(thehash)) 
+
+    return TNScramData(
+        algorithm='sha-512',
+        salt=b64decode(salt),
+        iteration_count=int(rounds),
+        stored_key=stored_key,
+        server_key=server_key
+    )
+
+
+def validate_plain_api_key_scram(passwd: str, server_data: TNScramServerData) -> bool:
+    """
+    Check whether the provided plain-text password / api key matches the one that generated
+    our local SCRAM server data. This is used to implement plain password validation for
+    compatibliity with the API_KEY_PLAIN authentication mechanism. 
+    """
+    scram_data = generate_scram_data(passwd, server_data.iteration_count, server_data.salt)
+    return hmac.compare_digest(scram_data.server_key, server_data.server_key)
