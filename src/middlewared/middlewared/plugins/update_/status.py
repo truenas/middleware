@@ -24,6 +24,10 @@ class UpdateService(Service):
         """
         Update status.
         """
+        return await self.status_internal()
+
+    @private
+    async def status_internal(self, propagate_exception=False):
         try:
             applied = await self.middleware.call('cache.get', 'update.applied')
         except KeyError:
@@ -86,6 +90,9 @@ class UpdateService(Service):
                 'error': repr(e),
             })
         except Exception as e:
+            if propagate_exception:
+                raise
+
             self.logger.exception('Failed to get update status')
             return self._result('ERROR', {
                 'error': repr(e),
