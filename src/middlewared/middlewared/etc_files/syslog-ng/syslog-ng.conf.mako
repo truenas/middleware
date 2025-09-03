@@ -36,11 +36,10 @@ def generate_syslog_remote_destination(server, d_name):
 
         if cert_id is not None:
             # Mutual TLS
-            certificate = []
             certificate = middleware.call_sync(
                 "certificate.query", [["id", "=", cert_id]]
             )
-            if certificate is not []:
+            if certificate:
                 remotelog_stanza += f'      key-file(\"{certificate[0]["privatekey_path"]}\")\n'
                 remotelog_stanza += f'      cert-file(\"{certificate[0]["certificate_path"]}\")\n'
         remotelog_stanza += '    )\n'
