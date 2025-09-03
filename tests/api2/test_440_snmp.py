@@ -283,7 +283,7 @@ class TestSNMP:
         validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
 
     @skip_ha_tests
-    async def test_ha_sysname_reply_uses_same_ip(self):
+    def test_ha_sysname_reply_uses_same_ip(self):
         validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
         validate_snmp_get_sysname_uses_same_ip(truenas_server.nodea_ip)
         validate_snmp_get_sysname_uses_same_ip(truenas_server.nodeb_ip)
