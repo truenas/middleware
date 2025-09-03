@@ -26,8 +26,9 @@ class SyslogServer(BaseModel):
     Nonstandard port numbers can be used by appending a colon and port number to the hostname, like \
     mysyslogserver:1928.
 
-    Port 514 is used by default for TCP and UDP transports as per RFC3164; port 6514 is used by default for TLS \
-    transport as per RFC5425.
+    * UDP defaults to port 514.
+    * TCP defaults to port 601.
+    * TLS defaults to port 6514.
     """
     transport: Literal['UDP', 'TCP', 'TLS'] = 'UDP'
     """Transport Protocol for the remote system log server connection."""

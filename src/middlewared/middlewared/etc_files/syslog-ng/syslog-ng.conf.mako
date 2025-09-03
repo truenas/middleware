@@ -14,10 +14,10 @@ def generate_syslog_remote_destination(server, d_name):
 
     if "]:" in address or (":" in address and not "]" in address): 
         host, port = address.rsplit(":", 1)
-    elif transport == "tls":
-        host, port = address, "6514"
     else:
-        host, port = address, "514"
+        host = address
+        # https://wiki.archlinux.org/title/Syslog-ng#:~:text=Default%20listening%20ports
+        port = {"udp": "514", "tcp": "601", "tls": "6514"}[transport]
 
     host = host.replace("[", "").replace("]", "")
     cert_id = server["tls_certificate"]
