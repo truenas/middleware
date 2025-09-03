@@ -3,7 +3,7 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NotRequired
 
 
 __all__ = [
@@ -70,9 +70,9 @@ class AlertCategory(BaseModel):
 
 
 class AlertClassConfiguration(BaseModel):
-    level: AlertLevel
+    level: AlertLevel = NotRequired
     """Severity level for alerts of this class."""
-    policy: Literal['IMMEDIATELY', 'HOURLY', 'DAILY', 'NEVER']
+    policy: Literal['IMMEDIATELY', 'HOURLY', 'DAILY', 'NEVER'] = NotRequired
     """Notification policy for alerts of this class.
 
     * `IMMEDIATELY`: Send notifications as soon as alerts occur
@@ -80,7 +80,7 @@ class AlertClassConfiguration(BaseModel):
     * `DAILY`: Batch notifications and send daily
     * `NEVER`: Do not send notifications for this alert class
     """
-    proactive_support: bool = False
+    proactive_support: bool = NotRequired
     """Whether to include alerts of this class in proactive support reporting."""
 
 
