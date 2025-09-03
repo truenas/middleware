@@ -1,18 +1,8 @@
-import asyncio
 import contextlib
 import os
 import time
 import pytest
-
-from pysnmp.hlapi.v3arch.asyncio import (
-    CommunityData,
-    ContextData,
-    SnmpEngine,
-    UdpTransportTarget,
-    get_cmd
-)
-from pysnmp.smi.rfc1902 import ObjectIdentity, ObjectType
-
+import subprocess
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
@@ -177,22 +167,28 @@ def get_systemctl_status(service):
     return "RUNNING" if action[0].split()[2] == "(running)" else "STOPPED"
 
 
-async def get_sysname(hostip, community):
-    snmpEngine = SnmpEngine()
-    errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
-        snmpEngine,
-        CommunityData(community),
-        await UdpTransportTarget.create((hostip, 161)),
-        ContextData(),
-        ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysName', 0))
-    )
+def v2c_snmpwalk(mib, hostip='localhost'):
+    """
+    Run snmpwalk with v2c protocol
+    mib is the item to be gathered.  mib format examples:
+        iso.3.6.1.6.3.15.1.2.2.1.3
+        1.3.6.1.4.1.50536.1.2
+    """
+    # The call will timeout if SNMP is not running
+    if hostip == 'localhost':
+        res_stdout = ssh(f"snmpwalk -v2c -cpublic localhost {mib}")
+    else:
+        # Run the snmpwalk from the test runner
+        res = subprocess.run(
+            f"snmpwalk -v2c -cpublic {hostip} {mib}",
+            shell=True,
+            capture_output=True,
+            text=True,
+        )
+        assert res.returncode == 0, res.stderr
+        res_stdout = res.stdout
 
-    assert errorIndication is None, errorIndication
-    assert errorStatus == 0, errorStatus
-    value = str(varBinds[0])
-    _prefix = "SNMPv2-MIB::sysName.0 = "
-    assert value.startswith(_prefix), value
-    return value[len(_prefix):]
+    return [x.split(':')[-1].strip(' \"') for x in res_stdout.splitlines()]
 
 
 def validate_snmp_get_sysname_uses_same_ip(hostip):
@@ -206,7 +202,8 @@ def validate_snmp_get_sysname_uses_same_ip(hostip):
     # Give some time so that the tcpdump has started before we proceed
     time.sleep(5)
 
-    asyncio.run(get_sysname(hostip, COMMUNITY))
+    # Get sysName.0
+    v2c_snmpwalk("iso.3.6.1.2.1.1.5", hostip)
 
     # Now collect and process the tcpdump output
     outs, errs = async_SSH_done(p, 20)
@@ -237,20 +234,6 @@ def user_list_users(snmp_config):
     if add_cmd:
         cmd += add_cmd
     cmd += "localhost iso.3.6.1.6.3.15.1.2.2.1.3"
-
-    # This call will timeout if SNMP is not running
-    res = ssh(cmd)
-    return [x.split(':')[-1].strip(' \"') for x in res.splitlines()]
-
-
-def v2c_snmpwalk(mib):
-    """
-    Run snmpwalk with v2c protocol
-    mib is the item to be gathered.  mib format examples:
-        iso.3.6.1.6.3.15.1.2.2.1.3
-        1.3.6.1.4.1.50536.1.2
-    """
-    cmd = f"snmpwalk -v2c -cpublic localhost {mib}"
 
     # This call will timeout if SNMP is not running
     res = ssh(cmd)
