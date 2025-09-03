@@ -368,21 +368,21 @@ class SystemDatasetService(ConfigService):
                     self.logger.debug(msg, config['pool'], config['basename'])
                     self.force_pool = boot_pool
                     config = self.middleware.call_sync('systemdataset.config')
-                enc = get_encryption_info(ds[0]['properties'])
-                if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
-                    # Pool is encrypted with a key and is locked
-                    self.logger.debug(
-                        'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
-                        config['pool'],
-                    )
-                    self.force_pool = boot_pool
-                    config = self.middleware.call_sync('systemdataset.config')
                 else:
-                    self.logger.debug(
-                        'Root dataset for pool %r is not available, but system dataset may be manually '
-                        'mounted. Proceeding with normal setup.',
-                        config['pool']
-                    )
+                    enc = get_encryption_info(ds[0]['properties'])
+                    if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
+                        msg = 'Root dataset for pool %r is not available,'
+                        msg += 'temporarily setting up system dataset on boot pool'
+                        # Pool is encrypted with a key and is locked
+                        self.logger.debug(msg, config['pool'])
+                        self.force_pool = boot_pool
+                        config = self.middleware.call_sync('systemdataset.config')
+                    else:
+                        self.logger.debug(
+                            'Root dataset for pool %r is not available, but system dataset may be manually '
+                            'mounted. Proceeding with normal setup.',
+                            config['pool']
+                        )
 
         mounted_pool = mounted = None
 
