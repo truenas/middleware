@@ -30,10 +30,13 @@ class SyslogServer(BaseModel):
     transport as per RFC5425.
     """
     transport: Literal['UDP', 'TCP', 'TLS'] = 'UDP'
-    """Transport Protocol for the remote system log server connection. Choosing Transport Layer Security (TLS) also \
-    requires selecting a preconfigured system certificate with `tls_certificate`."""
+    """Transport Protocol for the remote system log server connection."""
     tls_certificate: int | None = None
-    """Certificate ID for TLS-encrypted syslog connections or `null` for no certificate."""
+    """Applies only if `transport` is "TLS".
+
+    ID of the local certificate to send for mutual TLS (mTLS) connections. `null` indicates one-way TLS in which only \
+    the server identified by `host` will need to provide a certificate.
+    """
 
 
 class SystemAdvancedEntry(BaseModel):

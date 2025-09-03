@@ -69,7 +69,7 @@ def erase_syslogservers():
     check_syslog_state()
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture
 def tls_cert(erase_syslogservers):
     """Placeholder for adding remote certs and Restore syslog to default after testing"""
     truenas_default_id = 1
@@ -205,42 +205,41 @@ def test_remote_syslog_function(erase_syslogservers):
         assert check_syslog(remote_log, "In a coal mine", remote=True, timeout=20)
 
 
-class TestTLS:
-    @pytest.mark.parametrize('testing', ['TLS transport', 'Mutual TLS'])
-    def test_remote_syslog_with_TLS(self, tls_cert, testing):
-        """
-        Confirm expected settings in syslog-ng.conf when selecting TLS transport.
-        NOTE: This test does NOT confirm end-to-end functionality.
-        TODO: Add remote syslog server to enable end-to-end testing:
-                * Mutual TLS: Add client cert,key and CA from remote syslog server
-                (For testing purposes use 'truenas_default' cert)
-        The tls_cert fixture performs syslog cleanup.
-        """
-        remote = "127.0.0.1"
-        port = "5140"
-        transport = "TLS"
+@pytest.mark.parametrize('testing', ['TLS transport', 'Mutual TLS'])
+def test_remote_syslog_with_TLS(tls_cert, testing):
+    """
+    Confirm expected settings in syslog-ng.conf when selecting TLS transport.
+    NOTE: This test does NOT confirm end-to-end functionality.
+    TODO: Add remote syslog server to enable end-to-end testing:
+            * Mutual TLS: Add client cert,key and CA from remote syslog server
+            (For testing purposes use 'truenas_default' cert)
+    The tls_cert fixture performs syslog cleanup.
+    """
+    remote = "127.0.0.1"
+    port = "5140"
+    transport = "TLS"
 
-        test_tls = [
-            f'{remote}', f'port({port})', 'transport("tls")', 'ca-file("/etc/ssl/certs/ca-certificates.crt")'
+    test_tls = [
+        f'{remote}', f'port({port})', 'transport("tls")', 'ca-file("/etc/ssl/certs/ca-certificates.crt")'
+    ]
+    tls_payload = {"host": f"{remote}:{port}", "transport": transport}
+
+    if testing == "Mutual TLS":
+        test_tls += [
+            "key-file(\"/etc/certificates/truenas_default.key\")",
+            "cert-file(\"/etc/certificates/truenas_default.crt\")"
         ]
-        tls_payload = {"host": f"{remote}:{port}", "transport": transport}
+        tls_payload["tls_certificate"] = tls_cert
 
-        if testing == "Mutual TLS":
-            test_tls += [
-                "key-file(\"/etc/certificates/truenas_default.key\")",
-                "cert-file(\"/etc/certificates/truenas_default.crt\")"
-            ]
-            tls_payload["tls_certificate"] = tls_cert
+    data = call('system.advanced.update', {"syslogservers": [tls_payload]})
+    assert data['syslogservers'][0]['transport'] == 'TLS'
 
-        data = call('system.advanced.update', {"syslogservers": [tls_payload]})
-        assert data['syslogservers'][0]['transport'] == 'TLS'
+    conf = ssh(
+        'grep -A10 "destination loghost" /etc/syslog-ng/syslog-ng.conf',
+        complete_response=True, check=False
+    )
+    assert conf['result'] is True, "Missing remote entry"
 
-        conf = ssh(
-            'grep -A10 "destination loghost" /etc/syslog-ng/syslog-ng.conf',
-            complete_response=True, check=False
-        )
-        assert conf['result'] is True, "Missing remote entry"
-
-        for item in test_tls:
-            assert list(filter(lambda s: item in s, conf['output'].splitlines())) is not []
-        check_syslog_state()
+    for item in test_tls:
+        assert list(filter(lambda s: item in s, conf['output'].splitlines())) is not []
+    check_syslog_state()
