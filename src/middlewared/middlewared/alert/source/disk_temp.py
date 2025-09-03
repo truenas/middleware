@@ -31,7 +31,7 @@ class DiskTemperatureTooHotAlertSource(AlertSource):
         map = {i.name: i for i in await self.middleware.call("disk.get_disks")}
         temp_cache = await self.middleware.call("disk.temperatures", [], True)
         for disk, (temp, crit) in temp_cache.items():
-            if temp is None or crit is None:
+            if temp is None or crit is None or crit == 0:
                 continue
             elif temp < crit:
                 continue
