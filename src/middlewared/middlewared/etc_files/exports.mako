@@ -163,7 +163,7 @@
         # Remove all files in /etc/exports.d
         for file in files_in_exportsd:
 
-            if file.startswith('zfs.exports'):
+            if file == 'zfs.exports':
                 middleware.logger.warning("Disabling sharenfs ZFS property on datasets")
                 disable_sharenfs()
             else:
