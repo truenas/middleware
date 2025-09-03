@@ -19,7 +19,7 @@ class SystemAdvancedService(Service):
     )
     async def syslog_certificate_choices(self):
         """
-        Return choices of certificates which can be used for `syslog_tls_certificate`.
+        Return choices of certificates which can be used for `syslogservers.N.tls_certificate`.
         """
         return {
             i['id']: i['name']

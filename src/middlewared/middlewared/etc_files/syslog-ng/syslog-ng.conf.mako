@@ -8,44 +8,46 @@ logger = middleware.logger
 syslog_template = 'template("${MESSAGE}\\n")'
 
 
-def generate_syslog_remote_destination(advanced_config):
-    syslog_server = advanced_config["syslogserver"]
-    if "]:" in syslog_server or (":" in syslog_server and not "]" in syslog_server): 
-        host, port = syslog_server.rsplit(":", 1)
+def generate_syslog_remote_destination(server, d_name):
+    address = server["host"]
+    transport = server["transport"].lower()
+
+    if "]:" in address or (":" in address and not "]" in address): 
+        host, port = address.rsplit(":", 1)
+    elif transport == "tls":
+        host, port = address, "6514"
     else:
-        host, port = syslog_server, "514"
+        host, port = address, "514"
 
     host = host.replace("[", "").replace("]", "")
-    transport = advanced_config["syslog_transport"].lower()
-    cert_id = advanced_config["syslog_tls_certificate"]
+    cert_id = server["tls_certificate"]
 
-    remotelog_stanza = 'destination loghost {\n'
-    remotelog_stanza += '  syslog(\n'
+    remotelog_stanza =  f'destination {d_name} {{\n'
+    remotelog_stanza +=  '  syslog(\n'
     remotelog_stanza += f'    "{host}"\n'
     remotelog_stanza += f'    port({port})\n'
-    remotelog_stanza += '    ip-protocol(6)\n'
-    remotelog_stanza += f'    transport("{transport}")\n'
+    remotelog_stanza +=  '    ip-protocol(6)\n'
+    remotelog_stanza += f'    transport({transport})\n'
 
-    if advanced_config["syslog_transport"] == "TLS":
+    if transport == "tls":
         # Both mutual and one-way TLS require this
         remotelog_stanza += '    tls(\n'
         remotelog_stanza += '      ca-file("/etc/ssl/certs/ca-certificates.crt")\n'
 
         if cert_id is not None:
             # Mutual TLS
-            certificate = []
             certificate = middleware.call_sync(
                 "certificate.query", [["id", "=", cert_id]]
             )
-            if certificate is not []:
+            if certificate:
                 remotelog_stanza += f'      key-file(\"{certificate[0]["privatekey_path"]}\")\n'
                 remotelog_stanza += f'      cert-file(\"{certificate[0]["certificate_path"]}\")\n'
         remotelog_stanza += '    )\n'
 
     remotelog_stanza += '  );\n};\n'    
-    remotelog_stanza += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
-    remotelog_stanza += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
-    remotelog_stanza += 'log { source(s_src); filter(f_tnremote); destination(loghost); };'
+    remotelog_stanza += f'log {{ source(s_tn_middleware); filter(f_tnremote); destination({d_name}); }};\n'
+    remotelog_stanza += f'log {{ source(s_tn_auditd); filter(f_tnremote); destination({d_name}); }};\n'
+    remotelog_stanza += f'log {{ source(s_src); filter(f_tnremote); destination({d_name}); }};'
 
     return remotelog_stanza
 %>\
@@ -73,11 +75,11 @@ options {
 ##################
 source s_src { system(); internal(); };
 
-source tn_middleware_src {
+source s_tn_middleware {
   unix-stream("${DEFAULT_SYSLOG_PATH}" create-dirs(yes) perm(0600));
 };
 
-source tn_auditd_src {
+source s_tn_auditd {
   unix-stream("/var/run/syslog-ng/auditd.sock" create-dirs(yes) perm(0600));
 };
 
@@ -92,13 +94,13 @@ source tn_auditd_src {
 @include "/etc/syslog-ng/conf.d/tndestinations.conf"
 
 ## Remote syslog stanza needs to here _before_ the audit-related configuration
-% if render_ctx['system.advanced.config']['syslogserver']:
+% for i, server in enumerate(render_ctx['system.advanced.config']['syslogservers']):
 ##################
 # remote logging
 ##################
-${generate_syslog_remote_destination(render_ctx['system.advanced.config'])}
-% endif
+${generate_syslog_remote_destination(server, 'loghost' + str(i))}
 
+% endfor
 ##################
 # audit-related configuration
 ##################
@@ -119,7 +121,7 @@ log {
 ########################
 % for tnlog in ALL_LOG_FILES:
 log {
-  source(tn_middleware_src); filter(f_${tnlog.name or "middleware"});
+  source(s_tn_middleware); filter(f_${tnlog.name or "middleware"});
   destination { file(${tnlog.logfile} ${syslog_template}); };
 };
 % endfor

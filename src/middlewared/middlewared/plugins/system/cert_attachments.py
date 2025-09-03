@@ -11,10 +11,14 @@ class SystemGeneralCertificateAttachmentDelegate(CertificateServiceAttachmentDel
 
 class SystemAdvancedCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
-    CERT_FIELD = 'syslog_tls_certificate'
+    CERT_FIELD = NotImplementedError
     HUMAN_NAME = 'Syslog Service'
     NAMESPACE = 'system.advanced'
     SERVICE = 'syslogd'
+
+    async def state(self, cert_id):
+        config = await self.middleware.call('system.advanced.config')
+        return any(server['tls_certificate'] == cert_id for server in config['syslogservers'])
 
 
 async def setup(middleware):
