@@ -22,8 +22,13 @@ __all__ = [
 class SyslogServer(BaseModel):
     host: str
     """Remote syslog server DNS hostname or IP address.
+
     Nonstandard port numbers can be used by appending a colon and port number to the hostname, like \
-    mysyslogserver:1928. Otherwise, port 514 is used."""
+    mysyslogserver:1928.
+
+    Port 514 is used by default for TCP and UDP transports as per RFC3164; port 6514 is used by default for TLS \
+    transport as per RFC5425.
+    """
     transport: Literal['UDP', 'TCP', 'TLS'] = 'UDP'
     """Transport Protocol for the remote system log server connection. Choosing Transport Layer Security (TLS) also \
     requires selecting a preconfigured system certificate with `tls_certificate`."""

@@ -10,13 +10,16 @@ syslog_template = 'template("${MESSAGE}\\n")'
 
 def generate_syslog_remote_destination(server, d_name):
     address = server["host"]
+    transport = server["transport"].lower()
+
     if "]:" in address or (":" in address and not "]" in address): 
         host, port = address.rsplit(":", 1)
+    elif transport == "tls":
+        host, port = address, "6514"
     else:
         host, port = address, "514"
 
     host = host.replace("[", "").replace("]", "")
-    transport = server["transport"].lower()
     cert_id = server["tls_certificate"]
 
     remotelog_stanza =  f'destination {d_name} {{\n'
