@@ -1217,7 +1217,7 @@ class AlertClassesService(ConfigService):
                 verrors.add(f"alert_class_update.classes.{k}", "This alert class does not exist")
                 continue
 
-            if not AlertClass.class_by_name[k].proactive_support and v["proactive_support"]:
+            if "proactive_support" in v and not AlertClass.class_by_name[k].proactive_support:
                 verrors.add(
                     f"alert_class_update.classes.{k}.proactive_support",
                     "Proactive support is not supported by this alert class",
