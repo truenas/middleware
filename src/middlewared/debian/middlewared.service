@@ -10,6 +10,8 @@ Conflicts=reboot.target shutdown.target halt.target
 
 [Service]
 Type=notify
+# Allow child processes like syslog-ng to send notifications
+NotifyAccess=all
 ExecStart=/usr/bin/middlewared --log-handler=file
 TimeoutStartSec=900
 Restart=always
