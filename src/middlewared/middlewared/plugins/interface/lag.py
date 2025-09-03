@@ -28,7 +28,9 @@ class InterfaceService(Service):
             netif.create_interface(name)
             iface = netif.get_interface(name)
 
-        info = {'protocol': None, 'xmit_hash_policy': None, 'lacpdu_rate': None, 'primary_interface': None}
+        info = {
+            'protocol': None, 'xmit_hash_policy': None, 'lacpdu_rate': None, 'primary_interface': None, 'miimon': None,
+        }
         protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
         if iface.protocol != protocol:
             info['protocol'] = protocol
@@ -38,6 +40,9 @@ class InterfaceService(Service):
             curr_primary = iface.primary_interface
             if curr_primary != db_primary:
                 info['primary_interface'] = db_primary
+
+        if iface.miimon == 0:
+            info['miimon'] = 100
 
         if lagg['lagg_xmit_hash_policy']:
             # passing the xmit_hash_policy value needs to be lower-case
@@ -78,6 +83,13 @@ class InterfaceService(Service):
             if info['primary_interface'] is not None:
                 self.logger.info('Changing primary interface on %r to %s', name, info['primary_interface'])
                 iface.primary_interface = info['primary_interface']
+
+            if info['miimon'] is not None:
+                try:
+                    self.logger.info('Setting miimon on %r to %s ms', name, info['miimon'])
+                    iface.miimon = info['miimon']
+                except Exception:
+                    self.logger.exception('Failed to set miimon on %r, interface may not support MII monitoring', name)
 
             # be sure and bring the lagg back up after making changes
             iface.up()
