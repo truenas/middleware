@@ -1,26 +1,42 @@
 import copy
+import errno
 import os
 import re
+import subprocess
 
 import middlewared.sqlalchemy as sa
-
 from middlewared.api import api_method
 from middlewared.api.current import (
-    VMDeviceEntry, VMDeviceCreateArgs, VMDeviceCreateResult, VMDeviceUpdateArgs, VMDeviceUpdateResult,
-    VMDeviceDeleteArgs, VMDeviceDeleteResult, VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult,
-    VMDeviceIotypeChoicesArgs, VMDeviceIotypeChoicesResult, VMDeviceNicAttachChoicesArgs,
-    VMDeviceNicAttachChoicesResult, VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult,
+    VMDeviceConvertArgs,
+    VMDeviceConvertResult,
+    VMDeviceCreateArgs,
+    VMDeviceCreateResult,
+    VMDeviceEntry,
+    VMDeviceUpdateArgs,
+    VMDeviceUpdateResult,
+    VMDeviceDeleteArgs,
+    VMDeviceDeleteResult,
+    VMDeviceDiskChoicesArgs,
+    VMDeviceDiskChoicesResult,
+    VMDeviceIotypeChoicesArgs,
+    VMDeviceIotypeChoicesResult,
+    VMDeviceNicAttachChoicesArgs,
+    VMDeviceNicAttachChoicesResult,
+    VMDeviceBindChoicesArgs,
+    VMDeviceBindChoicesResult,
 )
-from middlewared.plugins.vm.devices.storage_devices import IOTYPE_CHOICES
-from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
-from middlewared.service import CallError, CRUDService, private
-from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.zfs.utils import has_internal_path
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.service import CallError, CRUDService, job, private
+from middlewared.service_exception import ValidationError
+from middlewared.utils import run
 
+from .devices.storage_devices import IOTYPE_CHOICES
 from .devices import DEVICES
 from .utils import ACTIVE_STATES
 
-
+VALID_DISK_FORMATS = ('qcow2', 'qed', 'raw', 'vdi', 'vhdx', 'vmdk')
 RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
 
 
@@ -42,6 +58,160 @@ class VMDeviceService(CRUDService):
         cli_namespace = 'service.vm.device'
         role_prefix = 'VM_DEVICE'
         entry = VMDeviceEntry
+
+    @private
+    def run_convert_cmd(self, cmd_args, job, progress_desc):
+        self.logger.info('Running command: %r', cmd_args)
+        progress_pattern = re.compile(r'(\d+\.\d+)')
+        try:
+            with subprocess.Popen(
+                cmd_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            ) as process:
+                stderr_data = []
+                while True:
+                    output = process.stdout.readline()
+                    if not output and process.poll() is not None:
+                        break
+
+                    if output:
+                        line = output.strip()
+                        progress_match = progress_pattern.search(line)
+                        if progress_match:
+                            try:
+                                progress_value = round(float(progress_match.group(1)))
+                                job.set_progress(progress_value, progress_desc)
+                            except ValueError:
+                                self.logger.warning('Invalid progress value: %r', progress_match.group(1))
+                        else:
+                            self.logger.debug('qemu-img output: %r', line)
+
+                remaining_stderr = process.stderr.read()
+                if remaining_stderr:
+                    stderr_data.append(remaining_stderr.strip())
+
+                return_code = process.wait()
+                if return_code != 0:
+                    stderr_msg = '\n'.join(stderr_data) if stderr_data else 'No error details available'
+                    raise CallError(f'qemu-img convert failed: {stderr_msg}', return_code)
+        except (OSError, subprocess.SubprocessError) as e:
+            raise CallError(f'Failed to execute qemu-img convert: {e}')
+
+    @private
+    def validate_convert_disk_image(self, dip, schema, converting_from_image_to_zvol=False):
+        if not os.path.isabs(dip):
+            raise ValidationError(schema, f'{dip!r} must be an absolute path', errno.EINVAL)
+        elif has_internal_path(dip):
+            raise ValidationError(schema, f'{dip!r} is in a protected system path', errno.EACCES)
+
+        if converting_from_image_to_zvol:
+            statpath = dip
+        else:
+            statpath = os.path.dirname(dip)
+
+        try:
+            st = self.middleware.call_sync('filesystem.stat', statpath)
+            if converting_from_image_to_zvol and st['type'] != 'FILE':
+                raise ValidationError(schema, f'{dip!r} is not a file', errno.EINVAL)
+            elif not converting_from_image_to_zvol and st['type'] != 'DIRECTORY':
+                raise ValidationError(schema, f'Export directory {statpath!r} is not a directory', errno.EINVAL)
+        except CallError as e:
+            if e.errno == errno.ENOENT:
+                if converting_from_image_to_zvol:
+                    raise ValidationError(schema, f'{statpath!r} does not exist', errno.ENOENT)
+            else:
+                raise e from None
+
+        return st
+
+    @private
+    def validate_convert_zvol(self, zvp, schema):
+        ptn = zvp.removeprefix('/dev/zvol/').replace('+', ' ')
+        ntp = os.path.join('/dev/zvol', ptn.replace(' ', '+'))
+        zv = self.middleware.call_sync(
+            'zfs.resource.query_impl',
+            {'paths': [ptn], 'properties': ['volsize']}
+        )
+        if not zv:
+            raise ValidationError(schema, f'{ptn!r} does not exist', errno.ENOENT)
+        elif zv[0]['type'] != 'VOLUME':
+            raise ValidationError(schema, f'{ptn!r} is not a volume', errno.EINVAL)
+        elif has_internal_path(ptn):
+            raise ValidationError(schema, f'{ptn!r} is in a protected system path', errno.EACCES)
+        elif not os.path.exists(ntp):
+            raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
+
+        return zv, ntp
+
+    @api_method(
+        VMDeviceConvertArgs,
+        VMDeviceConvertResult,
+        roles=['VM_DEVICE_WRITE']
+    )
+    @job(lock='vm.device.convert', lock_queue_size=1)
+    def convert(self, job, data):
+        """
+        Convert between disk images and ZFS volumes. Supported disk image formats \
+        are qcow2, qed, raw, vdi, vhdx, and vmdk. The conversion direction is determined \
+        automatically based on file extension.
+        """
+        schema = 'vm.device.convert'
+        # Determine conversion direction
+        source_is_image = data['source'].endswith(VALID_DISK_FORMATS)
+        dest_is_image = data['destination'].endswith(VALID_DISK_FORMATS)
+        if (source_is_image and dest_is_image):
+            raise ValidationError(
+                schema,
+                'One path must be a disk image and the other must be a ZFS volume',
+                errno.EINVAL
+            )
+
+        converting_from_image_to_zvol = False
+        if source_is_image:
+            schema += '.source'
+            source_image = data['source']
+            zvol = data['destination']
+            converting_from_image_to_zvol = True
+            progress_desc = "Convert to zvol progress"
+        else:
+            schema += '.destination'
+            source_image = data['destination']
+            zvol = data['source']
+            progress_desc = "Convert to disk image progress"
+
+        st = self.validate_convert_disk_image(source_image, schema, converting_from_image_to_zvol)
+        zv, abs_zvolpath = self.validate_convert_zvol(zvol, schema)
+
+        cmd_args = ['qemu-img', 'convert', '-p']
+        if converting_from_image_to_zvol:
+            if st['size'] > zv[0]['properties']['volsize']['value']:
+                raise ValidationError(schema, f'{zvol!r} is too small', errno.ENOSPC)
+            cmd_args.extend(['-O', 'raw', source_image, abs_zvolpath])
+        else:
+            dl = data['destination'].lower()
+            for fmt in VALID_DISK_FORMATS:
+                if dl.endswith(f'.{fmt}'):
+                    cmd_args.extend(['-f', 'raw', '-O', fmt, abs_zvolpath, source_image])
+                    break
+            else:
+                raise ValidationError(
+                    schema,
+                    f'Destination must have a valid format extension: {", ".join(VALID_DISK_FORMATS)}',
+                    errno.EINVAL
+                )
+
+        self.run_convert_cmd(cmd_args, job, progress_desc)
+        if not converting_from_image_to_zvol:
+            # set the user/group owner to the uid/gid of the parent directory
+            chown_job = self.middleware.call_sync(
+                'filesystem.chown',
+                {'path': data['destination'], 'uid': st['uid'], 'gid': st['gid']}
+            )
+            chown_job.wait_sync(raise_error=True)
+
+        return True
 
     @api_method(VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult, roles=['VM_DEVICE_READ'])
     async def disk_choices(self):
