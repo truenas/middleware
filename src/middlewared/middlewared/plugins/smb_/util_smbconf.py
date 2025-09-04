@@ -44,7 +44,6 @@ class TrueNASVfsObjects(enum.StrEnum):
     FRUIT = 'fruit'
     STREAMS_XATTR = 'streams_xattr'
     SHADOW_COPY_ZFS = 'shadow_copy_zfs'
-    ACL_XATTR = 'acl_xattr'
     IXNAS = 'ixnas'
     WINMSA = 'winmsa'
     RECYCLE = 'recycle'
@@ -96,7 +95,8 @@ def __parse_share_fs_acl(share_path: str, vfs_objects: set) -> None:
 
     match (acltype := path_get_acltype(share_path)):
         case FS_ACL_Type.POSIX1E:
-            vfs_objects.add(TrueNASVfsObjects.ACL_XATTR)
+            # We're relying on default samba POSIX ACL processing to handle ACLs.
+            pass
         case FS_ACL_Type.NFS4:
             vfs_objects.add(TrueNASVfsObjects.IXNAS)
         case FS_ACL_Type.DISABLED:
