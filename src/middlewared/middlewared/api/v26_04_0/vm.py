@@ -121,6 +121,8 @@ class VMCreate(VMEntry):
     id: Excluded = excluded_field()
     display_available: Excluded = excluded_field()
     devices: Excluded = excluded_field()
+    bootloader_ovmf: str | None = Field(default=None, examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'])
+    """OVMF firmware file to use for UEFI boot."""
 
     @field_validator('uuid')
     def validate_uuid(cls, value):
@@ -143,7 +145,8 @@ class VMCreateResult(BaseModel):
 
 
 class VMUpdate(VMCreate, metaclass=ForUpdateMetaclass):
-    pass
+    bootloader_ovmf: Excluded = excluded_field()
+    enable_secure_boot: Excluded = excluded_field()
 
 
 class VMUpdateArgs(BaseModel):
