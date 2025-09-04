@@ -66,7 +66,7 @@ class DISPLAY(Device):
                     'children': [create_element(
                         'resolution', x=self.resolution().split('x')[0], y=self.resolution().split('x')[-1]
                     )]
-                })
+                }, vgamem=str(64*1024), ram=str(128*1024), vram=str(64*1024))
             ]
         })
 
