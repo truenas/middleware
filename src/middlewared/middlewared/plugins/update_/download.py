@@ -40,7 +40,7 @@ class UpdateService(Service):
 
             update_status = self.middleware.call_sync('update.status_internal', True)
             if update_status['error']:
-                raise CallError(f'Error retrieving update status: {update_status["error"]}', errno.ENETUNREACH)
+                raise CallError(f'Error retrieving update status: {update_status["error"]}', errno.ENOPKG)
 
             if train is None and version is None:
                 if update_status['status']['new_version'] is None:
