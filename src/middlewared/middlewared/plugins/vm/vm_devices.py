@@ -161,7 +161,9 @@ class VMDeviceService(CRUDService):
         # Determine conversion direction
         source_is_image = data['source'].endswith(VALID_DISK_FORMATS)
         dest_is_image = data['destination'].endswith(VALID_DISK_FORMATS)
-        if (source_is_image and dest_is_image):
+        if (source_is_image and dest_is_image) or (not source_is_image and not dest_is_image):
+            # could have provided the same value for source and destination
+            # OR neither one of the fields specified are the disk image
             raise ValidationError(
                 schema,
                 'One path must be a disk image and the other must be a ZFS volume',
