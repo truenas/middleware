@@ -388,7 +388,18 @@ class DiskEntry:
     def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry] | None:
         """Return a tuple of `GptPartEntry` objects for any
         GPT partitions written to the disk."""
-        return read_gpt(dev_fd or self.devpath, self.lbs)
+        try:
+            return read_gpt(dev_fd or self.devpath, self.lbs)
+        except Exception:
+            # when we access the "identifier" attribute of the disk object
+            # we try to read partitions on the devices which requires
+            # opening the underlying device. Our users run TrueNAS
+            # on extravagant hardware and, sometimes, the devices dont
+            # respond very well to even opening them in RD_ONLY mode.
+            # For example, opening an empty sd-card reader device
+            # raises errno 123 (no medimum found). In this scenario
+            # and any other, we should not crash here.
+            pass
 
     def wipe_quick(self, dev_fd: int | None = None) -> None:
         """Write 0's to the first and last 32MiB of the disk.
