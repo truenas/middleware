@@ -52,7 +52,8 @@ def test_cdrom_xml(vm_data, expected_xml):
         },
     }]}, '<devices><graphics type="spice" port="5912"><listen type="address" address="0.0.0.0" /></graphics>'
          '<controller type="usb" model="nec-xhci" /><input type="tablet" bus="usb" /><video>'
-         '<model type="qxl"><resolution x="1024" y="768" /></model></video><channel type="spicevmc">'
+         '<model type="qxl" vgamem="65536" ram="131072" vram="65536"><resolution x="1024" y="768" /></model>'
+         '</video><channel type="spicevmc">'
          f'<target type="virtio" name="com.redhat.spice.0" /></channel>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
 ])
