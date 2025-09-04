@@ -287,7 +287,7 @@ class DiskEntry:
             return "SNTL"
         return None
 
-    def __run_smartctl_cmd_impl(self, cmd: list[str]) -> str:
+    def __run_smartctl_cmd_impl(self, cmd: list[str], raise_alert: bool = True) -> str:
         if tl := self.translation:
             if tl == "SATL":
                 cmd.extend(["-d", "sat"])
@@ -303,10 +303,11 @@ class DiskEntry:
             errors="ignore",
         )
         if (cp.returncode & 0b11) != 0:
-            raise OSError(f"{cmd!r} failed for {self.name}:\n{cp.stderr}")
+            if raise_alert:
+                raise OSError(f"{cmd!r} failed for {self.name} ({cp.returncode!r}):\n{cp.stderr}")
         return cp.stdout
 
-    def smartctl_info(self, return_json: bool = False) -> dict | str:
+    def smartctl_info(self, return_json: bool = False, raise_alert: bool = True) -> dict | str:
         """Return smartctl -x information.
 
         Args:
@@ -320,20 +321,20 @@ class DiskEntry:
         if return_json:
             cmd.extend(["-jc"])
 
-        stdout = self.__run_smartctl_cmd_impl(cmd)
+        stdout = self.__run_smartctl_cmd_impl(cmd, raise_alert)
         if return_json:
             return json.loads(stdout)
         else:
             return stdout
 
     def smartctl_test(
-        self, ttype: typing.Literal["long", "short", "offline", "conveyance"]
+        self, ttype: typing.Literal["long", "short", "offline", "conveyance"], raise_alert: bool = True
     ) -> None:
         """Run a SMART test.
 
         ttype: str The type of SMART test to be ran.
         """
-        self.__run_smartctl_cmd_impl(["smartctl", self.devpath, "-t", ttype])
+        self.__run_smartctl_cmd_impl(["smartctl", self.devpath, "-t", ttype], raise_alert)
 
     def temp(self) -> TempEntry:
         """Return temperature information as reported via sysfs.

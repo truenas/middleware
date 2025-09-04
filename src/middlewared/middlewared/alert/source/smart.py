@@ -22,6 +22,7 @@ class SmartInfo:
     smart_testfail: bool = False
     spare_block_reserve: int | None = None
     erase_count: int | None = None
+    unknown_device: bool = False
 
 
 class SMARTUncorrectedErrorsAlertClass(AlertClass):
@@ -111,12 +112,19 @@ class SMARTAlertSource(ThreadedAlertSource):
         )
 
     def parse_smart_info(self, data: dict) -> SmartInfo:
-        if data["device"]["protocol"] == "ATA":
-            return self.parse_ata_smart_info(data)
-        elif data["device"]["protocol"] == "SCSI":
-            return self.parse_scsi_smart_info(data)
-        elif data["device"]["protocol"] == "NVMe":
-            return self.parse_nvme_smart_info(data)
+        proto = data.get("device", {}).get("protocol")
+        if not proto:
+            return SmartInfo(unknown_device=True)
+
+        match proto:
+            case "ATA":
+                return self.parse_ata_smart_info(data)
+            case "SCSI":
+                return self.parse_scsi_smart_info(data)
+            case "NVMe":
+                return self.parse_nvme_smart_info(data)
+            case _:
+                return SmartInfo(unknown_device=True)
 
     def micron_phison_check(self, sijson, si, is_ent):
         alerts = list()
@@ -180,8 +188,12 @@ class SMARTAlertSource(ThreadedAlertSource):
                 continue
 
             try:
-                sijson = disk.smartctl_info(return_json=True)
+                sijson = disk.smartctl_info(return_json=True, raise_alert=False)
                 parsed = self.parse_smart_info(sijson)
+                if parsed.unknown_device:
+                    # empty SD card readers, USB bridges, etc
+                    continue
+
                 if parsed.uncorrected_errors:
                     alerts.append(
                         Alert(
@@ -202,6 +214,6 @@ class SMARTAlertSource(ThreadedAlertSource):
                     )
                 alerts.extend(self.micron_phison_check(sijson, parsed, is_ent))
             except Exception:
-                self.logger.exception("Unexpected failure parsing SMART info")
+                self.middleware.logger.exception("Unexpected failure parsing SMART info")
                 continue
         return alerts
