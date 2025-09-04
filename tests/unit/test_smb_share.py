@@ -152,7 +152,6 @@ def test__base_smb_posixacl(posixacl_dataset):
     assert conf['vfs objects'] == [
         TrueNASVfsObjects.STREAMS_XATTR,
         TrueNASVfsObjects.SHADOW_COPY_ZFS,
-        TrueNASVfsObjects.ACL_XATTR,
         TrueNASVfsObjects.ZFS_CORE,
         TrueNASVfsObjects.IO_URING
     ]
