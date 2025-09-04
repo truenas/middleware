@@ -1,8 +1,10 @@
 import collections
 import contextlib
 import dataclasses
+import errno
 import functools
 import json
+import logging
 import os
 import re
 import string
@@ -12,6 +14,8 @@ import uuid
 
 from .disk_io import read_gpt, wipe_disk_quick, create_gpt_partition
 from .gpt_parts import GptPartEntry, PART_TYPES
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
@@ -390,16 +394,19 @@ class DiskEntry:
         GPT partitions written to the disk."""
         try:
             return read_gpt(dev_fd or self.devpath, self.lbs)
-        except Exception:
-            # when we access the "identifier" attribute of the disk object
-            # we try to read partitions on the devices which requires
-            # opening the underlying device. Our users run TrueNAS
-            # on extravagant hardware and, sometimes, the devices dont
-            # respond very well to even opening them in RD_ONLY mode.
-            # For example, opening an empty sd-card reader device
-            # raises errno 123 (no medimum found). In this scenario
-            # and any other, we should not crash here.
-            pass
+        except Exception as e:
+            if isinstance(e, OSError) and e.errno == errno.ENOMEDIUM:
+                # when we access the "identifier" attribute of the disk object
+                # we try to read partitions on the devices which requires
+                # opening the underlying device. Our users run TrueNAS
+                # on extravagant hardware and, sometimes, the devices dont
+                # respond very well to even opening them in RD_ONLY mode.
+                # For example, opening an empty sd-card reader device
+                # raises errno 123 (no medimum found). In this scenario
+                # and any other, we should not crash here.
+                pass
+            else:
+                logger.exception("Unexpected error reading partitions for device: %r", self.devpath)
 
     def wipe_quick(self, dev_fd: int | None = None) -> None:
         """Write 0's to the first and last 32MiB of the disk.
