@@ -114,7 +114,8 @@ class ServiceService(CRUDService):
     @api_method(
         ServiceUpdateArgs,
         ServiceUpdateResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE',
+               'SHARING_FTP_WRITE', 'SHARING_NVME_TARGET_WRITE'],
         audit='Update service configuration',
         audit_callback=True,
         pass_app=True,
@@ -146,7 +147,8 @@ class ServiceService(CRUDService):
     @api_method(
         ServiceControlArgs,
         ServiceControlResult,
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE',
+               'SHARING_FTP_WRITE', 'SHARING_NVME_TARGET_WRITE'],
         pass_app=True,
         pass_app_rest=True,
         audit='Service Control:',
