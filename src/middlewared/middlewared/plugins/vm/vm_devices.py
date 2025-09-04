@@ -110,6 +110,14 @@ class VMDeviceService(CRUDService):
             if converting_from_image_to_zvol:
                 if st['type'] != 'FILE':
                     raise ValidationError(schema, f'{dip!r} is not a file', errno.EINVAL)
+
+                vfs = self.middleware.call_sync('filesystem.statfs', dip)
+                if has_internal_path(vfs['source']):
+                    raise ValidationError(
+                        schema,
+                        f'{dip!r} is in a protected system path ({vfs["source"]})',
+                        errno.EACCES
+                    )
             else:
                 # if converting from a zvol to a disk image,
                 # qemu-img will create the file if it doesn't
@@ -126,26 +134,23 @@ class VMDeviceService(CRUDService):
             else:
                 raise e from None
 
-        vfs = self.middleware.call_sync('filesystem.statfs', dip)
-        if has_internal_path(vfs['source']):
-            raise ValidationError(
-                schema,
-                f'{dip!r} is in a protected system path ({vfs["source"]})',
-                errno.EACCES
-            )
-
         if not converting_from_image_to_zvol:
             sp = os.path.dirname(dip)
             try:
-                dst = self.middleware.call_sync('filesystem.stat', os.path.dirname(sp))
+                dst = self.middleware.call_sync('filesystem.statfs', os.path.dirname(sp))
                 if dst['type'] != 'DIRECTORY':
                     raise ValidationError(schema, f'{sp!r} is not a directory', errno.EINVAL)
+                elif has_internal_path(dst['source']):
+                    raise ValidationError(
+                        schema,
+                        f'{sp!r} is in a protected system path ({dst["source"]})',
+                        errno.EACCES
+                    )
             except CallError as e:
                 if e.errno == errno.ENOENT:
                     raise ValidationError(schema, f'{sp!r} does not exist', errno.ENOENT)
                 else:
                     raise e from None
-
         return st
 
     @private
