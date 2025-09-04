@@ -101,7 +101,7 @@ class VMDeviceService(CRUDService):
 
     @private
     def validate_convert_disk_image(self, dip, schema, converting_from_image_to_zvol=False):
-        if not dip.startswith("/mnt/"):
+        if not dip.startswith("/mnt/") or os.path.dirname(dip) == "/mnt":
             raise ValidationError(schema, f'{dip!r} is an invalid location', errno.EINVAL)
 
         st = None
