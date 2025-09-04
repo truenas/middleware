@@ -101,28 +101,50 @@ class VMDeviceService(CRUDService):
 
     @private
     def validate_convert_disk_image(self, dip, schema, converting_from_image_to_zvol=False):
-        if not os.path.isabs(dip):
-            raise ValidationError(schema, f'{dip!r} must be an absolute path', errno.EINVAL)
-        elif has_internal_path(dip):
-            raise ValidationError(schema, f'{dip!r} is in a protected system path', errno.EACCES)
+        if not dip.startswith("/mnt/"):
+            raise ValidationError(schema, f'{dip!r} is an invalid location', errno.EINVAL)
 
-        if converting_from_image_to_zvol:
-            statpath = dip
-        else:
-            statpath = os.path.dirname(dip)
-
+        st = None
         try:
-            st = self.middleware.call_sync('filesystem.stat', statpath)
-            if converting_from_image_to_zvol and st['type'] != 'FILE':
-                raise ValidationError(schema, f'{dip!r} is not a file', errno.EINVAL)
-            elif not converting_from_image_to_zvol and st['type'] != 'DIRECTORY':
-                raise ValidationError(schema, f'Export directory {statpath!r} is not a directory', errno.EINVAL)
+            st = self.middleware.call_sync('filesystem.stat', dip)
+            if converting_from_image_to_zvol:
+                if st['type'] != 'FILE':
+                    raise ValidationError(schema, f'{dip!r} is not a file', errno.EINVAL)
+            else:
+                # if converting from a zvol to a disk image,
+                # qemu-img will create the file if it doesn't
+                # exist OR it will OVERWRITE the file that exists
+                raise ValidationError(
+                    schema,
+                    f'{dip!r} already exists and would be overwritten',
+                    errno.EEXIST
+                )
         except CallError as e:
             if e.errno == errno.ENOENT:
                 if converting_from_image_to_zvol:
-                    raise ValidationError(schema, f'{statpath!r} does not exist', errno.ENOENT)
+                    raise ValidationError(schema, f'{dip!r} does not exist', errno.ENOENT)
             else:
                 raise e from None
+
+        vfs = self.middleware.call_sync('filesystem.statfs', dip)
+        if has_internal_path(vfs['source']):
+            raise ValidationError(
+                schema,
+                f'{dip!r} is in a protected system path ({vfs["source"]})',
+                errno.EACCES
+            )
+
+        if not converting_from_image_to_zvol:
+            sp = os.path.dirname(dip)
+            try:
+                dst = self.middleware.call_sync('filesystem.stat', os.path.dirname(sp))
+                if dst['type'] != 'DIRECTORY':
+                    raise ValidationError(schema, f'{sp!r} is not a directory', errno.EINVAL)
+            except CallError as e:
+                if e.errno == errno.ENOENT:
+                    raise ValidationError(schema, f'{sp!r} does not exist', errno.ENOENT)
+                else:
+                    raise e from None
 
         return st
 
@@ -188,7 +210,7 @@ class VMDeviceService(CRUDService):
 
         cmd_args = ['qemu-img', 'convert', '-p']
         if converting_from_image_to_zvol:
-            if st['size'] > zv[0]['properties']['volsize']['value']:
+            if st and st['size'] > zv[0]['properties']['volsize']['value']:
                 raise ValidationError(schema, f'{zvol!r} is too small', errno.ENOSPC)
             cmd_args.extend(['-O', 'raw', source_image, abs_zvolpath])
         else:
@@ -205,7 +227,7 @@ class VMDeviceService(CRUDService):
                 )
 
         self.run_convert_cmd(cmd_args, job, progress_desc)
-        if not converting_from_image_to_zvol:
+        if not converting_from_image_to_zvol and st:
             # set the user/group owner to the uid/gid of the parent directory
             chown_job = self.middleware.call_sync(
                 'filesystem.chown',
