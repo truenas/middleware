@@ -19,6 +19,26 @@ __all__ = [
 ]
 
 
+class SyslogServer(BaseModel):
+    host: str
+    """Remote syslog server DNS hostname or IP address.
+
+    Nonstandard port numbers can be used by appending a colon and port number to the hostname, like \
+    mysyslogserver:1928.
+
+    Port 514 is used by default for TCP and UDP transports as per RFC3164; port 6514 is used by default for TLS \
+    transport as per RFC5425.
+    """
+    transport: Literal['UDP', 'TCP', 'TLS'] = 'UDP'
+    """Transport Protocol for the remote system log server connection."""
+    tls_certificate: int | None = None
+    """Applies only if `transport` is "TLS".
+
+    ID of the local certificate to send for mutual TLS (mTLS) connections. `null` indicates one-way TLS in which only \
+    the server identified by `host` will need to provide a certificate.
+    """
+
+
 class SystemAdvancedEntry(BaseModel):
     id: int
     """Placeholder identifier.  Not used as there is only one."""
@@ -64,17 +84,10 @@ class SystemAdvancedEntry(BaseModel):
     """SED (Self-Encrypting Drive) user type for drive encryption."""
     sysloglevel: Literal['F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG']
     """Minimum log level for syslog messages. F_EMERG is most critical, F_DEBUG is least critical."""
-    syslogserver: str = NotRequired
-    """Remote syslog server DNS hostname or IP address. Nonstandard port numbers can be used by adding \
-    a colon and the port number to the hostname, like mysyslogserver:1928.  Setting this field enables \
-    the remote syslog function."""
-    syslog_transport: Literal['UDP', 'TCP', 'TLS']
-    """Transport Protocol for the remote system log server connection. \
-    Choosing Transport Layer Security (TLS) also requires selecting a preconfigured system Certificate."""
-    syslog_tls_certificate: int | None
-    """Certificate ID for TLS-encrypted syslog connections or `null` for no certificate."""
+    syslogservers: list[SyslogServer] = Field(default=[], max_length=2)
+    """Configurations for up to two remote syslog servers."""
     syslog_audit: bool = NotRequired
-    """The remote syslog server will also receive audit messages."""
+    """The remote syslog server(s) will also receive audit messages."""
     isolated_gpu_pci_ids: list[str]
     """List of GPU PCI IDs to isolate from the host system for VM passthrough."""
     kernel_extra_options: str
@@ -84,6 +97,11 @@ class SystemAdvancedEntry(BaseModel):
 class SystemAdvancedUpdate(SystemAdvancedEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     anonstats_token: Excluded = excluded_field()
+    syslogservers: list[SyslogServer] = Field(default=[], max_length=2)
+    """Configurations for up to two remote syslog servers.
+
+    **If provided, will overwrite the entire array in the existing entry.**
+    """
     isolated_gpu_pci_ids: Excluded = excluded_field()
     sed_passwd: Secret[str]
     """Password for SED (Self-Encrypting Drive) global unlock."""
