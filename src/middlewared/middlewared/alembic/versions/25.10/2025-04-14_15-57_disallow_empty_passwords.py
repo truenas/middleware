@@ -6,6 +6,7 @@ Create Date: 2025-04-14 15:57:08.141738+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -16,7 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute('UPDATE account_bsdusers SET bsdusr_password_disabled = TRUE WHERE bsdusr_unixhash = "*"')
+    op.execute(text('UPDATE account_bsdusers SET bsdusr_password_disabled = TRUE WHERE bsdusr_unixhash = "*"'))
 
 
 def downgrade():

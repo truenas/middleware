@@ -28,9 +28,9 @@ def upgrade():
         if attributes := decrypt(c["attributes"]):
             attributes = json.loads(attributes)
             del attributes["cipher"]
-            conn.execute("UPDATE system_keychaincredential SET attributes = ? WHERE id = ?", (
-                encrypt(json.dumps(attributes)), c["id"]
-            ))
+            conn.execute(text("UPDATE system_keychaincredential SET attributes = :attributes WHERE id = :id"), {
+                'attributes': encrypt(json.dumps(attributes)), 'id': c["id"]
+            })
     # ### end Alembic commands ###
 
 

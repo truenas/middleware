@@ -7,6 +7,7 @@ Create Date: 2021-12-10 13:36:47.357888+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('services_ftp', schema=None) as batch_op:
         batch_op.add_column(sa.Column('ftp_timeout_notransfer', sa.Integer(), nullable=True))
 
-    op.execute("UPDATE services_ftp SET ftp_timeout_notransfer = 300")
+    op.execute(text("UPDATE services_ftp SET ftp_timeout_notransfer = 300"))
 
     with op.batch_alter_table('services_ftp', schema=None) as batch_op:
         batch_op.alter_column('ftp_timeout_notransfer', nullable=False)

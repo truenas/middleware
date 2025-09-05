@@ -7,6 +7,7 @@ Create Date: 2019-11-19 20:41:34.620255+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -63,8 +64,8 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_services_openvpnserver_root_ca_id'), ['root_ca_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_services_openvpnserver_server_certificate_id'), ['server_certificate_id'], unique=False)
 
-    op.execute("INSERT INTO services_services (srv_service, srv_enable) VALUES ('openvpn_client', 0)")
-    op.execute("INSERT INTO services_services (srv_service, srv_enable) VALUES ('openvpn_server', 0)")
+    op.execute(text("INSERT INTO services_services (srv_service, srv_enable) VALUES ('openvpn_client', 0)"))
+    op.execute(text("INSERT INTO services_services (srv_service, srv_enable) VALUES ('openvpn_server', 0)"))
     # ### end Alembic commands ###
 
 

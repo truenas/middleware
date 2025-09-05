@@ -81,7 +81,8 @@ def upgrade():
                 disks = [
                     disk["disk_id"]
                     for disk in map(dict, conn.execute(
-                        f"SELECT * FROM tasks_smarttest_smarttest_disks WHERE smarttest_id = ?", [row["id"]],
+                        text("SELECT * FROM tasks_smarttest_smarttest_disks WHERE smarttest_id = :smarttest_id"), 
+                        {"smarttest_id": row["id"]}
                     ).fetchall())
                 ]
 
@@ -109,10 +110,15 @@ def upgrade():
             if row["smarttest_desc"]:
                 description += ": " + row["smarttest_desc"]
 
-            conn.execute("INSERT INTO tasks_cronjob (cron_minute, cron_hour, cron_daymonth, cron_month, cron_dayweek, "
-                         "cron_user, cron_command, cron_description, cron_enabled, cron_stdout, cron_stderr) VALUES ("
-                         "'00', ?, ?, ?, ?, 'root', ?, ?, 1, 0, 0)", [hour, daymonth, month, dayweek, command,
-                                                                      description])
+            conn.execute(
+                text("INSERT INTO tasks_cronjob (cron_minute, cron_hour, cron_daymonth, cron_month, cron_dayweek, "
+                     "cron_user, cron_command, cron_description, cron_enabled, cron_stdout, cron_stderr) VALUES "
+                     "('00', :hour, :daymonth, :month, :dayweek, 'root', :command, :description, 1, 0, 0)"), 
+                {
+                    "hour": hour, "daymonth": daymonth, "month": month, "dayweek": dayweek, 
+                    "command": command, "description": description
+                }
+            )
         except Exception:
             raise
 
@@ -128,7 +134,7 @@ def upgrade():
         batch_op.drop_column('disk_informational')
         batch_op.drop_column('disk_difference')
 
-    op.execute("DELETE FROM services_services WHERE srv_service = 'smartd'")
+    op.execute(text("DELETE FROM services_services WHERE srv_service = 'smartd'"))
     # ### end Alembic commands ###
 
 

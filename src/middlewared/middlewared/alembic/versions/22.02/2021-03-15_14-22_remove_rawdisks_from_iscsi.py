@@ -27,7 +27,7 @@ def upgrade():
     for disk_id, in conn.execute(text(f'SELECT id FROM {main_table} WHERE {main_col} = "Disk"')).fetchall():
         # delete the target to extent associations first
         for id_, tar_id in conn.execute(
-            f'SELECT id, iscsi_target_id FROM {tartoext_table} WHERE iscsi_extent_id = {disk_id}'
+            text(f'SELECT id, iscsi_target_id FROM {tartoext_table} WHERE iscsi_extent_id = {disk_id}')
         ).fetchall():
             tar_ids.add(tar_id)
             conn.execute(text(f'DELETE FROM {tartoext_table} WHERE id = {id_}'))

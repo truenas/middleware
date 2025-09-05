@@ -7,6 +7,7 @@ Create Date: 2020-05-29 14:52:52.049932+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -17,7 +18,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')")
+    op.execute(text("REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')"))
 
 
 def downgrade():

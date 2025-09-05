@@ -7,6 +7,7 @@ Create Date: 2019-10-07 08:39:20.884714+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('system_failover', schema=None) as batch_op:
         batch_op.add_column(sa.Column('master_node', sa.String(length=1), nullable=True))
 
-    op.execute("UPDATE system_failover SET master_node = 'A'")
+    op.execute(text("UPDATE system_failover SET master_node = 'A'"))
 
     with op.batch_alter_table('system_failover', schema=None) as batch_op:
         batch_op.alter_column('master_node',

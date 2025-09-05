@@ -7,6 +7,7 @@ Create Date: 2023-10-02 19:31:49.067706+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -31,6 +32,6 @@ def upgrade():
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.add_column(sa.Column('adv_syslog_audit', sa.Boolean(), nullable=True))
 
-    conn.execute('UPDATE system_advanced SET adv_syslog_audit = ?', False)
+    conn.execute(text('UPDATE system_advanced SET adv_syslog_audit = :audit'), {'audit': False})
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.alter_column('adv_syslog_audit', existing_type=sa.Boolean(), nullable=False)

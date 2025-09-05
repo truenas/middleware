@@ -7,6 +7,7 @@ Create Date: 2023-09-19 16:05:32.676987+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import json
 
 
@@ -25,7 +26,7 @@ def upgrade():
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.add_column(sa.Column('cifs_audit', sa.TEXT(), nullable=True))
 
-    conn.execute('UPDATE sharing_cifs_share SET cifs_audit = ?', AUDIT_CONFIG)
+    conn.execute(text('UPDATE sharing_cifs_share SET cifs_audit = :config'), {'config': AUDIT_CONFIG})
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.alter_column('cifs_audit', existing_type=sa.TEXT(), nullable=False)
 

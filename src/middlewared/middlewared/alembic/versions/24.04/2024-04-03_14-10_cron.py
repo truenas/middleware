@@ -38,7 +38,7 @@ def upgrade():
                     else:
                         value = '1'  # No luck in guessing the correct value, here is our best guess
 
-                    conn.execute(f"UPDATE {table} SET {k} = ? WHERE id = ?", [value, row["id"]])
+                    conn.execute(text(f"UPDATE {table} SET {k} = :value WHERE id = :id"), {"value": value, "id": row["id"]})
 
 
 

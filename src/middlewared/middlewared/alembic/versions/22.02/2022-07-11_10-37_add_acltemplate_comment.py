@@ -9,6 +9,7 @@ import json
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -143,10 +144,10 @@ def upgrade():
     for entry in name_comment:
         template_name, template_comment = entry
         conn.execute(
-            "UPDATE filesystem_acltemplate "
-            "SET acltemplate_comment = ? "
-            "WHERE acltemplate_name = ?",
-            template_comment, template_name
+            text("UPDATE filesystem_acltemplate "
+                 "SET acltemplate_comment = :comment "
+                 "WHERE acltemplate_name = :name"),
+            {'comment': template_comment, 'name': template_name}
         )
 
     comment = "Template restricting access to local and domain administrators."
@@ -158,9 +159,11 @@ def upgrade():
             "acltemplate_builtin": True,
             "acltemplate_comment": comment,
         }
+        columns = ','.join(entry.keys())
+        placeholders = ','.join([f":{key}" for key in entry.keys()])
         conn.execute(
-            f"INSERT INTO filesystem_acltemplate ({','.join(entry.keys())}) VALUES ({','.join(['?'] * len(entry))})",
-            tuple(entry.values()),
+            text(f"INSERT INTO filesystem_acltemplate ({columns}) VALUES ({placeholders})"),
+            entry
         )
 
 

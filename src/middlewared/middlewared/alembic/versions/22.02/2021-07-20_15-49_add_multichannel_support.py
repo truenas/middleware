@@ -7,6 +7,7 @@ Create Date: 2021-07-20 15:49:54.447479+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('services_cifs', schema=None) as batch_op:
         batch_op.add_column(sa.Column('cifs_srv_multichannel', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE services_cifs SET cifs_srv_multichannel = 0")
+    op.execute(text("UPDATE services_cifs SET cifs_srv_multichannel = 0"))
 
     with op.batch_alter_table('services_cifs', schema=None) as batch_op:
         batch_op.alter_column('cifs_srv_multichannel', existing_type=sa.BOOLEAN(), nullable=False)

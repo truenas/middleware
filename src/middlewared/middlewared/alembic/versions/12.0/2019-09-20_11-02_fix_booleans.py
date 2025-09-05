@@ -22,8 +22,8 @@ def upgrade():
     for table_name, in conn.execute(text("SELECT name FROM sqlite_master WHERE type = 'table'")).fetchall():
         for column in conn.execute(text(f"PRAGMA TABLE_INFO('{table_name}')")):
             if column["type"].lower() in ("bool", "boolean"):
-                op.execute(f"UPDATE {table_name} SET {column['name']} = 1 WHERE {column['name']} IN ('1', 'true') COLLATE NOCASE")
-                op.execute(f"UPDATE {table_name} SET {column['name']} = 0 WHERE {column['name']} != 1 AND {column['name']} IS NOT NULL")
+                conn.execute(text(f"UPDATE {table_name} SET {column['name']} = 1 WHERE {column['name']} IN ('1', 'true') COLLATE NOCASE"))
+                conn.execute(text(f"UPDATE {table_name} SET {column['name']} = 0 WHERE {column['name']} != 1 AND {column['name']} IS NOT NULL"))
 
 
 def downgrade():

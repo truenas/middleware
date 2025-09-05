@@ -28,9 +28,9 @@ def upgrade():
 
     for device_id, device in devices.items():
         device['iotype'] = 'THREADS'
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
-            json.dumps(device), device_id
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attrs WHERE id = :id"), {
+            "attrs": json.dumps(device), "id": device_id
+        })
 
 
 def downgrade():

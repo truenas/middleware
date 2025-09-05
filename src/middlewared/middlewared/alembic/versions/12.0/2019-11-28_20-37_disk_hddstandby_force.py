@@ -7,6 +7,7 @@ Create Date: 2019-11-28 20:37:01.292027+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('storage_disk', schema=None) as batch_op:
         batch_op.add_column(sa.Column('disk_hddstandby_force', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE storage_disk SET disk_hddstandby_force = 0")
+    op.execute(text("UPDATE storage_disk SET disk_hddstandby_force = 0"))
 
     with op.batch_alter_table('storage_disk', schema=None) as batch_op:
         batch_op.alter_column('disk_hddstandby_force',

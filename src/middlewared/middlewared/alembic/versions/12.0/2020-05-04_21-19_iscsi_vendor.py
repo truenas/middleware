@@ -24,9 +24,9 @@ def upgrade():
 
     conn = op.get_bind()
     for extent in conn.execute(text("SELECT * FROM services_iscsitargetextent")).fetchall():
-        conn.execute("UPDATE services_iscsitargetextent SET iscsi_target_extent_vendor = ? WHERE id = ?", (
-            'FreeBSD' if extent['iscsi_target_extent_legacy'] else None, extent['id']
-        ))
+        conn.execute(text("UPDATE services_iscsitargetextent SET iscsi_target_extent_vendor = :vendor WHERE id = :id"), {
+            'vendor': 'FreeBSD' if extent['iscsi_target_extent_legacy'] else None, 'id': extent['id']
+        })
 
     with op.batch_alter_table('services_iscsitargetextent', schema=None) as batch_op:
         batch_op.drop_column('iscsi_target_extent_legacy')

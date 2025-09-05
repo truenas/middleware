@@ -29,12 +29,13 @@ def upgrade():
             conn.execute(text('''
                 SELECT id, int_interface
                 FROM network_interfaces
-                WHERE id > ? AND int_interface = ?
+                WHERE id > :id1 AND int_interface = :name1
                 ORDER BY id ASC
-            ''', (id1, name1)).fetchall()
+            '''), {"id1": id1, "name1": name1}).fetchall()
         ):
             conn.execute(
-                'UPDATE network_interfaces SET int_interface = ? WHERE id = ?', (f'{name2}_{i + 1}', id2)
+                text('UPDATE network_interfaces SET int_interface = :interface WHERE id = :id'), 
+                {"interface": f'{name2}_{i + 1}', "id": id2}
             )
             ignorelist.add(id2)
 

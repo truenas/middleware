@@ -28,9 +28,9 @@ def upgrade():
     preferred_trains = json.loads(official_catalog['preferred_trains'])
     if 'community' not in preferred_trains:
         preferred_trains.append('community')
-        conn.execute("UPDATE services_catalog SET preferred_trains = ? WHERE label = ?", (
-            json.dumps(preferred_trains), official_catalog['label']
-        ))
+        conn.execute(text("UPDATE services_catalog SET preferred_trains = :trains WHERE label = :label"), {
+            "trains": json.dumps(preferred_trains), "label": official_catalog['label']
+        })
 
     # ### end Alembic commands ###
 

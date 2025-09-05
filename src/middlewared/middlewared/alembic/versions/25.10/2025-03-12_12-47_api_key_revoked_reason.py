@@ -7,6 +7,7 @@ Create Date: 2025-03-12 12:47:32.110298+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('account_api_key', schema=None) as batch_op:
         batch_op.add_column(sa.Column('revoked_reason', sa.Text(), nullable=True))
 
-    op.execute("UPDATE account_api_key SET revoked_reason = 'Unknown reason' WHERE expiry = -1")
+    op.execute(text("UPDATE account_api_key SET revoked_reason = 'Unknown reason' WHERE expiry = -1"))
     # ### end Alembic commands ###
 
 

@@ -8,6 +8,7 @@ Create Date: 2020-07-16 09:41:58.110396+00:00
 from alembic import op
 import json
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -22,7 +23,7 @@ def upgrade():
     with op.batch_alter_table('network_globalconfiguration', schema=None) as batch_op:
         batch_op.add_column(sa.Column('gc_activity', sa.TEXT(), nullable=True))
 
-    op.execute("UPDATE network_globalconfiguration SET gc_activity = '{\"type\": \"DENY\", \"activities\": []}'")
+    op.execute(text("UPDATE network_globalconfiguration SET gc_activity = '{\"type\": \"DENY\", \"activities\": []}'"))
 
     with op.batch_alter_table('network_globalconfiguration', schema=None) as batch_op:
         batch_op.alter_column('gc_activity',

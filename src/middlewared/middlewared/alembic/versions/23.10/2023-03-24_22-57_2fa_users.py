@@ -45,7 +45,7 @@ def upgrade():
     for row in map(dict, conn.execute(text('SELECT id,bsdusr_uid FROM account_bsdusers')).fetchall()):
         row = dict(row)
         secret = existing_secret if row['bsdusr_uid'] == 0 else None
-        conn.execute('INSERT INTO account_twofactor_user_auth (secret,user_id) VALUES (?,?)', (secret, row['id']))
+        conn.execute(text('INSERT INTO account_twofactor_user_auth (secret,user_id) VALUES (:secret, :user_id)'), {'secret': secret, 'user_id': row['id']})
 
     with op.batch_alter_table('system_twofactorauthentication', schema=None) as batch_op:
         batch_op.drop_column('secret')
