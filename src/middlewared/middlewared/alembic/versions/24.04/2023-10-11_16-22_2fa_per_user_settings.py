@@ -29,10 +29,10 @@ def upgrade():
     )):
         twofactor_config = twofactor_config[0]
         for row in map(dict, conn.execute(text('SELECT id FROM account_twofactor_user_auth')).fetchall()):
-            conn.execute(
-                'UPDATE account_twofactor_user_auth SET interval = ?, otp_digits = ? WHERE id = ?', [
-                    twofactor_config['interval'], twofactor_config['otp_digits'], row['id']
-                ]
+            conn.execute(text(
+                'UPDATE account_twofactor_user_auth SET interval = :interval, otp_digits = :otp_digits WHERE id = :id'), {
+                    'interval': twofactor_config['interval'], 'otp_digits': twofactor_config['otp_digits'], 'id': row['id']
+                }
             )
 
     with op.batch_alter_table('system_twofactorauthentication', schema=None) as batch_op:

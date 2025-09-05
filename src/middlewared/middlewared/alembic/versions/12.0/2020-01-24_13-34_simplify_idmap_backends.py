@@ -32,7 +32,7 @@ def upgrade():
         idmap_table = f"directoryservice_idmap_{backend}"
 
         backend_data = [dict(row) for row in conn.execute(text(f"SELECT * FROM {idmap_table} WHERE "
-                                                               f"idmap_{backend}_domain_id = ?"), (dom,)).fetchall()]
+                                                               f"idmap_{backend}_domain_id = :dom_id"), {'dom_id': dom}).fetchall()]
 
         m[dom]['backend'] = backend
         if not backend_data:
