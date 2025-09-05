@@ -10,6 +10,7 @@ from collections import defaultdict
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 revision = '14899f89b885'
@@ -26,7 +27,7 @@ def upgrade():
 
     ip_to_port_to_id = defaultdict(dict)
     ports_popularity = defaultdict(int)
-    for row in map(dict, conn.execute("SELECT * FROM services_iscsitargetportalip").fetchall()):
+    for row in map(dict, conn.execute(text("SELECT * FROM services_iscsitargetportalip")).fetchall()):
         ip_to_port_to_id[row['iscsi_target_portalip_ip']][row['iscsi_target_portalip_port']] = row['id']
         ports_popularity[row['iscsi_target_portalip_port']] += 1
 

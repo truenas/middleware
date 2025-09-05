@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize s3 bindip
 
@@ -17,7 +19,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute("UPDATE services_s3 SET s3_bindip = '0.0.0.0' WHERE s3_bindip = ''")
+    conn.execute(text("UPDATE services_s3 SET s3_bindip = '0.0.0.0' WHERE s3_bindip = ''"))
 
 
 def downgrade():

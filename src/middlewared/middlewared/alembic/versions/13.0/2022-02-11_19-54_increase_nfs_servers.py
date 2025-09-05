@@ -7,6 +7,7 @@ Create Date: 2022-02-11 19:54:32.149486+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -18,4 +19,4 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute("UPDATE services_nfs SET nfs_srv_servers = 16 WHERE nfs_srv_servers = 4")
+    conn.execute(text("UPDATE services_nfs SET nfs_srv_servers = 16 WHERE nfs_srv_servers = 4"))

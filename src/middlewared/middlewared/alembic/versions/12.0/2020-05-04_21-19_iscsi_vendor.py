@@ -8,6 +8,7 @@ Create Date: 2020-05-04 21:19:22.658721-07:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -22,7 +23,7 @@ def upgrade():
         batch_op.add_column(sa.Column('iscsi_target_extent_vendor', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
-    for extent in conn.execute("SELECT * FROM services_iscsitargetextent").fetchall():
+    for extent in conn.execute(text("SELECT * FROM services_iscsitargetextent")).fetchall():
         conn.execute("UPDATE services_iscsitargetextent SET iscsi_target_extent_vendor = ? WHERE id = ?", (
             'FreeBSD' if extent['iscsi_target_extent_legacy'] else None, extent['id']
         ))

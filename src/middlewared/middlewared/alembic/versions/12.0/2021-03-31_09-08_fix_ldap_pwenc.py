@@ -7,6 +7,7 @@ Create Date: 2021-03-31 09:08:41.264829+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 from middlewared.utils.pwenc import encrypt, decrypt
 
@@ -20,7 +21,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for row in conn.execute("SELECT * FROM directoryservice_ldap").fetchall():
+    for row in conn.execute(text("SELECT * FROM directoryservice_ldap")).fetchall():
         if row["ldap_binddn"] and decrypt(row["ldap_binddn"]):
             # New (>= 12.0) configurations have ldap_binddn erroneously encrypted instead of ldap_bindpw
             # due to fd623d849d1abee8c5786128b150e92209ba1f69

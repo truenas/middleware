@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize vm_device attributes with dtype
 
@@ -20,7 +22,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for vm_device_config in conn.execute("SELECT * FROM vm_device").fetchall():
+    for vm_device_config in conn.execute(text("SELECT * FROM vm_device")).fetchall():
         vm_device_config = dict(vm_device_config)
         attributes = json.loads(decrypt(vm_device_config['attributes']))
         attributes['dtype'] = vm_device_config['dtype']

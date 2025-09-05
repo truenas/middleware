@@ -9,6 +9,7 @@ from alembic import op
 from json import dumps, loads
 from middlewared.utils.pwenc import encrypt, decrypt
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -35,7 +36,7 @@ def ds_migrate_ldap(conn, ldap):
     cred_plain = None
 
     # initialize our directoryservices row
-    conn.execute("INSERT INTO directoryservices (enable, service_type, enable_dns_updates) VALUES (1, 'LDAP', 0)")
+    conn.execute(text("INSERT INTO directoryservices (enable, service_type, enable_dns_updates) VALUES (1, 'LDAP', 0)"))
 
     # generate the cred information
     if anon:
@@ -131,8 +132,8 @@ def ds_migrate_ldap(conn, ldap):
 
 
 def ds_migrate_ipa(conn, ldap):
-    keytabs = [dict(row) for row in conn.execute('SELECT * FROM directoryservice_kerberoskeytab').fetchall()]
-    realms = [dict(row) for row in conn.execute('SELECT * FROM directoryservice_kerberosrealm').fetchall()]
+    keytabs = [dict(row) for row in conn.execute(text('SELECT * FROM directoryservice_kerberoskeytab')).fetchall()]
+    realms = [dict(row) for row in conn.execute(text('SELECT * FROM directoryservice_kerberosrealm')).fetchall()]
 
     if not keytabs or not realms:
         # Kerberos configuration is required to properly join IPA and so this is a legacy setup
@@ -177,7 +178,7 @@ def ds_migrate_ipa(conn, ldap):
     target_server = ldap['ldap_hostname'].split()[0]
 
     # initialize our directoryservices row
-    conn.execute("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'IPA')")
+    conn.execute(text("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'IPA')"))
 
     # Unfortunately, we can't set the IPA_SMB_DOMAIN during migration because it's not known until runtime
     stmt = (
@@ -256,8 +257,8 @@ def migrate_idmap_domain(dom, netbios_domain_name) -> dict | None:
 
 
 def ds_migrate_ad(conn, ad):
-    smb = dict(conn.execute('SELECT * FROM services_cifs').fetchone())
-    idmaps = [dict(row) for row in conn.execute('SELECT * FROM directoryservice_idmap_domain').fetchall()]
+    smb = dict(conn.execute(text('SELECT * FROM services_cifs')).fetchone())
+    idmaps = [dict(row) for row in conn.execute(text('SELECT * FROM directoryservice_idmap_domain')).fetchall()]
     primary_idmap = None
     default_domain = None
     cache_enabled = not ad['ad_disable_freenas_cache']
@@ -316,7 +317,7 @@ def ds_migrate_ad(conn, ad):
     trusted_doms = encrypt(dumps(trusted_doms))
 
     # initialize our directoryservices row
-    conn.execute("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'ACTIVEDIRECTORY')")
+    conn.execute(text("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'ACTIVEDIRECTORY')"))
 
     stmt = (
         'UPDATE directoryservices SET '
@@ -347,8 +348,8 @@ def ds_migrate_ad(conn, ad):
 
 def ds_migrate():
     conn = op.get_bind()
-    ad = dict(conn.execute('SELECT * FROM directoryservice_activedirectory').fetchone())
-    ldap = dict(conn.execute('SELECT * FROM directoryservice_ldap').fetchone())
+    ad = dict(conn.execute(text('SELECT * FROM directoryservice_activedirectory')).fetchone())
+    ldap = dict(conn.execute(text('SELECT * FROM directoryservice_ldap')).fetchone())
 
     if ldap['ldap_enable']:
         if ldap['ldap_server_type'] == 'FREEIPA':

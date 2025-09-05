@@ -11,6 +11,7 @@ import json
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -31,7 +32,7 @@ def upgrade():
                     )
 
     conn = op.get_bind()
-    data = conn.execute("SELECT iscsi_target_portal_discoveryauthgroup, iscsi_target_portal_discoveryauthmethod, id FROM services_iscsitargetportal").fetchall()
+    data = conn.execute(text("SELECT iscsi_target_portal_discoveryauthgroup, iscsi_target_portal_discoveryauthmethod, id FROM services_iscsitargetportal")).fetchall()
 
     # Migrate the data into the new table.
     # - Mutual CHAP first.
@@ -67,10 +68,10 @@ def upgrade():
 
     if mutual_chap_auth_groups:
         if len(mutual_chap_auth_groups) == 1:
-            data = conn.execute(f"SELECT DISTINCT iscsi_target_auth_peeruser FROM services_iscsitargetauthcredential WHERE iscsi_target_auth_tag = {mutual_chap_auth_groups[0]} AND iscsi_target_auth_peeruser != ''").fetchall()
+            data = conn.execute(text(f"SELECT DISTINCT iscsi_target_auth_peeruser FROM services_iscsitargetauthcredential WHERE iscsi_target_auth_tag = {mutual_chap_auth_groups[0]} AND iscsi_target_auth_peeruser != ''")).fetchall()
         else:
             tags = ','.join(str(x) for x in mutual_chap_auth_groups)
-            data = conn.execute(f"SELECT DISTINCT iscsi_target_auth_peeruser FROM services_iscsitargetauthcredential WHERE iscsi_target_auth_tag in ({tags}) AND iscsi_target_auth_peeruser != ''").fetchall()
+            data = conn.execute(text(f"SELECT DISTINCT iscsi_target_auth_peeruser FROM services_iscsitargetauthcredential WHERE iscsi_target_auth_tag in ({tags}) AND iscsi_target_auth_peeruser != ''")).fetchall()
         if len(list(data)) > 1:
             active_peeruser = data[0][0]
             conn.execute("INSERT INTO system_keyvalue (\"key\", value) VALUES (?, ?)",

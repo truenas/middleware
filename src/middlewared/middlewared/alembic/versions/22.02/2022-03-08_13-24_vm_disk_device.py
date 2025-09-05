@@ -10,6 +10,7 @@ import json
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for device in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype = 'DISK'").fetchall()):
+    for device in map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'DISK'")).fetchall()):
         device["attributes"] = json.loads(device["attributes"])
         if device["attributes"].get("path"):
             device["attributes"]["path"] = device["attributes"]["path"].replace(" ", "+")

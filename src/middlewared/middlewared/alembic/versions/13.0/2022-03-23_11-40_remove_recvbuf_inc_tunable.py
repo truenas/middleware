@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """remove net.inet.tcp.recvbuf_inc (was removed in 13)
 
 Revision ID: 88bfe11b5be5
@@ -16,4 +18,4 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute('DELETE FROM system_tunable WHERE tun_var = "net.inet.tcp.recvbuf_in"')
+    conn.execute(text('DELETE FROM system_tunable WHERE tun_var = "net.inet.tcp.recvbuf_in"'))

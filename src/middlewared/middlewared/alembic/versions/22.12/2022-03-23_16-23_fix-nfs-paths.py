@@ -7,6 +7,7 @@ Create Date: 2022-03-23 16:23:22.667861+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import json
 
 
@@ -23,7 +24,7 @@ def upgrade():
         batch_op.add_column(sa.Column('nfs_path', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
-    nfs_shares = [dict(row) for row in conn.execute("SELECT * FROM sharing_nfs_share").fetchall()]
+    nfs_shares = [dict(row) for row in conn.execute(text("SELECT * FROM sharing_nfs_share")).fetchall()]
     for entry in nfs_shares:
         # use existing entry for first path and add new entries for subsequent paths
         _id = entry.pop("id")
@@ -37,7 +38,7 @@ def upgrade():
         except IndexError:
             first_path = "/var/empty"
 
-        conn.execute(f'UPDATE sharing_nfs_share SET nfs_path = "{first_path}" WHERE id = {_id}')
+        conn.execute(text(f'UPDATE sharing_nfs_share SET nfs_path = "{first_path}" WHERE id = {_id}'))
         if not paths:
             continue
 

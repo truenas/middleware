@@ -7,6 +7,7 @@ Create Date: 2020-01-24 13:34:04.998905+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import json
 
 
@@ -22,7 +23,7 @@ def upgrade():
     conn = op.get_bind()
     m = {}
     highest_seen = 0
-    configured_domains = [dict(row) for row in conn.execute("SELECT * FROM directoryservice_idmap_domaintobackend").fetchall()]
+    configured_domains = [dict(row) for row in conn.execute(text("SELECT * FROM directoryservice_idmap_domaintobackend")).fetchall()]
     for domain in configured_domains:
         m[domain['idmap_dtb_domain_id']] = {}
         backend = domain['idmap_dtb_idmap_backend']

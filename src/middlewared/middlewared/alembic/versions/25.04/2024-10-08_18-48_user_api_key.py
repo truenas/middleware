@@ -7,6 +7,7 @@ Create Date: 2024-10-08 18:48:55.972115+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import json
 
 
@@ -23,7 +24,7 @@ ENTRY_REVOKED = -1
 def upgrade():
     conn = op.get_bind()
     to_revoke = []
-    for row in conn.execute("SELECT id, allowlist FROM account_api_key").fetchall():
+    for row in conn.execute(text("SELECT id, allowlist FROM account_api_key")).fetchall():
         try:
             if json.loads(row['allowlist']) != DEFAULT_ALLOW_LIST:
                 to_revoke.append(str(row['id']))
@@ -35,7 +36,7 @@ def upgrade():
         batch_op.add_column(sa.Column('expiry', sa.Integer(), nullable=False, server_default='0'))
         batch_op.drop_column('allowlist')
 
-    conn.execute(f"UPDATE account_api_key SET expiry={ENTRY_REVOKED} WHERE id IN ({', '.join(to_revoke)});")
+    conn.execute(text(f"UPDATE account_api_key SET expiry={ENTRY_REVOKED} WHERE id IN ({', '.join(to_revoke)});"))
 
 
 def downgrade():

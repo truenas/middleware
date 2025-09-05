@@ -7,6 +7,7 @@ Create Date: 2023-03-15 15:59:58.605407+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import re
 
 
@@ -21,7 +22,7 @@ RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 def upgrade():
     conn = op.get_bind()
 
-    ngc = dict(conn.execute('SELECT * FROM network_globalconfiguration').fetchone())
+    ngc = dict(conn.execute(text('SELECT * FROM network_globalconfiguration')).fetchone())
     if not ngc['gc_hostname_virtual']:
         return
 

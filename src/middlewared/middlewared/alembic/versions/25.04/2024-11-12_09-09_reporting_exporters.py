@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Reporting exporters type attr normalization
 
@@ -18,7 +20,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for exporter_config in conn.execute("SELECT * FROM reporting_exporters").fetchall():
+    for exporter_config in conn.execute(text("SELECT * FROM reporting_exporters")).fetchall():
         exporter_config = dict(exporter_config)
         attributes = json.loads(exporter_config['attributes'])
         attributes['exporter_type'] = exporter_config['type']

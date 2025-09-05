@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Remove novnc support from display devices
 
@@ -22,7 +24,7 @@ def upgrade():
     conn = op.get_bind()
     to_remove_ids = []
     vms_mapping = defaultdict(list)
-    for row in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'").fetchall()):
+    for row in map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'")).fetchall()):
         vms_mapping[row['vm_id']].append(row)
 
     for devices in vms_mapping.values():

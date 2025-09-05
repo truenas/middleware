@@ -7,6 +7,7 @@ Create Date: 2020-04-29 18:10:31.488781+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 from middlewared.utils.pwenc import encrypt
 
@@ -21,7 +22,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     if not (
-        conn.execute("SELECT * FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631' AND value = 'true'").
+        conn.execute(text("SELECT * FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631' AND value = 'true'")).
                 fetchall()
     ):
         for table, fields in [
@@ -32,7 +33,7 @@ def upgrade():
             ("system_certificate", ["cert_privatekey"]),
             ("system_certificateauthority", ["cert_privatekey"]),
         ]:
-            for row in conn.execute(f"SELECT * FROM {table}").fetchall():
+            for row in conn.execute(text(f"SELECT * FROM {table}")).fetchall():
                 set_ = []
                 params = []
                 for k in fields:
@@ -43,7 +44,7 @@ def upgrade():
                 if set_:
                     conn.execute(f"UPDATE {table} SET {', '.join(set_)} WHERE id = {row['id']}", params)
 
-    conn.execute("DELETE FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631'")
+    conn.execute(text("DELETE FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631'"))
 
 
 def downgrade():

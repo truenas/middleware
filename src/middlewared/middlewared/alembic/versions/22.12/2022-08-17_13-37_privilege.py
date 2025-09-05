@@ -9,6 +9,7 @@ import json
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -33,16 +34,16 @@ def upgrade():
     )
 
     conn = op.get_bind()
-    for row in conn.execute("SELECT * FROM account_bsdgroups WHERE bsdgrp_group = 'builtin_administrators'").fetchall():
+    for row in conn.execute(text("SELECT * FROM account_bsdgroups WHERE bsdgrp_group = 'builtin_administrators'")).fetchall():
         builtin_administrators_id = row["id"]
         break
     else:
         conn.execute("INSERT INTO account_bsdgroups (bsdgrp_gid, bsdgrp_group, bsdgrp_builtin, bsdgrp_sudo, bsdgrp_smb,"
                      "bsdgrp_sudo_commands, bsdgrp_sudo_nopasswd) VALUES (544, 'builtin_administrators', 1, 0, 1, '[]',"
                      "0)")
-        builtin_administrators_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        builtin_administrators_id = conn.execute(text("SELECT last_insert_rowid()")).fetchone()[0]
 
-    root_id = conn.execute("SELECT * FROM account_bsdusers WHERE bsdusr_uid = 0").fetchone()["id"]
+    root_id = conn.execute(text("SELECT * FROM account_bsdusers WHERE bsdusr_uid = 0")).fetchone()["id"]
 
     allowlist = [{"method": "*", "resource": "*"}]
     op.execute("INSERT INTO account_privilege (builtin_name, name, local_groups, ds_groups, allowlist, web_shell) "

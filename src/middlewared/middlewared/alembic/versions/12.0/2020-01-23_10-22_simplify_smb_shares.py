@@ -7,6 +7,7 @@ Create Date: 2020-01-16 19:16:53.973957+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -45,7 +46,7 @@ def upgrade():
         batch_op.add_column(sa.Column('cifs_durablehandle', sa.Boolean(), nullable=True))
 
     conn = op.get_bind()
-    smb_shares = [dict(row) for row in conn.execute("SELECT * FROM sharing_cifs_share").fetchall()]
+    smb_shares = [dict(row) for row in conn.execute(text("SELECT * FROM sharing_cifs_share")).fetchall()]
     for share in smb_shares:
         aux_params = share.get('cifs_auxsmbconf', '').split('\n')
         vfs_objects = share.get('cifs_vfsobjects', '')

@@ -22,7 +22,7 @@ depends_on = None
 
 def get_hostname(conn):
     try:
-        return dict(conn.execute('SELECT * FROM network_globalconfiguration').fetchone())['gc_hostname']
+        return dict(conn.execute(text('SELECT * FROM network_globalconfiguration')).fetchone())['gc_hostname']
     except Exception:
         return 'truenas'
 
@@ -44,7 +44,7 @@ def upgrade():
     )
 
     hostname = get_hostname(conn)
-    for graphite_ip in filter(lambda ip: bool(ip[0]), conn.execute('SELECT graphite FROM system_reporting').fetchall()):
+    for graphite_ip in filter(lambda ip: bool(ip[0]), conn.execute(text('SELECT graphite FROM system_reporting')).fetchall()):
         attributes = {
             'destination_ip': graphite_ip[0],
             'destination_port': 2003,

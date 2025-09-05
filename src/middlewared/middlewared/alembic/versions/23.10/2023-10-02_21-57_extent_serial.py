@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """Ensure iSCSI extents have a non-empty serial number.
 
 Revision ID: fa33f4ae6427
@@ -29,11 +31,11 @@ def upgrade():
     # previously empty)
     conn = op.get_bind()
     tofix = []
-    for (ident,) in conn.execute("SELECT id FROM services_iscsitargetextent WHERE iscsi_target_extent_serial == null or iscsi_target_extent_serial == ''"):
+    for (ident,) in conn.execute(text("SELECT id FROM services_iscsitargetextent WHERE iscsi_target_extent_serial == null or iscsi_target_extent_serial == ''")):
         tofix.append(ident)
     if tofix:
         serials = []
-        for (serial,) in conn.execute("SELECT iscsi_target_extent_serial FROM services_iscsitargetextent"):
+        for (serial,) in conn.execute(text("SELECT iscsi_target_extent_serial FROM services_iscsitargetextent")):
             if serial not in [None, '']:
                 serials.append(serial)
         for ident in tofix:

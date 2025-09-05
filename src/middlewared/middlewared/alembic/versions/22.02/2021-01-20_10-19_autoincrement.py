@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """Make all primary keys autoincrement
 
 Revision ID: 2fb0f87b2f17
@@ -22,8 +24,8 @@ def upgrade():
     op.execute("""
         UPDATE directoryservice_idmap_domain SET idmap_domain_certificate_id = NULL WHERE idmap_domain_certificate_id = ''
     """)  # NAS-111944
-    conn.execute("PRAGMA legacy_alter_table = TRUE")
-    for name, sql in conn.execute("SELECT name, sql FROM sqlite_master WHERE type = 'table'").fetchall():
+    conn.execute(text("PRAGMA legacy_alter_table = TRUE"))
+    for name, sql in conn.execute(text("SELECT name, sql FROM sqlite_master WHERE type = 'table'")).fetchall():
         if m := re.match(r'CREATE TABLE "(.+)" \((\s*|.+\s)"?id"? integer (NOT NULL |)PRIMARY KEY[,)]', sql, flags=re.IGNORECASE):
             table_name = m.group(1)
             new_sql = m.group(0).replace('PRIMARY KEY', 'PRIMARY KEY AUTOINCREMENT') + sql[len(m.group(0)):]
@@ -40,7 +42,7 @@ def upgrade():
             continue
 
         index_sqls = []
-        for index_sql, in conn.execute("""
+        for index_sql, in conn.execute(text("""
             SELECT sql
             FROM sqlite_master
             WHERE type = 'index' AND tbl_name = ?
@@ -49,14 +51,14 @@ def upgrade():
                 index_sqls.append(index_sql)
 
         params = {"table": f'"{name}"', "table_old": f'"{name}__old"'}
-        conn.execute("ALTER TABLE %(table)s RENAME TO %(table_old)s" % params)
+        conn.execute(text("ALTER TABLE %(table)s RENAME TO %(table_old)s"))
         conn.execute(new_sql)
-        conn.execute("INSERT INTO %(table)s SELECT * FROM %(table_old)s" % params)
-        conn.execute("DROP TABLE %(table_old)s" % params)
+        conn.execute(text("INSERT INTO %(table)s SELECT * FROM %(table_old)s"))
+        conn.execute(text("DROP TABLE %(table_old)s"))
         for index_sql in index_sqls:
             conn.execute(index_sql)
 
-    conn.execute("PRAGMA legacy_alter_table = FALSE")
+    conn.execute(text("PRAGMA legacy_alter_table = FALSE"))
 
 
 def downgrade():

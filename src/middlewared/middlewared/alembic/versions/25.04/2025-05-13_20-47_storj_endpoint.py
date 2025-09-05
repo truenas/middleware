@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """Add `endpoint` field to system_cloudcredentials.attributes for type STORJ_IX.
 
 Revision ID: 30c9619bf9e7
@@ -21,7 +23,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for entry in map(dict, conn.execute("SELECT id, attributes FROM system_cloudcredentials WHERE provider = 'STORJ_IX'").fetchall()):
+    for entry in map(dict, conn.execute(text("SELECT id, attributes FROM system_cloudcredentials WHERE provider = 'STORJ_IX'")).fetchall()):
         if attributes := decrypt(entry["attributes"]):
             attributes = json.loads(attributes)
             attributes.setdefault("endpoint", "https://gateway.storjshare.io/")
