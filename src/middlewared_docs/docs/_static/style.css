@@ -3,6 +3,69 @@ div.sphinxsidebarwrapper > div.sidebartoctree ul ul { padding: 0.1em 0 0 0 !impo
 ul.search li { background: none; }
 div[role=navigation] div.btn-group a:first-child { margin-right: 2px; }
 
+/* Make sidebar independently scrollable */
+.sphinxsidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    z-index: 1000;
+}
+
+.sphinxsidebarwrapper {
+    padding: 1rem;
+    height: 100%;
+}
+
+/* Adjust main content to account for fixed sidebar */
+.document {
+    margin-left: 300px !important;
+}
+
+/* Ensure the sidebar maintains scroll position */
+.sphinxsidebar .toctree-l1 > a {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    text-decoration: none;
+    border-radius: 0.25rem;
+}
+
+.sphinxsidebar .toctree-l1 > a:hover {
+    background-color: #e9ecef;
+}
+
+.sphinxsidebar .current > a {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Ensure navbar doesn't overlap with fixed sidebar */
+.navbar {
+    margin-left: 300px !important;
+}
+
+/* Responsive handling for smaller screens */
+@media (max-width: 992px) {
+    .sphinxsidebar {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+    
+    .document {
+        margin-left: 0 !important;
+    }
+    
+    .navbar {
+        margin-left: 0 !important;
+    }
+}
+
 #json-schema>.value-type { display: none; }
 #json-schema h2, #json-schema h3, #json-schema h4, #json-schema h5 { margin: 0.5rem 0 0.5rem 0; padding: 0; }
 #json-schema .card-header>h2 { margin: 0 0 0.5rem 0; }
