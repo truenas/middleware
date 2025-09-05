@@ -8,6 +8,7 @@ Create Date: 2024-05-19 16:25:17.935672+00:00
 import json
 
 import sqlalchemy as sa
+from sqlalchemy import text
 
 from alembic import op
 
@@ -21,7 +22,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     # We will drop all old catalogs
-    conn.execute('DELETE FROM services_catalog')
+    conn.execute(text('DELETE FROM services_catalog'))
 
     with op.batch_alter_table('services_catalog', schema=None) as batch_op:
         batch_op.drop_column('repository')

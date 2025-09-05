@@ -9,6 +9,7 @@ import itertools
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -20,7 +21,7 @@ depends_on = None
 
 def ensure_unique_string(conn, table, column):
     values = set()
-    for row in conn.execute(f"SELECT * FROM {table}").fetchall():
+    for row in conn.execute(text(f"SELECT * FROM {table}")).fetchall():
         value = row[column]
         if value is not None:
             update = False

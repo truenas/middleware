@@ -10,6 +10,7 @@ import textwrap
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -41,9 +42,9 @@ def upgrade():
         batch_op.alter_column('cifs_afp', existing_type=sa.BOOLEAN(), nullable=False)
 
     conn = op.get_bind()
-    has_cifs_home = bool(conn.execute("SELECT * FROM sharing_cifs_share WHERE cifs_home = 1"))
+    has_cifs_home = bool(conn.execute(text("SELECT * FROM sharing_cifs_share WHERE cifs_home = 1")))
     disable_acl_if_trivial = []
-    for share in conn.execute("SELECT * FROM sharing_afp_share").fetchall():
+    for share in conn.execute(text("SELECT * FROM sharing_afp_share")).fetchall():
         cifs_auxsmbconf = []
         share_disable_acl_if_trivial = False
         if share["afp_allow"].strip():
@@ -111,11 +112,11 @@ def upgrade():
             tuple(cifs_share.values()),
         )
 
-        share_id = conn.execute("SELECT last_insert_rowid()").fetchall()[0][0]
+        share_id = conn.execute(text("SELECT last_insert_rowid()")).fetchall()[0][0]
         if share_disable_acl_if_trivial:
             disable_acl_if_trivial.append(share_id)
 
-        conn.execute("UPDATE services_cifs SET cifs_srv_aapl_extensions = 1")
+        conn.execute(text("UPDATE services_cifs SET cifs_srv_aapl_extensions = 1"))
 
     if disable_acl_if_trivial:
         conn.execute("INSERT INTO system_keyvalue (\"key\", value) VALUES (?, ?)",

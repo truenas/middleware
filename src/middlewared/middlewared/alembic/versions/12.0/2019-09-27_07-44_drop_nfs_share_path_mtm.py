@@ -10,6 +10,7 @@ import operator
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -24,7 +25,7 @@ def upgrade():
     op.add_column('sharing_nfs_share', sa.Column('nfs_paths', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
-    for share_id, in conn.execute("SELECT id FROM sharing_nfs_share").fetchall():
+    for share_id, in conn.execute(text("SELECT id FROM sharing_nfs_share")).fetchall():
         paths = list(map(operator.itemgetter(0),
                          conn.execute("SELECT path FROM sharing_nfs_share_path WHERE share_id = ?", [share_id])))
         conn.execute("UPDATE sharing_nfs_share SET nfs_paths = ? WHERE id = ?", [json.dumps(paths), share_id])

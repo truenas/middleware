@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Docker address pool default updated
 
@@ -20,7 +22,7 @@ def upgrade():
     conn = op.get_bind()
 
     if docker_config := list(map(
-        dict, conn.execute('SELECT * FROM services_docker').fetchall()
+        dict, conn.execute(text('SELECT * FROM services_docker')).fetchall()
     )):
         docker_config = docker_config[0]
         address_pool_config = json.loads(docker_config['address_pools'])

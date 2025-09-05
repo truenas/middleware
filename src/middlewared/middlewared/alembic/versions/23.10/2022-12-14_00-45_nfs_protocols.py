@@ -7,6 +7,7 @@ Create Date: 2022-12-14 00:45:57.157120+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -22,8 +23,8 @@ def upgrade():
     # First read the current state, so that we can tweak the default value of
     # the new column based upon the values.
     conn = op.get_bind()
-    share_count = conn.execute("SELECT COUNT(id) FROM sharing_nfs_share").first()[0]
-    nfs_srv_v4  = conn.execute("SELECT nfs_srv_v4 FROM services_nfs").first()[0]
+    share_count = conn.execute(text("SELECT COUNT(id) FROM sharing_nfs_share")).first()[0]
+    nfs_srv_v4  = conn.execute(text("SELECT nfs_srv_v4 FROM services_nfs")).first()[0]
 
     # Want to check whether we can change the default to include
     with op.batch_alter_table('services_nfs', schema=None) as batch_op:
@@ -36,7 +37,7 @@ def upgrade():
 
 def downgrade():
     conn = op.get_bind()
-    nfs_srv_protocols = conn.execute("SELECT nfs_srv_protocols FROM services_nfs").first()[0]
+    nfs_srv_protocols = conn.execute(text("SELECT nfs_srv_protocols FROM services_nfs")).first()[0]
     with op.batch_alter_table('services_nfs', schema=None) as batch_op:
         if "NFSV4" in nfs_srv_protocols:
             batch_op.add_column(sa.Column('nfs_srv_v4', sa.BOOLEAN(), nullable=False, server_default='1'))

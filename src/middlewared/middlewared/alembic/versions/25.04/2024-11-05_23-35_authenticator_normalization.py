@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize authenticator attributes
 
@@ -51,11 +53,11 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
 def upgrade():
     conn = op.get_bind()
     authenticator_configs = [
-        dict(config) for config in conn.execute("SELECT * FROM system_acmednsauthenticator").fetchall()
+        dict(config) for config in conn.execute(text("SELECT * FROM system_acmednsauthenticator")).fetchall()
     ]
     authenticator_mapping = defaultdict(list)
     encrypted_domains_certs = []
-    for cert in conn.execute("SELECT * FROM system_certificate").fetchall():
+    for cert in conn.execute(text("SELECT * FROM system_certificate")).fetchall():
         cert = dict(cert)
         try:
             value = decrypt(cert['cert_domains_authenticators']) if cert['cert_domains_authenticators'] else '{}'

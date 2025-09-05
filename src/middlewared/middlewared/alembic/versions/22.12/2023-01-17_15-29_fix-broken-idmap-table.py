@@ -7,6 +7,7 @@ Create Date: 2023-01-17 15:29:52.743200+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -31,7 +32,7 @@ def upgrade():
     ranges = []
     default_range = (90000001, 100000000)
 
-    for row in conn.execute("SELECT * FROM directoryservice_idmap_domain").fetchall():
+    for row in conn.execute(text("SELECT * FROM directoryservice_idmap_domain")).fetchall():
         if row['idmap_domain_name'] == 'DS_TYPE_DEFAULT_DOMAIN':
             # The default domain entry wasn't dropped and so we can skip the rest of this
             return

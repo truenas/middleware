@@ -10,6 +10,7 @@ import re
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -25,12 +26,12 @@ def upgrade():
         batch_op.add_column(sa.Column('ssh_weak_ciphers', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
-    for row in conn.execute("SELECT * FROM services_ssh").fetchall():
+    for row in conn.execute(text("SELECT * FROM services_ssh")).fetchall():
         row = dict(row)
 
         ssh_weak_ciphers = ['AES128-CBC', 'NONE']
 
-        m = re.search('NoneEnabled\s+(yes|no)', row['ssh_options'], flags=re.IGNORECASE)
+        m = re.search(r'NoneEnabled\s+(yes|no)', row['ssh_options'], flags=re.IGNORECASE)
         if m:
             row['ssh_options'] = row['ssh_options'].replace(m.group(0), '')
             if m.group(1).lower() == 'no':
