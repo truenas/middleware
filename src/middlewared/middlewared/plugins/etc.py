@@ -1,7 +1,8 @@
 import asyncio
 from collections import defaultdict
-import imp
+import importlib.util
 import os
+import sys
 
 from mako import exceptions
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
@@ -54,8 +55,17 @@ class PyRenderer(object):
 
     async def render(self, path, ctx):
         name = os.path.basename(path)
-        find = imp.find_module(name, [os.path.dirname(path)])
-        mod = imp.load_module(name, *find)
+        filepath = f"{path}.py"  # matches previous behavior (basename + '.py' in dirname)
+
+        spec = importlib.util.spec_from_file_location(name, filepath)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load spec for {name!r} from {filepath!r}")
+
+        mod = importlib.util.module_from_spec(spec)
+        # Match imp.load_module semantics: put in sys.modules before exec
+        sys.modules[name] = mod
+        spec.loader.exec_module(mod)
+
         args = [self.service, self.service.middleware]
         if ctx is not None:
             args.append(ctx)
