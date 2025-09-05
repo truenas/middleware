@@ -1,6 +1,7 @@
 import logging
 
-from certbot_dns_ovh._internal.dns_ovh import _OVHLexiconClient
+from lexicon.client import Client
+from lexicon.config import ConfigResolver
 
 from middlewared.api.current import OVHSchemaArgs
 
@@ -8,6 +9,53 @@ from .base import Authenticator
 
 
 logger = logging.getLogger(__name__)
+
+
+class _OVHLexiconClient:
+    """Compatibility wrapper for OVH Lexicon client to match the old certbot interface"""
+
+    def __init__(self, endpoint, application_key, application_secret, consumer_key, ttl):
+        self.endpoint = endpoint
+        self.application_key = application_key
+        self.application_secret = application_secret
+        self.consumer_key = consumer_key
+        self.ttl = ttl
+
+    def add_txt_record(self, domain, validation_name, validation_content):
+        """Add a TXT record using the OVH API via Lexicon"""
+        config = ConfigResolver().with_dict({
+            'provider_name': 'ovh',
+            'domain': domain,
+            'delegated': domain,  # Bypass Lexicon subdomain resolution
+            'ttl': self.ttl,
+            'ovh': {
+                'auth_entrypoint': self.endpoint,
+                'auth_application_key': self.application_key,
+                'auth_application_secret': self.application_secret,
+                'auth_consumer_key': self.consumer_key
+            }
+        })
+
+        with Client(config) as operations:
+            operations.create_record(rtype='TXT', name=validation_name, content=validation_content)
+
+    def del_txt_record(self, domain, validation_name, validation_content):
+        """Delete a TXT record using the OVH API via Lexicon"""
+        config = ConfigResolver().with_dict({
+            'provider_name': 'ovh',
+            'domain': domain,
+            'delegated': domain,  # Bypass Lexicon subdomain resolution
+            'ttl': self.ttl,
+            'ovh': {
+                'auth_entrypoint': self.endpoint,
+                'auth_application_key': self.application_key,
+                'auth_application_secret': self.application_secret,
+                'auth_consumer_key': self.consumer_key
+            }
+        })
+
+        with Client(config) as operations:
+            operations.delete_record(rtype='TXT', name=validation_name, content=validation_content)
 
 
 class OVHAuthenticator(Authenticator):
