@@ -39,7 +39,7 @@ def upgrade():
     # 3. Fallback to localhost
     conn = op.get_bind()
     if s3_conf := conn.execute(text("SELECT s3_certificate_id FROM services_s3 WHERE s3_certificate_id IS NOT NULL")).fetchone():
-        if cert_data := conn.execute("SELECT cert_certificate FROM system_certificate WHERE id = :cert_id", cert_id=s3_conf[0]).fetchone():
+        if cert_data := conn.execute(text("SELECT cert_certificate FROM system_certificate WHERE id = :cert_id"), {"cert_id": s3_conf[0]}).fetchone():
             s3_tls_server_uri = 'localhost'
             try:
                 cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data[0])
@@ -65,8 +65,8 @@ def upgrade():
                 pass
 
             conn.execute(
-                "UPDATE services_s3 SET s3_tls_server_uri = :s3_tls_server_uri",
-                s3_tls_server_uri=s3_tls_server_uri
+                text("UPDATE services_s3 SET s3_tls_server_uri = :s3_tls_server_uri"),
+                {"s3_tls_server_uri": s3_tls_server_uri}
             )
 
 

@@ -25,9 +25,9 @@ def upgrade():
     # The first option is that this is a new upgrade from Angelfish (broken) to BlueFin. In this
     # case run the migration from NAS-111944.
     conn = op.get_bind()
-    op.execute("""
+    op.execute(text("""
         UPDATE directoryservice_idmap_domain SET idmap_domain_certificate_id = NULL WHERE idmap_domain_certificate_id = ''
-    """)  # fixes break caused by fix to NAS-111944
+    """))  # fixes break caused by fix to NAS-111944
 
     ranges = []
     default_range = (90000001, 100000000)
@@ -54,9 +54,10 @@ def upgrade():
         'idmap_domain_range_high': default_range[1],
     }
 
+    placeholders = ','.join([f':{k}' for k in new_entry.keys()])
     conn.execute(
-        f"INSERT INTO directoryservice_idmap_domain ({','.join(new_entry.keys())}) VALUES ({','.join(['?'] * len(new_entry))})",
-        tuple(new_entry.values()),
+        text(f"INSERT INTO directoryservice_idmap_domain ({','.join(new_entry.keys())}) VALUES ({placeholders})"),
+        new_entry
     )
 
 

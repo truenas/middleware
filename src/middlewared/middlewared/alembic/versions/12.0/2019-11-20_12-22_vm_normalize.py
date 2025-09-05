@@ -26,7 +26,7 @@ def upgrade():
         batch_op.add_column(sa.Column('threads', sa.INTEGER(), nullable=True))
         batch_op.add_column(sa.Column('shutdown_timeout', sa.INTEGER(), nullable=True))
 
-    op.execute("UPDATE vm_vm SET cores = 1, threads = 1, shutdown_timeout = 90")
+    op.execute(text("UPDATE vm_vm SET cores = 1, threads = 1, shutdown_timeout = 90"))
 
     with op.batch_alter_table('vm_vm', schema=None) as batch_op:
         batch_op.alter_column('cores',
@@ -71,9 +71,9 @@ def upgrade():
             # This is to ensure old users have this as a default value
             vnc_device['attributes']['vnc_bind'] = '0.0.0.0'
 
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
-            json.dumps(vnc_device['attributes']), vnc_device['id']
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {
+            'attributes': json.dumps(vnc_device['attributes']), 'id': vnc_device['id']
+        })
 
     # add physical sector size support
 
@@ -92,7 +92,7 @@ def upgrade():
             'physical_sectorsize': None,
         })
 
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (json.dumps(attributes), device['id']))
+        conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {'attributes': json.dumps(attributes), 'id': device['id']})
 
     # normalize_mac_address
 
@@ -101,7 +101,7 @@ def upgrade():
 
         if not attributes.get('mac') or attributes['mac'] == '00:a0:98:FF:FF:FF':
             attributes['mac'] = None
-            conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (json.dumps(attributes), device['id']))
+            conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {'attributes': json.dumps(attributes), 'id': device['id']})
 
     # ### end Alembic commands ###
 

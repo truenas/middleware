@@ -26,8 +26,10 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
     if not cert_ids:
         return
 
+    placeholders = ','.join([f':id{i}' for i in range(len(cert_ids))])
+    params = {f'id{i}': cert_id for i, cert_id in enumerate(cert_ids)}
     for cert in conn.execute(
-        f"SELECT * FROM system_certificate WHERE id IN ({','.join(['?'] * len(cert_ids))})", tuple(cert_ids)
+        text(f"SELECT * FROM system_certificate WHERE id IN ({placeholders})"), params
     ).fetchall():
         cert = dict(cert)
 
@@ -45,7 +47,7 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
         # Only update if a change was made
         if updated_authenticators != authenticators:
             conn.execute(
-                "UPDATE system_certificate SET cert_domains_authenticators = :auths WHERE id = :id",
+                text("UPDATE system_certificate SET cert_domains_authenticators = :auths WHERE id = :id"),
                 {'auths': encrypt(json.dumps(updated_authenticators)), 'id': cert['id']}
             )
 
@@ -80,20 +82,21 @@ def upgrade():
             remove_authenticator_ref(
                 authenticator_config['id'], authenticator_mapping[authenticator_config['id']], conn
             )
-            conn.execute("DELETE FROM system_acmednsauthenticator WHERE id = :id", {'id': authenticator_config['id']})
+            conn.execute(text("DELETE FROM system_acmednsauthenticator WHERE id = :id"), {'id': authenticator_config['id']})
         else:
             attributes['authenticator'] = authenticator_config['authenticator']
             conn.execute(
-                "UPDATE system_acmednsauthenticator SET attributes = ? WHERE id = ?",
-                (encrypt(json.dumps(attributes)), authenticator_config['id'])
+                text("UPDATE system_acmednsauthenticator SET attributes = :attributes WHERE id = :id"),
+                {"attributes": encrypt(json.dumps(attributes)), "id": authenticator_config['id']}
             )
 
     # For certs where we were not able to read domains mappings, we will now unset those as they are not usable
     # anymore
     if encrypted_domains_certs:
-        placeholders = ', '.join(map(str, encrypted_domains_certs))
+        placeholders = ','.join([f':id{i}' for i in range(len(encrypted_domains_certs))])
+        params = {f'id{i}': cert_id for i, cert_id in enumerate(encrypted_domains_certs)}
         conn.execute(
-            f"UPDATE system_certificate SET cert_domains_authenticators = NULL WHERE id IN ({placeholders})"
+            text(f"UPDATE system_certificate SET cert_domains_authenticators = NULL WHERE id IN ({placeholders})"), params
         )
 
     with op.batch_alter_table('system_acmednsauthenticator', schema=None) as batch_op:

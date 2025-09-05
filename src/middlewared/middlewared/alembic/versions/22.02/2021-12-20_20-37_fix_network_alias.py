@@ -7,6 +7,7 @@ Create Date: 2021-12-20 20:37:29.496586+00:00
 """
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import text
 from ipaddress import ip_interface
 
 
@@ -110,8 +111,8 @@ def drop_and_create_new_table():
 def upgrade():
     con = op.get_bind()
     new_aliases = []
-    for iface_id, in con.execute('SELECT id from network_interfaces').fetchall():
-        rows = con.execute(f'SELECT * FROM network_alias WHERE alias_interface_id = {iface_id}').fetchall()
+    for iface_id, in con.execute(text('SELECT id from network_interfaces')).fetchall():
+        rows = con.execute(text('SELECT * FROM network_alias WHERE alias_interface_id = :iface_id'), {'iface_id': iface_id}).fetchall()
         a_addresses, b_addresses, vips = pull_out_entries(rows)
         new_aliases = combine_entries(iface_id, a_addresses, b_addresses, vips)
 
@@ -120,9 +121,9 @@ def upgrade():
     # now write our new values to newly created table
     for new_alias in new_aliases:
         alias = dict(new_alias)
-        columns = tuple(alias.keys())
-        values = tuple(alias.values())
-        con.execute(f'INSERT INTO network_alias {columns} VALUES {values}')
+        columns = ','.join(alias.keys())
+        placeholders = ','.join([f":{key}" for key in alias.keys()])
+        con.execute(text(f'INSERT INTO network_alias ({columns}) VALUES ({placeholders})'), alias)
 
 
 def downgrade():

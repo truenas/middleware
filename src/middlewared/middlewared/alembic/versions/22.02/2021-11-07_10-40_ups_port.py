@@ -30,7 +30,7 @@ def upgrade():
     ups_port = ups_config[0]['ups_port']
 
     if serial_port == ups_port:
-        conn.execute("UPDATE services_ups SET ups_port = ? WHERE id = ?", ('', ups_config[0]['id']))
+        conn.execute(text("UPDATE services_ups SET ups_port = :port WHERE id = :id"), {'port': '', 'id': ups_config[0]['id']})
 
 
 def downgrade():

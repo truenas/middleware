@@ -8,6 +8,7 @@ Create Date: 2022-06-12 17:50:03.593598+00:00
 """
 import json
 import sqlalchemy as sa
+from sqlalchemy import text
 
 from alembic import op
 
@@ -26,16 +27,16 @@ def upgrade():
 
     target_groups = [
         dict(row)
-        for row in conn.execute("""
+        for row in conn.execute(text("""
             SELECT *
             FROM services_iscsitargetgroups
             WHERE iscsi_target_initiatorgroup_id IS NOT NULL
-        """).fetchall()
+        """)).fetchall()
     ]
     for target_group in target_groups:
         initiator = conn.execute(
-            "SELECT * FROM services_iscsitargetauthorizedinitiator WHERE id = ?",
-            [target_group['iscsi_target_initiatorgroup_id']]
+            text("SELECT * FROM services_iscsitargetauthorizedinitiator WHERE id = :id"),
+            {"id": target_group['iscsi_target_initiatorgroup_id']}
         ).fetchone()
         if initiator is None:
             continue
@@ -44,10 +45,10 @@ def upgrade():
 
         auth_network = initiator['iscsi_target_initiator_auth_network']
 
-        conn.execute("UPDATE services_iscsitarget SET iscsi_target_auth_networks = ? WHERE id = ?", (
-            json.dumps([] if auth_network == 'ALL' else auth_network.split()),
-            target_group['iscsi_target_id']
-        ))
+        conn.execute(text("UPDATE services_iscsitarget SET iscsi_target_auth_networks = :networks WHERE id = :id"), {
+            "networks": json.dumps([] if auth_network == 'ALL' else auth_network.split()),
+            "id": target_group['iscsi_target_id']
+        })
 
     with op.batch_alter_table('services_iscsitargetauthorizedinitiator', schema=None) as batch_op:
         batch_op.drop_column('iscsi_target_initiator_auth_network')

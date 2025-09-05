@@ -30,7 +30,7 @@ def upgrade():
             continue
 
         secret = None
-        conn.execute('INSERT INTO account_twofactor_user_auth (secret,user_id) VALUES (?,?)', (secret, row['id']))
+        conn.execute(text('INSERT INTO account_twofactor_user_auth (secret,user_id) VALUES (:secret, :user_id)'), {'secret': secret, 'user_id': row['id']})
 
 
 def downgrade():

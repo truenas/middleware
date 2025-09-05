@@ -31,8 +31,8 @@ def upgrade():
 
         idmap_table = f"directoryservice_idmap_{backend}"
 
-        backend_data = [dict(row) for row in conn.execute(f"SELECT * FROM {idmap_table} WHERE "
-                                                          f"idmap_{backend}_domain_id = ?", dom).fetchall()]
+        backend_data = [dict(row) for row in conn.execute(text(f"SELECT * FROM {idmap_table} WHERE "
+                                                               f"idmap_{backend}_domain_id = ?"), (dom,)).fetchall()]
 
         m[dom]['backend'] = backend
         if not backend_data:
@@ -90,12 +90,12 @@ def upgrade():
             range_high = highest_seen + 100000000
 
         backend = params.pop('backend')
-        conn.execute("UPDATE directoryservice_idmap_domain SET idmap_domain_idmap_backend = :backend, "
-                     "idmap_domain_range_low = :low, idmap_domain_range_high = :high, "
-                     "idmap_domain_certificate_id = :cert, idmap_domain_options = :opts "
-                     "WHERE idmap_domain_name= :dom",
-                     low=range_low, high=range_high, backend=backend, cert=certificate_id,
-                     opts=json.dumps(params) if params else '', dom=domain)
+        conn.execute(text("UPDATE directoryservice_idmap_domain SET idmap_domain_idmap_backend = :backend, "
+                          "idmap_domain_range_low = :low, idmap_domain_range_high = :high, "
+                          "idmap_domain_certificate_id = :cert, idmap_domain_options = :opts "
+                          "WHERE idmap_domain_name= :dom"), {
+                              "low": range_low, "high": range_high, "backend": backend, "cert": certificate_id,
+                              "opts": json.dumps(params) if params else '', "dom": domain})
 
     with op.batch_alter_table('directoryservice_idmap_domain', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_directoryservice_idmap_domain_idmap_domain_certificate_id'), ['idmap_domain_certificate_id'], unique=False)

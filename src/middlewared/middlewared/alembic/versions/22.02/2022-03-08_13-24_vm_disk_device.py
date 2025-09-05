@@ -26,9 +26,9 @@ def upgrade():
         device["attributes"] = json.loads(device["attributes"])
         if device["attributes"].get("path"):
             device["attributes"]["path"] = device["attributes"]["path"].replace(" ", "+")
-            conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
-                json.dumps(device["attributes"]), device["id"]
-            ))
+            conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {
+                'attributes': json.dumps(device["attributes"]), 'id': device["id"]
+            })
 
 
 def downgrade():

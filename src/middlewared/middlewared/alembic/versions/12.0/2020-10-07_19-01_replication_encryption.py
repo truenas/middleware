@@ -7,6 +7,7 @@ Create Date: 2020-10-07 19:01:33.955108+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -24,7 +25,7 @@ def upgrade():
         batch_op.add_column(sa.Column('repl_encryption_key_format', sa.String(length=120), nullable=True))
         batch_op.add_column(sa.Column('repl_encryption_key_location', sa.Text(), nullable=True))
 
-    op.execute('UPDATE storage_replication SET repl_encryption = FALSE')
+    op.execute(text('UPDATE storage_replication SET repl_encryption = FALSE'))
 
     with op.batch_alter_table('storage_replication', schema=None) as batch_op:
         batch_op.alter_column('repl_encryption',

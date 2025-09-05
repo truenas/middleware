@@ -28,9 +28,9 @@ def upgrade():
             'controller_type': 'nec-xhci',
             'usb': None,
         })
-        conn.execute('UPDATE vm_device SET attributes = ? WHERE id = ?', (
-            json.dumps(device_attrs), device_id
-        ))
+        conn.execute(text('UPDATE vm_device SET attributes = :attrs WHERE id = :id'), {
+            'attrs': json.dumps(device_attrs), 'id': device_id
+        })
 
 
 def downgrade():

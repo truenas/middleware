@@ -45,7 +45,7 @@ def upgrade():
     for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).fetchall():
         attributes = json.loads(decrypt(device['attributes']))
         attributes['serial'] = generate_string(string_size=8)
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (encrypt(json.dumps(attributes)), device['id']))
+        conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {"attributes": encrypt(json.dumps(attributes)), "id": device['id']})
 
 
 def downgrade():

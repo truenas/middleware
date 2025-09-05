@@ -21,9 +21,9 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    op.execute("""
+    op.execute(text("""
         UPDATE directoryservice_idmap_domain SET idmap_domain_certificate_id = NULL WHERE idmap_domain_certificate_id = ''
-    """)  # NAS-111944
+    """))  # NAS-111944
     conn.execute(text("PRAGMA legacy_alter_table = TRUE"))
     for name, sql in conn.execute(text("SELECT name, sql FROM sqlite_master WHERE type = 'table'")).fetchall():
         if m := re.match(r'CREATE TABLE "(.+)" \((\s*|.+\s)"?id"? integer (NOT NULL |)PRIMARY KEY[,)]', sql, flags=re.IGNORECASE):
@@ -45,18 +45,18 @@ def upgrade():
         for index_sql, in conn.execute(text("""
             SELECT sql
             FROM sqlite_master
-            WHERE type = 'index' AND tbl_name = ?
-        """, (table_name,)).fetchall():
+            WHERE type = 'index' AND tbl_name = :tbl_name
+        """), {"tbl_name": table_name}).fetchall():
             if index_sql is not None:
                 index_sqls.append(index_sql)
 
         params = {"table": f'"{name}"', "table_old": f'"{name}__old"'}
-        conn.execute(text("ALTER TABLE %(table)s RENAME TO %(table_old)s"))
-        conn.execute(new_sql)
-        conn.execute(text("INSERT INTO %(table)s SELECT * FROM %(table_old)s"))
-        conn.execute(text("DROP TABLE %(table_old)s"))
+        conn.execute(text(f"ALTER TABLE {params['table']} RENAME TO {params['table_old']}"))
+        conn.execute(text(new_sql))
+        conn.execute(text(f"INSERT INTO {params['table']} SELECT * FROM {params['table_old']}"))
+        conn.execute(text(f"DROP TABLE {params['table_old']}"))
         for index_sql in index_sqls:
-            conn.execute(index_sql)
+            conn.execute(text(index_sql))
 
     conn.execute(text("PRAGMA legacy_alter_table = FALSE"))
 

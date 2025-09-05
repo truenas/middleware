@@ -31,9 +31,9 @@ def upgrade():
         address_pool_config = json.loads(docker_config['address_pools'])
         address_pool_config.append({'base': 'fdd0::/48', 'size': 64})
 
-        conn.execute("UPDATE services_docker SET address_pools = ? WHERE id = ?", [
-            json.dumps(address_pool_config),
-            docker_config['id']]
+        conn.execute(text("UPDATE services_docker SET address_pools = :address_pools WHERE id = :id"), {
+            "address_pools": json.dumps(address_pool_config),
+            "id": docker_config['id']}
         )
 
 

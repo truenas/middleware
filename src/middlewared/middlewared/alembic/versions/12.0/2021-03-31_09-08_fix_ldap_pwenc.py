@@ -25,11 +25,11 @@ def upgrade():
         if row["ldap_binddn"] and decrypt(row["ldap_binddn"]):
             # New (>= 12.0) configurations have ldap_binddn erroneously encrypted instead of ldap_bindpw
             # due to fd623d849d1abee8c5786128b150e92209ba1f69
-            conn.execute("UPDATE directoryservice_ldap SET ldap_binddn = ?, ldap_bindpw = ? WHERE id = ?", [
-                decrypt(row["ldap_binddn"]),
-                encrypt(row["ldap_bindpw"]),
-                row["id"],
-            ])
+            conn.execute(text("UPDATE directoryservice_ldap SET ldap_binddn = :binddn, ldap_bindpw = :bindpw WHERE id = :id"), {
+                'binddn': decrypt(row["ldap_binddn"]),
+                'bindpw': encrypt(row["ldap_bindpw"]),
+                'id': row["id"],
+            })
 
     # ### end Alembic commands ###
 

@@ -7,6 +7,7 @@ Create Date: 2020-03-11 14:38:45.857258+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('directoryservice_activedirectory', schema=None) as batch_op:
         batch_op.add_column(sa.Column('ad_restrict_pam', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE directoryservice_activedirectory SET ad_restrict_pam = 0")
+    op.execute(text("UPDATE directoryservice_activedirectory SET ad_restrict_pam = 0"))
 
     with op.batch_alter_table('directoryservice_activedirectory', schema=None) as batch_op:
         batch_op.alter_column('ad_restrict_pam', nullable=False)

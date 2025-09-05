@@ -7,6 +7,7 @@ Create Date: 2019-11-20 12:14:34.182278+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -22,7 +23,7 @@ def upgrade():
         batch_op.add_column(sa.Column('ini_script_text', sa.TEXT(), nullable=True))
         batch_op.add_column(sa.Column('ini_comment', sa.VARCHAR(length=255), nullable=True))
 
-    op.execute("UPDATE tasks_initshutdown SET ini_script_text = '', ini_comment = ''")
+    op.execute(text("UPDATE tasks_initshutdown SET ini_script_text = '', ini_comment = ''"))
 
     with op.batch_alter_table('tasks_initshutdown', schema=None) as batch_op:
         batch_op.alter_column('ini_script_text',

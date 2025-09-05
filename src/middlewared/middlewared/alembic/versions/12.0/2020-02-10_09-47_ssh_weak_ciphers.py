@@ -40,11 +40,11 @@ def upgrade():
         if 'Ciphers' in row['ssh_options']:
             ssh_weak_ciphers.remove('AES128-CBC')
 
-        conn.execute("UPDATE services_ssh SET ssh_weak_ciphers = :ssh_weak_ciphers, "
-                     "ssh_options = :ssh_options WHERE id = :id",
-                     ssh_weak_ciphers=json.dumps(ssh_weak_ciphers),
-                     ssh_options=row["ssh_options"],
-                     id=row["id"])
+        conn.execute(text("UPDATE services_ssh SET ssh_weak_ciphers = :ssh_weak_ciphers, "
+                          "ssh_options = :ssh_options WHERE id = :id"), {
+                              "ssh_weak_ciphers": json.dumps(ssh_weak_ciphers),
+                              "ssh_options": row["ssh_options"],
+                              "id": row["id"]})
 
     with op.batch_alter_table('services_ssh', schema=None) as batch_op:
         batch_op.alter_column('ssh_weak_ciphers',

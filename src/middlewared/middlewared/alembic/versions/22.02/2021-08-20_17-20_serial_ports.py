@@ -31,7 +31,7 @@ def upgrade():
     else:
         new_val = io_choices[sys_config['adv_serialport']]
 
-    conn.execute("UPDATE system_advanced SET adv_serialport = ? WHERE id = ?", (new_val, sys_config['id']))
+    conn.execute(text("UPDATE system_advanced SET adv_serialport = :port WHERE id = :id"), {"port": new_val, "id": sys_config['id']})
 
 
 def downgrade():

@@ -27,6 +27,6 @@ def upgrade():
         if attributes := decrypt(entry["attributes"]):
             attributes = json.loads(attributes)
             attributes.setdefault("endpoint", "https://gateway.storjshare.io/")
-            conn.execute("UPDATE system_cloudcredentials SET attributes = ? WHERE id = ?", (
-                encrypt(json.dumps(attributes)), entry["id"]
-            ))
+            conn.execute(text("UPDATE system_cloudcredentials SET attributes = :attributes WHERE id = :id"), {
+                "attributes": encrypt(json.dumps(attributes)), "id": entry["id"]
+            })

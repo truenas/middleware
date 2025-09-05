@@ -7,6 +7,7 @@ Create Date: 2020-10-23 14:18:55.023736+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('storage_replication', schema=None) as batch_op:
         batch_op.add_column(sa.Column('repl_properties_exclude', sa.TEXT(), nullable=True))
 
-    op.execute("UPDATE storage_replication SET repl_properties_exclude = '[]'")
+    op.execute(text("UPDATE storage_replication SET repl_properties_exclude = '[]'"))
 
     with op.batch_alter_table('storage_replication', schema=None) as batch_op:
         batch_op.alter_column('repl_properties_exclude',

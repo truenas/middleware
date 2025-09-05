@@ -27,8 +27,8 @@ def upgrade():
     conn = op.get_bind()
     for share_id, in conn.execute(text("SELECT id FROM sharing_nfs_share")).fetchall():
         paths = list(map(operator.itemgetter(0),
-                         conn.execute("SELECT path FROM sharing_nfs_share_path WHERE share_id = ?", [share_id])))
-        conn.execute("UPDATE sharing_nfs_share SET nfs_paths = ? WHERE id = ?", [json.dumps(paths), share_id])
+                         conn.execute(text("SELECT path FROM sharing_nfs_share_path WHERE share_id = :share_id"), {"share_id": share_id})))
+        conn.execute(text("UPDATE sharing_nfs_share SET nfs_paths = :paths WHERE id = :id"), {"paths": json.dumps(paths), "id": share_id})
 
     with op.batch_alter_table('sharing_nfs_share', schema=None) as batch_op:
         batch_op.alter_column('nfs_paths',

@@ -7,6 +7,7 @@ Create Date: 2020-07-22 12:13:15.609666+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('sharing_nfs_share', schema=None) as batch_op:
         batch_op.add_column(sa.Column('nfs_aliases', sa.TEXT(), nullable=True))
 
-    op.execute("UPDATE sharing_nfs_share SET nfs_aliases = '[]'")
+    op.execute(text("UPDATE sharing_nfs_share SET nfs_aliases = '[]'"))
 
     with op.batch_alter_table('sharing_nfs_share', schema=None) as batch_op:
         batch_op.alter_column('nfs_aliases',

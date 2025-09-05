@@ -7,6 +7,7 @@ Create Date: 2020-10-21 16:19:50.910413+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('services_snmp', schema=None) as batch_op:
         batch_op.add_column(sa.Column('snmp_iftop', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE services_snmp SET snmp_iftop = FALSE")
+    op.execute(text("UPDATE services_snmp SET snmp_iftop = FALSE"))
 
     with op.batch_alter_table('services_snmp', schema=None) as batch_op:
         batch_op.alter_column('snmp_iftop', nullable=False)

@@ -33,9 +33,9 @@ def upgrade():
             'web': attrs.pop('vnc_web', True),
             'type': 'VNC',
         })
-        conn.execute("UPDATE vm_device SET attributes = ?, dtype = 'DISPLAY' WHERE id = ?", (
-            json.dumps(attrs), device['id']
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attrs, dtype = 'DISPLAY' WHERE id = :id"), {
+            "attrs": json.dumps(attrs), "id": device['id']
+        })
 
 
 def downgrade():

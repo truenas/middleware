@@ -42,7 +42,7 @@ def upgrade():
                         params.append(encrypt(row[k]))
 
                 if set_:
-                    conn.execute(f"UPDATE {table} SET {', '.join(set_)} WHERE id = {row['id']}", params)
+                    conn.execute(text(f"UPDATE {table} SET {', '.join(set_)} WHERE id = {row['id']}"), params)
 
     conn.execute(text("DELETE FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631'"))
 
