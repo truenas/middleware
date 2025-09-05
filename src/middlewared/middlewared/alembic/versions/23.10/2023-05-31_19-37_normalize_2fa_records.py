@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize 2FA AD records
 
@@ -20,10 +22,10 @@ def upgrade():
     # we will add it to the 2fa table
     existing_records = [
         user_id['user_id'] for user_id in map(
-            dict, conn.execute('SELECT user_id FROM account_twofactor_user_auth').fetchall()
+            dict, conn.execute(text('SELECT user_id FROM account_twofactor_user_auth')).fetchall()
         )
     ]
-    for row in map(dict, conn.execute('SELECT id FROM account_bsdusers').fetchall()):
+    for row in map(dict, conn.execute(text('SELECT id FROM account_bsdusers')).fetchall()):
         if row['id'] in existing_records:
             continue
 

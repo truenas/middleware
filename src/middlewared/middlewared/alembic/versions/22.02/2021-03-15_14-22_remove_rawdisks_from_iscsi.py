@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """remove raw disks from iscsi
 
 Revision ID: 370ff38939fd
@@ -22,22 +24,22 @@ def upgrade():
 
     tar_ids = set()
     # query db for entries that point to raw disks
-    for disk_id, in conn.execute(f'SELECT id FROM {main_table} WHERE {main_col} = "Disk"').fetchall():
+    for disk_id, in conn.execute(text(f'SELECT id FROM {main_table} WHERE {main_col} = "Disk"')).fetchall():
         # delete the target to extent associations first
         for id_, tar_id in conn.execute(
             f'SELECT id, iscsi_target_id FROM {tartoext_table} WHERE iscsi_extent_id = {disk_id}'
         ).fetchall():
             tar_ids.add(tar_id)
-            conn.execute(f'DELETE FROM {tartoext_table} WHERE id = {id_}')
+            conn.execute(text(f'DELETE FROM {tartoext_table} WHERE id = {id_}'))
 
         # delete extent next
-        conn.execute(f'DELETE FROM {main_table} WHERE id = {disk_id}')
+        conn.execute(text(f'DELETE FROM {main_table} WHERE id = {disk_id}'))
 
     # delete target(s) information last
     for tar_id in tar_ids:
         try:
-            conn.execute(f'DELETE FROM services_iscsitargetgroups WHERE iscsi_target_id = {tar_id}')
-            conn.execute(f'DELETE FROM services_iscsitarget WHERE id = {tar_id}')
+            conn.execute(text(f'DELETE FROM services_iscsitargetgroups WHERE iscsi_target_id = {tar_id}'))
+            conn.execute(text(f'DELETE FROM services_iscsitarget WHERE id = {tar_id}'))
         except Exception:
             # dont fail the transaction for all targets since this can fail on
             # on foreign key constraint since targets can have multiple assignments

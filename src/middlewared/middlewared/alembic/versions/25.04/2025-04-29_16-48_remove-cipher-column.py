@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """Copy of revision 0e5949153c20 in 23.10
 
 Revision ID: 249b95f63f76
@@ -21,7 +23,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for c in map(dict, conn.execute("SELECT * FROM system_keychaincredential WHERE type = 'SSH_CREDENTIALS'").fetchall()):
+    for c in map(dict, conn.execute(text("SELECT * FROM system_keychaincredential WHERE type = 'SSH_CREDENTIALS'")).fetchall()):
         if attributes := decrypt(c["attributes"]):
             attributes = json.loads(attributes)
             attributes.pop("cipher", None)

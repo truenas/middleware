@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """update usb pass through params
 
 Revision ID: d388b0e9a50d
@@ -18,7 +20,7 @@ def upgrade():
     conn = op.get_bind()
     devices = {
         row['id']: json.loads(row['attributes'])
-        for row in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype = 'USB'").fetchall())
+        for row in map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'USB'")).fetchall())
     }
 
     for device_id, device_attrs in devices.items():

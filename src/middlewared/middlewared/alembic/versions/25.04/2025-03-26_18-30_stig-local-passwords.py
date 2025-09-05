@@ -8,6 +8,7 @@ Create Date: 2025-03-26 18:30:31.856948+00:00
 from alembic import op
 from datetime import datetime, UTC
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -34,4 +35,4 @@ def upgrade():
 
     # Initialize the password last set date for local accounts with passwords
     # This ensures that accounts will not get locked out if admin sets a max password age
-    conn.execute(f'UPDATE account_bsdusers SET bsdusr_last_password_change="{now}" WHERE bsdusr_unixhash!="*"')
+    conn.execute(text(f'UPDATE account_bsdusers SET bsdusr_last_password_change="{now}" WHERE bsdusr_unixhash!="*"'))

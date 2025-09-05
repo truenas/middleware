@@ -8,6 +8,7 @@ Create Date: 2023-03-24 22:57:01.757983+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 revision = '55836e7dac39'
@@ -38,10 +39,10 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_account_twofactor_user_auth_user_id'), ['user_id'], unique=False)
 
     conn = op.get_bind()
-    existing_secret_record = conn.execute('SELECT secret FROM system_twofactorauthentication').fetchone()
+    existing_secret_record = conn.execute(text('SELECT secret FROM system_twofactorauthentication')).fetchone()
     existing_secret = existing_secret_record['secret'] if existing_secret_record else None
 
-    for row in map(dict, conn.execute('SELECT id,bsdusr_uid FROM account_bsdusers').fetchall()):
+    for row in map(dict, conn.execute(text('SELECT id,bsdusr_uid FROM account_bsdusers')).fetchall()):
         row = dict(row)
         secret = existing_secret if row['bsdusr_uid'] == 0 else None
         conn.execute('INSERT INTO account_twofactor_user_auth (secret,user_id) VALUES (?,?)', (secret, row['id']))

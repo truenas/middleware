@@ -7,6 +7,7 @@ Create Date: 2024-10-30 19:58:06.237170+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -19,9 +20,9 @@ depends_on = None
 def set_discovery_auth(conn, authtype, authgroups):
     if authgroups:
         if len(authgroups) == 1:
-            conn.execute(f'UPDATE services_iscsitargetauthcredential SET iscsi_target_auth_discovery_auth = "{authtype}" WHERE iscsi_target_auth_tag == {authgroups[0]}')
+            conn.execute(text(f'UPDATE services_iscsitargetauthcredential SET iscsi_target_auth_discovery_auth = "{authtype}" WHERE iscsi_target_auth_tag == {authgroups[0]}'))
         else:
-            conn.execute(f'UPDATE services_iscsitargetauthcredential SET iscsi_target_auth_discovery_auth = "{authtype}" WHERE iscsi_target_auth_tag IN {tuple(authgroups)}')
+            conn.execute(text(f'UPDATE services_iscsitargetauthcredential SET iscsi_target_auth_discovery_auth = "{authtype}" WHERE iscsi_target_auth_tag IN {tuple(authgroups)}'))
 
 
 def upgrade():

@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize Remote Display VM device
 
@@ -19,7 +21,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    vnc_devices = [dict(row) for row in conn.execute("SELECT * FROM vm_device WHERE dtype = 'VNC'").fetchall()]
+    vnc_devices = [dict(row) for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).fetchall()]
 
     for device in vnc_devices:
         attrs = json.loads(device['attributes'])

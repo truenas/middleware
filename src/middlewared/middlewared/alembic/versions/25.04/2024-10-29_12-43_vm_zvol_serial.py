@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Add serial to VM zvol disk devices
 
@@ -40,7 +42,7 @@ def generate_string(string_size=8, punctuation_chars=False, extra_chars=None):
 
 def upgrade():
     conn = op.get_bind()
-    for device in conn.execute("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')").fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).fetchall():
         attributes = json.loads(decrypt(device['attributes']))
         attributes['serial'] = generate_string(string_size=8)
         conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (encrypt(json.dumps(attributes)), device['id']))

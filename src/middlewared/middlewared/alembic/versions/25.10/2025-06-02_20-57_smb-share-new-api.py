@@ -7,6 +7,7 @@ Create Date: 2025-06-02 20:57:13.100313+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -19,7 +20,7 @@ depends_on = None
 def migrate_purposes():
     """ Adjust SMB share configuration for new purpose names. """
     conn = op.get_bind()
-    shares = conn.execute('SELECT * FROM sharing_cifs_share').fetchall()
+    shares = conn.execute(text('SELECT * FROM sharing_cifs_share')).fetchall()
     for share in shares:
         update = False
         auto_ds = False

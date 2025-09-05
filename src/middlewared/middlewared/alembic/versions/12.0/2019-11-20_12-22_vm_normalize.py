@@ -9,6 +9,7 @@ import json
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -43,7 +44,7 @@ def upgrade():
     # ensure vnc port
 
     all_ports = [6000, 6100]
-    vnc_devices = [dict(row) for row in conn.execute("SELECT * FROM vm_device WHERE dtype = 'VNC'").fetchall()]
+    vnc_devices = [dict(row) for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).fetchall()]
 
     for vnc_device in vnc_devices:
         vnc_device['attributes'] = json.loads(vnc_device['attributes'])
@@ -76,7 +77,7 @@ def upgrade():
 
     # add physical sector size support
 
-    for device in conn.execute("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')").fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).fetchall():
         attributes = json.loads(device['attributes'])
 
         try:
@@ -95,7 +96,7 @@ def upgrade():
 
     # normalize_mac_address
 
-    for device in conn.execute("SELECT * FROM vm_device WHERE dtype = 'NIC'").fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'NIC'")).fetchall():
         attributes = json.loads(device['attributes'])
 
         if not attributes.get('mac') or attributes['mac'] == '00:a0:98:FF:FF:FF':

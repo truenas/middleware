@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize VM Display Device Port(s)
 
@@ -28,7 +30,7 @@ def upgrade():
 
     display_devices = {
         row['id']: json.loads(row['attributes'])
-        for row in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'").fetchall())
+        for row in map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'")).fetchall())
     }
     reserved_ports = [d['port'] for d in display_devices.values()] + [6000]
 
