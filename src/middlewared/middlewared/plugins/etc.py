@@ -465,6 +465,9 @@ class EtcService(Service):
         return changes
 
     async def generate(self, name, checkpoint=None):
+        # [
+        #     {'type': 'py', 'path': 'fips', 'checkpoint': None},
+        # ]
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
@@ -479,7 +482,7 @@ class EtcService(Service):
                 entries = group
 
             for entry in entries:
-                renderer = self._renderers.get(entry['type'])
+                renderer: PyRenderer = self._renderers.get(entry['type'])  # PyRenderer
                 if renderer is None:
                     raise ValueError(f'Unknown type: {entry["type"]}')
 
@@ -488,14 +491,14 @@ class EtcService(Service):
                     if entry_checkpoint != checkpoint:
                         continue
 
-                path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])
+                path = os.path.join(self.files_dir, entry.get('local_path') or entry['path'])  # ../etc_files/fips
                 entry_path = entry['path']
                 if entry_path.startswith('local/'):
                     entry_path = entry_path[len('local/'):]
-                outfile = f'/etc/{entry_path}'
+                outfile = f'/etc/{entry_path}'  # /etc/fips
 
                 try:
-                    rendered = await renderer.render(path, ctx)
+                    rendered = await renderer.render(path, ctx)  # ../etc_files/fips, None
                 except FileShouldNotExist:
                     try:
                         await self.middleware.run_in_thread(os.unlink, outfile)
