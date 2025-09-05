@@ -21,9 +21,12 @@ def upgrade():
     conn = op.get_bind()
     for table_name, in conn.execute(text("SELECT name FROM sqlite_master WHERE type = 'table'")).fetchall():
         for column in conn.execute(text(f"PRAGMA TABLE_INFO('{table_name}')")):
-            if column["type"].lower() in ("bool", "boolean"):
-                conn.execute(text(f"UPDATE {table_name} SET {column['name']} = 1 WHERE {column['name']} IN ('1', 'true') COLLATE NOCASE"))
-                conn.execute(text(f"UPDATE {table_name} SET {column['name']} = 0 WHERE {column['name']} != 1 AND {column['name']} IS NOT NULL"))
+            # SQLAlchemy 2.0+ returns tuples: (cid, name, type, notnull, dflt_value, pk)
+            column_name = column[1]  # name is at index 1
+            column_type = column[2]  # type is at index 2
+            if column_type.lower() in ("bool", "boolean"):
+                conn.execute(text(f"UPDATE {table_name} SET {column_name} = 1 WHERE {column_name} IN ('1', 'true') COLLATE NOCASE"))
+                conn.execute(text(f"UPDATE {table_name} SET {column_name} = 0 WHERE {column_name} != 1 AND {column_name} IS NOT NULL"))
 
 
 def downgrade():
