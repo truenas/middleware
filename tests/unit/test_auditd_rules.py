@@ -12,13 +12,12 @@ IMMUTABLE_STIG_RULE = "-e 2"
 # Non-STIG test items
 SAMPLE_CE_RULES = ["-a always,exclude -F msgtype=USER_START", "-a always,exclude -F msgtype=SERVICE_START"]
 # Common test items
-INCUS_RULE = "-a always,exit -F arch=b64 -S all -F path=/usr/bin/incus -F perm=x -F auid!=-1 -F key=escalation"
 REBOOT_RULE = "-a always,exit -F arch=b64 -S execve -F path=/usr/sbin/reboot -F key=escalation"
 
 STIG_ASSERT_IN = [MODULE_STIG_RULE, SAMPLE_STIG_RULE, REBOOT_RULE]  # TODO:  IMMUTABLE_STIG_RULE when enabled
 STIG_ASSERT_NOT_IN = SAMPLE_CE_RULES
 
-NON_STIG_ASSERT_IN = [INCUS_RULE, REBOOT_RULE] + SAMPLE_CE_RULES
+NON_STIG_ASSERT_IN = [REBOOT_RULE] + SAMPLE_CE_RULES
 NON_STIG_ASSERT_NOT_IN = [SAMPLE_STIG_RULE]
 
 

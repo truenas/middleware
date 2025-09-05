@@ -30,7 +30,6 @@ ALLOWED_BUILTIN_GIDS = {
     952,  # truenas_sharing_administrators
 }
 
-# TRUENAS_IDMAP_MAX + 1, this is also first ID in range allocated for Incus idmaps
 CONTAINER_ROOT_UID = 2147000001
 
 SYNTHETIC_CONTAINER_ROOT = {
