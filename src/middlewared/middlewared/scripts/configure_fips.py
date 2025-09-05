@@ -41,6 +41,7 @@ def configure_fips(enable_fips: bool) -> None:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
+    logging.debug('Running the command')
 
     if len(sys.argv) == 2:
         database_path = sys.argv[1]
