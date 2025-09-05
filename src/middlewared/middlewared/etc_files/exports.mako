@@ -120,20 +120,22 @@
                        line.rsplit(" ", 1)[0]
                    )
                except Exception:
-                   middleware.logger.warning("%s: dataset lookup failed", line, exc_info=True)
+                   middleware.logger.warning("%s: Dataset lookup failed", line, exc_info=True)
                    continue
 
                datasets.append(ds_name)
 
+        middleware.logger.warning("Datasets with sharenfs: %s", str(datasets))
         for ds in datasets:
             try:
+                middleware.logger.warning("%s: Disable sharenfs", ds)
                 middleware.call_sync(
                     'zfs.dataset.update',
                     ds,
                     {'properties': {'sharenfs': {'value': 'off'}}}
                 )
             except Exception:
-                middleware.logger.warning("%s: failed to disable sharenfs", ds, exc_info=True)
+                middleware.logger.warning("%s: Failed to disable sharenfs", ds, exc_info=True)
 
         return
 
@@ -160,26 +162,26 @@
                 'zfs_file_attributes': {'immutable': False}
             })
 
-        # Remove all files in /etc/exports.d
-        for file in files_in_exportsd:
-
-            if file == 'zfs.exports':
+            # Process zfs.exports first
+            if 'zfs.exports' in files_in_exportsd:
                 middleware.logger.warning("Disabling sharenfs ZFS property on datasets")
                 disable_sharenfs()
-            else:
-                middleware.logger.warning("%s: Unexpected file found in exports.d", file)
 
-            try:
-                middleware.logger.warning("Removing unexpected file found in exports.d: %s", file)
-                os.remove(os.path.join('/etc/exports.d', file))
-            except Exception:
-                middleware.logger.error(
-                    "%s: Failed to remove unexpected file in exports.d",
-                    file, exc_info=True
-                )
+            # Remove all files in /etc/exports.d.  NOTE: zfs.exports might now be gone.
+            for file in files_in_exportsd:
+                filepath = os.path.join('/etc/exports.d', file)
+                if os.path.exists(filepath):
+                    try:
+                        middleware.logger.warning("Removing unexpected file found in exports.d: %s", file)
+                        os.remove(filepath)
+                    except Exception:
+                        middleware.logger.error(
+                            "%s: Failed to remove unexpected file in exports.d",
+                            file, exc_info=True
+                        )
 
-                # Block NFS start if we fail to cleanup /etc/exports.d
-                rv = False
+                        # Block NFS start if we fail to cleanup /etc/exports.d
+                        rv = False
 
 
         # _Always_ exit with /etc/exports.d in immutable state
