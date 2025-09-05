@@ -32,6 +32,9 @@ class DomainConnection(
 
     def _get_enabled_ds(self):
         server_type = self.middleware.call_sync('directoryservices.config')['service_type']
+        if server_type is None:
+            return None
+
         return DSType(server_type)
 
     @pass_app()
