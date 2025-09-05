@@ -11,6 +11,7 @@ import requests.exceptions
 from middlewared.api import api_method
 from middlewared.api.current import UpdateDownloadArgs, UpdateDownloadResult
 from middlewared.service import CallError, job, private, Service
+from middlewared.service_exception import ErrnoMixin
 from middlewared.utils.size import format_size
 from .utils import DOWNLOAD_UPDATE_FILE, scale_update_server, UPLOAD_LOCATION
 
@@ -39,8 +40,15 @@ class UpdateService(Service):
             job.set_progress(0, "Retrieving update manifest")
 
             update_status = self.middleware.call_sync('update.status_internal', True)
-            if update_status['error']:
+            if update_status['code'] == 'ERROR':
                 raise CallError(f'Error retrieving update status: {update_status["error"]}', errno.ENOPKG)
+            if update_status['code'] == 'REBOOT_REQUIRED':
+                raise CallError('System update was already applied, system reboot is required.',
+                                ErrnoMixin.EREBOOTREQUIRED)
+            if update_status['code'] == 'HA_UNAVAILABLE':
+                raise CallError('HA is configured but currently unavailable.', ErrnoMixin.EHAUNAVAILABLE)
+            if update_status['code'] != 'NORMAL':
+                raise CallError(f'Unknown update status: {update_status["code"]}')
 
             if train is None and version is None:
                 if update_status['status']['new_version'] is None:
