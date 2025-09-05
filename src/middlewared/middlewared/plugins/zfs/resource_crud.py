@@ -134,10 +134,9 @@ class ZFSResourceService(Service):
         """Check to see if a given snapshot exists.
         NOTE: internal method so lots of assumptions
         are made by the passed in `snap_name` arg."""
-        ds, snap_name = snap_name.split("@")
         rv = self.middleware.call_sync(
             "zfs.resource.query_impl",
-            {"paths": [ds], "properties": None, "get_snapshots": True}
+            {"paths": [snap_name.split("@")[0]], "properties": None, "get_snapshots": True}
         )
         return rv and snap_name in rv[0]["snapshots"]
 
