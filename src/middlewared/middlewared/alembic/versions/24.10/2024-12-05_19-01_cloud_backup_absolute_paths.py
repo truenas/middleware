@@ -7,6 +7,7 @@ Create Date: 2024-12-05 19:01:52.134798+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('tasks_cloud_backup', schema=None) as batch_op:
         batch_op.add_column(sa.Column('absolute_paths', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE tasks_cloud_backup SET absolute_paths = 1")
+    op.execute(text("UPDATE tasks_cloud_backup SET absolute_paths = 1"))
 
     with op.batch_alter_table('tasks_cloud_backup', schema=None) as batch_op:
         batch_op.alter_column('absolute_paths',

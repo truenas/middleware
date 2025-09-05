@@ -7,6 +7,7 @@ Create Date: 2020-10-20 12:46:04.125860+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 
 revision = 'c9900d2d11cb'
@@ -16,8 +17,8 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("INSERT INTO services_services (srv_service, srv_enable) VALUES ('glusterd', 0)")
+    op.execute(text("INSERT INTO services_services (srv_service, srv_enable) VALUES ('glusterd', 0)"))
 
 
 def downgrade():
-    op.execute("DELETE FROM services_services WHERE srv_service = 'glusterd'")
+    op.execute(text("DELETE FROM services_services WHERE srv_service = 'glusterd'"))

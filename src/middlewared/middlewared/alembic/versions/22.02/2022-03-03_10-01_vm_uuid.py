@@ -25,7 +25,7 @@ def upgrade():
         batch_op.add_column(sa.Column('uuid', sa.String(length=255), nullable=False, server_default=''))
 
     for vm in map(dict, conn.execute(text("SELECT * FROM vm_vm")).fetchall()):
-        conn.execute("UPDATE vm_vm SET uuid = ? WHERE id = ?", (str(uuid.uuid4()), vm['id']))
+        conn.execute(text("UPDATE vm_vm SET uuid = :uuid WHERE id = :id"), {'uuid': str(uuid.uuid4()), 'id': vm['id']})
 
 
 def downgrade():

@@ -7,6 +7,7 @@ Create Date: 2019-12-19 15:02:01.421499+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('system_alert', schema=None) as batch_op:
         batch_op.add_column(sa.Column('last_occurrence', sa.DateTime(), nullable=True))
 
-    op.execute("UPDATE system_alert SET last_occurrence = datetime")
+    op.execute(text("UPDATE system_alert SET last_occurrence = datetime"))
 
     with op.batch_alter_table('system_alert', schema=None) as batch_op:
         batch_op.alter_column('last_occurrence',

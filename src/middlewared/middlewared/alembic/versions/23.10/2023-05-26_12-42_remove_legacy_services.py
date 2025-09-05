@@ -7,6 +7,7 @@ Create Date: 2023-05-26 12:42:31.731606+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -25,7 +26,7 @@ def upgrade():
     op.drop_table('services_rsyncmod')
     op.drop_table('services_dynamicdns')
     op.drop_table('services_webdav')
-    op.execute("DELETE FROM services_services WHERE srv_service IN ('dynamicdns', 'openvpn_client', 'openvpn_server', 'rsync', 'webdav')")
+    op.execute(text("DELETE FROM services_services WHERE srv_service IN ('dynamicdns', 'openvpn_client', 'openvpn_server', 'rsync', 'webdav')"))
     # ### end Alembic commands ###
 
 

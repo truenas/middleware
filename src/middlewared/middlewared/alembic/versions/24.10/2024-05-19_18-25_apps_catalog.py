@@ -31,7 +31,8 @@ def upgrade():
 
     # Now we will add our catalog
     conn.execute(
-        "INSERT INTO services_catalog (label, preferred_trains) VALUES ('TRUENAS', ?)", (json.dumps(['stable']),)
+        text("INSERT INTO services_catalog (label, preferred_trains) VALUES ('TRUENAS', :preferred_trains)"), 
+        {'preferred_trains': json.dumps(['stable'])}
     )
 
     # We will add the model which will be used for docker

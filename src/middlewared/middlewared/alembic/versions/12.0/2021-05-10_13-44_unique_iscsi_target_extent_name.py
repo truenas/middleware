@@ -34,7 +34,7 @@ def ensure_unique_string(conn, table, column):
                         break
 
             if update:
-                conn.execute(f"UPDATE {table} SET {column} = ? WHERE id = ?", [value, row["id"]])
+                conn.execute(text(f"UPDATE {table} SET {column} = :value WHERE id = :id"), {'value': value, 'id': row["id"]})
 
             values.add(value)
 

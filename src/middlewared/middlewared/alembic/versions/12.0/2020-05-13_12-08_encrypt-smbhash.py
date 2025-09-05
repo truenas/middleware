@@ -24,7 +24,7 @@ def upgrade():
     conn = op.get_bind()
     for row in conn.execute(text(f"SELECT id, bsdusr_smbhash FROM {table} WHERE bsdusr_unixhash != '*'")).fetchall():
         encrypted_hash = encrypt(row["bsdusr_smbhash"])
-        conn.execute(f"UPDATE {table} SET bsdusr_smbhash = ? WHERE id = {row['id']}", encrypted_hash)
+        conn.execute(text(f"UPDATE {table} SET bsdusr_smbhash = :hash WHERE id = :id"), {'hash': encrypted_hash, 'id': row['id']})
 
 
 def downgrade():

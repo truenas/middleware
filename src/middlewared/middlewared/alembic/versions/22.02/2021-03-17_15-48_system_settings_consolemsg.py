@@ -7,6 +7,7 @@ Create Date: 2021-03-17 15:48:29.195879+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('system_settings', schema=None) as batch_op:
         batch_op.add_column(sa.Column('stg_guiconsolemsg', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE system_settings SET stg_guiconsolemsg = (SELECT adv_consolemsg FROM system_advanced)")
+    op.execute(text("UPDATE system_settings SET stg_guiconsolemsg = (SELECT adv_consolemsg FROM system_advanced)"))
 
     with op.batch_alter_table('system_settings', schema=None) as batch_op:
         batch_op.alter_column('stg_guiconsolemsg',

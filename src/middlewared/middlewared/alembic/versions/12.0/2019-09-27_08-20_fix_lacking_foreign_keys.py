@@ -7,6 +7,7 @@ Create Date: 2019-09-27 08:20:13.391318+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -17,11 +18,11 @@ depends_on = None
 
 
 def create_foreign_key(*args, **kwargs):
-    op.execute(f"DELETE FROM {args[1]} WHERE {args[3][0]} NOT IN (SELECT {args[4][0]} FROM {args[2]})")
+    op.execute(text(f"DELETE FROM {args[1]} WHERE {args[3][0]} NOT IN (SELECT {args[4][0]} FROM {args[2]})"))
 
 
 def create_foreign_key_nullable(*args, **kwargs):
-    op.execute(f"UPDATE {args[1]} SET {args[3][0]} = NULL WHERE {args[3][0]} IS NOT NULL AND {args[3][0]} NOT IN (SELECT {args[4][0]} FROM {args[2]})")
+    op.execute(text(f"UPDATE {args[1]} SET {args[3][0]} = NULL WHERE {args[3][0]} IS NOT NULL AND {args[3][0]} NOT IN (SELECT {args[4][0]} FROM {args[2]})"))
 
 
 def upgrade():

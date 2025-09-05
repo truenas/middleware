@@ -7,6 +7,7 @@ Create Date: 2022-07-12 09:34:58.755371+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('tasks_cloudsync', schema=None) as batch_op:
         batch_op.add_column(sa.Column('create_empty_src_dirs', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE tasks_cloudsync SET create_empty_src_dirs = FALSE")
+    op.execute(text("UPDATE tasks_cloudsync SET create_empty_src_dirs = FALSE"))
 
     with op.batch_alter_table('tasks_cloudsync', schema=None) as batch_op:
         batch_op.alter_column('create_empty_src_dirs',

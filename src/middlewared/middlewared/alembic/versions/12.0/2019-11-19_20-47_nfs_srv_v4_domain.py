@@ -7,6 +7,7 @@ Create Date: 2019-11-19 20:47:28.702007+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('services_nfs', schema=None) as batch_op:
         batch_op.add_column(sa.Column('nfs_srv_v4_domain', sa.String(length=120), nullable=True))
 
-    op.execute("UPDATE services_nfs SET nfs_srv_v4_domain = ''")
+    op.execute(text("UPDATE services_nfs SET nfs_srv_v4_domain = ''"))
 
     with op.batch_alter_table('services_nfs', schema=None) as batch_op:
         batch_op.alter_column('nfs_srv_v4_domain',

@@ -40,13 +40,13 @@ def upgrade():
     for authgroup, authmethod, _portal_id in data:
         if authmethod == 'CHAP Mutual' and authgroup not in mutual_chap_auth_groups:
             # Let's not carry around 'CHAP Mutual' anymore.
-            conn.execute('INSERT INTO services_iscsidiscoveryauth (iscsi_discoveryauth_authmethod, iscsi_discoveryauth_authgroup) VALUES ("CHAP_MUTUAL",?)', authgroup)
+            conn.execute(text('INSERT INTO services_iscsidiscoveryauth (iscsi_discoveryauth_authmethod, iscsi_discoveryauth_authgroup) VALUES ("CHAP_MUTUAL", :authgroup)'), {"authgroup": authgroup})
             mutual_chap_auth_groups.append(authgroup)
     # - Simple CHAP next.
     simple_chap_auth_groups = []
     for authgroup, authmethod, _portal_id in data:
         if authmethod == 'CHAP' and authgroup not in mutual_chap_auth_groups + simple_chap_auth_groups:
-            conn.execute('INSERT INTO services_iscsidiscoveryauth (iscsi_discoveryauth_authmethod, iscsi_discoveryauth_authgroup) VALUES ("CHAP",?)', authgroup)
+            conn.execute(text('INSERT INTO services_iscsidiscoveryauth (iscsi_discoveryauth_authmethod, iscsi_discoveryauth_authgroup) VALUES ("CHAP", :authgroup)'), {"authgroup": authgroup})
             simple_chap_auth_groups.append(authgroup)
 
     # Things to test
@@ -59,12 +59,14 @@ def upgrade():
 
     if none_count and non_none_count:
         portal_id_strs = list(str(item[2]) for item in none_list)
-        none_ips = conn.execute("SELECT iscsi_target_portalip_ip FROM services_iscsitargetportalip WHERE iscsi_target_portalip_portal_id IN (?)", ','.join(portal_id_strs)).fetchall()
-        conn.execute("INSERT INTO system_keyvalue (\"key\", value) VALUES (?, ?)",
-                     ("ISCSIDiscoveryAuthMixed", json.dumps({'ips': [ip[0] for ip in none_ips]})))
+        placeholders = ','.join(f':portal_id_{i}' for i in range(len(portal_id_strs)))
+        params = {f'portal_id_{i}': portal_id for i, portal_id in enumerate(portal_id_strs)}
+        none_ips = conn.execute(text(f"SELECT iscsi_target_portalip_ip FROM services_iscsitargetportalip WHERE iscsi_target_portalip_portal_id IN ({placeholders})"), params).fetchall()
+        conn.execute(text("INSERT INTO system_keyvalue (\"key\", value) VALUES (:key, :value)"),
+                     {"key": "ISCSIDiscoveryAuthMixed", "value": json.dumps({'ips': [ip[0] for ip in none_ips]})})
     elif non_none_count > 1:
-        conn.execute("INSERT INTO system_keyvalue (\"key\", value) VALUES (?, ?)",
-                     ("ISCSIDiscoveryAuthMultipleCHAP", json.dumps({})))
+        conn.execute(text("INSERT INTO system_keyvalue (\"key\", value) VALUES (:key, :value)"),
+                     {"key": "ISCSIDiscoveryAuthMultipleCHAP", "value": json.dumps({})})
 
     if mutual_chap_auth_groups:
         if len(mutual_chap_auth_groups) == 1:
@@ -74,8 +76,8 @@ def upgrade():
             data = conn.execute(text(f"SELECT DISTINCT iscsi_target_auth_peeruser FROM services_iscsitargetauthcredential WHERE iscsi_target_auth_tag in ({tags}) AND iscsi_target_auth_peeruser != ''")).fetchall()
         if len(list(data)) > 1:
             active_peeruser = data[0][0]
-            conn.execute("INSERT INTO system_keyvalue (\"key\", value) VALUES (?, ?)",
-                         ("ISCSIDiscoveryAuthMultipleMutualCHAP", json.dumps({'peeruser': active_peeruser})))
+            conn.execute(text("INSERT INTO system_keyvalue (\"key\", value) VALUES (:key, :value)"),
+                         {"key": "ISCSIDiscoveryAuthMultipleMutualCHAP", "value": json.dumps({'peeruser': active_peeruser})})
 
     # Remove the obsolete columns
     with op.batch_alter_table('services_iscsitargetportal', schema=None) as batch_op:

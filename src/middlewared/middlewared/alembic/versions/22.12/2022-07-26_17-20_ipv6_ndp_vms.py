@@ -26,7 +26,7 @@ def upgrade():
     for row in map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'NIC'")).fetchall()):
         config = json.loads(row['attributes'])
         config['trust_guest_rx_filters'] = False
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (json.dumps(config), row['id']))
+        conn.execute(text("UPDATE vm_device SET attributes = :attrs WHERE id = :id"), {"attrs": json.dumps(config), "id": row['id']})
 
 
 def downgrade():

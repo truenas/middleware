@@ -22,9 +22,9 @@ def upgrade():
     conn = op.get_bind()
 
     conn.execute(text("DELETE FROM services_catalog WHERE label = 'TRUENAS'"))
-    conn.execute("UPDATE services_catalog SET label = ? WHERE label = ?", (
-        'TRUENAS', 'OFFICIAL'
-    ))
+    conn.execute(text("UPDATE services_catalog SET label = :new_label WHERE label = :old_label"), {
+        'new_label': 'TRUENAS', 'old_label': 'OFFICIAL'
+    })
 
 
 def downgrade():

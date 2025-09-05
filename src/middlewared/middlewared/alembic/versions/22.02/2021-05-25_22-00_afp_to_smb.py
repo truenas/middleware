@@ -25,7 +25,7 @@ def upgrade():
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.add_column(sa.Column('cifs_timemachine_quota', sa.Integer(), nullable=True))
 
-    op.execute("UPDATE sharing_cifs_share SET cifs_timemachine_quota = 0")
+    op.execute(text("UPDATE sharing_cifs_share SET cifs_timemachine_quota = 0"))
 
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.alter_column('cifs_timemachine_quota', existing_type=sa.INTEGER(), nullable=False)
@@ -33,10 +33,10 @@ def upgrade():
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.add_column(sa.Column('cifs_afp', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE sharing_cifs_share SET cifs_afp = 0")
-    op.execute("""
+    op.execute(text("UPDATE sharing_cifs_share SET cifs_afp = 0"))
+    op.execute(text("""
         UPDATE sharing_cifs_share SET cifs_purpose = 'NO_PRESET', cifs_afp = 1 WHERE cifs_purpose = 'MULTI_PROTOCOL_AFP'
-    """)
+    """))
 
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.alter_column('cifs_afp', existing_type=sa.BOOLEAN(), nullable=False)
@@ -107,9 +107,11 @@ def upgrade():
             "cifs_afp": True,
         }
 
+        column_names = ','.join(cifs_share.keys())
+        placeholders = ','.join(f':{key}' for key in cifs_share.keys())
         conn.execute(
-            f"INSERT INTO sharing_cifs_share ({','.join(cifs_share.keys())}) VALUES ({','.join(['?'] * len(cifs_share))})",
-            tuple(cifs_share.values()),
+            text(f"INSERT INTO sharing_cifs_share ({column_names}) VALUES ({placeholders})"),
+            cifs_share
         )
 
         share_id = conn.execute(text("SELECT last_insert_rowid()")).fetchall()[0][0]
@@ -119,12 +121,12 @@ def upgrade():
         conn.execute(text("UPDATE services_cifs SET cifs_srv_aapl_extensions = 1"))
 
     if disable_acl_if_trivial:
-        conn.execute("INSERT INTO system_keyvalue (\"key\", value) VALUES (?, ?)",
-                     ("smb_disable_acl_if_trivial", json.dumps(disable_acl_if_trivial)))
+        conn.execute(text("INSERT INTO system_keyvalue (\"key\", value) VALUES (:key, :value)"),
+                     {"key": "smb_disable_acl_if_trivial", "value": json.dumps(disable_acl_if_trivial)})
 
     op.drop_table('services_afp')
     op.drop_table('sharing_afp_share')
-    op.execute("DELETE FROM services_services WHERE srv_service = 'afp'")
+    op.execute(text("DELETE FROM services_services WHERE srv_service = 'afp'"))
     # ### end Alembic commands ###
 
 

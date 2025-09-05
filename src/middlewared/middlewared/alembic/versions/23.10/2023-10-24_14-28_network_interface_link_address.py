@@ -7,6 +7,7 @@ Create Date: 2023-10-24 14:28:25.413126+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -26,10 +27,10 @@ def upgrade():
     sa.PrimaryKeyConstraint('id', name=op.f('pk_network_interface_link_address')),
     sqlite_autoincrement=True
     )
-    op.execute("INSERT INTO network_interface_link_address (interface, link_address, link_address_b) "
+    op.execute(text("INSERT INTO network_interface_link_address (interface, link_address, link_address_b) "
                "SELECT int_interface, int_link_address, int_link_address_b FROM network_interfaces "
                "WHERE NOT (int_interface LIKE 'bond%' OR int_interface LIKE 'br%' "
-               "OR int_interface LIKE 'lagg%' OR int_interface LIKE 'vlan%')")
+               "OR int_interface LIKE 'lagg%' OR int_interface LIKE 'vlan%')"))
     with op.batch_alter_table('network_interfaces', schema=None) as batch_op:
         batch_op.drop_column('int_link_address')
         batch_op.drop_column('int_link_address_b')

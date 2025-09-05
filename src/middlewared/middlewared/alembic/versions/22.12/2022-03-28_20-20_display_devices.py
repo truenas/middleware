@@ -40,9 +40,9 @@ def upgrade():
             web_port += 1
         display_device['web_port'] = web_port
         reserved_ports.append(web_port)
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
-            json.dumps(display_device), display_id
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attrs WHERE id = :id"), {
+            "attrs": json.dumps(display_device), "id": display_id
+        })
 
 
 def downgrade():
