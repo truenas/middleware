@@ -22,6 +22,7 @@ depends_on = None
 def ensure_unique_string(conn, table, column):
     values = set()
     for row in conn.execute(text(f"SELECT * FROM {table}")).fetchall():
+        row = row._asdict()
         value = row[column]
         if value is not None:
             update = False
