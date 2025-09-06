@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 
@@ -37,7 +37,7 @@ def upgrade_available_for_app(
         catalog_app_metadata['train'], {}
     ).get(catalog_app_metadata['name']):
         latest_version = version_mapping[catalog_app_metadata['train']][catalog_app_metadata['name']]['version']
-        return parse_version(catalog_app_metadata['version']) < parse_version(
+        return Version(catalog_app_metadata['version']) < Version(
             latest_version
         ), latest_version
     elif (app_metadata['custom_app'] or catalog_app == IX_APP_NAME) and image_updates_available:
