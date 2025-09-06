@@ -132,8 +132,8 @@ def ds_migrate_ldap(conn, ldap):
 
 
 def ds_migrate_ipa(conn, ldap):
-    keytabs = list(map(dict, conn.execute(text('SELECT * FROM directoryservice_kerberoskeytab')).fetchall()))
-    realms = list(map(dict, conn.execute(text('SELECT * FROM directoryservice_kerberosrealm')).fetchall()))
+    keytabs = [row._asdict() for row in conn.execute(text('SELECT * FROM directoryservice_kerberoskeytab')).fetchall()]
+    realms = [row._asdict() for row in conn.execute(text('SELECT * FROM directoryservice_kerberosrealm')).fetchall()]
 
     if not keytabs or not realms:
         # Kerberos configuration is required to properly join IPA and so this is a legacy setup
@@ -257,8 +257,8 @@ def migrate_idmap_domain(dom, netbios_domain_name) -> dict | None:
 
 
 def ds_migrate_ad(conn, ad):
-    smb = dict(conn.execute(text('SELECT * FROM services_cifs')).fetchone())
-    idmaps = list(map(dict, conn.execute(text('SELECT * FROM directoryservice_idmap_domain')).fetchall()))
+    smb = conn.execute(text('SELECT * FROM services_cifs')).fetchone()._asdict()
+    idmaps = [row._asdict() for row in conn.execute(text('SELECT * FROM directoryservice_idmap_domain')).fetchall()]
     primary_idmap = None
     default_domain = None
     cache_enabled = not ad['ad_disable_freenas_cache']
@@ -348,8 +348,8 @@ def ds_migrate_ad(conn, ad):
 
 def ds_migrate():
     conn = op.get_bind()
-    ad = dict(conn.execute(text('SELECT * FROM directoryservice_activedirectory')).fetchone())
-    ldap = dict(conn.execute(text('SELECT * FROM directoryservice_ldap')).fetchone())
+    ad = conn.execute(text('SELECT * FROM directoryservice_activedirectory')).fetchone()._asdict()
+    ldap = conn.execute(text('SELECT * FROM directoryservice_ldap')).fetchone()._asdict()
 
     if ldap['ldap_enable']:
         if ldap['ldap_server_type'] == 'FREEIPA':

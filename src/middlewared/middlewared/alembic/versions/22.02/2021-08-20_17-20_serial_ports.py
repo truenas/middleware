@@ -21,7 +21,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     io_choices = {e['start']: e['name'] for e in serial_port_choices()}
-    sys_config = list(map(dict, conn.execute(text("SELECT * FROM system_advanced")).fetchall()))
+    sys_config = [row._asdict() for row in conn.execute(text("SELECT * FROM system_advanced")).fetchall()]
     if not sys_config:
         return
 
