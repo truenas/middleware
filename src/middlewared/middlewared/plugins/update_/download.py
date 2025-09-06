@@ -133,7 +133,7 @@ class UpdateService(Service):
                                 size = os.path.getsize(dst)
                                 if size != total:
                                     raise CallError(f'Downloaded update file size mismatch ({size} != {total})',
-                                                    errno.ENETUNREACH)
+                                                    errno.ECONNRESET)
 
                                 break
                         except Exception as e:
@@ -148,12 +148,12 @@ class UpdateService(Service):
                             if isinstance(e, CallError):
                                 raise
                             else:
-                                raise CallError(f'Error downloading update: {e}', errno.ENETUNREACH)
+                                raise CallError(f'Error downloading update: {e}', errno.ECONNRESET)
 
                 size = os.path.getsize(dst)
                 if size != total:
                     os.unlink(dst)
-                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})', errno.ENETUNREACH)
+                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})', errno.ECONNRESET)
 
                 set_progress(1, "Update downloaded.")
                 return True
