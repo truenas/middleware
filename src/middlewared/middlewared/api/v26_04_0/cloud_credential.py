@@ -6,7 +6,8 @@ __all__ = ["CloudCredentialEntry",
            "CredentialsCreateArgs", "CredentialsCreateResult",
            "CredentialsUpdateArgs", "CredentialsUpdateResult",
            "CredentialsDeleteArgs", "CredentialsDeleteResult",
-           "CredentialsVerifyArgs", "CredentialsVerifyResult"]
+           "CredentialsVerifyArgs", "CredentialsVerifyResult",
+           "CredentialsS3ProviderChoicesArgs", "CredentialsS3ProviderChoicesResult"]
 
 
 class CloudCredentialEntry(BaseModel):
@@ -71,3 +72,11 @@ class CredentialsVerifyResult(BaseModel):
     """Error message if credential verification failed or `null` on success."""
     excerpt: LongString | None = None
     """Logs excerpt (or `null` if no error occurred)."""
+
+
+class CredentialsS3ProviderChoicesArgs(BaseModel):
+    pass
+
+
+class CredentialsS3ProviderChoicesResult(BaseModel):
+    result: dict[str, str]
