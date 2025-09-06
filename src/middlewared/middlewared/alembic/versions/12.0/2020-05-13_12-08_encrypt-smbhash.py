@@ -23,6 +23,7 @@ def upgrade():
     table = "account_bsdusers"
     conn = op.get_bind()
     for row in conn.execute(text(f"SELECT id, bsdusr_smbhash FROM {table} WHERE bsdusr_unixhash != '*'")).fetchall():
+        row = row._asdict()
         encrypted_hash = encrypt(row["bsdusr_smbhash"])
         conn.execute(text(f"UPDATE {table} SET bsdusr_smbhash = :hash WHERE id = :id"), {'hash': encrypted_hash, 'id': row['id']})
 

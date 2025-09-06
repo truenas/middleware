@@ -22,6 +22,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     for row in conn.execute(text("SELECT * FROM directoryservice_ldap")).fetchall():
+        row = row._asdict()
         if row["ldap_binddn"] and decrypt(row["ldap_binddn"]):
             # New (>= 12.0) configurations have ldap_binddn erroneously encrypted instead of ldap_bindpw
             # due to fd623d849d1abee8c5786128b150e92209ba1f69

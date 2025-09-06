@@ -35,6 +35,7 @@ def upgrade():
 
     conn = op.get_bind()
     for row in conn.execute(text("SELECT * FROM account_bsdgroups WHERE bsdgrp_group = 'builtin_administrators'")).fetchall():
+        row = row._asdict()
         builtin_administrators_id = row["id"]
         break
     else:
