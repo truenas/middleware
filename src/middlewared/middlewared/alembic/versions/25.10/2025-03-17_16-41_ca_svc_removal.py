@@ -185,7 +185,7 @@ def upgrade():
 
     certs = {cert['cert_name']: cert for cert in [r._asdict() for r in conn.execute(text("SELECT * FROM system_certificate")).fetchall()]}
     kmip_config = next(
-        [r._asdict() for r in conn.execute(text("SELECT * FROM system_kmip")).fetchall()], {'certificate_authority_id': None}
+        iter([r._asdict() for r in conn.execute(text("SELECT * FROM system_kmip")).fetchall()]), {'certificate_authority_id': None}
     )
     # We need to set existing usages to NULL
     conn.execute(text('UPDATE system_kmip SET certificate_authority_id = NULL'))
