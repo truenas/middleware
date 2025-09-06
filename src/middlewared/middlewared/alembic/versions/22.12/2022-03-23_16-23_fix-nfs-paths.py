@@ -24,7 +24,7 @@ def upgrade():
         batch_op.add_column(sa.Column('nfs_path', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
-    nfs_shares = [dict(row) for row in conn.execute(text("SELECT * FROM sharing_nfs_share")).fetchall()]
+    nfs_shares = list(map(dict, conn.execute(text("SELECT * FROM sharing_nfs_share")).fetchall()))
     for entry in nfs_shares:
         # use existing entry for first path and add new entries for subsequent paths
         _id = entry.pop("id")
@@ -38,7 +38,7 @@ def upgrade():
         except IndexError:
             first_path = "/var/empty"
 
-        conn.execute(text(f'UPDATE sharing_nfs_share SET nfs_path = "{first_path}" WHERE id = {_id}'))
+        conn.execute(text('UPDATE sharing_nfs_share SET nfs_path = :path WHERE id = :id'), {'path': first_path, 'id': _id})
         if not paths:
             continue
 
@@ -47,9 +47,10 @@ def upgrade():
                 continue
 
             entry['nfs_path'] = path
+            placeholders = ', '.join([f':{k}' for k in entry.keys()])
             conn.execute(
-                f"INSERT INTO sharing_nfs_share ({','.join(entry.keys())}) VALUES ({','.join(['?'] * len(entry))})",
-                tuple(entry.values()),
+                text(f"INSERT INTO sharing_nfs_share ({','.join(entry.keys())}) VALUES ({placeholders})"),
+                entry,
             )
 
     with op.batch_alter_table('sharing_nfs_share', schema=None) as batch_op:

@@ -54,13 +54,12 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
 
 def upgrade():
     conn = op.get_bind()
-    authenticator_configs = [
-        dict(config) for config in conn.execute(text("SELECT * FROM system_acmednsauthenticator")).fetchall()
-    ]
+    authenticator_configs = list(
+        map(dict, conn.execute(text("SELECT * FROM system_acmednsauthenticator")).fetchall())
+    )
     authenticator_mapping = defaultdict(list)
     encrypted_domains_certs = []
-    for cert in conn.execute(text("SELECT * FROM system_certificate")).fetchall():
-        cert = dict(cert)
+    for cert in map(dict, conn.execute(text("SELECT * FROM system_certificate")).fetchall()):
         try:
             value = decrypt(cert['cert_domains_authenticators']) if cert['cert_domains_authenticators'] else '{}'
             if value is None:
@@ -75,7 +74,6 @@ def upgrade():
             authenticator_mapping[value].append(cert['id'])
 
     for authenticator_config in authenticator_configs:
-        authenticator_config = dict(authenticator_config)
         try:
             attributes = json.loads(decrypt(authenticator_config['attributes']))
         except json.JSONDecodeError:

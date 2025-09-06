@@ -23,7 +23,7 @@ def upgrade():
     conn = op.get_bind()
     m = {}
     highest_seen = 0
-    configured_domains = [dict(row) for row in conn.execute(text("SELECT * FROM directoryservice_idmap_domaintobackend")).fetchall()]
+    configured_domains = list(map(dict, conn.execute(text("SELECT * FROM directoryservice_idmap_domaintobackend")).fetchall()))
     for domain in configured_domains:
         m[domain['idmap_dtb_domain_id']] = {}
         backend = domain['idmap_dtb_idmap_backend']
@@ -31,8 +31,8 @@ def upgrade():
 
         idmap_table = f"directoryservice_idmap_{backend}"
 
-        backend_data = [dict(row) for row in conn.execute(text(f"SELECT * FROM {idmap_table} WHERE "
-                                                               f"idmap_{backend}_domain_id = :dom_id"), {'dom_id': dom}).fetchall()]
+        backend_data = list(map(dict, conn.execute(text(f"SELECT * FROM {idmap_table} WHERE "
+                                                               f"idmap_{backend}_domain_id = :dom_id"), {'dom_id': dom}).fetchall()))
 
         m[dom]['backend'] = backend
         if not backend_data:
