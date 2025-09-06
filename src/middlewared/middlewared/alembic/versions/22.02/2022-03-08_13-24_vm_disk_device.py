@@ -22,7 +22,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for device in map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'DISK'")).fetchall()):
+    for device in [r._asdict() for r in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'DISK'")).fetchall()]:
         device["attributes"] = json.loads(device["attributes"])
         if device["attributes"].get("path"):
             device["attributes"]["path"] = device["attributes"]["path"].replace(" ", "+")

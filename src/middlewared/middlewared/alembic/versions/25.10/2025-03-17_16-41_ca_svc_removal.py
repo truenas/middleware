@@ -117,8 +117,8 @@ def get_chain_list(cert: dict, cas: dict[str, dict]) -> list[str]:
 
 def upgrade():
     conn = op.get_bind()
-    cas = {ca['id']: ca for ca in map(dict, conn.execute(text("SELECT * FROM system_certificateauthority")).fetchall())}
-    for cert in map(dict, conn.execute(text("SELECT * FROM system_certificate")).fetchall()):
+    cas = {ca['id']: ca for ca in [r._asdict() for r in conn.execute(text("SELECT * FROM system_certificateauthority")).fetchall()]}
+    for cert in [r._asdict() for r in conn.execute(text("SELECT * FROM system_certificate")).fetchall()]:
         chain = get_chain_list(cert, cas)
         if not chain:
             continue
@@ -145,8 +145,8 @@ def upgrade():
         )
 
     # We are going to migrate CAs to cert table now
-    certs = {cert['cert_name']: cert for cert in map(dict, conn.execute(text("SELECT * FROM system_certificate")).fetchall())}
-    cas = {ca['id']: ca for ca in map(dict, conn.execute(text("SELECT * FROM system_certificateauthority")).fetchall())}
+    certs = {cert['cert_name']: cert for cert in [r._asdict() for r in conn.execute(text("SELECT * FROM system_certificate")).fetchall()]}
+    cas = {ca['id']: ca for ca in [r._asdict() for r in conn.execute(text("SELECT * FROM system_certificateauthority")).fetchall()]}
     cas_id_to_name_mapping = {}
     for ca in cas.values():
         if ca['cert_name'] == IPA_CA_CERT_NAME:
@@ -183,9 +183,9 @@ def upgrade():
         batch_op.drop_index('ix_system_certificateauthority_cert_signedby_id')
         batch_op.drop_column('cert_signedby_id')
 
-    certs = {cert['cert_name']: cert for cert in map(dict, conn.execute(text("SELECT * FROM system_certificate")).fetchall())}
+    certs = {cert['cert_name']: cert for cert in [r._asdict() for r in conn.execute(text("SELECT * FROM system_certificate")).fetchall()]}
     kmip_config = next(
-        map(dict, conn.execute(text("SELECT * FROM system_kmip")).fetchall()), {'certificate_authority_id': None}
+        [r._asdict() for r in conn.execute(text("SELECT * FROM system_kmip")).fetchall()], {'certificate_authority_id': None}
     )
     # We need to set existing usages to NULL
     conn.execute(text('UPDATE system_kmip SET certificate_authority_id = NULL'))
