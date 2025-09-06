@@ -29,7 +29,7 @@ def upgrade():
         ("storage_scrub", "scrub_"),
     ]:
         fields = [prefix + field for field in ["minute", "hour", "daymonth", "month", "dayweek"]]
-        for row in map(dict, conn.execute(text(f"SELECT id, {', '.join(fields)} FROM {table}")).fetchall()):
+        for row in [r._asdict() for r in conn.execute(text(f"SELECT id, {', '.join(fields)} FROM {table}")).fetchall()]:
             for k in fields:
                 value = row[k]
                 if value is not None and '/' in value and not re.match(r'^(\*|[0-9]+-[0-9]+)/([0-9]+)$', value):
