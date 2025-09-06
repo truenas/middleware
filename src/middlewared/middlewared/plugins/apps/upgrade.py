@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 import yaml
 
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -196,7 +196,7 @@ class AppService(Service):
             'available_versions_for_upgrade': [
                 {'version': v['version'], 'human_version': v['human_version']}
                 for v in versions_config['versions'].values()
-                if parse_version(v['version']) > parse_version(app['version'])
+                if Version(v['version']) > Version(app['version'])
             ],
         }
 
@@ -216,7 +216,7 @@ class AppService(Service):
             raise CallError(f'Unable to locate {new_version!r} version for {metadata["name"]!r} app')
 
         verrors = ValidationErrors()
-        if parse_version(new_version) <= parse_version(app['version']):
+        if Version(new_version) <= Version(app['version']):
             verrors.add('options.app_version', 'Upgrade version must be greater than current version')
 
         verrors.check()
