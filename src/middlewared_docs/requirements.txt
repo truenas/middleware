@@ -4,13 +4,12 @@ beautifulsoup4==4.12.3
 certifi==2024.8.30
 charset-normalizer==3.4.0
 click==8.1.7
-dataclasses-json==0.5.14
+dataclasses-json==0.6.7
 docutils==0.19
-htmlmin==0.1.12
 idna==3.10
 imagesize==1.4.1
 Jinja2==3.1.4
-json-schema-for-humans==1.0.2
+json-schema-for-humans==1.4.1
 markdown2==2.5.1
 MarkupSafe==2.1.5
 marshmallow==3.23.1
