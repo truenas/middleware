@@ -1,12 +1,10 @@
-import uuid
-
 from typing import Literal
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
-    single_argument_result,
+    single_argument_result, UUIDv4String,
 )
 
 from .vm_device import VMDisplayDevice, VMDeviceEntry
@@ -102,7 +100,7 @@ class VMEntry(BaseModel):
     """Guest architecture type. `null` to use hypervisor default."""
     machine_type: str | None = None
     """Virtual machine type/chipset. `null` to use hypervisor default."""
-    uuid: str | None = None
+    uuid: UUIDv4String | None = None
     """Unique UUID for the VM. `null` to auto-generate."""
     devices: list[VMDeviceEntry]
     """Array of virtual devices attached to this VM."""
@@ -123,15 +121,6 @@ class VMCreate(VMEntry):
     devices: Excluded = excluded_field()
     bootloader_ovmf: str | None = Field(default=None, examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'])
     """OVMF firmware file to use for UEFI boot."""
-
-    @field_validator('uuid')
-    def validate_uuid(cls, value):
-        if value is not None:
-            try:
-                uuid.UUID(value, version=4)
-            except ValueError:
-                raise ValueError('UUID is not valid version 4')
-        return value
 
 
 @single_argument_args('vm_create')
