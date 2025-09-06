@@ -1,5 +1,0 @@
-#!/bin/sh -ex
-
-mkdir -p /var/lib/ssl
-mv /usr/lib/ssl/fipsmodule.cnf /var/lib/ssl/fipsmodule.cnf
-ln -s /var/lib/ssl/fipsmodule.cnf /usr/lib/ssl/fipsmodule.cnf
