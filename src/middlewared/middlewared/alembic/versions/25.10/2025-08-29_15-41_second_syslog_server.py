@@ -21,9 +21,13 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    server, transport, cert_id = conn.execute(
-        'SELECT adv_syslogserver, adv_syslog_transport, adv_syslog_tls_certificate_id FROM system_advanced'
+    result = conn.execute(
+        text('SELECT adv_syslogserver, adv_syslog_transport, adv_syslog_tls_certificate_id FROM system_advanced')
     ).fetchone()
+    if result:
+        server, transport, cert_id = result
+    else:
+        server, transport, cert_id = None, None, None
 
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.add_column(sa.Column('adv_syslogservers', sa.TEXT(), nullable=False, server_default='[]'))
