@@ -21,11 +21,11 @@ def upgrade():
     # We will now get all existing records from 2fa table and then if some user does not has his record in 2fa table
     # we will add it to the 2fa table
     existing_records = [
-        user_id['user_id'] for user_id in map(
-            dict, conn.execute(text('SELECT user_id FROM account_twofactor_user_auth')).fetchall()
-        )
+        user_id['user_id'] for user_id in [
+            r._asdict() for r in conn.execute(text('SELECT user_id FROM account_twofactor_user_auth')).fetchall()
+        ]
     ]
-    for row in map(dict, conn.execute(text('SELECT id FROM account_bsdusers')).fetchall()):
+    for row in [r._asdict() for r in conn.execute(text('SELECT id FROM account_bsdusers')).fetchall()]:
         if row['id'] in existing_records:
             continue
 

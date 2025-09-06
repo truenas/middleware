@@ -23,7 +23,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for entry in map(dict, conn.execute(text("SELECT id, attributes FROM system_cloudcredentials WHERE provider = 'STORJ_IX'")).fetchall()):
+    for entry in [r._asdict() for r in conn.execute(text("SELECT id, attributes FROM system_cloudcredentials WHERE provider = 'STORJ_IX'")).fetchall()]:
         if attributes := decrypt(entry["attributes"]):
             attributes = json.loads(attributes)
             attributes.setdefault("endpoint", "https://gateway.storjshare.io/")
