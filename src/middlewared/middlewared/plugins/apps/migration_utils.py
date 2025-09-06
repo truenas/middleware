@@ -3,18 +3,18 @@ import yaml
 
 from apps_validation.json_schema_utils import APP_CONFIG_MIGRATIONS_SCHEMA
 from jsonschema import validate, ValidationError
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from middlewared.plugins.apps.ix_apps.path import get_installed_app_version_path
 
 
 def version_in_range(version: str, min_version: str = None, max_version: str = None) -> bool:
-    parsed_version = parse_version(version)
+    parsed_version = Version(version)
     if min_version and max_version and (min_version == max_version):
-        return parsed_version == parse_version(min_version)
-    if min_version and parsed_version < parse_version(min_version):
+        return parsed_version == Version(min_version)
+    if min_version and parsed_version < Version(min_version):
         return False
-    if max_version and parsed_version > parse_version(max_version):
+    if max_version and parsed_version > Version(max_version):
         return False
     return True
 
@@ -26,7 +26,7 @@ def validate_versions(current_version: str, target_version: str):
             'migration_files': []
         }
     try:
-        if parse_version(current_version) >= parse_version(target_version):
+        if Version(current_version) >= Version(target_version):
             return {
                 'error': 'Target version should be greater than current version',
                 'migration_files': []
