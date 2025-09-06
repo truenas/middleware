@@ -27,7 +27,7 @@ SHARE_BLACKLIST = (
 def upgrade():
 
     conn = op.get_bind()
-    smb_shares = [dict(row) for row in conn.execute(text("SELECT * FROM sharing_cifs_share")).fetchall()]
+    smb_shares = list(map(dict, conn.execute(text("SELECT * FROM sharing_cifs_share")).fetchall()))
     for share in smb_shares:
         changed = False
         not_blacklisted = []
@@ -44,6 +44,6 @@ def upgrade():
         new_aux = '\n'.join(not_blacklisted)
 
         conn.execute(
-            'UPDATE sharing_cifs_share SET cifs_auxsmbconf = :aux WHERE id = :share_id',
-            aux=new_aux, share_id=share['id']
+            text('UPDATE sharing_cifs_share SET cifs_auxsmbconf = :aux WHERE id = :share_id'),
+            {'aux': new_aux, 'share_id': share['id']}
         )

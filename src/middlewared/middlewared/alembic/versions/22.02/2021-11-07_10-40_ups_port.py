@@ -21,8 +21,8 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    sys_config = [dict(row) for row in conn.execute(text("SELECT * FROM system_advanced")).fetchall()]
-    ups_config = [dict(row) for row in conn.execute(text("SELECT * FROM services_ups")).fetchall()]
+    sys_config = list(map(dict, conn.execute(text("SELECT * FROM system_advanced")).fetchall()))
+    ups_config = list(map(dict, conn.execute(text("SELECT * FROM services_ups")).fetchall()))
     if not sys_config or not ups_config:
         return
 
