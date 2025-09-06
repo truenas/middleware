@@ -25,6 +25,7 @@ def upgrade():
     conn = op.get_bind()
     to_revoke = []
     for row in conn.execute(text("SELECT id, allowlist FROM account_api_key")).fetchall():
+        row = row._asdict()
         try:
             if json.loads(row['allowlist']) != DEFAULT_ALLOW_LIST:
                 to_revoke.append(str(row['id']))
