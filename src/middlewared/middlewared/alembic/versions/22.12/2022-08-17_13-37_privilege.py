@@ -44,7 +44,7 @@ def upgrade():
                      "0)"))
         builtin_administrators_id = conn.execute(text("SELECT last_insert_rowid()")).fetchone()[0]
 
-    root_id = conn.execute(text("SELECT * FROM account_bsdusers WHERE bsdusr_uid = 0")).fetchone()["id"]
+    root_id = conn.execute(text("SELECT * FROM account_bsdusers WHERE bsdusr_uid = 0")).fetchone()._asdict()["id"]
 
     allowlist = [{"method": "*", "resource": "*"}]
     op.execute(text("INSERT INTO account_privilege (builtin_name, name, local_groups, ds_groups, allowlist, web_shell) "
