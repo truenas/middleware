@@ -44,7 +44,7 @@ def upgrade():
     # ensure vnc port
 
     all_ports = [6000, 6100]
-    vnc_devices = [dict(row) for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).fetchall()]
+    vnc_devices = list(map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).fetchall()))
 
     for vnc_device in vnc_devices:
         vnc_device['attributes'] = json.loads(vnc_device['attributes'])

@@ -26,8 +26,7 @@ def upgrade():
         batch_op.add_column(sa.Column('ssh_weak_ciphers', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
-    for row in conn.execute(text("SELECT * FROM services_ssh")).fetchall():
-        row = dict(row)
+    for row in map(dict, conn.execute(text("SELECT * FROM services_ssh")).fetchall()):
 
         ssh_weak_ciphers = ['AES128-CBC', 'NONE']
 
