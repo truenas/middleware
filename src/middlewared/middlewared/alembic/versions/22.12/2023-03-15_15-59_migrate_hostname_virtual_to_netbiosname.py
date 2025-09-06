@@ -22,7 +22,7 @@ RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 def upgrade():
     conn = op.get_bind()
 
-    ngc = dict(conn.execute(text('SELECT * FROM network_globalconfiguration')).fetchone())
+    ngc = conn.execute(text('SELECT * FROM network_globalconfiguration')).fetchone()._asdict()
     if not ngc['gc_hostname_virtual']:
         return
 
