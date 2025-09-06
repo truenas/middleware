@@ -1,3 +1,4 @@
+import errno
 import json
 import time
 
@@ -29,7 +30,9 @@ class UpdateService(Service):
                 async with client.get(url) as resp:
                     return await resp.json()
             except ClientResponseError as e:
-                raise CallError(f'Error while fetching update manifest: {e}')
+                raise CallError(f'Error while fetching update manifest: {e}', errno.ECONNRESET)
+            except TimeoutError:
+                raise CallError('Connection timeout while fetching update manifest', errno.ETIMEDOUT)
 
     @private
     async def get_trains(self):

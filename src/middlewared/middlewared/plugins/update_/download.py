@@ -11,6 +11,7 @@ import requests.exceptions
 from middlewared.api import api_method
 from middlewared.api.current import UpdateDownloadArgs, UpdateDownloadResult
 from middlewared.service import CallError, job, private, Service
+from middlewared.service_exception import ErrnoMixin
 from middlewared.utils.size import format_size
 from .utils import DOWNLOAD_UPDATE_FILE, scale_update_server, UPLOAD_LOCATION
 
@@ -38,9 +39,16 @@ class UpdateService(Service):
 
             job.set_progress(0, "Retrieving update manifest")
 
-            update_status = self.middleware.call_sync('update.status')
-            if update_status['error']:
-                raise CallError(f'Error retrieving update status: {update_status["error"]}')
+            update_status = self.middleware.call_sync('update.status_internal', True)
+            if update_status['code'] == 'ERROR':
+                raise CallError(f'Error retrieving update status: {update_status["error"]}', errno.ENOPKG)
+            if update_status['code'] == 'REBOOT_REQUIRED':
+                raise CallError('System update was already applied, system reboot is required.',
+                                ErrnoMixin.EREBOOTREQUIRED)
+            if update_status['code'] == 'HA_UNAVAILABLE':
+                raise CallError('HA is configured but currently unavailable.', ErrnoMixin.EHAUNAVAILABLE)
+            if update_status['code'] != 'NORMAL':
+                raise CallError(f'Unknown update status: {update_status["code"]}')
 
             if train is None and version is None:
                 if update_status['status']['new_version'] is None:
@@ -129,17 +137,23 @@ class UpdateService(Service):
 
                                 break
                         except Exception as e:
-                            if i < 5 and progress and any(ee in str(e) for ee in ("ECONNRESET", "ETIMEDOUT")):
+                            if i < 5 and progress and isinstance(e, (
+                                requests.exceptions.ConnectionError,
+                                requests.exceptions.Timeout,
+                            )):
                                 self.middleware.logger.warning("Recoverable update download error: %r", e)
                                 time.sleep(2)
                                 continue
 
-                            raise
+                            if isinstance(e, CallError):
+                                raise
+                            else:
+                                raise CallError(f'Error downloading update: {e}', errno.ECONNRESET)
 
                 size = os.path.getsize(dst)
                 if size != total:
                     os.unlink(dst)
-                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})')
+                    raise CallError(f'Downloaded update file size mismatch ({size} != {total})', errno.ECONNRESET)
 
                 set_progress(1, "Update downloaded.")
                 return True
