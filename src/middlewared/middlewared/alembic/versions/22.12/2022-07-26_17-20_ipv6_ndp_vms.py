@@ -23,7 +23,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    for row in map(dict, conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'NIC'")).fetchall()):
+    for row in [r._asdict() for r in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'NIC'")).fetchall()]:
         config = json.loads(row['attributes'])
         config['trust_guest_rx_filters'] = False
         conn.execute(text("UPDATE vm_device SET attributes = :attrs WHERE id = :id"), {"attrs": json.dumps(config), "id": row['id']})
