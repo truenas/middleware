@@ -22,7 +22,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for vm_device_config in map(dict, conn.execute(text("SELECT * FROM vm_device")).fetchall()):
+    for vm_device_config in [row._asdict() for row in conn.execute(text("SELECT * FROM vm_device")).fetchall()]:
         attributes = json.loads(decrypt(vm_device_config['attributes']))
         attributes['dtype'] = vm_device_config['dtype']
         conn.execute(

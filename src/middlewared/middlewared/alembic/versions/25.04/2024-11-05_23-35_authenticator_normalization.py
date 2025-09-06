@@ -31,7 +31,7 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
     for cert in conn.execute(
         text(f"SELECT * FROM system_certificate WHERE id IN ({placeholders})"), params
     ).fetchall():
-        cert = dict(cert)
+        cert = cert._asdict()
 
         try:
             authenticators = json.loads(decrypt(cert['cert_domains_authenticators']) or '{}')
@@ -54,12 +54,12 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
 
 def upgrade():
     conn = op.get_bind()
-    authenticator_configs = list(
-        map(dict, conn.execute(text("SELECT * FROM system_acmednsauthenticator")).fetchall())
-    )
+    authenticator_configs = [
+        row._asdict() for row in conn.execute(text("SELECT * FROM system_acmednsauthenticator")).fetchall()
+    ]
     authenticator_mapping = defaultdict(list)
     encrypted_domains_certs = []
-    for cert in map(dict, conn.execute(text("SELECT * FROM system_certificate")).fetchall()):
+    for cert in [row._asdict() for row in conn.execute(text("SELECT * FROM system_certificate")).fetchall()]:
         try:
             value = decrypt(cert['cert_domains_authenticators']) if cert['cert_domains_authenticators'] else '{}'
             if value is None:
