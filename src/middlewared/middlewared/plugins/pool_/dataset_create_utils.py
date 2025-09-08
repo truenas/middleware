@@ -132,7 +132,7 @@ def create_dataset_with_pylibzfs(
                     continue
                 try:
                     lz.create_resource(name=pp, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM)
-                except truenas_pylibzfs.ZFSError as e:
+                except truenas_pylibzfs.ZFSException as e:
                     if e.code == truenas_pylibzfs.ZFSError.EZFS_EXISTS:
                         continue
                     else:
