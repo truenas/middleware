@@ -1,6 +1,9 @@
+import errno
+
 from middlewared.api import api_method, Event
 from middlewared.api.current import UpdateStatusArgs, UpdateStatusResult, UpdateStatusChangedEvent
-from middlewared.service import NetworkActivityDisabled, private, Service
+from middlewared.service import private, Service
+from middlewared.service_exception import CallError, ErrnoMixin, get_errname
 
 
 class UpdateService(Service):
@@ -29,17 +32,23 @@ class UpdateService(Service):
     @private
     async def status_internal(self, propagate_exception=False):
         try:
-            applied = await self.middleware.call('cache.get', 'update.applied')
-        except KeyError:
-            applied = False
-        if applied:
-            return self._result('REBOOT_REQUIRED')
+            try:
+                applied = await self.middleware.call('cache.get', 'update.applied')
+            except KeyError:
+                applied = False
+            if applied:
+                raise CallError(
+                    'System update was already applied, system reboot is required.',
+                    ErrnoMixin.EREBOOTREQUIRED,
+                )
 
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.disabled.reasons'):
-                return self._result('HA_UNAVAILABLE')
+            if await self.middleware.call('failover.licensed'):
+                if await self.middleware.call('failover.disabled.reasons'):
+                    raise CallError(
+                        'HA is configured but currently unavailable.',
+                        ErrnoMixin.HA_UNAVAILABLE,
+                    )
 
-        try:
             current_version = await self.middleware.call('system.version_short')
             config = await self.middleware.call('update.config')
             trains = await self.middleware.call('update.get_trains')
@@ -59,18 +68,19 @@ class UpdateService(Service):
                 if new_version is not None:
                     break
             else:
-                return self._result('ERROR', {'error': 'No releases match specified update profile.'})
+                raise CallError('No releases match specified update profile.', errno.ENOPKG)
 
             if new_version['version'] == current_version:
                 new_version = None
             else:
                 if not await self.middleware.call('update.can_update_to', new_version['version']):
-                    return self._result('ERROR', {
-                        'error': (
+                    raise CallError(
+                        (
                             f'Currently installed version {current_version} is newer than the newest version '
                             f'{new_version["version"]} provided by train {next_train}.'
                         ),
-                    })
+                        errno.ENOPKG,
+                    )
 
                 new_version = await self.middleware.call('update.version_from_manifest', new_version)
 
@@ -85,18 +95,15 @@ class UpdateService(Service):
                 },
                 'update_download_progress': self.update_download_progress,
             })
-        except NetworkActivityDisabled as e:
-            return self._result('NETWORK_ACTIVITY_DISABLED', {
-                'error': repr(e),
-            })
         except Exception as e:
             if propagate_exception:
                 raise
 
-            self.logger.exception('Failed to get update status')
-            return self._result('ERROR', {
-                'error': repr(e),
-            })
+            if isinstance(e, CallError):
+                return self._error(e.errno, e.errmsg)
+            else:
+                self.logger.exception('Failed to get update status')
+                return self._error(errno.EFAULT, repr(e))
 
     def _result(self, code, data=None):
         result = {
@@ -116,6 +123,14 @@ class UpdateService(Service):
             result['update_download_progress'] = None
 
         return result
+
+    def _error(self, code, reason):
+        return self._result('ERROR', {
+            'error': {
+                'errname': get_errname(code),
+                'reason': reason,
+            }
+        })
 
     @private
     async def set_update_download_progress(self, progress, update_status):
