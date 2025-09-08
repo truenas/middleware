@@ -56,10 +56,18 @@ def restore_after_stig():
         user_and_config_cleanup()
 
 
+@pytest.fixture(scope='module')
+def root_non_stig_client():
+    """Maintain a root client without STIG for rate limit management"""
+    with client(auth=("root", password())) as c:
+        yield c
+
+
 @pytest.fixture(autouse=True)
-def clear_ratelimit():
-    if not STIG_ACTIVE:
-        call('rate.limit.cache_clear')
+def clear_ratelimit(root_non_stig_client):
+    # We need to use non stig client here because we cannot make private endpoint
+    # calls when STIG is active.
+    root_non_stig_client.call('rate.limit.cache_clear')
 
 
 @pytest.fixture(scope='function')
@@ -169,7 +177,7 @@ def wait_for_failover_disabled_reasons(reasons, delay=5, retries=60, /, call_fn=
 
 
 @pytest.fixture(scope='module')
-def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled):
+def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_stig_client):
     """ Configure STIG and yield admin user object and an authenticated session """
     user_obj, secret = full_admin_w_2fa_builtin_admin
     global STIG_ACTIVE
@@ -473,7 +481,6 @@ class TestNotAuthorizedOps:
     def test_stig_prevent_operation(self, stig_admin, cmd, args, is_job):
         ''' Wnen in GPOS STIG mode enabling TrueCommand is not authorized '''
         with pytest.raises(CallError, match='Not authorized'):
-            time.sleep(1)
             if isinstance(args, tuple):
                 stig_admin.call(cmd, *args, job=is_job)
             else:
