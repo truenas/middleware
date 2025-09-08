@@ -76,18 +76,6 @@ class SystemService(Service):
         if options['delay'] is not None:
             await asyncio.sleep(options['delay'])
 
-        if (
-            await self.middleware.call('failover.licensed')
-            and (await self.middleware.call('failover.config'))['disabled'] is False
-        ):
-            # "proper" shutdown process on linux produces
-            # an untenable situation where race conditions
-            # abound with how we've written our failover
-            # logic. Instead of battling this war, we'll
-            # employ the same tactic that we already use
-            # in the failover plugin itself. (i.e. panic ourself)
-            await self.middleware.call('failover.become_passive')
-
         await run(['/sbin/shutdown', '-r', 'now'])
 
     @api_method(SystemShutdownArgs, SystemShutdownResult, roles=['FULL_ADMIN'])
