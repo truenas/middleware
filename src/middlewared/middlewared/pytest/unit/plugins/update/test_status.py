@@ -111,10 +111,13 @@ NEXT_TRAIN_NAMES = ["TrueNAS-SCALE-Goldfish", "TrueNAS-SCALE-Fangtooth"]
         },
         {
             "code": "ERROR",
-            "error": (
-                "Currently installed version 25.04.1 is newer than the newest version 25.04.0 provided by train "
-                "TrueNAS-SCALE-Fangtooth."
-            ),
+            "error": {
+                "errname": "ENOPKG",
+                "reason": (
+                    "Currently installed version 25.04.1 is newer than the newest version 25.04.0 provided by train "
+                    "TrueNAS-SCALE-Fangtooth."
+                ),
+            },
             "status": None,
             "update_download_progress": None,
         },
