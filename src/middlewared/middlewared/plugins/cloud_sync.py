@@ -641,6 +641,9 @@ class CredentialsService(CRUDService):
 
     @api_method(CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult)
     def s3_provider_choices(self):
+        """
+        Provide choices for S3 provider `provider` field.
+        """
         return S3_PROVIDERS
 
 
