@@ -344,7 +344,7 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
 @contextlib.contextmanager
 def manage_start_nfs():
-    """ The exit state is managed by init_nfs """
+    """ Context Manager: The exit state is managed by init_nfs """
     try:
         yield set_nfs_service_state('start')
     finally:
@@ -501,11 +501,9 @@ def nfs_dataset_and_share():
 
 @pytest.fixture(scope="class")
 def start_nfs():
-    """ The exit state is managed by init_nfs """
-    try:
-        yield set_nfs_service_state('start')
-    finally:
-        set_nfs_service_state('stop')
+    """ Class Fixture: The exit state is managed by init_nfs """
+    with manage_start_nfs() as nfs_start:
+        yield nfs_start
 
 
 # =====================================================================
@@ -2105,7 +2103,8 @@ def test_sharenfs_in_exportsd():
     # Start from a stopped state
     set_nfs_service_state('stop')
 
-    with nfs_dataset('nfs') as ds:
+    # Create a dataset for the ZFS 'sharenfs'
+    with nfs_dataset('zfsnfs') as ds:
         try:
             # Get the sharenfs entries in place
             set_immutable_state('/etc/exports.d', want_immutable=False)  # Disable immutable
