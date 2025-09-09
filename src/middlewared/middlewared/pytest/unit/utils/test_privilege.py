@@ -37,7 +37,8 @@ def test_privilege_has_full_admin(credential, expected):
     assert credential_full_admin_or_user(user_cred, 'canary') == expected
     assert credential_full_admin_or_user(user_cred, 'BOB')
 
-    assert app_credential_full_admin_or_user(types.SimpleNamespace(authenticated_credentials=user_cred), 'canary') == expected
+    assert app_credential_full_admin_or_user(types.SimpleNamespace(authenticated_credentials=user_cred),
+                                             'canary') == expected
 
 
 @pytest.mark.parametrize('service,credential,expected', [
@@ -48,6 +49,7 @@ def test_privilege_has_full_admin(credential, expected):
     ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
     ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
     ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
+    ('cifs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
     ('nfs', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
@@ -55,6 +57,7 @@ def test_privilege_has_full_admin(credential, expected):
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, True),
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
+    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
     ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
     ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
     ('iscsitarget', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
@@ -62,6 +65,7 @@ def test_privilege_has_full_admin(credential, expected):
     ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
     ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, True),
     ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
+    ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
     ('ftp', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
@@ -69,7 +73,18 @@ def test_privilege_has_full_admin(credential, expected):
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, True),
+    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, False),
+    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
+    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
+    ('nvmet', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
+    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, False),
+    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
+    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
+    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
+    ('nvmet', {'privilege': {'allowlist': [], 'roles': ['SHARING_NVME_TARGET_WRITE']}}, True),
+
 ])
 def test_privilege_has_write_to_service(service, credential, expected):
     user_cred = UserSessionManagerCredentials({'username': 'BOB'} | credential, AA_LEVEL1, pam_hdl)
-    assert app_has_write_privilege_for_service(types.SimpleNamespace(authenticated_credentials=user_cred), service) == expected
+    assert app_has_write_privilege_for_service(types.SimpleNamespace(authenticated_credentials=user_cred),
+                                               service) == expected
