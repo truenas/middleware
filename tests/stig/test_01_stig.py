@@ -56,10 +56,18 @@ def restore_after_stig():
         user_and_config_cleanup()
 
 
+@pytest.fixture(scope='module')
+def root_non_stig_client():
+    """Maintain a root client without STIG for rate limit management"""
+    with client(auth=("root", password())) as c:
+        yield c
+
+
 @pytest.fixture(autouse=True)
-def clear_ratelimit():
-    if not STIG_ACTIVE:
-        call('rate.limit.cache_clear')
+def clear_ratelimit(root_non_stig_client):
+    # We need to use non stig client here because we cannot make private endpoint
+    # calls when STIG is active.
+    root_non_stig_client.call('rate.limit.cache_clear')
 
 
 @pytest.fixture(scope='function')
@@ -169,7 +177,7 @@ def wait_for_failover_disabled_reasons(reasons, delay=5, retries=60, /, call_fn=
 
 
 @pytest.fixture(scope='module')
-def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled):
+def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_stig_client):
     """ Configure STIG and yield admin user object and an authenticated session """
     user_obj, secret = full_admin_w_2fa_builtin_admin
     global STIG_ACTIVE
@@ -456,8 +464,24 @@ class TestNotAuthorizedOps:
         pp('docker.update', {'pool': 'NotApplicable'}, True, id="Docker"),
         pp('virt.global.update', {'pool': 'NotApplicable'}, True, id="VM support"),
         pp('tn_connect.update', {'enabled': True, 'ips': ['1.2.3.4']}, False, id="TrueNAS Connect"),
+        # VM operations
+        pp('vm.create', {'name': 'test_vm', 'vcpus': 1, 'memory': 512, 'bootloader': 'UEFI'}, False, id="VM create"),
+        pp('vm.update', (1, {'vcpus': 2}), False, id="VM update"),
+        pp('vm.start', (1, {}), False, id="VM start"),
+        pp('vm.stop', (1, {}), True, id="VM stop"),
+        pp('vm.restart', 1, True, id="VM restart"),
+        pp('vm.poweroff', 1, False, id="VM poweroff"),
+        pp('vm.clone', 1, False, id="VM clone"),
+        pp('vm.delete', (1, {'delay': 0}), False, id="VM delete"),
+        # VM device operations
+        pp('vm.device.create', {'vm': 1, 'dtype': 'NIC', 'attributes': {}}, False, id="VM device create"),
+        pp('vm.device.update', (1, {'dtype': 'NIC', 'attributes': {}}), False, id="VM device update"),
+        pp('vm.device.delete', 1, False, id="VM device delete"),
     ])
     def test_stig_prevent_operation(self, stig_admin, cmd, args, is_job):
         ''' Wnen in GPOS STIG mode enabling TrueCommand is not authorized '''
         with pytest.raises(CallError, match='Not authorized'):
-            stig_admin.call(cmd, args, job=is_job)
+            if isinstance(args, tuple):
+                stig_admin.call(cmd, *args, job=is_job)
+            else:
+                stig_admin.call(cmd, args, job=is_job)
