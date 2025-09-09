@@ -2,7 +2,7 @@ import errno
 import json
 import time
 
-from aiohttp import ClientResponseError, ClientSession, ClientTimeout
+from aiohttp import ClientError, ClientConnectorError, ClientSession, ClientTimeout
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils import MANIFEST_FILE, UPDATE_TRAINS_FILE_NAME
@@ -29,8 +29,13 @@ class UpdateService(Service):
             try:
                 async with client.get(url) as resp:
                     return await resp.json()
-            except ClientResponseError as e:
-                raise CallError(f'Error while fetching update manifest: {e}', errno.ECONNRESET)
+            except ClientError as e:
+                if isinstance(e, ClientConnectorError) and e.os_error.errno == errno.ENETUNREACH:
+                    error = errno.ENETUNREACH
+                else:
+                    error = errno.ECONNRESET
+
+                raise CallError(f'Error while fetching update manifest: {e}', error)
             except TimeoutError:
                 raise CallError('Connection timeout while fetching update manifest', errno.ETIMEDOUT)
 
@@ -125,7 +130,7 @@ class UpdateService(Service):
             try:
                 async with client.get(url) as resp:
                     release_notes = await resp.text()
-            except ClientResponseError:
+            except Exception:
                 release_notes = None
 
         self.release_notes_cache[url] = (release_notes, time.monotonic() + 86400)

@@ -91,6 +91,13 @@ class UpdateStatusStatus(BaseModel):
     """New system version information (or `null` if no new system version is available)."""
 
 
+class UpdateStatusError(BaseModel):
+    errname: str
+    """Error code (i.e. ENONET)."""
+    reason: LongString
+    """Error text."""
+
+
 class UpdateDownloadProgress(BaseModel):
     percent: float
     """Download completion percentage (0.0 to 100.0)."""
@@ -101,18 +108,15 @@ class UpdateDownloadProgress(BaseModel):
 
 
 class UpdateStatus(BaseModel):
-    code: Literal['NORMAL', 'ERROR', 'NETWORK_ACTIVITY_DISABLED', 'REBOOT_REQUIRED', 'HA_UNAVAILABLE']
+    code: Literal['NORMAL', 'ERROR']
     """
     Status code:
     * NORMAL - normal status, see `status` dictionary for details.
     * ERROR - an error occurred, see `error` for details.
-    * NETWORK_ACTIVITY_DISABLED - network activity is disabled, see `error` for details.
-    * REBOOT_REQUIRED - system update was already applied, system reboot is required.
-    * HA_UNAVAILABLE - HA is configured but currently unavailable.
     """
     status: UpdateStatusStatus | None
     """Detailed update status information. `null` if code is ERROR."""
-    error: LongString | None
+    error: UpdateStatusError | None
     """Error message if code is ERROR. `null` otherwise."""
     update_download_progress: UpdateDownloadProgress | None
     """Current update download progress."""
