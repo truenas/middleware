@@ -14,10 +14,12 @@ from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
 )
+from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 
 from .dataset_query_utils import generic_query
+from .dataset_create_utils import create_dataset_with_pylibzfs
 from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize, ZFSKeyFormat,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
@@ -378,6 +380,18 @@ class PoolDatasetService(CRUDService):
                         'remove': True,
                     })
 
+    @private
+    @pass_thread_local_storage
+    def create_impl(self, tls, data, props, encryption_dict=None):
+        return create_dataset_with_pylibzfs(
+            tls.lzh,
+            data['name'],
+            data['type'],
+            props,
+            encryption_dict,
+            data['create_ancestors']
+        )
+
     @api_method(
         PoolDatasetCreateArgs,
         PoolDatasetCreateResult,
@@ -630,14 +644,7 @@ class PoolDatasetService(CRUDService):
             **encryption_dict,
             **(await self.get_create_update_user_props(data['user_properties']))
         )
-
-        await self.middleware.call('zfs.dataset.create', {
-            'name': data['name'],
-            'type': data['type'],
-            'properties': props,
-            'create_ancestors': data['create_ancestors'],
-        })
-
+        await self.middleware.call('pool.dataset.create_impl', data, props, encryption_dict)
         dataset_data = {
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
             'key_format': encryption_dict.get('keyformat')
