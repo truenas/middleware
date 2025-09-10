@@ -168,9 +168,6 @@ class SupportService(ConfigService):
         if vendor:
             raise CallError(f'Support is not available for this product ({vendor})', errno.EINVAL)
 
-        if await self.middleware.call('system.experimental'):
-            raise CallError('This TrueNAS build is experimental', errno.EINVAL)
-
         await self.middleware.call('network.general.will_perform_activity', 'support')
 
         job.set_progress(1, 'Gathering data')
