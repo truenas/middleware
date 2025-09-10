@@ -23,7 +23,7 @@ class TNCACMEService(Service):
     async def config(self):
         return await acme_config(await self.middleware.call('tn_connect.config_internal'))
 
-    async def update_ui(self):
+    async def update_ui(self, start_heartbeat=True):
         logger.debug('Updating UI with TNC cert')
         config = await self.middleware.call('tn_connect.config')
         if config['certificate'] is None:
@@ -97,7 +97,7 @@ class TNCACMEService(Service):
             )
             await self.middleware.call('etc.generate', 'ssl')
             await self.middleware.call('tn_connect.set_status', Status.CERT_RENEWAL_SUCCESS.name)
-            await self.update_ui()
+            await self.update_ui(False)
 
     async def initiate_cert_generation_impl(self):
         cert_job = await self.middleware.call('tn_connect.acme.create_cert')
