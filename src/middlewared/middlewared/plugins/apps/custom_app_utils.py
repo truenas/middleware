@@ -20,9 +20,12 @@ def validate_payload(data: dict, schema: str) -> dict:
         else:
             if not isinstance(compose_config, dict):
                 verrors.add(f'{schema}.custom_compose_config_string', 'YAML must represent a dictionary/object')
-            elif 'services' not in compose_config:
-                verrors.add(f'{schema}.custom_compose_config_string', 'YAML is missing required \"services\" key')
-
+            elif 'services' not in compose_config and 'include' not in compose_config:
+                verrors.add(
+                    f'{schema}.custom_compose_config_string',
+                    'YAML is missing required "services" key or '
+                    '"include" key which points to a file that has services'
+                )
     verrors.check()
 
     return compose_config
