@@ -49,14 +49,6 @@ class TNCACMEService(Service):
                 except Exception:
                     logger.error('Failed to restart UI on remote controller', exc_info=True)
 
-    async def update_ui_impl(self):
-        config = await self.middleware.call('tn_connect.config')
-        # We are going to set the cert now for system UI
-        if config['certificate'] is None:
-            # Just some sanity testing
-            raise CallError('Certificate is not set for TrueNAS Connect')
-        await self.middleware.call('system.general.update', {'ui_certificate': config['certificate']})
-
     async def initiate_cert_generation(self):
         logger.debug('Initiating cert generation steps for TNC')
         try:
