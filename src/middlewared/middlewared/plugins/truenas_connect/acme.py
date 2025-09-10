@@ -28,7 +28,7 @@ class TNCACMEService(Service):
         config = await self.middleware.call('tn_connect.config')
         if config['certificate'] is None:
             # Just some sanity testing
-            logger.error('TNC cert configuration failed', exc_info=True)
+            logger.error('TNC cert configuration failed')
             await self.middleware.call('tn_connect.set_status', Status.CERT_CONFIGURATION_FAILURE.name)
         else:
             logger.debug('TNC cert configured successfully')
