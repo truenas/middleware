@@ -44,8 +44,29 @@
     display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
     display_devices = middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISPLAY']])
 
-    has_tn_connect = middleware.call_sync('tn_connect.config')['certificate'] is not None
+    tn_connect_config = middleware.call_sync('tn_connect.config')
+    has_tn_connect = tn_connect_config['certificate'] is not None
+    try:
+        tnc_basename = middleware.call_sync('tn_connect.hostname.basename_from_cert')
+        tnc_cert = middleware.call_sync('certificate.get_instance', tn_connect_config['certificate']) if tn_connect_config['certificate'] else None
+    except Exception:
+        # This should not happen but better safe then sorry as we don't want to disrupt nginx configuration
+        tnc_basename = tnc_cert = None
+        middleware.logger.exception('Failed to retrieve TNC certificate information')
 
+    servers = []
+    if tnc_cert and tnc_basename:
+        servers.append({
+            'name': tnc_basename,
+            'cert': tnc_cert,
+            'default_server': False,
+            })
+
+    servers.append({
+        'name': 'localhost',
+        'cert': cert if ssl_configuration else None,
+        'default_server': True,
+    })
     current_api_version = middleware.api_versions[-1].version
 %>
 #
