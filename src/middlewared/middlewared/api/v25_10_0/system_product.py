@@ -16,8 +16,6 @@ __all__ = (
     "SystemVersionResult",
     "SystemVersionShortArgs",
     "SystemVersionShortResult",
-    "SystemExperimentalArgs",
-    "SystemExperimentalResult",
 )
 
 
@@ -76,12 +74,3 @@ class SystemVersionShortArgs(BaseModel):
 class SystemVersionShortResult(BaseModel):
     result: str
     """Short version string of the TrueNAS system."""
-
-
-class SystemExperimentalArgs(BaseModel):
-    pass
-
-
-class SystemExperimentalResult(BaseModel):
-    result: bool
-    """Whether experimental features are enabled on this system."""
