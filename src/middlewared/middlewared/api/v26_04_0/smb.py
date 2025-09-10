@@ -163,7 +163,7 @@ class SmbServiceEntry(BaseModel):
     aapl_extensions: bool
     """ Enable support for SMB2/3 AAPL protocol extensions. This setting makes the TrueNAS server advertise support \
     for Apple protocol extensions as a MacOS server. Enabling this is required for Time Machine support. """
-    search_protocols: list[SMBSearchType]
+    search_protocols: list[SMBSearchType] = []
     """ List of enabled search protocols for the SMB server. Currently the only support search protocol is SPOTLIGHT \
     for MacOS clients. When SPOTLIGHT search protocol support is enabled, MacOS clients can send spotlight protocol \
     requests to the TrueNAS samba server and receive results from indexed paths."""
