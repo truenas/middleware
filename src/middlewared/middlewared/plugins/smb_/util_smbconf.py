@@ -463,6 +463,19 @@ def generate_smb_conf_dict(
         'idmap config * : read only': True,
     }
 
+    if 'SPOTLIGHT' in smb_service_config['search_protocols']:
+        smbconf.update({
+            'spotlight backend': 'elasticsearch',
+            'elasticsearch:address': '/var/run/truesearch/truesearch.sock',
+            'spotlight': True
+        })
+
+    else:
+        smbconf.update({
+            'rpc_daemon:mdssd': 'disabled',
+            'rpc_server:mdssvc': 'disabled',
+        })
+
     """
     When guest access is enabled on _any_ SMB share we have to change the
     behavior of when the server maps to the guest account. `Bad User` here means

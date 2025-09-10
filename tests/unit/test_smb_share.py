@@ -33,6 +33,7 @@ BASE_SMB_CONFIG = {
     'next_rid': 0,
     'multichannel': False,
     'encryption': 'DEFAULT',
+    'search_protocols': [],
     'debug': False
 }
 
