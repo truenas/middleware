@@ -1,3 +1,4 @@
+import collections
 import errno
 import os
 
@@ -7,7 +8,6 @@ from middlewared.api.current import (
     PoolDatasetDeleteArgs, PoolDatasetDeleteResult, PoolDatasetDestroySnapshotsArgs, PoolDatasetDestroySnapshotsResult,
     PoolDatasetPromoteArgs, PoolDatasetPromoteResult, PoolDatasetRenameArgs, PoolDatasetRenameResult,
 )
-from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import (
@@ -23,6 +23,44 @@ from .dataset_create_utils import create_dataset_with_pylibzfs
 from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize, ZFSKeyFormat,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
+)
+try:
+    from truenas_pylibzfs import ZFSException, ZFSProperty
+except ImportError:
+    ZFSException = ZFSProperty = None
+
+
+PropertyDef = collections.namedtuple(
+    'PropertyDef',
+    ['api_name', 'real_name', 'transform', 'inheritable', 'is_user_prop']
+)
+UPDATE_PROPERTIES = (
+    PropertyDef('aclinherit', 'aclinherit', str.lower, True, False),
+    PropertyDef('aclmode', 'aclmode', str.lower, True, False),
+    PropertyDef('acltype', 'acltype', str.lower, True, False),
+    PropertyDef('atime', 'atime', str.lower, True, False),
+    PropertyDef('checksum', 'checksum', str.lower, True, False),
+    PropertyDef('comments', TNUserProp.DESCRIPTION.value, None, False, True),
+    PropertyDef('sync', 'sync', str.lower, True, False),
+    PropertyDef('compression', 'compression', str.lower, True, False),
+    PropertyDef('deduplication', 'dedup', str.lower, True, False),
+    PropertyDef('exec', 'exec', str.lower, True, False),
+    PropertyDef('managedby', TNUserProp.MANAGED_BY.value, None, True, True),
+    PropertyDef('quota', 'quota', none_normalize, False, False),
+    PropertyDef('quota_warning', TNUserProp.QUOTA_WARN.value, str, True, True),
+    PropertyDef('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True, True),
+    PropertyDef('refquota', 'refquota', none_normalize, False, False),
+    PropertyDef('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True, True),
+    PropertyDef('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True, True),
+    PropertyDef('reservation', 'reservation', none_normalize, False, False),
+    PropertyDef('refreservation', 'refreservation', none_normalize, False, False),
+    PropertyDef('copies', 'copies', str, True, False),
+    PropertyDef('snapdir', 'snapdir', str.lower, True, False),
+    PropertyDef('snapdev', 'snapdev', str.lower, True, False),
+    PropertyDef('readonly', 'readonly', str.lower, True, False),
+    PropertyDef('recordsize', 'recordsize', None, True, False),
+    PropertyDef('volsize', 'volsize', lambda x: str(x), False, False),
+    PropertyDef('special_small_block_size', 'special_small_blocks', None, True, False),
 )
 
 
@@ -671,6 +709,24 @@ class PoolDatasetService(CRUDService):
         self.middleware.send_event('pool.dataset.query', 'ADDED', id=data['id'], fields=created_ds)
         return created_ds
 
+    @private
+    @pass_thread_local_storage
+    def update_impl(self, tls, name, zprops, uprops, iprops):
+        _zprops = dict()
+        for prop, value in zprops.items():
+            try:
+                _zprops[ZFSProperty[prop.upper()]] = value
+            except KeyError:
+                raise ValidationError("pool.dataset.update", f"Invalid property {prop} specified ({value})")
+
+        ds = tls.lzh.open_resource(name=name)
+        if _zprops:
+            ds.set_properties(properties=_zprops)
+        if uprops:
+            ds.set_user_properties(user_properties=uprops)
+        for i in iprops:
+            ds.inherit_property(property=i)
+
     @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
@@ -725,70 +781,46 @@ class PoolDatasetService(CRUDService):
 
         verrors.check()
 
-        properties_definitions = (
-            ('aclinherit', None, str.lower, True),
-            ('aclmode', None, str.lower, True),
-            ('acltype', None, str.lower, True),
-            ('atime', None, str.lower, True),
-            ('checksum', None, str.lower, True),
-            ('comments', TNUserProp.DESCRIPTION.value, None, False),
-            ('sync', None, str.lower, True),
-            ('compression', None, str.lower, True),
-            ('deduplication', 'dedup', str.lower, True),
-            ('exec', None, str.lower, True),
-            ('managedby', TNUserProp.MANAGED_BY.value, None, True),
-            ('quota', None, none_normalize, False),
-            ('quota_warning', TNUserProp.QUOTA_WARN.value, str, True),
-            ('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True),
-            ('refquota', None, none_normalize, False),
-            ('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True),
-            ('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True),
-            ('reservation', None, none_normalize, False),
-            ('refreservation', None, none_normalize, False),
-            ('copies', None, str, True),
-            ('snapdir', None, str.lower, True),
-            ('snapdev', None, str.lower, True),
-            ('readonly', None, str.lower, True),
-            ('recordsize', None, None, True),
-            ('volsize', None, lambda x: str(x), False),
-            ('special_small_block_size', 'special_small_blocks', None, True),
-        )
-
-        props = {}
-        for i, real_name, transform, inheritable in properties_definitions:
-            if i not in data:
+        zprops = {}
+        inherit_props = set()
+        user_props = {}
+        for prop in UPDATE_PROPERTIES:
+            if prop.api_name not in data:
                 continue
-            name = real_name or i
-            if inheritable and data[i] == 'INHERIT':
-                props[name] = {'source': 'INHERIT'}
+            if prop.inheritable and data[prop.api_name] == 'INHERIT':
+                inherit_props.add(prop.real_name)
+                if prop.real_name == 'acltype':
+                    inherit_props.add('aclmode')
+                    inherit_props.add('aclinherit')
             else:
-                props[name] = {'value': data[i] if not transform else transform(data[i])}
+                if not prop.transform:
+                    transformed = data[prop.api_name]
+                else:
+                    transformed = prop.transform(data[prop.api_name])
 
-        if data.get('user_properties_update'):
-            props.update(await self.get_create_update_user_props(data['user_properties_update'], True))
+                if prop.is_user_prop:
+                    user_props[prop.real_name] = transformed
+                else:
+                    zprops[prop.real_name] = transformed
 
-        if 'acltype' in props and (acltype_value := props['acltype'].get('value')):
-            if acltype_value == 'nfsv4':
-                props.update({
-                    'aclinherit': {'value': 'passthrough'}
-                })
-            elif acltype_value in ['posix', 'off']:
-                props.update({
-                    'aclmode': {'value': 'discard'},
-                    'aclinherit': {'value': 'discard'}
-                })
-            elif props['acltype'].get('source') == 'INHERIT':
-                props.update({
-                    'aclmode': {'source': 'INHERIT'},
-                    'aclinherit': {'source': 'INHERIT'}
-                })
+                if prop.real_name == 'acltype':
+                    if zprops[prop.real_name] == 'nfsv4':
+                        zprops.update({'aclinherit': 'passthrough'})
+                    elif zprops[prop.real_name] in ('posix', 'off'):
+                        zprops.update({'aclmode': 'discard', 'aclinherit': 'discard'})
+
+        for up in data.get('user_properties_update', []):
+            if 'value' in up:
+                user_props[up['key']] = up['value']
+            elif up.get('remove'):
+                inherit_props.add(up['key'])
 
         try:
-            await self.middleware.call('zfs.dataset.update', id_, {'properties': props})
-        except ZFSSetPropertyError as e:
-            verrors = ValidationErrors()
-            verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
-            raise verrors
+            await self.middleware.call('pool.dataset.update_impl', id_, zprops, user_props, inherit_props)
+        except ZFSException as e:
+            raise ValidationError("pool.dataset.update", f"Failed to update properties: {e}")
+        except Exception as e:
+            raise CallError(f'Failed to update dataset properties: {e}')
 
         if data['type'] == 'VOLUME':
             if 'volsize' in data and data['volsize'] > dataset[0]['volsize']['parsed']:
@@ -893,13 +925,6 @@ class PoolDatasetService(CRUDService):
         job.set_progress(20, 'Initial validation complete')
 
         return await self.middleware.call('zfs.dataset.destroy_snapshots', name, snapshots_spec)
-
-    def __handle_zfs_set_property_error(self, e, properties_definitions):
-        zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
-        api_name = zfs_name_to_api_name.get(e.property) or e.property
-        verrors = ValidationErrors()
-        verrors.add(api_name, e.error)
-        return verrors
 
     @item_method
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
