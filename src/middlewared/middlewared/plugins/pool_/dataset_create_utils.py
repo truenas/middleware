@@ -69,37 +69,28 @@ def create_dataset_with_pylibzfs(
         }
 
         # Process properties
-        sparse = False
         # Determine keyformat early to handle pbkdf2iters correctly
         keyformat = None
         if encryption_dict:
             keyformat = encryption_dict.get("keyformat", "hex")
 
         for prop_name, prop_value in properties.items():
-            # Skip encryption properties as they're handled separately
-            if prop_name in ["encryption", "keyformat", "keylocation", "pbkdf2iters", "key"]:
+            if prop_name in ("sparse", "encryption", "keyformat", "keylocation", "pbkdf2iters", "key"):
+                # Skip encryption properties and sparse property as they're handled separately
                 continue
-
-            # Special handling for sparse - it's a creation option, not a property
-            if prop_name == "sparse":
-                sparse = prop_value
-                continue
-
-            # Check if it's a known ZFS property
-            if prop_name in property_mapping:
-                pylibzfs_props[property_mapping[prop_name]] = str(prop_value)
-            # Check if it's a user property (contains ':')
             elif ":" in prop_name:
                 user_props[prop_name] = str(prop_value)
-            # Try to find the property by uppercase name
+            elif prop_name in property_mapping:
+                pylibzfs_props[property_mapping[prop_name]] = str(prop_value)
+
+        if dataset_type == "VOLUME":
+            if "sparse" in properties and properties["sparse"] is True:
+                # sparse volume is only created if user explicitly
+                # requests it
+                pylibzfs_props["refreservation"] = "none"
             else:
-                try:
-                    prop_enum = getattr(truenas_pylibzfs.ZFSProperty, prop_name.upper())
-                    pylibzfs_props[prop_enum] = str(prop_value)
-                except AttributeError:
-                    # If not found, treat as user property
-                    if prop_name not in ["sparse", "key"]:  # Skip known non-properties
-                        user_props[prop_name] = str(prop_value)
+                # otherwise, we always create "thick" provisioned volumes
+                pylibzfs_props["refreservation"] = properties.get("refreservation", properties["volsize"])
 
         # Handle encryption if specified
         crypto_config = None
@@ -137,13 +128,6 @@ def create_dataset_with_pylibzfs(
                         continue
                     else:
                         raise e from None
-
-        # Now create the actual dataset
-        # For volumes with sparse option, we need to handle it separately
-        if dataset_type == "VOLUME" and sparse:
-            # Sparse volumes are created by not setting reservation equal to volsize
-            # This is handled automatically by the library when we don't set reservation
-            pass
 
         # Create the dataset/volume
         if crypto_config:
