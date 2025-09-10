@@ -18,6 +18,12 @@ class TNCHostnameService(Service):
         namespace = 'tn_connect.hostname'
         private = True
 
+    async def basename_from_cert(self):
+        config = await self.middleware.call('tn_connect.config')
+        if config['enabled'] and config['status'] in CONFIGURED_TNC_STATES and config['certificate']:
+            san = await self.middleware.call('certificate.get_domain_names', config['certificate'])
+            return san[0].strip('DNS:') if san else None
+
     async def config(self):
         return await hostname_config(await self.middleware.call('tn_connect.config_internal'))
 
