@@ -55,7 +55,7 @@ class ShellWorkerThread(threading.Thread):
                 "-c",
                 "qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock",
                 "console",
-                f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}',
+                f'{options["vm_data"]["uuid"]}',
             ]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command

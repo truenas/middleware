@@ -34,14 +34,6 @@ def get_vm_nvram_file_name(vm_data: dict) -> str:
     return f'{vm_data["id"]}_{vm_data["name"]}_VARS.fd'
 
 
-def get_default_status() -> dict:
-    return {
-        'state': 'ERROR',
-        'pid': None,
-        'domain_state': 'ERROR',
-    }
-
-
 @cache
 def get_cpu_model_choices():
     """

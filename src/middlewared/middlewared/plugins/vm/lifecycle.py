@@ -42,27 +42,6 @@ class VMService(Service, VMSupervisorMixin):
             await self.middleware.call('vm.setup_libvirt_connection')
 
     @private
-    def initialize_vms(self, timeout=30):
-        vms = self.middleware.call_sync('vm.query')
-        if vms and self._is_kvm_supported():
-            self.setup_libvirt_connection(timeout)
-        else:
-            return
-
-        if self._is_connection_alive():
-            for vm_data in vms:
-                try:
-                    self._add_with_vm_data(vm_data)
-                except Exception as e:
-                    # Whatever happens, we don't want middlewared not booting
-                    self.middleware.logger.error(
-                        'Unable to setup %r VM object: %s', vm_data['name'], str(e), exc_info=True
-                    )
-            self.middleware.call_sync('service.control', 'RELOAD', 'http').wait_sync(raise_error=True)
-        else:
-            self.middleware.logger.error('Failed to establish libvirt connection')
-
-    @private
     async def start_on_boot(self):
         for vm in await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True}):
             try:
@@ -128,12 +107,6 @@ class VMService(Service, VMSupervisorMixin):
 
 
 async def __event_system_ready(middleware, event_type, args):
-    """
-    Method called when system is ready, supposed to start VMs
-    flagged that way.
-    """
-    await middleware.call('vm.initialize_vms')
-
     # we ignore the 'ready' event on an HA system since the failover event plugin
     # is responsible for starting this service, however, the VMs still need to be
     # initialized (which is what the above callers are doing)
@@ -154,7 +127,5 @@ async def setup(middleware):
     # sysctls during vm start/stop
     await middleware.call('sysctl.store_default_arc_max')
 
-    if await middleware.call('system.ready'):
-        middleware.create_task(middleware.call('vm.initialize_vms', 5))  # We use a short timeout here deliberately
     middleware.event_subscribe('system.ready', __event_system_ready)
     middleware.event_subscribe('system.shutdown', __event_system_shutdown)
