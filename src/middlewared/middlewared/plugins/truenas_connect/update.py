@@ -249,20 +249,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if creds is None:
             return
 
-        # If we have a cert set, we will try to revoke it and also update system to use system cert
-        if config['certificate']:
-            logger.debug('Setting up self generated cert for UI')
-            await self.middleware.call('certificate.setup_self_signed_cert_for_ui')
-            logger.debug('Restarting nginx to consume self generated cert')
-            await self.middleware.call('system.general.ui_restart', 2)
-            if revoke_cert_and_account:
-                logger.debug('Revoking existing TNC cert')
-                await self.middleware.call('tn_connect.acme.revoke_cert')
-
         if revoke_cert_and_account is False:
             # This happens when we get 401 from heartbeat as TNC will already have caatered to these cases
             logger.debug('Skipping revoking TNC user account')
             return
+
+        logger.debug('Revoking existing TNC cert')
+        await self.middleware.call('tn_connect.acme.revoke_cert')
 
         logger.debug('Revoking TNC user account')
         # We need to revoke the user account now
