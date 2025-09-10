@@ -150,15 +150,16 @@ http {
     }
 % endif
 
+% for server in servers:
     server {
-        server_name  localhost;
-% if ssl_configuration:
+        server_name  ${server['name']};
+% if server['cert']:
     % for ip in ip_list:
-        listen                 ${ip}:${general_settings['ui_httpsport']} default_server ssl http2;
+        listen                 ${ip}:${general_settings['ui_httpsport']} ${'default_server' if server['default_server'] else ''} ssl http2;
     % endfor
 
-        ssl_certificate        "${cert['certificate_path']}";
-        ssl_certificate_key    "${cert['privatekey_path']}";
+        ssl_certificate        "${server['cert']['certificate_path']}";
+        ssl_certificate_key    "${server['cert']['privatekey_path']}";
         ssl_dhparam "${dhparams_file}";
         ssl_session_timeout    120m;
         ssl_session_cache      shared:ssl:16m;
@@ -168,14 +169,14 @@ http {
 
         ## If oscsp stapling is a must in cert extensions, we should make sure nginx respects that
         ## and handles clients accordingly.
-        % if 'Tlsfeature' in cert['extensions']:
+        % if 'Tlsfeature' in server['cert']['extensions']:
         ssl_stapling on;
         ssl_stapling_verify on;
         % endif
         #resolver ;
         #ssl_trusted_certificate ;
 % endif
-% if not general_settings['ui_httpsredirect'] or not ssl_configuration:
+% if not general_settings['ui_httpsredirect'] or not server['cert']:
     % for ip in ip_list:
         listen       ${ip}:${general_settings['ui_port']};
     % endfor
@@ -391,6 +392,8 @@ ${spaces}gzip off;
 % endif
         }
     }
+% endfor
+
 % if general_settings['ui_httpsredirect'] and ssl_configuration:
     server {
     % for ip in ip_list:
