@@ -23,6 +23,7 @@ BASE_SMB_CONFIG = {
     'next_rid': 0,
     'multichannel': False,
     'encryption': 'DEFAULT',
+    'search_protocols': [],
     'debug': False
 }
 
@@ -421,3 +422,22 @@ def test__enable_stig():
     )
     assert conf['client use kerberos'] == 'required'
     assert conf['ntlm auth'] == 'disabled'
+
+
+def test__search_protocols_protocols_none():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert conf['rpc_daemon:mdssd'] == 'disabled'
+    assert conf['rpc_server:mdssvc'] == 'disabled'
+
+
+def test_search_protocols_spotlight():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG | {'search_protocols': ['SPOTLIGHT']}, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
+    )
+    assert conf['spotlight backend'] == 'elasticsearch'
+    assert conf['elasticsearch:address'] == '/var/run/truesearch/truesearch.sock'
+    assert conf['spotlight'] is True

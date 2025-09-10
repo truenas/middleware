@@ -81,6 +81,7 @@ class SMBModel(sa.Model):
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
     cifs_srv_encryption = sa.Column(sa.String(120), nullable=True)
+    cifs_srv_search_protocols = sa.Column(sa.JSON(list), default=[])
 
 
 class SMBService(ConfigService):
