@@ -310,7 +310,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
             # file and associated audit entries.
             self.pam_set_item(self.handle, pam.PAM_RHOST, ctypes.c_char_p(origin))
         else:
-            reason = self.pam_strerror(self.handle, retval).encode()
+            reason = self.pam_strerror(self.handle, retval).decode()
 
         return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.START, retval, reason)
 
@@ -342,7 +342,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
             self.truenas_state.passwd = passwd
             self.truenas_state.stage = TrueNASAuthenticatorStage.LOGIN
         else:
-            reason = self.pam_strerror(self.handle, retval)
+            reason = self.pam_strerror(self.handle, retval).decode()
 
         return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.AUTH, retval, reason, passwd)
 
@@ -476,7 +476,7 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         with self.TRUENAS_LOCK:
             resp = super().close_session()
 
-        reason = self.pam_strerror(self.handle, resp)
+        reason = self.pam_strerror(self.handle, resp).decode()
         return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.CLOSE_SESSION, resp, reason)
 
     def end(self) -> None:
