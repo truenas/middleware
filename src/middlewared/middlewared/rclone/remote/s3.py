@@ -45,7 +45,7 @@ class S3RcloneRemote(BaseRcloneRemote):
                 task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
     async def get_credentials_extra(self, credentials):
-        result = {"provider": "Other"}
+        result = {"provider": credentials["provider"].get("provider", "Other")}
 
         if (credentials["provider"].get("endpoint") or "").rstrip("/").endswith(".scw.cloud"):
             if credentials["provider"].get("max_upload_parts", 10000) == 10000:
