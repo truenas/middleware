@@ -72,7 +72,4 @@ class TNCPostInstallService(Service):
             5 * 60,
             lambda: self.middleware.create_task(self.middleware.call('tn_connect.hostname.sync_interface_ips')),
         )
-        logger.debug('TNC Post Install: Configuring nginx to consume TNC certificate')
-        await self.middleware.call('tn_connect.acme.update_ui_impl')
-
         logger.debug('TNC Post Install: TNC setup completed successfully')
