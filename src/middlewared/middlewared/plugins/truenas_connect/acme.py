@@ -25,10 +25,10 @@ class TNCACMEService(Service):
 
     async def update_ui(self):
         logger.debug('Updating UI with TNC cert')
-        try:
-            await self.update_ui_impl()
-        except Exception:
-            logger.error('Failed to configure TNC cert in the UI', exc_info=True)
+        config = await self.middleware.call('tn_connect.config')
+        if config['certificate'] is None:
+            # Just some sanity testing
+            logger.error('TNC cert configuration failed', exc_info=True)
             await self.middleware.call('tn_connect.set_status', Status.CERT_CONFIGURATION_FAILURE.name)
         else:
             logger.debug('TNC cert configured successfully')
