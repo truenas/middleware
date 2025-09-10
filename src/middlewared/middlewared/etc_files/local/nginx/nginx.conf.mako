@@ -83,6 +83,8 @@ events {
 http {
     include       mime.types;
     default_type  application/octet-stream;
+    # We need this because TNC domain exceeds 64
+    server_names_hash_bucket_size 128;
 
     # Types to enable gzip compression on
     gzip_types
