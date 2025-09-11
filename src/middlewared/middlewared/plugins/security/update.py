@@ -42,7 +42,7 @@ class SystemSecurityService(ConfigService):
         entry = SystemSecurityEntry
 
     @private
-    async def configure_security_on_ha(self, is_ha, job, reason):
+    async def configure_security_on_ha(self, is_ha, job, reason: RebootReason):
         if not is_ha:
             return
 
@@ -63,7 +63,10 @@ class SystemSecurityService(ConfigService):
         else:
             try:
                 # we automatically reboot (and wait for) the other controller
-                reboot_job = await self.middleware.call('failover.reboot.other_node')
+                reboot_job = await self.middleware.call(
+                    'failover.reboot.other_node',
+                    {'reason': reason.value, 'graceful': True},
+                )
                 await job.wrap(reboot_job)
             except Exception:
                 # something extravagant happened, so we'll just play it safe and say that

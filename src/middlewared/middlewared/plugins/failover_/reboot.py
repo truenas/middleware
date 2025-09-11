@@ -13,7 +13,6 @@ from middlewared.api.current import (
     FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult,
 )
 from middlewared.plugins.system.reboot import RebootReason
-from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.service import CallError, job, private, Service
 
 
@@ -150,7 +149,7 @@ class FailoverRebootService(Service):
 
     @api_method(FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult, roles=['FULL_ADMIN'])
     @job(lock='reboot_standby')
-    async def other_node(self, job):
+    async def other_node(self, job, options):
         """
         Reboot the other node and wait for it to come back online.
 
@@ -171,14 +170,14 @@ class FailoverRebootService(Service):
         remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
 
         job.set_progress(5, 'Rebooting other controller')
-        if remote_be_changed:
+        if remote_be_changed or options['graceful']:
             # We try to call `system.reboot` with two possible signatures: first, with reboot reason, the actual one,
             # and second, without reboot reason, the legacy one. One will work on 25.04+ and fail silently on 24.10
             # (due to `job_return: true`), the other vice versa.
             await self.middleware.call(
                 'failover.call_remote',
                 'system.reboot',
-                [SYSTEM_UPGRADE_REBOOT_REASON, {'delay': 5}],
+                [options['reason'], {'delay': 5}],
                 {
                     'job': True,
                     'job_return': True,
