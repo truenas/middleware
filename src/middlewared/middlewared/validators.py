@@ -20,46 +20,6 @@ class ValidatorBase:
         raise NotImplementedError()
 
 
-class Email(ValidatorBase):
-    def __init__(self, empty=False):
-        assert isinstance(empty, bool)
-        self.empty = empty
-        # https://www.rfc-editor.org/rfc/rfc5321#section-4.5.3.1.3
-        # (subtract 2 because path portion of email is separated
-        # by enclosing "<" which we cannot control)
-        self.max_path = 254
-
-    def __call__(self, value):
-        if value is None or (self.empty and not value):
-            return
-        elif len(value) > self.max_path:
-            raise ValueError("Maximum length is {self.max_path} characters.")
-        else:
-            right_most_atsign = value.rfind("@")
-            if right_most_atsign == -1:
-                raise ValueError("Missing '@' symbol.")
-
-            # The email validation/RFC debacle is a vortex of endless
-            # despair. There have been erratas for the erratas to "fix"
-            # the email address issues but it's still very much a source of
-            # debate. It's actually gotten to a point where most interwebz
-            # people claim that validating email addresses more than the
-            # bare minimum is only harmful. I tend to agree with them because
-            # each email server implementation follows their own set of rules.
-            # This means NO MATTER WHAT WE DO, we're bound to still allow an
-            # "invalid" email address depending on the email server being
-            # used. It's better to be false-positive than false-negative here.
-            # The only guaranteed way to "validate" an email address is to send
-            # a test email to the given address.
-            local_part = value[:right_most_atsign]
-            if not local_part:
-                raise ValueError("Missing local part of email string (part before the '@').")
-
-            domain_part = value[right_most_atsign:]
-            if domain_part == '@':
-                raise ValueError("Missing domain part of email string (part after the '@').")
-
-
 class IpAddress(ValidatorBase):
     def __call__(self, value):
         try:
