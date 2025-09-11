@@ -49,14 +49,6 @@ class Range(ValidatorBase):
             raise ValueError(f"Should be {error}")
 
 
-class Port(Range):
-    ''' Example usage with exclude:
-    validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])]
-    '''
-    def __init__(self, exclude=None):
-        super().__init__(min_=1, max_=65535, exclude=exclude)
-
-
 def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
     from middlewared.schema import Dict, Error
     from middlewared.service import ValidationErrors
