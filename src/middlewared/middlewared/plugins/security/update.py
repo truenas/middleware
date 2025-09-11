@@ -62,7 +62,11 @@ class SystemSecurityService(ConfigService):
             await self.middleware.call('failover.call_remote', 'system.reboot.remove_reason', [reason.name])
         else:
             try:
-                # we automatically reboot (and wait for) the other controller
+                # Automatically reboot (and wait for) the other controller.
+                # NAS-137368: Previously, we were calling `failover.become_passive` on the standby node. This did not
+                # give the OS ample opportunity to write the FIPS configuration changes made above to disk, and the file
+                # changes were lost on reboot. Passing {'graceful': True} allows the OS to write pending changes to disk
+                # before rebooting.
                 reboot_job = await self.middleware.call(
                     'failover.reboot.other_node',
                     {'reason': reason.value, 'graceful': True},
