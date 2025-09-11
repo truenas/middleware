@@ -4,7 +4,7 @@ import pytest
 
 from middlewared.schema import Dict, Int, Str
 from middlewared.service_exception import ValidationErrors
-from middlewared.validators import check_path_resides_within_volume_sync, validate_schema, Range
+from middlewared.validators import check_path_resides_within_volume_sync, validate_schema
 
 
 @pytest.mark.parametrize("schema,data,result", [
@@ -13,7 +13,6 @@ from middlewared.validators import check_path_resides_within_volume_sync, valida
     ([Str("text", required=True)], {}, {"text"}),
     ([Int("number")], {"number": "1"}, {"number": 1}),
     ([Int("number")], {"number": "XXX"}, {"number"}),
-    ([Int("number", validators=[Range(min_=2)])], {"number": 1}, {"number"}),
     ([Dict("image", Str("repository", required=True))], {}, {"image.repository"}),
 ])
 def test__validate_schema(schema, data, result):

@@ -19,36 +19,6 @@ class ValidatorBase:
         raise NotImplementedError()
 
 
-class Range(ValidatorBase):
-    def __init__(self, min_=None, max_=None, exclude=None):
-        self.min = min_
-        self.max = max_
-        self.exclude = exclude or []
-
-    def __call__(self, value):
-        if value is None:
-            return
-        if isinstance(value, str):
-            value = len(value)
-        if value in self.exclude:
-            raise ValueError(
-                f'{value} is a reserved for internal use. Please select another value.'
-            )
-
-        error = {
-            (True, True): f"between {self.min} and {self.max}",
-            (False, True): f"less than or equal to {self.max}",
-            (True, False): f"greater than or equal to {self.min}",
-            (False, False): "",
-        }[self.min is not None, self.max is not None]
-
-        if self.min is not None and value < self.min:
-            raise ValueError(f"Should be {error}")
-
-        if self.max is not None and value > self.max:
-            raise ValueError(f"Should be {error}")
-
-
 def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
     from middlewared.schema import Dict, Error
     from middlewared.service import ValidationErrors
