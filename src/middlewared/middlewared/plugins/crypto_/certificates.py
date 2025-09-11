@@ -11,6 +11,7 @@ from middlewared.api.current import (
     CertificateUpdateResult, CertificateDeleteArgs, CertificateDeleteResult,
 )
 from middlewared.async_validators import validate_country
+from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 
 from .query_utils import normalize_cert_attrs
@@ -68,6 +69,13 @@ class CertificateService(CRUDService):
         verrors = ValidationErrors()
         if cert:
             cert = cert[0]
+            if cert['name'].startswith(TNC_CERT_PREFIX):
+                verrors.add(
+                    schema_name,
+                    f'Certificate "{cert["name"]}" is reserved for TrueNAS Connect service '
+                    'and cannot be used by other services'
+                )
+
             if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR'] or cert['cert_type_CA']:
                 verrors.add(
                     schema_name,
