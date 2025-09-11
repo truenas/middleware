@@ -1,3 +1,4 @@
+import collections
 import enum
 import itertools
 import json
@@ -141,3 +142,43 @@ class ZFSKeyFormat(enum.Enum):
     HEX = 'HEX'
     PASSPHRASE = 'PASSPHRASE'
     RAW = 'RAW'
+
+
+PropertyDef = collections.namedtuple(
+    'PropertyDef',
+    (
+        'api_name',
+        'real_name',
+        'transform',
+        'inheritable',
+        'is_user_prop'
+    )
+)
+POOL_DS_UPDATE_PROPERTIES = (
+    PropertyDef('aclinherit', 'aclinherit', str.lower, True, False),
+    PropertyDef('aclmode', 'aclmode', str.lower, True, False),
+    PropertyDef('acltype', 'acltype', str.lower, True, False),
+    PropertyDef('atime', 'atime', str.lower, True, False),
+    PropertyDef('checksum', 'checksum', str.lower, True, False),
+    PropertyDef('comments', TNUserProp.DESCRIPTION.value, None, False, True),
+    PropertyDef('sync', 'sync', str.lower, True, False),
+    PropertyDef('compression', 'compression', str.lower, True, False),
+    PropertyDef('deduplication', 'dedup', str.lower, True, False),
+    PropertyDef('exec', 'exec', str.lower, True, False),
+    PropertyDef('managedby', TNUserProp.MANAGED_BY.value, None, True, True),
+    PropertyDef('quota', 'quota', none_normalize, False, False),
+    PropertyDef('quota_warning', TNUserProp.QUOTA_WARN.value, str, True, True),
+    PropertyDef('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True, True),
+    PropertyDef('refquota', 'refquota', none_normalize, False, False),
+    PropertyDef('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True, True),
+    PropertyDef('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True, True),
+    PropertyDef('reservation', 'reservation', none_normalize, False, False),
+    PropertyDef('refreservation', 'refreservation', none_normalize, False, False),
+    PropertyDef('copies', 'copies', str, True, False),
+    PropertyDef('snapdir', 'snapdir', str.lower, True, False),
+    PropertyDef('snapdev', 'snapdev', str.lower, True, False),
+    PropertyDef('readonly', 'readonly', str.lower, True, False),
+    PropertyDef('recordsize', 'recordsize', None, True, False),
+    PropertyDef('volsize', 'volsize', lambda x: str(x), False, False),
+    PropertyDef('special_small_block_size', 'special_small_blocks', None, True, False),
+)

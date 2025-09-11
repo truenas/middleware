@@ -21,47 +21,19 @@ from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 from .dataset_query_utils import generic_query
 from .dataset_create_utils import create_dataset_with_pylibzfs
 from .utils import (
-    dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize, ZFSKeyFormat,
-    ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
+    dataset_mountpoint,
+    get_dataset_parents,
+    get_props_of_interest_mapping,
+    none_normalize,
+    POOL_DS_UPDATE_PROPERTIES,
+    TNUserProp,
+    ZFSKeyFormat,
+    ZFS_VOLUME_BLOCK_SIZE_CHOICES
 )
 try:
     from truenas_pylibzfs import ZFSException, ZFSProperty
 except ImportError:
     ZFSException = ZFSProperty = None
-
-
-PropertyDef = collections.namedtuple(
-    'PropertyDef',
-    ['api_name', 'real_name', 'transform', 'inheritable', 'is_user_prop']
-)
-UPDATE_PROPERTIES = (
-    PropertyDef('aclinherit', 'aclinherit', str.lower, True, False),
-    PropertyDef('aclmode', 'aclmode', str.lower, True, False),
-    PropertyDef('acltype', 'acltype', str.lower, True, False),
-    PropertyDef('atime', 'atime', str.lower, True, False),
-    PropertyDef('checksum', 'checksum', str.lower, True, False),
-    PropertyDef('comments', TNUserProp.DESCRIPTION.value, None, False, True),
-    PropertyDef('sync', 'sync', str.lower, True, False),
-    PropertyDef('compression', 'compression', str.lower, True, False),
-    PropertyDef('deduplication', 'dedup', str.lower, True, False),
-    PropertyDef('exec', 'exec', str.lower, True, False),
-    PropertyDef('managedby', TNUserProp.MANAGED_BY.value, None, True, True),
-    PropertyDef('quota', 'quota', none_normalize, False, False),
-    PropertyDef('quota_warning', TNUserProp.QUOTA_WARN.value, str, True, True),
-    PropertyDef('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True, True),
-    PropertyDef('refquota', 'refquota', none_normalize, False, False),
-    PropertyDef('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True, True),
-    PropertyDef('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True, True),
-    PropertyDef('reservation', 'reservation', none_normalize, False, False),
-    PropertyDef('refreservation', 'refreservation', none_normalize, False, False),
-    PropertyDef('copies', 'copies', str, True, False),
-    PropertyDef('snapdir', 'snapdir', str.lower, True, False),
-    PropertyDef('snapdev', 'snapdev', str.lower, True, False),
-    PropertyDef('readonly', 'readonly', str.lower, True, False),
-    PropertyDef('recordsize', 'recordsize', None, True, False),
-    PropertyDef('volsize', 'volsize', lambda x: str(x), False, False),
-    PropertyDef('special_small_block_size', 'special_small_blocks', None, True, False),
-)
 
 
 class PoolDatasetEncryptionModel(sa.Model):
@@ -784,7 +756,7 @@ class PoolDatasetService(CRUDService):
         zprops = {}
         inherit_props = set()
         user_props = {}
-        for prop in UPDATE_PROPERTIES:
+        for prop in POOL_DS_UPDATE_PROPERTIES:
             if prop.api_name not in data:
                 continue
             if prop.inheritable and data[prop.api_name] == 'INHERIT':
