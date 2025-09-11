@@ -149,7 +149,7 @@ PropertyDef = collections.namedtuple(
     (
         'api_name',  # name we expose to API consumer
         'real_name',  # actual zfs property name in libzfs
-        'transform',  # how to transform the API name (if needed)
+        'transform',  # how to transform the value for the given property (if required)
         'inheritable',  # can the zfs property be inherited
         'is_user_prop'  # zfs _USER_ property obfuscated as a zfs property to API consumer
     )
