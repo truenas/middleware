@@ -19,22 +19,6 @@ class ValidatorBase:
         raise NotImplementedError()
 
 
-class Match(ValidatorBase):
-    def __init__(self, pattern, flags=0, explanation=None):
-        self.pattern = pattern
-        self.flags = flags
-        self.explanation = explanation
-
-        self.regex = re.compile(pattern, flags)
-
-    def __call__(self, value):
-        if value is not None and not self.regex.match(value):
-            raise ValueError(self.explanation or f"Value does not match {self.pattern!r} pattern")
-
-    def __deepcopy__(self, memo):
-        return Match(self.pattern, self.flags, self.explanation)
-
-
 class Range(ValidatorBase):
     def __init__(self, min_=None, max_=None, exclude=None):
         self.min = min_
