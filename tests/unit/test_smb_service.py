@@ -1,5 +1,6 @@
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.smb import TRUESEARCH_ES_PATH
 
 BASE_SMB_CONFIG = {
     'id': 1,
@@ -439,5 +440,5 @@ def test_search_protocols_spotlight():
         BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT
     )
     assert conf['spotlight backend'] == 'elasticsearch'
-    assert conf['elasticsearch:address'] == '/var/run/truesearch/truesearch.sock'
+    assert conf['elasticsearch:address'] == TRUESEARCH_ES_PATH
     assert conf['spotlight'] is True
