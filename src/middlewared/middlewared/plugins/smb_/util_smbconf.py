@@ -10,7 +10,7 @@ from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.smb import SMBSharePurpose
+from middlewared.utils.smb import SMBSharePurpose, SearchProtocol, TRUESEARCH_ES_PATH
 from middlewared.plugins.account import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, VEEAM_REPO_BLOCKSIZE
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
@@ -463,10 +463,10 @@ def generate_smb_conf_dict(
         'idmap config * : read only': True,
     }
 
-    if 'SPOTLIGHT' in smb_service_config['search_protocols']:
+    if SearchProtocol.SPOTLIGHT in smb_service_config['search_protocols']:
         smbconf.update({
             'spotlight backend': 'elasticsearch',
-            'elasticsearch:address': '/var/run/truesearch/truesearch.sock',
+            'elasticsearch:address': TRUESEARCH_ES_PATH,
             'spotlight': True
         })
 

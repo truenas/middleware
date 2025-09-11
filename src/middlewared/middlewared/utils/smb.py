@@ -92,6 +92,10 @@ class SMBUnixCharset(enum.StrEnum):
     UTF_16_LE = 'UTF_16_LE'
 
 
+class SearchProtocol(enum.StrEnum):
+    SPOTLIGHT = 'SPOTLIGHT'
+
+
 class SMBSharePurpose(enum.StrEnum):
     DEFAULT_SHARE = 'DEFAULT_SHARE'
     LEGACY_SHARE = 'LEGACY_SHARE'
@@ -108,6 +112,7 @@ INVALID_SHARE_NAME_CHARACTERS = frozenset({
 })
 RESERVED_SHARE_NAMES = frozenset({'global', 'printers', 'homes', 'admin$', 'ipc$'})
 SUPPORTED_SMB_VARIABLES = frozenset({'U', 'G', 'D'})  # see man 5 smb.conf "VARIABLE SUBSTITUTIONS"
+TRUESEARCH_ES_PATH = '/var/run/truesearch/truesearch-es.sock'
 
 
 def validate_smb_share_name(name: str) -> str:
