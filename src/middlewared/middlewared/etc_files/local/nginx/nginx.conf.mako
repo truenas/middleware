@@ -2,24 +2,33 @@
     import ipaddress
     import os
 
+    from middlewared.logger import NGINX_LOG_PATH
+
     # Let's ensure that /var/log/nginx directory exists
-    os.makedirs('/var/log/nginx', exist_ok=True)
+    os.makedirs(NGINX_LOG_PATH, exist_ok=True)
 
     # The error log should be a real file owned by nginx
-    NGINX_ERROR_LOG = '/var/log/nginx/error.log'
-    nginx_owner = {'uid': 33, 'gid': 4}  # 33 = nginx, 4 = adm
-    if os.path.isfile(NGINX_ERROR_LOG) is not True:
+    fix_error_file = False
+    nginx_error_log = os.path.join(NGINX_LOG_PATH, 'error.log')
+    try:
+        fix_error_file = os.path.islink(nginx_error_log)
+    except FileNotFoundError:
+        fix_error_file = True
+
+    if fix_error_file:
         try:
-            os.remove(NGINX_ERROR_LOG)
+            os.remove(nginx_error_log)
         except Exception:
             pass
 
-        with open(NGINX_ERROR_LOG, 'w') as f:
+        with open(nginx_error_log, 'w') as f:
             pass
 
-        # Match owner and permissions to access.log
-        os.chown(NGINX_ERROR_LOG, nginx_owner['uid'], nginx_owner['gid'])
-        os.chmod(NGINX_ERROR_LOG, 0o640)
+        # Match owner and permissions to access.log: ['www-data','adm']
+        nginx_uid = middleware.call_sync('user.get_builtin_user_id', 'www-data')
+        nginx_gid = middleware.call_sync('group.get_builtin_group_id', 'adm')
+        os.chown(nginx_error_log, nginx_uid, nginx_gid)
+        os.chmod(nginx_error_log, 0o640)
 
 
     general_settings = middleware.call_sync('system.general.config')
