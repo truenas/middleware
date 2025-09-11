@@ -1,4 +1,3 @@
-import ipaddress
 import os
 import re
 from pathlib import Path
@@ -18,14 +17,6 @@ class ValidatorBase:
     """The base validator class to be inherited by all validators"""
     def __call__(self, *args, **kwargs):
         raise NotImplementedError()
-
-
-class IpAddress(ValidatorBase):
-    def __call__(self, value):
-        try:
-            ipaddress.ip_address(value)
-        except ValueError:
-            raise ValueError('Not a valid IP address')
 
 
 class Match(ValidatorBase):

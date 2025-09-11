@@ -1,7 +1,8 @@
 import asyncio
+import ipaddress
 import socket
 
-from middlewared.validators import IpAddress, check_path_resides_within_volume_sync
+from middlewared.validators import check_path_resides_within_volume_sync
 
 
 async def check_path_resides_within_volume(verrors, middleware, schema_name, path, must_be_dir=False):
@@ -20,8 +21,7 @@ async def resolve_hostname(middleware, verrors, name, hostname):
     def resolve_host_name_thread(hostname):
         try:
             try:
-                ip = IpAddress()
-                ip(hostname)
+                ipaddress.ip_address(hostname)
                 return hostname
             except ValueError:
                 return socket.gethostbyname(hostname)

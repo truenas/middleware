@@ -43,7 +43,6 @@ from middlewared.pipe import Pipes
 from middlewared.service_exception import CallError, ValidationErrors, InstanceNotFound
 from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_STARTED_SENTINEL_PATH
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
-from middlewared.validators import IpAddress
 
 from .compound_service import CompoundService
 from .config_service import ConfigService
@@ -427,49 +426,41 @@ class CoreService(Service):
         Method that will send an ICMP echo request to "hostname"
         and will wait up to "timeout" for a reply.
         """
-        ip = None
-        ip_found = True
         verrors = ValidationErrors()
+        hostname = options['hostname']
+        protocol = options['type']
+
         try:
-            ip = IpAddress()
-            ip(options['hostname'])
-            ip = options['hostname']
+            ipaddress.ip_address(hostname)
         except ValueError:
-            ip_found = False
-        if not ip_found:
+            family = {'ICMP': socket.AF_UNSPEC, 'ICMPV4': socket.AF_INET, 'ICMPV6': socket.AF_INET6}
             try:
-                if options['type'] == 'ICMP':
-                    ip = socket.getaddrinfo(options['hostname'], None)[0][4][0]
-                elif options['type'] == 'ICMPV4':
-                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET)[0][4][0]
-                elif options['type'] == 'ICMPV6':
-                    ip = socket.getaddrinfo(options['hostname'], None, socket.AF_INET6)[0][4][0]
+                ip = socket.getaddrinfo(hostname, None, family[protocol])[0][4][0]
             except socket.gaierror:
                 verrors.add(
                     'options.hostname',
-                    f'{options["hostname"]} cannot be resolved to an IP address.'
+                    f'{hostname} cannot be resolved to an IP address.'
                 )
-
-        verrors.check()
+                raise verrors
+        else:
+            ip = hostname
 
         addr = ipaddress.ip_address(ip)
-        if not addr.version == 4 and (options['type'] == 'ICMP' or options['type'] == 'ICMPV4'):
+        if addr.version == 6 and protocol != 'ICMPV6':
             verrors.add(
                 'options.type',
                 f'Requested ICMPv4 protocol, but the address provided "{addr}" is not a valid IPv4 address.'
             )
-        if not addr.version == 6 and options['type'] == 'ICMPV6':
+        elif addr.version == 4 and protocol == 'ICMPV6':
             verrors.add(
                 'options.type',
                 f'Requested ICMPv6 protocol, but the address provided "{addr}" is not a valid IPv6 address.'
             )
         verrors.check()
 
-        ping_host = False
-        if addr.version in [4, 6]:
-            ping_host = self._ping_host(addr.version, ip, options['timeout'], options.get('count'), options.get('interface'), options.get('interval'))
-
-        return ping_host
+        return self._ping_host(
+            addr.version, ip, options['timeout'], options['count'], options['interface'], options['interval']
+        )
 
     @api_method(CoreArpArgs, CoreArpResult, roles=['FULL_ADMIN'])
     def arp(self, options):

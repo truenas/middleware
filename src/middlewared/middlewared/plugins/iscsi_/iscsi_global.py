@@ -1,4 +1,5 @@
 import asyncio
+import ipaddress
 import re
 import socket
 
@@ -11,7 +12,7 @@ from middlewared.async_validators import validate_port
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
-from middlewared.validators import IpAddress, Port
+from middlewared.validators import Port
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 
@@ -78,8 +79,7 @@ class ISCSIGlobalService(SystemServiceService):
 
         # First check that a valid IP was supplied
         try:
-            ip_validator = IpAddress()
-            ip_validator(ip)
+            ipaddress.ip_address(ip)
         except ValueError:
             verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
             return None

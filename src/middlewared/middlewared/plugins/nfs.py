@@ -17,7 +17,6 @@ from middlewared.api.current import (
 )
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
-from middlewared.validators import IpAddress
 from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -733,8 +732,7 @@ class SharingNFSService(SharingService):
             try:
                 try:
                     # If this is an IP address, just return it
-                    ip = IpAddress()
-                    ip(hostname)
+                    ipaddress.ip_address(hostname)
                     return hostname
                 except ValueError:
                     # Not an IP address, should be a name
