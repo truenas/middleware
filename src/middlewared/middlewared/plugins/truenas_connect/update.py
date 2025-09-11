@@ -269,6 +269,17 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             else:
                 raise CallError(f'Failed to revoke account: {response["error"]}')
 
+    @private
+    async def delete_cert(self, cert_id):
+        # We will like to remove the TNC cert now when TNC is disabled
+        # We will not make this fatal in case user had it configured with some other plugin
+        # before we had added validation to prevent users from doing that
+        logger.debug('Deleting TNC certificate with id %d', cert_id)
+        delete_job = await self.middleware.call('certificate.delete', cert_id, {'force': True})
+        await delete_job.wait()
+        if delete_job.error:
+            logger.error('Failed to delete TNC certificate: %s', delete_job.error)
+
     @api_method(TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'])
     async def ip_choices(self):
         """
