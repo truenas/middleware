@@ -60,6 +60,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                             # This is called to just make sure that we setup a self-signed certificate and
                             # remove any alerts which might be there as we are going to unset TNC
                             await self.middleware.call('tn_connect.unset_registration_details', False)
+
                         await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
                             'enabled': False,
                         } | get_unset_payload())
@@ -67,6 +68,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                             'tn_connect.config', 'CHANGED', fields=await self.middleware.call('tn_connect.config')
                         )
                         await self.middleware.call('alert.oneshot_create', 'TNCDisabledAutoUnconfigured', None)
+                        await self.middleware.call('tn_connect.delete_cert', tnc_config['certificate'])
                         return
                     case 500:
                         logger.debug('TNC Heartbeat: Received 500')
