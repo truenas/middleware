@@ -12,6 +12,7 @@ CONFIGURED_TNC_STATES = (
     Status.CERT_RENEWAL_SUCCESS.name,
 )
 HEARTBEAT_INTERVAL = 120
+TNC_CERT_PREFIX = 'truenas_connect_'
 TNC_IPS_CACHE_KEY = 'truenas_connect_sync_ips'
 
 

@@ -8,7 +8,7 @@ from truenas_connect_utils.status import Status
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, job, Service
 
-from .utils import CERT_RENEW_DAYS
+from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX
 
 
 logger = logging.getLogger('truenas_connect')
@@ -68,7 +68,7 @@ class TNCACMEService(Service):
             cert_id = await self.middleware.call(
                 'datastore.insert',
                 'system.certificate', {
-                    'name': f'truenas_connect_{str(uuid.uuid4())[-5:]}',
+                    'name': f'{TNC_CERT_PREFIX}{str(uuid.uuid4())[-5:]}',
                     'type': CERT_TYPE_EXISTING,
                     'certificate': cert_details['cert'],
                     'privatekey': cert_details['private_key'],
