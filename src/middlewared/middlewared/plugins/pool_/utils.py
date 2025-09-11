@@ -1,9 +1,9 @@
-import collections
 import enum
 import itertools
 import json
 import os
 import re
+import typing
 
 from pathlib import Path
 
@@ -144,16 +144,19 @@ class ZFSKeyFormat(enum.Enum):
     RAW = 'RAW'
 
 
-PropertyDef = collections.namedtuple(
-    'PropertyDef',
-    (
-        'api_name',  # name we expose to API consumer
-        'real_name',  # actual zfs property name in libzfs
-        'transform',  # how to transform the value for the given property (if required)
-        'inheritable',  # can the zfs property be inherited
-        'is_user_prop'  # zfs _USER_ property obfuscated as a zfs property to API consumer
-    )
-)
+class PropertyDef(typing.NamedTuple):
+    api_name: str
+    """name we expose to API consumer"""
+    real_name: str
+    """actual zfs propert name in libzfs"""
+    transform: typing.Callable | None
+    """callable to transform the value for the property (if required)"""
+    inheritable: bool
+    """if the zfs property can be inherited"""
+    is_user_prop: bool
+    """is this property an a zfs USER property instead of a data property"""
+
+
 POOL_BASE_PROPERTIES = (
     PropertyDef('aclinherit', 'aclinherit', str.lower, True, False),
     PropertyDef('aclmode', 'aclmode', str.lower, True, False),
