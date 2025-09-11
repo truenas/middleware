@@ -130,6 +130,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             'interfaces': data['interfaces'],
             'use_all_interfaces': data['use_all_interfaces'],
         }
+        restart_ui = False
 
         # Extract IPs from interfaces using ip_in_use method
         # If use_all_interfaces is True, get IPs from all interfaces
@@ -149,6 +150,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         elif config['enabled'] is True and data['enabled'] is False:
             await self.unset_registration_details()
             db_payload.update(get_unset_payload())
+            restart_ui = True
 
         # Check if IPs or interfaces have changed
         combined_ips_old = config['ips'] + config.get('interfaces_ips', [])
@@ -169,6 +171,10 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
+
+        if restart_ui:
+            logger.debug('Restarting nginx to not use TNC certificate anymore')
+            await self.middleware.call('system.general.ui_restart', 4)
 
         new_config = await self.config()
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=new_config)
@@ -243,20 +249,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if creds is None:
             return
 
-        # If we have a cert set, we will try to revoke it and also update system to use system cert
-        if config['certificate']:
-            logger.debug('Setting up self generated cert for UI')
-            await self.middleware.call('certificate.setup_self_signed_cert_for_ui')
-            logger.debug('Restarting nginx to consume self generated cert')
-            await self.middleware.call('system.general.ui_restart', 2)
-            if revoke_cert_and_account:
-                logger.debug('Revoking existing TNC cert')
-                await self.middleware.call('tn_connect.acme.revoke_cert')
-
         if revoke_cert_and_account is False:
             # This happens when we get 401 from heartbeat as TNC will already have caatered to these cases
             logger.debug('Skipping revoking TNC user account')
             return
+
+        logger.debug('Revoking existing TNC cert')
+        await self.middleware.call('tn_connect.acme.revoke_cert')
 
         logger.debug('Revoking TNC user account')
         # We need to revoke the user account now

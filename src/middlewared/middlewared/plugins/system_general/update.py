@@ -144,7 +144,6 @@ class SystemGeneralService(ConfigService):
 
     @settings.fields_validator('ui_certificate')
     async def _validate_ui_certificate(self, verrors, ui_certificate):
-        tnc_config = await self.middleware.call('tn_connect.config')
         cert = await self.middleware.call(
             'certificate.query',
             [["id", "=", ui_certificate]]
@@ -153,11 +152,6 @@ class SystemGeneralService(ConfigService):
             verrors.add(
                 'ui_certificate',
                 'Please specify a valid certificate which exists in the system'
-            )
-        elif tnc_config['certificate'] and tnc_config['certificate'] != ui_certificate:
-            verrors.add(
-                'ui_certificate',
-                'Certificate cannot be changed when TrueNAS Connect has been configured'
             )
         else:
             verrors.extend(

@@ -44,8 +44,29 @@
     display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
     display_devices = middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISPLAY']])
 
-    has_tn_connect = middleware.call_sync('tn_connect.config')['certificate'] is not None
+    tn_connect_config = middleware.call_sync('tn_connect.config')
+    has_tn_connect = tn_connect_config['certificate'] is not None
+    try:
+        tnc_basename = middleware.call_sync('tn_connect.hostname.basename_from_cert')
+        tnc_cert = middleware.call_sync('certificate.get_instance', tn_connect_config['certificate']) if tn_connect_config['certificate'] else None
+    except Exception:
+        # This should not happen but better safe then sorry as we don't want to disrupt nginx configuration
+        tnc_basename = tnc_cert = None
+        middleware.logger.exception('Failed to retrieve TNC certificate information')
 
+    servers = []
+    if tnc_cert and tnc_basename:
+        servers.append({
+            'name': tnc_basename,
+            'cert': tnc_cert,
+            'default_server': False,
+            })
+
+    servers.append({
+        'name': 'localhost',
+        'cert': cert if ssl_configuration else None,
+        'default_server': True,
+    })
     current_api_version = middleware.api_versions[-1].version
 %>
 #
@@ -62,6 +83,8 @@ events {
 http {
     include       mime.types;
     default_type  application/octet-stream;
+    # We need this because TNC domain exceeds 64
+    server_names_hash_bucket_size 128;
 
     # Types to enable gzip compression on
     gzip_types
@@ -127,15 +150,16 @@ http {
     }
 % endif
 
+% for server in servers:
     server {
-        server_name  localhost;
-% if ssl_configuration:
+        server_name  ${server['name']};
+% if server['cert']:
     % for ip in ip_list:
-        listen                 ${ip}:${general_settings['ui_httpsport']} default_server ssl http2;
+        listen                 ${ip}:${general_settings['ui_httpsport']} ${'default_server' if server['default_server'] else ''} ssl http2;
     % endfor
 
-        ssl_certificate        "${cert['certificate_path']}";
-        ssl_certificate_key    "${cert['privatekey_path']}";
+        ssl_certificate        "${server['cert']['certificate_path']}";
+        ssl_certificate_key    "${server['cert']['privatekey_path']}";
         ssl_dhparam "${dhparams_file}";
         ssl_session_timeout    120m;
         ssl_session_cache      shared:ssl:16m;
@@ -145,14 +169,14 @@ http {
 
         ## If oscsp stapling is a must in cert extensions, we should make sure nginx respects that
         ## and handles clients accordingly.
-        % if 'Tlsfeature' in cert['extensions']:
+        % if 'Tlsfeature' in server['cert']['extensions']:
         ssl_stapling on;
         ssl_stapling_verify on;
         % endif
         #resolver ;
         #ssl_trusted_certificate ;
 % endif
-% if not general_settings['ui_httpsredirect'] or not ssl_configuration:
+% if not general_settings['ui_httpsredirect'] or not server['cert']:
     % for ip in ip_list:
         listen       ${ip}:${general_settings['ui_port']};
     % endfor
@@ -368,6 +392,8 @@ ${spaces}gzip off;
 % endif
         }
     }
+% endfor
+
 % if general_settings['ui_httpsredirect'] and ssl_configuration:
     server {
     % for ip in ip_list:
