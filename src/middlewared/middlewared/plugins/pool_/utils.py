@@ -185,7 +185,7 @@ POOL_BASE_PROPERTIES = (
 
 )
 POOL_DS_UPDATE_PROPERTIES = POOL_BASE_PROPERTIES
-POOL_DS_CREATE_PROPERTIES = (
+POOL_DS_CREATE_PROPERTIES = POOL_BASE_PROPERTIES + (
     PropertyDef('casesensitivity', 'casesensitivity', str.lower, True, False),
     # sparse is NOT an actual zfs property but is a boolean value we provide
     # during a create request to allow the api consumer the ability to create
