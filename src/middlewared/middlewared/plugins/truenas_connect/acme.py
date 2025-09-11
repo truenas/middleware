@@ -23,12 +23,12 @@ class TNCACMEService(Service):
     async def config(self):
         return await acme_config(await self.middleware.call('tn_connect.config_internal'))
 
-    async def update_ui(self):
+    async def update_ui(self, start_heartbeat=True):
         logger.debug('Updating UI with TNC cert')
-        try:
-            await self.update_ui_impl()
-        except Exception:
-            logger.error('Failed to configure TNC cert in the UI', exc_info=True)
+        config = await self.middleware.call('tn_connect.config')
+        if config['certificate'] is None:
+            # Just some sanity testing
+            logger.error('TNC cert configuration failed')
             await self.middleware.call('tn_connect.set_status', Status.CERT_CONFIGURATION_FAILURE.name)
         else:
             logger.debug('TNC cert configured successfully')
@@ -48,14 +48,6 @@ class TNCACMEService(Service):
                     )
                 except Exception:
                     logger.error('Failed to restart UI on remote controller', exc_info=True)
-
-    async def update_ui_impl(self):
-        config = await self.middleware.call('tn_connect.config')
-        # We are going to set the cert now for system UI
-        if config['certificate'] is None:
-            # Just some sanity testing
-            raise CallError('Certificate is not set for TrueNAS Connect')
-        await self.middleware.call('system.general.update', {'ui_certificate': config['certificate']})
 
     async def initiate_cert_generation(self):
         logger.debug('Initiating cert generation steps for TNC')
@@ -105,7 +97,7 @@ class TNCACMEService(Service):
             )
             await self.middleware.call('etc.generate', 'ssl')
             await self.middleware.call('tn_connect.set_status', Status.CERT_RENEWAL_SUCCESS.name)
-            await self.update_ui()
+            await self.update_ui(False)
 
     async def initiate_cert_generation_impl(self):
         cert_job = await self.middleware.call('tn_connect.acme.create_cert')
