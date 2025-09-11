@@ -1,4 +1,3 @@
-import collections
 import errno
 import os
 
@@ -24,7 +23,7 @@ from .utils import (
     dataset_mountpoint,
     get_dataset_parents,
     get_props_of_interest_mapping,
-    none_normalize,
+    POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
     TNUserProp,
     ZFSKeyFormat,
@@ -614,41 +613,13 @@ class PoolDatasetService(CRUDService):
         verrors.check()
 
         props = {}
-        for i, real_name, transform, inheritable in (
-            ('aclinherit', None, str.lower, True),
-            ('aclmode', None, str.lower, True),
-            ('acltype', None, str.lower, True),
-            ('atime', None, str.lower, True),
-            ('casesensitivity', None, str.lower, True),
-            ('checksum', None, str.lower, True),
-            ('comments', TNUserProp.DESCRIPTION.value, None, True),
-            ('compression', None, str.lower, True),
-            ('copies', None, str, True),
-            ('deduplication', 'dedup', str.lower, True),
-            ('exec', None, str.lower, True),
-            ('managedby', TNUserProp.MANAGED_BY.value, None, True),
-            ('quota', None, none_normalize, True),
-            ('quota_warning', TNUserProp.QUOTA_WARN.value, str, True),
-            ('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True),
-            ('readonly', None, str.lower, True),
-            ('recordsize', None, None, True),
-            ('refquota', None, none_normalize, True),
-            ('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True),
-            ('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True),
-            ('refreservation', None, none_normalize, False),
-            ('reservation', None, none_normalize, False),
-            ('snapdir', None, str.lower, True),
-            ('snapdev', None, str.lower, True),
-            ('sparse', None, None, False),
-            ('sync', None, str.lower, True),
-            ('volblocksize', None, None, False),
-            ('volsize', None, lambda x: str(x), False),
-            ('special_small_block_size', 'special_small_blocks', None, True),
-        ):
-            if i not in data or (inheritable and data[i] == 'INHERIT'):
+        for i in POOL_DS_CREATE_PROPERTIES:
+            if (
+                i.api_name not in data
+                or (i.inheritable and data[i.api_name] == 'INHERIT')
+            ):
                 continue
-            name = real_name or i
-            props[name] = data[i] if not transform else transform(data[i])
+            props[i.real_name] = data[i.api_name] if not i.transform else i.transform(data[i.api_name])
 
         props.update(
             **encryption_dict,
