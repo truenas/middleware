@@ -5,6 +5,23 @@
     # Let's ensure that /var/log/nginx directory exists
     os.makedirs('/var/log/nginx', exist_ok=True)
 
+    # The error log should be a real file owned by nginx
+    NGINX_ERROR_LOG = '/var/log/nginx/error.log'
+    nginx_owner = {'uid': 33, 'gid': 4}  # 33 = nginx, 4 = adm
+    if os.path.isfile(NGINX_ERROR_LOG) is not True:
+        try:
+            os.remove(NGINX_ERROR_LOG)
+        except Exception:
+            pass
+
+        with open(NGINX_ERROR_LOG, 'w') as f:
+            pass
+
+        # Match owner and permissions to access.log
+        os.chown(NGINX_ERROR_LOG, nginx_owner['uid'], nginx_owner['gid'])
+        os.chmod(NGINX_ERROR_LOG, 0o640)
+
+
     general_settings = middleware.call_sync('system.general.config')
     cert = general_settings['ui_certificate']
     dhparams_file = middleware.call_sync('certificate.dhparam')
