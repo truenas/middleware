@@ -9,8 +9,8 @@ from pydantic import AfterValidator, Field
 from ..validators import match_validator
 
 __all__ = [
-    "exclude_tcp_ports", "TcpPort", "Hostname", "Domain", "IPv4Address", "IPv6Address", "IPvAnyAddress", "IPNetwork",
-    "IPv4Nameserver", "IPv6Nameserver"
+    "exclude_tcp_ports", "TcpPort", "Hostname", "MACAddress", "Domain", "IPv4Address", "IPv6Address", "IPvAnyAddress",
+    "IPNetwork", "IPv4Nameserver", "IPv6Nameserver"
 ]
 
 
@@ -69,6 +69,10 @@ Hostname = Annotated[str, AfterValidator(match_validator(
 Domain = Annotated[str, AfterValidator(match_validator(
     re.compile(r"^[a-z.\-0-9]*$", re.IGNORECASE),
     "Domain can only contain letters, numbers, periods, and dashes"
+))]
+MACAddress = Annotated[str, AfterValidator(match_validator(
+    re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$"),
+    'MAC address is not valid.'
 ))]
 IPv4Address = Annotated[str, AfterValidator(_validate_ipv4_address)]
 IPv6Address = Annotated[str, AfterValidator(_validate_ipv6_address)]
