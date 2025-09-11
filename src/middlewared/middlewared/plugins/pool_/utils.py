@@ -3,6 +3,7 @@ import itertools
 import json
 import os
 import re
+import typing
 
 from pathlib import Path
 
@@ -141,3 +142,57 @@ class ZFSKeyFormat(enum.Enum):
     HEX = 'HEX'
     PASSPHRASE = 'PASSPHRASE'
     RAW = 'RAW'
+
+
+class PropertyDef(typing.NamedTuple):
+    api_name: str
+    """name we expose to API consumer"""
+    real_name: str
+    """actual zfs propert name in libzfs"""
+    transform: typing.Callable | None
+    """callable to transform the value for the property (if required)"""
+    inheritable: bool
+    """if the zfs property can be inherited"""
+    is_user_prop: bool
+    """is this property an a zfs USER property instead of a data property"""
+
+
+POOL_BASE_PROPERTIES = (
+    PropertyDef('aclinherit', 'aclinherit', str.lower, True, False),
+    PropertyDef('aclmode', 'aclmode', str.lower, True, False),
+    PropertyDef('acltype', 'acltype', str.lower, True, False),
+    PropertyDef('atime', 'atime', str.lower, True, False),
+    PropertyDef('checksum', 'checksum', str.lower, True, False),
+    PropertyDef('compression', 'compression', str.lower, True, False),
+    PropertyDef('copies', 'copies', str, True, False),
+    PropertyDef('deduplication', 'dedup', str.lower, True, False),
+    PropertyDef('exec', 'exec', str.lower, True, False),
+    PropertyDef('sync', 'sync', str.lower, True, False),
+    PropertyDef('quota', 'quota', none_normalize, False, False),
+    PropertyDef('readonly', 'readonly', str.lower, True, False),
+    PropertyDef('recordsize', 'recordsize', None, True, False),
+    PropertyDef('refreservation', 'refreservation', none_normalize, False, False),
+    PropertyDef('refquota', 'refquota', none_normalize, False, False),
+    PropertyDef('reservation', 'reservation', none_normalize, False, False),
+    PropertyDef('snapdev', 'snapdev', str.lower, True, False),
+    PropertyDef('snapdir', 'snapdir', str.lower, True, False),
+    PropertyDef('special_small_block_size', 'special_small_blocks', None, True, False),
+    PropertyDef('volsize', 'volsize', lambda x: str(x), False, False),
+    # user properties but obfuscated to the api consumer as zfs properties
+    PropertyDef('comments', TNUserProp.DESCRIPTION.value, None, False, True),
+    PropertyDef('managedby', TNUserProp.MANAGED_BY.value, None, True, True),
+    PropertyDef('quota_warning', TNUserProp.QUOTA_WARN.value, str, True, True),
+    PropertyDef('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True, True),
+    PropertyDef('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True, True),
+    PropertyDef('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True, True),
+
+)
+POOL_DS_UPDATE_PROPERTIES = POOL_BASE_PROPERTIES
+POOL_DS_CREATE_PROPERTIES = POOL_BASE_PROPERTIES + (
+    PropertyDef('casesensitivity', 'casesensitivity', str.lower, True, False),
+    # sparse is NOT an actual zfs property but is a boolean value we provide
+    # during a create request to allow the api consumer the ability to create
+    # zvols as "thin" provisioned (i.e. "refreservation" is set to "none" (i.e 0))
+    PropertyDef('sparse', 'sparse', None, False, False),
+    PropertyDef('volblocksize', 'volblocksize', None, False, False),
+)
