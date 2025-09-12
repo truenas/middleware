@@ -130,7 +130,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             'interfaces': data['interfaces'],
             'use_all_interfaces': data['use_all_interfaces'],
         }
-        restart_ui = False
+        tnc_disabled = False
 
         # Extract IPs from interfaces using ip_in_use method
         # If use_all_interfaces is True, get IPs from all interfaces
@@ -150,7 +150,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         elif config['enabled'] is True and data['enabled'] is False:
             await self.unset_registration_details()
             db_payload.update(get_unset_payload())
-            restart_ui = True
+            tnc_disabled = True
 
         # Check if IPs or interfaces have changed
         combined_ips_old = config['ips'] + config.get('interfaces_ips', [])
@@ -172,9 +172,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
-        if restart_ui:
+        if tnc_disabled:
+            # If TNC is disabled and was enabled earlier, we will like to restart UI and delete TNC cert
             logger.debug('Restarting nginx to not use TNC certificate anymore')
             await self.middleware.call('system.general.ui_restart', 4)
+
+            if config['certificate']:
+                await self.delete_cert(config['certificate'])
 
         new_config = await self.config()
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=new_config)
