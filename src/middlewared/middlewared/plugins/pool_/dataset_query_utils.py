@@ -4,7 +4,7 @@ from typing import TypeAlias
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import BOOT_POOL_NAME_VALID, filters, get_impl
+from middlewared.utils import BOOT_POOL_NAME_VALID, filter_list, validate_options, do_select, do_order, get_impl
 from middlewared.utils.size import format_size
 
 try:
@@ -12,9 +12,10 @@ try:
 except ImportError:
     truenas_pylibzfs = None
 
+
 __all__ = ("generic_query",)
 
-GENERIC_FILTERS = filters()
+
 INTERNAL_DATASETS = (
     ".system",
     "ix-applications",
@@ -107,11 +108,11 @@ class ExtraArgs:
 class QueryFiltersCallbackState:
     filters: list = field(default_factory=list)
     """list of filters"""
-    filter_fn: Callable = GENERIC_FILTERS.filter_list
+    filter_fn: Callable = filter_list
     """function to do filtering"""
     get_fn: Callable = get_impl
     """function to get value from dict"""
-    select_fn: Callable = GENERIC_FILTERS.do_select
+    select_fn: Callable = do_select
     """function to select values"""
     select: list = field(default_factory=list)
     """list of fields to select. None means all"""
@@ -1054,7 +1055,7 @@ def generic_query(
         MatchNotFound: When get=True but no results found
     """
     # parse query-options
-    options, select, order_by = GENERIC_FILTERS.validate_options(options_in)
+    options, select, order_by = validate_options(options_in)
 
     # set up callback state
     state = QueryFiltersCallbackState(
@@ -1104,11 +1105,11 @@ def generic_query(
             state.results = _flatten_hierarchy(state.results)
 
     if order_by:
-        state.results = GENERIC_FILTERS.do_order(state.results, order_by)
+        state.results = do_order(state.results, order_by)
 
     # Apply selection AFTER all business logic (hierarchy, filtering, ordering)
     if select:
-        state.results = GENERIC_FILTERS.do_select(state.results, select)
+        state.results = do_select(state.results, select)
 
     if options["get"]:
         if not state.results:
