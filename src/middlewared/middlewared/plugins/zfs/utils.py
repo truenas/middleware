@@ -11,7 +11,6 @@ __all__ = (
 
 INTERNAL_PATHS = (
     "ix-apps",
-    ".ix-virt",
     "ix-applications",
     ".system"
 )

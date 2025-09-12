@@ -291,4 +291,4 @@ lifetime of the SSH session. NOTE that not all NSS-provided accounts will be abl
 Apps and containers
 -------------------
 
-There is no interaction between the host identity providers and accounts in apps or incus containers.
+There is no interaction between the host identity providers and accounts in apps containers.

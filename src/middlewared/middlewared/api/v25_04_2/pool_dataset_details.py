@@ -71,7 +71,6 @@ class PoolDatasetDetailsModel(BaseModel):
     iscsi_shares: list[PDD_ISCSIEntry]
     vms: list[PDD_VMEntry]
     apps: list[PDD_AppEntry]
-    virt_instances: list[PDD_VirtEntry]
     replication_tasks_count: int
     snapshot_tasks_count: int
     cloudsync_tasks_count: int
