@@ -5,7 +5,7 @@ from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.schema import Dict
 from middlewared.service import CallError
 from middlewared.utils.zfs import query_imported_fast_impl
-from middlewared.validators import check_path_resides_within_volume_sync
+from middlewared.utils.path import check_path_resides_within_volume_sync
 
 from .device import Device
 from .utils import create_element, disk_from_number, LIBVIRT_USER

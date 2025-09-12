@@ -2,7 +2,7 @@ import asyncio
 import ipaddress
 import socket
 
-from middlewared.validators import check_path_resides_within_volume_sync
+from middlewared.utils.path import check_path_resides_within_volume_sync
 
 
 async def check_path_resides_within_volume(verrors, middleware, schema_name, path, must_be_dir=False):
