@@ -1,9 +1,8 @@
 from datetime import datetime
-import operator
-import re
 from typing import Any, Iterable, NamedTuple, overload, Protocol, Sequence, TypeVar
 
 from middlewared.service_exception import MatchNotFound
+from .filter_ops import opmap
 from .lang import undefined
 
 
@@ -123,446 +122,378 @@ def select_path(obj: _Entry, path: str) -> tuple[list[str], Any]:
     return (keys, cur)
 
 
-class filters:
-    @staticmethod
-    def op_in(x, y):
-        return operator.contains(y, x)
+def validate_filters(filters: Iterable[Sequence], recursion_depth: int = 0, value_maps: dict | None = None):
+    """
+    This method gets called when `query-filters` gets validated in
+    the accepts() decorator of public API endpoints. It is generally
+    a good idea to improve validation here, but not at significant
+    expense of performance as this is called every time `filter_list`
+    is called.
+    """
+    if recursion_depth > MAX_FILTERS_DEPTH:
+        raise ValueError('query-filters max recursion depth exceeded')
 
-    @staticmethod
-    def op_rin(x, y):
-        if x is None:
-            return False
+    for f in filters:
+        if len(f) == 2:
+            op, value = f
+            if op != 'OR':
+                raise ValueError(f'Invalid operation: {op}')
 
-        return operator.contains(x, y)
+            if not value:
+                raise ValueError('OR filter requires at least one branch.')
 
-    @staticmethod
-    def op_nin(x, y):
-        if x is None:
-            return False
+            for branch in value:
+                if isinstance(branch[0], list):
+                    validate_filters(branch, recursion_depth + 1, value_maps)
+                else:
+                    validate_filters([branch], recursion_depth + 1, value_maps)
 
-        return not operator.contains(y, x)
+            continue
 
-    @staticmethod
-    def op_rnin(x, y):
-        if x is None:
-            return False
+        elif len(f) != 3:
+            raise ValueError(f'Invalid filter {f}')
 
-        return not operator.contains(x, y)
+        op = f[1]
+        if op[0] == 'C':
+            op = op[1:]
+            if op == '~':
+                raise ValueError('Invalid case-insensitive operation: {}'.format(f[1]))
 
-    @staticmethod
-    def op_re(x, y):
-        # Some string fields are nullable. If this is the case then we will treat the null as an empty string
-        # so that the regex match doesn't raise an exception.
-        return re.match(y, x or '')
+        if op not in opmap:
+            raise ValueError('Invalid operation: {}'.format(f[1]))
 
-    @staticmethod
-    def op_startswith(x, y):
-        if x is None:
-            return False
-
-        return x.startswith(y)
-
-    @staticmethod
-    def op_notstartswith(x, y):
-        if x is None:
-            return False
-
-        return not x.startswith(y)
-
-    @staticmethod
-    def op_endswith(x, y):
-        if x is None:
-            return False
-
-        return x.endswith(y)
-
-    @staticmethod
-    def op_notendswith(x, y):
-        if x is None:
-            return False
-
-        return not x.endswith(y)
-
-    opmap = {
-        '=': operator.eq,
-        '!=': operator.ne,
-        '>': operator.gt,
-        '>=': operator.ge,
-        '<': operator.lt,
-        '<=': operator.le,
-        '~': op_re,
-        'in': op_in,
-        'nin': op_nin,
-        'rin': op_rin,
-        'rnin': op_rnin,
-        '^': op_startswith,
-        '!^': op_notstartswith,
-        '$': op_endswith,
-        '!$': op_notendswith,
-    }
-
-    def validate_filters(self, filters: Iterable[Sequence], recursion_depth: int = 0, value_maps: dict | None = None):
-        """
-        This method gets called when `query-filters` gets validated in
-        the accepts() decorator of public API endpoints. It is generally
-        a good idea to improve validation here, but not at significant
-        expense of performance as this is called every time `filter_list`
-        is called.
-        """
-        if recursion_depth > MAX_FILTERS_DEPTH:
-            raise ValueError('query-filters max recursion depth exceeded')
-
-        for f in filters:
-            if len(f) == 2:
-                op, value = f
-                if op != 'OR':
-                    raise ValueError(f'Invalid operation: {op}')
-
-                if not value:
-                    raise ValueError('OR filter requires at least one branch.')
-
-                for branch in value:
-                    if isinstance(branch[0], list):
-                        self.validate_filters(branch, recursion_depth + 1, value_maps)
-                    else:
-                        self.validate_filters([branch], recursion_depth + 1, value_maps)
-
+        # special handling for datetime objects
+        for operand in (f[0], f[2]):
+            if not isinstance(operand, str) or not operand.endswith(TIMESTAMP_DESIGNATOR):
                 continue
 
-            elif len(f) != 3:
-                raise ValueError(f'Invalid filter {f}')
+            if op not in ['=', '!=', '>', '>=', '<', '<=']:
+                raise ValueError(f'{op}: invalid timestamp operation.')
 
-            op = f[1]
-            if op[0] == 'C':
-                op = op[1:]
-                if op == '~':
-                    raise ValueError('Invalid case-insensitive operation: {}'.format(f[1]))
+            other = f[2] if operand == f[0] else f[0]
+            # At this point we're just validating that it's an ISO8601 string.
+            try:
+                ts = datetime.fromisoformat(other)
+            except (TypeError, ValueError):
+                raise ValueError(f'{other}: must be an ISO-8601 formatted timestamp string')
 
-            if op not in self.opmap:
-                raise ValueError('Invalid operation: {}'.format(f[1]))
+            if value_maps is not None:
+                value_maps[other] = ts
 
-            # special handling for datetime objects
-            for operand in (f[0], f[2]):
-                if not isinstance(operand, str) or not operand.endswith(TIMESTAMP_DESIGNATOR):
+    return filters
+
+
+def validate_select(select: _SelectList) -> None:
+    for s in select:
+        if isinstance(s, str):
+            continue
+
+        if isinstance(s, list):
+            if len(s) != 2:
+                raise ValueError(
+                    f'{s}: A select as list may only contain two parameters: the name '
+                    'of the parameter being selected, and the name to which to assign it '
+                    'in resulting data.'
+                )
+
+            for idx, selector in enumerate(s):
+                if isinstance(selector, str):
                     continue
 
-                if op not in ['=', '!=', '>', '>=', '<', '<=']:
-                    raise ValueError(f'{op}: invalid timestamp operation.')
+                raise ValueError(
+                    f'{s}: {"first" if idx == 0 else "second"} item must be a string.'
+                )
 
-                other = f[2] if operand == f[0] else f[0]
-                # At this point we're just validating that it's an ISO8601 string.
-                try:
-                    ts = datetime.fromisoformat(other)
-                except (TypeError, ValueError):
-                    raise ValueError(f'{other}: must be an ISO-8601 formatted timestamp string')
+            continue
 
-                if value_maps is not None:
-                    value_maps[other] = ts
+        raise ValueError(
+            f'{s}: selectors must be either a parameter name as a string or '
+            'a list containing two items [<parameter name>, <as name>] to emulate '
+            'SELECT <parameter name> AS <as name>.'
+        )
 
-    def validate_select(self, select: _SelectList) -> None:
-        for s in select:
-            if isinstance(s, str):
-                continue
 
-            if isinstance(s, list):
-                if len(s) != 2:
-                    raise ValueError(
-                        f'{s}: A select as list may only contain two parameters: the name '
-                        'of the parameter being selected, and the name to which to assign it '
-                        'in resulting data.'
-                    )
+def validate_order_by(order_by: Iterable[str]) -> None:
+    for idx, o in enumerate(order_by):
+        if isinstance(o, str):
+            continue
 
-                for idx, selector in enumerate(s):
-                    if isinstance(selector, str):
-                        continue
+        raise ValueError(
+            f'{order_by}: parameter at index {idx} [{o}] is not a string.'
+        )
 
-                    raise ValueError(
-                        f'{s}: {"first" if idx == 0 else "second"} item must be a string.'
-                    )
 
-                continue
+def validate_options(options: dict | None) -> tuple[dict, _SelectList, Iterable[str]]:
+    if options is None:
+        return ({}, [], [])
 
-            raise ValueError(
-                f'{s}: selectors must be either a parameter name as a string or '
-                'a list containing two items [<parameter name>, <as name>] to emulate '
-                'SELECT <parameter name> AS <as name>.'
-            )
+    if options.get('get') and options.get('limit', 0) > 1:
+        raise ValueError(
+            'Invalid options combination. `get` implies a single result.'
+        )
 
-    def validate_order_by(self, order_by: Iterable[str]) -> None:
-        for idx, o in enumerate(order_by):
-            if isinstance(o, str):
-                continue
+    if options.get('get') and options.get('offset'):
+        raise ValueError(
+            'Invalid options combination. `get` implies a single result.'
+        )
 
-            raise ValueError(
-                f'{order_by}: parameter at index {idx} [{o}] is not a string.'
-            )
+    select = options.get('select', [])
+    validate_select(select)
+    order_by = options.get('order_by', [])
+    validate_order_by(order_by)
 
-    def validate_options(self, options: dict | None) -> tuple[dict, _SelectList, Iterable[str]]:
-        if options is None:
-            return ({}, [], [])
+    return (options, select, order_by)
 
-        if options.get('get') and options.get('limit', 0) > 1:
-            raise ValueError(
-                'Invalid options combination. `get` implies a single result.'
-            )
 
-        if options.get('get') and options.get('offset'):
-            raise ValueError(
-                'Invalid options combination. `get` implies a single result.'
-            )
+def filterop(i: object, f: Sequence, source_getter: GetterProtocol) -> bool:
+    name, op, value = f
+    data = source_getter(i, name)
+    if data.result is undefined:
+        # Key / attribute doesn't exist in value
+        return False
 
-        select = options.get('select', [])
-        self.validate_select(select)
-        order_by = options.get('order_by', [])
-        self.validate_order_by(order_by)
-
-        return (options, select, order_by)
-
-    def filterop(self, i: object, f: Sequence, source_getter: GetterProtocol) -> bool:
-        name, op, value = f
-        data = source_getter(i, name)
-        if data.result is undefined:
-            # Key / attribute doesn't exist in value
-            return False
-
-        if not data.done:
-            new_filter = [data.key, op, value]
-            for entry in data.result:
-                if self.filterop(entry, new_filter, source_getter):
-                    return True
-
-            return False
-
-        source = data.result
-        if op[0] == 'C':
-            fn = self.opmap[op[1:]]
-            source = casefold(source)
-            value = casefold(value)
-        else:
-            fn = self.opmap[op]
-
-        if fn(source, value):
-            return True
+    if not data.done:
+        new_filter = [data.key, op, value]
+        for entry in data.result:
+            if filterop(entry, new_filter, source_getter):
+                return True
 
         return False
 
-    def getter_fn(self, entry: Any) -> GetterProtocol:
-        """
-        Evaluate the type of objects returned by iterable and return an
-        appropriate function to retrieve attributes so that we can apply filters
+    source = data.result
+    if op[0] == 'C':
+        fn = opmap[op[1:]]
+        source = casefold(source)
+        value = casefold(value)
+    else:
+        fn = opmap[op]
 
-        This allows us to filter objects that are not dictionaries.
-        """
-        if isinstance(entry, dict):
-            return get_impl
+    if fn(source, value):
+        return True
 
-        return get_attr
+    return False
 
-    def eval_filter(
-        self,
-        list_item: _Entry,
-        the_filter: Sequence,
-        getter: GetterProtocol,
-        value_maps: dict[str, datetime] | None = None
-    ):
-        """
-        `the_filter` in this case will be a single condition of either the form
-        [<a>, <opcode>, <b>] or ["OR", [<condition>, <condition>, ...]
 
-        This allows us to do a simple check of list length to determine whether
-        we have a conjunction or disjunction.
+def getter_fn(entry: Any) -> GetterProtocol:
+    """
+    Evaluate the type of objects returned by iterable and return an
+    appropriate function to retrieve attributes so that we can apply filters
 
-        value_maps is dict supplied in which to store operands that need to
-        be converted into a different type.
+    This allows us to filter objects that are not dictionaries.
+    """
+    if isinstance(entry, dict):
+        return get_impl
 
-        Recursion depth is checked when validate_filters is called above.
-        """
-        if len(the_filter) == 2:
-            # OR check
-            op, value = the_filter
-            for branch in value:
-                if isinstance(branch[0], list):
-                    # This branch of OR is a conjunction of
-                    # multiple conditions. All of them must be
-                    # True in order for branch to be True.
-                    hit = all(self.eval_filter(list_item, i, getter, value_maps) for i in branch)
-                else:
-                    hit = self.eval_filter(list_item, branch, getter, value_maps)
+    return get_attr
 
-                if hit is True:
-                    return True
 
-            # None of conditions in disjunction are True.
-            return False
+def eval_filter(
+    list_item: _Entry,
+    the_filter: Sequence,
+    getter: GetterProtocol,
+    value_maps: dict[str, datetime] | None = None
+):
+    """
+    `the_filter` in this case will be a single condition of either the form
+    [<a>, <opcode>, <b>] or ["OR", [<condition>, <condition>, ...]
 
-        # Normal condition check
-        if not value_maps:
-            return self.filterop(list_item, the_filter, getter)
+    This allows us to do a simple check of list length to determine whether
+    we have a conjunction or disjunction.
 
-        # Use datetime objects for filter operation
-        operand_1 = value_maps.get(the_filter[0]) or the_filter[0]
-        operand_2 = value_maps.get(the_filter[2]) or the_filter[2]
+    value_maps is dict supplied in which to store operands that need to
+    be converted into a different type.
 
-        return self.filterop(list_item, (operand_1, the_filter[1], operand_2), getter)
-
-    def do_filters(
-        self,
-        _list: Iterable[_Entry],
-        filters: Iterable[Sequence],
-        select: _SelectList | None = None,
-        shortcircuit: bool = False,
-        value_maps: dict[str, datetime] | None = None,
-    ) -> list[_Entry]:
-        rv = []
-
-        # we may be filtering output from a generator and so delay
-        # evaluation of what "getter" to use until we begin iteration
-        getter = None
-
-        for i in _list:
-            if getter is None:
-                getter = self.getter_fn(i)
-            valid = True
-            for f in filters:
-                if not self.eval_filter(i, f, getter, value_maps):
-                    valid = False
-                    break
-
-            if not valid:
-                continue
-
-            if select:
-                entry = self.do_select([i], select)[0]
+    Recursion depth is checked when validate_filters is called above.
+    """
+    if len(the_filter) == 2:
+        # OR check
+        op, value = the_filter
+        for branch in value:
+            if isinstance(branch[0], list):
+                # This branch of OR is a conjunction of
+                # multiple conditions. All of them must be
+                # True in order for branch to be True.
+                hit = all(eval_filter(list_item, i, getter, value_maps) for i in branch)
             else:
-                entry = i
+                hit = eval_filter(list_item, branch, getter, value_maps)
 
-            rv.append(entry)
-            if shortcircuit:
+            if hit is True:
+                return True
+
+        # None of conditions in disjunction are True.
+        return False
+
+    # Normal condition check
+    if not value_maps:
+        return filterop(list_item, the_filter, getter)
+
+    # Use datetime objects for filter operation
+    operand_1 = value_maps.get(the_filter[0]) or the_filter[0]
+    operand_2 = value_maps.get(the_filter[2]) or the_filter[2]
+
+    return filterop(list_item, (operand_1, the_filter[1], operand_2), getter)
+
+
+def do_filters(
+    _list: Iterable[_Entry],
+    filters: Iterable[Sequence],
+    select: _SelectList | None = None,
+    shortcircuit: bool = False,
+    value_maps: dict[str, datetime] | None = None,
+) -> list[_Entry]:
+    rv = []
+
+    # we may be filtering output from a generator and so delay
+    # evaluation of what "getter" to use until we begin iteration
+    getter = None
+
+    for i in _list:
+        if getter is None:
+            getter = getter_fn(i)
+        valid = True
+        for f in filters:
+            if not eval_filter(i, f, getter, value_maps):
+                valid = False
                 break
 
-        return rv
+        if not valid:
+            continue
 
-    def do_select(self, _list: Iterable[_Entry], select: _SelectList) -> list[_Entry]:
-        rv = []
-        for i in _list:
-            entry = {}
-            for s in select:
-                if isinstance(s, list):
-                    target, new_name = s
-                else:
-                    target = s
-                    new_name = None
-
-                keys, value = select_path(i, target)
-                if value is MatchNotFound:
-                    continue
-
-                if new_name is not None:
-                    entry[new_name] = value
-                    continue
-
-                last = keys.pop(-1)
-                obj = entry
-                for k in keys:
-                    obj = obj.setdefault(k, {})
-
-                obj[last] = value
-
-            rv.append(entry)
-
-        return rv
-
-    def do_count(self, rv: list[_Entry]) -> int:
-        return len(rv)
-
-    def order_nulls(self, _list: list[_Entry], order: str) -> tuple[list[_Entry], list[_Entry]]:
-        if order.startswith(REVERSE_CHAR):
-            order = order[1:]
-            reverse = True
+        if select:
+            entry = do_select([i], select)[0]
         else:
-            reverse = False
+            entry = i
 
-        nulls = []
-        non_nulls = []
-        for entry in _list:
-            if entry.get(order) is None:
-                nulls.append(entry)
+        rv.append(entry)
+        if shortcircuit:
+            break
+
+    return rv
+
+
+def do_select(_list: Iterable[_Entry], select: _SelectList) -> list[_Entry]:
+    rv = []
+    for i in _list:
+        entry = {}
+        for s in select:
+            if isinstance(s, list):
+                target, new_name = s
             else:
-                non_nulls.append(entry)
+                target = s
+                new_name = None
 
-        non_nulls = sorted(non_nulls, key=lambda x: get(x, order), reverse=reverse)
-        return (nulls, non_nulls)
+            keys, value = select_path(i, target)
+            if value is MatchNotFound:
+                continue
 
-    def order_no_null(self, _list: list[_Entry], order: str) -> list[_Entry]:
-        if order.startswith(REVERSE_CHAR):
-            order = order[1:]
-            reverse = True
+            if new_name is not None:
+                entry[new_name] = value
+                continue
+
+            last = keys.pop(-1)
+            obj = entry
+            for k in keys:
+                obj = obj.setdefault(k, {})
+
+            obj[last] = value
+
+        rv.append(entry)
+
+    return rv
+
+
+def do_count(rv: list[_Entry]) -> int:
+    return len(rv)
+
+
+def order_nulls(_list: list[_Entry], order: str) -> tuple[list[_Entry], list[_Entry]]:
+    if order.startswith(REVERSE_CHAR):
+        order = order[1:]
+        reverse = True
+    else:
+        reverse = False
+
+    nulls = []
+    non_nulls = []
+    for entry in _list:
+        if entry.get(order) is None:
+            nulls.append(entry)
         else:
-            reverse = False
+            non_nulls.append(entry)
 
-        return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
+    non_nulls = sorted(non_nulls, key=lambda x: get(x, order), reverse=reverse)
+    return (nulls, non_nulls)
 
-    def do_order(self, rv: list[_Entry], order_by: Iterable[str]) -> list[_Entry]:
-        for o in order_by:
-            if o.startswith(NULLS_FIRST):
-                nulls, non_nulls = self.order_nulls(rv, o[len(NULLS_FIRST):])
-                rv = nulls + non_nulls
-            elif o.startswith(NULLS_LAST):
-                nulls, non_nulls = self.order_nulls(rv, o[len(NULLS_LAST):])
-                rv = non_nulls + nulls
-            else:
-                rv = self.order_no_null(rv, o)
 
-        return rv
+def order_no_null(_list: list[_Entry], order: str) -> list[_Entry]:
+    if order.startswith(REVERSE_CHAR):
+        order = order[1:]
+        reverse = True
+    else:
+        reverse = False
 
-    def do_get(self, rv: list[_Entry]) -> _Entry:
-        try:
-            return rv[0]
-        except IndexError:
-            raise MatchNotFound() from None
+    return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
 
-    def filter_list(
-        self,
-        _list: Iterable[_Entry],
-        filters: Iterable[Sequence] | None = None,
-        options: dict | None = None
-    ) -> list[_Entry] | _Entry | int:
-        options, select, order_by = self.validate_options(options)
 
-        do_shortcircuit = options.get('get') and not order_by
-
-        if filters:
-            maps = {}
-            self.validate_filters(filters, value_maps=maps)
-            rv = self.do_filters(_list, filters, select, do_shortcircuit, value_maps=maps)
-            if do_shortcircuit:
-                return self.do_get(rv)
-
-        elif select:
-            rv = self.do_select(_list, select)
+def do_order(rv: list[_Entry], order_by: Iterable[str]) -> list[_Entry]:
+    for o in order_by:
+        if o.startswith(NULLS_FIRST):
+            nulls, non_nulls = order_nulls(rv, o[len(NULLS_FIRST):])
+            rv = nulls + non_nulls
+        elif o.startswith(NULLS_LAST):
+            nulls, non_nulls = order_nulls(rv, o[len(NULLS_LAST):])
+            rv = non_nulls + nulls
         else:
-            # Normalize the output to a list. Caller may have passed
-            # a generator into this method.
-            rv = list(_list)
+            rv = order_no_null(rv, o)
 
-        if options.get('count') is True:
-            return self.do_count(rv)
-
-        rv = self.do_order(rv, order_by)
-
-        if options.get('get') is True:
-            return self.do_get(rv)
-
-        if options.get('offset'):
-            rv = rv[options['offset']:]
-
-        if options.get('limit'):
-            return rv[:options['limit']]
-
-        return rv
+    return rv
 
 
-filter_list = filters().filter_list
+def do_get(rv: list[_Entry]) -> _Entry:
+    try:
+        return rv[0]
+    except IndexError:
+        raise MatchNotFound() from None
+
+
+def filter_list(
+    _list: Iterable[_Entry],
+    filters: Iterable[Sequence] | None = None,
+    options: dict | None = None
+) -> list[_Entry] | _Entry | int:
+    options, select, order_by = validate_options(options)
+
+    do_shortcircuit = options.get('get', False) and not order_by
+
+    if filters:
+        maps = {}
+        validate_filters(filters, value_maps=maps)
+        rv = do_filters(_list, filters, select, do_shortcircuit, value_maps=maps)
+        if do_shortcircuit:
+            return do_get(rv)
+
+    elif select:
+        rv = do_select(_list, select)
+    else:
+        # Normalize the output to a list. Caller may have passed
+        # a generator into this method.
+        rv = list(_list)
+
+    if options.get('count') is True:
+        return do_count(rv)
+
+    rv = do_order(rv, order_by)
+
+    if options.get('get') is True:
+        return do_get(rv)
+
+    if options.get('offset'):
+        rv = rv[options['offset']:]
+
+    if options.get('limit'):
+        return rv[:options['limit']]
+
+    return rv
 
 
 def filter_getattrs(filters: list[Sequence]) -> set:
