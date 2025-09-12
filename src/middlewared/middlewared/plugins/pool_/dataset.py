@@ -1,5 +1,6 @@
 import errno
 import os
+import pathlib
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -18,7 +19,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 
 from .dataset_query_utils import generic_query
-from .dataset_create_utils import create_dataset_with_pylibzfs
 from .utils import (
     dataset_mountpoint,
     get_dataset_parents,
@@ -30,9 +30,9 @@ from .utils import (
     ZFS_VOLUME_BLOCK_SIZE_CHOICES
 )
 try:
-    from truenas_pylibzfs import ZFSException, ZFSProperty
+    from truenas_pylibzfs import ZFSError, ZFSException, ZFSProperty, ZFSType
 except ImportError:
-    ZFSException = ZFSProperty = None
+    ZFSError = ZFSException = ZFSProperty = ZFSType = None
 
 
 class PoolDatasetEncryptionModel(sa.Model):
@@ -176,16 +176,6 @@ class PoolDatasetService(CRUDService):
             options,
             options.pop("extra", {})
         )
-
-    @private
-    async def get_create_update_user_props(self, user_properties, update=False):
-        props = {}
-        for prop in user_properties:
-            if 'value' in prop:
-                props[prop['key']] = {'value': prop['value']} if update else prop['value']
-            elif prop.get('remove'):
-                props[prop['key']] = {'source': 'INHERIT'}
-        return props
 
     async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):
         assert mode in ('CREATE', 'UPDATE')
@@ -391,15 +381,58 @@ class PoolDatasetService(CRUDService):
 
     @private
     @pass_thread_local_storage
-    def create_impl(self, tls, data, props, encryption_dict=None):
-        return create_dataset_with_pylibzfs(
-            tls.lzh,
-            data['name'],
-            data['type'],
-            props,
-            encryption_dict,
-            data['create_ancestors']
-        )
+    def create_impl(self, tls, name, ztype, zprops=None, uprops=None, enc=None, create_ancestors=False):
+        kwargs = {
+            "name": name,
+            "type": None,
+            "properties": zprops,
+            "user_properties": uprops,
+            "crypto": None,
+        }
+        if ztype == "FILESYSTEM":
+            kwargs["type"] = ZFSType.ZFS_TYPE_FILESYSTEM
+        elif ztype == "VOLUME":
+            kwargs["type"] = ZFSType.ZFS_TYPE_VOLUME
+            sparse = zprops.pop("sparse", None)  # not a real zfs property
+            if sparse is not None and sparse is True:
+                # sparse volume is only created if user explicitly
+                # requests it
+                zprops["refreservation"] = "none"
+            else:
+                # otherwise, we always create "thick" provisioned volumes
+                zprops["refreservation"] = zprops.get("refreservation", zprops["volsize"])
+        else:
+            raise CallError(f"Invalid dataset type: {kwargs['type']!r}")
+
+        if enc:
+            kwargs["crypto"] = tls.lzh.resource_cryptography_config(
+                keyformat=enc["keyformat"],
+                key=enc["key"],
+            )
+            if pb := enc.get("pbkdf2iters"):
+                kwargs["properties"]["pbdkf2iters"] = str(pb)
+
+        if create_ancestors:
+            # If we need to create ancestors, we need to handle this differently
+            # truenas_pylibzfs doesn't have a direct create_ancestors flag
+            # So we'll create parent datasets first if needed
+            for parent in reversed(pathlib.Path(name).parents):
+                pp = parent.as_posix()
+                if pp == "." or "/" not in pp:
+                    # cwd or root dataset
+                    continue
+                try:
+                    tls.lzh.create_resource(name=pp, type=ZFSType.ZFS_TYPE_FILESYSTEM)
+                except ZFSException as e:
+                    if e.code == ZFSError.EZFS_EXISTS:
+                        continue
+                    else:
+                        raise e from None
+
+        try:
+            tls.lzh.create_resource(**kwargs)
+        except Exception as e:
+            raise CallError(f"Failed to create dataset {name}: {str(e)}")
 
     @api_method(
         PoolDatasetCreateArgs,
@@ -612,20 +645,31 @@ class PoolDatasetService(CRUDService):
         ) or encryption_dict
         verrors.check()
 
-        props = {}
+        zprops, uprops = {}, {}
         for i in POOL_DS_CREATE_PROPERTIES:
             if (
                 i.api_name not in data
                 or (i.inheritable and data[i.api_name] == 'INHERIT')
             ):
                 continue
-            props[i.real_name] = data[i.api_name] if not i.transform else i.transform(data[i.api_name])
+            if not i.transform:
+                transformed = data[i.api_name]
+            else:
+                transformed = i.transform(data[i.api_name])
 
-        props.update(
-            **encryption_dict,
-            **(await self.get_create_update_user_props(data['user_properties']))
+            if i.is_user_prop:
+                uprops[i.real_name] = transformed
+            else:
+                zprops[i.real_name] = transformed
+
+        await self.middleware.call(
+            'pool.dataset.create_impl',
+            data['name'],
+            data['type'],
+            zprops,
+            uprops,
+            encryption_dict
         )
-        await self.middleware.call('pool.dataset.create_impl', data, props, encryption_dict)
         dataset_data = {
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
             'key_format': encryption_dict.get('keyformat')
