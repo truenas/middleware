@@ -521,7 +521,7 @@ class NvmetLinkConfig:
     def dst_name_prefix(self, render_ctx: dict):
         return ''
 
-    def create_links(self, entry: dict):
+    def create_links(self, entry: dict, render_ctx: dict):
         return True
 
     @contextmanager
@@ -529,7 +529,7 @@ class NvmetLinkConfig:
         # First we will see if any link sources need to be entirely removed
         src_to_dst = defaultdict(set)
         for entry in render_ctx[self.query]:
-            if self.create_links(entry):
+            if self.create_links(entry, render_ctx):
                 if _src_dir_name := self.src_dir_name(entry, render_ctx):
                     src_to_dst[_src_dir_name].add(self.dst_name(entry))
         rootdir = pathlib.Path(NVMET_KERNEL_CONFIG_DIR, self.src_parentdir)
@@ -619,8 +619,15 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
     def dst_name(self, entry):
         return f'{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}'
 
-    def create_links(self, entry: dict):
-        return entry['port']['enabled']
+    def create_links(self, entry: dict, render_ctx: dict):
+        # There are two reasons why we might NOT want to create a link
+        # 1. The port is not enabled
+        # 2. The port is RDMA, but the global RDMA setting is off
+        if not entry['port']['enabled']:
+            return False
+        if entry['port']['addr_trtype'] == PORT_TRTYPE.RDMA.api and not render_ctx['nvmet.global.rdma_enabled']:
+            return False
+        return True
 
 
 def write_config(config):
