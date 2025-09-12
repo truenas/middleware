@@ -21,9 +21,9 @@ from middlewared.api.current import (
 )
 from middlewared.auth import fake_app
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import Cron
 from middlewared.service import job, private, CallError, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import is_child
 
 
@@ -143,7 +143,7 @@ class ReplicationService(CRUDService):
         ]
 
         for task in data["periodic_snapshot_tasks"]:
-            Cron.convert_db_format_to_schedule(task, begin_end=True)
+            convert_db_format_to_schedule(task, begin_end=True)
 
         if data["direction"] == "PUSH":
             data["also_include_naming_schema"] = data["naming_schema"]
@@ -151,8 +151,8 @@ class ReplicationService(CRUDService):
         if data["direction"] == "PULL":
             data["also_include_naming_schema"] = []
 
-        Cron.convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
-        Cron.convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
+        convert_db_format_to_schedule(data, "schedule", key_prefix="schedule_", begin_end=True)
+        convert_db_format_to_schedule(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
         if "error" in context["state"]:
             data["state"] = context["state"]["error"]
@@ -181,8 +181,8 @@ class ReplicationService(CRUDService):
             data["naming_schema"] = data["also_include_naming_schema"]
         del data["also_include_naming_schema"]
 
-        Cron.convert_schedule_to_db_format(data, "schedule", key_prefix="schedule_", begin_end=True)
-        Cron.convert_schedule_to_db_format(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
+        convert_schedule_to_db_format(data, "schedule", key_prefix="schedule_", begin_end=True)
+        convert_schedule_to_db_format(data, "restrict_schedule", key_prefix="restrict_schedule_", begin_end=True)
 
         del data["periodic_snapshot_tasks"]
 

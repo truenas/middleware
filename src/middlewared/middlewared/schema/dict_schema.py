@@ -1,15 +1,11 @@
 import copy
 import collections
 
-from datetime import datetime, time
-
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.utils.cron import CRON_FIELDS, croniter_for_schedule
 
 from .attribute import Attribute
 from .exceptions import Error
-from .string_schema import Str, Time
 from .utils import NOT_PROVIDED, REDACTED_VALUE
 
 
@@ -192,110 +188,3 @@ class Dict(Attribute):
         for name, attr in self.attrs.items():
             cp.attrs[name] = attr.copy()
         return cp
-
-
-class Cron(Dict):
-
-    FIELDS = CRON_FIELDS
-
-    def __init__(self, name='', **kwargs):
-        self.additional_attrs = kwargs.pop('additional_attrs', False)
-        exclude = kwargs.pop('exclude', [])
-        defaults = kwargs.pop('defaults', {})
-        self.begin_end = kwargs.pop('begin_end', False)
-        # Update property is used to disable requirement on all attributes
-        # as well to not populate default values for not specified attributes
-        self.update = kwargs.pop('update', False)
-        super(Cron, self).__init__(name, **kwargs)
-        self.attrs = {}
-        for i in filter(lambda f: f not in exclude, Cron.FIELDS):
-            self.attrs[i] = Str(i, default=defaults.get(i, '*'))
-        if self.begin_end:
-            self.attrs['begin'] = Time('begin', default=defaults.get('begin', '00:00'))
-            self.attrs['end'] = Time('end', default=defaults.get('end', '23:59'))
-
-    @staticmethod
-    def convert_schedule_to_db_format(data_dict, schedule_name='schedule', key_prefix='', begin_end=False):
-        if schedule_name in data_dict:
-            schedule = data_dict.pop(schedule_name)
-            db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
-            if schedule is not None:
-                for index, field in enumerate(Cron.FIELDS):
-                    if field in schedule:
-                        data_dict[key_prefix + db_fields[index]] = schedule[field]
-                if begin_end:
-                    for field in ['begin', 'end']:
-                        if field in schedule:
-                            data_dict[key_prefix + field] = schedule[field]
-            else:
-                for index, field in enumerate(Cron.FIELDS):
-                    data_dict[key_prefix + db_fields[index]] = None
-                if begin_end:
-                    for field in ['begin', 'end']:
-                        data_dict[key_prefix + field] = None
-
-    @staticmethod
-    def convert_db_format_to_schedule(data_dict, schedule_name='schedule', key_prefix='', begin_end=False):
-        db_fields = ['minute', 'hour', 'daymonth', 'month', 'dayweek']
-        data_dict[schedule_name] = {}
-        for index, field in enumerate(db_fields):
-            key = key_prefix + field
-            if key in data_dict:
-                value = data_dict.pop(key)
-                if value is None:
-                    data_dict[schedule_name] = None
-                else:
-                    if data_dict[schedule_name] is not None:
-                        data_dict[schedule_name][Cron.FIELDS[index]] = value
-        if begin_end:
-            for field in ['begin', 'end']:
-                key = key_prefix + field
-                if key in data_dict:
-                    value = data_dict.pop(key)
-                    if value is None:
-                        data_dict[schedule_name] = None
-                    else:
-                        if data_dict[schedule_name] is not None:
-                            data_dict[schedule_name][field] = str(value)[:5]
-
-    def validate(self, value):
-        if value is None:
-            return
-
-        verrors = ValidationErrors()
-
-        for attr in self.attrs.values():
-            if attr.name in value:
-                try:
-                    attr.validate(value[attr.name])
-                except ValidationErrors as e:
-                    verrors.add_child(self.name, e)
-
-        for v in value:
-            if self.begin_end and v in ['begin', 'end']:
-                continue
-            if v not in Cron.FIELDS:
-                verrors.add(self.name, f'Unexpected {v} value')
-
-        verrors.check()
-
-        try:
-            iter_ = croniter_for_schedule(value)
-        except Exception as e:
-            iter_ = None
-            verrors.add(self.name, 'Please ensure fields match cron syntax - ' + str(e))
-
-        if value.get('begin') and value.get('end') and not (value.get('begin') <= value.get('end')):
-            verrors.add(self.name, 'Begin time should be less than or equal to end time')
-
-        if iter_ is not None and (value.get('begin') or value.get('end')):
-            begin = value.get('begin') or time(0, 0)
-            end = value.get('end') or time(23, 59)
-            for i in range(24 * 60):
-                d = iter_.get_next(datetime)
-                if begin <= d.time() <= end:
-                    break
-            else:
-                verrors.add(self.name, 'Specified schedule does not match specified time interval')
-
-        verrors.check()

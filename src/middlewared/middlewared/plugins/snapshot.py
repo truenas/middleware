@@ -9,9 +9,9 @@ from middlewared.api.current import (
     PeriodicSnapshotTaskMaxTotalCountResult, PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult
 )
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import Cron
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import is_child
 
 
@@ -58,7 +58,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
     @private
     async def extend(self, data, context):
-        Cron.convert_db_format_to_schedule(data, begin_end=True)
+        convert_db_format_to_schedule(data, begin_end=True)
 
         data['vmware_sync'] = any(
             (
@@ -133,7 +133,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         verrors.check()
 
-        Cron.convert_schedule_to_db_format(data, begin_end=True)
+        convert_schedule_to_db_format(data, begin_end=True)
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -212,7 +212,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         verrors.check()
 
-        Cron.convert_schedule_to_db_format(new, begin_end=True)
+        convert_schedule_to_db_format(new, begin_end=True)
 
         for key in ('vmware_sync', 'state'):
             new.pop(key, None)
