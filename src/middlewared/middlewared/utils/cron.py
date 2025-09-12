@@ -9,6 +9,15 @@ CRON_FIELDS = ('minute', 'hour', 'dom',      'month', 'dow')
 
 
 def croniter_for_schedule(schedule: dict, *args, **kwargs) -> croniter:
+    """
+    Create a croniter object from a schedule dictionary.
+    
+    :param schedule: Dictionary containing cron fields
+    :param args: Additional positional arguments passed to croniter constructor
+    :param kwargs: Additional keyword arguments passed to croniter constructor
+    :return: Configured croniter object for the schedule
+    :raises ValueError: If the schedule contains invalid cron expressions
+    """
     cron_expression = ''
     for field in CRON_FIELDS:
         value = schedule.get(field) or '*'
@@ -21,6 +30,16 @@ def croniter_for_schedule(schedule: dict, *args, **kwargs) -> croniter:
 
 
 def convert_schedule_to_db_format(data_dict: dict, schedule_name='schedule', key_prefix='', begin_end=False) -> None:
+    """
+    Convert a schedule dictionary to database field format.
+    
+    Transforms cron field names to database field names and flattens the schedule into individual fields.
+    
+    :param data_dict: Dictionary to modify in-place
+    :param schedule_name: Key name containing the schedule dictionary to convert
+    :param key_prefix: Prefix to add to database field names
+    :param begin_end: Whether to also convert 'begin' and 'end' time fields
+    """
     if schedule_name not in data_dict:
         return
 
@@ -41,6 +60,16 @@ def convert_schedule_to_db_format(data_dict: dict, schedule_name='schedule', key
 
 
 def convert_db_format_to_schedule(data_dict: dict, schedule_name='schedule', key_prefix='', begin_end=False) -> None:
+    """
+    Convert database field format to a schedule dictionary.
+    
+    Transforms database field names to cron field names and creates a nested schedule dictionary.
+    
+    :param data_dict: Dictionary to modify in-place
+    :param schedule_name: Key name for the created schedule dictionary
+    :param key_prefix: Prefix to look for on database field names
+    :param begin_end: Whether to also convert 'begin' and 'end' time fields
+    """
     data_dict[schedule_name] = {}
 
     def add_field_to_schedule(db_field: str, cron_field: str | None = None, transform=lambda x: x):
