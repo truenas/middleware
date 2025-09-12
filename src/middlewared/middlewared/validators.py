@@ -1,14 +1,8 @@
 import os
 from pathlib import Path
 
-from middlewared.utils import filters
 from middlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.path import path_location
-
-
-filters_obj = filters()
-validate_filters = filters_obj.validate_filters
-validate_options = filters_obj.validate_options
 
 
 def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):

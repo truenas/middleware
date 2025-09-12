@@ -10,13 +10,14 @@ from sqlalchemy.sql.expression import nullsfirst, nullslast
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filters
-from middlewared.validators import validate_filters, validate_options
-
 from .filter import FilterMixin
 from .schema import SchemaMixin
 
 
-do_select = filters().do_select
+filters_obj = filters()
+do_select = filters_obj.do_select
+validate_filters = filters_obj.validate_filters
+validate_options = filters_obj.validate_options
 
 
 def regexp(expr, item):
