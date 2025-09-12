@@ -63,7 +63,7 @@ class PWEncService(Service):
 
     @staticmethod
     def _secret_opener(path, flags):
-        with pathref_open(os.path.dirname(path), force=True, mode=0o755) as secret_path:
+        with pathref_open(os.path.dirname(path), force=True, expected_mode=0o755) as secret_path:
             return os.open(os.path.basename(path), flags, dir_fd=secret_path)
 
     def _reset_pwenc_check_field(self):

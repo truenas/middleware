@@ -1,11 +1,8 @@
 import copy
 import json
 import textwrap
-import typing
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.validators import ValidatorBase
-
 from .exceptions import Error
 from .utils import NOT_PROVIDED, REDACTED_VALUE
 
@@ -14,7 +11,7 @@ class Attribute:
 
     def __init__(
         self, name='', title=None, description=None, required=False, null=False, empty=True, private=False,
-        validators: typing.List[ValidatorBase]=None, register=False, hidden=False, editable=True, example=None, **kwargs
+        validators=None, register=False, hidden=False, editable=True, example=None, **kwargs
     ):
         self.name = name
         self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
@@ -82,7 +79,7 @@ class Attribute:
         """
         raise NotImplementedError("Attribute must implement to_json_schema method")
 
-    def _to_json_schema_common(self, parent) -> typing.Dict[str, typing.Any]:
+    def _to_json_schema_common(self, parent) -> dict:
         schema = {}
 
         schema['_name_'] = self.name

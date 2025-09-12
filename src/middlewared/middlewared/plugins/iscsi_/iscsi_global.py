@@ -1,4 +1,5 @@
 import asyncio
+import ipaddress
 import re
 import socket
 
@@ -11,7 +12,7 @@ from middlewared.async_validators import validate_port
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
-from middlewared.validators import IpAddress, Port
+
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 
@@ -60,10 +61,11 @@ class ISCSIGlobalService(SystemServiceService):
         return ret
 
     @private
-    def validate_isns_server(self, server, verrors):
-        """
-        Check whether a valid IP[:port] was supplied.  Returns None or failure,
-        or (server, ip, port) tuple on success.
+    def validate_isns_server(self, server: str, verrors: ValidationErrors):
+        """Check whether a valid IP[:port] was supplied.
+
+        :return: `(server, ip, port)` tuple on success or `None` on failure.
+
         """
         invalid_ip_port_tuple = f'Server "{server}" is not a valid IP(:PORT)? tuple.'
 
@@ -78,8 +80,7 @@ class ISCSIGlobalService(SystemServiceService):
 
         # First check that a valid IP was supplied
         try:
-            ip_validator = IpAddress()
-            ip_validator(ip)
+            ipaddress.ip_address(ip)
         except ValueError:
             verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
             return None
@@ -89,9 +90,12 @@ class ISCSIGlobalService(SystemServiceService):
         if len(parts) == 2:
             try:
                 port = int(parts[1])
-                port_validator = Port()
-                port_validator(port)
             except ValueError:
+                valid = False
+            else:
+                valid = 1 <= port <= 65535
+
+            if not valid:
                 verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
                 return None
         else:
