@@ -193,6 +193,8 @@ class NVMetPortService(CRUDService):
         """
         Return a dict with information about non_ana_port_ids, ana_port_ids and more.
 
+        If RDMA is disabled, then RDMA ports will be excluded.
+
         In addition to the global ANA setting, there is also a per-subsystem setting
         which, if used, will override whether ANA will be used for that particular
         subsystem.  It will only handle exceptions to the global setting.
@@ -200,7 +202,12 @@ class NVMetPortService(CRUDService):
         Referrals will be added between ports using the same transport, address family,
         and which are of the same ANA/non-ANA type.
         """
-        all_ports = {port['id']: port for port in await self.middleware.call('nvmet.port.query')}
+        if await self.middleware.call('nvmet.global.rdma_enabled'):
+            all_ports = {port['id']: port for port in await self.middleware.call('nvmet.port.query')}
+        else:
+            filters = [['addr_trtype', '!=', PORT_TRTYPE.RDMA.api]]
+            all_ports = {port['id']: port for port in await self.middleware.call('nvmet.port.query', filters)}
+
         all_port_ids = set(all_ports.keys())
         if not await self.middleware.call('failover.licensed'):
             # Simple case.  No ANA possible.
