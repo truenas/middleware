@@ -13,6 +13,7 @@ REVERSE_CHAR = '-'
 TIMESTAMP_DESIGNATOR = '.$date'
 
 _T = TypeVar('_T', str, list[str], None)
+_Filters = TypeVar('_Filters', bound=Iterable[Sequence])
 _Entry = dict[str, Any]
 _SelectList = Iterable[str | list[str]]
 
@@ -36,6 +37,7 @@ def casefold(obj: tuple[str]) -> list[str]: ...
 
 
 def casefold(obj: str | list[str] | tuple[str] | None) -> str | list[str] | None:
+    """Convert string or string collection to lowercase for case-insensitive filtering operations."""
     if obj is None:
         return None
 
@@ -49,6 +51,7 @@ def casefold(obj: str | list[str] | tuple[str] | None) -> str | list[str] | None
 
 
 def partition(s: str) -> tuple[str, str]:
+    """Split dotted path string into left and right components, handling escaped dots."""
     rv = ''
     while True:
         left, sep, right = s.partition('.')
@@ -62,6 +65,7 @@ def partition(s: str) -> tuple[str, str]:
 
 
 def get_impl(obj: object, path: str) -> FilterGetResult:
+    """Navigate nested dictionary/list structures using dot notation paths."""
     right = path
     cur = obj
     while right:
@@ -108,6 +112,7 @@ def get(obj: Any, path: str) -> Any:
 
 
 def select_path(obj: _Entry, path: str) -> tuple[list[str], Any]:
+    """Extract value from nested dictionary and return the key path and value."""
     keys = []
     right = path
     cur = obj
@@ -122,7 +127,7 @@ def select_path(obj: _Entry, path: str) -> tuple[list[str], Any]:
     return (keys, cur)
 
 
-def validate_filters(filters: Iterable[Sequence], recursion_depth: int = 0, value_maps: dict | None = None):
+def validate_filters(filters: _Filters, recursion_depth: int = 0, value_maps: dict | None = None) -> _Filters:
     """
     This method gets called when `query-filters` gets validated in
     the accepts() decorator of public API endpoints. It is generally
@@ -184,6 +189,7 @@ def validate_filters(filters: Iterable[Sequence], recursion_depth: int = 0, valu
 
 
 def validate_select(select: _SelectList) -> None:
+    """Validate that select parameters are properly formatted strings or field mapping lists."""
     for s in select:
         if isinstance(s, str):
             continue
@@ -214,6 +220,7 @@ def validate_select(select: _SelectList) -> None:
 
 
 def validate_order_by(order_by: Iterable[str]) -> None:
+    """Validate that order_by parameters are all strings."""
     for idx, o in enumerate(order_by):
         if isinstance(o, str):
             continue
@@ -224,6 +231,7 @@ def validate_order_by(order_by: Iterable[str]) -> None:
 
 
 def validate_options(options: dict | None) -> tuple[dict, _SelectList, Iterable[str]]:
+    """Validate and extract query options including select fields and ordering."""
     if options is None:
         return ({}, [], [])
 
@@ -246,6 +254,7 @@ def validate_options(options: dict | None) -> tuple[dict, _SelectList, Iterable[
 
 
 def filterop(i: object, f: Sequence, source_getter: GetterProtocol) -> bool:
+    """Apply a single filter operation to an object and return whether it matches."""
     name, op, value = f
     data = source_getter(i, name)
     if data.result is undefined:
@@ -341,6 +350,7 @@ def do_filters(
     shortcircuit: bool = False,
     value_maps: dict[str, datetime] | None = None,
 ) -> list[_Entry]:
+    """Filter a list of entries based on the provided filter conditions."""
     rv = []
 
     # we may be filtering output from a generator and so delay
@@ -372,6 +382,7 @@ def do_filters(
 
 
 def do_select(_list: Iterable[_Entry], select: _SelectList) -> list[_Entry]:
+    """Project specific fields from entries creating new dictionaries with selected data."""
     rv = []
     for i in _list:
         entry = {}
@@ -403,10 +414,12 @@ def do_select(_list: Iterable[_Entry], select: _SelectList) -> list[_Entry]:
 
 
 def do_count(rv: list[_Entry]) -> int:
+    """Return the count of entries in the result list."""
     return len(rv)
 
 
 def order_nulls(_list: list[_Entry], order: str) -> tuple[list[_Entry], list[_Entry]]:
+    """Separate and sort entries with null values from non-null values for a field."""
     if order.startswith(REVERSE_CHAR):
         order = order[1:]
         reverse = True
@@ -426,6 +439,7 @@ def order_nulls(_list: list[_Entry], order: str) -> tuple[list[_Entry], list[_En
 
 
 def order_no_null(_list: list[_Entry], order: str) -> list[_Entry]:
+    """Sort entries by a field without special handling for null values."""
     if order.startswith(REVERSE_CHAR):
         order = order[1:]
         reverse = True
@@ -436,6 +450,7 @@ def order_no_null(_list: list[_Entry], order: str) -> list[_Entry]:
 
 
 def do_order(rv: list[_Entry], order_by: Iterable[str]) -> list[_Entry]:
+    """Apply multiple ordering operations to a result list including null placement handling."""
     for o in order_by:
         if o.startswith(NULLS_FIRST):
             nulls, non_nulls = order_nulls(rv, o[len(NULLS_FIRST):])
@@ -450,6 +465,7 @@ def do_order(rv: list[_Entry], order_by: Iterable[str]) -> list[_Entry]:
 
 
 def do_get(rv: list[_Entry]) -> _Entry:
+    """Return the first entry from the result list or raise MatchNotFound if empty."""
     try:
         return rv[0]
     except IndexError:
@@ -461,6 +477,7 @@ def filter_list(
     filters: Iterable[Sequence] | None = None,
     options: dict | None = None
 ) -> list[_Entry] | _Entry | int:
+    """Main entry point for filtering, selecting, ordering and paginating data collections."""
     options, select, order_by = validate_options(options)
 
     do_shortcircuit = options.get('get', False) and not order_by
