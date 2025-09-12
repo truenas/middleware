@@ -382,13 +382,7 @@ class PoolDatasetService(CRUDService):
     @private
     @pass_thread_local_storage
     def create_impl(self, tls, name, ztype, zprops=None, uprops=None, enc=None, create_ancestors=False):
-        kwargs = {
-            "name": name,
-            "type": None,
-            "properties": zprops,
-            "user_properties": uprops,
-            "crypto": None,
-        }
+        kwargs = {"name": name, "type": None}
         if ztype == "FILESYSTEM":
             kwargs["type"] = ZFSType.ZFS_TYPE_FILESYSTEM
         elif ztype == "VOLUME":
@@ -404,13 +398,22 @@ class PoolDatasetService(CRUDService):
         else:
             raise CallError(f"Invalid dataset type: {kwargs['type']!r}")
 
+        if zprops:
+            kwargs["properties"] = zprops
+
+        if uprops:
+            kwargs["user_properties"] = uprops
+
         if enc:
             kwargs["crypto"] = tls.lzh.resource_cryptography_config(
                 keyformat=enc["keyformat"],
                 key=enc["key"],
             )
             if pb := enc.get("pbkdf2iters"):
-                kwargs["properties"]["pbdkf2iters"] = str(pb)
+                if "properties" in kwargs:
+                    kwargs["properties"]["pbkdf2iters"] = str(pb)
+                else:
+                    kwargs.update({"properties": {"pbkdf2iters": str(pb)}})
 
         if create_ancestors:
             # If we need to create ancestors, we need to handle this differently
@@ -668,7 +671,8 @@ class PoolDatasetService(CRUDService):
             data['type'],
             zprops,
             uprops,
-            encryption_dict
+            encryption_dict,
+            data['create_ancestors'],
         )
         dataset_data = {
             'name': data['name'], 'encryption_key': encryption_dict.get('key'),
