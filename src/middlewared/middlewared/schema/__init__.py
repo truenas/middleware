@@ -8,7 +8,6 @@ from .enum import EnumMixin  # noqa
 from .exceptions import Error  # noqa
 from .integer_schema import Float, Int, Timestamp  # noqa
 from .list_schema import List  # noqa
-from .patch import Patch  # noqa
 from .plugin_schema import Schemas  # noqa
 from .resolvers import resolve_methods  # noqa
 from .string_schema import ( # noqa
