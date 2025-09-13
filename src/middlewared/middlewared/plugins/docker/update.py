@@ -9,8 +9,7 @@ from middlewared.api.current import (
     DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult, DockerNvidiaPresentArgs,
     DockerNvidiaPresentResult,
 )
-from middlewared.schema import ValidationErrors
-from middlewared.service import CallError, ConfigService, job, private
+from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info

@@ -26,8 +26,7 @@ from middlewared.api.current import (
     KeychainCredentialRemoteSshSemiautomaticSetupArgs, KeychainCredentialRemoteSshSemiautomaticSetupResult,
 )
 from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
-from middlewared.service_exception import CallError, MatchNotFound, ValidationError
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import CallError, MatchNotFound, ValidationError, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run

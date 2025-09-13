@@ -20,8 +20,7 @@ from middlewared.api.current import (
     InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIpArgs,
     InterfaceWebsocketLocalIpResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
 )
-from middlewared.schema import ValidationErrors
-from middlewared.service import CallError, CRUDService, filterable_api_method, pass_app, private
+from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, pass_app, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from .interface.netif import netif

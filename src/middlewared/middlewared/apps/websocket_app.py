@@ -14,7 +14,6 @@ from middlewared.api.base.server.ws_handler.rpc import (
 )
 from middlewared.job import Job
 from middlewared.logger import Logger
-from middlewared.schema import Error as SchemaError
 from middlewared.service_exception import (
     adapt_exception,
     CallError,
@@ -189,7 +188,7 @@ class WebSocketApplication(RpcWebSocketApp):
             self.send_error(
                 message, EAGAIN, str(e), exc_info(), etype="VALIDATION", extra=list(e)
             )
-        except (CallException, SchemaError) as e:
+        except CallException as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
             self.send_error(message, e.errno, str(e), exc_info(), extra=e.extra)

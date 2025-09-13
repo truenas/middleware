@@ -1,6 +1,6 @@
 import ipaddress
 
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import ValidationErrors
 
 
 def validate_address_pools(system_ips: list[dict], user_specified_networks: list[dict]):

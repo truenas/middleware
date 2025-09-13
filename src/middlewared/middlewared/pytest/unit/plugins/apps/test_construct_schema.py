@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.plugins.apps.schema_construction_utils import construct_schema
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import ValidationErrors
 
 
 @pytest.mark.parametrize('data, new_values, update', [

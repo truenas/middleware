@@ -6,7 +6,7 @@ from typing import Literal, NamedTuple, TypeAlias, TYPE_CHECKING
 from uuid import uuid4
 
 from middlewared.event import EventSource
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import ValidationErrors
 if TYPE_CHECKING:
     from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
     from middlewared.main import Middleware

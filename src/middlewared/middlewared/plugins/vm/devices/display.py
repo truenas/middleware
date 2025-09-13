@@ -3,7 +3,7 @@ import subprocess
 from urllib.parse import urlencode, quote_plus
 
 from middlewared.api.current import VMDisplayDevice
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.utils.os import get_pids
 
 from .device import Device
