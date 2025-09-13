@@ -33,9 +33,8 @@ def calculate_args_index(f, audit_callback):
         expected_args.append('audit_callback')
     if hasattr(f, '_pass_thread_local_storage'):
         expected_args.append('tls')
-    if pass_app:
-        if f._pass_app['message_id']:
-            expected_args.append('message_id')
+    if pass_app and f._pass_app['message_id']:
+        expected_args.append('message_id')
 
     if signature_args[:len(expected_args)] != expected_args:
         raise RuntimeError(

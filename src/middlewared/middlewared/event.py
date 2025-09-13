@@ -22,7 +22,6 @@ class Events:
         name: str,
         description: str,
         private: bool,
-        returns,
         models: dict['EventType', type['BaseModel']] | None,
         no_auth_required: bool,
         no_authz_required: bool,
@@ -33,8 +32,6 @@ class Events:
         self.role_manager.register_event(name, roles)
         self._events[name] = {
             'description': description,
-            'accepts': [],
-            'returns': [],
             'models': models,
             'no_auth_required': no_auth_required,
             'no_authz_required': no_authz_required,
