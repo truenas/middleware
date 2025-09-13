@@ -6,7 +6,6 @@ from middlewared.schema import ValidationErrors
 
 class Device(ABC):
 
-    schema = NotImplemented
     schema_model = NotImplementedError
 
     def __init__(self, data, middleware=None):

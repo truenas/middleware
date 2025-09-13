@@ -2,7 +2,6 @@ import os
 
 from middlewared.api.current import VMCDROMDevice
 from middlewared.plugins.boot import BOOT_POOL_NAME
-from middlewared.schema import Dict
 from middlewared.service import CallError
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.utils.path import check_path_resides_within_volume_sync
@@ -13,9 +12,6 @@ from .utils import create_element, disk_from_number, LIBVIRT_USER
 
 class CDROM(Device):
 
-    schema = Dict(
-        'attributes',
-    )
     schema_model = VMCDROMDevice
 
     def identity(self):

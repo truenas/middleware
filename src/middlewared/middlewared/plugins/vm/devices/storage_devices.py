@@ -5,7 +5,6 @@ from middlewared.api.current import VMDiskDevice, VMRAWDevice
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
-from middlewared.schema import Dict
 from middlewared.utils.crypto import generate_string
 
 from .device import Device
@@ -81,10 +80,6 @@ class StorageDevice(Device):
 class RAW(StorageDevice):
 
     TYPE = 'file'
-
-    schema = Dict(
-        'attributes',
-    )
     schema_model = VMRAWDevice
 
     def create_source_element(self):
@@ -115,10 +110,6 @@ class RAW(StorageDevice):
 class DISK(StorageDevice):
 
     TYPE = 'block'
-
-    schema = Dict(
-        'attributes',
-    )
     schema_model = VMDiskDevice
 
     def create_source_element(self):

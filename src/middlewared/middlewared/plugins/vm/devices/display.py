@@ -3,7 +3,7 @@ import subprocess
 from urllib.parse import urlencode, quote_plus
 
 from middlewared.api.current import VMDisplayDevice
-from middlewared.schema import Dict, ValidationErrors
+from middlewared.schema import ValidationErrors
 from middlewared.utils.os import get_pids
 
 from .device import Device
@@ -18,9 +18,6 @@ class DISPLAY(Device):
         '1024x768', '800x600', '640x480',
     ]
 
-    schema = Dict(
-        'attributes',
-    )
     schema_model = VMDisplayDevice
 
     def __init__(self, *args, **kwargs):
