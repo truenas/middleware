@@ -5,7 +5,6 @@ import typing
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.role import RoleManager
-from middlewared.schema import Any
 from middlewared.service import ValidationErrors
 if typing.TYPE_CHECKING:
     from middlewared.api.base import BaseModel
@@ -35,7 +34,7 @@ class Events:
         self._events[name] = {
             'description': description,
             'accepts': [],
-            'returns': [returns] if returns else [Any(name, null=True)],
+            'returns': [],
             'models': models,
             'no_auth_required': no_auth_required,
             'no_authz_required': no_authz_required,

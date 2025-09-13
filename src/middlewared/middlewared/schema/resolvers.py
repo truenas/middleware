@@ -1,6 +1,5 @@
 import pprint
 
-from .adaptable_schemas import OROperator, Ref
 from .attribute import Attribute
 from .exceptions import ResolverError
 
@@ -13,7 +12,7 @@ def resolver(schemas, obj):
         new_params = []
         schema_obj = obj['get_attr'](schema_type)
         for p in schema_obj:
-            if isinstance(p, (Ref, Attribute, OROperator)):
+            if isinstance(p, Attribute):
                 resolved = p if p.resolved else p.resolve(schemas)
                 new_params.append(resolved)
             else:

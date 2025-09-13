@@ -19,7 +19,6 @@ from .logger import Logger, setup_audit_logging, setup_logging
 from .pipe import Pipe
 from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
-from .schema import OROperator
 import middlewared.service
 from .service_exception import CallError, ErrnoMixin
 from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
@@ -922,10 +921,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if not expose_secrets and hasattr(methodobj, "returns") and methodobj.returns:
             schema = methodobj.returns[0]
-            if isinstance(schema, OROperator):
-                result = schema.dump(result, False)
-            else:
-                result = schema.dump(result)
+            result = schema.dump(result)
 
         return result
 
