@@ -4,14 +4,14 @@ import re
 from croniter import croniter
 
 
-DB_FIELDS =   ('minute', 'hour', 'daymonth', 'month', 'dayweek')
+DB_FIELDS   = ('minute', 'hour', 'daymonth', 'month', 'dayweek')
 CRON_FIELDS = ('minute', 'hour', 'dom',      'month', 'dow')
 
 
 def croniter_for_schedule(schedule: dict, *args, **kwargs) -> croniter:
     """
     Create a croniter object from a schedule dictionary.
-    
+
     :param schedule: Dictionary containing cron fields
     :param args: Additional positional arguments passed to croniter constructor
     :param kwargs: Additional keyword arguments passed to croniter constructor
@@ -32,9 +32,9 @@ def croniter_for_schedule(schedule: dict, *args, **kwargs) -> croniter:
 def convert_schedule_to_db_format(data_dict: dict, schedule_name='schedule', key_prefix='', begin_end=False) -> None:
     """
     Convert a schedule dictionary to database field format.
-    
+
     Transforms cron field names to database field names and flattens the schedule into individual fields.
-    
+
     :param data_dict: Dictionary to modify in-place
     :param schedule_name: Key name containing the schedule dictionary to convert
     :param key_prefix: Prefix to add to database field names
@@ -62,9 +62,9 @@ def convert_schedule_to_db_format(data_dict: dict, schedule_name='schedule', key
 def convert_db_format_to_schedule(data_dict: dict, schedule_name='schedule', key_prefix='', begin_end=False) -> None:
     """
     Convert database field format to a schedule dictionary.
-    
+
     Transforms database field names to cron field names and creates a nested schedule dictionary.
-    
+
     :param data_dict: Dictionary to modify in-place
     :param schedule_name: Key name for the created schedule dictionary
     :param key_prefix: Prefix to look for on database field names

@@ -631,7 +631,11 @@ class KeychainCredentialService(CRUDService):
         service = self.middleware.call_sync("service.query", [("service", "=", "ssh")], {"get": True})
         ssh = self.middleware.call_sync("ssh.config")
         try:
-            user = self.middleware.call_sync("user.query", [("username", "=", data["username"]), ("local", "=", True)], {"get": True})
+            user = self.middleware.call_sync(
+                "user.query",
+                [("username", "=", data["username"]), ("local", "=", True)],
+                {"get": True}
+            )
         except MatchNotFound:
             raise CallError(f"User {data['username']} does not exist")
 

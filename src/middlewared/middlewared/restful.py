@@ -110,7 +110,9 @@ async def authenticate(app, middleware, request, credentials, method, resource):
         )
     elif credentials['credentials'] == 'API_KEY':
         if CURRENT_AAL.level is not AA_LEVEL1:
-            raise web.HTTPForbidden(text='API key authentication is not permitted by server authentication security level')
+            raise web.HTTPForbidden(
+                text='API key authentication is not permitted by server authentication security level'
+            )
 
         app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
         api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
