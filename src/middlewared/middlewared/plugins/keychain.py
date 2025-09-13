@@ -26,8 +26,7 @@ from middlewared.api.current import (
     KeychainCredentialRemoteSshSemiautomaticSetupArgs, KeychainCredentialRemoteSshSemiautomaticSetupResult,
 )
 from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
-from middlewared.service_exception import CallError, MatchNotFound, ValidationError
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import CallError, MatchNotFound, ValidationError, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -632,7 +631,11 @@ class KeychainCredentialService(CRUDService):
         service = self.middleware.call_sync("service.query", [("service", "=", "ssh")], {"get": True})
         ssh = self.middleware.call_sync("ssh.config")
         try:
-            user = self.middleware.call_sync("user.query", [("username", "=", data["username"]), ("local", "=", True)], {"get": True})
+            user = self.middleware.call_sync(
+                "user.query",
+                [("username", "=", data["username"]), ("local", "=", True)],
+                {"get": True}
+            )
         except MatchNotFound:
             raise CallError(f"User {data['username']} does not exist")
 

@@ -1,4 +1,3 @@
-import functools
 import importlib
 import inspect
 import itertools
@@ -7,7 +6,6 @@ import os
 import sys
 from typing import TYPE_CHECKING
 
-from middlewared.schema import Schemas
 if TYPE_CHECKING:
     from middlewared.service import Service
 
@@ -58,39 +56,7 @@ def load_classes(module, base, blacklist):
     return classes
 
 
-class SchemasMixin:
-    def __init__(self):
-        self._schemas = Schemas()
-
-    def _resolve_methods(self, services, events):
-        from middlewared.schema import resolve_methods  # Lazy import so namespace match
-        to_resolve = []
-        for service in services:
-            for attr in dir(service):
-                method = getattr(service, attr)
-                if not callable(method):
-                    continue
-                to_resolve.append({
-                    'name': attr,
-                    'type': 'method',
-                    'keys': ['accepts', 'returns'],
-                    'has_key': functools.partial(hasattr, method),
-                    'get_attr': functools.partial(getattr, method),
-                })
-
-        for name, attrs in events:
-            to_resolve.append({
-                'name': name,
-                'type': 'event',
-                'keys': ['accepts', 'returns'],
-                'has_key': lambda k: k in attrs,
-                'get_attr': functools.partial(dict.get, attrs),
-            })
-
-        resolve_methods(self._schemas, to_resolve)
-
-
-class LoadPluginsMixin(SchemasMixin):
+class LoadPluginsMixin:
 
     def __init__(self):
         self._services: dict[str, 'Service'] = {}
@@ -132,10 +98,6 @@ class LoadPluginsMixin(SchemasMixin):
 
         if on_modules_loaded:
             on_modules_loaded()
-
-        # Now that all plugins have been loaded we can resolve all method params
-        # to make sure every schema is patched and references match
-        self._resolve_methods(list(self._services.values()), [])
 
     def add_service(self, service: 'Service'):
         self._services[service._config.namespace] = service

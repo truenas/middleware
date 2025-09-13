@@ -18,12 +18,12 @@ from middlewared.api.current import (
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials
-from middlewared.schema import Cron
 from middlewared.service import (
     CallError, ValidationErrors, job, item_method, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.user_context import run_command_with_user_context
 from middlewared.utils.service.task_state import TaskStateMixin
 
@@ -121,7 +121,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             # Moving on, we are going to verify that it can be split successfully using shlex
             data['extra'] = data['extra'].split()
 
-        Cron.convert_db_format_to_schedule(data)
+        convert_db_format_to_schedule(data)
         if job := await self.get_task_state_job(context['task_state'], data['id']):
             data['job'] = job
         return data
@@ -370,7 +370,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         verrors, data = await self.validate_rsync_task(data, 'rsync_task_create')
         verrors.check()
 
-        Cron.convert_schedule_to_db_format(data)
+        convert_schedule_to_db_format(data)
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -402,7 +402,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         verrors, new = await self.validate_rsync_task(new, 'rsync_task_update')
         verrors.check()
 
-        Cron.convert_schedule_to_db_format(new)
+        convert_schedule_to_db_format(new)
 
         await self.middleware.call(
             'datastore.update',

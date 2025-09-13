@@ -6,9 +6,9 @@ from middlewared.api.current import (
     CronJobEntry, CronJobCreateArgs, CronJobCreateResult, CronJobUpdateArgs, CronJobUpdateResult, CronJobDeleteArgs,
     CronJobDeleteResult, CronJobRunArgs, CronJobRunResult
 )
-from middlewared.schema import Cron
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.user_context import run_command_with_user_context
 
 
@@ -42,7 +42,7 @@ class CronJobService(CRUDService):
 
     @private
     def cron_extend(self, data):
-        Cron.convert_db_format_to_schedule(data)
+        convert_db_format_to_schedule(data)
         return data
 
     @private
@@ -130,7 +130,7 @@ class CronJobService(CRUDService):
         verrors, data = await self.validate_data(data, 'cron_job_create')
         verrors.check()
 
-        Cron.convert_schedule_to_db_format(data)
+        convert_schedule_to_db_format(data)
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -156,8 +156,8 @@ class CronJobService(CRUDService):
 
         verrors.check()
 
-        Cron.convert_schedule_to_db_format(task_data)
-        Cron.convert_schedule_to_db_format(original_data)
+        convert_schedule_to_db_format(task_data)
+        convert_schedule_to_db_format(original_data)
 
         if len(set(task_data.items()) ^ set(original_data.items())) > 0:
 

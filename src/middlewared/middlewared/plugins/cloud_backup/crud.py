@@ -9,9 +9,9 @@ from middlewared.api.current import (
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
-from middlewared.schema import Cron
 from middlewared.service import pass_app, private, TaskPathService, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
 from .init import IncorrectPassword
@@ -67,7 +67,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         if job := await self.get_task_state_job(context["task_state"], cloud_backup["id"]):
             cloud_backup["job"] = job
 
-        Cron.convert_db_format_to_schedule(cloud_backup)
+        convert_db_format_to_schedule(cloud_backup)
 
         return cloud_backup
 
@@ -75,7 +75,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     async def _compress(self, cloud_backup):
         cloud_backup["credential"] = cloud_backup.pop("credentials")
 
-        Cron.convert_schedule_to_db_format(cloud_backup)
+        convert_schedule_to_db_format(cloud_backup)
 
         cloud_backup.pop("job", None)
         cloud_backup.pop(self.locked_field, None)

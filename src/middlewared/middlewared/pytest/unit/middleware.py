@@ -2,12 +2,10 @@ import asyncio
 import logging
 from unittest.mock import AsyncMock, Mock
 
-from middlewared.plugins.datastore.read import DatastoreService
 from middlewared.utils import filter_list
-from middlewared.utils.plugins import SchemasMixin
 
 
-class Middleware(SchemasMixin, dict):
+class Middleware(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -21,19 +19,6 @@ class Middleware(SchemasMixin, dict):
         self.logger = logging.getLogger("middlewared")
 
         super().__init__()
-
-        # Resolve core schemas like `query-filters`
-        super()._resolve_methods([DatastoreService(self)], [])
-
-    def _resolve_methods(self, services, events):
-        try:
-            return super()._resolve_methods(services, events)
-        except ValueError as e:
-            self.logger.warning(str(e))
-
-    async def _call(self, name, serviceobj, method, args, app=None):
-        self._resolve_methods([serviceobj], [])
-        return await method(*args)
 
     async def call(self, name, *args):
         result = self[name](*args)

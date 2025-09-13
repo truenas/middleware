@@ -2,7 +2,6 @@ import random
 
 from middlewared.api.current import VMNICDevice
 from middlewared.plugins.interface.netif import netif
-from middlewared.schema import Dict
 from middlewared.service import CallError
 
 from .device import Device
@@ -11,9 +10,6 @@ from .utils import create_element
 
 class NIC(Device):
 
-    schema = Dict(
-        'attributes',
-    )
     schema_model = VMNICDevice
 
     def __init__(self, *args, **kwargs):

@@ -5,7 +5,6 @@ import typing
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.role import RoleManager
-from middlewared.schema import Any
 from middlewared.service import ValidationErrors
 if typing.TYPE_CHECKING:
     from middlewared.api.base import BaseModel
@@ -23,7 +22,6 @@ class Events:
         name: str,
         description: str,
         private: bool,
-        returns,
         models: dict['EventType', type['BaseModel']] | None,
         no_auth_required: bool,
         no_authz_required: bool,
@@ -34,8 +32,6 @@ class Events:
         self.role_manager.register_event(name, roles)
         self._events[name] = {
             'description': description,
-            'accepts': [],
-            'returns': [returns] if returns else [Any(name, null=True)],
             'models': models,
             'no_auth_required': no_auth_required,
             'no_authz_required': no_authz_required,

@@ -2,7 +2,6 @@ import subprocess
 
 from middlewared.api.current import VMPCIDevice
 from middlewared.service import CallError
-from middlewared.schema import Dict
 from middlewared.utils import filter_list
 
 from .device import Device
@@ -31,9 +30,6 @@ class PCIBase(Device):
 
 class PCI(PCIBase):
 
-    schema = Dict(
-        'attributes',
-    )
     schema_model = VMPCIDevice
 
     def vm_device_filters(self):

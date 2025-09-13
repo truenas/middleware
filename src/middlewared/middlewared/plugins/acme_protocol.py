@@ -14,8 +14,7 @@ from middlewared.api.current import (
     DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult, DNSAuthenticatorDeleteArgs,
     DNSAuthenticatorDeleteResult,
 )
-from middlewared.schema import ValidationErrors
-from middlewared.service import CallError, CRUDService, private
+from middlewared.service import CallError, CRUDService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 
 

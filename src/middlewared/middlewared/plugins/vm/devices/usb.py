@@ -1,5 +1,4 @@
 from middlewared.api.current import VMUSBDevice
-from middlewared.schema import Dict
 
 from .pci import PCIBase
 from .utils import create_element
@@ -13,9 +12,6 @@ USB_CONTROLLER_CHOICES = [
 
 class USB(PCIBase):
 
-    schema = Dict(
-        'attributes',
-    )
     schema_model = VMUSBDevice
 
     @property

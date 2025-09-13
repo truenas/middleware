@@ -20,7 +20,6 @@ from .auth import (
 )
 from .job import Job
 from .pipe import Pipes, InputPipes
-from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
 from .utils.account.authenticator import ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator
 from .utils.auth import AA_LEVEL1, CURRENT_AAL
@@ -111,7 +110,9 @@ async def authenticate(app, middleware, request, credentials, method, resource):
         )
     elif credentials['credentials'] == 'API_KEY':
         if CURRENT_AAL.level is not AA_LEVEL1:
-            raise web.HTTPForbidden(text='API key authentication is not permitted by server authentication security level')
+            raise web.HTTPForbidden(
+                text='API key authentication is not permitted by server authentication security level'
+            )
 
         app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
         api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
@@ -891,8 +892,8 @@ class Resource(object):
                 'message': e.errmsg,
                 'errno': e.errno,
             }
-        except (SchemaError, ValidationError, ValidationErrors) as e:
-            if isinstance(e, (SchemaError, ValidationError)):
+        except (ValidationError, ValidationErrors) as e:
+            if isinstance(e, ValidationError):
                 e = [(e.attribute, e.errmsg, e.errno)]
             result = defaultdict(list)
             for attr, errmsg, errno_ in e:

@@ -5,8 +5,7 @@ from middlewared.api.current import (
     NetworkConfigurationEntry, NetworkConfigurationUpdateArgs, NetworkConfigurationUpdateResult
 )
 import middlewared.sqlalchemy as sa
-from middlewared.service import ConfigService, private
-from middlewared.schema import ValidationErrors
+from middlewared.service import ConfigService, ValidationErrors, private
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils import are_indices_in_consecutive_order
 

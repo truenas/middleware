@@ -15,9 +15,9 @@ from aiohttp.web import WebSocketResponse, WSMsgType
 from truenas_api_client import json
 from truenas_api_client.jsonrpc import JSONRPCError
 
-from middlewared.schema import Error
-from middlewared.service_exception import (CallException, CallError, ValidationError, ValidationErrors, adapt_exception,
-                                           get_errname)
+from middlewared.service_exception import (
+    CallException, CallError, ValidationError, ValidationErrors, adapt_exception, get_errname
+)
 from middlewared.utils.auth import AUID_UNSET, AUID_FAULTED
 from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lang import undefined
@@ -383,7 +383,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
         except ValidationErrors as e:
             if id_ != undefined:
                 app.send_truenas_validation_error(id_, sys.exc_info(), list(e))
-        except (CallException, Error) as e:
+        except CallException as e:
             # CallException and subclasses are the way to gracefully send errors to the client
             if id_ != undefined:
                 app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", e.errno, str(e),

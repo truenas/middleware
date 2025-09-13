@@ -27,9 +27,7 @@ def _compound_service_wrapper(service: 'CompoundService', fake_middleware: 'Midd
 
 
 def create_service(middleware: 'Middleware', cls: 'type[Service]') -> 'Service':
-    service = cls(middleware)
-    middleware._resolve_methods([service], [])
-    return service
+    return cls(middleware)
 
 
 class TestModelProvider(ModelProvider):

@@ -8,8 +8,7 @@ from middlewared.api.current import (
     TunableEntry, TunableCreateArgs, TunableCreateResult, TunableUpdateArgs, TunableUpdateResult, TunableDeleteArgs,
     TunableDeleteResult, TunableTunableTypeChoicesArgs, TunableTunableTypeChoicesResult
 )
-from middlewared.schema import ValidationErrors
-from middlewared.service import CRUDService, job, private
+from middlewared.service import CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 
