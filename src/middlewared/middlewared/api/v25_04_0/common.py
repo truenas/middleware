@@ -1,22 +1,16 @@
 from typing import Annotated, Self
 
+from pydantic import AfterValidator, model_validator
+
 from middlewared.api.base import BaseModel
-from middlewared.utils import filters
+from middlewared.utils import validate_filters, validate_options
 from middlewared.utils.cron import croniter_for_schedule
 
-from pydantic import AfterValidator, model_validator
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult"]
 
-filter_obj = filters()
 
-
-def validate_query_filters(qf: list) -> list:
-    filter_obj.validate_filters(qf)
-    return qf
-
-
-QueryFilters = Annotated[list, AfterValidator(validate_query_filters)]
+QueryFilters = Annotated[list, AfterValidator(validate_filters)]
 
 
 class QueryOptions(BaseModel):
@@ -35,7 +29,7 @@ class QueryOptions(BaseModel):
 
     @model_validator(mode='after')
     def validate_query_options(self) -> Self:
-        filter_obj.validate_options(self.dict())
+        validate_options(self.model_dump())
         return self
 
 
