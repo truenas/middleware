@@ -16,7 +16,7 @@ OPENSSL_FIPS_FILE = '/etc/ssl/openssl_fips.cnf'
 
 
 def validate_system_state() -> None:
-    for path in (FIPS_MODULE_FILE, OPENSSL_CONFIG_FILE, OPENSSL_FIPS_FILE, BASE_OPENSSL_CONFIG_FILE):
+    for path in (OPENSSL_CONFIG_FILE, OPENSSL_FIPS_FILE, BASE_OPENSSL_CONFIG_FILE):
         if not os.path.exists(path):
             raise Exception(f'{path!r} does not exist')
 
