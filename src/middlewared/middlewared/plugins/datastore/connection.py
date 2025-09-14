@@ -70,7 +70,7 @@ class DatastoreService(Service):
 
         self.connection.connection.execute("PRAGMA foreign_keys=ON")
 
-        if (constraint_violations := self.connection.execute(text("PRAGMA foreign_key_check")).fetchall()):
+        if constraint_violations := self.connection.execute(text("PRAGMA foreign_key_check")).fetchall():
             ts = int(time.time())
             shutil.copy(FREENAS_DATABASE, f'{FREENAS_DATABASE}_{ts}.bak')
 
@@ -82,12 +82,9 @@ class DatastoreService(Service):
 
     @private
     def execute(self, *args):
-        # In SQLAlchemy 2.x, raw SQL strings must be wrapped with text()
-        # args[0] is the query, args[1:] are any parameters
+        args = list(args)
         if args and isinstance(args[0], str):
-            query = text(args[0])
-            params = args[1:] if len(args) > 1 else []
-            return self.connection.execute(query, *params)
+            args[0] = text(args[0])
         return self.connection.execute(*args)
 
     @private
@@ -96,14 +93,10 @@ class DatastoreService(Service):
         options.setdefault('ha_sync', True)
         options.setdefault('return_last_insert_rowid', False)
 
-        # In SQLAlchemy 2.x, execute statement objects directly
-        # Let SQLAlchemy handle parameter binding internally
         result = self.connection.execute(stmt)
-
-        # For logging purposes, compile the statement to get SQL and params
         compiled = stmt.compile(self.engine, compile_kwargs={"render_postcompile": True})
         sql = compiled.string
-        params = list(compiled.params.values()) if compiled.params else []
+        params = compiled.params or {}
 
         self.middleware.call_hook_inline("datastore.post_execute_write", sql, params, options)
 
@@ -114,7 +107,7 @@ class DatastoreService(Service):
 
     @private
     def fetchall(self, query, params=None):
-        cursor = self.connection.execute(text(query) if isinstance(query, str) else query, params or [])
+        cursor = self.connection.execute(text(query) if isinstance(query, str) else query, params or {})
         try:
             return cursor.fetchall()
         finally:
