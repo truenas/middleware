@@ -23,7 +23,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for c in [r._asdict() for r in conn.execute(text("SELECT * FROM system_keychaincredential WHERE type = 'SSH_CREDENTIALS'")).fetchall()]:
+    for c in conn.execute(text("SELECT * FROM system_keychaincredential WHERE type = 'SSH_CREDENTIALS'")).mappings().all():
         if attributes := decrypt(c["attributes"]):
             attributes = json.loads(attributes)
             attributes.pop("cipher", None)

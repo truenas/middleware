@@ -21,7 +21,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     io_choices = {e['start']: e['name'] for e in serial_port_choices()}
-    sys_config = [row._asdict() for row in conn.execute(text("SELECT * FROM system_advanced")).fetchall()]
+    sys_config = conn.execute(text("SELECT * FROM system_advanced")).mappings().all()
     if not sys_config:
         return
 
@@ -31,7 +31,10 @@ def upgrade():
     else:
         new_val = io_choices[sys_config['adv_serialport']]
 
-    conn.execute(text("UPDATE system_advanced SET adv_serialport = :port WHERE id = :id"), {"port": new_val, "id": sys_config['id']})
+    conn.execute(
+        text("UPDATE system_advanced SET adv_serialport = :port WHERE id = :id"),
+        {"port": new_val, "id": sys_config['id']}
+    )
 
 
 def downgrade():

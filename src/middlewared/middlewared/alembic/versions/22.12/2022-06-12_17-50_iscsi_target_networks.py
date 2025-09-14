@@ -25,14 +25,9 @@ def upgrade():
 
     conn = op.get_bind()
 
-    target_groups = [
-        dict(row)
-        for row in conn.execute(text("""
-            SELECT *
-            FROM services_iscsitargetgroups
-            WHERE iscsi_target_initiatorgroup_id IS NOT NULL
-        """)).fetchall()
-    ]
+    target_groups = conn.execute(text(
+        """SELECT * FROM services_iscsitargetgroups WHERE iscsi_target_initiatorgroup_id IS NOT NULL"""
+    )).mappings().all()
     for target_group in target_groups:
         initiator = conn.execute(
             text("SELECT * FROM services_iscsitargetauthorizedinitiator WHERE id = :id"),

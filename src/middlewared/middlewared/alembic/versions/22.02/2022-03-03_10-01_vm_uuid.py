@@ -24,7 +24,7 @@ def upgrade():
     with op.batch_alter_table('vm_vm', schema=None) as batch_op:
         batch_op.add_column(sa.Column('uuid', sa.String(length=255), nullable=False, server_default=''))
 
-    for vm in [r._asdict() for r in conn.execute(text("SELECT * FROM vm_vm")).fetchall()]:
+    for vm in conn.execute(text("SELECT * FROM vm_vm")).mappings().all():
         conn.execute(text("UPDATE vm_vm SET uuid = :uuid WHERE id = :id"), {'uuid': str(uuid.uuid4()), 'id': vm['id']})
 
 

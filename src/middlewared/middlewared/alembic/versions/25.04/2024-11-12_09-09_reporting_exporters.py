@@ -20,7 +20,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for exporter_config in [row._asdict() for row in conn.execute(text("SELECT * FROM reporting_exporters")).fetchall()]:
+    for exporter_config in conn.execute(text("SELECT * FROM reporting_exporters")).mappings().all():
         attributes = json.loads(exporter_config['attributes'])
         attributes['exporter_type'] = exporter_config['type']
         conn.execute(

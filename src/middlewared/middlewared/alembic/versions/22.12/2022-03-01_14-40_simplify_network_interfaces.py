@@ -55,7 +55,7 @@ def create_new_entries(old_entry):
 def upgrade():
     con = op.get_bind()
     new_entries = []
-    for old_entry in [r._asdict() for r in con.execute(text('SELECT * FROM network_interfaces')).fetchall()]:
+    for old_entry in con.execute(text('SELECT * FROM network_interfaces')).mappings().all():
         new_entries.append(create_new_entries(old_entry))
 
     # add new columns

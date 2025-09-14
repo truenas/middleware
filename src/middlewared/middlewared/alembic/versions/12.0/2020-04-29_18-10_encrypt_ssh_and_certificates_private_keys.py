@@ -21,10 +21,9 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    if not (
-        conn.execute(text("SELECT * FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631' AND value = 'true'")).
-                fetchall()
-    ):
+    if not conn.execute(
+        text("SELECT * FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631' AND value = 'true'")
+    ).mappings().all():
         for table, fields in [
             ("services_snmp", ["snmp_v3_password", "snmp_v3_privpassphrase"]),
             ("services_ssh", ["ssh_privatekey", "ssh_host_dsa_key", "ssh_host_ecdsa_key", "ssh_host_ed25519_key",
@@ -33,8 +32,7 @@ def upgrade():
             ("system_certificate", ["cert_privatekey"]),
             ("system_certificateauthority", ["cert_privatekey"]),
         ]:
-            for row in conn.execute(text(f"SELECT * FROM {table}")).fetchall():
-                row = row._asdict()
+            for row in conn.execute(text(f"SELECT * FROM {table}")).mappings().all():
                 set_ = []
                 params = {}
                 for i, k in enumerate(fields):

@@ -27,8 +27,7 @@ SHARE_BLACKLIST = (
 def upgrade():
 
     conn = op.get_bind()
-    smb_shares = [row._asdict() for row in conn.execute(text("SELECT * FROM sharing_cifs_share")).fetchall()]
-    for share in smb_shares:
+    for share in conn.execute(text("SELECT * FROM sharing_cifs_share")).mappings().all():
         changed = False
         not_blacklisted = []
         for param in share.get('cifs_auxsmbconf', '').splitlines():

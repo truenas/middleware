@@ -24,11 +24,10 @@ def upgrade():
 
     conn = op.get_bind()
 
-    if twofactor_config := [
-        row._asdict() for row in conn.execute(text('SELECT * FROM system_twofactorauthentication')).fetchall()
-    ]:
-        twofactor_config = twofactor_config[0]
-        for row in [r._asdict() for r in conn.execute(text('SELECT id FROM account_twofactor_user_auth')).fetchall()]:
+    twofactor_configs = conn.execute(text('SELECT * FROM system_twofactorauthentication')).mappings().all()
+    if twofactor_configs:
+        twofactor_config = twofactor_configs[0]
+        for row in conn.execute(text('SELECT id FROM account_twofactor_user_auth')).mappings().all():
             conn.execute(text(
                 'UPDATE account_twofactor_user_auth SET interval = :interval, otp_digits = :otp_digits WHERE id = :id'), {
                     'interval': twofactor_config['interval'], 'otp_digits': twofactor_config['otp_digits'], 'id': row['id']

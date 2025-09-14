@@ -21,9 +21,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    vnc_devices = [row._asdict() for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).fetchall()]
-
-    for device in vnc_devices:
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).mappings().all():
         attrs = json.loads(device['attributes'])
         attrs.update({
             'port': attrs.pop('vnc_port'),

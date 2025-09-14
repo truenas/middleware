@@ -44,7 +44,7 @@ def upgrade():
     # ensure vnc port
 
     all_ports = [6000, 6100]
-    vnc_devices = [row._asdict() for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).fetchall()]
+    vnc_devices = conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).mappings().all()
 
     for vnc_device in vnc_devices:
         vnc_device['attributes'] = json.loads(vnc_device['attributes'])
@@ -77,7 +77,7 @@ def upgrade():
 
     # add physical sector size support
 
-    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).mappings().all():
         attributes = json.loads(device['attributes'])
 
         try:
@@ -92,16 +92,23 @@ def upgrade():
             'physical_sectorsize': None,
         })
 
-        conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {'attributes': json.dumps(attributes), 'id': device['id']})
+        conn.execute(
+            text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {
+                'attributes': json.dumps(attributes), 'id': device['id']
+            }
+        )
 
     # normalize_mac_address
 
-    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'NIC'")).fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'NIC'")).mappings().all():
         attributes = json.loads(device['attributes'])
 
         if not attributes.get('mac') or attributes['mac'] == '00:a0:98:FF:FF:FF':
             attributes['mac'] = None
-            conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {'attributes': json.dumps(attributes), 'id': device['id']})
+            conn.execute(
+                text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"),
+                {'attributes': json.dumps(attributes), 'id': device['id']}
+            )
 
     # ### end Alembic commands ###
 

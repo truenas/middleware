@@ -112,7 +112,10 @@ def upgrade():
     con = op.get_bind()
     new_aliases = []
     for iface_id, in con.execute(text('SELECT id from network_interfaces')).fetchall():
-        rows = [row._asdict() for row in con.execute(text('SELECT * FROM network_alias WHERE alias_interface_id = :iface_id'), {'iface_id': iface_id}).fetchall()]
+        rows = con.execute(
+            text('SELECT * FROM network_alias WHERE alias_interface_id = :iface_id'),
+            {'iface_id': iface_id}
+        ).mappings().all()
         a_addresses, b_addresses, vips = pull_out_entries(rows)
         new_aliases = combine_entries(iface_id, a_addresses, b_addresses, vips)
 
