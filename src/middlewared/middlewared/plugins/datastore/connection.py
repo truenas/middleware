@@ -93,10 +93,10 @@ class DatastoreService(Service):
         options.setdefault('ha_sync', True)
         options.setdefault('return_last_insert_rowid', False)
 
-        result = self.connection.execute(stmt)
         compiled = stmt.compile(self.engine, compile_kwargs={"render_postcompile": True})
         sql = compiled.string
         params = compiled.params or {}
+        result = self.connection.execute(stmt)
 
         self.middleware.call_hook_inline("datastore.post_execute_write", sql, params, options)
 
