@@ -21,9 +21,8 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    if docker_config := list(map(
-        dict, conn.execute(text('SELECT * FROM services_docker')).fetchall()
-    )):
+    docker_config = conn.execute(text('SELECT * FROM services_docker')).mappings().all()
+    if docker_config:
         docker_config = docker_config[0]
         address_pool_config = json.loads(docker_config['address_pools'])
 

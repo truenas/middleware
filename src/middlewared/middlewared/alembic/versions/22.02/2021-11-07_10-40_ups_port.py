@@ -21,8 +21,8 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    sys_config = [row._asdict() for row in conn.execute(text("SELECT * FROM system_advanced")).fetchall()]
-    ups_config = [row._asdict() for row in conn.execute(text("SELECT * FROM services_ups")).fetchall()]
+    sys_config = conn.execute(text("SELECT * FROM system_advanced")).mappings().all()
+    ups_config = conn.execute(text("SELECT * FROM services_ups")).mappings().all()
     if not sys_config or not ups_config:
         return
 

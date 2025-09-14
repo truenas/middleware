@@ -53,9 +53,7 @@ def remove_authenticator_ref(authenticator_id, cert_ids, conn):
 
 def upgrade():
     conn = op.get_bind()
-    authenticator_configs = [
-        row for row in conn.execute(text("SELECT * FROM system_acmednsauthenticator")).mappings().all()
-    ]
+    authenticator_configs = conn.execute(text("SELECT * FROM system_acmednsauthenticator")).mappings().all()
     authenticator_mapping = defaultdict(list)
     encrypted_domains_certs = []
     for cert in conn.execute(text("SELECT * FROM system_certificate")).mappings().all():

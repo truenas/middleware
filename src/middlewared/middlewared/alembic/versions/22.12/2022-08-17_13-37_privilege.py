@@ -34,8 +34,7 @@ def upgrade():
     )
 
     conn = op.get_bind()
-    for row in conn.execute(text("SELECT * FROM account_bsdgroups WHERE bsdgrp_group = 'builtin_administrators'")).fetchall():
-        row = row._asdict()
+    for row in conn.execute(text("SELECT * FROM account_bsdgroups WHERE bsdgrp_group = 'builtin_administrators'")).mappings().all():
         builtin_administrators_id = row["id"]
         break
     else:
@@ -44,7 +43,7 @@ def upgrade():
                      "0)"))
         builtin_administrators_id = conn.execute(text("SELECT last_insert_rowid()")).fetchone()[0]
 
-    root_id = conn.execute(text("SELECT * FROM account_bsdusers WHERE bsdusr_uid = 0")).fetchone()._asdict()["id"]
+    root_id = conn.execute(text("SELECT * FROM account_bsdusers WHERE bsdusr_uid = 0")).mappings().first()["id"]
 
     allowlist = [{"method": "*", "resource": "*"}]
     op.execute(text("INSERT INTO account_privilege (builtin_name, name, local_groups, ds_groups, allowlist, web_shell) "

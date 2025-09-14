@@ -21,7 +21,8 @@ depends_on = None
 
 def get_hostname(conn):
     try:
-        return conn.execute(text('SELECT * FROM network_globalconfiguration')).fetchone()._asdict()['gc_hostname']
+        row = conn.execute(text('SELECT * FROM network_globalconfiguration')).mappings().first()
+        return row['gc_hostname'] if row else 'truenas'
     except Exception:
         return 'truenas'
 

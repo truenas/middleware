@@ -258,7 +258,7 @@ def migrate_idmap_domain(dom, netbios_domain_name) -> dict | None:
 
 def ds_migrate_ad(conn, ad):
     smb = conn.execute(text('SELECT * FROM services_cifs')).mappings().first()
-    idmaps = [row for row in conn.execute(text('SELECT * FROM directoryservice_idmap_domain')).mappings().all()]
+    idmaps = conn.execute(text('SELECT * FROM directoryservice_idmap_domain')).mappings().all()
     primary_idmap = None
     default_domain = None
     cache_enabled = not ad['ad_disable_freenas_cache']

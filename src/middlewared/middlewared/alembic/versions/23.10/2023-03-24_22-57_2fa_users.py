@@ -39,11 +39,10 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_account_twofactor_user_auth_user_id'), ['user_id'], unique=False)
 
     conn = op.get_bind()
-    existing_secret_record = conn.execute(text('SELECT secret FROM system_twofactorauthentication')).fetchone()
-    existing_secret = existing_secret_record._asdict()['secret'] if existing_secret_record else None
+    existing_secret_record = conn.execute(text('SELECT secret FROM system_twofactorauthentication')).mappings().first()
+    existing_secret = existing_secret_record['secret'] if existing_secret_record else None
 
-    for row in conn.execute(text('SELECT id,bsdusr_uid FROM account_bsdusers')).fetchall():
-        row = row._asdict()
+    for row in conn.execute(text('SELECT id,bsdusr_uid FROM account_bsdusers')).mappings().all():
         secret = existing_secret if row['bsdusr_uid'] == 0 else None
         conn.execute(text('INSERT INTO account_twofactor_user_auth (secret,user_id) VALUES (:secret, :user_id)'), {'secret': secret, 'user_id': row['id']})
 

@@ -24,9 +24,8 @@ def upgrade():
     with op.batch_alter_table('services_docker', schema=None) as batch_op:
         batch_op.add_column(sa.Column('cidr_v6', sa.String(), nullable=False, server_default='fdd0::/64'))
 
-    if docker_config := list(map(
-        dict, conn.execute(text('SELECT * FROM services_docker')).fetchall()
-    )):
+    docker_config = conn.execute(text('SELECT * FROM services_docker')).mappings().all()
+    if docker_config:
         docker_config = docker_config[0]
         address_pool_config = json.loads(docker_config['address_pools'])
         address_pool_config.append({'base': 'fdd0::/48', 'size': 64})

@@ -23,7 +23,7 @@ def upgrade():
     conn = op.get_bind()
     devices = {
         row['id']: json.loads(row['attributes'])
-        for row in [r._asdict() for r in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).fetchall()]
+        for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).mappings().all()
     }
 
     for device_id, device in devices.items():

@@ -27,7 +27,7 @@ def upgrade():
 
     ip_to_port_to_id = defaultdict(dict)
     ports_popularity = defaultdict(int)
-    for row in [r._asdict() for r in conn.execute(text("SELECT * FROM services_iscsitargetportalip")).fetchall()]:
+    for row in conn.execute(text("SELECT * FROM services_iscsitargetportalip")).mappings().all():
         ip_to_port_to_id[row['iscsi_target_portalip_ip']][row['iscsi_target_portalip_port']] = row['id']
         ports_popularity[row['iscsi_target_portalip_port']] += 1
 

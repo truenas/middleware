@@ -32,8 +32,7 @@ def upgrade():
     ranges = []
     default_range = (90000001, 100000000)
 
-    for row in conn.execute(text("SELECT * FROM directoryservice_idmap_domain")).fetchall():
-        row = row._asdict()
+    for row in conn.execute(text("SELECT * FROM directoryservice_idmap_domain")).mappings().all():
         if row['idmap_domain_name'] == 'DS_TYPE_DEFAULT_DOMAIN':
             # The default domain entry wasn't dropped and so we can skip the rest of this
             return
