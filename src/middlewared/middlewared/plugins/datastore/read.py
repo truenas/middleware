@@ -85,7 +85,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         fk_attrs = {}
         aliases = {}
         if options['count'] and not self._filters_contains_foreign_key(filters):
-            qs = select([func.count(self._get_pk(table))])
+            qs = select(func.count(self._get_pk(table)))
         else:
             columns = list(table.c)
             from_ = table
@@ -102,9 +102,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
 
             if options['count']:
-                qs = select([func.count(self._get_pk(table))]).select_from(from_)
+                qs = select(func.count(self._get_pk(table))).select_from(from_)
             else:
-                qs = select(columns).select_from(from_)
+                qs = select(*columns).select_from(from_)
 
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix, aliases)))
@@ -253,13 +253,34 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
     def _strip_prefix(self, k, field_prefix):
         return k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k
 
+    def _get_row_value(self, row, column):
+        """Get value from row, handling both SQLAlchemy Row objects and tuples"""
+        try:
+            # Try Row object access first (string key)
+            return row[column.name]
+        except (TypeError, KeyError):
+            try:
+                # Try Row object access with column object
+                # SQLAlchemy 2.x doesn't support column object access
+                return getattr(row, column.name, None)
+            except (TypeError, KeyError):
+                # Fall back to tuple access (find column index)
+                if hasattr(row, '_fields'):  # namedtuple
+                    return getattr(row, column.name)
+                else:
+                    # Find column index in table
+                    for i, col in enumerate(column.table.c):
+                        if col == column:
+                            return row[i]
+                    raise ValueError(f"Column {column.name} not found in row")
+
     def _serialize_row(self, obj, table, aliases):
         data = {}
 
         for column in table.c:
             # aliases == {} when we are loading without relationships, let's leave fk values in that case
             if not column.foreign_keys or not aliases:
-                data[str(column.name)] = obj[column]
+                data[str(column.name)] = self._get_row_value(obj, column)
 
         for foreign_key, alias in aliases.items():
             column = foreign_key.parent
@@ -272,7 +293,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
             data[column.name[:-3]] = (
                 self._serialize_row(obj, alias, aliases)
-                if obj[column] is not None and obj[self._get_pk(alias)] is not None
+                if self._get_row_value(obj, column) is not None and self._get_row_value(obj, self._get_pk(alias)) is not None
                 else None
             )
 
@@ -280,7 +301,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     async def _fetch_many_to_many(self, table, rows):
         pk = self._get_pk(table)
-        pk_values = [row[pk] for row in rows]
+        pk_values = [self._get_row_value(row, pk) for row in rows]
 
         relationships = [{} for row in rows]
         if pk_values:
@@ -318,7 +339,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 for i, row in enumerate(rows):
                     relationships[i][relationship_name] = [
                         all_children[child_id]
-                        for child_id in pk_to_children_ids[row[pk]]
+                        for child_id in pk_to_children_ids[self._get_row_value(row, pk)]
                         if child_id in all_children
                     ]
 

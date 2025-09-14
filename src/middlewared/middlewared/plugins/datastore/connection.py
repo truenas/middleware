@@ -3,7 +3,7 @@ import re
 import shutil
 import time
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 from middlewared.service import private, Service
 
@@ -47,12 +47,12 @@ class DatastoreService(Service):
             intervention.
             """
             self.logger.warning("Removing certificate id for default idmap table entry.")
-            self.connection.execute(f"UPDATE {row.table} SET idmap_domain_certificate_id = NULL WHERE rowid = {row.rowid}")
+            self.connection.execute(text(f"UPDATE {row.table} SET idmap_domain_certificate_id = NULL WHERE rowid = {row.rowid}"))
             return
 
         self.logger.warning("Deleting row %d from table %s.", row.rowid, row.table)
         op = f"DELETE FROM {row.table} WHERE rowid = {row.rowid}"
-        self.connection.execute(op)
+        self.connection.execute(text(op))
         journal.write(f'{op}\n')
 
     @private
@@ -70,7 +70,7 @@ class DatastoreService(Service):
 
         self.connection.connection.execute("PRAGMA foreign_keys=ON")
 
-        if (constraint_violations := self.connection.execute("PRAGMA foreign_key_check").fetchall()):
+        if (constraint_violations := self.connection.execute(text("PRAGMA foreign_key_check")).fetchall()):
             ts = int(time.time())
             shutil.copy(FREENAS_DATABASE, f'{FREENAS_DATABASE}_{ts}.bak')
 
@@ -82,6 +82,12 @@ class DatastoreService(Service):
 
     @private
     def execute(self, *args):
+        # In SQLAlchemy 2.x, raw SQL strings must be wrapped with text()
+        # args[0] is the query, args[1:] are any parameters
+        if args and isinstance(args[0], str):
+            query = text(args[0])
+            params = args[1:] if len(args) > 1 else []
+            return self.connection.execute(query, *params)
         return self.connection.execute(*args)
 
     @private
@@ -90,22 +96,16 @@ class DatastoreService(Service):
         options.setdefault('ha_sync', True)
         options.setdefault('return_last_insert_rowid', False)
 
+        # In SQLAlchemy 2.x, execute statement objects directly
+        # Let SQLAlchemy handle parameter binding internally
+        result = self.connection.execute(stmt)
+
+        # For logging purposes, compile the statement to get SQL and params
         compiled = stmt.compile(self.engine, compile_kwargs={"render_postcompile": True})
-
         sql = compiled.string
-        binds = []
-        for param in compiled.positiontup:
-            bind = compiled.binds[param]
-            value = bind.value
-            bind_processor = compiled.binds[param].type.bind_processor(self.engine.dialect)
-            if bind_processor:
-                binds.append(bind_processor(value))
-            else:
-                binds.append(value)
+        params = list(compiled.params.values()) if compiled.params else []
 
-        result = self.connection.execute(sql, binds)
-
-        self.middleware.call_hook_inline("datastore.post_execute_write", sql, binds, options)
+        self.middleware.call_hook_inline("datastore.post_execute_write", sql, params, options)
 
         if options['return_last_insert_rowid']:
             return self.fetchall("SELECT last_insert_rowid()")[0][0]
@@ -114,7 +114,7 @@ class DatastoreService(Service):
 
     @private
     def fetchall(self, query, params=None):
-        cursor = self.connection.execute(query, params or [])
+        cursor = self.connection.execute(text(query) if isinstance(query, str) else query, params or [])
         try:
             return cursor.fetchall()
         finally:

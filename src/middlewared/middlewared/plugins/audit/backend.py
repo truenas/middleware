@@ -3,7 +3,7 @@ import threading
 import time
 
 from pydantic import Field
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy import and_, func, select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
@@ -71,7 +71,7 @@ class SQLConn:
                 connect_args={'check_same_thread': False}
             )
             self.connection = self.engine.connect()
-            self.connection.execute('PRAGMA journal_mode=WAL')
+            self.connection.execute(text('PRAGMA journal_mode=WAL'))
             self.dbfd = os.open(self.path, os.O_PATH)
 
     def fetchall(self, query, params=None):
@@ -194,10 +194,10 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         from_ = conn.table
 
         if options['count']:
-            qs = select([func.count('ROW_ID')]).select_from(from_)
+            qs = select(func.count('ROW_ID')).select_from(from_)
         else:
             columns = list(conn.table.c)
-            qs = select(columns).select_from(from_)
+            qs = select(*columns).select_from(from_)
 
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, conn.table, None, {})))
