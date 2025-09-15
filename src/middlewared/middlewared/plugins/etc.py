@@ -55,16 +55,19 @@ class PyRenderer(object):
 
     async def render(self, path, ctx):
         name = os.path.basename(path)
-        filepath = f"{path}.py"  # matches previous behavior (basename + '.py' in dirname)
+        filepath = f"{path}.py"
 
         spec = importlib.util.spec_from_file_location(name, filepath)
         if spec is None or spec.loader is None:
             raise ImportError(f"Cannot load spec for {name!r} from {filepath!r}")
 
         mod = importlib.util.module_from_spec(spec)
-        # Match imp.load_module semantics: put in sys.modules before exec
         sys.modules[name] = mod
-        spec.loader.exec_module(mod)
+        try:
+            spec.loader.exec_module(mod)
+        except Exception:
+            sys.modules.pop(name, None)
+            raise
 
         args = [self.service, self.service.middleware]
         if ctx is not None:
