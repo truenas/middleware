@@ -11,9 +11,8 @@ from middlewared.api.current import (
     InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult, InitShutdownScriptDeleteArgs,
     InitShutdownScriptDeleteResult,
 )
-from middlewared.schema import ValidationErrors
 from middlewared.service import CRUDService, job, private
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 

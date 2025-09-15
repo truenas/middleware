@@ -1,12 +1,11 @@
 from abc import ABC
 
 from middlewared.api.base.handler.accept import validate_model
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import ValidationErrors
 
 
 class Device(ABC):
 
-    schema = NotImplemented
     schema_model = NotImplementedError
 
     def __init__(self, data, middleware=None):

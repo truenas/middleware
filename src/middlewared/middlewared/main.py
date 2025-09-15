@@ -19,7 +19,6 @@ from .logger import Logger, setup_audit_logging, setup_logging
 from .pipe import Pipe
 from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
-from .schema import OROperator
 import middlewared.service
 from .service_exception import CallError, ErrnoMixin
 from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
@@ -906,28 +905,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if isinstance(result, Job):
             return result
 
-        if method_self := getattr(methodobj, "__self__", None):
-            if methodobj.__name__ in ["create", "update", "delete"]:
-                if do_method := getattr(method_self, f"do_{methodobj.__name__}", None):
-                    if hasattr(do_method, "new_style_returns"):
-                        # FIXME: Get rid of `create`/`do_create` duality
-                        methodobj = do_method
+        if (
+            (method_self := getattr(methodobj, "__self__", None))
+            and methodobj.__name__ in {"create", "update", "delete"}
+            and (do_method := getattr(method_self, f"do_{methodobj.__name__}", None))
+        ):
+            # FIXME: Get rid of `create`/`do_create` duality
+            methodobj = do_method
 
-        if hasattr(methodobj, "new_style_returns"):
-            # FIXME: When all models become new style, this should be passed explicitly
-            if new_style_returns_model is None:
-                new_style_returns_model = methodobj.new_style_returns
+        if new_style_returns_model is None:
+            new_style_returns_model = methodobj.new_style_returns
 
-            return serialize_result(new_style_returns_model, result, expose_secrets)
-
-        if not expose_secrets and hasattr(methodobj, "returns") and methodobj.returns:
-            schema = methodobj.returns[0]
-            if isinstance(schema, OROperator):
-                result = schema.dump(result, False)
-            else:
-                result = schema.dump(result)
-
-        return result
+        return serialize_result(new_style_returns_model, result, expose_secrets)
 
     async def authorize_method_call(self, app, method_name, methodobj, params):
         if hasattr(methodobj, '_no_auth_required'):
@@ -1208,7 +1197,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         description: str,
         *,
         private: bool = False,
-        returns=None,
         models: dict[EventType, type[BaseModel]] | None = None,
         no_auth_required: bool = False,
         no_authz_required: bool = False,
@@ -1219,7 +1207,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         and can be browsed in the API documentation without having to inspect source code.
         """
         roles = roles or []
-        self.events.register(name, description, private, returns, models, no_auth_required, no_authz_required, roles)
+        # self.events.register(name, description, private, models, no_auth_required, no_authz_required, roles)
 
     def send_event(self, name: str, event_type: EventType, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)

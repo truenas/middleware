@@ -2,23 +2,25 @@ from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass,
 )
 from middlewared.api import api_method
-from middlewared.api.current import (CloudCredentialEntry,
-                                     CredentialsCreateArgs, CredentialsCreateResult,
-                                     CredentialsUpdateArgs, CredentialsUpdateResult,
-                                     CredentialsDeleteArgs, CredentialsDeleteResult,
-                                     CredentialsVerifyArgs, CredentialsVerifyResult,
-                                     CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult,
-                                     CloudSyncEntry,
-                                     CloudSyncCreateArgs, CloudSyncCreateResult,
-                                     CloudSyncUpdateArgs, CloudSyncUpdateResult,
-                                     CloudSyncDeleteArgs, CloudSyncDeleteResult,
-                                     CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult,
-                                     CloudSyncListBucketsArgs, CloudSyncListBucketsResult,
-                                     CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult,
-                                     CloudSyncSyncArgs, CloudSyncSyncResult,
-                                     CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult,
-                                     CloudSyncAbortArgs, CloudSyncAbortResult,
-                                     CloudSyncProvidersArgs, CloudSyncProvidersResult)
+from middlewared.api.current import (
+    CloudCredentialEntry,
+    CredentialsCreateArgs, CredentialsCreateResult,
+    CredentialsUpdateArgs, CredentialsUpdateResult,
+    CredentialsDeleteArgs, CredentialsDeleteResult,
+    CredentialsVerifyArgs, CredentialsVerifyResult,
+    CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult,
+    CloudSyncEntry,
+    CloudSyncCreateArgs, CloudSyncCreateResult,
+    CloudSyncUpdateArgs, CloudSyncUpdateResult,
+    CloudSyncDeleteArgs, CloudSyncDeleteResult,
+    CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult,
+    CloudSyncListBucketsArgs, CloudSyncListBucketsResult,
+    CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult,
+    CloudSyncSyncArgs, CloudSyncSyncResult,
+    CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult,
+    CloudSyncAbortArgs, CloudSyncAbortResult,
+    CloudSyncProvidersArgs, CloudSyncProvidersResult
+)
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
@@ -28,12 +30,12 @@ from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
-from middlewared.schema import Cron
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, item_method, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
+from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
@@ -695,7 +697,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         if job := await self.get_task_state_job(context["task_state"], cloud_sync["id"]):
             cloud_sync["job"] = job
 
-        Cron.convert_db_format_to_schedule(cloud_sync)
+        convert_db_format_to_schedule(cloud_sync)
 
         return cloud_sync
 
@@ -703,7 +705,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     async def _compress(self, cloud_sync):
         cloud_sync["credential"] = cloud_sync.pop("credentials")
 
-        Cron.convert_schedule_to_db_format(cloud_sync)
+        convert_schedule_to_db_format(cloud_sync)
 
         cloud_sync.pop('job', None)
         cloud_sync.pop(self.locked_field, None)

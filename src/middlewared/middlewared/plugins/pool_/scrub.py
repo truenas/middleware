@@ -9,10 +9,10 @@ from middlewared.api.current import (
     PoolScrubDeleteArgs, PoolScrubDeleteResult, PoolScrubScrubArgs, PoolScrubScrubResult, PoolScrubRunArgs,
     PoolScrubRunResult
 )
-from middlewared.schema import Cron
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 
 
 RE_HISTORY_ZPOOL_SCRUB_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool (scrub|create)', re.MULTILINE)
@@ -53,7 +53,7 @@ class PoolScrubService(CRUDService):
         pool = data.pop('volume')
         data['pool'] = pool['id']
         data['pool_name'] = pool['vol_name']
-        Cron.convert_db_format_to_schedule(data)
+        convert_db_format_to_schedule(data)
         return data
 
     @private
@@ -122,7 +122,7 @@ class PoolScrubService(CRUDService):
         verrors.check()
 
         data['volume'] = data.pop('pool')
-        Cron.convert_schedule_to_db_format(data)
+        convert_schedule_to_db_format(data)
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
@@ -148,8 +148,8 @@ class PoolScrubService(CRUDService):
         verrors.check()
 
         task_data.pop('original_pool_id')
-        Cron.convert_schedule_to_db_format(task_data)
-        Cron.convert_schedule_to_db_format(original_data)
+        convert_schedule_to_db_format(task_data)
+        convert_schedule_to_db_format(original_data)
 
         if len(set(task_data.items()) ^ set(original_data.items())) > 0:
 

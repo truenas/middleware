@@ -10,8 +10,7 @@ from middlewared.api.current import (
 )
 from middlewared.async_validators import validate_port
 from middlewared.common.ports import ServicePortDelegate
-from middlewared.schema import ValidationErrors
-from middlewared.service import private, SystemServiceService
+from middlewared.service import private, SystemServiceService, ValidationErrors
 
 
 class SSHModel(sa.Model):

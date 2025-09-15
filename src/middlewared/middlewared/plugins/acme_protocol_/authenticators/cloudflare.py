@@ -3,7 +3,7 @@ import logging
 from certbot_dns_cloudflare._internal.dns_cloudflare import _CloudflareClient
 
 from middlewared.api.current import CloudFlareSchemaArgs
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import ValidationErrors
 
 from .base import Authenticator
 

@@ -33,7 +33,6 @@ from middlewared.api.current import (
     FailoverUpgradeResult,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.schema import NOT_PROVIDED
 from middlewared.service import (
     job,
     private,
@@ -55,6 +54,7 @@ from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.utils.contextlib import asyncnullcontext
+
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -94,11 +94,11 @@ class FailoverService(ConfigService):
     )
     async def do_update(self, data):
         """Update failover configuration."""
-        master = data.pop('master', NOT_PROVIDED)
+        master = data.pop('master', None)
         old = await self.middleware.call('datastore.config', 'system.failover')
         new = old.copy()
         new.update(data)
-        if master is NOT_PROVIDED:
+        if master is None:
             # The node making the call is the one we want to make MASTER by default
             new['master_node'] = await self.middleware.call('failover.node')
         else:
