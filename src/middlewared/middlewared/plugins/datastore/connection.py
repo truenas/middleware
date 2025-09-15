@@ -47,7 +47,9 @@ class DatastoreService(Service):
             intervention.
             """
             self.logger.warning("Removing certificate id for default idmap table entry.")
-            self.connection.execute(text(f"UPDATE {row.table} SET idmap_domain_certificate_id = NULL WHERE rowid = {row.rowid}"))
+            self.connection.execute(text(
+                f"UPDATE {row.table} SET idmap_domain_certificate_id = NULL WHERE rowid = {row.rowid}"
+            ))
             return
 
         self.logger.warning("Deleting row %d from table %s.", row.rowid, row.table)
