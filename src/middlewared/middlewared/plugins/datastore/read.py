@@ -280,7 +280,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     async def _fetch_many_to_many(self, table, rows):
         pk = self._get_pk(table)
-        pk_values = [row._mapping[self._get_pk(table)] for row in rows]
+        pk_values = [row._mapping[pk] for row in rows]
 
         relationships = [{} for row in rows]
         if pk_values:
@@ -318,7 +318,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 for i, row in enumerate(rows):
                     relationships[i][relationship_name] = [
                         all_children[child_id]
-                        for child_id in pk_to_children_ids[row._mapping[self._get_pk(table)]]
+                        for child_id in pk_to_children_ids[row._mapping[pk]]
                         if child_id in all_children
                     ]
 
