@@ -222,7 +222,7 @@ async def test__update_fk():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "UPDATE account_bsdusers SET bsdusr_uid=?, bsdusr_group_id=? WHERE account_bsdusers.id = ?",
-            [100, 30, 5],
+            {"bsdusr_uid": 100, "bsdusr_group_id": 30, "id_1": 5},
             ANY,
         )
 
@@ -481,7 +481,7 @@ async def test__encrypted_json_save():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedjson (json_dict, json_list) VALUES (?, ?)",
-            ['!{"key": "value"}', '![1, 2]'],
+            {"json_dict": {"key": "value"}, "json_list": [1, 2]},
             ANY,
         )
 
@@ -493,7 +493,7 @@ async def test__encrypted_json_save():
 @pytest.mark.asyncio
 async def test__encrypted_text_load(string, object_):
     async with datastore_test() as ds:
-        ds.execute("INSERT INTO test_encryptedtext VALUES (1, ?)", string)
+        ds.execute(text("INSERT INTO test_encryptedtext VALUES (1, :string)"), {"string": string})
 
         with patch("middlewared.sqlalchemy.decrypt", decrypt_safe):
             assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] == object_
@@ -510,7 +510,7 @@ async def test__encrypted_text_save():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
-            ['!Text'],
+            {"object": "Text"},
             ANY,
         )
 
@@ -535,7 +535,7 @@ async def test__encrypted_text_save_null():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
-            [None],
+            {"object": None},
             ANY,
         )
 
