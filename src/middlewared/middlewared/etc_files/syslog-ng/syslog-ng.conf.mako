@@ -48,12 +48,12 @@ def generate_syslog_remote_destination(server, d_name):
 
     remotelog_stanza += (
       '  );\n'  # end syslog
-      '}};\n\n'  # end destination
+      '};\n\n'  # end destination
 
-      'log {{ source(s_tn_middleware); filter(f_tnremote); destination({d_name}); }};\n'
-      'log {{ source(s_tn_auditd); filter(f_tnremote); destination({d_name}); }};\n'
-      'log {{ source(s_src); filter(f_tnremote); destination({d_name}); }};\n'
-      'log {{ source(s_nginx_logs); filter(f_tnremote); destination({d_name}); }};\n'
+     f'log {{ source(s_tn_middleware); filter(f_tnremote); destination({d_name}); }};\n'
+     f'log {{ source(s_tn_auditd); filter(f_tnremote); destination({d_name}); }};\n'
+     f'log {{ source(s_src); filter(f_tnremote); destination({d_name}); }};\n'
+     f'log {{ source(s_nginx_logs); filter(f_tnremote); destination({d_name}); }};\n'
     )
 
     return remotelog_stanza
@@ -102,19 +102,19 @@ source s_tn_auditd {
 
 ## Remote syslog stanza needs to be here _before_ the audit-related configuration
 % if render_ctx['system.advanced.config']['syslogservers']:
-  ##################
-  # remote logging
-  ##################
-  source s_nginx_logs {
-    wildcard-file(
-      base-dir("${NGINX_LOG_PATH}")
-      filename-pattern("*.log")
-    );
-  };
+##################
+# remote logging
+##################
+source s_nginx_logs {
+  wildcard-file(
+    base-dir("${NGINX_LOG_PATH}")
+    filename-pattern("*.log")
+  );
+};
 
-  % for i, server in enumerate(render_ctx['system.advanced.config']['syslogservers']):
-    ${generate_syslog_remote_destination(server, 'loghost' + str(i))}
-  % endfor
+% for i, server in enumerate(render_ctx['system.advanced.config']['syslogservers']):
+${generate_syslog_remote_destination(server, 'loghost' + str(i))}
+% endfor
 % endif
 ##################
 # audit-related configuration
