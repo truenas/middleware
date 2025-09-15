@@ -90,7 +90,7 @@ class SQLConn:
                 raise RuntimeError(f'{self.path}: audit database was renamed.')
 
             try:
-                cursor = self.connection.execute(query, params or [])
+                cursor = self.connection.execute(text(query) if isinstance(query, str) else query, params or {})
             except DBAPIError as e:
                 # We want to squash errors that are due to presence of missing
                 # table. See note for audit_table_exists() method.
