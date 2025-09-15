@@ -4,9 +4,10 @@ import unittest.mock
 import pytest
 
 from jsonschema import validate, ValidationError
+from packaging.version import Version
 
 from middlewared.plugins.apps.migration_utils import (
-    APP_CONFIG_MIGRATIONS_SCHEMA, get_migration_scripts, parse_version, validate_versions, version_in_range,
+    APP_CONFIG_MIGRATIONS_SCHEMA, get_migration_scripts, validate_versions, version_in_range,
 )
 
 
@@ -322,10 +323,10 @@ def test_validate_versions(current_version, target_version, expected):
 ])
 def test_parse_versions(version, expected):
     if isinstance(expected, str):
-        assert parse_version(version) == parse_version(expected)
+        assert Version(version) == Version(expected)
     else:
         with pytest.raises(ValueError):
-            parse_version(version)
+            Version(version)
 
 
 @pytest.mark.parametrize('version, min_version, max_version, expected', [
