@@ -389,15 +389,15 @@ class PoolDatasetService(CRUDService):
         elif data.ztype == "VOLUME":
             kwargs["type"] = ZFSType.ZFS_TYPE_VOLUME
             sparse = data.zprops.pop("sparse", None)  # not a real zfs property
-            if sparse is not None and sparse is True:
+            if sparse is True:
                 # sparse volume is only created if user explicitly
                 # requests it
                 data.zprops["refreservation"] = "none"
             else:
                 # otherwise, we always create "thick" provisioned volumes
-                data.zprops["refreservation"] = data.zprops.get("refreservation", data.zprops["volsize"])
+                data.zprops.setdefault("refreservation", data.zprops["volsize"])
         else:
-            raise CallError(f"Invalid dataset type: {data.type!r}")
+            raise CallError(f"Invalid dataset type: {data.ztype!r}")
 
         if data.zprops:
             kwargs["properties"] = data.zprops
@@ -414,7 +414,7 @@ class PoolDatasetService(CRUDService):
                 if "properties" in kwargs:
                     kwargs["properties"]["pbkdf2iters"] = str(pb)
                 else:
-                    kwargs.update({"properties": {"pbkdf2iters": str(pb)}})
+                    kwargs["properties"] = {"pbkdf2iters": str(pb)}
 
         if data.create_ancestors:
             # If we need to create ancestors, we need to handle this differently
@@ -656,10 +656,10 @@ class PoolDatasetService(CRUDService):
                 or (i.inheritable and data[i.api_name] == 'INHERIT')
             ):
                 continue
-            if not i.transform:
-                transformed = data[i.api_name]
-            else:
+            if i.transform:
                 transformed = i.transform(data[i.api_name])
+            else:
+                transformed = data[i.api_name]
 
             if i.is_user_prop:
                 uprops[i.real_name] = transformed
