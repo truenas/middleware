@@ -1,3 +1,4 @@
+import dataclasses
 import enum
 import itertools
 import json
@@ -40,6 +41,22 @@ ZFS_VOLUME_BLOCK_SIZE_CHOICES = {
 }
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CreateImplArgs:
+    name: str
+    """The name of the resource being created."""
+    ztype: typing.Literal["FILESYSTEM", "VOLUME"]
+    """The type of the resource to be created."""
+    zprops: dict[str, str] = dataclasses.field(default_factory=dict)
+    """ZFS data properties to be applied during creation."""
+    uprops: dict[str, str] | None = None
+    """ZFS user properties to be applied during creation."""
+    encrypt: dict | None = None
+    """Encryption related properties to be applied during creation."""
+    create_ancestors: bool = False
+    """Create ancestors for the zfs resource being created."""
 
 
 def none_normalize(x):
