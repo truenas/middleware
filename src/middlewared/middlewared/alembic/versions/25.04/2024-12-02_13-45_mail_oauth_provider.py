@@ -10,7 +10,7 @@ import json
 from alembic import op
 import sqlalchemy as sa
 
-from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import encrypt, decrypt
 
 
 # revision identifiers, used by Alembic.

@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from alembic import op
 
-from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import encrypt, decrypt
 
 
 revision = '0e1cd4d5fcf0'

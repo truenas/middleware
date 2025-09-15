@@ -7,7 +7,7 @@ Create Date: 2025-05-07 12:57:43.575785+00:00
 """
 from alembic import op
 from json import dumps, loads
-from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import encrypt, decrypt
 import sqlalchemy as sa
 
 
