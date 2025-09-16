@@ -12,7 +12,10 @@ MS_RESERVED_WORDS = frozenset([
     'BATCH'.casefold(),
     'BUILTIN'.casefold(),
     'DIALUP'.casefold(),
-    'DOMAIN'.casefold(),
+    # Although DOMAIN is a reserved keyword per microsoft documentation, we have a customer
+    # who decided to name their AD domain "DOMAIN". Hence, this part of validation is removed
+    # but left commented-out to avoid someone re-introducing the validation in the future.
+    # 'DOMAIN'.casefold(),
     'ENTERPRISE'.casefold(),
     'INTERACTIVE'.casefold(),
     'INTERNET'.casefold(),
