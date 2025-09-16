@@ -30,11 +30,11 @@ class SSLRandom(Random):
         return RAND_bytes(n)
 
     def seed(self, *args, **kwds):
-        "Stub method.  Not used for a system random number generator."
+        """Stub method.  Not used for a system random number generator."""
         return None
 
     def _notimplemented(self, *args, **kwds):
-        "Method should not be called for a system random number generator."
+        """Method should not be called for a system random number generator."""
         raise NotImplementedError('System entropy source does not have state.')
     getstate = setstate = _notimplemented
 
