@@ -1,5 +1,5 @@
 <%
-from middlewared.logger import DEFAULT_SYSLOG_PATH, ALL_LOG_FILES
+from middlewared.logger import DEFAULT_SYSLOG_PATH, NGINX_LOG_PATH, ALL_LOG_FILES
 
 logger = middleware.logger
 
@@ -22,12 +22,14 @@ def generate_syslog_remote_destination(server, d_name):
     host = host.replace("[", "").replace("]", "")
     cert_id = server["tls_certificate"]
 
-    remotelog_stanza =  f'destination {d_name} {{\n'
-    remotelog_stanza +=  '  syslog(\n'
-    remotelog_stanza += f'    "{host}"\n'
-    remotelog_stanza += f'    port({port})\n'
-    remotelog_stanza +=  '    ip-protocol(6)\n'
-    remotelog_stanza += f'    transport({transport})\n'
+    remotelog_stanza = (
+     f'destination {d_name} {{\n'
+      '  syslog(\n'
+     f'    "{host}"\n'
+     f'    port({port})\n'
+      '    ip-protocol(6)\n'
+     f'    transport({transport})\n'
+    )
 
     if transport == "tls":
         # Both mutual and one-way TLS require this
@@ -44,10 +46,15 @@ def generate_syslog_remote_destination(server, d_name):
                 remotelog_stanza += f'      cert-file(\"{certificate[0]["certificate_path"]}\")\n'
         remotelog_stanza += '    )\n'
 
-    remotelog_stanza += '  );\n};\n'    
-    remotelog_stanza += f'log {{ source(s_tn_middleware); filter(f_tnremote); destination({d_name}); }};\n'
-    remotelog_stanza += f'log {{ source(s_tn_auditd); filter(f_tnremote); destination({d_name}); }};\n'
-    remotelog_stanza += f'log {{ source(s_src); filter(f_tnremote); destination({d_name}); }};'
+    remotelog_stanza += (
+      '  );\n'  # end syslog
+      '};\n\n'  # end destination
+
+     f'log {{ source(s_tn_middleware); filter(f_tnremote); destination({d_name}); }};\n'
+     f'log {{ source(s_tn_auditd); filter(f_tnremote); destination({d_name}); }};\n'
+     f'log {{ source(s_src); filter(f_tnremote); destination({d_name}); }};\n'
+     f'log {{ source(s_nginx_logs); filter(f_tnremote); destination({d_name}); }};\n'
+    )
 
     return remotelog_stanza
 %>\
@@ -93,14 +100,26 @@ source s_tn_auditd {
 ##################
 @include "/etc/syslog-ng/conf.d/tndestinations.conf"
 
-## Remote syslog stanza needs to here _before_ the audit-related configuration
-% for i, server in enumerate(render_ctx['system.advanced.config']['syslogservers']):
+## Remote syslog stanza needs to be here _before_ the audit-related configuration
+% if render_ctx['system.advanced.config']['syslogservers']:
 ##################
 # remote logging
 ##################
-${generate_syslog_remote_destination(server, 'loghost' + str(i))}
+source s_nginx_logs {
+  wildcard-file(
+    base-dir("${NGINX_LOG_PATH}")
+    filename-pattern("access.log")
+  );
+  wildcard-file(
+    base-dir("${NGINX_LOG_PATH}")
+    filename-pattern("error.log")
+  );
+};
 
+% for i, server in enumerate(render_ctx['system.advanced.config']['syslogservers']):
+${generate_syslog_remote_destination(server, 'loghost' + str(i))}
 % endfor
+% endif
 ##################
 # audit-related configuration
 ##################
