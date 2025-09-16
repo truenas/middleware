@@ -108,7 +108,11 @@ source s_tn_auditd {
 source s_nginx_logs {
   wildcard-file(
     base-dir("${NGINX_LOG_PATH}")
-    filename-pattern("*.log")
+    filename-pattern("access.log")
+  );
+  wildcard-file(
+    base-dir("${NGINX_LOG_PATH}")
+    filename-pattern("error.log")
   );
 };
 
