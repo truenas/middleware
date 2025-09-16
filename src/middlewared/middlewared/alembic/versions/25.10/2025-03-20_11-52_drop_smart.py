@@ -115,9 +115,9 @@ def upgrade():
         except Exception:
             raise
 
-    with op.batch_alter_table('tasks_smarttest_smarttest_disks', schema=None) as batch_op:
-        batch_op.drop_index('tasks_smarttest_smarttest_disks_smarttest_id__disk_id')
-
+    # There is no need to drop tasks_smarttest_smarttest_disks indices explicitly as they will be
+    # dropped automatically when the table is dropped.
+    # https://sqlite.org/lang_droptable.html
     op.drop_table('tasks_smarttest_smarttest_disks')
     op.drop_table('services_smart')
     op.drop_table('tasks_smarttest')
