@@ -909,14 +909,19 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             (method_self := getattr(methodobj, "__self__", None))
             and methodobj.__name__ in {"create", "update", "delete"}
             and (do_method := getattr(method_self, f"do_{methodobj.__name__}", None))
+            and hasattr(do_method, "new_style_returns")
         ):
             # FIXME: Get rid of `create`/`do_create` duality
             methodobj = do_method
 
-        if new_style_returns_model is None:
-            new_style_returns_model = methodobj.new_style_returns
+        if hasattr(methodobj, "new_style_returns"):
+            # FIXME: When all models become new style, this should be passed explicitly
+            if new_style_returns_model is None:
+                new_style_returns_model = methodobj.new_style_returns
 
-        return serialize_result(new_style_returns_model, result, expose_secrets)
+            return serialize_result(new_style_returns_model, result, expose_secrets)
+
+        return result
 
     async def authorize_method_call(self, app, method_name, methodobj, params):
         if hasattr(methodobj, '_no_auth_required'):
