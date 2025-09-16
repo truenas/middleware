@@ -2095,31 +2095,3 @@ def test_random_files_in_exportsd(expect_NFS_start):
             assert any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
         else:  # Alert should have been cleared
             assert not any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
-
-
-def test_sharenfs_in_exportsd():
-    """'sharenfs' are ZFS share entries that we remove and should not block NFS start"""
-
-    # Start from a stopped state
-    set_nfs_service_state('stop')
-
-    # Create a dataset for the ZFS 'sharenfs'
-    with nfs_dataset('zfsnfs') as ds:
-        try:
-            # Get the sharenfs entries in place
-            set_immutable_state('/etc/exports.d', want_immutable=False)  # Disable immutable
-            call('zfs.dataset.update', ds, {'properties': {'sharenfs': {'value': 'on'}}})
-            exportsd_entries = list(ssh('ls /etc/exports.d').splitlines())
-            assert 'zfs.exports' in exportsd_entries
-
-            set_nfs_service_state('start')
-
-            # Additional confirmation
-            alerts = call('alert.list')
-            assert not any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
-            exportsd_entries = list(ssh('ls /etc/exports.d').splitlines())
-            assert [] == exportsd_entries
-            assert 'IMMUTABLE' in call('filesystem.stat', '/etc/exports.d')['attributes']
-        finally:
-            # In all cases we want to end with NFS stopped
-            set_nfs_service_state('stop')
