@@ -915,7 +915,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if new_style_returns_model is None and hasattr(methodobj, "new_style_returns"):
             # anything decorated with @api_method gets this attribute
-            return serialize_result(new_style_returns_model, result, expose_secrets)
+            return serialize_result(methodobj.new_style_returns, result, expose_secrets)
 
         return result
 
