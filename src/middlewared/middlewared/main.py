@@ -913,10 +913,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             # FIXME: Get rid of `create`/`do_create` duality
             methodobj = do_method
 
-        if new_style_returns_model is None:
-            new_style_returns_model = methodobj.new_style_returns
+        if new_style_returns_model is None and hasattr(methodobj, "new_style_returns"):
+            # anything decorated with @api_method gets this attribute
+            return serialize_result(new_style_returns_model, result, expose_secrets)
 
-        return serialize_result(new_style_returns_model, result, expose_secrets)
+        return result
 
     async def authorize_method_call(self, app, method_name, methodobj, params):
         if hasattr(methodobj, '_no_auth_required'):
