@@ -3,6 +3,8 @@
 
 import ctypes
 import enum
+import errno
+import grp
 import os
 import struct
 
@@ -29,6 +31,31 @@ __all__ = [
 
 libc = ctypes.CDLL('libc.so.6', use_errno=True)
 UTMP_LOCK = RLock()
+
+
+def __ensure_login_file(path: str) -> None:
+    # Ensure containing directory exists (e.g., /run or /var/log)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    fd = os.open(path, os.O_CREAT | os.O_APPEND, 0o664)
+    os.close(fd)
+
+    # Resolve utmp group if present; fall back to root
+    try:
+        gid = grp.getgrnam('utmp').gr_gid
+    except KeyError:
+        gid = 0
+
+    # chown root:utmp (or root:root) and set explicit perms
+    try:
+        os.chown(path, 0, gid)
+    except PermissionError:
+        pass
+
+    try:
+        os.chmod(path, 0o664)
+    except PermissionError:
+        pass
 
 
 class MiddlewareTTYName(enum.StrEnum):
@@ -190,7 +217,8 @@ def __pututline(entry: StructUtmp) -> None:
 
     res = func(ctypes.byref(entry))
     if not res:
-        raise RuntimeError(f'pututline() failed with error: {os.strerror(ctypes.get_errno())}')
+        err = ctypes.get_errno()
+        raise OSError(err, os.strerror(err))
 
     return ctypes.cast(res, ctypes.POINTER(StructUtmp))
 
@@ -321,6 +349,17 @@ def wtmp_query(filters: list | None = None, options: dict | None = None) -> list
 
 
 def __pututline_file(file: LoginFile, entry: StructUtmp) -> None:
+    try:
+        return __pututline_file_impl(file, entry)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            __endutent()
+            __ensure_login_file(str(file))
+            return __pututline_file_impl(file, entry)
+        raise
+
+
+def __pututline_file_impl(file: LoginFile, entry: StructUtmp) -> None:
     # WARNING: this assumes global lock (UTMP_LOCK) already held
     __utmpname(file)
     __setutent()
