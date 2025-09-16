@@ -1208,7 +1208,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         and can be browsed in the API documentation without having to inspect source code.
         """
         roles = roles or []
-        # self.events.register(name, description, private, models, no_auth_required, no_authz_required, roles)
+        self.events.register(name, description, private, models, no_auth_required, no_authz_required, roles)
 
     def send_event(self, name: str, event_type: EventType, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)
