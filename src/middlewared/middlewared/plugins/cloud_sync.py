@@ -1,3 +1,4 @@
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass,
 )
@@ -36,6 +37,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
+from middlewared.utils.crypto import ssl_random
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
@@ -43,12 +45,8 @@ from middlewared.utils.service.task_state import TaskStateMixin
 import aiorwlock
 import asyncio
 import base64
-import codecs
 from collections import namedtuple
 import configparser
-from Cryptodome import Random
-from Cryptodome.Cipher import AES
-from Cryptodome.Util import Counter
 import enum
 import json
 import logging
@@ -421,15 +419,21 @@ async def rclone_check_progress(job, proc):
 
 
 def rclone_encrypt_password(password):
+    """
+    Note: rclone uses aes-256-ctr with a hard-coded key to slightly obfuscate passwords in the configuration file. The
+    following is required by the application itself.
+    """
     key = bytes([0x9c, 0x93, 0x5b, 0x48, 0x73, 0x0a, 0x55, 0x4d,
                  0x6b, 0xfd, 0x7c, 0x63, 0xc8, 0x86, 0xa9, 0x2b,
                  0xd3, 0x90, 0x19, 0x8e, 0xb8, 0x12, 0x8a, 0xfb,
                  0xf4, 0xde, 0x16, 0x2b, 0x8b, 0x95, 0xf6, 0x38])
 
-    iv = Random.new().read(AES.block_size)
-    counter = Counter.new(128, initial_value=int(codecs.encode(iv, "hex"), 16))
-    cipher = AES.new(key, AES.MODE_CTR, counter=counter)
-    encrypted = iv + cipher.encrypt(password.encode("utf-8"))
+    aes = algorithms.AES256
+    iv = ssl_random(aes.block_size // 8)
+    counter = modes.CTR(iv)
+    cipher = Cipher(aes(key), counter)
+    encryptor = cipher.encryptor()
+    encrypted = iv + encryptor.update(password.encode("utf-8")) + encryptor.finalize()
     return base64.urlsafe_b64encode(encrypted).decode("ascii").rstrip("=")
 
 
