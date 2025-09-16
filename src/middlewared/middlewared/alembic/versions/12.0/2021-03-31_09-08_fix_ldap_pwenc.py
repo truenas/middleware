@@ -8,7 +8,7 @@ Create Date: 2021-03-31 09:08:41.264829+00:00
 from alembic import op
 import sqlalchemy as sa
 
-from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import encrypt, decrypt
 
 
 # revision identifiers, used by Alembic.

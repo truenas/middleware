@@ -9,7 +9,7 @@ import json
 
 from alembic import op
 
-from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import encrypt, decrypt
 
 
 revision = '0972c1f572b8'

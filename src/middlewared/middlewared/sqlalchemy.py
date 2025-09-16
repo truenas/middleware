@@ -11,7 +11,7 @@ from sqlalchemy.types import UserDefinedType, TypeDecorator
 
 from truenas_api_client import json
 
-from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import encrypt, decrypt
 
 
 class Base(object):

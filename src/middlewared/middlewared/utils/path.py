@@ -1,12 +1,8 @@
 # -*- coding=utf-8 -*-
-from contextlib import contextmanager
-import errno
 import enum
-import fcntl
 import logging
 import os
 from pathlib import Path
-import stat
 from typing import Iterable, TYPE_CHECKING
 
 from middlewared.utils.filesystem.constants import ZFSCTL
@@ -14,7 +10,7 @@ if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 
 
-__all__ = ["pathref_open", "pathref_reopen", "is_child", "is_child_realpath", "path_location"]
+__all__ = ["is_child", "is_child_realpath", "path_location"]
 
 logger = logging.getLogger(__name__)
 
@@ -80,92 +76,6 @@ def check_path_resides_within_volume_sync(
             "be accessed through the path-based API, then it should be called "
             "directly, e.g. '/mnt/dozer/.zfs/snapshot/mysnap'."
         )
-
-
-def pathref_reopen(fd_in: int, flags: int, *, close_fd: bool = False, mode: int = 0o777) -> int:
-    # use procfs to reopen a file with new flags
-    if fcntl.fcntl(fd_in, fcntl.F_GETFL) & os.O_PATH == 0:
-        raise ValueError('Not an O_PATH open')
-
-    pathref = f'/proc/self/fd/{fd_in}'
-    fd_out = os.open(pathref, flags, mode)
-    if close_fd:
-        os.close(fd_in)
-
-    return fd_out
-
-
-@contextmanager
-def pathref_open(
-    path: str,
-    *,
-    dir_fd: int | None = None,
-    additional_flags: int = 0,
-    expected_mode: int | None = None,
-    force: bool = False,
-    mkdir: bool = False,
-):
-    """Get O_PATH open for specified `path`.
-
-    :param dir_fd: Fileno for open of to use as dir_fd for open of path.
-
-    :param expected_mode: Expected permissions on open of `path`. If the `force` kwarg is also set then the file's
-        permissions will be changed to the specified value. Otherwise ValueError will be raised on permissions mismatch.
-
-    :param force: If path is a symbolic link, then the symlink will be removed and replaced with a directory. In case of
-        mismatch between expected_mode and stat() output, chmod(2) will be called.
-
-    :param mkdir: If `path` does not exist, then it will be created.
-
-    """
-    flags = os.O_PATH | os.O_NOFOLLOW | additional_flags
-    fd = -1
-
-    try:
-        fd = os.open(path, flags, dir_fd=dir_fd)
-    except FileNotFoundError:
-        if not mkdir:
-            raise
-
-        os.mkdir(path, expected_mode or 0o755, dir_fd=dir_fd)
-        fd = os.open(path, flags, dir_fd=dir_fd)
-    except OSError as e:
-        # open will fail with ELOOP if last component is symlink
-        # due to O_NOFOLLOW
-        if e.errno != errno.ELOOP or not force:
-            raise
-
-        os.unlink(path, dir_fd=dir_fd)
-        os.mkdir(path, expected_mode or 0o755, dir_fd=dir_fd)
-        fd = os.open(path, flags, dir_fd=dir_fd)
-
-    st = os.fstat(fd)
-
-    if not stat.S_ISDIR(st.st_mode):
-        os.close(fd)
-        raise NotADirectoryError(path)
-
-    if expected_mode and stat.S_IMODE(st.st_mode) != expected_mode:
-        if not force:
-            raise ValueError(
-                f'{stat.S_IMODE(st.st_mode)} does not match expected mode: '
-                f'{expected_mode}, and "force" was not specified.'
-            )
-
-        try:
-            tmp_fd = pathref_reopen(fd, os.O_DIRECTORY)
-            try:
-                os.fchmod(tmp_fd, expected_mode)
-            finally:
-                os.close(tmp_fd)
-        except Exception:
-            os.close(fd)
-            raise
-
-    try:
-        yield fd
-    finally:
-        os.close(fd)
 
 
 def is_child_realpath(child: str, parent: str) -> bool:

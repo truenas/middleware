@@ -9,7 +9,7 @@ import json
 
 from alembic import op
 
-from middlewared.plugins.pwenc import encrypt
+from middlewared.utils.pwenc import encrypt
 
 # revision identifiers, used by Alembic.
 revision = 'b5829f78cec3'

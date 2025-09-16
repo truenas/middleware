@@ -12,7 +12,7 @@ from string import ascii_letters, digits, punctuation
 
 from alembic import op
 
-from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.utils.pwenc import encrypt, decrypt
 
 
 revision = 'a4ce4939b908'

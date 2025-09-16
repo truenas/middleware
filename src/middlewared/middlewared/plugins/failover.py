@@ -54,6 +54,7 @@ from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.utils.contextlib import asyncnullcontext
+from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
@@ -376,7 +377,7 @@ class FailoverService(ConfigService):
 
         self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
-        self.send_small_file('/data/pwenc_secret')
+        self.send_small_file(PWENC_FILE_SECRET)
         self.send_small_file('/home/admin/.ssh/authorized_keys')
         self.send_small_file('/home/truenas_admin/.ssh/authorized_keys')
         self.send_small_file('/root/.ssh/authorized_keys')

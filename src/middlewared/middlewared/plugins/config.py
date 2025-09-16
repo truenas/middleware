@@ -14,9 +14,9 @@ from middlewared.api.current import (
     ConfigSaveArgs, ConfigSaveResult, ConfigUploadArgs, ConfigUploadResult, ConfigResetArgs, ConfigResetResult
 )
 from middlewared.service import CallError, Service, job, pass_app, private
-from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.privilege import credential_has_full_admin
+from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
