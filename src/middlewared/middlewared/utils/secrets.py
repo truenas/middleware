@@ -41,6 +41,7 @@ class SSLRandom(Random):
 
 _sslrand = SSLRandom()
 choice = _sslrand.choice
+randbits = _sslrand.getrandbits
 
 
 def token_bytes(nbytes=None):
