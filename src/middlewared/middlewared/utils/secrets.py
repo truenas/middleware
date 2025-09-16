@@ -1,5 +1,6 @@
 # Python secrets module equalivalent based on openssl RAND_bytes rather than os.urandom
 
+from base64 import urlsafe_b64encode
 from random import Random, RECIP_BPF
 from secrets import DEFAULT_ENTROPY
 from ssl import RAND_bytes
@@ -84,4 +85,4 @@ def token_urlsafe(nbytes=None):
 
     """
     tok = token_bytes(nbytes)
-    return base64.urlsafe_b64encode(tok).rstrip(b'=').decode('ascii')
+    return urlsafe_b64encode(tok).rstrip(b'=').decode('ascii')
