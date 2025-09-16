@@ -1,7 +1,6 @@
 import hashlib
 import os
 import pathlib
-import secrets
 import subprocess
 import uuid
 from collections import defaultdict
@@ -21,6 +20,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
+from middlewared.utils import secrets
 from middlewared.utils.size import format_size
 from .utils import sanitize_extent
 

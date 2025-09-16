@@ -1,4 +1,3 @@
-import secrets
 from functools import cache
 
 import middlewared.sqlalchemy as sa
@@ -11,6 +10,7 @@ from middlewared.api.current import (NVMetSubsysCreateArgs,
                                      NVMetSubsysUpdateArgs,
                                      NVMetSubsysUpdateResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
+from middlewared.utils import secrets
 from .mixin import NVMetStandbyMixin
 
 SERIAL_RETRIES = 10
