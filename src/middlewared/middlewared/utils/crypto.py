@@ -1,6 +1,7 @@
 from base64 import b64encode
 from hashlib import pbkdf2_hmac
-from secrets import choice, compare_digest, token_urlsafe, token_hex
+from hmac import compare_digest
+from .secrets import choice, token_urlsafe, token_hex
 from ssl import RAND_bytes
 from string import ascii_letters, digits, punctuation
 from uuid import UUID
