@@ -1,12 +1,12 @@
 from base64 import b64encode
 from hashlib import pbkdf2_hmac
 from hmac import compare_digest
-from .secrets import choice, token_urlsafe, token_hex
 from ssl import RAND_bytes
 from string import ascii_letters, digits, punctuation
 from uuid import UUID
 
 from cryptit import cryptit
+from middlewared.utils.secrets import choice, token_urlsafe, token_hex
 
 from samba.crypto import md4_hash_blob
 
