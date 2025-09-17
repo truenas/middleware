@@ -4,7 +4,6 @@
 import ctypes
 import enum
 import errno
-import grp
 import os
 import struct
 
@@ -19,6 +18,7 @@ from datetime import datetime, UTC
 from ipaddress import IPv4Address, IPv6Address
 from middlewared.utils import filter_list
 from middlewared.utils.auth import get_login_uid, AUID_UNSET, AUID_FAULTED
+from middlewared.utils.nss.grp import getgrnam
 from middlewared.utils.nss.pwd import getpwuid
 from socket import ntohl
 from threading import RLock  # Generally utmp operations are MT-UNSAFE and race prone
@@ -42,7 +42,7 @@ def __ensure_login_file(path: str) -> None:
 
     # Resolve utmp group if present; fall back to root
     try:
-        gid = grp.getgrnam('utmp').gr_gid
+        gid = getgrnam('utmp', as_dict=True)['gr_gid']
     except KeyError:
         gid = 0
 
