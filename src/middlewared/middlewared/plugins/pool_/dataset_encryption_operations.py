@@ -1,5 +1,3 @@
-import secrets
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetInsertOrUpdateEncryptedRecordArgs, PoolDatasetInsertOrUpdateEncryptedRecordResult,
@@ -7,6 +5,7 @@ from middlewared.api.current import (
     PoolDatasetInheritParentEncryptionPropertiesResult
 )
 from middlewared.service import CallError, job, private, Service, ValidationErrors
+from middlewared.utils import secrets
 
 from .utils import DATASET_DATABASE_MODEL_NAME, ZFSKeyFormat
 
