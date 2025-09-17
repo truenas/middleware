@@ -2,12 +2,12 @@
 import contextlib
 import logging
 import os
-import secrets
 import string
 import sys
 
 from dataclasses import dataclass
 from middlewared.test.integration.utils import call, fail
+from middlewared.utils import secrets
 
 __all__ = [
     'directoryservice', 'override_nameservers', 'get_nameservers', 'get_directory_services_account',
