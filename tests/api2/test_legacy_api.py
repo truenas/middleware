@@ -79,4 +79,34 @@ def test_query_method(legacy_api_client, query_method):
 
 
 def test_config_method(legacy_api_client, config_method):
+    version = legacy_api_client._ws.url.split("/")[-1].lstrip("v")
+    if config_method == "app.config":
+        # Not a ConfigService config method. Requires an argument.
+        return
+
+    # Methods that do not exist in 25.04
+    if (
+        version in {"25.04.0", "25.04.1", "25.04.2"}
+        and config_method in {
+            "audit.config",
+            "auth.twofactor.config",
+            "directoryservices.config",
+            "kerberos.config",
+            "kmip.config",
+            "mail.config",
+            "network.configuration.config",
+            "nvmet.global.config",
+            "replication.config.config",
+            "ssh.config",
+            "support.config",
+            "system.advanced.config",
+            "system.general.config",
+            "systemdataset.config",
+            "truecommand.config",
+            "update.config",
+            "ups.config",
+        }
+    ):
+        return
+
     legacy_api_client.call(config_method)
