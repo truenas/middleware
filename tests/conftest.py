@@ -74,17 +74,6 @@ def pytest_generate_tests(metafunc):
             ids=[f"legacy_api_client={version}" for version in versions],
         )
 
-    if "query_method" in metafunc.fixturenames:
-        with client() as c:
-            methods = [name for name in c.call("core.get_methods") if name.endswith(".query")]
-
-        metafunc.parametrize(
-            "query_method",
-            methods,
-            indirect=True,
-            ids=[f"query_method={method}" for method in methods],
-        )
-
 
 @pytest.fixture(scope="module")
 def legacy_api_client(request):
@@ -92,7 +81,17 @@ def legacy_api_client(request):
         yield c
 
 
-@pytest.fixture
+def _get_methods(name: str | None = None):
+    with client() as c:
+        methods = c.call("core.get_methods")
+
+    if name:
+        return filter(lambda m: m.endswith(f".{name}"), methods)
+
+    return methods
+
+
+@pytest.fixture(params=_get_methods("query"), ids=lambda m: f"query_method={m}")
 def query_method(request):
     yield request.param
 
