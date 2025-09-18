@@ -202,7 +202,6 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         )
 
     def _model_dump_fallback(self, context, value):
-        # FIXME: This does not work any more in pydantic 2.10
         if isinstance(value, Secret):
             if context["expose_secrets"]:
                 value = value.get_secret_value()

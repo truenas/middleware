@@ -55,17 +55,6 @@ def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
     }
 
 
-def _reveal_secrets(v):
-    if hasattr(v, "get_secret_value"):
-        return v.get_secret_value()
-    if isinstance(v, dict):
-        return {k: _reveal_secrets(x) for k, x in v.items()}
-    if isinstance(v, (list, tuple, set)):
-        t = type(v)
-        return t(_reveal_secrets(x) for x in v)
-    return v
-
-
 def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, expose_secrets=True) -> dict:
     """
     Validates `data` against the `model`, sanitizes values, sets defaults.
@@ -94,11 +83,9 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
 
         raise verrors from None
 
-    data = instance.model_dump(
+    return instance.model_dump(
         context={"expose_secrets": expose_secrets},
         exclude_unset=exclude_unset,
         warnings=False,
         by_alias=True,
-        serialize_as_any=True
     )
-    return _reveal_secrets(data) if expose_secrets else data
