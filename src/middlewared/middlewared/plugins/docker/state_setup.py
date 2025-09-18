@@ -7,6 +7,7 @@ from datetime import datetime
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils.interface import wait_for_default_interface_link_state_up
+from middlewared.plugins.pool_.utils import CreateImplArgs
 
 from .state_utils import (
     DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, missing_required_datasets,
@@ -107,11 +108,14 @@ class DockerSetupService(Service):
                     )
             else:
                 self.move_conflicting_dir(dataset_name)
-                self.middleware.call_sync('zfs.dataset.create', {
-                    'name': dataset_name, 'type': 'FILESYSTEM', 'properties': DatasetDefaults.create_time_props(
-                        os.path.basename(dataset_name)
-                    ),
-                })
+                self.middleware.call_sync(
+                    'pool.dataset.create_impl',
+                    CreateImplArgs(
+                        name=dataset_name,
+                        ztype='FILESYSTEM',
+                        zprops=DatasetDefaults.create_time_props(os.path.basename(dataset_name))
+                    )
+                )
 
     @private
     async def create_update_docker_datasets(self, docker_ds):
