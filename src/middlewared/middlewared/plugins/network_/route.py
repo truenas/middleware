@@ -39,9 +39,9 @@ class RouteService(Service):
     async def sync(self):
         config = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
 
-        # Generate dhclient.conf so we can ignore routes (def gw) option
+        # Generate dhcpcd.conf so we can ignore routes (def gw) option
         # in case there is one explicitly set in network config
-        await self.middleware.call('etc.generate', 'dhclient')
+        await self.middleware.call('etc.generate', 'dhcpcd')
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:
@@ -83,12 +83,12 @@ class RouteService(Service):
                     #   3. route.sync() gets called which eventually
                     #       calls dhclient_leases which reads a file on
                     #       disk to see if we have any previously
-                    #       defined default gateways from dhclient.
+                    #       defined default gateways from DHCP.
                     #       However, by the time we read this file,
-                    #       dhclient could still be requesting an
+                    #       DHCP could still be requesting an
                     #       address from the DHCP server
                     #   4. so when we try to install our own default
-                    #       gateway manually (even though dhclient will
+                    #       gateway manually (even though DHCP will
                     #       do this for us) it will fail expectedly here.
                     # Either way, let's log the error.
                     gw = ipv4_gateway.asdict()['gateway']

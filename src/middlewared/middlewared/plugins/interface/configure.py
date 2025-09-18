@@ -1,6 +1,4 @@
 import ipaddress
-import os
-import signal
 import re
 
 from .netif import netif
@@ -35,9 +33,9 @@ class InterfaceService(Service):
         addrs_database = set()
         dhclient_run, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
         if dhclient_run and not data['int_dhcp']:
-            # dhclient is running on the interface but is marked to not have dhcp configure the interface
-            self.logger.debug('Killing dhclient for %r', name)
-            os.kill(dhclient_pid, signal.SIGTERM)
+            # DHCP is running on the interface but is marked to not have dhcp configure the interface
+            self.logger.debug('Stopping DHCP for %r', name)
+            self.middleware.call_sync('interface.dhcp_stop', name)
         elif dhclient_run and data['int_dhcp'] and (i := self.middleware.call_sync('interface.dhclient_leases', name)):
             # dhclient is running on the interface and is marked for dhcp AND we have a lease file for it
             _addr = re.search(r'fixed-address\s+(.+);', i)
@@ -141,9 +139,10 @@ class InterfaceService(Service):
         iface.flush()
 
         dhclient_running, dhclient_pid = self.middleware.call_sync('interface.dhclient_status', name)
-        # Kill dhclient if its running for this interface
+        # Stop DHCP if it's running for this interface
         if dhclient_running:
-            os.kill(dhclient_pid, signal.SIGTERM)
+            # Use dhcp_stop for proper cleanup with dhcpcd
+            self.middleware.call_sync('interface.dhcp_stop', name)
 
         # If we have bridge/vlan/lagg not in the database at all
         # it gets destroy, otherwise just bring it down.
