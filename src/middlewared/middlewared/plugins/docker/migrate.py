@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 from middlewared.service import CallError, private, Service
+from middlewared.plugins.pool_.utils import CreateImplArgs
 
 from .state_utils import DatasetDefaults, Status
 from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
@@ -25,12 +26,15 @@ class DockerService(Service):
 
         try:
             job.set_progress(40, f'Replicating datasets from {old_config["pool"]!r} to {new_pool!r} pool')
-            await self.middleware.call('zfs.dataset.create', {
-                'name': applications_ds_name(config['pool']), 'type': 'FILESYSTEM',
-                'properties': DatasetDefaults.create_time_props(
-                    os.path.basename(applications_ds_name(config['pool']))
-                ),
-            })
+            dsname = applications_ds_name(config['pool'])
+            await self.middleware.call(
+                'pool.dataset.create_impl',
+                CreateImplArgs(
+                    name=dsname,
+                    ztype='FILESYSTEM',
+                    zprops=DatasetDefaults.create_time_props(os.path.basename(dsname))
+                )
+            )
             await (await self.middleware.call('docker.fs_manage.umount')).wait()
 
             await self.replicate_apps_dataset(new_pool, old_config['pool'], migration_options)
