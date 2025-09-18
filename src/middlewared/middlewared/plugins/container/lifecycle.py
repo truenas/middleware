@@ -1,3 +1,5 @@
+import errno
+
 from truenas_pylibvirt import (
     ContainerCapabilitiesPolicy, ContainerDomain, ContainerDomainConfiguration, ContainerIdmapConfiguration,
     ContainerIdmapConfigurationItem, NICDevice, NICDeviceType, Time,
@@ -8,7 +10,8 @@ from middlewared.api.current import (
     ContainerStartArgs, ContainerStartResult,
     ContainerStopArgs, ContainerStopResult,
 )
-from middlewared.service import private, Service
+from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
+from middlewared.service import CallError, private, Service
 
 
 class ContainerService(Service):
@@ -43,7 +46,15 @@ class ContainerService(Service):
         container = container.copy()
         container.pop("id", None)
         container.pop("status", None)
-        container["root"] = f"/mnt/{container.pop('dataset')}"
+
+        dataset = container.pop("dataset")
+        datasets = self.middleware.call_sync(
+            'zfs.resource.query_impl', {'paths': [dataset], 'properties': ['mountpoint']}
+        )
+        if not datasets:
+            raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
+
+        container["root"] = datasets[0]["properties"]["mountpoint"]["value"]
         container["time"] = Time(container["time"])
         container["devices"] = [
             NICDevice(
@@ -56,10 +67,15 @@ class ContainerService(Service):
         ]
 
         if container["idmap"]:
-            container["idmap"] = ContainerIdmapConfiguration(
-                uid=ContainerIdmapConfigurationItem(**container["idmap"]["uid"]),
-                gid=ContainerIdmapConfigurationItem(**container["idmap"]["gid"]),
-            )
+            if container["idmap"] == "DEFAULT":
+                item = ContainerIdmapConfigurationItem(
+                    target=CONTAINER_ROOT_UID,
+                    count=65536,
+                )
+            else:
+                item = ContainerIdmapConfigurationItem(**container["idmap"])
+
+            container["idmap"] = ContainerIdmapConfiguration(uid=item, gid=item)
 
         if container["capabilities_policy"]:
             container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]

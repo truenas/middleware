@@ -86,18 +86,19 @@ def container(image, options=None, start=False, startup_script=None):
     }, job=True)
     try:
         dataset = container["dataset"]
+        mountpoint = call("pool.dataset.get_instance", dataset)["mountpoint"]
         if startup_script is not None:
-            ssh(f"mkdir -p /mnt/{dataset}/var/spool/cron/crontabs")
+            ssh(f"mkdir -p {mountpoint}/var/spool/cron/crontabs")
 
             call(
                 "filesystem.file_receive",
-                f"/mnt/{dataset}/var/spool/cron/crontabs/root",
+                f"{mountpoint}/var/spool/cron/crontabs/root",
                 base64.b64encode(b"@reboot /script-wrapper.sh\n").decode("ascii"),
                 {"mode": 0o600},
             )
             call(
                 "filesystem.file_receive",
-                f"/mnt/{dataset}/script-wrapper.sh",
+                f"{mountpoint}/script-wrapper.sh",
                 base64.b64encode(textwrap.dedent("""\
                     #!/bin/sh
                     /script.sh > /.log 2>&1
@@ -107,7 +108,7 @@ def container(image, options=None, start=False, startup_script=None):
             )
             call(
                 "filesystem.file_receive",
-                f"/mnt/{dataset}/script.sh",
+                f"{mountpoint}/script.sh",
                 base64.b64encode(startup_script.encode("ascii")).decode("ascii"),
                 {"mode": 0o755},
             )
@@ -190,7 +191,8 @@ def test_container_stop_force_after_timeout(ubuntu_container):
 
 
 def test_container_shell(started_ubuntu_container):
-    ssh(f"touch /mnt/{started_ubuntu_container['dataset']}/mnt/canary")
+    mountpoint = call("pool.dataset.get_instance", started_ubuntu_container["dataset"])["mountpoint"]
+    ssh(f"touch {mountpoint}/mnt/canary")
     token = call("auth.generate_token", 300, {}, False)
     ws = websocket.create_connection(websocket_url() + "/websocket/shell")
     try:
@@ -217,24 +219,25 @@ def test_container_shell(started_ubuntu_container):
         ws.close()
 
 
-def test_idmap(ubuntu_image):
+@pytest.mark.parametrize("target,config", [
+    (0, None),
+    (2147000001, "DEFAULT"),
+    (2147000002, {"target": 2147000002, "count": 10}),
+])
+def test_idmap(ubuntu_image, target, config):
     with container(ubuntu_image, {
-        "idmap": {
-            "uid": {
-                "target": 5000,
-                "count": 10,
-            },
-            "gid": {
-                "target": 6000,
-                "count": 10,
-            },
-        },
+        "idmap": config,
     }, True) as c:
-        assert ssh(f"ps -p {c['status']['pid']} -o uid,gid --no-headers").strip().split() == ["5000", "6000"]
+        assert ssh(f"ps -p {c['status']['pid']} -o uid,gid --no-headers").strip().split() == [
+            str(target), str(target),
+        ]
 
-        ssh(f"mkdir -m 777 /mnt/{c['dataset']}/playground")
+        mountpoint = call("pool.dataset.get_instance", c["dataset"])["mountpoint"]
+        ssh(f"mkdir -m 777 {mountpoint}/playground")
         ssh(nsenter(c, "touch /playground/canary"))
-        assert ssh(f"stat -c '%u %g' /mnt/{c['dataset']}/playground/canary").strip().split() == ["5000", "6000"]
+        assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == [
+            str(target), str(target),
+        ]
 
 
 @pytest.mark.parametrize("configuration,has", [

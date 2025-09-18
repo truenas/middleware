@@ -1,8 +1,8 @@
-"""Container
+"""Containers
 
-Revision ID: bdddec2904bf
+Revision ID: 1e0e2e848857
 Revises: 94d4fd77c063
-Create Date: 2025-07-30 14:14:01.231473+00:00
+Create Date: 2025-09-18 13:58:32.518922+00:00
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'bdddec2904bf'
+revision = '1e0e2e848857'
 down_revision = '94d4fd77c063'
 branch_labels = None
 depends_on = None
@@ -21,8 +21,8 @@ def upgrade():
     op.create_table('container_config',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bridge', sa.Text(), nullable=True),
-    sa.Column('v4_network', sa.Text(), nullable=True),
-    sa.Column('v6_network', sa.Text(), nullable=True),
+    sa.Column('v4_network', sa.String(), nullable=True),
+    sa.Column('v6_network', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_container_config')),
     sqlite_autoincrement=True
     )
@@ -45,10 +45,9 @@ def upgrade():
     sa.Column('initenv', sa.TEXT(), nullable=False),
     sa.Column('inituser', sa.Text(), nullable=True),
     sa.Column('initgroup', sa.Text(), nullable=True),
-    sa.Column('idmap_uid_target', sa.Integer(), nullable=True),
-    sa.Column('idmap_uid_count', sa.Integer(), nullable=True),
-    sa.Column('idmap_gid_target', sa.Integer(), nullable=True),
-    sa.Column('idmap_gid_count', sa.Integer(), nullable=True),
+    sa.Column('idmap', sa.Text(), nullable=True),
+    sa.Column('idmap_target', sa.Integer(), nullable=True),
+    sa.Column('idmap_count', sa.Integer(), nullable=True),
     sa.Column('capabilities_policy', sa.Text(), nullable=False),
     sa.Column('capabilities_state', sa.TEXT(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_container_container')),
