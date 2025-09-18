@@ -16,7 +16,11 @@ get_or_insert_lock = asyncio.Lock()
 
 
 def config_args(entry: type[BaseModel]) -> type[BaseModel]:
-    return create_model(entry.__name__.removesuffix("Entry") + 'ConfigArgs', __base__=(BaseModel,))
+    return create_model(
+        entry.__name__.removesuffix("Entry") + 'ConfigArgs',
+        __base__=(BaseModel,),
+        __module__=entry.__module__,
+    )
 
 
 def config_result(entry: type[BaseModel]) -> type[BaseModel]:
