@@ -59,6 +59,18 @@ class CreateImplArgs:
     """Create ancestors for the zfs resource being created."""
 
 
+@dataclasses.dataclass(slots=True, kw_only=True)
+class UpdateImplArgs:
+    name: str
+    """The name of the resource being created."""
+    zprops: dict[str, str] = dataclasses.field(default_factory=dict)
+    """ZFS data properties to be applied during creation."""
+    uprops: dict[str, str] = dataclasses.field(default_factory=dict)
+    """ZFS user properties to be applied during creation."""
+    iprops: set = dataclasses.field(default_factory=set)
+    """ZFS properties to be inherited from parent."""
+
+
 def none_normalize(x):
     if x in (0, None):
         return 'none'

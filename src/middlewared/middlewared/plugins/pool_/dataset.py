@@ -23,17 +23,16 @@ from .utils import (
     CreateImplArgs,
     dataset_mountpoint,
     get_dataset_parents,
-    get_props_of_interest_mapping,
     POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
-    TNUserProp,
+    UpdateImplArgs,
     ZFSKeyFormat,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES
 )
 try:
-    from truenas_pylibzfs import ZFSError, ZFSException, ZFSProperty, ZFSType
+    from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
 except ImportError:
-    ZFSError = ZFSException = ZFSProperty = ZFSType = None
+    ZFSError = ZFSException = ZFSType = None
 
 
 class PoolDatasetEncryptionModel(sa.Model):
@@ -72,52 +71,6 @@ class PoolDatasetService(CRUDService):
                 }
             }
         )
-
-    def _internal_user_props(self):
-        return TNUserProp.values()
-
-    def __transform(self, datasets, retrieve_children, children_filters, retrieve_user_props):
-        """
-        We need to transform the data zfs gives us to make it consistent/user-friendly,
-        making it match whatever pool.dataset.{create,update} uses as input.
-        """
-
-        def transform(dataset):
-            for orig_name, new_name, method in get_props_of_interest_mapping():
-                if orig_name not in dataset['properties']:
-                    continue
-                i = new_name or orig_name
-                dataset[i] = dataset['properties'][orig_name]
-                if method:
-                    dataset[i]['value'] = method(dataset[i]['value'])
-
-            if 'mountpoint' in dataset:
-                # This is treated specially to keep backwards compatibility with API
-                dataset['mountpoint'] = dataset['mountpoint']['value']
-            if dataset['type'] == 'VOLUME':
-                dataset['mountpoint'] = None
-
-            if retrieve_user_props:
-                dataset['user_properties'] = {
-                    k: v for k, v in dataset['properties'].items() if ':' in k and k not in self._internal_user_props()
-                }
-            del dataset['properties']
-
-            if all(k in dataset for k in ('encrypted', 'key_loaded')):
-                dataset['locked'] = dataset['encrypted'] and not dataset['key_loaded']
-
-            if retrieve_children:
-                rv = []
-                for child in filter_list(dataset['children'], children_filters):
-                    rv.append(transform(child))
-                dataset['children'] = rv
-
-            return dataset
-
-        rv = []
-        for dataset in datasets:
-            rv.append(transform(dataset))
-        return rv
 
     @private
     async def internal_datasets_filters(self):
@@ -705,20 +658,13 @@ class PoolDatasetService(CRUDService):
 
     @private
     @pass_thread_local_storage
-    def update_impl(self, tls, name, zprops, uprops, iprops):
-        _zprops = dict()
-        for prop, value in zprops.items():
-            try:
-                _zprops[ZFSProperty[prop.upper()]] = value
-            except KeyError:
-                raise ValidationError("pool.dataset.update", f"Invalid property {prop} specified ({value})")
-
-        ds = tls.lzh.open_resource(name=name)
-        if _zprops:
-            ds.set_properties(properties=_zprops)
-        if uprops:
-            ds.set_user_properties(user_properties=uprops)
-        for i in iprops:
+    def update_impl(self, tls, data: UpdateImplArgs):
+        ds = tls.lzh.open_resource(name=data.name)
+        if data.zprops:
+            ds.set_properties(properties=data.zprops)
+        if data.uprops:
+            ds.set_user_properties(user_properties=data.uprops)
+        for i in data.iprops:
             ds.inherit_property(property=i)
 
     @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)
@@ -775,17 +721,15 @@ class PoolDatasetService(CRUDService):
 
         verrors.check()
 
-        zprops = {}
-        inherit_props = set()
-        user_props = {}
+        uia: UpdateImplArgs = UpdateImplArgs(name=id_)
         for prop in POOL_DS_UPDATE_PROPERTIES:
             if prop.api_name not in data:
                 continue
             if prop.inheritable and data[prop.api_name] == 'INHERIT':
-                inherit_props.add(prop.real_name)
+                uia.iprops.add(prop.real_name)
                 if prop.real_name == 'acltype':
-                    inherit_props.add('aclmode')
-                    inherit_props.add('aclinherit')
+                    uia.iprops.add('aclmode')
+                    uia.iprops.add('aclinherit')
             else:
                 if not prop.transform:
                     transformed = data[prop.api_name]
@@ -793,24 +737,24 @@ class PoolDatasetService(CRUDService):
                     transformed = prop.transform(data[prop.api_name])
 
                 if prop.is_user_prop:
-                    user_props[prop.real_name] = transformed
+                    uia.uprops[prop.real_name] = transformed
                 else:
-                    zprops[prop.real_name] = transformed
+                    uia.zprops[prop.real_name] = transformed
 
                 if prop.real_name == 'acltype':
-                    if zprops[prop.real_name] == 'nfsv4':
-                        zprops.update({'aclinherit': 'passthrough'})
-                    elif zprops[prop.real_name] in ('posix', 'off'):
-                        zprops.update({'aclmode': 'discard', 'aclinherit': 'discard'})
+                    if uia.zprops[prop.real_name] == 'nfsv4':
+                        uia.zprops.update({'aclinherit': 'passthrough'})
+                    elif uia.zprops[prop.real_name] in ('posix', 'off'):
+                        uia.zprops.update({'aclmode': 'discard', 'aclinherit': 'discard'})
 
         for up in data.get('user_properties_update', []):
             if 'value' in up:
-                user_props[up['key']] = up['value']
+                uia.uprops[up['key']] = up['value']
             elif up.get('remove'):
-                inherit_props.add(up['key'])
+                uia.iprops.add(up['key'])
 
         try:
-            await self.middleware.call('pool.dataset.update_impl', id_, zprops, user_props, inherit_props)
+            await self.middleware.call('pool.dataset.update_impl', uia)
         except ZFSException as e:
             raise ValidationError("pool.dataset.update", f"Failed to update properties: {e}")
         except Exception as e:
