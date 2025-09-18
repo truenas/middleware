@@ -32,6 +32,14 @@ def pwenc_get_ctx():
     return pwenc_data['secret_ctx']
 
 
+def pwenc_reset_cache():
+    """ Clear reference to pwenc secret allowing reopen with possibly different
+    contents. This is primarily used by the remote node in HA after syncing to
+    peer. """
+    with pwenc_data['lock']:
+        pwenc_data['secret_ctx'] = None
+
+
 def pwenc_encrypt(data_in: bytes) -> bytes:
     """ Encrypt and base64 encode the input bytes """
     ctx = pwenc_get_ctx()
