@@ -36,7 +36,7 @@ def pwenc_reset_cache():
     """ Clear reference to pwenc secret allowing reopen with possibly different
     contents. This is primarily used by the remote node in HA after syncing to
     peer. """
-    with pewnc_data['lock']:
+    with pwenc_data['lock']:
         pwenc_data['secret_ctx'] = None
 
 
