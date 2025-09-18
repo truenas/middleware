@@ -33,8 +33,7 @@ class AppSchemaActions(Service):
                     zprops=user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
                 )
             )
-            # TODO: why mount? creating mounts by default so this isn't needed
-            # await self.middleware.call('zfs.dataset.mount', create_ds)
+            await self.middleware.call('zfs.dataset.mount', create_ds)
 
     async def apply_acls(self, acls_to_apply):
         bulk_job = await self.middleware.call(
