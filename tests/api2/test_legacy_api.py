@@ -1,3 +1,39 @@
+import pytest
+
+from middlewared.test.integration.utils import client, session, url
+
+
+def get_api_versions():
+    with session() as s:
+        return s.get(f"{url()}/api/versions").json()
+
+
+@pytest.fixture(scope="module", params=get_api_versions(), ids=lambda v: f"legacy_api_client={v}")
+def legacy_api_client(request):
+    with client(version=request.param) as c:
+        yield c
+
+
+def get_methods(name: str | None = None):
+    with client() as c:
+        methods = c.call("core.get_methods")
+
+    if name:
+        return filter(lambda m: m.endswith(f".{name}"), methods)
+
+    return methods
+
+
+@pytest.fixture(scope="module", params=get_methods("query"), ids=lambda m: f"query_method={m}")
+def query_method(request):
+    yield request.param
+
+
+@pytest.fixture(scope="module", params=get_methods("config"), ids=lambda m: f"config_method={m}")
+def config_method(request):
+    yield request.param
+
+
 def test_query_method(legacy_api_client, query_method):
     version = legacy_api_client._ws.url.split("/")[-1].lstrip("v")
     # Methods that do not exist in the previous API versions
@@ -40,3 +76,7 @@ def test_query_method(legacy_api_client, query_method):
         return
 
     legacy_api_client.call(query_method)
+
+
+def test_config_method(legacy_api_client, config_method):
+    legacy_api_client.call(config_method)

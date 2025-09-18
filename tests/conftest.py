@@ -2,7 +2,6 @@ import os
 import pytest
 
 from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
-from middlewared.test.integration.utils import client, session, url
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.pytest import failed
 
@@ -60,40 +59,6 @@ def mock_role():
     if not STIG_ENABLED:
         truenas_server.client.call("test.add_mock_role")
     yield
-
-
-def pytest_generate_tests(metafunc):
-    if "legacy_api_client" in metafunc.fixturenames:
-        with session() as s:
-            versions = s.get(f"{url()}/api/versions").json()
-
-        metafunc.parametrize(
-            "legacy_api_client",
-            versions,
-            indirect=True,
-            ids=[f"legacy_api_client={version}" for version in versions],
-        )
-
-
-@pytest.fixture(scope="module")
-def legacy_api_client(request):
-    with client(version=request.param) as c:
-        yield c
-
-
-def _get_methods(name: str | None = None):
-    with client() as c:
-        methods = c.call("core.get_methods")
-
-    if name:
-        return filter(lambda m: m.endswith(f".{name}"), methods)
-
-    return methods
-
-
-@pytest.fixture(params=_get_methods("query"), ids=lambda m: f"query_method={m}")
-def query_method(request):
-    yield request.param
 
 
 @pytest.fixture(scope="module")
