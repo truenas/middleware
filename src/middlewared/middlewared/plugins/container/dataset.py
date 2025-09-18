@@ -1,3 +1,5 @@
+import os
+
 from middlewared.service import CallError, private, Service
 
 REGISTRY_URL = "http://pivnoy.thelogin.ru"
@@ -44,6 +46,9 @@ class ContainerService(Service):
                 },
             )
 
+        if not os.path.exists(main_dataset_mountpoint):
+            await self.middleware.call('zfs.dataset.mount', main_dataset)
+
         for dataset in datasets:
             if dataset not in existing_datasets:
                 await self.middleware.call(
@@ -53,3 +58,5 @@ class ContainerService(Service):
                         'type': 'FILESYSTEM',
                     },
                 )
+
+            await self.middleware.call('zfs.dataset.mount', dataset)

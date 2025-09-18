@@ -10,7 +10,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.network import INTERNET_TIMEOUT
 
-REGISTRY_URL = "http://pivnoy.thelogin.ru"
+REGISTRY_URL = "https://images.sys.truenas.net/streams"
 
 
 class ContainerImageService(Service):
@@ -62,6 +62,7 @@ class ContainerImageService(Service):
                 # Image dataset already exists, no action needed.
                 return snapshot_name
 
+        self.middleware.call_sync('container.ensure_datasets', pool)
         mountpoint = self.middleware.call_sync(
             'pool.dataset.create',
             {'name': dataset_name, 'create_ancestors': True},

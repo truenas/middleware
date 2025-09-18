@@ -12,6 +12,7 @@ from middlewared.api.current import (
     ContainerUpdateArgs, ContainerUpdateResult,
     ContainerDeleteArgs, ContainerDeleteResult,
 )
+from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -40,10 +41,9 @@ class ContainerModel(sa.Model):
     initenv = sa.Column(sa.JSON(dict))
     inituser = sa.Column(sa.Text(), nullable=True)
     initgroup = sa.Column(sa.Text(), nullable=True)
-    idmap_uid_target = sa.Column(sa.Integer(), nullable=True)
-    idmap_uid_count = sa.Column(sa.Integer(), nullable=True)
-    idmap_gid_target = sa.Column(sa.Integer(), nullable=True)
-    idmap_gid_count = sa.Column(sa.Integer(), nullable=True)
+    idmap = sa.Column(sa.Text(), nullable=True)
+    idmap_target = sa.Column(sa.Integer(), nullable=True)
+    idmap_count = sa.Column(sa.Integer(), nullable=True)
     capabilities_policy = sa.Column(sa.Text())
     capabilities_state = sa.Column(sa.JSON(dict))
 
@@ -120,35 +120,26 @@ class ContainerService(CRUDService):
 
     @private
     def extend_container(self, container):
-        if container['idmap_uid_target'] is not None:
+        if container['idmap'] == 'ISOLATED':
             container['idmap'] = {
-                'uid': {'target': container['idmap_uid_target'], 'count': container['idmap_uid_count']},
-                'gid': {'target': container['idmap_gid_target'], 'count': container['idmap_gid_count']},
+                'target': container['idmap_target'],
+                'count': container['idmap_count'],
             }
-        else:
-            container['idmap'] = None
 
-        del container['idmap_uid_target']
-        del container['idmap_uid_count']
-        del container['idmap_gid_target']
-        del container['idmap_gid_count']
+        del container['idmap_target']
+        del container['idmap_count']
 
         return container
 
     @private
     def compress(self, container):
-        if container['idmap']:
-            container['idmap_uid_target'] = container['idmap']['uid']['target']
-            container['idmap_uid_count'] = container['idmap']['uid']['count']
-            container['idmap_gid_target'] = container['idmap']['gid']['target']
-            container['idmap_gid_count'] = container['idmap']['gid']['count']
+        if isinstance(container['idmap'], dict):
+            container['idmap_target'] = container['idmap']['target']
+            container['idmap_count'] = container['idmap']['count']
+            container['idmap'] = 'ISOLATED'
         else:
-            container['idmap_uid_target'] = None
-            container['idmap_uid_count'] = None
-            container['idmap_gid_target'] = None
-            container['idmap_gid_count'] = None
-
-        del container['idmap']
+            container['idmap_target'] = None
+            container['idmap_count'] = None
 
     @private
     async def validate(self, verrors, schema_name, data, old=None):
@@ -169,6 +160,13 @@ class ContainerService(CRUDService):
                 f'{schema_name}.name',
                 'Only alphanumeric characters are allowed.'
             )
+
+        if isinstance(data['idmap'], dict):
+            if data['idmap']['target'] < CONTAINER_ROOT_UID:
+                verrors.add(
+                    f'{schema_name}.idmap.target',
+                    f'Cannot be less than {CONTAINER_ROOT_UID}.'
+                )
 
     @api_method(ContainerCreateArgs, ContainerCreateResult)
     @job(lock=lambda args: f'container_create:{args[0].get("name")}')
@@ -192,21 +190,11 @@ class ContainerService(CRUDService):
             verrors.add_child('container_create.image', image_verrors)
             verrors.check()
 
+        await self.middleware.call('container.ensure_datasets', pool)
         data['dataset'] = f'{pool}/.truenas_containers/containers/{data["name"]}'
 
-        # Create dataset parent
-        dataset_parent = data['dataset'].rsplit('/', 1)[0]
-        if not await self.middleware.call(
-            'zfs.resource.query_impl',
-            {'paths': [dataset_parent], 'properties': None}
-        ):
-            await self.middleware.call(
-                'pool.dataset.create',
-                {'name': dataset_parent, 'create_ancestors': True},
-            )
-
         # Populate dataset
-        if dataset_parent.split('/')[0] == image_snapshot.split('@')[0].split('/')[0]:  # noqa
+        if pool == image_snapshot.split('@')[0].split('/')[0]:  # noqa
             # The container is in the same pool as images. We can just clone the image.
             await self.middleware.call("pool.snapshot.clone", {
                 "snapshot": image_snapshot,  # noqa

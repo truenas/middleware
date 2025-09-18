@@ -18,18 +18,11 @@ __all__ = [
 ]
 
 
-class IdmapConfigurationItem(BaseModel):
+class IdmapConfiguration(BaseModel):
     target: PositiveInt
     """UID/GID 0 in container will be mapped to this target UID/GID in host."""
     count: PositiveInt
     """How many users/groups in container are allowed to map to host"s user/group."""
-
-
-class IdmapConfiguration(BaseModel):
-    uid: IdmapConfigurationItem
-    """UID mapping configuration."""
-    gid: IdmapConfigurationItem
-    """GID mapping configuration."""
 
 
 class ContainerStatus(BaseModel):
@@ -78,11 +71,24 @@ class ContainerEntry(BaseModel):
     """"init" process username."""
     initgroup: str | None = None
     """"init" process group."""
-    idmap: IdmapConfiguration | None = None
-    """ID mapping configuration."""
+    idmap: IdmapConfiguration | Literal["DEFAULT"] | None = "DEFAULT"
+    """Idmap configuration for the container\
+    \
+    There are two possible values:\
+    \
+    DEFAULT: This applies the standard TrueNAS idmap namespace configuration.\
+    It changes user ID (UID) 0 (root) in the container to UID 2147000001 (truenas_container_unpriv_root).\
+    It offsets the other container UIDs by the same amount.\
+    For example, UID 1000 in the container becomes UID 2147001001 in the host.\
+    \
+    None: The container does not apply any idmap namespace.\
+    Container UIDs map directly to host UIDs.\
+    For example, UID 0 in the container is UID 0 in the host.\
+    \
+    WARNING: For security, use the DEFAULT value. Security best practice is to run containers with idmap namespaces."""
     capabilities_policy: Literal["DEFAULT", "ALLOW", "DENY"] = "DEFAULT"
-    """Default rules for capabilities: either keep the default behavior that is dropping a few selected capabilities,
-    or keep all capabilities or drop all capabilities. """
+    """Default rules for capabilities: either keep the default behavior that is dropping the following capabilities:\
+    sys_module, sys_time, mknod, audit_control, mac_admin. Or keep all capabilities, or drop all capabilities."""
     capabilities_state: dict[str, bool] = {}
     """Enable or disable specific capabilities."""
     status: ContainerStatus
@@ -119,6 +125,7 @@ class ContainerCreateResult(BaseModel):
 class ContainerUpdate(ContainerCreate, metaclass=ForUpdateMetaclass):
     pool: Excluded = excluded_field()
     image: Excluded = excluded_field()
+    idmap: Excluded = excluded_field()
 
 
 class ContainerUpdateArgs(BaseModel):
