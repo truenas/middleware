@@ -29,7 +29,7 @@ from middlewared.api.current import (
     FileFollowTailEventSourceArgs, FileFollowTailEventSourceEvent,
 )
 from middlewared.event import EventSource
-from middlewared.utils.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
+from middlewared.utils.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE, pwenc_reset_cache
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import private, CallError, filterable_api_method, Service, job
@@ -524,7 +524,7 @@ class FilesystemService(Service):
                 os.fchown(f.fileno(), options.get('uid', -1), options.get('gid', -1))
 
         if path == PWENC_FILE_SECRET:
-            self.middleware.call_sync('pwenc.reset_secret_cache')
+            pwenc_reset_cache()
 
         return True
 
