@@ -46,7 +46,7 @@ class UpdateService(Service):
                 if await self.middleware.call('failover.disabled.reasons'):
                     raise CallError(
                         'HA is configured but currently unavailable.',
-                        ErrnoMixin.HA_UNAVAILABLE,
+                        ErrnoMixin.EHAUNAVAILABLE,
                     )
 
             current_version = await self.middleware.call('system.version_short')
