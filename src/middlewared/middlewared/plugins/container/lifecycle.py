@@ -67,13 +67,19 @@ class ContainerService(Service):
         ]
 
         if container["idmap"]:
-            if container["idmap"] == "DEFAULT":
-                item = ContainerIdmapConfigurationItem(
-                    target=CONTAINER_ROOT_UID,
-                    count=65536,
-                )
-            else:
-                item = ContainerIdmapConfigurationItem(**container["idmap"])
+            match container["idmap"]["type"]:
+                case "DEFAULT":
+                    item = ContainerIdmapConfigurationItem(
+                        target=CONTAINER_ROOT_UID,
+                        count=65536,
+                    )
+                case "ISOLATED":
+                    item = ContainerIdmapConfigurationItem(
+                        target=CONTAINER_ROOT_UID + container["idmap"]["slice"] * 65536,
+                        count=65536,
+                    )
+                case _:
+                    raise CallError(f"Unsupported idmap type {container['idmap']['type']!r}")
 
             container["idmap"] = ContainerIdmapConfiguration(uid=item, gid=item)
 

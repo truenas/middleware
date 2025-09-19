@@ -1,8 +1,8 @@
 """Containers
 
-Revision ID: 1e0e2e848857
+Revision ID: 5d51d6e50ff2
 Revises: 94d4fd77c063
-Create Date: 2025-09-18 13:58:32.518922+00:00
+Create Date: 2025-09-19 06:04:50.655593+00:00
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1e0e2e848857'
+revision = '5d51d6e50ff2'
 down_revision = '94d4fd77c063'
 branch_labels = None
 depends_on = None
@@ -45,9 +45,7 @@ def upgrade():
     sa.Column('initenv', sa.TEXT(), nullable=False),
     sa.Column('inituser', sa.Text(), nullable=True),
     sa.Column('initgroup', sa.Text(), nullable=True),
-    sa.Column('idmap', sa.Text(), nullable=True),
-    sa.Column('idmap_target', sa.Integer(), nullable=True),
-    sa.Column('idmap_count', sa.Integer(), nullable=True),
+    sa.Column('idmap_slice', sa.Integer(), nullable=True),
     sa.Column('capabilities_policy', sa.Text(), nullable=False),
     sa.Column('capabilities_state', sa.TEXT(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_container_container')),
