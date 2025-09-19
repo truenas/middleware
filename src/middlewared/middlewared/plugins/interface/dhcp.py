@@ -1,13 +1,8 @@
 import os
 from contextlib import suppress
-from subprocess import run, PIPE, STDOUT
+from subprocess import run, PIPE, STDOUT, DEVNULL
 
 from middlewared.service import private, Service
-from middlewared.utils.cgroups import move_to_root_cgroups
-
-
-DHCPCD_PIDFILE = '/var/run/dhcpcd/pid'
-DHCPCD_LEASE_DIR = '/var/lib/dhcpcd/'
 
 
 class InterfaceService(Service):
@@ -15,23 +10,18 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
-    def _is_dhcpcd_running(self):
-        """Check if the dhcpcd master daemon is running."""
+    def _get_dhcpcd_pid_for_interface(self, interface):
+        """Get the PID of the dhcpcd daemon for a specific interface."""
+        pidfile = f'/run/dhcpcd/{interface}.pid'
         with suppress(FileNotFoundError, ValueError):
-            with open(DHCPCD_PIDFILE) as f:
+            with open(pidfile) as f:
                 pid = int(f.read().strip())
                 try:
                     os.kill(pid, 0)
-                    return True, pid
+                    return pid
                 except OSError:
                     pass
-        return False, None
-
-    @private
-    def _get_dhcpcd_pid(self):
-        """Get the PID of the dhcpcd daemon."""
-        running, pid = self._is_dhcpcd_running()
-        return pid if running else None
+        return None
 
     @private
     def _parse_dhcpcd_output(self, output):
@@ -47,35 +37,24 @@ class InterfaceService(Service):
 
     @private
     def dhcp_start(self, interface, wait=False):
-        """Start DHCP on the specified interface using dhcpcd."""
-        # First check if dhcpcd daemon is running
-        running, pid = self._is_dhcpcd_running()
+        """Start DHCP on the specified interface using systemd."""
+        # Start the dhcpcd service for this interface using systemd
+        cmd = ['systemctl', 'start', f'dhcpcd@{interface}.service']
 
-        if not running:
-            # Start the dhcpcd master daemon
-            cmd = ['dhcpcd', '-b', '-q']
-            if not wait:
-                cmd.append('-B')  # Background immediately
+        proc = run(cmd, stdout=PIPE, stderr=STDOUT)
+        if proc.returncode != 0:
+            self.logger.error('Failed to start dhcpcd for interface %r: %r', interface, proc.stdout.decode())
+            return
 
-            proc = run(cmd, stdout=PIPE, stderr=STDOUT)
-            if proc.returncode != 0:
-                self.logger.error('Failed to start dhcpcd daemon: %r', proc.stdout.decode())
-                return
-
-            # Get the new PID and move to root cgroups
-            try:
-                running, pid = self._is_dhcpcd_running()
-                if pid:
-                    move_to_root_cgroups(pid)
-            except Exception:
-                self.logger.warning('Failed to move dhcpcd to root cgroups', exc_info=True)
-        else:
-            # Daemon is running, just rebind the interface
-            # This will make dhcpcd request a lease for this interface
-            cmd = ['dhcpcd', '-n', interface]
-            proc = run(cmd, stdout=PIPE, stderr=STDOUT)
-            if proc.returncode != 0:
-                self.logger.error('Failed to start DHCP on %r: %r', interface, proc.stdout.decode())
+        # If wait is True, wait for the service to be fully active
+        if wait:
+            # Wait for the service to become active
+            cmd = ['systemctl', 'is-active', f'dhcpcd@{interface}.service']
+            for _ in range(30):  # Wait up to 30 seconds
+                proc = run(cmd, stdout=DEVNULL, stderr=DEVNULL)
+                if proc.returncode == 0:
+                    break
+                run(['sleep', '1'], check=False)
 
     @private
     def dhcp_status(self, interface):
@@ -88,15 +67,13 @@ class InterfaceService(Service):
         Returns:
             tuple(bool, pid): if DHCP is active for the interface and the daemon pid.
         """
-        # Check if dhcpcd daemon is running
-        running, pid = self._is_dhcpcd_running()
-        if not running:
-            return False, None
+        # Check if the systemd service is active
+        cmd = ['systemctl', 'is-active', f'dhcpcd@{interface}.service']
+        proc = run(cmd, stdout=DEVNULL, stderr=DEVNULL)
 
-        # Check if this interface has an active lease
-        # dhcpcd -U returns 0 if interface has a lease
-        result = run(['dhcpcd', '-U', interface], capture_output=True, text=True)
-        if result.returncode == 0 and result.stdout.strip():
+        if proc.returncode == 0:
+            # Service is active, get the PID
+            pid = self._get_dhcpcd_pid_for_interface(interface)
             return True, pid
 
         return False, None
@@ -104,8 +81,8 @@ class InterfaceService(Service):
     @private
     def dhcp_stop(self, interface):
         """Stop DHCP on a specific interface."""
-        # Release and remove the interface from dhcpcd
-        run(['dhcpcd', '-k', interface], capture_output=True)
+        # Stop the dhcpcd service for this interface using systemd
+        run(['systemctl', 'stop', f'dhcpcd@{interface}.service'], capture_output=True)
 
     @private
     def dhcp_leases(self, interface):
