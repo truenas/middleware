@@ -65,7 +65,7 @@ class DatastoreService(Service):
         if self.connection is not None:
             self.connection.close()
 
-        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}')
+        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}', isolation_level='AUTOCOMMIT')
 
         self.connection = self.engine.connect()
         self.connection.connection.create_function("REGEXP", 2, regexp)
