@@ -125,7 +125,7 @@ def container(image, options=None, start=False, startup_script=None):
 
         #  Id   Name   State
         # --------------------
-        assert len(ssh(f"{VIRSH} list --all").strip().splitlines()) == 2
+        assert container["uuid"] not in ssh(f"{VIRSH} list --all")
 
 
 @pytest.fixture(scope="function")
@@ -219,12 +219,23 @@ def test_container_shell(started_ubuntu_container):
         ws.close()
 
 
+@pytest.fixture(scope="module")
+def idmap_slice_1_container(ubuntu_image):
+    # A container that uses idmap slice 2 to test idmap slice auto-allocation
+    with container(ubuntu_image, {
+        "name": "idmap_slice_1",
+        "idmap": {"type": "ISOLATED", "slice": 1},
+    }, True):
+        yield
+
+
 @pytest.mark.parametrize("target,config", [
     (0, None),
-    (2147000001, "DEFAULT"),
-    (2147000002, {"target": 2147000002, "count": 10}),
+    (2147000001, {"type": "DEFAULT"}),
+    (2147000001 + 65536, {"type": "ISOLATED", "slice": 1}),
+    (2147000001 + 65536 * 2, {"type": "ISOLATED", "slice": None}),
 ])
-def test_idmap(ubuntu_image, target, config):
+def test_idmap(ubuntu_image, idmap_slice_1_container, target, config):
     with container(ubuntu_image, {
         "idmap": config,
     }, True) as c:
@@ -233,11 +244,9 @@ def test_idmap(ubuntu_image, target, config):
         ]
 
         mountpoint = call("pool.dataset.get_instance", c["dataset"])["mountpoint"]
-        ssh(f"mkdir -m 777 {mountpoint}/playground")
+        ssh(f"mkdir {mountpoint}/playground")
         ssh(nsenter(c, "touch /playground/canary"))
-        assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == [
-            str(target), str(target),
-        ]
+        assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == ["0", "0"]
 
 
 @pytest.mark.parametrize("configuration,has", [

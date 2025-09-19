@@ -13,6 +13,8 @@ from middlewared.api.current import (
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, private, Service
 
+IDMAP_COUNT = 65536
+
 
 class ContainerService(Service):
     @api_method(ContainerStartArgs, ContainerStartResult, roles=["CONTAINER_WRITE"])
@@ -67,13 +69,19 @@ class ContainerService(Service):
         ]
 
         if container["idmap"]:
-            if container["idmap"] == "DEFAULT":
-                item = ContainerIdmapConfigurationItem(
-                    target=CONTAINER_ROOT_UID,
-                    count=65536,
-                )
-            else:
-                item = ContainerIdmapConfigurationItem(**container["idmap"])
+            match container["idmap"]["type"]:
+                case "DEFAULT":
+                    item = ContainerIdmapConfigurationItem(
+                        target=CONTAINER_ROOT_UID,
+                        count=IDMAP_COUNT,
+                    )
+                case "ISOLATED":
+                    item = ContainerIdmapConfigurationItem(
+                        target=CONTAINER_ROOT_UID + container["idmap"]["slice"] * IDMAP_COUNT,
+                        count=IDMAP_COUNT,
+                    )
+                case _:
+                    raise CallError(f"Unsupported idmap type {container['idmap']['type']!r}")
 
             container["idmap"] = ContainerIdmapConfiguration(uid=item, gid=item)
 

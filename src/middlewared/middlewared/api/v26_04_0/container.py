@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal, Union
 
-from pydantic import Field, PositiveInt
+from pydantic import Discriminator, Field, PositiveInt
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args, UUIDv4String,
@@ -18,11 +18,23 @@ __all__ = [
 ]
 
 
-class IdmapConfiguration(BaseModel):
-    target: PositiveInt
-    """UID/GID 0 in container will be mapped to this target UID/GID in host."""
-    count: PositiveInt
-    """How many users/groups in container are allowed to map to host"s user/group."""
+class DefaultIdmapConfiguration(BaseModel):
+    type: Literal["DEFAULT"]
+
+
+class IsolatedIdmapConfiguration(BaseModel):
+    type: Literal["ISOLATED"]
+    slice: PositiveInt | None = Field(lt=1000)
+    "`null` when creating means we'll look up an unused slice on backend."
+
+
+IdmapConfiguration = Annotated[
+    Union[
+        DefaultIdmapConfiguration,
+        IsolatedIdmapConfiguration,
+    ],
+    Discriminator("type"),
+]
 
 
 class ContainerStatus(BaseModel):
@@ -71,15 +83,18 @@ class ContainerEntry(BaseModel):
     """"init" process username."""
     initgroup: str | None = None
     """"init" process group."""
-    idmap: IdmapConfiguration | Literal["DEFAULT"] | None = "DEFAULT"
+    idmap: IdmapConfiguration | None = DefaultIdmapConfiguration(type="DEFAULT")
     """Idmap configuration for the container\
     \
-    There are two possible values:\
+    There are three two possible values:\
     \
     DEFAULT: This applies the standard TrueNAS idmap namespace configuration.\
     It changes user ID (UID) 0 (root) in the container to UID 2147000001 (truenas_container_unpriv_root).\
     It offsets the other container UIDs by the same amount.\
     For example, UID 1000 in the container becomes UID 2147001001 in the host.\
+    \
+    ISOLATED: Same as `DEFAULT`, but UID will be calculated as `2147000001 + 65536 * slice`.\
+    This will ensure unique ID for each container (provided that the `slice` is also unique).
     \
     None: The container does not apply any idmap namespace.\
     Container UIDs map directly to host UIDs.\
