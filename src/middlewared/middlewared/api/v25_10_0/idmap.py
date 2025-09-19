@@ -1,5 +1,4 @@
 from middlewared.api.base import BaseModel
-from typing import Literal
 
 
 __all__ = [
