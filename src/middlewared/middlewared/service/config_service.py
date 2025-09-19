@@ -15,6 +15,23 @@ from .service_mixin import ServiceChangeMixin
 get_or_insert_lock = asyncio.Lock()
 
 
+def config_args(entry: type[BaseModel]) -> type[BaseModel]:
+    return create_model(
+        entry.__name__.removesuffix("Entry") + 'ConfigArgs',
+        __base__=(BaseModel,),
+        __module__=entry.__module__,
+    )
+
+
+def config_result(entry: type[BaseModel]) -> type[BaseModel]:
+    return create_model(
+        entry.__name__.removesuffix('Entry') + 'ConfigResult',
+        __base__=(BaseModel,),
+        __module__=entry.__module__,
+        result=Annotated[entry, Field()],
+    )
+
+
 class ConfigServiceMetabase(ServiceBase):
 
     def __new__(cls, name, bases, attrs):
@@ -44,23 +61,20 @@ class ConfigServiceMetabase(ServiceBase):
                 raise ValueError(f'{namespace}: public ConfigService must have entry defined')
         else:
             # Decorate config method with api_method
-            accepts_model = create_model(
-                namespace.replace(".", "_").capitalize() + 'Config',
-                __base__=(BaseModel,),
-                __module__=entry.__module__,
-            )
-            result_model = create_model(
-                entry.__name__.removesuffix('Entry') + 'ConfigResult',
-                __base__=(BaseModel,),
-                __module__=entry.__module__,
-                result=Annotated[entry, Field()],
-            )
+            accepts_model = config_args(entry)
+            result_model = config_result(entry)
             klass.config = api_method(
                 accepts_model,
                 result_model,
                 private=private,
                 cli_private=config.cli_private,
             )(klass.config)
+
+            # Models must be registered with their factories for backwards compatibility.
+            klass._register_models = [
+                (accepts_model, config_args, entry.__name__),
+                (result_model, config_result, entry.__name__),
+            ]
 
         return klass
 
