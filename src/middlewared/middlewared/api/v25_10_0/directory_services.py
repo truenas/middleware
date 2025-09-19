@@ -54,7 +54,7 @@ class DirectoryServicesCacheRefreshArgs(BaseModel):
 
 
 class DirectoryServicesCacheRefreshResult(BaseModel):
-    result: Literal[None]
+    result: None
 
 
 # Idmap domains are a configuration feature of winbindd when joined to an active directory or ipa domain.

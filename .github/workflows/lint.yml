@@ -13,6 +13,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Check illegal patterns
+      run: |
+        if grep -r "Literal\[None\]" src/middlewared/middlewared/api/; then
+          echo "❌ Literal[None] usage found in middlewared/api/. Use None instead."
+          exit 1
+        else
+          echo "✅ No Literal[None] usage found in middlewared/api/"
+        fi
     - name: Set up Python 3.11
       uses: actions/setup-python@v3
       with:
