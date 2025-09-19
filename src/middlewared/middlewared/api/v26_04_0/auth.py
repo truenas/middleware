@@ -316,7 +316,7 @@ class AuthSetAttributeArgs(BaseModel):
 
 
 class AuthSetAttributeResult(BaseModel):
-    result: Literal[None]
+    result: None
     """Returns `null` when the attribute is successfully set."""
 
 

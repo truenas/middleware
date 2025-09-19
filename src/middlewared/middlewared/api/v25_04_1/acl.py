@@ -203,7 +203,7 @@ class POSIXACL(AclBaseInfo):
 class DISABLED_ACL(AclBaseInfo):
     # ACL response paths with ACL entirely disabled
     acltype: Literal[FS_ACL_Type.DISABLED]
-    acl: Literal[None]
+    acl: None
     trivial: Literal[True]
 
 
