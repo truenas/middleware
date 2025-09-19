@@ -80,7 +80,7 @@ class FilesystemChownArgs(FilesystemPermChownBase):
 
 
 class FilesystemChownResult(BaseModel):
-    result: Literal[None]
+    result: None
     """Returns `null` when the ownership change is successfully completed."""
 
 
@@ -104,7 +104,7 @@ class FilesystemSetpermArgs(FilesystemPermChownBase):
 
 
 class FilesystemSetpermResult(BaseModel):
-    result: Literal[None]
+    result: None
     """Returns `null` when the permission change is successfully completed."""
 
 
@@ -402,7 +402,7 @@ class FilesystemGetArgs(BaseModel):
 
 
 class FilesystemGetResult(BaseModel):
-    result: Literal[None]
+    result: None
     """Returns `null` when the file is successfully read."""
 
 

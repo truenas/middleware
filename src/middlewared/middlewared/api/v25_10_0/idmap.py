@@ -12,4 +12,4 @@ class IdmapDomainClearIdmapCacheArgs(BaseModel):
 
 
 class IdmapDomainClearIdmapCacheResult(BaseModel):
-    result: Literal[None]
+    result: None
