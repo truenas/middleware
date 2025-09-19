@@ -1,4 +1,5 @@
 import os
+import time
 from contextlib import suppress
 from subprocess import run, PIPE, STDOUT, DEVNULL
 
@@ -38,8 +39,8 @@ class InterfaceService(Service):
     @private
     def dhcp_start(self, interface, wait=False):
         """Start DHCP on the specified interface using systemd."""
-        # Start the dhcpcd service for this interface using systemd
-        cmd = ['systemctl', 'start', f'dhcpcd@{interface}.service']
+        # Start the ix-dhcpcd service for this interface using systemd
+        cmd = ['systemctl', 'start', f'ix-dhcpcd@{interface}.service']
 
         proc = run(cmd, stdout=PIPE, stderr=STDOUT)
         if proc.returncode != 0:
@@ -49,12 +50,12 @@ class InterfaceService(Service):
         # If wait is True, wait for the service to be fully active
         if wait:
             # Wait for the service to become active
-            cmd = ['systemctl', 'is-active', f'dhcpcd@{interface}.service']
+            cmd = ['systemctl', 'is-active', f'ix-dhcpcd@{interface}.service']
             for _ in range(30):  # Wait up to 30 seconds
                 proc = run(cmd, stdout=DEVNULL, stderr=DEVNULL)
                 if proc.returncode == 0:
                     break
-                run(['sleep', '1'], check=False)
+                time.sleep(1)
 
     @private
     def dhcp_status(self, interface):
@@ -68,7 +69,7 @@ class InterfaceService(Service):
             tuple(bool, pid): if DHCP is active for the interface and the daemon pid.
         """
         # Check if the systemd service is active
-        cmd = ['systemctl', 'is-active', f'dhcpcd@{interface}.service']
+        cmd = ['systemctl', 'is-active', f'ix-dhcpcd@{interface}.service']
         proc = run(cmd, stdout=DEVNULL, stderr=DEVNULL)
 
         if proc.returncode == 0:
@@ -81,8 +82,8 @@ class InterfaceService(Service):
     @private
     def dhcp_stop(self, interface):
         """Stop DHCP on a specific interface."""
-        # Stop the dhcpcd service for this interface using systemd
-        run(['systemctl', 'stop', f'dhcpcd@{interface}.service'], capture_output=True)
+        # Stop the ix-dhcpcd service for this interface using systemd
+        run(['systemctl', 'stop', f'ix-dhcpcd@{interface}.service'], capture_output=True)
 
     @private
     def dhcp_leases(self, interface):
