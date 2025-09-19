@@ -279,7 +279,7 @@ class DISABLED_ACL(AclBaseInfo):
     # ACL response paths with ACL entirely disabled
     acltype: Literal[FS_ACL_Type.DISABLED]
     """ACL type identifier indicating access control lists are disabled."""
-    acl: None
+    acl: Literal[None]
     """Always `null` when ACLs are disabled on the filesystem."""
     trivial: Literal[True]
     """Always `true` when ACLs are disabled - only basic POSIX permissions apply."""
