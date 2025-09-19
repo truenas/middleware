@@ -6,7 +6,7 @@ from middlewared.service import private, Service
 from middlewared.utils.cgroups import move_to_root_cgroups
 
 
-DHCPCD_PIDFILE = '/var/run/dhcpcd.pid'
+DHCPCD_PIDFILE = '/var/run/dhcpcd/pid'
 DHCPCD_LEASE_DIR = '/var/lib/dhcpcd/'
 
 
