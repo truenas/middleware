@@ -1,4 +1,5 @@
 from typing import Annotated, Any
+import uuid
 
 from pydantic import (
     AfterValidator,
@@ -18,7 +19,7 @@ from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 __all__ = [
     "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
-    "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName",
+    "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "UUIDv4String",
 ]
 
 
@@ -57,6 +58,15 @@ class LongStringWrapper:
         )
 
 
+def uuidv4_validator(value):
+    try:
+        uuid.UUID(value, version=4)
+    except ValueError:
+        raise ValueError('UUID is not valid version 4')
+
+    return value
+
+
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
 LongString = Annotated[
@@ -73,3 +83,4 @@ NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
 SmbShareName = Annotated[str, AfterValidator(validate_smb_share_name)]
 SnapshotNameSchema = Annotated[str, AfterValidator(lambda val: validate_snapshot_naming_schema(val) or val)]
 SECRET_VALUE = "********"
+UUIDv4String = Annotated[str, AfterValidator(uuidv4_validator)]
