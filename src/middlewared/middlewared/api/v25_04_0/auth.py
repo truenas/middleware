@@ -213,7 +213,7 @@ class AuthSetAttributeArgs(BaseModel):
 
 
 class AuthSetAttributeResult(BaseModel):
-    result: Literal[None]
+    result: None
 
 
 @single_argument_args('generate_single_use_password')
