@@ -9,6 +9,7 @@ from alembic import op
 from json import dumps, loads
 from middlewared.utils.pwenc import encrypt, decrypt
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -35,7 +36,7 @@ def ds_migrate_ldap(conn, ldap):
     cred_plain = None
 
     # initialize our directoryservices row
-    conn.execute("INSERT INTO directoryservices (enable, service_type, enable_dns_updates) VALUES (1, 'LDAP', 0)")
+    conn.execute(text("INSERT INTO directoryservices (enable, service_type, enable_dns_updates) VALUES (1, 'LDAP', 0)"))
 
     # generate the cred information
     if anon:
@@ -114,7 +115,7 @@ def ds_migrate_ldap(conn, ldap):
     )
 
     conn.execute(
-        stmt, enable=ldap['ldap_enable'], stype=service_type, enable_cache=cache_enabled, cred_type=cred_type,
+        text(stmt), enable=ldap['ldap_enable'], stype=service_type, enable_cache=cache_enabled, cred_type=cred_type,
         cred_krb5=cred_krb5, mtls_cert_id=cert_id, cred_plain=cred_plain, timeout=ldap['ldap_timeout'],
         realm_id=kerberos_realm_id, server_urls=ldap_server_urls, starttls=ldap_starttls, basedn=ldap['ldap_basedn'],
         validate_certs=ldap['ldap_validate_certificates'], schema=ldap['ldap_schema'], aux=ldap['ldap_auxiliary_parameters'],
@@ -131,8 +132,8 @@ def ds_migrate_ldap(conn, ldap):
 
 
 def ds_migrate_ipa(conn, ldap):
-    keytabs = [dict(row) for row in conn.execute('SELECT * FROM directoryservice_kerberoskeytab').fetchall()]
-    realms = [dict(row) for row in conn.execute('SELECT * FROM directoryservice_kerberosrealm').fetchall()]
+    keytabs = [row for row in conn.execute(text('SELECT * FROM directoryservice_kerberoskeytab')).mappings().all()]
+    realms = [row for row in conn.execute(text('SELECT * FROM directoryservice_kerberosrealm')).mappings().all()]
 
     if not keytabs or not realms:
         # Kerberos configuration is required to properly join IPA and so this is a legacy setup
@@ -177,7 +178,7 @@ def ds_migrate_ipa(conn, ldap):
     target_server = ldap['ldap_hostname'].split()[0]
 
     # initialize our directoryservices row
-    conn.execute("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'IPA')")
+    conn.execute(text("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'IPA')"))
 
     # Unfortunately, we can't set the IPA_SMB_DOMAIN during migration because it's not known until runtime
     stmt = (
@@ -197,7 +198,7 @@ def ds_migrate_ipa(conn, ldap):
     )
 
     conn.execute(
-        stmt, enable=ldap['ldap_enable'], stype='IPA', enable_cache=cache_enabled, cred_type='KERBEROS_PRINCIPAL',
+        text(stmt), enable=ldap['ldap_enable'], stype='IPA', enable_cache=cache_enabled, cred_type='KERBEROS_PRINCIPAL',
         cred_krb5=cred_krb5, timeout=ldap['ldap_timeout'], realm_id=kerberos_realm_id, basedn=ldap['ldap_basedn'],
         validate_certs=ldap['ldap_validate_certificates'], dom=realm_name, server=target_server, hostname=hostname
     )
@@ -256,8 +257,8 @@ def migrate_idmap_domain(dom, netbios_domain_name) -> dict | None:
 
 
 def ds_migrate_ad(conn, ad):
-    smb = dict(conn.execute('SELECT * FROM services_cifs').fetchone())
-    idmaps = [dict(row) for row in conn.execute('SELECT * FROM directoryservice_idmap_domain').fetchall()]
+    smb = conn.execute(text('SELECT * FROM services_cifs')).mappings().first()
+    idmaps = conn.execute(text('SELECT * FROM directoryservice_idmap_domain')).mappings().all()
     primary_idmap = None
     default_domain = None
     cache_enabled = not ad['ad_disable_freenas_cache']
@@ -316,7 +317,7 @@ def ds_migrate_ad(conn, ad):
     trusted_doms = encrypt(dumps(trusted_doms))
 
     # initialize our directoryservices row
-    conn.execute("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'ACTIVEDIRECTORY')")
+    conn.execute(text("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'ACTIVEDIRECTORY')"))
 
     stmt = (
         'UPDATE directoryservices SET '
@@ -337,7 +338,7 @@ def ds_migrate_ad(conn, ad):
     )
 
     conn.execute(
-        stmt, enable_cache=cache_enabled, cred_type='KERBEROS_PRINCIPAL', cred_krb5=cred_krb5,
+        text(stmt), enable_cache=cache_enabled, cred_type='KERBEROS_PRINCIPAL', cred_krb5=cred_krb5,
         timeout=ad['ad_timeout'], dom=ad['ad_domainname'], hostname=smb['cifs_srv_netbiosname'],
         idmap=idmap_config, site=ad['ad_site'] or None, caou=ad['ad_createcomputer'] or None,
         defdom=ad['ad_use_default_domain'], enable_trusted_doms=has_trusted_doms, trusted_doms=trusted_doms,
@@ -347,8 +348,8 @@ def ds_migrate_ad(conn, ad):
 
 def ds_migrate():
     conn = op.get_bind()
-    ad = dict(conn.execute('SELECT * FROM directoryservice_activedirectory').fetchone())
-    ldap = dict(conn.execute('SELECT * FROM directoryservice_ldap').fetchone())
+    ad = conn.execute(text('SELECT * FROM directoryservice_activedirectory')).mappings().first()
+    ldap = conn.execute(text('SELECT * FROM directoryservice_ldap')).mappings().first()
 
     if ldap['ldap_enable']:
         if ldap['ldap_server_type'] == 'FREEIPA':

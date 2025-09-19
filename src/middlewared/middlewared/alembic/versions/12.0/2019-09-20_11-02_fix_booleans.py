@@ -18,11 +18,24 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for table_name, in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall():
-        for column in conn.execute(f"PRAGMA TABLE_INFO('{table_name}')"):
-            if column["type"].lower() in ("bool", "boolean"):
-                op.execute(f"UPDATE {table_name} SET {column['name']} = 1 WHERE {column['name']} IN ('1', 'true') COLLATE NOCASE")
-                op.execute(f"UPDATE {table_name} SET {column['name']} = 0 WHERE {column['name']} != 1 AND {column['name']} IS NOT NULL")
+    # We want to skip tables like sqlite_sequence
+    tables = conn.exec_driver_sql(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+    ).all()
+
+    for (table_name,) in tables:
+        # PRAGMA TABLE_INFO returns dict-like rows when using .mappings()
+        cols = conn.exec_driver_sql(f"PRAGMA TABLE_INFO(\"{table_name}\")").mappings().all()
+        for col in cols:
+            col_name = col["name"]
+            col_type = (col.get("type") or "").lower()
+            if col_type in ("bool", "boolean"):
+                conn.exec_driver_sql(
+                    f'UPDATE "{table_name}" SET "{col_name}" = 1 WHERE "{col_name}" IN (\'1\',\'true\') COLLATE NOCASE'
+                )
+                conn.exec_driver_sql(
+                    f'UPDATE "{table_name}" SET "{col_name}" = 0 WHERE "{col_name}" != 1 AND "{col_name}" IS NOT NULL'
+                )
 
 
 def downgrade():

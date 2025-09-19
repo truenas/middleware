@@ -367,7 +367,7 @@ class InterfaceService(CRUDService):
     def network_config_to_be_removed(self):
         """Determines which network configuration items will be removed during interface setup.
 
-        On a fresh install of SCALE, dhclient is started for every interface so IP
+        On a fresh install of SCALE, DHCP is started for every interface so IP
         addresses/routes could be installed via that program. However, when the
         end-user goes to configure the first interface we tear down all other interfaces
         configs AND delete the default route. We also remove the default route if the
@@ -1613,9 +1613,9 @@ class InterfaceService(CRUDService):
                 self.logger.error('Failed to configure {}'.format(name), exc_info=True)
 
         if run_dhcp:
-            # update dhclient.conf before we run dhclient to ensure the hostname/fqdn
-            # and/or the supersede routers config options are set properly
-            await self.middleware.call('etc.generate', 'dhclient')
+            # update dhcpcd.conf before we run dhcpcd to ensure the hostname/fqdn
+            # and/or the static routers config options are set properly
+            await self.middleware.call('etc.generate', 'dhcpcd')
             await asyncio.wait([
                 self.middleware.create_task(self.run_dhcp(interface, wait_dhcp)) for interface in run_dhcp
             ])
@@ -1710,7 +1710,7 @@ class InterfaceService(CRUDService):
 
     @private
     async def run_dhcp(self, name, wait_dhcp):
-        self.logger.debug('Starting dhclient for {}'.format(name))
+        self.logger.debug('Starting DHCP for {}'.format(name))
         try:
             await self.middleware.call('interface.dhclient_start', name, wait_dhcp)
         except Exception:

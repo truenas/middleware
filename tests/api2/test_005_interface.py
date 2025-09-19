@@ -66,7 +66,7 @@ def get_payload(ws_client):
 
 # Make sure that our initial conditions are met
 def test_001_check_ipvx(request):
-    # Verify that dhclient is running
+    # Verify that DHCP is running
     running, _ = call("interface.dhclient_status", interface)
     assert running is True
 

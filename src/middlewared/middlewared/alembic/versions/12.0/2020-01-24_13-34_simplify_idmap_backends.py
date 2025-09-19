@@ -7,6 +7,7 @@ Create Date: 2020-01-24 13:34:04.998905+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 import json
 
 
@@ -22,7 +23,7 @@ def upgrade():
     conn = op.get_bind()
     m = {}
     highest_seen = 0
-    configured_domains = [dict(row) for row in conn.execute("SELECT * FROM directoryservice_idmap_domaintobackend").fetchall()]
+    configured_domains = conn.execute(text("SELECT * FROM directoryservice_idmap_domaintobackend")).mappings().all()
     for domain in configured_domains:
         m[domain['idmap_dtb_domain_id']] = {}
         backend = domain['idmap_dtb_idmap_backend']
@@ -30,8 +31,9 @@ def upgrade():
 
         idmap_table = f"directoryservice_idmap_{backend}"
 
-        backend_data = [dict(row) for row in conn.execute(f"SELECT * FROM {idmap_table} WHERE "
-                                                          f"idmap_{backend}_domain_id = ?", dom).fetchall()]
+        backend_data = conn.execute(
+            text(f"SELECT * FROM {idmap_table} WHERE idmap_{backend}_domain_id = :dom_id"), {'dom_id': dom}
+        ).mappings().all()
 
         m[dom]['backend'] = backend
         if not backend_data:
@@ -89,12 +91,12 @@ def upgrade():
             range_high = highest_seen + 100000000
 
         backend = params.pop('backend')
-        conn.execute("UPDATE directoryservice_idmap_domain SET idmap_domain_idmap_backend = :backend, "
-                     "idmap_domain_range_low = :low, idmap_domain_range_high = :high, "
-                     "idmap_domain_certificate_id = :cert, idmap_domain_options = :opts "
-                     "WHERE idmap_domain_name= :dom",
-                     low=range_low, high=range_high, backend=backend, cert=certificate_id,
-                     opts=json.dumps(params) if params else '', dom=domain)
+        conn.execute(text("UPDATE directoryservice_idmap_domain SET idmap_domain_idmap_backend = :backend, "
+                          "idmap_domain_range_low = :low, idmap_domain_range_high = :high, "
+                          "idmap_domain_certificate_id = :cert, idmap_domain_options = :opts "
+                          "WHERE idmap_domain_name= :dom"), {
+                              "low": range_low, "high": range_high, "backend": backend, "cert": certificate_id,
+                              "opts": json.dumps(params) if params else '', "dom": domain})
 
     with op.batch_alter_table('directoryservice_idmap_domain', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_directoryservice_idmap_domain_idmap_domain_certificate_id'), ['idmap_domain_certificate_id'], unique=False)

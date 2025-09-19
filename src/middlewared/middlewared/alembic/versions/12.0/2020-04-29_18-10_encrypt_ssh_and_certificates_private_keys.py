@@ -7,6 +7,7 @@ Create Date: 2020-04-29 18:10:31.488781+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 from middlewared.utils.pwenc import encrypt
 
@@ -20,10 +21,9 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    if not (
-        conn.execute("SELECT * FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631' AND value = 'true'").
-                fetchall()
-    ):
+    if not conn.execute(
+        text("SELECT * FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631' AND value = 'true'")
+    ).mappings().all():
         for table, fields in [
             ("services_snmp", ["snmp_v3_password", "snmp_v3_privpassphrase"]),
             ("services_ssh", ["ssh_privatekey", "ssh_host_dsa_key", "ssh_host_ecdsa_key", "ssh_host_ed25519_key",
@@ -32,18 +32,20 @@ def upgrade():
             ("system_certificate", ["cert_privatekey"]),
             ("system_certificateauthority", ["cert_privatekey"]),
         ]:
-            for row in conn.execute(f"SELECT * FROM {table}").fetchall():
+            for row in conn.execute(text(f"SELECT * FROM {table}")).mappings().all():
                 set_ = []
-                params = []
-                for k in fields:
+                params = {}
+                for i, k in enumerate(fields):
                     if row[k] is not None:
-                        set_.append(f"{k} = ?")
-                        params.append(encrypt(row[k]))
+                        param_name = f"param{i}"
+                        set_.append(f"{k} = :{param_name}")
+                        params[param_name] = encrypt(row[k])
 
                 if set_:
-                    conn.execute(f"UPDATE {table} SET {', '.join(set_)} WHERE id = {row['id']}", params)
+                    params['id'] = row['id']
+                    conn.execute(text(f"UPDATE {table} SET {', '.join(set_)} WHERE id = :id"), params)
 
-    conn.execute("DELETE FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631'")
+    conn.execute(text("DELETE FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631'"))
 
 
 def downgrade():

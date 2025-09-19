@@ -7,6 +7,7 @@ Create Date: 2023-05-10 13:44:25.770294+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('storage_replication', schema=None) as batch_op:
         batch_op.add_column(sa.Column('repl_encryption_inherit', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE storage_replication SET repl_encryption_inherit = 0 WHERE repl_encryption = 1")
+    op.execute(text("UPDATE storage_replication SET repl_encryption_inherit = 0 WHERE repl_encryption = 1"))
 
     # ### end Alembic commands ###
 

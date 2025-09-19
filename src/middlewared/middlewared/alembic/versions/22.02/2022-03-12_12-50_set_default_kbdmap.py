@@ -7,6 +7,7 @@ Create Date: 2022-03-12 12:50:48.732801+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -17,7 +18,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("UPDATE system_settings SET stg_kbdmap = 'us' WHERE stg_kbdmap = ''")
+    op.execute(text("UPDATE system_settings SET stg_kbdmap = 'us' WHERE stg_kbdmap = ''"))
 
 
 def downgrade():

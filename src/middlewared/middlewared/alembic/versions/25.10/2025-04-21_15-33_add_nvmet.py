@@ -7,6 +7,7 @@ Create Date: 2025-04-21 15:33:34.588193+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -108,7 +109,7 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_services_nvmet_port_subsys_nvmet_port_subsys_port_id'), ['nvmet_port_subsys_port_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_services_nvmet_port_subsys_nvmet_port_subsys_subsys_id'), ['nvmet_port_subsys_subsys_id'], unique=False)
 
-    op.execute("INSERT INTO services_services (srv_service, srv_enable) VALUES ('nvmet', 0)")
+    op.execute(text("INSERT INTO services_services (srv_service, srv_enable) VALUES ('nvmet', 0)"))
 
 
 def downgrade():

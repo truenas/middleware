@@ -7,6 +7,7 @@ Create Date: 2024-05-01 15:55:42.754331+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -33,28 +34,28 @@ def upgrade():
     # with readonly checked
     stmnt = (
         f"UPDATE {SHARE_TABLE} "
-        f"SET {PURPOSE_KEY} = ?, {READONLY_KEY} = ? "
-        f"WHERE {PURPOSE_KEY} = ?"
+        f"SET {PURPOSE_KEY} = :purpose, {READONLY_KEY} = :readonly "
+        f"WHERE {PURPOSE_KEY} = :old_purpose"
     )
-    conn.execute(stmnt, ['DEFAULT_SHARE', 1, 'READ_ONLY'])
+    conn.execute(text(stmnt), {'purpose': 'DEFAULT_SHARE', 'readonly': 1, 'old_purpose': 'READ_ONLY'})
 
     # convert any cluster DEFAULT_CLUSTER_SHARE shares to
     # DEFAULT_SHARE
     stmnt = (
         f"UPDATE {SHARE_TABLE} "
-        f"SET {PURPOSE_KEY} = ? "
-        f"WHERE {PURPOSE_KEY} = ?"
+        f"SET {PURPOSE_KEY} = :purpose "
+        f"WHERE {PURPOSE_KEY} = :old_purpose"
     )
-    conn.execute(stmnt, ['DEFAULT_SHARE', 'DEFAULT_CLUSTER_SHARE'])
+    conn.execute(text(stmnt), {'purpose': 'DEFAULT_SHARE', 'old_purpose': 'DEFAULT_CLUSTER_SHARE'})
 
     # convert any SMB users with a home directory of `/nonexistent` to
     # having a home directory of `/var/empty`
     stmnt = (
        f"UPDATE {USER_TABLE} "
-       f"SET {HOME_KEY} = ? "
-       f"WHERE {HOME_KEY} = ? AND {SMB_KEY} = ?"
+       f"SET {HOME_KEY} = :home "
+       f"WHERE {HOME_KEY} = :legacy_home AND {SMB_KEY} = :smb"
     )
-    conn.execute(stmnt, [EMPTY_DIR, LEGACY_HOME, 1])
+    conn.execute(text(stmnt), {'home': EMPTY_DIR, 'legacy_home': LEGACY_HOME, 'smb': 1})
 
 
 def downgrade():

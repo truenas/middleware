@@ -3,7 +3,7 @@ import re
 import shutil
 import time
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 from middlewared.service import private, Service
 
@@ -47,12 +47,14 @@ class DatastoreService(Service):
             intervention.
             """
             self.logger.warning("Removing certificate id for default idmap table entry.")
-            self.connection.execute(f"UPDATE {row.table} SET idmap_domain_certificate_id = NULL WHERE rowid = {row.rowid}")
+            self.connection.execute(text(
+                f"UPDATE {row.table} SET idmap_domain_certificate_id = NULL WHERE rowid = {row.rowid}"
+            ))
             return
 
         self.logger.warning("Deleting row %d from table %s.", row.rowid, row.table)
         op = f"DELETE FROM {row.table} WHERE rowid = {row.rowid}"
-        self.connection.execute(op)
+        self.connection.execute(text(op))
         journal.write(f'{op}\n')
 
     @private
@@ -63,14 +65,14 @@ class DatastoreService(Service):
         if self.connection is not None:
             self.connection.close()
 
-        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}')
+        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}', isolation_level='AUTOCOMMIT')
 
         self.connection = self.engine.connect()
         self.connection.connection.create_function("REGEXP", 2, regexp)
 
         self.connection.connection.execute("PRAGMA foreign_keys=ON")
 
-        if (constraint_violations := self.connection.execute("PRAGMA foreign_key_check").fetchall()):
+        if constraint_violations := self.connection.execute(text("PRAGMA foreign_key_check")).fetchall():
             ts = int(time.time())
             shutil.copy(FREENAS_DATABASE, f'{FREENAS_DATABASE}_{ts}.bak')
 
@@ -82,6 +84,9 @@ class DatastoreService(Service):
 
     @private
     def execute(self, *args):
+        args = list(args)
+        if args and isinstance(args[0], str):
+            args[0] = text(args[0])
         return self.connection.execute(*args)
 
     @private
@@ -91,21 +96,11 @@ class DatastoreService(Service):
         options.setdefault('return_last_insert_rowid', False)
 
         compiled = stmt.compile(self.engine, compile_kwargs={"render_postcompile": True})
-
         sql = compiled.string
-        binds = []
-        for param in compiled.positiontup:
-            bind = compiled.binds[param]
-            value = bind.value
-            bind_processor = compiled.binds[param].type.bind_processor(self.engine.dialect)
-            if bind_processor:
-                binds.append(bind_processor(value))
-            else:
-                binds.append(value)
+        params = compiled.params or {}
+        result = self.connection.execute(stmt)
 
-        result = self.connection.execute(sql, binds)
-
-        self.middleware.call_hook_inline("datastore.post_execute_write", sql, binds, options)
+        self.middleware.call_hook_inline("datastore.post_execute_write", sql, params, options)
 
         if options['return_last_insert_rowid']:
             return self.fetchall("SELECT last_insert_rowid()")[0][0]
@@ -114,7 +109,7 @@ class DatastoreService(Service):
 
     @private
     def fetchall(self, query, params=None):
-        cursor = self.connection.execute(query, params or [])
+        cursor = self.connection.execute(text(query) if isinstance(query, str) else query, params or {})
         try:
             return cursor.fetchall()
         finally:

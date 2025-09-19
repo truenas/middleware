@@ -7,6 +7,7 @@ Create Date: 2020-05-21 11:45:15.691643+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('services_afp', schema=None) as batch_op:
         batch_op.add_column(sa.Column('afp_srv_loglevel', sa.String(length=120), nullable=True))
 
-    op.execute('UPDATE services_afp SET afp_srv_loglevel="MINIMUM"')
+    op.execute(text('UPDATE services_afp SET afp_srv_loglevel="MINIMUM"'))
 
     with op.batch_alter_table('services_afp', schema=None) as batch_op:
         batch_op.alter_column('afp_srv_loglevel', nullable=False)

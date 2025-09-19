@@ -7,6 +7,7 @@ Create Date: 2025-02-19 18:47:53.749089+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -26,8 +27,7 @@ SHARE_BLACKLIST = (
 def upgrade():
 
     conn = op.get_bind()
-    smb_shares = [dict(row) for row in conn.execute("SELECT * FROM sharing_cifs_share").fetchall()]
-    for share in smb_shares:
+    for share in conn.execute(text("SELECT * FROM sharing_cifs_share")).mappings().all():
         changed = False
         not_blacklisted = []
         for param in share.get('cifs_auxsmbconf', '').splitlines():
@@ -43,6 +43,6 @@ def upgrade():
         new_aux = '\n'.join(not_blacklisted)
 
         conn.execute(
-            'UPDATE sharing_cifs_share SET cifs_auxsmbconf = :aux WHERE id = :share_id',
-            aux=new_aux, share_id=share['id']
+            text('UPDATE sharing_cifs_share SET cifs_auxsmbconf = :aux WHERE id = :share_id'),
+            {'aux': new_aux, 'share_id': share['id']}
         )

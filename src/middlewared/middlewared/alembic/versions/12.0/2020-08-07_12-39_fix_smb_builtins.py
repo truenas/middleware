@@ -7,6 +7,7 @@ Create Date: 2020-08-07 12:39:23.535263+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -17,7 +18,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("UPDATE account_bsdusers SET bsdusr_smb = 0 WHERE bsdusr_builtin = 1")
+    op.execute(text("UPDATE account_bsdusers SET bsdusr_smb = 0 WHERE bsdusr_builtin = 1"))
 
 
 def downgrade():

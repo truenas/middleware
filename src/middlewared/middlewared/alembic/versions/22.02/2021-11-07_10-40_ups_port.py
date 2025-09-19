@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize UPS Port choice
 
@@ -19,8 +21,8 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    sys_config = [dict(row) for row in conn.execute("SELECT * FROM system_advanced").fetchall()]
-    ups_config = [dict(row) for row in conn.execute("SELECT * FROM services_ups").fetchall()]
+    sys_config = conn.execute(text("SELECT * FROM system_advanced")).mappings().all()
+    ups_config = conn.execute(text("SELECT * FROM services_ups")).mappings().all()
     if not sys_config or not ups_config:
         return
 
@@ -28,7 +30,7 @@ def upgrade():
     ups_port = ups_config[0]['ups_port']
 
     if serial_port == ups_port:
-        conn.execute("UPDATE services_ups SET ups_port = ? WHERE id = ?", ('', ups_config[0]['id']))
+        conn.execute(text("UPDATE services_ups SET ups_port = :port WHERE id = :id"), {'port': '', 'id': ups_config[0]['id']})
 
 
 def downgrade():

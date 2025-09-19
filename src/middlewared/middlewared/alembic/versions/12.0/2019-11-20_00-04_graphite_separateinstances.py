@@ -7,6 +7,7 @@ Create Date: 2019-11-20 00:04:21.095499+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('system_reporting', schema=None) as batch_op:
         batch_op.add_column(sa.Column('graphite_separateinstances', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE system_reporting SET graphite_separateinstances = 0")
+    op.execute(text("UPDATE system_reporting SET graphite_separateinstances = 0"))
 
     with op.batch_alter_table('system_reporting', schema=None) as batch_op:
         batch_op.alter_column('graphite_separateinstances',

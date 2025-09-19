@@ -7,6 +7,7 @@ Create Date: 2022-03-07 11:21:55.067698+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -17,9 +18,9 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("UPDATE services_iscsitargetextent SET iscsi_target_extent_type = 'DISK' WHERE iscsi_target_extent_type = 'ZVOL'")
-    op.execute("UPDATE services_iscsitargetextent SET iscsi_target_extent_type = 'FILE' WHERE iscsi_target_extent_type = 'File'")
-    op.execute("UPDATE services_iscsitargetextent SET iscsi_target_extent_rpm = 'UNKNOWN' WHERE iscsi_target_extent_rpm = 'Unknown'")
+    op.execute(text("UPDATE services_iscsitargetextent SET iscsi_target_extent_type = 'DISK' WHERE iscsi_target_extent_type = 'ZVOL'"))
+    op.execute(text("UPDATE services_iscsitargetextent SET iscsi_target_extent_type = 'FILE' WHERE iscsi_target_extent_type = 'File'"))
+    op.execute(text("UPDATE services_iscsitargetextent SET iscsi_target_extent_rpm = 'UNKNOWN' WHERE iscsi_target_extent_rpm = 'Unknown'"))
 
 
 def downgrade():

@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize Remote Display VM device
 
@@ -19,9 +21,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    vnc_devices = [dict(row) for row in conn.execute("SELECT * FROM vm_device WHERE dtype = 'VNC'").fetchall()]
-
-    for device in vnc_devices:
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).mappings().all():
         attrs = json.loads(device['attributes'])
         attrs.update({
             'port': attrs.pop('vnc_port'),
@@ -31,9 +31,9 @@ def upgrade():
             'web': attrs.pop('vnc_web', True),
             'type': 'VNC',
         })
-        conn.execute("UPDATE vm_device SET attributes = ?, dtype = 'DISPLAY' WHERE id = ?", (
-            json.dumps(attrs), device['id']
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attrs, dtype = 'DISPLAY' WHERE id = :id"), {
+            "attrs": json.dumps(attrs), "id": device['id']
+        })
 
 
 def downgrade():

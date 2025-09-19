@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """iotype added
 
 Revision ID: 9b7127606e2b
@@ -21,14 +23,14 @@ def upgrade():
     conn = op.get_bind()
     devices = {
         row['id']: json.loads(row['attributes'])
-        for row in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')").fetchall())
+        for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).mappings().all()
     }
 
     for device_id, device in devices.items():
         device['iotype'] = 'THREADS'
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
-            json.dumps(device), device_id
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attrs WHERE id = :id"), {
+            "attrs": json.dumps(device), "id": device_id
+        })
 
 
 def downgrade():

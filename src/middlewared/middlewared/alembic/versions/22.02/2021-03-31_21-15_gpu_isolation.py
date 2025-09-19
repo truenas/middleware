@@ -7,6 +7,7 @@ Create Date: 2021-13-31 21:15:42.818433+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 revision = '72fc294965d1'
@@ -19,7 +20,7 @@ def upgrade():
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.add_column(sa.Column('adv_isolated_gpu_pci_ids', sa.TEXT(), nullable=True))
 
-    op.execute("UPDATE system_advanced SET adv_isolated_gpu_pci_ids = '[]'")
+    op.execute(text("UPDATE system_advanced SET adv_isolated_gpu_pci_ids = '[]'"))
 
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.alter_column('adv_isolated_gpu_pci_ids', existing_type=sa.TEXT(), nullable=False)

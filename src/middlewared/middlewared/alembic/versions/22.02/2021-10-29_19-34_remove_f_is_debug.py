@@ -7,6 +7,7 @@ Create Date: 2021-10-29 19:34:05.030458+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -17,8 +18,8 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("UPDATE system_advanced SET adv_sysloglevel = UPPER(adv_sysloglevel)")
-    op.execute("UPDATE system_advanced SET adv_sysloglevel = 'F_DEBUG' WHERE adv_sysloglevel = 'F_IS_DEBUG'")
+    op.execute(text("UPDATE system_advanced SET adv_sysloglevel = UPPER(adv_sysloglevel)"))
+    op.execute(text("UPDATE system_advanced SET adv_sysloglevel = 'F_DEBUG' WHERE adv_sysloglevel = 'F_IS_DEBUG'"))
 
 
 def downgrade():

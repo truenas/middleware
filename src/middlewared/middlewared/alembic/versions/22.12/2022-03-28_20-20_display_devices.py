@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize VM Display Device Port(s)
 
@@ -28,7 +30,7 @@ def upgrade():
 
     display_devices = {
         row['id']: json.loads(row['attributes'])
-        for row in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'").fetchall())
+        for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'")).mappings().all()
     }
     reserved_ports = [d['port'] for d in display_devices.values()] + [6000]
 
@@ -38,9 +40,9 @@ def upgrade():
             web_port += 1
         display_device['web_port'] = web_port
         reserved_ports.append(web_port)
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
-            json.dumps(display_device), display_id
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attrs WHERE id = :id"), {
+            "attrs": json.dumps(display_device), "id": display_id
+        })
 
 
 def downgrade():

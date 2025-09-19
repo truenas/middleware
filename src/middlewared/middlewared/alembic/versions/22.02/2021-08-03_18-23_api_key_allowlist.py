@@ -7,6 +7,7 @@ Create Date: 2021-06-08 18:23:04.487592+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,7 +22,7 @@ def upgrade():
     with op.batch_alter_table('account_api_key', schema=None) as batch_op:
         batch_op.add_column(sa.Column('allowlist', sa.TEXT(), nullable=True))
 
-    op.execute("UPDATE account_api_key SET allowlist = '[]'")
+    op.execute(text("UPDATE account_api_key SET allowlist = '[]'"))
 
     with op.batch_alter_table('account_api_key', schema=None) as batch_op:
         batch_op.alter_column('allowlist', existing_type=sa.TEXT(), nullable=False)

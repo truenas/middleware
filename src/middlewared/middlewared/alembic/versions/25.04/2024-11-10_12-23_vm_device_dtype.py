@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Normalize vm_device attributes with dtype
 
@@ -20,13 +22,12 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for vm_device_config in conn.execute("SELECT * FROM vm_device").fetchall():
-        vm_device_config = dict(vm_device_config)
+    for vm_device_config in conn.execute(text("SELECT * FROM vm_device")).mappings().all():
         attributes = json.loads(decrypt(vm_device_config['attributes']))
         attributes['dtype'] = vm_device_config['dtype']
         conn.execute(
-            "UPDATE vm_device SET attributes = ? WHERE id = ?",
-            (encrypt(json.dumps(attributes)), vm_device_config['id'])
+            text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"),
+            {'attributes': encrypt(json.dumps(attributes)), 'id': vm_device_config['id']}
         )
 
     with op.batch_alter_table('vm_device', schema=None) as batch_op:

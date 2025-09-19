@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Reporting exporters type attr normalization
 
@@ -18,13 +20,12 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    for exporter_config in conn.execute("SELECT * FROM reporting_exporters").fetchall():
-        exporter_config = dict(exporter_config)
+    for exporter_config in conn.execute(text("SELECT * FROM reporting_exporters")).mappings().all():
         attributes = json.loads(exporter_config['attributes'])
         attributes['exporter_type'] = exporter_config['type']
         conn.execute(
-            "UPDATE reporting_exporters SET attributes = ? WHERE id = ?",
-            (json.dumps(attributes), exporter_config['id'])
+            text("UPDATE reporting_exporters SET attributes = :attributes WHERE id = :id"),
+            {'attributes': json.dumps(attributes), 'id': exporter_config['id']}
         )
 
     with op.batch_alter_table('reporting_exporters', schema=None) as batch_op:

@@ -8,6 +8,7 @@ Create Date: 2024-04-03 14:10:41.168534+00:00
 from alembic import op
 import re
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -28,7 +29,7 @@ def upgrade():
         ("storage_scrub", "scrub_"),
     ]:
         fields = [prefix + field for field in ["minute", "hour", "daymonth", "month", "dayweek"]]
-        for row in map(dict, conn.execute(f"SELECT id, {', '.join(fields)} FROM {table}").fetchall()):
+        for row in conn.execute(text(f"SELECT id, {', '.join(fields)} FROM {table}")).mappings().all():
             for k in fields:
                 value = row[k]
                 if value is not None and '/' in value and not re.match(r'^(\*|[0-9]+-[0-9]+)/([0-9]+)$', value):
@@ -37,7 +38,7 @@ def upgrade():
                     else:
                         value = '1'  # No luck in guessing the correct value, here is our best guess
 
-                    conn.execute(f"UPDATE {table} SET {k} = ? WHERE id = ?", [value, row["id"]])
+                    conn.execute(text(f"UPDATE {table} SET {k} = :value WHERE id = :id"), {"value": value, "id": row["id"]})
 
 
 

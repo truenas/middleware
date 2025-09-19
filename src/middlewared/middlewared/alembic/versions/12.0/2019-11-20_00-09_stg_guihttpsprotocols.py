@@ -7,6 +7,7 @@ Create Date: 2019-11-20 00:09:06.241796+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -21,9 +22,9 @@ def upgrade():
     with op.batch_alter_table('system_settings', schema=None) as batch_op:
         batch_op.add_column(sa.Column('stg_guihttpsprotocols', sa.TEXT(), nullable=True))
 
-    op.execute("""
+    op.execute(text("""
         UPDATE system_settings SET stg_guihttpsprotocols = '["TLSv1.2", "TLSv1.3"]'
-    """)
+    """))
 
     with op.batch_alter_table('system_settings', schema=None) as batch_op:
         batch_op.alter_column('stg_guihttpsprotocols',

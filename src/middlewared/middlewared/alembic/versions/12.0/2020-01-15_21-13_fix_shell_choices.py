@@ -6,6 +6,7 @@ Create Date: 2020-01-15 21:13:01.570666+00:00
 
 """
 from alembic import op
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -18,9 +19,9 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    conn.execute('UPDATE account_bsdUsers SET bsdusr_shell = ? WHERE bsdusr_shell = ?', (
-        '/etc/netcli.sh', '//etc/netcli.sh'
-    ))
+    conn.execute(text('UPDATE account_bsdUsers SET bsdusr_shell = :new_shell WHERE bsdusr_shell = :old_shell'), {
+        'new_shell': '/etc/netcli.sh', 'old_shell': '//etc/netcli.sh'
+    })
 
 
 def downgrade():

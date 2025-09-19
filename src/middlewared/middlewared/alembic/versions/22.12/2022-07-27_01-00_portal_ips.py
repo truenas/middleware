@@ -10,6 +10,7 @@ from collections import defaultdict
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 revision = '14899f89b885'
@@ -26,7 +27,7 @@ def upgrade():
 
     ip_to_port_to_id = defaultdict(dict)
     ports_popularity = defaultdict(int)
-    for row in map(dict, conn.execute("SELECT * FROM services_iscsitargetportalip").fetchall()):
+    for row in conn.execute(text("SELECT * FROM services_iscsitargetportalip")).mappings().all():
         ip_to_port_to_id[row['iscsi_target_portalip_ip']][row['iscsi_target_portalip_port']] = row['id']
         ports_popularity[row['iscsi_target_portalip_port']] += 1
 
@@ -51,10 +52,10 @@ def upgrade():
             leave_id = port_to_id[listen_port]
         else:
             leave_id = sorted(port_to_id.values())[0]
-        conn.execute("DELETE FROM services_iscsitargetportalip WHERE iscsi_target_portalip_ip = ? AND id != ?",
-                     ip, leave_id)
+        conn.execute(text("DELETE FROM services_iscsitargetportalip WHERE iscsi_target_portalip_ip = :ip AND id != :id"),
+                     {"ip": ip, "id": leave_id})
 
-    conn.execute("UPDATE services_iscsitargetglobalconfiguration SET iscsi_listen_port = ?", listen_port)
+    conn.execute(text("UPDATE services_iscsitargetglobalconfiguration SET iscsi_listen_port = :port"), {"port": listen_port})
 
     with op.batch_alter_table('services_iscsitargetportalip', schema=None) as batch_op:
         batch_op.create_index(

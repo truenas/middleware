@@ -8,6 +8,7 @@ Create Date: 2020-08-24 14:32:34.620255+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 revision = 'c747d1692290'
@@ -25,10 +26,10 @@ def upgrade():
         sa.Column('builtin', sa.Boolean(), default=False),
         sa.PrimaryKeyConstraint('label', name=op.f('pk_services_catalog')),
     )
-    op.execute(
+    op.execute(text(
         "INSERT INTO services_catalog (label, repository, branch, builtin) VALUES"
         " ('OFFICIAL', 'https://github.com/truenas/charts.git', 'master', 1)"
-    )
+    ))
 
 
 def downgrade():

@@ -9,6 +9,7 @@ import json
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -25,7 +26,7 @@ def upgrade():
         batch_op.add_column(sa.Column('threads', sa.INTEGER(), nullable=True))
         batch_op.add_column(sa.Column('shutdown_timeout', sa.INTEGER(), nullable=True))
 
-    op.execute("UPDATE vm_vm SET cores = 1, threads = 1, shutdown_timeout = 90")
+    op.execute(text("UPDATE vm_vm SET cores = 1, threads = 1, shutdown_timeout = 90"))
 
     with op.batch_alter_table('vm_vm', schema=None) as batch_op:
         batch_op.alter_column('cores',
@@ -43,7 +44,7 @@ def upgrade():
     # ensure vnc port
 
     all_ports = [6000, 6100]
-    vnc_devices = [dict(row) for row in conn.execute("SELECT * FROM vm_device WHERE dtype = 'VNC'").fetchall()]
+    vnc_devices = conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'VNC'")).mappings().all()
 
     for vnc_device in vnc_devices:
         vnc_device['attributes'] = json.loads(vnc_device['attributes'])
@@ -70,13 +71,13 @@ def upgrade():
             # This is to ensure old users have this as a default value
             vnc_device['attributes']['vnc_bind'] = '0.0.0.0'
 
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (
-            json.dumps(vnc_device['attributes']), vnc_device['id']
-        ))
+        conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {
+            'attributes': json.dumps(vnc_device['attributes']), 'id': vnc_device['id']
+        })
 
     # add physical sector size support
 
-    for device in conn.execute("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')").fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).mappings().all():
         attributes = json.loads(device['attributes'])
 
         try:
@@ -91,16 +92,23 @@ def upgrade():
             'physical_sectorsize': None,
         })
 
-        conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (json.dumps(attributes), device['id']))
+        conn.execute(
+            text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {
+                'attributes': json.dumps(attributes), 'id': device['id']
+            }
+        )
 
     # normalize_mac_address
 
-    for device in conn.execute("SELECT * FROM vm_device WHERE dtype = 'NIC'").fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'NIC'")).mappings().all():
         attributes = json.loads(device['attributes'])
 
         if not attributes.get('mac') or attributes['mac'] == '00:a0:98:FF:FF:FF':
             attributes['mac'] = None
-            conn.execute("UPDATE vm_device SET attributes = ? WHERE id = ?", (json.dumps(attributes), device['id']))
+            conn.execute(
+                text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"),
+                {'attributes': json.dumps(attributes), 'id': device['id']}
+            )
 
     # ### end Alembic commands ###
 

@@ -110,8 +110,8 @@ class DNSService(Service):
         else:
             # means there aren't any nameservers configured so let's
             # check to see if dhcp is running on any of the interfaces
-            # and if there are, then check dhclient leases file for
-            # nameservers that were handed to us via dhcp
+            # and if there are, then check DHCP leases for
+            # nameservers that were handed to us via DHCP
             interfaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
             if interfaces:
                 interfaces = [i['int_interface'] for i in interfaces if i['int_dhcp']]

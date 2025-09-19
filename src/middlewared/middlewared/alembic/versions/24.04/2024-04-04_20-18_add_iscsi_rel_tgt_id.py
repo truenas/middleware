@@ -7,6 +7,7 @@ Create Date: 2024-04-04 20:18:24.354103+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -24,8 +25,8 @@ def upgrade():
 
     rel_tgt_id = 1
     conn = op.get_bind()
-    for target in conn.execute("SELECT * FROM services_iscsitarget").fetchall():
-        conn.execute("UPDATE services_iscsitarget SET iscsi_target_rel_tgt_id = ? WHERE id = ?", (rel_tgt_id, target['id']))
+    for target in conn.execute(text("SELECT * FROM services_iscsitarget")).fetchall():
+        conn.execute(text("UPDATE services_iscsitarget SET iscsi_target_rel_tgt_id = :rel_tgt_id WHERE id = :id"), {"rel_tgt_id": rel_tgt_id, "id": target['id']})
         rel_tgt_id += 1
 
     with op.batch_alter_table('services_iscsitarget', schema=None) as batch_op:

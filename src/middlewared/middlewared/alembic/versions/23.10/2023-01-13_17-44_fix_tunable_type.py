@@ -7,6 +7,7 @@ Create Date: 2023-01-13 17:44:37.982722+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -18,7 +19,7 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    conn.execute('UPDATE system_tunable SET tun_type = "SYSCTL" where tun_type = "sysctl"')
+    conn.execute(text('UPDATE system_tunable SET tun_type = "SYSCTL" where tun_type = "sysctl"'))
 
 
 def downgrade():

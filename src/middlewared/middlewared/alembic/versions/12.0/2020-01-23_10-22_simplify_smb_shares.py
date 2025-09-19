@@ -7,6 +7,7 @@ Create Date: 2020-01-16 19:16:53.973957+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -45,7 +46,7 @@ def upgrade():
         batch_op.add_column(sa.Column('cifs_durablehandle', sa.Boolean(), nullable=True))
 
     conn = op.get_bind()
-    smb_shares = [dict(row) for row in conn.execute("SELECT * FROM sharing_cifs_share").fetchall()]
+    smb_shares = conn.execute(text("SELECT * FROM sharing_cifs_share")).mappings().all()
     for share in smb_shares:
         aux_params = share.get('cifs_auxsmbconf', '').split('\n')
         vfs_objects = share.get('cifs_vfsobjects', '')
@@ -79,13 +80,13 @@ def upgrade():
             aux_params.append(f"vfs objects = {vfs_objects.replace(',', ' ')}")
 
         new_aux = '\n'.join(aux_params)
-        conn.execute("UPDATE sharing_cifs_share SET cifs_acl = :acl, cifs_streams = :streams, "
-                     "cifs_aapl_name_mangling = :catia, cifs_durablehandle= :durable, "
-                     "cifs_path_suffix = '', cifs_auxsmbconf = :aux, cifs_purpose = 'NO_PRESET' "
-                     "WHERE id=:share_id", acl=has_acl, streams=has_streams, catia=has_catia,
-                     durable=set_durable, aux=new_aux, share_id=share['id'])
+        conn.execute(text("UPDATE sharing_cifs_share SET cifs_acl = :acl, cifs_streams = :streams, "
+                          "cifs_aapl_name_mangling = :catia, cifs_durablehandle= :durable, "
+                          "cifs_path_suffix = '', cifs_auxsmbconf = :aux, cifs_purpose = 'NO_PRESET' "
+                          "WHERE id=:share_id"), {"acl": has_acl, "streams": has_streams, "catia": has_catia,
+                                                   "durable": set_durable, "aux": new_aux, "share_id": share['id']})
 
-    op.execute(f"UPDATE services_cifs SET cifs_srv_aapl_extensions = {fruit_enabled}")
+    op.execute(text(f"UPDATE services_cifs SET cifs_srv_aapl_extensions = {fruit_enabled}"))
 
     with op.batch_alter_table('sharing_cifs_share', schema=None) as batch_op:
         batch_op.drop_column('cifs_vfsobjects')

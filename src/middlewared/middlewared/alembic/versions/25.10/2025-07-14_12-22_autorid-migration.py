@@ -7,6 +7,7 @@ Create Date: 2025-07-14 12:22:17.431832+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 from json import loads, dumps
 from middlewared.utils.pwenc import encrypt, decrypt
 
@@ -56,7 +57,7 @@ def migrate_autorid_to_rid(conn, config: dict) -> None:
 
 def upgrade():
     conn = op.get_bind()
-    row = conn.execute('SELECT * FROM directoryservices').fetchone()
+    row = conn.execute(text('SELECT * FROM directoryservices')).fetchone()
     if not row:
         return
 

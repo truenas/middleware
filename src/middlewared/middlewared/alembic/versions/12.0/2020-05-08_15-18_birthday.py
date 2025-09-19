@@ -8,6 +8,7 @@ Create Date: 2020-05-08 15:18:35.333997+00:00
 import os
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 from datetime import datetime
 
 # revision identifiers, used by Alembic.
@@ -23,7 +24,7 @@ def upgrade():
         batch_op.add_column(sa.Column('stg_birthday', sa.DateTime(), nullable=True))
 
     if os.environ.get("FREENAS_INSTALL") != "yes":
-        op.execute("UPDATE system_settings SET stg_birthday = '" + str(datetime(1970, 1, 1, 0, 0, 0)) + "'")
+        op.execute(text("UPDATE system_settings SET stg_birthday = '" + str(datetime(1970, 1, 1, 0, 0, 0)) + "'"))
 
     # ### end Alembic commands ###
 

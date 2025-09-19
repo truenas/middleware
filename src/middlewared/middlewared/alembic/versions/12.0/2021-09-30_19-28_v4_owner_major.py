@@ -7,6 +7,7 @@ Create Date: 2021-09-14 19:28:42.914039+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 revision = 'fee786dfe121'
@@ -19,7 +20,7 @@ def upgrade():
     with op.batch_alter_table('services_nfs', schema=None) as batch_op:
         batch_op.add_column(sa.Column('nfs_srv_v4_owner_major', sa.String(length=1023), nullable=True))
 
-    op.execute('UPDATE services_nfs SET nfs_srv_v4_owner_major = ""')
+    op.execute(text('UPDATE services_nfs SET nfs_srv_v4_owner_major = ""'))
 
     with op.batch_alter_table('services_nfs', schema=None) as batch_op:
         batch_op.alter_column('nfs_srv_v4_owner_major', existing_type=sa.VARCHAR(1023), nullable=False)

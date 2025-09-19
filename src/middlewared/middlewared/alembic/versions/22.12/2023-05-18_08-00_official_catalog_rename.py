@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 """
 Change official catalog label
 
@@ -19,10 +21,10 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    conn.execute("DELETE FROM services_catalog WHERE label = 'TRUENAS'")
-    conn.execute("UPDATE services_catalog SET label = ? WHERE label = ?", (
-        'TRUENAS', 'OFFICIAL'
-    ))
+    conn.execute(text("DELETE FROM services_catalog WHERE label = 'TRUENAS'"))
+    conn.execute(text("UPDATE services_catalog SET label = :new_label WHERE label = :old_label"), {
+        'new_label': 'TRUENAS', 'old_label': 'OFFICIAL'
+    })
 
 
 def downgrade():

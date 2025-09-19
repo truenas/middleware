@@ -7,6 +7,7 @@ Create Date: 2023-02-17 12:50:10.441696+00:00
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -26,8 +27,8 @@ def upgrade():
     sa.UniqueConstraint('uid', name=op.f('uq_account_bsdusers_webui_attribute_uid')),
     sqlite_autoincrement=True
     )
-    op.execute("INSERT INTO account_bsdusers_webui_attribute (uid, attributes) "
-               "SELECT bsdusr_uid, bsdusr_attributes FROM account_bsdusers WHERE bsdusr_attributes != '{}'")
+    op.execute(text("INSERT INTO account_bsdusers_webui_attribute (uid, attributes) "
+               "SELECT bsdusr_uid, bsdusr_attributes FROM account_bsdusers WHERE bsdusr_attributes != '{}'"))
     with op.batch_alter_table('account_bsdusers', schema=None) as batch_op:
         batch_op.drop_column('bsdusr_attributes')
 
