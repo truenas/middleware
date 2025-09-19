@@ -67,6 +67,7 @@ def test_query_method(legacy_api_client, query_method):
         "sharing.smb.query",
         "tunable.query",
         "vmware.query",
+        "zfs.resource.query",
     }:
         return
 
