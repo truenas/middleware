@@ -1,6 +1,7 @@
 import os
 
 from middlewared.service import CallError, Service
+from middlewared.plugins.pool_.utils import CreateImplArgs
 
 from .ix_apps.path import get_app_parent_volume_ds_name
 from .utils import DatasetDefaults
@@ -25,10 +26,12 @@ class AppSchemaActions(Service):
         }
         for create_ds in sorted(set(user_wants) - existing_datasets):
             await self.middleware.call(
-                'zfs.dataset.create', {
-                    'properties': user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
-                    'name': create_ds, 'type': 'FILESYSTEM',
-                }
+                'pool.dataset.create_impl',
+                CreateImplArgs(
+                    name=create_ds,
+                    ztype='FILESYSTEM',
+                    zprops=user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
+                )
             )
             await self.middleware.call('zfs.dataset.mount', create_ds)
 

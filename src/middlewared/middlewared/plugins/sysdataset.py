@@ -18,6 +18,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
@@ -506,19 +507,23 @@ class SystemDatasetService(ConfigService):
         }
         for dataset, config in datasets.items():
             props = config['props']
-            # Disable encryption for pools with passphrase-encrypted root datasets so that system dataset could be
-            # automatically mounted on system boot.
+            # Disable encryption for system managed datasets that are
+            # configured on zpools that are passphrase-encrypted.
             if root_dataset_is_passphrase_encrypted:
                 props['encryption'] = 'off'
             is_cores_ds = dataset.endswith('/cores')
             if is_cores_ds:
                 props['quota'] = '1G'
             if dataset not in datasets_prop:
-                await self.middleware.call('zfs.dataset.create', {'name': dataset, 'properties': props})
+                await self.middleware.call(
+                    'pool.dataset.create_impl', CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props)
+                )
             elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
                     await self.middleware.call('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
-                    await self.middleware.call('zfs.dataset.create', {'name': dataset, 'properties': props})
+                    await self.middleware.call(
+                        'pool.dataset.create_impl', CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props)
+                    )
                 except Exception:
                     self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
