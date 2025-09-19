@@ -16,6 +16,7 @@ from middlewared.api.current import (
     BootEnvironmentKeepArgs,
     BootEnvironmentKeepResult,
 )
+from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import filterable_api_method, Service, private
 from middlewared.service_exception import CallError, ValidationError
 from middlewared.utils import filter_list
@@ -157,11 +158,11 @@ class BootEnvironmentService(Service):
     @api_method(BootEnvironmentKeepArgs, BootEnvironmentKeepResult, roles=['BOOT_ENV_WRITE'])
     def keep(self, data):
         self.middleware.call_sync(
-            "zfs.dataset.update",
-            self.validate_be("boot.environment.keep", data["id"])["dataset"],
-            {
-                "properties": {"zectl:keep": {"value": str(data["value"])}},
-            },
+            "pool.dataset.update_impl",
+            UpdateImplArgs(
+                name=self.validate_be("boot.environment.keep", data["id"])["dataset"],
+                uprops={"zectl:keep": str(data["value"])},
+            )
         )
         return self.query([["id", "=", data["id"]]], {"get": True})
 

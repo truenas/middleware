@@ -33,6 +33,7 @@ from middlewared.api.current import (
     AuditEntry, AuditDownloadReportArgs, AuditDownloadReportResult, AuditQueryArgs, AuditQueryResult,
     AuditExportArgs, AuditExportResult, AuditUpdateArgs, AuditUpdateResult
 )
+from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import LEGACY_USERPROP_PREFIX, TNUserProp
 from middlewared.service import filterable_api_method, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
@@ -383,38 +384,55 @@ class AuditService(ConfigService):
         old_crit = int(ds_props.get(QUOTA_CRIT, '0'))
 
         payload = {}
+        zprops, uprops = dict(), dict()
         # Using floor division for conversion from bytes to GiB
         if new['quota'] != old_quota // _GIB:
             quota_val = "none" if new['quota'] == 0 else f'{new["quota"]}G'
             # Using refquota gives better fidelity with dataset settings
             payload['refquota'] = {'parsed': quota_val}
+            zprops['refquot'] = quota_val
 
         if new['reservation'] != old_reservation // _GIB:
             reservation_val = "none" if new['reservation'] == 0 else f'{new["reservation"]}G'
             payload['refreservation'] = {'parsed': reservation_val}
+            zprops['refreservation'] = reservation_val
 
         if new["quota_fill_warning"] != old_warn:
-            payload[QUOTA_WARN] = {'parsed': str(new['quota_fill_warning'])}
+            qw = str(new['quota_fill_warning'])
+            payload[QUOTA_WARN] = {'parsed': qw}
+            uprops[QUOTA_WARN] = qw
 
         if new["quota_fill_critical"] != old_crit:
-            payload[QUOTA_CRIT] = {'parsed': str(new['quota_fill_critical'])}
+            qc = str(new['quota_fill_critical'])
+            payload[QUOTA_CRIT] = {'parsed': qc}
+            uprops[QUOTA_CRIT] = qc
 
         if not payload:
             return
 
-        await self.middleware.call(
-            'zfs.dataset.update', ds['name'], {'properties': payload}
-        )
-        # HA: Update remote node
+        args = UpdateImplArgs(name=ds['name'], zprops=zprops, uprops=uprops)
+        await self.middleware.call('pool.dataset.update_imp', args)
         if await self.middleware.call('failover.status') == 'MASTER':
             try:
                 await self.middleware.call(
-                    'failover.call_remote', 'zfs.dataset.update', [ds['name'], {'properties': payload}]
+                    'failover.call_remote', 'pool.dataset.update_impl', [args]
                 )
-            except Exception:
-                self.middleware.logger.exception(
-                    "Unexpected failure to update audit dataset settings on standby node."
-                )
+            except Exception as e:
+                if isinstance(e, CallError) and hasattr(e, "errno") and e.errno == CallError.ENOMETHOD:
+                    try:
+                        await self.middleware.call(
+                            'failover.call_remote',
+                            'zfs.dataset.update',
+                            [ds['name'], {'properties': payload}]
+                        )
+                    except Exception:
+                        self.middleware.logger.exception(
+                            "Failed updating audit dataset settings using fallback method on standby"
+                        )
+                else:
+                    self.middleware.logger.exception(
+                        "Unexpected failure updating audit dataset settings on standby"
+                    )
 
     @api_method(AuditUpdateArgs, AuditUpdateResult, audit='Update Audit Configuration')
     async def update(self, data):
@@ -481,11 +499,12 @@ class AuditService(ConfigService):
                 ', '.join(to_remove)
             )
 
-        payload = {'refreservation': {'parsed': None}}
+        zprops = {'refreservation': 'none'}
         for ds_name in to_remove:
             try:
                 await self.middleware.call(
-                    'zfs.dataset.update', ds_name, {'properties': payload}
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(name=ds_name, zprops=zprops)
                 )
             except Exception:
                 self.logger.error(

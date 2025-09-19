@@ -1,6 +1,7 @@
 import errno
 
 from middlewared.service import CallError, Service
+from middlewared.plugins.pool_.utils import UpdateImplArgs
 
 from .state_utils import docker_dataset_custom_props, IX_APPS_MOUNT_PATH, Status
 
@@ -53,15 +54,10 @@ class DockerFilesystemManageService(Service):
 
         # If the mount point is not at the expected location, fix it
         if ds[0]['properties']['mountpoint']['value'] != IX_APPS_MOUNT_PATH:
+            mp = docker_dataset_custom_props(docker_ds.split('/')[-1]['mountpoint'])
             await self.middleware.call(
-                'zfs.dataset.update',
-                docker_ds, {
-                    'properties': {
-                        'mountpoint': {
-                            'value': docker_dataset_custom_props(docker_ds.split('/')[-1])['mountpoint']
-                        },
-                    },
-                }
+                'pool.dataset.update_impl',
+                UpdateImplArgs(name=docker_ds, zprops={'mountpoint': mp})
             )
 
     async def ix_apps_is_mounted(self, dataset_to_check=None):
