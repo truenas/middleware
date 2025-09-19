@@ -23,16 +23,17 @@ from .service_mixin import ServiceChangeMixin
 PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'select')
 
 
-def get_instance_args(entry, primary_key="id"):
+def get_instance_args(entry: type[BaseModel], primary_key: str = "id") -> type[BaseModel]:
     return create_model(
         entry.__name__.removesuffix("Entry") + "GetInstanceArgs",
         __base__=(BaseModel,),
+        __module__=entry.__module__,
         id=Annotated[entry.model_fields[primary_key].annotation, Field()],
         options=Annotated[QueryOptions, Field(default={})],
     )
 
 
-def get_instance_result(entry):
+def get_instance_result(entry: type[BaseModel]) -> type[BaseModel]:
     return create_model(
         entry.__name__.removesuffix("Entry") + "GetInstanceResult",
         __base__=(BaseModel,),
@@ -87,6 +88,7 @@ class CRUDServiceMetabase(ServiceBase):
                 cli_private=cli_private,
             )(klass.get_instance)
 
+            # Models must be registered with their factories for backwards compatibility.
             klass._register_models = [
                 (query_result_model, query_result, entry.__name__),
                 (query_result_model.__annotations__["result"].__args__[1],
