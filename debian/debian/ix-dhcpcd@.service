@@ -1,0 +1,17 @@
+[Unit]
+Description=DHCP Client Daemon on %I
+Wants=network.target
+After=networking.service sys-subsystem-net-devices-%i.device
+Before=network.target
+BindsTo=sys-subsystem-net-devices-%i.device
+Documentation=man:dhcpcd(8)
+
+[Service]
+Type=forking
+PIDFile=/run/dhcpcd/%I.pid
+ExecStart=/usr/sbin/dhcpcd -q -w %I
+ExecStop=/usr/sbin/dhcpcd -x %I
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
