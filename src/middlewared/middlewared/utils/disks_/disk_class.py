@@ -522,7 +522,7 @@ class DiskEntry:
         """Return a tuple of `GptPartEntry` objects for any
         GPT partitions written to the disk."""
         try:
-            return read_gpt(dev_fd or self.devpath, self.lbs)
+            return read_gpt(dev_fd or self.devpath, self.lbs, disk_name=self.name)
         except Exception as e:
             if isinstance(e, OSError) and e.errno == errno.ENOMEDIUM:
                 # when we access the "identifier" attribute of the disk object

@@ -50,7 +50,7 @@ def wipe_disk_quick(dev_fd: int, disk_size: int | None = None) -> None:
         os.write(dev_fd, to_write)
 
 
-def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
+def read_gpt(devobj: int | str, lbs: int, disk_name: str) -> tuple[GptPartEntry]:
     """Read GPT partition entries from a device.
 
     Reads and parses the GPT (GUID Partition Table) from the specified device
@@ -60,6 +60,7 @@ def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
     Args:
         devobj: Device path (e.g., '/dev/sda') or file descriptor
         lbs: Logical block size in bytes (typically 512 or 4096)
+        disk_name: Disk name (e.g., 'sda').
 
     Returns:
         tuple[GptPartEntry]: Tuple of GPT partition entries found on the device.
@@ -125,6 +126,8 @@ def read_gpt(devobj: int | str, lbs: int) -> tuple[GptPartEntry]:
                         partition_name=name,
                         first_lba=first_lba,
                         last_lba=last_lba,
+                        disk_name=disk_name,
+                        lbs=lbs,
                     )
                 )
     finally:
