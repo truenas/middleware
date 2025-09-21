@@ -63,7 +63,6 @@ class DeviceService(Service):
                 'id': part_name,
                 'path': f'/dev/{parent}',
                 'disk': parent,
-                'fs_label': i.get('ID_FS_LABEL'),
                 'partition_type': i['ID_PART_ENTRY_TYPE'],
                 'partition_number': part_num,
                 'partition_uuid': i['ID_PART_ENTRY_UUID'],
