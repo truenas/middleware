@@ -68,6 +68,22 @@ class DiskEntry:
     devpath: str | None = None
     """The disk's /dev path (i.e. '/dev/sda')"""
 
+    def is_valid(self) -> bool:
+        """
+        Check if this disk entry represents a valid disk.
+
+        Returns True if:
+        1. The name matches the VALID_WHOLE_DISK pattern
+        2. The device exists in /sys/block/
+        """
+        if not self.name:
+            return False
+
+        if not VALID_WHOLE_DISK.match(self.name):
+            return False
+
+        return os.path.exists(f"/sys/block/{self.name}")
+
     def __opener(
         self,
         *,
@@ -362,11 +378,11 @@ class DiskEntry:
 
         return 'UNKNOWN'
 
+    @functools.cached_property
     def rotation_rate(self) -> int | None:
         """Get rotation rate in RPM for HDD devices
 
         Returns None for SSDs or when unable to determine.
-        Matches _get_rotation_rate behavior from device_info.py
         """
         if self.media_type != 'HDD':
             return None
@@ -388,6 +404,7 @@ class DiskEntry:
 
             return rotation_rate
 
+    @functools.cached_property
     def is_dif_formatted(self) -> bool:
         """
         DIF is a feature added to the SCSI Standard. It adds 8 bytes to the end of each sector on disk.
