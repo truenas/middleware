@@ -99,25 +99,25 @@ class DeviceService(Service):
             size = mediasize = blocks * 512
 
         disk = {
-            'name': dev.sys_name,
-            'sectorsize': sectorsize,
-            'number': dev.device_number,
-            'subsystem': self.safe_retrieval(dev.parent.properties, 'SUBSYSTEM', ''),
-            'driver': driver,
-            'hctl': self.safe_retrieval(dev.parent.properties, 'DEVPATH', '').split('/')[-1],
-            'size': size,
-            'mediasize': mediasize,
-            'vendor': vendor,
-            'ident': ident,
-            'serial': serial,
-            'model': model,
-            'descr': descr,
-            'lunid': self.safe_retrieval(dev.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.') or None,
-            'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN').upper(),
-            'type': 'UNKNOWN',
-            'blocks': blocks,
+            'name': dev.sys_name,  # name
+            'sectorsize': sectorsize,  # lbs
+            'number': dev.device_number,  # device_number
+            'subsystem': self.safe_retrieval(dev.parent.properties, 'SUBSYSTEM', ''),  # subsystem
+            'driver': driver,  # driver
+            'hctl': self.safe_retrieval(dev.parent.properties, 'DEVPATH', '').split('/')[-1],  # hctl
+            'size': size,  # size_bytes
+            'mediasize': mediasize,  # size_bytes
+            'vendor': vendor,  # vendor
+            'ident': ident,  # serial at this point
+            'serial': serial,  # serial
+            'model': model,  # model
+            'descr': descr,  # model
+            'lunid': self.safe_retrieval(dev.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.') or None,  # lunid
+            'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN').upper(),  # bus
+            'type': 'UNKNOWN',  # media_type
+            'blocks': blocks,  # size_sectors
             'serial_lunid': None,
-            'rotationrate': None,
+            'rotationrate': None,  # rotation_rate
             'stripesize': None,  # remove this? (not used)
             'parts': [],
         }
