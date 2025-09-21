@@ -134,12 +134,7 @@ class DiskService(Service):
                 'size': pinfo.total_bytes,
                 'id': part_name,
                 'path': os.path.join('/dev', part_name),
-                'encrypted_provider': None,
             }
-
-            encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
-            if encrypted_provider:
-                part['encrypted_provider'] = os.path.join('/dev', encrypted_provider[0].split('/')[3])
             parts.append(part)
         return parts
 

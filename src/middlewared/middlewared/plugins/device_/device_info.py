@@ -58,7 +58,7 @@ class DeviceService(Service):
             part_num = int(i['ID_PART_ENTRY_NUMBER'])
             part_name = self.middleware.call_sync('disk.get_partition_for_disk', parent, part_num)
             pinfo = get_partition_size_info(parent, int(i['ID_PART_ENTRY_OFFSET']), int(i['ID_PART_ENTRY_SIZE']))
-            part = {
+            parts.append({
                 'name': part_name,
                 'id': part_name,
                 'path': f'/dev/{parent}',
@@ -72,15 +72,7 @@ class DeviceService(Service):
                 'start': pinfo.start_byte,
                 'end': pinfo.end_byte,
                 'size': pinfo.total_bytes,
-                'encrypted_provider': None,
-            }
-
-            for attr in filter(lambda x: x.startswith('holders/md'), i.attributes.available_attributes):
-                # looks like `holders/md123`
-                part['encrypted_provider'] = f'/dev/{attr.split("/", 1)[1].strip()}'
-                break
-
-            parts.append(part)
+            })
 
         return parts
 
