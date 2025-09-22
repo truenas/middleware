@@ -401,7 +401,7 @@ class UPSBase(GraphBase):
     async def export_multiple_identifiers(
         self, query_params: dict, identifiers: list, aggregate: bool = True
     ) -> typing.List[dict]:
-        self.UPS_IDENTIFIER = (await self.middleware.call('ups.config'))['identifier']
+        self.UPS_IDENTIFIER = f"local_{(await self.middleware.call('ups.config'))['identifier']}"
         return await super().export_multiple_identifiers(query_params, identifiers, aggregate)
 
     def query_parameters(self) -> dict:
@@ -417,7 +417,7 @@ class UPSChargePlugin(UPSBase):
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_{self.UPS_IDENTIFIER}.charge'
+        return f'upsd_{self.UPS_IDENTIFIER}.battery_charge_percentage'
 
 
 class UPSRuntimePlugin(UPSBase):
@@ -427,7 +427,7 @@ class UPSRuntimePlugin(UPSBase):
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_{self.UPS_IDENTIFIER}.runtime'
+        return f'upsd_{self.UPS_IDENTIFIER}.battery_estimated_runtime'
 
 
 class UPSVoltagePlugin(UPSBase):
@@ -445,7 +445,7 @@ class UPSVoltagePlugin(UPSBase):
         return list(self.IDENTIFIER_MAPPING.keys())
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_{self.UPS_IDENTIFIER}.{self.IDENTIFIER_MAPPING[identifier]}'
+        return f'upsd_{self.UPS_IDENTIFIER}.{self.IDENTIFIER_MAPPING[identifier]}'
 
 
 class UPSCurrentPlugin(UPSBase):
@@ -455,7 +455,7 @@ class UPSCurrentPlugin(UPSBase):
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_{self.UPS_IDENTIFIER}.input_current'
+        return f'upsd_{self.UPS_IDENTIFIER}.input_current'
 
 
 class UPSFrequencyPlugin(UPSBase):
@@ -465,7 +465,7 @@ class UPSFrequencyPlugin(UPSBase):
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_{self.UPS_IDENTIFIER}.input_frequency'
+        return f'upsd_{self.UPS_IDENTIFIER}.input_frequency'
 
 
 class UPSLoadPlugin(UPSBase):
@@ -475,7 +475,7 @@ class UPSLoadPlugin(UPSBase):
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_{self.UPS_IDENTIFIER}.load'
+        return f'upsd_{self.UPS_IDENTIFIER}.load_usage'
 
 
 class UPSTemperaturePlugin(UPSBase):
@@ -485,4 +485,4 @@ class UPSTemperaturePlugin(UPSBase):
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_{self.UPS_IDENTIFIER}.temp'
+        return f'upsd_{self.UPS_IDENTIFIER}.temperature'
