@@ -1,12 +1,9 @@
-import re
+import os.path
 from datetime import timedelta
 
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.utils.disks import dev_to_ident
+from middlewared.utils.disks_.disk_class import DiskEntry, iterate_disks
 from middlewared.utils.time_utils import utc_now
-
-
-RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -22,11 +19,12 @@ class DiskService(Service, ServiceChangeMixin):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return
 
-        disks = await self.middleware.call('device.get_disks')
+        disk_obj = DiskEntry(name=name, devpath=os.path.join('/dev', name))
         # Abort if the disk is not recognized as an available disk
-        if name not in disks:
+        if not disk_obj.is_valid():
             return
-        ident = await self.middleware.call('disk.device_to_identifier', name, disks)
+
+        ident = disk_obj.identifier  # Ensure this matches with earlier implementation
         qs = await self.middleware.call(
             'datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['disk_expiretime']}
         )
@@ -43,14 +41,14 @@ class DiskService(Service, ServiceChangeMixin):
 
         disk.update({'disk_name': name, 'disk_expiretime': None})
 
-        self._map_device_disk_to_db(disk, disks[name])
+        self._map_device_disk_to_db(disk, disk_obj)
 
         if not new:
             await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
-        if disks[name]['dif']:
+        if disk_obj.is_dif_formatted:
             await self.middleware.call('alert.oneshot_create', 'DifFormatted', [name])
         else:
             await self.middleware.call('alert.oneshot_delete', 'DifFormatted', None)
@@ -64,9 +62,10 @@ class DiskService(Service, ServiceChangeMixin):
             # output logging information to middlewared.log in case we sync disks
             # when not all the disks have been resolved
             log_info = {
-                ok: {
-                    ik: iv for ik, iv in ov.items() if ik in ('lunid', 'serial')
-                } for ok, ov in sys_disks.items()
+                disk.name: {
+                    'serial': disk.serial,
+                    'lunid': disk.lunid,
+                } for disk in sys_disks
             }
             self.logger.info('Found disks: %r', log_info)
         else:
@@ -76,25 +75,7 @@ class DiskService(Service, ServiceChangeMixin):
 
     @private
     def ident_to_dev(self, ident, sys_disks):
-        if not ident or not (search := RE_IDENT.search(ident)):
-            return
-
-        tp = search.group('type')
-        value = search.group('value')
-        mapping = {'uuid': 'uuid', 'devicename': 'name', 'serial_lunid': 'serial_lunid', 'serial': 'serial'}
-        if tp not in mapping:
-            return
-
-        for disk, info in sys_disks.items():
-            if tp == 'uuid':
-                for part in filter(lambda x: x['partition_uuid'] == value, info['parts']):
-                    return part['disk']
-            elif info.get(mapping[tp]) == value:
-                return disk
-
-    @private
-    def dev_to_ident(self, name, sys_disks):
-        return dev_to_ident(name, sys_disks)
+        return next((disk for disk in sys_disks if disk.identifier == ident), None)
 
     @private
     @job(lock='disk.sync_all')
@@ -112,8 +93,8 @@ class DiskService(Service, ServiceChangeMixin):
         opts.setdefault('zfs_guid', False)
 
         job.set_progress(10, 'Enumerating system disks')
-        sys_disks = self.middleware.call_sync('device.get_disks', True)
-        number_of_disks = self.log_disk_info(sys_disks)
+        system_disks = list(iterate_disks())
+        number_of_disks = self.log_disk_info(system_disks)
 
         job.set_progress(20, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
@@ -131,8 +112,9 @@ class DiskService(Service, ServiceChangeMixin):
 
             original_disk = disk.copy()
 
-            name = self.ident_to_dev(disk['disk_identifier'], sys_disks)
-            if not name or self.dev_to_ident(name, sys_disks) != disk['disk_identifier']:
+            disk_obj = self.ident_to_dev(disk['disk_identifier'], system_disks)
+            name = disk_obj.name if disk_obj else None
+            if not disk_obj or disk_obj.identifier != disk['disk_identifier']:
                 # 1. can't translate identitifer to device
                 # 2. or can't translate device to identifier
                 if not disk['disk_expiretime']:
@@ -155,13 +137,13 @@ class DiskService(Service, ServiceChangeMixin):
                 disk['disk_expiretime'] = None
                 disk['disk_name'] = name
 
-            if name in sys_disks:
-                if sys_disks[name]['dif']:
-                    dif_formatted_disks.append(name)
+            if disk_obj and disk_obj.is_valid():
+                if disk_obj.is_dif_formatted:
+                    dif_formatted_disks.append(disk_obj.name)
 
-                self._map_device_disk_to_db(disk, sys_disks[name])
+                self._map_device_disk_to_db(disk, disk_obj)
 
-            if name not in sys_disks and not disk['disk_expiretime']:
+            if name and not disk['disk_expiretime']:
                 # If for some reason disk is not identified as a system disk mark it to expire.
                 disk['disk_expiretime'] = utc_now() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
 
@@ -173,9 +155,10 @@ class DiskService(Service, ServiceChangeMixin):
 
         qs = None
         progress_percent = 70
-        for name in filter(lambda x: x not in seen_disks, sys_disks):
+        for disk_obj in filter(lambda x: x.name not in seen_disks, system_disks):
             progress_percent += increment
-            disk_identifier = self.dev_to_ident(name, sys_disks)
+            disk_identifier = disk_obj.identifier
+            name = disk_obj.name
             if qs is None:
                 qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 
@@ -190,9 +173,9 @@ class DiskService(Service, ServiceChangeMixin):
 
             original_disk = disk.copy()
             disk['disk_name'] = name
-            self._map_device_disk_to_db(disk, sys_disks[name])
+            self._map_device_disk_to_db(disk, disk_obj)
 
-            if sys_disks[name]['dif']:
+            if disk_obj.is_dif_formatted:
                 dif_formatted_disks.append(name)
 
             if not new:
@@ -242,10 +225,21 @@ class DiskService(Service, ServiceChangeMixin):
         return dict(disk, disk_size=None if disk.get('disk_size') is None else str(disk['disk_size'])) != original_disk
 
     def _map_device_disk_to_db(self, db_disk, disk):
-        only_update_if_true = ('size',)
-        update_keys = ('serial', 'lunid', 'rotationrate', 'type', 'size', 'subsystem', 'number', 'model', 'bus')
-        for key in filter(lambda k: k in update_keys and (k not in only_update_if_true or disk[k]), disk):
-            db_disk[f'disk_{key}'] = disk[key]
+        for db_key, disk_key in {
+            'serial': 'serial',
+            'lunid': 'lunid',
+            'rotationrate': 'rotation_rate',
+            'type': 'media_type',
+            'subsystem': 'subsystem',
+            'number': 'device_number',
+            'model': 'model',
+            'bus': 'bus',
+        }.items():
+            db_disk[f'disk_{db_key}'] = getattr(disk, disk_key)
+
+        # We only want to update size if we have a positive value
+        if disk.size_bytes:
+            db_disk['disk_size'] = disk.size_bytes
 
     @private
     def sync_size_if_changed(self, name: str):
