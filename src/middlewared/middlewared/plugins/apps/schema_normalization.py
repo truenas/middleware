@@ -106,7 +106,7 @@ class AppSchemaService(Service):
 
         value['kfd_device_exists'] = self.kfd_exists
 
-        if not any(gpu['vendor'] != 'NVIDIA' for gpu in gpu_choices.values()):
+        if all(gpu['vendor'] == 'NVIDIA' for gpu in gpu_choices.values()):
             value['use_all_gpus'] = False
             value['kfd_device_exists'] = False
 
