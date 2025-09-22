@@ -1,0 +1,5 @@
+case "$reason" in
+BOUND|BOUND6)
+	sleep 3 && midclt call dns.sync &
+;;
+esac
