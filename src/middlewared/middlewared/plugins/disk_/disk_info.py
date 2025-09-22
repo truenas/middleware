@@ -1,7 +1,6 @@
 import collections
 from collections.abc import Generator
 import contextlib
-import glob
 import os
 import pathlib
 import time
@@ -105,38 +104,6 @@ class DiskService(Service):
                 return
 
         return dev.attributes.asint('size') * BYTES_512
-
-    @private
-    def list_partitions(self, disk):
-        parts = []
-        try:
-            bd = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
-        except pyudev.DeviceNotFoundByNameError:
-            return parts
-
-        if not bd.children:
-            return parts
-
-        req_keys = ('ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
-        for p in filter(lambda p: all(p.get(k) for k in req_keys), bd.children):
-            part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
-            pinfo = get_partition_size_info(disk, int(p['ID_PART_ENTRY_OFFSET']), int(p['ID_PART_ENTRY_SIZE']))
-            part = {
-                'name': part_name,
-                'partition_type': p['ID_PART_ENTRY_TYPE'],
-                'partition_number': int(p['ID_PART_ENTRY_NUMBER']),
-                'partition_uuid': p['ID_PART_ENTRY_UUID'],
-                'disk': disk,
-                'start_sector': pinfo.start_sector,
-                'start': pinfo.start_byte,
-                'end_sector': pinfo.end_sector,
-                'end': pinfo.end_byte,
-                'size': pinfo.total_bytes,
-                'id': part_name,
-                'path': os.path.join('/dev', part_name),
-            }
-            parts.append(part)
-        return parts
 
     @private
     def get_part_uuid_from_udev(self, disk, part_type):

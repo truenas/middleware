@@ -1,21 +1,9 @@
-from middlewared.service import filterable_api_method, private, Service
-from middlewared.utils import filter_list
+from middlewared.service import private, Service
 from middlewared.utils.disks_.disk_class import DiskEntry
 from middlewared.utils.disks_.gpt_parts import PART_TYPES
 
 
 class DiskService(Service):
-
-    @filterable_api_method(private=True)
-    async def list_all_partitions(self, filters, options):
-        """
-        Returns list of all partitions present in the system
-        """
-        disks = await self.middleware.call('device.get_disks')
-        parts = []
-        for disk in disks:
-            parts.extend(await self.middleware.call('disk.list_partitions', disk))
-        return filter_list(parts, filters, options)
 
     @private
     def get_partition(self, disk: str):

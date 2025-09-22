@@ -56,22 +56,7 @@ class DeviceService(Service):
             'serial_lunid': None,
             'rotationrate': disk_obj.rotation_rate,
             'dif': disk_obj.is_dif_formatted,
-            'parts': [
-                {
-                    'name': part.name,
-                    'id': part.name,
-                    'path': f'/dev/{part.name}',
-                    'disk': part.disk_name,
-                    'partition_type': part.partition_type_guid,
-                    'partition_number': part.partition_number,
-                    'partition_uuid': part.unique_partition_guid,
-                    'start_sector': part.first_lba,
-                    'end_sector': part.last_lba,
-                    'start': part.start_byte,
-                    'end': part.end_byte,
-                    'size': part.size_bytes,
-                } for part in (disk_obj.partitions() if get_partitions else [])
-            ],
+            'parts': self.get_disk_partitions(disk_obj.name) if get_partitions else [],
         }
         if disk_data['serial'] and disk_data['lunid']:
             disk_data['serial_lunid'] = f'{disk_data["serial"]}_{disk_data["lunid"]}'
@@ -88,6 +73,31 @@ class DeviceService(Service):
                 return self.get_disk_details(disk_obj, get_partitions)
         except Exception:
             self.logger.debug('Failed to retrieve disk details for %s', name, exc_info=True)
+
+    @private
+    def get_disk_partitions(self, name):
+        disk_obj = DiskEntry(name=name, devpath=os.path.join('/dev', name))
+        try:
+            [
+                {
+                    'name': part.name,
+                    'id': part.name,
+                    'path': f'/dev/{part.name}',
+                    'disk': part.disk_name,
+                    'partition_type': part.partition_type_guid,
+                    'partition_number': part.partition_number,
+                    'partition_uuid': part.unique_partition_guid,
+                    'start_sector': part.first_lba,
+                    'end_sector': part.last_lba,
+                    'start': part.start_byte,
+                    'end': part.end_byte,
+                    'size': part.size_bytes,
+                } for part in disk_obj.partitions()
+            ]
+        except Exception:
+            # Keeping old behaviour
+            self.logger.debug('Failed to retrieve partitions for %s', name, exc_info=True)
+            return []
 
     @private
     def get_gpus(self):

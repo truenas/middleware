@@ -243,7 +243,7 @@ class BootService(Service):
     async def expand_device(self, device):
         disk = await self.middleware.call('disk.get_disk_from_partition', device)
 
-        partitions = await self.middleware.call('disk.list_partitions', disk)
+        partitions = await self.middleware.call('device.get_disk_partitions', disk)
         if len(partitions) != 3:
             raise CallError(f'Expected 3 partitions, found {len(partitions)}')
 
@@ -269,7 +269,7 @@ class BootService(Service):
 
     @private
     async def legacy_schema(self, disk):
-        partitions = await self.middleware.call('disk.list_partitions', disk)
+        partitions = await self.middleware.call('device.get_disk_partitions', disk)
         swap_types = [
             '516e7cb5-6ecf-11d6-8ff8-00022d09712b',  # used by freebsd
             '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f',  # used by linux

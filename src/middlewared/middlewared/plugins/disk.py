@@ -201,10 +201,6 @@ class DiskService(CRUDService):
         await self.middleware.call('disk.update', new['identifier'], {k: v for k, v in old.items() if k in keys})
 
     @private
-    async def check_clean(self, disk):
-        return not bool(await self.middleware.call('disk.list_partitions', disk))
-
-    @private
     async def configure_power_management(self):
         """
         This runs on boot to properly configure all power management options

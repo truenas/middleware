@@ -20,7 +20,6 @@ class PoolService(Service):
         Expand pool to fit all available disk space.
         """
         pool = await self.middleware.call('pool.get_instance', id_)
-        all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
         vdevs = []
         for vdev in sum(pool['topology'].values(), []):
             if vdev['status'] != 'ONLINE':
@@ -36,7 +35,9 @@ class PoolService(Service):
                                 f'(Reported status is {child["status"]})'
                     break
 
-                part_data = all_partitions.get(child['device'])
+                disk_info = await self.middleware.call('device.get_disk', child['disk'], True)
+                partitions = {p['name']: p for p in (disk_info['parts'] if disk_info else [])}
+                part_data = partitions.get(child['device'])
                 if not part_data:
                     skip_vdev = f'Unable to find partition data for {child["device"]}'
                 elif not part_data['partition_number']:

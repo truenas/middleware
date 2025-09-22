@@ -61,7 +61,7 @@ class PoolService(Service):
                     'options.force',
                     f'Disk {options["disk"]!r} is associated to exported zpool {disk["exported_zpool"]!r}.{msg}'
                 )
-            elif not await self.middleware.call('disk.check_clean', disk['devname']):
+            elif await self.middleware.call('device.get_disk_partitions', disk['devname']):
                 verrors.add(
                     'options.force',
                     f'Disk {options["disk"]!r} is not clean, partitions were found.{msg}'
