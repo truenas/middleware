@@ -9,7 +9,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import private, Service
 from middlewared.service_exception import ValidationErrors
-from middlewared.utils.disks import dev_to_ident
+from middlewared.utils.disks_.disk_class import iterate_disks
 
 
 class DiskService(Service):
@@ -53,51 +53,56 @@ class DiskService(Service):
 
         used, unused = [], []
         serial_to_disk = defaultdict(list)
-        sys_disks = await self.middleware.call('device.get_disks')
-        for dname, i in sys_disks.items():
-            if not i['size']:
+        for disk_obj in iterate_disks():
+            if not disk_obj.size_bytes:
                 # seen on an internal system during QA. The disk had actually been spun down
                 # by OS because it had so many errors so the size was an empty string in our db
                 # SMART data reported the following for the disk: "device is NOT READY (e.g. spun down, busy)"
                 continue
 
-            i['identifier'] = dev_to_ident(dname, sys_disks)
-            i['enclosure_slot'] = enc_info.get(dname, ())
-            serial_to_disk[(i['serial'], i['lunid'])].append(i)
+            dname = disk_obj.name
+            disk_data = await self.middleware.call('device.get_disk_details', disk_obj, data['join_partitions'])
+            disk_data.update({
+                'identifier': disk_obj.identifier,
+                'enclosure_slot': enc_info.get(dname, ()),
+            })
+            serial_to_disk[(disk_data['serial'], disk_data['lunid'])].append(disk_data)
 
             # add enclosure information
-            i['enclosure'] = {}
-            if enc := i.pop('enclosure_slot'):
-                i['enclosure'].update({'drive_bay_number': enc[0], 'id': enc[1]})
+            disk_data['enclosure'] = {}
+            if enc := disk_data.pop('enclosure_slot'):
+                disk_data['enclosure'].update({'drive_bay_number': enc[0], 'id': enc[1]})
 
             # query partitions for the disk(s) if requested
-            i['partitions'] = []
-            if data['join_partitions']:
-                i['partitions'] = await self.middleware.call('disk.list_partitions', i['name'])
+            # We have partitions information already if it was required
+            # However, device.* api gives it by saying `parts` - keeping in line with earlier
+            # behaviour, we are adding `partitions` key here
+            # TODO: We should probably remove 'parts' key entirely and just use 'partitions'
+            disk_data['partitions'] = disk_data['parts']
 
             # TODO: UI needs to remove dependency on `devname` since `name` is sufficient
-            i['devname'] = i['name']
+            disk_data['devname'] = disk_data['name']
             try:
-                i['size'] = int(i['size'])
+                disk_data['size'] = int(disk_data['size'])
             except ValueError:
-                i['size'] = None
+                disk_data['size'] = None
 
             # disk is "technically" not "in use" but the zpool is exported
             # and can be imported so the disk would be "in use" if the zpool
             # was imported so we'll mark this disk specially so that end-user
             # can be warned appropriately
-            i['exported_zpool'] = in_use_disks_exported.get(dname)
+            disk_data['exported_zpool'] = in_use_disks_exported.get(dname)
 
             # disk is in use by a zpool that is currently imported
-            i['imported_zpool'] = in_use_disks_imported.get(dname)
+            disk_data['imported_zpool'] = in_use_disks_imported.get(dname)
 
             if any((
-                i['imported_zpool'] is not None,
-                i['exported_zpool'] is not None,
+                disk_data['imported_zpool'] is not None,
+                disk_data['exported_zpool'] is not None,
             )):
-                used.append(i)
+                used.append(disk_data)
             else:
-                unused.append(i)
+                unused.append(disk_data)
 
         for i in used + unused:
             # need to add a `duplicate_serial` key so that webUI can give an appropriate warning to end-user
