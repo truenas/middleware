@@ -1,9 +1,8 @@
-from ipaddress import IPv4Address
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field, Secret
 
-from middlewared.api.base import BaseModel, query_result, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, IPv4Address, query_result, ForUpdateMetaclass
 from middlewared.api.base.validators import passwd_complexity_validator
 from .common import QueryFilters, QueryOptions
 
