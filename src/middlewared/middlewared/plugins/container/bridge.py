@@ -21,7 +21,7 @@ class ContainerService(Service):
     @private
     def configure_bridge(self):
         with self.lock:
-            config = self.middleware.call_sync("container.config.config")
+            config = self.middleware.call_sync("lxc.config")
             if config["bridge"] is not None:
                 return
 
@@ -140,5 +140,5 @@ class ContainerService(Service):
 
     @private
     def bridge_name(self):
-        config = self.middleware.call_sync("container.config.config")
+        config = self.middleware.call_sync("lxc.config")
         return config["bridge"] or BRIDGE_NAME

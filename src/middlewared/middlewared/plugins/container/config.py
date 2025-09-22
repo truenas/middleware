@@ -2,9 +2,9 @@ import ipaddress
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ContainerConfigEntry,
-    ContainerConfigUpdateArgs, ContainerConfigUpdateResult,
-    ContainerConfigBridgeChoicesArgs, ContainerConfigBridgeChoicesResult,
+    LXCConfigEntry,
+    LXCConfigUpdateArgs, LXCConfigUpdateResult,
+    LXCConfigBridgeChoicesArgs, LXCConfigBridgeChoicesResult,
 )
 from middlewared.service import ConfigService, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -19,16 +19,16 @@ class ContainerConfigModel(sa.Model):
     v6_network = sa.Column(sa.String(), nullable=True)
 
 
-class ContainerConfigService(ConfigService):
+class LXCConfigService(ConfigService):
 
     class Config:
-        cli_namespace = "service.container.config"
+        cli_namespace = "service.lxc.config"
         datastore = "container_config"
-        namespace = "container.config"
-        role_prefix = "CONTAINER_CONFIG"
-        entry = ContainerConfigEntry
+        namespace = "lxc"
+        role_prefix = "LXC_CONFIG"
+        entry = LXCConfigEntry
 
-    @api_method(ContainerConfigUpdateArgs, ContainerConfigUpdateResult)
+    @api_method(LXCConfigUpdateArgs, LXCConfigUpdateResult)
     async def do_update(self, data):
         """
         Update container config.
@@ -43,18 +43,18 @@ class ContainerConfigService(ConfigService):
         verrors = ValidationErrors()
 
         if (config["bridge"] or "") not in await self.bridge_choices():
-            verrors.add("container_config_update.bridge", "Invalid bridge")
+            verrors.add("lxc_config_update.bridge", "Invalid bridge")
 
         if config["bridge"] is None and config["v4_network"] is None and config["v6_network"] is None:
             verrors.add(
-                "container_config_update.bridge",
+                "lxc_config_update.bridge",
                 "You must specify either IPv4 network of IPv6 network for automatically-configured bridge"
             )
 
         for k in ["v4_network", "v6_network"]:
             if config[k]:
                 if ipaddress.ip_interface(config[k]).network.num_addresses < 4:
-                    verrors.add(f"container_config_update.{k}", "The network must have at least 4 addresses")
+                    verrors.add(f"lxc_config_update.{k}", "The network must have at least 4 addresses")
 
         verrors.check()
 
@@ -62,7 +62,7 @@ class ContainerConfigService(ConfigService):
 
         return await self.config()
 
-    @api_method(ContainerConfigBridgeChoicesArgs, ContainerConfigBridgeChoicesResult, roles=["VIRT_GLOBAL_READ"])
+    @api_method(LXCConfigBridgeChoicesArgs, LXCConfigBridgeChoicesResult, roles=["VIRT_GLOBAL_READ"])
     async def bridge_choices(self):
         """
         Bridge choices for virtualization purposes.
