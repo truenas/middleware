@@ -17,7 +17,7 @@ from middlewared.service import CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.zfs import query_imported_fast_impl
 
-RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
+RE_NAME = re.compile(r'^[a-zA-Z_0-9\-]+$')
 
 
 class ContainerModel(sa.Model):
@@ -172,7 +172,7 @@ class ContainerService(CRUDService):
         elif not RE_NAME.search(data['name']):
             verrors.add(
                 f'{schema_name}.name',
-                'Only alphanumeric characters are allowed.'
+                'Name can only contain alphanumeric and hyphen characters.'
             )
 
     @api_method(ContainerCreateArgs, ContainerCreateResult)
