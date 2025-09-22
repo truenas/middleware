@@ -1,7 +1,7 @@
 import ipaddress
 from pathlib import Path
 
-from middlewared.utils.disks import RE_IS_PART
+from middlewared.utils.disks_.disk_class import RE_IS_PART
 
 
 def jbof_static_ip(shelf_index, eth_index):

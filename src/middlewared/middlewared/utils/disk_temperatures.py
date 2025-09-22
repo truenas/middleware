@@ -4,7 +4,6 @@ from typing import Dict, Optional
 from middlewared.utils.db import query_table
 
 
-DISKS_TO_IGNORE: tuple = ('sr', 'md', 'dm-', 'loop', 'zd')
 NVME_TYPE: str = 'nvme'
 HDD_TYPE: str = 'hdd'
 

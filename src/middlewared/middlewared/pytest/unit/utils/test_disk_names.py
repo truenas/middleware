@@ -2,7 +2,7 @@ import unittest.mock
 
 import pytest
 
-from middlewared.utils.disks import get_disk_names, VALID_WHOLE_DISK
+from middlewared.utils.disks_.disk_class import iterate_disks, VALID_WHOLE_DISK
 
 
 @pytest.mark.parametrize('to_test, should_work', [
@@ -48,5 +48,6 @@ def test_get_disk_names(scandir):
         mock_devices.append(device)
 
     scandir.return_value.__enter__.return_value = mock_devices
-    assert get_disk_names() is not None
-    assert get_disk_names() == ['vda', 'vdb', 'sda', 'sdd', 'nvme0n1', 'xvda', 'xvdc']
+    disks = [d.name for d in iterate_disks()]
+    assert disks is not None
+    assert disks == ['vda', 'vdb', 'sda', 'sdd', 'nvme0n1', 'xvda', 'xvdc']

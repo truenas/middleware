@@ -3,7 +3,6 @@ import time
 from middlewared.api.current import ReportingRealtimeEventSourceArgs, ReportingRealtimeEventSourceEvent
 from middlewared.event import EventSource
 from middlewared.service import private, Service
-from middlewared.utils.disks import get_disk_names
 from middlewared.utils.disks_.disk_class import iterate_disks
 
 from .realtime_reporting import (
@@ -64,7 +63,7 @@ class ReportingRealtimeService(Service):
 
         data = dict()
         if netdata_metrics:
-            disks = get_disk_names()
+            disks = list(iterate_disks())
             if len(disks) != len(disk_mapping):
                 disk_mapping = get_disks_with_identifiers()
 
