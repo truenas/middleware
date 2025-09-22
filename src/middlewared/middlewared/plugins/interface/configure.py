@@ -156,14 +156,18 @@ class InterfaceService(Service):
 
     @private
     def alias_to_addr(self, alias):
+        addr = self.interface_to_addr(ipaddress.ip_interface(f'{alias["address"]}/{alias["netmask"]}'))
+        if 'vhid' in alias:
+            addr.vhid = alias['vhid']
+        return addr
+
+    @private
+    def interface_to_addr(self, ip):
         addr = netif.InterfaceAddress()
-        ip = ipaddress.ip_interface(f'{alias["address"]}/{alias["netmask"]}')
         addr.af = getattr(netif.AddressFamily, 'INET6' if ip.version == 6 else 'INET')
         addr.address = ip.ip
         addr.netmask = ip.netmask
         addr.broadcast = ip.network.broadcast_address
-        if 'vhid' in alias:
-            addr.vhid = alias['vhid']
         return addr
 
     @private

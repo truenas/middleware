@@ -17,6 +17,7 @@ INTERNAL_INTERFACES = (
     "ix",
     "tailscale",
     "mac",  # macvtap AND mac (latter being macvlan)
+    "truenasbr",
 )
 
 
