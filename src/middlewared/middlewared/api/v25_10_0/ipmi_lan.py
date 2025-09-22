@@ -58,7 +58,7 @@ class IPMILanQuery(BaseModel):
 
 
 class IPMILanUpdateOptionsDHCP(BaseModel):
-    dhcp: Literal[True] = True
+    dhcp: Literal[True]
     """Turn on DHCP protocol for IP address management."""
     password: Secret[
         Annotated[
@@ -81,7 +81,7 @@ class IPMILanUpdateOptionsDHCP(BaseModel):
 
 
 class IPMILanUpdateOptionsStatic(IPMILanUpdateOptionsDHCP):
-    dhcp: Literal[False] = False
+    dhcp: Literal[False]
     """Provide a static IP address."""
     ipaddress: IPv4Address
     """The IPv4 address in the form of `192.168.1.150`."""
