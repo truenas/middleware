@@ -16,6 +16,11 @@ _RFC_4122_CLEARFLAGS_MASK = ~((0xf000 << 64) | (0xc000 << 48))
 _RFC_4122_VERSION_4_FLAGS = ((4 << 76) | (0x8000 << 48))
 
 
+def ssl_random(size: int) -> bytes:
+    """ Return the specified number of random bytes from the openssl CSPRNG """
+    return RAND_bytes(size)
+
+
 def generate_string(string_size=8, punctuation_chars=False, extra_chars=None):
     """
     Generate a cryptographically secure random string of size `string_size`.
