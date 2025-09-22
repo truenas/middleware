@@ -12,7 +12,6 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
-from middlewared.utils.disks import valid_zfs_partition_uuids
 
 
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
@@ -112,13 +111,8 @@ class BootService(Service):
         if not options['expand']:
             # Lets try to find out the size of the current ZFS or FreeBSD-ZFS (upgraded TrueNAS CORE installation)
             # partition so the new partition is not bigger, preventing size mismatch if one of them fail later on.
-            zfs_part = await self.middleware.call(
-                'disk.get_partition_with_uuids',
-                disks[0],
-                list(valid_zfs_partition_uuids()),
-            )
-            if zfs_part:
-                format_opts['size'] = zfs_part['size']
+            if zfs_part := await self.middleware.call('disk.get_partition', disks[0]):
+                format_opts['size'] = zfs_part['size_bytes']
 
         format_opts['legacy_schema'] = await self.legacy_schema(disks[0])
 

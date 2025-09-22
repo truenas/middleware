@@ -554,6 +554,15 @@ class DiskEntry:
             else:
                 logger.exception("Unexpected error reading partitions for device: %r", self.devpath)
 
+    def zfs_partitions(self, dev_fd: int | None = None) -> list[GptPartEntry]:
+        """
+        Returns list of `GptPartEntry` objects for any ZFS partitions
+        """
+        if parts := self.partitions(dev_fd):
+            return [p for p in parts if PART_TYPES.get(p.partition_type_guid, "UNKNOWN") == "ZFS"]
+
+        return []
+
     def wipe_quick(self, dev_fd: int | None = None) -> None:
         """Write 0's to the first and last 32MiB of the disk.
         This should remove all filesystem metadata and partition
