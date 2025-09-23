@@ -1,5 +1,5 @@
 export MWPATH1=/usr/lib/python3/dist-packages/middlewared
-export MWPATH2=/usr/local/lib/python3.11/dist-packages/middlewared
+export MWPATH2=/usr/local/lib/python3.13/dist-packages/middlewared
 export BUILD=$(shell pwd)/build
 
 stop_service:
