@@ -31,8 +31,8 @@ jobs:
         run: |
           ./src/freenas/usr/bin/install-dev-tools
           cd src/middlewared ; make reinstall_container
-          cp -a /__w/middleware/middleware/src/middlewared/middlewared/pytest /usr/local/lib/python3.11/dist-packages/middlewared/
+          cp -a /__w/middleware/middleware/src/middlewared/middlewared/pytest /usr/local/lib/python3.13/dist-packages/middlewared/
                
       - name: Test
         run:
-          pytest-3 -v --disable-pytest-warnings /usr/local/lib/python3.11/dist-packages/middlewared/pytest
+          pytest-3 -v --disable-pytest-warnings /usr/local/lib/python3.13/dist-packages/middlewared/pytest
