@@ -6,7 +6,7 @@ from auto_config import ha
 
 
 retry = 5
-fips_version = "3.0.9"
+fips_version = "3.1.2"
 
 
 @pytest.mark.timeout(1200)
