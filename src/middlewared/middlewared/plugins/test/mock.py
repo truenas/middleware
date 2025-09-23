@@ -18,9 +18,10 @@ class TestService(Service):
 
     async def set_mock(self, name, args, description):
         if isinstance(description, str):
-            exec(description)
+            local_scope = {}
+            exec(description, {}, local_scope)
             try:
-                method = locals()["mock"]
+                method = local_scope["mock"]
             except KeyError:
                 raise CallError("Your mock declaration must include `def mock` or `async def mock`")
         elif isinstance(description, dict):
