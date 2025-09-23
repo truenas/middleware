@@ -63,6 +63,10 @@ MB_200 = 200 * MB
 NVME_ALT1_TCP_PORT = 4444
 NVME_ALT2_TCP_PORT = 4555
 
+# Use a RE because the message returned varies depending on whether based on
+# Bookworm or Trixie
+RE_CONNECTION_REFUSED = '[Cc]onnection refused'
+
 
 @cache
 def basenqn():
@@ -374,7 +378,7 @@ class TestNVMe(NVMeRunning):
 
     def test__discover_fail_not_running(self, loopback_client: NVMeCLIClient):
         nc = loopback_client
-        with pytest.raises(AssertionError, match='Connection refused'):
+        with pytest.raises(AssertionError, match=RE_CONNECTION_REFUSED):
             nc.discover()
 
     def test__service_started(self, fixture_nvmet_running):
@@ -382,7 +386,7 @@ class TestNVMe(NVMeRunning):
 
     def test__discover_fail_no_port(self, loopback_client: NVMeCLIClient):
         nc = loopback_client
-        with pytest.raises(AssertionError, match='Connection refused'):
+        with pytest.raises(AssertionError, match=RE_CONNECTION_REFUSED):
             nc.discover()
 
     def assert_discovery(self, data: dict, subnqns: list | None = None):
@@ -662,8 +666,9 @@ class TestNVMe(NVMeRunning):
                         assert len(devices) == 1, devices
                         self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL_RESIZE_START_MB)])
 
-                        # Update the size of the ZVOL
+                        # Update the size of the ZVOL, give an extra list to allow size change to propagate
                         call('pool.dataset.update', zvol_config['id'], {'volsize': ZVOL_RESIZE_END_MB * MB})
+                        nc.nvme_list()
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
                         self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL_RESIZE_END_MB)])
@@ -1665,7 +1670,7 @@ class TestManySubsystems:
 
     def test__start_many_nvme(self, loopback_client: NVMeCLIClient, fixture_100_nvme_subsystems):
         nc = loopback_client
-        with pytest.raises(AssertionError, match='Connection refused'):
+        with pytest.raises(AssertionError, match=RE_CONNECTION_REFUSED):
             nc.discover()
         # We want to be sure that the service starts in a reasonable amount of time.
         start_time = time.time()
