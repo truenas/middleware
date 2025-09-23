@@ -19,6 +19,10 @@
 #
 # ProFTPD configuration file
 #
+
+# Includes DSO modules
+Include /etc/proftpd/modules.conf
+
 ServerName "${network_configuration['hostname_local']} FTP Server"
 ServerType standalone
 DefaultServer on

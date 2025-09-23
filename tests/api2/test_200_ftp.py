@@ -15,7 +15,7 @@ from assets.websocket.server import reboot
 from middlewared.test.integration.assets.account import user as ftp_user
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.client import truenas_server, host as init_truenas_server
 
 from auto_config import password, pool_name, user
 from functions import SSH_TEST, send_file
@@ -37,9 +37,16 @@ INIT_DIRS_AND_FILES = {
 
 # ================= Utility Functions ==================
 
+@pytest.fixture(scope='module')
+def confirm_test_config():
+    if truenas_server.ip is None:
+        # Fix-up truenas_server
+        init_truenas_server()
+    assert truenas_server.ip is not None
+
 
 @pytest.fixture(scope='module')
-def ftp_init_db_dflt():
+def ftp_init_db_dflt(confirm_test_config):
     # Get the 'default' settings from FTPModel
     ftpconf_script = '#!/usr/bin/python3\n'
     ftpconf_script += 'import json\n'
