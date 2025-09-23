@@ -64,9 +64,10 @@ done
 
 #DEBHELPER#
 
-# zfs-zed is not respecting vendor preset file so we enable it explicitly
+# Following service(s) are not respecting vendor preset file so we enable them explicitly
 systemctl daemon-reload
 systemctl enable zfs-zed
+systemctl enable syslog-ng
 
 # We need to mask certain services so that they don't start automatically
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
