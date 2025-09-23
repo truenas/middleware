@@ -59,7 +59,7 @@ def bounding_set(capsh_print):
 
 @pytest.fixture(scope="module", autouse=True)
 def bridge():
-    call("container.config.update", {
+    call("lxc.update", {
         "v4_network": "10.47.214.0/24",
         "v6_network": "fd42:3656:7be9:e46c::0/64",
     })

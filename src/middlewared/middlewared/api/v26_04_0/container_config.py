@@ -3,13 +3,13 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "ContainerConfigEntry",
-    "ContainerConfigUpdateArgs", "ContainerConfigUpdateResult",
-    "ContainerConfigBridgeChoicesArgs", "ContainerConfigBridgeChoicesResult",
+    "LXCConfigEntry",
+    "LXCConfigUpdateArgs", "LXCConfigUpdateResult",
+    "LXCConfigBridgeChoicesArgs", "LXCConfigBridgeChoicesResult",
 ]
 
 
-class ContainerConfigEntry(BaseModel):
+class LXCConfigEntry(BaseModel):
     id: int
     """Configuration ID."""
     bridge: str | None = None
@@ -20,20 +20,20 @@ class ContainerConfigEntry(BaseModel):
     """IPv6 network CIDR for the virtualization bridge network. `null` if not configured."""
 
 
-@single_argument_args("container_config_update")
-class ContainerConfigUpdateArgs(ContainerConfigEntry, metaclass=ForUpdateMetaclass):
+@single_argument_args("lxc_config_update")
+class LXCConfigUpdateArgs(LXCConfigEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class ContainerConfigUpdateResult(BaseModel):
-    result: ContainerConfigEntry
-    """Updated container configuration."""
+class LXCConfigUpdateResult(BaseModel):
+    result: LXCConfigEntry
+    """Updated LXC configuration."""
 
 
-class ContainerConfigBridgeChoicesArgs(BaseModel):
+class LXCConfigBridgeChoicesArgs(BaseModel):
     pass
 
 
-class ContainerConfigBridgeChoicesResult(BaseModel):
+class LXCConfigBridgeChoicesResult(BaseModel):
     result: dict[str, str]
     """Object of available network bridge interfaces and their configurations."""
