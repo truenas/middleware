@@ -434,8 +434,6 @@ def generate_smb_conf_dict(
         'bind interfaces only': True,
         'fruit:nfs_aces': False,
         'fruit:zero_file_id': False,
-        'rpc_daemon:mdssd': 'disabled',
-        'rpc_server:mdssvc': 'disabled',
         'restrict anonymous': 0 if guest_enabled else 2,
         'winbind request timeout': 60 if ds_type is DSType.AD else 2,
         'passdb backend': f'tdbsam:{SMBPath.PASSDB_DIR.value[0]}/passdb.tdb',
