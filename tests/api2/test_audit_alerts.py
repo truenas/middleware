@@ -79,7 +79,7 @@ def test_audit_backend_alert(setup_state):
 
 def test_audit_health_monitor_alert():
     with mock("auditbackend.query", """
-        from middlewared.service import private
+        from middlewared.service import CallError, private
         @private
         async def mock(self, *args):
             raise CallError('TEST_SERVICE: connection to audit database is not initialized.')
