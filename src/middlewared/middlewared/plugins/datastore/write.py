@@ -70,7 +70,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     insert.setdefault(column.name, '')
 
         pk_column = self._get_pk(table)
-        return_last_insert_rowid = isinstance(pk_column.type, sqltypes.Integer)
+        # Only use last_insert_rowid if the PK is an integer type AND we didn't provide a value
+        return_last_insert_rowid = (
+            isinstance(pk_column.type, sqltypes.Integer) and
+            pk_column.name not in insert
+        )
         result = await self.middleware.call(
             'datastore.execute_write',
             table.insert().values(**insert),

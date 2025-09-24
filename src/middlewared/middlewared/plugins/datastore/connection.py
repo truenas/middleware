@@ -85,7 +85,7 @@ class DatastoreService(Service):
         self.middleware.call_hook_inline("datastore.post_execute_write", sql, params, options)
 
         if options['return_last_insert_rowid']:
-            return self.fetchall("SELECT last_insert_rowid()")[0][0]
+            return self.connection.execute(text("SELECT last_insert_rowid() as rowid")).scalar_one()
 
         return result
 
@@ -93,6 +93,6 @@ class DatastoreService(Service):
     def fetchall(self, query, params=None):
         cursor = self.connection.execute(text(query) if isinstance(query, str) else query, params or {})
         try:
-            return cursor.fetchall()
+            return list(cursor.mappings())
         finally:
             cursor.close()
