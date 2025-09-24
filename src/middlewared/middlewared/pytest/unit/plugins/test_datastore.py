@@ -73,7 +73,6 @@ async def datastore_test(mocked_calls=None):
                             part.engine = None
 
 
-
 class UserModel(Model):
     __tablename__ = 'account_bsdusers'
 
