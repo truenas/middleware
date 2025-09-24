@@ -95,18 +95,21 @@ class RpcWebSocketApp(App):
     def format_truenas_error(
         self, errno_: int, reason: str, exc_info: ExcInfo | None = None, extra: list | None = None
     ) -> dict:
-        return {
+        result = {
             "error": errno_,
             "errname": get_errname(errno_),
             "reason": reason,
             "trace": self.truenas_error_traceback(exc_info) if exc_info else None,
             "extra": extra,
-            **(
-                {"py_exception": binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()}
-                if self.py_exceptions and exc_info
-                else {}
-            ),
         }
+
+        if self.py_exceptions and exc_info:
+            try:
+                result["py_exception"] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
+            except Exception:
+                self.middleware.logger.debug("Error pickling py_exception", exc_info=True)
+
+        return result
 
     def truenas_error_traceback(self, exc_info: ExcInfo) -> dict:
         etype, value, tb = exc_info
