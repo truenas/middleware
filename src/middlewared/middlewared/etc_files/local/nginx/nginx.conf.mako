@@ -282,18 +282,18 @@ ${spaces}gzip off;
         location /api/docs {
             alias /usr/share/middlewared/docs;
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            expires epoch;
         }
 
         location /api/docs/current {
             alias /usr/share/middlewared/docs/${current_api_version};
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            expires epoch;
         }
 
         location @index {
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            expires epoch;
             ${security_headers(indent=12)}
             root /usr/share/truenas/webui;
             try_files /index.html =404;
@@ -302,7 +302,7 @@ ${spaces}gzip off;
         location = /ui/ {
             allow all;
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            expires epoch;
             ${security_headers(indent=12)}
             root /usr/share/truenas/webui;
             try_files /index.html =404;
