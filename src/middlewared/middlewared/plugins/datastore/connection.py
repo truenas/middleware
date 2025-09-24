@@ -41,17 +41,18 @@ class DatastoreService(Service):
 
     @private
     def setup(self):
-        if self.engine is not None:
-            self.engine.dispose()
-
+        # In SQLAlchemy 2.0, we must close connections before disposing the engine
+        # to avoid "Cannot operate on a closed database" errors
         if self.connection is not None:
             self.connection.close()
 
-        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}', isolation_level='AUTOCOMMIT')
+        if self.engine is not None:
+            self.engine.dispose()
 
+        self.engine = create_engine(f'sqlite:///{FREENAS_DATABASE}')
         self.connection = self.engine.connect()
+        self.connection = self.connection.execution_options(isolation_level="AUTOCOMMIT")
         self.connection.connection.create_function("REGEXP", 2, regexp)
-
         self.connection.connection.execute("PRAGMA foreign_keys=ON")
 
         if constraint_violations := self.connection.execute(text("PRAGMA foreign_key_check")).fetchall():
