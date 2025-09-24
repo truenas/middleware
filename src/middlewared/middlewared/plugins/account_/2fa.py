@@ -152,6 +152,10 @@ class UserService(Service):
             }
         )
 
+        # We need to regenerate the users.oath file in order to remove
+        # 2FA requirement for the user
+        await self.middleware.call('etc.generate', 'user')
+
     @api_method(
         UserRenew2faSecretArgs,
         UserRenew2faSecretResult,
