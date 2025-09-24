@@ -1,8 +1,7 @@
 import os
 
 from middlewared.service import CallError, private, Service
-
-REGISTRY_URL = "http://pivnoy.thelogin.ru"
+from .utils import container_dataset, container_dataset_mountpoint
 
 
 class ContainerService(Service):
@@ -13,8 +12,8 @@ class ContainerService(Service):
 
     @private
     async def ensure_datasets(self, pool):
-        main_dataset = f'{pool}/.truenas_containers'
-        main_dataset_mountpoint = f'/.truenas_containers/{pool}'
+        main_dataset = container_dataset(pool)
+        main_dataset_mountpoint = container_dataset_mountpoint(pool)
 
         datasets = [f'{main_dataset}/containers', f'{main_dataset}/images']
 
