@@ -25,14 +25,14 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Deploy
         run: |
           ./src/freenas/usr/bin/install-dev-tools
           cd src/middlewared ; make reinstall_container
           cp -a /__w/middleware/middleware/src/middlewared/middlewared/pytest /usr/local/lib/python3.13/dist-packages/middlewared/
-               
+
       - name: Test
         run:
           pytest-3 -v --disable-pytest-warnings /usr/local/lib/python3.13/dist-packages/middlewared/pytest
