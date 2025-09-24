@@ -20,12 +20,14 @@ __all__ = [
 
 class DefaultIdmapConfiguration(BaseModel):
     type: Literal["DEFAULT"]
+    """Configuration type for default ID mapping."""
 
 
 class IsolatedIdmapConfiguration(BaseModel):
     type: Literal["ISOLATED"]
+    """Configuration type for isolated ID mapping."""
     slice: PositiveInt | None = Field(lt=1000)
-    "`null` when creating means we'll look up an unused slice on backend."
+    """`null` when creating means we'll look up an unused slice on backend."""
 
 
 IdmapConfiguration = Annotated[
@@ -122,9 +124,9 @@ class ContainerCreate(ContainerEntry):
 
 class ContainerCreateImage(BaseModel):
     name: str
-    "Image name. Use `container.image.query_registry` to list all available images."
+    """Image name. Use `container.image.query_registry` to list all available images."""
     version: str
-    "Image version. Use `container.image.query_registry` to list all available images."
+    """Image version. Use `container.image.query_registry` to list all available images."""
 
 
 @single_argument_args("container_create")

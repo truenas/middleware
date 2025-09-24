@@ -110,7 +110,13 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix, aliases)))
 
         if options['count']:
-            return (await self.middleware.call("datastore.fetchall", qs))[0][0]
+            result = await self.middleware.call("datastore.fetchall", qs)
+            # The count result will be a dict with a generated key for the count column
+            # We need to get the first value from the first row
+            if result and result[0]:
+                # Get the first value from the dictionary
+                return list(result[0].values())[0]
+            return 0
 
         order_by = options['order_by']
         if order_by:
@@ -259,7 +265,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         for column in table.c:
             # aliases == {} when we are loading without relationships, let's leave fk values in that case
             if not column.foreign_keys or not aliases:
-                data[str(column.name)] = obj._mapping[column]
+                data[str(column.name)] = obj[column]
 
         for foreign_key, alias in aliases.items():
             column = foreign_key.parent
@@ -272,7 +278,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
             data[column.name[:-3]] = (
                 self._serialize_row(obj, alias, aliases)
-                if obj._mapping[column] is not None and obj._mapping[self._get_pk(alias)] is not None
+                if obj[column] is not None and obj[self._get_pk(alias)] is not None
                 else None
             )
 
@@ -280,7 +286,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     async def _fetch_many_to_many(self, table, rows):
         pk = self._get_pk(table)
-        pk_values = [row._mapping[pk] for row in rows]
+        pk_values = [row[pk.name] for row in rows]
 
         relationships = [{} for row in rows]
         if pk_values:
@@ -318,7 +324,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 for i, row in enumerate(rows):
                     relationships[i][relationship_name] = [
                         all_children[child_id]
-                        for child_id in pk_to_children_ids[row._mapping[pk]]
+                        for child_id in pk_to_children_ids[row[pk.name]]
                         if child_id in all_children
                     ]
 

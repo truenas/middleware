@@ -58,7 +58,19 @@ async def datastore_test(mocked_calls=None):
                 for call_name, call_func in mocked_calls.items():
                     m[call_name] = call_func
 
-                yield ds
+                try:
+                    yield ds
+                finally:
+                    # Properly clean up the connection and engine after each test
+                    for part in ds.parts:
+                        if hasattr(part, "connection") and part.connection is not None:
+                            if not part.connection.closed:
+                                part.connection.close()
+                            part.connection = None
+
+                        if hasattr(part, "engine") and part.engine is not None:
+                            part.engine.dispose()
+                            part.engine = None
 
 
 class UserModel(Model):
