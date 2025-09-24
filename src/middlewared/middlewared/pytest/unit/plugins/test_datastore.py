@@ -4,7 +4,6 @@ from unittest.mock import ANY, patch
 
 import pytest
 import sqlalchemy as sa
-from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -97,10 +96,10 @@ class UserCascadeModel(Model):
 @pytest.mark.asyncio
 async def test__relationship_load():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (10, 1010)"))
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)"))
-        ds.execute(text("INSERT INTO `account_bsdgroupmembership` VALUES (1, 10, 5)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (10, 1010)")
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
+        ds.execute("INSERT INTO `account_bsdgroupmembership` VALUES (1, 10, 5)")
 
         assert await ds.query("account.bsdgroupmembership") == [
             {
@@ -125,10 +124,10 @@ async def test__relationship_load():
 async def test__filter_join():
 
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (10, 1010)"))
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (4, 44, 10)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (10, 1010)")
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (4, 44, 10)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
 
         result = await ds.query("account.bsdusers", [("bsdusr_group__bsdgrp_gid", "=", 2020)])
         assert len(result) == 1
@@ -138,8 +137,8 @@ async def test__filter_join():
 @pytest.mark.asyncio
 async def test__prefix():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
 
         assert await ds.query("account.bsdusers", [], {"prefix": "bsdusr_"}) == [
             {
@@ -156,8 +155,8 @@ async def test__prefix():
 @pytest.mark.asyncio
 async def test__prefix_filter():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
 
         assert await ds.query("account.bsdusers", [("uid", "=", 55)], {"prefix": "bsdusr_"}) == [
             {
@@ -178,8 +177,8 @@ async def test__prefix_filter():
 @pytest.mark.asyncio
 async def test__fk_filter():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
 
         assert await ds.query("account.bsdusers", [("group", "=", 20)], {"prefix": "bsdusr_"}) == [
             {
@@ -203,8 +202,8 @@ async def test__inserted_primary_key():
 @pytest.mark.asyncio
 async def test__update_filter__too_much_rows():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (30, 3030)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (30, 3030)")
 
         with pytest.raises(RuntimeError):
             await ds.update("account_bsdgroups", [("bsdgrp_gid", ">", 1000)], {"bsdgrp_gid": 1000})
@@ -213,16 +212,16 @@ async def test__update_filter__too_much_rows():
 @pytest.mark.asyncio
 async def test__update_fk():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (30, 3030)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (30, 3030)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
 
         await ds.update("account_bsdusers", 5, {"bsdusr_uid": 100, "bsdusr_group": 30})
 
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "UPDATE account_bsdusers SET bsdusr_uid=?, bsdusr_group_id=? WHERE account_bsdusers.id = ?",
-            {"bsdusr_uid": 100, "bsdusr_group_id": 30, "id_1": 5},
+            [100, 30, 5],
             ANY,
         )
 
@@ -231,7 +230,7 @@ async def test__update_fk():
 async def test__bad_fk_update():
     async with datastore_test() as ds:
         with pytest.raises(NoRowsWereUpdatedException):
-            ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (5, 50)"))
+            ds.execute("INSERT INTO `account_bsdgroups` VALUES (5, 50)")
             assert await ds.update("account.bsdgroups", 1, {"bsdgrp_gid": 5})
 
 
@@ -245,9 +244,9 @@ async def test__bad_fk_insert():
 @pytest.mark.asyncio
 async def test__bad_fk_load():
     async with datastore_test() as ds:
-        ds.execute(text("PRAGMA foreign_keys=OFF"))
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 21)"))
+        ds.execute("PRAGMA foreign_keys=OFF")
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 21)")
 
         assert await ds.query("account.bsdusers", [], {"prefix": "bsdusr_"}) == [
             {
@@ -261,8 +260,8 @@ async def test__bad_fk_load():
 @pytest.mark.asyncio
 async def test__delete_fk():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers` VALUES (5, 55, 20)")
 
         with pytest.raises(IntegrityError):
             await ds.delete("account.bsdgroups", 20)
@@ -271,8 +270,8 @@ async def test__delete_fk():
 @pytest.mark.asyncio
 async def test__delete_fk_cascade():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `account_bsdgroups` VALUES (20, 2020)"))
-        ds.execute(text("INSERT INTO `account_bsdusers_cascade` VALUES (5, 55, 20)"))
+        ds.execute("INSERT INTO `account_bsdgroups` VALUES (20, 2020)")
+        ds.execute("INSERT INTO `account_bsdusers_cascade` VALUES (5, 55, 20)")
 
         await ds.delete("account.bsdgroups", 20)
 
@@ -297,7 +296,7 @@ class NullableFkModel(Model):
 @pytest.mark.asyncio
 async def test__null_fk_load():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO `test_nullablefk` VALUES (1, NULL)"))
+        ds.execute("INSERT INTO `test_nullablefk` VALUES (1, NULL)")
 
         assert await ds.query("test.nullablefk") == [
             {
@@ -332,9 +331,9 @@ class StringModel(Model):
 @pytest.mark.asyncio
 async def test__string_filters(filter_, ids):
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_string VALUES (1, 'Lorem')"))
-        ds.execute(text("INSERT INTO test_string VALUES (2, 'Ipsum')"))
-        ds.execute(text("INSERT INTO test_string VALUES (3, NULL)"))
+        ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
+        ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
+        ds.execute("INSERT INTO test_string VALUES (3, NULL)")
 
         assert [row["id"] for row in await ds.query("test.string", filter_)] == ids
 
@@ -342,11 +341,11 @@ async def test__string_filters(filter_, ids):
 @pytest.mark.asyncio
 async def test_delete_not_in():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_string VALUES (1, 'Lorem')"))
-        ds.execute(text("INSERT INTO test_string VALUES (2, 'Ipsum')"))
-        ds.execute(text("INSERT INTO test_string VALUES (3, 'dolor')"))
-        ds.execute(text("INSERT INTO test_string VALUES (4, 'sit')"))
-        ds.execute(text("INSERT INTO test_string VALUES (5, 'amer')"))
+        ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
+        ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
+        ds.execute("INSERT INTO test_string VALUES (3, 'dolor')")
+        ds.execute("INSERT INTO test_string VALUES (4, 'sit')")
+        ds.execute("INSERT INTO test_string VALUES (5, 'amer')")
 
         await ds.delete("test_string", [["string", "nin", ["Lorem", "dolor"]]])
 
@@ -367,11 +366,11 @@ class IntegerModel(Model):
 @pytest.mark.asyncio
 async def test__logic(filter_, ids):
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_integer VALUES (1, 1)"))
-        ds.execute(text("INSERT INTO test_integer VALUES (2, 2)"))
-        ds.execute(text("INSERT INTO test_integer VALUES (3, 3)"))
-        ds.execute(text("INSERT INTO test_integer VALUES (4, 4)"))
-        ds.execute(text("INSERT INTO test_integer VALUES (5, 5)"))
+        ds.execute("INSERT INTO test_integer VALUES (1, 1)")
+        ds.execute("INSERT INTO test_integer VALUES (2, 2)")
+        ds.execute("INSERT INTO test_integer VALUES (3, 3)")
+        ds.execute("INSERT INTO test_integer VALUES (4, 4)")
+        ds.execute("INSERT INTO test_integer VALUES (5, 5)")
 
         assert [row["id"] for row in await ds.query("test.integer", filter_)] == ids
 
@@ -383,10 +382,10 @@ async def test__logic(filter_, ids):
 @pytest.mark.asyncio
 async def test__order_by(order_by, ids):
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_integer VALUES (1, 1)"))
-        ds.execute(text("INSERT INTO test_integer VALUES (2, 2)"))
-        ds.execute(text("INSERT INTO test_integer VALUES (3, 2)"))
-        ds.execute(text("INSERT INTO test_integer VALUES (4, 3)"))
+        ds.execute("INSERT INTO test_integer VALUES (1, 1)")
+        ds.execute("INSERT INTO test_integer VALUES (2, 2)")
+        ds.execute("INSERT INTO test_integer VALUES (3, 2)")
+        ds.execute("INSERT INTO test_integer VALUES (4, 3)")
 
         assert [row["id"] for row in await ds.query("test.integer", [], {"order_by": order_by})] == ids
 
@@ -406,7 +405,7 @@ class JSONModel(Model):
 @pytest.mark.asyncio
 async def test__json_load(id_, json_dict, json_list, json_dict_result, json_list_result):
     async with datastore_test() as ds:
-        ds.execute(text(f"INSERT INTO test_json VALUES ({id_}, '{json_dict}', '{json_list}')"))
+        ds.execute(f"INSERT INTO test_json VALUES ({id_}, '{json_dict}', '{json_list}')")
         row = await ds.query("test.json", [["id", "=", id_]], {"get": True})
         assert row["json_dict"] == json_dict_result and row["json_list"] == json_list_result
 
@@ -462,7 +461,7 @@ def encrypt(s):
 @pytest.mark.asyncio
 async def test__encrypted_json_load(id_, json_dict, json_list, json_dict_result, json_list_result):
     async with datastore_test() as ds:
-        ds.execute(text(f"INSERT INTO test_encryptedjson VALUES ({id_}, '{json_dict}', '{json_list}')"))
+        ds.execute(f"INSERT INTO test_encryptedjson VALUES ({id_}, '{json_dict}', '{json_list}')")
 
         with patch("middlewared.sqlalchemy.decrypt", decrypt):
             row = await ds.query("test.encryptedjson", [["id", "=", id_]], {"get": True})
@@ -481,7 +480,7 @@ async def test__encrypted_json_save():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedjson (json_dict, json_list) VALUES (?, ?)",
-            {"json_dict": {"key": "value"}, "json_list": [1, 2]},
+            ['!{"key": "value"}', '![1, 2]'],
             ANY,
         )
 
@@ -493,7 +492,7 @@ async def test__encrypted_json_save():
 @pytest.mark.asyncio
 async def test__encrypted_text_load(string, object_):
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_encryptedtext VALUES (1, :string)"), {"string": string})
+        ds.execute("INSERT INTO test_encryptedtext VALUES (1, ?)", string)
 
         with patch("middlewared.sqlalchemy.decrypt", decrypt_safe):
             assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] == object_
@@ -510,7 +509,7 @@ async def test__encrypted_text_save():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
-            {"object": "Text"},
+            ['!Text'],
             ANY,
         )
 
@@ -518,7 +517,7 @@ async def test__encrypted_text_save():
 @pytest.mark.asyncio
 async def test__encrypted_text_load_null():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_encryptedtext VALUES (1, NULL)"))
+        ds.execute("INSERT INTO test_encryptedtext VALUES (1, NULL)")
 
         with patch("middlewared.sqlalchemy.decrypt", decrypt_safe):
             assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] is None
@@ -535,7 +534,7 @@ async def test__encrypted_text_save_null():
         ds.middleware.call_hook_inline.assert_called_once_with(
             "datastore.post_execute_write",
             "INSERT INTO test_encryptedtext (object) VALUES (?)",
-            {"object": None},
+            [None],
             ANY,
         )
 
@@ -550,8 +549,8 @@ class CustomPkModel(Model):
 @pytest.mark.asyncio
 async def test__custom_pk_query():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')"))
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')"))
+        ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
 
         result = await ds.query("test.custompk", [("identifier", "=", "ID1")], {"prefix": "custom_", "get": True})
         assert result == {"identifier": "ID1", "name": "Test 1"}
@@ -560,9 +559,9 @@ async def test__custom_pk_query():
 @pytest.mark.asyncio
 async def test__custom_pk_count():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')"))
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')"))
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID3', 'Other Test')"))
+        ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
+        ds.execute("INSERT INTO test_custompk VALUES ('ID3', 'Other Test')")
 
         assert await ds.query("test.custompk", [("name", "^", "Test")], {"prefix": "custom_", "count": True}) == 2
 
@@ -570,8 +569,8 @@ async def test__custom_pk_count():
 @pytest.mark.asyncio
 async def test__custom_pk_update():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')"))
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')"))
+        ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
 
         await ds.update("test.custompk", "ID1", {"name": "Updated"}, {"prefix": "custom_"})
 
@@ -582,8 +581,8 @@ async def test__custom_pk_update():
 @pytest.mark.asyncio
 async def test__custom_pk_delete():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')"))
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')"))
+        ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
 
         await ds.delete("test.custompk", "ID1")
 
@@ -593,9 +592,9 @@ async def test__custom_pk_delete():
 @pytest.mark.asyncio
 async def test__delete_by_filter():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')"))
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')"))
-        ds.execute(text("INSERT INTO test_custompk VALUES ('ID3', 'Other Test')"))
+        ds.execute("INSERT INTO test_custompk VALUES ('ID1', 'Test 1')")
+        ds.execute("INSERT INTO test_custompk VALUES ('ID2', 'Test 2')")
+        ds.execute("INSERT INTO test_custompk VALUES ('ID3', 'Other Test')")
 
         await ds.delete("test.custompk", [("custom_name", "^", "Test")])
 
@@ -636,12 +635,12 @@ async def test__bad_fk_insert_rollback():
 @pytest.mark.asyncio
 async def test__mtm_loader():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO storage_disk VALUES (10)"))
-        ds.execute(text("INSERT INTO storage_disk VALUES (20)"))
-        ds.execute(text("INSERT INTO storage_disk VALUES (30)"))
-        ds.execute(text("INSERT INTO tasks_smarttest VALUES (100)"))
-        ds.execute(text("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 10)"))
-        ds.execute(text("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 30)"))
+        ds.execute("INSERT INTO storage_disk VALUES (10)")
+        ds.execute("INSERT INTO storage_disk VALUES (20)")
+        ds.execute("INSERT INTO storage_disk VALUES (30)")
+        ds.execute("INSERT INTO tasks_smarttest VALUES (100)")
+        ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 10)")
+        ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 30)")
 
         assert await ds.query("tasks.smarttest", [], {"prefix": "smarttest_"}) == [
             {
@@ -654,9 +653,9 @@ async def test__mtm_loader():
 @pytest.mark.asyncio
 async def test__mtm_insert():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO storage_disk VALUES (10)"))
-        ds.execute(text("INSERT INTO storage_disk VALUES (20)"))
-        ds.execute(text("INSERT INTO storage_disk VALUES (30)"))
+        ds.execute("INSERT INTO storage_disk VALUES (10)")
+        ds.execute("INSERT INTO storage_disk VALUES (20)")
+        ds.execute("INSERT INTO storage_disk VALUES (30)")
 
         await ds.insert("tasks.smarttest", {"disks": [10, 30]}, {"prefix": "smarttest_"})
 
@@ -671,12 +670,12 @@ async def test__mtm_insert():
 @pytest.mark.asyncio
 async def test__mtm_update():
     async with datastore_test() as ds:
-        ds.execute(text("INSERT INTO storage_disk VALUES (10)"))
-        ds.execute(text("INSERT INTO storage_disk VALUES (20)"))
-        ds.execute(text("INSERT INTO storage_disk VALUES (30)"))
-        ds.execute(text("INSERT INTO tasks_smarttest VALUES (100)"))
-        ds.execute(text("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 10)"))
-        ds.execute(text("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 30)"))
+        ds.execute("INSERT INTO storage_disk VALUES (10)")
+        ds.execute("INSERT INTO storage_disk VALUES (20)")
+        ds.execute("INSERT INTO storage_disk VALUES (30)")
+        ds.execute("INSERT INTO tasks_smarttest VALUES (100)")
+        ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 10)")
+        ds.execute("INSERT INTO tasks_smarttest_smarttest_disks VALUES (NULL, 100, 30)")
 
         await ds.update("tasks.smarttest", 100, {"disks": [20, 30]}, {"prefix": "smarttest_"})
 
