@@ -442,3 +442,5 @@ def test_search_protocols_spotlight():
     assert conf['spotlight backend'] == 'elasticsearch'
     assert conf['elasticsearch:address'] == TRUESEARCH_ES_PATH
     assert conf['spotlight'] is True
+    assert 'rpc_daemon:mdssd' not in conf
+    assert 'rpc_server:mdssvc' not in conf
