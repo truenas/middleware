@@ -3,7 +3,6 @@ import unittest.mock
 
 import pytest
 import sqlalchemy as sa
-from sqlalchemy import text
 
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.pytest.unit.plugins.test_datastore import datastore_test, Model
@@ -44,8 +43,8 @@ async def test_get_or_insert(rows, should_work):
             if rows:
                 # Testing case where the row exists already
                 ds.execute(
-                    text('INSERT INTO `services_catalog` VALUES (:label, :trains)'),
-                    {'label': rows[0]['label'], 'trains': json.dumps(rows[0]['preferred_trains'])}
+                    'INSERT INTO `services_catalog` VALUES (?, ?)',
+                    (rows[0]['label'], json.dumps(rows[0]['preferred_trains']))
                 )
                 response = await config_service_obj._get_or_insert('services.catalog', {})
                 assert response == rows[0]

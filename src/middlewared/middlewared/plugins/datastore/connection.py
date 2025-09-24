@@ -66,11 +66,11 @@ class DatastoreService(Service):
         self.connection.connection.execute("VACUUM")
 
     @private
-    def execute(self, *args):
-        args = list(args)
-        if args and isinstance(args[0], str):
-            args[0] = text(args[0])
-        return self.connection.execute(*args)
+    def execute(self, query, *params):
+        if len(params) == 1 and isinstance(params[0], (list, tuple)):
+            params = tuple(params[0])
+
+        return self.connection.exec_driver_sql(query, params)
 
     @private
     def execute_write(self, stmt, options=None):
@@ -79,11 +79,32 @@ class DatastoreService(Service):
         options.setdefault('return_last_insert_rowid', False)
 
         compiled = stmt.compile(self.engine, compile_kwargs={"render_postcompile": True})
-        sql = compiled.string
-        params = compiled.params or {}
-        result = self.connection.execute(stmt)
 
-        self.middleware.call_hook_inline("datastore.post_execute_write", sql, params, options)
+        param_to_bind = {}
+        if compiled._post_compile_expanded_state:
+            for bind, parameters in compiled._post_compile_expanded_state.parameter_expansion.items():
+                for parameter in parameters:
+                    param_to_bind[parameter] = bind
+
+        sql = compiled.string
+        binds = []
+        for param in compiled.positiontup:
+            if compiled._post_compile_expanded_state:
+                bind = compiled.binds[param_to_bind[param]]
+                value = compiled._post_compile_expanded_state.parameters[param]
+            else:
+                bind = compiled.binds[param]
+                value = bind.value
+
+            bind_processor = bind.type.bind_processor(self.engine.dialect)
+            if bind_processor:
+                binds.append(bind_processor(value))
+            else:
+                binds.append(value)
+
+        result = self.connection.exec_driver_sql(sql, tuple(binds))
+
+        self.middleware.call_hook_inline("datastore.post_execute_write", sql, binds, options)
 
         if options['return_last_insert_rowid']:
             return self.connection.execute(text("SELECT last_insert_rowid() as rowid")).scalar_one()
