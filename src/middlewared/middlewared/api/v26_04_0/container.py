@@ -20,10 +20,12 @@ __all__ = [
 
 class DefaultIdmapConfiguration(BaseModel):
     type: Literal["DEFAULT"]
+    "Configuration type for default ID mapping."
 
 
 class IsolatedIdmapConfiguration(BaseModel):
     type: Literal["ISOLATED"]
+    "Configuration type for isolated ID mapping."
     slice: PositiveInt | None = Field(lt=1000)
     "`null` when creating means we'll look up an unused slice on backend."
 
