@@ -22,36 +22,33 @@ class ContainerRegistryClientMixin:
         response = {'error': None, 'response': {}, 'response_obj': None}
         try:
             async with asyncio.timeout(timeout):
-                async with aiohttp.ClientSession(
-                    raise_for_status=True, trust_env=True,
-                ) as session:
-                    req = await getattr(session, mode)(
-                        url, headers=headers, auth=aiohttp.BasicAuth(**auth) if auth else None
+                async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as ss:
+                    coro = getattr(ss, mode)
+                    req = await coro(
+                        url,
+                        headers=headers,
+                        auth=aiohttp.BasicAuth(**auth) if auth else None
                     )
+                    response['response_obj'] = req
+                    if req.status != 200:
+                        cnt = ''
+                        if req.content:
+                            cnt = f' ({req.content})'
+                        response['error'] = f'Received response code {req.status}{cnt}'
+                    else:
+                        try:
+                            response['response'] = await req.json()
+                        except aiohttp.ContentTypeError as e:
+                            # quay.io registry returns malformed content type header
+                            # which aiohttp fails to parse even though the content
+                            # returned by registry is valid json
+                            response['error'] = f'Unable to parse response: {e}'
+                        except RuntimeError as e:
+                            response['error'] = f'Connection closed before the response could be fully read ({e})'
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with {url} in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
-            response.update({
-                'error': str(e),
-                'error_obj': e,
-            })
-        else:
-            response['response_obj'] = req
-            if req.status != 200:
-                response['error'] = f'Received response code {req.status}' + (
-                    f' ({req.content})' if req.content else ''
-                )
-            else:
-                try:
-                    response['response'] = await req.json()
-                except aiohttp.ContentTypeError as e:
-                    # quay.io registry returns malformed content type header which aiohttp fails to parse
-                    # even though the content returned by registry is valid json
-                    response['error'] = f'Unable to parse response: {e}'
-                except asyncio.TimeoutError:
-                    response['error'] = 'Timed out waiting for a response'
-                except RuntimeError as e:
-                    response['error'] = f'Connection closed before the response could be fully read ({e})'
+            response.update({'error': str(e), 'error_obj': e})
         return response
 
     async def _get_token(self, scope, auth_url=DOCKER_AUTH_URL, service=DOCKER_AUTH_SERVICE, auth=None):
