@@ -18,23 +18,11 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
 
-    staging_to_production = {
-        'account_service_base_url': {
-            'staging': 'https://account-service.staging.truenasconnect.net/',
-            'production': 'https://account-service.tys1.truenasconnect.net/'
-        },
-        'leca_service_base_url': {
-            'staging': 'https://dns-service.staging.truenasconnect.net/',
-            'production': 'https://dns-service.tys1.truenasconnect.net/'
-        },
-        'tnc_base_url': {
-            'staging': 'https://web.staging.truenasconnect.net/',
-            'production': 'https://web.truenasconnect.net/'
-        },
-        'heartbeat_url': {
-            'staging': 'https://heartbeat-service.staging.truenasconnect.net/',
-            'production': 'https://heartbeat-service.tys1.truenasconnect.net/'
-        }
+    production_urls = {
+        'account_service_base_url': 'https://account-service.tys1.truenasconnect.net/',
+        'leca_service_base_url': 'https://dns-service.tys1.truenasconnect.net/',
+        'tnc_base_url': 'https://web.truenasconnect.net/',
+        'heartbeat_url': 'https://heartbeat-service.tys1.truenasconnect.net/'
     }
 
     result = conn.execute(
@@ -53,15 +41,15 @@ def upgrade():
         'heartbeat_url': row[4]
     }
 
-    all_staging = all(
-        current_urls.get(column) == mapping['staging']
-        for column, mapping in staging_to_production.items()
+    all_non_prod = all(
+        current_urls.get(column) and ('.dev.' in current_urls[column] or '.staging.' in current_urls[column])
+        for column in production_urls.keys()
     )
 
-    if all_staging:
+    if all_non_prod:
         set_clauses = []
-        for column, mapping in staging_to_production.items():
-            set_clauses.append(f"{column} = {mapping['production']!r}")
+        for column, new_url in production_urls.items():
+            set_clauses.append(f"{column} = {new_url!r}")
 
         update_sql = f"UPDATE truenas_connect SET {', '.join(set_clauses)} WHERE id = {row_id}"
         conn.execute(update_sql)
