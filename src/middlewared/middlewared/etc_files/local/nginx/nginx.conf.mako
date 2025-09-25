@@ -282,18 +282,18 @@ ${spaces}gzip off;
         location /api/docs {
             alias /usr/share/middlewared/docs;
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            expires epoch;
         }
 
         location /api/docs/current {
             alias /usr/share/middlewared/docs/${current_api_version};
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            expires epoch;
         }
 
         location @index {
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            expires epoch;
             ${security_headers(indent=12)}
             root /usr/share/truenas/webui;
             try_files /index.html =404;
@@ -301,11 +301,47 @@ ${spaces}gzip off;
 
         location = /ui/ {
             allow all;
-            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            add_header Expires 0;
+            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
+            add_header Clear-Site-Data '"cache"' always;
+            add_header Etag "${system_version}";
             ${security_headers(indent=12)}
+            expires epoch;
             root /usr/share/truenas/webui;
             try_files /index.html =404;
+        }
+
+        location = /ui/sw.js {
+            allow all;
+
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
+
+            add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+            add_header Clear-Site-Data '"cache"' always;
+            add_header Etag "${system_version}";
+            ${security_headers(indent=12)}
+            expires epoch;
+
+            alias /usr/share/truenas/webui;
+            try_files $uri $uri/ @index;
+        }
+
+        location = /ui/index.html {
+            allow all;
+
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
+
+            add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+            add_header Clear-Site-Data '"cache"' always;
+            add_header Etag "${system_version}";
+            ${security_headers(indent=12)}
+            expires epoch;
+
+            alias /usr/share/truenas/webui;
+            try_files $uri $uri/ @index;
         }
 
         location /ui {
