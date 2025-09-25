@@ -21,6 +21,9 @@ class ContainerImageService(Service):
 
     @api_method(ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult, roles=['CONTAINER_IMAGE_WRITE'])
     def query_registry(self):
+        """
+        Query images available in the images registry.
+        """
         products = self.query_registry_images()["products"]
 
         return [
@@ -38,6 +41,8 @@ class ContainerImageService(Service):
 
     @private
     def query_registry_images(self):
+        self.middleware.call_sync('network.general.will_perform_activity', 'container')
+
         r = requests.get(f"{REGISTRY_URL}/v1/images.json", timeout=INTERNET_TIMEOUT)
         r.raise_for_status()
         return r.json()
@@ -137,3 +142,7 @@ class ContainerImageService(Service):
         except Exception:
             self.middleware.call_sync('zfs.dataset.delete', dataset_name)
             raise
+
+
+async def setup(middleware):
+    await middleware.call('network.general.register_activity', 'container', 'Container images registry')
