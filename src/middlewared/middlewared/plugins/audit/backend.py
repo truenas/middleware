@@ -100,7 +100,7 @@ class SQLConn:
                 return []
 
             try:
-                return cursor.fetchall()
+                return list(cursor.mappings())
             finally:
                 cursor.close()
 
