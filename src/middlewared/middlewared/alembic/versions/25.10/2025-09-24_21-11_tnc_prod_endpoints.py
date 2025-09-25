@@ -6,6 +6,7 @@ Revises: 5ea9f662ced4
 Create Date: 2025-09-24 16:44:06.551471+00:00
 """
 from alembic import op
+from sqlalchemy import text
 
 
 # revision identifiers, used by Alembic.
@@ -25,9 +26,9 @@ def upgrade():
         'heartbeat_url': 'https://heartbeat-service.tys1.truenasconnect.net/'
     }
 
-    result = conn.execute(
+    result = conn.execute(text(
         'SELECT id, account_service_base_url, leca_service_base_url, tnc_base_url, heartbeat_url FROM truenas_connect'
-    ).fetchall()
+    )).fetchall()
 
     if not result:
         return
@@ -51,7 +52,7 @@ def upgrade():
         for column, new_url in production_urls.items():
             set_clauses.append(f"{column} = {new_url!r}")
 
-        update_sql = f"UPDATE truenas_connect SET {', '.join(set_clauses)} WHERE id = {row_id}"
+        update_sql = text(f"UPDATE truenas_connect SET {', '.join(set_clauses)} WHERE id = {row_id}")
         conn.execute(update_sql)
 
 
