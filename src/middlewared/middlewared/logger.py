@@ -172,6 +172,14 @@ class ConsoleLogFormatter(logging.Formatter):
         HIGHRED = '\033[1;41m'  # (critical)
         RESET   = '\033[1;m'    # Reset
 
+    color_mapping = {
+        logging.CRITICAL: ConsoleColor.HIGHRED,
+        logging.ERROR   : ConsoleColor.HIGHRED,
+        logging.WARNING : ConsoleColor.RED,
+        logging.INFO    : ConsoleColor.GREEN,
+        logging.DEBUG   : ConsoleColor.YELLOW,
+    }
+
     def format(self, record):
         """Set the color based on the log level.
 
@@ -179,15 +187,7 @@ class ConsoleLogFormatter(logging.Formatter):
             logging.Formatter class.
         """
         ConsoleColor = self.ConsoleColor
-        color_mapping = {
-            logging.CRITICAL: ConsoleColor.HIGHRED,
-            logging.ERROR   : ConsoleColor.HIGHRED,
-            logging.WARNING : ConsoleColor.RED,
-            logging.INFO    : ConsoleColor.GREEN,
-            logging.DEBUG   : ConsoleColor.YELLOW,
-        }
-
-        color_start = color_mapping.get(record.levelno, ConsoleColor.RESET)
+        color_start = self.color_mapping.get(record.levelno, ConsoleColor.RESET)
         record.levelname = color_start + record.levelname + ConsoleColor.RESET
 
         return logging.Formatter.format(self, record)
