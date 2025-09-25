@@ -13,6 +13,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinxcontrib.jquery",
     # "sphinx.ext.intersphinx",
 ]
 
