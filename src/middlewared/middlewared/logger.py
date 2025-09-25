@@ -358,7 +358,7 @@ def setup_syslog_handler(tnlog: TNLog, fallback: logging.Handler | None) -> logg
 
 class Logger:
     """Pseudo-Class for Logger - Wrapper for logging module"""
-    def __init__(self, application_name: str, debug_level: str = 'DEBUG', log_format: str = DEFAULT_LOGFORMAT):
+    def __init__(self, application_name: str, debug_level: str | int = 'DEBUG', log_format: str = DEFAULT_LOGFORMAT):
         self.application_name = application_name
         self.debug_level = debug_level
         self.log_format = log_format
@@ -373,7 +373,7 @@ class Logger:
         """
         if output_option.lower() == 'console':
             console_handler = logging.StreamHandler()
-            logging.root.setLevel(getattr(logging, self.debug_level))
+            logging.root.setLevel(self.debug_level)
             time_format = "%Y/%m/%d %H:%M:%S"
             console_handler.setFormatter(ConsoleLogFormatter(self.log_format, datefmt=time_format))
             logging.root.addHandler(console_handler)
@@ -389,14 +389,14 @@ class Logger:
             for tnlog in ALL_LOG_FILES:
                 setup_syslog_handler(tnlog, fallback_handler)
 
-        logging.root.setLevel(getattr(logging, self.debug_level))
+        logging.root.setLevel(self.debug_level)
 
 
 def setup_audit_logging() -> logging.Logger:
     return setup_syslog_handler(MIDDLEWARE_TNAUDIT, None)
 
 
-def setup_logging(name: str, debug_level: typing.Optional[str], log_handler: typing.Optional[str]):
+def setup_logging(name: str, debug_level: str | int, log_handler: typing.Optional[str]):
     _logger = Logger(name, debug_level)
     _logger.getLogger()
 
