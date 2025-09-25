@@ -106,40 +106,30 @@ class TNLog:
 # NOTE if new separate log file needs to be added, create a new TNLog
 # object and append to ALL_LOG_FILES tuple. These files are read by the
 # syslog-ng config generation scripts and automatically handled.
-TNLOG_MIDDLEWARE = TNLog(None, LOGFILE)
-TNLOG_APP_LIFECYCLE = TNLog('app_lifecycle', APP_LIFECYCLE_LOGFILE)
-TNLOG_APP_MIGRATION = TNLog('app_migration', APP_MIGRATION_LOGFILE)
-TNLOG_DOCKER_IMAGE = TNLog('docker_image', DOCKER_IMAGE_LOGFILE)
-TNLOG_FAILOVER = TNLog('failover', FAILOVER_LOGFILE)
-TNLOG_NETDATA_API = TNLog('netdata_api', NETDATA_API_LOGFILE)
-TNLOG_TNC = TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE)
-TNLOG_ZETTAREPL = TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT)
-
-# NOTE: this is also consumed by tests/unit/test_logger.py, which validates
+# This is also consumed by tests/unit/test_logger.py, which validates
 # the auto-generated syslog-ng rules place messages in the correct log files.
 ALL_LOG_FILES = (
-    TNLOG_MIDDLEWARE,
-    TNLOG_APP_LIFECYCLE,
-    TNLOG_APP_MIGRATION,
-    TNLOG_DOCKER_IMAGE,
-    TNLOG_FAILOVER,
-    TNLOG_NETDATA_API,
-    TNLOG_TNC,
-    TNLOG_ZETTAREPL,
+    TNLog(None, LOGFILE),
+    TNLog('app_lifecycle', APP_LIFECYCLE_LOGFILE),
+    TNLog('app_migration', APP_MIGRATION_LOGFILE),
+    TNLog('docker_image', DOCKER_IMAGE_LOGFILE),
+    TNLog('failover', FAILOVER_LOGFILE),
+    TNLog('netdata_api', NETDATA_API_LOGFILE),
+    TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE),
+    TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT),
 )
-
 # Audit entries are inserted into audit databases in /audit rather than
 # written to files in /var/log and so they are not members of ALL_LOG_FILES
 MIDDLEWARE_TNAUDIT = TNLog('TNAUDIT_MIDDLEWARE', '', '', None)
-
-BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': '\\n'})
 
 
 class TNLogFormatter(logging.Formatter):
     """ logging formatter to convert python exception into structured data """
 
+    BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': '\\n'})
+
     def _escape_rfc_generic(self, msg: str) -> str:
-        return msg.translate(BASIC_SYSLOG_TRANSLATION)
+        return msg.translate(self.BASIC_SYSLOG_TRANSLATION)
 
     def format(self, record: logging.LogRecord) -> str:
         exc_info = record.exc_info
@@ -185,8 +175,8 @@ class ConsoleLogFormatter(logging.Formatter):
     def format(self, record):
         """Set the color based on the log level.
 
-            Returns:
-                logging.Formatter class.
+        Returns:
+            logging.Formatter class.
         """
         ConsoleColor = self.ConsoleColor
         color_mapping = {
