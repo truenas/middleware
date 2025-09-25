@@ -4,45 +4,49 @@ import queue
 import socket
 import typing
 import warnings
-from .logging.console_formatter import ConsoleLogFormatter
 from collections import deque
-from cryptography.utils import CryptographyDeprecationWarning
-from json import dumps
 from dataclasses import dataclass
+from enum import StrEnum
+from json import dumps
+
+from cryptography.utils import CryptographyDeprecationWarning
+
 from .utils.time_utils import utc_now
 
-# markdown debug is also considered useless
-logging.getLogger('MARKDOWN').setLevel(logging.INFO)
-# asyncio runs in debug mode but we do not need INFO/DEBUG
-logging.getLogger('asyncio').setLevel(logging.WARNING)
-# We dont need internal aiohttp debug logging
-logging.getLogger('aiohttp.internal').setLevel(logging.WARNING)
-# We dont need internal botocore debug logging
-logging.getLogger('botocore').setLevel(logging.WARNING)
-# we dont need websocket debug messages
-logging.getLogger('websocket').setLevel(logging.WARNING)
-# issues garbage warnings
-logging.getLogger('googleapiclient').setLevel(logging.ERROR)
-# It's too verbose (when used to list remote datasets/snapshots)
-logging.getLogger('paramiko').setLevel(logging.INFO)
-# pyroute2.ndb is chatty....only log errors
-logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
-logging.getLogger('pyroute2.netlink').setLevel(logging.CRITICAL)
-logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
-logging.getLogger('urllib3').setLevel(logging.WARNING)
-# ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
-# with that much information and raise the log level in this case
-logging.getLogger('acme.client').setLevel(logging.WARNING)
-logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARNING)
-# "Encoding detection: ascii is most likely the one."
-logging.getLogger('charset_normalizer').setLevel(logging.INFO)
-# Prevent debug docker logs
-logging.getLogger('docker.utils.config').setLevel(logging.ERROR)
-logging.getLogger('docker.auth').setLevel(logging.ERROR)
-# Prevent httpx debug spam
-logging.getLogger('httpx._client').setLevel(logging.ERROR)
-# Prevent kmip client spam
-logging.getLogger('kmip.services.kmip_client').setLevel(logging.ERROR)
+
+# Set logging levels
+for level, names in {
+    logging.INFO: (
+        'charset_normalizer',  # "Encoding detection: ascii is most likely the one."
+        'MARKDOWN',  # markdown debug is also considered useless
+        'paramiko',  # It's too verbose (when used to list remote datasets/snapshots)
+    ),
+    logging.WARNING: (
+        'acme.client',  # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the
+                        # logs with that much information and raise the log level in this case
+        'aiohttp.internal',  # We dont need internal aiohttp debug logging
+        'asyncio',  # asyncio runs in debug mode but we do not need INFO/DEBUG
+        'botocore',  # We dont need internal botocore debug logging
+        'certbot_dns_cloudflare._internal.dns_cloudflare',
+        'urllib3',
+        'websocket',  # we dont need websocket debug messages
+    ),
+    logging.ERROR: (
+        'docker.auth',
+        'docker.utils.config',  # Prevent debug docker logs
+        'googleapiclient',  # issues garbage warnings
+        'httpx._client',  # Prevent httpx debug spam
+        'kmip.services.kmip_client',  # Prevent kmip client spam
+    ),
+    logging.CRITICAL: (
+        'pyroute2.ndb',  # pyroute2.ndb is chatty....only log errors
+        'pyroute2.netlink',
+        'pyroute2.netlink.nlsocket',
+    ),
+}.items():
+    for name in names:
+        logging.getLogger(name).setLevel(level)
+
 
 # /usr/lib/python3/dist-packages/pydantic/json_schema.py:2158: PydanticJsonSchemaWarning:
 # Default value <object object at 0x7fa8ac040d30> is not JSON serializable; excluding default from JSON schema
@@ -166,6 +170,37 @@ class TNLogFormatter(logging.Formatter):
         record.exc_text = exc_text
         record.stack_info = stack_info
         return msg
+
+
+class ConsoleLogFormatter(logging.Formatter):
+    """Format the console log messages"""
+
+    class ConsoleColor(StrEnum):
+        YELLOW  = '\033[1;33m'  # (warning)
+        GREEN   = '\033[1;32m'  # (info)
+        RED     = '\033[1;31m'  # (error)
+        HIGHRED = '\033[1;41m'  # (critical)
+        RESET   = '\033[1;m'    # Reset
+
+    def format(self, record):
+        """Set the color based on the log level.
+
+            Returns:
+                logging.Formatter class.
+        """
+        ConsoleColor = self.ConsoleColor
+        color_mapping = {
+            logging.CRITICAL: ConsoleColor.HIGHRED,
+            logging.ERROR   : ConsoleColor.HIGHRED,
+            logging.WARNING : ConsoleColor.RED,
+            logging.INFO    : ConsoleColor.GREEN,
+            logging.DEBUG   : ConsoleColor.YELLOW,
+        }
+
+        color_start = color_mapping.get(record.levelno, ConsoleColor.RESET)
+        record.levelname = color_start + record.levelname + ConsoleColor.RESET
+
+        return logging.Formatter.format(self, record)
 
 
 QFORMATTER = TNLogFormatter()
