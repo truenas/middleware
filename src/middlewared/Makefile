@@ -1,7 +1,3 @@
-export MWPATH1=/usr/lib/python3/dist-packages/middlewared
-export MWPATH2=/usr/local/lib/python3.13/dist-packages/middlewared
-export BUILD=$(shell pwd)/build
-
 stop_service:
 	systemctl stop middlewared
 
@@ -10,16 +6,18 @@ start_service:
 	systemctl restart middlewared
 
 clean:
-	rm -rf $(MWPATH1)*
-	rm -rf $(MWPATH2)*
-	rm -rf $(BUILD)
+	# deb packages install to a different location
+	# compared to pip. This removes any remnants
+	# of middlewared so we don't have situation of
+	# two "middlewared" packages being on disk at
+	# same time.
+	find /usr -type d \( -path "*/dist-packages/middlewared" -o -path "*/site-packages/middlewared" \) 2>/dev/null | xargs -r rm -rf
 
 install:
 	pip install --no-build-isolation --break-system-packages --root-user-action=ignore .
 	cp ./debian/middlewared.service /usr/lib/systemd/system/middlewared.service
 
 install_test:
-	pip install --no-build-isolation --break-system-packages --root-user-action=ignore .[test]
 	bash install-dev-tools
 
 migrate:
