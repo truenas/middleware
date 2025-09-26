@@ -43,7 +43,7 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import create_zettarepl
 
-from middlewared.logger import setup_logging, TRACE
+from middlewared.logger import setup_logging
 from middlewared.service.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.cgroups import move_to_root_cgroups
@@ -152,7 +152,7 @@ class ZettareplProcess:
             setproctitle.setproctitle('middlewared (zettarepl)')
             die_with_parent()
             move_to_root_cgroups(os.getpid())
-            if logging.getLevelName(self.debug_level) == TRACE:
+            if logging.getLevelName(self.debug_level) == logging.TRACE:
                 # If we want TRACE then we want all debug from zettarepl
                 default_level = logging.DEBUG
             elif logging.getLevelName(self.debug_level) == logging.DEBUG:

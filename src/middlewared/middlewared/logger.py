@@ -186,9 +186,9 @@ class ConsoleLogFormatter(logging.Formatter):
         Returns:
             logging.Formatter class.
         """
-        ConsoleColor = self.ConsoleColor
-        color_start = self.color_mapping.get(record.levelno, ConsoleColor.RESET)
-        record.levelname = color_start + record.levelname + ConsoleColor.RESET
+        color_reset = self.ConsoleColor.RESET
+        color_start = self.color_mapping.get(record.levelno, color_reset)
+        record.levelname = color_start + record.levelname + color_reset
 
         return logging.Formatter.format(self, record)
 
