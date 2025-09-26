@@ -135,7 +135,8 @@ def setup_middleware_tests(path: str) -> Generator[None, None, None]:
     try:
         copytree(
             os.path.join(path, MIDDLEWARE_PYTEST),
-            os.path.join(MIDDLEWARE_PYTEST_MODULE)
+            os.path.join(MIDDLEWARE_PYTEST_MODULE),
+            dirs_exist_ok=True
         )
         yield
     finally:
