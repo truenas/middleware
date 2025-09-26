@@ -84,18 +84,19 @@ def dataset(name, data=None, pool=pool, **kwargs):
 
         yield dataset
     finally:
-        if 'delete_delay' in kwargs:
-            time.sleep(kwargs['delete_delay'])
+        if kwargs.get('delete', True):
+            if 'delete_delay' in kwargs:
+                time.sleep(kwargs['delete_delay'])
 
-        try:
-            call("pool.dataset.delete", dataset, {"recursive": True})
-        except InstanceNotFound:
-            pass
-        except CallError as e:
-            if "dataset already exists" in str(e):
+            try:
                 call("pool.dataset.delete", dataset, {"recursive": True})
-            else:
-                raise
+            except InstanceNotFound:
+                pass
+            except CallError as e:
+                if "dataset already exists" in str(e):
+                    call("pool.dataset.delete", dataset, {"recursive": True})
+                else:
+                    raise
 
 
 @contextlib.contextmanager

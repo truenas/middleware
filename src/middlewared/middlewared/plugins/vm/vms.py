@@ -1,4 +1,3 @@
-import asyncio
 import errno
 import functools
 import os
@@ -7,7 +6,7 @@ import shlex
 import shutil
 import uuid
 
-import middlewared.sqlalchemy as sa
+from truenas_pylibvirt import DomainDoesNotExistError
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -16,19 +15,19 @@ from middlewared.api.current import (
     VMStatusArgs, VMStatusResult, VMLogFilePathArgs, VMLogFilePathResult, VMLogFileDownloadArgs,
     VMLogFileDownloadResult,
 )
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.service import CallError, CRUDService, item_method, job, private, ValidationErrors
 from middlewared.plugins.vm.numeric_set import parse_numeric_set
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
+from middlewared.service import CallError, CRUDService, item_method, job, private, ValidationErrors
+import middlewared.sqlalchemy as sa
 
-from .utils import ACTIVE_STATES, get_default_status, get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
-from .vm_supervisor import VMSupervisorMixin
+from .utils import ACTIVE_STATES, get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
 
 
 BOOT_LOADER_OPTIONS = {
     'UEFI': 'UEFI',
     'UEFI_CSM': 'Legacy BIOS',
 }
-LIBVIRT_LOCK = asyncio.Lock()
 RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
 
 
@@ -71,12 +70,12 @@ def ovmf_options():
     return [path for path in os.listdir('/usr/share/OVMF') if re.findall(r'^OVMF_CODE.*.fd', path)]
 
 
-class VMService(CRUDService, VMSupervisorMixin):
+class VMService(CRUDService):
 
     class Config:
         namespace = 'vm'
         datastore = 'vm.vm'
-        datastore_extend = 'vm.extend_vm'
+        datastore_extend = 'vm.extend'
         datastore_extend_context = 'vm.extend_context'
         cli_namespace = 'service.vm'
         role_prefix = 'VM'
@@ -91,19 +90,33 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @private
     def extend_context(self, rows, extra):
-        status = {}
-        shutting_down = self.middleware.call_sync('system.state') == 'SHUTTING_DOWN'
-        kvm_supported = self._is_kvm_supported()
-        if shutting_down is False and rows and kvm_supported:
-            self._safely_check_setup_connection(5)
-
-        libvirt_running = shutting_down is False and self._is_connection_alive()
-        for row in rows:
-            status[row['id']] = self.status_impl(row) if libvirt_running else get_default_status()
-
         return {
-            'status': status,
+            'states': gather_pylibvirt_domains_states(
+                self.middleware,
+                rows,
+                self.middleware.libvirt_domains_manager.containers_connection,
+                lambda container: self.middleware.call_sync(
+                    'vm.pylibvirt_vm', self.extend_vm(container),
+                ),
+            ),
         }
+
+    @private
+    def extend(self, vm, context):
+        vm['status'] = get_pylibvirt_domain_state(context['states'], vm)
+
+        self.extend_vm(vm)
+
+        return vm
+
+    @private
+    def extend_vm(self, vm):
+        vm['devices'] = self.middleware.call_sync(
+            'vm.device.query',
+            [('vm', '=', vm['id'])],
+            {'force_sql_filters': True},
+        )
+        vm['display_available'] = any(device['attributes']['dtype'] == 'DISPLAY' for device in vm['devices'])
 
     @api_method(VMBootloaderOptionsArgs, VMBootloaderOptionsResult, roles=['VM_READ'])
     async def bootloader_options(self):
@@ -111,17 +124,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         Supported motherboard firmware options.
         """
         return BOOT_LOADER_OPTIONS
-
-    @private
-    async def extend_vm(self, vm, context):
-        vm['devices'] = await self.middleware.call(
-            'vm.device.query',
-            [('vm', '=', vm['id'])],
-            {'force_sql_filters': True},
-        )
-        vm['display_available'] = any(device['attributes']['dtype'] == 'DISPLAY' for device in vm['devices'])
-        vm['status'] = context['status'][vm['id']]
-        return vm
 
     @api_method(VMCreateArgs, VMCreateResult)
     async def do_create(self, data):
@@ -159,15 +161,11 @@ class VMService(CRUDService, VMSupervisorMixin):
         a snapshot is being taken for periodic snapshot tasks. For manual snapshots, if user has specified vms to
         be paused, they will be in that case.
         """
-        async with LIBVIRT_LOCK:
-            await self.middleware.run_in_thread(self._check_setup_connection)
-
         verrors = ValidationErrors()
         await self.common_validation(verrors, 'vm_create', data)
         verrors.check()
 
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
-        await self.middleware.run_in_thread(self._add, vm_id)
         await self.middleware.call('etc.generate', 'libvirt_guests')
 
         return await self.get_instance(vm_id)
@@ -336,12 +334,8 @@ class VMService(CRUDService, VMSupervisorMixin):
         new.update(data)
 
         if new['name'] != old['name']:
-            await self.middleware.run_in_thread(self._check_setup_connection)
             if old['status']['state'] in ACTIVE_STATES:
                 raise CallError('VM name can only be changed when VM is inactive')
-
-            if old['name'] not in self.vms:
-                raise CallError(f'Unable to locate domain for {old["name"]}')
 
         verrors = ValidationErrors()
         await self.common_validation(verrors, 'vm_update', new, old=old)
@@ -352,9 +346,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         await self.middleware.call('datastore.update', 'vm.vm', id_, new)
 
-        vm_data = await self.get_instance(id_)
         if new['name'] != old['name']:
-            await self.middleware.run_in_thread(self._rename_domain, old, vm_data)
             try:
                 new_path = os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(new))
                 await self.middleware.run_in_thread(
@@ -377,70 +369,51 @@ class VMService(CRUDService, VMSupervisorMixin):
         return await self.get_instance(id_)
 
     @api_method(VMDeleteArgs, VMDeleteResult)
-    async def do_delete(self, id_, data):
+    def do_delete(self, id_, data):
         """
         Delete a VM.
         """
-        async with LIBVIRT_LOCK:
-            vm = await self.get_instance(id_)
-            # Deletion should be allowed even if host does not support virtualization
-            if self._is_kvm_supported():
-                await self.middleware.run_in_thread(self._check_setup_connection)
-                status = await self.middleware.call('vm.status', id_)
-            else:
-                status = vm['status']
+        vm = self.middleware.call_sync('vm.get_instance', id_)
 
-            force_delete = data.get('force')
-            if status['state'] in ACTIVE_STATES:
-                await self.middleware.call('vm.poweroff', id_)
-                # We would like to wait at least 7 seconds to have the vm
-                # complete it's post vm actions which might require interaction with it's domain
-                await asyncio.sleep(7)
-            elif status.get('state') == 'ERROR' and not force_delete:
-                raise CallError('Unable to retrieve VM status. Failed to destroy VM')
+        force_delete = data.get('force')
 
-            if data['zvols']:
-                devices = await self.middleware.call('vm.device.query', [
-                    ('vm', '=', id_), ('attributes.dtype', '=', 'DISK')
-                ])
+        if data['zvols']:
+            devices = self.middleware.call_sync('vm.device.query', [
+                ('vm', '=', id_), ('attributes.dtype', '=', 'DISK')
+            ])
 
-                for zvol in devices:
-                    if not zvol['attributes']['path'].startswith('/dev/zvol/'):
-                        continue
+            for zvol in devices:
+                if not zvol['attributes']['path'].startswith('/dev/zvol/'):
+                    continue
 
-                    disk_name = zvol_path_to_name(zvol['attributes']['path'])
-                    try:
-                        await self.middleware.call('zfs.dataset.delete', disk_name, {'recursive': True})
-                    except Exception:
-                        if not force_delete:
-                            raise
-                        else:
-                            self.logger.error(
-                                'Failed to delete %r volume when removing %r VM', disk_name, vm['name'], exc_info=True
-                            )
+                disk_name = zvol_path_to_name(zvol['attributes']['path'])
+                try:
+                    self.middleware.call_sync('zfs.dataset.delete', disk_name, {'recursive': True})
+                except Exception:
+                    if not force_delete:
+                        raise
+                    else:
+                        self.logger.error(
+                            'Failed to delete %r volume when removing %r VM', disk_name, vm['name'], exc_info=True
+                        )
 
-            try:
-                await self.middleware.run_in_thread(self._undefine_domain, vm['name'])
-            except Exception:
-                if not force_delete:
-                    raise
-                else:
-                    self.logger.error("Failed to un-define %r VM's domain", vm['name'], exc_info=True)
+        pylibvirt_vm = self.middleware.call_sync("vm.pylibvirt_vm", vm)
+        try:
+            self.middleware.libvirt_domains_manager.vms.delete(pylibvirt_vm)
+        except DomainDoesNotExistError:
+            pass
 
-            # We remove vm devices first
-            for device in vm['devices']:
-                await self.middleware.call('vm.device.delete', device['id'], {'force': data['force']})
-            result = await self.middleware.call('datastore.delete', 'vm.vm', id_)
-            if not await self.middleware.call('vm.query'):
-                await self.middleware.call('vm.deinitialize_vms', {'reload_ui': False})
-                self._clear()
-            else:
-                await self.middleware.call('etc.generate', 'libvirt_guests')
-            return result
+        # We remove vm devices first
+        for device in vm['devices']:
+            self.middleware.call_sync('vm.device.delete', device['id'], {'force': data['force']})
+
+        self.middleware.call_sync('datastore.delete', 'vm.vm', id_)
+
+        self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     @item_method
     @api_method(VMStatusArgs, VMStatusResult, roles=['VM_READ'])
-    def status(self, id_):
+    async def status(self, id_):
         """
         Get the status of `id` VM.
 
@@ -448,20 +421,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             - state, RUNNING / STOPPED / SUSPENDED
             - pid, process id if RUNNING
         """
-        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id_]], {'get': True})
-        self._check_setup_connection()
-        return self.status_impl(vm)
-
-    @private
-    def status_impl(self, vm):
-        if self._has_domain(vm['name']):
-            try:
-                # Whatever happens, query shouldn't fail
-                return self._status(vm['name'])
-            except Exception:
-                self.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
-
-        return get_default_status()
+        return (await self.get_instance(id_))['status']
 
     @api_method(VMLogFilePathArgs, VMLogFilePathResult, roles=['VM_READ'])
     def log_file_path(self, vm_id):

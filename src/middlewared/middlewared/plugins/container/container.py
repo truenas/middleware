@@ -13,6 +13,7 @@ from middlewared.api.current import (
     ContainerUpdateArgs, ContainerUpdateResult,
     ContainerDeleteArgs, ContainerDeleteResult,
 )
+from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -73,44 +74,20 @@ class ContainerService(CRUDService):
 
     @private
     def extend_context(self, rows, extra):
-        status = {}
-        if rows:
-            shutting_down = self.middleware.call_sync('system.state') == 'SHUTTING_DOWN'
-            if not shutting_down:
-                uuid_to_container = {row['uuid']: row for row in rows}
-                connection = self.middleware.libvirt_domains_manager.containers_connection
-                try:
-                    for domain in connection.list_domains():
-                        uuid = domain.name()
-                        if container := uuid_to_container.get(uuid):
-                            status[uuid] = self._domain_state(
-                                connection,
-                                domain,
-                                self.middleware.call_sync(
-                                    'container.pylibvirt_container', self.extend_container(container.copy()),
-                                ),
-                            )
-                except Exception:
-                    self.logger.warning("Unhandled exception in `container.extend_context`", exc_info=True)
-
         return {
-            'status': status,
-        }
-
-    def _domain_state(self, connection, libvirt_domain, domain):
-        return {
-            'state': 'RUNNING' if libvirt_domain.isActive() else 'STOPPED',
-            'pid': domain.pid(),
-            'domain_state': connection.domain_state(libvirt_domain).value,
+            'states': gather_pylibvirt_domains_states(
+                self.middleware,
+                rows,
+                self.middleware.libvirt_domains_manager.containers_connection,
+                lambda container: self.middleware.call_sync(
+                    'container.pylibvirt_container', self.extend_container(container),
+                ),
+            ),
         }
 
     @private
     async def extend(self, container, context):
-        container['status'] = context['status'].get(container['uuid']) or {
-            'state': 'STOPPED',
-            'pid': None,
-            'domain_state': None,
-        }
+        container['status'] = get_pylibvirt_domain_state(context['states'], container)
 
         self.extend_container(container)
 
@@ -279,3 +256,5 @@ class ContainerService(CRUDService):
         self.middleware.call_sync('datastore.delete', 'container.container', id_)
 
         self.middleware.call_sync('pool.dataset.delete', container['dataset'])
+
+        self.middleware.call_sync('etc.generate', 'libvirt_guests')
