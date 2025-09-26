@@ -2,7 +2,7 @@
 # contained within the tests/unit directory as well as middleware specific unit
 # tests contained within src/middlewared/middlewared/pytest/unit.
 #
-# NOTE: this requires `make install_tests` to have been run on the TrueNAS VM.
+# NOTE: this requires "install-dev-tools" to have been run on the TrueNAS VM.
 
 import argparse
 import middlewared
