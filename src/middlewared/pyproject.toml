@@ -40,14 +40,10 @@ include-package-data = true
 [tool.setuptools.package-data]
 middlewared = [
     "alembic/**/*",
-    "alembic/**/.gitkeep",
     "alembic.ini",
     "assets/**/*",
-    "assets/**/.gitkeep",
     "etc_files/**/*",
-    "etc_files/**/.gitkeep",
     "migration/**/*",
-    "migration/**/.gitkeep",
     "test/integration/assets/**/*",
     "test/integration/utils/**/*",
 ]
