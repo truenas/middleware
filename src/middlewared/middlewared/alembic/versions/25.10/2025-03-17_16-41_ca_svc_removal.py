@@ -117,8 +117,8 @@ def get_chain_list(cert: dict, cas: dict[str, dict]) -> list[str]:
 
 def upgrade():
     conn = op.get_bind()
-    cas = {ca['id']: ca for ca in conn.execute(text("SELECT * FROM system_certificateauthority")).mappings().all()}
-    for cert in conn.execute(text("SELECT * FROM system_certificate")).mappings().all():
+    cas = {ca['id']: dict(ca) for ca in conn.execute(text("SELECT * FROM system_certificateauthority")).mappings().all()}
+    for cert in map(dict, conn.execute(text("SELECT * FROM system_certificate")).mappings().all()):
         chain = get_chain_list(cert, cas)
         if not chain:
             continue

@@ -46,7 +46,7 @@ def upgrade():
         batch_op.add_column(sa.Column('cifs_durablehandle', sa.Boolean(), nullable=True))
 
     conn = op.get_bind()
-    smb_shares = conn.execute(text("SELECT * FROM sharing_cifs_share")).mappings().all()
+    smb_shares = map(dict, conn.execute(text("SELECT * FROM sharing_cifs_share")).mappings().all())
     for share in smb_shares:
         aux_params = share.get('cifs_auxsmbconf', '').split('\n')
         vfs_objects = share.get('cifs_vfsobjects', '')

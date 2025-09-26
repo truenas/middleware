@@ -42,7 +42,7 @@ def generate_string(string_size=8, punctuation_chars=False, extra_chars=None):
 
 def upgrade():
     conn = op.get_bind()
-    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).fetchall():
+    for device in conn.execute(text("SELECT * FROM vm_device WHERE dtype IN ('DISK', 'RAW')")).mappings().all():
         attributes = json.loads(decrypt(device['attributes']))
         attributes['serial'] = generate_string(string_size=8)
         conn.execute(text("UPDATE vm_device SET attributes = :attributes WHERE id = :id"), {"attributes": encrypt(json.dumps(attributes)), "id": device['id']})

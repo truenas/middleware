@@ -24,7 +24,7 @@ def upgrade():
         batch_op.add_column(sa.Column('nfs_path', sa.TEXT(), nullable=True))
 
     conn = op.get_bind()
-    nfs_shares = conn.execute(text("SELECT * FROM sharing_nfs_share")).mappings().all()
+    nfs_shares = map(dict, conn.execute(text("SELECT * FROM sharing_nfs_share")).mappings().all())
     for entry in nfs_shares:
         # use existing entry for first path and add new entries for subsequent paths
         _id = entry.pop("id")
