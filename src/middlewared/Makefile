@@ -15,11 +15,11 @@ clean:
 	rm -rf $(BUILD)
 
 install:
-	python3 setup.py install --single-version-externally-managed --record=/dev/null
+	pip install --no-build-isolation --break-system-packages --root-user-action=ignore .
 	cp ./debian/middlewared.service /usr/lib/systemd/system/middlewared.service
 
 install_test:
-	python3 setup_test.py install --single-version-externally-managed --record=/dev/null
+	pip install --no-build-isolation --break-system-packages --root-user-action=ignore .[test]
 	bash install-dev-tools
 
 migrate:
