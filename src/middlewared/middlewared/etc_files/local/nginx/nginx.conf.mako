@@ -240,6 +240,7 @@ ${spaces}gzip off;
             allow all;
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
+
 % for device in display_devices:
         location ${display_device_path}/${device['id']} {
     % if ":" in device['attributes']['bind']:
@@ -283,18 +284,18 @@ ${spaces}gzip off;
         location /api/docs {
             alias /usr/share/middlewared/docs;
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            expires epoch;
+            add_header Expires 0;
         }
 
         location /api/docs/current {
             alias /usr/share/middlewared/docs/${current_api_version};
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            expires epoch;
+            add_header Expires 0;
         }
 
         location @index {
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            expires epoch;
+            add_header Expires 0;
             ${security_headers(indent=12)}
             root /usr/share/truenas/webui;
             try_files /index.html =404;
@@ -306,7 +307,7 @@ ${spaces}gzip off;
             add_header Clear-Site-Data '"cache"' always;
             add_header Etag "${system_version}";
             ${security_headers(indent=12)}
-            expires epoch;
+            add_header Expires 0;
             root /usr/share/truenas/webui;
             try_files /index.html =404;
         }
@@ -322,7 +323,7 @@ ${spaces}gzip off;
             add_header Clear-Site-Data '"cache"' always;
             add_header Etag "${system_version}";
             ${security_headers(indent=12)}
-            expires epoch;
+            add_header Expires 0;
 
             alias /usr/share/truenas/webui;
             try_files $uri $uri/ @index;
@@ -339,7 +340,7 @@ ${spaces}gzip off;
             add_header Clear-Site-Data '"cache"' always;
             add_header Etag "${system_version}";
             ${security_headers(indent=12)}
-            expires epoch;
+            add_header Expires 0;
 
             alias /usr/share/truenas/webui;
             try_files $uri $uri/ @index;
@@ -454,6 +455,7 @@ ${spaces}gzip off;
             ${security_headers_enhanced(indent=12)}
 % endif
         }
+
     }
 % endfor
 
