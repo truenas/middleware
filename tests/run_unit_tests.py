@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from collections.abc import Generator
 from dataclasses import dataclass
 from junitparser import JUnitXml
+from shutil import copytree, rmtree
 from truenas_api_client import Client
 from uuid import uuid4
 
@@ -128,6 +129,20 @@ def disable_api_test_config(path: str) -> Generator[None, None, None]:
         )
 
 
+@contextmanager
+def setup_middleware_tests(path: str) -> Generator[None, None, None]:
+    """ temporarily setup our pytest tests in the python dir """
+    try:
+        copytree(
+            os.path.join(path, MIDDLEWARE_PYTEST),
+            os.path.join(MIDDLEWARE_PYTEST_MODULE),
+            dirs_exist_ok=True
+        )
+        yield
+    finally:
+        rmtree(MIDDLEWARE_PYTEST_MODULE)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
@@ -142,7 +157,8 @@ def main() -> None:
 
     args = parser.parse_args()
     with disable_api_test_config(args.path):
-        exit_code = run_unit_tests(args.path)
+        with setup_middleware_tests(args.path):
+            exit_code = run_unit_tests(args.path)
 
     sys.exit(exit_code)
 
