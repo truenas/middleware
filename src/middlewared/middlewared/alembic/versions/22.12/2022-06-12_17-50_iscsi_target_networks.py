@@ -32,7 +32,7 @@ def upgrade():
         initiator = conn.execute(
             text("SELECT * FROM services_iscsitargetauthorizedinitiator WHERE id = :id"),
             {"id": target_group['iscsi_target_initiatorgroup_id']}
-        ).fetchone()
+        ).mappings().first()
         if initiator is None:
             continue
 

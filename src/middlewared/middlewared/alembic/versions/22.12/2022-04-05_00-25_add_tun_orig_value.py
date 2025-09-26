@@ -25,12 +25,15 @@ def upgrade():
     op.execute(text(f'DELETE FROM system_tunable WHERE tun_type = "loader" {nocase} or tun_type = "rc" {nocase}'))
 
     conn = op.get_bind()
-    for entry in conn.execute(text('SELECT * FROM system_tunable WHERE tun_type = "sysctl" COLLATE NOCASE')).fetchall():
+    for entry in conn.execute(text('SELECT * FROM system_tunable WHERE tun_type = "sysctl" COLLATE NOCASE')).mappings():
         # It's impossible to (easily) determine the default value of a sysctl tunable because
         # of the order in which the upgrade service runs compared to systemd-sysctl service.
         # We'll simply use the user-provided value to normalize the database. There is no
         # change in functionality by doing it this way.
-        conn.execute(text('UPDATE system_tunable SET tun_orig_value = :value WHERE id = :id'), {'value': entry['tun_value'], 'id': entry['id']})
+        conn.execute(
+            text('UPDATE system_tunable SET tun_orig_value = :value WHERE id = :id'),
+            {'value': entry['tun_value'], 'id': entry['id']}
+        )
 
 
 def downgrade():
