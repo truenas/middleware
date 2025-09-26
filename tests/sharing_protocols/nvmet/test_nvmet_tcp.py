@@ -664,6 +664,7 @@ class TestNVMe(NVMeRunning):
 
                         # Update the size of the ZVOL
                         call('pool.dataset.update', zvol_config['id'], {'volsize': ZVOL_RESIZE_END_MB * MB})
+
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
                         self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL_RESIZE_END_MB)])

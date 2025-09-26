@@ -397,3 +397,23 @@ class NVMetNamespaceService(SharingService):
             'pool.dataset.path_in_locked_datasets',
             path
         )
+
+    @private
+    async def resync_lun_size_for_zvol(self, zvol_id):
+        if not await self.middleware.call('service.started', 'nvmet'):
+            return
+
+        namespaces = await self.middleware.call(
+            'nvmet.namespace.query', [['enabled', '=', True],
+                                      ['locked', '=', False],
+                                      ['device_type', '=', 'ZVOL'],
+                                      ['device_path', '=', f'zvol/{zvol_id}']])
+        if not namespaces:
+            return
+
+        ns = namespaces[0]
+        try:
+            await self.middleware.call('nvmet.namespace.resize_namespace', ns['id'])
+        except Exception:
+            self.logger.warning('Failed to resync lun size for subnqn %r nsid %r (ID %r)',
+                                ns['subsys']['subnqn'], ns['nsid'], ns['id'], exc_info=True)
