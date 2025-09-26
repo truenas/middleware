@@ -541,6 +541,11 @@ class iSCSITargetService(CRUDService):
                 raise OSError(cp.returncode, os.strerror(cp.returncode), err)
 
     @private
+    async def rescan_iqn(self, iqn, timeout=30):
+        cmd = ['iscsiadm', '-m', 'node', '-T', iqn, '-R']
+        await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8', timeout=timeout)
+
+    @private
     def logged_in_iqns(self):
         """
         :return: dict keyed by iqn, with list of the unsurfaced disk names as the value
