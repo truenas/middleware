@@ -765,6 +765,7 @@ class PoolDatasetService(CRUDService):
                 # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscsi)
                 # and if it is, resync it so the connected initiators can see the new size of the zvol
                 await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id_)
+                await self.middleware.call('nvmet.namespace.resync_lun_size_for_zvol', id_)
 
             if 'readonly' in data:
                 # depending on the iscsi client connected to us, if someone marks a zvol
