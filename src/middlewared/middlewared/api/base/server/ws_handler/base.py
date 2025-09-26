@@ -1,12 +1,37 @@
-from typing import TYPE_CHECKING
+from ipaddress import ip_address, ip_network
+from typing import Iterable, TYPE_CHECKING
 
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web import Request, WebSocketResponse
 
 from middlewared.utils.origin import ConnectionOrigin
-from middlewared.webui_auth import addr_in_allowlist
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+
+
+def addr_in_allowlist(remote_addr, allowlist: Iterable) -> bool:
+    """Determine if `remote_addr` is a valid IP address included in `allowlist`."""
+    valid = False
+    try:
+        remote_addr = ip_address(remote_addr)
+    except Exception:
+        # invalid/malformed IP so play it safe and
+        # return False
+        valid = False
+    else:
+        for allowed in allowlist:
+            try:
+                allowed = ip_network(allowed)
+            except Exception:
+                # invalid/malformed network so play it safe
+                valid = False
+                break
+            else:
+                if remote_addr == allowed or remote_addr in allowed:
+                    valid = True
+                    break
+
+    return valid
 
 
 class BaseWebSocketHandler:
@@ -47,12 +72,7 @@ class BaseWebSocketHandler:
             return True
 
         ui_allowlist = await self.middleware.call("system.general.get_ui_allowlist")
-        if not ui_allowlist:
-            return True
-        elif addr_in_allowlist(origin.rem_addr, ui_allowlist):
-            return True
-
-        return False
+        return not ui_allowlist or addr_in_allowlist(origin.rem_addr, ui_allowlist)
 
     async def process(self, origin: ConnectionOrigin, ws: WebSocketResponse):
         raise NotImplementedError
