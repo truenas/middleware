@@ -52,12 +52,12 @@ def migrate_autorid_to_rid(conn, config: dict) -> None:
         'ad_idmap = :idmap, '
         'ad_enable_trusted_domains = 0'
     )
-    conn.execute(stmt, idmap=new_idmap)
+    conn.execute(text(stmt), {'idmap': new_idmap})
 
 
 def upgrade():
     conn = op.get_bind()
-    row = conn.execute(text('SELECT * FROM directoryservices')).fetchone()
+    row = conn.execute(text('SELECT * FROM directoryservices')).mappings().first()
     if not row:
         return
 

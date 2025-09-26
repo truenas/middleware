@@ -44,7 +44,7 @@ def upgrade():
     conn = op.get_bind()
     has_cifs_home = bool(conn.execute(text("SELECT * FROM sharing_cifs_share WHERE cifs_home = 1")))
     disable_acl_if_trivial = []
-    for share in conn.execute(text("SELECT * FROM sharing_afp_share")).fetchall():
+    for share in conn.execute(text("SELECT * FROM sharing_afp_share")).mappings():
         cifs_auxsmbconf = []
         share_disable_acl_if_trivial = False
         if share["afp_allow"].strip():

@@ -25,7 +25,7 @@ def upgrade():
 
     rel_tgt_id = 1
     conn = op.get_bind()
-    for target in conn.execute(text("SELECT * FROM services_iscsitarget")).fetchall():
+    for target in conn.execute(text("SELECT * FROM services_iscsitarget")).mappings():
         conn.execute(text("UPDATE services_iscsitarget SET iscsi_target_rel_tgt_id = :rel_tgt_id WHERE id = :id"), {"rel_tgt_id": rel_tgt_id, "id": target['id']})
         rel_tgt_id += 1
 
