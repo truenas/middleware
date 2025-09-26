@@ -164,7 +164,7 @@ http {
     }
 
     map $http_origin $allow_origin {
-        ~^https://truenas.connect.(dev.|staging.)?ixsystems.net$ $http_origin;
+        ~^${tn_connect_config['tnc_base_url'].rstrip("/")}$ $http_origin;
         default "";
     }
 
