@@ -19,6 +19,7 @@ install:
 
 install_test:
 	bash install-dev-tools
+	pip install --no-build-isolation --break-system-packages --root-user-action=ignore .
 
 migrate:
 	migrate
