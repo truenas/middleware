@@ -70,6 +70,22 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+            # If we have just added a new extent to an existing target, then STANDBY node may already be logged
+            # into the target, so we should force a rescan.  Check the target LUN count.
+            target_id = data['target']
+            if await self.middleware.call('iscsi.targetextent.query',
+                                          [['target', '=', target_id]],
+                                          {'count': True}) > 1:
+                target_name = (await self.middleware.call('iscsi.target.query',
+                                                          [['id', '=', target_id]],
+                                                          {'select': ['name'], 'get': True}))['name']
+                try:
+                    await self.middleware.call('failover.call_remote', 'iscsi.alua.added_target_extent', [target_name])
+                except CallError as e:
+                    if e.errno != CallError.ENOMETHOD:
+                        self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                        # Better to continue than to raise the exception
+            # Now update the remote node
             await self.middleware.call(
                 'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
             )
