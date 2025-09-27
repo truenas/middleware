@@ -2,7 +2,7 @@ import io
 import json
 
 import pytest
-import requests
+from functions import http_post
 
 from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.account import unprivileged_user_client
@@ -27,7 +27,7 @@ def download_token(job_with_pipe):
 
 
 def test_download_auth_token_cannot_be_used_for_upload(download_token):
-    r = requests.post(
+    r = http_post(
         f"http://{truenas_server.ip}/_upload",
         headers={"Authorization": f"Token {download_token}"},
         data={

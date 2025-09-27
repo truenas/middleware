@@ -1,7 +1,7 @@
 import re
 
 import pytest
-import requests
+from functions import http_get
 
 from middlewared.test.integration.utils import url
 
@@ -10,7 +10,7 @@ RE_MAIN_SCRIPT = re.compile(r'<script src="(main[.-].+\.js)" type="module">')
 
 @pytest.mark.parametrize("path", ["/", "/ui", "/ui/", "/ui/index.html", "/ui/sessions/signin"])
 def test_index_html(path):
-    r = requests.get(url() + path, timeout=10)
+    r = http_get(url() + path, timeout=10)
 
     assert r.status_code == 200
 
@@ -25,10 +25,10 @@ def test_index_html(path):
 
 
 def test_assets():
-    r = requests.get(url(), timeout=10)
+    r = http_get(url(), timeout=10)
 
     m = RE_MAIN_SCRIPT.search(r.text)
-    r = requests.get(url() + f"/ui/{m.group(1)}")
+    r = http_get(url() + f"/ui/{m.group(1)}")
 
     assert "Strict-Transport-Security" in r.headers
 

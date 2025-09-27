@@ -11,7 +11,7 @@ from time import sleep
 
 import os
 import pytest
-import requests
+from functions import http_get
 import secrets
 import string
 
@@ -79,7 +79,7 @@ def check_audit_download(report_path, report_type, tag=None):
         [{"report_name": os.path.basename(report_path)}],
         f"report.{report_type.lower()}"
     )
-    r = requests.get(f"{url()}{url_path}")
+    r = http_get(f"{url()}{url_path}")
     r.raise_for_status()
     if tag is not None:
         assert f"{tag}" in r.text
@@ -311,7 +311,7 @@ class TestAuditOps:
                     [{"report_name": os.path.basename(report_path)}],
                     f"report.{backend.lower()}"
                 )
-                r = requests.get(f"{url()}{path}")
+                r = http_get(f"{url()}{path}")
                 r.raise_for_status()
                 assert len(r.content) == st['size']
 

@@ -4,7 +4,7 @@ import io
 import json
 
 import pytest
-import requests
+from functions import http_post
 
 from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.api_key import api_key
@@ -89,7 +89,7 @@ def test_root_api_key_upload(auth):
     ip = truenas_server.ip
     with auth(["FULL_ADMIN"]) as kwargs:
         kwargs.pop("anonymous", None)  # This key is only used for our test requests library
-        r = requests.post(
+        r = http_post(
             f"http://{ip}/_upload",
             **kwargs,
             data={
@@ -113,7 +113,7 @@ def test_denied_api_key_upload(auth):
     ip = truenas_server.ip
     with auth(["SHARING_ADMIN"]) as kwargs:
         kwargs.pop("anonymous", None)  # This key is only used for our test requests library
-        r = requests.post(
+        r = http_post(
             f"http://{ip}/_upload",
             **kwargs,
             data={

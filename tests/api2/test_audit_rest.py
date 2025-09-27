@@ -5,7 +5,7 @@ import os
 import sys
 from unittest.mock import ANY
 
-import requests
+from functions import http_get, http_post
 
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, url
@@ -31,7 +31,7 @@ def test_unauthenticated_call():
             "success": False,
         }
     ], include_logins=True):
-        r = requests.get(f"{url()}/api/v2.0/system/info", auth=("invalid", "password"))
+        r = http_get(f"{url()}/api/v2.0/system/info", auth=("invalid", "password"))
         assert r.status_code == 401
 
 
@@ -49,7 +49,7 @@ def test_unauthenticated_upload_call():
             "success": False,
         }
     ], include_logins=True):
-        r = requests.post(
+        r = http_post(
             f"{url()}/api/v2.0/resttest/test_input_pipe",
             auth=("invalid", "password"),
             files={
@@ -166,11 +166,11 @@ def test_unauthorized_call():
                 "success": False,
             }
         ]):
-            r = requests.post(
+            r = http_post(
                 f"{url()}/api/v2.0/user",
                 auth=(u.username, u.password),
                 headers={"Content-type": "application/json"},
-                data=json.dumps({"username": "sergey", "full_name": "Sergey"}),
+                data={"username": "sergey", "full_name": "Sergey"},
             )
             assert r.status_code == 403, r.text
 
@@ -248,7 +248,7 @@ def test_api_key_auth():
                 "success": True,
             },
         ], include_logins=True):
-            r = requests.get(
+            r = http_get(
                 f"{url()}/api/v2.0/smb",
                 headers={
                     "Content-type": "application/json",

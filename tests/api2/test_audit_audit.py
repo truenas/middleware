@@ -1,6 +1,6 @@
 import os
 
-import requests
+from functions import http_get
 import time
 import operator
 import pytest
@@ -112,7 +112,7 @@ class TestAuditDownload:
         job_id, download_data = call(
             'core.download', 'audit.download_report', [payload], 'report.csv'
         )
-        r = requests.get(f'{url()}{download_data}')
+        r = http_get(f'{url()}{download_data}')
         r.raise_for_status()
         assert len(r.content) == st['size']
 

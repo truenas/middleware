@@ -1,7 +1,7 @@
 import socket
 import time
 
-import requests
+from functions import http_get
 import websocket
 
 from middlewared.test.integration.utils import call, host, mock, ssh, url, websocket_url
@@ -35,7 +35,7 @@ def test_system_general_ui_allowlist():
 
                 # Ensure we are testing endpoints that do not give 403 by default
                 for endpoint in protected_endpoints:
-                    r = requests.get(url() + endpoint, timeout=10)
+                    r = http_get(url() + endpoint, timeout=10)
                     assert r.status_code != 403
                 for endpoint, message in protected_ws_endpoints:
                     ws = websocket.create_connection(websocket_url() + endpoint)
@@ -50,7 +50,7 @@ def test_system_general_ui_allowlist():
 
                 # Check everything still works
                 for endpoint in protected_endpoints:
-                    r = requests.get(url() + endpoint, timeout=10)
+                    r = http_get(url() + endpoint, timeout=10)
                     assert r.status_code != 403
                 for endpoint, message in protected_ws_endpoints:
                     ws = websocket.create_connection(websocket_url() + endpoint)
@@ -64,12 +64,12 @@ def test_system_general_ui_allowlist():
                 time.sleep(10)
 
                 # Ensure we are still able to open the UI
-                r = requests.get(url(), timeout=10)
+                r = http_get(url(), timeout=10)
                 assert r.status_code == 200
 
                 # Ensure that we can't access API
                 for endpoint in protected_endpoints:
-                    r = requests.get(url() + endpoint, timeout=10)
+                    r = http_get(url() + endpoint, timeout=10)
                     assert r.status_code == 403, (endpoint, r.text)
                 for endpoint, message in protected_ws_endpoints:
                     ws = websocket.create_connection(websocket_url() + endpoint)

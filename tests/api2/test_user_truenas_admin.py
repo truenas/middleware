@@ -5,7 +5,7 @@ import tarfile
 import tempfile
 
 import pytest
-import requests
+from functions import http_get
 
 from middlewared.test.integration.assets.account import root_with_password_disabled
 from middlewared.test.integration.assets.keychain import ssh_keypair
@@ -60,7 +60,7 @@ def test_can_set_admin_authorized_key(truenas_admin):
                 ], capture_output=True, check=True, timeout=30)
 
                 job_id, path = call("core.download", "config.save", [{"root_authorized_keys": True}], "config.tar")
-                r = requests.get(f"{url()}{path}")
+                r = http_get(f"{url()}{path}")
                 r.raise_for_status()
                 tar_io = io.BytesIO(r.content)
                 with tarfile.TarFile(fileobj=tar_io) as tar:

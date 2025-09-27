@@ -12,7 +12,6 @@ from time import sleep
 import iscsi
 import pyscsi
 import pytest
-import requests
 from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_portal, portal, read_capacity16, target,
                                     target_extent_associate, verify_capacity, verify_ha_device_identification,
                                     verify_ha_inquiry, verify_luns)
@@ -2130,7 +2129,7 @@ def _ha_reboot_master(delay=900, description=''):
             if _get_node(timeout=get_node_timeout) == new_master_node:
                 new_master = True
                 break
-        except requests.exceptions.Timeout:
+        except TimeoutError:
             delay = delay - get_node_timeout
         except Exception:
             delay = delay - 1

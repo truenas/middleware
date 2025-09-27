@@ -1,7 +1,7 @@
 import errno
 
 import pytest
-import requests
+from functions import http_get
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user_client
@@ -34,7 +34,7 @@ def test_job_download_logs(c):
 
         path = c.call("core.job_download_logs", jid, "logs.txt")
 
-        r = requests.get(f"{url()}{path}")
+        r = http_get(f"{url()}{path}")
         r.raise_for_status()
 
         assert r.headers["Content-Disposition"] == "attachment; filename=\"logs.txt\""
@@ -80,7 +80,7 @@ def test_job_download_logs_unprivileged_downloads_internal_logs_with_read_role(c
 
         path = c.call("core.job_download_logs", jid, "logs.txt")
 
-        r = requests.get(f"{url()}{path}")
+        r = http_get(f"{url()}{path}")
         r.raise_for_status()
 
         assert r.headers["Content-Disposition"] == "attachment; filename=\"logs.txt\""

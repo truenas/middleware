@@ -7,11 +7,13 @@ import enum
 import json
 import os
 import re
+import ssl
+import urllib.request
+import urllib.error
+from base64 import b64encode
 from subprocess import PIPE, Popen, TimeoutExpired, run
 from time import sleep
 from urllib.parse import urlparse
-
-import requests
 
 from auto_config import password, user
 from middlewared.test.integration.utils import host
@@ -22,6 +24,141 @@ header = {'Content-Type': 'application/json', 'Vary': 'accept'}
 global authentication
 authentication = (user, password)
 RE_HTTPS = re.compile(r'^http(:.*)')
+
+
+class HTTPResponse:
+    """A wrapper to make urllib response behave like requests.Response"""
+    def __init__(self, response, content):
+        self.status_code = response.code
+        self.headers = dict(response.headers)
+        self.text = content
+        self._content = content.encode('utf-8') if isinstance(content, str) else content
+        self.url = response.url
+        self.reason = response.reason
+
+    def json(self):
+        return json.loads(self.text)
+
+    @property
+    def content(self):
+        return self._content
+
+    def raise_for_status(self):
+        if 400 <= self.status_code < 600:
+            raise Exception(f"HTTP {self.status_code}: {self.reason}")
+
+
+def http_request(method, url, data=None, headers=None, auth=None, files=None, timeout=None, verify=True):
+    """A urllib-based replacement for requests.request()"""
+    headers = headers or {}
+
+    # Handle basic authentication
+    if auth:
+        credentials = f"{auth[0]}:{auth[1]}"
+        encoded = b64encode(credentials.encode()).decode('ascii')
+        headers['Authorization'] = f'Basic {encoded}'
+
+    # Handle JSON data
+    if data is not None and not files:
+        if isinstance(data, (dict, list)):
+            data = json.dumps(data).encode('utf-8')
+            if 'Content-Type' not in headers:
+                headers['Content-Type'] = 'application/json'
+        elif isinstance(data, str):
+            data = data.encode('utf-8')
+
+    # Handle multipart files
+    if files:
+        boundary = '----WebKitFormBoundary' + ''.join([str(i) for i in range(16)])
+        headers['Content-Type'] = f'multipart/form-data; boundary={boundary}'
+        body_parts = []
+
+        # Add form data if present
+        if data and isinstance(data, dict):
+            for key, value in data.items():
+                body_parts.append(f'--{boundary}')
+                body_parts.append(f'Content-Disposition: form-data; name="{key}"')
+                body_parts.append('')
+                body_parts.append(str(value))
+
+        # Add files
+        for field_name, file_info in files.items():
+            if isinstance(file_info, tuple):
+                filename, file_content = file_info[0], file_info[1]
+            else:
+                filename = field_name
+                file_content = file_info
+
+            # Handle io.BytesIO/io.StringIO objects
+            if hasattr(file_content, 'read'):
+                file_content = file_content.read()
+                if hasattr(file_info, 'seek'):
+                    file_info.seek(0)  # Reset position if possible
+
+            body_parts.append(f'--{boundary}')
+            body_parts.append(f'Content-Disposition: form-data; name="{field_name}"; filename="{filename}"')
+            body_parts.append('Content-Type: application/octet-stream')
+            body_parts.append('')
+            if isinstance(file_content, bytes):
+                body_parts.append(file_content.decode('utf-8', errors='replace'))
+            else:
+                body_parts.append(str(file_content))
+
+        body_parts.append(f'--{boundary}--')
+        data = '\r\n'.join(str(part) for part in body_parts).encode('utf-8')
+
+    # Create request
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+
+    # Handle SSL verification
+    if not verify:
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+    else:
+        ssl_context = None
+
+    try:
+        # Make the request
+        if timeout:
+            response = urllib.request.urlopen(req, timeout=timeout, context=ssl_context)
+        else:
+            response = urllib.request.urlopen(req, context=ssl_context)
+
+        content = response.read().decode('utf-8', errors='replace')
+        return HTTPResponse(response, content)
+
+    except urllib.error.HTTPError as e:
+        content = e.read().decode('utf-8', errors='replace')
+        # Create a response object for error cases
+        error_response = type('Response', (), {
+            'code': e.code,
+            'headers': dict(e.headers),
+            'url': e.url,
+            'reason': e.reason
+        })()
+        return HTTPResponse(error_response, content)
+    except urllib.error.URLError as e:
+        # Connection errors
+        raise ConnectionError(f"Failed to connect: {e.reason}")
+
+
+# Convenience functions to match requests API
+def http_get(url, **kwargs):
+    return http_request('GET', url, **kwargs)
+
+def http_post(url, data=None, json=None, **kwargs):
+    if json is not None:
+        data = json
+    return http_request('POST', url, data=data, **kwargs)
+
+def http_put(url, data=None, json=None, **kwargs):
+    if json is not None:
+        data = json
+    return http_request('PUT', url, data=data, **kwargs)
+
+def http_delete(url, **kwargs):
+    return http_request('DELETE', url, **kwargs)
 
 
 class SRVTarget(enum.Enum):
@@ -55,14 +192,14 @@ def GET(testpath, payload=None, controller_a=False, **optional):
     timeout = optional.get('timeout', None)
 
     if testpath.startswith('http'):
-        getit = requests.get(complete_uri, timeout=timeout)
+        getit = http_get(complete_uri, timeout=timeout)
     else:
         if optional.pop("anonymous", False):
             auth = None
         else:
             auth = optional.pop("auth", authentication)
-        getit = requests.get(complete_uri, headers=dict(header, **optional.get("headers", {})),
-                             auth=auth, data=json.dumps(data), verify=False, timeout=timeout)
+        getit = http_get(complete_uri, headers=dict(header, **optional.get("headers", {})),
+                        auth=auth, data=json.dumps(data) if data else None, verify=False, timeout=timeout)
     return getit
 
 
@@ -79,12 +216,12 @@ def POST(testpath, payload=None, controller_a=False, **optional):
     files = optional.get("files")
     headers = dict(({} if optional.get("force_new_headers") else header), **optional.get("headers", {}))
     if payload is None:
-        postit = requests.post(
-            f'{url}{testpath}', headers=headers, auth=auth, files=files)
+        postit = http_post(
+            f'{url}{testpath}', headers=headers, auth=auth, files=files, verify=False)
     else:
-        postit = requests.post(
-            f'{url}{testpath}', headers=headers, auth=auth,
-            data=json.dumps(data), files=files
+        postit = http_post(
+            f'{url}{testpath}', data=data, headers=headers, auth=auth,
+            files=files, verify=False
         )
     return postit
 
@@ -96,8 +233,8 @@ def PUT(testpath, payload=None, controller_a=False, **optional):
         auth = None
     else:
         auth = authentication
-    putit = requests.put(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                         auth=auth, data=json.dumps(data))
+    putit = http_put(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
+                    auth=auth, data=data, verify=False)
     return putit
 
 
@@ -108,9 +245,9 @@ def DELETE(testpath, payload=None, controller_a=False, **optional):
         auth = None
     else:
         auth = authentication
-    deleteit = requests.delete(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                               auth=auth,
-                               data=json.dumps(data))
+    deleteit = http_delete(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
+                          auth=auth,
+                          data=data, verify=False)
     return deleteit
 
 

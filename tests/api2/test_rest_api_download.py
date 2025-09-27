@@ -2,7 +2,7 @@ import errno
 import time
 
 import pytest
-import requests
+from functions import http_get
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user
@@ -51,7 +51,7 @@ def test_download_from_download_endpoint():
     with client() as c:
         job_id, path = c.call("core.download", "resttest.test_download_pipe", [{"key": "value"}], "file.bin")
 
-    r = requests.get(f"{url()}{path}")
+    r = http_get(f"{url()}{path}")
     r.raise_for_status()
 
     assert r.headers["Content-Disposition"] == "attachment; filename=\"file.bin\""
@@ -71,7 +71,7 @@ def test_buffered_download_from_slow_download_endpoint(buffered, sleep, result):
 
     time.sleep(sleep)
 
-    r = requests.get(f"{url()}{path}")
+    r = http_get(f"{url()}{path}")
     r.raise_for_status()
 
     assert r.headers["Content-Disposition"] == "attachment; filename=\"file.bin\""

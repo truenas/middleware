@@ -1,7 +1,8 @@
 import time
 
 import pytest
-import requests
+from functions import http_get
+from urllib.error import URLError
 
 from middlewared.test.integration.utils import call, ssh, url
 
@@ -26,11 +27,11 @@ def test_system_general_ui_rollback():
         time.sleep(10)
 
         # Ensure that changes were applied and the UI is now inaccessible
-        with pytest.raises(requests.ConnectionError):
-            requests.get(url(), timeout=10)
+        with pytest.raises((URLError, ConnectionError)):
+            http_get(url(), timeout=10)
 
         # Additionally ensure that it is still working
-        assert requests.get(url() + ":81", timeout=10).status_code == 200
+        assert http_get(url() + ":81", timeout=10).status_code == 200
 
         # Ensure that the check-in timeout is ticking back
         assert 3 <= int(ssh("midclt call system.general.checkin_waiting").strip()) < 10
@@ -39,7 +40,7 @@ def test_system_general_ui_rollback():
         time.sleep(15)
 
         # Ensure that the UI is now accessible
-        assert requests.get(url(), timeout=10).status_code == 200
+        assert http_get(url(), timeout=10).status_code == 200
     except Exception:
         # Bring things back to normal via SSH in case of any error
         ssh("midclt call system.general.update '{\"ui_port\": 80}'")
