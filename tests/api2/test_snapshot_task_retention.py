@@ -1,7 +1,6 @@
 from datetime import datetime
 from unittest.mock import ANY
-
-import pytz
+from zoneinfo import ZoneInfo
 
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
@@ -9,7 +8,7 @@ from middlewared.test.integration.utils import assert_creates_job, call
 
 
 def test_change_retention():
-    tz = pytz.timezone(call("system.info")["timezone"])
+    tz = ZoneInfo(call("system.info")["timezone"])
 
     with dataset("snapshottask-retention-test") as ds:
         call("zettarepl.load_removal_dates")
@@ -37,7 +36,7 @@ def test_change_retention():
                 "source": "periodic_snapshot_task",
                 "periodic_snapshot_task_id": task["id"],
             }
-            assert result["retention"]["datetime"].astimezone(tz) == tz.localize(datetime(2031, 4, 10, 6, 30))
+            assert result["retention"]["datetime"].astimezone(tz) == datetime(2031, 4, 10, 6, 30, tzinfo=tz)
 
             result = call("pool.snapshottask.update_will_change_retention_for", task["id"], {
                 "naming_schema": "auto-%Y-%m-%d-%H-%M-365d",
@@ -63,11 +62,11 @@ def test_change_retention():
                 "datetime": ANY,
                 "source": "property",
             }
-            assert result["retention"]["datetime"].astimezone(tz) == tz.localize(datetime(2031, 4, 10, 6, 30))
+            assert result["retention"]["datetime"].astimezone(tz) == datetime(2031, 4, 10, 6, 30, tzinfo=tz)
 
 
 def test_delete_retention():
-    tz = pytz.timezone(call("system.info")["timezone"])
+    tz = ZoneInfo(call("system.info")["timezone"])
 
     with dataset("snapshottask-retention-test-2") as ds:
         call("zettarepl.load_removal_dates")
@@ -109,4 +108,4 @@ def test_delete_retention():
                 "datetime": ANY,
                 "source": "property",
             }
-            assert result["retention"]["datetime"].astimezone(tz) == tz.localize(datetime(2031, 4, 10, 6, 30))
+            assert result["retention"]["datetime"].astimezone(tz) == datetime(2031, 4, 10, 6, 30, tzinfo=tz)
