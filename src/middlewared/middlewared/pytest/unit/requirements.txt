@@ -1,2 +1,4 @@
 pyfakefs
 pytest-asyncio
+jsonschema
+PyYAML
