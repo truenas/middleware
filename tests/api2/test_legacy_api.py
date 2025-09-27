@@ -94,6 +94,7 @@ def test_config_method(legacy_api_client, config_method):
             "directoryservices.config",
             "kerberos.config",
             "kmip.config",
+            "lxc.config",
             "mail.config",
             "network.configuration.config",
             "nvmet.global.config",
