@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Disable rootfs protection
-        run: /usr/local/libexec/disable-rootfs-protection
+        run: /usr/local/libexec/disable-rootfs-protection --force
 
       - name: Find pytest directory
         run: |
