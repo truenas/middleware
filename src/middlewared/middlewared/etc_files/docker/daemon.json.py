@@ -28,7 +28,7 @@ def render(service, middleware):
         'storage-driver': 'overlay2',
         'fixed-cidr-v6': config['cidr_v6'],
         'default-address-pools': config['address_pools'],
-        'registry-mirrors': config['secure_registry_mirrors'],
+        'registry-mirrors': config['secure_registry_mirrors'] + config['insecure_registry_mirrors'],
         'insecure-registries': [urlparse(registry_url).netloc for registry_url in config['insecure_registry_mirrors']],
         **(
             {
