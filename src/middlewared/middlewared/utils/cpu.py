@@ -3,6 +3,7 @@ import functools
 import os
 import re
 import typing
+from pathlib import Path
 
 
 AMD_PREFER_TDIE = (
@@ -15,6 +16,7 @@ AMD_PREFER_TDIE = (
     'AMD Ryzen Threadripper 19',
     'AMD Ryzen Threadripper 29',
 )
+HWMON_ROOT = Path('/sys/class/hwmon')
 RE_CORE = re.compile(r'^Core ([0-9]+)$')
 
 
@@ -92,11 +94,11 @@ def cpu_info_impl() -> CpuInfo:
 
 def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
     temperatures = collections.defaultdict(dict)
-    for chip_name in filter(lambda sen: sen.startswith('coretemp-isa'), cpu_metrics):
-        for temp in cpu_metrics[chip_name].values():
-            if not (m := RE_CORE.match(temp['name'])):
+    for chip_name in filter(lambda sen: sen.startswith('coretemp'), cpu_metrics):
+        for label, temp in cpu_metrics[chip_name].items():
+            if not (m := RE_CORE.match(label)):
                 continue
-            temperatures[chip_name][int(m.group(1))] = temp['value']
+            temperatures[chip_name][int(m.group(1))] = temp
 
     return dict(enumerate(sum(
         [
@@ -107,12 +109,9 @@ def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
     )))
 
 
-def amd_cpu_temperatures(amd_metrics: dict) -> dict:
+def amd_cpu_temperatures(amd_sensors: dict) -> dict:
     cpu_model = cpu_info()['cpu_model']
     core_count = cpu_info()['physical_core_count']
-    amd_sensors = {}
-    for amd_sensor in amd_metrics.values():
-        amd_sensors[amd_sensor['name']] = amd_sensor['value']
 
     ccds = []
     for k, v in amd_sensors.items():
@@ -137,3 +136,67 @@ def amd_cpu_temperatures(amd_metrics: dict) -> dict:
             return dict(enumerate([amd_sensors['temp1']] * core_count))
         elif 'temp1_input' in amd_sensors['temp1']:
             return dict(enumerate([amd_sensors['temp1']['temp1_input']] * core_count))
+
+
+def read_cpu_temps() -> dict:
+    temperatures = {}
+    for hwmon in sorted(HWMON_ROOT.glob('hwmon*'), key=lambda p: p.name):
+        cpu_temps = {}
+        try:
+            name = (hwmon / 'name').read_text().strip()
+        except (FileNotFoundError, OSError):
+            continue
+
+        if name not in ('coretemp', 'k10temp'):
+            continue
+
+        chip_key = f'{name}-{hwmon.name}'
+        for temp_input in hwmon.glob('temp*_input'):
+            stem = temp_input.stem.replace('_input', '')
+            label_path = hwmon / f'{stem}_label'
+            try:
+                label = label_path.read_text().strip() if label_path.exists() else stem
+                raw = int(temp_input.read_text().strip())
+            except (OSError, FileNotFoundError, ValueError):
+                continue
+
+            cpu_temps[label] = raw / 1000.0
+
+        if cpu_temps:
+            temperatures[chip_key] = cpu_temps
+
+    return temperatures
+
+
+def get_cpu_temperatures() -> dict:
+    chips = read_cpu_temps()
+    amd_sensors = {}
+    for key, vals in chips.items():
+        if isinstance(vals, dict) and key.startswith('k10temp'):
+            amd_sensors.update(vals)
+
+    if amd_sensors:
+        cpu_data = amd_cpu_temperatures(amd_sensors) or {}
+    else:
+        cpu_data = generic_cpu_temperatures(chips) or {}
+
+    data = {}
+    total_temp = 0
+    cinfo = cpu_info()
+    for core, temp in cpu_data.items():
+        data[f'cpu{core}'] = temp
+        total_temp += temp
+        try:
+            # we follow the paradigm that htop uses
+            # for filling in the hyper-threaded ids
+            # temperatures. (i.e. we just copy the
+            # temp of the parent physical core id)
+            data[cinfo['ht_map'][f'cpu{core}']] = temp
+            total_temp += temp
+        except KeyError:
+            continue
+
+    if total_temp:
+        data['cpu'] = total_temp / len(data)
+
+    return data or ({f'cpu{i}': 0 for i in range(cinfo['core_count'])} | {'cpu': 0})
