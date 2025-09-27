@@ -27,7 +27,7 @@ jobs:
 
       - name: Deploy
         run: |
-          apt install -y python3-pip python3-pytest
+          apt update ; apt install -y python3-pip python3-pytest
           if [ -f "${{ env.PYTEST_DIR }}/unit/requirements.txt" ]; then
             pip3 install -r "${{ env.PYTEST_DIR }}/unit/requirements.txt"
           else
