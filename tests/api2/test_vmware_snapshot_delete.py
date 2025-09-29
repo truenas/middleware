@@ -1,5 +1,5 @@
 import contextlib
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import ANY
 
 from middlewared.test.integration.utils import call, mock
@@ -25,7 +25,7 @@ def pending_snapshot_delete(d):
 
 
 def test_success():
-    with pending_snapshot_delete(datetime(2100, 1, 1)):
+    with pending_snapshot_delete(datetime(2100, 1, 1, tzinfo=timezone.utc)):
         with mock("vmware.connect", return_value=None):
             with mock("vmware.find_vms_by_uuid", return_value=[None]):
                 with mock("vmware.delete_snapshot", return_value=None):
@@ -36,7 +36,7 @@ def test_success():
 
 
 def test_failure_1():
-    with pending_snapshot_delete(datetime(2100, 1, 1)):
+    with pending_snapshot_delete(datetime(2100, 1, 1, tzinfo=timezone.utc)):
         with mock("vmware.connect", f"""
             async def mock(self, *args):
                 raise Exception('Unknown error')
@@ -47,7 +47,7 @@ def test_failure_1():
 
 
 def test_failure_2():
-    with pending_snapshot_delete(datetime(2100, 1, 1)):
+    with pending_snapshot_delete(datetime(2100, 1, 1, tzinfo=timezone.utc)):
         with mock("vmware.connect", return_value=None):
             with mock("vmware.find_vms_by_uuid", f"""
                 async def mock(self, *args):
@@ -59,7 +59,7 @@ def test_failure_2():
 
 
 def test_failure_and_expiry():
-    with pending_snapshot_delete(datetime(2010, 1, 1)):
+    with pending_snapshot_delete(datetime(2010, 1, 1, tzinfo=timezone.utc)):
         with mock("vmware.connect", f"""
             async def mock(self, *args):
                 raise Exception('Unknown error')
