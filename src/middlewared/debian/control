@@ -5,6 +5,7 @@ Maintainer: William Grzybowski <william@grzy.org>
 Build-Depends: alembic,
                debhelper-compat (= 12),
                dh-python,
+               pybuild-plugin-pyproject,
                python3-acme,
                python3-aiohttp,
                python3-aiorwlock,

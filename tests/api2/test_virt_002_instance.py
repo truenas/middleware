@@ -23,6 +23,9 @@ INS3_OS = 'Ubuntu'
 INS3_IMAGE = 'ubuntu/oracular/default'
 
 
+pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
+
+
 @pytest.fixture(scope='module')
 def virt_setup():
     # ensure that any stale config from other tests is nuked

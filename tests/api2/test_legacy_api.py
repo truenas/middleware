@@ -85,8 +85,8 @@ def test_config_method(legacy_api_client, config_method):
         # Not a ConfigService config method. Requires an argument.
         return
 
-    # Methods that do not exist in 25.04
     if (
+        # Methods that do not exist in 25.04
         version in {"25.04.0", "25.04.1", "25.04.2"}
         and config_method in {
             "audit.config",
@@ -94,6 +94,7 @@ def test_config_method(legacy_api_client, config_method):
             "directoryservices.config",
             "kerberos.config",
             "kmip.config",
+            "lxc.config",
             "mail.config",
             "network.configuration.config",
             "nvmet.global.config",
@@ -106,6 +107,15 @@ def test_config_method(legacy_api_client, config_method):
             "truecommand.config",
             "update.config",
             "ups.config",
+        }
+    ):
+        return
+
+    if (
+        # Methods that do not exist in 25.10
+        version in {"25.10.0"}
+        and config_method in {
+            "lxc.config",
         }
     ):
         return

@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "middlewared"
+description = "TrueNAS Middleware Daemon"
+version = "0.0.0"
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.11"
+
+[project.scripts]
+configure_fips = "middlewared.scripts.configure_fips:main"
+setup_cgroups = "middlewared.scripts.setup_cgroups:main"
+middlewared = "middlewared.main:main"
+midgdb = "middlewared.scripts.gdb:main"
+sedhelper = "middlewared.scripts.sedhelper:main"
+wait_to_hang_and_dump_core = "middlewared.scripts.wait_to_hang_and_dump_core:main"
+wait_on_disks = "middlewared.scripts.wait_on_disks:main"
+start_vendor_service = "middlewared.scripts.vendor_service:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["middlewared*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+middlewared = [
+    "alembic/**/*",
+    "alembic.ini",
+    "assets/**/*",
+    "etc_files/**/*",
+    "migration/**/*",
+    "pytest/**/*",
+    "test/integration/assets/**/*",
+    "test/integration/utils/**/*",
+]
+

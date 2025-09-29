@@ -1,3 +1,9 @@
+from truenas_pylibvirt import (
+    NICDevice, NICDeviceType,
+    DiskStorageDevice, StorageDeviceType, StorageDeviceIoType,
+    VmBootloader, VmCpuMode, VmDomain, VmDomainConfiguration,
+)
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMStartArgs, VMStartResult, VMStopArgs, VMStopResult, VMRestartArgs, VMRestartResult, VMPoweroffArgs,
@@ -9,7 +15,6 @@ from .vm_supervisor import VMSupervisorMixin
 
 
 class VMService(Service, VMSupervisorMixin):
-
     @private
     async def lifecycle_action_check(self):
         if not await self.middleware.call('vm.license_active'):
@@ -17,7 +22,7 @@ class VMService(Service, VMSupervisorMixin):
 
     @item_method
     @api_method(VMStartArgs, VMStartResult, roles=['VM_WRITE'])
-    async def start(self, id_, options):
+    def start(self, id_, options):
         """
         Start a VM.
 
@@ -29,10 +34,16 @@ class VMService(Service, VMSupervisorMixin):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        await self.lifecycle_action_check()
-        await self.middleware.run_in_thread(self._check_setup_connection)
+        self.middleware.call_sync('vm.lifecycle_action_check')
 
-        vm = await self.middleware.call('vm.get_instance', id_)
+        vm = self.middleware.call_sync('vm.get_instance', id_)
+
+        self.middleware.libvirt_domains_manager.vms.start(self.pylibvirt_vm(vm))
+
+        return
+
+        # FIXME: Move this code to pylibvirt
+        """
         vm_state = vm['status']['state']
         if vm_state == 'RUNNING':
             raise CallError(f'{vm["name"]!r} is already running')
@@ -61,6 +72,7 @@ class VMService(Service, VMSupervisorMixin):
             raise
 
         await (await self.middleware.call('service.control', 'RELOAD', 'http')).wait(raise_error=True)
+        """
 
     @item_method
     @api_method(VMStopArgs, VMStopResult, roles=['VM_WRITE'])
@@ -159,6 +171,47 @@ class VMService(Service, VMSupervisorMixin):
                 self.resume(vm_id)
             except Exception:
                 self.logger.error('Failed to resume %r vm', vms[vm_id]['name'], exc_info=True)
+
+    @private
+    def pylibvirt_vm(self, vm):
+        vm = vm.copy()
+        vm.pop("id", None)
+        vm.pop("display_available", None)
+        vm.pop("status", None)
+
+        vm["bootloader"] = VmBootloader(vm["bootloader"])
+        vm["cpu_mode"] = VmCpuMode(vm["cpu_mode"])
+
+        devices = []
+        for device in vm["devices"]:
+            match device["attributes"]["dtype"]:
+                case "DISK":
+                    devices.append(DiskStorageDevice(
+                        type_=StorageDeviceType(device["attributes"]["type"]),
+                        logical_sectorsize=device["attributes"]["logical_sectorsize"],
+                        physical_sectorsize=device["attributes"]["physical_sectorsize"],
+                        iotype=StorageDeviceIoType(device["attributes"]["iotype"]),
+                        serial=device["attributes"]["serial"],
+                        path=device["attributes"]["path"],
+                    ))
+
+                case "NIC":
+                    if device["attributes"]["nic_attach"].startswith("br"):
+                        type_ = NICDeviceType.BRIDGE
+                    else:
+                        type_ = NICDeviceType.DIRECT
+
+                    devices.append(NICDevice(
+                        type_=type_,
+                        source=device["attributes"]["nic_attach"],
+                        model=None,
+                        mac=None,
+                        trust_guest_rx_filters=device["attributes"]["trust_guest_rx_filters"],
+                    ))
+
+        vm["devices"] = devices
+
+        return VmDomain(VmDomainConfiguration(**vm))
 
 
 async def _event_vms(middleware, event_type, args):

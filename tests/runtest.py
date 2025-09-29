@@ -21,6 +21,7 @@ TEST_DIR_TO_RESULT = {
     'stig': 'results/stig_tests_result.xml',
     'sharing_protocols': 'results/sharing_protocols_tests_result.xml',
     'cloud': 'results/cloud_tests_result.xml',
+    'vm': 'results/vm_result.xml',
 }
 
 workdir = os.getcwd()
@@ -311,7 +312,7 @@ pytest_command = [
     "-o", "junit_family=xunit2",
     '--timeout=300',
     "--junitxml",
-    TEST_DIR_TO_RESULT.get(test_dir),
+    TEST_DIR_TO_RESULT[test_dir],
 ]
 if testexpr:
     pytest_command.extend(['-k', testexpr])

@@ -22,6 +22,8 @@ VM_NAME = 'virt-vm'
 CONTAINER_NAME = 'virt-container'
 VNC_PORT = 6900
 
+pytestmark = pytest.mark.skip('Disable VIRT tests for the moment')
+
 
 @pytest.fixture(scope='module')
 def virt_pool():

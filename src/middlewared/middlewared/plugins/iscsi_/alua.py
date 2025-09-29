@@ -681,6 +681,16 @@ class iSCSITargetAluaService(Service):
             finally:
                 await (await self.middleware.call('service.control', 'RELOAD', 'iscsitarget')).wait(raise_error=True)
 
+    async def added_target_extent(self, target_name):
+        """This is called on the STANDBY node after an extent has been added to a target."""
+        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
+            global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+            iqn = f'{global_basename}:HA:{target_name}'
+            try:
+                await self.middleware.call("iscsi.target.rescan_iqn", iqn)
+            except Exception:
+                self.logger.debug('Failed to rescan %r', iqn)
+
     async def has_active_jobs(self):
         """Return whether any ALUA jobs are running or queued."""
         running_jobs = await self.middleware.call(

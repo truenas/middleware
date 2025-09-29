@@ -144,17 +144,18 @@ http {
     # NOTE: This is a DoDin requirement, so don't remove
     proxy_hide_header X-Powered-By;
     proxy_hide_header Server;
-% endif
 
+% endif
     gzip  on;
+
 % if fips_enabled:
     # Disable gzip for responses with cookies (BREACH attack mitigation)
     # NOTE: will be controlled per-response based on Set-Cookie header
     gzip_vary on;
     gzip_proxied any;
     gzip_disable "msie6";
-% endif
 
+% endif
     access_log /var/log/nginx/access.log combined buffer=32k flush=5s;
     error_log /var/log/nginx/error.log;
 
@@ -164,7 +165,7 @@ http {
     }
 
     map $http_origin $allow_origin {
-        ~^https://truenas.connect.(dev.|staging.)?ixsystems.net$ $http_origin;
+        ~^${tn_connect_config['tnc_base_url'].rstrip("/")}$ $http_origin;
         default "";
     }
 
@@ -174,8 +175,8 @@ http {
         ~.+ "1";
         default "0";
     }
-% endif
 
+% endif
 % for server in servers:
     server {
         server_name  ${server['name']};
@@ -239,6 +240,7 @@ ${spaces}gzip off;
             allow all;
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
+
 % for device in display_devices:
         location ${display_device_path}/${device['id']} {
     % if ":" in device['attributes']['bind']:
@@ -282,18 +284,18 @@ ${spaces}gzip off;
         location /api/docs {
             alias /usr/share/middlewared/docs;
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            expires epoch;
+            add_header Expires 0;
         }
 
         location /api/docs/current {
             alias /usr/share/middlewared/docs/${current_api_version};
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            expires epoch;
+            add_header Expires 0;
         }
 
         location @index {
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-            expires epoch;
+            add_header Expires 0;
             ${security_headers(indent=12)}
             root /usr/share/truenas/webui;
             try_files /index.html =404;
@@ -305,7 +307,7 @@ ${spaces}gzip off;
             add_header Clear-Site-Data '"cache"' always;
             add_header Etag "${system_version}";
             ${security_headers(indent=12)}
-            expires epoch;
+            add_header Expires 0;
             root /usr/share/truenas/webui;
             try_files /index.html =404;
         }
@@ -317,11 +319,11 @@ ${spaces}gzip off;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Https $https;
 
-            add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
             add_header Clear-Site-Data '"cache"' always;
             add_header Etag "${system_version}";
             ${security_headers(indent=12)}
-            expires epoch;
+            add_header Expires 0;
 
             alias /usr/share/truenas/webui;
             try_files $uri $uri/ @index;
@@ -334,11 +336,11 @@ ${spaces}gzip off;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Https $https;
 
-            add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0" always;
+            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
             add_header Clear-Site-Data '"cache"' always;
             add_header Etag "${system_version}";
             ${security_headers(indent=12)}
-            expires epoch;
+            add_header Expires 0;
 
             alias /usr/share/truenas/webui;
             try_files $uri $uri/ @index;
@@ -453,6 +455,7 @@ ${spaces}gzip off;
             ${security_headers_enhanced(indent=12)}
 % endif
         }
+
     }
 % endfor
 
@@ -464,6 +467,6 @@ ${spaces}gzip off;
         server_name localhost;
         return 307 https://$host:${general_settings['ui_httpsport']}$request_uri;
     }
-% endif
 
+% endif
 }

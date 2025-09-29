@@ -39,4 +39,4 @@ def upgrade():
 
     if server:
         syslogservers = json.dumps([{'host': server, 'transport': transport, 'tls_certificate': cert_id}])
-        conn.execute(text(f'UPDATE system_advanced SET adv_syslogservers = {syslogservers!r}'))
+        conn.execute(text(f'UPDATE system_advanced SET adv_syslogservers = :payload'), {'payload': syslogservers})

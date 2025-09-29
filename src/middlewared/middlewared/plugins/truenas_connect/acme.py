@@ -124,6 +124,11 @@ class TNCACMEService(Service):
 
     async def revoke_cert(self):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
+        if tnc_config['certificate'] is None:
+            # If cert generation had failed, there won't be any cert to revoke
+            logger.debug('No TNC certificate configured, skipping revocation')
+            return
+
         certificate = await self.middleware.call('certificate.get_instance', tnc_config['certificate'])
         acme_config = await self.middleware.call('tn_connect.acme.config')
         if acme_config['error']:

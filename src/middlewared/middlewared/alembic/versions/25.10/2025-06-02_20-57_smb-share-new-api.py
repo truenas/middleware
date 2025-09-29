@@ -65,7 +65,7 @@ def migrate_purposes():
             'cifs_auto_snapshot = :autosnap '
             'WHERE id = :shareid'
         )
-        conn.execute(stmt, purpose=purpose, autods=auto_ds, autosnap=auto_snap, shareid=share.id)
+        conn.execute(stmt, {'purpose': purpose, 'autods': auto_ds, 'autosnap': auto_snap, 'shareid': share.id})
 
 
 def upgrade():

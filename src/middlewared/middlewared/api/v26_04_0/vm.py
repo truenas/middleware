@@ -35,8 +35,12 @@ class VMStatus(BaseModel):
     """Current state of the virtual machine."""
     pid: int | None
     """Process ID of the running VM. `null` if not running."""
-    domain_state: NonEmptyString
+    domain_state: NonEmptyString | None
     """Hypervisor-specific domain state."""
+
+    @classmethod
+    def to_previous(cls, value):
+        return {**value, "domain_state": value["domain_state"] or "ERROR"}
 
 
 class VMEntry(BaseModel):
@@ -165,8 +169,11 @@ class VMDeleteArgs(BaseModel):
 
 
 class VMDeleteResult(BaseModel):
-    result: bool
-    """Whether the virtual machine was successfully deleted."""
+    result: None
+
+    @classmethod
+    def to_previous(cls, value):
+        return {"result": True}
 
 
 class VMBootloaderOvmfChoicesArgs(BaseModel):
