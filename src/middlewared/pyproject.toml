@@ -39,6 +39,7 @@ middlewared = [
     "assets/**/*",
     "etc_files/**/*",
     "migration/**/*",
+    "pytest/**/*",
     "test/integration/assets/**/*",
     "test/integration/utils/**/*",
 ]
