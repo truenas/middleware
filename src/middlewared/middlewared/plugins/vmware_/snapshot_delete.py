@@ -29,6 +29,7 @@ class VMWareService(Service):
                 "vmware": vmware,
                 "vm_uuid": vm_uuid,
                 "snapshot_name": snapshot_name,
+                "datetime": utc_now(),
             },
         )
 

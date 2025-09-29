@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
-from middlewared.sqlalchemy import EncryptedText, JSON, Time
+from middlewared.sqlalchemy import DateTime, EncryptedText, JSON, Time
 
 import middlewared.plugins.datastore  # noqa
 import middlewared.plugins.datastore.connection  # noqa
@@ -803,6 +803,64 @@ async def test__time():
 
         assert (await ds.query("test.time", [], {"get": True}))["time"] == datetime.time(21, 30)
         assert (await ds.sql("SELECT * FROM test_time"))[0]["time"] == "21:30:00"
+
+
+class DateTimeModel(Model):
+    __tablename__ = 'test_datetime'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    dt_field = sa.Column(DateTime())
+
+
+@pytest.mark.asyncio
+async def test__datetime_naive():
+    """Test that naive datetime values are stored and retrieved correctly"""
+    async with datastore_test() as ds:
+        naive_dt = datetime.datetime(2024, 1, 15, 14, 30, 45)
+        await ds.insert("test.datetime", {"dt_field": naive_dt})
+        result = await ds.query("test.datetime", [], {"get": True})
+        assert result["dt_field"] == naive_dt
+        assert result["dt_field"].tzinfo is None
+
+
+@pytest.mark.asyncio
+async def test__datetime_aware_utc():
+    """Test that timezone-aware UTC datetime values are converted to naive"""
+    async with datastore_test() as ds:
+        aware_dt = datetime.datetime(2024, 1, 15, 14, 30, 45, tzinfo=datetime.timezone.utc)
+        await ds.insert("test.datetime", {"dt_field": aware_dt})
+        result = await ds.query("test.datetime", [], {"get": True})
+        expected = aware_dt.replace(tzinfo=None)
+        assert result["dt_field"] == expected
+        assert result["dt_field"].tzinfo is None
+
+
+@pytest.mark.asyncio
+async def test__datetime_aware_non_utc():
+    """Test that timezone-aware non-UTC datetime values are converted to naive UTC"""
+    async with datastore_test() as ds:
+        est = datetime.timezone(datetime.timedelta(hours=-5))
+        aware_dt = datetime.datetime(2024, 1, 15, 14, 30, 45, tzinfo=est)
+        await ds.insert("test.datetime", {"dt_field": aware_dt})
+        result = await ds.query("test.datetime", [], {"get": True})
+        expected = datetime.datetime(2024, 1, 15, 19, 30, 45)
+        assert result["dt_field"] == expected
+        assert result["dt_field"].tzinfo is None
+
+
+@pytest.mark.asyncio
+async def test__datetime_retrieval_always_naive():
+    """Test that even if SQLite returns timezone-aware objects, we get naive datetimes"""
+    async with datastore_test() as ds:
+        # Directly insert a datetime string that might be interpreted as timezone-aware
+        # by newer versions of Python/SQLAlchemy
+        ds.execute("INSERT INTO test_datetime VALUES (1, '2024-01-15 14:30:45+00:00')")
+        result = await ds.query("test.datetime", [], {"get": True})
+        assert result["dt_field"].tzinfo is None
+        # Also test with a non-UTC timezone offset
+        ds.execute("INSERT INTO test_datetime VALUES (2, '2024-01-15 14:30:45-05:00')")
+        result = await ds.query("test.datetime", [["id", "=", 2]], {"get": True})
+        assert result["dt_field"].tzinfo is None
 
 
 class NullModel(Model):

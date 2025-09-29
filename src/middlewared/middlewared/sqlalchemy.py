@@ -3,7 +3,7 @@ import datetime
 import isodate
 from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
-    Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
+    Boolean, CHAR, DateTime as _DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
 )  # noqa
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship  # noqa
@@ -115,6 +115,29 @@ class MultiSelectField(UserDefinedType):
 
     def result_processor(self, dialect, coltype):
         return self._result_processor
+
+
+class DateTime(TypeDecorator):
+    """A DateTime type that always returns naive datetime objects.
+
+    This maintains backward compatibility after SQLAlchemy 2.0 and Python 3.12+
+    changes that may cause SQLite to return timezone-aware datetime objects.
+    """
+    impl = _DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None and hasattr(value, 'tzinfo') and value.tzinfo is not None:
+            # Convert timezone-aware to naive UTC before storing
+            value = value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None and hasattr(value, 'tzinfo') and value.tzinfo is not None:
+            # Convert timezone-aware to naive UTC when retrieving
+            # This handles the case where SQLite/SQLAlchemy returns timezone-aware objects
+            value = value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+        return value
 
 
 class Time(UserDefinedType):
