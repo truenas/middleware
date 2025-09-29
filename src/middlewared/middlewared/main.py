@@ -77,7 +77,7 @@ from systemd.daemon import notify as systemd_notify
 from truenas_api_client import json
 
 if typing.TYPE_CHECKING:
-    from types import MethodType
+    from types import MethodType, ModuleType
     from aiohttp.web_request import Request
     from .api.base.server.app import App
     from .api.base.server.ws_handler.rpc import RpcWebSocketApp
@@ -319,11 +319,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def __plugins_load(self):
         setup_funcs = []
 
-        def on_module_begin(mod):
+        def on_module_begin(mod: ModuleType):
             self._console_write(f'loaded plugin {mod.__name__}')
             self.__notify_startup_progress()
 
-        def on_module_end(mod):
+        def on_module_end(mod: ModuleType):
             if not hasattr(mod, 'setup'):
                 return
 
@@ -341,51 +341,39 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             on_modules_loaded=on_modules_loaded,
         )
 
+        implicit_methods = ('config', 'get_instance', 'query')
+        role_manager = self.role_manager
         for namespace, service in self.get_services().items():
-            self.role_manager.register_method(f'{service._config.namespace}.config', [])
-            self.role_manager.register_method(f'{service._config.namespace}.get_instance', [])
-            self.role_manager.register_method(f'{service._config.namespace}.query', [])
+            for method in implicit_methods:
+                role_manager.register_method(f'{namespace}.{method}', [])
 
-            if service._config.role_prefix:
-                self.role_manager.add_roles_to_method(
-                    f'{service._config.namespace}.config', [f'{service._config.role_prefix}_READ']
-                )
-                self.role_manager.add_roles_to_method(
-                    f'{service._config.namespace}.get_instance', [f'{service._config.role_prefix}_READ']
-                )
-                self.role_manager.add_roles_to_method(
-                    f'{service._config.namespace}.query', [f'{service._config.role_prefix}_READ']
-                )
-                self.role_manager.register_method(
-                    f'{service._config.namespace}.create', [f'{service._config.role_prefix}_WRITE']
-                )
-                self.role_manager.register_method(
-                    f'{service._config.namespace}.update', [f'{service._config.role_prefix}_WRITE']
-                )
-                if service._config.role_separate_delete:
-                    self.role_manager.register_method(
-                        f'{service._config.namespace}.delete', [f'{service._config.role_prefix}_DELETE']
-                    )
-                else:
-                    self.role_manager.register_method(
-                        f'{service._config.namespace}.delete', [f'{service._config.role_prefix}_WRITE']
-                    )
+            config = service._config
+            role_prefix = config.role_prefix
+            if role_prefix:
+                for method in implicit_methods:
+                    role_manager.add_roles_to_method(f'{namespace}.{method}', [f'{role_prefix}_READ'])
+
+                for method, role in (
+                    ('create', 'WRITE'),
+                    ('update', 'WRITE'),
+                    ('delete', 'DELETE' if config.role_separate_delete else 'WRITE'),
+                ):
+                    role_manager.register_method(f'{namespace}.{method}', [f'{role_prefix}_{role}'])
 
             for method_name in dir(service):
                 roles = getattr(getattr(service, method_name), 'roles', None) or []
 
-                if method_name in ['do_create', 'do_update', 'do_delete']:
+                if method_name in {'do_create', 'do_update', 'do_delete'}:
                     method_name = method_name.removeprefix('do_')
 
                 if method_name.endswith('_choices'):
                     roles.append('READONLY_ADMIN')
 
-                    if service._config.role_prefix:
-                        roles.append(f'{service._config.role_prefix}_READ')
+                    if role_prefix:
+                        roles.append(f'{role_prefix}_READ')
 
                 if roles:
-                    self.role_manager.register_method(f'{service._config.namespace}.{method_name}', roles,
-                                                      exist_ok=True)
+                    role_manager.register_method(f'{namespace}.{method_name}', roles, exist_ok=True)
 
         return setup_funcs
 
