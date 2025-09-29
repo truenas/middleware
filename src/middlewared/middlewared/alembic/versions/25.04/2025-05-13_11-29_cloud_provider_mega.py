@@ -34,9 +34,9 @@ def upgrade():
         args = {"provider": "MEGA"}
         now = utc_now()
         conn.execute(
-            'INSERT INTO system_alert (node, source, "key", datetime, text, args, dismissed, uuid, klass, '
+            text('INSERT INTO system_alert (node, source, "key", datetime, text, args, dismissed, uuid, klass, '
             "last_occurrence) VALUES ('A', '', :key, :datetime, :text, :args, 0, :uuid, 'CloudProviderRemoved', "
-            ":last_occurrence)",
+            ":last_occurrence)"),
             {
                 "key": json.dumps(args),
                 "datetime": now,

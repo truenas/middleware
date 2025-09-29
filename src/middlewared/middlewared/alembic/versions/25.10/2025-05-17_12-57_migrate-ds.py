@@ -11,7 +11,6 @@ from middlewared.utils.pwenc import encrypt, decrypt
 import sqlalchemy as sa
 from sqlalchemy import text
 
-
 # revision identifiers, used by Alembic.
 revision = 'f8b0ab7c2275'
 down_revision = 'dae46dda9606'
@@ -115,19 +114,46 @@ def ds_migrate_ldap(conn, ldap):
     )
 
     conn.execute(
-        text(stmt), enable=ldap['ldap_enable'], stype=service_type, enable_cache=cache_enabled, cred_type=cred_type,
-        cred_krb5=cred_krb5, mtls_cert_id=cert_id, cred_plain=cred_plain, timeout=ldap['ldap_timeout'],
-        realm_id=kerberos_realm_id, server_urls=ldap_server_urls, starttls=ldap_starttls, basedn=ldap['ldap_basedn'],
-        validate_certs=ldap['ldap_validate_certificates'], schema=ldap['ldap_schema'], aux=ldap['ldap_auxiliary_parameters'],
-        baseuser=ldap['ldap_base_user'], basegroup=ldap['ldap_base_group'], basenetgroup=ldap['ldap_base_netgroup'],
-        userobj=ldap['ldap_user_object_class'], username=ldap['ldap_user_name'], useruid=ldap['ldap_user_uid'],
-        usergid=ldap['ldap_user_gid'], usergecos=ldap['ldap_user_gecos'], userpath=ldap['ldap_user_home_directory'],
-        usershell=ldap['ldap_user_shell'], shadowchg=ldap['ldap_shadow_last_change'],
-        shadowmin=ldap['ldap_shadow_min'], shadowmax=ldap['ldap_shadow_max'],
-        shadowwarn=ldap['ldap_shadow_warning'], shadowinact=ldap['ldap_shadow_inactive'],
-        shadowexp=ldap['ldap_shadow_expire'], groupobj=ldap['ldap_group_object_class'],
-        groupgid=ldap['ldap_group_gid'], groupmem=ldap['ldap_group_member'], ngobj=ldap['ldap_netgroup_object_class'],
-        ngmem=ldap['ldap_netgroup_member'], ngtrip=ldap['ldap_netgroup_triple']
+        text(stmt), {
+            'enable': ldap['ldap_enable'],
+            'stype': service_type,
+            'enable_cache': cache_enabled,
+            'cred_type': cred_type,
+            'cred_krb5': cred_krb5,
+            'mtls_cert_id': cert_id,
+            'cred_plain': cred_plain,
+            'timeout': ldap['ldap_timeout'],
+            'realm_id': kerberos_realm_id,
+            'server_urls': ldap_server_urls,
+            'starttls': ldap_starttls,
+            'basedn': ldap['ldap_basedn'],
+            'validate_certs': ldap['ldap_validate_certificates'],
+            'schema': ldap['ldap_schema'],
+            'aux': ldap['ldap_auxiliary_parameters'],
+            'baseuser': ldap['ldap_base_user'],
+            'basegroup': ldap['ldap_base_group'],
+            'basenetgroup': ldap['ldap_base_netgroup'],
+            'userobj': ldap['ldap_user_object_class'],
+            'username': ldap['ldap_user_name'],
+            'useruid': ldap['ldap_user_uid'],
+            'usergid': ldap['ldap_user_gid'],
+            'usergecos': ldap['ldap_user_gecos'],
+            'userpath': ldap['ldap_user_home_directory'],
+            'usershell': ldap['ldap_user_shell'],
+            'shadowchg': ldap['ldap_shadow_last_change'],
+            'shadowmin': ldap['ldap_shadow_min'],
+            'shadowmax': ldap['ldap_shadow_max'],
+            'shadowwarn': ldap['ldap_shadow_warning'],
+            'shadowinact': ldap['ldap_shadow_inactive'],
+            'shadowexp': ldap['ldap_shadow_expire'],
+            'groupobj': ldap['ldap_group_object_class'],
+            'groupgid': ldap['ldap_group_gid'],
+            'groupmem': ldap['ldap_group_member'],
+            'ngobj': ldap['ldap_netgroup_object_class'],
+            'ngmem': ldap['ldap_netgroup_member'],
+            'ngtrip': ldap['ldap_netgroup_triple']
+        }
+
     )
 
 
@@ -198,9 +224,20 @@ def ds_migrate_ipa(conn, ldap):
     )
 
     conn.execute(
-        text(stmt), enable=ldap['ldap_enable'], stype='IPA', enable_cache=cache_enabled, cred_type='KERBEROS_PRINCIPAL',
-        cred_krb5=cred_krb5, timeout=ldap['ldap_timeout'], realm_id=kerberos_realm_id, basedn=ldap['ldap_basedn'],
-        validate_certs=ldap['ldap_validate_certificates'], dom=realm_name, server=target_server, hostname=hostname
+        text(stmt), {
+            'enable': ldap['ldap_enable'],
+            'stype': 'IPA',
+            'enable_cache': cache_enabled,
+            'cred_type': 'KERBEROS_PRINCIPAL',
+            'cred_krb5': cred_krb5,
+            'timeout': ldap['ldap_timeout'],
+            'realm_id': kerberos_realm_id,
+            'basedn': ldap['ldap_basedn'],
+            'validate_certs': ldap['ldap_validate_certificates'],
+            'dom': realm_name,
+            'server': target_server,
+            'hostname': hostname
+        }
     )
 
 
@@ -338,11 +375,22 @@ def ds_migrate_ad(conn, ad):
     )
 
     conn.execute(
-        text(stmt), enable_cache=cache_enabled, cred_type='KERBEROS_PRINCIPAL', cred_krb5=cred_krb5,
-        timeout=ad['ad_timeout'], dom=ad['ad_domainname'], hostname=smb['cifs_srv_netbiosname'],
-        idmap=idmap_config, site=ad['ad_site'] or None, caou=ad['ad_createcomputer'] or None,
-        defdom=ad['ad_use_default_domain'], enable_trusted_doms=has_trusted_doms, trusted_doms=trusted_doms,
-        dnsup=ad['ad_allow_dns_updates'], realm_id=ad['ad_kerberos_realm_id']
+        text(stmt), {
+            'enable_cache': cache_enabled,
+            'cred_type': 'KERBEROS_PRINCIPAL',
+            'cred_krb5': cred_krb5,
+            'timeout': ad['ad_timeout'],
+            'dom': ad['ad_domainname'],
+            'hostname': smb['cifs_srv_netbiosname'],
+            'idmap': idmap_config,
+            'site': ad['ad_site'] or None,
+            'caou': ad['ad_createcomputer'] or None,
+            'defdom': ad['ad_use_default_domain'],
+            'enable_trusted_doms': has_trusted_doms,
+            'trusted_doms': trusted_doms,
+            'dnsup': ad['ad_allow_dns_updates'],
+            'realm_id': ad['ad_kerberos_realm_id']
+        }
     )
 
 

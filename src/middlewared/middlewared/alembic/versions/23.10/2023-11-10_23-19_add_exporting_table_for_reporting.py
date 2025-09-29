@@ -61,10 +61,12 @@ def upgrade():
         )
         conn.execute(
             query,
-            enabled=True,
-            type='GRAPHITE',
-            name='netdata',
-            attributes=json.dumps(attributes)
+            {
+                'enabled': True,
+                'type': 'GRAPHITE',
+                'name': 'netdata',
+                'attributes': json.dumps(attributes)
+            }
         )
 
     op.drop_table('system_reporting')

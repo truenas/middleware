@@ -30,8 +30,8 @@ def upgrade():
             if em_oauth:
                 em_oauth["provider"] = "gmail"
                 conn.execute(
-                    "UPDATE system_email SET em_oauth = ? WHERE id = ?",
-                    (encrypt(json.dumps(em_oauth)), id)
+                    text("UPDATE system_email SET em_oauth = :em_oauth WHERE id = :id"),
+                    {'em_oauth': encrypt(json.dumps(em_oauth)), 'id': id}
                 )
 
     # ### end Alembic commands ###

@@ -42,8 +42,12 @@ def upgrade():
             serial = generate_serial(serials)
             if serial:
                 conn.execute(
-                    "UPDATE services_iscsitargetextent SET iscsi_target_extent_serial = ? WHERE id = ?",
-                    serial, ident
+                    text(
+                        "UPDATE services_iscsitargetextent SET iscsi_target_extent_serial = :serial WHERE id = :ident"
+                    ),
+                    {
+                        "serial": serial, "ident": ident
+                    }
                 )
                 serials.append(serial)
 

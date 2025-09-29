@@ -25,7 +25,7 @@ def upgrade():
     to_remove_ids = []
     vms_mapping = defaultdict(list)
     for row in conn.execute(text("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'")).mappings().all():
-        vms_mapping[row['vm_id']].append(row)
+        vms_mapping[row['vm_id']].append(dict(row))
 
     for devices in vms_mapping.values():
         if len(devices) == 1:
