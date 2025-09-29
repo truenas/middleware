@@ -219,14 +219,16 @@ Use the ``limit`` option to limit the number of results returned.
 Offset
 ^^^^^^
 
-Use the ``offset`` option to remove the first items from a returned list.
+Use the ``offset`` option to skip the first N items from the returned list.
 
 .. code:: javascript
 
     {
-      "offset": 1  // Omits the first item from the query result
+      "offset": 1  // Skip the first query result item and return the remainder items
     }
 
+To get the 'last' or most recent entry on a query, first get the ``count`` then use the same query filter and an ``offset``
+value of ``count - 1``.
 
 Select
 ^^^^^^
