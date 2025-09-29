@@ -12,6 +12,11 @@ fi
 PACKAGES=(
     # need to make things work
     make
+    # Debian package building tools
+    dpkg-dev
+    dh-python
+    pybuild-plugin-pyproject
+    debhelper-compat
     # open-iscsi is used to test authorized networks for iscsi
     open-iscsi
     # Integration and unit test utils, python package management
