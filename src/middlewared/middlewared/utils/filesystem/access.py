@@ -105,7 +105,7 @@ def check_acl_execute_impl(path: str, acl: list, uid: int, gid: int, path_must_e
             id_info['xid'] = uid
 
         elif entry['tag'] in ('group@', 'GROUP_OBJ'):
-            id_info['id_type'] = 'USER'
+            id_info['id_type'] = 'GROUP'
             id_info['xid'] = gid
 
         if (user_details := get_user_details(**id_info)) is None:
