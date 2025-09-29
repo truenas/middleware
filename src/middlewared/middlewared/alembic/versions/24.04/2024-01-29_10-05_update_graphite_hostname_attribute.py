@@ -26,7 +26,7 @@ def upgrade():
         attributes['namespace'] = attributes.pop('hostname')
         conn.execute(
             text('UPDATE reporting_exporters set attributes=:attributes'),
-            attributes=json.dumps(attributes)
+            {'attributes': json.dumps(attributes)}
         )
 
     # ### end Alembic commands ###

@@ -375,11 +375,22 @@ def ds_migrate_ad(conn, ad):
     )
 
     conn.execute(
-        text(stmt), enable_cache=cache_enabled, cred_type='KERBEROS_PRINCIPAL', cred_krb5=cred_krb5,
-        timeout=ad['ad_timeout'], dom=ad['ad_domainname'], hostname=smb['cifs_srv_netbiosname'],
-        idmap=idmap_config, site=ad['ad_site'] or None, caou=ad['ad_createcomputer'] or None,
-        defdom=ad['ad_use_default_domain'], enable_trusted_doms=has_trusted_doms, trusted_doms=trusted_doms,
-        dnsup=ad['ad_allow_dns_updates'], realm_id=ad['ad_kerberos_realm_id']
+        text(stmt), {
+            'enable_cache': cache_enabled,
+            'cred_type': 'KERBEROS_PRINCIPAL',
+            'cred_krb5': cred_krb5,
+            'timeout': ad['ad_timeout'],
+            'dom': ad['ad_domainname'],
+            'hostname': smb['cifs_srv_netbiosname'],
+            'idmap': idmap_config,
+            'site': ad['ad_site'] or None,
+            'caou': ad['ad_createcomputer'] or None,
+            'defdom': ad['ad_use_default_domain'],
+            'enable_trusted_doms': has_trusted_doms,
+            'trusted_doms': trusted_doms,
+            'dnsup': ad['ad_allow_dns_updates'],
+            'realm_id': ad['ad_kerberos_realm_id']
+        }
     )
 
 
