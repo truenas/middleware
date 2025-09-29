@@ -82,7 +82,7 @@ class APIDumper:
         if doc := inspect.getdoc(method.methodobj):
             doc = re.sub(r"(\S)\n[ ]*(\S)", "\\1 \\2", doc).strip()
 
-        if hasattr(method, "_job"):
+        if hasattr(method.methodobj, "_job"):
             # FIXME: If we decide to keep the jobs, make this nicer (a badge?)
             if doc:
                 doc = doc + "\r\n\r\n"
