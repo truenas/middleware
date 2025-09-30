@@ -112,7 +112,7 @@ INVALID_SHARE_NAME_CHARACTERS = frozenset({
 })
 RESERVED_SHARE_NAMES = frozenset({'global', 'printers', 'homes', 'admin$', 'ipc$'})
 SUPPORTED_SMB_VARIABLES = frozenset({'U', 'G', 'D'})  # see man 5 smb.conf "VARIABLE SUBSTITUTIONS"
-TRUESEARCH_ES_PATH = '/var/run/truesearch/truesearch-es.sock'
+TRUESEARCH_ES_PATH = '/run/truesearch/truesearch-es.sock'
 
 
 def validate_smb_share_name(name: str) -> str:
