@@ -4,45 +4,49 @@ import queue
 import socket
 import typing
 import warnings
-from .logging.console_formatter import ConsoleLogFormatter
 from collections import deque
-from cryptography.utils import CryptographyDeprecationWarning
-from json import dumps
 from dataclasses import dataclass
+from enum import StrEnum
+from json import dumps
+
+from cryptography.utils import CryptographyDeprecationWarning
+
 from .utils.time_utils import utc_now
 
-# markdown debug is also considered useless
-logging.getLogger('MARKDOWN').setLevel(logging.INFO)
-# asyncio runs in debug mode but we do not need INFO/DEBUG
-logging.getLogger('asyncio').setLevel(logging.WARNING)
-# We dont need internal aiohttp debug logging
-logging.getLogger('aiohttp.internal').setLevel(logging.WARNING)
-# We dont need internal botocore debug logging
-logging.getLogger('botocore').setLevel(logging.WARNING)
-# we dont need websocket debug messages
-logging.getLogger('websocket').setLevel(logging.WARNING)
-# issues garbage warnings
-logging.getLogger('googleapiclient').setLevel(logging.ERROR)
-# It's too verbose (when used to list remote datasets/snapshots)
-logging.getLogger('paramiko').setLevel(logging.INFO)
-# pyroute2.ndb is chatty....only log errors
-logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
-logging.getLogger('pyroute2.netlink').setLevel(logging.CRITICAL)
-logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
-logging.getLogger('urllib3').setLevel(logging.WARNING)
-# ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
-# with that much information and raise the log level in this case
-logging.getLogger('acme.client').setLevel(logging.WARNING)
-logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARNING)
-# "Encoding detection: ascii is most likely the one."
-logging.getLogger('charset_normalizer').setLevel(logging.INFO)
-# Prevent debug docker logs
-logging.getLogger('docker.utils.config').setLevel(logging.ERROR)
-logging.getLogger('docker.auth').setLevel(logging.ERROR)
-# Prevent httpx debug spam
-logging.getLogger('httpx._client').setLevel(logging.ERROR)
-# Prevent kmip client spam
-logging.getLogger('kmip.services.kmip_client').setLevel(logging.ERROR)
+
+# Set logging levels
+for level, names in {
+    logging.INFO: (
+        'charset_normalizer',  # "Encoding detection: ascii is most likely the one."
+        'MARKDOWN',  # markdown debug is also considered useless
+        'paramiko',  # It's too verbose (when used to list remote datasets/snapshots)
+    ),
+    logging.WARNING: (
+        'acme.client',  # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the
+                        # logs with that much information and raise the log level in this case
+        'aiohttp.internal',  # We dont need internal aiohttp debug logging
+        'asyncio',  # asyncio runs in debug mode but we do not need INFO/DEBUG
+        'botocore',  # We dont need internal botocore debug logging
+        'certbot_dns_cloudflare._internal.dns_cloudflare',
+        'urllib3',
+        'websocket',  # we dont need websocket debug messages
+    ),
+    logging.ERROR: (
+        'docker.auth',
+        'docker.utils.config',  # Prevent debug docker logs
+        'googleapiclient',  # issues garbage warnings
+        'httpx._client',  # Prevent httpx debug spam
+        'kmip.services.kmip_client',  # Prevent kmip client spam
+    ),
+    logging.CRITICAL: (
+        'pyroute2.ndb',  # pyroute2.ndb is chatty....only log errors
+        'pyroute2.netlink',
+        'pyroute2.netlink.nlsocket',
+    ),
+}.items():
+    for name in names:
+        logging.getLogger(name).setLevel(level)
+
 
 # /usr/lib/python3/dist-packages/pydantic/json_schema.py:2158: PydanticJsonSchemaWarning:
 # Default value <object object at 0x7fa8ac040d30> is not JSON serializable; excluding default from JSON schema
@@ -102,40 +106,30 @@ class TNLog:
 # NOTE if new separate log file needs to be added, create a new TNLog
 # object and append to ALL_LOG_FILES tuple. These files are read by the
 # syslog-ng config generation scripts and automatically handled.
-TNLOG_MIDDLEWARE = TNLog(None, LOGFILE)
-TNLOG_APP_LIFECYCLE = TNLog('app_lifecycle', APP_LIFECYCLE_LOGFILE)
-TNLOG_APP_MIGRATION = TNLog('app_migration', APP_MIGRATION_LOGFILE)
-TNLOG_DOCKER_IMAGE = TNLog('docker_image', DOCKER_IMAGE_LOGFILE)
-TNLOG_FAILOVER = TNLog('failover', FAILOVER_LOGFILE)
-TNLOG_NETDATA_API = TNLog('netdata_api', NETDATA_API_LOGFILE)
-TNLOG_TNC = TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE)
-TNLOG_ZETTAREPL = TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT)
-
-# NOTE: this is also consumed by tests/unit/test_logger.py, which validates
+# This is also consumed by tests/unit/test_logger.py, which validates
 # the auto-generated syslog-ng rules place messages in the correct log files.
 ALL_LOG_FILES = (
-    TNLOG_MIDDLEWARE,
-    TNLOG_APP_LIFECYCLE,
-    TNLOG_APP_MIGRATION,
-    TNLOG_DOCKER_IMAGE,
-    TNLOG_FAILOVER,
-    TNLOG_NETDATA_API,
-    TNLOG_TNC,
-    TNLOG_ZETTAREPL,
+    TNLog(None, LOGFILE),
+    TNLog('app_lifecycle', APP_LIFECYCLE_LOGFILE),
+    TNLog('app_migration', APP_MIGRATION_LOGFILE),
+    TNLog('docker_image', DOCKER_IMAGE_LOGFILE),
+    TNLog('failover', FAILOVER_LOGFILE),
+    TNLog('netdata_api', NETDATA_API_LOGFILE),
+    TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE),
+    TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT),
 )
-
 # Audit entries are inserted into audit databases in /audit rather than
 # written to files in /var/log and so they are not members of ALL_LOG_FILES
 MIDDLEWARE_TNAUDIT = TNLog('TNAUDIT_MIDDLEWARE', '', '', None)
-
-BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': '\\n'})
 
 
 class TNLogFormatter(logging.Formatter):
     """ logging formatter to convert python exception into structured data """
 
+    BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': '\\n'})
+
     def _escape_rfc_generic(self, msg: str) -> str:
-        return msg.translate(BASIC_SYSLOG_TRANSLATION)
+        return msg.translate(self.BASIC_SYSLOG_TRANSLATION)
 
     def format(self, record: logging.LogRecord) -> str:
         exc_info = record.exc_info
@@ -166,6 +160,37 @@ class TNLogFormatter(logging.Formatter):
         record.exc_text = exc_text
         record.stack_info = stack_info
         return msg
+
+
+class ConsoleLogFormatter(logging.Formatter):
+    """Format the console log messages"""
+
+    class ConsoleColor(StrEnum):
+        YELLOW  = '\033[1;33m'  # (warning)
+        GREEN   = '\033[1;32m'  # (info)
+        RED     = '\033[1;31m'  # (error)
+        HIGHRED = '\033[1;41m'  # (critical)
+        RESET   = '\033[1;m'    # Reset
+
+    color_mapping = {
+        logging.CRITICAL: ConsoleColor.HIGHRED,
+        logging.ERROR   : ConsoleColor.HIGHRED,
+        logging.WARNING : ConsoleColor.RED,
+        logging.INFO    : ConsoleColor.GREEN,
+        logging.DEBUG   : ConsoleColor.YELLOW,
+    }
+
+    def format(self, record):
+        """Set the color based on the log level.
+
+        Returns:
+            logging.Formatter class.
+        """
+        color_reset = self.ConsoleColor.RESET
+        color_start = self.color_mapping.get(record.levelno, color_reset)
+        record.levelname = color_start + record.levelname + color_reset
+
+        return logging.Formatter.format(self, record)
 
 
 QFORMATTER = TNLogFormatter()
@@ -323,7 +348,7 @@ def setup_syslog_handler(tnlog: TNLog, fallback: logging.Handler | None) -> logg
 
 class Logger:
     """Pseudo-Class for Logger - Wrapper for logging module"""
-    def __init__(self, application_name: str, debug_level: str = 'DEBUG', log_format: str = DEFAULT_LOGFORMAT):
+    def __init__(self, application_name: str, debug_level: str | int = 'DEBUG', log_format: str = DEFAULT_LOGFORMAT):
         self.application_name = application_name
         self.debug_level = debug_level
         self.log_format = log_format
@@ -338,7 +363,7 @@ class Logger:
         """
         if output_option.lower() == 'console':
             console_handler = logging.StreamHandler()
-            logging.root.setLevel(getattr(logging, self.debug_level))
+            logging.root.setLevel(self.debug_level)
             time_format = "%Y/%m/%d %H:%M:%S"
             console_handler.setFormatter(ConsoleLogFormatter(self.log_format, datefmt=time_format))
             logging.root.addHandler(console_handler)
@@ -354,14 +379,14 @@ class Logger:
             for tnlog in ALL_LOG_FILES:
                 setup_syslog_handler(tnlog, fallback_handler)
 
-        logging.root.setLevel(getattr(logging, self.debug_level))
+        logging.root.setLevel(self.debug_level)
 
 
 def setup_audit_logging() -> logging.Logger:
     return setup_syslog_handler(MIDDLEWARE_TNAUDIT, None)
 
 
-def setup_logging(name: str, debug_level: typing.Optional[str], log_handler: typing.Optional[str]):
+def setup_logging(name: str, debug_level: str | int, log_handler: typing.Optional[str]):
     _logger = Logger(name, debug_level)
     _logger.getLogger()
 
