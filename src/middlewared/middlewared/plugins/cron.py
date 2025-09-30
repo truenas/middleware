@@ -216,10 +216,19 @@ class CronJobService(CRUDService):
             )['email']
             stdout = cp.stdout.decode()
             if email:
+                text = (
+                    'The command:\n\n' +
+                    cron_task['command'] + '\n\n' +
+                    'Produced the following output:\n\n' +
+                    stdout.rstrip() + '\n\n' +
+                    "If you don't wish to receive these e-mails, please go to your Cron Job options and check " +
+                    '"Hide Standard Output" and "Hide Standard Error" checkboxes.'
+                )
+
                 mail_job = self.middleware.call_sync(
                     'mail.send', {
-                        'subject': 'CronTask Run',
-                        'text': stdout,
+                        'subject': 'Cron Job Run',
+                        'text': text,
                         'to': [email]
                     }
                 )
