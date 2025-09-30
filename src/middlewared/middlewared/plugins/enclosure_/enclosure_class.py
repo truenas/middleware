@@ -122,7 +122,10 @@ class Enclosure:
         """
         spn = self.dmi.system_product_name
         model = spn.removeprefix('TRUENAS-').removeprefix('FREENAS-')
-        model = model.removesuffix('-HA').removesuffix('-S')
+        for suffix in ('-HA', '-S', '-PC', '-SC', '-C'):
+            # "-PC", "-SC", and "-C" are used on R60 platform
+            model = model.removesuffix(suffix)
+
         try:
             dmi_model = ControllerModels[model]
         except KeyError:
