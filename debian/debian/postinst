@@ -40,8 +40,10 @@ systemctl disable openipmi
 systemctl disable nfs-server
 systemctl disable rpcbind
 
-# This service will be started from middleware as needed
+# These services will be started from middleware as needed
 systemctl disable ix-nvmf
+systemctl disable truenas-webshare-auth
+systemctl disable truesearch
 
 # NAS-123024: disable proftpd.socket, if it starts it will block proftpd.service
 # proftpd.socket is used in conjunction with xinetd
