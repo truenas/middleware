@@ -27,6 +27,7 @@ from .utils import (
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from .schema.sudo import AUDIT_EVENT_SUDO_JSON_SCHEMAS, AUDIT_EVENT_SUDO_PARAM_SET
+from .schema.system import AUDIT_EVENT_SYSTEM_JSON_SCHEMAS, AUDIT_EVENT_SYSTEM_PARAM_SET
 from middlewared.api import api_method
 from middlewared.api.current import (
     AuditEntry, AuditDownloadReportArgs, AuditDownloadReportResult, AuditQueryArgs, AuditQueryResult,
@@ -178,6 +179,7 @@ class AuditService(ConfigService):
                     AUDIT_EVENT_MIDDLEWARE_PARAM_SET
                     | AUDIT_EVENT_SMB_PARAM_SET
                     | AUDIT_EVENT_SUDO_PARAM_SET
+                    | AUDIT_EVENT_SYSTEM_PARAM_SET
                 ):
                     verrors.add(
                         f'audit.query.query-options.select.{idx}',
@@ -512,7 +514,12 @@ class AuditService(ConfigService):
     @filterable_api_method(private=True)
     async def json_schemas(self, filters, options):
         return filter_list(
-            AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS + AUDIT_EVENT_SUDO_JSON_SCHEMAS,
+            (
+                AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS +
+                AUDIT_EVENT_SMB_JSON_SCHEMAS +
+                AUDIT_EVENT_SUDO_JSON_SCHEMAS +
+                AUDIT_EVENT_SYSTEM_JSON_SCHEMAS
+            ),
             filters,
             options
         )
