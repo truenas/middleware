@@ -28,7 +28,7 @@ class AuditEventSystemPrivilegedEventData(BaseModel):
 
 
 class AuditEventSystemEscalationEventData(AuditEventSystemPrivilegedEventData):
-    # Same as Privilege Event (for now)
+    # Same as Privileged Event (for now)
     pass
 
 
