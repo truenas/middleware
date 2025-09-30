@@ -22,6 +22,7 @@ class VMWarePendingSnapshotDelete(sa.Model):
 class VMWareService(Service):
     @private
     async def defer_deleting_snapshot(self, vmware, vm_uuid, snapshot_name):
+        self.logger.debug(f'vmware.defer_deleting_snapshot {vmware} {vm_uuid} {snapshot_name}')
         await self.middleware.call(
             "datastore.insert",
             "storage.vmwarependingsnapshotdelete",

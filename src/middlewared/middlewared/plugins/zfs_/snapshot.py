@@ -139,6 +139,7 @@ class ZFSSnapshotService(CRUDService):
         """
         Take a snapshot from a given dataset.
         """
+        self.logger.debug(f'zfs.snapshot.create {data}')
         dataset = data['dataset']
         recursive = data.get('recursive', False)
         exclude = data.get('exclude', [])

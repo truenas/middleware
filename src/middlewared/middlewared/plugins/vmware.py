@@ -432,6 +432,7 @@ class VMWareService(CRUDService):
 
     @private
     def snapshot_end(self, context):
+        self.logger.debug(f'vmware.snapshot_end {context}')
         self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
 
         vmsnapname = context["vmsnapname"]
