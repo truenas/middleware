@@ -16,7 +16,7 @@ from functions import async_SSH_done, async_SSH_start
 
 pytest.mark.skip('snmp-agent is broken after upgrade to Trixie: NAS-137789')
 
-#skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
+skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
 TRAPS = False
 CONTACT = 'root@localhost.com'
