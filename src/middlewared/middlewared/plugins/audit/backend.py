@@ -194,7 +194,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         from_ = conn.table
 
         if options['count']:
-            qs = select(func.count('ROW_ID')).select_from(from_)
+            qs = select(func.count('ROW_ID').label('count')).select_from(from_)
         else:
             columns = list(conn.table.c)
             qs = select(*columns).select_from(from_)
@@ -206,7 +206,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
             if not (results := self.__fetchall(conn, qs)):
                 return 0
 
-            return results[0][0]
+            return results[0]['count']
 
         if order_by:
             for i, order in enumerate(order_by):
