@@ -76,12 +76,9 @@ class UpdateService(Service):
         return UpdateProfiles[name] >= UpdateProfiles[selected_name]
 
     @private
-    async def current_version_profile(self, trains=None):
-        if trains is None:
-            trains = await self.middleware.call('update.get_trains')
-
-        current_train_name = await self.middleware.call('update.get_current_train_name', trains)
-        current_train_releases = await self.middleware.call('update.get_train_releases', current_train_name)
+    async def current_version_profile(self):
+        manifest = await self.middleware.call('update.get_manifest_file')
+        current_train_releases = await self.middleware.call('update.get_train_releases', manifest['train'])
         current_version = await self.middleware.call('system.version_short')
         if (current_release := current_train_releases.get(current_version)) is None:
             if any(substring in current_version for substring in ('CUSTOM', 'INTERNAL', 'MASTER')):
