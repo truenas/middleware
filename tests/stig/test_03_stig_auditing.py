@@ -106,7 +106,7 @@ def test_privileged_and_escalation_events(test_rule, param, key, auditd_gpos_sti
     sleep(1)
     ssh(f"{test_rule} {param}", user=STIG_USER, password=STIG_PWD, check=False)
     sleep(1)
-    auditd_data = ssh(f"ausearch --input-logs --checkpoint /tmp/auditd_test --start checkpoint -k {key} -i ")
+    auditd_data = ssh(f"ausearch --input-logs --checkpoint /tmp/auditd_test --start checkpoint -k {key} -i ", check=False)
     assert_auditd_event(auditd_data.splitlines(), test_rule, STIG_USER, STIG_USER)
 
     # Second part: Confirm TrueNAS audit subsystem records the event and we can filter for it
