@@ -84,7 +84,6 @@ def auditd_gpos_stig_enable():
         ssh('rm /tmp/auditd_test')
 
 
-# -a always,exit -F arch=b64 -F path=/usr/bin/ping -F perm=x -F auid>=900 -F auid!=unset -F key=privileged
 @pytest.mark.parametrize('test_rule,param,key', [
     pp("ping", "-c1 127.0.0.1", "privileged", id="ping - privileged"),
     pp("chmod 777", "/etc/nginx", "escalation", id="nginx conf - escalation"),
