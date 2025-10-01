@@ -54,7 +54,7 @@ class UpdateService(Service):
             trains = await self.middleware.call('update.get_trains')
 
             current_train_name = await self.middleware.call('update.get_current_train_name', trains)
-            current_profile = await self.middleware.call('update.current_version_profile', trains)
+            current_profile = await self.middleware.call('update.current_version_profile')
             matches_profile = await self.middleware.call('update.profile_matches', current_profile, config['profile'])
 
             new_version = None
