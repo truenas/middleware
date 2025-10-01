@@ -12,6 +12,7 @@ __all__ = [
     "ContainerCreateArgs", "ContainerCreateResult",
     "ContainerUpdateArgs", "ContainerUpdateResult",
     "ContainerDeleteArgs", "ContainerDeleteResult",
+    "ContainerPoolChoicesArgs", "ContainerPoolChoicesResult",
     "ContainerStartArgs", "ContainerStartResult",
     "ContainerStopArgs", "ContainerStopResult",
     "ContainerMigrateArgs", "ContainerMigrateResult",
@@ -164,6 +165,15 @@ class ContainerDeleteArgs(BaseModel):
 
 class ContainerDeleteResult(BaseModel):
     result: None
+
+
+class ContainerPoolChoicesArgs(BaseModel):
+    pass
+
+
+class ContainerPoolChoicesResult(BaseModel):
+    result: dict
+    """Object of available ZFS pools that can be used for container root filesystem."""
 
 
 class ContainerStartArgs(BaseModel):

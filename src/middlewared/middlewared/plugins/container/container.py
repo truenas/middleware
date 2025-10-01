@@ -12,10 +12,13 @@ from middlewared.api.current import (
     ContainerCreateArgs, ContainerCreateResult,
     ContainerUpdateArgs, ContainerUpdateResult,
     ContainerDeleteArgs, ContainerDeleteResult,
+    ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
 )
+from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.zfs import query_imported_fast_impl
 
 RE_NAME = re.compile(r'^[a-zA-Z_0-9\-]+$')
@@ -163,7 +166,7 @@ class ContainerService(CRUDService):
         verrors.check()
 
         pool = data.pop('pool')
-        if not await self.middleware.run_in_thread(query_imported_fast_impl, [pool]):
+        if pool not in await self.pool_choices():
             verrors.add('container_create.pool', 'Pool not found.')
             verrors.check()
 
@@ -258,3 +261,27 @@ class ContainerService(CRUDService):
         self.middleware.call_sync('pool.dataset.delete', container['dataset'])
 
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
+
+    @api_method(ContainerPoolChoicesArgs, ContainerPoolChoicesResult, roles=['VIRT_GLOBAL_READ'])
+    async def pool_choices(self):
+        """
+        Pool choices for container creation.
+        """
+        pools = {}
+        imported_pools = await self.middleware.run_in_thread(query_imported_fast_impl)
+        for ds in await self.middleware.call(
+            'zfs.resource.query_impl',
+            {
+                'paths': [
+                    p['name']
+                    for p in imported_pools.values()
+                    if p['name'] not in BOOT_POOL_NAME_VALID
+                ],
+                'properties': ['encryption'],
+            }
+        ):
+            enc = get_encryption_info(ds['properties'])
+            if not enc.locked:
+                pools[ds['name']] = ds['name']
+
+        return pools
