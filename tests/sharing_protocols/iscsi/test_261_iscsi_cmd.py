@@ -25,7 +25,7 @@ from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
 from pytest_dependency import depends
 
 from middlewared.service_exception import CallError, InstanceNotFound, ValidationError, ValidationErrors
-from middlewared.test.integration.assets.iscsi import target_login_test
+from middlewared.test.integration.assets.iscsi import iscsi_extent, target_login_test
 from middlewared.test.integration.assets.iscsi import iscsi_auth as iscsi_auth_data
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
@@ -1453,6 +1453,42 @@ class TestEntentNames:
                     call('iscsi.extent.update', extent2['id'], {'name': name1})
                 with assert_validation_errors('iscsi_extent_update.name', f'Extent name must be unique when flattened ({name1})'):
                     call('iscsi.extent.update', extent2['id'], {'name': bad_name2})
+
+    def test__test_reuse_extent_zvol(self):
+        """
+        Test that the ZVOL underlying an extent may not be reused in another extent.
+        """
+        zvol1_name = f'{pool_name}/reusevol1'
+        with zvol_dataset(zvol1_name, 100):
+            extent1_payload = {
+                'type': 'DISK',
+                'disk': f'zvol/{zvol1_name}',
+                'name': 'reuseext1'
+            }
+            with iscsi_extent(extent1_payload):
+                extent2_payload = extent1_payload | {'name': 'reuseext2'}
+                with assert_validation_errors('iscsi_extent_create.disk',
+                                              'Disk currently in use by extent reuseext1'):
+                    with iscsi_extent(extent2_payload):
+                        pass
+
+    def test__test_reuse_extent_file(self):
+        """
+        Test that the file underlying an extent may not be reused in another extent.
+        """
+        filepath = f'/mnt/{pool_name}/reuse_file1'
+        extent1_payload = {
+            'type': 'FILE',
+            'path': filepath,
+            'name': 'reuseext1',
+            'filesize': MB_100,
+        }
+        with iscsi_extent(extent1_payload, True, True):
+            extent2_payload = extent1_payload | {'name': 'reuseext2'}
+            with assert_validation_errors('iscsi_extent_create.path',
+                                          'File currently in use by extent reuseext1'):
+                with iscsi_extent(extent2_payload):
+                    pass
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
