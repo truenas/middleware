@@ -1,9 +1,10 @@
 import copy
 
 from acme.messages import OrderResource
+from truenas_acme_utils.client_utils import ACMEClientAndKeyData
 from truenas_acme_utils.event import event_callbacks
 from truenas_acme_utils.exceptions import CallError as AcmeUtilsCallError
-from truenas_acme_utils.issue_cert import ACMEClientAndKeyData, issue_certificate
+from truenas_acme_utils.issue_cert import issue_certificate
 from truenas_crypto_utils.generate_utils import normalize_san
 
 from middlewared.service import Service, ValidationErrors
