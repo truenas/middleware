@@ -25,7 +25,7 @@ class USBStorageAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
         with os.scandir("/dev/disk/by-id") as sdir:
-            for i in filter(lambda x: "usb" in x.name.lower(), sdir):
+            for i in filter(lambda x: x.name.lower().startswith("usb-"), sdir):
                 resolved_path = os.path.realpath(i.path)
                 if resolved_path.startswith("/dev/sr"):
                     # When opening the IPMI KVM console on the
