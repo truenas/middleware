@@ -11,9 +11,54 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.time_utils import utc_now
 
-EVENT_KEYS = {'timestamp', 'message_timestamp', 'service_data', 'username', 'service', 'audit_id', 'address', 'event_data', 'event', 'session', 'success'}
-ACCEPT_KEYS = {'command', 'submituser', 'lines', 'submithost', 'uuid', 'runenv', 'server_time', 'runcwd', 'submitcwd', 'runuid', 'runargv', 'columns', 'runuser', 'submit_time'}
-REJECT_KEYS = {'command', 'submituser', 'lines', 'submithost', 'uuid', 'reason', 'runenv', 'server_time', 'runcwd', 'submitcwd', 'runuid', 'runargv', 'columns', 'runuser', 'submit_time'}
+EVENT_KEYS = {
+    'address',
+    'audit_id',
+    'event',
+    'event_data',
+    'message_timestamp',
+    'service',
+    'service_data',
+    'session',
+    'success',
+    'timestamp',
+    'username'
+}
+ACCEPT_KEYS = {
+    'columns',
+    'command',
+    'lines',
+    'runargv',
+    'runcwd',
+    'runenv',
+    'runuid',
+    'runuser',
+    'server_time',
+    'source',
+    'submit_time',
+    'submitcwd',
+    'submitenv',
+    'submithost',
+    'submituser',
+    'uuid'
+}
+REJECT_KEYS = {
+    'columns',
+    'command',
+    'lines',
+    'reason',
+    'runargv',
+    'runcwd',
+    'runuid',
+    'runuser',
+    'server_time',
+    'submit_time',
+    'submitcwd',
+    'submitenv',
+    'submithost',
+    'submituser',
+    'uuid'
+}
 
 LS_COMMAND = '/bin/ls'
 ECHO_COMMAND = '/bin/echo'
