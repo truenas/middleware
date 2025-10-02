@@ -371,7 +371,7 @@ class CertificateService(CRUDService):
         job.set_progress(90, 'Finalizing changes')
 
         return {
-            'CSR': req,
+            'CSR': req.decode(),
             'privatekey': key,
             'type': CERT_TYPE_CSR,
         }

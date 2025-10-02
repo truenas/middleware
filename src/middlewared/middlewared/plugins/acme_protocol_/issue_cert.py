@@ -1,8 +1,9 @@
 import copy
 
+from acme.messages import OrderResource
 from truenas_acme_utils.event import event_callbacks
 from truenas_acme_utils.exceptions import CallError as AcmeUtilsCallError
-from truenas_acme_utils.issue_cert import issue_certificate
+from truenas_acme_utils.issue_cert import ACMEClientAndKeyData, issue_certificate
 from truenas_crypto_utils.generate_utils import normalize_san
 
 from middlewared.service import Service, ValidationErrors
@@ -15,7 +16,7 @@ class ACMEService(Service):
         namespace = 'acme'
         private = True
 
-    def issue_certificate(self, job, progress, data, csr_data):
+    def issue_certificate(self, job, progress: int, data: dict, csr_data: dict) -> OrderResource:
         """
         How we would like to proceed with issuing an ACME cert is as follows:
         1) Decide domains which are involved
@@ -77,9 +78,17 @@ class ACMEService(Service):
         acme_client_key_payload = self.middleware.call_sync(
             'acme.get_acme_client_and_key_payload', data['acme_directory_uri'], data['tos']
         )
-        return self.issue_certificate_impl(job, progress, acme_client_key_payload, csr_data['CSR'], dns_mapping_copy)
+        return self.issue_certificate_impl(
+            job,
+            progress,
+            acme_client_key_payload,
+            csr_data['CSR'].encode(),
+            dns_mapping_copy,
+        )
 
-    def issue_certificate_impl(self, job, progress, acme_client_key_payload, csr, dns_mapping_copy):
+    def issue_certificate_impl(
+        self, job, progress: int, acme_client_key_payload: ACMEClientAndKeyData, csr: bytes, dns_mapping_copy: dict
+    ) -> OrderResource:
         # Let's make sure for dns mapping, we have authenticator objects in place
         authenticators = {
             o['id']: o
