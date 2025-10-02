@@ -17,24 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Disable rootfs protection
-        run: /usr/local/libexec/disable-rootfs-protection --force
+      - name: Install dev tools
+        run: ./src/freenas/usr/bin/install-dev-tools
 
-      - name: Find pytest directory
+      - name: Install middleware
         run: |
-          PYTEST_DIR=$(find /usr -name pytest -type d | grep middlewared)
-          echo "PYTEST_DIR=$PYTEST_DIR" >> $GITHUB_ENV
-
-      - name: Deploy
-        run: |
-          apt update ; apt install -y python3-pip python3-pytest
-          if [ -f "${{ env.PYTEST_DIR }}/unit/requirements.txt" ]; then
-            pip3 install -r "${{ env.PYTEST_DIR }}/unit/requirements.txt"
-          else
-            echo "Error: requirements.txt not found at ${{ env.PYTEST_DIR }}/unit/requirements.txt"
-            exit 1
-          fi
+          cd src/middlewared ; make reinstall_container
 
       - name: Test
         run: |
-          pytest-3 -v --disable-pytest-warnings "${{ env.PYTEST_DIR }}"
+          pytest-3 -v --disable-pytest-warnings /usr/lib/python3/dist-packages/middlewared/pytest
