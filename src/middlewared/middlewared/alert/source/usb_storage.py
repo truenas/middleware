@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from pathlib import Path
+import os
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.utils import ProductType
@@ -24,7 +24,16 @@ class USBStorageAlertSource(ThreadedAlertSource):
 
     def check_sync(self):
         alerts = []
-        for usb in filter(lambda x: x.stem.startswith('usb-'), Path('/dev/disk/by-id').iterdir()):
-            if '-part' not in usb.as_posix():
-                alerts.append(Alert(USBStorageAlertClass, usb.resolve().as_posix()))
+        with os.scandir("/dev/disk/by-id") as sdir:
+            for i in filter(lambda x: "usb" in x.name.lower(), sdir):
+                resolved_path = os.path.realpath(i.path)
+                if resolved_path.startswith("/dev/sr"):
+                    # When opening the IPMI KVM console on the
+                    # {f/v}-series platforms, a USB CDROM device
+                    # is automatically added to OS without the
+                    # user actually mounting an ISO. In this
+                    # scenario, we need to ignore the device.
+                    continue
+                elif "-part" not in i.name:
+                    alerts.append(Alert(USBStorageAlertClass, resolved_path))
         return alerts
