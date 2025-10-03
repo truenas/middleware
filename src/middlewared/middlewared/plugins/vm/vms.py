@@ -94,9 +94,9 @@ class VMService(CRUDService):
             'states': gather_pylibvirt_domains_states(
                 self.middleware,
                 rows,
-                self.middleware.libvirt_domains_manager.containers_connection,
-                lambda container: self.middleware.call_sync(
-                    'vm.pylibvirt_vm', self.extend_vm(container),
+                self.middleware.libvirt_domains_manager.vms_connection,
+                lambda vm: self.middleware.call_sync(
+                    'vm.pylibvirt_vm', self.extend_vm(vm),
                 ),
             ),
         }
@@ -104,9 +104,7 @@ class VMService(CRUDService):
     @private
     def extend(self, vm, context):
         vm['status'] = get_pylibvirt_domain_state(context['states'], vm)
-
         self.extend_vm(vm)
-
         return vm
 
     @private
@@ -117,6 +115,7 @@ class VMService(CRUDService):
             {'force_sql_filters': True},
         )
         vm['display_available'] = any(device['attributes']['dtype'] == 'DISPLAY' for device in vm['devices'])
+        return vm
 
     @api_method(VMBootloaderOptionsArgs, VMBootloaderOptionsResult, roles=['VM_READ'])
     async def bootloader_options(self):

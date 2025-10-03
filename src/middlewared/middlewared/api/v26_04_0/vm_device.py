@@ -17,7 +17,6 @@ __all__ = [
     'VMDeviceNicAttachChoicesResult', 'VMDeviceBindChoicesArgs', 'VMDeviceBindChoicesResult',
     'VMDevicePassthroughDeviceArgs', 'VMDevicePassthroughDeviceResult', 'VMDeviceIommuEnabledArgs',
     'VMDeviceIommuEnabledResult', 'VMDevicePassthroughDeviceChoicesArgs', 'VMDevicePassthroughDeviceChoicesResult',
-    'VMDevicePptdevChoicesArgs', 'VMDevicePptdevChoicesResult',
     'VMDeviceUsbPassthroughDeviceArgs', 'VMDeviceUsbPassthroughDeviceResult',
     'VMDeviceUsbPassthroughChoicesArgs', 'VMDeviceUsbPassthroughChoicesResult',
     'VMDeviceUsbControllerChoicesArgs', 'VMDeviceUsbControllerChoicesResult',
@@ -367,15 +366,6 @@ class VMDevicePassthroughDeviceChoicesResult(BaseModel):
     """Object of available PCI devices for passthrough with their detailed information."""
 
 
-class VMDevicePptdevChoicesArgs(BaseModel):
-    pass
-
-
-class VMDevicePptdevChoicesResult(BaseModel):
-    result: VMDevicePassthroughInfo
-    """Object of PCI passthrough devices with their availability status."""
-
-
 class USBCapability(BaseModel):
     product: str | None
     """USB product name. `null` if not available."""
@@ -403,6 +393,8 @@ class USBPassthroughDevice(BaseModel):
     """Whether the USB device is available for passthrough to virtual machines."""
     error: str | None
     """Error message if the device cannot be used for passthrough. `null` if no error."""
+    description: str
+    """Human-readable description of the USB device."""
 
 
 class USBPassthroughInfo(RootModel[dict[str, USBPassthroughDevice]]):

@@ -33,7 +33,7 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils import run
 
 from .devices.storage_devices import IOTYPE_CHOICES
-from .devices import DEVICES
+from .devices.factory import device_factory
 from .utils import ACTIVE_STATES
 
 VALID_DISK_FORMATS = ('qcow2', 'qed', 'raw', 'vdi', 'vhdx', 'vmdk')
@@ -472,9 +472,8 @@ class VMDeviceService(CRUDService):
     @private
     async def validate_device(self, device, old=None, update=True):
         vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
-        device_obj = DEVICES[device['attributes']['dtype']](device, self.middleware)
-        await self.middleware.run_in_thread(device_obj.validate, device, old, vm_instance, update)
-
+        device_adapter = device_factory.get_device_adapter(device)
+        await self.middleware.run_in_thread(device_adapter.validate, old, vm_instance, update)
         return device
 
     @private

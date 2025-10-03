@@ -1,11 +1,43 @@
 import random
 
-from middlewared.api.current import VMNICDevice
-from middlewared.plugins.interface.netif import netif
-from middlewared.service import CallError
+import truenas_pynetif as netif
 
+from middlewared.api.current import VMNICDevice
+from middlewared.service import CallError
+from middlewared.service_exception import ValidationErrors
+
+from .delegate import DeviceDelegate
 from .device import Device
 from .utils import create_element
+
+
+class NICDelegate(DeviceDelegate):
+
+    @property
+    def schema_model(self):
+        return VMNICDevice
+
+    def validate_middleware(
+        self,
+        device: dict,
+        verrors: ValidationErrors,
+        old: dict | None = None,
+        vm_instance: dict | None = None,
+        update: bool = True,
+    ) -> None:
+        nic = device['attributes'].get('nic_attach')
+        if nic:
+            nic_choices = self.middleware.call_sync('vm.device.nic_attach_choices')
+            if nic not in nic_choices:
+                verrors.add('attributes.nic_attach', 'Not a valid choice.')
+            elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
+                verrors.add(
+                    'attributes.trust_guest_rx_filters',
+                    'This can only be set when "nic_attach" is not a bridge device'
+                )
+
+        # TODO: We should probably have a migration to standardize mac adresses to ensure they are present
+
 
 
 class NIC(Device):

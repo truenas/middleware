@@ -62,4 +62,5 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     def get_memory_usage_internal(self, vm):
-        return self._memory_info(vm['name'])
+        libvirt_domain = self.middleware.libvirt_domains_manager.vms_connection.get_domain(vm['uuid'])
+        return self.middleware.libvirt_domains_manager.vms_connection.domain_memory_usage(libvirt_domain)

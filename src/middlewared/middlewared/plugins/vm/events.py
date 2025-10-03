@@ -9,7 +9,7 @@ from .connection import LibvirtConnectionMixin
 class VMService(Service, LibvirtConnectionMixin):
 
     @private
-    def setup_libvirt_events(self):
+    def setup_libvirt_events_old(self):
         self._check_setup_connection()
 
         def callback(conn, dom, event, detail, opaque):

@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 from typing import Literal
 
+import truenas_pynetif as netif
 from pydantic import Field
 
 from middlewared.api import api_method
@@ -12,7 +13,6 @@ from middlewared.api.base import BaseModel, single_argument_args, UniqueList, IP
 from middlewared.api.current import DNSQueryItem
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
-from middlewared.plugins.interface.netif import netif
 from middlewared.service_exception import CallError, ValidationErrors
 
 
