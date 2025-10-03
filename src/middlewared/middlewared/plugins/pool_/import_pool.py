@@ -120,16 +120,13 @@ class PoolService(Service):
                 # The same applies to trueans-containers dataset, we would like to have it mounted in a custom
                 # place so user cannot unintentionally share it via SMB/NFS
                 if child == os.path.join(pool_name, 'ix-apps'):
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=child, zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
-                    )
+                    args: UpdateImplArgs = UpdateImplArgs(name=child, zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
+                    await self.middleware.call('pool.dataset.update_impl', args)
                 elif child == container_dataset(pool_name):
-                    await self.middleware.call(
-                        'zfs.dataset.update', child, {
-                            'properties': {'mountpoint': {'value': container_dataset_mountpoint(pool_name)}}
-                        }
+                    args: UpdateImplArgs = UpdateImplArgs(
+                        name=child, zprops={'mountpoint': container_dataset_mountpoint(pool_name)}
                     )
+                    await self.middleware.call('pool.dataset.update_impl', args)
                 continue
             try:
                 # Reset all mountpoints

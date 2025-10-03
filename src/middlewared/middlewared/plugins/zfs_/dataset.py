@@ -155,42 +155,6 @@ class ZFSDatasetService(CRUDService):
         else:
             return data
 
-    def update(self, id_: str, data: dict):
-        """Update a ZFS dataset or zvol.
-
-        Args:
-            id: str (i.e. "tank/dataset")
-            properties: A nested dictionary whose top-level key should be
-                `properties` and value should be a dictionary whose keys
-                    represent the properties and values represent what
-                    to update.
-                    i.e.
-                        {
-                            'properties': {
-                                'prop_name1': 'value',
-                                'prop_name2': 'value',
-                            }
-                        }
-        """
-        data.setdefault('properties', {})
-        try:
-            with libzfs.ZFS() as zfs:
-                dataset = zfs.get_dataset(id_)
-
-                if 'properties' in data:
-                    properties = data['properties'].copy()
-                    # Set these after reservations
-                    for k in ['quota', 'refquota']:
-                        if k in properties:
-                            properties[k] = properties.pop(k)  # Set them last
-                    self.update_zfs_object_props(properties, dataset)
-
-        except libzfs.ZFSException as e:
-            self.logger.error('Failed to update dataset', exc_info=True)
-            raise CallError(f'Failed to update dataset: {e}')
-        else:
-            return data
-
     def delete(self, id_: str, options: dict | None = None):
         """Delete a ZFS dataset or zvol.
 

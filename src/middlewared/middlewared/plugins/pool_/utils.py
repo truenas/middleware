@@ -7,6 +7,7 @@ import re
 import typing
 
 from pathlib import Path
+from typing import TypedDict
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
@@ -59,8 +60,19 @@ class CreateImplArgs:
     """Create ancestors for the zfs resource being created."""
 
 
+class UpdateImplArgs(TypedDict, total=False):
+    name: str
+    """The name of the resource being created."""
+    zprops: dict[str, str]
+    """ZFS data properties to be applied during creation."""
+    uprops: dict[str, str]
+    """ZFS user properties to be applied during creation."""
+    iprops: set
+    """ZFS properties to be inherited from parent."""
+
+
 @dataclasses.dataclass(slots=True, kw_only=True)
-class UpdateImplArgs:
+class UpdateImplArgsDataclass:
     name: str
     """The name of the resource being created."""
     zprops: dict[str, str] = dataclasses.field(default_factory=dict)
