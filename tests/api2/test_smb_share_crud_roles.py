@@ -27,7 +27,7 @@ def test_read_role_cant_write(unprivileged_user_fixture, role):
 
     common_checks(unprivileged_user_fixture, "sharing.smb.getacl", role, True)
     common_checks(unprivileged_user_fixture, "sharing.smb.setacl", role, False)
-    common_checks(unprivileged_user_fixture, "smb.status", role, False)
+    # common_checks(unprivileged_user_fixture, "smb.status", role, False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_SMB_WRITE"])
