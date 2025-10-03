@@ -4,8 +4,7 @@ import re
 from typing import TextIO
 
 import pyudev
-
-from .iommu import build_pci_device_cache, get_iommu_groups_info, GPU_CLASS_CODES
+from truenas_pylibvirt.utils.iommu import build_pci_device_cache, get_iommu_groups_info, GPU_CLASS_CODES
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')

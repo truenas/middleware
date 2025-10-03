@@ -5,6 +5,8 @@ from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
 
+import truenas_pynetif as netif
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     InterfaceEntry, InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
@@ -23,7 +25,6 @@ from middlewared.api.current import (
 from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, pass_app, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
-from .interface.netif import netif
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 

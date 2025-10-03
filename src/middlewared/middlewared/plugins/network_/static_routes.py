@@ -1,5 +1,7 @@
 from ipaddress import ip_interface
 
+import truenas_pynetif as netif
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     StaticRouteEntry,
@@ -13,7 +15,6 @@ from middlewared.api.current import (
 import middlewared.sqlalchemy as sa
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import ValidationError
-from middlewared.plugins.interface.netif import netif
 
 
 class StaticRouteModel(sa.Model):

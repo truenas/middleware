@@ -1,9 +1,11 @@
 import ipaddress
 import re
 
-from .netif import netif
-from .interface_types import InterfaceType
+import truenas_pynetif as netif
+
 from middlewared.service import private, Service
+
+from .interface_types import InterfaceType
 
 
 class InterfaceService(Service):

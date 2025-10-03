@@ -3,12 +3,10 @@ import errno
 from middlewared.api import api_method
 from middlewared.api.current import VMGetMemoryUsageArgs, VMGetMemoryUsageResult
 from middlewared.service import CallError, private, Service
-
-from .utils import ACTIVE_STATES
-from .vm_supervisor import VMSupervisorMixin
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 
-class VMService(Service, VMSupervisorMixin):
+class VMService(Service):
 
     async def _set_guest_vmemory(self, vm_id, overcommit):
         vm = await self.middleware.call('vm.get_instance', vm_id)
@@ -27,10 +25,10 @@ class VMService(Service, VMSupervisorMixin):
             await self.middleware.call('sysctl.set_arc_max', memory_details['arc_max_after_shrink'])
 
     @private
-    async def init_guest_vmemory(self, vm, overcommit):
-        guest_status = await self.middleware.call('vm.status', vm['id'])
+    async def init_guest_vmemory(self, vm_id, overcommit):
+        guest_status = await self.middleware.call('vm.status', vm_id)
         if guest_status.get('state') not in ACTIVE_STATES:
-            await self._set_guest_vmemory(vm['id'], overcommit)
+            await self._set_guest_vmemory(vm_id, overcommit)
         else:
             raise CallError("VM process is running, we won't allocate memory")
 
@@ -62,4 +60,5 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     def get_memory_usage_internal(self, vm):
-        return self._memory_info(vm['name'])
+        libvirt_domain = self.middleware.libvirt_domains_manager.vms_connection.get_domain(vm['uuid'])
+        return self.middleware.libvirt_domains_manager.vms_connection.domain_memory_usage(libvirt_domain)

@@ -2,38 +2,28 @@ import os
 
 from middlewared.api.current import VMCDROMDevice
 from middlewared.plugins.boot import BOOT_POOL_NAME
-from middlewared.service import CallError
-from middlewared.utils.zfs import query_imported_fast_impl
+from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.path import check_path_resides_within_volume_sync
+from middlewared.utils.zfs import query_imported_fast_impl
 
-from .device import Device
-from .utils import create_element, disk_from_number, LIBVIRT_USER
+from .delegate import DeviceDelegate
+from .utils import LIBVIRT_USER
 
 
-class CDROM(Device):
+class CDROMDelegate(DeviceDelegate):
 
-    schema_model = VMCDROMDevice
+    @property
+    def schema_model(self):
+        return VMCDROMDevice
 
-    def identity(self):
-        return self.data['attributes']['path']
-
-    def is_available(self):
-        return os.path.exists(self.identity())
-
-    def xml(self, *args, **kwargs):
-        disk_number = kwargs.pop('disk_number')
-        return create_element(
-            'disk', type='file', device='cdrom', attribute_dict={
-                'children': [
-                    create_element('driver', name='qemu', type='raw'),
-                    create_element('source', file=self.data['attributes']['path']),
-                    create_element('target', dev=f'sd{disk_from_number(disk_number)}', bus='sata'),
-                    create_element('boot', order=str(kwargs.pop('boot_number'))),
-                ]
-            }
-        )
-
-    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+    def validate_middleware(
+        self,
+        device: dict,
+        verrors: ValidationErrors,
+        old: dict | None = None,
+        vm_instance: dict | None = None,
+        update: bool = True,
+    ) -> None:
         path = device['attributes']['path']
         check_path_resides_within_volume_sync(
             verrors, 'attributes.path', path, [
@@ -43,7 +33,7 @@ class CDROM(Device):
         if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
             verrors.add(
                 'attributes.path',
-                f'{vm_instance["name"]} has "{self.identity()}" already configured'
+                f'{vm_instance["name"]} has {path!r} already configured'
             )
 
         if not verrors:
@@ -74,7 +64,7 @@ class CDROM(Device):
                     verrors.add('attributes.path', e.errmsg)
 
                 if not self.middleware.call_sync(
-                    'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
+                     'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
                 ):
                     verrors.add(
                         'attributes.path',
