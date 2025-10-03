@@ -25,13 +25,13 @@ def iscsi_auth(data):
 
 
 @contextlib.contextmanager
-def iscsi_extent(data):
+def iscsi_extent(data, remove=False, force=False):
     extent = call("iscsi.extent.create", data)
 
     try:
         yield extent
     finally:
-        call("iscsi.extent.delete", extent["id"])
+        call("iscsi.extent.delete", extent["id"], remove, force)
 
 
 @contextlib.contextmanager
