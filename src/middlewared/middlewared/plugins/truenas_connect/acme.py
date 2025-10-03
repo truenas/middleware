@@ -109,16 +109,16 @@ class TNCACMEService(Service):
 
     @job(lock='tn_connect_cert_generation')
     async def create_cert(self, job, cert_id=None):
-        csr_details = None
+        csr_details = {}
         if cert := (await self.middleware.call('certificate.query', [['id', '=', cert_id]])):
             csr_details = {
-                'csr': cert[0]['CSR'],
+                'csr': cert[0]['CSR'].encode(),
                 'private_key': cert[0]['privatekey'],
             }
 
         await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         try:
-            return await create_cert(await self.middleware.call('tn_connect.config_internal'), csr_details)
+            return await create_cert(await self.middleware.call('tn_connect.config_internal'), **csr_details)
         except TNCCallError as e:
             raise CallError(str(e))
 
