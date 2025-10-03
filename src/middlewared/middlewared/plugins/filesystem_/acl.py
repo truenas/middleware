@@ -125,7 +125,7 @@ class FilesystemService(Service):
         elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', st['realpath']):
             verrors.add(
                 f'{schema}.path',
-                'Path component for is currently encrypted and locked'
+                'Path component is currently encrypted and locked'
             )
         else:
             statfs_flags = self.middleware.call_sync('filesystem.statfs', path)['flags']
