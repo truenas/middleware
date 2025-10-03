@@ -755,6 +755,40 @@ class TestNVMe(NVMeRunning):
                     assert len(devices) == 1, devices
                     self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200)])
 
+                iscsi_extent_payload = {
+                    'type': 'FILE',
+                    'path': file1,
+                    'name': 'nvmet_test_extent'
+                }
+
+                # Ensure we can't create iSCSI using a FILE used by us
+                with assert_validation_errors('iscsi_extent_create.path',
+                                              'File currently in use by NVMe-oF '
+                                              f'subsystem {SUBSYS_NAME1} NSID 1'):
+                    with iscsi_extent(iscsi_extent_payload):
+                        pass
+
+                iscsi_extent_payload = {
+                    'type': 'FILE',
+                    'path': file2,
+                    'name': 'nvmet_test_extent',
+                    'filesize': MB_100
+                }
+
+                with iscsi_extent(iscsi_extent_payload, True):
+                    # Ensure we can't create using a FILE used by iSCSI
+                    in_use_msg = 'This device_path already used by iSCSI extent: nvmet_test_extent'
+                    with assert_validation_errors('nvmet_namespace_create.device_path', in_use_msg):
+                        with nvmet_namespace(subsys_id,
+                                             file2,
+                                             DEVICE_TYPE_FILE,
+                                             filesize=MB_100,
+                                             delete_options={'remove': True}):
+                            pass
+                    # Ensure we can't update using a FILE used by iSCSI
+                    with assert_validation_errors('nvmet_namespace_update.device_path', in_use_msg):
+                        call('nvmet.namespace.update', ns['id'], {'device_path': file2})
+
     def test__pool_export_import(self, fixture_port, loopback_client: NVMeCLIClient, zvol1):
         """
         Test that we can export and import a pool underlying subsystem namespaces.

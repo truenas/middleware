@@ -294,7 +294,7 @@ class iSCSITargetExtentService(SharingService):
     async def clean(self, data, schema_name, verrors, old=None):
         await self.clean_name(data, schema_name, verrors, old=old)
         await self.clean_serial(data, schema_name, verrors, old=old)
-        await self.middleware.call('iscsi.extent.clean_type_and_path', data, schema_name, verrors)
+        await self.middleware.call('iscsi.extent.clean_type_and_path', data, schema_name, verrors, old)
         await self.middleware.call('iscsi.extent.clean_size', data, schema_name, verrors)
 
     @private
@@ -375,7 +375,8 @@ class iSCSITargetExtentService(SharingService):
         return data[self.path_field]
 
     @private
-    def clean_type_and_path(self, data, schema_name, verrors):
+    def clean_type_and_path(self, data, schema_name, verrors, old=None):
+        not_old_id = ('id', '!=', old['id']) if old else None
         if data['type'] is None:
             return data
 
@@ -408,6 +409,13 @@ class iSCSITargetExtentService(SharingService):
             if '@' in zvol_name and not data['ro']:
                 verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')
 
+            filters = [('disk', '=', disk)]
+            if not_old_id:
+                filters.append(not_old_id)
+            if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
+                verrors.add(f'{schema_name}.disk',
+                            f'Disk currently in use by extent {used[0]["name"]}')
+
         elif extent_type == 'FILE':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
@@ -430,6 +438,19 @@ class iSCSITargetExtentService(SharingService):
                     f'{schema_name}.path',
                     'Filepath may not contain space characters'
                 )
+
+            if namespaces := self.middleware.call_sync('nvmet.namespace.query', [['device_path', '=', path]]):
+                ns = namespaces[0]
+                verrors.add(f'{schema_name}.path',
+                            f'File currently in use by NVMe-oF subsystem {ns["subsys"]["name"]} NSID {ns["nsid"]}')
+                raise verrors
+
+            filters = [('path', '=', path)]
+            if not_old_id:
+                filters.append(not_old_id)
+            if used := self.middleware.call_sync('iscsi.extent.query', filters, {'select': ['name']}):
+                verrors.add(f'{schema_name}.path',
+                            f'File currently in use by extent {used[0]["name"]}')
 
         return data
 
