@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from truenas_connect_utils.acme import acme_config, create_cert
+from truenas_connect_utils.acme import acme_config, check_renewal_needed, create_cert
 from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.status import Status
 
@@ -22,6 +22,24 @@ class TNCACMEService(Service):
 
     async def config(self):
         return await acme_config(await self.middleware.call('tn_connect.config_internal'))
+
+    async def check_ari_renewal(self):
+        """Check if certificate renewal is needed using ARI (RFC 9773)"""
+        config = await self.middleware.call('tn_connect.config')
+        if config['certificate'] is None:
+            logger.debug('No TNC certificate configured, skipping ARI check')
+            return {'should_renew': False, 'reason': 'No certificate configured'}
+
+        certificate = await self.middleware.call('certificate.get_instance', config['certificate'])
+        tnc_config = await self.middleware.call('tn_connect.config_internal')
+
+        try:
+            renewal_check = await check_renewal_needed(tnc_config, certificate['certificate'])
+            logger.debug('ARI renewal check result: %s', renewal_check)
+            return renewal_check
+        except Exception:
+            logger.error('Failed to check ARI renewal status', exc_info=True)
+            return {'should_renew': False, 'reason': 'ARI check failed'}
 
     async def update_ui(self, start_heartbeat=True):
         logger.debug('Updating UI with TNC cert')
@@ -76,11 +94,19 @@ class TNCACMEService(Service):
             await self.update_ui()
 
     async def renew_cert(self):
+        """Renew TNC certificate with ARI support (RFC 9773)"""
         logger.debug('Initiating renewal of TNC certificate')
         await self.middleware.call('tn_connect.set_status', Status.CERT_RENEWAL_IN_PROGRESS.name)
         try:
             config = await self.middleware.call('tn_connect.config')
-            renewal_job = await self.middleware.call('tn_connect.acme.create_cert', config['certificate'])
+            certificate = await self.middleware.call('certificate.get_instance', config['certificate'])
+
+            # Pass current certificate for ARI replaces field auto-detection
+            renewal_job = await self.middleware.call(
+                'tn_connect.acme.create_cert',
+                config['certificate'],
+                certificate['certificate']
+            )
             await renewal_job.wait(raise_error=True)
         except Exception:
             logger.error('Failed to renew certificate for TNC', exc_info=True)
@@ -108,7 +134,13 @@ class TNCACMEService(Service):
         return cert_job.result
 
     @job(lock='tn_connect_cert_generation')
-    async def create_cert(self, job, cert_id=None):
+    async def create_cert(self, job, cert_id=None, current_cert_pem=None):
+        """
+        Create or renew TNC certificate with ARI support
+
+        :param cert_id: Existing certificate ID for renewal
+        :param current_cert_pem: Current certificate PEM for ARI replaces field (RFC 9773)
+        """
         csr_details = None
         if cert := (await self.middleware.call('certificate.query', [['id', '=', cert_id]])):
             csr_details = {
@@ -118,7 +150,11 @@ class TNCACMEService(Service):
 
         await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         try:
-            return await create_cert(await self.middleware.call('tn_connect.config_internal'), csr_details)
+            return await create_cert(
+                await self.middleware.call('tn_connect.config_internal'),
+                csr_details,
+                current_cert_pem=current_cert_pem
+            )
         except TNCCallError as e:
             raise CallError(str(e))
 
