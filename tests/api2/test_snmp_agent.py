@@ -8,7 +8,7 @@ import pytest
 from middlewared.test.integration.utils import call, host, ssh
 
 
-pytest.mark.skip('snmp-agent is broken after upgrade to Trixie: NAS-137789')
+pytestmark = pytest.mark.skip('snmp-agent is broken after upgrade to Trixie: NAS-137789')
 
 
 @pytest.fixture()
