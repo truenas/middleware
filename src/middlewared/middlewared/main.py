@@ -962,18 +962,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
             raise CallError('Not authorized', errno.EACCES)
 
-    def can_subscribe(self, app, name):
+    def can_subscribe(self, app: App, name: str) -> bool:
         short_name = name.split(':')[0]
-        if event := self.events.get_event(short_name):
-            if event['no_auth_required']:
-                return True
+        event = self.events.get_event(short_name)
+
+        if event and event['no_auth_required']:
+            return True
 
         if not app.authenticated:
             return False
 
-        if event:
-            if event['no_authz_required']:
-                return True
+        if event and event['no_authz_required']:
+            return True
 
         return app.authenticated_credentials.authorize('SUBSCRIBE', short_name)
 

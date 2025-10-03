@@ -123,28 +123,34 @@ class EventSourceManager:
         self.middleware.role_manager.register_event(name, event_source.roles)
 
     async def subscribe(self, subscriber: Subscriber, ident: str, name: str, arg: str | None):
-        if ident in self.idents:
+        idents_ = self.idents
+        middleware_ = self.middleware
+        event_sources_ = self.instances[name]
+
+        if ident in idents_:
             raise ValueError(f"Ident {ident} is already used")
 
-        self.idents[ident] = IdentData(subscriber, name, arg)
+        idents_[ident] = IdentData(subscriber, name, arg)
         self.subscriptions[name][arg].add(ident)
 
-        if arg not in self.instances[name]:
-            self.middleware.logger.trace("Creating new instance of event source %r:%r", name, arg)
-            self.instances[name][arg] = self.event_sources[name](
-                self.middleware, name, arg,
+        if arg not in event_sources_:
+            middleware_.logger.trace("Creating new instance of event source %r:%r", name, arg)
+            event_sources_[arg] = self.event_sources[name](
+                middleware_,
+                name,
+                arg,
                 functools.partial(self._send_event, name, arg),
                 functools.partial(self._unsubscribe_all, name, arg),
             )
             # Validate that specified `arg` is acceptable wrt event source in question
             try:
-                await self.instances[name][arg].validate_arg()
+                await event_sources_[arg].validate_arg()
             except ValidationErrors as e:
                 await self.unsubscribe(ident, e)
             else:
-                self.middleware.create_task(self.instances[name][arg].process())
+                middleware_.create_task(event_sources_[arg].process())
         else:
-            self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
+            middleware_.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
     async def unsubscribe(self, ident: str, error: Exception | None = None):
         ident_data = self.idents.pop(ident)
