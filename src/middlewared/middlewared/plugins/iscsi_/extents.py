@@ -19,6 +19,7 @@ from middlewared.api.current import (
     iSCSITargetExtentUpdateResult
 )
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
@@ -133,14 +134,11 @@ class iSCSITargetExtentService(SharingService):
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
             await self.middleware.call(
-                'zfs.dataset.update',
-                zvolname,
-                {
-                    'properties': {
-                        'volthreading': {'value': 'off'},
-                        'readonly': {'value': 'on' if data['ro'] else 'off'}
-                    }
-                }
+                'pool.dataset.update_impl',
+                UpdateImplArgs(
+                    name=zvolname,
+                    zprops={'volthreading': 'off', 'readonly': 'on' if data['ro'] else 'off'}
+                )
             )
 
         data['id'] = await self.middleware.call(
@@ -179,13 +177,11 @@ class iSCSITargetExtentService(SharingService):
         if zvolpath is not None and zvolpath.startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', zvolpath))
             await self.middleware.call(
-                'zfs.dataset.update',
-                zvolname,
-                {
-                    'properties': {
-                        'readonly': {'value': 'on' if new['ro'] else 'off'}
-                    }
-                }
+                'pool.dataset.update_impl',
+                UpdateImplArgs(
+                    name=zvolname,
+                    zprops={'readonly': 'on' if new['ro'] else 'off'}
+                )
             )
 
         await self.middleware.call(
@@ -255,9 +251,11 @@ class iSCSITargetExtentService(SharingService):
                     # 2. is a volume
                     # 3. volthreading is currently off
                     await self.middleware.call(
-                        'zfs.dataset.update',
-                        zvolname,
-                        {'properties': {'volthreading': {'value': 'on'}}}
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(
+                            name=zvolname,
+                            zprops={'volthreading': 'on'}
+                        )
                     )
 
         try:
@@ -681,9 +679,11 @@ class iSCSITargetExtentService(SharingService):
         for zvol in await self.middleware.call('zfs.resource.query_impl', args):
             if zvol['properties']['volthreading']['raw'] == 'on':
                 await self.middleware.call(
-                    'zfs.dataset.update',
-                    zvol['name'],
-                    {'properties': {'volthreading': {'value': 'off'}}}
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(
+                        name=zvol['name'],
+                        zprops={'volthreading': 'off'}
+                    )
                 )
 
 

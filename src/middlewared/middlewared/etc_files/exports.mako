@@ -5,8 +5,9 @@
     from pathlib import Path
     from contextlib import suppress
     from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+    from middlewared.plugins.pool_.utils import UpdateImplArgs
 
-    
+
     def do_map(share, map_type, map_ids, alert_shares):
         output = []
         invalid_name = []
@@ -130,9 +131,8 @@
             try:
                 middleware.logger.warning("%s: Disable sharenfs", ds)
                 middleware.call_sync(
-                    'zfs.dataset.update',
-                    ds,
-                    {'properties': {'sharenfs': {'value': 'off'}}}
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(name=ds, zprops={'sharenfs': 'off'})
                 )
             except Exception:
                 middleware.logger.warning("%s: Failed to disable sharenfs", ds, exc_info=True)

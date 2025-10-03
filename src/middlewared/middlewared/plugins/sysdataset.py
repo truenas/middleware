@@ -18,7 +18,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
@@ -421,7 +421,8 @@ class SystemDatasetService(ConfigService):
 
         if acl_enabled:
             self.middleware.call_sync(
-                'zfs.dataset.update', config['basename'], {'properties': {'acltype': {'value': 'off'}}}
+                'pool.dataset.update_impl',
+                UpdateImplArgs(name=config['basename'], zprops={'acltype': 'off'})
             )
 
         if mounted is None:
@@ -527,19 +528,19 @@ class SystemDatasetService(ConfigService):
                 except Exception:
                     self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
-                update_props_dict = {
-                    k: {'value': v} for k, v in props.items()
-                    # use `raw` key instead of `value` since
-                    # the latter will do some fancy translation
-                    # depending on the property.
-                    # (i.e. if raw == "on" value == True)
-                    if datasets_prop[dataset][k]['raw'] != v
-                }
+                update_props_dict = dict()
+                for k, v in props.items():
+                    if datasets_prop[dataset][k]['raw'] != v:
+                        # use `raw` key instead of `value` since
+                        # the latter will do some fancy translation
+                        # depending on the property.
+                        # (i.e. if raw == "on" value == True)
+                        update_props_dict[k] = v
+
                 if update_props_dict:
                     await self.middleware.call(
-                        'zfs.dataset.update',
-                        dataset,
-                        {'properties': update_props_dict},
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=dataset, zprops=update_props_dict)
                     )
 
     def __create_relevant_paths(self, ds_name, create_paths):

@@ -7,7 +7,7 @@ from datetime import datetime
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils.interface import wait_for_default_interface_link_state_up
-from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 
 from .state_utils import (
     DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, missing_required_datasets,
@@ -102,9 +102,8 @@ class DockerSetupService(Service):
                 if any(val['raw'] != update_props[name] for name, val in existing_dataset.items()):
                     # if any of the zfs properties don't match what we expect we'll update all properties
                     self.middleware.call_sync(
-                        'zfs.dataset.update', dataset_name, {
-                            'properties': {k: {'value': v} for k, v in update_props.items()}
-                        }
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=dataset_name, zprops=update_props)
                     )
             else:
                 self.move_conflicting_dir(dataset_name)

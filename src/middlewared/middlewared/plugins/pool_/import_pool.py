@@ -7,6 +7,7 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
+from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
 from middlewared.utils.zfs import query_imported_fast_impl
 from .utils import ZPOOL_CACHE_FILE
@@ -46,12 +47,10 @@ class PoolService(Service):
 
     @private
     async def disable_shares(self, ds):
-        await self.middleware.call('zfs.dataset.update', ds, {
-            'properties': {
-                'sharenfs': {'value': "off"},
-                'sharesmb': {'value': "off"},
-            }
-        })
+        await self.middleware.call(
+            'pool.dataset.update_impl',
+            UpdateImplArgs(name=ds, zprops={'sharenfs': "off", 'sharesmb': "off"})
+        )
 
     @api_method(PoolImportPoolArgs, PoolImportPoolResult, roles=['POOL_WRITE'])
     @job(lock='import_pool')
@@ -122,7 +121,8 @@ class PoolService(Service):
                 # place so user cannot unintentionally share it via SMB/NFS
                 if child == os.path.join(pool_name, 'ix-apps'):
                     await self.middleware.call(
-                        'zfs.dataset.update', child, {'properties': {'mountpoint': {'value': f'/{IX_APPS_DIR_NAME}'}}}
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=child, zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
                     )
                 elif child == container_dataset(pool_name):
                     await self.middleware.call(
@@ -259,31 +259,31 @@ class PoolService(Service):
         else:
             self.logger.debug('Done calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
 
-        opts = {'properties': dict()}
+        opts = dict()
         if ds['acltype']['value'] == 'nfsv4':
             if ds['aclinherit']['value'] != 'passthrough':
-                opts['properties'].update({'aclinherit': {'value': 'passthrough'}})
+                opts['aclinherit'] = 'passthrough'
             if ds['aclmode']['value'] != 'passthrough':
-                opts['properties'].update({'aclmode': {'value': 'passthrough'}})
+                opts['aclmode'] = 'passthrough'
         else:
             if ds['aclinherit']['value'] != 'discard':
-                opts['properties'].update({'aclinherit': {'value': 'discard'}})
+                opts['aclinherit'] = 'discard'
             if ds['aclmode']['value'] != 'discard':
-                opts['properties'].update({'aclmode': {'value': 'discard'}})
+                opts['aclmode'] = 'discard'
 
         if ds['sharenfs']['value'] != 'off':
-            opts['properties'].update({'sharenfs': {'value': 'off'}})
+            opts['sharenfs'] = 'off'
         if ds['sharesmb']['value'] != 'off':
-            opts['properties'].update({'sharesmb': {'value': 'off'}})
+            opts['sharesmb'] = 'off'
 
-        if opts['properties']:
+        if opts:
             try:
-                self.logger.debug('Calling zfs.dateset.update on %r with opts %r', vol_name, opts['properties'])
-                self.middleware.call_sync('zfs.dataset.update', vol_name, opts)
+                self.logger.debug('Calling pool.dateset.update_impl on %r with opts %r', vol_name, opts)
+                self.middleware.call_sync('pool.dataset.update_impl', UpdateImplArgs(name=vol_name, zprops=opts))
             except Exception:
                 self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
             else:
-                self.logger.debug('Done calling zfs.dateset.update on %r', vol_name)
+                self.logger.debug('Done calling pool.dataset.update_impl on %r', vol_name)
 
     @private
     def import_on_boot_impl(self, vol_name, vol_guid, set_cachefile=False):
