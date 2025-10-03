@@ -697,6 +697,7 @@ class CoreService(Service):
 
     @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False, pass_app=True)
     async def subscribe(self, app, event):
+        self.logger.debug(f'core.subscribe {event}')
         if not self.middleware.can_subscribe(app, event):
             raise CallError('Not authorized', errno.EACCES)
 
