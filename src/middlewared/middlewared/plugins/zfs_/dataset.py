@@ -104,54 +104,39 @@ class ZFSDatasetService(CRUDService):
 
         return filter_list(datasets, filters, options)
 
-    def create(self, data: dict):
-        """Creates a ZFS dataset or zvol.
+    def update(self, id_: str, data: dict):
+        """Update a ZFS dataset or zvol.
 
-        Args: a dictionary with following keys
-            name: str (i.e. "tank/new-dataset")
-            create_ancestors: bool, default is False, if set to True, will
-                create any ancestors that do not exist
-            type: str default is FILESYSTEM. Can also be VOLUME to create a
-                zvol.
-            properties: dictionary with desired properties to be applied
-                to the dataset/zvol during creation.
+        Args:
+            id: str (i.e. "tank/dataset")
+            properties: A nested dictionary whose top-level key should be
+                `properties` and value should be a dictionary whose keys
+                    represent the properties and values represent what
+                    to update.
+                    i.e.
+                        {
+                            'properties': {
+                                'prop_name1': 'value',
+                                'prop_name2': 'value',
+                            }
+                        }
         """
-        data.setdefault('name', '')
-        data.setdefault('create_ancestors', False)
-        data.setdefault('type', 'FILESYSTEM')
         data.setdefault('properties', {})
-
-        verrors = ValidationErrors()
-        if not data['name']:
-            verrors.add('name', 'name must be provided')
-        elif data['name'] == '/':
-            verrors.add('name', 'Invalid name')
-        elif '/' not in data['name']:
-            verrors.add('name', 'You need a full name, e.g. pool/newdataset')
-        verrors.check()
-
-        properties = data.get('properties') or {}
-        sparse = properties.pop('sparse', False)
-        params = {}
-
-        for k, v in data['properties'].items():
-            params[k] = v
-
-        # it's important that we set xattr=sa for various
-        # performance reasons related to ea handling
-        if data['type'] == 'FILESYSTEM' and 'xattr' not in params:
-            params['xattr'] = 'sa'
-
         try:
             with libzfs.ZFS() as zfs:
-                pool = zfs.get(data['name'].split('/')[0])
-                pool.create(
-                    data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']),
-                    sparse_vol=sparse, create_ancestors=data['create_ancestors'],
-                )
+                dataset = zfs.get_dataset(id_)
+
+                if 'properties' in data:
+                    properties = data['properties'].copy()
+                    # Set these after reservations
+                    for k in ['quota', 'refquota']:
+                        if k in properties:
+                            properties[k] = properties.pop(k)  # Set them last
+                    self.update_zfs_object_props(properties, dataset)
+
         except libzfs.ZFSException as e:
-            self.logger.error('Failed to create dataset', exc_info=True)
-            raise CallError(f'Failed to create dataset: {e}')
+            self.logger.error('Failed to update dataset', exc_info=True)
+            raise CallError(f'Failed to update dataset: {e}')
         else:
             return data
 

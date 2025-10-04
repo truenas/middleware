@@ -21,6 +21,7 @@ from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
 from .dataset_query_utils import generic_query
 from .utils import (
     CreateImplArgs,
+    CreateImplArgsDataclass,
     dataset_mountpoint,
     get_dataset_parents,
     POOL_DS_CREATE_PROPERTIES,
@@ -337,40 +338,50 @@ class PoolDatasetService(CRUDService):
     @private
     @pass_thread_local_storage
     def create_impl(self, tls, data: CreateImplArgs):
-        kwargs = {"name": data.name, "type": None}
-        if data.ztype == "FILESYSTEM":
+        # Convert TypedDict to dataclass to handle defaults for missing fields
+        args = CreateImplArgsDataclass(
+            name=data['name'],
+            ztype=data['ztype'],
+            zprops=data.get('zprops', {}),
+            uprops=data.get('uprops', None),
+            encrypt=data.get('encrypt', None),
+            create_ancestors=data.get('create_ancestors', False)
+        )
+
+        kwargs = {"name": args.name, "type": None}
+        if args.ztype == "FILESYSTEM":
             kwargs["type"] = ZFSType.ZFS_TYPE_FILESYSTEM
-        elif data.ztype == "VOLUME":
+        elif args.ztype == "VOLUME":
             kwargs["type"] = ZFSType.ZFS_TYPE_VOLUME
-            sparse = data.zprops.pop("sparse", None)  # not a real zfs property
+            sparse = args.zprops.pop("sparse", None)  # not a real zfs property
             if sparse is True:
                 # sparse volume is only created if user explicitly
                 # requests it
-                data.zprops["refreservation"] = "none"
+                args.zprops["refreservation"] = "none"
             else:
                 # otherwise, we always create "thick" provisioned volumes
-                data.zprops.setdefault("refreservation", data.zprops["volsize"])
+                args.zprops.setdefault("refreservation", args.zprops["volsize"])
         else:
-            raise CallError(f"Invalid dataset type: {data.ztype!r}")
+            raise CallError(f"Invalid dataset type: {args.ztype!r}")
 
-        if data.zprops:
-            kwargs["properties"] = data.zprops
+        if args.zprops:
+            kwargs["properties"] = args.zprops
 
-        if data.uprops:
-            kwargs["user_properties"] = data.uprops
+        if args.uprops:
+            kwargs["user_properties"] = args.uprops
 
-        if data.encrypt and data.encrypt.get("encryption") != "off":
+        if args.encrypt and args.encrypt.get("encryption") != "off":
             kwargs["crypto"] = tls.lzh.resource_cryptography_config(
-                keyformat=data.encrypt["keyformat"],
-                key=data.encrypt["key"],
+                keyformat=args.encrypt["keyformat"],
+                key=args.encrypt["key"],
             )
-            if pb := data.encrypt.get("pbkdf2iters"):
+            if pb := args.encrypt.get("pbkdf2iters"):
                 if "properties" in kwargs:
                     kwargs["properties"]["pbkdf2iters"] = str(pb)
                 else:
                     kwargs["properties"] = {"pbkdf2iters": str(pb)}
 
-        if data.create_ancestors:
+        if args.create_ancestors:
             # If we need to create ancestors, we need to handle this differently
             # truenas_pylibzfs doesn't have a direct create_ancestors flag
             # So we'll create parent datasets first if needed
