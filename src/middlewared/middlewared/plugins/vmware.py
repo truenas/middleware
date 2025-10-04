@@ -445,8 +445,6 @@ class VMWareService(CRUDService):
             except Exception as e:
                 self.logger.warning("VMware login failed to %s", vmsnapobj["hostname"])
                 self.alert_vmware_login_failed(vmsnapobj, e)
-                for vm_uuid in elem["snapvms"]:
-                    self.middleware.call_sync("vmware.defer_deleting_snapshot", vmsnapobj, vm_uuid, vmsnapname)
                 continue
 
             # vm is an object, so we'll dereference that object anywhere it's user facing.
@@ -465,7 +463,6 @@ class VMWareService(CRUDService):
                                 "snapshot": vmsnapname,
                                 "error": self._vmware_exception_message(e),
                             })
-                            self.middleware.call_sync("vmware.defer_deleting_snapshot", vmsnapobj, vm_uuid, vmsnapname)
 
             self.disconnect(si)
 
