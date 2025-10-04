@@ -9,7 +9,9 @@ from middlewared.test.integration.utils import call
 def test__iscsi_extent__disk_choices(request):
     with dataset("test zvol", {"type": "VOLUME", "volsize": 1048576}) as ds:
         # Make snapshots available for devices
-        call("zfs.dataset.update", ds, {"properties": {"snapdev": {"parsed": "visible"}}})
+        call(
+            "pool.dataset.update_impl", {"name": ds, "zprops": {"snapdev": "visible"}}
+        )
         call("pool.snapshot.create", {"dataset": ds, "name": "snap-1"})
         assert call("iscsi.extent.disk_choices") == {
             f'zvol/{ds.replace(" ", "+")}': f'{ds} (1 MiB)',

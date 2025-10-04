@@ -29,9 +29,11 @@ def setup_state(request):
                 ssh(f"echo 'Corrupted DB' > {path}")
             case 'AuditDatasetCleanup':
                 call(
-                    "zfs.dataset.update",
-                    "boot-pool/ROOT/24.10.0-MASTER-20240709-021413/audit",
-                    {"properties": {"org.freenas:refquota_warning": {"parsed": "70"}}}
+                    "pool.dataset.update_impl",
+                    {
+                        "name": "boot-pool/ROOT/24.10.0-MASTER-20240709-021413/audit",
+                        "uprops": {"org.freenas:refquota_warning": "70"}
+                    }
                 )
             case _:
                 pass

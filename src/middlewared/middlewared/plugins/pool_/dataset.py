@@ -26,6 +26,7 @@ from .utils import (
     POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
     UpdateImplArgs,
+    UpdateImplArgsDataclass,
     ZFSKeyFormat,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES
 )
@@ -659,12 +660,20 @@ class PoolDatasetService(CRUDService):
     @private
     @pass_thread_local_storage
     def update_impl(self, tls, data: UpdateImplArgs):
-        ds = tls.lzh.open_resource(name=data.name)
-        if data.zprops:
-            ds.set_properties(properties=data.zprops)
-        if data.uprops:
-            ds.set_user_properties(user_properties=data.uprops)
-        for i in data.iprops:
+        # Convert TypedDict to dataclass to handle defaults for missing fields
+        args = UpdateImplArgsDataclass(
+            name=data['name'],
+            zprops=data.get('zprops', {}),
+            uprops=data.get('uprops', {}),
+            iprops=data.get('iprops', set())
+        )
+
+        ds = tls.lzh.open_resource(name=args.name)
+        if args.zprops:
+            ds.set_properties(properties=args.zprops)
+        if args.uprops:
+            ds.set_user_properties(user_properties=args.uprops)
+        for i in args.iprops:
             ds.inherit_property(property=i)
 
     @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)
@@ -722,14 +731,22 @@ class PoolDatasetService(CRUDService):
         verrors.check()
 
         uia: UpdateImplArgs = UpdateImplArgs(name=id_)
+        # Since TypedDict doesn't provide defaults, we need to ensure these exist
+        if 'zprops' not in uia:
+            uia['zprops'] = {}
+        if 'uprops' not in uia:
+            uia['uprops'] = {}
+        if 'iprops' not in uia:
+            uia['iprops'] = set()
+
         for prop in POOL_DS_UPDATE_PROPERTIES:
             if prop.api_name not in data:
                 continue
             if prop.inheritable and data[prop.api_name] == 'INHERIT':
-                uia.iprops.add(prop.real_name)
+                uia['iprops'].add(prop.real_name)
                 if prop.real_name == 'acltype':
-                    uia.iprops.add('aclmode')
-                    uia.iprops.add('aclinherit')
+                    uia['iprops'].add('aclmode')
+                    uia['iprops'].add('aclinherit')
             else:
                 if not prop.transform:
                     transformed = data[prop.api_name]
@@ -737,21 +754,21 @@ class PoolDatasetService(CRUDService):
                     transformed = prop.transform(data[prop.api_name])
 
                 if prop.is_user_prop:
-                    uia.uprops[prop.real_name] = transformed
+                    uia['uprops'][prop.real_name] = transformed
                 else:
-                    uia.zprops[prop.real_name] = transformed
+                    uia['zprops'][prop.real_name] = transformed
 
                 if prop.real_name == 'acltype':
-                    if uia.zprops[prop.real_name] == 'nfsv4':
-                        uia.zprops.update({'aclinherit': 'passthrough'})
-                    elif uia.zprops[prop.real_name] in ('posix', 'off'):
-                        uia.zprops.update({'aclmode': 'discard', 'aclinherit': 'discard'})
+                    if uia['zprops'][prop.real_name] == 'nfsv4':
+                        uia['zprops'].update({'aclinherit': 'passthrough'})
+                    elif uia['zprops'][prop.real_name] in ('posix', 'off'):
+                        uia['zprops'].update({'aclmode': 'discard', 'aclinherit': 'discard'})
 
         for up in data.get('user_properties_update', []):
             if 'value' in up:
-                uia.uprops[up['key']] = up['value']
+                uia['uprops'][up['key']] = up['value']
             elif up.get('remove'):
-                uia.iprops.add(up['key'])
+                uia['iprops'].add(up['key'])
 
         try:
             await self.middleware.call('pool.dataset.update_impl', uia)
