@@ -351,6 +351,10 @@ class PoolDatasetService(CRUDService):
         kwargs = {"name": args.name, "type": None}
         if args.ztype == "FILESYSTEM":
             kwargs["type"] = ZFSType.ZFS_TYPE_FILESYSTEM
+            if "xattr" not in args.zprops:
+                # its important to set this as "sa"
+                # for performance reasons
+                args.zprops["xattr"] = "sa"
         elif args.ztype == "VOLUME":
             kwargs["type"] = ZFSType.ZFS_TYPE_VOLUME
             sparse = args.zprops.pop("sparse", None)  # not a real zfs property
