@@ -59,6 +59,10 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                     # Prepend the index to the location tuple
                     loc = (idx,) + err_copy.get('loc', ())
                     err_copy['loc'] = loc
+                    if 'ctx' not in err_copy:
+                        err_copy['ctx'] = {'error': err_copy.get('msg', 'validation error')}
+                    elif 'error' not in err_copy.get('ctx', {}):
+                        err_copy['ctx']['error'] = err_copy.get('msg', 'validation error')
                     errors.append(err_copy)
                 raise ValidationError.from_exception_data(e.title, errors)
             except ValidationErrors as e:
@@ -72,6 +76,7 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                         'loc': loc,
                         'msg': error.errmsg,
                         'type': 'value_error',
+                        'ctx': {'error': error.errmsg},
                     })
                 raise ValidationError.from_exception_data('ValidationError', errors)
             except Exception as e:
@@ -82,13 +87,17 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                         err_copy = err.copy()
                         loc = (idx,) + err_copy.get('loc', ())
                         err_copy['loc'] = loc
+                        if 'ctx' not in err_copy:
+                            err_copy['ctx'] = {'error': err_copy.get('msg', 'validation error')}
+                        elif 'error' not in err_copy.get('ctx', {}):
+                            err_copy['ctx']['error'] = err_copy.get('msg', 'validation error')
                         errors.append(err_copy)
                     raise ValidationError.from_exception_data('ValidationError', errors)
                 else:
                     # Generic error at this index
                     raise ValidationError.from_exception_data(
                         'ValidationError',
-                        [{'loc': (idx,), 'msg': str(e), 'type': 'value_error'}]
+                        [{'loc': (idx,), 'msg': str(e), 'type': 'value_error', 'ctx': {'error': str(e)}}]
                     )
         return out
     return _validate
