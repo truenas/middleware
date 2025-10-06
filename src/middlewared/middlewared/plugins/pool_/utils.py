@@ -44,8 +44,23 @@ ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
 
+class CreateImplArgs(typing.TypedDict, total=False):
+    name: str
+    """The name of the resource being created."""
+    ztype: typing.Literal["FILESYSTEM", "VOLUME"]
+    """The type of the resource to be created."""
+    zprops: dict[str, str]
+    """ZFS data properties to be applied during creation."""
+    uprops: dict[str, str] | None
+    """ZFS user properties to be applied during creation."""
+    encrypt: dict | None
+    """Encryption related properties to be applied during creation."""
+    create_ancestors: bool
+    """Create ancestors for the zfs resource being created."""
+
+
 @dataclasses.dataclass(slots=True, kw_only=True)
-class CreateImplArgs:
+class CreateImplArgsDataclass:
     name: str
     """The name of the resource being created."""
     ztype: typing.Literal["FILESYSTEM", "VOLUME"]
