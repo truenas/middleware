@@ -94,7 +94,7 @@ systemctl mask lvm2-monitor.service
 systemctl mask ipa-epn.service
 
 # Prevent systemd management of users and accounts: NAS-137910
-systemctl mask systemd-sysusers.servics
+systemctl mask systemd-sysusers.service
 
 systemctl set-default truenas.target
 

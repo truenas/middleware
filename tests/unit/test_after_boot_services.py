@@ -34,7 +34,7 @@ def process_svc_data(svc_entry: str):
 @pytest.mark.parametrize('svc_name,expected', [
     ("nscd", {"state": "listed", "alarm": None, "status": ("loaded", "active", "running")}),
     ("rpcbind", {"state": "listed", "alarm": None, "status": ("loaded", "inactive", "dead")}),
-    ("systemd-sysusers", {"state": "listed", "alarm": None, "status": ("loaded", "inactive", "dead")}),
+    ("systemd-sysusers", {"state": "listed", "alarm": None, "status": ("masked", "inactive", "dead")}),
 ])
 def test__systemctl_unit_state(systemctl_service_status, svc_name, expected):
     """ Confirm status of services at boot """
