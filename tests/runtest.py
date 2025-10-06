@@ -20,6 +20,11 @@ TEST_DIR_TO_RESULT = {
     'directory_services': 'results/directoryservices_tests_result.xml',
     'stig': 'results/stig_tests_result.xml',
     'sharing_protocols': 'results/sharing_protocols_tests_result.xml',
+    'sharing_protocols/fibre_channel': 'results/sharing_protocols_fibre_channel_tests_result.xml',
+    'sharing_protocols/iscsi': 'results/sharing_protocols_iscsi_tests_result.xml',
+    'sharing_protocols/nfs': 'results/sharing_protocols_nfs_tests_result.xml',
+    'sharing_protocols/nvmet': 'results/sharing_protocols_nvmet_tests_result.xml',
+    'sharing_protocols/smb': 'results/sharing_protocols_smb_tests_result.xml',
     'cloud': 'results/cloud_tests_result.xml',
     'vm': 'results/vm_result.xml',
 }
