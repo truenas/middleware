@@ -137,13 +137,15 @@ class VMDeviceService(CRUDService):
         if not converting_from_image_to_zvol:
             sp = os.path.dirname(dip)
             try:
-                dst = self.middleware.call_sync('filesystem.statfs', os.path.dirname(sp))
+                dst = self.middleware.call_sync('filesystem.stat', os.path.dirname(sp))
                 if dst['type'] != 'DIRECTORY':
                     raise ValidationError(schema, f'{sp!r} is not a directory', errno.EINVAL)
-                elif has_internal_path(dst['source']):
+
+                vfs = self.middleware.call_sync('filesystem.statfs', dst['realpath'])
+                if has_internal_path(vfs['source']):
                     raise ValidationError(
                         schema,
-                        f'{sp!r} is in a protected system path ({dst["source"]})',
+                        f'{sp!r} is in a protected system path ({vfs["source"]})',
                         errno.EACCES
                     )
             except CallError as e:
