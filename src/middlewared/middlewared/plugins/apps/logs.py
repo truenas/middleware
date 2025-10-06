@@ -17,12 +17,6 @@ class AppContainerLogsFollowTailEventSource(EventSource):
 
     """
     Retrieve logs of a container/service in an app.
-
-    Name of app and id of container/service is required.
-    Optionally `tail_lines` and `limit_bytes` can be specified.
-
-    `tail_lines` is an option to select how many lines of logs to retrieve for the said container. It
-    defaults to 500. If set to `null`, it will retrieve complete logs of the container.
     """
     args = AppContainerLogsFollowTailEventSourceArgs
     event = AppContainerLogsFollowTailEventSourceEvent

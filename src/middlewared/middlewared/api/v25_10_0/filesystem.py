@@ -428,6 +428,8 @@ class FilesystemPutResult(BaseModel):
 class FileFollowTailEventSourceArgs(BaseModel):
     path: str
     """Path to the file to follow/tail."""
+    tail_lines: int = 3
+    """Number of log lines to tail from the end of the log."""
 
 
 @single_argument_result
