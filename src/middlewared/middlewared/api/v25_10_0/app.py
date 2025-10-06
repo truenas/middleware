@@ -534,7 +534,7 @@ class AppSimilarResult(BaseModel):
 
 class AppContainerLogsFollowTailEventSourceArgs(BaseModel):
     tail_lines: int | None = Field(default=500, ge=1)
-    """Number of log lines to tail from the end of the log."""
+    """Number of log lines to tail from the end of the log. If `null`, retrieve complete logs of the container."""
     app_name: str
     """Name of the application whose container logs to follow."""
     container_id: str
