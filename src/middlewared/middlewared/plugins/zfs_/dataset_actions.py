@@ -3,7 +3,6 @@ import libzfs
 
 from middlewared.service import CallError, Service
 from middlewared.service_exception import ValidationError
-from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
 
 def handle_ds_not_found(error_code: int, ds_name: str):
@@ -17,23 +16,6 @@ class ZFSDatasetService(Service):
         namespace = 'zfs.dataset'
         private = True
         process_pool = True
-
-    def path_to_dataset(self, path, mntinfo=None):
-        """
-        Convert `path` to a ZFS dataset name. This
-        performs lookup through mountinfo.
-
-        Anticipated error conditions are that path is not
-        on ZFS or if the boot pool underlies the path. In
-        addition to this, all the normal exceptions that
-        can be raised by a failed call to os.stat() are
-        possible.
-        """
-        # NOTE: there is no real reason to call this method
-        # since it uses a child process in the process pool.
-        # It's more efficient to just import `path_to_dataset_impl`
-        # and call it directly.
-        return path_to_dataset_impl(path, mntinfo)
 
     def child_dataset_names(self, path):
         # return child datasets given a dataset `path`.

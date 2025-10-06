@@ -10,7 +10,7 @@ import aiohttp
 from middlewared.service import Service
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.time_utils import utc_now
-
+from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
 USAGE_URL = 'https://usage.truenas.com/submit'
 
@@ -144,7 +144,7 @@ class UsageService(Service):
             opposite_namespace = 'rsynctask' if namespace == 'cloudsync' else 'cloudsync'
             for task in self.middleware.call_sync(f'{namespace}.query', filters):
                 try:
-                    task_ds = self.middleware.call_sync('zfs.dataset.path_to_dataset', task['path'], context['mntinfo'])
+                    task_ds = path_to_dataset_impl(task['path'], context['mntinfo'])
                 except Exception:
                     self.logger.error('Failed mapping path %r to dataset', task['path'], exc_info=True)
                 else:
