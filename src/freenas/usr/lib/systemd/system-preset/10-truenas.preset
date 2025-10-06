@@ -49,3 +49,6 @@ disable apt-daily-upgrade.service
 disable apt-daily-upgrade.timer
 disable apt-daily.service
 disable apt-daily.timer
+
+# Prevent systemd management of users and accounts: NAS-137910
+disable systemd-sysusers
