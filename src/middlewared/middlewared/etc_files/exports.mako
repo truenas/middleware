@@ -6,6 +6,8 @@
     from contextlib import suppress
     from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
     from middlewared.plugins.pool_.utils import UpdateImplArgs
+    from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
+    from middlewared.utils.mount import getmntinfo
 
 
     def do_map(share, map_type, map_ids, alert_shares):
@@ -109,33 +111,24 @@
         return hostname
 
     def disable_sharenfs():
-        datasets = []
+        potential_datasets = set()
         with open('/etc/exports.d/zfs.exports', 'r') as f:
            for line in f:
                if not line.strip() or line.startswith('#'):
                    continue
 
-               try:
-                   ds_name = middleware.call_sync(
-                       'zfs.dataset.path_to_dataset',
-                       line.rsplit(" ", 1)[0]
-                   )
-               except Exception:
-                   middleware.logger.warning("%s: Dataset lookup failed", line, exc_info=True)
-                   continue
+               potential_datasets.add(line.rsplit(" ", 1)[0])
 
-               datasets.append(ds_name)
-
-        middleware.logger.warning("Datasets with sharenfs: %s", str(datasets))
-        for ds in datasets:
-            try:
-                middleware.logger.warning("%s: Disable sharenfs", ds)
-                middleware.call_sync(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(name=ds, zprops={'sharenfs': 'off'})
-                )
-            except Exception:
-                middleware.logger.warning("%s: Failed to disable sharenfs", ds, exc_info=True)
+        for path, ds in paths_to_datasets_impl(potential_datasets, getmntinfo()).items():
+            if ds is not None:
+                try:
+                    middleware.logger.warning("Disable sharenfs for: %s", ds)
+                    middleware.call_sync(
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=ds, zprops={'sharenfs': 'off'})
+                    )
+                except Exception:
+                    middleware.logger.warning("Failed to disable sharenfs for: %s", ds, exc_info=True)
 
         return
 
