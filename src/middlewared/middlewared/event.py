@@ -8,6 +8,7 @@ from middlewared.role import RoleManager
 from middlewared.service import ValidationErrors
 if typing.TYPE_CHECKING:
     from middlewared.api.base import BaseModel
+    from middlewared.main import Middleware
     from middlewared.types import EventType
 
 
@@ -59,12 +60,26 @@ class Events:
             yield k, self.get_event(k)
 
 
-class EventSource:
-    args = None
-    event = None
-    roles = []
+class SendEventProcedure(typing.Protocol):
+    def __call__(self, event_type: str, **kwargs) -> None: ...
 
-    def __init__(self, middleware, name, arg, send_event, unsubscribe_all):
+
+UnsubscribeProcedure: typing.TypeAlias = typing.Callable[[Exception | None], typing.Awaitable[None]]
+
+
+class EventSource:
+    args: type['BaseModel'] | None = None
+    event: type['BaseModel'] | None = None
+    roles: list[str] = []
+
+    def __init__(
+        self,
+        middleware: 'Middleware',
+        name: str,
+        arg: str | None,
+        send_event: SendEventProcedure,
+        unsubscribe_all: UnsubscribeProcedure,
+    ):
         self.middleware = middleware
         self.name = name
         self.arg = arg

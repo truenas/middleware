@@ -46,7 +46,7 @@ from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
 class FilesystemReceiveFileOptions(BaseModel):
     append: bool = False
-    mode: int = None
+    mode: int | None = None
     uid: int = ACL_UNDEFINED_ID
     gid: int = ACL_UNDEFINED_ID
 
@@ -63,28 +63,14 @@ class FilesystemReceiveFileResult(BaseModel):
 
 class FileFollowTailEventSource(EventSource):
     """
-    Retrieve last `no_of_lines` specified as an integer argument for a specific `path` and then
-    any new lines as they are added. Specified argument has the format `path:no_of_lines` ( `/var/log/messages:3` ).
-
-    `no_of_lines` is optional and if it is not specified it defaults to `3`.
-
-    However, `path` is required for this.
+    Retrieve last ``tail_lines`` lines specified as an integer argument for a specified ``path`` and then
+    any new lines as they are added.
     """
     args = FileFollowTailEventSourceArgs
     event = FileFollowTailEventSourceEvent
 
-    def parse_arg(self):
-        if ':' in self.arg:
-            path, lines = self.arg.rsplit(':', 1)
-            lines = int(lines)
-        else:
-            path = self.arg
-            lines = 3
-
-        return path, lines
-
     def run_sync(self):
-        path, lines = self.parse_arg()
+        path, lines = self.arg['path'], self.arg['tail_lines']
 
         if not os.path.exists(path):
             # FIXME: Error?
