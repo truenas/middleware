@@ -7,9 +7,10 @@ from alembic.operations import ops
 from alembic.operations.base import BatchOperations, Operations
 from alembic.operations.batch import ApplyBatchImpl, BatchOperationsImpl
 from sqlalchemy import engine_from_config, ForeignKeyConstraint, pool
+import sqlalchemy as sa
 
 from middlewared.plugins.config import FREENAS_DATABASE
-from middlewared.sqlalchemy import JSON, Model
+from middlewared.sqlalchemy import EncryptedText, JSON, Model, MultiSelectField
 from middlewared.utils.plugins import load_modules
 from middlewared.utils.python import get_middlewared_dir
 
@@ -107,6 +108,22 @@ def render_item(type_, obj, autogen_context):
     return False
 
 
+def compare_type(context, inspected_column, metadata_column, inspected_type, metadata_type):
+    if isinstance(metadata_type, EncryptedText) and isinstance(inspected_type, (sa.String, sa.Text, sa.VARCHAR)):
+        return False
+
+    if isinstance(metadata_type, MultiSelectField) and isinstance(inspected_type, sa.VARCHAR):
+        return False
+
+    if isinstance(metadata_type, (sa.String, sa.VARCHAR)) and isinstance(inspected_type, (sa.String, sa.VARCHAR)):
+        # SQLite does not enforce VARCHAR length, so the inconsistencies between our metadata and our database
+        # do not matter
+        if metadata_type.length != inspected_type.length:
+            return False
+
+    return None
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -155,6 +172,7 @@ def run_migrations_online():
             render_as_batch=True,
             include_object=include_object,
             render_item=render_item,
+            compare_type=compare_type,
         )
 
         with context.begin_transaction():
