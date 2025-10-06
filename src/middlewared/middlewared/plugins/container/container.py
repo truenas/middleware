@@ -122,6 +122,14 @@ class ContainerService(CRUDService):
             container['idmap_slice'] = idmap['slice']
 
     @private
+    async def validate_pool(self, verrors, schema, pool):
+        if pool not in await self.middleware.call("container.pool_choices"):
+            verrors.add(
+                schema,
+                'Pool not found.'
+            )
+
+    @private
     async def validate(self, verrors, schema_name, data, old=None):
         if data['uuid'] is None:
             data['uuid'] = str(uuid.uuid4())
@@ -161,14 +169,19 @@ class ContainerService(CRUDService):
         """
         Create a Container.
         """
+        # Use preferred pool from config if pool not specified
+        pool = data.pop('pool') or (await self.middleware.call('lxc.config'))['preferred_pool']
         verrors = ValidationErrors()
         await self.validate(verrors, 'container_create', data)
-        verrors.check()
+        if not pool:
+            verrors.add(
+                'container_create.pool',
+                'Either configure a preferred pool in lxc settings or provide a pool name.'
+            )
+        else:
+            await self.validate_pool(verrors, 'container_create.pool', pool)
 
-        pool = data.pop('pool')
-        if pool not in await self.pool_choices():
-            verrors.add('container_create.pool', 'Pool not found.')
-            verrors.check()
+        verrors.check()
 
         image = data.pop('image')
         try:
