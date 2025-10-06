@@ -1,8 +1,11 @@
 import collections
+import contextlib
 import functools
 import os
 import re
 import typing
+
+from middlewared.utils.sensors import SensorsWrapper
 
 
 AMD_PREFER_TDIE = (
@@ -15,7 +18,14 @@ AMD_PREFER_TDIE = (
     'AMD Ryzen Threadripper 19',
     'AMD Ryzen Threadripper 29',
 )
+AMD_PREFIXES = (
+    'k8temp',
+    'k10temp',
+)
 RE_CORE = re.compile(r'^Core ([0-9]+)$')
+
+sensors = SensorsWrapper()
+sensors.init()
 
 
 class CpuInfo(typing.TypedDict):
@@ -92,11 +102,11 @@ def cpu_info_impl() -> CpuInfo:
 
 def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
     temperatures = collections.defaultdict(dict)
-    for chip_name in filter(lambda sen: sen.startswith('coretemp-isa'), cpu_metrics):
-        for temp in cpu_metrics[chip_name].values():
-            if not (m := RE_CORE.match(temp['name'])):
+    for chip_name in filter(lambda sen: sen.startswith('coretemp'), cpu_metrics):
+        for label, temp in cpu_metrics[chip_name].items():
+            if not (m := RE_CORE.match(label)):
                 continue
-            temperatures[chip_name][int(m.group(1))] = temp['value']
+            temperatures[chip_name][int(m.group(1))] = temp
 
     return dict(enumerate(sum(
         [
@@ -107,12 +117,9 @@ def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
     )))
 
 
-def amd_cpu_temperatures(amd_metrics: dict) -> dict:
+def amd_cpu_temperatures(amd_sensors: dict) -> dict:
     cpu_model = cpu_info()['cpu_model']
     core_count = cpu_info()['physical_core_count']
-    amd_sensors = {}
-    for amd_sensor in amd_metrics.values():
-        amd_sensors[amd_sensor['name']] = amd_sensor['value']
 
     ccds = []
     for k, v in amd_sensors.items():
@@ -137,3 +144,52 @@ def amd_cpu_temperatures(amd_metrics: dict) -> dict:
             return dict(enumerate([amd_sensors['temp1']] * core_count))
         elif 'temp1_input' in amd_sensors['temp1']:
             return dict(enumerate([amd_sensors['temp1']['temp1_input']] * core_count))
+
+
+def read_cpu_temps() -> dict:
+    """
+    Read CPU temperatures using libsensors.
+    Returns data in the format expected by existing temperature processing functions.
+
+    Returns:
+        Dictionary with chip names as keys and temperature readings as nested dicts
+        Example: {'coretemp-isa-0000': {'Core 0': 48.0}, 'k10temp-pci-00c3': {'Tctl': 67.0}}
+    """
+    with contextlib.suppress(OSError, RuntimeError):
+        return sensors.get_cpu_temperatures()
+
+    return {}
+
+
+def get_cpu_temperatures() -> dict:
+    chips = read_cpu_temps()
+    amd_sensors = {}
+    for key, vals in chips.items():
+        if isinstance(vals, dict) and key.startswith(AMD_PREFIXES):
+            amd_sensors.update(vals)
+
+    if amd_sensors:
+        cpu_data = amd_cpu_temperatures(amd_sensors) or {}
+    else:
+        cpu_data = generic_cpu_temperatures(chips) or {}
+
+    data = {}
+    total_temp = 0
+    cinfo = cpu_info()
+    for core, temp in cpu_data.items():
+        data[f'cpu{core}'] = temp
+        total_temp += temp
+        try:
+            # we follow the paradigm that htop uses
+            # for filling in the hyper-threaded ids
+            # temperatures. (i.e. we just copy the
+            # temp of the parent physical core id)
+            data[cinfo['ht_map'][f'cpu{core}']] = temp
+            total_temp += temp
+        except KeyError:
+            continue
+
+    if total_temp:
+        data['cpu'] = total_temp / len(data)
+
+    return data or ({f'cpu{i}': 0 for i in range(cinfo['core_count'])} | {'cpu': 0})
