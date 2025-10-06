@@ -6,7 +6,8 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerMigrateArgs, ContainerMigrateResult,
 )
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, job, Service
+from middlewared.plugins.pool_.utils import UpdateImplArgs
 
 
 class ContainerService(Service):
@@ -39,25 +40,21 @@ class ContainerService(Service):
             name = split[-1]
             try:
                 if not processed_parents_mountpoints:
-                    await self.middleware.call("zfs.dataset.update", f"{pool}/.ix-virt", {
-                        "properties": {
-                            "mountpoint": {"source": "INHERIT"},
-                            "readonly": {"value": "off"},
-                        }
-                    })
-                    await self.middleware.call("zfs.dataset.update", f"{pool}/.ix-virt/containers", {
-                        "properties": {
-                            "mountpoint": {"source": "INHERIT"},
-                            "readonly": {"value": "off"},
-                        }
-                    })
+                    for ds in (f"{pool}/.ix-virt", f"{pool}/.ix-virt/containers"):
+                        await self.middleware.call(
+                            "pool.dataset.update_impl",
+                            UpdateImplArgs(
+                                name=ds,
+                                zprops={"readonly": "off"},
+                                iprops={"mountpoint"}
+                            )
+                        )
                     processed_parents_mountpoints = True
 
-                await self.middleware.call("zfs.dataset.update", dataset["name"], {
-                    "properties": {
-                        "mountpoint": {"source": "INHERIT"},
-                    }
-                })
+                await self.middleware.call(
+                    "pool.dataset.update_impl",
+                    UpdateImplArgs(name=dataset["name"], iprops={"mountpoint"})
+                )
                 await self.middleware.call("zfs.dataset.mount", dataset["name"])
 
                 with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
