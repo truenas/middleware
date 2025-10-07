@@ -20,4 +20,5 @@ def test_audit_system_escalation():
     payload['query-options'] = {"offset": count - 1}
     event = call('audit.query', payload)
     assert len(event) == 1
-    assert event[0]['event_data']['proctitle'] == cmd, f"Expected {cmd}, but found {event['event_data']['proctitle']}"
+    proctitle = event[0]['event_data']['proctitle']
+    assert proctitle == cmd, f"Expected {cmd!r} but found {proctitle!r}"
