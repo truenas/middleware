@@ -459,6 +459,11 @@ def generate_smb_conf_dict(
         # We are setting this to read-only to prevent misconfiguration of trusted
         # domains from accidentally setting mappings in the tdb file.
         'idmap config * : read only': True,
+        # See NAS-137437. SMB3 directory leases currently cause a significant performance
+        # impact on SPECstorage2020 EDA Workloads. This is due to the way strict rename
+        # being enabled behind the scenes when directory leases are enabled, which causes
+        # contention with fcntl locks on the database containing open files.
+        'smb3 directory leases': 'no',
     }
 
     if SearchProtocol.SPOTLIGHT in smb_service_config['search_protocols']:
