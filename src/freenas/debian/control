@@ -5,6 +5,7 @@ Maintainer: William Grzybowski <william@grzy.org>
 Build-Depends: debhelper-compat (= 12)
 Standards-Version: 4.4.0
 Homepage: http://www.truenas.com
+Rules-Requires-Root: binary-targets
 
 Package: truenas-files
 Architecture: any
