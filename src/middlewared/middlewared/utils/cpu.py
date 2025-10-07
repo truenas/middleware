@@ -1,5 +1,4 @@
 import collections
-import contextlib
 import functools
 import os
 import re
@@ -24,8 +23,7 @@ AMD_PREFIXES = (
 )
 RE_CORE = re.compile(r'^Core ([0-9]+)$')
 
-sensors = SensorsWrapper()
-sensors.init()
+sensors = None
 
 
 class CpuInfo(typing.TypedDict):
@@ -155,10 +153,19 @@ def read_cpu_temps() -> dict:
         Dictionary with chip names as keys and temperature readings as nested dicts
         Example: {'coretemp-isa-0000': {'Core 0': 48.0}, 'k10temp-pci-00c3': {'Tctl': 67.0}}
     """
-    with contextlib.suppress(OSError, RuntimeError):
-        return sensors.get_cpu_temperatures()
+    global sensors
+    if sensors is None:
+        try:
+            sensors = SensorsWrapper()
+            sensors.init()
+        except (OSError, RuntimeError):
+            return {}
 
-    return {}
+    try:
+        return sensors.get_cpu_temperatures()
+    except (OSError, RuntimeError):
+        sensors = None
+        return {}
 
 
 def get_cpu_temperatures() -> dict:
