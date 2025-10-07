@@ -11,7 +11,7 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
-from .mount_unmount_impl import unmount_impl, UnmountArgs
+from .mount_unmount_impl import UnmountArgs
 from .query_impl import query_impl, ZFSPathNotFoundException
 
 
@@ -24,7 +24,8 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def unmount(self, tls, data: UnmountArgs) -> None:
-        unmount_impl(tls.lzh, data)
+        rsrc = tls.lzh.open_resource(name=data.pop("filesystem"))
+        rsrc.unmount(**data)
 
     @private
     def group_paths_by_parents(self, paths: list[str]) -> dict[str, list[str]]:

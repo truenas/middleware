@@ -1,11 +1,6 @@
 from typing import TypedDict
 
-try:
-    import truenas_pylibzfs
-except ImportError:
-    truenas_pylibzfs = None
-
-__all__ = ("unmount_impl",)
+__all__ = ("UnmountArgs",)
 
 
 class UnmountArgs(TypedDict, total=False):
@@ -28,16 +23,3 @@ class UnmountArgs(TypedDict, total=False):
     unload_encryption_key: bool
     """Unload keys for any encryption roots unmounted by this operation.
     Defaults to False."""
-
-
-def unmount_impl(lzh, data: UnmountArgs) -> None:
-    rsrc = lzh.open_resource(name=data["filesystem"])
-    rsrc.unmount(
-        **{
-            "force": data.get("force", False),
-            "lazy": data.get("lazy", False),
-            "recursive": data.get("recursive", False),
-            "mountpoint": data.get("mountpoint", False),
-            "unload_encryption_key": data.get("unload_encryption_key", False)
-        }
-    )
