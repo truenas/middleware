@@ -52,9 +52,12 @@ class ISCSITargetService(SimpleService):
         await self.middleware.call("iscsi.alua.before_stop")
 
     async def reload(self):
-        return (await run(
-            ["scstadmin", "-noprompt", "-force", "-config", "/etc/scst.conf"], check=False
-        )).returncode == 0
+        if await self.middleware.call("iscsi.global.direct_config_enabled"):
+            return await self.middleware.call("iscsi.scst.apply_config_file")
+        else:
+            return (await run(
+                ["scstadmin", "-noprompt", "-force", "-config", "/etc/scst.conf"], check=False
+            )).returncode == 0
 
     async def become_active(self):
         """If we are becoming the ACTIVE node on a HA system, and if SCST was already loaded
@@ -68,4 +71,7 @@ class ISCSITargetService(SimpleService):
                     self.logger.warning('Failover exception', exc_info=True)
                     # Fall through
         # Fallback to doing a regular restart
-        return await (await self.middleware.call('service.control', 'RESTART', self.name, {'ha_propagate': False})).wait(raise_error=True)
+        return await (await self.middleware.call('service.control',
+                                                 'RESTART',
+                                                 self.name,
+                                                 {'ha_propagate': False})).wait(raise_error=True)

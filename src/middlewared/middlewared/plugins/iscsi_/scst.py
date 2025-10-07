@@ -3,6 +3,7 @@ import pathlib
 
 from middlewared.service import Service
 from .utils import ISCSI_TARGET_PARAMETERS, sanitize_extent
+from scstadmin import SCSTAdmin
 
 SCST_BASE = '/sys/kernel/scst_tgt'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
@@ -131,7 +132,8 @@ class iSCSITargetService(Service):
         pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'del {lun}\n')
 
     def replace_iscsi_lun(self, iqn, extent, lun):
-        pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'replace {extent} {lun}\n')
+        mgmt_path = f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
+        pathlib.Path(mgmt_path).write_text(f'replace {extent} {lun}\n')
 
     def delete_fc_lun(self, wwpn, lun):
         pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(f'del {lun}\n')
@@ -161,3 +163,11 @@ class iSCSITargetService(Service):
             except (FileNotFoundError, PermissionError):
                 # If we're not running, that's OK
                 pass
+
+    def apply_config_file(self):
+        try:
+            SCSTAdmin.apply_config_file('/etc/scst.conf')
+        except Exception:
+            self.logger.debug("Failed to apply SCST configuration", exc_info=True)
+            return False
+        return True
