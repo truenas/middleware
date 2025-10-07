@@ -54,7 +54,7 @@ def test_disk_wipe_partition_clean():
     proc_partitions = str(ssh('cat /proc/partitions'))
     # If the wipe is truly successful /proc/partitions should have a singular
     # entry for 'disk' in the table
-    assert len([line for line in proc_partitions.splitlines() if disk in line]) == 1
+    assert len([line for line in proc_partitions.splitlines() if disk in line.split()]) == 1
 
 
 @pytest.mark.parametrize('dev_name', ['BOOT', 'UNUSED', 'bogus', ''])
