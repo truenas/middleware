@@ -1,5 +1,6 @@
 import pytest
 
+from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import client, session, url
 
 
@@ -39,6 +40,8 @@ def misc_methods() -> list[tuple[tuple, str]]:
     """Add methods to this list to test calling them through previous API versions.
 
     `((method_name, method_args...), earliest_version_to_test)`
+
+    Remove methods from this list if they are removed from the current API version.    
 
     """
     return [
@@ -138,6 +141,12 @@ def test_config_method(legacy_api_client, config_method):
 def test_misc_methods(legacy_api_client, misc_methods):
     """General test for calling any other methods using previous API versions."""
     client, version = legacy_api_client
+    exceptions = []
     for args, vers in misc_methods:
         if version >= vers:
-            client.call(*args)
+            try:
+                client.call(*args)
+            except Exception as exc:
+                exceptions.append(CallError(f"method call: {args}, version: {vers}, error: {str(exc)}"))
+    if exceptions:
+        raise ExceptionGroup("One or more methods failed backwards compatibility", exceptions)
