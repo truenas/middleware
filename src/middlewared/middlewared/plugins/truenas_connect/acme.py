@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import datetime, timezone
 
 from truenas_acme_utils.ari import fetch_renewal_info
 from truenas_connect_utils.acme import acme_config, create_cert
@@ -139,7 +140,25 @@ class TNCACMEService(Service):
             'TNC renewal suggested window is between %r and %r',
             renewal_info['suggested_window']['start'], renewal_info['suggested_window']['end']
         )
-        
+
+        # Check if current time is within the suggested renewal window
+        current_time = datetime.now(timezone.utc)
+        start_time = renewal_info['suggested_window']['start']
+        end_time = renewal_info['suggested_window']['end']
+        # We deliberately ignore end_time as per RFC 9773 Section 4.2
+        within_window = start_time <= current_time
+        if within_window:
+            logger.info(
+                'Current time %r is within renewal window [%r, %r], renewal is needed',
+                current_time, start_time, end_time
+            )
+        else:
+            logger.debug(
+                'Current time %r is outside renewal window [%r, %r], renewal is not needed yet',
+                current_time, start_time, end_time
+            )
+
+        return within_window, cert_id
 
     async def initiate_cert_generation_impl(self):
         cert_job = await self.middleware.call('tn_connect.acme.create_cert')
