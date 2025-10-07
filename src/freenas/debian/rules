@@ -48,3 +48,11 @@ override_dh_installdeb:
 override_dh_shlibdeps:
 
 override_dh_usrlocal:
+
+override_dh_builddeb:
+	# --- MCG DEBUG ---
+	sh -c "\
+		echo 'before dh_builddeb';\
+		ls -al debian/truenas-files/home;\
+	"
+	dh_builddeb
