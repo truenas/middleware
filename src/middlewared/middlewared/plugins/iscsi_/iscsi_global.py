@@ -15,7 +15,7 @@ from middlewared.utils import run
 
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
-DEFAULT_DIRECT_CONFIG = False
+DEFAULT_DIRECT_CONFIG = True
 
 
 class ISCSIGlobalModel(sa.Model):
