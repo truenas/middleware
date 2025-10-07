@@ -93,6 +93,9 @@ systemctl mask lvm2-monitor.service
 # ipa-epn.service is in conflict with our implementation of support for IPA
 systemctl mask ipa-epn.service
 
+# Prevent systemd management of users and accounts: NAS-137910
+systemctl mask systemd-sysusers.service
+
 systemctl set-default truenas.target
 
 sed -i.bak 's/CHARMAP="ISO-8859-15"/CHARMAP="UTF-8"/' /etc/default/console-setup
