@@ -11,7 +11,7 @@ def get_api_versions():
 @pytest.fixture(scope="module", params=get_api_versions(), ids=lambda v: f"legacy_api_client={v}")
 def legacy_api_client(request):
     with client(version=request.param) as c:
-        yield c
+        yield c, c._ws.url.split("/")[-1].lstrip("v")
 
 
 def get_methods(name: str | None = None):
@@ -34,8 +34,20 @@ def config_method(request):
     yield request.param
 
 
+@pytest.fixture(scope="module")
+def misc_methods() -> list[tuple[tuple, str]]:
+    """Add methods to this list to test calling them through previous API versions.
+
+    `((method_name, method_args...), earliest_version_to_test)`
+
+    """
+    return [
+        (("fcport.status",), "25.04.0"),
+    ]
+
+
 def test_query_method(legacy_api_client, query_method):
-    version = legacy_api_client._ws.url.split("/")[-1].lstrip("v")
+    client, version = legacy_api_client
     # Methods that do not exist in the previous API versions
     if version in {"25.04.0", "25.04.1"} and query_method in {
         "vm.query",
@@ -76,11 +88,11 @@ def test_query_method(legacy_api_client, query_method):
     }:
         return
 
-    legacy_api_client.call(query_method)
+    client.call(query_method)
 
 
 def test_config_method(legacy_api_client, config_method):
-    version = legacy_api_client._ws.url.split("/")[-1].lstrip("v")
+    client, version = legacy_api_client
     if config_method == "app.config":
         # Not a ConfigService config method. Requires an argument.
         return
@@ -120,4 +132,12 @@ def test_config_method(legacy_api_client, config_method):
     ):
         return
 
-    legacy_api_client.call(config_method)
+    client.call(config_method)
+
+
+def test_misc_methods(legacy_api_client, misc_methods):
+    """General test for calling any other methods using previous API versions."""
+    client, version = legacy_api_client
+    for args, vers in misc_methods:
+        if version >= vers:
+            client.call(*args)
