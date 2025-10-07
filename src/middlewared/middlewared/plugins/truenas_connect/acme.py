@@ -78,13 +78,21 @@ class TNCACMEService(Service):
             )
             await self.update_ui()
 
-    async def renew_cert(self):
-        await self.middleware.call('tn_connect.acme.check_renewal_needed')
+    async def renew_cert(self, bypass_renewal_check=False):
+        cert_renewal_id = None
+        if not bypass_renewal_check:
+            renewal_needed, cert_renewal_id = await self.middleware.call('tn_connect.acme.check_renewal_needed')
+            if not renewal_needed:
+                logger.debug('TNC certificate renewal not needed at this time')
+                return
+
         logger.debug('Initiating renewal of TNC certificate')
         await self.middleware.call('tn_connect.set_status', Status.CERT_RENEWAL_IN_PROGRESS.name)
         try:
             config = await self.middleware.call('tn_connect.config')
-            renewal_job = await self.middleware.call('tn_connect.acme.create_cert', config['certificate'])
+            renewal_job = await self.middleware.call(
+                'tn_connect.acme.create_cert', config['certificate'], cert_renewal_id
+            )
             await renewal_job.wait(raise_error=True)
         except Exception:
             logger.error('Failed to renew certificate for TNC', exc_info=True)
@@ -169,7 +177,7 @@ class TNCACMEService(Service):
         return cert_job.result
 
     @job(lock='tn_connect_cert_generation')
-    async def create_cert(self, job, cert_id=None):
+    async def create_cert(self, job, cert_id=None, cert_renewal_id=None):
         csr_details = None
         if cert := (await self.middleware.call('certificate.query', [['id', '=', cert_id]])):
             csr_details = {
@@ -179,7 +187,9 @@ class TNCACMEService(Service):
 
         await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         try:
-            return await create_cert(await self.middleware.call('tn_connect.config_internal'), csr_details)
+            return await create_cert(
+                await self.middleware.call('tn_connect.config_internal'), csr_details, cert_renewal_id
+            )
         except TNCCallError as e:
             raise CallError(str(e))
 
