@@ -411,7 +411,7 @@ class AuditService(ConfigService):
             return
 
         args = UpdateImplArgs(name=ds['name'], zprops=zprops, uprops=uprops)
-        await self.middleware.call('pool.dataset.update_imp', args)
+        await self.middleware.call('pool.dataset.update_impl', args)
         if await self.middleware.call('failover.status') == 'MASTER':
             try:
                 await self.middleware.call(
