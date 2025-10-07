@@ -76,7 +76,7 @@ class ContainerEntry(BaseModel):
     """How many seconds to wait for container to shut down before killing it."""
     dataset: str
     """Which dataset to use as the container root filesystem."""
-    init: str
+    init: str = '/sbin/init'
     """"init" process commandline."""
     initdir: str | None = None
     """"init" process working dir."""

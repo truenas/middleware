@@ -81,7 +81,6 @@ def container(image, options=None, start=False, startup_script=None):
         "name": "test",
         "pool": pool,
         "image": image,
-        "init": "/sbin/init",
         **options,
     }, job=True)
     try:
