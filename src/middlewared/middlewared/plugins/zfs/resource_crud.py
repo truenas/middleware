@@ -29,7 +29,7 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def unmount(self, tls, data: UnmountArgs) -> None:
-        fs = data.pop("filesystem")
+        fs = data.pop("filesystem", None)
         if not fs:
             raise ValidationError("zfs.resource.unmount", "'filesystem' key is required")
 
