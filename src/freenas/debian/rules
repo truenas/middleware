@@ -24,6 +24,9 @@ override_dh_auto_install:
 	"
 
 override_dh_fixperms:
+	# By default dh_fixperms will set ownership to root:root
+	# Exclude the truenas_admin home directory from the ownership change
+	dh_fixperms --exclude /home/truenas_admin
 
 override_dh_shlibdeps:
 
