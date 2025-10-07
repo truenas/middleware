@@ -8,6 +8,7 @@ from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, Po
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.plugins.zfs.mount_unmount_impl import UnmountArgs
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
 from middlewared.utils.zfs import query_imported_fast_impl
 from .utils import ZPOOL_CACHE_FILE
@@ -396,7 +397,10 @@ class PoolService(Service):
             if not umount_root_short_circuit:
                 with contextlib.suppress(CallError):
                     self.logger.debug('Forcefully umounting %r', vol_name)
-                    self.middleware.call_sync('zfs.dataset.umount', vol_name, {'force': True})
+                    self.middleware.call_sync(
+                        'zfs.resource.unmount',
+                        UnmountArgs(filesystem=vol_name, force=True, recursive=True)
+                    )
                     self.logger.debug('Successfully umounted %r', vol_name)
 
             pool_mount = f'/mnt/{vol_name}'
@@ -507,7 +511,10 @@ class PoolService(Service):
         # If root ds is encrypted, at this point we know that root dataset has not been mounted yet and neither
         # unlocked, so if there are any children it has which were unencrypted - we force umount them
         try:
-            await self.middleware.call('zfs.dataset.umount', pool_name, {'force': True})
+            await self.middleware.call(
+                'zfs.resource.unmount',
+                UnmountArgs(filesystem=pool_name, force=True, recursive=True)
+            )
             self.logger.debug('Successfully umounted any unencrypted datasets under %r dataset', pool_name)
         except Exception:
             self.logger.error('Failed to umount any unencrypted datasets under %r dataset', pool_name, exc_info=True)

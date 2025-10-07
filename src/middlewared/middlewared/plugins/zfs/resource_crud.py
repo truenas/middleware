@@ -11,6 +11,7 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
+from .mount_unmount_impl import unmount_impl, UnmountArgs
 from .query_impl import query_impl, ZFSPathNotFoundException
 
 
@@ -19,6 +20,11 @@ class ZFSResourceService(Service):
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
+
+    @private
+    @pass_thread_local_storage
+    def unmount(self, tls, data: UnmountArgs) -> None:
+        unmount_impl(tls.lzh, data)
 
     @private
     def group_paths_by_parents(self, paths: list[str]) -> dict[str, list[str]]:
@@ -59,7 +65,7 @@ class ZFSResourceService(Service):
             if "@" in path:
                 raise ValidationError(
                     "zfs.resource.query",
-                    "Set `get_snapshots = True` when wanting to query snapshot information."
+                    "Set `get_snapshots = True` when wanting to query snapshot information.",
                 )
 
         if data["get_children"] and self.group_paths_by_parents(data["paths"]):
@@ -116,7 +122,7 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def query_impl(self, tls, data: dict | None = None):
-        base = ZFSResourceQueryArgs().model_dump()['data']
+        base = ZFSResourceQueryArgs().model_dump()["data"]
         if data is None:
             final = base
         else:
@@ -136,7 +142,11 @@ class ZFSResourceService(Service):
         are made by the passed in `snap_name` arg."""
         rv = self.middleware.call_sync(
             "zfs.resource.query_impl",
-            {"paths": [snap_name.split("@")[0]], "properties": None, "get_snapshots": True}
+            {
+                "paths": [snap_name.split("@")[0]],
+                "properties": None,
+                "get_snapshots": True,
+            },
         )
         return rv and snap_name in rv[0]["snapshots"]
 
