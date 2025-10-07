@@ -2,6 +2,7 @@ import libzfs
 
 from middlewared.service import CallError, job, Service
 from middlewared.utils import filter_list
+from middlewared.plugins.zfs.mount_unmount_impl import UnmountArgs
 
 from .utils import unlocked_zvols_fast, zvol_path_to_name
 
@@ -139,15 +140,14 @@ class ZFSDatasetService(Service):
         options.setdefault('recursive', False)
         options.setdefault('force_umount', False)
         options.setdefault('umount', False)
-
         force = options.pop('force_umount')
         if options.pop('umount'):
-            rsrc = self.middleware.call_sync(
-                'zfs.resource.query_impl', {'paths': [id_], 'properties': ['mounted']}
+            self.middleware.call_sync(
+                'zfs.resource.unmount',
+                UnmountArgs(filesystem=id_, force=force, unload_encryption_key=True)
             )
-            if rsrc[0]['type'] == 'VOLUME' or rsrc[0]['properties']['mounted']['raw'] == 'yes':
-                # if it's a zvol, "mounted" property doesn't exist
-                self.middleware.call_sync('zfs.dataset.umount', id_, {'force': force})
+            return
+
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id_)
