@@ -1,11 +1,12 @@
+import os
+import sys
 import time
 
 import pytest
 
 from middlewared.test.integration.utils import client, ssh
 
-import sys
-import os
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
@@ -20,7 +21,7 @@ def test_filesystem__file_tail_follow__grouping():
         def append(type, **kwargs):
             received.append((time.monotonic(), kwargs["fields"]["data"]))
 
-        c.subscribe("filesystem.file_tail_follow:/tmp/file_tail_follow.txt", append)
+        sub_id = c.subscribe('filesystem.file_tail_follow:{"path": "/tmp/file_tail_follow.txt"}', append)
 
         ssh("for i in `seq 1 200`; do echo test >> /tmp/file_tail_follow.txt; sleep 0.01; done")
 
@@ -40,3 +41,6 @@ def test_filesystem__file_tail_follow__grouping():
 
         time.sleep(1)
         assert received[-1][1] == "finish\n"
+
+        # Make sure we can cleanly end the subscription
+        c.unsubscribe(sub_id)
