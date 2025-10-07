@@ -14,6 +14,11 @@ from middlewared.service.decorators import pass_thread_local_storage
 from .mount_unmount_impl import UnmountArgs
 from .query_impl import query_impl, ZFSPathNotFoundException
 
+try:
+    from truenas_pylibzfs import ZFSError, ZFSException
+except ImportError:
+    ZFSError = ZFSException = None
+
 
 class ZFSResourceService(Service):
     class Config:
@@ -24,8 +29,18 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def unmount(self, tls, data: UnmountArgs) -> None:
-        rsrc = tls.lzh.open_resource(name=data.pop("filesystem"))
-        rsrc.unmount(**data)
+        fs = data.pop("filesystem")
+        if not fs:
+            raise ValidationError("zfs.resource.unmount", "'filesystem' key is required")
+
+        try:
+            rsrc = tls.lzh.open_resource(name=fs)
+            rsrc.unmount(**data)
+        except ZFSException as e:
+            if ZFSError(e.code) == ZFSError.EZFS_NOENT:
+                raise ValidationError("zfs.resource.unmount", f"{fs!r} does not exist")
+            else:
+                raise e from None
 
     @private
     def group_paths_by_parents(self, paths: list[str]) -> dict[str, list[str]]:
