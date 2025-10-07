@@ -5,7 +5,7 @@ try:
 except ImportError:
     truenas_pylibzfs = None
 
-__all__ = ("unmount_impl", "mount_impl")
+__all__ = ("unmount_impl",)
 
 
 class UnmountArgs(TypedDict, total=False):
