@@ -11,7 +11,6 @@ override_dh_auto_install:
 	sh -c "\
 		mkdir -p debian/truenas-files/etc; \
 		cp -a etc debian/truenas-files/; \
-		cp -a lib debian/truenas-files/; \
 		cp -a usr debian/truenas-files/; \
 		mkdir debian/truenas-files/home; \
 		cp -a root debian/truenas-files/home/truenas_admin; \

@@ -55,7 +55,9 @@ def test_002_firstboot_checks(ws_client):
         '/root': {'mode': 0o40700, 'uid': 0, 'gid': 0},
     }
     for path, expected_stat in stat_info.items():
-        assert all(ws_client.call('filesystem.stat', path)[key] == expected_stat[key] for key in expected_stat)
+        actual_stat = ws_client.call('filesystem.stat', path)
+        assert all(actual_stat[key] == expected_stat[key] for key in expected_stat), \
+            f"Expected {expected_stat} but found {actual_stat}"
 
 
 def test_003_enable_ssh_for_root_user(ws_client):
