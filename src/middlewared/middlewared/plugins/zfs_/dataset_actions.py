@@ -43,20 +43,6 @@ class ZFSDatasetService(Service):
             handle_ds_not_found(e.code, name)
             raise CallError(f'Failed to mount dataset: {e}')
 
-    def umount(self, name: str, options: dict | None = None):
-        if options is None:
-            options = dict()
-        options.setdefault('force', False)
-
-        try:
-            with libzfs.ZFS() as zfs:
-                dataset = zfs.get_dataset(name)
-                dataset.umount(force=options['force'])
-        except libzfs.ZFSException as e:
-            self.logger.error('Failed to umount dataset', exc_info=True)
-            handle_ds_not_found(e.code, name)
-            raise CallError(f'Failed to umount dataset: {e}')
-
     def rename(self, name: str, options: dict):
         options.setdefault('recursive', False)
         options.setdefault('new_name', None)
