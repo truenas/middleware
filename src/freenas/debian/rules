@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-export DH_VERBOSE = 1
+#export DH_VERBOSE = 1
 
 %:
 	dh $@
@@ -8,11 +8,9 @@ override_dh_auto_install:
 	# NOTE: Once we update to Trixie or have ipmi-tool after version
 	# 1.8.19-4 (current Bookworm) we can stop downloading
 	# enterprise-numbers.txt from IANA during package build.
-	# MCG TODO: Remove lib. No lib dir to copy from.
 	sh -c "\
 		mkdir -p debian/truenas-files/etc; \
 		cp -a etc debian/truenas-files/; \
-		cp -a lib debian/truenas-files/; \
 		cp -a usr debian/truenas-files/; \
 		mkdir debian/truenas-files/home; \
 		cp -a root debian/truenas-files/home/truenas_admin; \
@@ -25,34 +23,7 @@ override_dh_auto_install:
 	"
 
 override_dh_fixperms:
-	# By default dh_fixperms will set ownership to root:root
-	# Exclude the truenas_admin home directory from the ownership change
-	sh -c "\
-		echo 'before dh_fixperms';\
-		ls -al debian/truenas-files/home;\
-	"
-	dh_fixperms --exclude debian/truenas-files/home/truenas_admin
-	sh -c "\
-		echo 'after dh_fixperms';\
-		ls -al debian/truenas-files/home;\
-	"
-
-override_dh_installdeb:
-	# --- MCG DEBUG ---
-	sh -c "\
-		echo 'before dh_installdeb';\
-		ls -al debian/truenas-files/home;\
-	"
-	dh_installdeb
 
 override_dh_shlibdeps:
 
 override_dh_usrlocal:
-
-override_dh_builddeb:
-	# --- MCG DEBUG ---
-	sh -c "\
-		echo 'before dh_builddeb';\
-		ls -al debian/truenas-files/home;\
-	"
-	dh_builddeb
