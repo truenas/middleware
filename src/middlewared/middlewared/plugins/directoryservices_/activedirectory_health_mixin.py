@@ -35,18 +35,19 @@ class ADHealthMixin:
         """
         ds_config = self.middleware.call_sync('directoryservices.config')
         netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
+        domain = ds_config['kerberos_realm'] or ds_config['configuration']['domain']
 
         # Write temporary krb5.conf targeting kdc. Since this is a health check we
         # don't want to introduce a server affinity
         krbconf = KRB5Conf()
         krbconf.add_libdefaults({
-            str(KRB_LibDefaults.DEFAULT_REALM): ds_config['kerberos_realm'],
+            str(KRB_LibDefaults.DEFAULT_REALM): domain.upper(),
             str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
             str(KRB_LibDefaults.FORWARDABLE): 'true',
             str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
         })
         krbconf.add_realms([{
-            'realm': ds_config['kerberos_realm'] or ds_config['configuration']['domain'],
+            'realm': domain.upper(),
             'primary_kdc': None,
             'admin_server': [],
             'kdc': [kdc],
@@ -56,7 +57,7 @@ class ADHealthMixin:
 
         cred = {
             'credential_type': 'KERBEROS_USER',
-            'username': netbiosname,
+            'username': f'{netbiosname}$',
             'password': b64decode(account_password).decode(),
         }
 
@@ -225,6 +226,8 @@ class ADHealthMixin:
                     machine_pass
                 )
             except (CallError, KRB5Error):
+                self.logger.warning('Check for machine account password validity failed', exc_info=True)
+
                 faulted_reason = (
                     'Stored machine account secret is invalid. This may indicate that '
                     'the machine account password was reset in Active Directory without '
