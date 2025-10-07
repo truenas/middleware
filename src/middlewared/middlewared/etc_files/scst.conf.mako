@@ -238,7 +238,7 @@
         other_node = 'MANUAL'
 
     # Let's map extents to respective ios
-    all_extent_names = []
+    all_rw_extent_names = []
     missing_extents = []
     extents_io = {'vdisk_fileio': [], 'vdisk_blockio': []}
     for extent in extents.values():
@@ -267,7 +267,8 @@
                 continue
 
         extents_io[extents_io_key].append(extent)
-        all_extent_names.append(extent['name'])
+        if not extent['ro']:
+            all_rw_extent_names.append(extent['name'])
 
         extent['t10_dev_id'] = extent['serial']
         if not extent['xen']:
@@ -295,7 +296,7 @@
     if alua_enabled and failover_status == "BACKUP":
         cml = calc_copy_manager_luns(list(itertools.chain.from_iterable([x for x in logged_in_targets.values() if x is not None])), True)
     else:
-        cml = calc_copy_manager_luns(all_extent_names)
+        cml = calc_copy_manager_luns(all_rw_extent_names)
 
     def set_active_lun_to_cluster_mode(extentname):
         if extentname in active_extents and extentname in clustered_extents:
