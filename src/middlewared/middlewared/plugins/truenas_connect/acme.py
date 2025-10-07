@@ -144,26 +144,32 @@ class TNCACMEService(Service):
             logger.error('Failed to fetch renewal info for TNC certificate: %r', renewal_info['error'])
             return False, None
 
+        start_time = renewal_info['suggested_window']['start']
+        end_time = renewal_info['suggested_window']['end']
+
         logger.debug(
-            'TNC renewal suggested window is between %r and %r',
-            renewal_info['suggested_window']['start'], renewal_info['suggested_window']['end']
+            'TNC renewal suggested window: %s to %s',
+            start_time.strftime('%Y-%m-%d %H:%M:%S UTC'),
+            end_time.strftime('%Y-%m-%d %H:%M:%S UTC')
         )
 
         # Check if current time is within the suggested renewal window
         current_time = datetime.now(timezone.utc)
-        start_time = renewal_info['suggested_window']['start']
-        end_time = renewal_info['suggested_window']['end']
         # We deliberately ignore end_time as per RFC 9773 Section 4.2
         within_window = start_time <= current_time
         if within_window:
             logger.info(
-                'Current time %r is within renewal window [%r, %r], renewal is needed',
-                current_time, start_time, end_time
+                'Renewal needed: current time (%s) is past renewal start (%s)',
+                current_time.strftime('%Y-%m-%d %H:%M:%S UTC'),
+                start_time.strftime('%Y-%m-%d %H:%M:%S UTC')
             )
         else:
+            time_until_renewal = start_time - current_time
+            days = time_until_renewal.days
+            hours = time_until_renewal.seconds // 3600
             logger.debug(
-                'Current time %r is outside renewal window [%r, %r], renewal is not needed yet',
-                current_time, start_time, end_time
+                'Renewal not needed: %d days and %d hours until renewal window opens at %s',
+                days, hours, start_time.strftime('%Y-%m-%d %H:%M:%S UTC')
             )
 
         return within_window, cert_id
