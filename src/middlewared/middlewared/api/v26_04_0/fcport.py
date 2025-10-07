@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import WWPN, BaseModel, Excluded, FibreChannelPortAlias, ForUpdateMetaclass, excluded_field
-from .common import QueryArgs
+from .common import QueryArgs, QueryOptions
 
 
 __all__ = [
@@ -98,8 +98,18 @@ class FCPortPortChoicesResult(BaseModel):
     ])
 
 
+class FCPortStatusOptionsExtra(BaseModel):
+    with_lun_access: bool = True
+    """When `true`, only include Fibre Channel sessions that have access to at least one LUN (Logical Unit Number). \
+    When `false`, include all Fibre Channel sessions regardless of LUN access."""
+
+
+class FCPortStatusOptions(QueryOptions):
+    extra: FCPortStatusOptionsExtra = FCPortStatusOptionsExtra()
+
+
 class FCPortStatusArgs(QueryArgs):
-    pass  # FIXME: when QueryArgs has better options.extra support add in with_lun_access
+    options: FCPortStatusOptions = FCPortStatusOptions()
 
 
 class FCPortStatusResult(BaseModel):
