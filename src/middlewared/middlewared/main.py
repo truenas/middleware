@@ -1237,7 +1237,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         for thread_id, stack in get_threads_stacks().items():
             self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
 
-    def set_mock(self, name, args, mock):
+    def set_mock(self, name: str, args: list, mock: typing.Callable):
         for _args, _mock in self.mocks[name]:
             if args == _args:
                 raise ValueError(f'{name!r} is already mocked with {args!r}')

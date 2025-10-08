@@ -1,3 +1,5 @@
+from typing import Any, Literal
+
 from middlewared.alert.base import  AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.role import Role
 from middlewared.service import CallError, Service
@@ -16,9 +18,14 @@ class TestService(Service):
     class Config:
         private = True
 
-    async def set_mock(self, name, args, description):
+    async def set_mock(
+        self,
+        name: str,
+        args: list,
+        description: str | dict[Literal["exception", "return_value"], Any]
+    ) -> None:
         if isinstance(description, str):
-            scope = {}
+            scope: dict[str, Any] = {"__name__": "__main__"}
             exec(description, scope)
             try:
                 method = scope["mock"]
