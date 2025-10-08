@@ -163,6 +163,43 @@ class VMService(CRUDService):
         """
         verrors = ValidationErrors()
         await self.common_validation(verrors, 'vm_create', data)
+
+        if data['bootloader_ovmf'] and data['bootloader_ovmf'] not in await self.middleware.call(
+            'vm.bootloader_ovmf_choices'
+        ):
+            verrors.add(
+                'vm_create.bootloader_ovmf',
+                'Invalid bootloader ovmf choice specified'
+            )
+
+        if data['enable_secure_boot']:
+            # Only q35 machine type supports secure boot
+            # https://docs.openstack.org/nova/latest/admin/secure-boot.html
+            if not data['machine_type']:
+                data['machine_type'] = 'pc-q35-6.2'
+                if not data['arch_type']:
+                    # If arch type is not specified, we assume x86_64 architecture
+                    # we set this because otherwise vm.update will fail if this is not set
+                    # explicitly
+                    data['arch_type'] = 'x86_64'
+            elif data['machine_type'] and 'pc-q35' not in data['machine_type']:
+                verrors.add(
+                    'vm_create.machine_type',
+                    'Secure boot is only available in q35 machine type'
+                )
+
+            if data['bootloader_ovmf'] is None:
+                data['bootloader_ovmf'] = 'OVMF_CODE_4M.secboot.fd'
+
+            if 'secboot' not in data['bootloader_ovmf'].lower():
+                verrors.add(
+                    'vm_create.bootloader_ovmf',
+                    'Select a bootloader_ovmf that supports secure boot i.e OVMF_CODE_4M.secboot.fd'
+                )
+
+        if data['bootloader_ovmf'] is None:
+            data['bootloader_ovmf'] = 'OVMF_CODE_4M.fd'
+
         verrors.check()
 
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
@@ -172,14 +209,6 @@ class VMService(CRUDService):
 
     @private
     async def common_validation(self, verrors, schema_name, data, old=None):
-        if data['bootloader_ovmf'] and data['bootloader_ovmf'] not in await self.middleware.call(
-            'vm.bootloader_ovmf_choices'
-        ):
-            verrors.add(
-                f'{schema_name}.bootloader_ovmf',
-                'Invalid bootloader ovmf choice specified'
-            )
-
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
 
@@ -280,34 +309,6 @@ class VMService(CRUDService):
                     f'Number of cpus in "{schema_name}.cpuset" must be equal to total number '
                     'vcpus if pinning is enabled.'
                 )
-
-        if data['enable_secure_boot']:
-            # Only q35 machine type supports secure boot
-            # https://docs.openstack.org/nova/latest/admin/secure-boot.html
-            if not data['machine_type']:
-                data['machine_type'] = 'pc-q35-6.2'
-                if not data['arch_type']:
-                    # If arch type is not specified, we assume x86_64 architecture
-                    # we set this because otherwise vm.update will fail if this is not set
-                    # explicitly
-                    data['arch_type'] = 'x86_64'
-            elif data['machine_type'] and 'pc-q35' not in data['machine_type']:
-                verrors.add(
-                    f'{schema_name}.machine_type',
-                    'Secure boot is only available in q35 machine type'
-                )
-
-            if data['bootloader_ovmf'] is None:
-                data['bootloader_ovmf'] = 'OVMF_CODE_4M.secboot.fd'
-
-            if 'secboot' not in data['bootloader_ovmf'].lower():
-                verrors.add(
-                    f'{schema_name}.bootloader_ovmf',
-                    'Select a bootloader_ovmf that supports secure boot i.e OVMF_CODE_4M.secboot.fd'
-                )
-
-        if data['bootloader_ovmf'] is None:
-            data['bootloader_ovmf'] = 'OVMF_CODE.fd'
 
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
