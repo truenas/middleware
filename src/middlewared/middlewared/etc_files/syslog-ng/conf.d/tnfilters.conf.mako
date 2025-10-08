@@ -60,19 +60,12 @@ filter f_scst {
 filter f_${tnlog.name or "middleware"} { program("${tnlog.get_ident()[:-2]}"); };
 % endfor
 
-# Temporary SNMP filter: NAS-129124
-filter f_snmp {
-  program("snmpd") and match("unexpected header length" value("MESSAGE"));
-};
-
 filter f_truenas_exclude {
 % if not nfs_conf['mountd_log']:
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_tnaudit_all) and
-  not filter(f_scst) and
-  # Temporary SNMP filter: NAS-129124
-  not filter(f_snmp)
+  not filter(f_scst)
 };
 
 #####################
