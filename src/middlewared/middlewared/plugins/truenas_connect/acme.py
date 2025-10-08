@@ -193,6 +193,9 @@ class TNCACMEService(Service):
 
         await self.middleware.call('tn_connect.hostname.register_update_ips', None, True)
         try:
+            if cert_renewal_id:
+                logger.debug('Renewing TNC certificate with cert renewal ID: %s', cert_renewal_id)
+
             return await create_cert(
                 await self.middleware.call('tn_connect.config_internal'), csr_details, cert_renewal_id
             )
