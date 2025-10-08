@@ -9,3 +9,4 @@ websocket-client>=1.4.2
 cython-iscsi @ git+https://github.com/truenas/cython-iscsi.git@tester
 PYSCSI @ git+https://github.com/truenas/python-scsi.git@tester
 zeroconf
+pyotp
