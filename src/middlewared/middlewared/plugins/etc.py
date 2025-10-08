@@ -294,6 +294,9 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'scst.env', 'checkpoint': 'pool_import', 'mode': 0o744},
             ]
         },
+        'scst_direct': [
+            {'type': 'mako', 'path': 'scst.direct', 'checkpoint': 'pool_import', 'mode': 0o600},
+        ],
         'scst_targets': [
             {'type': 'mako', 'path': 'initiators.allow', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'initiators.deny', 'checkpoint': 'pool_import'},
