@@ -2,7 +2,7 @@ import libzfs
 
 from middlewared.service import CallError, job, Service
 from middlewared.utils import filter_list
-from middlewared.plugins.zfs.mount_unmount_impl import UnmountArgs
+from middlewared.plugins.zfs.mount_unmount_impl import MountArgs, UnmountArgs
 
 from .utils import unlocked_zvols_fast, zvol_path_to_name
 
@@ -109,7 +109,10 @@ class ZFSDatasetService(Service):
             raise CallError(f'Failed to load key for {id_}: {e}')
         else:
             if mount_ds:
-                self.middleware.call_sync('zfs.dataset.mount', id_, {'recursive': recursive})
+                self.middleware.call_sync(
+                    'zfs.resource.mount',
+                    MountArgs(filesystem=id_, recursive=recursive)
+                )
 
     def check_key(self, id_: str, options: dict | None = None):
         """
@@ -153,7 +156,7 @@ class ZFSDatasetService(Service):
                 ds = zfs.get_dataset(id_)
                 self.common_encryption_checks(id_, ds)
                 if not ds.key_loaded:
-                    raise CallError(f'{id_}\'s key is not loaded')
+                    raise CallError(f"{id_}'s key is not loaded")
                 ds.unload_key(**options)
         except libzfs.ZFSException as e:
             self.logger.error(f'Failed to unload key for {id_}', exc_info=True)

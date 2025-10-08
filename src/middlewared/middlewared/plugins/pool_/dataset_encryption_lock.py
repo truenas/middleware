@@ -14,6 +14,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.filesystem.directory import directory_is_empty
+from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 
 from .utils import dataset_mountpoint, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
@@ -211,8 +212,11 @@ class PoolDatasetService(Service):
                         shutil.move(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
 
                 try:
-                    self.middleware.call_sync('zfs.dataset.mount', name, {'recursive': True})
-                except CallError as e:
+                    self.middleware.call_sync(
+                        'zfs.resource.mount',
+                        MountArgs(filesystem=name, recursive=True)
+                    )
+                except Exception as e:
                     failed[name]['error'] = f'Failed to mount dataset: {e}'
                 else:
                     unlocked.append(name)

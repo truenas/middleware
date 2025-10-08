@@ -25,24 +25,6 @@ class ZFSDatasetService(Service):
         except libzfs.ZFSException as e:
             raise CallError(f'Failed retrieving child datsets for {path} with error {e}')
 
-    def mount(self, name: str, options: dict | None = None):
-        if options is None:
-            options = dict()
-        options.setdefault('recursive', False)
-        options.setdefault('force_mount', False)
-
-        try:
-            with libzfs.ZFS() as zfs:
-                dataset = zfs.get_dataset(name)
-                if options['recursive']:
-                    dataset.mount_recursive(ignore_errors=True, force_mount=options['force_mount'])
-                else:
-                    dataset.mount()
-        except libzfs.ZFSException as e:
-            self.logger.error('Failed to mount dataset', exc_info=True)
-            handle_ds_not_found(e.code, name)
-            raise CallError(f'Failed to mount dataset: {e}')
-
     def rename(self, name: str, options: dict):
         options.setdefault('recursive', False)
         options.setdefault('new_name', None)

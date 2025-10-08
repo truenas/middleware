@@ -11,13 +11,14 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
-from .mount_unmount_impl import UnmountArgs
-from .query_impl import query_impl, ZFSPathNotFoundException
-
-try:
-    from truenas_pylibzfs import ZFSError, ZFSException
-except ImportError:
-    ZFSError = ZFSException = None
+from .exceptions import ZFSFSNotProvidedError, ZFSPathNotFoundException
+from .mount_unmount_impl import (
+    mount_impl,
+    MountArgs,
+    unmount_impl,
+    UnmountArgs,
+)
+from .query_impl import query_impl
 
 
 class ZFSResourceService(Service):
@@ -28,19 +29,25 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def unmount(self, tls, data: UnmountArgs) -> None:
-        fs = data.pop("filesystem", None)
-        if not fs:
-            raise ValidationError("zfs.resource.unmount", "'filesystem' key is required")
-
+    def mount(self, tls, data: MountArgs) -> None:
+        schema = "zfs.resource.mount"
         try:
-            rsrc = tls.lzh.open_resource(name=fs)
-            rsrc.unmount(**data)
-        except ZFSException as e:
-            if ZFSError(e.code) == ZFSError.EZFS_NOENT:
-                raise ValidationError("zfs.resource.unmount", f"{fs!r} does not exist")
-            else:
-                raise e from None
+            mount_impl(tls, data)
+        except ZFSFSNotProvidedError:
+            raise ValidationError(schema, "'filesystem' key is required")
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(schema, e.message, errno.ENOENT)
+
+    @private
+    @pass_thread_local_storage
+    def unmount(self, tls, data: UnmountArgs) -> None:
+        schema = "zfs.resource.unmount"
+        try:
+            unmount_impl(tls, data)
+        except ZFSFSNotProvidedError:
+            raise ValidationError(schema, "'filesystem' key is required")
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(schema, e.message, errno.ENOENT)
 
     @private
     def group_paths_by_parents(self, paths: list[str]) -> dict[str, list[str]]:
@@ -205,4 +212,4 @@ class ZFSResourceService(Service):
         try:
             return self.middleware.call_sync("zfs.resource.query_impl", data)
         except ZFSPathNotFoundException as e:
-            raise ValidationError("zfs.resource.query", str(e), errno.ENOENT)
+            raise ValidationError("zfs.resource.query", e.message, errno.ENOENT)
