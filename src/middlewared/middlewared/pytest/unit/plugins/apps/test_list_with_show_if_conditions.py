@@ -137,8 +137,8 @@ def test_minio_explicit_ix_volume(mock_isdir, mock_isfile):
     model = generate_pydantic_model(schema, 'TestMinioIxVolume', values, NOT_PROVIDED)
     instance = model(**values)
 
-    assert instance.storage.data_dirs[0].type == 'ix_volume'
-    assert instance.storage.data_dirs[0].ix_volume_config.dataset_name == 'data1'
+    assert instance.storage.data_dirs[0]['type'] == 'ix_volume'
+    assert instance.storage.data_dirs[0]['ix_volume_config']['dataset_name'] == 'data1'
 
 
 @patch('middlewared.plugins.apps.pydantic_utils.os.path.isfile', return_value=True)
@@ -163,8 +163,8 @@ def test_minio_explicit_host_path(mock_isdir, mock_isfile):
     model = generate_pydantic_model(schema, 'TestMinioHostPath', values, NOT_PROVIDED)
     instance = model(**values)
 
-    assert instance.storage.data_dirs[0].type == 'host_path'
-    assert instance.storage.data_dirs[0].host_path_config.path == '/mnt/data'
+    assert instance.storage.data_dirs[0]['type'] == 'host_path'
+    assert instance.storage.data_dirs[0]['host_path_config']['path'] == '/mnt/data'
 
 
 @patch('middlewared.plugins.apps.pydantic_utils.os.path.isfile', return_value=True)
@@ -197,9 +197,9 @@ def test_minio_mixed_storage_types(mock_isdir, mock_isfile):
     model = generate_pydantic_model(schema, 'TestMinioMixed', values, NOT_PROVIDED)
     instance = model(**values)
 
-    assert instance.storage.data_dirs[0].type == 'host_path'
-    assert instance.storage.data_dirs[1].type == 'ix_volume'
-    assert instance.storage.data_dirs[2].type == 'host_path'
+    assert instance.storage.data_dirs[0]['type'] == 'host_path'
+    assert instance.storage.data_dirs[1]['type'] == 'ix_volume'
+    assert instance.storage.data_dirs[2]['type'] == 'host_path'
 
 
 # Nested Show If Tests
@@ -297,10 +297,10 @@ def test_nested_show_if_basic():
     model = generate_pydantic_model(schema, 'TestNested', values, NOT_PROVIDED)
     instance = model(**values)
 
-    assert instance.rules[0].filter_config.pattern == '*.txt'
-    assert instance.rules[0].filter_config.regex_options.case_sensitive is False
-    assert instance.rules[1].filter_config.pattern == '*.log'
-    assert instance.rules[2].type == 'other'
+    assert instance.rules[0]['filter_config']['pattern'] == '*.txt'
+    assert instance.rules[0]['filter_config']['regex_options']['case_sensitive'] is False
+    assert instance.rules[1]['filter_config']['pattern'] == '*.log'
+    assert instance.rules[2]['type'] == 'other'
 
 
 def test_complex_nested_show_if():
@@ -464,8 +464,8 @@ def test_defaults_vs_explicit():
     }
     model_explicit = generate_pydantic_model(schema, 'TestExplicit', explicit_values, NOT_PROVIDED)
     m2 = model_explicit(**explicit_values)
-    assert m2.config.items[0].mode == 'manual'
-    assert m2.config.items[0].manual_config.value == 'test'
+    assert m2.config.items[0]['mode'] == 'manual'
+    assert m2.config.items[0]['manual_config']['value'] == 'test'
 
 
 def test_empty_list_handling():
@@ -708,8 +708,8 @@ def test_multiple_discriminator_fields():
     model = generate_pydantic_model(schema, 'TestMultiple', values, NOT_PROVIDED)
     instance = model(**values)
 
-    assert instance.items[0].type == 'special'
-    assert instance.items[0].enabled is True
+    assert instance.items[0]['type'] == 'special'
+    assert instance.items[0]['enabled'] is True
 
 
 # Constraint Tests
@@ -1023,10 +1023,10 @@ def test_discriminator_with_nested_show_if_different_values():
     model = generate_pydantic_model(schema, 'TestDiscriminator', values, NOT_PROVIDED)
     instance = model(**values)
 
-    assert instance.items[0].config.enable is False
-    assert instance.items[0].config.field_when_disabled == 'value1'
-    assert instance.items[1].config.enable is True
-    assert instance.items[1].config.field_when_enabled == 'value2'
+    assert instance.items[0]['config']['enable'] is False
+    assert instance.items[0]['config']['field_when_disabled'] == 'value1'
+    assert instance.items[1]['config']['enable'] is True
+    assert instance.items[1]['config']['field_when_enabled'] == 'value2'
 
 
 def test_update_scenario_with_discriminator_list():
@@ -1114,8 +1114,8 @@ def test_update_scenario_with_discriminator_list():
     model = generate_pydantic_model(schema, 'TestUpdate', new_values, old_values)
     instance = model(**new_values)
 
-    assert instance.storage_list[0].config_a.field_a == 'new_value'
-    assert instance.storage_list[1].config_b.toggle is True
+    assert instance.storage_list[0]['config_a']['field_a'] == 'new_value'
+    assert instance.storage_list[1]['config_b']['toggle'] is True
 
 
 def test_complex_nested_discriminator_with_construct_schema():
@@ -1314,7 +1314,7 @@ def test_list_items_with_multiple_discriminator_values():
     instance = model(**values)
 
     assert len(instance.items) == 4
-    assert instance.items[0].config_a.a_field == 'value1'
-    assert instance.items[1].config_a.a_field == 'value2'
-    assert instance.items[2].config_b.b_field == 'value3'
-    assert instance.items[3].config_a.a_field == 'value4'
+    assert instance.items[0]['config_a']['a_field'] == 'value1'
+    assert instance.items[1]['config_a']['a_field'] == 'value2'
+    assert instance.items[2]['config_b']['b_field'] == 'value3'
+    assert instance.items[3]['config_a']['a_field'] == 'value4'
