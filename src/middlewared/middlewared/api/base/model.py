@@ -2,11 +2,13 @@ import inspect
 from types import NoneType
 from typing import Annotated, Any, Union, get_args, get_origin
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
+from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Secret, create_model, Field, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.json_schema import SkipJsonSchema
 from pydantic.main import ModelT
+from pydantic.types import SecretType
+from pydantic_core import SchemaSerializer, core_schema
 
 from middlewared.utils.lang import undefined
 
@@ -25,8 +27,31 @@ _SERIALIZER_NAME = "serializer"
 """Reserved name for model serializers `_not_required_serializer` and `_for_update_serializer`."""
 
 
+def _serialize_secret(value: Secret[SecretType], info: core_schema.SerializationInfo) -> SecretType | str:
+    """
+    Return the hidden value if "expose_secrets" was passed to `model_dump`. Otherwise, return the redaction string.
+    """
+    if isinstance(info.context, dict) and info.context.get("expose_secrets") is True:
+        return value.get_secret_value()
+    else:
+        # always serialize Secret as if info.mode="json" (never return a Secret object)
+        return str(value)
+
+
+# Lifted from `pydantic.Secret`. We only change the serializer function, `_serialize_secret`.
+Secret.__pydantic_serializer__ = SchemaSerializer(
+    core_schema.any_schema(
+        serialization=core_schema.plain_serializer_function_ser_schema(
+            _serialize_secret,
+            info_arg=True,
+            when_used='always',
+        )
+    )
+)
+
+
 @model_serializer(mode="wrap")
-def _not_required_serializer(self, serializer):
+def _not_required_serializer(self: "BaseModel", serializer: core_schema.SerializerFunctionWrapHandler):
     """Exclude all fields that are set to `NotRequired`."""
     return {
         k: v
@@ -36,7 +61,7 @@ def _not_required_serializer(self, serializer):
 
 
 @model_serializer(mode="wrap")
-def _for_update_serializer(self, serializer):
+def _for_update_serializer(self: "BaseModel", serializer: core_schema.SerializerFunctionWrapHandler):
     if self is undefined:
         # Can happen if `ForUpdateMetaclass` models are nestsed. Defer serialization to the outer model.
         return self
