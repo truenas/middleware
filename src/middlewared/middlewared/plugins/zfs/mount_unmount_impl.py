@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from .exceptions import ZFSFSNotProvidedError, ZFSPathNotFoundException
+from .utils import open_resource
 
 try:
     import truenas_pylibzfs
@@ -65,20 +65,6 @@ class UnmountArgs(TypedDict, total=False):
     Defaults to False."""
 
 
-def __open_rsrc(tls, data: MountArgs | UnmountArgs):
-    fs = data.pop("filesystem", None)
-    if not fs:
-        raise ZFSFSNotProvidedError()
-
-    try:
-        return tls.lzh.open_resource(name=fs)
-    except truenas_pylibzfs.ZFSException as e:
-        if truenas_pylibzfs.ZFSError(e.code) == truenas_pylibzfs.ZFSError.EZFS_NOENT:
-            raise ZFSPathNotFoundException(fs)
-        else:
-            raise e from None
-
-
 def __mount_cb(hdl, state):
     if hdl.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
         mounted = hdl.asdict(properties={truenas_pylibzfs.ZFSProperty.MOUNTED})
@@ -90,11 +76,13 @@ def __mount_cb(hdl, state):
 
 
 def mount_impl(tls, data: MountArgs) -> None:
-    rsrc = __open_rsrc(tls, data)
+    path = data.pop("filesystem", "")
+    rsrc = open_resource(tls, path)
     state = {"recursive": data.pop("recursive", False), "mntopts": data}
     __mount_cb(rsrc, state)
 
 
 def unmount_impl(tls, data: UnmountArgs) -> None:
-    rsrc = __open_rsrc(tls, data)
+    path = data.pop("filesystem", "")
+    rsrc = open_resource(tls, path)
     rsrc.unmount(**data)

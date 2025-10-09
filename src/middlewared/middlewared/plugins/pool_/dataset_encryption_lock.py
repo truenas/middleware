@@ -15,6 +15,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
+from middlewared.plugins.zfs.load_unload_impl import UnloadKeyArgs
 
 from .utils import dataset_mountpoint, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
@@ -55,11 +56,7 @@ class PoolDatasetService(Service):
 
         coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
         await asyncio.gather(*coroutines)
-        await self.middleware.call(
-            'zfs.dataset.unload_key', id_, {
-                'umount': True, 'force_umount': options['force_umount'], 'recursive': True
-            }
-        )
+        await self.middleware.call('zfs.dataset.unload_key', UnloadKeyArgs(filesyste=id_, recursive=True))
 
         if ds['mountpoint']:
             await self.middleware.call('filesystem.set_zfs_attributes', {
