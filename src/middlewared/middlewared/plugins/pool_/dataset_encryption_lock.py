@@ -214,7 +214,7 @@ class PoolDatasetService(Service):
                 try:
                     self.middleware.call_sync(
                         'zfs.resource.mount',
-                        MountArgs(filesystem=name, recursive=True)
+                        MountArgs(filesystem=name)
                     )
                 except Exception as e:
                     failed[name]['error'] = f'Failed to mount dataset: {e}'
