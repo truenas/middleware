@@ -1,7 +1,7 @@
-__all__ = ("ZFSFSNotProvidedError", "ZFSPathNotFoundException")
+__all__ = ("ZFSPathNotProvidedException", "ZFSPathNotFoundException")
 
 
-class ZFSFSNotProvidedError(Exception):
+class ZFSPathNotProvidedException(Exception):
     pass
 
 

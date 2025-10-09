@@ -11,7 +11,8 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
-from .exceptions import ZFSFSNotProvidedError, ZFSPathNotFoundException
+from .exceptions import ZFSPathNotProvidedException, ZFSPathNotFoundException
+from .load_unload_impl import unload_key_impl, UnloadKeyArgs
 from .mount_unmount_impl import (
     mount_impl,
     MountArgs,
@@ -33,7 +34,7 @@ class ZFSResourceService(Service):
         schema = "zfs.resource.mount"
         try:
             mount_impl(tls, data)
-        except ZFSFSNotProvidedError:
+        except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'filesystem' key is required")
         except ZFSPathNotFoundException as e:
             raise ValidationError(schema, e.message, errno.ENOENT)
@@ -44,7 +45,18 @@ class ZFSResourceService(Service):
         schema = "zfs.resource.unmount"
         try:
             unmount_impl(tls, data)
-        except ZFSFSNotProvidedError:
+        except ZFSPathNotProvidedException:
+            raise ValidationError(schema, "'filesystem' key is required")
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(schema, e.message, errno.ENOENT)
+
+    @private
+    @pass_thread_local_storage
+    def unload_key(self, tls, data: UnloadKeyArgs) -> None:
+        schema = "zfs.resource.unload_key"
+        try:
+            unload_key_impl(tls, data)
+        except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'filesystem' key is required")
         except ZFSPathNotFoundException as e:
             raise ValidationError(schema, e.message, errno.ENOENT)

@@ -3,9 +3,18 @@ from typing import Literal
 
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
+from .exceptions import ZFSPathNotProvidedException, ZFSPathNotFoundException
+
+try:
+    import truenas_pylibzfs
+except ImportError:
+    truenas_pylibzfs = None
+
+
 __all__ = (
     "get_encryption_info",
     "has_internal_path",
+    "open_resource",
 )
 
 
@@ -79,3 +88,16 @@ def get_encryption_info(data: dict) -> EncryptionInfo:
             locked=data["keystatus"]["raw"] != "available",
             location=data["keylocation"]["raw"],
         )
+
+
+def open_resource(tls, path: str):
+    if not path:
+        raise ZFSPathNotProvidedException()
+
+    try:
+        return tls.lzh.open_resource(name=path)
+    except truenas_pylibzfs.ZFSException as e:
+        if truenas_pylibzfs.ZFSError(e.code) == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+            raise ZFSPathNotFoundException(path)
+        else:
+            raise e from None
