@@ -15,6 +15,7 @@ from middlewared.utils import run
 
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
+DEFAULT_DIRECT_CONFIG = True
 
 
 class ISCSIGlobalModel(sa.Model):
@@ -27,6 +28,7 @@ class ISCSIGlobalModel(sa.Model):
     iscsi_alua = sa.Column(sa.Boolean(), default=False)
     iscsi_listen_port = sa.Column(sa.Integer(), nullable=False, default=3260)
     iscsi_iser = sa.Column(sa.Boolean(), default=False)
+    iscsi_direct_config = sa.Column(sa.Boolean(), nullable=True)
 
 
 class ISCSIGlobalService(SystemServiceService):
@@ -167,6 +169,9 @@ class ISCSIGlobalService(SystemServiceService):
 
         await self._update_service(old, new, options={'ha_propagate': False})
 
+        if old['direct_config'] != new['direct_config']:
+            await self.middleware.call('etc.generate', 'scst_direct')
+
         if licensed and old['alua'] != new['alua']:
             if new['alua']:
                 await self.middleware.call(
@@ -248,3 +253,15 @@ class ISCSIGlobalService(SystemServiceService):
             return False
 
         return (await self.middleware.call('iscsi.global.config'))['iser']
+
+    @private
+    async def direct_config_enabled(self):
+        """
+        Returns whether SCST should be directly configured (via /sys).
+
+        If False then scstadmin will be used.
+        """
+        direct_config = (await self.middleware.call('iscsi.global.config'))['direct_config']
+        if direct_config is None:
+            return DEFAULT_DIRECT_CONFIG
+        return direct_config
