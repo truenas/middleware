@@ -58,7 +58,7 @@ def generate_syslog_remote_destination(server, d_name):
 
     return remotelog_stanza
 %>\
-@version: 3.38
+@version: current
 @include "scl.conf"
 
 ##################
@@ -73,7 +73,7 @@ options {
   owner("root");
   group("adm");
   perm(0640);
-  stats_freq(0);
+  stats(freq(0));
   bad_hostname("^gconfd$");
 };
 
