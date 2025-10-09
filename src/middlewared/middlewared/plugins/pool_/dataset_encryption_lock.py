@@ -56,7 +56,7 @@ class PoolDatasetService(Service):
 
         coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
         await asyncio.gather(*coroutines)
-        await self.middleware.call('zfs.dataset.unload_key', UnloadKeyArgs(filesyste=id_, recursive=True))
+        await self.middleware.call('zfs.resource.unload_key', UnloadKeyArgs(filesystem=id_, recursive=True))
 
         if ds['mountpoint']:
             await self.middleware.call('filesystem.set_zfs_attributes', {
