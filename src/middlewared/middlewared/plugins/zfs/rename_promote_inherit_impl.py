@@ -59,7 +59,7 @@ def rename_impl(tls, data: RenameArgs):
     if (
         recurse is True
         and "@" not in new
-        and "@" not in curr
+        or "@" not in curr
     ):
         raise ZFSRenameNotASnapshotException()
 
