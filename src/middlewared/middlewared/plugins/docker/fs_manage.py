@@ -2,7 +2,7 @@ import errno
 
 from middlewared.service import CallError, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
-from middlewared.plugins.zfs.mount_unmount_impl import UnmountArgs
+from middlewared.plugins.zfs.mount_unmount_impl import MountArgs, UnmountArgs
 
 from .state_utils import docker_dataset_custom_props, IX_APPS_MOUNT_PATH, Status
 
@@ -19,7 +19,10 @@ class DockerFilesystemManageService(Service):
                 if mount:
                     # Check if ix-apps dataset mount point needs updating
                     await self.ensure_ix_apps_mount_point(docker_ds)
-                    await self.middleware.call('zfs.dataset.mount', docker_ds, {'recursive': True, 'force_mount': True})
+                    await self.middleware.call(
+                        'zfs.resource.mount',
+                        MountArgs(filesystem=docker_ds, force=True, recursive=True)
+                    )
                 else:
                     await self.middleware.call(
                         'zfs.resource.unmount',

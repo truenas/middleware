@@ -5,15 +5,12 @@ try:
 except ImportError:
     ZFSError = ZFSException = ZFSProperty = None
 
+from .exceptions import ZFSPathNotFoundException
 from .normalization import normalize_asdict_result
 from .property_management import build_set_of_zfs_props, DeterminedProperties
 from .utils import has_internal_path
 
-__all__ = ("query_impl", "ZFSPathNotFoundException")
-
-
-class ZFSPathNotFoundException(Exception):
-    pass
+__all__ = ("query_impl",)
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -80,7 +77,7 @@ def __query_impl_paths(hdl, state):
         except ZFSException as e:
             if ZFSError(e.code) == ZFSError.EZFS_NOENT:
                 if state.query_args.get("raise_on_noent", False):
-                    raise ZFSPathNotFoundException(f"{path!r}: not found")
+                    raise ZFSPathNotFoundException(path)
                 else:
                     continue
             raise

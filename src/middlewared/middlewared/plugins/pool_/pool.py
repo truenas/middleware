@@ -13,6 +13,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
+from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
@@ -453,7 +454,7 @@ class PoolService(CRUDService):
                 'pool.dataset.update_impl',
                 UpdateImplArgs(name=data['name'], iprops={'mountpoint'})
             )
-            await self.middleware.call('zfs.dataset.mount', data['name'])
+            await self.middleware.call('zfs.resource.mount', MountArgs(filesystem=data['name']))
 
             pool = {
                 'name': data['name'],

@@ -8,6 +8,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, job, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 
 
 class ContainerService(Service):
@@ -55,7 +56,7 @@ class ContainerService(Service):
                     "pool.dataset.update_impl",
                     UpdateImplArgs(name=dataset["name"], iprops={"mountpoint"})
                 )
-                await self.middleware.call("zfs.dataset.mount", dataset["name"])
+                await self.middleware.call("zfs.resource.mount", MountArgs(filesystem=dataset["name"]))
 
                 with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
                     manifest = yaml.safe_load(f.read())

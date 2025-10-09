@@ -10,6 +10,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.plugins.zfs.utils import has_internal_path
+from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
@@ -655,7 +656,7 @@ class PoolDatasetService(CRUDService):
 
         data['id'] = data['name']
 
-        await self.middleware.call('zfs.dataset.mount', data['name'])
+        await self.middleware.call('zfs.resource.mount', MountArgs(filesystem=data['name']))
 
         created_ds = await self.get_instance(data['id'])
 
