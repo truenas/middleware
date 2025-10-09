@@ -135,13 +135,10 @@ class ZFSDatasetService(Service):
 
     def unload_key(self, id_: str, options: dict | None = None):
         if options is None:
-            options = {
-                'recursive': True,
-                'force_umount': False,
-            }
+            options = {'recursive': True, 'force_umount': False}
+
         options.setdefault('recursive', True)
         options.setdefault('force_umount', False)
-        force = options.pop('force_umount')
         # though libzfs upstream is written in a way
         # that makes it seem as-if you can unload the
         # key for an encrypted dataset WITHOUT unmounting
@@ -152,7 +149,7 @@ class ZFSDatasetService(Service):
             UnmountArgs(
                 filesystem=id_,
                 recursive=options['recursive'],
-                force=force,
+                force=options['force_umount'],
                 unload_encryption_key=True
             )
         )
