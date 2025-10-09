@@ -23,6 +23,8 @@ class UnloadKeyArgs(TypedDict):
     recursive: bool
     """Recursively unload encryption keys for any child resources of the
     parent."""
+    force_unmount: bool
+    """Forcefully unmount the resource before unloading the encryption key."""
 
 
 def unload_key_impl(tls, data: UnloadKeyArgs):
@@ -30,4 +32,8 @@ def unload_key_impl(tls, data: UnloadKeyArgs):
     to unload the encryption key of a zfs resource without first
     unmounting it. This is why it's calling "unmount" method."""
     rsrc = open_resource(tls, data.get("filesystem", ""))
-    rsrc.unmount(recursive=data.get("recursive", False), unload_encryption_key=True)
+    rsrc.unmount(
+        force=data.get("force_unmount", False),
+        recursive=data.get("recursive", False),
+        unload_encryption_key=True
+    )
