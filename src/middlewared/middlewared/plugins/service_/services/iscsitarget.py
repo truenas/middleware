@@ -71,7 +71,13 @@ class ISCSITargetService(SimpleService):
                     self.logger.warning('Failover exception', exc_info=True)
                     # Fall through
         # Fallback to doing a regular restart
-        return await (await self.middleware.call('service.control',
+     rjob = await self.middleware.call(
+         'service.control',
+         'RESTART',
+         self.name,
+         {'ha_propagate': False}
+     )
+     await rjob.wait(raise_error=True)
                                                  'RESTART',
                                                  self.name,
                                                  {'ha_propagate': False})).wait(raise_error=True)
