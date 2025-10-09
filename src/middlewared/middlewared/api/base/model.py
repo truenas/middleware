@@ -10,6 +10,7 @@ from pydantic.main import ModelT
 from pydantic.types import SecretType
 from pydantic_core import SchemaSerializer, core_schema
 
+from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
 
 
@@ -32,10 +33,13 @@ def _serialize_secret(value: Secret[SecretType], info: core_schema.Serialization
     Return the hidden value if "expose_secrets" was passed to `model_dump`. Otherwise, return the redaction string.
     """
     if isinstance(info.context, dict) and info.context.get("expose_secrets") is True:
-        return value.get_secret_value()
+        return_val = value.get_secret_value()
+        if isinstance(return_val, LongStringWrapper):
+            return_val = return_val.value
+        return return_val
     else:
         # always serialize Secret as if info.mode="json" (never return a Secret object)
-        return str(value)
+        return SECRET_VALUE
 
 
 # Lifted from `pydantic.Secret`. We only change the serializer function, `_serialize_secret`.
