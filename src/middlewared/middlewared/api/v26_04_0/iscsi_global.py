@@ -35,6 +35,7 @@ class IscsiGlobalEntry(BaseModel):
     """Whether iSCSI Extensions for RDMA (iSER) are enabled. Enabling is limited to TrueNAS Enterprise-licensed \
     systems and requires the system and network environment have Remote Direct Memory Access (RDMA)-capable hardware."""
     direct_config: bool | None
+    """Whether configuration is written into the kernel directly by middlewared."""
 
 
 @single_argument_args('iscsi_update')
