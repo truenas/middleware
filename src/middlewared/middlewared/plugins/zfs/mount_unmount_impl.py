@@ -80,9 +80,10 @@ def __open_rsrc(tls, data: MountArgs | UnmountArgs):
 
 
 def __mount_cb(hdl, state):
-    mounted = hdl.asdict(properties={truenas_pylibzfs.ZFSProperty.MOUNTED})
-    if mounted["properties"]["mounted"]["raw"] == "no":
-        hdl.mount(**state["mntopts"])
+    if hdl.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
+        mounted = hdl.asdict(properties={truenas_pylibzfs.ZFSProperty.MOUNTED})
+        if mounted["properties"]["mounted"]["raw"] == "no":
+            hdl.mount(**state["mntopts"])
     if state["recursive"]:
         hdl.iter_filesystems(callback=__mount_cb, state=state)
     return True
@@ -90,9 +91,6 @@ def __mount_cb(hdl, state):
 
 def mount_impl(tls, data: MountArgs) -> None:
     rsrc = __open_rsrc(tls, data)
-    if rsrc.type != truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
-        return
-
     state = {"recursive": data.pop("recursive", False), "mntopts": data}
     __mount_cb(rsrc, state)
 
