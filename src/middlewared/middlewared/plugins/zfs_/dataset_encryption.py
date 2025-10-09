@@ -136,31 +136,26 @@ class ZFSDatasetService(Service):
     def unload_key(self, id_: str, options: dict | None = None):
         if options is None:
             options = {
-                'recursive': False,
+                'recursive': True,
                 'force_umount': False,
-                'umount': False,
             }
-        options.setdefault('recursive', False)
+        options.setdefault('recursive', True)
         options.setdefault('force_umount', False)
-        options.setdefault('umount', False)
         force = options.pop('force_umount')
-        if options.pop('umount'):
-            self.middleware.call_sync(
-                'zfs.resource.unmount',
-                UnmountArgs(filesystem=id_, force=force, unload_encryption_key=True)
+        # though libzfs upstream is written in a way
+        # that makes it seem as-if you can unload the
+        # key for an encrypted dataset WITHOUT unmounting
+        # it, this is false. You have to unmount the
+        # dataset before you can unload the key.
+        self.middleware.call_sync(
+            'zfs.resource.unmount',
+            UnmountArgs(
+                filesystem=id_,
+                recursive=options['recursive'],
+                force=force,
+                unload_encryption_key=True
             )
-            return
-
-        try:
-            with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id_)
-                self.common_encryption_checks(id_, ds)
-                if not ds.key_loaded:
-                    raise CallError(f"{id_}'s key is not loaded")
-                ds.unload_key(**options)
-        except libzfs.ZFSException as e:
-            self.logger.error(f'Failed to unload key for {id_}', exc_info=True)
-            raise CallError(f'Failed to unload key for {id_}: {e}')
+        )
 
     def change_key(self, id_: str, options: dict | None = None):
         if options is None:
