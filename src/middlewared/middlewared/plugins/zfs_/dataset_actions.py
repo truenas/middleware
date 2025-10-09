@@ -2,7 +2,6 @@ import errno
 import libzfs
 
 from middlewared.service import CallError, Service
-from middlewared.service_exception import ValidationError
 
 
 def handle_ds_not_found(error_code: int, ds_name: str):
@@ -24,21 +23,6 @@ class ZFSDatasetService(Service):
                 return [child.name for child in zfs.get_dataset_by_path(path).children]
         except libzfs.ZFSException as e:
             raise CallError(f'Failed retrieving child datsets for {path} with error {e}')
-
-    def rename(self, name: str, options: dict):
-        options.setdefault('recursive', False)
-        options.setdefault('new_name', None)
-        if not options['new_name']:
-            raise ValidationError('new_name', 'new_name is required')
-
-        try:
-            with libzfs.ZFS() as zfs:
-                dataset = zfs.get_dataset(name)
-                dataset.rename(options['new_name'], recursive=options['recursive'])
-        except libzfs.ZFSException as e:
-            self.logger.error('Failed to rename dataset', exc_info=True)
-            handle_ds_not_found(e.code, name)
-            raise CallError(f'Failed to rename dataset: {e}')
 
     def promote(self, name):
         try:

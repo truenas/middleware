@@ -11,6 +11,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
+from middlewared.plugins.zfs.rename_promote_inherit_impl import RenameArgs
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
@@ -936,5 +937,12 @@ class PoolDatasetService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
-
-        return await self.middleware.call('zfs.dataset.rename', id_, options)
+        return await self.middleware.call(
+            'zfs.resource.rename',
+            RenameArgs(
+                current_name=id_,
+                new_name=options['new_name'],
+                force_unmount=options['force'],
+                recursive=options['recursive'],
+            )
+        )
