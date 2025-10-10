@@ -41,6 +41,9 @@ class InternalInterfaceService(Service):
         elif hardware in ('PUMA', 'ECHOWARP', 'LAJOLLA2', 'SUBLIGHT'):
             # {x/m/f/h}-series
             found.append('ntb0')
+        elif hardware in ('LUDICROUS', 'PLAID'):
+            # v-series
+            found.append('internode0')
         return tuple(found)
 
     async def pre_sync(self):

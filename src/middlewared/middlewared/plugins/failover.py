@@ -170,6 +170,8 @@ class FailoverService(ConfigService):
           LAJOLLA2 (f-series)
           SUBLIGHT (h-series)
           PUMA (x-series)
+          LUDICROUS (v-series, V1XX)
+          PLAID (v-series, V2XX)
           BHYVE (HA VMs for CI)
           IXKVM (HA VMs (on KVM) for CI)
           MANUAL (everything else)

@@ -1,0 +1,10 @@
+# The v-series will use a regular interface for HA
+# inter-node communication.
+[Match]
+Firmware=smbios-field(product_name $= "TRUENAS-V*")
+Property=INTERFACE=ens10f1np1
+Driver=bnxt_en
+Type=ether
+
+[Link]
+Name=internode0
