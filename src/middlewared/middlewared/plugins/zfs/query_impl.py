@@ -22,6 +22,8 @@ class CallbackState:
     """(e)xclude (i)nternal (p)aths. Unless
     someone is querying an internal path, we
     will exclude them."""
+    current_depth: int = 0
+    """Current recursion depth."""
 
 
 def __query_impl_snapshots_callback(hdl, info):
@@ -63,9 +65,27 @@ def __query_impl_callback(hdl, state):
 
     info["children"] = None
     state.results.append(info)
-    if state.query_args["get_children"]:
+
+    # Check if we should get children based on get_children or max_depth
+    # max_depth > 0 takes priority, or get_children is True and we haven't exceeded depth
+    should_get_children = False
+    if state.query_args["max_depth"] > 0:
+        # max_depth is set, check if we're within the limit
+        should_get_children = state.current_depth < state.query_args["max_depth"]
+    elif state.query_args["get_children"]:
+        # get_children is True and no max_depth limit (or max_depth == 0 meaning unlimited)
+        should_get_children = True
+
+    if should_get_children:
         info["children"] = list()
-        hdl.iter_filesystems(callback=__query_impl_callback, state=state)
+        child_state = CallbackState(
+            results=state.results,
+            query_args=state.query_args,
+            dp=state.dp,
+            eip=state.eip,
+            current_depth=state.current_depth + 1
+        )
+        hdl.iter_filesystems(callback=__query_impl_callback, state=child_state)
     return True
 
 
@@ -103,11 +123,16 @@ def __should_exclude_internal_paths(data):
 
 
 def query_impl(hdl, data):
+    if data["max_depth"] > 0 and data["get_children"] is False:
+        # If max_depth > 0, enable get_children implicitly
+        data["get_children"] = True
+
     state = CallbackState(
         results=list(),
         query_args=data,
         dp=DeterminedProperties(),
         eip=__should_exclude_internal_paths(data),
+        current_depth=0
     )
     if state.query_args["paths"]:
         __query_impl_paths(hdl, state)
