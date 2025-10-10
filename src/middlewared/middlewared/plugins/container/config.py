@@ -15,6 +15,7 @@ class ContainerConfigModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     bridge = sa.Column(sa.Text(), nullable=True)
+    preferred_pool = sa.Column(sa.Text(), nullable=True)
     v4_network = sa.Column(sa.String(), nullable=True)
     v6_network = sa.Column(sa.String(), nullable=True)
 
@@ -49,6 +50,11 @@ class LXCConfigService(ConfigService):
             verrors.add(
                 "lxc_config_update.bridge",
                 "You must specify either IPv4 network of IPv6 network for automatically-configured bridge"
+            )
+
+        if config["preferred_pool"]:
+            await self.middleware.call(
+                "container.validate_pool", verrors, "lxc_config_update.preferred_pool", config["preferred_pool"]
             )
 
         for k in ["v4_network", "v6_network"]:
