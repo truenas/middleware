@@ -56,9 +56,11 @@ class PoolDatasetService(Service):
 
         coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
         await asyncio.gather(*coroutines)
+        # recursive doesn't apply to zvols
+        recursive = ds['type'] != 'VOLUME'
         await self.middleware.call(
             'zfs.resource.unload_key',
-            UnloadKeyArgs(force_unmount=options['force_umount'], filesystem=id_, recursive=True)
+            UnloadKeyArgs(force_unmount=options['force_umount'], filesystem=id_, recursive=recursive)
         )
 
         if ds['mountpoint']:
