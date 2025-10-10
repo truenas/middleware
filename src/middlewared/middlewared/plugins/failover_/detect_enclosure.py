@@ -80,6 +80,24 @@ class EnclosureDetectionService(Service):
                 NODE = 'A' if val == 1 else 'B'
 
             return HARDWARE, NODE
+        elif product.startswith('TRUENAS-V'):
+            # HARDWARE depends on whether V1XX or V2XX
+            match product[9]:
+                case '1':
+                    HARDWARE = 'LUDICROUS'
+                case '2':
+                    HARDWARE = 'PLAID'
+                case _:
+                    return HARDWARE, NODE
+            for s in get_ses_enclosures(False):
+                if s.vendor == 'ECStream':
+                    if s.product == '4IXGA-NTBp':
+                        NODE = 'A'
+                        break
+                    elif s.product == '4IXGA-NTBs':
+                        NODE = 'B'
+                        break
+            return HARDWARE, NODE
         elif not product.startswith(PLATFORM_PREFIXES):
             # users run TrueNAS on all kinds of exotic hardware. Most of the time, the
             # exotic hardware doesn't respond to standards conforming requests. Furthermore,
