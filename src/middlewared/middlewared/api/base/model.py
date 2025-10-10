@@ -1,13 +1,14 @@
-import functools
 import inspect
 from types import NoneType
-from typing import Annotated, Any, Literal, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
+from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Secret, create_model, Field, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.json_schema import SkipJsonSchema
-from pydantic.main import IncEx, ModelT
+from pydantic.main import ModelT
+from pydantic.types import SecretType
+from pydantic_core import SchemaSerializer, core_schema
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
@@ -27,8 +28,34 @@ _SERIALIZER_NAME = "serializer"
 """Reserved name for model serializers `_not_required_serializer` and `_for_update_serializer`."""
 
 
+def _serialize_secret(value: Secret[SecretType], info: core_schema.SerializationInfo) -> SecretType | str:
+    """
+    Return the hidden value if "expose_secrets" was passed to `model_dump`. Otherwise, return the redaction string.
+    """
+    if isinstance(info.context, dict) and info.context.get("expose_secrets") is True:
+        return_val = value.get_secret_value()
+        if isinstance(return_val, LongStringWrapper):
+            return_val = return_val.value
+        return return_val
+    else:
+        # always serialize Secret as if info.mode="json" (never return a Secret object)
+        return SECRET_VALUE
+
+
+# Lifted from `pydantic.Secret`. We only change the serializer function, `_serialize_secret`.
+Secret.__pydantic_serializer__ = SchemaSerializer(
+    core_schema.any_schema(
+        serialization=core_schema.plain_serializer_function_ser_schema(
+            _serialize_secret,
+            info_arg=True,
+            when_used='always',
+        )
+    )
+)
+
+
 @model_serializer(mode="wrap")
-def _not_required_serializer(self, serializer):
+def _not_required_serializer(self: "BaseModel", serializer: core_schema.SerializerFunctionWrapHandler):
     """Exclude all fields that are set to `NotRequired`."""
     return {
         k: v
@@ -38,7 +65,7 @@ def _not_required_serializer(self, serializer):
 
 
 @model_serializer(mode="wrap")
-def _for_update_serializer(self, serializer):
+def _for_update_serializer(self: "BaseModel", serializer: core_schema.SerializerFunctionWrapHandler):
     if self is undefined:
         # Can happen if `ForUpdateMetaclass` models are nestsed. Defer serialization to the outer model.
         return self
@@ -168,51 +195,6 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
                         )
             if not v.description and (parent_field := cls.__base__.model_fields.get(k)):
                 v.description = parent_field.description
-
-    def model_dump(
-        self,
-        *,
-        mode: Literal['json', 'python'] | str = 'python',
-        include: IncEx = None,
-        exclude: IncEx = None,
-        context: dict[str, Any] | None = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        round_trip: bool = False,
-        warnings: bool | Literal['none', 'warn', 'error'] = True,
-        serialize_as_any: bool = False
-    ) -> dict[str, Any]:
-        return self.__pydantic_serializer__.to_python(
-            self,
-            mode=mode,
-            by_alias=by_alias,
-            include=include,
-            exclude=exclude,
-            context=context,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-            fallback=functools.partial(self._model_dump_fallback, context),
-        )
-
-    def _model_dump_fallback(self, context, value):
-        if isinstance(value, Secret):
-            if context["expose_secrets"]:
-                value = value.get_secret_value()
-
-                if isinstance(value, LongStringWrapper):
-                    value = value.value
-
-                return value
-            else:
-                return SECRET_VALUE
-
-        return value
 
     @classmethod
     def schema_model_fields(cls):
