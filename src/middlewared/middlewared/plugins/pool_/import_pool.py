@@ -45,7 +45,7 @@ class PoolService(Service):
                 # we'll need iterate all children no matter what.
                 await self.middleware.call(
                     'pool.dataset.update_impl',
-                    UpdateImplArgs(name=i, zprops={'mountpoint': f'/mnt/{pool_name}')
+                    UpdateImplArgs(name=i, zprops={'mountpoint': f'/mnt/{pool_name}'})
                 )
                 to_inherit.append(pool_name)
                 break
