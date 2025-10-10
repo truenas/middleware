@@ -43,6 +43,10 @@ class PoolService(Service):
                 # much of anything will work on our side. Furthermore,
                 # there is no reason to continue the iteration since
                 # we'll need iterate all children no matter what.
+                await self.middleware.call(
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(name=i, zprops={'mountpoint': f'/mnt/{pool_name}')
+                )
                 to_inherit.append(pool_name)
                 break
             elif i['name'] == f'{pool_name}/ix-applications':
