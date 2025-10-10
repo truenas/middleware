@@ -11,7 +11,13 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
-from .exceptions import ZFSPathNotProvidedException, ZFSPathNotFoundException
+from .exceptions import (
+    ZFSPathNotFoundException,
+    ZFSPathNotProvidedException,
+    ZFSRenamePathAlreadyExistsException,
+    ZFSRenameNotASnapshotException,
+    ZFSRenamePathNotProvidedException,
+)
 from .load_unload_impl import unload_key_impl, UnloadKeyArgs
 from .mount_unmount_impl import (
     mount_impl,
@@ -19,6 +25,7 @@ from .mount_unmount_impl import (
     unmount_impl,
     UnmountArgs,
 )
+from .rename_promote_inherit_impl import rename_impl, RenameArgs
 from .query_impl import query_impl
 
 
@@ -58,6 +65,23 @@ class ZFSResourceService(Service):
             unload_key_impl(tls, data)
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'filesystem' key is required")
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(schema, e.message, errno.ENOENT)
+
+    @private
+    @pass_thread_local_storage
+    def rename(self, tls, data: RenameArgs) -> None:
+        schema = "zfs.resource.rename"
+        try:
+            rename_impl(tls, data)
+        except ZFSRenameNotASnapshotException:
+            raise ValidationError(schema, "recursive is only valid for snapshots")
+        except ZFSRenamePathNotProvidedException:
+            raise ValidationError(schema, "'new_name' key is required")
+        except ZFSRenamePathAlreadyExistsException as e:
+            raise ValidationError(schema, e.message, errno.EEXIST)
+        except ZFSPathNotProvidedException:
+            raise ValidationError(schema, "'current_name' key is required")
         except ZFSPathNotFoundException as e:
             raise ValidationError(schema, e.message, errno.ENOENT)
 

@@ -11,6 +11,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
+from middlewared.plugins.zfs.rename_promote_inherit_impl import RenameArgs
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
@@ -922,13 +923,18 @@ class PoolDatasetService(CRUDService):
     )
     async def rename(self, id_, options):
         """
-        Rename a pool dataset `id`.
+        Rename a zfs resource (filesystem, snapshot, or zvolume) of `id`.
 
         No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
         as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.
 
         Proceed only if you are certain the ZFS resource is not in use and fully understand the risks.
         Set Force to continue.
+
+        NOTE: The "recursive" option is only valid for renaming snapshots. If True, and a snapshot is given, the \
+        snapshot will be renamed recursively for all children. For example: dozer/a@now, dozer/a/b@now will be \
+        renamed to dozer/a@new dozer/a/b@new. Renaming snapshots IS NOT recommended and can cause disruptions or \
+        service failures all the same.
         """
         if not options['force']:
             raise ValidationError(
@@ -936,5 +942,12 @@ class PoolDatasetService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
-
-        return await self.middleware.call('zfs.dataset.rename', id_, options)
+        return await self.middleware.call(
+            'zfs.resource.rename',
+            RenameArgs(
+                current_name=id_,
+                new_name=options['new_name'],
+                force_unmount=options['force'],
+                recursive=options['recursive'],
+            )
+        )
