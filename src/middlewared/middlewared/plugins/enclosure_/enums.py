@@ -45,6 +45,10 @@ class ControllerModels(Enum):
     R60 = 'R60'  # all nvme flash
     X10 = 'X10'
     X20 = 'X20'
+    V140 = 'V140'
+    V160 = 'V160'
+    V260 = 'V260'
+    V280 = 'V280'
 
 
 @unique
