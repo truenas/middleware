@@ -390,7 +390,7 @@ class AuditService(ConfigService):
             quota_val = "none" if new['quota'] == 0 else f'{new["quota"]}G'
             # Using refquota gives better fidelity with dataset settings
             payload['refquota'] = {'parsed': quota_val}
-            zprops['refquot'] = quota_val
+            zprops['refquota'] = quota_val
 
         if new['reservation'] != old_reservation // _GIB:
             reservation_val = "none" if new['reservation'] == 0 else f'{new["reservation"]}G'
