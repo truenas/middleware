@@ -117,11 +117,3 @@ class ZFSSnapshotService(Service):
                     snapshot.release(tag, options.get('recursive', False))
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to release snapshot: {err}')
-
-    def rename(self, id_, new_name):
-        try:
-            with libzfs.ZFS() as zfs:
-                snapshot = zfs.get_snapshot(id_)
-                snapshot.rename(new_name)
-        except libzfs.ZFSException as err:
-            raise CallError(f'Failed to rename snapshot: {err}')

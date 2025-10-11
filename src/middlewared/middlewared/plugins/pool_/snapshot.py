@@ -6,7 +6,8 @@ from middlewared.api.current import (
     PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult, PoolSnapshotRenameArgs,
     PoolSnapshotRenameResult,
 )
-from middlewared.service import CRUDService, filterable_api_method, ValidationError, ValidationErrors
+from middlewared.service import CRUDService, filterable_api_method, ValidationError
+from middlewared.plugins.zfs.rename_promote_inherit_impl import RenameArgs
 
 
 class PoolSnapshotService(CRUDService):
@@ -110,15 +111,16 @@ class PoolSnapshotService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
-
-        verrors = ValidationErrors()
-        new_name = options['new_name']
-        if new_name.split('@')[0] != id_.split('@')[0]:
-            verrors.add(
+        elif options['new_name'].split('@')[0] != id_.split('@')[0]:
+            raise ValidationError(
                 'pool.snapshot.rename.new_name',
                 'Old and new snapshot must be part of the same ZFS dataset'
             )
-
-        verrors.check()
-
-        await self.middleware.call('zfs.snapshot.rename', id_, new_name)
+        await self.middleware.call(
+            'zfs.resource.rename',
+            RenameArgs(
+                current_name=id_,
+                new_name=options['new_name'],
+                recursive=options['recursive'],
+            )
+        )

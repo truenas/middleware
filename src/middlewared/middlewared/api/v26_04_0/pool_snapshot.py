@@ -271,6 +271,8 @@ class PoolSnapshotRenameOptions(BaseModel):
 
     Set Force only if you understand and accept the risks.
     """
+    recursive: bool = False
+    """Recursively rename the snapshots of all descendent resources."""
 
 
 class PoolSnapshotRenameArgs(BaseModel):
