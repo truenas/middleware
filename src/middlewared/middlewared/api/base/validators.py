@@ -17,16 +17,20 @@ def match_validator(pattern: re.Pattern, explanation: str | None = None):
 
 
 def time_validator(value: str):
+    """Always return in the format HH:MM."""
     try:
         hours, minutes = value.split(':')
     except ValueError:
         raise ValueError('Time should be in 24 hour format like "18:00"')
-    else:
-        try:
-            time(int(hours), int(minutes))
-        except TypeError:
-            raise ValueError('Time should be in 24 hour format like "18:00"')
-    return value
+
+    try:
+        time(int(hours), int(minutes))
+    except TypeError:
+        raise ValueError('Time should be in 24 hour format like "18:00"')
+
+    # pad hours and minutes with zeros (e.g. "1:00" -> "01:00")
+    # allows for easier time comparison since "9" > "10" but "09" < "10"
+    return ':'.join(digits.rjust(2, '0') for digits in (hours, minutes))
 
 
 def https_only_check(url: HttpUrl) -> str:
