@@ -20,6 +20,75 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
+    @private
+    async def reset_mountpoint_recursively(self, pool_name):
+        """When a zpool is imported, we query only the first level
+        of datasets for the zpool and check to see if the mountpoint
+        is what we expect it to be. When the mountpoint is not what
+        we expect, we will recursively inherit (reset) the mountpoint
+        property. This usually happens when a zpool is foreign to
+        TrueNAS or someone has unintentionally changed this property."""
+        to_inherit = list()
+        container_mnt = container_dataset_mountpoint(pool_name)
+        container_ds = container_dataset(pool_name)
+        for i in await self.middleware.call(
+            'zfs.resource.query_impl',
+            {'paths': [pool_name], 'properties': ['mountpoint'], 'max_depth': 1}
+        ):
+            mntpnt = i['properties']['mountpoint']['value']
+            if i["pool"] == pool_name and mntpnt != f'/mnt/{pool_name}':
+                # yikes, someone messed with mountpoint of root dataset
+                # or this is a zpool from a non-truenas system. we have
+                # to iterate over everything and reset mountpoint before
+                # much of anything will work on our side. Furthermore,
+                # there is no reason to continue the iteration since
+                # we'll need iterate all children no matter what.
+                await self.middleware.call(
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(name=i, zprops={'mountpoint': f'/mnt/{pool_name}'})
+                )
+                to_inherit.append(pool_name)
+                break
+            elif i['name'] == f'{pool_name}/ix-applications':
+                # We exclude `ix-applications` dataset since resetting it will
+                # cause PVC's to not mount because "mountpoint=legacy" is expected.
+                continue
+
+            if (
+                i['name'] == f'{pool_name}/.truenas_containers'
+                and i['name'] == container_ds
+                and container_mnt != mntpnt
+            ):
+                # This dataset gets a custom mountpoint so user cannot
+                # unintentionally share it via SMB, NFS, etc.
+                await self.middleware.call(
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(name=i, zprops={'mountpoint': container_mnt})
+                )
+            elif i['name'] == f'{pool_name}/ix-apps' and mntpnt != f'/{IX_APPS_DIR_NAME}':
+                await self.middleware.call(
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(name=i, zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
+                )
+            elif mntpnt != f'/mnt/{pool_name}/{i["name"]}':
+                to_inherit.append(i["name"])
+
+        if to_inherit:
+            # NOTE: we use zfs.resource.query which will hide internal
+            # paths. This is important so don't chagne it unless you
+            # understand the implications fully.
+            for i in await self.middleware.call(
+                'zfs.resource.query',
+                {'paths': to_inherit, 'properties': None, 'get_children': True}
+            ):
+                try:
+                    await self.middleware.call(
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=i['name'], iprops={'mountpoint'})
+                    )
+                except Exception:
+                    self.logger.exception('Failed inheriting mountpoint property for %r', i['name'])
+
     @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
     @job()
     async def import_find(self, job):
@@ -45,13 +114,6 @@ class PoolService(Service):
                 entry[i] = pool[i]
             result.append(entry)
         return result
-
-    @private
-    async def disable_shares(self, ds):
-        await self.middleware.call(
-            'pool.dataset.update_impl',
-            UpdateImplArgs(name=ds, zprops={'sharenfs': "off", 'sharesmb': "off"})
-        )
 
     @api_method(PoolImportPoolArgs, PoolImportPoolResult, roles=['POOL_WRITE'])
     @job(lock='import_pool')
@@ -108,45 +170,8 @@ class PoolService(Service):
         # set acl properties correctly for given top-level dataset's acltype
         await self.middleware.call('pool.normalize_root_dataset_properties', pool_name, guid)
 
-        # Recursively reset dataset mountpoints for the zpool.
-        recursive = True
-        for child in await self.middleware.call('zfs.dataset.child_dataset_names', pool_name):
-            if child in (os.path.join(pool_name, k) for k in ('ix-applications', 'ix-apps', '.truenas_containers')):
-                # We exclude `ix-applications` dataset since resetting it will
-                # cause PVC's to not mount because "mountpoint=legacy" is expected.
-                # We exclude `ix-apps` dataset since it has a custom mountpoint in place
-                # If user downgrades to DF or earlier and he had ix-apps dataset, and he comes back
-                # to EE or later, what will happen is that the mountpoint for ix-apps would be reset
-                # because of the logic we have below, hence we just set and it's children will inherit it
-                # The same applies to trueans-containers dataset, we would like to have it mounted in a custom
-                # place so user cannot unintentionally share it via SMB/NFS
-                if child == os.path.join(pool_name, 'ix-apps'):
-                    args: UpdateImplArgs = UpdateImplArgs(name=child, zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
-                    await self.middleware.call('pool.dataset.update_impl', args)
-                elif child == container_dataset(pool_name):
-                    args: UpdateImplArgs = UpdateImplArgs(
-                        name=child, zprops={'mountpoint': container_dataset_mountpoint(pool_name)}
-                    )
-                    await self.middleware.call('pool.dataset.update_impl', args)
-                continue
-            try:
-                # Reset all mountpoints
-                await self.middleware.call('zfs.dataset.inherit', child, 'mountpoint', recursive)
-
-            except CallError as e:
-                if e.errno != errno.EPROTONOSUPPORT:
-                    self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
-                    continue
-
-                try:
-                    await self.disable_shares(child)
-                    self.logger.warning('%s: disabling ZFS dataset property-based shares', child)
-                except Exception:
-                    self.logger.warning('%s: failed to disable share: %s.', child, str(e), exc_info=True)
-
-            except Exception as e:
-                # Let's not make this fatal
-                self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
+        # reset (recursively) the mountpoint property (if required)
+        await self.reset_mountpoint_recursively(pool_name)
 
         # We want to set immutable flag on all of locked datasets
         for encrypted_ds in await self.middleware.call(

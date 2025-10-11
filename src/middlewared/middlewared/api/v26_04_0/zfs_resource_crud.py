@@ -271,6 +271,22 @@ class ZFSResourceQuery(BaseModel):
     """Retrieve children information for the zfs resource."""
     get_snapshots: bool = False
     """Retrieve snapshot information for the zfs resource."""
+    max_depth: int = 0
+    """Maximum depth to recurse when retrieving children.
+    A value of 0 means unlimited recursion (default behavior).
+    A value greater than 0 limits the recursion to that many levels deep.
+
+    When max_depth > 0, get_children is automatically enabled if not already set.
+
+    Examples:
+        max_depth=0: Retrieve all descendants (unlimited depth)
+        max_depth=1: Retrieve only immediate children
+        max_depth=2: Retrieve children and grandchildren
+        max_depth=3: Retrieve up to great-grandchildren
+
+    Note: When max_depth > 0 is specified, it takes priority over get_children.
+    The depth is measured from the specified path(s), not from the pool root.
+    """
 
 
 class ZFSResourceQueryArgs(BaseModel):
