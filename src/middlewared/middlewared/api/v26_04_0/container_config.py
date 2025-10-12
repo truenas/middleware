@@ -12,6 +12,8 @@ __all__ = [
 class LXCConfigEntry(BaseModel):
     id: int
     """Configuration ID."""
+    preferred_pool: str | None = None
+    """Default pool used by containers and image datasets."""
     bridge: str | None = None
     """Network bridge interface for virtualized instance networking. `null` if not configured."""
     v4_network: IPv4Network | None = None
