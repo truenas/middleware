@@ -5,6 +5,7 @@ import uuid
 from middlewared.api import api_method
 from middlewared.api.current import VMCloneArgs, VMCloneResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs
 from middlewared.service import CallError, item_method, Service, private
 from middlewared.service_exception import ValidationErrors
 
@@ -69,7 +70,7 @@ class VMService(Service):
                 continue
             break
 
-        await self.middleware.call('zfs.snapshot.clone', {'snapshot': zvol_snapshot, 'dataset_dst': clone_dst})
+        await self.middleware.call('zfs.resource.clone', CloneArgs(current_name=zvol_snapshot, new_name=clone_dst))
 
         created_clones.append(clone_dst)
 
