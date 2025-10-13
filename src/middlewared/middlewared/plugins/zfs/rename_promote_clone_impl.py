@@ -8,10 +8,25 @@ from .exceptions import (
 )
 from .utils import open_resource
 
+try:
+    from truenas_pylibzfs import ZFSType
+except ImportError:
+    ZFSType = None
+
+
 __all__ = (
+    "clone_impl",
+    "CloneArgs",
     "rename_impl",
     "RenameArgs",
 )
+
+
+class CloneArgs(TypedDict):
+    current_name: str
+    """The name of the zfs snapshot that should be cloned."""
+    new_name: str
+    """The new name to be given to the clone."""
 
 
 class RenameArgs(TypedDict, total=False):
@@ -39,6 +54,26 @@ class RenameArgs(TypedDict, total=False):
     if this option is False (default)."""
     force_unmount: bool
     """Force unmount any file systems that need to be unmounted in the process."""
+
+
+def clone_impl(tls, data: CloneArgs):
+    curr = data.pop("current_name", "")
+    rsrc = open_resource(tls, curr)
+    if rsrc.type != ZFSType.ZFS_TYPE_SNAPSHOT:
+        raise ZFSPathNotASnapshotException()
+
+    new = data.pop("new_name", None)
+    if not new:
+        raise ZFSPathNotProvidedException()
+
+    try:
+        open_resource(tls, new)
+    except ZFSPathNotFoundException:
+        pass
+    else:
+        raise ZFSPathAlreadyExistsException(new)
+
+    rsrc.clone(name=new)
 
 
 def rename_impl(tls, data: RenameArgs):
