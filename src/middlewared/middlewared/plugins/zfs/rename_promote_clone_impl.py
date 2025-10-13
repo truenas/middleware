@@ -1,10 +1,10 @@
 from typing import TypedDict
 
 from .exceptions import (
+    ZFSPathAlreadyExistsException,
+    ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
-    ZFSRenamePathAlreadyExistsException,
-    ZFSRenameNotASnapshotException,
-    ZFSRenamePathNotProvidedException,
+    ZFSPathNotProvidedException,
 )
 from .utils import open_resource
 
@@ -46,22 +46,18 @@ def rename_impl(tls, data: RenameArgs):
     rsrc = open_resource(tls, curr)
     new = data.pop("new_name", None)
     if not new:
-        raise ZFSRenamePathNotProvidedException()
+        raise ZFSPathNotProvidedException()
 
     try:
         open_resource(tls, new)
     except ZFSPathNotFoundException:
         pass
     else:
-        raise ZFSRenamePathAlreadyExistsException(new)
+        raise ZFSPathAlreadyExistsException(new)
 
     recurse = data.get("recursive", False)
-    if (
-        recurse is True
-        and "@" not in new
-        or "@" not in curr
-    ):
-        raise ZFSRenameNotASnapshotException()
+    if recurse is True and "@" not in new or "@" not in curr:
+        raise ZFSPathNotASnapshotException()
 
     rsrc.rename(
         new_name=new,

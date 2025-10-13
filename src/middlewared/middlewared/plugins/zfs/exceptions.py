@@ -1,10 +1,13 @@
 __all__ = (
+    "ZFSPathNotASnapshotException",
+    "ZFSPathAlreadyExistsException",
     "ZFSPathNotFoundException",
     "ZFSPathNotProvidedException",
-    "ZFSRenamePathAlreadyExistsException",
-    "ZFSRenameNotASnapshotException",
-    "ZFSRenamePathNotProvidedException",
 )
+
+
+class ZFSPathNotASnapshotException(Exception):
+    pass
 
 
 class ZFSPathNotFoundException(Exception):
@@ -17,15 +20,7 @@ class ZFSPathNotProvidedException(Exception):
     pass
 
 
-class ZFSRenamePathAlreadyExistsException(Exception):
+class ZFSPathAlreadyExistsException(Exception):
     def __init__(self, path):
         self.message = f"{path!r} already exists"
         super().__init__(self.message)
-
-
-class ZFSRenameNotASnapshotException(Exception):
-    pass
-
-
-class ZFSRenamePathNotProvidedException(Exception):
-    pass
