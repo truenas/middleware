@@ -12,11 +12,10 @@ from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .exceptions import (
+    ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSPathNotProvidedException,
-    ZFSRenamePathAlreadyExistsException,
-    ZFSRenameNotASnapshotException,
-    ZFSRenamePathNotProvidedException,
+    ZFSPathAlreadyExistsException,
 )
 from .load_unload_impl import unload_key_impl, UnloadKeyArgs
 from .mount_unmount_impl import (
@@ -25,8 +24,8 @@ from .mount_unmount_impl import (
     unmount_impl,
     UnmountArgs,
 )
-from .rename_promote_inherit_impl import rename_impl, RenameArgs
 from .query_impl import query_impl
+from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl, RenameArgs
 
 
 class ZFSResourceService(Service):
@@ -34,6 +33,21 @@ class ZFSResourceService(Service):
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
+
+    @private
+    @pass_thread_local_storage
+    def clone(self, tls, data: CloneArgs) -> None:
+        schema = "zfs.resource.clone"
+        try:
+            clone_impl(tls, data)
+        except ZFSPathNotASnapshotException:
+            raise ValidationError(schema, "Only snapshots may be cloned")
+        except ZFSPathAlreadyExistsException as e:
+            raise ValidationError(schema, e.message, errno.EEXIST)
+        except ZFSPathNotProvidedException:
+            raise ValidationError(schema, "'current_name' key is required")
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(schema, e.message, errno.ENOENT)
 
     @private
     @pass_thread_local_storage
@@ -74,11 +88,9 @@ class ZFSResourceService(Service):
         schema = "zfs.resource.rename"
         try:
             rename_impl(tls, data)
-        except ZFSRenameNotASnapshotException:
+        except ZFSPathNotASnapshotException:
             raise ValidationError(schema, "recursive is only valid for snapshots")
-        except ZFSRenamePathNotProvidedException:
-            raise ValidationError(schema, "'new_name' key is required")
-        except ZFSRenamePathAlreadyExistsException as e:
+        except ZFSPathAlreadyExistsException as e:
             raise ValidationError(schema, e.message, errno.EEXIST)
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'current_name' key is required")

@@ -10,6 +10,7 @@ from middlewared.plugins.cloud_backup.restic import get_restic_config, run_resti
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs
 from middlewared.service import CallError, Service, item_method, job, private
 from middlewared.utils import run
 from middlewared.utils.time_utils import utc_now
@@ -36,10 +37,10 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
             clone = zvol_path_to_name(local_path) + f"-{name}"
             try:
-                await middleware.call("zfs.snapshot.clone", {
-                    "snapshot": snapshot,
-                    "dataset_dst": clone,
-                })
+                await middleware.call(
+                    "zfs.resource.clone",
+                    CloneArgs(current_name=snapshot, new_name=clone)
+                )
             except Exception:
                 clone = None
                 raise
