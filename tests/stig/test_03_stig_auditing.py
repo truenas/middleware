@@ -13,7 +13,6 @@ import pytest
 from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
-# from middlewared.utils import auditd
 from time import sleep
 
 # Alias
@@ -64,7 +63,7 @@ def assert_auditd_event(data: list, cmd: str, auid=None, euid=None):
 
 @pytest.fixture(scope='module')
 def auditd_gpos_stig_enable():
-    """Fixture to manage auditd configuration"""    
+    """Fixture to manage auditd configuration"""
     config_auditd(WITH_GPOS_STIG)
     try:
         rules = ssh('auditctl -l')
@@ -81,11 +80,11 @@ def auditd_gpos_stig_enable():
     finally:
         config_auditd(WITHOUT_GPOS_STIG)
         # Cleanup /tmp
-        ssh('rm /tmp/auditd_test')
+        ssh('rm -f /tmp/auditd_test')
 
 
 @pytest.mark.parametrize('test_rule,param,key', [
-    pp("ping", "-c1 127.0.0.1", "privileged", id="ping - privileged"),
+    pp("mount", ">/dev/null 2>&1", "privileged", id="mount - privileged"),
     pp("chmod 777", "/etc/nginx", "escalation", id="nginx conf - escalation"),
     pp("rm -f", "/var/log/nginx/error.log", "escalation", id="nginx error.log - escalation"),
 ])
@@ -96,7 +95,8 @@ def test_privileged_and_escalation_events(test_rule, param, key, auditd_gpos_sti
 
     match key:
         case 'privilege':
-            assert any(f"{test_rule} " in r for r in ruleset), f"Missing {test_rule}:\n{ruleset}"
+            # NOTE: Sample command is in "/usr/bin"
+            assert any(f"/usr/bin/{test_rule} " in r for r in ruleset), f"Missing {test_rule}:\n{ruleset}"
         case 'escalation':
             assert any(f"{param} " in r for r in ruleset), f"Missing {param}:\n{ruleset}"
 
