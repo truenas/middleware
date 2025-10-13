@@ -35,6 +35,8 @@ class PoolService(Service):
             'zfs.resource.query_impl',
             {'paths': [pool_name], 'properties': ['mountpoint'], 'max_depth': 1}
         ):
+            if i['type'] != 'FILESYSTEM':
+                continue
             mntpnt = i['properties']['mountpoint']['value']
             if i["pool"] == pool_name and mntpnt != f'/mnt/{pool_name}':
                 # yikes, someone messed with mountpoint of root dataset
@@ -81,6 +83,8 @@ class PoolService(Service):
                 'zfs.resource.query',
                 {'paths': to_inherit, 'properties': None, 'get_children': True}
             ):
+                if i['type'] != 'FILESYSTEM':
+                    continue
                 try:
                     await self.middleware.call(
                         'pool.dataset.update_impl',
