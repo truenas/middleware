@@ -60,10 +60,12 @@ class UpdateService(Service):
         `profile` choices for configuration update.
         """
         profiles = {}
+        config = await self.middleware.call('update.config_internal')
         is_enterprise = await self.middleware.call('system.is_enterprise')
         current_profile = UpdateProfiles[await self.current_version_profile()]
         for profile in UpdateProfiles:
-            info = profile.describe(is_enterprise) | {'available': profile <= current_profile}
+            available = profile.name == config['profile'] or profile <= current_profile
+            info = profile.describe(is_enterprise) | {'available': available}
             if is_enterprise:
                 if profile >= UpdateProfiles.GENERAL:
                     profiles[profile.name] = info
