@@ -30,10 +30,12 @@ class NVMetSPDKService(Service):
         Allocate hugepages and bind PCI devices.
         """
         _slots = await self.slots()
+        my_env = os.environ.copy()
         if _slots:
-            my_env = os.environ.copy()
             my_env['PCI_ALLOWED'] = " ".join(_slots)
-            return await self._run_setup('config', env=my_env)
+        else:
+            my_env['PCI_ALLOWED'] = "none"
+        return await self._run_setup('config', env=my_env)
 
     async def reset(self):
         """
@@ -51,8 +53,11 @@ class NVMetSPDKService(Service):
         return await self._run_setup('cleanup')
 
     async def slots(self):
-        _nics = await self.nics()
-        return await self.middleware.call('nvmet.spdk.pci_slots', _nics)
+        # For the time being we are NOT going to support dedicated NICs that
+        # will be devoted to NVMe-oF.  So we will return the empty list.
+        return []
+        # _nics = await self.nics()
+        # return await self.middleware.call('nvmet.spdk.pci_slots', _nics)
 
     def pci_slots(self, nics):
         pci_slots = []
@@ -69,7 +74,7 @@ class NVMetSPDKService(Service):
 
     async def nics(self):
         """
-        Return a list of NIC names correesponding to all configure NVMe-oF ports.
+        Return a list of NIC names corresponding to all configure NVMe-oF ports.
         """
         # Check that kernel nvmet is not enabled
         if (await self.middleware.call('nvmet.global.config'))['kernel']:
