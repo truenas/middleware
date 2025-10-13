@@ -22,11 +22,13 @@ __all__ = (
 )
 
 
-class CloneArgs(TypedDict):
+class CloneArgs(TypedDict, total=False):
     current_name: str
     """The name of the zfs snapshot that should be cloned."""
     new_name: str
     """The new name to be given to the clone."""
+    properties: dict[str, str | int]
+    """Optional set of properties to set on the cloned resource."""
 
 
 class RenameArgs(TypedDict, total=False):
@@ -73,7 +75,10 @@ def clone_impl(tls, data: CloneArgs):
     else:
         raise ZFSPathAlreadyExistsException(new)
 
-    rsrc.clone(name=new)
+    if props := data.get("props", None):
+        rsrc.clone(name=new, properties=props)
+    else:
+        rsrc.clone(name=new)
 
 
 def rename_impl(tls, data: RenameArgs):
