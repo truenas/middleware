@@ -7,7 +7,7 @@ from middlewared.api.current import (
     PoolSnapshotRenameResult,
 )
 from middlewared.service import CRUDService, filterable_api_method, ValidationError
-from middlewared.plugins.zfs.rename_promote_inherit_impl import RenameArgs
+from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
 
 
 class PoolSnapshotService(CRUDService):

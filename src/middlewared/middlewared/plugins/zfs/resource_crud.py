@@ -25,8 +25,8 @@ from .mount_unmount_impl import (
     unmount_impl,
     UnmountArgs,
 )
-from .rename_promote_inherit_impl import rename_impl, RenameArgs
 from .query_impl import query_impl
+from .rename_promote_clone_impl import rename_impl, RenameArgs
 
 
 class ZFSResourceService(Service):
