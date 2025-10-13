@@ -1,14 +1,8 @@
 <%
     import ipaddress
     import socket
-    import os
     from pathlib import Path
-    from contextlib import suppress
-    from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
-    from middlewared.plugins.pool_.utils import UpdateImplArgs
-    from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
-    from middlewared.utils.mount import getmntinfo
-
+    from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
 
     def do_map(share, map_type, map_ids, alert_shares):
         output = []
@@ -110,92 +104,12 @@
 
         return hostname
 
-    def disable_sharenfs():
-        potential_datasets = set()
-        with open('/etc/exports.d/zfs.exports', 'r') as f:
-           for line in f:
-               if not line.strip() or line.startswith('#'):
-                   continue
-
-               potential_datasets.add(line.rsplit(" ", 1)[0])
-
-        for path, ds in paths_to_datasets_impl(potential_datasets, getmntinfo()).items():
-            if ds is not None:
-                try:
-                    middleware.logger.warning("Disable sharenfs for: %s", ds)
-                    middleware.call_sync(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=ds, zprops={'sharenfs': 'off'})
-                    )
-                except Exception:
-                    middleware.logger.warning("Failed to disable sharenfs for: %s", ds, exc_info=True)
-
-        return
-
-    def disable_exportsd():
-
-        rv = True
-
-        with suppress(FileExistsError):
-            os.mkdir('/etc/exports.d', mode=0o755)
-
-        if 'IMMUTABLE' not in middleware.call_sync('filesystem.stat', '/etc/exports.d')['attributes']:
-            middleware.logger.warning('/etc/exports.d: Found in mutable state, expected immutable.')
-
-        # The directory /etc/exports.d should be immutable.
-        # If the directory contains files, then we need to delete those files
-        # and restore immutable state
-        files_in_exportsd = os.listdir('/etc/exports.d')
-        if len(files_in_exportsd) > 0:
-            middleware.logger.error('Files found in /etc/exports.d: %s', str(files_in_exportsd))
-
-            # Temporary remove immutable to allow file deletion
-            middleware.call_sync('filesystem.set_zfs_attributes', {
-                'path': '/etc/exports.d',
-                'zfs_file_attributes': {'immutable': False}
-            })
-
-            # Process zfs.exports first
-            if 'zfs.exports' in files_in_exportsd:
-                middleware.logger.warning("Disabling sharenfs ZFS property on datasets")
-                disable_sharenfs()
-
-            # Remove all files in /etc/exports.d.  NOTE: zfs.exports might now be gone.
-            for file in files_in_exportsd:
-                filepath = os.path.join('/etc/exports.d', file)
-                if os.path.exists(filepath):
-                    try:
-                        middleware.logger.warning("Removing unexpected file found in exports.d: %s", file)
-                        os.remove(filepath)
-                    except Exception:
-                        middleware.logger.error(
-                            "%s: Failed to remove unexpected file in exports.d",
-                            file, exc_info=True
-                        )
-
-                        # Block NFS start if we fail to cleanup /etc/exports.d
-                        rv = False
-
-
-        # _Always_ exit with /etc/exports.d in immutable state
-        middleware.call_sync('filesystem.set_zfs_attributes', {
-            'path': '/etc/exports.d',
-            'zfs_file_attributes': {'immutable': True}
-        })
-
-        # Confirmation
-        if 'IMMUTABLE' not in middleware.call_sync('filesystem.stat', '/etc/exports.d')['attributes']:
-            rv = False
-
-        return rv
-
     entries = []
     gaierrors = []
     alert_shares = {}
 
     config = render_ctx["nfs.config"]
     shares = render_ctx["sharing.nfs.query"]
-    poison_exports = not disable_exportsd()
 
     has_nfs_principal = middleware.call_sync('kerberos.keytab.has_nfs_principal')
     global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
@@ -264,15 +178,6 @@
 
 
 %>
-% if poison_exports:
-WARNING:
-# /etc/exports.d contains unexpected files that could not be removed.
-# This message has been added to prevent the NFS service from starting until the
-# issue has been resolved.
-
-% else:
-
-% endif
 % for export in entries:
 "${export["path"]}"${"\\\n\t"}${"\\\n\t".join(export["options"])}
 % endfor
