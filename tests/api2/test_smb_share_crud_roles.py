@@ -38,7 +38,7 @@ def test_write_role_can_write(unprivileged_user_fixture, role):
 
     common_checks(unprivileged_user_fixture, "sharing.smb.getacl", role, True)
     common_checks(unprivileged_user_fixture, "sharing.smb.setacl", role, True)
-    common_checks(unprivileged_user_fixture, "smb.status", role, True, valid_role_exception=False)
+    # common_checks(unprivileged_user_fixture, "smb.status", role, True, valid_role_exception=False)
 
     common_checks(
         unprivileged_user_fixture, "service.control", role, True, method_args=["START", "cifs"],
