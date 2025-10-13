@@ -274,7 +274,7 @@ class PoolService(Service):
             self.logger.debug('Calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
             ds = self.middleware.call_sync(
                 'zfs.resource.query_impl',
-                {'paths': [vol_name], 'properties': ['acltype', 'aclinherit', 'aclmode', 'sharesmb']}
+                {'paths': [vol_name], 'properties': ['acltype', 'aclinherit', 'aclmode']}
             )[0]['properties']
         except Exception:
             self.logger.warning('Unexpected failure querying root-level properties for %r', vol_name, exc_info=True)
@@ -293,9 +293,6 @@ class PoolService(Service):
                 opts['aclinherit'] = 'discard'
             if ds['aclmode']['value'] != 'discard':
                 opts['aclmode'] = 'discard'
-
-        if ds['sharesmb']['value'] != 'off':
-            opts['sharesmb'] = 'off'
 
         if opts:
             try:
