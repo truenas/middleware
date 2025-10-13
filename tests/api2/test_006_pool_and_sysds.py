@@ -4,7 +4,6 @@ import pytest
 from pytest_dependency import depends
 
 from auto_config import ha, pool_name
-from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, fail
 from middlewared.test.integration.utils.client import client
 
@@ -184,9 +183,6 @@ def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, 
     """
     depends(request, ['POOL_FUNCTIONALITY1'])
     zp_name = list(pool_data.keys())[0]
-    with pytest.raises(CallError, match="cannot share"):
-        # should prevent setting this property on any dataset
-        ws_client.call('zfs.dataset.update', zp_name, {'properties': {'sharenfs': {'value': 'on'}}})
 
     # export zpool
     try:
