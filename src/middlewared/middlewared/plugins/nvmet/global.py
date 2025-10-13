@@ -286,7 +286,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
             await self.middleware.call('nvmet.global.load_kernel_modules')
         else:
             await self.middleware.call('nvmet.spdk.slots')
-            if await self.middleware.call('service.start', NVMF_SERVICE):
+            if await (await self.middleware.call('service.control', 'START', NVMF_SERVICE)).wait(raise_error=True):
                 await self.middleware.call('nvmet.spdk.wait_nvmf_ready')
         await self.middleware.call('etc.generate', 'nvmet')
 
@@ -297,7 +297,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 await self.middleware.run_in_thread(clear_config)
                 await self.middleware.call('nvmet.global.unload_kernel_modules')
             else:
-                return await self.middleware.call('service.stop', NVMF_SERVICE)
+                return (await self.middleware.call('service.control', 'STOP', NVMF_SERVICE)).wait(raise_error=True)
 
     @private
     async def system_ready(self):
