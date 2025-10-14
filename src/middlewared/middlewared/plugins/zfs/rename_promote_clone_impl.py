@@ -2,6 +2,7 @@ from typing import TypedDict
 
 from .exceptions import (
     ZFSPathAlreadyExistsException,
+    ZFSPathInvalidException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSPathNotProvidedException,
@@ -9,14 +10,16 @@ from .exceptions import (
 from .utils import open_resource
 
 try:
-    from truenas_pylibzfs import ZFSType
+    from truenas_pylibzfs import ZFSProperty, ZFSType
 except ImportError:
-    ZFSType = None
+    ZFSProperty = ZFSType = None
 
 
 __all__ = (
     "clone_impl",
     "CloneArgs",
+    "promote_impl",
+    "PromoteArgs",
     "rename_impl",
     "RenameArgs",
 )
@@ -29,6 +32,11 @@ class CloneArgs(TypedDict, total=False):
     """The new name to be given to the clone."""
     properties: dict[str, str | int]
     """Optional set of properties to set on the cloned resource."""
+
+
+class PromoteArgs(TypedDict):
+    current_name: str
+    """The name of the zfs resource to be promoted."""
 
 
 class RenameArgs(TypedDict, total=False):
@@ -79,6 +87,14 @@ def clone_impl(tls, data: CloneArgs):
         rsrc.clone(name=new, properties=props)
     else:
         rsrc.clone(name=new)
+
+
+def promote_impl(tls, data: PromoteArgs):
+    rsrc = open_resource(tls, data["current_name"])
+    origin = rsrc.get_properties(properties={ZFSProperty.ORIGIN}).origin
+    if origin.value is None:
+        raise ZFSPathInvalidException()
+    rsrc.promote()
 
 
 def rename_impl(tls, data: RenameArgs):
