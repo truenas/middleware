@@ -1,3 +1,4 @@
+import errno
 import os
 import subprocess
 import wbclient
@@ -58,16 +59,20 @@ class ADJoinMixin:
 
     def _ad_wait_wbclient(self) -> None:
         waited = 0
-        ctx = wbclient.Ctx()
         while waited <= 60:
-            if ctx.domain().domain_info()['online']:
-                return
+            try:
+                ctx = wbclient.Ctx()
+            except Exception:
+                self.logger.debug('Failed to initialize winbind context', exc_info=True)
+            else:
+                if ctx.domain().domain_info()['online']:
+                    return
 
             self.logger.debug('Waiting for domain to come online')
             sleep(1)
             waited += 1
 
-        raise CallError('Timed out while waiting for domain to come online')
+        raise CallError('Timed out while waiting for domain to come online', errno=errno.ETIMEDOUT)
 
     def _ad_wait_kerberos_start(self) -> None:
         """
@@ -312,6 +317,15 @@ class ADJoinMixin:
             # if there's an actual unrecoverable kerberos error
             # in our post-join actions then leaving AD will also fail
             raise
+        except CallError as e:
+            if e.errno != errno.ETIMEDOUT:
+                raise e
+
+            self.logger.error(
+                'Timeout out waiting for AD to come online. Leaving '
+                'domain configured for debugging purposes'
+            )
+            # Allow AD setup to continue in semi-broken state
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
             # roll back and present user with error
