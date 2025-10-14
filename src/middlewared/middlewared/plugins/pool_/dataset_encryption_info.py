@@ -239,7 +239,7 @@ class PoolDatasetService(Service):
                 if crypto and not crypto.info().key_is_loaded:
                     return True
             except ZFSException as e:
-                if ZFSError(e.code) == ZFSError.EZFS_NOENT:
+                if ZFSError(e.code) in (ZFSError.EZFS_NOENT, ZFSError.EZFS_INVALIDNAME):
                     continue
                 else:
                     raise
