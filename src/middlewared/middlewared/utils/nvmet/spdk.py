@@ -496,7 +496,7 @@ class NvmetBdevConfig(NvmetConfig):
             case 'URING bdev':
                 if filename := live_item.get('driver_specific', {}).get('uring', {}).get('filename'):
                     if filename.startswith('/dev/zvol/'):
-                        return f'ZVOL:{filename[5:]}'
+                        return f'ZVOL:{filename[5:].replace("+", " ")}'
             case 'AIO disk':
                 if filename := live_item.get('driver_specific', {}).get('aio', {}).get('filename'):
                     if filename.startswith('/mnt'):
@@ -512,13 +512,13 @@ class NvmetBdevConfig(NvmetConfig):
         return result
 
     def bdev_name(self, config_item, render_ctx):
-        # Skip is we're the BACKUP in a HA
+        # Skip if we're the BACKUP in a HA
         if render_ctx['failover.status'] == 'BACKUP':
             return
 
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
-                return f"ZVOL:{config_item['device_path']}"
+                return f"ZVOL:{config_item['device_path'].replace('+', ' ')}"
 
             case NAMESPACE_DEVICE_TYPE.FILE.api:
                 return f"FILE:{config_item['device_path']}"
@@ -539,7 +539,7 @@ class NvmetBdevConfig(NvmetConfig):
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
                 rpc.bdev.bdev_uring_create(client,
-                                           filename=f"/dev/{config_item['device_path']}",
+                                           filename=f"/dev/{config_item['device_path'].replace(' ', '+')}",
                                            name=name
                                            )
 
