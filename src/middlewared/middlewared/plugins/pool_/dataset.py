@@ -11,7 +11,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
-from middlewared.plugins.zfs.rename_promote_clone_impl import RenameArgs
+from middlewared.plugins.zfs.rename_promote_clone_impl import PromoteArgs, RenameArgs
 from middlewared.service import (
     CallError, CRUDService, InstanceNotFound, item_method, job, private, ValidationError, ValidationErrors,
     filterable_api_method,
@@ -902,17 +902,8 @@ class PoolDatasetService(CRUDService):
     @item_method
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
-        """
-        Promote the cloned dataset `id`.
-        """
-        dataset = await self.middleware.call(
-            'zfs.resource.query_impl', {'paths': [id_], 'properties': ['origin']}
-        )
-        if not dataset:
-            raise CallError(f'Dataset "{id_}" does not exist.', errno.ENOENT)
-        if not dataset[0]['properties']['origin']['value']:
-            raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
-        return await self.middleware.call('zfs.dataset.promote', id_)
+        """Promote a cloned dataset."""
+        return await self.middleware.call('zfs.resource.promote', PromoteArgs(current_name=id_))
 
     @api_method(
         PoolDatasetRenameArgs,
