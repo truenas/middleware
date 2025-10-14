@@ -119,8 +119,12 @@ class MailSendArgs(BaseModel):
 
 
 class MailSendResult(BaseModel):
-    result: bool
+    result: None
     """The message was sent successfully."""
+
+    @classmethod
+    def to_previous(cls, value):
+        return {"result": True}
 
 
 class MailLocalAdministratorEmailArgs(BaseModel):

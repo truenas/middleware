@@ -161,7 +161,7 @@ class MailService(ConfigService):
             template = get_template('assets/templates/mail.html')
             message['html'] = template.render(body=html.escape(message['text']).replace('\n', '<br>\n'))
 
-        return self.send_raw(job, message, config)
+        self.send_raw(job, message, config)
 
     @job(pipes=['input'], check_pipes=False)
     @private
@@ -291,7 +291,7 @@ class MailService(ConfigService):
                     )
         except NetworkActivityDisabled:
             self.logger.warning('Sending email denied')
-            return False
+            raise
         except Exception as e:
             # We are only interested in ValueError, not subclasses.
             if e.__class__ is ValueError:
@@ -305,7 +305,6 @@ class MailService(ConfigService):
                 with self.mail_queue as mq:
                     mq.append(msg)
             raise CallError(f'Failed to send email: {e}')
-        return True
 
     @contextlib.contextmanager
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
