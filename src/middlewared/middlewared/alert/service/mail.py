@@ -1,4 +1,5 @@
 from middlewared.alert.base import AlertService
+from middlewared.service_exception import NetworkActivityDisabled
 
 
 class MailAlertService(AlertService):
@@ -15,8 +16,11 @@ class MailAlertService(AlertService):
                 self.logger.trace("No e-mail address configured for any of the local administrators, not sending email")
                 return
 
-        await self.middleware.call("mail.send", {
-            "subject": "Alerts",
-            "html": await self._format_alerts(alerts, gone_alerts, new_alerts),
-            "to": emails,
-        })
+        try:
+            await self.middleware.call("mail.send", {
+                "subject": "Alerts",
+                "html": await self._format_alerts(alerts, gone_alerts, new_alerts),
+                "to": emails,
+            })
+        except NetworkActivityDisabled:
+            pass
