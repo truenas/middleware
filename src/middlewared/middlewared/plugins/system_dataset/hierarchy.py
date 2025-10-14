@@ -1,6 +1,7 @@
 import os
 
 from middlewared.plugins.vm.utils import LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
+from middlewared.utils.truesearch import TRUESEARCH_UID, TRUESEARCH_GID
 
 from .utils import SYSDATASET_PATH
 
@@ -151,6 +152,25 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             'post_mount_actions': [
                 {
                     'method': 'smb.setup_directories',
+                    'args': [],
+                }
+            ]
+        },
+        {
+            'name': os.path.join(pool_name, '.system/truesearch'),
+            'props': {
+                'mountpoint': 'legacy',
+                'readonly': 'off',
+                'snapdir': 'hidden',
+            },
+            'chown_config': {
+                'uid': TRUESEARCH_UID,
+                'gid': TRUESEARCH_GID,
+                'mode': 0o700,
+            },
+            'post_mount_actions': [
+                {
+                    'method': 'truesearch.configure',
                     'args': [],
                 }
             ]

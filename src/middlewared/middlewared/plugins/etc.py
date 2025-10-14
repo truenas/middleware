@@ -95,6 +95,9 @@ class EtcService(Service):
         'docker': [
             {'type': 'py', 'path': 'docker/daemon.json'},
         ],
+        'truesearch': [
+            {'type': 'py', 'path': 'truesearch/config.json'},
+        ],
         'truenas_nvdimm': [
             {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
         ],
