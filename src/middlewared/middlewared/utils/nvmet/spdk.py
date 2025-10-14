@@ -453,13 +453,6 @@ class NvmetHostSubsysConfig(NvmetConfig):
             # dhchap_ctrlr_key vs dhchap_ctrl_key
             kwargs.update({'dhchap_ctrlr_key': host_config_key(config_item['host'], 'dhchap_ctrl_key')})
 
-        # If this is a HA system then inject some settings
-        match render_ctx['failover.node']:
-            case 'A':
-                kwargs.update({'max_cntlid': NVMET_NODE_A_MAX_CONTROLLER_ID})
-            case 'B':
-                kwargs.update({'min_cntlid': NVMET_NODE_B_MIN_CONTROLLER_ID})
-
         rpc.nvmf.nvmf_subsystem_add_host(client, **kwargs)
 
     def update(self, client, config_item, live_item, render_ctx):
