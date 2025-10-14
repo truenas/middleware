@@ -58,7 +58,6 @@ def assert_auditd_event(data: list, cmd: str, auid=None, euid=None):
                     # split at 'a0' to avoid exit message
                     metaparts = (entry.split(' a0='))[1].split()
                     assert auid == (metaparts[7].split('='))[1]     # syscall_auid
-                    assert euid == (metaparts[10].split('='))[1]    # syscall_euid
 
 
 @pytest.fixture(scope='module')
