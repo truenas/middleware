@@ -1,9 +1,10 @@
+from datetime import datetime
 from typing import Literal
 
-from pydantic import Secret
+from pydantic import Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args, single_argument_result,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NotRequired, single_argument_args, single_argument_result,
 )
 
 __all__ = [
@@ -15,6 +16,21 @@ __all__ = [
     "VMWareMatchDatastoresWithDatasetsArgs", "VMWareMatchDatastoresWithDatasetsResult",
     "VMWareDatasetHasVmsArgs", "VMWareDatasetHasVmsResult",
 ]
+
+
+class VMWareEntryState(BaseModel):
+    state: Literal["PENDING", "SUCCESS", "ERROR", "BLOCKED"] = NotRequired
+    """VMware host state.
+
+    * `PENDING`: No snapshot operation on the host was performed yet
+    * `SUCCESS`: The last snapshot operation on the host was successful
+    * `ERROR`: The last snapshot operation on the host failed
+    * `BLOCKED`: Network activity is blocked
+    """
+    error: str = NotRequired
+    """Error text (if any)."""
+    datetime_: datetime = Field(alias="datetime", default=NotRequired)
+    """State update datetime."""
 
 
 class VMWareEntry(BaseModel):
@@ -30,7 +46,7 @@ class VMWareEntry(BaseModel):
     """Credentials used to authorize access to the VMWare host."""
     password: Secret[str]
     """Password for VMware host authentication."""
-    state: dict
+    state: VMWareEntryState
     """Current connection and synchronization state with the VMware host."""
 
 
