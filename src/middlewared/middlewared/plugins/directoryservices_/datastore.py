@@ -630,7 +630,9 @@ class DirectoryServices(ConfigService):
                     'and re-join the domain cleanly.'
                 )
                 self.logger.error(errmsg)
-                self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.FAULTED.name, errmsg)
+                self.middleware.call_sync(
+                    'directoryservices.health.set_state', ds_type.value, DSStatus.FAULTED.name, errmsg
+                )
                 raise CallError(errmsg)
             except Exception:
                 # We failed to join, revert any changes to datastore
