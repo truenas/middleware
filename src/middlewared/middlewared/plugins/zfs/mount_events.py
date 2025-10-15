@@ -30,7 +30,7 @@ def mount_events_process(middleware):
                 # Block until the kernel signals a mount table change
                 poller.poll()  # returns on mount/umount/propagation/etc.
 
-                # Rewind and read new snapshot
+                # Rewind and read current mount state
                 os.lseek(fd, 0, os.SEEK_SET)
                 with os.fdopen(fd, "r", closefd=False) as f:
                     cur = parse_mounts(f.read())
