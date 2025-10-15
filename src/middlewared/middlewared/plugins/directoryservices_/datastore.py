@@ -15,6 +15,7 @@ from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
 from middlewared.utils.directoryservices.krb5 import (
     ktutil_list_impl, kdc_saf_cache_get, kdc_saf_cache_remove
 )
+from middlewared.utils.directoryservices.krb5_error import KRB5Error
 from middlewared.utils.directoryservices.constants import (
     DSCredType, DomainJoinResponse, DSStatus, DSType, DEF_SVC_OPTS
 )
@@ -26,6 +27,7 @@ from middlewared.utils.directoryservices.ldap_constants import (
     LDAP_SHADOW_MAP_SCHEMA_NAME, LDAP_GROUP_MAP_SCHEMA_NAME,
     LDAP_NETGROUP_MAP_SCHEMA_NAME, LDAP_ATTRIBUTE_MAP_SCHEMA_NAME,
 )
+from wbclient import WBCError
 
 
 class DirectoryServicesModel(sa.Model):
@@ -618,13 +620,27 @@ class DirectoryServices(ConfigService):
         if ds_type in (DSType.AD, DSType.IPA):
             join_job = self.middleware.call_sync('directoryservices.connection.join_domain', new.get('force', False))
             try:
-                join_resp = job.wrap_sync(join_job)
+                join_resp = job.wrap_sync(join_job, raise_error_forward_classes=(WBCError, KRB5Error))
+            except (WBCError, KRB5Error):
+                errmsg = (
+                    'Failed to properly join domain and start up services. This may be related to issues '
+                    'with account setup on the domain controller. To help with debugging, the '
+                    'TrueNAS configuration and new domain account are left intact for investigation. '
+                    'Once investigation is concluded, you should clear the domain configuration on TrueNAS '
+                    'and re-join the domain cleanly.'
+                )
+                self.logger.error(errmsg)
+                self.middleware.call_sync(
+                    'directoryservices.health.set_state', ds_type.value, DSStatus.FAULTED.name, errmsg
+                )
+                raise CallError(errmsg)
             except Exception:
                 # We failed to join, revert any changes to datastore
                 self.__revert_changes(revert)
                 self.middleware.call_sync('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
                 for etc in ds_type.etc_files:
                     self.middleware.call_sync('etc.generate', etc)
+
                 raise
 
         # We either successfully joined or were already joined. Activate the service and fill cache
