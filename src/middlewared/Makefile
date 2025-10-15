@@ -19,7 +19,7 @@ clean:
 build_deb:
 	mkdir -p build-mw-deb
 	# Ignore the changes file generation error - we only need the .deb file
-	dpkg-buildpackage -b -us -uc -nc || true
+	dpkg-buildpackage -b -us -uc || true
 	# Check if .deb file was created and move it to build directory
 	@if DEB_FILE=$$(ls ../middlewared_*.deb 2>/dev/null | head -1) && [ -f "$$DEB_FILE" ]; then \
 		mv $$DEB_FILE build-mw-deb/; \
