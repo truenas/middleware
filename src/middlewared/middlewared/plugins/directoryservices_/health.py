@@ -178,6 +178,10 @@ class DomainHealth(
 
         self.check()
 
+        # We may need to restart dependent services after recovering from a problematic state
+        if self.middleware.call_sync('failover.is_single_master_node'):
+            self.middleware.call_sync('directoryservices.restart_dependent_services')
+
     def set_state(self, ds_type, ds_status, status_msg=None):
         ds = DSType(ds_type)
         status = DSStatus[ds_status]
