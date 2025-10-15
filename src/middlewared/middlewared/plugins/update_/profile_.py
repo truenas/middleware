@@ -95,9 +95,7 @@ class UpdateService(Service):
 
 async def post_license_update(middleware, prev_license, *args, **kwargs):
     if prev_license is None and await middleware.call('system.product_type') == 'ENTERPRISE':
-        current_profile = UpdateProfiles[(await middleware.call('update.config'))['profile']]
-        if current_profile < UpdateProfiles.MISSION_CRITICAL:
-            await middleware.call('update.set_profile', UpdateProfiles.MISSION_CRITICAL.name)
+        await middleware.call('update.set_profile', UpdateProfiles.MISSION_CRITICAL.name)
 
 
 async def setup(middleware):
