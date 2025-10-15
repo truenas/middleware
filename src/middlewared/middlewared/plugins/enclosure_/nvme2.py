@@ -24,7 +24,9 @@ from .slot_mappings import get_nvme_slot_info
 RE_SLOT = re.compile(r'^0-([0-9]+)$')
 
 
-def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
+def fake_nvme_enclosure(
+    model: str, num_of_nvme_slots: int, mapped: dict[int, str], ui_info: dict | None = None
+) -> list[dict]:
     """This function takes the nvme devices that been mapped
     to their respective slots and then creates a "fake" enclosure
     device that matches (similarly) to what our real enclosure
@@ -63,6 +65,7 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
         fake_enclosure['should_ignore'] = True
         return [fake_enclosure]
 
+    slot_mapping = disks_map['versions']['DEFAULT']['id'][dmi]
     for slot in range(1, num_of_nvme_slots + 1):
         device = mapped.get(slot, None)
         # the `value_raw` variables represent the
@@ -79,15 +82,16 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
             status = 'Not installed'
             value_raw = 0x5000000
 
-        mapped_slot = disks_map['versions']['DEFAULT']['id'][dmi][slot]['mapped_slot']
-        light = disks_map['versions']['DEFAULT']['id'][dmi][slot][SUPPORTS_IDENTIFY_KEY]
-        dfk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_FRONT_KEY]
-        drk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_REAR_KEY]
-        dtk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_TOP_KEY]
-        dik = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_INTERNAL_KEY]
+        slot_info = slot_mapping[slot]
+        mapped_slot = slot_info['mapped_slot']
+        light = slot_info[SUPPORTS_IDENTIFY_KEY]
+        dfk = slot_info[DISK_FRONT_KEY]
+        drk = slot_info[DISK_REAR_KEY]
+        dtk = slot_info[DISK_TOP_KEY]
+        dik = slot_info[DISK_INTERNAL_KEY]
 
         # light_status will follow light unless we explicitedly override
-        light_status = disks_map['versions']['DEFAULT']['id'][dmi][slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, light)
+        light_status = slot_info.get(SUPPORTS_IDENTIFY_STATUS_KEY, light)
         if light_status:
             # Currently do not have an nvme platform that supports retrieving IDENT status
             raise NotImplementedError
@@ -118,8 +122,8 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
     return [fake_enclosure]
 
 
-def map_plx_nvme(model, ctx):
-    num_of_nvme_slots = 4  # nvme plx bridge used on m50/60 and r50bm have 4 nvme drive bays
+def map_plx_nvme(model: str, ctx: Context) -> list[dict]:
+    num_of_nvme_slots = 4  # nvme plx bridge used on m50/60, v-series and r50bm have 4 nvme drive bays
     addresses_to_slots = {
         (slot / 'address').read_text().strip(): slot.name
         for slot in pathlib.Path('/sys/bus/pci/slots').iterdir()
@@ -286,6 +290,10 @@ def map_nvme():
         ControllerModels.M40.value,
         ControllerModels.M50.value,
         ControllerModels.M60.value,
+        ControllerModels.V140.value,
+        ControllerModels.V160.value,
+        ControllerModels.V260.value,
+        ControllerModels.V280.value,
         ControllerModels.R50BM.value,
     ):
         return map_plx_nvme(model, ctx)

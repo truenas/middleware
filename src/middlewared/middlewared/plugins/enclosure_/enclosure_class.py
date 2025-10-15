@@ -151,12 +151,16 @@ class Enclosure:
                 # M series
                 self.model = dmi_model.value
                 self.controller = True
+            case 'ECStream_4IXGA-NTBp' | 'ECStream_4IXGA-NTBs':
+                # V series
+                self.model = dmi_model.value
+                self.controller = True
             case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
                 # X series
                 self.model = dmi_model.value
                 self.controller = True
             case 'BROADCOM_VirtualSES':
-                # H series
+                # H series, V series
                 self.model = dmi_model.value
                 self.controller = True
             case 'ECStream_FS1' | 'ECStream_FS2' | 'ECStream_DSS212Sp' | 'ECStream_DSS212Ss':
@@ -238,8 +242,9 @@ class Enclosure:
         # enclosure but we need to check if this enclosure has
         # different revisions
         vers_key = 'DEFAULT'
+        mapped_versions = mapped_info['versions']
         if not mapped_info['any_version']:
-            for vers in mapped_info['versions']:
+            for vers in mapped_versions:
                 if self.dmi.system_version == vers:
                     vers_key = vers
                     break
@@ -255,10 +260,14 @@ class Enclosure:
             idkey, idvalue = 'id', self.encid
         elif self.is_r50_series:
             idkey, idvalue = 'product', self.product
+        elif self.is_vseries and self.encname == 'BROADCOM VirtualSES 0001':
+            # V-series has 2 VirtualSES enclosures (one per HBA)
+            # Use enclosure ID to distinguish between them
+            idkey, idvalue = 'id', self.encid
 
         # Now we know the specific enclosure we're on and the specific
         # key we need to use to pull out the drive slot mapping
-        for mapkey, mapslots in mapped_info['versions'][vers_key].items():
+        for mapkey, mapslots in mapped_versions[vers_key].items():
             if mapkey == idkey and (found := mapslots.get(idvalue)):
                 return found
 
@@ -501,6 +510,15 @@ class Enclosure:
         ))
 
     @property
+    def is_vseries(self):
+        return bool(
+            self.controller
+            and not self.is_mini
+            and self.model
+            and self.model[0] == 'V'
+        )
+
+    @property
     def is_xseries(self):
         """Determine if the enclosure device is a x-series controller.
 
@@ -663,6 +681,7 @@ class Enclosure:
             self.is_fseries,
             self.is_hseries,
             self.is_mseries,
+            self.is_vseries,
             self.is_xseries,
         ))
 
@@ -713,6 +732,7 @@ class Enclosure:
             self.is_hseries,
             self.is_mini,
             self.is_mseries,
+            self.is_vseries,
             self.is_r10,
             self.is_r20_series,
             self.is_r30,
@@ -741,7 +761,7 @@ class Enclosure:
                 return 14
             elif self.is_r10:
                 return 16
-            elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
+            elif any((self.is_fseries, self.is_mseries, self.is_vseries, self.is_24_bay_jbod)):
                 return 24
             elif self.is_rseries:
                 return 48
@@ -765,6 +785,10 @@ class Enclosure:
         elif self.model in (
             ControllerModels.M50.value,
             ControllerModels.M60.value,
+            ControllerModels.V140.value,
+            ControllerModels.V160.value,
+            ControllerModels.V260.value,
+            ControllerModels.V280.value,
             ControllerModels.R50BM.value,
         ):
             return 4
