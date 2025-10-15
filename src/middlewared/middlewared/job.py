@@ -736,6 +736,12 @@ class Job:
         return await subjob.wait(raise_error=True)
 
     def wrap_sync(self, subjob):
+        """
+        Wrap a job in another job, proxying progress and result/error.
+        This is useful when we want to run a job inside a job.
+
+        :param subjob: The job to wrap.
+        """
         self.set_progress(**subjob.progress)
         subjob.wrapped.append(self)
 
