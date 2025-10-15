@@ -727,7 +727,8 @@ def lock_namespace(data, render_ctx):
     NvmetBdevConfig().lock(client, data, render_ctx)
 
 
-def unlock_namespace(data, render_ctx):
+def unlock_namespace(middleware, data, render_ctx):
+    inject_path_to_recordsize(middleware, render_ctx)
     client = make_client()
     NvmetBdevConfig().unlock(client, data, render_ctx)
     NvmetNamespaceConfig().unlock(client, data, render_ctx)
@@ -736,3 +737,50 @@ def unlock_namespace(data, render_ctx):
 def resize_namespace(data, render_ctx):
     client = make_client()
     NvmetBdevConfig().resize(client, data, render_ctx)
+
+
+def inject_path_to_recordsize(middleware, render_ctx):
+    #
+    # Disable this functionality
+    # ==========================
+    #
+    # Found that the linux kernel client (6.12.43, 6.16.8) was *unable* to
+    # properly handle when this was reported e.g. as:
+    # - block_size: 131072
+    # - num_blocks: 800
+    #
+    # verified (by tcpdump) that the Identify Namespace response populated
+    # Namespace Size (NSZE): 0x320
+    # LBAF0: 0x00 0x00 0x11 0x00    (observe 2**0x11 = 131072)
+    #
+    # See "LBA Format List Structure"
+    render_ctx['path_to_recordsize'] = {}
+    return
+
+    # If we have any namespaces that are configured which are FILE
+    # type, then we need to work out the blocksize for each one.
+    # This will be the recordsize of the underlying dataset.
+    fns = {ns['device_path'] for ns in filter(lambda ns: ns.get('device_type') == NAMESPACE_DEVICE_TYPE.FILE.api,
+                                              render_ctx['nvmet.namespace.query'])}
+    if fns:
+        record_sizes = {f'{item["mountpoint"]}/': int(item['recordsize']['rawvalue']) for item in
+                        middleware.call_sync('pool.dataset.query',
+                                             [["mountpoint", "!=", None]],
+                                             {"select": ["name",
+                                                         "children",
+                                                         "mountpoint",
+                                                         "recordsize.rawvalue"]})}
+        path_to_recordsize = {}
+        for path in fns:
+            longest_match = 0
+            matched_value = None
+            for key, value in record_sizes.items():
+                if path.startswith(key):
+                    if (length := len(key)) > longest_match:
+                        longest_match = length
+                        matched_value = value
+            if matched_value:
+                path_to_recordsize[path] = matched_value
+
+        # Inject into context
+        render_ctx['path_to_recordsize'] = path_to_recordsize

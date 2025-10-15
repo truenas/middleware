@@ -382,7 +382,7 @@ class NVMetNamespaceService(SharingService):
                             'failover.node',
                             'failover.status']:
                     render_ctx[api] = await self.middleware.call(api)
-                await self.middleware.run_in_thread(spdk_unlock_namespace, data, render_ctx)
+                await self.middleware.run_in_thread(spdk_unlock_namespace, self.middleware, data, render_ctx)
 
     @private
     async def resize_namespace(self, id_):
