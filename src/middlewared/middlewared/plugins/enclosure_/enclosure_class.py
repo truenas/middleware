@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import logging
+import typing
 
 from middlewared.utils.scsi_generic import inquiry
 
@@ -29,8 +30,21 @@ from .slot_mappings import get_slot_info
 logger = logging.getLogger(__name__)
 
 
+class EnclosureElementDict(typing.TypedDict):
+    type: int
+    descriptor: str
+    status: list[int]
+
+
+class EnclosureStatusDict(typing.TypedDict):
+    id: str
+    name: str
+    status: set[typing.Literal['OK', 'INVOP', 'INFO', 'NON-CRIT', 'CRIT', 'UNRECOV']]
+    elements: dict[int, EnclosureElementDict]
+
+
 class Enclosure:
-    def __init__(self, bsg, sg, enc_stat):
+    def __init__(self, bsg: str, sg: str, enc_stat: EnclosureStatusDict):
         self.dmi = parse_dmi()
         self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix('/dev/bsg/')
         self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
@@ -271,7 +285,7 @@ class Enclosure:
             if mapkey == idkey and (found := mapslots.get(idvalue)):
                 return found
 
-    def _parse_elements(self, elements):
+    def _parse_elements(self, elements: dict[int, EnclosureElementDict]):
         final = {}
         disk_position_mapping = self.determine_disk_slot_positions()
         for slot, element in elements.items():
