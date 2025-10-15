@@ -5,9 +5,8 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, Service
 from middlewared.utils.memory import get_memory_info
-
-from .devices import NIC
-from .utils import ACTIVE_STATES
+from middlewared.utils.libvirt.nic import NICDelegate
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 
 class VMService(Service):
@@ -128,4 +127,4 @@ class VMService(Service):
         Returns:
             str: with six groups of two hexadecimal digits
         """
-        return NIC.random_mac()
+        return NICDelegate.random_mac()

@@ -2,10 +2,11 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
+import truenas_pynetif as netif
+
 from middlewared.api import api_method
 from middlewared.api.current import FailoverDisabledReasonsReasonsArgs, FailoverDisabledReasonsReasonsResult
 from middlewared.service import Service, private
-from middlewared.plugins.interface.netif import netif
 from middlewared.utils.zfs import query_imported_fast_impl
 from .enums import DisabledReasonsEnum
 

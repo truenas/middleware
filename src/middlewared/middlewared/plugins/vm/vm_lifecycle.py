@@ -1,8 +1,6 @@
-from truenas_pylibvirt import (
-    NICDevice, NICDeviceType,
-    DiskStorageDevice, StorageDeviceType, StorageDeviceIoType,
-    VmBootloader, VmCpuMode, VmDomain, VmDomainConfiguration,
-)
+import os
+
+from truenas_pylibvirt import VmBootloader, VmCpuMode
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -10,11 +8,14 @@ from middlewared.api.current import (
     VMPoweroffResult, VMSuspendArgs, VMSuspendResult, VMResumeArgs, VMResumeResult,
 )
 from middlewared.service import CallError, item_method, job, private, Service
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
-from .vm_supervisor import VMSupervisorMixin
+from .vm_domain import VmDomain, VmDomainConfiguration
+from .utils import get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
 
 
-class VMService(Service, VMSupervisorMixin):
+class VMService(Service):
+
     @private
     async def lifecycle_action_check(self):
         if not await self.middleware.call('vm.license_active'):
@@ -37,42 +38,25 @@ class VMService(Service, VMSupervisorMixin):
         self.middleware.call_sync('vm.lifecycle_action_check')
 
         vm = self.middleware.call_sync('vm.get_instance', id_)
+        if vm['status']['state'] in ACTIVE_STATES:
+            raise CallError(f'VM {vm["name"]!r} is already running')
 
-        self.middleware.libvirt_domains_manager.vms.start(self.pylibvirt_vm(vm))
-
-        return
-
-        # FIXME: Move this code to pylibvirt
-        """
-        vm_state = vm['status']['state']
-        if vm_state == 'RUNNING':
-            raise CallError(f'{vm["name"]!r} is already running')
-        if vm_state == 'SUSPENDED':
-            raise CallError(f'{vm["name"]!r} VM is suspended and can only be resumed/powered off')
-
-        if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
+        if vm['bootloader'] not in self.middleware.call_sync('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
 
-        if await self.middleware.call('system.is_ha_capable'):
+        # Check HA compatibility
+        if self.middleware.call_sync('system.is_ha_capable'):
             for device in vm['devices']:
                 if device['attributes']['dtype'] in ('PCI', 'USB'):
                     raise CallError(
-                        'Please remove PCI/USB devices from VM before starting it in HA capable machines as '
-                        'they are not supported.'
+                        'Please remove PCI/USB devices from VM before starting it in HA capable machines'
                     )
 
-        # Perhaps we should have a default config option for VMs?
-        await self.middleware.call('vm.init_guest_vmemory', vm, options['overcommit'])
+        # Start the VM using pylibvirt
+        self.middleware.libvirt_domains_manager.vms.start(self.pylibvirt_vm(vm, options))
 
-        try:
-            await self.middleware.run_in_thread(self._start, vm['name'])
-        except Exception:
-            if (await self.middleware.call('vm.get_instance', id_))['status']['state'] != 'RUNNING':
-                await self.middleware.call('vm.teardown_guest_vmemory', id_)
-            raise
-
-        await (await self.middleware.call('service.control', 'RELOAD', 'http')).wait(raise_error=True)
-        """
+        # Reload HTTP service for display device changes
+        self.middleware.call_sync('service.control', 'RELOAD', 'http').wait_sync(raise_error=True)
 
     @item_method
     @api_method(VMStopArgs, VMStopResult, roles=['VM_WRITE'])
@@ -88,16 +72,12 @@ class VMService(Service, VMSupervisorMixin):
         `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
         not already stopped within the specified `shutdown_timeout`.
         """
-        self._check_setup_connection()
         vm_data = self.middleware.call_sync('vm.get_instance', id_)
-
+        libvirt_domain = self.pylibvirt_vm(vm_data)
         if options['force']:
-            self._poweroff(vm_data['name'])
+            self.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
         else:
-            self._stop(vm_data['name'], vm_data['shutdown_timeout'])
-
-        if options['force_after_timeout'] and self.middleware.call_sync('vm.status', id_)['state'] == 'RUNNING':
-            self._poweroff(vm_data['name'])
+            self.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm_data['shutdown_timeout'])
 
     @item_method
     @api_method(VMPoweroffArgs, VMPoweroffResult, roles=['VM_WRITE'])
@@ -105,10 +85,8 @@ class VMService(Service, VMSupervisorMixin):
         """
         Poweroff a VM.
         """
-        self._check_setup_connection()
-
         vm_data = self.middleware.call_sync('vm.get_instance', id_)
-        self._poweroff(vm_data['name'])
+        self.middleware.libvirt_domains_manager.vms.destroy(self.pylibvirt_vm(vm_data))
 
     @item_method
     @api_method(VMRestartArgs, VMRestartResult, roles=['VM_WRITE'])
@@ -117,7 +95,6 @@ class VMService(Service, VMSupervisorMixin):
         """
         Restart a VM.
         """
-        self._check_setup_connection()
         vm = self.middleware.call_sync('vm.get_instance', id_)
         stop_job = self.middleware.call_sync('vm.stop', id_, {'force_after_timeout': True})
         stop_job.wait_sync()
@@ -132,10 +109,8 @@ class VMService(Service, VMSupervisorMixin):
         """
         Suspend `id` VM.
         """
-        self._check_setup_connection()
-
-        vm = self.middleware.call_sync('vm.get_instance', id_)
-        self._suspend(vm['name'])
+        vm_data = self.middleware.call_sync('vm.get_instance', id_)
+        self.middleware.libvirt_domains_manager.vms.suspend(self.pylibvirt_vm(vm_data))
 
     @item_method
     @api_method(VMResumeArgs, VMResumeResult, roles=['VM_WRITE'])
@@ -143,10 +118,8 @@ class VMService(Service, VMSupervisorMixin):
         """
         Resume suspended `id` VM.
         """
-        self._check_setup_connection()
-
-        vm = self.middleware.call_sync('vm.get_instance', id_)
-        self._resume(vm['name'])
+        vm_data = self.middleware.call_sync('vm.get_instance', id_)
+        self.middleware.libvirt_domains_manager.vms.resume(self.pylibvirt_vm(vm_data))
 
     @private
     def suspend_vms(self, vm_ids):
@@ -173,54 +146,23 @@ class VMService(Service, VMSupervisorMixin):
                 self.logger.error('Failed to resume %r vm', vms[vm_id]['name'], exc_info=True)
 
     @private
-    def pylibvirt_vm(self, vm):
+    def pylibvirt_vm(self, vm, start_config: dict | None = None) -> VmDomain:
         vm = vm.copy()
-        vm.pop("id", None)
         vm.pop("display_available", None)
         vm.pop("status", None)
 
-        vm["bootloader"] = VmBootloader(vm["bootloader"])
-        vm["cpu_mode"] = VmCpuMode(vm["cpu_mode"])
-
         devices = []
         for device in vm["devices"]:
-            match device["attributes"]["dtype"]:
-                case "DISK":
-                    devices.append(DiskStorageDevice(
-                        type_=StorageDeviceType(device["attributes"]["type"]),
-                        logical_sectorsize=device["attributes"]["logical_sectorsize"],
-                        physical_sectorsize=device["attributes"]["physical_sectorsize"],
-                        iotype=StorageDeviceIoType(device["attributes"]["iotype"]),
-                        serial=device["attributes"]["serial"],
-                        path=device["attributes"]["path"],
-                    ))
+            devices.append(self.middleware.call_sync('vm.device.get_pylibvirt_device', device))
 
-                case "NIC":
-                    if device["attributes"]["nic_attach"].startswith("br"):
-                        type_ = NICDeviceType.BRIDGE
-                    else:
-                        type_ = NICDeviceType.DIRECT
+        vm.update({
+            'bootloader': VmBootloader(vm["bootloader"]),
+            'cpu_mode': VmCpuMode(vm["cpu_mode"]),
+            'nvram_path': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name({
+                'id': vm['id'],
+                'name': vm['name'],
+            })),
+            'devices': devices,
+        })
 
-                    devices.append(NICDevice(
-                        type_=type_,
-                        source=device["attributes"]["nic_attach"],
-                        model=None,
-                        mac=None,
-                        trust_guest_rx_filters=device["attributes"]["trust_guest_rx_filters"],
-                    ))
-
-        vm["devices"] = devices
-
-        return VmDomain(VmDomainConfiguration(**vm))
-
-
-async def _event_vms(middleware, event_type, args):
-    vm = await middleware.call('vm.query', [['id', '=', args['id']]])
-    if not vm or vm[0]['status']['state'] != 'STOPPED' or args.get('state') != 'SHUTOFF':
-        return
-
-    middleware.create_task(middleware.call('vm.teardown_guest_vmemory', args['id']))
-
-
-async def setup(middleware):
-    middleware.event_subscribe('vm.query', _event_vms)
+        return VmDomain(VmDomainConfiguration(**vm), self.middleware, start_config)

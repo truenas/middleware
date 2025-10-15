@@ -31,10 +31,10 @@ from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, CRUDService, job, private
 from middlewared.service_exception import ValidationError
 from middlewared.utils import run
+from middlewared.utils.libvirt.storage_devices import IOTYPE_CHOICES
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
+from middlewared.utils.libvirt.device_factory import DeviceFactory
 
-from .devices.storage_devices import IOTYPE_CHOICES
-from .devices import DEVICES
-from .utils import ACTIVE_STATES
 
 VALID_DISK_FORMATS = ('qcow2', 'qed', 'raw', 'vdi', 'vhdx', 'vmdk')
 RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
@@ -58,6 +58,10 @@ class VMDeviceService(CRUDService):
         cli_namespace = 'service.vm.device'
         role_prefix = 'VM_DEVICE'
         entry = VMDeviceEntry
+
+    def __init__(self, *args, **kw):
+        super(VMDeviceService, self).__init__(*args, **kw)
+        self.device_factory = DeviceFactory(self.middleware)
 
     @private
     def run_convert_cmd(self, cmd_args, job, progress_desc):
@@ -470,11 +474,18 @@ class VMDeviceService(CRUDService):
         await check_path_resides_within_volume(verrors, self.middleware, schema, path)
 
     @private
+    async def register_pylibvirt_device(self, device_key, device_klass, delegate_klass):
+        self.device_factory.register(device_key, device_klass, delegate_klass)
+
+    @private
+    def get_pylibvirt_device(self, device_data):
+        return self.device_factory.get_device(device_data)
+
+    @private
     async def validate_device(self, device, old=None, update=True):
         vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
-        device_obj = DEVICES[device['attributes']['dtype']](device, self.middleware)
-        await self.middleware.run_in_thread(device_obj.validate, device, old, vm_instance, update)
-
+        device_adapter = self.device_factory.get_device_adapter(device)
+        await self.middleware.run_in_thread(device_adapter.validate, old, vm_instance, update)
         return device
 
     @private

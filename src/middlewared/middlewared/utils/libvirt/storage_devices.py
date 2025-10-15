@@ -5,66 +5,30 @@ from middlewared.api.current import VMDiskDevice, VMRAWDevice
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
+from middlewared.service_exception import ValidationErrors
 from middlewared.utils.crypto import generate_string
 
-from .device import Device
-from .utils import create_element, disk_from_number
+from .delegate import DeviceDelegate
 
 
 IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
 
 
-class StorageDevice(Device):
+class StorageDelegate(DeviceDelegate):
 
-    TYPE = NotImplemented
-
-    def identity(self):
-        return self.data['attributes']['path']
-
-    def is_available(self):
-        return os.path.exists(self.identity())
-
-    def xml(self, *args, **kwargs):
-        disk_number = kwargs.pop('disk_number')
-        virtio = self.data['attributes']['type'] == 'VIRTIO'
-        logical_sectorsize = self.data['attributes']['logical_sectorsize']
-        physical_sectorsize = self.data['attributes']['physical_sectorsize']
-        iotype = self.data['attributes']['iotype']
-
-        return create_element(
-            'disk', type=self.TYPE, device='disk', attribute_dict={
-                'children': [
-                    create_element('driver', name='qemu', type='raw', cache='none', io=iotype.lower(), discard='unmap'),
-                    self.create_source_element(),
-                    create_element(
-                        'target', bus='sata' if not virtio else 'virtio',
-                        dev=f'{"vd" if virtio else "sd"}{disk_from_number(disk_number)}'
-                    ),
-                    create_element('serial', attribute_dict={'text': self.data['attributes']['serial']}),
-                    create_element('boot', order=str(kwargs.pop('boot_number'))),
-                    *([] if not logical_sectorsize else [create_element(
-                        'blockio', logical_block_size=str(logical_sectorsize), **({} if not physical_sectorsize else {
-                            'physical_block_size': str(physical_sectorsize)
-                        })
-                    )]),
-                ]
-            }
-        )
-
-    def create_source_element(self):
-        raise NotImplementedError
-
-    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+    def validate_middleware(
+        self,
+        device: dict,
+        verrors: ValidationErrors,
+        old: dict | None = None,
+        vm_instance: dict | None = None,
+        update: bool = True,
+    ) -> None:
+        identity = device['attributes'].get('path') or zvol_name_to_path(device['attributes']['zvol_name'])
         if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
             verrors.add(
                 'attributes.path',
-                f'{vm_instance["name"]} has "{self.identity()}" already configured'
-            )
-
-        if device['attributes'].get('physical_sectorsize') and not device['attributes'].get('logical_sectorsize'):
-            verrors.add(
-                'attributes.logical_sectorsize',
-                'This field must be provided when physical_sectorsize is specified.'
+                f'{vm_instance["name"]} has "{identity}" already configured'
             )
 
         if update is False:
@@ -77,15 +41,20 @@ class StorageDevice(Device):
             verrors.add('attributes.serial', 'This field is read-only.')
 
 
-class RAW(StorageDevice):
+class RAWDelegate(StorageDelegate):
 
-    TYPE = 'file'
-    schema_model = VMRAWDevice
+    @property
+    def schema_model(self):
+        return VMRAWDevice
 
-    def create_source_element(self):
-        return create_element('source', file=self.data['attributes']['path'])
-
-    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+    def validate_middleware(
+        self,
+        device: dict,
+        verrors: ValidationErrors,
+        old: dict | None = None,
+        vm_instance: dict | None = None,
+        update: bool = True,
+    ) -> None:
         path = device['attributes']['path']
         exists = device['attributes'].get('exists', True)
         if exists and not os.path.exists(path):
@@ -104,18 +73,23 @@ class RAW(StorageDevice):
 
         self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
 
-        super()._validate(device, verrors, old, vm_instance, update)
+        super().validate_middleware(device, verrors, old, vm_instance, update)
 
 
-class DISK(StorageDevice):
+class DiskDelegate(StorageDelegate):
 
-    TYPE = 'block'
-    schema_model = VMDiskDevice
+    @property
+    def schema_model(self):
+        return VMDiskDevice
 
-    def create_source_element(self):
-        return create_element('source', dev=self.data['attributes']['path'])
-
-    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+    def validate_middleware(
+        self,
+        device: dict,
+        verrors: ValidationErrors,
+        old: dict | None = None,
+        vm_instance: dict | None = None,
+        update: bool = True,
+    ) -> None:
         create_zvol = device['attributes'].get('create_zvol')
         path = device['attributes'].get('path')
 
@@ -150,7 +124,7 @@ class DISK(StorageDevice):
                 # message that is more intuitive for end-user
                 parentzvol = device['attributes']['zvol_name'].rsplit('/', 1)[0]
                 if parentzvol and not self.middleware.call_sync(
-                    'zfs.resource.query_impl', {'paths': [parentzvol], 'properties': None}
+                        'zfs.resource.query_impl', {'paths': [parentzvol], 'properties': None}
                 ):
                     verrors.add(
                         'attributes.zvol_name',
@@ -185,4 +159,4 @@ class DISK(StorageDevice):
                         'Disk resides in an invalid location and is not supported.'
                     )
 
-        super()._validate(device, verrors, old, vm_instance, update)
+        super().validate_middleware(device, verrors, old, vm_instance, update)

@@ -5,10 +5,8 @@ from middlewared.api import api_method
 from middlewared.api.current import VMGuestArchitectureAndMachineChoicesArgs, VMGuestArchitectureAndMachineChoicesResult
 from middlewared.service import private, Service
 
-from .connection import LibvirtConnectionMixin
 
-
-class VMService(Service, LibvirtConnectionMixin):
+class VMService(Service):
 
     CAPABILITIES = None
 
@@ -36,6 +34,8 @@ class VMService(Service, LibvirtConnectionMixin):
         Keys in the response would be supported guest architecture(s) on the host and their respective values would
         be supported machine type(s) for the specific architecture on the host.
         """
+        raise Exception('I am broken atm')
+        # TODO: Remove the libvirt dependency here please
         if not self.CAPABILITIES:
             await self.middleware.call('vm.update_capabilities_cache')
         return self.CAPABILITIES

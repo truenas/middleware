@@ -1,5 +1,6 @@
+import truenas_pynetif as netif
+
 from middlewared.service import private, Service
-from .netif import netif
 
 
 class InterfaceService(Service):

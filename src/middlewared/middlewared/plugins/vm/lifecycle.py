@@ -1,45 +1,14 @@
 import asyncio
-import contextlib
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
-
-from .utils import ACTIVE_STATES
-from .vm_supervisor import VMSupervisorMixin
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 
 SHUTDOWN_LOCK = asyncio.Lock()
 
 
-class VMService(Service, VMSupervisorMixin):
-
-    @private
-    async def wait_for_libvirtd(self, timeout):
-        async def libvirtd_started(middleware):
-            job = await middleware.call('service.control', 'START', 'libvirtd', {'ha_propagate': False})
-            await job.wait(raise_error=True)
-            while not await middleware.call('service.started', 'libvirtd'):
-                await asyncio.sleep(2)
-
-        try:
-            self._system_supports_virtualization()
-            if not await self.middleware.call('service.started', 'libvirtd'):
-                await asyncio.wait_for(self.middleware.create_task(libvirtd_started(self.middleware)), timeout=timeout)
-            # We want to do this before initializing libvirt connection
-            await self.middleware.run_in_thread(self._open)
-            await self.middleware.run_in_thread(self._check_connection_alive)
-            await self.middleware.call('vm.setup_libvirt_events')
-        except (asyncio.TimeoutError, CallError):
-            self.middleware.logger.error('Failed to setup libvirt', exc_info=True)
-
-    @private
-    def setup_libvirt_connection(self, timeout=30):
-        self.middleware.call_sync('vm.wait_for_libvirtd', timeout)
-
-    @private
-    async def check_setup_libvirt(self):
-        if not await self.middleware.call('service.started', 'libvirtd'):
-            await self.middleware.call('vm.setup_libvirt_connection')
+class VMService(Service):
 
     @private
     async def start_on_boot(self):
@@ -48,34 +17,6 @@ class VMService(Service, VMSupervisorMixin):
                 await self.middleware.call('vm.start', vm['id'])
             except Exception as e:
                 self.middleware.logger.error(f'Failed to start VM {vm["name"]}: {e}')
-
-    @private
-    async def deinitialize_vms(self, options):
-        await self.middleware.call('vm.close_libvirt_connection')
-        if options.get('reload_ui'):
-            await (await self.middleware.call('service.control', 'RELOAD', 'http')).wait(raise_error=True)
-        if options.get('stop_libvirt'):
-            await (await self.middleware.call('service.control', 'STOP', 'libvirtd')).wait(raise_error=True)
-
-    @private
-    def close_libvirt_connection(self):
-        if self.LIBVIRT_CONNECTION:
-            with contextlib.suppress(CallError):
-                self._close()
-
-    @private
-    def setup_details(self):
-        return {
-            'connected': self._is_connection_alive(),
-            'connection_initialised': bool(self.LIBVIRT_CONNECTION),
-            'domains': list(self.vms.keys()),
-            'libvirt_domains': self._list_domains() if self.LIBVIRT_CONNECTION else None,
-        }
-
-    @private
-    async def terminate(self):
-        async with SHUTDOWN_LOCK:
-            await self.middleware.call('vm.close_libvirt_connection')
 
     @private
     async def terminate_timeout(self):

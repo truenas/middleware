@@ -6,9 +6,9 @@ import collections
 
 import pytest
 from unittest.mock import patch, MagicMock
+from truenas_pylibvirt.utils.iommu import get_iommu_groups_info, is_pci_bridge_critical
 
 from middlewared.utils.gpu import get_gpus
-from middlewared.utils.iommu import get_iommu_groups_info
 
 
 # Mock PCI topologies for testing
@@ -399,6 +399,5 @@ def test_circular_bridge_reference():
             mock_get_class.return_value = '0x060400'  # All are bridges
 
             # This should not hang or crash
-            from middlewared.utils.iommu import is_pci_bridge_critical
             result = is_pci_bridge_critical('0000:00:01.0')
             assert result is False  # Should handle gracefully
