@@ -516,6 +516,10 @@ class NvmetBdevConfig(NvmetConfig):
         if render_ctx['failover.status'] == 'BACKUP':
             return
 
+        # Skip if locked
+        if config_item['locked']:
+            return
+
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
                 return f"ZVOL:{config_item['device_path'].replace('+', ' ')}"
@@ -564,6 +568,31 @@ class NvmetBdevConfig(NvmetConfig):
 
             case 'Null disk':
                 rpc.bdev.bdev_null_delete(client, name=live_item['name'])
+
+    def lock(self, client, config_item, render_ctx):
+        key = self.config_key(config_item, render_ctx)
+        live = self.get_live(client, render_ctx)
+        if key in live:
+            self.delete(client, live[key], render_ctx)
+
+    def unlock(self, client, config_item, render_ctx):
+        config_item['locked'] = False
+        key = self.config_key(config_item, render_ctx)
+        live = self.get_live(client, render_ctx)
+        if key not in live:
+            self.add(client, config_item, render_ctx)
+
+    def resize(self, client, config_item, render_ctx):
+        name = self.bdev_name(config_item, render_ctx)
+        if not name:
+            return
+
+        match config_item['device_type']:
+            case NAMESPACE_DEVICE_TYPE.ZVOL.api:
+                rpc.bdev.bdev_uring_rescan(client, name=name)
+
+            case NAMESPACE_DEVICE_TYPE.FILE.api:
+                rpc.bdev.bdev_aio_rescan(client, name=name)
 
 
 class NvmetNamespaceConfig(NvmetBdevConfig):
@@ -690,3 +719,20 @@ def write_config(config):
         NvmetNamespaceConfig().render(client, config),
     ):
         pass
+
+
+def lock_namespace(data, render_ctx):
+    client = make_client()
+    NvmetNamespaceConfig().lock(client, data, render_ctx)
+    NvmetBdevConfig().lock(client, data, render_ctx)
+
+
+def unlock_namespace(data, render_ctx):
+    client = make_client()
+    NvmetBdevConfig().unlock(client, data, render_ctx)
+    NvmetNamespaceConfig().unlock(client, data, render_ctx)
+
+
+def resize_namespace(data, render_ctx):
+    client = make_client()
+    NvmetBdevConfig().resize(client, data, render_ctx)

@@ -21,6 +21,9 @@ from .constants import NAMESPACE_DEVICE_TYPE
 from middlewared.utils.nvmet.kernel import lock_namespace as kernel_lock_namespace
 from middlewared.utils.nvmet.kernel import unlock_namespace as kernel_unlock_namespace
 from middlewared.utils.nvmet.kernel import resize_namespace as kernel_resize_namespace
+from middlewared.utils.nvmet.spdk import lock_namespace as spdk_lock_namespace
+from middlewared.utils.nvmet.spdk import unlock_namespace as spdk_unlock_namespace
+from middlewared.utils.nvmet.spdk import resize_namespace as spdk_resize_namespace
 
 UUID_GENERATE_RETRIES = 10
 NSID_SEARCH_RANGE = 0xFFFF  # This is much less than NSID, but good enough for practical purposes.
@@ -361,6 +364,11 @@ class NVMetNamespaceService(SharingService):
         if data['enabled']:
             if (await self.middleware.call('nvmet.global.config'))['kernel']:
                 await self.middleware.run_in_thread(kernel_lock_namespace, data)
+            else:
+                render_ctx = {}
+                for api in ['nvmet.namespace.query', 'failover.status']:
+                    render_ctx[api] = await self.middleware.call(api)
+                await self.middleware.run_in_thread(spdk_lock_namespace, data, render_ctx)
 
     @private
     async def start(self, id_):
@@ -368,6 +376,13 @@ class NVMetNamespaceService(SharingService):
         if data['enabled'] and await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
             if (await self.middleware.call('nvmet.global.config'))['kernel']:
                 await self.middleware.run_in_thread(kernel_unlock_namespace, data)
+            else:
+                render_ctx = {}
+                for api in ['nvmet.namespace.query',
+                            'failover.node',
+                            'failover.status']:
+                    render_ctx[api] = await self.middleware.call(api)
+                await self.middleware.run_in_thread(spdk_unlock_namespace, data, render_ctx)
 
     @private
     async def resize_namespace(self, id_):
@@ -375,6 +390,11 @@ class NVMetNamespaceService(SharingService):
         if data['enabled'] and await self.middleware.call('failover.status') in ('MASTER', 'SINGLE'):
             if (await self.middleware.call('nvmet.global.config'))['kernel']:
                 await self.middleware.run_in_thread(kernel_resize_namespace, data)
+            else:
+                render_ctx = {}
+                for api in ['failover.status']:
+                    render_ctx[api] = await self.middleware.call(api)
+                await self.middleware.run_in_thread(spdk_resize_namespace, data, render_ctx)
 
     @private
     async def sharing_task_determine_locked(self, data):
