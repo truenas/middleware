@@ -84,6 +84,6 @@ IOMMU_GROUPS = {
 
 
 def test_iommu_groups():
-    with patch('middlewared.utils.iommu.pathlib.PosixPath.is_dir', Mock(return_value=True)):
-        with patch('middlewared.utils.iommu.pathlib.Path.glob', Mock(return_value=DEVICES_PATH)):
+    with patch('truenas_pylibvirt.utils.iommu.pathlib.PosixPath.is_dir', Mock(return_value=True)):
+        with patch('truenas_pylibvirt.utils.iommu.pathlib.Path.glob', Mock(return_value=DEVICES_PATH)):
             assert get_iommu_groups_info() == IOMMU_GROUPS

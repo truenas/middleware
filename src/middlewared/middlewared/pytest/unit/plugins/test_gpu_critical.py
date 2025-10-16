@@ -232,7 +232,7 @@ def test_critical_gpu(
             mock_build_cache.return_value = (device_to_class, bus_to_devices)
 
             # Mock the bridge analysis functions
-            with patch('middlewared.utils.iommu.get_devices_behind_bridge') as mock_get_devices:
+            with patch('truenas_pylibvirt.utils.iommu.get_devices_behind_bridge') as mock_get_devices:
                 # For bridge 0000:00:01.0, return GPU devices behind it
                 def get_devices_side_effect(bridge_addr, bus_to_devices=None, device_to_class=None):
                     if bridge_addr == '0000:00:01.0':
@@ -241,10 +241,10 @@ def test_critical_gpu(
                 mock_get_devices.side_effect = get_devices_side_effect
 
                 # Mock build_pci_device_cache for iommu.py
-                with patch('middlewared.utils.iommu.build_pci_device_cache') as mock_iommu_build:
+                with patch('truenas_pylibvirt.utils.iommu.build_pci_device_cache') as mock_iommu_build:
                     mock_iommu_build.return_value = (device_to_class, bus_to_devices)
 
-                    with patch('middlewared.utils.iommu.get_pci_device_class') as mock_get_class:
+                    with patch('truenas_pylibvirt.utils.iommu.get_pci_device_class') as mock_get_class:
                         def get_class_side_effect(path):
                             # Return appropriate class based on device
                             for addr, class_code in device_to_class.items():
