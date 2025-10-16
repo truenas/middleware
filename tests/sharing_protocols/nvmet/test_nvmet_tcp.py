@@ -115,7 +115,7 @@ def encrypted_zvol():
             'algorithm': 'AES-128-CCM',
             'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
         }
-    }) as ds:
+    }, delete=True) as ds:
         config = call('pool.dataset.query', [['name', '=', ds]], {'get': True})
         yield config
 
@@ -413,7 +413,7 @@ class TestNVMe(NVMeRunning):
     def test__service_started(self, fixture_nvmet_running):
         assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'RUNNING'
 
-    def test__discover_fail_no_port(self, loopback_client: NVMeCLIClient):
+    def test__discover_fail_no_port(self, fixture_nvmet_running, loopback_client: NVMeCLIClient):
         nc = loopback_client
         with pytest.raises(AssertionError, match=RE_CONNECTION_REFUSED):
             nc.discover()
@@ -756,7 +756,7 @@ class TestNVMe(NVMeRunning):
                         'encryption': True,
                         'inherit_encryption': False,
                         'encryption_options': {'passphrase': NVMET_ENCRYPTED_PASSPHRASE}
-                    }) as ds:
+                    }, delete=True) as ds:
                         file2 = f'/mnt/{ds}/file2_{digits}'
                         with nvmet_namespace(subsys_id,
                                              file2,
@@ -801,6 +801,7 @@ class TestNVMe(NVMeRunning):
                     with iscsi_extent(iscsi_extent_payload):
                         pass
 
+                file2 = f'/mnt/{pool_name}/file2_{digits}'
                 iscsi_extent_payload = {
                     'type': 'FILE',
                     'path': file2,
