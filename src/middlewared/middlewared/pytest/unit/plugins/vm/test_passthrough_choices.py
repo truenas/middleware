@@ -2,8 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.plugins.vm.pci import VMDeviceService
-from middlewared.pytest.unit.middleware import Middleware
+from truenas_pylibvirt.utils.pci import get_pci_device_details
 
 
 @pytest.mark.parametrize('pcidevs,results', [
@@ -119,4 +118,4 @@ def test__get_pci_device_details(pcidevs, results):
             'critical': False,  # System peripheral is not critical
         }
     }
-    assert VMDeviceService(Middleware()).get_pci_device_details(pcidevs, iommu_info) == results
+    assert get_pci_device_details(pcidevs, iommu_info) == results

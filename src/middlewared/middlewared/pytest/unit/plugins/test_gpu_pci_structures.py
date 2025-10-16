@@ -288,7 +288,7 @@ def test_gpu_pci_topology(topology_name):
 
     with patch('middlewared.utils.gpu.pyudev.Devices.from_name', side_effect=mock_from_name):
         # Mock both get_pci_device_class and build_pci_device_cache
-        with patch('middlewared.utils.iommu.get_pci_device_class') as mock_get_class:
+        with patch('truenas_pylibvirt.utils.iommu.get_pci_device_class') as mock_get_class:
             def mock_get_class_code(path):
                 for addr, info in topology['devices'].items():
                     if addr in path:
@@ -310,7 +310,7 @@ def test_gpu_pci_topology(topology_name):
                     pass
 
             # Mock build_pci_device_cache for both iommu.py and gpu.py
-            with patch('middlewared.utils.iommu.build_pci_device_cache') as mock_build_cache_iommu:
+            with patch('truenas_pylibvirt.utils.iommu.build_pci_device_cache') as mock_build_cache_iommu:
                 mock_build_cache_iommu.return_value = (device_to_class, bus_to_devices)
 
                 with patch('middlewared.utils.gpu.build_pci_device_cache') as mock_build_cache_gpu:
@@ -320,10 +320,10 @@ def test_gpu_pci_topology(topology_name):
                     def mock_get_devices_behind_bridge(bridge_addr, bus_to_devices=None, device_to_class=None):
                         return topology.get('bridge_devices', {}).get(bridge_addr, [])
 
-                    with patch('middlewared.utils.iommu.get_devices_behind_bridge',
+                    with patch('truenas_pylibvirt.utils.iommu.get_devices_behind_bridge',
                                side_effect=mock_get_devices_behind_bridge):
                         # Mock pathlib for IOMMU group scanning
-                        with patch('middlewared.utils.iommu.pathlib.Path') as mock_path:
+                        with patch('truenas_pylibvirt.utils.iommu.pathlib.Path') as mock_path:
                             # Mock the IOMMU groups directory structure
                             mock_iommu_paths = []
                             for addr, info in topology['devices'].items():
@@ -381,7 +381,7 @@ def test_error_handling():
 def test_circular_bridge_reference():
     """Test handling of circular bridge references (error case)."""
     # This should not cause infinite recursion
-    with patch('middlewared.utils.iommu.get_devices_behind_bridge') as mock_get_devices:
+    with patch('truenas_pylibvirt.utils.iommu.get_devices_behind_bridge') as mock_get_devices:
         # Create circular reference: bridge A -> bridge B -> bridge A
         def circular_devices(bridge_addr):
             if bridge_addr == '0000:00:01.0':
@@ -395,7 +395,7 @@ def test_circular_bridge_reference():
 
         mock_get_devices.side_effect = circular_devices_wrapper
 
-        with patch('middlewared.utils.iommu.get_pci_device_class') as mock_get_class:
+        with patch('truenas_pylibvirt.utils.iommu.get_pci_device_class') as mock_get_class:
             mock_get_class.return_value = '0x060400'  # All are bridges
 
             # This should not hang or crash
