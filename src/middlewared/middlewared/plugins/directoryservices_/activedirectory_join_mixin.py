@@ -76,12 +76,28 @@ class ADJoinMixin:
 
     def _ad_wait_wbclient(self) -> None:
         waited = 0
-        ctx = wbclient.Ctx()
+
+        # We just restarted winbindd, but it may not be fully responsive yet
+        try:
+            ctx = wbclient.Ctx()
+        except wbclient.WBCError as exc:
+            if exc.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
+                raise exc
+
+            self.logger.error(
+                'Winbindd is not currently available. Waiting 10 seconds to retry '
+                'getting a client handle.'
+            )
+
+            sleep(10)
+            ctx = wbclient.Ctx()
+
         while waited <= 60:
             if ctx.domain().domain_info()['online']:
                 return
 
-            self.logger.debug('Waiting for domain to come online')
+            self.logger.debug('Waiting for domain to come online. Current attempt: %d',
+                              waited + 1)
             sleep(1)
             waited += 1
 
@@ -387,9 +403,13 @@ class ADJoinMixin:
         try:
             job.set_progress(60, 'Performing post-join actions')
             return self._ad_post_join_actions(job, conf)
-        except KRB5Error:
+        except (wbclient.WBCError, KRB5Error):
             # if there's an actual unrecoverable kerberos error
             # in our post-join actions then leaving AD will also fail
+            #
+            # This also applies to the case where we successfully joined
+            # but winbindd is failing to come up properly. We want to keep
+            # the config in a debuggable state to investigate.
             raise
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
