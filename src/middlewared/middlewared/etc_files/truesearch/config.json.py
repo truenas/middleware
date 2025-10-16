@@ -70,7 +70,7 @@ def render(service, middleware):
             "enabled": False,
             "log_path": "/var/log/truesearch/audit.log",
             "max_log_size": 104857600,
-            "sensitive_paths": ["/etc", "/root", "/home/*/.ssh"],
+            "sensitive_paths": [],
             "log_file_access": False,
             "log_security_events": True
         },

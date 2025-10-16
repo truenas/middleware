@@ -545,6 +545,14 @@ class SMBService(ConfigService):
                     'to users with full administrative privileges.'
                 )
 
+        if SearchProtocol.SPOTLIGHT in new['search_protocols']:
+            if not await self.middleware.call('truesearch.available'):
+                verrors.add(
+                    'smb_update.search_protocols',
+                    'Share indexing service is not available. Please, ensure that the system dataset does not reside '
+                    'on the boot pool.'
+                )
+
         await self.validate_smb(new, verrors)
         verrors.check()
 

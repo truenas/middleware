@@ -59,3 +59,15 @@ def test_index_new_dataset(share):
         time.sleep(5)
 
         expect_search_result(["mytest.txt", "nested/anothertest.txt"])
+
+
+def test_user_cannot_read_file(share):
+    prohibited_dir = f"/mnt/{share['dataset']}/prohibited"
+    ssh(f"mkdir {prohibited_dir}")
+    ssh(f"touch {prohibited_dir}/prohibitedtest.txt")
+
+    expect_search_result(["mytest.txt", "prohibited/prohibitedtest.txt"])
+
+    call("filesystem.setperm", {"path": prohibited_dir, "mode": "700", "options": {"stripacl": True}}, job=True)
+
+    expect_search_result(["mytest.txt"])

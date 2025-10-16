@@ -9,11 +9,18 @@ class TrueSearchService(Service):
     class Config:
         private = True
 
+    async def available(self) -> bool:
+        """
+        Whether the truesearch service can be used.
+        """
+        # Boot pool is usually too small to fit the search index
+        return not await self.middleware.call('systemdataset.is_boot_pool')
+
     async def enabled(self) -> bool:
         """
         Whether the truesearch service should be started.
         """
-        return bool(await self.directories())
+        return await self.available() and bool(await self.directories())
 
     async def directories(self) -> list[str]:
         """
