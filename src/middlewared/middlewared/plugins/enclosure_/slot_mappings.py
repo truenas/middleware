@@ -732,16 +732,15 @@ def get_slot_info(enc: 'Enclosure'):
     elif enc.is_vseries:
         # V-series has 2 VirtualSES enclosures (one per 9600-12i4e HBA)
         # Front 24 slots are split between two HBAs with interleaved mapping
-        # HBA at PCI a1:00.0 manages TrueNAS slots 1-10, 13-14
-        # HBA at PCI 61:00.0 manages TrueNAS slots 11-12, 15-24
+        # Use slot designation -> PCI address to distinguish between enclosures
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'id': {
-                        # First VirtualSES enclosure (HBA at PCI a1:00.0)
+                        # First VirtualSES enclosure
                         # Handles TrueNAS slots 1-10, 13-14
-                        'VSES_ENCLOSURE_ID_A1': {
+                        'NVME0': {
                             key: {SYSFS_SLOT_KEY: sysfs_key, MAPPED_SLOT_KEY: mapped_key, SUPPORTS_IDENTIFY_KEY: True}
                             for key, sysfs_key, mapped_key in (
                                 (1, 0, 1),
@@ -758,9 +757,9 @@ def get_slot_info(enc: 'Enclosure'):
                                 (11, 10, 14),
                             )
                         },
-                        # Second VirtualSES enclosure (HBA at PCI 61:00.0)
+                        # Second VirtualSES enclosure
                         # Handles TrueNAS slots 11-12, 15-24
-                        'VSES_ENCLOSURE_ID_61': {
+                        'NVME8': {
                             key: {SYSFS_SLOT_KEY: sysfs_key, MAPPED_SLOT_KEY: mapped_key, SUPPORTS_IDENTIFY_KEY: True}
                             for key, sysfs_key, mapped_key in (
                                 (1, 0, 11),
