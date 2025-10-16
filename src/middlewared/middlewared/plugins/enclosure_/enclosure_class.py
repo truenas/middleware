@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import logging
+import os
 import typing
 
 from middlewared.utils.scsi_generic import inquiry
@@ -247,6 +248,9 @@ class Enclosure:
             )),
         ))
 
+    def get_slot_designation(self):
+        bus_address = os.path.realpath(f'/sys/class/enclosure/{self.pci}').split('/')[5]
+
     def _get_array_device_mapping_info(self):
         mapped_info = get_slot_info(self)
         if not mapped_info:
@@ -265,19 +269,18 @@ class Enclosure:
 
         # Now we need to check this specific enclosure's disk slot
         # mapping information
-        idkey, idvalue = 'model', self.model
-        if all((
-            self.vendor == 'AHCI',
-            self.product == 'SGPIOEnclosure',
-            any((self.is_mini, self.is_r20_series))
-        )):
+        if (
+            self.vendor == 'AHCI'
+            and self.product == 'SGPIOEnclosure'
+            and (self.is_mini or self.is_r20_series)
+        ):
             idkey, idvalue = 'id', self.encid
         elif self.is_r50_series:
             idkey, idvalue = 'product', self.product
         elif self.is_vseries and self.encname == 'BROADCOM VirtualSES 0001':
-            # V-series has 2 VirtualSES enclosures (one per HBA)
-            # Use enclosure ID to distinguish between them
-            idkey, idvalue = 'id', self.encid
+            idkey, idvalue = 'id', self.get_slot_designation()
+        else:
+            idkey, idvalue = 'model', self.model
 
         # Now we know the specific enclosure we're on and the specific
         # key we need to use to pull out the drive slot mapping
