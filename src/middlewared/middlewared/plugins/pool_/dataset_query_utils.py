@@ -4,7 +4,14 @@ from typing import TypeAlias
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import BOOT_POOL_NAME_VALID, filter_list, validate_options, do_select, do_order, get_impl
+from middlewared.utils import (
+    BOOT_POOL_NAME_VALID,
+    filter_list,
+    validate_options,
+    do_select,
+    do_order,
+    get_impl,
+)
 from middlewared.utils.size import format_size
 
 try:
@@ -21,6 +28,7 @@ INTERNAL_DATASETS = (
     "ix-applications",
     "ix-apps",
     ".ix-virt",
+    ".truenas_containers",
 )
 """
 Tuple of internal dataset name patterns that should be filtered out by default.
@@ -549,7 +557,9 @@ def normalize_user_properties(uprops: dict[str, str] | None) -> dict[str, dict]:
     return props
 
 
-def build_set_of_zfs_props(hdl, state: QueryFiltersCallbackState) -> ZFSPropSetType | None:
+def build_set_of_zfs_props(
+    hdl, state: QueryFiltersCallbackState
+) -> ZFSPropSetType | None:
     """
     Build a set of ZFS properties to retrieve for a given ZFS resource.
 
