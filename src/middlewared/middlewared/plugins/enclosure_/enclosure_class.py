@@ -5,7 +5,7 @@
 
 import logging
 import os
-import typing
+from typing import Iterable, Literal, TypeAlias, TypedDict
 
 from middlewared.utils.scsi_generic import inquiry
 
@@ -31,32 +31,32 @@ from .slot_mappings import get_slot_info
 logger = logging.getLogger(__name__)
 
 
-class EnclosureElementDict(typing.TypedDict):
+class EnclosureElementDict(TypedDict):
     type: int
     descriptor: str
     status: list[int]
 
 
-class EnclosureStatusDict(typing.TypedDict):
-    id: str
-    name: str
-    status: set[typing.Literal['OK', 'INVOP', 'INFO', 'NON-CRIT', 'CRIT', 'UNRECOV']]
-    elements: dict[int, EnclosureElementDict]
+EnclosureStatus: TypeAlias = Literal['OK', 'INVOP', 'INFO', 'NON-CRIT', 'CRIT', 'UNRECOV']
+ElementsDict: TypeAlias = dict[int, EnclosureElementDict]
 
 
 class Enclosure:
-    def __init__(self, bsg: str, sg: str, enc_stat: EnclosureStatusDict):
+    def __init__(self, bsg: str, sg: str, enc_id: str, enc_status: Iterable[EnclosureStatus]):
         self.dmi = parse_dmi()
         self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix('/dev/bsg/')
-        self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
+        self.encid, self.status = enc_id, list(enc_status)
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
         self._get_model_and_controller()
         self._should_ignore_enclosure()
         self.sysfs_map, self.disks_map, self.elements = dict(), dict(), dict()
+
+    def initialize(self, elements: ElementsDict, slot_designation: str | None = None):
         if not self.should_ignore:
             self.sysfs_map = map_disks_to_enclosure_slots(self)
-            self.disks_map = self._get_array_device_mapping_info()
-            self.elements = self._parse_elements(enc_stat['elements'])
+            self.disks_map = self._get_array_device_mapping_info(slot_designation)
+            self.elements = self._parse_elements(elements)
+        return self
 
     def asdict(self):
         """This method is what is returned in enclosure2.query"""
@@ -251,7 +251,7 @@ class Enclosure:
     def get_slot_designation(self):
         bus_address = os.path.realpath(f'/sys/class/enclosure/{self.pci}').split('/')[5]
 
-    def _get_array_device_mapping_info(self):
+    def _get_array_device_mapping_info(self, slot_designation: str | None = None):
         mapped_info = get_slot_info(self)
         if not mapped_info:
             return
@@ -269,7 +269,9 @@ class Enclosure:
 
         # Now we need to check this specific enclosure's disk slot
         # mapping information
-        if (
+        if slot_designation:
+            idkey, idvalue = 'id', slot_designation
+        elif (
             self.vendor == 'AHCI'
             and self.product == 'SGPIOEnclosure'
             and (self.is_mini or self.is_r20_series)
@@ -277,8 +279,6 @@ class Enclosure:
             idkey, idvalue = 'id', self.encid
         elif self.is_r50_series:
             idkey, idvalue = 'product', self.product
-        elif self.is_vseries and self.encname == 'BROADCOM VirtualSES 0001':
-            idkey, idvalue = 'id', self.get_slot_designation()
         else:
             idkey, idvalue = 'model', self.model
 
@@ -288,7 +288,7 @@ class Enclosure:
             if mapkey == idkey and (found := mapslots.get(idvalue)):
                 return found
 
-    def _parse_elements(self, elements: dict[int, EnclosureElementDict]):
+    def _parse_elements(self, elements: ElementsDict):
         final = {}
         disk_position_mapping = self.determine_disk_slot_positions()
         for slot, element in elements.items():
@@ -528,12 +528,7 @@ class Enclosure:
 
     @property
     def is_vseries(self):
-        return bool(
-            self.controller
-            and not self.is_mini
-            and self.model
-            and self.model[0] == 'V'
-        )
+        return self.controller and self.model and self.model[0] == 'V'
 
     @property
     def is_xseries(self):
