@@ -17,8 +17,12 @@ class NVMetStandbyMixin:
                 if new_state:
                     # Start on STANDBY node
                     await self.middleware.call('failover.call_remote',
-                                               'service.control', ['START', NVMET_SERVICE_NAME, {'ha_propagate': False}])
+                                               'service.control',
+                                               ['START', NVMET_SERVICE_NAME, {'ha_propagate': False}],
+                                               {'job': True})
                 else:
                     # Stop on STANDBY node
                     await self.middleware.call('failover.call_remote',
-                                               'service.control', ['STOP', NVMET_SERVICE_NAME, {'ha_propagate': False}])
+                                               'service.control',
+                                               ['STOP', NVMET_SERVICE_NAME, {'ha_propagate': False}],
+                                               {'job': True})
