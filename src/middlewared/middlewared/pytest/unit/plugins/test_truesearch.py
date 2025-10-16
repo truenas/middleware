@@ -20,6 +20,7 @@ async def test_process_directories(directories, datasets, result):
     middleware = Mock()
     middleware.call = AsyncMock(return_value=[
         {
+            "type": "FILESYSTEM",
             "properties": {
                 "mountpoint": {
                     "value": f"/mnt/{dataset}"

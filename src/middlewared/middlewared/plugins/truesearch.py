@@ -38,15 +38,19 @@ class TrueSearchService(Service):
         Encrypted datasets are excluded from the index to prevent sensitive data being stored in index unencrypted.
         """
         pools = {directory.removeprefix('/mnt/').split('/')[0] for directory in directories}
-        mountpoints = {
-            dataset['properties']['mountpoint']['value']: dataset['properties']['encryption']['value'] != 'off'
-            for dataset in await self.middleware.call('zfs.resource.query_impl', {
-                'paths': pools,
-                'properties': ['encryption', 'mountpoint'],
-                'get_children': True,
-            })
-            if (dataset['properties'].get('mountpoint', {}).get('value') or '').startswith('/mnt/')
-        }
+
+        mountpoints = {}
+        for dataset in await self.middleware.call('zfs.resource.query_impl', {
+            'paths': pools,
+            'properties': ['encryption', 'mountpoint'],
+            'get_children': True,
+        }):
+            if dataset['type'] != 'FILESYSTEM':
+                continue
+
+            if dataset['properties']['mountpoint']['value']:
+                encrypted = dataset['properties']['encryption']['value'] != 'off'
+                mountpoints[dataset['properties']['mountpoint']['value']] = encrypted
 
         result = set()
         for directory in directories:
@@ -123,11 +127,11 @@ class TrueSearchService(Service):
         running = (await self.middleware.call('service.get_state', 'truesearch')).running
 
         if enabled and running:
-            await self.middleware.call('service.control', 'RELOAD', 'truesearch')
+            await (await self.middleware.call('service.control', 'RELOAD', 'truesearch')).wait(raise_error=True)
         elif enabled and not running:
-            await self.middleware.call('service.control', 'START', 'truesearch')
+            await (await self.middleware.call('service.control', 'START', 'truesearch')).wait(raise_error=True)
         elif not enabled and running:
-            await self.middleware.call('service.control', 'STOP', 'truesearch')
+            await (await self.middleware.call('service.control', 'STOP', 'truesearch')).wait(raise_error=True)
 
     async def schedule_reconfigure(self):
         """
