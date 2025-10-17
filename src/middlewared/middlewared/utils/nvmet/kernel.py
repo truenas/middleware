@@ -162,7 +162,8 @@ class NvmetPortConfig(NvmetConfig):
                     result[k] = addr_traddr_to_address(
                         attrs.get('index', 0),
                         attrs['addr_trtype'],
-                        v, render_ctx
+                        v,
+                        render_ctx
                     )
                 case 'addr_trsvcid':
                     result[k] = v
