@@ -66,14 +66,6 @@ def render(service, middleware):
             "max_file_descriptors": 65536,
             "enable_seccomp": False
         },
-        "audit": {
-            "enabled": False,
-            "log_path": "/var/log/truesearch/audit.log",
-            "max_log_size": 104857600,
-            "sensitive_paths": [],
-            "log_file_access": False,
-            "log_security_events": True
-        },
         "elasticsearch": {
             "enabled": True,
             "socket_path": TRUESEARCH_ES_PATH,
