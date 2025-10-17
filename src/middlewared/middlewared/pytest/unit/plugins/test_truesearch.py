@@ -7,11 +7,11 @@ from middlewared.plugins.truesearch import TrueSearchService
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("directories,datasets,result", [
-    (["/mnt/tank/users"], {"tank": False}, ["/mnt/tank/users"]),
-    (["/mnt/tank/users/alex"], {"tank": False, "tank/users": False}, ["/mnt/tank/users/alex"]),
-    (["/mnt/tank/users"], {"tank": False, "tank/users": True}, []),
-    (["/mnt/tank/users/alex"], {"tank": False, "tank/users": True}, []),
-    (["/mnt/tank/users"],
+    ({"/mnt/tank/users"}, {"tank": False}, ["/mnt/tank/users"]),
+    ({"/mnt/tank/users/alex"}, {"tank": False, "tank/users": False}, ["/mnt/tank/users/alex"]),
+    ({"/mnt/tank/users"}, {"tank": False, "tank/users": True}, []),
+    ({"/mnt/tank/users/alex"}, {"tank": False, "tank/users": True}, []),
+    ({"/mnt/tank/users"},
      {"tank": False, "tank/users": False, "tank/users/alice": False, "tank/users/bob": False,
       "tank/users/alice/books": False, "tank/users/alice/documents": True},
      ["/mnt/tank/users", "/mnt/tank/users/alice", "/mnt/tank/users/alice/books", "/mnt/tank/users/bob"]),

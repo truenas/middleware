@@ -6,7 +6,7 @@ import pytest
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, host, ssh
+from middlewared.test.integration.utils import call, host, mock, ssh
 
 USERNAME = 'alex'
 PASSWORD = 'password'
@@ -14,7 +14,13 @@ SHARE_NAME = 'alex'
 
 
 @pytest.fixture(scope='module')
-def share():
+def make_available():
+    with mock('truesearch.unavailable_reasons', return_value=[]):
+        yield
+
+
+@pytest.fixture(scope='module')
+def share(make_available):
     call('smb.update', {'search_protocols': ['SPOTLIGHT']})
 
     with dataset('truesearch', data={'share_type': 'SMB'}) as ds:

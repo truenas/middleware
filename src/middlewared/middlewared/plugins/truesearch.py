@@ -9,12 +9,29 @@ class TrueSearchService(Service):
     class Config:
         private = True
 
+    async def unavailable_reasons(self) -> list[str]:
+        """
+        Returns a list of reasons why the truesearch service cannot be used.
+        """
+        reasons = []
+
+        # Boot pool is usually too small to fit the search index
+        if await self.middleware.call('systemdataset.is_boot_pool'):
+            reasons.append('The system dataset must not reside on the boot pool.')
+
+        if await self.middleware.call('system.license') is None:
+            if not (await self.middleware.call('truecommand.config'))['enabled']:
+                reasons.append(
+                    'The system must be connected to TrueNAS Connect, or have an Enterprise License key installed.'
+                )
+
+        return reasons
+
     async def available(self) -> bool:
         """
         Whether the truesearch service can be used.
         """
-        # Boot pool is usually too small to fit the search index
-        return not await self.middleware.call('systemdataset.is_boot_pool')
+        return not bool(await self.middleware.call('truesearch.unavailable_reasons'))
 
     async def enabled(self) -> bool:
         """
@@ -60,35 +77,34 @@ class TrueSearchService(Service):
 
     def _processed_directories_for_directory(self, mountpoints: dict[str, bool], directory: str) -> set[str]:
         result = set()
-        if (encrypted := mountpoints.get(directory)) is not None:
-            # Directory is a dataset
-            if encrypted:
+        match (encrypted := mountpoints.get(directory)):
+            case True:
                 # The dataset is encrypted. Don't index this dataset.
                 return set()
+            case False:
+                # The dataset is not encrypted. Add the directory
+                result.add(directory)
+                # And all the nested non-encrypted datasets
+                for mountpoint, encrypted in mountpoints.items():
+                    if os.path.commonpath([mountpoint, directory]) == directory and not encrypted:
+                        result.add(mountpoint)
 
-            # Add the directory
-            result.add(directory)
-            # And all the nested non-encrypted datasets
-            for mountpoint, encrypted in mountpoints.items():
-                if os.path.commonpath([mountpoint, directory]) == directory and not encrypted:
-                    result.add(mountpoint)
+                return result
+            case None:
+                # Directory is not a dataset. Find its parent dataset
+                parent = directory
+                while parent not in ["/mnt", "/"]:
+                    parent = os.path.dirname(parent)
 
-            return result
-        else:
-            # Directory is not a dataset. Find its parent dataset
-            parent = directory
-            while parent not in ["/mnt", "/"]:
-                parent = os.path.dirname(parent)
+                    match (encrypted := mountpoints.get(parent)):
+                        case True:
+                            # The dataset is encrypted. Don't index this dataset.
+                            return set()
+                        case False:
+                            return {directory}
 
-                if (encrypted := mountpoints.get(parent)) is not None:
-                    if encrypted:
-                        # The dataset is encrypted. Don't index this dataset.
-                        return set()
-                    else:
-                        return {directory}
-
-            # Parent dataset not found
-            return set()
+                # Parent dataset not found
+                return set()
 
     async def raw_directories(self) -> set[str]:
         """
@@ -147,6 +163,10 @@ class TrueSearchService(Service):
         )
 
 
+async def post_license_update(middleware, prev_license, *args, **kwargs):
+    await middleware.call('truesearch.configure')
+
+
 async def on_dataset_mounted(middleware, data):
     mount = data
 
@@ -170,5 +190,6 @@ async def on_system_ready(middleware, event_type, args):
 
 
 async def setup(middleware):
+    middleware.register_hook("system.post_license_update", post_license_update)
     middleware.register_hook("zfs.dataset.mounted", on_dataset_mounted)
     middleware.event_subscribe("system.ready", on_system_ready)
