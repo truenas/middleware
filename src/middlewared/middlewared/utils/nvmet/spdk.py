@@ -708,8 +708,7 @@ class NvmetAnaStateConfig:
 def write_config(config):
     client = make_client()
 
-    if not os.path.isdir(SPDK_KEY_DIR):
-        os.makedirs(SPDK_KEY_DIR, exist_ok=True)
+    os.makedirs(SPDK_KEY_DIR, exist_ok=True)
 
     # Render operations are context managers that do
     # 1. Create-style operations
