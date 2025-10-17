@@ -70,7 +70,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     async def __spdk_forbidden(self):
         # For now we'll disallow SPDK if any CPU is missing avx2
-        return any(AVX2_FLAG not in flags for flags in (await self.middleware.call('system.cpu_flags')).values())
+        return AVX2_FLAG not in (await self.middleware.call('system.cpu_flags'))
 
     async def __validate(self, verrors, data, schema_name, old=None):
         if data['rdma'] and old['rdma'] != data['rdma']:

@@ -206,15 +206,11 @@ def get_cpu_temperatures() -> dict:
 
 
 @functools.cache
-def cpu_flags() -> dict[int, CpuFlags]:
-    result = {}
+def cpu_flags() -> CpuFlags:
     with open('/proc/cpuinfo', 'rb') as f:
         for line in filter(lambda x: x.startswith((b'processor', b'flags')), f):
             parts = line.decode('utf-8').split(':', 1)
             title = parts[0].strip()
-            match title:
-                case 'processor':
-                    cpu_number = int(parts[1].strip())
-                case 'flags':
-                    result[cpu_number] = parts[1].strip().split()
-        return result
+            if title == 'flags':
+                return parts[1].strip().split()
+    return []
