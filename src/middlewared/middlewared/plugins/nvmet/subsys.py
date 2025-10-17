@@ -15,6 +15,7 @@ from .mixin import NVMetStandbyMixin
 
 SERIAL_RETRIES = 10
 MAX_NQN_LEN = 223
+MAX_MODEL_LEN = 40
 
 EXTENDED_CONTEXT_KEY_HOSTS = 'hosts'
 EXTENDED_CONTEXT_KEY_NAMESPACES = 'namespaces'
@@ -231,11 +232,11 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
             system_product = dmiinfo.get('system-product-name', '')
 
         if vendor:
-            return system_product or vendor
+            return (system_product or vendor)[:MAX_MODEL_LEN]
         else:
             if system_product.lower().startswith('truenas'):
-                return system_product
-            return f'TrueNAS {system_product}'
+                return system_product[:MAX_MODEL_LEN]
+            return f'TrueNAS {system_product}'[:MAX_MODEL_LEN]
 
     @private
     @cache
