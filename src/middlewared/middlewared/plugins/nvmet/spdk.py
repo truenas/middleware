@@ -62,12 +62,15 @@ class NVMetSPDKService(Service):
     def pci_slots(self, nics):
         pci_slots = []
         for nic in nics:
-            with open(f'/sys/class/net/{nic}/device/uevent', 'r') as f:
-                for line in f:
-                    if line.startswith('PCI_SLOT_NAME='):
-                        if slot := line.strip().split('=', 1)[1]:
-                            pci_slots.append(slot)
-                            break
+            try:
+                with open(f'/sys/class/net/{nic}/device/uevent', 'r') as f:
+                    for line in f:
+                        if line.startswith('PCI_SLOT_NAME='):
+                            if slot := line.strip().split('=', 1)[1]:
+                                pci_slots.append(slot)
+                                break
+            except FileNotFoundError:
+                pass
         if len(nics) != len(pci_slots):
             raise CallError("Could not find PCI slot for every NIC")
         return pci_slots
@@ -91,9 +94,9 @@ class NVMetSPDKService(Service):
             choices = {}
         addresses = set()
         for port in ports:
-            if port['addr_trtype'] not in [PORT_TRTYPE.TCP.api, PORT_TRTYPE.RDMA.api]:
+            if port['addr_trtype'] not in (PORT_TRTYPE.TCP.api, PORT_TRTYPE.RDMA.api):
                 raise CallError(f"Unsupported addr_trtype: {port['addr_trtype']!r}")
-            if port['addr_adrfam'] not in [PORT_ADDR_FAMILY.IPV4.api, PORT_ADDR_FAMILY.IPV6.api]:
+            if port['addr_adrfam'] not in (PORT_ADDR_FAMILY.IPV4.api, PORT_ADDR_FAMILY.IPV6.api):
                 raise CallError(f"Unsupported addr_adrfam: {port['addr_adrfam']!r}")
             if do_failover:
                 # HA get the non-VIP address (this works on MASTER too)

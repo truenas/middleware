@@ -366,7 +366,7 @@ class NVMetNamespaceService(SharingService):
                 await self.middleware.run_in_thread(kernel_lock_namespace, data)
             else:
                 render_ctx = {}
-                for api in ['nvmet.namespace.query', 'failover.status']:
+                for api in ('nvmet.namespace.query', 'failover.status'):
                     render_ctx[api] = await self.middleware.call(api)
                 await self.middleware.run_in_thread(spdk_lock_namespace, data, render_ctx)
 
@@ -378,9 +378,11 @@ class NVMetNamespaceService(SharingService):
                 await self.middleware.run_in_thread(kernel_unlock_namespace, data)
             else:
                 render_ctx = {}
-                for api in ['nvmet.namespace.query',
-                            'failover.node',
-                            'failover.status']:
+                for api in (
+                    'nvmet.namespace.query',
+                    'failover.node',
+                    'failover.status'
+                ):
                     render_ctx[api] = await self.middleware.call(api)
                 await self.middleware.run_in_thread(spdk_unlock_namespace, self.middleware, data, render_ctx)
 
@@ -391,9 +393,7 @@ class NVMetNamespaceService(SharingService):
             if (await self.middleware.call('nvmet.global.config'))['kernel']:
                 await self.middleware.run_in_thread(kernel_resize_namespace, data)
             else:
-                render_ctx = {}
-                for api in ['failover.status']:
-                    render_ctx[api] = await self.middleware.call(api)
+                render_ctx = {'failover.status': await self.middleware.call('failover.status')}
                 await self.middleware.run_in_thread(spdk_resize_namespace, data, render_ctx)
 
     @private

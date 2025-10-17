@@ -5,24 +5,28 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 
-from middlewared.plugins.nvmet.constants import (DHCHAP_DHGROUP,
-                                                 DHCHAP_HASH,
-                                                 NAMESPACE_DEVICE_TYPE,
-                                                 NVMET_KERNEL_CONFIG_DIR,
-                                                 PORT_ADDR_FAMILY,
-                                                 PORT_TRTYPE)
+from middlewared.plugins.nvmet.constants import (
+    DHCHAP_DHGROUP,
+    DHCHAP_HASH,
+    NAMESPACE_DEVICE_TYPE,
+    NVMET_KERNEL_CONFIG_DIR,
+    PORT_ADDR_FAMILY,
+    PORT_TRTYPE,
+)
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from .render_common import (ANA_PORT_INDEX_OFFSET,
-                            NVMET_DEFAULT_ANA_GRPID,
-                            NVMET_NODE_A_ANA_GRPID,
-                            NVMET_NODE_A_MAX_CONTROLLER_ID,
-                            NVMET_NODE_B_ANA_GRPID,
-                            NVMET_NODE_B_MIN_CONTROLLER_ID,
-                            addr_traddr_to_address,
-                            ana_grpid,
-                            ana_state,
-                            port_subsys_index,
-                            subsys_ana)
+from .render_common import (
+    ANA_PORT_INDEX_OFFSET,
+    NVMET_DEFAULT_ANA_GRPID,
+    NVMET_NODE_A_ANA_GRPID,
+    NVMET_NODE_A_MAX_CONTROLLER_ID,
+    NVMET_NODE_B_ANA_GRPID,
+    NVMET_NODE_B_MIN_CONTROLLER_ID,
+    addr_traddr_to_address,
+    ana_grpid,
+    ana_state,
+    port_subsys_index,
+    subsys_ana,
+)
 
 
 class NvmetConfig:
@@ -155,9 +159,11 @@ class NvmetPortConfig(NvmetConfig):
                 case 'addr_adrfam':
                     result[k] = PORT_ADDR_FAMILY.by_api(v).sysfs
                 case 'addr_traddr':
-                    result[k] = addr_traddr_to_address(attrs.get('index', 0),
-                                                       attrs['addr_trtype'],
-                                                       v, render_ctx)
+                    result[k] = addr_traddr_to_address(
+                        attrs.get('index', 0),
+                        attrs['addr_trtype'],
+                        v, render_ctx
+                    )
                 case 'addr_trsvcid':
                     result[k] = v
                 case 'inline_data_size':

@@ -6,20 +6,24 @@ from contextlib import contextmanager
 
 from spdk import rpc
 
-from middlewared.plugins.nvmet.constants import (NAMESPACE_DEVICE_TYPE,
-                                                 NVMET_DISCOVERY_NQN,
-                                                 PORT_ADDR_FAMILY)
-from .render_common import (ANA_INACCESSIBLE_STATE,
-                            ANA_OPTIMIZED_STATE,
-                            ANA_PORT_INDEX_OFFSET,
-                            NVMET_NODE_A_MAX_CONTROLLER_ID,
-                            NVMET_NODE_B_MIN_CONTROLLER_ID,
-                            addr_traddr_to_address,
-                            ana_grpid,
-                            ana_state,
-                            port_subsys_index,
-                            subsys_ana,
-                            subsys_visible)
+from middlewared.plugins.nvmet.constants import (
+    NAMESPACE_DEVICE_TYPE,
+    NVMET_DISCOVERY_NQN,
+    PORT_ADDR_FAMILY,
+)
+from .render_common import (
+    ANA_INACCESSIBLE_STATE,
+    ANA_OPTIMIZED_STATE,
+    ANA_PORT_INDEX_OFFSET,
+    NVMET_NODE_A_MAX_CONTROLLER_ID,
+    NVMET_NODE_B_MIN_CONTROLLER_ID,
+    addr_traddr_to_address,
+    ana_grpid,
+    ana_state,
+    port_subsys_index,
+    subsys_ana,
+    subsys_visible,
+)
 
 SPDK_RPC_SERVER_ADDR = '/var/run/spdk/spdk.sock'
 SPDK_RPC_PORT = 5260
@@ -194,10 +198,12 @@ class NvmetPortConfig(NvmetConfig):
                 continue
             elif addr_traddr == entry['addr_traddr']:
                 return str(entry['index'])
-            elif addr_traddr == addr_traddr_to_address(entry['index'] + ANA_PORT_INDEX_OFFSET,
-                                                       entry['addr_trtype'],
-                                                       entry['addr_traddr'],
-                                                       render_ctx):
+            elif addr_traddr == addr_traddr_to_address(
+                entry['index'] + ANA_PORT_INDEX_OFFSET,
+                entry['addr_trtype'],
+                entry['addr_traddr'],
+                render_ctx
+            ):
                 return str(entry['index'] + ANA_PORT_INDEX_OFFSET)
 
     def live_address_to_key(self, laddr, render_ctx):
@@ -215,18 +221,22 @@ class NvmetPortConfig(NvmetConfig):
         return config_item['index']
 
     def get_live(self, client, render_ctx):
-        return {self.live_address_to_key(entry['address'], render_ctx): entry
-                for entry in rpc.nvmf.nvmf_subsystem_get_listeners(client, nqn=NVMET_DISCOVERY_NQN)}
+        live = {}
+        for entry in rpc.nvmf.nvmf_subsystem_get_listeners(client, nqn=NVMET_DISCOVERY_NQN):
+            live[self.live_address_to_key(entry['address'], render_ctx)] = entry
+        return live
 
     def add_to_nqn(self, client, config_item, nqn, render_ctx):
         kwargs = {
             'nqn': nqn,
             'trtype': config_item['addr_trtype'],
             'adrfam': PORT_ADDR_FAMILY.by_api(config_item['addr_adrfam']).spdk,
-            'traddr': addr_traddr_to_address(config_item['index'],
-                                             config_item['addr_trtype'],
-                                             config_item['addr_traddr'],
-                                             render_ctx),
+            'traddr': addr_traddr_to_address(
+                config_item['index'],
+                config_item['addr_trtype'],
+                config_item['addr_traddr'],
+                render_ctx
+            ),
             'trsvcid': str(config_item['addr_trsvcid'])
         }
         # The API will generate the listen_address from its constituents - hence flat here
@@ -241,9 +251,11 @@ class NvmetPortConfig(NvmetConfig):
         self.add_to_nqn(client, config_item, NVMET_DISCOVERY_NQN, render_ctx)
 
     def address_match(self, config_item, live_address):
-        if config_item['addr_trtype'] != live_address['trtype'] or \
-           config_item['addr_traddr'] != live_address['traddr'] or \
-           str(config_item['addr_trsvcid']) != live_address['trsvcid']:
+        if (
+            config_item['addr_trtype'] != live_address['trtype']
+            or config_item['addr_traddr'] != live_address['traddr']
+            or str(config_item['addr_trsvcid']) != live_address['trsvcid']
+        ):
             return False
         return True
 
@@ -253,9 +265,7 @@ class NvmetPortConfig(NvmetConfig):
             self.add(client, config_item, render_ctx)
 
     def delete_from_nqn(self, client, laddr, nqn, render_ctx):
-        kwargs = {
-            'nqn': nqn,
-        }
+        kwargs = {'nqn': nqn}
         kwargs.update(laddr)
         rpc.nvmf.nvmf_subsystem_remove_listener(client, **kwargs)
 
@@ -432,11 +442,12 @@ class NvmetHostSubsysConfig(NvmetConfig):
                 hostnqn = host['nqn']
                 # Yes, deliberately mapped live dhchap_ctrlr_key to dhchap_ctrl_key here to
                 # make comparison in the update method easier
-                result[f"{hostnqn}:{subsys['nqn']}"] = {'hostnqn': hostnqn,
-                                                        'nqn': subsys['nqn'],
-                                                        'dhchap_key': host.get('dhchap_key'),
-                                                        'dhchap_ctrl_key': host.get('dhchap_ctrlr_key'),
-                                                        }
+                result[f"{hostnqn}:{subsys['nqn']}"] = {
+                    'hostnqn': hostnqn,
+                    'nqn': subsys['nqn'],
+                    'dhchap_key': host.get('dhchap_key'),
+                    'dhchap_ctrl_key': host.get('dhchap_ctrlr_key'),
+                }
         return result
 
     def add(self, client, config_item, render_ctx):
@@ -533,27 +544,30 @@ class NvmetBdevConfig(NvmetConfig):
             return
 
         if render_ctx['failover.status'] == 'BACKUP':
-            rpc.bdev.bdev_null_create(client,
-                                      block_size=4096,
-                                      num_blocks=1,
-                                      name=name
-                                      )
+            rpc.bdev.bdev_null_create(
+                client,
+                block_size=4096,
+                num_blocks=1,
+                name=name
+            )
             return
 
         match config_item['device_type']:
             case NAMESPACE_DEVICE_TYPE.ZVOL.api:
-                rpc.bdev.bdev_uring_create(client,
-                                           filename=f"/dev/{config_item['device_path'].replace(' ', '+')}",
-                                           name=name
-                                           )
+                rpc.bdev.bdev_uring_create(
+                    client,
+                    filename=f"/dev/{config_item['device_path'].replace(' ', '+')}",
+                    name=name
+                )
 
             case NAMESPACE_DEVICE_TYPE.FILE.api:
                 _path = config_item['device_path']
-                rpc.bdev.bdev_aio_create(client,
-                                         filename=_path,
-                                         block_size=render_ctx.get('path_to_recordsize', {}).get(_path, 512),
-                                         name=name
-                                         )
+                rpc.bdev.bdev_aio_create(
+                    client,
+                    filename=_path,
+                    block_size=render_ctx.get('path_to_recordsize', {}).get(_path, 512),
+                    name=name
+                )
 
     def update(self, client, config_item, live_item, render_ctx):
         pass
@@ -641,11 +655,13 @@ class NvmetNamespaceConfig(NvmetBdevConfig):
 
 
 def make_client():
-    return rpc.client.JSONRPCClient(SPDK_RPC_SERVER_ADDR,
-                                    SPDK_RPC_PORT,
-                                    SPDK_RPC_TIMEOUT,
-                                    log_level=SPDK_RPC_LOG_LEVEL,
-                                    conn_retries=SPDK_RPC_CONN_RETRIES)
+    return rpc.client.JSONRPCClient(
+        SPDK_RPC_SERVER_ADDR,
+        SPDK_RPC_PORT,
+        SPDK_RPC_TIMEOUT,
+        log_level=SPDK_RPC_LOG_LEVEL,
+        conn_retries=SPDK_RPC_CONN_RETRIES
+    )
 
 
 def nvmf_subsystem_get_qpairs(client, nqn):
@@ -693,7 +709,7 @@ def write_config(config):
     client = make_client()
 
     if not os.path.isdir(SPDK_KEY_DIR):
-        os.mkdir(SPDK_KEY_DIR)
+        os.makedirs(SPDK_KEY_DIR, exist_ok=True)
 
     # Render operations are context managers that do
     # 1. Create-style operations
@@ -763,13 +779,17 @@ def inject_path_to_recordsize(middleware, render_ctx):
     fns = {ns['device_path'] for ns in filter(lambda ns: ns.get('device_type') == NAMESPACE_DEVICE_TYPE.FILE.api,
                                               render_ctx['nvmet.namespace.query'])}
     if fns:
-        record_sizes = {f'{item["mountpoint"]}/': int(item['recordsize']['rawvalue']) for item in
-                        middleware.call_sync('pool.dataset.query',
-                                             [["mountpoint", "!=", None]],
-                                             {"select": ["name",
-                                                         "children",
-                                                         "mountpoint",
-                                                         "recordsize.rawvalue"]})}
+        record_sizes = {
+            f'{item["mountpoint"]}/': int(item['recordsize']['rawvalue']) for item in middleware.call_sync(
+                'pool.dataset.query',
+                [["mountpoint", "!=", None]],
+                {"select": [
+                    "name",
+                    "children",
+                    "mountpoint",
+                    "recordsize.rawvalue"
+                ]}
+            )}
         path_to_recordsize = {}
         for path in fns:
             longest_match = 0
