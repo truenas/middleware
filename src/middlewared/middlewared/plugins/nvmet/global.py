@@ -187,22 +187,34 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
             if subsys_id is None:
                 subsys_name_to_subsys_id = {subsys['subnqn']: subsys['id'] for subsys in subsystems}
-                for subsys in nvmet_debug_path.iterdir():
-                    if subsys_id := subsys_name_to_subsys_id.get(subsys.name):
-                        for ctrl in subsys.iterdir():
-                            if session := self.__parse_session_dir(ctrl, port_index_to_id):
-                                session['subsys_id'] = subsys_id
-                                sessions.append(session)
+                try:
+                    for subsys in nvmet_debug_path.iterdir():
+                        if subsys_id := subsys_name_to_subsys_id.get(subsys.name):
+                            for ctrl in subsys.iterdir():
+                                try:
+                                    if session := self.__parse_session_dir(ctrl, port_index_to_id):
+                                        session['subsys_id'] = subsys_id
+                                        sessions.append(session)
+                                except (NotADirectoryError, FileNotFoundError):
+                                    pass
+                except (NotADirectoryError, FileNotFoundError):
+                    pass
             else:
                 for subsys in subsystems:
                     if subsys['id'] == subsys_id:
                         subnqn = subsys['subnqn']
-                        path = nvmet_debug_path / subnqn
-                        if path.is_dir():
-                            for ctrl in path.iterdir():
-                                if session := self.__parse_session_dir(ctrl, port_index_to_id):
-                                    session['subsys_id'] = subsys_id
-                                    sessions.append(session)
+                        try:
+                            path = nvmet_debug_path / subnqn
+                            if path.is_dir():
+                                for ctrl in path.iterdir():
+                                    try:
+                                        if session := self.__parse_session_dir(ctrl, port_index_to_id):
+                                            session['subsys_id'] = subsys_id
+                                            sessions.append(session)
+                                    except (NotADirectoryError, FileNotFoundError):
+                                        pass
+                        except (NotADirectoryError, FileNotFoundError):
+                            pass
         else:
             if not self.middleware.call_sync('nvmet.spdk.nvmf_ready'):
                 return sessions
