@@ -115,7 +115,7 @@ def encrypted_zvol():
             'algorithm': 'AES-128-CCM',
             'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
         }
-    }) as ds:
+    }, delete=True) as ds:
         config = call('pool.dataset.query', [['name', '=', ds]], {'get': True})
         yield config
 
@@ -144,6 +144,34 @@ def wait_for_session_count(count: int, retries: int = 5, delay: int = 1, raise_e
         time.sleep(delay)
     if raise_error:
         raise ValueError(f'Expected {count} sessions, but have {len(sessions)}')
+
+
+@contextlib.contextmanager
+def nvmet_implementation(name):
+    old_config = call('nvmet.global.config')
+    match name:
+        case 'kernel':
+            if old_config['kernel']:
+                # No change necessary
+                yield
+            else:
+                # Change necessary, so restore when done
+                call('nvmet.global.update', {'kernel': True})
+                try:
+                    yield
+                finally:
+                    call('nvmet.global.update', {'kernel': False})
+        case 'SPDK':
+            if not old_config['kernel']:
+                # No change necessary
+                yield
+            else:
+                # Change necessary, so restore when done
+                call('nvmet.global.update', {'kernel': False})
+                try:
+                    yield
+                finally:
+                    call('nvmet.global.update', {'kernel': True})
 
 
 class NVMeCLIClient:
@@ -264,11 +292,12 @@ def loopback_client():
 
 class NVMeRunning:
 
-    @pytest.fixture(scope='class')
-    def fixture_nvmet_running(self):
-        with ensure_service_enabled(SERVICE_NAME):
-            with ensure_service_started(SERVICE_NAME, 3):
-                yield
+    @pytest.fixture(params=['kernel', 'SPDK'], scope='class')
+    def fixture_nvmet_running(self, request):
+        with nvmet_implementation(request.param):
+            with ensure_service_enabled(SERVICE_NAME):
+                with ensure_service_started(SERVICE_NAME, 3):
+                    yield
 
     @contextlib.contextmanager
     def subsys(self, name, port, **kwargs):
@@ -384,7 +413,7 @@ class TestNVMe(NVMeRunning):
     def test__service_started(self, fixture_nvmet_running):
         assert call('service.query', [['service', '=', SERVICE_NAME]], {'get': True})['state'] == 'RUNNING'
 
-    def test__discover_fail_no_port(self, loopback_client: NVMeCLIClient):
+    def test__discover_fail_no_port(self, fixture_nvmet_running, loopback_client: NVMeCLIClient):
         nc = loopback_client
         with pytest.raises(AssertionError, match=RE_CONNECTION_REFUSED):
             nc.discover()
@@ -727,7 +756,7 @@ class TestNVMe(NVMeRunning):
                         'encryption': True,
                         'inherit_encryption': False,
                         'encryption_options': {'passphrase': NVMET_ENCRYPTED_PASSPHRASE}
-                    }) as ds:
+                    }, delete=True) as ds:
                         file2 = f'/mnt/{ds}/file2_{digits}'
                         with nvmet_namespace(subsys_id,
                                              file2,
@@ -772,6 +801,7 @@ class TestNVMe(NVMeRunning):
                     with iscsi_extent(iscsi_extent_payload):
                         pass
 
+                file2 = f'/mnt/{pool_name}/file2_{digits}'
                 iscsi_extent_payload = {
                     'type': 'FILE',
                     'path': file2,
@@ -860,9 +890,13 @@ class TestNVMe(NVMeRunning):
         """
         Test that a client can see expected referrals.
 
+        Note that kernel and SPDK behavior is different (SPDK makes more visible).
+
         For HA this includes the implicit referral for a port when ANA is enabled.
         """
-        assert call('nvmet.global.config')['xport_referral']
+        config = call('nvmet.global.config')
+        assert config['xport_referral']
+        use_spdk = not config['kernel']
         port = fixture_port
         nc = loopback_client
         subsys1_nqn = f'{basenqn()}:{SUBSYS_NAME1}'
@@ -890,12 +924,21 @@ class TestNVMe(NVMeRunning):
                         with nvmet_port_subsys(subsys_id, port2['id']):
                             # Check that we can see each port point at the other
                             data = nc.discover()
-                            assert len(data['records']) == 3
+                            if use_spdk:
+                                assert len(data['records']) == 4
+                                assert self.discovery_present(data, SUBSYS1_ALT1_PORT)
+                            else:
+                                assert len(data['records']) == 3
                             assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
                             assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
                             assert self.discovery_present(data, DISCOVERY_ALT1_PORT)
                             data = nc.discover(port=NVME_ALT1_TCP_PORT)
-                            assert len(data['records']) == 3
+
+                            if use_spdk:
+                                assert len(data['records']) == 4
+                                assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
+                            else:
+                                assert len(data['records']) == 3
                             assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
                             assert self.discovery_present(data, SUBSYS1_ALT1_PORT)
                             assert self.discovery_present(data, DISCOVERY_ALT1_PORT)
@@ -904,22 +947,22 @@ class TestNVMe(NVMeRunning):
                             with nvmet_xport_referral(False):
                                 # Check that we can see each port point at the other
                                 data = nc.discover()
-                                assert len(data['records']) == 2
+                                assert len(data['records']) == 2 if not use_spdk else 4
                                 assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
                                 assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
                                 data = nc.discover(port=NVME_ALT1_TCP_PORT)
-                                assert len(data['records']) == 2
+                                assert len(data['records']) == 2 if not use_spdk else 4
                                 assert self.discovery_present(data, SUBSYS1_ALT1_PORT)
                                 assert self.discovery_present(data, DISCOVERY_ALT1_PORT)
 
                             if ha:
                                 data = nc.discover()
-                                assert len(data['records']) == 3
+                                assert len(data['records']) == 3 if not use_spdk else 4
                                 assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
                                 assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT)
                                 assert self.discovery_present(data, DISCOVERY_ALT1_PORT)
                                 data = nc.discover(port=NVME_ALT1_TCP_PORT)
-                                assert len(data['records']) == 3
+                                assert len(data['records']) == 3 if not use_spdk else 4
                                 assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT)
                                 assert self.discovery_present(data, SUBSYS1_ALT1_PORT)
                                 assert self.discovery_present(data, DISCOVERY_ALT1_PORT)
@@ -930,13 +973,13 @@ class TestNVMe(NVMeRunning):
                                         this_node = {'traddr': node_ip}
                                         other_node = {'traddr': other_node_ip}
                                         data = nc.discover(addr=node_ip)
-                                        assert len(data['records']) == 4
+                                        assert len(data['records']) == 4 if not use_spdk else 6
                                         assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT | this_node)
                                         assert self.discovery_present(data, SUBSYS1_DEFAULT_PORT | this_node)
                                         assert self.discovery_present(data, DISCOVERY_ALT1_PORT | this_node)
                                         assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT | other_node)
                                         data = nc.discover(addr=node_ip, port=NVME_ALT1_TCP_PORT)
-                                        assert len(data['records']) == 4
+                                        assert len(data['records']) == 4 if not use_spdk else 6
                                         assert self.discovery_present(data, DISCOVERY_DEFAULT_PORT | this_node)
                                         assert self.discovery_present(data, SUBSYS1_ALT1_PORT | this_node)
                                         assert self.discovery_present(data, DISCOVERY_ALT1_PORT | this_node)
@@ -947,9 +990,13 @@ class TestNVMe(NVMeRunning):
         Test that when a client does a nvme connect-all, it adds the paths defined
         by the referrals.
 
+        Note that kernel and SPDK behavior is different (SPDK makes more visible).
+
         For HA this includes the implicit referral for a port when ANA is enabled.
         """
-        assert call('nvmet.global.config')['xport_referral']
+        config = call('nvmet.global.config')
+        assert config['xport_referral']
+        use_spdk = not config['kernel']
         nc = loopback_client
         zvol1_path = f'zvol/{zvol1["name"]}'
         with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys1:
@@ -1036,7 +1083,7 @@ class TestNVMe(NVMeRunning):
                         with nvmet_xport_referral(False):
                             with nc.connect_all_ctx():
                                 data = nc.nvme_list_subsys()
-                                assert self.subsys_path_count(data, subsys_nqn) == 1
+                                assert self.subsys_path_count(data, subsys_nqn) == 1 if not use_spdk else 2
                                 assert self.subsys_path_present(data, subsys_nqn,
                                                                 truenas_server.ip, NVME_DEFAULT_TCP_PORT)
 
@@ -1055,7 +1102,7 @@ class TestNVMe(NVMeRunning):
                                             assert False, 'Unexpected failover.node'
                                     with nc.connect_all_ctx(active_ip):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2
+                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
                                         assert self.subsys_path_present(data,
                                                                         subsys_nqn,
                                                                         active_ip,
@@ -1067,7 +1114,7 @@ class TestNVMe(NVMeRunning):
 
                                     with nc.connect_all_ctx(active_ip, NVME_ALT1_TCP_PORT):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2
+                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
                                         assert self.subsys_path_present(data,
                                                                         subsys_nqn,
                                                                         active_ip,
@@ -1079,7 +1126,7 @@ class TestNVMe(NVMeRunning):
 
                                     with nc.connect_all_ctx(standby_ip):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2
+                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
                                         assert self.subsys_path_present(data,
                                                                         subsys_nqn,
                                                                         active_ip,
@@ -1091,7 +1138,7 @@ class TestNVMe(NVMeRunning):
 
                                     with nc.connect_all_ctx(standby_ip, NVME_ALT1_TCP_PORT):
                                         data = nc.nvme_list_subsys()
-                                        assert self.subsys_path_count(data, subsys_nqn) == 2
+                                        assert self.subsys_path_count(data, subsys_nqn) == 2 if not use_spdk else 4
                                         assert self.subsys_path_present(data,
                                                                         subsys_nqn,
                                                                         active_ip,
@@ -1680,13 +1727,14 @@ class TestManySubsystems:
     TIME_LIMIT_SECONDS = 15
     DELAY_SECONDS = 3
 
-    @pytest.fixture(scope='class')
-    def fixture_port(self):
+    @pytest.fixture(params=['kernel', 'SPDK'], scope='class')
+    def fixture_port(self, request):
         if truenas_server.ip is None:
             init_truenas_server()
         assert truenas_server.ip in call('nvmet.port.transport_address_choices', 'TCP')
-        with nvmet_port(truenas_server.ip) as port:
-            yield port
+        with nvmet_implementation(request.param):
+            with nvmet_port(truenas_server.ip) as port:
+                yield port
 
     @pytest.fixture(scope='class')
     def fixture_100_nvme_subsystems(self, fixture_port):

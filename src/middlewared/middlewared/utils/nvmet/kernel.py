@@ -5,19 +5,28 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 
+from middlewared.plugins.nvmet.constants import (
+    DHCHAP_DHGROUP,
+    DHCHAP_HASH,
+    NAMESPACE_DEVICE_TYPE,
+    NVMET_KERNEL_CONFIG_DIR,
+    PORT_ADDR_FAMILY,
+    PORT_TRTYPE,
+)
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from .constants import (DHCHAP_DHGROUP,
-                        DHCHAP_HASH,
-                        NAMESPACE_DEVICE_TYPE,
-                        NVMET_KERNEL_CONFIG_DIR,
-                        NVMET_NODE_A_ANA_GRPID,
-                        NVMET_NODE_B_ANA_GRPID,
-                        PORT_ADDR_FAMILY,
-                        PORT_TRTYPE)
-
-ANA_OPTIMIZED_STATE = 'optimized'
-ANA_INACCESSIBLE_STATE = 'inaccessible'
-ANA_PORT_INDEX_OFFSET = 5000
+from .render_common import (
+    ANA_PORT_INDEX_OFFSET,
+    NVMET_DEFAULT_ANA_GRPID,
+    NVMET_NODE_A_ANA_GRPID,
+    NVMET_NODE_A_MAX_CONTROLLER_ID,
+    NVMET_NODE_B_ANA_GRPID,
+    NVMET_NODE_B_MIN_CONTROLLER_ID,
+    addr_traddr_to_address,
+    ana_grpid,
+    ana_state,
+    port_subsys_index,
+    subsys_ana,
+)
 
 
 class NvmetConfig:
@@ -150,16 +159,12 @@ class NvmetPortConfig(NvmetConfig):
                 case 'addr_adrfam':
                     result[k] = PORT_ADDR_FAMILY.by_api(v).sysfs
                 case 'addr_traddr':
-                    result[k] = v
-                    if attrs.get('index', 0) > ANA_PORT_INDEX_OFFSET:
-                        prefix = attrs['addr_trtype'].lower()
-                        choices = render_ctx[f'{prefix}.nvmet.port.transport_address_choices']
-                        pair = choices[v].split('/')
-                        match render_ctx['failover.node']:
-                            case 'A':
-                                result[k] = pair[0]
-                            case 'B':
-                                result[k] = pair[1]
+                    result[k] = addr_traddr_to_address(
+                        attrs.get('index', 0),
+                        attrs['addr_trtype'],
+                        v,
+                        render_ctx
+                    )
                 case 'addr_trsvcid':
                     result[k] = v
                 case 'inline_data_size':
@@ -190,7 +195,7 @@ class NvmetPortConfig(NvmetConfig):
             ana_path.mkdir(exist_ok=True)
             ana_state_path = pathlib.Path(ana_path, 'ana_state')
             cur_state = ana_state_path.read_text().strip()
-            new_state = ANA_OPTIMIZED_STATE if render_ctx['failover.status'] == 'MASTER' else ANA_INACCESSIBLE_STATE
+            new_state = ana_state(render_ctx)
             if cur_state != new_state:
                 ana_state_path.write_text(f'{new_state}\n')
         else:
@@ -399,9 +404,9 @@ class NvmetSubsysConfig(NvmetConfig):
         # Perhaps inject some values
         match render_ctx['failover.node']:
             case 'A':
-                result['attr_cntlid_max'] = 31999
+                result['attr_cntlid_max'] = NVMET_NODE_A_MAX_CONTROLLER_ID
             case 'B':
-                result['attr_cntlid_min'] = 32000
+                result['attr_cntlid_min'] = NVMET_NODE_B_MIN_CONTROLLER_ID
 
         result['attr_model'] = render_ctx['nvmet.subsys.model']
         result['attr_firmware'] = render_ctx['nvmet.subsys.firmware']
@@ -480,23 +485,11 @@ class NvmetNamespaceConfig(NvmetConfig):
         result['buffered_io'] = NAMESPACE_DEVICE_TYPE.by_api(attrs['device_type']).sysfs
 
         result['resv_enable'] = 1
-        result['ana_grpid'] = 1
+        result['ana_grpid'] = NVMET_DEFAULT_ANA_GRPID
 
-        do_ana = False
         # Is ANA active for this namespace (subsystem)
-        if render_ctx['nvmet.global.ana_active']:
-            # Maybe ANA applies to this namespace
-            if isinstance(subsys_ana := attrs['subsys']['ana'], bool):
-                do_ana = subsys_ana
-            else:
-                do_ana = bool(render_ctx['nvmet.global.ana_enabled'])
-
-        if do_ana:
-            match render_ctx['failover.node']:
-                case 'A':
-                    result['ana_grpid'] = NVMET_NODE_A_ANA_GRPID
-                case 'B':
-                    result['ana_grpid'] = NVMET_NODE_B_ANA_GRPID
+        if subsys_ana(attrs['subsys'], render_ctx):
+            result['ana_grpid'] = ana_grpid(render_ctx)
 
         match render_ctx['failover.status']:
             case 'SINGLE' | 'MASTER':
@@ -591,28 +584,8 @@ class NvmetPortSubsysConfig(NvmetLinkConfig):
     dst_query_keys = ['subsys', 'subnqn']
 
     def src_dir_name(self, entry, render_ctx: dict):
-        # Because we have elected to support overriding the global ANA
-        # setting for individual subsystems this has two knock-on effects
-        # 1. Additional ANA-specific port indexes are in injected
-        # 2. Particular subsystems will link to either the ANA or non-ANA
-        #    port index.
-        # However, if we're on the standby node we never want to setup
-        # a link to the VIP port.
-        raw_index = entry[self.src_query_keys[0]][self.src_query_keys[1]]
-        # Now check whether ANA is playing a part.
-        match entry['subsys']['ana']:
-            case True:
-                index = raw_index + ANA_PORT_INDEX_OFFSET
-            case False:
-                index = raw_index
-            case _:
-                if render_ctx['nvmet.global.ana_enabled']:
-                    index = raw_index + ANA_PORT_INDEX_OFFSET
-                else:
-                    index = raw_index
-
-        if index < ANA_PORT_INDEX_OFFSET and render_ctx['failover.status'] == 'BACKUP':
-            return None
+        if (index := port_subsys_index(entry, render_ctx)) is None:
+            return index
 
         return str(index)
 

@@ -9,7 +9,7 @@ from middlewared.api import api_method
 from middlewared.api.current import SystemHostIdArgs, SystemHostIdResult, SystemInfoArgs, SystemInfoResult
 from middlewared.service import no_authz_required, private, Service
 from middlewared.utils import sw_buildtime
-from middlewared.utils.cpu import cpu_info
+from middlewared.utils.cpu import cpu_info, cpu_flags
 
 
 class SystemService(Service):
@@ -38,6 +38,13 @@ class SystemService(Service):
         cache it since hot-plugging cpus is something
         we've not accounted for."""
         return cpu_info()
+
+    @private
+    async def cpu_flags(self):
+        """CPU info could change after boot, but we
+        cache it since hot-plugging cpus is something
+        we've not accounted for."""
+        return cpu_flags()
 
     @private
     async def time_info(self):

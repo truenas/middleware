@@ -10,11 +10,14 @@ from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 from middlewared.utils import filter_list
 from .constants import NVMET_SERVICE_NAME
-from .kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
+from middlewared.utils.nvmet.kernel import clear_config, load_modules, nvmet_kernel_module_loaded, unload_module
+from middlewared.utils.nvmet.spdk import make_client, nvmf_subsystem_get_qpairs
 from .mixin import NVMetStandbyMixin
 from .utils import uuid_nqn
 
 NVMET_DEBUG_DIR = '/sys/kernel/debug/nvmet'
+NVMF_SERVICE = 'nvmf'
+AVX2_FLAG = 'avx2'
 
 
 class NVMetGlobalModel(sa.Model):
@@ -65,9 +68,11 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     async def __ana_forbidden(self):
         return not await self.middleware.call('failover.licensed')
 
+    async def __spdk_forbidden(self):
+        # For now we'll disallow SPDK if any CPU is missing avx2
+        return AVX2_FLAG not in (await self.middleware.call('system.cpu_flags'))
+
     async def __validate(self, verrors, data, schema_name, old=None):
-        if not data.get('kernel', False):
-            verrors.add(f'{schema_name}.kernel', 'Cannot disable kernel mode.')
         if data['rdma'] and old['rdma'] != data['rdma']:
             available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
             if RDMAprotocols.NVMET.value not in available_rdma_protocols:
@@ -80,6 +85,17 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 verrors.add(
                     f'{schema_name}.ana',
                     'This platform does not support Asymmetric Namespace Access(ANA).'
+                )
+        if old['kernel'] != data['kernel']:
+            if not data['kernel'] and await self.__spdk_forbidden():
+                verrors.add(
+                    f'{schema_name}.kernel',
+                    'Cannot switch nvmet backend because CPU lacks required capabilities.'
+                )
+            elif await self.running():
+                verrors.add(
+                    f'{schema_name}.kernel',
+                    'Cannot switch nvmet backend while the service is running.'
                 )
 
     @private
@@ -121,9 +137,9 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
     async def sessions(self, filters, options):
         sessions = []
         subsys_id = None
-        for filter in filters:
-            if len(filter) == 3 and filter[0] == 'subsys_id' and filter[1] == '=':
-                subsys_id = filter[2]
+        for _filter in filters:
+            if len(_filter) == 3 and _filter[0] == 'subsys_id' and _filter[1] == '=':
+                subsys_id = _filter[2]
                 break
         sessions = await self.middleware.call('nvmet.global.local_sessions', subsys_id)
         if await self.ana_enabled():
@@ -159,33 +175,86 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         sessions = []
         global_info = self.middleware.call_sync('nvmet.global.config')
         subsystems = self.middleware.call_sync('nvmet.subsys.query')
+        ports = self.middleware.call_sync('nvmet.port.query')
+        ha = self.middleware.call_sync('failover.licensed')
 
         if global_info['kernel']:
             nvmet_debug_path = pathlib.Path(NVMET_DEBUG_DIR)
             if not nvmet_debug_path.exists():
                 return sessions
 
-        port_index_to_id = {port['index']: port['id'] for port in self.middleware.call_sync('nvmet.port.query')}
+            port_index_to_id = {port['index']: port['id'] for port in ports}
 
-        if subsys_id is None:
-            basenqn = global_info['basenqn']
-            subsys_name_to_subsys_id = {f'{basenqn}:{subsys["name"]}': subsys['id'] for subsys in subsystems}
-            for subsys in nvmet_debug_path.iterdir():
-                if subsys_id := subsys_name_to_subsys_id.get(subsys.name):
-                    for ctrl in subsys.iterdir():
-                        if session := self.__parse_session_dir(ctrl, port_index_to_id):
-                            session['subsys_id'] = subsys_id
-                            sessions.append(session)
+            if subsys_id is None:
+                subsys_name_to_subsys_id = {subsys['subnqn']: subsys['id'] for subsys in subsystems}
+                try:
+                    for subsys in nvmet_debug_path.iterdir():
+                        if subsys_id := subsys_name_to_subsys_id.get(subsys.name):
+                            for ctrl in subsys.iterdir():
+                                try:
+                                    if session := self.__parse_session_dir(ctrl, port_index_to_id):
+                                        session['subsys_id'] = subsys_id
+                                        sessions.append(session)
+                                except (NotADirectoryError, FileNotFoundError):
+                                    pass
+                except (NotADirectoryError, FileNotFoundError):
+                    pass
+            else:
+                for subsys in subsystems:
+                    if subsys['id'] == subsys_id:
+                        subnqn = subsys['subnqn']
+                        try:
+                            path = nvmet_debug_path / subnqn
+                            if path.is_dir():
+                                for ctrl in path.iterdir():
+                                    try:
+                                        if session := self.__parse_session_dir(ctrl, port_index_to_id):
+                                            session['subsys_id'] = subsys_id
+                                            sessions.append(session)
+                                    except (NotADirectoryError, FileNotFoundError):
+                                        pass
+                        except (NotADirectoryError, FileNotFoundError):
+                            pass
         else:
+            if not self.middleware.call_sync('nvmet.spdk.nvmf_ready'):
+                return sessions
+            client = make_client()
+            choices = {}
+            port_to_portid = {}
+            for port in ports:
+                addr = port['addr_traddr']
+                trtype = port['addr_trtype']
+                addrs = [addr]
+                if ha:
+                    try:
+                        mychoices = choices[trtype]
+                    except KeyError:
+                        mychoices = self.middleware.call_sync('nvmet.port.transport_address_choices', trtype, True)
+                        mychoices[trtype] = mychoices
+                    if pair := mychoices.get(addr, '').split('/'):
+                        addrs.extend(pair)
+
+                for addr in addrs:
+                    port_to_portid[f"{trtype}:{addr}:{port['addr_trsvcid']}"] = port['id']
             for subsys in subsystems:
-                if subsys['id'] == subsys_id:
-                    subnqn = f'{global_info["basenqn"]}:{subsys["name"]}'
-                    path = nvmet_debug_path / subnqn
-                    if path.is_dir():
-                        for ctrl in path.iterdir():
-                            if session := self.__parse_session_dir(ctrl, port_index_to_id):
-                                session['subsys_id'] = subsys_id
-                                sessions.append(session)
+                if subsys_id is not None and subsys_id != subsys['id']:
+                    continue
+                for entry in nvmf_subsystem_get_qpairs(client, subsys['subnqn']):
+                    laddr = entry['listen_address']
+                    key = f"{laddr['trtype']}:{laddr['traddr']}:{laddr['trsvcid']}"
+                    if port_id := port_to_portid.get(key):
+                        session = {
+                            'host_traddr': entry.get('peer_address', {}).get('traddr'),
+                            'hostnqn': entry['hostnqn'],
+                            'subsys_id': subsys['id'],
+                            'port_id': port_id,
+                            'ctrl': entry['cntlid']
+                        }
+                        # Do we really care that we might have multiple duplicate connections
+                        # (only visible delta being a different qid and peer_address.trsvcid)
+                        # If so, replace this with a simple append.
+                        if session not in sessions:
+                            sessions.append(session)
 
         return sessions
 
@@ -216,7 +285,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         if (await self.config())['kernel']:
             return await self.middleware.run_in_thread(nvmet_kernel_module_loaded)
         else:
-            return False
+            return await self.middleware.call('service.started', NVMF_SERVICE)
 
     @private
     async def reload(self):
@@ -225,14 +294,23 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     @private
     async def start(self):
-        await self.middleware.call('nvmet.global.load_kernel_modules')
+        if (await self.config())['kernel']:
+            await self.middleware.call('nvmet.global.load_kernel_modules')
+        else:
+            await self.middleware.call('nvmet.spdk.slots')
+            if await (await self.middleware.call('service.control', 'START', NVMF_SERVICE)).wait(raise_error=True):
+                await self.middleware.call('nvmet.spdk.wait_nvmf_ready')
         await self.middleware.call('etc.generate', 'nvmet')
 
     @private
     async def stop(self):
         if await self.running():
-            await self.middleware.run_in_thread(clear_config)
-            await self.middleware.call('nvmet.global.unload_kernel_modules')
+            if (await self.config())['kernel']:
+                await self.middleware.run_in_thread(clear_config)
+                await self.middleware.call('nvmet.global.unload_kernel_modules')
+            else:
+                job = await self.middleware.call('service.control', 'STOP', NVMF_SERVICE)
+                return await job.wait(raise_error=True)
 
     @private
     async def system_ready(self):
