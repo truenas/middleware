@@ -1727,13 +1727,14 @@ class TestManySubsystems:
     TIME_LIMIT_SECONDS = 15
     DELAY_SECONDS = 3
 
-    @pytest.fixture(scope='class')
-    def fixture_port(self):
+    @pytest.fixture(params=['kernel', 'SPDK'], scope='class')
+    def fixture_port(self, request):
         if truenas_server.ip is None:
             init_truenas_server()
         assert truenas_server.ip in call('nvmet.port.transport_address_choices', 'TCP')
-        with nvmet_port(truenas_server.ip) as port:
-            yield port
+        with nvmet_implementation(request.param):
+            with nvmet_port(truenas_server.ip) as port:
+                yield port
 
     @pytest.fixture(scope='class')
     def fixture_100_nvme_subsystems(self, fixture_port):
