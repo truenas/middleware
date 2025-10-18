@@ -9,13 +9,14 @@ __all__ = ("destroy_impl",)
 
 
 def destroy_impl(tls, data):
+    target = data["path"].split("@")[0]
     rcpa = {
         "pool_name": data["path"].split("/")[0],
         "script": None,
         "script_arguments_dict": {
             "recursive": data["recursive"],
             "defer": False,
-            "target": data["path"].split("@")[0],
+            "target": target,
         },
         "readonly": False,
     }
@@ -25,6 +26,7 @@ def destroy_impl(tls, data):
     elif data["all_snapshots"]:
         rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
     else:
+        tls.lzh.open_resource(name=target).unmount(recursive=data["recursive"])
         rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES
 
     try_again = False
@@ -37,7 +39,7 @@ def destroy_impl(tls, data):
         try_again = True
         for clone, err in res["clones"].items():
             if err == errno.EBUSY:
-                tls.lzh.open_resoure(name=clone).unmount(recursive=data["recursive"])
+                tls.lzh.open_resource(name=clone).unmount(recursive=data["recursive"])
             # TODO: else raise ZFSException(err) if not EBUSY??
 
     if try_again:

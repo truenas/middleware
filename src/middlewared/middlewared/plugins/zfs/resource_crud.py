@@ -283,7 +283,7 @@ class ZFSResourceService(Service):
                 errno.EINVAL
             )
 
-        return destroy_impl(tls.lzh, data)
+        return destroy_impl(tls, data)
 
     @api_method(
         ZFSResourceDestroyArgs,
