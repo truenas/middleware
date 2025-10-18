@@ -283,7 +283,7 @@ class ZFSResourceService(Service):
                 errno.EINVAL
             )
 
-        return destroy_impl(tls.lzh, data)["result"]
+        return destroy_impl(tls.lzh, data)
 
     @api_method(
         ZFSResourceDestroyArgs,
@@ -293,7 +293,14 @@ class ZFSResourceService(Service):
     def destroy(self, data):
         """Destroy a ZFS resource. This method provides an interface
         to destroy filesystems, volumes, or snapshots."""
-        return self.middleware.call_sync("zfs.resource.destroy_impl", data)
+        res = self.middleware.call_sync("zfs.resource.destroy_impl", data)
+        if res["failed"]:
+            if res["failed"][data["path"]] == errno.ENOENT:
+                raise ValidationError(
+                    "zfs.resource.destroy",
+                    f"{data['path']!r} does not exist.",
+                    errno.ENOENT,
+                )
 
     @api_method(
         ZFSResourceQueryArgs,

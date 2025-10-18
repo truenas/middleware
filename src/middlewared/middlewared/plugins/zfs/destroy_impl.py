@@ -20,20 +20,20 @@ def destroy_impl(tls, data):
         "readonly": False,
     }
     if "@" in data["path"]:
-        rcpa["script"] = truenas_pylibzfs.ZFSChannelPrograEnum.DESTROY_SNAPSHOTS
+        rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
         rcpa["script_arguments_dict"].update({"pattern": data["path"].split("@")[-1]})
     elif data["all_snapshots"]:
-        rcpa["script"] = truenas_pylibzfs.ZFSChannelPrograEnum.DESTROY_SNAPSHOTS
+        rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
     else:
-        rcpa["script"] = truenas_pylibzfs.ZFSChannelPrograEnum.DESTROY_RESOURCES
+        rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES
 
     try_again = False
     res = truenas_pylibzfs.lzc.run_channel_program(**rcpa)
-    if res["holds"] and data["remove_holds"]:
+    if res["return"]["holds"] and data["remove_holds"]:
         try_again = True
         truenas_pylibzfs.lzc.release_holds(holds=set(res["holds"].items()))
 
-    if res["clones"] and data["remove_clones"]:
+    if res["return"]["clones"] and data["remove_clones"]:
         try_again = True
         for clone, err in res["clones"].items():
             if err == errno.EBUSY:
@@ -42,4 +42,4 @@ def destroy_impl(tls, data):
 
     if try_again:
         res = truenas_pylibzfs.lzc.run_channel_program(**rcpa)
-    return res
+    return res["return"]
