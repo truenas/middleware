@@ -1,8 +1,11 @@
 import errno
+import os
 import pathlib
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZFSResourceDestroyArgs,
+    ZFSResourceDestroyResult,
     ZFSResourceEntry,
     ZFSResourceQueryArgs,
     ZFSResourceQueryResult,
@@ -11,6 +14,7 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
+from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathInvalidException,
@@ -32,8 +36,9 @@ from .rename_promote_clone_impl import (
     promote_impl,
     PromoteArgs,
     rename_impl,
-    RenameArgs
+    RenameArgs,
 )
+from .utils import has_internal_path
 
 
 class ZFSResourceService(Service):
@@ -64,7 +69,9 @@ class ZFSResourceService(Service):
         try:
             promote_impl(tls, data)
         except ZFSPathInvalidException:
-            raise ValidationError(schema, f"{data['current_name']!r} is ineligible for promotion.")
+            raise ValidationError(
+                schema, f"{data['current_name']!r} is ineligible for promotion."
+            )
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'current_name' key is required")
         except ZFSPathNotFoundException as e:
@@ -141,9 +148,11 @@ class ZFSResourceService(Service):
             return root_dict
 
         for path in paths:
+            pp = path.split("@")[0]
             subpaths = list()
             for sp in paths:
-                if pathlib.Path(sp).is_relative_to(pathlib.Path(path)) and sp != path:
+                spp = sp.split("@")[0]
+                if pathlib.Path(spp).is_relative_to(pathlib.Path(pp)) and spp != pp:
                     # Find all paths that are relative to this path
                     # (excluding the path itself)
                     subpaths.append(sp)
@@ -241,6 +250,50 @@ class ZFSResourceService(Service):
             },
         )
         return rv and snap_name in rv[0]["snapshots"]
+
+    @private
+    @pass_thread_local_storage
+    def destroy_impl(self, tls, data: dict, bypass: bool = False):
+        if os.path.isabs(data["path"]):
+            raise ValidationError(
+                "zfs.resource.destroy",
+                "Absolute path is invalid. Must be in form of <pool>/<resource>.",
+                errno.EINVAL,
+            )
+        elif data["path"].endswith("/"):
+            raise ValidationError(
+                "zfs.resource.destroy",
+                "Path must not end with a forward-slash.",
+                errno.EINVAL,
+            )
+        elif not bypass and has_internal_path(data["path"]):
+            # NOTE: `bypass` is a value only exposed to
+            # internal callers and not to our public API.
+            raise ValidationError(
+                "zfs.resource.destory",
+                f"{data['path']!r} is a protected path.",
+                errno.EACCES
+            )
+
+        tmp = data["path"].split("/")
+        if len(tmp) == 1 or tmp[-1] == "":
+            raise ValidationError(
+                "zfs.resource.destroy",
+                "Destroying the root filesystem is not allowed.",
+                errno.EINVAL
+            )
+
+        return destroy_impl(tls.lzh, data)["result"]
+
+    @api_method(
+        ZFSResourceDestroyArgs,
+        ZFSResourceDestroyResult,
+        roles=["ZFS_RESOURCE_WRITE"]
+    )
+    def destroy(self, data):
+        """Destroy a ZFS resource. This method provides an interface
+        to destroy filesystems, volumes, or snapshots."""
+        return self.middleware.call_sync("zfs.resource.destroy_impl", data)
 
     @api_method(
         ZFSResourceQueryArgs,
