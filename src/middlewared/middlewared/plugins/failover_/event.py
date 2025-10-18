@@ -757,7 +757,11 @@ class FailoverEventsService(Service):
 
         logger.info('Configuring TrueNAS Connect Service (if necessary)')
         self.run_call('tn_connect.state.check')
-        logger.info('Configuring TrueNAS Connect Service (if necessary)')
+        logger.info('Done configuring TrueNAS Connect Service (if necessary)')
+
+        logger.info('Configuring TrueSearch (if necessary)')
+        self.run_call('truesearch.configure')
+        logger.info('Done configuring TrueSearch (if necessary)')
 
         # The system, while it was in BACKUP state, might have failed to contact the remote node and reached a
         # conclusion that the other node needs to be rebooted. Let's clean this up.

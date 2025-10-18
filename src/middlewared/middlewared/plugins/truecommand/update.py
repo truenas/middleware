@@ -185,6 +185,8 @@ class TruecommandService(ConfigService):
                     # poll iX Portal to see what's up. Let's just start wireguard now
                     await self.middleware.call('truecommand.start_truecommand_service')
 
+                await self.middleware.call('truesearch.configure')
+
             return await self.config()
 
     @private
