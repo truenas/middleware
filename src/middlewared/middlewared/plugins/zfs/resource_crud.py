@@ -287,8 +287,71 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_WRITE"]
     )
     def destroy(self, data):
-        """Destroy a ZFS resource. This method provides an interface
-        to destroy filesystems, volumes, or snapshots."""
+        """
+        Destroy a ZFS resource (dataset, volume, or snapshot).
+
+        This method provides an interface for destroying ZFS resources with support \
+        for recursive deletion, clone removal, hold removal, and batch snapshot deletion.
+
+        Args:
+            data (dict): Dictionary containing destruction parameters:
+                - path (str): Path of the ZFS resource to destroy. Must be in the form \
+                    'pool/dataset', 'pool/dataset@snapshot', or 'pool/zvol'.
+                    Cannot be an absolute path or end with a forward slash.
+                - recursive (bool, optional): If True, recursively destroy all descendants.
+                    For snapshots, destroys the snapshot across all descendant datasets.
+                    Default: False.
+                - remove_clones (bool, optional): If True, automatically destroy any clones \
+                    of snapshots being destroyed. Default: False.
+                - remove_holds (bool, optional): If True, automatically remove any holds \
+                    preventing snapshot destruction. Default: False.
+                - all_snapshots (bool, optional): If True, destroy all snapshots of the \
+                    specified dataset (dataset remains). Default: False.
+
+        Returns:
+            None: On successful destruction.
+
+        Raises:
+            ValidationError: Raised in the following cases:
+                - Resource does not exist (ENOENT)
+                - Resource has children and recursive=False (EBUSY)
+                - Snapshot has clones and remove_clones=False
+                - Snapshot has holds and remove_holds=False
+                - Attempting to destroy root filesystem
+                - Path is absolute (starts with /)
+                - Path ends with forward slash
+                - Path references protected internal resources
+
+        Examples:
+            # Destroy a simple dataset
+            destroy({"path": "tank/temp"})
+
+            # Recursively destroy dataset and all children
+            destroy({"path": "tank/parent", "recursive": True})
+
+            # Destroy a specific snapshot
+            destroy({"path": "tank/dataset@snapshot1"})
+
+            # Destroy snapshot recursively across all descendants
+            destroy({"path": "tank/parent@snap", "recursive": True})
+
+            # Destroy all snapshots of a dataset (keep dataset)
+            destroy({"path": "tank/dataset", "all_snapshots": True})
+
+            # Destroy snapshot with clones (automatically remove clones)
+            destroy({"path": "tank/original@snap", "remove_clones": True})
+
+            # Destroy snapshot with holds (automatically release holds)
+            destroy({"path": "tank/dataset@held_snap", "remove_holds": True})
+
+        Notes:
+            - Root filesystem destruction is not allowed for safety
+            - Protected system paths cannot be destroyed via API
+            - When destroying snapshots recursively, only matching snapshots in
+              descendant datasets are removed
+            - The all_snapshots flag only removes snapshots, not the dataset itself
+            - For volumes with snapshots, either use recursive=True or all_snapshots=True
+        """
         res = self.middleware.call_sync("zfs.resource.destroy_impl", data)
         if res["failed"]:
             schema = "zfs.resource.destroy"
@@ -296,15 +359,11 @@ class ZFSResourceService(Service):
             if rerrno == errno.ENOENT:
                 raise ValidationError(schema, f"{data['path']!r} does not exist.", rerrno)
             elif rerrno == errno.EBUSY and not data["recursive"]:
-                raise ValidationError(
-                    schema,
-                    f"{data['path']!r} may have children, snapshots, clones or holds",
-                    rerrno
-                )
+                raise ValidationError(schema, f"Does {data['path']!r} have children?", rerrno)
             else:
                 clones = tuple(res["clones"].keys())
                 holds = tuple(res["holds"].keys())
-                err = f"Failed to detele {data['path']!r}."
+                err = f"Failed to delete {data['path']!r}."
                 if clones:
                     err += f" There are clones ({','.join(clones)})."
                 if holds:
