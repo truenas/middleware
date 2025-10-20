@@ -296,7 +296,11 @@ class ZFSResourceService(Service):
             if rerrno == errno.ENOENT:
                 raise ValidationError(schema, f"{data['path']!r} does not exist.", rerrno)
             elif rerrno == errno.EBUSY and not data["recursive"]:
-                raise ValidationError(schema, f"Does {data['path']!r} have children?", rerrno)
+                raise ValidationError(
+                    schema,
+                    f"{data['path']!r} may have children, snapshots, clones or holds",
+                    rerrno
+                )
             else:
                 clones = tuple(res["clones"].keys())
                 holds = tuple(res["holds"].keys())

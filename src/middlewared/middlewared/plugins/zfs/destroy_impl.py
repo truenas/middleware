@@ -39,11 +39,11 @@ def destroy_impl(tls, data):
     res = truenas_pylibzfs.lzc.run_channel_program(**rcpa)
     if res["return"]["holds"] and data.get("remove_holds", False):
         try_again = True
-        truenas_pylibzfs.lzc.release_holds(holds=set(res["holds"].items()))
+        truenas_pylibzfs.lzc.release_holds(holds=set(res["return"]["holds"].items()))
 
     if res["return"]["clones"] and data.get("remove_clones", False):
         try_again = True
-        for clone, err in res["clones"].items():
+        for clone, err in res["return"]["clones"].items():
             if err == errno.EBUSY:
                 tls.lzh.open_resource(name=clone).unmount(recursive=recursive)
             # TODO: else raise ZFSException(err) if not EBUSY??
