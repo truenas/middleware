@@ -162,13 +162,14 @@ class ADJoinMixin:
 
         return domain_info
 
-    def _ad_lookup_dc(self, domain: str, retry: bool = True) -> dict:
+    def _ad_lookup_dc(self, domain: str, server: str | None = None, retry: bool = True) -> dict:
         """
         Look up some basic information about the domain controller that
         is currently set in the libads server affinity cache.
 
         Args:
             domain (str) : name of domain for which to look up domain controller info
+            server (str | None) : optional name of target server for which to look up info
             retry (bool) : if specified then flush out possible caches on failure
                 and retry
 
@@ -179,7 +180,7 @@ class ADJoinMixin:
             CallError
         """
         try:
-            dc_info = lookup_dc(domain)
+            dc_info = lookup_dc(domain, server)
         except Exception as e:
             if not retry:
                 raise e from None
@@ -187,7 +188,7 @@ class ADJoinMixin:
             # samba's gencache may have a stale server affinity entry
             # or stale negative cache results
             self.middleware.call_sync('idmap.gencache.flush')
-            dc_info = lookup_dc(domain)
+            dc_info = lookup_dc(domain, server)
 
         return dc_info
 
@@ -463,7 +464,11 @@ class ADJoinMixin:
         ds_config['configuration']['hostname'] = hostname
         workgroup = smb['workgroup']
 
-        dc_info = self._ad_lookup_dc(domain)
+        # Retrieve the basic domain information from DNS / CLDAP ping in order
+        # to get a domain controller from which to retrieve site and workgroup
+        # information
+        dom_info = self._ad_domain_info(domain)
+        dc_info = self._ad_lookup_dc(domain, server=dom_info['kdc_server'])
 
         job.set_progress(0, 'Preparing to join Active Directory')
         self.middleware.call_sync('etc.generate', 'smb')
