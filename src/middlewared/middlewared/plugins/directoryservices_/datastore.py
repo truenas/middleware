@@ -736,7 +736,7 @@ class DirectoryServices(ConfigService):
                 dom_info = get_domain_info(ds_config['configuration']['domain'])
                 dom_info['domain_controller'] = lookup_dc(
                     ds_config['configuration']['domain'],
-                    dom_info['ldap_server']
+                    dom_info['kdc_server']
                 )
                 return dom_info
             case DSType.IPA.value:
