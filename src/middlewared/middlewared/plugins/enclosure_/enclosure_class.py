@@ -108,6 +108,8 @@ class Enclosure:
             # the one whose enclosure id is "3000000000000001"). So we ignore the
             # other enclosure device otherwise.
             self.should_ignore = True
+        elif self.is_vseries and self.vendor == 'ECStream':
+            self.should_ignore = True
         else:
             self.should_ignore = False
 
