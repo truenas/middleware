@@ -463,6 +463,9 @@ class ADJoinMixin:
         ds_config['configuration']['hostname'] = hostname
         workgroup = smb['workgroup']
 
+        # Retrieve the basic domain information from DNS / CLAP ping in order
+        # to get a domain controller from which to retrieve site and workgroup
+        # information
         dom_info = self._ad_domain_info(domain)
         dc_info = self._ad_lookup_dc(domain, server=dom_info['kdc_server'])
 
