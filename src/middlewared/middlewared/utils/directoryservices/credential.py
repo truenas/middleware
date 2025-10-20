@@ -3,6 +3,7 @@ import gssapi
 import ldap
 import subprocess
 
+from time import sleep
 from middlewared.service_exception import CallError, ValidationErrors
 from .ad import get_domain_info
 from .constants import DSCredType, DSType
@@ -94,7 +95,25 @@ def kinit_with_cred(
         case _:
             raise ValueError(f'{cred_type}: not a kerberos credential type')
 
-    return gss_dump_cred(gss_get_current_cred(ccache))
+    # This should not fail since we just did kinit, but it has been observed
+    # to fail in file-backed ccache
+    retries = 5
+    while retries:
+        if (cred := gss_get_current_cred(ccache, False)) is not None:
+            break
+
+        retries -= 1
+        sleep(1)
+
+    if not cred:
+        # Do it one more time to pass error from library back up to caller
+        # This is due to apparent library bug in which python gssapi will acquire cred
+        # but then be unable to read it.
+        #
+        # TODO: we should probably shift to using a python kerberos module directly
+        cred = gss_get_current_cred(ccache)
+
+    return gss_dump_cred(cred)
 
 
 def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationErrors, revert: list):
