@@ -734,7 +734,10 @@ class DirectoryServices(ConfigService):
         match ds_config['service_type']:
             case DSType.AD.value:
                 dom_info = get_domain_info(ds_config['configuration']['domain'])
-                dom_info['domain_controller'] = lookup_dc(ds_config['configuration']['domain'])
+                dom_info['domain_controller'] = lookup_dc(
+                    ds_config['configuration']['domain'],
+                    dom_info['ldap_server']
+                )
                 return dom_info
             case DSType.IPA.value:
                 return self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
