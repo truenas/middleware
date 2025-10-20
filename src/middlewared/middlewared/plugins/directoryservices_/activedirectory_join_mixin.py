@@ -169,6 +169,7 @@ class ADJoinMixin:
 
         Args:
             domain (str) : name of domain for which to look up domain controller info
+            server (str | None) : optional name of target server for which to look up info
             retry (bool) : if specified then flush out possible caches on failure
                 and retry
 
