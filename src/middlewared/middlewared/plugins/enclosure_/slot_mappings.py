@@ -730,7 +730,7 @@ def get_slot_info(enc: 'Enclosure'):
     elif enc.is_vseries:
         # V-series has 2 VirtualSES enclosures (one per 9600-12i4e HBA)
         # Front 24 slots are split between two HBAs with interleaved mapping
-        # Use slot designation -> PCI address to distinguish between enclosures
+        # Use slot designation to distinguish between enclosures
         return {
             'any_version': True,
             'versions': {
