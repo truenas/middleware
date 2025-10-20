@@ -1,8 +1,11 @@
 import errno
+import os
 import pathlib
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZFSResourceDestroyArgs,
+    ZFSResourceDestroyResult,
     ZFSResourceEntry,
     ZFSResourceQueryArgs,
     ZFSResourceQueryResult,
@@ -11,6 +14,7 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
+from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathInvalidException,
@@ -32,8 +36,9 @@ from .rename_promote_clone_impl import (
     promote_impl,
     PromoteArgs,
     rename_impl,
-    RenameArgs
+    RenameArgs,
 )
+from .utils import has_internal_path
 
 
 class ZFSResourceService(Service):
@@ -241,6 +246,69 @@ class ZFSResourceService(Service):
             },
         )
         return rv and snap_name in rv[0]["snapshots"]
+
+    @private
+    @pass_thread_local_storage
+    def destroy_impl(self, tls, data: dict, bypass: bool = False):
+        if os.path.isabs(data["path"]):
+            raise ValidationError(
+                "zfs.resource.destroy",
+                "Absolute path is invalid. Must be in form of <pool>/<resource>.",
+                errno.EINVAL,
+            )
+        elif data["path"].endswith("/"):
+            raise ValidationError(
+                "zfs.resource.destroy",
+                "Path must not end with a forward-slash.",
+                errno.EINVAL,
+            )
+        elif not bypass and has_internal_path(data["path"]):
+            # NOTE: `bypass` is a value only exposed to
+            # internal callers and not to our public API.
+            raise ValidationError(
+                "zfs.resource.destory",
+                f"{data['path']!r} is a protected path.",
+                errno.EACCES
+            )
+
+        tmp = data["path"].split("/")
+        if len(tmp) == 1 or tmp[-1] == "":
+            raise ValidationError(
+                "zfs.resource.destroy",
+                "Destroying the root filesystem is not allowed.",
+                errno.EINVAL
+            )
+
+        return destroy_impl(tls, data)
+
+    @api_method(
+        ZFSResourceDestroyArgs,
+        ZFSResourceDestroyResult,
+        roles=["ZFS_RESOURCE_WRITE"]
+    )
+    def destroy(self, data):
+        """Destroy a ZFS resource. This method provides an interface
+        to destroy filesystems, volumes, or snapshots."""
+        res = self.middleware.call_sync("zfs.resource.destroy_impl", data)
+        if res["failed"]:
+            schema = "zfs.resource.destroy"
+            rerrno = res["failed"][data["path"]]
+            if rerrno == errno.ENOENT:
+                raise ValidationError(schema, f"{data['path']!r} does not exist.", rerrno)
+            elif rerrno == errno.EBUSY and not data["recursive"]:
+                raise ValidationError(schema, f"Does {data['path']!r} have children?", rerrno)
+            else:
+                clones = tuple(res["clones"].keys())
+                holds = tuple(res["holds"].keys())
+                err = f"Failed to detele {data['path']!r}."
+                if clones:
+                    err += f" There are clones ({','.join(clones)})."
+                if holds:
+                    err += f" There are holds ({', '.join(holds)})"
+                if not holds and not clones:
+                    estr = errno.errorcode.get(rerrno)
+                    err += f" ({rerrno if not estr else estr})"
+                raise ValidationError(schema, err)
 
     @api_method(
         ZFSResourceQueryArgs,
