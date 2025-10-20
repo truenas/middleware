@@ -80,15 +80,22 @@ def get_domain_info(domain: str, retry: bool = False) -> dict:
     raise CallError(err_msg)
 
 
-def lookup_dc(domain_name: str) -> dict:
-    lookup = subprocess.run([
+def lookup_dc(domain_name: str, server: str | None) -> dict:
+    """ Perform an unauthenticated CLDAP ping against the target server
+    (may be IP address or FQDN or workgroup) or domain itself (if unspecified) """
+    cmd = [
         SMBCmd.NET.value,
         '-S', domain_name,
         '--json',
         '--realm', domain_name,
-        'ads', 'lookup'
-    ], check=False, capture_output=True)
+    ]
 
+    if server:
+        cmd.extend(['--server', server])
+
+    cmd.extend(['ads', 'lookup'])
+
+    lookup = subprocess.run(cmd, check=False, capture_output=True)
     if lookup.returncode != 0:
         raise CallError(
             'Failed to look up Domain Controller information: '
