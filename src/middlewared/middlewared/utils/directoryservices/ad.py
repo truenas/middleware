@@ -81,7 +81,7 @@ def get_domain_info(domain: str, retry: bool = False) -> dict:
 
 
 def lookup_dc(domain_name: str, server: str | None) -> dict:
-    """ Perform an unauthenticated CLDAP ping against the target server
+    """ Perform an unauthenticated CLDAP ping against the target `server`
     (may be IP address or FQDN or workgroup) or domain itself (if unspecified) """
     cmd = [
         SMBCmd.NET.value,
