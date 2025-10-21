@@ -250,34 +250,34 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def destroy_impl(self, tls, data: dict, bypass: bool = False):
-        if os.path.isabs(data["path"]):
+        schema = "zfs.resource.destroy"
+        path = data["path"]
+        if os.path.isabs(path):
             raise ValidationError(
-                "zfs.resource.destroy",
-                "Absolute path is invalid. Must be in form of <pool>/<resource>.",
-                errno.EINVAL,
+                schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL
             )
-        elif data["path"].endswith("/"):
+        elif path.endswith("/"):
             raise ValidationError(
-                "zfs.resource.destroy",
-                "Path must not end with a forward-slash.",
-                errno.EINVAL,
+                schema, "Path must not end with a forward-slash.", errno.EINVAL
             )
-        elif not bypass and has_internal_path(data["path"]):
+        elif not bypass and has_internal_path(path):
             # NOTE: `bypass` is a value only exposed to
             # internal callers and not to our public API.
-            raise ValidationError(
-                "zfs.resource.destory",
-                f"{data['path']!r} is a protected path.",
-                errno.EACCES
-            )
+            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        tmp = data["path"].split("/")
+        tmp = path.split("/")
         if len(tmp) == 1 or tmp[-1] == "":
             raise ValidationError(
-                "zfs.resource.destroy",
-                "Destroying the root filesystem is not allowed.",
-                errno.EINVAL
+                schema, "Destroying the root filesystem is not allowed.", errno.EINVAL
             )
+
+        if not data["recursive"] and "@" not in path and not data["all_snapshots"]:
+            args = {"paths": [path], "properties": None, "get_children": True, "get_snapshots": True}
+            rv = self.middleware.call_sync("zfs.resource.query", args)
+            if len(rv) > 1:
+                raise ValidationError(schema, f"{path!r} has children.", errno.ENOTEMPTY)
+            elif rv[0]["snapshots"]:
+                raise ValidationError(schema, f"{path!r} has snapshots.", errno.ENOTEMPTY)
 
         return destroy_impl(tls, data)
 
@@ -358,7 +358,7 @@ class ZFSResourceService(Service):
             rerrno = res["failed"][data["path"]]
             if rerrno == errno.ENOENT:
                 raise ValidationError(schema, f"{data['path']!r} does not exist.", rerrno)
-            elif rerrno == errno.EBUSY and not data["recursive"]:
+            elif rerrno in (errno.EEXIST, errno.EBUSY) and not data["recursive"]:
                 raise ValidationError(schema, f"Does {data['path']!r} have children?", rerrno)
             else:
                 clones = tuple(res["clones"].keys())
