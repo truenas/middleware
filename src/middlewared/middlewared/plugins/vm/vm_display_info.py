@@ -6,9 +6,7 @@ from middlewared.api.current import (
     VMGetDisplayDevicesResult, VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult,
 )
 from middlewared.service import pass_app, private, Service
-
-from .devices import DISPLAY
-from .utils import NGINX_PREFIX
+from middlewared.utils.libvirt.display import DisplayDelegate, NGINX_PREFIX
 
 
 class VMService(Service):
@@ -44,7 +42,7 @@ class VMService(Service):
         """
         Retrieve supported resolution choices for VM Display devices.
         """
-        return {r: r for r in DISPLAY.RESOLUTION_ENUM}
+        return {r: r for r in DisplayDelegate.RESOLUTION_ENUM}
 
     @api_method(VMGetDisplayDevicesArgs, VMGetDisplayDevicesResult, roles=['VM_READ'])
     async def get_display_devices(self, id_):
@@ -79,10 +77,10 @@ class VMService(Service):
                 pass
 
         if display_devices := await self.get_display_devices(id_):
-            for device in map(lambda d: DISPLAY(d, middleware=self.middleware), display_devices):
-                if device.data['attributes'].get('web'):
+            for device_data in display_devices:
+                if device_data['attributes'].get('web'):
                     uri_data.update({
-                        'uri': device.web_uri(host, protocol=protocol),
+                        'uri': DisplayDelegate.web_uri(device_data, host, protocol=protocol),
                         'error': None,
                     })
                     break
@@ -92,13 +90,6 @@ class VMService(Service):
             uri_data['error'] = 'Display device is not configured for this VM'
 
         return uri_data
-
-    @private
-    async def get_display_devices_ui_info(self):
-        devices = []
-        for device in await self.middleware.call('vm.device.query', [['attributes.dtype', '=', 'DISPLAY']]):
-            devices.append(DISPLAY(device, middleware=self.middleware).get_webui_info())
-        return devices
 
     @private
     async def get_vm_display_nginx_route(self):

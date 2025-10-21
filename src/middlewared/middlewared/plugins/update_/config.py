@@ -59,6 +59,8 @@ class UpdateService(ConfigService):
         if new['profile'] != old['profile']:
             self.middleware.send_event('update.status', 'CHANGED', status=await self.middleware.call('update.status'))
 
+            await self.middleware.call("alert.alert_source_clear_run", "HasUpdate")
+
         return await self.config()
 
     @private

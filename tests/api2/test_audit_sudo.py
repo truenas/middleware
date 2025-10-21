@@ -159,6 +159,14 @@ class SudoTests:
         command.append(cmd)
         return " ".join(command)
 
+    def to_list(self, value):
+        if isinstance(value, list):
+            return value
+        elif isinstance(value, str):
+            return value.split(',')
+        else:
+            raise ValueError("Unsupported value type", value)
+
     def allowed_all(self):
         """All of the sudo commands are allowed"""
         # First get a baseline # of events
@@ -172,7 +180,7 @@ class SudoTests:
         assert accept['submituser'] == self.USER
         assert accept['command'] == LS_COMMAND
         assert accept['runuser'] == 'root'
-        assert accept['runargv'].split(',') == ['ls', '/etc']
+        assert self.to_list(accept['runargv']) == ['ls', '/etc']
         # NAS-130373
         assert_timestamp(event, accept)
 
@@ -184,7 +192,7 @@ class SudoTests:
         assert accept['submituser'] == self.USER
         assert accept['command'] == ECHO_COMMAND
         assert accept['runuser'] == 'root'
-        assert accept['runargv'].split(',') == ['echo', magic]
+        assert self.to_list(accept['runargv']) == ['echo', magic]
 
         # sudo to a non-root user
         self.sudo_command('ls /tmp', SUDO_TO_USER)
@@ -193,7 +201,7 @@ class SudoTests:
         assert accept['submituser'] == self.USER
         assert accept['command'] == LS_COMMAND
         assert accept['runuser'] == SUDO_TO_USER
-        assert accept['runargv'].split(',') == ['ls', '/tmp']
+        assert self.to_list(accept['runargv']) == ['ls', '/tmp']
 
     def allowed_some(self):
         """Some of the sudo commands are allowed"""
@@ -208,7 +216,7 @@ class SudoTests:
         assert accept['submituser'] == self.USER
         assert accept['command'] == ECHO_COMMAND
         assert accept['runuser'] == 'root'
-        assert accept['runargv'].split(',') == ['echo', magic]
+        assert self.to_list(accept['runargv']) == ['echo', magic]
 
         # Generate a sudo command that we are NOT allowed perform
         with pytest.raises(AssertionError):
@@ -219,7 +227,7 @@ class SudoTests:
         assert reject['submituser'] == self.USER
         assert reject['command'] == LS_COMMAND
         assert reject['runuser'] == 'root'
-        assert reject['runargv'].split(',') == ['ls', '/etc']
+        assert self.to_list(reject['runargv']) == ['ls', '/etc']
         assert reject['reason'] == 'command not allowed'
 
     def allowed_none(self):
@@ -237,7 +245,7 @@ class SudoTests:
         assert reject['submituser'] == self.USER
         assert reject['command'] == LS_COMMAND
         assert reject['runuser'] == 'root'
-        assert reject['runargv'].split(',') == ['ls', '/etc']
+        assert self.to_list(reject['runargv']) == ['ls', '/etc']
         assert reject['reason'] == 'user NOT in sudoers'
         # NAS-130373
         assert_timestamp(event, reject)

@@ -14,7 +14,6 @@ from middlewared.test.integration.utils.system import reset_systemd_svcs
 from auto_config import ha, interface, password, user, pool_name
 from functions import async_SSH_done, async_SSH_start
 
-pytestmark = pytest.mark.skip('snmp-agent is broken after upgrade to Trixie: NAS-137789')
 
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
@@ -73,8 +72,8 @@ def initialize_and_start_snmp():
     try:
         # Get initial config and start SNMP
         orig_config = call('snmp.config')
-        call('service.control', 'START', 'snmp', job=True)
-        yield orig_config
+        res = call('service.control', 'START', 'snmp', job=True)
+        yield (res, orig_config)
     finally:
         # Restore default config (which will also delete any created user),
         # stop SNMP and restore default enable state
@@ -249,7 +248,8 @@ def user_list_users(snmp_config):
 class TestSNMP:
 
     def test_configure_SNMP(self, initialize_and_start_snmp):
-        config = initialize_and_start_snmp
+        is_running, config = initialize_and_start_snmp
+        assert is_running
 
         # We should be starting with the default config
         # Check the hard way so that we can identify the culprit
@@ -420,13 +420,16 @@ class TestSNMP:
                 res = user_list_users(SNMP_USER_CONFIG)
             assert "Unknown user name" in str(ve.value)
 
-    def test_zvol_reporting(self, create_nested_structure):
+    def test_zvol_reporting(self, create_nested_structure, initialize_and_start_snmp):
         """
         The TrueNAS snmp agent should list all zvols.
         TrueNAS zvols can be created on any ZFS pool or dataset.
         The snmp agent should list them all.
         snmpwalk -v2c -cpublic localhost 1.3.6.1.4.1.50536.1.2.1.1.2
         """
+        is_running, config = initialize_and_start_snmp
+        assert is_running
+
         # The expectation is that the snmp agent should list exactly the six zvols.
         created_items = create_nested_structure
 

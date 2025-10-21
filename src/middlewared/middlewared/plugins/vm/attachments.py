@@ -5,8 +5,7 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import PortDelegate
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import private, Service
-
-from .utils import ACTIVE_STATES
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 
 async def determine_recursive_search(recursive, device, child_datasets):

@@ -6,8 +6,6 @@ import os
 
 import libzfs
 import netsnmpagent
-import pysnmp.hlapi  # noqa
-import pysnmp.smi
 
 from truenas_api_client import Client
 
@@ -191,11 +189,6 @@ def get_zfs_arc_miss_percent(kstat):
         return miss_percent
     return 0
 
-
-mib_builder = pysnmp.smi.builder.MibBuilder()
-mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
-mib_builder.setMibSources(*mib_sources)
-mib_builder.loadModules("TRUENAS-MIB")
 
 agent = netsnmpagent.netsnmpAgent(
     AgentName="TrueNASAgent",

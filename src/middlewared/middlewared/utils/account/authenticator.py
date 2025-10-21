@@ -656,7 +656,12 @@ class UnixPamAuthenticator(UserPamAuthenticator):
         self.truenas_state.origin = origin
         if self.skip():
             passwd = self._get_user_obj(username)
-            return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.AUTH, pam.PAM_SUCCESS, passwd)
+            return TrueNASAuthenticatorResponse(
+                stage=TrueNASAuthenticatorStage.AUTH,
+                code=pam.PAM_SUCCESS,
+                reason=None,
+                user_info=passwd
+            )
 
         return super().authenticate(username, '', origin)
 

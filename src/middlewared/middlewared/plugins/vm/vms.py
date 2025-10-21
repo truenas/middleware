@@ -7,7 +7,9 @@ import shutil
 import uuid
 
 from truenas_pylibvirt import DomainDoesNotExistError
+from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
 
+import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMEntry, VMCreateArgs, VMCreateResult, VMUpdateArgs, VMUpdateResult, VMDeleteArgs, VMDeleteResult,
@@ -15,13 +17,12 @@ from middlewared.api.current import (
     VMStatusArgs, VMStatusResult, VMLogFilePathArgs, VMLogFilePathResult, VMLogFileDownloadArgs,
     VMLogFileDownloadResult,
 )
-from middlewared.plugins.vm.numeric_set import parse_numeric_set
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDService, item_method, job, private, ValidationErrors
-import middlewared.sqlalchemy as sa
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
-from .utils import ACTIVE_STATES, get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
+from .utils import get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
 
 
 BOOT_LOADER_OPTIONS = {
@@ -94,9 +95,9 @@ class VMService(CRUDService):
             'states': gather_pylibvirt_domains_states(
                 self.middleware,
                 rows,
-                self.middleware.libvirt_domains_manager.containers_connection,
-                lambda container: self.middleware.call_sync(
-                    'vm.pylibvirt_vm', self.extend_vm(container),
+                self.middleware.libvirt_domains_manager.vms_connection,
+                lambda vm: self.middleware.call_sync(
+                    'vm.pylibvirt_vm', self.extend_vm(vm),
                 ),
             ),
         }
@@ -104,9 +105,7 @@ class VMService(CRUDService):
     @private
     def extend(self, vm, context):
         vm['status'] = get_pylibvirt_domain_state(context['states'], vm)
-
         self.extend_vm(vm)
-
         return vm
 
     @private
@@ -117,6 +116,7 @@ class VMService(CRUDService):
             {'force_sql_filters': True},
         )
         vm['display_available'] = any(device['attributes']['dtype'] == 'DISPLAY' for device in vm['devices'])
+        return vm
 
     @api_method(VMBootloaderOptionsArgs, VMBootloaderOptionsResult, roles=['VM_READ'])
     async def bootloader_options(self):

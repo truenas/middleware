@@ -785,23 +785,41 @@ class Job:
 
         return job
 
-    async def wrap(self, subjob: Job):
+    async def wrap(
+        self,
+        subjob: Job,
+        raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError, ValidationErrors,),
+    ):
         """
         Wrap a job in another job, proxying progress and result/error.
         This is useful when we want to run a job inside a job.
 
         :param subjob: The job to wrap.
+        :param raise_error_forward_classes: tuple containing classes to re-raise from
+        the job result. If the exception type does not match, then a CallError will be raised
         """
         self.set_progress(**subjob.progress)
         subjob.wrapped.append(self)
 
-        return await subjob.wait(raise_error=True)
+        return await subjob.wait(raise_error=True, raise_error_forward_classes=raise_error_forward_classes)
 
-    def wrap_sync(self, subjob: Job):
+    def wrap_sync(
+        self,
+        subjob: Job,
+        raise_error_forward_classes: tuple[type[BaseException], ...] = (CallError, ValidationErrors,),
+    ):
+        """
+        Wrap a job in another job, proxying progress and result/error.
+        This is useful when we want to run a job inside a job.
+
+        :param subjob: The job to wrap.
+        :param raise_error_forward_classes: tuple containing classes to re-raise from
+        the job result. If the exception type does not match, then a CallError will be raised
+        """
         self.set_progress(**subjob.progress)
         subjob.wrapped.append(self)
 
-        return subjob.wait_sync(raise_error=True)
+        return subjob.wait_sync(raise_error=True, raise_error_forward_classes=raise_error_forward_classes)
 
     def cleanup(self):
         if self.logs_path:

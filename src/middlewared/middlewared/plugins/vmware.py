@@ -333,8 +333,6 @@ class VMWareService(CRUDService):
 
     @private
     def snapshot_proceed(self, dataset, qs):
-        self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
-
         # Generate a unique snapshot name that won't collide with anything that exists on the VMWare side.
         vmsnapname = str(uuid.uuid4())
 
@@ -349,6 +347,12 @@ class VMWareService(CRUDService):
         # all the snaps we created in the first place.
         vmsnapobjs = []
         for vmsnapobj in qs:
+            if not self.middleware.call_sync('network.general.can_perform_activity', 'vmware'):
+                self.set_vmsnapobj_state(vmsnapobj, {
+                    "state": "BLOCKED",
+                })
+                continue
+
             # Data structures that will be used to keep track of VMs that are snapped,
             # as wel as VMs we tried to snap and failed, and VMs we realized we couldn't
             # snapshot.

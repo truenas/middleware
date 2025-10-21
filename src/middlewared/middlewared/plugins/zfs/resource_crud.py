@@ -12,10 +12,11 @@ from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .exceptions import (
+    ZFSPathAlreadyExistsException,
+    ZFSPathInvalidException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSPathNotProvidedException,
-    ZFSPathAlreadyExistsException,
 )
 from .load_unload_impl import unload_key_impl, UnloadKeyArgs
 from .mount_unmount_impl import (
@@ -25,7 +26,14 @@ from .mount_unmount_impl import (
     UnmountArgs,
 )
 from .query_impl import query_impl
-from .rename_promote_clone_impl import clone_impl, CloneArgs, rename_impl, RenameArgs
+from .rename_promote_clone_impl import (
+    clone_impl,
+    CloneArgs,
+    promote_impl,
+    PromoteArgs,
+    rename_impl,
+    RenameArgs
+)
 
 
 class ZFSResourceService(Service):
@@ -44,6 +52,19 @@ class ZFSResourceService(Service):
             raise ValidationError(schema, "Only snapshots may be cloned")
         except ZFSPathAlreadyExistsException as e:
             raise ValidationError(schema, e.message, errno.EEXIST)
+        except ZFSPathNotProvidedException:
+            raise ValidationError(schema, "'current_name' key is required")
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(schema, e.message, errno.ENOENT)
+
+    @private
+    @pass_thread_local_storage
+    def promote(self, tls, data: PromoteArgs) -> None:
+        schema = "zfs.resource.promote"
+        try:
+            promote_impl(tls, data)
+        except ZFSPathInvalidException:
+            raise ValidationError(schema, f"{data['current_name']!r} is ineligible for promotion.")
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'current_name' key is required")
         except ZFSPathNotFoundException as e:

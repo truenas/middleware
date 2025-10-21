@@ -1,10 +1,7 @@
 import os
 
 import pyudev
-
-from .iommu import (
-    get_iommu_groups_info, get_pci_device_class, SENSITIVE_PCI_DEVICE_TYPES,
-)
+from truenas_pylibvirt.utils.iommu import get_iommu_groups_info, get_pci_device_class, SENSITIVE_PCI_DEVICE_TYPES
 
 
 def get_pci_device_default_data() -> dict:

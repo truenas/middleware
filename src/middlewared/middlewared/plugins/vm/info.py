@@ -1,6 +1,9 @@
 import os
 import re
 
+from truenas_pylibvirt.utils import kvm_supported
+from truenas_pylibvirt.utils.cpu import get_cpu_model_choices
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMSupportsVirtualizationArgs, VMSupportsVirtualizationResult, VMVirtualizationDetailsArgs,
@@ -10,23 +13,20 @@ from middlewared.api.current import (
 from middlewared.service import private, Service
 from middlewared.utils import run
 
-from .connection import LibvirtConnectionMixin
-from .utils import get_cpu_model_choices
-
 
 RE_AMD_NASID = re.compile(r'NASID:.*\((.*)\)')
 RE_VENDOR_AMD = re.compile(r'AuthenticAMD')
 RE_VENDOR_INTEL = re.compile(r'GenuineIntel')
 
 
-class VMService(Service, LibvirtConnectionMixin):
+class VMService(Service):
 
     @api_method(VMSupportsVirtualizationArgs, VMSupportsVirtualizationResult, roles=['VM_READ'])
     def supports_virtualization(self):
         """
         Returns "true" if system supports virtualization, "false" otherwise
         """
-        return self._is_kvm_supported()
+        return kvm_supported()
 
     @private
     async def license_active(self):
@@ -47,8 +47,8 @@ class VMService(Service, LibvirtConnectionMixin):
         Retrieve details if virtualization is supported on the system and in case why it's not supported if it isn't.
         """
         return {
-            'supported': self._is_kvm_supported(),
-            'error': None if self._is_kvm_supported() else 'Your CPU does not support KVM extensions',
+            'supported': kvm_supported(),
+            'error': None if kvm_supported() else 'Your CPU does not support KVM extensions',
         }
 
     @api_method(VMMaximumSupportedVcpusArgs, VMMaximumSupportedVcpusResult, roles=['VM_READ'])

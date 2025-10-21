@@ -44,7 +44,7 @@ from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
 )
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, NetworkActivityDisabled
 import middlewared.sqlalchemy as sa
 from middlewared.utils import bisect
 from middlewared.utils.plugins import load_modules, load_classes
@@ -576,7 +576,10 @@ class AlertService(Service):
 
                 for alert in new_alerts:
                     if alert.mail:
-                        await self.middleware.call("mail.send", alert.mail)
+                        try:
+                            await self.middleware.call("mail.send", alert.mail)
+                        except NetworkActivityDisabled:
+                            pass
 
                 if await self.middleware.call("system.is_enterprise"):
                     gone_proactive_support_alerts = [

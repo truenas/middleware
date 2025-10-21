@@ -1,4 +1,4 @@
-from middlewared.plugins.nvmet.kernel import write_config
+from middlewared.utils.nvmet.kernel import write_config
 
 
 def render(service, middleware, render_ctx):

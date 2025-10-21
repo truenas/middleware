@@ -4,12 +4,13 @@ import os
 import contextlib
 import signal
 import asyncio
+
+import truenas_pynetif as netif
 from pyroute2.netlink.exceptions import NetlinkError
 
 from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
 from middlewared.service import Service, filterable_api_method, private
-from middlewared.plugins.interface.netif import netif
 from middlewared.utils import filter_list
 
 RE_RTSOLD_INTERFACE = re.compile(r'Interface (.+)')
