@@ -63,7 +63,7 @@ def test_zfs_resource_destroy_recursive_filesystem():
 def test_zfs_resource_destroy_volume():
     """Test deletion of zvols"""
     vol = "test_zvol"
-    args = {"type": "VOLUME", "sparse": True, "size": 1024 ** 3}
+    args = {"type": "VOLUME", "sparse": True, "volsize": 1024 ** 3}
     zvol = create_resource(vol, args)
     result = call("zfs.resource.query", {"paths": [zvol]})
     assert len(result) == 1
@@ -116,7 +116,7 @@ def test_zfs_resource_destroy_recursive_snapshots():
             "get_children": True
         }
     ):
-        assert snap in i["snapshots"]
+        assert f"{i['name']}@{snap}" in i["snapshots"]
 
     # Recursively destroy snapshot from root
     call("zfs.resource.destroy", {"path": f"{root}@{snap}", "recursive": True})
@@ -130,7 +130,7 @@ def test_zfs_resource_destroy_recursive_snapshots():
             "get_children": True
         }
     ):
-        assert snap not in i["snapshots"]
+        assert f"{i['name']}@{snap}" not in i["snapshots"]
 
     # cleanup
     call("zfs.resource.destroy", {"path": root, "recursive": True})
@@ -143,7 +143,7 @@ def test_zfs_resource_destroy_with_clone():
     snap = "snap"
     call("zfs.snapshot.create", {"dataset": source, "name": snap})
     clone_name = "test_fs_clone"
-    call("zfs.snapshot.clone", {"snapshot": f"{source}@{snap}", "dataset_dst": clone_name})
+    call("zfs.resource.clone", {"current_name": f"{source}@{snap}", "new_name": clone_name})
 
     # Try to destroy source snapshot without removing clone (should fail)
     with pytest.raises(Exception) as exc_info:
@@ -235,7 +235,7 @@ def test_zfs_resource_destroy_complex_hierarchy():
     branch1 = "/".join([f"branch1_{i}" for i in range(1, 4)])
     branch2 = "/".join([f"branch2_{i}" for i in range(1, 4)])
     br1 = create_resource(os.path.join(lvl0, branch1), {"create_ancestors": True})
-    args = {"type": "VOLUME", "sparse": True, "size": 1024 ** 3}
+    args = {"type": "VOLUME", "sparse": True, "volsize": 1024 ** 3}
     create_resource(f"{br1}/zv1", args)
     br2 = create_resource(os.path.join(lvl0, branch2), {"create_ancestors": True})
     zv2 = create_resource(f"{br2}/zv2", args)
