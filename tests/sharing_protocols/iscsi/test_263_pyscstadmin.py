@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import re
 import tempfile
 
 import pytest
@@ -20,6 +21,9 @@ ZVOL2_MB = 200
 SUSPEND_LOAD_SECONDS = 5
 NOSUSPEND_LOAD_SECONDS = 20
 SCSTADMIN_LOAD_SECONDS = 40
+
+CHANGES_RE = re.compile(r"Done, (\d+) change\(s\) made.")
+REMOVE_LUN_RE = re.compile(r"Removing LUN (\d+) from driver/target 'copy_manager/copy_manager_tgt': done.")
 
 DEVICE_TEST1 = """
     DEVICE test1 {{
@@ -424,8 +428,20 @@ def check_config(scst_conf_filepath):
         check=False,
     )
     assert results['returncode'] == 0, f"scstadmin failed with: {results['stderr']}"
-    assert 'Done, 0 change(s) made.' in results['stdout'], \
-        f"Expected no changes, but got: {results['stdout']}"
+
+    # Want to ensure no significant changes are applied
+    # First check for no changes at all.
+    if 'Done, 0 change(s) made.' in results['stdout']:
+        return
+
+    # We don't care if copy manager tgt removals are made.  Even
+    # the perl scstadmin has some hysteresis in this regard.
+    if result := CHANGES_RE.search(results['stdout']):
+        change_count = int(result.group(1))
+        if len(re.findall(REMOVE_LUN_RE, results['stdout'])) == change_count:
+            return
+
+    assert False, f"Expected no changes, but got: {results['stdout']}"
 
 
 def apply_and_check_config(scst_conf_filepath):
