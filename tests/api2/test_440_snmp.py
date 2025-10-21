@@ -332,7 +332,8 @@ class TestSNMP:
 
                 # Confirm we can use the value
                 res = v2c_snmpwalk("iso.3.6.1.2.1.1.5", community=community_str)[0]
-                assert res == hostname
+                # HA nodes append a node ID to the hostname.
+                assert res.startswith(hostname)
             else:
                 with pytest.raises(ValidationErrors, match="String should match pattern"):
                     call('snmp.update', {'community': community_str})
