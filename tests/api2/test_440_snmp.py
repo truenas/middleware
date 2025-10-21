@@ -11,9 +11,12 @@ from middlewared.test.integration.assets.filesystem import directory, mkfile
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
-from auto_config import ha, interface, password, user, pool_name
+from auto_config import ha, hostname, interface, password, user, pool_name
 from functions import async_SSH_done, async_SSH_start
 
+
+# Alias
+pp = pytest.param
 
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
@@ -67,7 +70,7 @@ CMD_STATE = {
 #                     Fixtures and utilities
 # =====================================================================
 @pytest.fixture(scope='module')
-def initialize_and_start_snmp():
+def init_and_start():
     """ Initialize and start SNMP """
     try:
         # Get initial config and start SNMP
@@ -169,7 +172,7 @@ def get_systemctl_status(service):
     return "RUNNING" if action[0].split()[2] == "(running)" else "STOPPED"
 
 
-def v2c_snmpwalk(mib, hostip='localhost'):
+def v2c_snmpwalk(mib, hostip='localhost', community='public') -> list[str]:
     """
     Run snmpwalk with v2c protocol
     mib is the item to be gathered.  mib format examples:
@@ -178,11 +181,11 @@ def v2c_snmpwalk(mib, hostip='localhost'):
     """
     # The call will timeout if SNMP is not running
     if hostip == 'localhost':
-        res_stdout = ssh(f"snmpwalk -v2c -cpublic localhost {mib}")
+        res_stdout = ssh(f"snmpwalk -v2c -c'{community}' localhost {mib}")
     else:
         # Run the snmpwalk from the test runner
         res = subprocess.run(
-            f"snmpwalk -v2c -cpublic {hostip} {mib}",
+            f"snmpwalk -v2c -c'{community}' {hostip} {mib}",
             shell=True,
             capture_output=True,
             text=True,
@@ -221,7 +224,7 @@ def validate_snmp_get_sysname_uses_same_ip(hostip):
     assert get_dst.endswith(".161")
 
 
-def user_list_users(snmp_config):
+def user_list_users(snmp_config) -> list[str]:
     """Run an snmpwalk as a SNMP v3 user"""
 
     add_cmd = None
@@ -247,8 +250,18 @@ def user_list_users(snmp_config):
 # =====================================================================
 class TestSNMP:
 
-    def test_configure_SNMP(self, initialize_and_start_snmp):
-        is_running, config = initialize_and_start_snmp
+    @pytest.fixture(scope='class')
+    def restore_snmp_config(self):
+        """ Restore SNMP default configuration after a parametrized test """
+        try:
+            # Nothing to do at the start
+            yield
+        finally:
+            # Restore default config (which will also delete any created user)
+            call('snmp.update', EXPECTED_DEFAULT_CONFIG)
+
+    def test_configure_SNMP(self, init_and_start):
+        is_running, config = init_and_start
         assert is_running
 
         # We should be starting with the default config
@@ -282,7 +295,49 @@ class TestSNMP:
         assert data['contact'] == CONTACT
         assert data['location'] == LOCATION
 
-    def test_sysname_reply_uses_same_ip(self, initialize_and_start_snmp):
+    def test_SNMP_bad_community_string(self, init_and_start):
+        """Confirm we reject commands using an invalid community string"""
+        (started, config) = init_and_start
+        assert started is True
+        assert config['community'] == COMMUNITY
+
+        with pytest.raises(Exception, match="No Response"):
+            v2c_snmpwalk("iso.3.6.1.2.1.1.5", community="ValueThatDoesNotMatch")
+
+    class TestCommunityString:
+        @pytest.mark.parametrize('community_str,expect_to_pass', [
+            pp('abcd1234', True, id="Valid: abcd1234"),
+            pp('!$%&()+-_={}[]<>,.? abcd1234', True, id="Valid: !$%&()+-_={}[]<>,.? abcd1234"),
+            pp('!$%&()+-_={}[]<>,.? abcd1234 \\', False, id="Invalid: !$%&()+-_={}[]<>,.? abcd1234 \\"),
+            pp('!$%&()+-_={}[]<>,.? abcd1234 /', False, id="Invalid: !$%&()+-_={}[]<>,.? abcd1234 /"),
+            pp('!$%&()+-_={}[]<>,.? abcd1234 #', False, id="Invalid: !$%&()+-_={}[]<>,.? abcd1234 #"),
+            pp('!$%&()+-_={}[]<>,.? abcd1234 @', False, id="Invalid: !$%&()+-_={}[]<>,.? abcd1234 @")
+        ])
+        def test_SNMP_community_string(self, community_str, expect_to_pass, init_and_start, restore_snmp_config):
+            """NAS-137725
+            There are no documented limitations on the community string, but other major companies
+            have excluded: @#/ and 'backslash'.  We will follow that."""
+
+            (started, config) = init_and_start
+            assert started is True
+            assert config['community'] == COMMUNITY
+
+            if expect_to_pass is True:
+                # Confirm we can set the value
+                call('snmp.update', {'community': community_str})
+
+                # Confirm the value is in the config file
+                data = call('snmp.config')
+                assert data['community'] == community_str
+
+                # Confirm we can use the value
+                res = v2c_snmpwalk("iso.3.6.1.2.1.1.5", community=community_str)[0]
+                assert res == hostname
+            else:
+                with pytest.raises(ValidationErrors, match="String should match pattern"):
+                    call('snmp.update', {'community': community_str})
+
+    def test_sysname_reply_uses_same_ip(self, init_and_start):
         validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
 
     @skip_ha_tests
@@ -291,7 +346,7 @@ class TestSNMP:
         validate_snmp_get_sysname_uses_same_ip(truenas_server.nodea_ip)
         validate_snmp_get_sysname_uses_same_ip(truenas_server.nodeb_ip)
 
-    def test_SNMPv3_private_user(self):
+    def test_SNMPv3_private_user(self, init_and_start):
         """
         The SNMP system user should always be available
         """
@@ -327,7 +382,7 @@ class TestSNMP:
         ({'v3_privproto': 'AES'},
             'snmp_update.v3_privpassphrase', 'This field is required when SNMPv3 private protocol is specified'),
     ])
-    def test_v3_validators(self, payload, attrib, errmsg):
+    def test_v3_validators(self, payload, attrib, errmsg, init_and_start):
         """
         All these configuration updates should fail.
         """
@@ -420,14 +475,14 @@ class TestSNMP:
                 res = user_list_users(SNMP_USER_CONFIG)
             assert "Unknown user name" in str(ve.value)
 
-    def test_zvol_reporting(self, create_nested_structure, initialize_and_start_snmp):
+    def test_zvol_reporting(self, create_nested_structure, init_and_start):
         """
         The TrueNAS snmp agent should list all zvols.
         TrueNAS zvols can be created on any ZFS pool or dataset.
         The snmp agent should list them all.
         snmpwalk -v2c -cpublic localhost 1.3.6.1.4.1.50536.1.2.1.1.2
         """
-        is_running, config = initialize_and_start_snmp
+        is_running, config = init_and_start
         assert is_running
 
         # The expectation is that the snmp agent should list exactly the six zvols.
