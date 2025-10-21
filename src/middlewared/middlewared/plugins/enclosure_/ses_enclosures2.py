@@ -1,22 +1,15 @@
 from contextlib import suppress
 from logging import getLogger
 from pathlib import Path
-from typing import Iterable, TypedDict
+from typing import Iterable
 
 from libsg3.ses import EnclosureDevice
-from .enclosure_class import ElementsDict, Enclosure, EnclosureStatus
+from .enclosure_class import ElementsDict, Enclosure
 
 logger = getLogger(__name__)
 
 
-class EnclosureStatusDict(TypedDict):
-    id: str
-    name: str
-    status: set[EnclosureStatus]
-    elements: ElementsDict
-
-
-def get_ses_enclosure_status(bsg_path: str) -> EnclosureStatusDict | None:
+def get_ses_enclosure_status(bsg_path):
     try:
         return EnclosureDevice(bsg_path).status()
     except OSError:

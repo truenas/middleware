@@ -290,7 +290,7 @@ class Enclosure:
             if mapkey == idkey and (found := mapslots.get(idvalue)):
                 return found
 
-    def _parse_elements(self, elements: ElementsDict):
+    def _parse_elements(self, elements):
         final = {}
         disk_position_mapping = self.determine_disk_slot_positions()
         for slot, element in elements.items():

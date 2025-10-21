@@ -24,9 +24,7 @@ from .slot_mappings import get_nvme_slot_info
 RE_SLOT = re.compile(r'^0-([0-9]+)$')
 
 
-def fake_nvme_enclosure(
-    model: str, num_of_nvme_slots: int, mapped: dict[int, str], ui_info: dict | None = None
-) -> list[dict]:
+def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
     """This function takes the nvme devices that been mapped
     to their respective slots and then creates a "fake" enclosure
     device that matches (similarly) to what our real enclosure
@@ -120,7 +118,7 @@ def fake_nvme_enclosure(
     return [fake_enclosure]
 
 
-def map_plx_nvme(model: str, ctx: Context) -> list[dict]:
+def map_plx_nvme(model, ctx):
     num_of_nvme_slots = 4  # nvme plx bridge used on m50/60, v-series and r50bm have 4 nvme drive bays
     addresses_to_slots = {
         (slot / 'address').read_text().strip(): slot.name

@@ -3,8 +3,6 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from typing import TYPE_CHECKING
-
 from .constants import (
     DISK_FRONT_KEY,
     DISK_TOP_KEY,
@@ -16,8 +14,6 @@ from .constants import (
     SUPPORTS_IDENTIFY_STATUS_KEY
 )
 from .enums import ControllerModels, JbodModels, JbofModels
-if TYPE_CHECKING:
-    from .enclosure_class import Enclosure
 
 # If SUPPORTS_IDENTIFY_STATUS_KEY is absent from a slot mapping then
 # its value will be the same as SUPPORTS_IDENTIFY_KEY for that slot.
@@ -289,7 +285,7 @@ def get_nvme_slot_info(model):
         }
 
 
-def get_slot_info(enc: 'Enclosure'):
+def get_slot_info(enc):
     """This function returns a dictionary that maps
     drives from their original slots to their mapped slots. This
     is done solely for the purpose of displaying the enclosure
