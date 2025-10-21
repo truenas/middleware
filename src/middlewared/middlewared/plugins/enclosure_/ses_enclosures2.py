@@ -23,7 +23,9 @@ def get_ses_enclosure_status(bsg_path: str) -> EnclosureStatusDict | None:
         logger.error('Error querying enclosure status for %r', bsg_path, exc_info=True)
 
 
-def _initialize_v_series_enclosures(rv: list, deferred_enclosures: list[tuple[Enclosure, ElementsDict]], asdict=True):
+def _initialize_v_series_enclosures(
+    rv: list, deferred_enclosures: list[tuple[Enclosure, ElementsDict]], asdict: bool = True
+) -> None:
     """
     Compare the encids (SAS addresses) of the two VirtualSES enclosures
     to determine their slot designations for initialization.
@@ -38,21 +40,21 @@ def _initialize_v_series_enclosures(rv: list, deferred_enclosures: list[tuple[En
         logger.error('Unable to map elements: Expected 2 VirtualSES enclosures, found %r', len(deferred_enclosures))
         return extend_rv(enc.initialize(status) for enc, status in deferred_enclosures)
 
-    (enc1, status1), (enc2, status2) = deferred_enclosures
+    (enc1, elements1), (enc2, elements2) = deferred_enclosures
     hex_id1 = int(enc1.encid, 16)
     hex_id2 = int(enc2.encid, 16)
 
     if hex_id1 < hex_id2:
-        enc1.initialize(status1, slot_designation='NVME0')
-        enc2.initialize(status2, slot_designation='NVME8')
+        enc1.initialize(elements1, slot_designation='NVME0')
+        enc2.initialize(elements2, slot_designation='NVME8')
     elif hex_id1 > hex_id2:
-        enc1.initialize(status1, slot_designation='NVME8')
-        enc2.initialize(status2, slot_designation='NVME0')
+        enc1.initialize(elements1, slot_designation='NVME8')
+        enc2.initialize(elements2, slot_designation='NVME0')
     else:
         logger.error('Unable to map elements: Both VirtualSES enclosures have the same ID / SAS address')
         return extend_rv(enc.initialize(status) for enc, status in deferred_enclosures)
 
-    return extend_rv((enc1, enc2))
+    extend_rv((enc1, enc2))
 
 
 def get_ses_enclosures(asdict=True):

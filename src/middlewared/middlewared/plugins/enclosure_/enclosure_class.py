@@ -242,11 +242,15 @@ class Enclosure:
             (parsed_element_status.lower() == ElementStatusesToIgnore.UNSUPPORTED.value),
             (self.is_xseries and desc == ElementDescriptorsToIgnore.ADISE0.value),
             (self.model == JbodModels.ES60.value and desc == ElementDescriptorsToIgnore.ADS.value),
-            (not self.is_hseries and desc in (
-                ElementDescriptorsToIgnore.EMPTY.value,
-                ElementDescriptorsToIgnore.AD.value,
-                ElementDescriptorsToIgnore.DS.value,
-            )),
+            (
+                not self.is_hseries
+                and not self.is_vseries  # Array Device Slot elements' descriptors on V-series are "<empty>"
+                and desc in {
+                    ElementDescriptorsToIgnore.EMPTY.value,
+                    ElementDescriptorsToIgnore.AD.value,
+                    ElementDescriptorsToIgnore.DS.value,
+                }
+            ),
         ))
 
     def _get_array_device_mapping_info(self, slot_designation: str | None = None):
