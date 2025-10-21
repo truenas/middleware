@@ -244,7 +244,8 @@ class Enclosure:
             (self.model == JbodModels.ES60.value and desc == ElementDescriptorsToIgnore.ADS.value),
             (
                 not self.is_hseries
-                and not self.is_vseries  # Array Device Slot elements' descriptors on V-series are "<empty>"
+                # Array Device Slot elements' descriptors on V-series are "<empty>"
+                and not (self.is_vseries and element['type'] == 23)
                 and desc in {
                     ElementDescriptorsToIgnore.EMPTY.value,
                     ElementDescriptorsToIgnore.AD.value,
