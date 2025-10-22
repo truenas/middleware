@@ -160,7 +160,13 @@ class RouteService(Service):
             if not if_name.startswith(ignore_nics):
                 for nic_address in iface.addresses:
                     if nic_address.af == FAMILY:
-                        nic = InterfaceClass(nic_address)
+                        addr_dict = nic_address.asdict()
+                        address = addr_dict['address']
+
+                        with contextlib.suppress(KeyError):
+                            address = f'{address}/{addr_dict["netmask"]}'
+
+                        nic = InterfaceClass(address)
                         if ipaddress.ip_address(gateway) in nic.network:
                             return True
 
