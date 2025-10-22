@@ -70,12 +70,52 @@ def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[
     return {name: normalize_portal_uri(uri, host_ip) for name, uri in portals.items()}
 
 
+def create_external_app_metadata(app_name: str, container_details: list[dict]) -> dict:
+    """
+    Create synthetic metadata for external Docker containers not managed by TrueNAS.
+    """
+    # Get the primary image from the first container
+    primary_image = container_details[0]['image'] if container_details else 'unknown'
+
+    return {
+        'metadata': {
+            'name': app_name,
+            'title': app_name,
+            'description': f'External Docker container: {app_name}',
+            'app_version': 'N/A',
+            'version': '1.0.0',
+            'train': 'external',
+            'icon': '',
+            'categories': ['external'],
+            'capabilities': [],
+            'host_mounts': [],
+            'keywords': [],
+            'home': '',
+            'sources': [],
+            'screenshots': [],
+            'maintainers': [],
+            'run_as_context': [],
+            'lib_version': '',
+            'lib_version_hash': '',
+            'last_update': '',
+        },
+        'version': '1.0.0',
+        'human_version': primary_image,
+        'portals': {},
+        'notes': f'This is an external container deployed outside of TrueNAS Apps. Image: {primary_image}',
+        'custom_app': True,
+        'migrated': False,
+        'source': 'external',
+    }
+
+
 def list_apps(
     train_to_apps_version_mapping: dict[str, dict[str, dict[str, str]]],
     specific_app: str | None = None,
     host_ip: str | None = None,
     retrieve_config: bool = False,
     image_update_cache: dict | None = None,
+    include_external: bool = False,
 ) -> list[dict]:
     apps = []
     image_update_cache = image_update_cache or {}
@@ -85,14 +125,26 @@ def list_apps(
     # This will only give us apps which are running or in deploying state
     for app_name, app_resources in list_resources_by_project(
         project_name=f'{PROJECT_PREFIX}{specific_app}' if specific_app else None,
+        include_external=include_external,
     ).items():
-        app_name = get_app_name_from_project_name(app_name)
+        # Determine if this is a TrueNAS app or external app
+        is_truenas_app = app_name.startswith(PROJECT_PREFIX)
+        app_name = get_app_name_from_project_name(app_name) if is_truenas_app else app_name
         app_names.add(app_name)
-        if app_name not in metadata:
-            # The app is malformed or something is seriously wrong with it
-            continue
 
+        # Get workloads first to have container details for external apps
         workloads = translate_resources_to_desired_workflow(app_resources)
+
+        # Handle missing metadata
+        if app_name not in metadata:
+            if is_truenas_app:
+                # TrueNAS apps without metadata are malformed
+                continue
+            else:
+                # External apps - create synthetic metadata
+                app_metadata = create_external_app_metadata(app_name, workloads['container_details'])
+        else:
+            app_metadata = metadata[app_name]
         # When we stop docker service and start it again - the containers can be in exited
         # state which means we need to account for this.
         state = AppState.STOPPED
@@ -112,12 +164,15 @@ def list_apps(
 
         state = state.value
 
-        app_metadata = metadata[app_name]
         active_workloads = get_default_workload_values() if state == 'STOPPED' else workloads
         image_updates_available = any(
             image_update_cache.get(normalize_reference(k)['complete_tag']) for k in active_workloads['images']
         )
         upgrade_available, latest_version = upgrade_available_for_app(train_to_apps_version_mapping, app_metadata)
+
+        # Determine app source
+        app_source = app_metadata.get('source', 'truenas' if is_truenas_app else 'external')
+
         app_data = {
             'name': app_name,
             'id': app_name,
@@ -126,6 +181,7 @@ def list_apps(
             'upgrade_available': upgrade_available,
             'latest_version': latest_version,
             'image_updates_available': image_updates_available,
+            'source': app_source,
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         }
         if (app_data['custom_app'] or app_metadata['metadata']['name'] == IX_APP_NAME) and image_updates_available:
@@ -151,6 +207,8 @@ def list_apps(
 
             app_metadata = metadata[entry.name]
             upgrade_available, latest_version = upgrade_available_for_app(train_to_apps_version_mapping, app_metadata)
+
+            # Stopped apps from config path are TrueNAS apps
             app_data = {
                 'name': entry.name,
                 'id': entry.name,
@@ -159,6 +217,7 @@ def list_apps(
                 'upgrade_available': upgrade_available,
                 'latest_version': latest_version,
                 'image_updates_available': False,
+                'source': app_metadata.get('source', 'truenas'),
                 **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
             }
             apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
@@ -191,7 +250,11 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
     host_ips = set()
     workloads['containers'] = len(app_resources['containers'])
     for container in app_resources['containers']:
-        service_name = container['Config']['Labels'][COMPOSE_SERVICE_KEY]
+        # External containers may not have Docker Compose labels
+        service_name = container['Config']['Labels'].get(
+            COMPOSE_SERVICE_KEY,
+            container.get('Name', '').lstrip('/')
+        )
         container_ports_config = []
         images.add(container['Config']['Image'])
         for container_port, host_config in container.get('NetworkSettings', {}).get('Ports', {}).items():
