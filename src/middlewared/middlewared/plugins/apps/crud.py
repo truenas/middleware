@@ -97,6 +97,8 @@ class AppService(CRUDService):
         Retrieve user specified configuration of `app_name`.
         """
         app = self.get_instance__sync(app_name)
+        if app.get('source') == 'external':
+            raise CallError('Configuration retrieval is not supported for external Docker containers', errno=errno.EOPNOTSUPP)
         return get_current_app_config(app_name, app['version'])
 
     @api_method(
@@ -230,6 +232,8 @@ class AppService(CRUDService):
         Update `app_name` app with new configuration.
         """
         app = self.get_instance__sync(app_name, {'extra': {'retrieve_config': True}})
+        if app.get('source') == 'external':
+            raise CallError('Update operation is not supported for external Docker containers', errno=errno.EOPNOTSUPP)
         app = self.update_internal(job, app, data, trigger_compose=app['state'] != 'STOPPED')
         self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         return app
@@ -298,6 +302,12 @@ class AppService(CRUDService):
         will have no effect.
         """
         app_config = self.get_instance__sync(app_name)
+        if app_config.get('source') == 'external':
+            raise CallError(
+                'Delete operation is not supported for external Docker containers. '
+                'Use standard Docker commands to remove external containers.',
+                errno=errno.EOPNOTSUPP
+            )
         if options['force_remove_custom_app'] and not app_config['custom_app']:
             raise CallError('`force_remove_custom_app` flag is only valid for a custom app', errno=errno.EINVAL)
 

@@ -82,6 +82,9 @@ class AppService(Service):
         Upgrade `app_name` app to `app_version`.
         """
         app = self.middleware.call_sync('app.get_instance', app_name)
+        if app.get('source') == 'external':
+            raise CallError('Upgrade operation is not supported for external Docker containers', errno=errno.EOPNOTSUPP)
+
         if app['state'] == 'STOPPED':
             raise CallError('In order to upgrade an app, it must not be in stopped state')
 

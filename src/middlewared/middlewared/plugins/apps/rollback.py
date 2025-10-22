@@ -30,6 +30,9 @@ class AppService(Service):
         """
         app = self.middleware.call_sync('app.get_instance', app_name)
         verrors = ValidationErrors()
+        if app.get('source') == 'external':
+            verrors.add('app_name', 'Rollback operation is not supported for external Docker containers')
+
         if options['app_version'] == app['version']:
             verrors.add('options.app_version', 'Cannot rollback to same version')
         elif options['app_version'] not in get_rollback_versions(app_name, app['version']):
