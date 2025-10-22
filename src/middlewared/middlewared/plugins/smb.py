@@ -49,7 +49,7 @@ from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
-from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose
+from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpose
 from middlewared.utils.tdb import TDBError
 
 
@@ -545,6 +545,13 @@ class SMBService(ConfigService):
                     'to users with full administrative privileges.'
                 )
 
+        if SearchProtocol.SPOTLIGHT in new['search_protocols']:
+            if reasons := await self.middleware.call('truesearch.unavailable_reasons'):
+                verrors.add(
+                    'smb_update.search_protocols',
+                    'Share indexing service is not available. ' + ' '.join(reasons)
+                )
+
         await self.validate_smb(new, verrors)
         verrors.check()
 
@@ -570,6 +577,12 @@ class SMBService(ConfigService):
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
             grp_job = await self.middleware.call('smb.synchronize_group_mappings')
             await grp_job.wait()
+
+        if (
+            (SearchProtocol.SPOTLIGHT in old['search_protocols']) !=
+            (SearchProtocol.SPOTLIGHT in new['search_protocols'])
+        ):
+            await self.middleware.call('truesearch.configure')
 
         await self._service_change(self._config.service, 'restart')
         return new_config
@@ -716,6 +729,8 @@ class SharingSMBService(SharingService):
             mdns_reload = await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})
             # Failure to reload mDNS shouldn't be passed to API consumer
             await mdns_reload.wait()
+
+        await self.middleware.call('truesearch.configure')
 
         return await self.get_instance(data['id'])
 
@@ -895,6 +910,8 @@ class SharingSMBService(SharingService):
         if check_mdns:
             await (await self.middleware.call('service.control', 'RELOAD', 'mdns')).wait(raise_error=True)
 
+        await self.middleware.call('truesearch.configure')
+
         return await self.get_instance(id_)
 
     @api_method(
@@ -931,6 +948,9 @@ class SharingSMBService(SharingService):
             await (await self.middleware.call('service.control', 'RELOAD', 'mdns', {'ha_propagate': False})).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'smb')
+
+        await self.middleware.call('truesearch.configure')
+
         return result
 
     @private

@@ -20,6 +20,7 @@ from middlewared.utils.os import terminate_pid
 
 if TYPE_CHECKING:
     from middlewared.plugins.service_.services.base_interface import ServiceInterface
+    from middlewared.plugins.service_.services.base_state import ServiceState
 
 
 class ServiceModel(sa.Model):
@@ -49,9 +50,7 @@ class ServiceService(CRUDService):
             services = [services]
 
         jobs = {
-            asyncio.ensure_future(
-                (await self.middleware.call('service.object', service['service'])).get_state()
-            ): service
+            asyncio.ensure_future(self.get_state(service['service'])): service
             for service in services
         }
 
@@ -381,6 +380,10 @@ class ServiceService(CRUDService):
             return self.SERVICES[name]
         except KeyError:
             raise MatchNotFound(name) from None
+
+    @private
+    async def get_state(self, name: str) -> 'ServiceState':
+        return await (await self.middleware.call('service.object', name)).get_state()
 
     @private
     async def generate_etc(self, object_: 'ServiceInterface'):
