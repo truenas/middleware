@@ -113,6 +113,8 @@ class AppEntry(BaseModel):
     """Whether newer Docker images are available for the containers in this application."""
     custom_app: bool
     """Whether this is a custom application (`true`) or from a catalog (`false`)."""
+    source: Literal['truenas', 'external']
+    """The source of the application: 'truenas' for apps managed by TrueNAS, 'external' for external Docker containers."""
     migrated: bool
     """Whether this application has been migrated from kubernetes."""
     human_version: NonEmptyString
