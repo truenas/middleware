@@ -59,11 +59,18 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
 
 
 def get_config_of_app(app_data: dict, collective_config: dict, retrieve_config: bool) -> dict:
+    if not retrieve_config:
+        return {}
+
+    # External apps don't have config files, return empty config
+    if app_data.get('source') == 'external':
+        return {'config': {}}
+
     return {
         'config': collective_config.get(app_data['name']) or (
             get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
         )
-    } if retrieve_config else {}
+    }
 
 
 def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[str, str]:
