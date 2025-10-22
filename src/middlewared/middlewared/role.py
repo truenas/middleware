@@ -114,6 +114,8 @@ ROLES = {
     'CONTAINER_WRITE': Role(includes=['CONTAINER_READ'], stig=None),
     'LXC_CONFIG_READ': Role(),
     'LXC_CONFIG_WRITE': Role(includes=['LXC_CONFIG_READ'], stig=None),
+    'CONTAINER_DEVICE_READ': Role(includes=['CONTAINER_READ']),
+    'CONTAINER_DEVICE_WRITE': Role(includes=['CONTAINER_WRITE', 'CONTAINER_DEVICE_READ'], stig=None),
     'CONTAINER_IMAGE_READ': Role(),
     'CONTAINER_IMAGE_WRITE': Role(includes=['CONTAINER_IMAGE_READ'], stig=None),
 

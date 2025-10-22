@@ -58,15 +58,28 @@ class ContainerService(Service):
 
         container["root"] = datasets[0]["properties"]["mountpoint"]["value"]
         container["time"] = Time(container["time"])
-        container["devices"] = [
-            NICDevice(
-                type_=NICDeviceType.BRIDGE,
-                source=self.middleware.call_sync("container.bridge_name"),
-                model=None,
-                mac=None,
-                trust_guest_rx_filters=False,
+        devices = []
+        has_nic_device = False
+        for device in container.get("devices", []):
+            if device["attributes"]["dtype"] == "NIC":
+                has_nic_device = True
+
+            devices.append(self.middleware.call_sync("container.device.get_pylibvirt_device", device))
+
+        if not has_nic_device:
+            # Add one if one isn't added already
+            # TODO: See if this should be desired behaviour
+            devices.append(
+                NICDevice(
+                    type_=NICDeviceType.BRIDGE,
+                    source=self.middleware.call_sync("container.bridge_name"),
+                    model=None,
+                    mac=None,
+                    trust_guest_rx_filters=False,
+                )
             )
-        ]
+
+        container["devices"] = devices
 
         if container["idmap"]:
             match container["idmap"]["type"]:

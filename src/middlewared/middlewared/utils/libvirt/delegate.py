@@ -29,7 +29,7 @@ class DeviceDelegate(BaseDeviceDelegate, ABC):
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
         pass

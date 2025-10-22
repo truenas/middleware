@@ -90,7 +90,14 @@ class ContainerService(CRUDService):
 
     @private
     async def extend(self, container, context):
-        container['status'] = get_pylibvirt_domain_state(context['states'], container)
+        container.update({
+            'status': get_pylibvirt_domain_state(context['states'], container),
+            'devices': await self.middleware.call(
+                'container.device.query',
+                [('container', '=', container['id'])],
+                {'force_sql_filters': True},
+            )
+        })
 
         self.extend_container(container)
 

@@ -19,7 +19,7 @@ class DeviceAdapter:
         self.data = data
 
     def validate(
-        self, old: dict | None = None, vm_instance: dict | None = None, update: bool = True
+        self, old: dict | None = None, instance: dict | None = None, update: bool = True
     ) -> None:
         verrors = ValidationErrors()
 
@@ -30,6 +30,6 @@ class DeviceAdapter:
         for field, error in device_errors:
             verrors.add(f'attributes.{field}', error)
 
-        self.delegate.validate_middleware(self.data, verrors, old, vm_instance, update)
+        self.delegate.validate_middleware(self.data, verrors, old, instance, update)
 
         verrors.check()

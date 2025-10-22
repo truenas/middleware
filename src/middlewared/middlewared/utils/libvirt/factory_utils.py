@@ -1,5 +1,5 @@
 from truenas_pylibvirt.device import (
-    Device, CDROMDevice, DisplayDevice, DisplayDeviceType, NICDevice, NICDeviceType, NICDeviceModel,
+    Device, CDROMDevice, DisplayDevice, DisplayDeviceType, FilesystemDevice, NICDevice, NICDeviceType, NICDeviceModel,
     PCIDevice, DiskStorageDevice, RawStorageDevice, StorageDeviceType, StorageDeviceIoType, USBDevice
 )
 
@@ -78,6 +78,12 @@ def get_device(device: dict, delegate: DeviceDelegate) -> Device:
         case 'CDROM':
             return CDROMDevice(
                 path=device['attributes']['path'],
+                device_delegate=delegate,
+            )
+        case 'FILESYSTEM':
+            return FilesystemDevice(
+                target=device['attributes']['target'],
+                source=device['attributes']['source'],
                 device_delegate=delegate,
             )
         case _:

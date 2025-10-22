@@ -1,27 +1,22 @@
 import os
 
-from middlewared.api.current import VMCDROMDevice
 from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.path import check_path_resides_within_volume_sync
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .delegate import DeviceDelegate
-from .utils import LIBVIRT_USER
+from .utils import LIBVIRT_USER, disk_uniqueness_integrity_check
 
 
 class CDROMDelegate(DeviceDelegate):
-
-    @property
-    def schema_model(self):
-        return VMCDROMDevice
 
     def validate_middleware(
         self,
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
         path = device['attributes']['path']
@@ -30,10 +25,10 @@ class CDROMDelegate(DeviceDelegate):
                 i['name'] for i in query_imported_fast_impl().values() if i['name'] != BOOT_POOL_NAME
             ]
         )
-        if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
+        if not disk_uniqueness_integrity_check(device, instance):
             verrors.add(
                 'attributes.path',
-                f'{vm_instance["name"]} has {path!r} already configured'
+                f'{instance["name"]} has {path!r} already configured'
             )
 
         if not verrors:

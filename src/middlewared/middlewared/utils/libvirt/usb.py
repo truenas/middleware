@@ -1,4 +1,3 @@
-from middlewared.api.current import VMUSBDevice
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
@@ -12,16 +11,12 @@ USB_CONTROLLER_CHOICES = [
 
 class USBDelegate(DeviceDelegate):
 
-    @property
-    def schema_model(self):
-        return VMUSBDevice
-
     def validate_middleware(
         self,
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
         if self.middleware.call_sync('system.is_ha_capable'):

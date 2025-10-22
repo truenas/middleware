@@ -1,6 +1,5 @@
 import random
 
-from middlewared.api.current import VMNICDevice
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
@@ -15,16 +14,12 @@ class NICDelegate(DeviceDelegate):
         ]
         return ':'.join(['%02x' % x for x in mac_address])
 
-    @property
-    def schema_model(self):
-        return VMNICDevice
-
     def validate_middleware(
         self,
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
         nic = device['attributes'].get('nic_attach')
