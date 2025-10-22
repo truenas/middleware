@@ -53,7 +53,7 @@ def should_send_job_event(job: Job, wsclient: RpcWebSocketApp) -> bool:
     if wsclient.authenticated_credentials:
         return job.credential_can_access(wsclient.authenticated_credentials, JobAccess.READ)
 
-    return True
+    return False
 
 
 class State(enum.Enum):
