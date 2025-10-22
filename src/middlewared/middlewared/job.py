@@ -34,7 +34,7 @@ def should_send_job_event(job, wsclient):
     if wsclient.authenticated_credentials:
         return job.credential_can_access(wsclient.authenticated_credentials, JobAccess.READ)
 
-    return True
+    return False
 
 
 class State(enum.Enum):
