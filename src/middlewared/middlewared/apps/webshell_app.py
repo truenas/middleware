@@ -4,7 +4,6 @@ import contextlib
 import fcntl
 import os
 import queue
-import shlex
 import struct
 import termios
 import threading
@@ -83,7 +82,7 @@ class ShellWorkerThread(threading.Thread):
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root
         elif options.get("container_id"):
-            command = options["nsenter"] + [shlex.join(options["command"])]
+            command = options["nsenter"] + [options["command"]]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root
@@ -287,6 +286,7 @@ class ShellApplication:
                         "container.nsenter",
                         await self.middleware.call("container.get_instance", options["container_id"]),
                     )
+                    options["command"] = options.get("command") or "/bin/sh"
                 if options.get("virt_instance_id"):
                     try:
                         virt_instance = await self.middleware.call(
