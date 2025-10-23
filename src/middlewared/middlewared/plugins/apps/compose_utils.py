@@ -95,7 +95,7 @@ def collect_logs(app_name: str, app_version: str) -> str:
         *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
     ))
     if not compose_files:
-        raise CallError(f'No compose files found for app {app_name!r}')
+        return f'No compose files found for app {app_name!r}'
 
     args = ['-p', f'{PROJECT_PREFIX}{app_name}', 'logs', '--no-color', '--timestamps']
 
