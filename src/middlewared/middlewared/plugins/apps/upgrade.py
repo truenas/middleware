@@ -181,7 +181,7 @@ class AppService(Service):
         if app['custom_app'] or app.get('source') == 'external':
             changelog = 'Image updates are available for this app'
             if app.get('source') == 'external':
-                changelog = 'Updated container image is available. The app will be restarted with the latest image.'
+                changelog = 'Pull latest image and restart container.'
             return {
                 'latest_version': app['version'],
                 'latest_human_version': app['human_version'],
