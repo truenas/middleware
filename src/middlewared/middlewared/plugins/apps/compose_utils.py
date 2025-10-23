@@ -88,3 +88,20 @@ def validate_compose_config(compose_yaml: str) -> tuple[bool, str]:
             return False, error_msg
 
         return True, ''
+
+
+def collect_logs(app_name: str, app_version: str) -> str:
+    compose_files = list(itertools.chain(
+        *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
+    ))
+    if not compose_files:
+        raise CallError(f'No compose files found for app {app_name!r}')
+
+    args = ['-p', f'{PROJECT_PREFIX}{app_name}', 'logs', '--no-color', '--timestamps']
+
+    cp = run(['docker', '--config', '/etc/docker', 'compose'] + compose_files + args, timeout=300)
+    if cp.returncode != 0:
+        logger.error('Failed to collect logs for %r app: %s', app_name, cp.stderr)
+        return ''
+
+    return cp.stdout
