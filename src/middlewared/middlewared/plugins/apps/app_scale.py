@@ -27,14 +27,6 @@ class AppService(Service):
         Stop `app_name` app.
         """
         app_config = self.middleware.call_sync('app.get_instance', app_name)
-        if app_config.get('source') == 'external':
-            from middlewared.service_exception import CallError
-            import errno
-            raise CallError(
-                'Stop operation is not supported for external Docker containers. '
-                'Use standard Docker commands to manage external containers.',
-                errno=errno.EOPNOTSUPP
-            )
         cache_key = get_app_stop_cache_key(app_name)
         try:
             self.middleware.call_sync('cache.put', cache_key, True)
@@ -66,14 +58,6 @@ class AppService(Service):
         Start `app_name` app.
         """
         app_config = self.middleware.call_sync('app.get_instance', app_name)
-        if app_config.get('source') == 'external':
-            from middlewared.service_exception import CallError
-            import errno
-            raise CallError(
-                'Start operation is not supported for external Docker containers. '
-                'Use standard Docker commands to manage external containers.',
-                errno=errno.EOPNOTSUPP
-            )
         job.set_progress(20, f'Starting {app_name!r} app')
         compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
         job.set_progress(100, f'Started {app_name!r} app')
@@ -90,12 +74,4 @@ class AppService(Service):
         Redeploy `app_name` app.
         """
         app = await self.middleware.call('app.get_instance', app_name)
-        if app.get('source') == 'external':
-            from middlewared.service_exception import CallError
-            import errno
-            raise CallError(
-                'Redeploy operation is not supported for external Docker containers. '
-                'Use standard Docker commands to manage external containers.',
-                errno=errno.EOPNOTSUPP
-            )
         return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
