@@ -6,15 +6,9 @@ from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import client, session, url
 
 
-class FangtoothVersions(enum.StrEnum):
-    V25_04_0 = "25.04.0"
-    V25_04_1 = "25.04.1"
-    V25_04_2 = "25.04.2"
-
-
-class GoldEyeVersions(enum.StrEnum):
-    V25_10_0 = "25.10.0"
-    V25_10_1 = "25.10.1"
+class APIVersions(enum.Enum):
+    FT = ("25.04.0", "25.04.1", "25.04.2",)
+    GE = ("25.10.0", "25.10.1",)
 
 
 def get_api_versions():
@@ -57,14 +51,14 @@ def misc_methods() -> list[tuple[tuple, str]]:
     Remove methods from this list if they are removed from the current API version.
 
     """
-    return [(("fcport.status",), "25.04.0")]
+    return [(("fcport.status",), APIVersions.FT.value[0])]
 
 
 def test_query_method(legacy_api_client, query_method):
     client, version = legacy_api_client
     # Methods that do not exist in the previous API versions
     if (
-        version in FangtoothVersions
+        version in APIVersions.FT.value
         and query_method in (
             "vm.query",
             "vm.device.query",
@@ -74,7 +68,7 @@ def test_query_method(legacy_api_client, query_method):
         return
 
     if (
-        version in GoldEyeVersions
+        version in APIVersions.GE.value
         and query_method in (
             "audit.query",
             "certificate.query",
@@ -118,7 +112,7 @@ def test_config_method(legacy_api_client, config_method):
         return
 
     if (
-        version in FangtoothVersions
+        version in APIVersions.FT.value
         and config_method in (
             "audit.config",
             "auth.twofactor.config",
@@ -143,7 +137,7 @@ def test_config_method(legacy_api_client, config_method):
         return
 
     if (
-        version in GoldEyeVersions
+        version in APIVersions.GE.value
         and config_method in {
             "lxc.config",
         }
