@@ -83,8 +83,6 @@ class AppService(Service):
         Upgrade `app_name` app to `app_version`.
         """
         app = self.middleware.call_sync('app.get_instance', app_name)
-        if app.get('source') == 'external':
-            raise CallError('Upgrade operation is not supported for external Docker containers', errno=errno.EOPNOTSUPP)
 
         if app['state'] == 'STOPPED':
             raise CallError('In order to upgrade an app, it must not be in stopped state')
@@ -92,7 +90,7 @@ class AppService(Service):
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
-        if app['custom_app'] or app['metadata']['name'] == IX_APP_NAME:
+        if app['custom_app'] or app['metadata']['name'] == IX_APP_NAME or app.get('source') == 'external':
             job.set_progress(20, 'Pulling app images')
             try:
                 self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
@@ -180,13 +178,16 @@ class AppService(Service):
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
-        if app['custom_app']:
+        if app['custom_app'] or app.get('source') == 'external':
+            changelog = 'Image updates are available for this app'
+            if app.get('source') == 'external':
+                changelog = 'Updated container image is available. The app will be restarted with the latest image.'
             return {
                 'latest_version': app['version'],
                 'latest_human_version': app['human_version'],
                 'upgrade_version': app['version'],
                 'upgrade_human_version': app['human_version'],
-                'changelog': 'Image updates are available for this app',
+                'changelog': changelog,
                 'available_versions_for_upgrade': [],
             }
 

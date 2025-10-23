@@ -47,7 +47,19 @@ class AppService(Service):
         job = job or type('dummy_job', (object,), {'set_progress': lambda *args: None})()
         job.set_progress(20, 'Pulling app images')
 
-        compose_action(app_name, app['version'], action='pull')
+        if app.get('source') == 'external':
+            # For external apps, pull images directly using docker pull
+            from .utils import run
+            from middlewared.service_exception import CallError
+
+            for image_tag in app['active_workloads']['images']:
+                job.set_progress(30, f'Pulling image {image_tag}')
+                cp = run(['docker', 'pull', image_tag])
+                if cp.returncode != 0:
+                    raise CallError(f'Failed to pull image {image_tag!r}: {cp.stderr}')
+        else:
+            compose_action(app_name, app['version'], action='pull')
+
         job.set_progress(80 if options['redeploy'] else 100, 'Images pulled successfully')
 
         # We will update image cache so that it reflects the fact that image has been pulled again
