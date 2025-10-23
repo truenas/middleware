@@ -1,16 +1,17 @@
-import re
+import asyncio
+import contextlib
 import ipaddress
 import os
-import contextlib
+import re
 import signal
-import asyncio
+import typing
 
 import truenas_pynetif as netif
 from pyroute2.netlink.exceptions import NetlinkError
 
 from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
-from middlewared.service import Service, filterable_api_method, private
+from middlewared.service import ValidationError, Service, filterable_api_method, private
 from middlewared.utils import filter_list
 
 RE_RTSOLD_INTERFACE = re.compile(r'Interface (.+)')
@@ -144,20 +145,39 @@ class RouteService(Service):
             if remove:
                 routing_table.delete(routing_table.default_route_ipv6)
 
+    @private
+    def gateway_is_reachable(self, gateway: str, ipv: typing.Literal[4, 6] = 4) -> bool:
+        match ipv:
+            case 4:
+                FAMILY, InterfaceClass = netif.AddressFamily.INET, ipaddress.IPv4Interface
+            case 6:
+                FAMILY, InterfaceClass = netif.AddressFamily.INET6, ipaddress.IPv6Interface
+            case _:
+                raise ValidationError('route.gw_reachable.ipv', f'Expected 4 or 6, got {ipv}')
+
+        ignore_nics = ('lo', 'tap', 'epair')
+        for if_name, iface in netif.list_interfaces().items():
+            if not if_name.startswith(ignore_nics):
+                for nic_address in iface.addresses:
+                    if nic_address.af == FAMILY:
+                        addr_dict = nic_address.asdict()
+                        address = addr_dict['address']
+
+                        with contextlib.suppress(KeyError):
+                            address = f'{address}/{addr_dict["netmask"]}'
+
+                        nic = InterfaceClass(address)
+                        if ipaddress.ip_address(gateway) in nic.network:
+                            return True
+
+        return False
+
     @api_method(RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult, roles=['NETWORK_INTERFACE_READ'])
     def ipv4gw_reachable(self, ipv4_gateway):
         """
         Get the IPv4 gateway and verify if it is reachable by any interface.
         """
-        ignore_nics = ('lo', 'tap', 'epair')
-        for if_name, iface in list(netif.list_interfaces().items()):
-            if not if_name.startswith(ignore_nics):
-                for nic_address in iface.addresses:
-                    if nic_address.af == netif.AddressFamily.INET:
-                        ipv4_nic = ipaddress.IPv4Interface(nic_address)
-                        if ipaddress.ip_address(ipv4_gateway) in ipv4_nic.network:
-                            return True
-        return False
+        return self.gateway_is_reachable(ipv4_gateway, ipv=4)
 
     @private
     async def has_valid_router_announcements(self, interface):
