@@ -81,18 +81,17 @@ class Enclosure2Service(Service):
         except MatchNotFound:
             raise ValidationError('enclosure2.set_slot_status', f'Enclosure with id: {data["enclosure_id"]} not found')
 
-        slot = data['slot']
         if enc_info['id'].endswith('_nvme_enclosure'):
             if enc_info['id'].startswith('r30'):
                 # an all nvme flash system so drive identification is handled
                 # in a completely different way than sata/scsi
-                return r30_set_slot_status(slot, data['status'])
+                return r30_set_slot_status(data['slot'], data['status'])
             elif enc_info['id'].startswith('r60'):
                 # R60 nvme flash system with different LED control mechanism
-                return r60_set_slot_status(slot, data['status'])
+                return r60_set_slot_status(data['slot'], data['status'])
             elif enc_info['id'].startswith(('f60', 'f100', 'f130')):
                 try:
-                    return fseries_set_slot_status(slot, data['status'])
+                    return fseries_set_slot_status(data['slot'], data['status'])
                 except InsufficientPrivilege:
                     if self.middleware.call_sync('failover.licensed'):
                         opts = {'raise_connect_error': False}
@@ -105,32 +104,32 @@ class Enclosure2Service(Service):
                 return
         elif enc_info['model'] == JbofModels.ES24N.name:
             return self.middleware.call_sync(
-                'enclosure2.jbof_set_slot_status', data['enclosure_id'], slot, data['status']
+                'enclosure2.jbof_set_slot_status', data['enclosure_id'], data['slot'], data['status']
             )
 
         if enc_info['pci'] is None:
             raise ValidationError('enclosure2.set_slot_status', 'Unable to determine PCI address for enclosure')
-
-        origslot, supported = self.get_original_disk_slot(slot, enc_info)
-        if origslot is None:
-            raise ValidationError('enclosure2.set_slot_status', f'Slot {slot} not found in enclosure')
-        if not supported:
-            raise ValidationError(
-                'enclosure2.set_slot_status', f'Slot {slot} does not support identification'
-            )
-
-        if enc_info['model'].startswith('V'):
-            bsg = enc_info['elements']['Array Device Slot'][slot]['original']['enclosure_bsg']
-            pci = bsg.rsplit('/', 1)[-1]
         else:
-            pci = enc_info['pci']
+            origslot, supported = self.get_original_disk_slot(data['slot'], enc_info)
+            if origslot is None:
+                raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]} not found in enclosure')
+            elif not supported:
+                raise ValidationError(
+                    'enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification'
+                )
+            else:
+                if enc_info['model'].startswith('V'):
+                    bsg = enc_info['elements']['Array Device Slot'][data['slot']]['original']['enclosure_bsg']
+                    pci = bsg.rsplit('/', 1)[-1]
+                else:
+                    pci = enc_info['pci']
 
-        try:
-            toggle_enclosure_slot_identifier(
-                f'/sys/class/enclosure/{pci}', origslot, data['status'], False, enc_info['model']
-            )
-        except FileNotFoundError:
-            raise CallError(f'Slot: {slot!r} not found', errno.ENOENT)
+                try:
+                    toggle_enclosure_slot_identifier(
+                        f'/sys/class/enclosure/{pci}', origslot, data['status'], False, enc_info['model']
+                    )
+                except FileNotFoundError:
+                    raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)
 
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)

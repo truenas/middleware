@@ -4,7 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import logging
-from typing import Iterable, Literal, TypeAlias, TypedDict
+from typing import Literal, TypeAlias, TypedDict
 
 from middlewared.utils.scsi_generic import inquiry
 
@@ -40,11 +40,18 @@ EnclosureStatus: TypeAlias = Literal['OK', 'INVOP', 'INFO', 'NON-CRIT', 'CRIT', 
 ElementsDict: TypeAlias = dict[int, EnclosureElementDict]
 
 
+class EnclosureStatusDict(TypedDict):
+    id: str
+    name: str
+    status: set[EnclosureStatus]
+    elements: ElementsDict
+
+
 class Enclosure:
-    def __init__(self, bsg: str, sg: str, enc_id: str, enc_status: Iterable[EnclosureStatus]):
+    def __init__(self, bsg: str, sg: str, enc_stat: EnclosureStatusDict):
         self.dmi = parse_dmi()
         self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix('/dev/bsg/')
-        self.encid, self.status = enc_id, list(enc_status)
+        self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
         self._get_model_and_controller()
         self._should_ignore_enclosure()
@@ -246,11 +253,11 @@ class Enclosure:
                 not self.is_hseries
                 # Array Device Slot elements' descriptors on V-series are "<empty>"
                 and not (self.is_vseries and element['type'] == 23)
-                and desc in {
+                and desc in (
                     ElementDescriptorsToIgnore.EMPTY.value,
                     ElementDescriptorsToIgnore.AD.value,
                     ElementDescriptorsToIgnore.DS.value,
-                }
+                )
             ),
         ))
 
