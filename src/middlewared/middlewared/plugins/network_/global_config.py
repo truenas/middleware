@@ -141,17 +141,25 @@ class NetworkConfigurationService(ConfigService):
             )
 
     @private
+    async def validate_gateways(self, verrors: ValidationErrors, data: dict, schema: str) -> None:
+        """Validate ipv4gateway and ipv6gateway are reachable if provided."""
+        for field in ('ipv4gateway', 'ipv6gateway'):
+            if (
+                (gateway_value := data.get(field))
+                and not await self.middleware.call(
+                    'route.gateway_is_reachable',
+                    ipaddress.ip_address(gateway_value).exploded,
+                    int(field[3])
+                )
+            ):
+                verrors.add(f'{schema}.{field}', f'Gateway {gateway_value} is unreachable')
+
+    @private
     async def validate_general_settings(self, data, schema):
         verrors = ValidationErrors()
 
         await self.validate_nameservers(verrors, data, schema)
-
-        if (ipv4_gateway_value := data.get('ipv4gateway')):
-            if not await self.middleware.call(
-                'route.ipv4gw_reachable',
-                ipaddress.ip_address(ipv4_gateway_value).exploded
-            ):
-                verrors.add(f'{schema}.ipv4gateway', f'Gateway {ipv4_gateway_value} is unreachable')
+        await self.validate_gateways(verrors, data, schema)
 
         if (domains := data.get('domains', [])) and len(domains) > 5:
             verrors.add(f'{schema}.domains', 'No more than 5 additional domains are allowed')
