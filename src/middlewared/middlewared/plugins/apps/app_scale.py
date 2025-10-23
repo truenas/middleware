@@ -35,9 +35,19 @@ class AppService(Service):
                 fields=app_config | {'state': 'STOPPING', 'active_workloads': get_default_workload_values()},
             )
             job.set_progress(20, f'Stopping {app_name!r} app')
-            compose_action(
-                app_name, app_config['version'], 'down', remove_orphans=True, remove_images=False, remove_volumes=False,
-            )
+
+            if app_config.get('source') == 'external':
+                # For external apps, use direct Docker commands
+                from .utils import run
+                cp = run(['docker', 'stop', app_name])
+                if cp.returncode != 0:
+                    from middlewared.service_exception import CallError
+                    raise CallError(f'Failed to stop external app {app_name!r}: {cp.stderr}')
+            else:
+                compose_action(
+                    app_name, app_config['version'], 'down', remove_orphans=True, remove_images=False, remove_volumes=False,
+                )
+
             job.set_progress(100, f'Stopped {app_name!r} app')
         finally:
             self.middleware.send_event(
@@ -59,7 +69,17 @@ class AppService(Service):
         """
         app_config = self.middleware.call_sync('app.get_instance', app_name)
         job.set_progress(20, f'Starting {app_name!r} app')
-        compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
+
+        if app_config.get('source') == 'external':
+            # For external apps, use direct Docker commands
+            from .utils import run
+            cp = run(['docker', 'start', app_name])
+            if cp.returncode != 0:
+                from middlewared.service_exception import CallError
+                raise CallError(f'Failed to start external app {app_name!r}: {cp.stderr}')
+        else:
+            compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
+
         job.set_progress(100, f'Started {app_name!r} app')
 
     @api_method(
@@ -74,4 +94,14 @@ class AppService(Service):
         Redeploy `app_name` app.
         """
         app = await self.middleware.call('app.get_instance', app_name)
+
+        if app.get('source') == 'external':
+            # For external apps, restart the container
+            from .utils import run
+            from middlewared.service_exception import CallError
+            cp = run(['docker', 'restart', app_name])
+            if cp.returncode != 0:
+                raise CallError(f'Failed to restart external app {app_name!r}: {cp.stderr}')
+            return
+
         return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
