@@ -409,6 +409,11 @@ class PoolDatasetService(CRUDService):
         except Exception as e:
             raise CallError(f"Failed to create dataset {kwargs['name']}: {e}")
 
+        self.middleware.call_sync(
+            'zfs.resource.mount',
+            MountArgs(filesystem=data['name'], recursive=args.create_ancestors)
+        )
+
     @api_method(
         PoolDatasetCreateArgs,
         PoolDatasetCreateResult,
@@ -656,8 +661,6 @@ class PoolDatasetService(CRUDService):
         await self.middleware.call_hook('dataset.post_create', {'encrypted': bool(encryption_dict), **dataset_data})
 
         data['id'] = data['name']
-
-        await self.middleware.call('zfs.resource.mount', MountArgs(filesystem=data['name']))
 
         created_ds = await self.get_instance(data['id'])
 
