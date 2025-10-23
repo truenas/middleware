@@ -5,7 +5,7 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
-from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
+from middlewared.plugins.container.utils import CONTAINER_DS_NAME, container_dataset, container_dataset_mountpoint
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs.mount_unmount_impl import UnmountArgs
@@ -57,7 +57,7 @@ class PoolService(Service):
                 continue
 
             if (
-                i['name'] == f'{pool_name}/.truenas_containers'
+                i['name'] == f'{pool_name}/{CONTAINER_DS_NAME}'
                 and i['name'] == container_ds
                 and container_mnt != mntpnt
             ):

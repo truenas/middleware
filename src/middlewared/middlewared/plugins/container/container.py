@@ -14,6 +14,7 @@ from middlewared.api.current import (
     ContainerDeleteArgs, ContainerDeleteResult,
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
 )
+from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CRUDService, job, private, ValidationErrors
@@ -191,7 +192,7 @@ class ContainerService(CRUDService):
             verrors.check()
 
         await self.middleware.call('container.ensure_datasets', pool)
-        data['dataset'] = f'{pool}/.truenas_containers/containers/{data["name"]}'
+        data['dataset'] = f'{pool}/{CONTAINER_DS_NAME}/containers/{data["name"]}'
 
         # Populate dataset
         if pool == image_snapshot.split('@')[0].split('/')[0]:  # noqa
