@@ -12,6 +12,7 @@ from .snmp import SNMPService
 from .ssh import SSHService
 from .sssd import SSSDService
 from .truecommand import TruecommandService
+from .truesearch import TruesearchService
 from .ups import UPSService
 from .wsd import WSDService
 from .keepalived import KeepalivedService
@@ -83,5 +84,6 @@ all_services = [
     SyslogdService,
     TimeservicesService,
     TruecommandService,
+    TruesearchService,
     UserService,
 ]

@@ -1185,7 +1185,7 @@ async def service_remote(middleware, service, verb, options):
         # to not replicate to the remote controller
         return
 
-    ignore = ('system', 'nfs', 'netdata', 'truecommand', 'docker', 'libvirtd', 'libvirtd-guests')
+    ignore = ('system', 'nfs', 'netdata', 'truecommand', 'truesearch', 'docker', 'libvirtd', 'libvirtd-guests')
     if service in ignore:
         # doesn't matter what's going on, no reason to do
         # any type of service action on the remote controller

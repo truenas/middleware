@@ -1,7 +1,14 @@
+import enum
+
 import pytest
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import client, session, url
+
+
+class APIVersions(enum.Enum):
+    FT = ("25.04.0", "25.04.1", "25.04.2",)
+    GE = ("25.10.0", "25.10.1",)
 
 
 def get_api_versions():
@@ -41,54 +48,58 @@ def misc_methods() -> list[tuple[tuple, str]]:
 
     `((method_name, method_args...), earliest_version_to_test)`
 
-    Remove methods from this list if they are removed from the current API version.    
+    Remove methods from this list if they are removed from the current API version.
 
     """
-    return [
-        (("fcport.status",), "25.04.0"),
-    ]
+    return [(("fcport.status",), APIVersions.FT.value[0])]
 
 
 def test_query_method(legacy_api_client, query_method):
     client, version = legacy_api_client
     # Methods that do not exist in the previous API versions
-    if version in {"25.04.0", "25.04.1"} and query_method in {
-        "vm.query",
-        "vm.device.query",
-        "zfs.resource.query"
-    }:
+    if (
+        version in APIVersions.FT.value
+        and query_method in (
+            "vm.query",
+            "vm.device.query",
+            "zfs.resource.query"
+        )
+    ):
         return
 
-    if version in {"25.04.0", "25.04.1", "25.04.2", "25.10.0"} and query_method in {
-        "audit.query",
-        "certificate.query",
-        "cloudsync.query",
-        "container.query",
-        "disk.query",
-        "dns.query",
-        "interface.query",
-        "ipmi.lan.query",
-        "jbof.query",
-        "kerberos.keytab.query",
-        "kerberos.realm.query",
-        "nvmet.host.query",
-        "nvmet.host_subsys.query",
-        "nvmet.namespace.query",
-        "nvmet.port.query",
-        "nvmet.port_subsys.query",
-        "nvmet.subsys.query",
-        "pool.query",
-        "pool.dataset.query",
-        "pool.snapshot.query",
-        "privilege.query",
-        "replication.query",
-        "rsynctask.query",
-        "service.query",
-        "sharing.smb.query",
-        "tunable.query",
-        "vmware.query",
-        "zfs.resource.query"
-    }:
+    if (
+        version in APIVersions.GE.value
+        and query_method in (
+            "audit.query",
+            "certificate.query",
+            "cloudsync.query",
+            "container.query",
+            "disk.query",
+            "dns.query",
+            "interface.query",
+            "ipmi.lan.query",
+            "jbof.query",
+            "kerberos.keytab.query",
+            "kerberos.realm.query",
+            "nvmet.host.query",
+            "nvmet.host_subsys.query",
+            "nvmet.namespace.query",
+            "nvmet.port.query",
+            "nvmet.port_subsys.query",
+            "nvmet.subsys.query",
+            "pool.query",
+            "pool.dataset.query",
+            "pool.snapshot.query",
+            "privilege.query",
+            "replication.query",
+            "rsynctask.query",
+            "service.query",
+            "sharing.smb.query",
+            "tunable.query",
+            "vmware.query",
+            "zfs.resource.query"
+        )
+    ):
         return
 
     client.call(query_method)
@@ -101,9 +112,8 @@ def test_config_method(legacy_api_client, config_method):
         return
 
     if (
-        # Methods that do not exist in 25.04
-        version in {"25.04.0", "25.04.1", "25.04.2"}
-        and config_method in {
+        version in APIVersions.FT.value
+        and config_method in (
             "audit.config",
             "auth.twofactor.config",
             "directoryservices.config",
@@ -122,13 +132,12 @@ def test_config_method(legacy_api_client, config_method):
             "truecommand.config",
             "update.config",
             "ups.config",
-        }
+        )
     ):
         return
 
     if (
-        # Methods that do not exist in 25.10
-        version in {"25.10.0"}
+        version in APIVersions.GE.value
         and config_method in {
             "lxc.config",
         }
