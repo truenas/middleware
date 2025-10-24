@@ -1,8 +1,9 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, field_validator
+from pydantic import AfterValidator, Field, field_validator
 
-from middlewared.api.base import BaseModel, LocalGID, LocalUID, MACAddress, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, LocalGID, LocalUID, match_validator, NonEmptyString, single_argument_args
+from middlewared.validators import RE_MAC_ADDRESS
 
 
 __all__ = [
@@ -16,6 +17,15 @@ __all__ = [
 
 
 InstanceType: TypeAlias = Literal['CONTAINER', 'VM']
+MAC: TypeAlias = Annotated[
+    str | None,
+    AfterValidator(
+        match_validator(
+            RE_MAC_ADDRESS,
+            'MAC address is not valid.'
+        )
+    )
+]
 
 
 class Device(BaseModel):
@@ -77,7 +87,7 @@ class NIC(Device):
     """Type of network interface (bridged or macvlan)."""
     parent: NonEmptyString | None = None
     """Parent network interface on the host system."""
-    mac: MACAddress | None = None
+    mac: MAC = None
     """MAC address for the virtual network interface. `null` for auto-generated."""
 
 
