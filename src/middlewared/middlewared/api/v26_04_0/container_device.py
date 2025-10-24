@@ -23,9 +23,9 @@ class ContainerFilesystemDevice(BaseModel):
     dtype: Literal['FILESYSTEM']
     """Device type identifier for FILESYSTEM devices."""
     target: NonEmptyString = Field(pattern=r'^[^{}]*$')
-    """target must not contain "{", "}" characters"""
+    """Target must not contain braces."""
     source: NonEmptyString = Field(pattern=r'^[^{}]*$')
-    """source must not contain "{", "}" characters, and it should start with "/mnt/"."""
+    """Source must not contain braces, and not start with /mnt/."""
 
 
 class ContainerNICDevice(BaseModel):
