@@ -66,7 +66,7 @@ class AppService(CRUDService):
             'host_ip': host_ip,
             'retrieve_config': extra.get('retrieve_config', False),
             'image_update_cache': self.middleware.call_sync('app.image.op.get_update_cache', True),
-            'include_external': extra.get('include_external', False),
+            'include_external': extra.get('include_external', True),
         }
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs['specific_app'] = filters[0][2]
