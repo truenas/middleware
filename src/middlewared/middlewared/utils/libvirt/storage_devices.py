@@ -1,7 +1,6 @@
 import errno
 import os
 
-from middlewared.api.current import VMDiskDevice, VMRAWDevice
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
@@ -9,6 +8,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.utils.crypto import generate_string
 
 from .delegate import DeviceDelegate
+from .utils import disk_uniqueness_integrity_check
 
 
 IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
@@ -21,14 +21,14 @@ class StorageDelegate(DeviceDelegate):
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
         identity = device['attributes'].get('path') or zvol_name_to_path(device['attributes']['zvol_name'])
-        if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
+        if not disk_uniqueness_integrity_check(device, instance):
             verrors.add(
                 'attributes.path',
-                f'{vm_instance["name"]} has "{identity}" already configured'
+                f'{instance["name"]} has "{identity}" already configured'
             )
 
         if update is False:
@@ -43,16 +43,12 @@ class StorageDelegate(DeviceDelegate):
 
 class RAWDelegate(StorageDelegate):
 
-    @property
-    def schema_model(self):
-        return VMRAWDevice
-
     def validate_middleware(
         self,
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
         path = device['attributes']['path']
@@ -73,21 +69,17 @@ class RAWDelegate(StorageDelegate):
 
         self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
 
-        super().validate_middleware(device, verrors, old, vm_instance, update)
+        super().validate_middleware(device, verrors, old, instance, update)
 
 
 class DiskDelegate(StorageDelegate):
-
-    @property
-    def schema_model(self):
-        return VMDiskDevice
 
     def validate_middleware(
         self,
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
         create_zvol = device['attributes'].get('create_zvol')
@@ -124,7 +116,7 @@ class DiskDelegate(StorageDelegate):
                 # message that is more intuitive for end-user
                 parentzvol = device['attributes']['zvol_name'].rsplit('/', 1)[0]
                 if parentzvol and not self.middleware.call_sync(
-                        'zfs.resource.query_impl', {'paths': [parentzvol], 'properties': None}
+                    'zfs.resource.query_impl', {'paths': [parentzvol], 'properties': None}
                 ):
                     verrors.add(
                         'attributes.zvol_name',
@@ -159,4 +151,4 @@ class DiskDelegate(StorageDelegate):
                         'Disk resides in an invalid location and is not supported.'
                     )
 
-        super().validate_middleware(device, verrors, old, vm_instance, update)
+        super().validate_middleware(device, verrors, old, instance, update)

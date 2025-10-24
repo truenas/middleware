@@ -6,6 +6,8 @@ from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args, UUIDv4String,
 )
 
+from .container_device import ContainerDeviceEntry
+
 
 __all__ = [
     "ContainerEntry",
@@ -58,6 +60,8 @@ class ContainerEntry(BaseModel):
     """Container name."""
     description: str = ""
     """Container description."""
+    devices: list[ContainerDeviceEntry] = []
+    """Container's devices."""
     vcpus: int | None = Field(ge=1, default=None)
     """How many CPUs container can use."""
     cores: int | None = Field(ge=1, default=None)

@@ -21,6 +21,7 @@ from .common import *
 from .config import *
 from .container import *
 from .container_config import *
+from .container_device import *
 from .container_image import *
 from .core import *
 from .cronjob import *

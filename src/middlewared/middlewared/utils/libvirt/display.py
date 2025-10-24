@@ -2,7 +2,6 @@ from urllib.parse import urlencode, quote_plus
 
 from truenas_pylibvirt.device import DisplayDevice
 
-from middlewared.api.current import VMDisplayDevice
 from middlewared.service_exception import ValidationErrors
 
 from .delegate import DeviceDelegate
@@ -32,29 +31,25 @@ class DisplayDelegate(DeviceDelegate):
             'redirect_uri': f'{data["attributes"]["bind"]}:{data["attributes"]["web_port"]}',
         }
 
-    @property
-    def schema_model(self):
-        return VMDisplayDevice
-
     def validate_middleware(
         self,
         device: dict,
         verrors: ValidationErrors,
         old: dict | None = None,
-        vm_instance: dict | None = None,
+        instance: dict | None = None,
         update: bool = True,
     ) -> None:
-        if vm_instance:
+        if instance:
             if update:
                 # we will remove the device from the list of devices as that reflects db state
                 # and not the state of the modified device in question
-                vm_instance['devices'] = [
-                    d for d in vm_instance['devices']
+                instance['devices'] = [
+                    d for d in instance['devices']
                     if d.get('id') != device.get('id')
                 ]
 
-            vm_instance['devices'].append(device)
-            self.middleware.call_sync('vm.device.validate_display_devices', verrors, vm_instance)
+            instance['devices'].append(device)
+            self.middleware.call_sync('vm.device.validate_display_devices', verrors, instance)
 
         verrors = self.validate_port_attrs(device, verrors)
 
