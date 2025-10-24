@@ -537,7 +537,7 @@ class Enclosure:
 
     @property
     def is_vseries(self):
-        return self.controller and self.model and self.model[0] == 'V'
+        return self.controller and bool(self.model) and self.model[0] == 'V'
 
     @property
     def is_xseries(self):
