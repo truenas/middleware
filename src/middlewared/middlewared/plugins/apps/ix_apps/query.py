@@ -203,31 +203,33 @@ def list_apps(
         return apps
 
     # We should now retrieve apps which are in stopped state
-    with os.scandir(get_app_parent_config_path()) as scan:
-        for entry in filter(
-            lambda e: e.is_dir() and ((specific_app and e.name == specific_app) or e.name not in app_names), scan
-        ):
-            app_names.add(entry.name)
-            if entry.name not in metadata:
-                # The app is malformed or something is seriously wrong with it
-                continue
+    app_parent_config_path = get_app_parent_config_path()
+    if os.path.exists(app_parent_config_path):
+        with os.scandir(app_parent_config_path) as scan:
+            for entry in filter(
+                lambda e: e.is_dir() and ((specific_app and e.name == specific_app) or e.name not in app_names), scan
+            ):
+                app_names.add(entry.name)
+                if entry.name not in metadata:
+                    # The app is malformed or something is seriously wrong with it
+                    continue
 
-            app_metadata = metadata[entry.name]
-            upgrade_available, latest_version = upgrade_available_for_app(train_to_apps_version_mapping, app_metadata)
+                app_metadata = metadata[entry.name]
+                upgrade_available, latest_version = upgrade_available_for_app(train_to_apps_version_mapping, app_metadata)
 
-            # Stopped apps from config path are TrueNAS apps
-            app_data = {
-                'name': entry.name,
-                'id': entry.name,
-                'active_workloads': get_default_workload_values(),
-                'state': AppState.STOPPED.value,
-                'upgrade_available': upgrade_available,
-                'latest_version': latest_version,
-                'image_updates_available': False,
-                'source': app_metadata.get('source', 'truenas'),
-                **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
-            }
-            apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
+                # Stopped apps from config path are TrueNAS apps
+                app_data = {
+                    'name': entry.name,
+                    'id': entry.name,
+                    'active_workloads': get_default_workload_values(),
+                    'state': AppState.STOPPED.value,
+                    'upgrade_available': upgrade_available,
+                    'latest_version': latest_version,
+                    'image_updates_available': False,
+                    'source': app_metadata.get('source', 'truenas'),
+                    **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
+                }
+                apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
 
     return apps
 
