@@ -17,10 +17,9 @@ class NFSHostListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
     title = "NFS host list excessively long"
     text = (
         "The NFS share, %(sharePath)s, has %(numEntries)d host entries. "
-        "An excessively long list of host entries may lead to "
-        "unexpected behavior, performance issues or failures. "
-        "If possible, please consider using a directory service, netgroups, "
-        "network ranges, or similar to reduce the length of the host list."
+        "A lengthy host list can lead to unexpected failures or performance issues. "
+        "Consider using directory services, netgroups, network ranges, "
+        "or other configurations to reduce the host list length."
     )
 
     async def delete(self, alerts, query):
@@ -33,10 +32,9 @@ class NFSNetworkListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
     title = "NFS network list excessively long"
     text = (
         "The NFS share, %(sharePath)s, has %(numEntries)d network entries. "
-        "An excessively long list of network entries may lead to "
-        "unexpected behavior, performance issues or failures. "
-        "If possible, please consider using a directory service, netgroups, "
-        "wider network ranges, or similar to reduce the length of the network list."
+        "A lengthy network list can lead to unexpected failures or performance issues. "
+        "Consider using directory services, netgroups, wider network ranges, "
+        "or other configurations to reduce the network list length."
     )
 
     async def delete(self, alerts, query):
