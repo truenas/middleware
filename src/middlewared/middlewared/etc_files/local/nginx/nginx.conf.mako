@@ -182,9 +182,10 @@ http {
         server_name  ${server['name']};
 % if server['cert']:
     % for ip in ip_list:
-        listen                 ${ip}:${general_settings['ui_httpsport']} ${'default_server' if server['default_server'] else ''} ssl http2;
+        listen                 ${ip}:${general_settings['ui_httpsport']} ${'default_server' if server['default_server'] else ''} ssl;
     % endfor
 
+        http2 on;
         ssl_certificate        "${server['cert']['certificate_path']}";
         ssl_certificate_key    "${server['cert']['privatekey_path']}";
         ssl_dhparam "${dhparams_file}";
