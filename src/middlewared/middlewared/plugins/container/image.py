@@ -7,6 +7,8 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerImageQueryRegistryArgs, ContainerImageQueryRegistryResult,
 )
+from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
+from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.network import INTERNET_TIMEOUT
 
@@ -53,25 +55,31 @@ class ContainerImageService(Service):
         """
         Pull image.
         """
-        dataset_name = f'{pool}/.truenas_containers/images/{image["name"]}:{image["version"]}'
+        suffix = f'images/{image["name"]}:{image["version"]}'
+        dataset_name = os.path.join(container_dataset(pool), suffix)
         snapshot_name = f'{dataset_name}@image'
         if datasets := self.middleware.call_sync(
             'zfs.resource.query_impl',
             {'paths': [dataset_name], 'properties': None, 'get_snapshots': True}
         ):
             if snapshot_name not in datasets[0]['snapshots']:
-                # Orphan dataset without a snapshot. Probably, a leftover of an unfinished `pull` attempt that did not
-                # have the chance to clean up properly. Delete it
+                # Orphan dataset without a snapshot. Probably leftover from a
+                # previous `pull` attempt that failed and did not clean up
+                # properly. Delete it.
                 self.middleware.call_sync('zfs.dataset.delete', dataset_name)
             else:
                 # Image dataset already exists, no action needed.
                 return snapshot_name
 
         self.middleware.call_sync('container.ensure_datasets', pool)
-        mountpoint = self.middleware.call_sync(
-            'pool.dataset.create',
-            {'name': dataset_name, 'create_ancestors': True},
-        )['mountpoint']
+        self.middleware.call_sync(
+            'pool.dataset.create_impl',
+            CreateImplArgs(
+                name=dataset_name,
+                create_ancestors=True,
+                ztype='FILESYSTEM',
+            ),
+        )
         try:
             verrors = ValidationErrors()
             products = self.query_registry_images()["products"]
@@ -95,6 +103,7 @@ class ContainerImageService(Service):
 
                 downloaded_size = 0
 
+                mountpoint = f'/mnt{container_dataset_mountpoint(pool)}/{suffix}'
                 # Save tarball to mountpoint
                 tarball_path = os.path.join(mountpoint, 'image.tar')
                 try:
