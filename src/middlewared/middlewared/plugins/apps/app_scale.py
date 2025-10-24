@@ -99,6 +99,10 @@ class AppService(Service):
         Start `app_name` app.
         """
         app_config = self.middleware.call_sync('app.get_instance', app_name)
+        self.middleware.send_event(
+            'app.query', 'CHANGED', id=app_name,
+            fields=app_config | {'state': 'DEPLOYING'},
+        )
         job.set_progress(20, f'Starting {app_name!r} app')
 
         if app_config.get('source') == 'external':
@@ -155,6 +159,13 @@ class AppService(Service):
 
         job.set_progress(100, f'Started {app_name!r} app')
 
+        # Re-query app to get updated state after starting
+        updated_app = self.middleware.call_sync('app.get_instance', app_name)
+        self.middleware.send_event(
+            'app.query', 'CHANGED', id=app_name,
+            fields=updated_app,
+        )
+
     @api_method(
         AppRedeployArgs, AppRedeployResult,
         audit='App: Redeploying',
@@ -167,6 +178,10 @@ class AppService(Service):
         Redeploy `app_name` app.
         """
         app = await self.middleware.call('app.get_instance', app_name)
+        self.middleware.send_event(
+            'app.query', 'CHANGED', id=app_name,
+            fields=app | {'state': 'DEPLOYING'},
+        )
 
         if app.get('source') == 'external':
             # For external apps, handle both Docker Compose projects and standalone containers
@@ -217,6 +232,13 @@ class AppService(Service):
                     raise
                 except Exception as e:
                     raise CallError(f'Failed to restart external app {app_name!r}: {e}')
+
+            # Re-query app to get updated state after restarting
+            updated_app = await self.middleware.call('app.get_instance', app_name)
+            self.middleware.send_event(
+                'app.query', 'CHANGED', id=app_name,
+                fields=updated_app,
+            )
             return
 
         return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
