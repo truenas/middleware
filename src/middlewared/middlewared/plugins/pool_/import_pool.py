@@ -56,11 +56,11 @@ class PoolService(Service):
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
                 continue
 
-            if (
-                i['name'] == f'{pool_name}/.truenas_containers'
-                and i['name'] == container_ds
-                and container_mnt != mntpnt
-            ):
+            if i['name'] == container_ds and container_mnt != mntpnt.removeprefix('/mnt'):
+                # TODO: fix the "removeprefix('/mnt')" logic. /mnt is altroot
+                # set at the zpool but the container_dataset_mountpoint function
+                # returns the mountpoint without it. Makes using it confusing
+                # and non-obvious.
                 # This dataset gets a custom mountpoint so user cannot
                 # unintentionally share it via SMB, NFS, etc.
                 await self.middleware.call(

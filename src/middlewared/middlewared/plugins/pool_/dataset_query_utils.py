@@ -2,6 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TypeAlias
 
+from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import (
@@ -28,7 +29,7 @@ INTERNAL_DATASETS = (
     "ix-applications",
     "ix-apps",
     ".ix-virt",
-    ".truenas_containers",
+    CONTAINER_DS_NAME,
 )
 """
 Tuple of internal dataset name patterns that should be filtered out by default.
