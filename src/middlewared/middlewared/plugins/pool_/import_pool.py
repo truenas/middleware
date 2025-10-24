@@ -5,7 +5,7 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
-from middlewared.plugins.container.utils import CONTAINER_DS_NAME, container_dataset, container_dataset_mountpoint
+from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs.mount_unmount_impl import UnmountArgs
@@ -56,11 +56,11 @@ class PoolService(Service):
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
                 continue
 
-            if (
-                i['name'] == f'{pool_name}/{CONTAINER_DS_NAME}'
-                and i['name'] == container_ds
-                and container_mnt != mntpnt
-            ):
+            if i['name'] == container_ds and container_mnt != mntpnt.removeprefix('/mnt'):
+                # TODO: fix the "removeprefix('/mnt')" logic. /mnt is altroot
+                # set at the zpool but the container_dataset_mountpoint function
+                # returns the mountpoint without it. Makes using it confusing
+                # and non-obvious.
                 # This dataset gets a custom mountpoint so user cannot
                 # unintentionally share it via SMB, NFS, etc.
                 await self.middleware.call(
