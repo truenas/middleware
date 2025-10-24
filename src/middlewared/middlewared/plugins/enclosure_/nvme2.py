@@ -119,7 +119,7 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
 
 
 def map_plx_nvme(model, ctx):
-    num_of_nvme_slots = 4  # nvme plx bridge used on m50/60 and r50bm have 4 nvme drive bays
+    num_of_nvme_slots = 4  # nvme plx bridge used on m50/60, v-series and r50bm have 4 nvme drive bays
     addresses_to_slots = {
         (slot / 'address').read_text().strip(): slot.name
         for slot in pathlib.Path('/sys/bus/pci/slots').iterdir()
@@ -286,6 +286,10 @@ def map_nvme():
         ControllerModels.M40.value,
         ControllerModels.M50.value,
         ControllerModels.M60.value,
+        ControllerModels.V140.value,
+        ControllerModels.V160.value,
+        ControllerModels.V260.value,
+        ControllerModels.V280.value,
         ControllerModels.R50BM.value,
     ):
         return map_plx_nvme(model, ctx)

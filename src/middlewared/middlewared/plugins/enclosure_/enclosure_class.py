@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import logging
+from typing import Literal, TypeAlias, TypedDict
 
 from middlewared.utils.scsi_generic import inquiry
 
@@ -29,8 +30,25 @@ from .slot_mappings import get_slot_info
 logger = logging.getLogger(__name__)
 
 
+class EnclosureElementDict(TypedDict):
+    type: int
+    descriptor: str
+    status: list[int]
+
+
+EnclosureStatus: TypeAlias = Literal['OK', 'INVOP', 'INFO', 'NON-CRIT', 'CRIT', 'UNRECOV']
+ElementsDict: TypeAlias = dict[int, EnclosureElementDict]
+
+
+class EnclosureStatusDict(TypedDict):
+    id: str
+    name: str
+    status: set[EnclosureStatus]
+    elements: ElementsDict
+
+
 class Enclosure:
-    def __init__(self, bsg, sg, enc_stat):
+    def __init__(self, bsg: str, sg: str, enc_stat: EnclosureStatusDict):
         self.dmi = parse_dmi()
         self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix('/dev/bsg/')
         self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
@@ -38,10 +56,13 @@ class Enclosure:
         self._get_model_and_controller()
         self._should_ignore_enclosure()
         self.sysfs_map, self.disks_map, self.elements = dict(), dict(), dict()
+
+    def initialize(self, elements: ElementsDict, slot_designation: str | None = None):
         if not self.should_ignore:
             self.sysfs_map = map_disks_to_enclosure_slots(self)
-            self.disks_map = self._get_array_device_mapping_info()
-            self.elements = self._parse_elements(enc_stat['elements'])
+            self.disks_map = self._get_array_device_mapping_info(slot_designation)
+            self.elements = self._parse_elements(elements)
+        return self
 
     def asdict(self):
         """This method is what is returned in enclosure2.query"""
@@ -93,6 +114,8 @@ class Enclosure:
             # only get mapped to the Virtual AHCI enclosure of the 1st one. (i.e.
             # the one whose enclosure id is "3000000000000001"). So we ignore the
             # other enclosure device otherwise.
+            self.should_ignore = True
+        elif self.is_vseries and self.vendor == 'ECStream':
             self.should_ignore = True
         else:
             self.should_ignore = False
@@ -151,12 +174,16 @@ class Enclosure:
                 # M series
                 self.model = dmi_model.value
                 self.controller = True
+            case 'ECStream_4IXGA-NTBp' | 'ECStream_4IXGA-NTBs':
+                # V series
+                self.model = dmi_model.value
+                self.controller = True
             case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
                 # X series
                 self.model = dmi_model.value
                 self.controller = True
             case 'BROADCOM_VirtualSES':
-                # H series
+                # H series, V series
                 self.model = dmi_model.value
                 self.controller = True
             case 'ECStream_FS1' | 'ECStream_FS2' | 'ECStream_DSS212Sp' | 'ECStream_DSS212Ss':
@@ -222,14 +249,19 @@ class Enclosure:
             (parsed_element_status.lower() == ElementStatusesToIgnore.UNSUPPORTED.value),
             (self.is_xseries and desc == ElementDescriptorsToIgnore.ADISE0.value),
             (self.model == JbodModels.ES60.value and desc == ElementDescriptorsToIgnore.ADS.value),
-            (not self.is_hseries and desc in (
-                ElementDescriptorsToIgnore.EMPTY.value,
-                ElementDescriptorsToIgnore.AD.value,
-                ElementDescriptorsToIgnore.DS.value,
-            )),
+            (
+                not self.is_hseries
+                # Array Device Slot elements' descriptors on V-series are "<empty>"
+                and not (self.is_vseries and element['type'] == 23)
+                and desc in (
+                    ElementDescriptorsToIgnore.EMPTY.value,
+                    ElementDescriptorsToIgnore.AD.value,
+                    ElementDescriptorsToIgnore.DS.value,
+                )
+            ),
         ))
 
-    def _get_array_device_mapping_info(self):
+    def _get_array_device_mapping_info(self, slot_designation: str | None = None):
         mapped_info = get_slot_info(self)
         if not mapped_info:
             return
@@ -246,15 +278,18 @@ class Enclosure:
 
         # Now we need to check this specific enclosure's disk slot
         # mapping information
-        idkey, idvalue = 'model', self.model
-        if all((
-            self.vendor == 'AHCI',
-            self.product == 'SGPIOEnclosure',
-            any((self.is_mini, self.is_r20_series))
-        )):
+        if slot_designation:
+            idkey, idvalue = 'id', slot_designation
+        elif (
+            self.vendor == 'AHCI'
+            and self.product == 'SGPIOEnclosure'
+            and (self.is_mini or self.is_r20_series)
+        ):
             idkey, idvalue = 'id', self.encid
         elif self.is_r50_series:
             idkey, idvalue = 'product', self.product
+        else:
+            idkey, idvalue = 'model', self.model
 
         # Now we know the specific enclosure we're on and the specific
         # key we need to use to pull out the drive slot mapping
@@ -501,6 +536,10 @@ class Enclosure:
         ))
 
     @property
+    def is_vseries(self):
+        return self.controller and bool(self.model) and self.model[0] == 'V'
+
+    @property
     def is_xseries(self):
         """Determine if the enclosure device is a x-series controller.
 
@@ -663,6 +702,7 @@ class Enclosure:
             self.is_fseries,
             self.is_hseries,
             self.is_mseries,
+            self.is_vseries,
             self.is_xseries,
         ))
 
@@ -713,6 +753,7 @@ class Enclosure:
             self.is_hseries,
             self.is_mini,
             self.is_mseries,
+            self.is_vseries,
             self.is_r10,
             self.is_r20_series,
             self.is_r30,
@@ -741,7 +782,7 @@ class Enclosure:
                 return 14
             elif self.is_r10:
                 return 16
-            elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
+            elif any((self.is_fseries, self.is_mseries, self.is_vseries, self.is_24_bay_jbod)):
                 return 24
             elif self.is_rseries:
                 return 48
@@ -765,6 +806,10 @@ class Enclosure:
         elif self.model in (
             ControllerModels.M50.value,
             ControllerModels.M60.value,
+            ControllerModels.V140.value,
+            ControllerModels.V160.value,
+            ControllerModels.V260.value,
+            ControllerModels.V280.value,
             ControllerModels.R50BM.value,
         ):
             return 4
