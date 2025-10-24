@@ -40,6 +40,7 @@ from .utils.threading import (
 )
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
+from .utils.web_app import SiteManager
 from .worker import main_worker, worker_init
 
 from aiohttp import web
@@ -124,6 +125,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.app: web.Application
         self.loop: asyncio.AbstractEventLoop
         self.runner: web.AppRunner
+        self.site_manager = SiteManager()
         self.api_versions: list[APIVersion]
         self.api_versions_adapter: APIVersionsAdapter
 
@@ -1531,9 +1533,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if await self.call('system.state') == 'READY':
             self._setup_periodic_tasks()
 
+        await self.add_tcp_site('127.0.0.1')
         unix_socket_path = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')
-        await self.start_tcp_site('127.0.0.1')
-        await web.UnixSite(self.runner, unix_socket_path).start()
+        await self.site_manager.add_site(web.UnixSite, unix_socket_path)
+        await self.site_manager.start_sites(self.runner)
         os.chmod(unix_socket_path, 0o666)
 
         self.logger.debug('Accepting connections')
@@ -1541,10 +1544,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         self.__notify_startup_complete()
 
-    async def start_tcp_site(self, host):
-        site = web.TCPSite(self.runner, host, 6000, reuse_address=True, reuse_port=True)
-        await site.start()
-        return site
+    async def add_tcp_site(self, host):
+        await self.site_manager.add_site(web.TCPSite, host, 6000, reuse_address=True, reuse_port=True)
 
     def terminate(self):
         self.logger.info('Terminating')

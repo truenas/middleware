@@ -47,7 +47,7 @@ class PoolService(Service):
                 # we'll need iterate all children no matter what.
                 await self.middleware.call(
                     'pool.dataset.update_impl',
-                    UpdateImplArgs(name=i, zprops={'mountpoint': f'/mnt/{pool_name}'})
+                    UpdateImplArgs(name=i['name'], zprops={'mountpoint': f'/mnt/{pool_name}'})
                 )
                 to_inherit.append(pool_name)
                 break
@@ -77,7 +77,7 @@ class PoolService(Service):
 
         if to_inherit:
             # NOTE: we use zfs.resource.query which will hide internal
-            # paths. This is important so don't chagne it unless you
+            # paths. This is important so don't change it unless you
             # understand the implications fully.
             for i in await self.middleware.call(
                 'zfs.resource.query',

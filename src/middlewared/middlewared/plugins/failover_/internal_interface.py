@@ -14,7 +14,7 @@ from middlewared.utils.functools_ import cache
 
 class InternalInterfaceService(Service):
 
-    http_site = None
+    http_site_added = False
 
     class Config:
         private = True
@@ -97,8 +97,8 @@ class InternalInterfaceService(Service):
         self.middleware.call_sync('failover.internal_interface.post_sync', internal_ip)
 
     async def post_sync(self, internal_ip):
-        if self.http_site is None:
-            self.http_site = await self.middleware.start_tcp_site(internal_ip)
+        if not self.http_site_added:
+            await self.middleware.add_tcp_site(internal_ip)
 
 
 async def __event_system_ready(middleware, event_type, args):
