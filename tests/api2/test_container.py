@@ -38,6 +38,11 @@ BASIC_CAPABILITIES = {
 }
 
 
+def get_mountpoint(dataset):
+    rv = call("zfs.resource.query_impl", {"paths": [dataset], "properties": ["mountpoint"]})
+    return rv[0]["properties"]["mountpoint"]["value"]
+
+
 def nsenter(container, command):
     return shlex.join(call("container.nsenter", container) + [command])
 
@@ -84,8 +89,7 @@ def container(image, options=None, start=False, startup_script=None):
         **options,
     }, job=True)
     try:
-        dataset = container["dataset"]
-        mountpoint = call("pool.dataset.get_instance", dataset)["mountpoint"]
+        mountpoint = get_mountpoint(container["dataset"])
         if startup_script is not None:
             ssh(f"mkdir -p {mountpoint}/var/spool/cron/crontabs")
 
@@ -190,7 +194,7 @@ def test_container_stop_force_after_timeout(ubuntu_container):
 
 
 def test_container_shell(started_ubuntu_container):
-    mountpoint = call("pool.dataset.get_instance", started_ubuntu_container["dataset"])["mountpoint"]
+    mountpoint = get_mountpoint(started_ubuntu_container["dataset"])
     ssh(f"touch {mountpoint}/mnt/canary")
     token = call("auth.generate_token", 300, {}, False)
     ws = websocket.create_connection(websocket_url() + "/websocket/shell")
@@ -199,14 +203,14 @@ def test_container_shell(started_ubuntu_container):
             "token": token,
             "options": {"container_id": started_ubuntu_container["id"], "command": ["ls", "/mnt"]}
         }))
-        resp_opcode, msg = ws.recv_data()
+        _, msg = ws.recv_data()
         assert json.loads(msg.decode())["msg"] == "connected", msg
 
         data = ""
         ws.settimeout(30)
-        for i in range(60):
+        for _ in range(60):
             try:
-                resp_opcode, msg = ws.recv_data()
+                _, msg = ws.recv_data()
             except Exception as e:
                 print(e)
                 break
@@ -242,7 +246,7 @@ def test_idmap(ubuntu_image, idmap_slice_1_container, target, config):
             str(target), str(target),
         ]
 
-        mountpoint = call("pool.dataset.get_instance", c["dataset"])["mountpoint"]
+        mountpoint = get_mountpoint(c["dataset"])
         ssh(f"mkdir {mountpoint}/playground")
         ssh(nsenter(c, "touch /playground/canary"))
         assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == ["0", "0"]
