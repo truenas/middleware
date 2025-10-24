@@ -65,12 +65,12 @@ class PoolService(Service):
                 # unintentionally share it via SMB, NFS, etc.
                 await self.middleware.call(
                     'pool.dataset.update_impl',
-                    UpdateImplArgs(name=i, zprops={'mountpoint': container_mnt})
+                    UpdateImplArgs(name=i['name'], zprops={'mountpoint': container_mnt})
                 )
             elif i['name'] == f'{pool_name}/ix-apps' and mntpnt != f'/{IX_APPS_DIR_NAME}':
                 await self.middleware.call(
                     'pool.dataset.update_impl',
-                    UpdateImplArgs(name=i, zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
+                    UpdateImplArgs(name=i['name'], zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
                 )
             elif mntpnt != f'/mnt/{pool_name}/{i["name"]}':
                 to_inherit.append(i["name"])
