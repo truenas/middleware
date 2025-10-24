@@ -37,17 +37,14 @@ class AppService(Service):
             job.set_progress(20, f'Stopping {app_name!r} app')
 
             if app_config.get('source') == 'external':
-                # For external apps, use direct Docker commands with actual container names
+                # For external apps, use direct Docker commands
+                # The app_name is the container name for external apps
                 from .utils import run
                 from middlewared.service_exception import CallError
-                container_names = [c['id'] for c in app_config.get('active_workloads', {}).get('container_details', [])]
-                if not container_names:
-                    raise CallError(f'No containers found for external app {app_name!r}')
 
-                for container_name in container_names:
-                    cp = run(['docker', 'stop', container_name])
-                    if cp.returncode != 0:
-                        raise CallError(f'Failed to stop container {container_name!r}: {cp.stderr}')
+                cp = run(['docker', 'stop', app_name])
+                if cp.returncode != 0:
+                    raise CallError(f'Failed to stop container {app_name!r}: {cp.stderr}')
             else:
                 compose_action(
                     app_name, app_config['version'], 'down', remove_orphans=True, remove_images=False, remove_volumes=False,
@@ -76,17 +73,14 @@ class AppService(Service):
         job.set_progress(20, f'Starting {app_name!r} app')
 
         if app_config.get('source') == 'external':
-            # For external apps, use direct Docker commands with actual container names
+            # For external apps, use direct Docker commands
+            # The app_name is the container name for external apps
             from .utils import run
             from middlewared.service_exception import CallError
-            container_names = [c['id'] for c in app_config.get('active_workloads', {}).get('container_details', [])]
-            if not container_names:
-                raise CallError(f'No containers found for external app {app_name!r}')
 
-            for container_name in container_names:
-                cp = run(['docker', 'start', container_name])
-                if cp.returncode != 0:
-                    raise CallError(f'Failed to start container {container_name!r}: {cp.stderr}')
+            cp = run(['docker', 'start', app_name])
+            if cp.returncode != 0:
+                raise CallError(f'Failed to start container {app_name!r}: {cp.stderr}')
         else:
             compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
 
@@ -106,17 +100,14 @@ class AppService(Service):
         app = await self.middleware.call('app.get_instance', app_name)
 
         if app.get('source') == 'external':
-            # For external apps, restart the containers using actual container names
+            # For external apps, use direct Docker commands
+            # The app_name is the container name for external apps
             from .utils import run
             from middlewared.service_exception import CallError
-            container_names = [c['id'] for c in app.get('active_workloads', {}).get('container_details', [])]
-            if not container_names:
-                raise CallError(f'No containers found for external app {app_name!r}')
 
-            for container_name in container_names:
-                cp = run(['docker', 'restart', container_name])
-                if cp.returncode != 0:
-                    raise CallError(f'Failed to restart container {container_name!r}: {cp.stderr}')
+            cp = run(['docker', 'restart', app_name])
+            if cp.returncode != 0:
+                raise CallError(f'Failed to restart container {app_name!r}: {cp.stderr}')
             return
 
         return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
