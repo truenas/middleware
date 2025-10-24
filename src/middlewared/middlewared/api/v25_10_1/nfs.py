@@ -138,11 +138,11 @@ class NfsShareEntry(BaseModel):
     """ User comment associated with share. """
     networks: list[NonEmptyString] = []
     """List of authorized networks that are allowed to access the share having format \
-    "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed. \
+    "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed.
     Excessively long lists should be avoided."""
     hosts: list[NonEmptyString] = []
-    """List of IP's/hostnames which are allowed to access the share.  No quotes or spaces are allowed. \
-    Each entry must be unique. If empty, all IP's/hostnames are allowed. \
+    """List of IP's/hostnames which are allowed to access the share. No quotes or spaces are allowed.
+    Each entry must be unique. If empty, all IP's/hostnames are allowed.
     Excessively long lists should be avoided."""
     ro: bool = False
     """ Export the share as read only. """
