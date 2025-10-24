@@ -522,6 +522,13 @@ class SharingNFSService(SharingService):
         nfs_share = await self.get_instance(id_)
         audit_callback(nfs_share['path'])
         res = await self.middleware.call("datastore.delete", self._config.datastore, id_)
+        # Remove alerts that might be associated with this share
+        await self.middleware.call(
+            'alert.oneshot_delete', 'NFSNetworkListExcessive', {'sharePath': nfs_share['path']}
+        )
+        await self.middleware.call(
+            'alert.oneshot_delete', 'NFSHostListExcessive', {'sharePath': nfs_share['path']}
+        )
         await self._service_change("nfs", "reload")
         return res
 
@@ -560,7 +567,7 @@ class SharingNFSService(SharingService):
             """
 
         # Data validation and sanitization
-        self.sanitize_share_networks_and_hosts(data, schema_name, verrors)
+        await self.sanitize_share_networks_and_hosts(data, schema_name, verrors)
         # User must clean these up before proceeding
         verrors.check()
 
@@ -651,13 +658,16 @@ class SharingNFSService(SharingService):
                 )
 
     @private
-    def sanitize_share_networks_and_hosts(self, data, schema_name, verrors):
+    async def sanitize_share_networks_and_hosts(self, data, schema_name, verrors):
         """
         Perform input sanitation
             - Network and host must contain unique items.
             - Network must contain network types.
             - Host must not include quotes or spaces.
         """
+        # Generate warning alert if a share host or network list is excessively long
+        NFS_NETWORKS_WARNING_THRESHOLD = 100
+        NFS_HOSTS_WARNING_THRESHOLD = 100
 
         # Flag non-unique items in hosts and networks
         confirm_unique(schema_name, 'networks', data, verrors)
@@ -668,8 +678,28 @@ class SharingNFSService(SharingService):
             schema_name, data['networks'], verrors, strict_test=False, convert=True
         )
 
+        # Register a warning level alert for excessively long list of network entries
+        if (netlen := len(data['networks'])) >= NFS_NETWORKS_WARNING_THRESHOLD:
+            await self.middleware.call(
+                'alert.oneshot_create', 'NFSNetworkListExcessive', {'sharePath': data['path'], 'numEntries': netlen}
+            )
+        else:
+            await self.middleware.call(
+                'alert.oneshot_delete', 'NFSNetworkListExcessive', {'sharePath': data['path']}
+            )
+
         # Validate hosts: no spaces or quotes
         sanitize_hosts(schema_name, data['hosts'], verrors)
+
+        # Register a warning level alert for excessively long list of host entries
+        if (hostlen := len(data['hosts'])) >= NFS_HOSTS_WARNING_THRESHOLD:
+            await self.middleware.call(
+                'alert.oneshot_create', 'NFSHostListExcessive', {'sharePath': data['path'], 'numEntries': hostlen}
+            )
+        else:
+            await self.middleware.call(
+                'alert.oneshot_delete', 'NFSHostListExcessive', {'sharePath': data['path']}
+            )
 
     @private
     def validate_share_networks(self, networks, dns_cache, schema_name, verrors):
