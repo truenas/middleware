@@ -650,16 +650,11 @@ class KeychainCredentialService(CRUDService):
             # which will then result in new host keys we need to grab
             ssh = self.middleware.call_sync("ssh.config")
 
-        # If .ssh dir does not exist, create it
-        dotsshdir = os.path.join(user["home"], ".ssh")
-        os.makedirs(dotsshdir, exist_ok=True)
-        os.chown(dotsshdir, user["uid"], user["group"]["bsdgrp_gid"])
-
         # Write public key in user authorized_keys for SSH
-        with open(f"{dotsshdir}/authorized_keys", "a+") as f:
-            f.seek(0)
-            if data["public_key"] not in f.read():
-                f.write("\n" + data["public_key"] + "\n")
+        pubkey = (user["sshpubkey"] or "").strip()
+        if data["public_key"] not in pubkey:
+            pubkey += "\n" + data["public_key"] + "\n"
+            self.middleware.call_sync("user.update", user["id"], {"sshpubkey": pubkey})
 
         ssh_hostkey = "{0} {1}\n{0} {2}\n{0} {3}\n".format(
             data["remote_hostname"],
