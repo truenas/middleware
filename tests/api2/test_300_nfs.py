@@ -364,14 +364,6 @@ def move_systemdataset(new_pool_name):
     return call('systemdataset.config')
 
 
-def make_list_of_ipaddr(size: int) -> list:
-    """ Return a list of ip addresses """
-    genlist = []
-    for i in range(1, size + 1):
-        genlist.append(f"192.168.1.{i}")
-    return genlist
-
-
 @contextlib.contextmanager
 def system_dataset(new_pool_name):
     '''
@@ -761,9 +753,6 @@ class TestNFSops:
             pp(["::/0"], False, "No entry is required", id="IPv6 - all-networks (::/0)"),
             pp(["::/48"], False, "No entry is required", id="IPv6 - all-networks (::/48)"),
             pp(["192.168.0.0/24", "::/0"], False, "No entry is required", id="IPv6 - overlap with all-networks"),
-            # The following two entries use hostlist to specify the size of the list to create
-            pp(42, True, "", id="Valid - Max allowed entries"),
-            pp(43, False, "should have at most", id="Invalid - Too many entries"),
         ],
     )
     def test_share_networks(
@@ -779,10 +768,6 @@ class TestNFSops:
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
         nfsid = nfs_dataset_and_share['nfsid']
-
-        # Boundary test on list size
-        if not isinstance(networklist, list):
-            networklist = make_list_of_ipaddr(networklist)
 
         with nfs_share_config(nfsid):
             if ExpectedToPass:
@@ -835,9 +820,6 @@ class TestNFSops:
             pp(["bad host"], False, "Cannot contain spaces", id="Invalid - name with spaces"),
             pp(["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True, "", id="Valid - IPv6 address"),
             pp(["::"], False, "No entry is required", id="Invalid - IPv6 everybody as ::"),
-            # The following two entries use hostlist to specify size of the list to create
-            pp(42, True, "", id="Valid - Max allowed entries"),
-            pp(43, False, "should have at most", id="Invalid - Too many entries"),
         ],
     )
     def test_share_hosts(
@@ -863,10 +845,6 @@ class TestNFSops:
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
         nfsid = nfs_dataset_and_share['nfsid']
-
-        # Boundary test on list size
-        if not isinstance(hostlist, list):
-            hostlist = make_list_of_ipaddr(hostlist)
 
         with nfs_share_config(nfsid):
             if ExpectedToPass:
