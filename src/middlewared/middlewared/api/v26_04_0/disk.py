@@ -77,6 +77,8 @@ class DiskEntry(BaseModel):
     """Disk encryption password (masked for security)."""
     kmip_uid: str | None = NotRequired
     """KMIP (Key Management Interoperability Protocol) unique identifier or `null`."""
+    sed: bool | None
+    """Whether the disk is SED (Self-Encrypting Drive) capable. `null` if not yet determined."""
 
 
 class DiskDetails(BaseModel):
