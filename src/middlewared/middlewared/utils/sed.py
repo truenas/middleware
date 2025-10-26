@@ -1,10 +1,16 @@
+import re
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 from subprocess import CompletedProcess
 
 from middlewared.utils import run
 
 __all__ = ("unlock_impl",)
+
+
+RE_INITIALIZED = re.compile(r'(LockingEnabled\s*:\s*(?:1|Y)|Locking\s*=\s*enabled)', re.IGNORECASE | re.MULTILINE)
+RE_LOCKED = re.compile(r'(Locked\s*:\s*1|Locked\s*=\s*Y)', re.IGNORECASE | re.MULTILINE)
+RE_UNLOCKED = re.compile(r'(Locked\s*:\s*0|Locked\s*=\s*N)', re.IGNORECASE | re.MULTILINE)
 
 
 class ReturnCodeMappings(IntEnum):
@@ -27,6 +33,15 @@ class UnlockResponses:
     """The response of `sedutil-cli --setLockingRange` command."""
     mbr_cp: CompletedProcess | None = None
     """The response of `sedutil-cli --setMBREnable off` command."""
+
+
+class SEDStatus(StrEnum):
+    FAILED = 'FAILED'
+    UNINITIALIZED = 'UNINITIALIZED'
+    LOCKED = 'LOCKED'
+    UNLOCKED = 'UNLOCKED'
+    INITIALIZED = 'INITIALIZED'
+    # TODO: We need to remove this and always make sure we are able to determine LOCKED/UNLOCKED state.
 
 
 async def run_sedutil_cmd(cmd: list[str]) -> CompletedProcess:
@@ -83,3 +98,19 @@ async def unlock_impl(disk: dict[str, str]) -> UnlockResponses:
     drive must conform to one of the Trusted Computing Group (TCG)
     Enterprise, Opal, Opalite or Pyrite SSC specifications."""
     return await unlock_tcg_opal_pyrite(disk['path'], disk['passwd'])
+
+
+async def sed_status(disk_name: str):
+    cp = await run_sedutil_cmd(['--query', f'/dev/{disk_name}'])
+    if cp.returncode != ReturnCodeMappings.SUCCESS:
+        return SEDStatus.FAILED
+
+    info = cp.stdout.decode(errors='ignore')
+    if not RE_INITIALIZED.search(info):
+        return SEDStatus.UNINITIALIZED
+    elif RE_LOCKED.search(info):
+        return SEDStatus.LOCKED
+    elif RE_UNLOCKED.search(info):
+        return SEDStatus.UNLOCKED
+    else:
+        return SEDStatus.INITIALIZED
