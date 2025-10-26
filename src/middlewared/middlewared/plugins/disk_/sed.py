@@ -121,6 +121,12 @@ class DiskService(Service):
         return failed is None or not info.locked
 
     @private
+    async def is_sed(self, disk_name):
+        devname = f'/dev/{disk_name}'
+        cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
+        return b' SED ' in cp.stdout
+
+    @private
     async def sed_initial_setup(self, disk_name, password):
         """
         NO_SED - Does not support SED
