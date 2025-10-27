@@ -948,7 +948,7 @@ class UserService(CRUDService):
             self.logger.warning('Failed to update authorized keys', exc_info=True)
             raise CallError(f'Failed to update authorized keys: {e}')
         else:
-            if user['uid'] == 0:
+            if user['uid'] in (0, ADMIN_UID):
                 if self.middleware.call_sync('failover.licensed'):
                     try:
                         self.middleware.call_sync(
