@@ -38,19 +38,22 @@ class PoolService(Service):
             if i['type'] != 'FILESYSTEM':
                 continue
             mntpnt = i['properties']['mountpoint']['value']
-            if i["pool"] == pool_name and mntpnt != f'/mnt/{pool_name}':
-                # yikes, someone messed with mountpoint of root dataset
-                # or this is a zpool from a non-truenas system. we have
-                # to iterate over everything and reset mountpoint before
-                # much of anything will work on our side. Furthermore,
-                # there is no reason to continue the iteration since
-                # we'll need iterate all children no matter what.
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(name=i['name'], zprops={'mountpoint': f'/mnt/{pool_name}'})
-                )
-                to_inherit.append(pool_name)
-                break
+            if i["name"] == pool_name:
+                if mntpnt != f'/mnt/{pool_name}':
+                    # yikes, someone messed with mountpoint of root dataset
+                    # or this is a zpool from a non-truenas system. we have
+                    # to iterate over everything and reset mountpoint before
+                    # much of anything will work on our side. Furthermore,
+                    # there is no reason to continue the iteration since
+                    # we'll need iterate all children no matter what.
+                    await self.middleware.call(
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(name=i['name'], zprops={'mountpoint': f'/mnt/{pool_name}'})
+                    )
+                    to_inherit.append(pool_name)
+                    break
+                else:
+                    continue
             elif i['name'] == f'{pool_name}/ix-applications':
                 # We exclude `ix-applications` dataset since resetting it will
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
@@ -72,7 +75,7 @@ class PoolService(Service):
                     'pool.dataset.update_impl',
                     UpdateImplArgs(name=i['name'], zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
                 )
-            elif mntpnt != f'/mnt/{pool_name}/{i["name"]}':
+            elif mntpnt != f'/mnt/{i["name"]}':
                 to_inherit.append(i["name"])
 
         if to_inherit:
