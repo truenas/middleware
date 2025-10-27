@@ -6,6 +6,30 @@ from importlinter import Contract, ContractCheck, fields, output
 class APISchemaContract(Contract):
     def check(self, graph, verbose):
         errors = []
+        whitelist = {
+            "annotated_types",
+            "pydantic",
+            "typing_extensions",
+            "middlewared.api.base",
+            "middlewared.utils.lang",
+            # FIXME: These should not be imported
+            "cryptography",
+            "lexicon",
+            "middlewared.plugins.account_.constants",
+            "middlewared.plugins.idmap_.idmap_constants",
+            "middlewared.plugins.smb_.constants",
+            "middlewared.plugins.zfs_.validation_utils",
+            "middlewared.utils",
+            "middlewared.utils.auth",
+            "middlewared.utils.cron",
+            "middlewared.utils.directoryservices.credential",
+            "middlewared.utils.directoryservices.krb5_conf",
+            "middlewared.utils.filesystem.acl",
+            "middlewared.utils.filesystem.stat_x",
+            "middlewared.utils.security",
+            "middlewared.utils.smb",
+            "zettarepl",
+        }
         for api_module in sorted(graph.find_children("middlewared.api")):
             if not api_module.startswith("middlewared.api.v"):
                 continue
@@ -16,30 +40,7 @@ class APISchemaContract(Contract):
                     if imported_module in sys.stdlib_module_names:
                         continue
 
-                    if imported_module in {
-                        "annotated_types",
-                        "pydantic",
-                        "typing_extensions",
-                        "middlewared.api.base",
-                        "middlewared.utils.lang",
-                        # FIXME: These should not be imported
-                        "cryptography",
-                        "lexicon",
-                        "middlewared.plugins.account_.constants",
-                        "middlewared.plugins.idmap_.idmap_constants",
-                        "middlewared.plugins.smb_.constants",
-                        "middlewared.plugins.zfs_.validation_utils",
-                        "middlewared.utils",
-                        "middlewared.utils.auth",
-                        "middlewared.utils.cron",
-                        "middlewared.utils.directoryservices.credential",
-                        "middlewared.utils.directoryservices.krb5_conf",
-                        "middlewared.utils.filesystem.acl",
-                        "middlewared.utils.filesystem.stat_x",
-                        "middlewared.utils.security",
-                        "middlewared.utils.smb",
-                        "zettarepl",
-                    }:
+                    if imported_module in whitelist:
                         continue
 
                     if imported_module.startswith(f"{api_module}."):
