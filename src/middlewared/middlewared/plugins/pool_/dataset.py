@@ -409,13 +409,10 @@ class PoolDatasetService(CRUDService):
         except Exception as e:
             raise CallError(f"Failed to create dataset {kwargs['name']}: {e}")
 
-        margs = MountArgs(filesystem=args.name, recursive=args.create_ancestors)
-        if 'mountpoint' in args.zprops:
-            if args.zprops['mountpoint'] == 'legacy':
-                return
-            elif os.path.isabs(args.zprops['mountpoint']):
-                margs['mountpoint'] = args.zprops['mountpoint']
+        if 'mountpoint' in args.zprops and args.zprops['mountpoint'] == 'legacy':
+            return
 
+        margs = MountArgs(filesystem=args.name, recursive=args.create_ancestors)
         self.middleware.call_sync('zfs.resource.mount', margs)
 
     @api_method(
