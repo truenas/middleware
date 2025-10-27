@@ -1,22 +1,19 @@
 from datetime import datetime
 from typing import Any, Iterable, NamedTuple, overload, Protocol, Sequence, TypeVar
 
+from middlewared.api.base.validators.filters import validate_filters
+from middlewared.api.base.validators.filter_ops import opmap
+from middlewared.api.base.validators.options import _SelectList, validate_options
 from middlewared.service_exception import MatchNotFound
-from .filter_ops import opmap
 from .lang import undefined
 
 
-MAX_FILTERS_DEPTH = 3
 NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'
 REVERSE_CHAR = '-'
-TIMESTAMP_DESIGNATOR = '.$date'
-MAX_LIMIT = 10000  # Sanity check for rows requested by auditing
 
 _T = TypeVar('_T', str, list[str], None)
-_Filters = TypeVar('_Filters', bound=Iterable[Sequence])
 _Entry = dict[str, Any]
-_SelectList = Iterable[str | list[str]]
 
 
 class FilterGetResult(NamedTuple):
@@ -96,7 +93,7 @@ def get_attr(obj: object, path: str) -> FilterGetResult:
 
 
 def get(obj: Any, path: str) -> Any:
-    """
+    r"""
     Get a path in obj using dot notation. In case of nested list or tuple, item may be specified by
     numeric index, otherwise the contents of the array are returned along with the unresolved path
     component.
@@ -105,7 +102,7 @@ def get(obj: Any, path: str) -> Any:
         obj = {'foo': {'bar': '1'}, 'foo.bar': '2', 'foobar': ['first', 'second', 'third']}
 
         path = 'foo.bar' returns '1'
-        path = 'foo\\.bar' returns '2'
+        path = 'foo\.bar' returns '2'
         path = 'foobar.0' returns 'first'
     """
     data = get_impl(obj, path)
@@ -126,135 +123,6 @@ def select_path(obj: _Entry, path: str) -> tuple[list[str], Any]:
             raise ValueError('Selecting by list index is not supported')
 
     return (keys, cur)
-
-
-def validate_filters(filters: _Filters, recursion_depth: int = 0, value_maps: dict | None = None) -> _Filters:
-    """
-    This method gets called when `query-filters` gets validated in
-    the accepts() decorator of public API endpoints. It is generally
-    a good idea to improve validation here, but not at significant
-    expense of performance as this is called every time `filter_list`
-    is called.
-    """
-    if recursion_depth > MAX_FILTERS_DEPTH:
-        raise ValueError('query-filters max recursion depth exceeded')
-
-    for f in filters:
-        if len(f) == 2:
-            op, value = f
-            if op != 'OR':
-                raise ValueError(f'Invalid operation: {op}')
-
-            if not value:
-                raise ValueError('OR filter requires at least one branch.')
-
-            for branch in value:
-                if isinstance(branch[0], list):
-                    validate_filters(branch, recursion_depth + 1, value_maps)
-                else:
-                    validate_filters([branch], recursion_depth + 1, value_maps)
-
-            continue
-
-        elif len(f) != 3:
-            raise ValueError(f'Invalid filter {f}')
-
-        op = f[1]
-        if op[0] == 'C':
-            op = op[1:]
-            if op == '~':
-                raise ValueError('Invalid case-insensitive operation: {}'.format(f[1]))
-
-        if op not in opmap:
-            raise ValueError('Invalid operation: {}'.format(f[1]))
-
-        # special handling for datetime objects
-        for operand in (f[0], f[2]):
-            if not isinstance(operand, str) or not operand.endswith(TIMESTAMP_DESIGNATOR):
-                continue
-
-            if op not in ['=', '!=', '>', '>=', '<', '<=']:
-                raise ValueError(f'{op}: invalid timestamp operation.')
-
-            other = f[2] if operand == f[0] else f[0]
-            # At this point we're just validating that it's an ISO8601 string.
-            try:
-                ts = datetime.fromisoformat(other)
-            except (TypeError, ValueError):
-                raise ValueError(f'{other}: must be an ISO-8601 formatted timestamp string')
-
-            if value_maps is not None:
-                value_maps[other] = ts
-
-    return filters
-
-
-def validate_select(select: _SelectList) -> None:
-    """Validate that select parameters are properly formatted strings or field mapping lists."""
-    for s in select:
-        if isinstance(s, str):
-            continue
-
-        if isinstance(s, list):
-            if len(s) != 2:
-                raise ValueError(
-                    f'{s}: A select as list may only contain two parameters: the name '
-                    'of the parameter being selected, and the name to which to assign it '
-                    'in resulting data.'
-                )
-
-            for idx, selector in enumerate(s):
-                if isinstance(selector, str):
-                    continue
-
-                raise ValueError(
-                    f'{s}: {"first" if idx == 0 else "second"} item must be a string.'
-                )
-
-            continue
-
-        raise ValueError(
-            f'{s}: selectors must be either a parameter name as a string or '
-            'a list containing two items [<parameter name>, <as name>] to emulate '
-            'SELECT <parameter name> AS <as name>.'
-        )
-
-
-def validate_order_by(order_by: Iterable[str]) -> None:
-    """Validate that order_by parameters are all strings."""
-    for idx, o in enumerate(order_by):
-        if isinstance(o, str):
-            continue
-
-        raise ValueError(
-            f'{order_by}: parameter at index {idx} [{o}] is not a string.'
-        )
-
-
-def validate_options(options: dict | None) -> tuple[dict, _SelectList, Iterable[str]]:
-    """Validate and extract query options including select fields and ordering."""
-    if options is None:
-        return ({}, [], [])
-
-    if options.get('get') and options.get('limit', 0) > 1:
-        raise ValueError(
-            'Invalid options combination. `get` implies a single result.'
-        )
-
-    if options.get('get') and options.get('offset'):
-        raise ValueError(
-            'Invalid options combination. `get` implies a single result.'
-        )
-
-    if options.get('limit', 0) > MAX_LIMIT:
-        raise ValueError(f'Options limit must be between 1 and {MAX_LIMIT}')
-
-    select = options.get('select', [])
-    validate_select(select)
-    order_by = options.get('order_by', [])
-    validate_order_by(order_by)
-
-    return (options, select, order_by)
 
 
 def filterop(i: object, f: Sequence, source_getter: GetterProtocol) -> bool:

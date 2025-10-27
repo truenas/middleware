@@ -1,5 +1,4 @@
 from middlewared.api.base import BaseModel, single_argument_args, single_argument_result
-from middlewared.utils.auth import AuthMech, AuthResp
 from datetime import datetime
 from pydantic import Field, Secret
 from typing import Any, ForwardRef, Literal
@@ -48,52 +47,52 @@ class AuthCommonOptions(BaseModel):
 
 
 class AuthApiKeyPlain(BaseModel):
-    mechanism: Literal[AuthMech.API_KEY_PLAIN]
+    mechanism: Literal["API_KEY_PLAIN"]
     username: str
     api_key: Secret[str]
     login_options: AuthCommonOptions = Field(default=AuthCommonOptions())
 
 
 class AuthPasswordPlain(BaseModel):
-    mechanism: Literal[AuthMech.PASSWORD_PLAIN]
+    mechanism: Literal["PASSWORD_PLAIN"]
     username: str
     password: Secret[str]
     login_options: AuthCommonOptions = Field(default=AuthCommonOptions())
 
 
 class AuthTokenPlain(BaseModel):
-    mechanism: Literal[AuthMech.TOKEN_PLAIN]
+    mechanism: Literal["TOKEN_PLAIN"]
     token: Secret[str]
     login_options: AuthCommonOptions = Field(default=AuthCommonOptions())
 
 
 class AuthOTPToken(BaseModel):
-    mechanism: Literal[AuthMech.OTP_TOKEN]
+    mechanism: Literal["OTP_TOKEN"]
     otp_token: Secret[str]
     login_options: AuthCommonOptions = Field(default=AuthCommonOptions())
 
 
 class AuthRespSuccess(BaseModel):
-    response_type: Literal[AuthResp.SUCCESS]
+    response_type: Literal["SUCCESS"]
     user_info: AuthUserInfo | None
     authenticator: Literal['LEVEL_1', 'LEVEL_2']
 
 
 class AuthRespAuthErr(BaseModel):
-    response_type: Literal[AuthResp.AUTH_ERR]
+    response_type: Literal["AUTH_ERR"]
 
 
 class AuthRespExpired(BaseModel):
-    response_type: Literal[AuthResp.EXPIRED]
+    response_type: Literal["EXPIRED"]
 
 
 class AuthRespOTPRequired(BaseModel):
-    response_type: Literal[AuthResp.OTP_REQUIRED]
+    response_type: Literal["OTP_REQUIRED"]
     username: str
 
 
 class AuthRespAuthRedirect(BaseModel):
-    response_type: Literal[AuthResp.REDIRECT]
+    response_type: Literal["REDIRECT"]
     urls: list[str]
 
 

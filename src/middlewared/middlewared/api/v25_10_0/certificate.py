@@ -2,11 +2,10 @@ import re
 from enum import Enum
 from typing import Annotated, Literal
 
-from cryptography import x509
 from pydantic import AfterValidator, EmailStr, Field, Secret, StringConstraints
 
 from middlewared.api.base import (
-    BaseModel, ForUpdateMetaclass, LongString, LongNonEmptyString, match_validator,
+    BaseModel, EKU_OID, ForUpdateMetaclass, LongString, LongNonEmptyString, match_validator,
     NonEmptyString, single_argument_args,
 )
 
@@ -18,7 +17,6 @@ __all__ = [
 ]
 
 
-EKU_OID = Enum('EKU_OID', {i: i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')})
 RE_CERTIFICATE_NAME = re.compile(r'^[a-z0-9_\-]+$', re.I)
 CERT_NAME = Annotated[NonEmptyString, AfterValidator(
     match_validator(

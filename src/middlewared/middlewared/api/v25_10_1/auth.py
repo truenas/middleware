@@ -4,7 +4,6 @@ from typing import Any, Literal, Union
 from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, single_argument_args, single_argument_result
-from middlewared.utils.auth import AuthMech, AuthResp
 from .user import UserGetUserObj
 
 
@@ -95,7 +94,7 @@ class AuthCommonOptions(BaseModel):
 
 
 class AuthApiKeyPlain(BaseModel):
-    mechanism: Literal[AuthMech.API_KEY_PLAIN]
+    mechanism: Literal["API_KEY_PLAIN"]
     """Authentication mechanism identifier for plain API key authentication."""
     username: str
     """Username associated with the API key."""
@@ -113,7 +112,7 @@ class AuthLegacyUsernamePassword(BaseModel):
 
 
 class AuthOTPToken(BaseModel):
-    mechanism: Literal[AuthMech.OTP_TOKEN]
+    mechanism: Literal["OTP_TOKEN"]
     """Authentication mechanism identifier for one-time password tokens."""
     otp_token: Secret[str]
     """One-time password token for authentication."""
@@ -122,7 +121,7 @@ class AuthOTPToken(BaseModel):
 
 
 class AuthPasswordPlain(BaseModel):
-    mechanism: Literal[AuthMech.PASSWORD_PLAIN]
+    mechanism: Literal["PASSWORD_PLAIN"]
     """Authentication mechanism identifier for plain password authentication."""
     username: str
     """Username for authentication."""
@@ -133,24 +132,24 @@ class AuthPasswordPlain(BaseModel):
 
 
 class AuthRespAuthErr(BaseModel):
-    response_type: Literal[AuthResp.AUTH_ERR]
+    response_type: Literal["AUTH_ERR"]
     """Authentication response type indicating authentication failure."""
 
 
 class AuthRespAuthRedirect(BaseModel):
-    response_type: Literal[AuthResp.REDIRECT]
+    response_type: Literal["REDIRECT"]
     """Authentication response type indicating redirect is required."""
     urls: list[str]
     """Array of URLs to redirect to for authentication completion."""
 
 
 class AuthRespExpired(BaseModel):
-    response_type: Literal[AuthResp.EXPIRED]
+    response_type: Literal["EXPIRED"]
     """Authentication response type indicating the session or token has expired."""
 
 
 class AuthRespOTPRequired(BaseModel):
-    response_type: Literal[AuthResp.OTP_REQUIRED]
+    response_type: Literal["OTP_REQUIRED"]
     """Authentication response type indicating one-time password is required."""
     username: str
     """Username for which OTP is required."""
@@ -168,7 +167,7 @@ class AuthUserInfo(UserGetUserObj):
 
 
 class AuthRespSuccess(BaseModel):
-    response_type: Literal[AuthResp.SUCCESS]
+    response_type: Literal["SUCCESS"]
     """Authentication response type indicating successful login."""
     user_info: AuthUserInfo | None
     """Authenticated user information or `null` if not available."""
@@ -177,7 +176,7 @@ class AuthRespSuccess(BaseModel):
 
 
 class AuthTokenPlain(BaseModel):
-    mechanism: Literal[AuthMech.TOKEN_PLAIN]
+    mechanism: Literal["TOKEN_PLAIN"]
     """Authentication mechanism type for plain token login."""
     token: Secret[str]
     """Authentication token (masked for security)."""

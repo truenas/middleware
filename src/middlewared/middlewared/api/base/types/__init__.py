@@ -1,3 +1,5 @@
+from .certificate import *  # noqa
+from .cloud import *  # noqa
 from .dict import *  # noqa
 from .fc import *  # noqa
 from .filesystem import *  # noqa

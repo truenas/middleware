@@ -25,7 +25,6 @@ class APISchemaContract(Contract):
             "middlewared.utils.smb",
             "zettarepl",
         }
-
         for api_module in sorted(graph.find_children("middlewared.api")):
             if not api_module.startswith("middlewared.api.v"):
                 continue
