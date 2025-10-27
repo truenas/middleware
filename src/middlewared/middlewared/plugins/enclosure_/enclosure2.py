@@ -118,9 +118,15 @@ class Enclosure2Service(Service):
                     'enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification'
                 )
             else:
+                if enc_info['model'].startswith('V'):
+                    bsg = enc_info['elements']['Array Device Slot'][data['slot']]['original']['enclosure_bsg']
+                    pci = bsg.rsplit('/', 1)[-1]
+                else:
+                    pci = enc_info['pci']
+
                 try:
                     toggle_enclosure_slot_identifier(
-                        f'/sys/class/enclosure/{enc_info["pci"]}', origslot, data['status'], False, enc_info['model']
+                        f'/sys/class/enclosure/{pci}', origslot, data['status'], False, enc_info['model']
                     )
                 except FileNotFoundError:
                     raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)
