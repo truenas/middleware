@@ -10,6 +10,7 @@ from middlewared.api.current import (
 from middlewared.service import private, Service
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.disks import dev_to_ident
+from middlewared.utils.sed import sed_status
 
 
 class DiskService(Service):
@@ -64,6 +65,9 @@ class DiskService(Service):
             i['identifier'] = dev_to_ident(dname, sys_disks)
             i['enclosure_slot'] = enc_info.get(dname, ())
             serial_to_disk[(i['serial'], i['lunid'])].append(i)
+
+            # Add SED status
+            i['sed_status'] = await sed_status(dname) if i['sed'] else None
 
             # add enclosure information
             i['enclosure'] = {}
