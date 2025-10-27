@@ -13,15 +13,10 @@ class APISchemaContract(Contract):
             "middlewared.api.base",
             "middlewared.utils.lang",
             # FIXME: These should not be imported
-            "cryptography",
-            "lexicon",
             "middlewared.plugins.account_.constants",
             "middlewared.plugins.idmap_.idmap_constants",
             "middlewared.plugins.smb_.constants",
             "middlewared.plugins.zfs_.validation_utils",
-            "middlewared.utils",
-            "middlewared.utils.auth",
-            "middlewared.utils.cron",
             "middlewared.utils.directoryservices.credential",
             "middlewared.utils.directoryservices.krb5_conf",
             "middlewared.utils.filesystem.acl",
@@ -30,6 +25,7 @@ class APISchemaContract(Contract):
             "middlewared.utils.smb",
             "zettarepl",
         }
+
         for api_module in sorted(graph.find_children("middlewared.api")):
             if not api_module.startswith("middlewared.api.v"):
                 continue
