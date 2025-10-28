@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 import requests
 
 from auto_config import password, user
-from middlewared.test.integration.utils import host
+from middlewared.test.integration.utils import call, host
 
 
 global header
@@ -46,26 +46,6 @@ def controller_url(target=SRVTarget.DEFAULT):
     return f'http://{get_host_ip(target)}/api/v2.0'
 
 
-def GET(testpath, payload=None, controller_a=False, **optional):
-    data = {} if payload is None else payload
-    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
-    complete_uri = testpath if testpath.startswith('http') else f'{url}{testpath}'
-    if optional.get('force_ssl', False):
-        complete_uri = RE_HTTPS.sub(r'https\1', complete_uri)
-    timeout = optional.get('timeout', None)
-
-    if testpath.startswith('http'):
-        getit = requests.get(complete_uri, timeout=timeout)
-    else:
-        if optional.pop("anonymous", False):
-            auth = None
-        else:
-            auth = optional.pop("auth", authentication)
-        getit = requests.get(complete_uri, headers=dict(header, **optional.get("headers", {})),
-                             auth=auth, data=json.dumps(data), verify=False, timeout=timeout)
-    return getit
-
-
 def POST(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
     url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
@@ -87,31 +67,6 @@ def POST(testpath, payload=None, controller_a=False, **optional):
             data=json.dumps(data), files=files
         )
     return postit
-
-
-def PUT(testpath, payload=None, controller_a=False, **optional):
-    data = {} if payload is None else payload
-    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
-    if optional.pop("anonymous", False):
-        auth = None
-    else:
-        auth = authentication
-    putit = requests.put(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                         auth=auth, data=json.dumps(data))
-    return putit
-
-
-def DELETE(testpath, payload=None, controller_a=False, **optional):
-    data = {} if payload is None else payload
-    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
-    if optional.pop("anonymous", False):
-        auth = None
-    else:
-        auth = authentication
-    deleteit = requests.delete(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                               auth=auth,
-                               data=json.dumps(data))
-    return deleteit
 
 
 def SSH_TEST(command, username, passwrd, host=None, timeout=120):
@@ -341,16 +296,19 @@ def ping_host(host, count, timeout=None):
         return process.returncode == 0
 
 
-def wait_on_job(job_id, max_timeout):
+def wait_on_job(job_id: int, max_timeout: int) -> dict:
     global job_results
     timeout = 0
     while True:
-        job_results = GET(f'/core/get_jobs/?id={job_id}')
-        job_state = job_results.json()[0]['state']
+        job_results = call('core.get_jobs', [['id', '=', job_id]], {'get': True})
+        job_state = job_results['state']
+
         if job_state in ('RUNNING', 'WAITING'):
             sleep(5)
         elif job_state in ('SUCCESS', 'FAILED'):
-            return {'state': job_state, 'results': job_results.json()[0]}
+            return {'state': job_state, 'results': job_results}
+
         if timeout >= max_timeout:
-            return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
+            return {'state': 'TIMEOUT', 'results': job_results}
+
         timeout += 5

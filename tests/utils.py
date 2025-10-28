@@ -1,30 +1,21 @@
 import contextlib
-import urllib.parse
-from functions import POST, SSH_TEST, DELETE, wait_on_job
 from time import sleep
 
-@contextlib.contextmanager
-def create_dataset(dataset, options=None, acl=None, mode=None):
-    perm_job = None
+from middlewared.test.integration.utils import call
 
-    result = POST("/pool/dataset/", {"name": dataset, **(options or {})})
-    assert result.status_code == 200, result.text
+
+@contextlib.contextmanager
+def create_dataset(dataset: str, options: dict | None = None, acl: dict | None = None, mode: str | None = None):
+    ds_id = call("pool.dataset.create", {"name": dataset, **(options or {})})["id"]
 
     if mode is not None:
-        perm_job = POST("/filesystem/setperm/", {'path': f"/mnt/{dataset}", "mode": mode})
+        call("filesystem.setperm", {"path": f"/mnt/{dataset}", "mode": mode}, job=True, timeout=180)
     elif acl is not None:
-        perm_job = POST("/filesystem/setacl/", {'path': f"/mnt/{dataset}", "dacl": acl})
-
-    if perm_job:
-        assert perm_job.status_code == 200, result.text
-        job_status = wait_on_job(perm_job.json(), 180)
-        assert job_status["state"] == "SUCCESS", str(job_status["results"])
+        call("filesystem.setacl", {"path": f"/mnt/{dataset}", "dacl": acl}, job=True, timeout=180)
 
     try:
         yield dataset
     finally:
         # dataset may be busy
         sleep(5)
-        result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/",
-                        {'recursive': True})
-        assert result.status_code == 200, result.text
+        call("pool.dataset.delete", ds_id, {"recursive": True})
