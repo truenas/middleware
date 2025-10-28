@@ -266,6 +266,7 @@ ROLES = {
 
     # ZFS Resources (query, create/update/delete)
     'ZFS_RESOURCE_READ': Role(),
+    'ZFS_RESOURCE_WRITE': Role(includes=['ZFS_RESOURCE_READ']),
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 

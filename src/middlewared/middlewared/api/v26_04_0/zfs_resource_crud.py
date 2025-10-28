@@ -1,8 +1,20 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, NotRequired, UniqueList
+from middlewared.api.base import (
+    BaseModel,
+    NonEmptyString,
+    NotRequired,
+    single_argument_args,
+    UniqueList,
+)
 
-__all__ = ("ZFSResourceEntry", "ZFSResourceQueryArgs", "ZFSResourceQueryResult")
+__all__ = (
+    "ZFSResourceEntry",
+    "ZFSResourceDestroyArgs",
+    "ZFSResourceDestroyResult",
+    "ZFSResourceQueryArgs",
+    "ZFSResourceQueryResult",
+)
 
 PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIVED"]
 
@@ -287,6 +299,30 @@ class ZFSResourceQuery(BaseModel):
     Note: When max_depth > 0 is specified, it takes priority over get_children.
     The depth is measured from the specified path(s), not from the pool root.
     """
+
+
+@single_argument_args("zfs_resource_destroy_args")
+class ZFSResourceDestroyArgs(BaseModel):
+    path: NonEmptyString
+    """Path of the zfs resource to be destroyed."""
+    recursive: bool = False
+    """Recursively destroy all descendants of the resource.
+
+    NOTE: If you want to recursively remove a particular snapshot \
+    from all descendants. You must set the `path` string to a snapshot \
+    (i.e. dozer/a@snap01) and set this to True. This will recursively \
+    destroy all snapshots named `snap01` from any descendants of dozer/a.
+    """
+    remove_clones: bool = False
+    """Destroy any clones associated to the resource being destroyed."""
+    remove_holds: bool = False
+    """Remove holds associated to the resource being destroyed."""
+    all_snapshots: bool = False
+    """Remove all snapshots for resource being destroyed."""
+
+
+class ZFSResourceDestroyResult(BaseModel):
+    result: None
 
 
 class ZFSResourceQueryArgs(BaseModel):

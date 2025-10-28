@@ -1,8 +1,11 @@
 import errno
+import os
 import pathlib
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZFSResourceDestroyArgs,
+    ZFSResourceDestroyResult,
     ZFSResourceEntry,
     ZFSResourceQueryArgs,
     ZFSResourceQueryResult,
@@ -11,8 +14,11 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
+from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
+    ZFSPathHasClonesException,
+    ZFSPathHasHoldsException,
     ZFSPathInvalidException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
@@ -32,8 +38,9 @@ from .rename_promote_clone_impl import (
     promote_impl,
     PromoteArgs,
     rename_impl,
-    RenameArgs
+    RenameArgs,
 )
+from .utils import has_internal_path
 
 
 class ZFSResourceService(Service):
@@ -241,6 +248,130 @@ class ZFSResourceService(Service):
             },
         )
         return rv and snap_name in rv[0]["snapshots"]
+
+    @private
+    @pass_thread_local_storage
+    def destroy_impl(self, tls, schema: str, data: dict, bypass: bool = False):
+        path = data["path"]
+        if os.path.isabs(path):
+            raise ValidationError(
+                schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL
+            )
+        elif path.endswith("/"):
+            raise ValidationError(
+                schema, "Path must not end with a forward-slash.", errno.EINVAL
+            )
+        elif not bypass and has_internal_path(path):
+            # NOTE: `bypass` is a value only exposed to
+            # internal callers and not to our public API.
+            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
+        tmp = path.split("/")
+        if len(tmp) == 1 or tmp[-1] == "":
+            raise ValidationError(
+                schema, "Destroying the root filesystem is not allowed.", errno.EINVAL
+            )
+
+        a_snapshot = "@" in path
+        if a_snapshot and data["all_snapshots"]:
+            raise ValidationError(
+                schema,
+                f"Setting all_snapshots and specifying a snapshot ({path}) is invalid.",
+                errno.EINVAL,
+            )
+
+        if not data["recursive"]:
+            if not a_snapshot:
+                args = {"paths": [path], "properties": None, "get_children": True, "get_snapshots": True}
+                rv = self.middleware.call_sync("zfs.resource.query", args)
+                extra = "Set recursive=True to remove them."
+                if not rv:
+                    raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
+                elif len(rv) > 1:
+                    raise ValidationError(schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY)
+                elif not data["all_snapshots"] and rv[0]["snapshots"]:
+                    raise ValidationError(schema, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY)
+
+        return destroy_impl(tls, data)
+
+    @api_method(
+        ZFSResourceDestroyArgs,
+        ZFSResourceDestroyResult,
+        roles=["ZFS_RESOURCE_WRITE"]
+    )
+    def destroy(self, data):
+        """
+        Destroy a ZFS resource (filesystem, volume, or snapshot).
+
+        This method provides an interface for destroying ZFS resources with support \
+        for recursive deletion, clone removal, hold removal, and batch snapshot deletion.
+
+        Args:
+            data (dict): Dictionary containing destruction parameters:
+                - path (str): Path of the ZFS resource to destroy. Must be in the form \
+                    'pool/name', 'pool/name@snapshot', or 'pool/zvol'.
+                    Cannot be an absolute path or end with a forward slash.
+                - recursive (bool, optional): If True, recursively destroy all descendants.
+                    For snapshots, destroys the snapshot across all descendant resources and \
+                    also destroy clones and/or holds that may be present.
+                    Default: False.
+                - all_snapshots (bool, optional): If True, destroy all snapshots of the \
+                    specified resource (resource remains). Default: False.
+
+        Returns:
+            None: On successful destruction.
+
+        Raises:
+            ValidationError: Raised in the following cases:
+                - Resource does not exist (ENOENT)
+                - Resource has children and recursive=False (EBUSY)
+                - Attempting to destroy root filesystem
+                - Path is absolute (starts with /)
+                - Path ends with forward slash
+                - Path references protected internal resources
+
+        Examples:
+            # Destroy a simple filesystem
+            destroy({"path": "tank/temp"})
+
+            # Recursively destroy filesystem, snapshots, clones, holds
+            # and all children
+            destroy({"path": "tank/parent", "recursive": True})
+
+            # Destroy a specific snapshot
+            destroy({"path": "tank/temp@snapshot1"})
+
+            # Recursively destroy the snapshot across all descendant
+            # resources including clone(s), and/or hold(s)
+            destroy({"path": "tank/parent@snap", "recursive": True})
+
+            # Destroy all snapshots of a resource (keeping "tank/temp")
+            destroy({"path": "tank/temp", "all_snapshots": True})
+
+        Notes:
+            - Root filesystem destruction is not allowed for safety
+            - Protected system paths cannot be destroyed via API
+            - When destroying snapshots recursively, only matching snapshots in
+              descendant datasets are removed
+            - The all_snapshots flag only removes snapshots, not the dataset itself
+            - For volumes with snapshots, either use recursive=True or all_snapshots=True
+        """
+        schema = "zfs.resource.destroy"
+        try:
+            failed, errnum = self.middleware.call_sync("zfs.resource.destroy_impl", schema, data)
+        except (ZFSPathHasClonesException, ZFSPathHasHoldsException) as e:
+            raise ValidationError(schema, e.message, errno.ENOTEMPTY)
+        except ZFSPathNotFoundException as e:
+            raise ValidationError(schema, e.message, errno.ENOENT)
+        else:
+            if failed:
+                # this is the channel program execution path and so when an
+                # error is raised while executing a channel program, the
+                # handling of errors is done a bit differently since the
+                # operation is done atomically behind the scenes. This should
+                # only be happening if someone is recursively deleting a
+                # resource.
+                raise ValidationError(schema, failed, errnum)
 
     @api_method(
         ZFSResourceQueryArgs,
