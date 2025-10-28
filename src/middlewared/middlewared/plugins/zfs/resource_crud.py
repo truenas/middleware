@@ -380,7 +380,7 @@ class ZFSResourceService(Service):
                 # operation is done atomically behind the scenes. This should
                 # only be happening if someone is recursively deleting a
                 # resource.
-                raise ValidationError("zfs.resource.destroy", failed, errnum)
+                raise ValidationError(schema, failed, errnum)
 
     @api_method(
         ZFSResourceQueryArgs,
