@@ -13,6 +13,18 @@ class ZFSPathAlreadyExistsException(Exception):
         super().__init__(self.message)
 
 
+class ZFSPathHasClonesException(Exception):
+    def __init__(self, path, clones):
+        self.message = f"{path!r} has the following clones: {','.join(clones)}"
+        super().__init__(self.message)
+
+
+class ZFSPathHasHoldsException(Exception):
+    def __init__(self, path, holds):
+        self.message = f"{path!r} has the following holds: {','.join(holds)}"
+        super().__init__(self.message)
+
+
 class ZFSPathInvalidException(Exception):
     pass
 
