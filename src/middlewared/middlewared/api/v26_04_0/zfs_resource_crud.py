@@ -306,17 +306,20 @@ class ZFSResourceDestroyArgs(BaseModel):
     path: NonEmptyString
     """Path of the zfs resource to be destroyed."""
     recursive: bool = False
-    """Recursively destroy all descendants of the resource.
+    """Recursively destroy all descendants of the resource. This will also \
+    release any holds and destroy any clones for any of the descendants of \
+    the resource being deleted.
 
-    NOTE: If you want to recursively remove a particular snapshot \
+    If you want to recursively remove a particular snapshot \
     from all descendants. You must set the `path` string to a snapshot \
     (i.e. dozer/a@snap01) and set this to True. This will recursively \
     destroy all snapshots named `snap01` from any descendants of dozer/a.
+
+    If you want to destroy all snapshots for a particular resource, then \
+    you must pass the `path` string as "pool/name" and set the all_snapshots \
+    flag to True. This will leave "pool/name" on disk but will remove all \
+    snapshots (and clones/holds) recursively for that resource.
     """
-    remove_clones: bool = False
-    """Destroy any clones associated to the resource being destroyed."""
-    remove_holds: bool = False
-    """Remove holds associated to the resource being destroyed."""
     all_snapshots: bool = False
     """Remove all snapshots for resource being destroyed."""
 
