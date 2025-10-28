@@ -46,26 +46,6 @@ def controller_url(target=SRVTarget.DEFAULT):
     return f'http://{get_host_ip(target)}/api/v2.0'
 
 
-def GET(testpath, payload=None, controller_a=False, **optional):
-    data = {} if payload is None else payload
-    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
-    complete_uri = testpath if testpath.startswith('http') else f'{url}{testpath}'
-    if optional.get('force_ssl', False):
-        complete_uri = RE_HTTPS.sub(r'https\1', complete_uri)
-    timeout = optional.get('timeout', None)
-
-    if testpath.startswith('http'):
-        getit = requests.get(complete_uri, timeout=timeout)
-    else:
-        if optional.pop("anonymous", False):
-            auth = None
-        else:
-            auth = optional.pop("auth", authentication)
-        getit = requests.get(complete_uri, headers=dict(header, **optional.get("headers", {})),
-                             auth=auth, data=json.dumps(data), verify=False, timeout=timeout)
-    return getit
-
-
 def POST(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
     url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
@@ -87,31 +67,6 @@ def POST(testpath, payload=None, controller_a=False, **optional):
             data=json.dumps(data), files=files
         )
     return postit
-
-
-def PUT(testpath, payload=None, controller_a=False, **optional):
-    data = {} if payload is None else payload
-    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
-    if optional.pop("anonymous", False):
-        auth = None
-    else:
-        auth = authentication
-    putit = requests.put(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                         auth=auth, data=json.dumps(data))
-    return putit
-
-
-def DELETE(testpath, payload=None, controller_a=False, **optional):
-    data = {} if payload is None else payload
-    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
-    if optional.pop("anonymous", False):
-        auth = None
-    else:
-        auth = authentication
-    deleteit = requests.delete(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                               auth=auth,
-                               data=json.dumps(data))
-    return deleteit
 
 
 def SSH_TEST(command, username, passwrd, host=None, timeout=120):

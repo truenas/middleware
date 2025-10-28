@@ -11,7 +11,6 @@ from middlewared.test.integration.utils import call, mock
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 sys.path.append(os.getcwd())
-from functions import DELETE, POST, PUT
 
 
 def test_change_local_administrator_groups_to_invalid():
@@ -131,8 +130,7 @@ def test_password_disabled_root_is_a_local_administrator():
         assert local_administrators[0]["username"] == "root"
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_create_privilege_audit(api):
+def test_create_privilege_audit():
     privilege = None
     try:
         with expect_audit_method_calls([{
@@ -145,25 +143,16 @@ def test_create_privilege_audit(api):
             ],
             "description": "Create privilege Test",
         }]):
-            payload = {
+            privilege = call("privilege.create", {
                 "name": "Test",
                 "web_shell": False,
-            }
-            if api == "ws":
-                privilege = call("privilege.create", payload)
-            elif api == "rest":
-                result = POST(f"/privilege/", payload)
-                assert result.status_code == 200, result.text
-                privilege = result.json()
-            else:
-                raise ValueError(api)
+            })
     finally:
         if privilege is not None:
             call("privilege.delete", privilege["id"])
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_update_privilege_audit(api):
+def test_update_privilege_audit():
     with privilege({
         "name": "Test",
         "web_shell": False,
@@ -173,17 +162,10 @@ def test_update_privilege_audit(api):
             "params": [p["id"], {}],
             "description": "Update privilege Test",
         }]):
-            if api == "ws":
-                call("privilege.update", p["id"], {})
-            elif api == "rest":
-                result = PUT(f"/privilege/id/{p['id']}", {})
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call("privilege.update", p["id"], {})
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_delete_privilege_audit(api):
+def test_delete_privilege_audit():
     with privilege({
         "name": "Test",
         "web_shell": False,
@@ -193,10 +175,4 @@ def test_delete_privilege_audit(api):
             "params": [p["id"]],
             "description": "Delete privilege Test",
         }]):
-            if api == "ws":
-                call("privilege.delete", p["id"])
-            elif api == "rest":
-                result = DELETE(f"/privilege/id/{p['id']}")
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call("privilege.delete", p["id"])
