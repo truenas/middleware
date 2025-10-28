@@ -28,7 +28,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 flake8-builtins flake8-tidy-imports flake8-literal
+        pip install flake8 flake8-builtins flake8-tidy-imports flake8-literal import-linter
+    - name: Lint imports
+      run: |
+        cd src/middlewared/ && lint-imports
     - name: Get current errors
       run: |
         tmpafter=$(mktemp)

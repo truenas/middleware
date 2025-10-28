@@ -1,7 +1,8 @@
 from typing import Literal
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, Excluded, excluded_field, NotRequired
-from middlewared.api.base.types.network import IPvAnyAddress, Hostname, Domain
+from middlewared.api.base import (
+    BaseModel, ForUpdateMetaclass, IPvAnyAddress, Hostname, Domain, Excluded, excluded_field, NotRequired,
+)
 
 
 __all__ = [
