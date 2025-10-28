@@ -56,7 +56,7 @@ class RenameArgs(TypedDict, total=False):
     to limit the length to something significantly less than the absolute
     name length limit."""
     recursive: bool
-    """Recursively rename the snapshots of all descendent resources. Snapshots
+    """Recursively rename the snapshots of all descendant resources. Snapshots
     are the only resource that can be renamed recursively."""
     no_unmount: bool
     """Do not remount file systems during rename. If a filesystem's mountpoint

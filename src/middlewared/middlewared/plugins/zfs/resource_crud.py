@@ -286,7 +286,7 @@ class ZFSResourceService(Service):
                 rv = self.middleware.call_sync("zfs.resource.query", args)
                 extra = "Set recursive=True to remove them."
                 if not rv:
-                    raise ValidationError(schema, f"{path!r} does not exist. {extra}", errno.ENOENT)
+                    raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
                 elif len(rv) > 1:
                     raise ValidationError(schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY)
                 elif not data["all_snapshots"] and rv[0]["snapshots"]:
