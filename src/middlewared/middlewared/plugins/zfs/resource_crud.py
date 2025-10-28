@@ -301,7 +301,7 @@ class ZFSResourceService(Service):
     )
     def destroy(self, data):
         """
-        Destroy a ZFS resource (dataset, volume, or snapshot).
+        Destroy a ZFS resource (filesystem, volume, or snapshot).
 
         This method provides an interface for destroying ZFS resources with support \
         for recursive deletion, clone removal, hold removal, and batch snapshot deletion.
@@ -309,17 +309,14 @@ class ZFSResourceService(Service):
         Args:
             data (dict): Dictionary containing destruction parameters:
                 - path (str): Path of the ZFS resource to destroy. Must be in the form \
-                    'pool/dataset', 'pool/dataset@snapshot', or 'pool/zvol'.
+                    'pool/name', 'pool/name@snapshot', or 'pool/zvol'.
                     Cannot be an absolute path or end with a forward slash.
                 - recursive (bool, optional): If True, recursively destroy all descendants.
-                    For snapshots, destroys the snapshot across all descendant datasets.
+                    For snapshots, destroys the snapshot across all descendant resources and \
+                    also destroy clones and/or holds that may be present.
                     Default: False.
-                - remove_clones (bool, optional): If True, automatically destroy any clones \
-                    of snapshots being destroyed. Default: False.
-                - remove_holds (bool, optional): If True, automatically remove any holds \
-                    preventing snapshot destruction. Default: False.
                 - all_snapshots (bool, optional): If True, destroy all snapshots of the \
-                    specified dataset (dataset remains). Default: False.
+                    specified resource (resource remains). Default: False.
 
         Returns:
             None: On successful destruction.
@@ -328,34 +325,28 @@ class ZFSResourceService(Service):
             ValidationError: Raised in the following cases:
                 - Resource does not exist (ENOENT)
                 - Resource has children and recursive=False (EBUSY)
-                - Snapshot has clones and remove_clones=False
-                - Snapshot has holds and remove_holds=False
                 - Attempting to destroy root filesystem
                 - Path is absolute (starts with /)
                 - Path ends with forward slash
                 - Path references protected internal resources
 
         Examples:
-            # Destroy a simple dataset
+            # Destroy a simple filesystem
             destroy({"path": "tank/temp"})
 
-            # Recursively destroy dataset and all children
+            # Recursively destroy filesystem, snapshots, clones, holds
+            # and all children
             destroy({"path": "tank/parent", "recursive": True})
 
             # Destroy a specific snapshot
-            destroy({"path": "tank/dataset@snapshot1"})
+            destroy({"path": "tank/temp@snapshot1"})
 
-            # Destroy snapshot recursively across all descendants
+            # Recursively destroy the snapshot across all descendant
+            # resources including clone(s), and/or hold(s)
             destroy({"path": "tank/parent@snap", "recursive": True})
 
-            # Destroy all snapshots of a dataset (keep dataset)
-            destroy({"path": "tank/dataset", "all_snapshots": True})
-
-            # Destroy snapshot with clones (automatically remove clones)
-            destroy({"path": "tank/original@snap", "remove_clones": True})
-
-            # Destroy snapshot with holds (automatically release holds)
-            destroy({"path": "tank/dataset@held_snap", "remove_holds": True})
+            # Destroy all snapshots of a resource (keeping "tank/temp")
+            destroy({"path": "tank/temp", "all_snapshots": True})
 
         Notes:
             - Root filesystem destruction is not allowed for safety
