@@ -191,28 +191,21 @@ def test_zfs_resource_destroy_all_snapshots():
     call("zfs.resource.destroy", {"path": source})
 
 
-def test_zfs_resource_destroy_validation_errors():
+@pytest.mark.parametrize(
+    "path,error",
+    [
+        pytest.param("tank", "root filesystem", id="delete root filesystem not allowed"),
+        pytest.param("/tank/dataset", "absolute", id="absolute paths not allowed"),
+        pytest.param("tank/dataset/", "slash", id="trailing forward-slash not allowed"),
+        pytest.param("tank/nonexistent_dataset_xyz123", "not exist", id="dataset doesnt exist")
+    ]
+)
+def test_zfs_resource_destroy_validation_errors(path, error):
     """Test various validation errors"""
 
-    # Test destroying root filesystem
     with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.destroy", {"path": "tank"})
-    assert "root filesystem" in str(exc_info.value).lower()
-
-    # Test absolute path
-    with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.destroy", {"path": "/tank/dataset"})
-    assert "absolute" in str(exc_info.value).lower()
-
-    # Test path ending with slash
-    with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.destroy", {"path": "tank/dataset/"})
-    assert "slash" in str(exc_info.value).lower()
-
-    # Test non-existent dataset
-    with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.destroy", {"path": "tank/nonexistent_dataset_xyz123"})
-    assert "not exist" in str(exc_info.value).lower() or "ENOENT" in str(exc_info.value)
+        call("zfs.resource.destroy", {"path": path})
+    assert error in str(exc_info.value).lower()
 
 
 def test_zfs_resource_destroy_complex_hierarchy():
