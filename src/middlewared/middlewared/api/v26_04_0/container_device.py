@@ -15,7 +15,12 @@ __all__ = [
     'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
     'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceIotypeChoicesArgs',
     'ContainerDeviceIotypeChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
-    'ContainerDeviceNicAttachChoicesResult'
+    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbControllerChoicesArgs',
+    'ContainerDeviceUsbControllerChoicesResult', 'ContainerDeviceUsbDeviceArgs',
+    'ContainerDeviceUsbDeviceResult', 'ContainerDeviceUsbChoicesArgs',
+    'ContainerDeviceUsbChoicesResult', 'ContainerDevicePciDeviceArgs',
+    'ContainerDevicePciDeviceResult', 'ContainerDevicePciDeviceChoicesArgs',
+    'ContainerDevicePciDeviceChoicesResult',
 ]
 
 
@@ -151,7 +156,7 @@ class ContainerDeviceCreate(ContainerDeviceEntry):
     id: Excluded = excluded_field()
 
 
-@single_argument_args('vm_device_create')
+@single_argument_args('container_device_create')
 class ContainerDeviceCreateArgs(ContainerDeviceCreate):
     pass
 
@@ -235,3 +240,134 @@ class ContainerDeviceNicAttachChoicesArgs(BaseModel):
 class ContainerDeviceNicAttachChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
     """Available network interfaces and bridges for Container NIC attachment."""
+
+
+class ContainerDeviceUsbControllerChoicesArgs(BaseModel):
+    pass
+
+
+class ContainerDeviceUsbControllerChoicesResult(BaseModel):
+    result: dict[str, str]
+    """Available USB controller types for containers."""
+
+
+class USBCapability(BaseModel):
+    product: str | None
+    """USB product name. `null` if not available."""
+    product_id: str | None
+    """USB product identifier. `null` if not available."""
+    vendor: str | None
+    """USB vendor name. `null` if not available."""
+    vendor_id: str | None
+    """USB vendor identifier. `null` if not available."""
+    bus: str | None
+    """USB bus number. `null` if not available."""
+    device: str | None
+    """USB device number on bus. `null` if not available."""
+
+
+class ContainerDeviceUsbDeviceArgs(BaseModel):
+    device: NonEmptyString
+    """USB device identifier to get passthrough information for."""
+
+
+class USBPassthroughDevice(BaseModel):
+    capability: USBCapability
+    """USB device capability and identification information."""
+    available: bool
+    """Whether the USB device is available for passthrough to virtual machines."""
+    error: str | None
+    """Error message if the device cannot be used for passthrough. `null` if no error."""
+    description: str
+    """Human-readable description of the USB device."""
+
+
+class ContainerDeviceUsbDeviceResult(BaseModel):
+    result: USBPassthroughDevice
+    """Detailed information about the specified USB passthrough device."""
+
+
+class ContainerDeviceUsbChoicesArgs(BaseModel):
+    pass
+
+
+class ContainerDeviceUsbChoicesResult(BaseModel):
+    result: dict[str, USBPassthroughDevice]
+    """Object of available USB devices for passthrough with their detailed information."""
+
+
+class ContainerDevicePciDeviceArgs(BaseModel):
+    device: NonEmptyString
+    """PCI device identifier to get passthrough information for."""
+
+
+class ContainerDeviceCapability(BaseModel):
+    class_: str | None = Field(alias='class')
+    """PCI device class identifier. `null` if not available."""
+    domain: str | None
+    """PCI domain number. `null` if not available."""
+    bus: str | None
+    """PCI bus number. `null` if not available."""
+    slot: str | None
+    """PCI slot number. `null` if not available."""
+    function: str | None
+    """PCI function number. `null` if not available."""
+    product: str | None
+    """Product name of the PCI device. `null` if not available."""
+    vendor: str | None
+    """Vendor name of the PCI device. `null` if not available."""
+
+
+class ContainerDeviceIOMMUGroupAddress(BaseModel):
+    domain: str
+    """PCI domain number for this IOMMU group address."""
+    bus: str
+    """PCI bus number for this IOMMU group address."""
+    slot: str
+    """PCI slot number for this IOMMU group address."""
+    function: str
+    """PCI function number for this IOMMU group address."""
+
+
+class ContainerDeviceIOMMUGroup(BaseModel):
+    number: int
+    """IOMMU group number for device isolation."""
+    addresses: list[ContainerDeviceIOMMUGroupAddress]
+    """Array of PCI addresses in this IOMMU group."""
+
+
+class ContainerDevicePassthroughDevice(BaseModel):
+    capability: ContainerDeviceCapability
+    """PCI device capability information."""
+    controller_type: str | None
+    """Type of controller this device provides. `null` if not a controller."""
+    iommu_group: ContainerDeviceIOMMUGroup | None = None
+    """IOMMU group information for device isolation. `null` if IOMMU not available."""
+    available: bool
+    """Whether the device is available for passthrough to virtual machines."""
+    drivers: list[str]
+    """Array of kernel drivers currently bound to this device."""
+    error: str | None
+    """Error message if the device cannot be used for passthrough. `null` if no error."""
+    reset_mechanism_defined: bool
+    """Whether the device supports proper reset mechanisms for passthrough."""
+    description: str
+    """Human-readable description of the PCI device."""
+    critical: bool
+    """Whether this device is critical to host system operation."""
+    device_path: str | None
+    """Device filesystem path. `null` if not available."""
+
+
+class ContainerDevicePciDeviceResult(BaseModel):
+    result: ContainerDevicePassthroughDevice
+    """Detailed information about the specified PCI passthrough device."""
+
+
+class ContainerDevicePciDeviceChoicesArgs(BaseModel):
+    pass
+
+
+class ContainerDevicePciDeviceChoicesResult(BaseModel):
+    result: dict[str, ContainerDevicePassthroughDevice]
+    """Object of available PCI devices for passthrough with their detailed information."""

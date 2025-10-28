@@ -1,3 +1,8 @@
+from truenas_pylibvirt.utils.pci import (
+    get_pci_device_default_data, get_all_pci_devices_details, get_single_pci_device_details,
+)
+from truenas_pylibvirt.utils.usb import find_usb_device_by_libvirt_name, get_all_usb_devices
+
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -7,10 +12,16 @@ from middlewared.api.current import (
     ContainerDeviceCreateArgs, ContainerDeviceCreateResult,
     ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
     ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult,
+    ContainerDeviceUsbControllerChoicesArgs, ContainerDeviceUsbControllerChoicesResult,
+    ContainerDeviceUsbDeviceArgs, ContainerDeviceUsbDeviceResult,
+    ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
+    ContainerDevicePciDeviceArgs, ContainerDevicePciDeviceResult,
+    ContainerDevicePciDeviceChoicesArgs, ContainerDevicePciDeviceChoicesResult,
 )
 from middlewared.service import CRUDService, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
+from middlewared.utils.libvirt.usb import USB_CONTROLLER_CHOICES
 
 
 class ContainerDeviceModel(sa.Model):
@@ -110,3 +121,54 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         return (await self.middleware.call('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})) | {
             container_bridge: container_bridge
         }
+
+    @api_method(
+        ContainerDeviceUsbControllerChoicesArgs, ContainerDeviceUsbControllerChoicesResult,
+        roles=['CONTAINER_DEVICE_READ']
+    )
+    async def usb_controller_choices(self):
+        """
+        Retrieve USB controller type choices
+        """
+        return {k: k for k in USB_CONTROLLER_CHOICES if 'qemu' not in k}
+
+    @api_method(
+        ContainerDeviceUsbDeviceArgs, ContainerDeviceUsbDeviceResult,
+        roles=['CONTAINER_DEVICE_READ']
+    )
+    def usb_device(self, device):
+        """
+        Retrieve details about `device` USB device.
+        """
+        return find_usb_device_by_libvirt_name(device)
+
+    @api_method(
+        ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
+        roles=['CONTAINER_DEVICE_READ']
+    )
+    def usb_choices(self):
+        """
+        Available choices for USB passthrough devices.
+        """
+        return get_all_usb_devices()
+
+    @api_method(
+        ContainerDevicePciDeviceArgs, ContainerDevicePciDeviceResult, roles=['CONTAINER_DEVICE_READ']
+    )
+    def pci_device(self, device):
+        """Retrieve details about `device` PCI device"""
+        if device_details := get_single_pci_device_details(device):
+            return device_details[device]
+        else:
+            return {
+                **get_pci_device_default_data(),
+                'error': 'Device not found',
+            }
+
+    @api_method(
+        ContainerDevicePciDeviceChoicesArgs, ContainerDevicePciDeviceChoicesResult,
+        roles=['CONTAINER_DEVICE_READ']
+    )
+    def pci_device_choices(self):
+        """Available choices for PCI passthru devices"""
+        return get_all_pci_devices_details()
