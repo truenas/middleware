@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 import requests
 
 from auto_config import password, user
-from middlewared.test.integration.utils import host
+from middlewared.test.integration.utils import call, host
 
 
 global header
@@ -341,16 +341,19 @@ def ping_host(host, count, timeout=None):
         return process.returncode == 0
 
 
-def wait_on_job(job_id, max_timeout):
+def wait_on_job(job_id: int, max_timeout: int) -> dict:
     global job_results
     timeout = 0
     while True:
-        job_results = GET(f'/core/get_jobs/?id={job_id}')
-        job_state = job_results.json()[0]['state']
+        job_results = call('core.get_jobs', [['id', '=', job_id]], {'get': True})
+        job_state = job_results['state']
+
         if job_state in ('RUNNING', 'WAITING'):
             sleep(5)
         elif job_state in ('SUCCESS', 'FAILED'):
-            return {'state': job_state, 'results': job_results.json()[0]}
+            return {'state': job_state, 'results': job_results}
+
         if timeout >= max_timeout:
-            return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
+            return {'state': 'TIMEOUT', 'results': job_results}
+
         timeout += 5
