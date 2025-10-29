@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class App:
-    def __init__(self, origin: ConnectionOrigin):
+    def __init__(self, origin: ConnectionOrigin | None):
         self.origin = origin
         self.session_id = str(ssl_uuid4())
         self.authenticated = False

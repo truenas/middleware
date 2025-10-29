@@ -40,6 +40,7 @@ class RpcWebSocketAppEvent(enum.Enum):
 
 class RpcWebSocketApp(App):
     def __init__(self, middleware: Middleware, origin: ConnectionOrigin, ws: WebSocketResponse):
+        self.origin: ConnectionOrigin
         super().__init__(origin)
 
         self.websocket = True
