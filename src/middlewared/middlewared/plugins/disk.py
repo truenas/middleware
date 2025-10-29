@@ -3,6 +3,7 @@ from middlewared.api.current import DiskEntry, DiskUpdateArgs, DiskUpdateResult
 from middlewared.service import filterable_api_method, private, CRUDService
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductType
+from middlewared.utils.sed import sed_status
 
 
 class DiskModel(sa.Model):
@@ -92,6 +93,9 @@ class DiskService(CRUDService):
         if context['real_names']:
             disk['real_name'] = context['identifier_to_name'].get(disk['identifier'])
 
+        if context['sed_status']:
+            disk['sed_status'] = sed_status(disk['name'])
+
         return disk
 
     @private
@@ -106,6 +110,7 @@ class DiskService(CRUDService):
             'boot_pool_disks': [],
             'boot_pool_name': None,
             'zfs_guid_to_pool': {},
+            'sed_status': extra.get('sed_status', False),
         }
 
         if context['passwords']:
