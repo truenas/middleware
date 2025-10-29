@@ -1666,11 +1666,21 @@ def test__target_lun_extent_modify(iscsi_running, extent_type):
                             call('iscsi.targetextent.update', textent2['id'], payload)
 
 
-def _isns_wait_for_iqn(isns_client, iqn, timeout=10):
+def _isns_wait_for_iqn(isns_client, iqn, timeout=20):
     iqns = set(isns_client.list_targets())
     while timeout > 0 and iqn not in iqns:
         sleep(1)
         iqns = set(isns_client.list_targets())
+        timeout -= 1
+    return iqns
+
+
+def _isns_wait_for_not_iqn(isns_client, iqn, timeout=20):
+    iqns = set(isns_client.list_targets())
+    while timeout > 0 and iqn in iqns:
+        sleep(1)
+        iqns = set(isns_client.list_targets())
+        timeout -= 1
     return iqns
 
 
@@ -1726,7 +1736,7 @@ def test__test_isns(iscsi_running):
 
                 # Now that iSNS is disabled again, ensure that our target is
                 # no longer advertised
-                iqns = set(isns_client.list_targets())
+                iqns = _isns_wait_for_not_iqn(isns_client, _iqn1)
                 assert _iqn1 not in iqns, _iqn1
 
         # Finally let's ensure that neither target is present.
