@@ -100,6 +100,12 @@ async def unlock_impl(disk: dict[str, str]) -> UnlockResponses:
     return await unlock_tcg_opal_pyrite(disk['path'], disk['passwd'])
 
 
+async def is_sed_disk(disk_name: str) -> bool:
+    devname = f'/dev/{disk_name}'
+    cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
+    return b' SED ' in cp.stdout
+
+
 async def sed_status(disk_name: str):
     cp = await run_sedutil_cmd(['--query', f'/dev/{disk_name}'])
     if cp.returncode != ReturnCodeMappings.SUCCESS:
