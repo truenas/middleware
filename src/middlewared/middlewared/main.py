@@ -1516,6 +1516,60 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         shellapp = ShellApplication(self)
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
 
+        async def get(req):
+            servers = []
+            host = req.headers.get('Host')
+            scheme = req.headers.get('X-Scheme') or req.scheme
+            port = int(req.headers.get('X-Server-Port') or 80)
+
+            if host:
+                # This condition is only cosmetic to avoid specifying 80/443 in the uri
+                if port not in (80, 443):
+                    host = f'{host}:{port}'
+                servers.append({
+                    'url': f'{scheme}://{host}/api/v2.0',
+                })
+
+            result = {
+                'openapi': '3.0.0',
+                'info': {
+                    'title': 'TrueNAS RESTful API',
+                    'version': 'v2.0',
+                },
+                'paths': {},
+                'servers': servers,
+                'components': {
+                    'schemas': {},
+                    'responses': {
+                        'NotFound': {
+                            'description': 'Endpoint not found',
+                        },
+                        'Unauthorized': {
+                            'description': 'No authorization for this endpoint',
+                        },
+                        'Success': {
+                            'description': 'Operation succeeded',
+                        },
+                    },
+                    'securitySchemes': {
+                        'basic': {
+                            'type': 'http',
+                            'scheme': 'basic'
+                        },
+                    },
+                },
+                'security': [{'basic': []}],
+            }
+
+            resp = web.Response()
+            resp.headers['Content-type'] = 'application/json'
+            resp.text = json.dumps(result, indent=True)
+            return resp
+
+        app.router.add_route('GET', '/api/v2.0', get)
+        app.router.add_route('GET', '/api/v2.0/', get)
+        app.router.add_route('GET', '/api/v2.0/openapi.json', get)
+
         self.create_task(self.jobs.run())
 
         # Start up middleware worker process pool
