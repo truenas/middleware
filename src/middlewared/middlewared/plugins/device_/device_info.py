@@ -133,8 +133,6 @@ class DeviceService(Service):
             'rotationrate': None,
             'stripesize': None,  # remove this? (not used)
             'parts': [],
-            # TODO: We should probably have this as optional
-            'sed': self.middleware.call_sync('disk.is_sed', dev.sys_name),
         }
 
         if get_partitions:
