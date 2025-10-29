@@ -68,12 +68,13 @@ def test_query_method(legacy_api_client, query_method):
         return
 
     if (
-        version in APIVersions.GE.value
+        version in APIVersions.FT.value + APIVersions.GE.value
         and query_method in (
             "audit.query",
             "certificate.query",
             "cloudsync.query",
             "container.query",
+            "container.device.query",
             "disk.query",
             "dns.query",
             "interface.query",
