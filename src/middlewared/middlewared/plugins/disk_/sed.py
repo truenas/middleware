@@ -107,7 +107,7 @@ class DiskService(Service):
         return True
 
     @private
-    async def sed_unlock(self, disk_name, force=False):
+    async def sed_unlock_impl(self, disk_name, force=False):
         if not await self.should_try_unlock(force):
             return
 
