@@ -22,6 +22,8 @@ __all__ = (
     "DiskUpdateResult",
     "DiskWipeArgs",
     "DiskWipeResult",
+    "DiskSedUnlockArgs",
+    "DiskSedUnlockResult",
 )
 
 
@@ -209,3 +211,20 @@ class DiskWipeArgs(BaseModel):
 class DiskWipeResult(BaseModel):
     result: None
     """Returns `null` when the disk wipe operation is successfully started."""
+
+
+class DiskSedUnlockArgs(BaseModel):
+    name: NonEmptyString
+    """Name of disk to unlock."""
+    password: NonEmptyString
+    """Password for disk to unlock."""
+    new_password: NonEmptyString = NotRequired
+    """
+    Optional password attribute to change the disk password if the disk 
+    unlock is successful with the provided password.
+    """
+
+
+class DiskSedUnlockResult(BaseModel):
+    result: bool
+    """Returns true if the disk unlock was successful."""
