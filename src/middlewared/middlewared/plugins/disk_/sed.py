@@ -5,7 +5,7 @@ import subprocess
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.service import CallError, Service, private
 from middlewared.utils import run
-from middlewared.utils.sed import unlock_impl
+from middlewared.utils.sed import is_sed_disk, unlock_impl
 
 
 RE_HDPARM_DRIVE_LOCKED = re.compile(r'Security.*\n\s*locked', re.DOTALL)
@@ -122,9 +122,7 @@ class DiskService(Service):
 
     @private
     async def is_sed(self, disk_name):
-        devname = f'/dev/{disk_name}'
-        cp = await run('sedutil-cli', '--isValidSED', devname, check=False)
-        return b' SED ' in cp.stdout
+        return await is_sed_disk(disk_name)
 
     @private
     async def sed_initial_setup(self, disk_name, password):
