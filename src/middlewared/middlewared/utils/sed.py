@@ -40,8 +40,6 @@ class SEDStatus(StrEnum):
     UNINITIALIZED = 'UNINITIALIZED'
     LOCKED = 'LOCKED'
     UNLOCKED = 'UNLOCKED'
-    INITIALIZED = 'INITIALIZED'
-    # TODO: We need to remove this and always make sure we are able to determine LOCKED/UNLOCKED state.
 
 
 async def run_sedutil_cmd(cmd: list[str]) -> CompletedProcess:
@@ -119,4 +117,7 @@ async def sed_status(disk_name: str):
     elif RE_UNLOCKED.search(info):
         return SEDStatus.UNLOCKED
     else:
-        return SEDStatus.INITIALIZED
+        # If we are not able to retrieve locked/unlocked status, we mark it as failed
+        # This should not happen as we only handle SED for enterprise systems but still
+        # better safe than sorry
+        return SEDStatus.FAILED
