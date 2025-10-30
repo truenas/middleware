@@ -248,6 +248,7 @@ class ContainerService(CRUDService):
         Update a Container.
         """
         old = await self.get_instance(id_)
+        del old['devices']
         new = old.copy()
         new.update(data)
 
@@ -281,7 +282,11 @@ class ContainerService(CRUDService):
 
         self.middleware.call_sync('datastore.delete', 'container.container', id_)
 
-        self.middleware.call_sync('pool.dataset.delete', container['dataset'])
+        self.middleware.call_sync(
+            'zfs.resource.destroy_impl', 'container_delete.dataset', {
+                'path': container['dataset'], 'recursive': False, 'all_snapshots': False
+            }
+        )
 
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
