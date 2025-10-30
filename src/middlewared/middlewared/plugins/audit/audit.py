@@ -1,13 +1,9 @@
-import csv
 import errno
 import middlewared.sqlalchemy as sa
 import os
 import shutil
 import time
 import uuid
-import yaml
-
-from truenas_api_client import json as ejson
 
 from .utils import (
     AUDIT_DATASET_PATH,
@@ -222,41 +218,42 @@ class AuditService(ConfigService):
         Supported export_formats are CSV, JSON, and YAML. The endpoint returns a
         local filesystem path where the resulting audit report is located.
         """
+        if data['remote_controller']:
+            raise ValidationError('audit.export.remote_controller',
+                                  'Generating audit reports from remote controller is not currently supported.')
+
         export_format = data.pop('export_format')
         job.set_progress(0, f'Quering data for {export_format} audit report')
-        if not (res := self.middleware.call_sync('audit.query', data)):
-            raise CallError('No entries were returned by query.', errno.ENOENT)
-
         if job.credentials:
             username = job.credentials.user['username']
         else:
             username = 'root'
 
+        # The auditbackend API call will write batches of audit records into the destination directory and then create
+        # a tar.gz file while deleting the the intermediate files. The export job returns the path of the final tar.gz
+        # file.
         target_dir = os.path.join(AUDIT_REPORTS_DIR, username)
-        os.makedirs(target_dir, mode=0o700, exist_ok=True)
+        dirname = f'{uuid.uuid4()}.{export_format.lower()}'
+        destination = os.path.join(target_dir, dirname)  # intermediate directory
+        os.makedirs(destination, mode=0o700, exist_ok=True)
 
-        filename = f'{uuid.uuid4()}.{export_format.lower()}'
-        destination = os.path.join(target_dir, filename)
-        with open(destination, 'w') as f:
-            job.set_progress(50, f'Writing audit report to {destination}.')
-            match export_format:
-                case 'CSV':
-                    fieldnames = res[0].keys()
-                    writer = csv.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    for entry in res:
-                        if entry.get('service_data'):
-                            entry['service_data'] = ejson.dumps(entry['service_data'])
-                        if entry.get('event_data'):
-                            entry['event_data'] = ejson.dumps(entry['event_data'])
-                        writer.writerow(entry)
-                case 'JSON':
-                    ejson.dump(res, f, indent=4)
-                case 'YAML':
-                    yaml.dump(res, f)
+        export_job_id = self.middleware.call_sync('auditbackend.export_to_file',
+                                                  data['services'][0],
+                                                  export_format,
+                                                  destination,
+                                                  data['query-filters'],
+                                                  data['query-options'])
 
-        job.set_progress(100, f'Audit report completed and available at {destination}')
-        return os.path.join(target_dir, destination)
+        try:
+            result = job.wrap_sync(export_job_id)
+        finally:
+            # We ignore errors here because under successful case, the tar command to generate our tarball will delete
+            # `destination` as it goes. This is mostly to catch cases where the job failed and we need to clean up after
+            # ourselves. If for some reason we leave trailing audit reports they'll be cleaned up during the daily
+            # periodic audit backend lifecycle cleanup call.
+            shutil.rmtree(destination, ignore_errors=True)
+
+        return result
 
     @api_method(
         AuditDownloadReportArgs,
@@ -291,14 +288,10 @@ class AuditService(ConfigService):
 
     @private
     def __process_reports_entry(self, entry, cutoff):
-        if not entry.is_file():
-            self.logger.warning(
-                '%s: unexpected item in audit reports directory',
-                entry.name
-            )
-            return
-
-        if not entry.name.endswith(('.csv', '.json', '.yaml')):
+        # The actual reports will be .tar.gz files, but there's always a very minor possibility we had an interrupted
+        # report (for example failover occurred while generating a report) that left an intermediate directory
+        # containing files.
+        if not entry.name.endswith(('.csv', '.json', '.yaml', '.tar.gz')):
             self.logger.warning(
                 '%s: unexpected file type in audit reports directory',
                 entry.name
@@ -309,10 +302,13 @@ class AuditService(ConfigService):
             return
 
         try:
-            os.unlink(entry.path)
+            if entry.is_file():
+                os.unlink(entry.path)
+            else:
+                shutil.rmtree(entry.path)
         except Exception:
             self.logger.error(
-                '%s: failed to remove file for audit reports directory.',
+                '%s: failed to remove from audit reports directory.',
                 entry.name, exc_info=True
             )
 
