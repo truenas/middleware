@@ -220,9 +220,9 @@ class DiskWipeResult(BaseModel):
 class DiskSedUnlockArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to unlock."""
-    password: NonEmptyString
+    password: Secret[NonEmptyString]
     """Password for disk to unlock."""
-    new_password: NonEmptyString = NotRequired
+    new_password: Secret[NonEmptyString] = NotRequired
     """
     Optional password attribute to change the disk password if the disk 
     unlock is successful with the provided password.
@@ -238,7 +238,7 @@ class DiskSedUnlockResult(BaseModel):
 class DiskSedSetupDiskArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to setup."""
-    password: NonEmptyString | None = None
+    password: Secret[NonEmptyString | None] = None
     """
     Password to use to setup the disk. If this is not set, first if a password on disk is set,
     it will be used else global configured SED password will be used.

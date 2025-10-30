@@ -56,6 +56,13 @@ class DiskService(Service):
         if status != 'SUCCESS':
             raise CallError(f'Failed to set up SED disk {disk["name"]!r} (got {status!r} status)')
 
+        # If a user had provided password, we would like to save that to the disk now
+        if options.get('password'):
+            await self.middleware.call('datastore.update', 'storage_disk', disk['identifier'], {
+                'disk_passwd': options['password'],
+            })
+            await self.middleware.call('kmip.sync_sed_keys', [disk['identifier']])
+
         return True
 
     @private
