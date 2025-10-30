@@ -146,6 +146,18 @@ def wait_for_session_count(count: int, retries: int = 5, delay: int = 1, raise_e
         raise ValueError(f'Expected {count} sessions, but have {len(sessions)}')
 
 
+def pick_dataset_details(details, name):
+    for info in details:
+        if info['name'] == name:
+            return info
+
+
+def assert_nvmet_share(share, path, sharetype='ZVOL', enabled=True):
+    assert share['enabled'] == enabled
+    assert share['type'] == sharetype
+    assert share['path'] == path
+
+
 @contextlib.contextmanager
 def nvmet_implementation(name):
     old_config = call('nvmet.global.config')
@@ -512,10 +524,22 @@ class TestNVMe(NVMeRunning):
         zvol1_path = f'zvol/{zvol1["name"]}'
         zvol2_path = f'zvol/{zvol2["name"]}'
 
+        # Check dataset details before we use the zvol
+        details = call('pool.dataset.details')
+        assert pick_dataset_details(details, zvol1["name"])['nvmet_shares'] == []
+        assert pick_dataset_details(details, zvol2["name"])['nvmet_shares'] == []
+
         with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys1:
             subsys1_id = subsys1['id']
             subsys1_nqn = subsys1['nqn']
             with nvmet_namespace(subsys1_id, zvol1_path):
+                # Check dataset details now that ZVOL1 is in use, but ZVOL2 is not
+                details = call('pool.dataset.details')
+                zvol1_nvmet_shares = pick_dataset_details(details, zvol1["name"])['nvmet_shares']
+                assert len(zvol1_nvmet_shares) == 1
+                assert_nvmet_share(zvol1_nvmet_shares[0], f'/dev/{zvol1_path}')
+                assert pick_dataset_details(details, zvol2["name"])['nvmet_shares'] == []
+
                 with nc.connect_ctx(subsys1_nqn):
                     devices = nc.nvme_devices()
                     # Ensure 1 subsystem
@@ -615,6 +639,14 @@ class TestNVMe(NVMeRunning):
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
                         self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, ZVOL2_MB)])
+
+                    details = call('pool.dataset.details')
+                    nvmet_shares = pick_dataset_details(details, zvol1["name"])['nvmet_shares']
+                    assert len(nvmet_shares) == 1
+                    assert_nvmet_share(nvmet_shares[0], f'/dev/zvol/{zvol1["name"]}')
+                    nvmet_shares = pick_dataset_details(details, zvol2["name"])['nvmet_shares']
+                    assert len(nvmet_shares) == 1
+                    assert_nvmet_share(nvmet_shares[0], f'/dev/zvol/{zvol2["name"]}')
 
     def test__zvol_locked_namespace(self,
                                     fixture_port,
@@ -722,6 +754,11 @@ class TestNVMe(NVMeRunning):
         """
         nc = loopback_client
         file1 = f'/mnt/{pool_name}/file1_{digits}'
+
+        # Check dataset details before we use the file
+        details = call('pool.dataset.details')
+        assert pick_dataset_details(details, pool_name)['nvmet_shares'] == []
+
         with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
             subsys_id = subsys['id']
             subsys_nqn = subsys['nqn']
@@ -730,6 +767,11 @@ class TestNVMe(NVMeRunning):
                                  DEVICE_TYPE_FILE,
                                  filesize=MB_100,
                                  delete_options={'remove': True}) as ns:
+                # Check dataset details now that we have a file in use
+                details = call('pool.dataset.details')
+                nvmet_shares = pick_dataset_details(details, pool_name)['nvmet_shares']
+                assert len(nvmet_shares) == 1
+                assert_nvmet_share(nvmet_shares[0], file1, 'FILE')
                 # First ensure that we can discover the subsys with one namespace
                 self.assert_discovery(nc.discover(), [subsys_nqn])
                 # Ensure we're not currently connected
