@@ -1,3 +1,4 @@
+import errno
 import os
 import threading
 import time
@@ -192,6 +193,13 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
         order_by = options.get('order_by', []).copy()
         from_ = conn.table
+
+        if not options['count'] and not options['limit']:
+            raise CallError(
+                'Auditing queries require pagination of results. This means that '
+                'you can either retrieve the row count, or specify a limit on number of '
+                'results.', errno.E2BIG
+            )
 
         if options['count']:
             qs = select(func.count('ROW_ID').label('count')).select_from(from_)

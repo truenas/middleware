@@ -1,4 +1,3 @@
-import asyncio
 import csv
 import errno
 import middlewared.sqlalchemy as sa
@@ -21,7 +20,6 @@ from .utils import (
     AUDIT_REPORTS_DIR,
     AUDITED_SERVICES,
     parse_query_filters,
-    requires_python_filtering,
     setup_truenas_verify,
 )
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
@@ -143,6 +141,18 @@ class AuditService(ConfigService):
         """
         verrors = ValidationErrors()
 
+        if len(data['services']) > 1:
+            raise ValidationError(
+                'audit.query.services',
+                'Querying more than one audit database in a single request is not supported'
+            )
+
+        if not data['query-options']['limit'] and not data['query-options']['count']:
+            raise ValidationError(
+                'audit.query.query-options',
+                'query-options must be set to either gather row count or contain a limit on the rows returned.'
+            )
+
         # If HA, handle the possibility of remote controller requests
         if await self.middleware.call('failover.licensed') and data['remote_controller']:
             data.pop('remote_controller')
@@ -169,12 +179,21 @@ class AuditService(ConfigService):
                 self.logger.exception('Unexpected failure querying remote node for audit entries')
                 raise
 
-        sql_filters = data['query-options']['force_sql_filters']
-
         if (select := data['query-options'].get('select')):
             for idx, entry in enumerate(select):
                 if isinstance(entry, list):
-                    entry = entry[0]
+                    verrors.add(
+                        f'audit.query.query-options.select.{idx}',
+                        '"Select as" operations are not supported in audit queries'
+                    )
+                    continue
+
+                if '.' in entry:
+                    verrors.add(
+                        f'audit.query.query-options.select.{idx}',
+                        'Selecting subkeys of audit entry fields is not supported.'
+                    )
+                    continue
 
                 if entry not in (
                     AUDIT_EVENT_MIDDLEWARE_PARAM_SET
@@ -187,48 +206,11 @@ class AuditService(ConfigService):
                         f'{entry}: column does not exist'
                     )
 
-        services_to_check, filters = parse_query_filters(
-            data['services'], data['query-filters'], sql_filters
-        )
-        if not services_to_check:
-            verrors.add(
-                'audit.query.query-filters',
-                'The combination of filters and specified services would result '
-                'in no databases being queried.'
-            )
-
         verrors.check()
 
-        if sql_filters:
-            filters = data['query-filters']
-            options = data['query-options']
-        else:
-            # Check whether we can pass to SQL backend directly
-            if requires_python_filtering(services_to_check, data['query-filters'], filters, data['query-options']):
-                options = {}
-            else:
-                options = data['query-options']
-                # set sql_filters so that we don't pass through filter_list
-                sql_filters = True
-
-        if options.get('count'):
-            results = 0
-        else:
-            results = []
-
-        # `services_to_check` is a set and so ordering isn't guaranteed;
-        # however, strict ordering when multiple databases are queried is
-        # a requirement for pagination and consistent results.
-        for op in await asyncio.gather(*[
-            self.middleware.call('auditbackend.query', svc, filters, options)
-            for svc in ALL_AUDITED if svc in services_to_check
-        ]):
-            results += op
-
-        if sql_filters:
-            return results
-
-        return filter_list(results, data['query-filters'], data['query-options'])
+        # Validate and possibly reduce filters being passed to backend
+        filters = parse_query_filters(data['query-filters'])
+        return await self.middleware.call('auditbackend.query', data['services'][0], filters, data['query-options'])
 
     @api_method(AuditExportArgs, AuditExportResult, roles=['SYSTEM_AUDIT_READ'], audit='Export Audit Data')
     @job()
