@@ -26,8 +26,8 @@ __all__ = (
     "DiskWipeResult",
     "DiskSedUnlockArgs",
     "DiskSedUnlockResult",
-    "DiskSedSetupDiskArgs",
-    "DiskSedSetupDiskResult",
+    "DiskSetupSedArgs",
+    "DiskSetupSedResult",
 )
 
 
@@ -235,7 +235,7 @@ class DiskSedUnlockResult(BaseModel):
 
 
 @single_argument_args('disk_sed_setup')
-class DiskSedSetupDiskArgs(BaseModel):
+class DiskSetupSedArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to setup."""
     password: Secret[NonEmptyString | None] = None
@@ -245,6 +245,6 @@ class DiskSedSetupDiskArgs(BaseModel):
     """
 
 
-class DiskSedSetupDiskResult(BaseModel):
+class DiskSetupSedResult(BaseModel):
     result: bool
     """Returns true if the disk setup was successful."""

@@ -4,7 +4,7 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DiskSedSetupDiskArgs, DiskSedSetupDiskResult, DiskSedUnlockArgs, DiskSedUnlockResult,
+    DiskSetupSedArgs, DiskSetupSedResult, DiskSedUnlockArgs, DiskSedUnlockResult,
 )
 from middlewared.service import CallError, Service, private, ValidationErrors
 from middlewared.utils import run
@@ -19,7 +19,7 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 class DiskService(Service):
 
-    @api_method(DiskSedSetupDiskArgs, DiskSedSetupDiskResult)
+    @api_method(DiskSetupSedArgs, DiskSetupSedResult, roles=['DISK_WRITE'])
     async def setup_sed(self, options):
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
             'extra': {'sed_status': True, 'passwords': True},
