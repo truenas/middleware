@@ -6,7 +6,7 @@ from time import time
 
 
 URL = "https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/"
-MAX_ADMIN_LOGINS_LISTED = 100
+MAX_LOGINS_LISTED = 100
 
 
 class AdminSessionAlertClass(AlertClass):
@@ -46,15 +46,25 @@ class AdminSessionAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
 
     async def check(self):
+        qf = [
+            ['message_timestamp', '>', now - 86400],
+            ['event', '=', 'AUTHENTICATION'],
+            ['username', 'in', ['root', 'admin', 'truenas_admin']],
+            ['success', '=', True]
+        ]
+
         now = int(time())
+        admin_login_count = await self.middleware.call('audit.query', {
+            'services': ['MIDDLEWARE'],
+            'query-filters': qf,
+            'query-options': {'count': True}
+        })
+        if not admin_login_count:
+            return
+
         admin_logins = await self.middleware.call('audit.query', {
             'services': ['MIDDLEWARE'],
-            'query-filters': [
-                ['message_timestamp', '>', now - 86400],
-                ['event', '=', 'AUTHENTICATION'],
-                ['username', 'in', ['root', 'admin', 'truenas_admin']],
-                ['success', '=', True]
-            ],
+            'query-filters': qf,
             'query-options': {
                 'select': [
                     'message_timestamp',
@@ -65,17 +75,16 @@ class AdminSessionAlertSource(AlertSource):
                     'success'
                 ],
                 'order_by': [
-                    'message_timestamp'
-                ]
+                    '-message_timestamp'
+                ],
+                'limit': MAX_LOGINS_LISTED
             }
         })
-        if not admin_logins:
-            return
 
-        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins[-MAX_ADMIN_LOGINS_LISTED:]])
+        audit_msg = ','.join([audit_entry_to_msg(entry) for entry in admin_logins])
         return Alert(
             AdminSessionAlertClass,
-            {'count': len(admin_logins), 'sessions': audit_msg},
+            {'count': admin_login_count, 'sessions': audit_msg},
             key=None
         )
 
@@ -86,14 +95,24 @@ class APIFailedLoginAlertSource(AlertSource):
 
     async def check(self):
         now = int(time())
+        qf = [
+            ['message_timestamp', '>', now - 86400],
+            ['event', '=', 'AUTHENTICATION'],
+            ['username', '!=', UNAUTHENTICATED],
+            ['success', '=', False]
+        ]
+
+        auth_failure_count = await self.middleware.call('audit.query', {
+            'services': ['MIDDLEWARE'],
+            'query-filters': qf,
+            'query-options': {'count': True}
+        })
+        if not auth_failure_count:
+            return
+
         auth_failures = await self.middleware.call('audit.query', {
             'services': ['MIDDLEWARE'],
-            'query-filters': [
-                ['message_timestamp', '>', now - 86400],
-                ['event', '=', 'AUTHENTICATION'],
-                ['username', '!=', UNAUTHENTICATED],
-                ['success', '=', False]
-            ],
+            'query-filters': qf,
             'query-options': {
                 'select': [
                     'message_timestamp',
@@ -102,7 +121,11 @@ class APIFailedLoginAlertSource(AlertSource):
                     'username',
                     'address',
                     'success'
-                ]
+                ],
+                'order_by': [
+                    '-message_timestamp'
+                ],
+                'limit': MAX_LOGINS_LISTED
             }
         })
         if not auth_failures:
@@ -111,6 +134,6 @@ class APIFailedLoginAlertSource(AlertSource):
         audit_msg = ','.join([audit_entry_to_msg(entry) for entry in auth_failures])
         return Alert(
             APIFailedLoginAlertClass,
-            {'count': len(auth_failures), 'sessions': audit_msg},
+            {'count': auth_failure_count, 'sessions': audit_msg},
             key=None
         )

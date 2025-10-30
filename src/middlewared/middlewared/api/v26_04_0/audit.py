@@ -66,7 +66,7 @@ class AuditEntry(BaseModel):
 
 
 class AuditQuery(BaseModel):
-    services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = ['MIDDLEWARE', 'SUDO']
+    services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = ['MIDDLEWARE']
     """Array of services to include in the audit query."""
     query_filters: QueryFilters = Field(alias='query-filters', default=[])
     """Array of filters to apply to the audit query results."""
