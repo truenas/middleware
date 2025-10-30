@@ -21,6 +21,9 @@ class DiskService(Service):
 
     @api_method(DiskSetupSedArgs, DiskSetupSedResult, roles=['DISK_WRITE'])
     async def setup_sed(self, options):
+        """
+        Setup specified `options.name` SED disk.
+        """
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
             'extra': {'sed_status': True, 'passwords': True},
             'force_sql_filters': True,
