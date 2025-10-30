@@ -109,7 +109,7 @@ def parse_filter(filter_in, filters_out):
 
     if filter_in[0] not in SQL_SAFE_FIELDS:
         raise ValueError(
-            f'{filters_in[0]}: specified filter field may not be ' 
+            f'{filter_in[0]}: specified filter field may not be '
             'specified for filtering on audit queries'
         )
 
