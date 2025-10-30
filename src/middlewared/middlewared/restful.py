@@ -2,12 +2,11 @@ import asyncio
 import base64
 import binascii
 from collections import defaultdict
-import copy
 import errno
 import pam
 import traceback
 import types
-import typing
+from typing import Any, Literal, LiteralString, TypeAlias, TypedDict, Union, TYPE_CHECKING
 import urllib.parse
 
 from aiohttp import web
@@ -16,7 +15,10 @@ from truenas_api_client import json
 
 from .api.base.server.app import App
 from .auth import (
-    ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials, AuthenticationContext,
+    ApiKeySessionManagerCredentials,
+    LoginPasswordSessionManagerCredentials,
+    TokenSessionManagerCredentials,
+    AuthenticationContext,
     dump_credentials
 )
 from .job import Job
@@ -25,11 +27,50 @@ from .service_exception import adapt_exception, CallError, MatchNotFound, Valida
 from .utils.account.authenticator import ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator
 from .utils.auth import AA_LEVEL1, CURRENT_AAL
 from .utils.origin import ConnectionOrigin
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
+if TYPE_CHECKING:
+    from aiohttp import BodyPartReader
+    from .api.base.types import HttpVerb
+    from .main import Middleware
+    from .pipe import Pipe
 
 
-def parse_credentials(request):
+class TokenDict(TypedDict):
+    token: str
+
+
+class LoginDict(TypedDict):
+    username: str
+    password: str
+
+
+class APIKeyDict(TypedDict):
+    api_key: str
+
+
+class TokenCredentialsDict(TypedDict):
+    credentials: Literal['TOKEN']
+    credentials_data: TokenDict
+
+
+class LoginCredentialsDict(TypedDict):
+    credentials: Literal['LOGIN_PASSWORD']
+    credentials_data: LoginDict
+
+
+class KeyCredentialsDict(TypedDict):
+    credentials: Literal['API_KEY']
+    credentials_data: APIKeyDict
+
+
+CredentialsDict: TypeAlias = TokenCredentialsDict | LoginCredentialsDict | KeyCredentialsDict
+SessionManagerCredentials: TypeAlias = Union[
+    TokenSessionManagerCredentials,
+    LoginPasswordSessionManagerCredentials,
+    ApiKeySessionManagerCredentials
+]
+
+
+def parse_credentials(request: web.Request) -> CredentialsDict | None:
     auth = request.headers.get('Authorization')
     if auth is None:
         qs = urllib.parse.parse_qs(request.query_string)
@@ -42,7 +83,8 @@ def parse_credentials(request):
             }
         else:
             return None
-    elif auth.startswith('Token '):
+
+    if auth.startswith('Token '):
         token = auth.split(' ', 1)[1]
         return {
             'credentials': 'TOKEN',
@@ -66,7 +108,8 @@ def parse_credentials(request):
                 'password': password,
             },
         }
-    elif auth.startswith('Bearer '):
+
+    if auth.startswith('Bearer '):
         key = auth.split(' ', 1)[1]
 
         return {
@@ -77,76 +120,81 @@ def parse_credentials(request):
         }
 
 
-async def authenticate(app, middleware, request, credentials, method, resource):
-    if credentials['credentials'] == 'TOKEN':
-        origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
-        # We are using the UnixPamAuthenticator here because we are generating a
-        # fresh login based on the username in base token's credentials
-        app.authentication_context.pam_hdl = UnixPamAuthenticator()
-        try:
-            token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
-                                          origin, method, resource, app=app)
-        except CallError as ce:
-            raise web.HTTPForbidden(text=ce.errmsg)
+async def authenticate(
+    app: App,
+    middleware: 'Middleware',
+    request: web.Request,
+    credentials: CredentialsDict,
+    method: 'HttpVerb',
+    resource: str
+) -> SessionManagerCredentials:
+    match credentials['credentials']:
+        case 'TOKEN':
+            origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
+            # We are using the UnixPamAuthenticator here because we are generating a
+            # fresh login based on the username in base token's credentials
+            app.authentication_context.pam_hdl = UnixPamAuthenticator()
+            try:
+                token = await middleware.call(
+                    'auth.get_token_for_action',
+                    credentials['credentials_data']['token'],
+                    origin,
+                    method,
+                    resource,
+                    app=app
+                )
+            except CallError as ce:
+                raise web.HTTPForbidden(text=ce.errmsg)
 
-        if token is None:
-            raise web.HTTPForbidden(text='Invalid token')
+            if token is None:
+                raise web.HTTPForbidden(text='Invalid token')
 
-        return token
-    elif credentials['credentials'] == 'LOGIN_PASSWORD':
-        twofactor_auth = await middleware.call('auth.twofactor.config')
-        if twofactor_auth['enabled']:
-            raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
+            return token
 
-        app.authentication_context.pam_hdl = UserPamAuthenticator()
-        resp = await middleware.call('auth.authenticate_plain',
-                                     credentials['credentials_data']['username'],
-                                     credentials['credentials_data']['password'], app=app)
-        if resp['pam_response']['code'] != pam.PAM_SUCCESS:
-            raise web.HTTPUnauthorized(text='Bad username or password')
+        case 'LOGIN_PASSWORD':
+            twofactor_auth = await middleware.call('auth.twofactor.config')
+            if twofactor_auth['enabled']:
+                raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
-        return LoginPasswordSessionManagerCredentials(
-            resp['user_data'],
-            assurance=CURRENT_AAL.level,
-            authenticator=app.authentication_context.pam_hdl
-        )
-    elif credentials['credentials'] == 'API_KEY':
-        if CURRENT_AAL.level is not AA_LEVEL1:
-            raise web.HTTPForbidden(
-                text='API key authentication is not permitted by server authentication security level'
+            app.authentication_context.pam_hdl = UserPamAuthenticator()
+            resp = await middleware.call(
+                'auth.authenticate_plain',
+                credentials['credentials_data']['username'],
+                credentials['credentials_data']['password'],
+                app=app
+            )
+            if resp['pam_response']['code'] != pam.PAM_SUCCESS:
+                raise web.HTTPUnauthorized(text='Bad username or password')
+
+            return LoginPasswordSessionManagerCredentials(
+                resp['user_data'],
+                assurance=CURRENT_AAL.level,
+                authenticator=app.authentication_context.pam_hdl
             )
 
-        app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
-        api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
-        if api_key is None:
-            raise web.HTTPUnauthorized(text='Invalid API key')
+        case 'API_KEY':
+            if CURRENT_AAL.level is not AA_LEVEL1:
+                raise web.HTTPForbidden(
+                    text='API key authentication is not permitted by server authentication security level'
+                )
 
-        return ApiKeySessionManagerCredentials(
-            *api_key,
-            assurance=CURRENT_AAL.level,
-            authenticator=app.authentication_context.pam_hdl
-        )
-    else:
-        raise web.HTTPUnauthorized()
+            app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
+            api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
+            if api_key is None:
+                raise web.HTTPUnauthorized(text='Invalid API key')
 
+            return ApiKeySessionManagerCredentials(
+                *api_key,
+                assurance=CURRENT_AAL.level,
+                authenticator=app.authentication_context.pam_hdl
+            )
 
-def create_application_impl(request, credentials=None):
-    return Application(ConnectionOrigin.create(request), credentials)
-
-
-async def create_application(request, credentials=None):
-    return await asyncio.to_thread(create_application_impl, request, credentials)
-
-
-def normalize_query_parameter(value):
-    try:
-        return json.loads(value)
-    except json.json.JSONDecodeError:
-        return value
+        case _:
+            raise web.HTTPUnauthorized()
 
 
 class Application(App):
-    def __init__(self, origin, authenticated_credentials):
+    def __init__(self, origin: ConnectionOrigin, authenticated_credentials: SessionManagerCredentials | None):
         super().__init__(origin)
         self.session_id = None
         self.authenticated = authenticated_credentials is not None
@@ -155,23 +203,34 @@ class Application(App):
         self.rest = True
 
 
+def create_application_impl(
+    request: web.Request, credentials: SessionManagerCredentials | None = None
+) -> Application:
+    return Application(ConnectionOrigin.create(request), credentials)
+
+
+async def create_application(
+    request: web.Request, credentials: SessionManagerCredentials | None = None
+) -> Application:
+    return await asyncio.to_thread(create_application_impl, request, credentials)
+
+
 class RESTfulAPI:
     """Used to register REST endpoints for the resttest plugin.
 
     Shaved down from the full REST API in NAS-136965.
 
     """
-    def __init__(self, middleware: 'Middleware', app):
+    def __init__(self, middleware: 'Middleware', app: web.Application):
         self.middleware = middleware
         self.app = app
         # Keep methods cached for future lookups
         self.methods = {}
 
-    async def register_resources(self):
-        resttest_service = self.middleware.get_service('resttest')
-        service_resource = Resource(self, self.middleware, 'resttest', resttest_service._config)
+    async def register_resources(self) -> None:
+        service_resource = Resource(self, self.middleware, 'resttest')
 
-        for methodname, method in list((await self.middleware.call('core.get_methods', 'resttest', 'REST')).items()):
+        for methodname, method in (await self.middleware.call('core.get_methods', 'resttest', 'REST')).items():
             self.methods[methodname] = method
             short_methodname = methodname.rsplit('.', 1)[-1]
 
@@ -179,7 +238,6 @@ class RESTfulAPI:
                 self,
                 self.middleware,
                 short_methodname,
-                resttest_service._config,
                 parent=service_resource,
                 post=methodname
             )
@@ -198,7 +256,6 @@ class Resource(object):
         rest: RESTfulAPI,
         middleware: 'Middleware',
         name: str,
-        service_config,
         parent: 'Resource | None' = None,
         post: str | None = None
     ):
@@ -206,8 +263,7 @@ class Resource(object):
         self.middleware = middleware
         self.name = name
         self.parent = parent
-        self.service_config = service_config
-        self.__method_params = {}
+        self.__method_params: dict[str, dict] = {}
 
         path = self.get_path()
         if post:
@@ -218,7 +274,7 @@ class Resource(object):
 
         self.middleware.logger.trace(f"add route {path}")
 
-    def __map_method_params(self, method_name):
+    def __map_method_params(self, method_name: str) -> None:
         """
         Middleware methods which accepts more than one argument are mapped to a single
         schema of object type.
@@ -250,7 +306,7 @@ class Resource(object):
 
         do = object.__getattribute__(self, 'do')
 
-        async def on_method(req, *args, **kwargs):
+        async def on_method(req: web.Request, *args, **kwargs) -> web.StreamResponse:
             resp = web.Response()
             info = req.match_info.route.resource.get_info()
 
@@ -310,7 +366,7 @@ class Resource(object):
 
         return on_method
 
-    def get_path(self):
+    def get_path(self) -> LiteralString:
         path = []
         parent = self.parent
         while parent is not None:
@@ -320,11 +376,11 @@ class Resource(object):
         path.append(self.name)
         return '/'.join(path)
 
-    async def parse_rest_json_request(self, req, resp):
+    async def parse_rest_json_request(self, req: web.Request, resp: web.Response) -> tuple[Any, bool]:
         body, error = None, False
         try:
             body = await req.json()
-        except json.decoder.JSONDecodeError as e:
+        except json.json.JSONDecodeError as e:
             resp.set_status(400)
             resp.headers['Content-type'] = 'application/json'
             resp.text = json.dumps({
@@ -335,7 +391,9 @@ class Resource(object):
 
         return body, error
 
-    async def do(self, req, resp, app, authorized, **kwargs):
+    async def do(
+        self, req: web.Request, resp: web.Response, app: Application, authorized: bool, **kwargs
+    ) -> web.StreamResponse:
         method = self.rest.methods[self.post]
 
         method_kwargs = {}
@@ -575,7 +633,7 @@ class Resource(object):
         return resp
 
 
-def copy_multipart_to_pipe(loop, filepart, pipe):
+def copy_multipart_to_pipe(loop: asyncio.AbstractEventLoop, filepart: 'BodyPartReader', pipe: 'Pipe') -> None:
     try:
         try:
             while True:
