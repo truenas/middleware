@@ -29,8 +29,8 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, CRUDService, job, private
-from middlewared.service_exception import ValidationError
 from middlewared.utils import run
+from middlewared.service_exception import InstanceNotFound, ValidationError
 
 from .devices.storage_devices import IOTYPE_CHOICES
 from .devices import DEVICES
@@ -171,6 +171,20 @@ class VMDeviceService(CRUDService):
             raise ValidationError(schema, f'{ptn!r} is in a protected system path', errno.EACCES)
         elif not os.path.exists(ntp):
             raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
+
+        for i in self.middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISK']]):
+            vmzv = i['attributes'].get('path')
+            if vmzv and vmzv == ntp:
+                try:
+                    vm = self.middleware.call_sync('vm.get_instance', i['vm'])
+                    if vm['status']['state'] == 'RUNNING':
+                        raise ValidationError(
+                            schema,
+                            f'{vmzv!r} is part of running VM. {vm["name"]!r} must be stopped first',
+                            errno.EBUSY
+                        )
+                except InstanceNotFound:
+                    pass
 
         return zv, ntp
 
