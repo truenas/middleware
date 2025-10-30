@@ -4,12 +4,12 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DiskSetupSedArgs, DiskSetupSedResult, DiskSedUnlockArgs, DiskSedUnlockResult,
+    DiskSetupSedArgs, DiskSetupSedResult, DiskUnlockSedArgs, DiskUnlockSedResult,
 )
 from middlewared.service import CallError, Service, private, ValidationErrors
 from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.sed import is_sed_disk, unlock_impl
+from middlewared.utils.sed import is_sed_disk, SEDStatus, unlock_impl
 
 
 RE_HDPARM_DRIVE_LOCKED = re.compile(r'Security.*\n\s*locked', re.DOTALL)
@@ -19,34 +19,38 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 class DiskService(Service):
 
-    @api_method(DiskSetupSedArgs, DiskSetupSedResult, roles=['DISK_WRITE'])
-    async def setup_sed(self, options):
-        """
-        Setup specified `options.name` SED disk.
-        """
+    @private
+    async def common_sed_validation(self, schema, options, status_to_check):
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
             'extra': {'sed_status': True, 'passwords': True},
             'force_sql_filters': True,
         })
         verrors = ValidationErrors()
         if not disk:
-            verrors.add('disk_sed_setup.name', f'{options["name"]!r} is not a valid disk')
+            verrors.add(f'{schema}.name', f'{options["name"]!r} is not a valid disk')
 
         verrors.check()
         disk = disk[0]
         if disk['sed'] is False:
-            verrors.add('disk_sed_setup.name', f'{options["name"]!r} is not a SED disk')
+            verrors.add(f'{schema}.name', f'{options["name"]!r} is not a SED disk')
 
         verrors.check()
 
-        if disk['sed_status'] != 'UNINITIALIZED':
+        if disk['sed_status'] != status_to_check:
             verrors.add(
-                'disk_sed_setup.name',
-                f'{options["name"]!r} SED status is not UNINITIALIZED (currently is {disk['sed_status']!r})'
+                f'{schema}.name',
+                f'{options["name"]!r} SED status is not {status_to_check} (currently is {disk['sed_status']})'
             )
 
         verrors.check()
+        return disk, verrors
 
+    @api_method(DiskSetupSedArgs, DiskSetupSedResult, roles=['DISK_WRITE'])
+    async def setup_sed(self, options):
+        """
+        Setup specified `options.name` SED disk.
+        """
+        disk, verrors = await self.common_sed_validation('disk_sed_setup', options, SEDStatus.UNINITIALIZED)
         password = options.get('password') or disk['passwd'] or (
             await self.middleware.call('system.advanced.sed_global_password')
         )
@@ -67,6 +71,15 @@ class DiskService(Service):
             await self.middleware.call('kmip.sync_sed_keys', [disk['identifier']])
 
         return True
+
+    @api_method(DiskUnlockSedArgs, DiskUnlockSedResult, roles=['DISK_WRITE'])
+    async def unlock_sed(self, options):
+        """
+        Unlock specified `options.name` SED disk.
+        """
+        name = options['name']
+        verrors = ValidationErrors()
+
 
     @private
     async def should_try_unlock(self, force=False):
