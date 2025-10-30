@@ -8,9 +8,9 @@ from middlewared.utils import run
 __all__ = ("unlock_impl", "is_sed_disk", "sed_status")
 
 
-RE_INITIALIZED = re.compile(r'(LockingEnabled\s*:\s*(?:1|Y)|Locking\s*=\s*enabled)', re.IGNORECASE | re.MULTILINE)
-RE_LOCKED = re.compile(r'(Locked\s*:\s*1|Locked\s*=\s*Y)', re.IGNORECASE | re.MULTILINE)
-RE_UNLOCKED = re.compile(r'(Locked\s*:\s*0|Locked\s*=\s*N)', re.IGNORECASE | re.MULTILINE)
+RE_INITIALIZED = re.compile(r'LockingEnabled\s*=\s*Y', re.IGNORECASE | re.MULTILINE)
+RE_LOCKED = re.compile(r'Locked\s*=\s*Y', re.IGNORECASE | re.MULTILINE)
+RE_UNLOCKED = re.compile(r'Locked\s*=\s*N', re.IGNORECASE | re.MULTILINE)
 
 
 class ReturnCodeMappings(IntEnum):
