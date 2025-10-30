@@ -52,7 +52,11 @@ class DiskService(Service):
 
         verrors.check()
 
-        
+        status = await self.sed_initial_setup(disk['name'], password)
+        if status != 'SUCCESS':
+            raise CallError(f'Failed to set up SED disk {disk["name"]!r} (got {status!r} status)')
+
+        return True
 
     @private
     async def should_try_unlock(self, force=False):
