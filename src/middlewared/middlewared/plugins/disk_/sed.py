@@ -2,9 +2,13 @@ import errno
 import re
 import subprocess
 
-from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.service import CallError, Service, private
+from middlewared.api import api_method
+from middlewared.api.current import (
+    DiskSedSetupDiskArgs, DiskSedSetupDiskResult, DiskSedUnlockArgs, DiskSedUnlockResult,
+)
+from middlewared.service import CallError, Service, private, ValidationErrors
 from middlewared.utils import run
+from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.sed import is_sed_disk, unlock_impl
 
 
@@ -14,6 +18,41 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 
 class DiskService(Service):
+
+    @api_method(DiskSedSetupDiskArgs, DiskSedSetupDiskResult)
+    async def setup_sed(self, options):
+        disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
+            'extra': {'sed_status': True, 'passwords': True},
+            'force_sql_filters': True,
+        })
+        verrors = ValidationErrors()
+        if not disk:
+            verrors.add('disk_sed_setup.name', f'{options["name"]!r} is not a valid disk')
+
+        verrors.check()
+        disk = disk[0]
+        if disk['sed'] is False:
+            verrors.add('disk_sed_setup.name', f'{options["name"]!r} is not a SED disk')
+
+        verrors.check()
+
+        if disk['sed_status'] != 'UNINITIALIZED':
+            verrors.add(
+                'disk_sed_setup.name',
+                f'{options["name"]!r} SED status is not UNINITIALIZED (currently is {disk['sed_status']!r})'
+            )
+
+        verrors.check()
+
+        password = options.get('password') or disk['passwd'] or (
+            await self.middleware.call('system.advanced.sed_global_password')
+        )
+        if not password:
+            verrors.add('disk_sed_setup.password', f'Please specify a password to be used for setting up SED disk')
+
+        verrors.check()
+
+        
 
     @private
     async def should_try_unlock(self, force=False):

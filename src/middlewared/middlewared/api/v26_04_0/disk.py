@@ -3,7 +3,9 @@ from typing import Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Excluded, excluded_field
+from middlewared.api.base import (
+    BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Excluded, excluded_field, single_argument_args,
+)
 from .alert import Alert
 
 __all__ = (
@@ -232,12 +234,14 @@ class DiskSedUnlockResult(BaseModel):
     """Returns true if the disk unlock was successful."""
 
 
+@single_argument_args('disk_sed_setup')
 class DiskSedSetupDiskArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to setup."""
     password: NonEmptyString | None = None
     """
-    Password to use to setup the disk. If this is not set, global configured SED password will be used.
+    Password to use to setup the disk. If this is not set, first if a password on disk is set,
+    it will be used else global configured SED password will be used.
     """
 
 

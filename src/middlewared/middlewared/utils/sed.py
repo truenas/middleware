@@ -5,7 +5,7 @@ from subprocess import CompletedProcess
 
 from middlewared.utils import run
 
-__all__ = ("unlock_impl",)
+__all__ = ("unlock_impl", "is_sed_disk", "sed_status")
 
 
 RE_INITIALIZED = re.compile(r'(LockingEnabled\s*:\s*(?:1|Y)|Locking\s*=\s*enabled)', re.IGNORECASE | re.MULTILINE)
