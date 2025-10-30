@@ -204,6 +204,7 @@ class DiskService(Service, ServiceChangeMixin):
             else:
                 self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
                 changed.add(disk['disk_identifier'])
+                qs.append(disk)
 
         if dif_formatted_disks:
             self.middleware.call_sync('alert.oneshot_create', 'DifFormatted', dif_formatted_disks)
