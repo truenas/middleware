@@ -1,21 +1,25 @@
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 
 
-ACTIVE_STATES = ['RUNNING', 'SUSPENDED']
+ACTIVE_STATES = ('RUNNING', 'SUSPENDED')
 LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
 
 
+def translate_device(dev: dict) -> str:
+    # A disk should have a path configured at all times, when that is not the case, that means `dtype` is DISK
+    # and end user wants to create a new zvol in this case.
+    zvol_name = zvol_name_to_path(dev['attributes']['zvol_name']) if dev['attributes'].get('zvol_name') else None
+    return dev['attributes'].get('path') or zvol_name or dev['attributes']['target']
+
+
 def disk_uniqueness_integrity_check(device: dict, instance: dict):
     # This ensures that the disk is not already present for `instance`
-    def translate_device(dev):
-        # A disk should have a path configured at all times, when that is not the case, that means `dtype` is DISK
-        # and end user wants to create a new zvol in this case.
-        return dev['attributes'].get('path') or zvol_name_to_path(dev['attributes']['zvol_name'])
-
     disks = [
         d for d in instance['devices']
-        if d['attributes']['dtype'] in ('DISK', 'RAW', 'CDROM') and translate_device(d) == translate_device(device)
+        if d['attributes']['dtype'] in (
+            'DISK', 'RAW', 'CDROM', 'FILESYSTEM',
+        ) and translate_device(d) == translate_device(device)
     ]
     if not disks:
         # We don't have that disk path in instance devices, we are good to go
