@@ -419,9 +419,8 @@ class VMDeviceUsbControllerChoicesArgs(BaseModel):
     pass
 
 
-@single_argument_result
 class VMDeviceUsbControllerChoicesResult(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    result: dict[str, str]
     """Available USB controller types for virtual machines."""
 
 
