@@ -85,115 +85,53 @@ def generate_audit_table(svc, vers):
     )
 
 
-def parse_query_filters(
-    services: list,
-    filters: list,
-    skip_sql_filters: bool
-) -> tuple:
+def parse_filter(filter_in, filters_out):
+    # handle OR
+    if len(filter_in) == 2:
+        if filter_in[0] != 'OR':
+            raise ValueError(f'{filter_in}: invalid filter')
+
+        for f in filter_in[1]:
+            parse_filter(f, filters_out)
+
+        return
+
+    if len(filter_in) != 3:
+        raise ValueError(f'{filter_in}: invalid filter')
+
+    # check operation field
+    if filter_in[0] == 'service':
+        # Since we are now limiting to a single service we'll
+        # just ignore filters that try to change what service
+        # we're querying. The filter would either have no effect at
+        # all or change the query to have no results. Neither option
+        # is particularly useful
+        return
+
+    if filter_in[0] not in SQL_SAFE_FIELDS:
+        raise ValueError(
+            f'{filter_in[0]}: specified filter field may not be '
+            'specified for filtering on audit queries'
+        )
+
+    filters_out.append(filter_in)
+
+
+def parse_query_filters(filters: list) -> list:
     """
     NOTE: this method should only be called by audit.query
 
-    This method tries to optimize audit query based on provided filter.
-    Optimizations are:
-
-    1. limit databases queried
-    2. generate sql filters where appropriate
-
-    returns a tuple of services that should be queried on backend and validated
-    SQL-safe filters.
-
-    We err on side of caution here since we're dealing with audit results.
-    This means that we skip optimized filters if the field is a JSON one, and
-    do not try to pass disjunctions to sqlalchemy. In future if needed we
-    can loosen these restrictions with appropriate levels of testing and
-    validation in auditbackend plugin.
+    This method parses the user-provided query-filters and determines
+    whether they're safe to pass directly to the SQL backend. Non-safe
+    query-fiters will raise a ValueError that call site will change to
+    ValidationError.
     """
-    services_to_check = services_in = set(services)
     filters_out = []
 
     for f in filters:
-        if len(f) != 3:
-            continue
+        parse_filter(f, filters_out)
 
-        if f[0] == 'service':
-            # we are potentially limiting which services may be audited
-
-            if isinstance(f[2], str):
-                svcs = set([f[2]])
-            else:
-                svcs = set(f[2])
-
-            match f[1]:
-                case '=' | 'in':
-                    if services_in == services_to_check:
-                        services_to_check = svcs
-                    else:
-                        services_to_check = services_to_check & svcs
-                case '!=' | 'nin':
-                    services_to_check = services_to_check - svcs
-                case _:
-                    # Other filters quite unlikely to be used
-                    # by end-users so we'll just skip optimization
-                    # and rely on filter_list later on
-                    pass
-
-            if not services_to_check:
-                # These filters are guaranteed to have no results. Bail
-                # early and let caller handle it.
-                break
-
-        if skip_sql_filters:
-            # User has manually specified to pass all these filters to datastore
-            continue
-
-        if f[0] not in SQL_SAFE_FIELDS:
-            # Keys that contain JSON data are not currently supported
-            continue
-
-        filters_out.append(f)
-
-    return (services_to_check, filters_out)
-
-
-def requires_python_filtering(
-    services: list,
-    filters_in: list,
-    filters_for_sql: list,
-    options: dict
-) -> bool:
-    """
-    There are situations where we have to perform additional audit filtering
-    in python via `filter_list`.
-
-    1. Not all user specified filters could be converted directly into an SQL
-       statement for auditbackend.query.
-
-    2. We are selecting a subkey within a JSON object.
-
-    3. Multiple services are being queried and pagination options are being used
-       or a specific ordering is specified.
-    """
-    if filters_in != filters_for_sql:
-        # We will need to do additional filtering after retrieval
-        return True
-
-    if (to_investigate := set(options.get('select', [])) - set(SQL_SAFE_FIELDS)):
-        # Field is being selected that may not be safe for SQL select
-        for entry in to_investigate:
-            # Selecting subkey in entry is not currently supported
-            if '.' in entry or isinstance(entry, tuple):
-                return True
-
-    if len(services) > 1:
-        # When we have more than one database being queried we
-        # often need to pass the aggregated results to filter_list
-        if options.get('offset') or options.get('limit'):
-            # We need to do pagination on total results.
-            return True
-        if options.get('order_by'):
-            return True
-
-    return False
+    return filters_out
 
 
 AUDIT_TABLES = {svc[0]: generate_audit_table(*svc) for svc in AUDITED_SERVICES}
