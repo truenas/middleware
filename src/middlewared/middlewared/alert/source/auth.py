@@ -46,6 +46,7 @@ class AdminSessionAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
 
     async def check(self):
+        now = int(time())
         qf = [
             ['message_timestamp', '>', now - 86400],
             ['event', '=', 'AUTHENTICATION'],
@@ -53,7 +54,6 @@ class AdminSessionAlertSource(AlertSource):
             ['success', '=', True]
         ]
 
-        now = int(time())
         admin_login_count = await self.middleware.call('audit.query', {
             'services': ['MIDDLEWARE'],
             'query-filters': qf,
