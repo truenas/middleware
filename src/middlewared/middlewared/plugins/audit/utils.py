@@ -26,6 +26,10 @@ SQL_SAFE_FIELDS = frozenset([
     'success',
 ])
 AUDIT_LOG_PATH_NAME = mtree_verify.LOG_PATH_NAME
+# Number of entries yielded by our batched iterator. This should match
+# the max limit for audit pagination so that we only ever have to deal
+# with one batch
+AUDIT_CHUNK_SZ = 10000  # number of audit entries yielded by iterator
 
 AuditBase = declarative_base()
 
