@@ -26,7 +26,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, CRUDService, job, private
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import InstanceNotFound, ValidationError
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
 
@@ -174,6 +174,20 @@ class VMDeviceService(CRUDService, DeviceMixin):
             raise ValidationError(schema, f'{ptn!r} is in a protected system path', errno.EACCES)
         elif not os.path.exists(ntp):
             raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
+
+        for i in self.middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISK']]):
+            vmzv = i['attributes'].get('path')
+            if vmzv and vmzv == ntp:
+                try:
+                    vm = self.middleware.call_sync('vm.get_instance', i['vm'])
+                    if vm['status']['state'] == 'RUNNING':
+                        raise ValidationError(
+                            schema,
+                            f'{vmzv!r} is part of running VM. {vm["name"]!r} must be stopped first',
+                            errno.EBUSY
+                        )
+                except InstanceNotFound:
+                    pass
 
         return zv, ntp
 
