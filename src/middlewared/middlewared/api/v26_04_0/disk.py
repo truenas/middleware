@@ -24,6 +24,8 @@ __all__ = (
     "DiskWipeResult",
     "DiskSedUnlockArgs",
     "DiskSedUnlockResult",
+    "DiskSedSetupDiskArgs",
+    "DiskSedSetupDiskResult",
 )
 
 
@@ -228,3 +230,17 @@ class DiskSedUnlockArgs(BaseModel):
 class DiskSedUnlockResult(BaseModel):
     result: bool
     """Returns true if the disk unlock was successful."""
+
+
+class DiskSedSetupDiskArgs(BaseModel):
+    name: NonEmptyString
+    """Name of disk to setup."""
+    password: NonEmptyString | None = None
+    """
+    Password to use to setup the disk. If this is not set, global configured SED password will be used.
+    """
+
+
+class DiskSedSetupDiskResult(BaseModel):
+    result: bool
+    """Returns true if the disk setup was successful."""
