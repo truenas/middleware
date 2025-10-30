@@ -126,10 +126,10 @@ class ContainerUSBDevice(BaseModel):
     """Host USB device path to pass through. `null` for controller only."""
 
 
-# ContainerUSBDevice / ContainerPCIDevice
-# TODO: Let's please add support for these after testing thoroughly these devices subsequently.
+# FIXME: PCI devices still need fixing
 ContainerDeviceType: TypeAlias = Annotated[
-    ContainerNICDevice | ContainerRAWDevice | ContainerDiskDevice | ContainerFilesystemDevice,
+    ContainerNICDevice | ContainerRAWDevice | ContainerDiskDevice | ContainerFilesystemDevice |
+    ContainerUSBDevice,
     Field(discriminator='dtype')
 ]
 
