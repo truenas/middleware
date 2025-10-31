@@ -1,13 +1,9 @@
-import csv
 import errno
 import middlewared.sqlalchemy as sa
 import os
 import shutil
 import time
 import uuid
-import yaml
-
-from truenas_api_client import json as ejson
 
 from .utils import (
     AUDIT_DATASET_PATH,

@@ -254,7 +254,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         manage at once.
         """
         data = []
-        do_get = options.get('get', False)
 
         try:
             for batch in conn.fetchall(qs, options.get('select', []), options.get('count', False)):
@@ -352,7 +351,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
         return result
 
-
     @job()
     def export_to_file(self, job, db_name, export_format, destination, filters, options):
         job.set_progress(None, f'Quering data for {export_format} audit report')
@@ -388,7 +386,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                             member_name = destination.replace(
                                 export_format.lower(), f'part_{idx:05d}.{export_format.lower()}'
                             )
-                            self.logger.debug("XXX: writing %d records to %s", len(batch), member_name)
                             add_audit_batch_to_tarfile(
                                 tf=tf,
                                 member_name=member_name,
