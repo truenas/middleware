@@ -1,4 +1,5 @@
 import errno
+import typing
 
 from .exceptions import ZFSPathHasClonesException, ZFSPathHasHoldsException
 from .utils import open_resource
@@ -8,10 +9,26 @@ try:
 except ImportError:
     truenas_pylibzfs = None
 
-__all__ = ("destroy_impl",)
+__all__ = ("destroy_impl", "DestroyArgs")
 
 
-def destroy_nonrecursive_impl(tls, data):
+class DestroyArgs(typing.TypedDict):
+    path: str
+    """The path of the zfs resource to destroy."""
+    recursive: bool
+    """Recursively destroy all descedants as well as
+    release any holds and destroy any clones or snapshots."""
+    all_snapshots: bool
+    """If true, will delete all snapshots ONLY for the
+    given zfs resource. Will not delete the resource itself."""
+    bypass: bool
+    """If true, will bypass the safety checks that prevent
+    deleting zfs resources that are "protected".
+    NOTE: This is only ever set by internal callers and is
+    not exposed to the public API."""
+
+
+def destroy_nonrecursive_impl(tls, data: DestroyArgs):
     path = data["path"]
     rsrc = open_resource(tls, data["path"])
     if rsrc == truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT:
@@ -45,7 +62,7 @@ def destroy_nonrecursive_impl(tls, data):
     return failed, errnum
 
 
-def destroy_impl(tls, data):
+def destroy_impl(tls, data: DestroyArgs):
     recursive = data.get("recursive", False)
     all_snaps = data.get("all_snapshots", False)
     if not recursive and not all_snaps:
