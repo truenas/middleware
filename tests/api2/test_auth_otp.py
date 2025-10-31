@@ -16,13 +16,6 @@ def otp_enabled():
         ssh("midclt call auth.twofactor.update '{\"enabled\": false}'")
 
 
-def test_otp_http_basic_auth(otp_enabled):
-    with session() as s:
-        r = s.put(f"{url()}/api/v2.0/auth/twofactor/", data=json.dumps({"enabled": False}))
-        assert r.status_code == 401
-        assert r.text == "HTTP Basic Auth is unavailable when OTP is enabled"
-
-
 def test_otp_http_basic_auth_upload(otp_enabled):
     with session() as s:
         r = s.post(
@@ -39,5 +32,3 @@ def test_otp_http_basic_auth_upload(otp_enabled):
         )
         assert r.status_code == 401
         assert r.text == "HTTP Basic Auth is unavailable when OTP is enabled"
-
-

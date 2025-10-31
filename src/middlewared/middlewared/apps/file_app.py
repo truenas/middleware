@@ -1,38 +1,243 @@
-from asyncio import run_coroutine_threadsafe
-from typing import TYPE_CHECKING
-from urllib.parse import parse_qs
+import asyncio
+import base64
+import binascii
+import pam
+from typing import Literal, TypeAlias, TypedDict, Union, TYPE_CHECKING
+import urllib.parse
 
 from aiohttp import web
 
-from middlewared.pipe import Pipes, InputPipes
-from middlewared.restful import (
-    parse_credentials,
-    authenticate,
-    create_application,
-    copy_multipart_to_pipe,
-    ConnectionOrigin
+from middlewared.api.base.server.app import App
+from middlewared.auth import (
+    ApiKeySessionManagerCredentials,
+    LoginPasswordSessionManagerCredentials,
+    TokenSessionManagerCredentials,
+    AuthenticationContext
 )
+from middlewared.pipe import Pipes, InputPipes
 from middlewared.service_exception import CallError
+from middlewared.utils.account.authenticator import ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator
+from middlewared.utils.auth import AA_LEVEL1, CURRENT_AAL
+from middlewared.utils.origin import ConnectionOrigin
 from truenas_api_client import json
 
 if TYPE_CHECKING:
-    from aiohttp.web_request import Request
-    from asyncio import AbstractEventLoop
+    from aiohttp import BodyPartReader
+    from middlewared.api.base.types import HttpVerb
     from middlewared.main import Middleware
-
+    from middlewared.pipe import Pipe
 
 __all__ = ("FileApplication",)
+
+
+class TokenDict(TypedDict):
+    token: str
+
+
+class LoginDict(TypedDict):
+    username: str
+    password: str
+
+
+class APIKeyDict(TypedDict):
+    api_key: str
+
+
+class TokenCredentialsDict(TypedDict):
+    credentials: Literal['TOKEN']
+    credentials_data: TokenDict
+
+
+class LoginCredentialsDict(TypedDict):
+    credentials: Literal['LOGIN_PASSWORD']
+    credentials_data: LoginDict
+
+
+class KeyCredentialsDict(TypedDict):
+    credentials: Literal['API_KEY']
+    credentials_data: APIKeyDict
+
+
+CredentialsDict: TypeAlias = TokenCredentialsDict | LoginCredentialsDict | KeyCredentialsDict
+SessionManagerCredentials: TypeAlias = Union[
+    TokenSessionManagerCredentials,
+    LoginPasswordSessionManagerCredentials,
+    ApiKeySessionManagerCredentials
+]
+
 
 MAX_UPLOADED_FILES = 5
 
 
+def parse_credentials(request: web.Request) -> CredentialsDict | None:
+    auth = request.headers.get('Authorization')
+    if auth is None:
+        qs = urllib.parse.parse_qs(request.query_string)
+        if 'auth_token' in qs:
+            return {
+                'credentials': 'TOKEN',
+                'credentials_data': {
+                    'token': qs['auth_token'][0],
+                },
+            }
+        else:
+            return None
+
+    if auth.startswith('Token '):
+        token = auth.split(' ', 1)[1]
+        return {
+            'credentials': 'TOKEN',
+            'credentials_data': {
+                'token': token,
+            },
+        }
+
+    if auth.startswith('Basic '):
+        try:
+            username, password = base64.b64decode(auth[6:]).decode('utf-8').split(':', 1)
+        except UnicodeDecodeError:
+            raise web.HTTPBadRequest()
+        except binascii.Error:
+            raise web.HTTPBadRequest()
+
+        return {
+            'credentials': 'LOGIN_PASSWORD',
+            'credentials_data': {
+                'username': username,
+                'password': password,
+            },
+        }
+
+    if auth.startswith('Bearer '):
+        key = auth.split(' ', 1)[1]
+
+        return {
+            'credentials': 'API_KEY',
+            'credentials_data': {
+                'api_key': key,
+            }
+        }
+
+
+async def authenticate(
+    app: App,
+    middleware: 'Middleware',
+    request: web.Request,
+    credentials: CredentialsDict,
+    method: 'HttpVerb',
+    resource: str
+) -> SessionManagerCredentials:
+    match credentials['credentials']:
+        case 'TOKEN':
+            origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
+            # We are using the UnixPamAuthenticator here because we are generating a
+            # fresh login based on the username in base token's credentials
+            app.authentication_context.pam_hdl = UnixPamAuthenticator()
+            try:
+                token = await middleware.call(
+                    'auth.get_token_for_action',
+                    credentials['credentials_data']['token'],
+                    origin,
+                    method,
+                    resource,
+                    app=app
+                )
+            except CallError as ce:
+                raise web.HTTPForbidden(text=ce.errmsg)
+
+            if token is None:
+                raise web.HTTPForbidden(text='Invalid token')
+
+            return token
+
+        case 'LOGIN_PASSWORD':
+            twofactor_auth = await middleware.call('auth.twofactor.config')
+            if twofactor_auth['enabled']:
+                raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
+
+            app.authentication_context.pam_hdl = UserPamAuthenticator()
+            resp = await middleware.call(
+                'auth.authenticate_plain',
+                credentials['credentials_data']['username'],
+                credentials['credentials_data']['password'],
+                app=app
+            )
+            if resp['pam_response']['code'] != pam.PAM_SUCCESS:
+                raise web.HTTPUnauthorized(text='Bad username or password')
+
+            return LoginPasswordSessionManagerCredentials(
+                resp['user_data'],
+                assurance=CURRENT_AAL.level,
+                authenticator=app.authentication_context.pam_hdl
+            )
+
+        case 'API_KEY':
+            if CURRENT_AAL.level is not AA_LEVEL1:
+                raise web.HTTPForbidden(
+                    text='API key authentication is not permitted by server authentication security level'
+                )
+
+            app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
+            api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
+            if api_key is None:
+                raise web.HTTPUnauthorized(text='Invalid API key')
+
+            return ApiKeySessionManagerCredentials(
+                *api_key,
+                assurance=CURRENT_AAL.level,
+                authenticator=app.authentication_context.pam_hdl
+            )
+
+        case _:
+            raise web.HTTPUnauthorized()
+
+
+class Application(App):
+    def __init__(self, origin: ConnectionOrigin, authenticated_credentials: SessionManagerCredentials | None):
+        super().__init__(origin)
+        self.session_id = None
+        self.authenticated = authenticated_credentials is not None
+        self.authenticated_credentials = authenticated_credentials
+        self.authentication_context = AuthenticationContext()
+        self.rest = True
+
+
+def create_application_impl(
+    request: web.Request, credentials: SessionManagerCredentials | None = None
+) -> Application:
+    return Application(ConnectionOrigin.create(request), credentials)
+
+
+async def create_application(
+    request: web.Request, credentials: SessionManagerCredentials | None = None
+) -> Application:
+    return await asyncio.to_thread(create_application_impl, request, credentials)
+
+
+def copy_multipart_to_pipe(loop: asyncio.AbstractEventLoop, filepart: 'BodyPartReader', pipe: 'Pipe') -> None:
+    try:
+        try:
+            while True:
+                read = asyncio.run_coroutine_threadsafe(
+                    filepart.read_chunk(filepart.chunk_size),
+                    loop=loop,
+                ).result()
+                if read == b'':
+                    break
+                pipe.w.write(read)
+        finally:
+            pipe.w.close()
+    except BrokenPipeError:
+        pass
+
+
 class FileApplication:
-    def __init__(self, middleware: "Middleware", loop: "AbstractEventLoop"):
+    def __init__(self, middleware: "Middleware", loop: asyncio.AbstractEventLoop):
         self.middleware = middleware
         self.loop = loop
-        self.jobs = {}
+        self.jobs: dict[int, asyncio.TimerHandle] = {}
 
-    def register_job(self, job_id, buffered):
+    def register_job(self, job_id: int, buffered: bool) -> None:
         # FIXME: Allow the job to run for infinite time + give 300 seconds to begin
         # download instead of waiting 3600 seconds for the whole operation
         self.jobs[job_id] = self.middleware.loop.call_later(
@@ -40,12 +245,12 @@ class FileApplication:
             lambda: self.middleware.create_task(self._cleanup_job(job_id)),
         )
 
-    async def _cleanup_cancel(self, job_id):
+    async def _cleanup_cancel(self, job_id: int) -> None:
         job_cleanup = self.jobs.pop(job_id, None)
         if job_cleanup:
             job_cleanup.cancel()
 
-    async def _cleanup_job(self, job_id):
+    async def _cleanup_job(self, job_id: int) -> None:
         if job_id not in self.jobs:
             return
         self.jobs[job_id].cancel()
@@ -54,7 +259,7 @@ class FileApplication:
         job = self.middleware.jobs[job_id]
         await job.pipes.close()
 
-    async def download(self, request: "Request") -> web.Response | web.StreamResponse:
+    async def download(self, request: web.Request) -> web.Response | web.StreamResponse:
         path = request.path.split("/")
         if not request.path[-1].isdigit():
             resp = web.Response()
@@ -63,7 +268,7 @@ class FileApplication:
 
         job_id = int(path[-1])
 
-        qs = parse_qs(request.query_string)
+        qs = urllib.parse.parse_qs(request.query_string)
         denied = False
         filename = None
         if "auth_token" not in qs:
@@ -111,7 +316,7 @@ class FileApplication:
                 read = job.pipes.output.r.read(1048576)
                 if read == b"":
                     break
-                run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
+                asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
 
         try:
             await self._cleanup_cancel(job_id)
@@ -122,7 +327,7 @@ class FileApplication:
         await resp.drain()
         return resp
 
-    async def upload(self, request: "Request") -> web.Response:
+    async def upload(self, request: web.Request) -> web.Response:
         reader = await request.multipart()
 
         part = await reader.next()

@@ -18,7 +18,6 @@ from .job import Job, JobsQueue, State
 from .logger import Logger, setup_audit_logging, setup_logging
 from .pipe import Pipe
 from .pylibvirt import create_pylibvirt_domains_manager
-from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
 import middlewared.service
 from .service_exception import CallError, ErrnoMixin
@@ -1517,8 +1516,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         shellapp = ShellApplication(self)
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
 
-        restful_api = RESTfulAPI(self, app)
-        await restful_api.register_resources()
         self.create_task(self.jobs.run())
 
         # Start up middleware worker process pool
