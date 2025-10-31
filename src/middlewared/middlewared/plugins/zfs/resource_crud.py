@@ -14,7 +14,7 @@ from middlewared.service import Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
-from .destroy_impl import destroy_impl
+from .destroy_impl import destroy_impl, DestroyArgs
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
@@ -251,7 +251,8 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def destroy_impl(self, tls, schema: str, data: dict, bypass: bool = False):
+    def destroy_impl(self, tls, data: DestroyArgs):
+        schema = "zfs.resource.destroy"
         path = data["path"]
         if os.path.isabs(path):
             raise ValidationError(
@@ -261,7 +262,7 @@ class ZFSResourceService(Service):
             raise ValidationError(
                 schema, "Path must not end with a forward-slash.", errno.EINVAL
             )
-        elif not bypass and has_internal_path(path):
+        elif not data["bypass"] and has_internal_path(path):
             # NOTE: `bypass` is a value only exposed to
             # internal callers and not to our public API.
             raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
@@ -357,8 +358,10 @@ class ZFSResourceService(Service):
             - For volumes with snapshots, either use recursive=True or all_snapshots=True
         """
         schema = "zfs.resource.destroy"
+        data = DestroyArgs(**data)
+        data["bypass"] = False
         try:
-            failed, errnum = self.middleware.call_sync("zfs.resource.destroy_impl", schema, data)
+            failed, errnum = self.middleware.call_sync("zfs.resource.destroy_impl", data)
         except (ZFSPathHasClonesException, ZFSPathHasHoldsException) as e:
             raise ValidationError(schema, e.message, errno.ENOTEMPTY)
         except ZFSPathNotFoundException as e:
