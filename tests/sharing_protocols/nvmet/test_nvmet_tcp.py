@@ -683,7 +683,7 @@ class TestNVMe(NVMeRunning):
                         self.assert_subsys_namespaces(devices, subsys_nqn, [(1, ZVOL1_MB), (2, NVMET_ENCRYPTED_MB)])
 
                     # Lock the ZVOL
-                    call('pool.dataset.lock', encrypted_zvol['id'], job=True)
+                    call('pool.dataset.lock', encrypted_zvol['id'], {'force_umount': True}, job=True)
                     with nc.connect_ctx(subsys_nqn):
                         devices = nc.nvme_devices()
                         assert len(devices) == 1, devices
@@ -809,7 +809,7 @@ class TestNVMe(NVMeRunning):
                             assert len(devices) == 1, devices
                             self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200), (2, 100)])
                             # Lock the dataset
-                            call('pool.dataset.lock', ds, job=True)
+                            call('pool.dataset.lock', ds, {'force_umount': True}, job=True)
                             devices = nc.nvme_devices()
                             assert len(devices) == 1, devices
                             self.assert_subsys_namespaces(devices, subsys_nqn, [(1, 200)])
