@@ -10,6 +10,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import PromoteArgs, RenameArgs
@@ -878,11 +879,10 @@ class PoolDatasetService(CRUDService):
                 'zfs_file_attributes': {'immutable': False}
             })
 
-        result = await self.middleware.call('zfs.dataset.delete', id_, {
-            'force': options['force'],
-            'recursive': options['recursive'],
-        })
-        return result
+        await self.middleware.call(
+            'zfs.resource.destroy', DestroyArgs(path=id_, recursive=options['recursive'])
+        )
+        return True
 
     # Used by Democratic CSI
     # FIXME: phase it out
