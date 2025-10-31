@@ -18,7 +18,7 @@ from middlewared.service import (
     ValidationError,
     ValidationErrors,
 )
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 @cache

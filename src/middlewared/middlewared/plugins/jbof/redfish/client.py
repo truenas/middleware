@@ -9,7 +9,8 @@ from urllib.parse import urlencode
 import aiohttp
 import requests
 from middlewared.service import CallError
-from middlewared.utils import MIDDLEWARE_RUN_DIR, filter_list
+from middlewared.utils import MIDDLEWARE_RUN_DIR
+from middlewared.utils.filter_list import filter_list
 from truenas_api_client import Client
 from urllib3.exceptions import InsecureRequestWarning
 

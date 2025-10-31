@@ -2,7 +2,7 @@ import asyncio
 import logging
 from unittest.mock import AsyncMock, Mock
 
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 class Middleware(dict):

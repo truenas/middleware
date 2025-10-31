@@ -12,7 +12,7 @@ import logging
 import errno
 from collections import defaultdict
 
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
 from middlewared.plugins.docker.state_utils import Status as DockerStatus

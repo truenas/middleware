@@ -1,7 +1,7 @@
 from middlewared.service_exception import ( # noqa
     CallException, CallError, InstanceNotFound, NetworkActivityDisabled, ValidationError, ValidationErrors
 )
-from middlewared.utils import filter_list # noqa
+from middlewared.utils.filter_list import filter_list # noqa
 
 from .compound_service import CompoundService # noqa
 from .config_service import ConfigService # noqa

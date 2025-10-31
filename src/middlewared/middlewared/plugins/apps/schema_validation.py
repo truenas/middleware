@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from middlewared.service import Service
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .schema_construction_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES
 

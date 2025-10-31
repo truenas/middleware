@@ -1,7 +1,7 @@
 from middlewared.api.current import DockerNetworkEntry
 from middlewared.plugins.apps.ix_apps.docker.networks import list_networks
 from middlewared.service import CRUDService, private
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 class DockerNetworkService(CRUDService):

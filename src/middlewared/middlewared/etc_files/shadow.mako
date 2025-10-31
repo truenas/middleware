@@ -1,5 +1,5 @@
 <%
-    from middlewared.utils import filter_list
+    from middlewared.utils.filter_list import filter_list
     from middlewared.utils.security import shadow_parse_aging
 
     sec = render_ctx['system.security.config']

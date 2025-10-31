@@ -14,7 +14,7 @@ from middlewared.plugins.idmap_.idmap_constants import (
 from middlewared.plugins.idmap_.idmap_winbind import (WBClient, WBCErr)
 from middlewared.plugins.idmap_.idmap_sss import SSSClient
 from middlewared.plugins.smb_.constants import SMBBuiltin
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import (
     get_domain_rid,
     BASE_RID_GROUP,

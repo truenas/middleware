@@ -35,7 +35,7 @@ from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import LEGACY_USERPROP_PREFIX, TNUserProp
 from middlewared.service import filterable_api_method, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors, ValidationError
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.filesystem.stat_x import statx
 from middlewared.utils.functools_ import cache

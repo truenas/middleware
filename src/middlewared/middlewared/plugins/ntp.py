@@ -14,7 +14,7 @@ from middlewared.api.current import (
 from middlewared.plugins.ntp_.enums import Mode, State
 from middlewared.service import CRUDService, ValidationErrors, filterable_api_method, private
 from middlewared.service_exception import CallError
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.plugins.ntp_.client import NTPClient
 
 

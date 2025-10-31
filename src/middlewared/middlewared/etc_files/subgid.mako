@@ -1,6 +1,6 @@
 <%
 from middlewared.api.base.types.user import INCUS_IDMAP_MIN, INCUS_IDMAP_COUNT
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 mapped = filter_list(render_ctx['group.query'], [
     ['local', '=', True],

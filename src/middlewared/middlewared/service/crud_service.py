@@ -11,7 +11,7 @@ from middlewared.api.base.model import (
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, QueryOptions
 from middlewared.service_exception import CallError, InstanceNotFound
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.type import copy_function_metadata
 
 from .base import ServiceBase

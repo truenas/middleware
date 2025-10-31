@@ -11,7 +11,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import CallError, CRUDService, job, ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.size import normalize_size
 
 from .utils import incus_call, incus_call_sync, VirtGlobalStatus, incus_wait, storage_pool_to_incus_pool

@@ -12,7 +12,7 @@ from middlewared.api.current import (
 from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
 )
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .compose_utils import compose_action
 from .custom_app_utils import validate_payload
