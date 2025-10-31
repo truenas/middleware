@@ -3,6 +3,7 @@ import os
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.service import CallError, private
 from middlewared.utils import run
 
@@ -91,11 +92,12 @@ class DeviceMixin:
             if not device['attributes'].get('path', '').startswith('/dev/zvol'):
                 raise CallError('Unable to destroy zvol as disk device has misconfigured path')
             zvol_id = zvol_path_to_name(device['attributes']['path'])
-            if await self.middleware.call('pool.dataset.query', [['id', '=', zvol_id]]):
-                # FIXME: We should use pool.dataset.delete but right now FS attachments will consider
-                # the current device as a valid reference. Also should we stopping the vm only when deleting an
-                # attachment ?
-                await self.middleware.call('zfs.dataset.delete', zvol_id)
+            if await self.middleware.call(
+                'zfs.resource.query_impl', {'paths': [zvol_id], 'properties': None}
+            ):
+                # FIXME: What about FS attachment? Also should we be stopping the vm only when
+                # deleting an attachment ?
+                await self.middleware.call('zfs.resource.destroy_impl', DestroyArgs(path=zvol_id))
         if options['raw_file']:
             if device_dtype != 'RAW':
                 raise CallError('Device is not of RAW type.')

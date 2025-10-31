@@ -11,6 +11,7 @@ from middlewared.plugins.container.utils import container_dataset, container_dat
 from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.network import INTERNET_TIMEOUT
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 
 REGISTRY_URL = "https://images.sys.truenas.net/streams"
 
@@ -66,7 +67,7 @@ class ContainerImageService(Service):
                 # Orphan dataset without a snapshot. Probably leftover from a
                 # previous `pull` attempt that failed and did not clean up
                 # properly. Delete it.
-                self.middleware.call_sync('zfs.dataset.delete', dataset_name)
+                self.middleware.call_sync('zfs.resource.destroy', DestroyArgs(path=dataset_name))
             else:
                 # Image dataset already exists, no action needed.
                 return snapshot_name
@@ -149,7 +150,7 @@ class ContainerImageService(Service):
             except (tarfile.TarError, OSError) as e:
                 raise CallError(f'Failed to extract image tarball: {str(e)}')
         except Exception:
-            self.middleware.call_sync('zfs.dataset.delete', dataset_name)
+            self.middleware.call_sync('zfs.resource.destroy', DestroyArgs(path=dataset_name))
             raise
 
 

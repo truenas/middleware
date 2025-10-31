@@ -1,10 +1,12 @@
 import errno
+import itertools
 import re
 import uuid
 
 from middlewared.api import api_method
 from middlewared.api.current import VMCloneArgs, VMCloneResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs
 from middlewared.service import CallError, item_method, Service, private
 from middlewared.service_exception import ValidationErrors
@@ -128,24 +130,26 @@ class VMService(Service):
 
                 await self.middleware.call('vm.device.create', item)
         except Exception as e:
-            for i in reversed(created_clones):
-                try:
-                    await self.middleware.call('zfs.dataset.delete', i)
-                except Exception:
-                    self.logger.warning('Rollback of VM clone left dangling zvol: %s', i)
-            for i in reversed(created_snaps):
-                try:
-                    dataset, snap = i.split('@')
-                    await self.middleware.call('zfs.snapshot.remove', {
-                        'dataset': dataset,
-                        'name': snap,
-                        'defer_delete': True,
-                    })
-                except Exception:
-                    self.logger.warn('Rollback of VM clone left dangling snapshot: %s', i)
+            for clone, snap in itertools.zip_longest(reversed(created_clones), reversed(created_snaps)):
+                # order is important here. the clone is dependent on snap so destroy
+                # the clone first before destroying the snap
+                if clone is not None:
+                    try:
+                        await self.middleware.call('zfs.resource.destroy', DestroyArgs(path=clone))
+                    except Exception:
+                        self.logger.exception('Failed to destroy cloned zvol %r', clone)
+                        # failing to destroy the clone means destroying the snap will
+                        # also fail since we're not recursively destroying anything
+                        continue
+                    else:
+                        if snap is not None:
+                            try:
+                                await self.middleware.call('zfs.resource.destroy', DestroyArgs(path=snap))
+                            except Exception:
+                                self.logger.exception('Failed to destroy snapshot %r for zvol %r', snap, clone)
             raise e
-        self.logger.info('VM cloned from {0} to {1}'.format(origin_name, vm['name']))
 
+        self.logger.info('VM cloned from %r to %r', origin_name, vm['name'])
         return True
 
     @private
