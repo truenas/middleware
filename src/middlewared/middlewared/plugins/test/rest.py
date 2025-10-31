@@ -25,29 +25,10 @@ class RestTestService(Service):
         return json.dumps(arg) + job.pipes.input.r.read().decode("utf-8")
 
     @api_method(RestTestArgs, RestTestResult, authorization_required=False)
-    @job(pipes=["input"], check_pipes=False)
-    def test_input_unchecked_pipe(self, job, arg):
-        if job.pipes.input:
-            input_ = job.pipes.input.r.read().decode("utf-8")
-        else:
-            input_ = "NONE"
-
-        return json.dumps(arg) + input_
-
-    @api_method(RestTestArgs, RestTestResult, authorization_required=False)
     @job(pipes=["output"])
     def test_download_pipe(self, job, arg):
         job.pipes.output.w.write(json.dumps(arg).encode("utf-8"))
         job.pipes.output.w.close()
-
-    @api_method(RestTestArgs, RestTestResult, authorization_required=False)
-    @job(pipes=["output"], check_pipes=False)
-    def test_download_unchecked_pipe(self, job, arg):
-        if job.pipes.output:
-            job.pipes.output.w.write(json.dumps(arg).encode("utf-8"))
-            job.pipes.output.w.close()
-        else:
-            return {"wrapped": arg}
 
     @api_method(RestTestArgs, RestTestResult, authorization_required=False)
     @job(pipes=["output"])
