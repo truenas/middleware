@@ -205,8 +205,7 @@ class CoreService(Service):
 
     def _should_list_service(self, name, service, target):
         if service._config.private is True:
-            if not (target == 'REST' and name == 'resttest'):
-                return False
+            return False
 
         if target == 'CLI' and service._config.cli_private:
             return False

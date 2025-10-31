@@ -10,7 +10,7 @@ def test_upload_to_upload_endpoint():
             f"{url()}/_upload",
             files={
                 "data": (None, io.StringIO(json.dumps({
-                    "method": "resttest.test_input_pipe",
+                    "method": "test.test_input_pipe",
                     "params": [{"key": "value"}]
                 }))),
                 "file": (None, io.StringIO("FILE")),

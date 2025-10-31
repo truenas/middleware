@@ -11,7 +11,7 @@ from middlewared.test.integration.utils import call, client, url
 
 def test_download_from_download_endpoint():
     with client() as c:
-        job_id, path = c.call("core.download", "resttest.test_download_pipe", [{"key": "value"}], "file.bin")
+        job_id, path = c.call("core.download", "test.test_download_pipe", [{"key": "value"}], "file.bin")
 
     r = requests.get(f"{url()}{path}")
     r.raise_for_status()
@@ -28,7 +28,7 @@ def test_download_from_download_endpoint():
 ])
 def test_buffered_download_from_slow_download_endpoint(buffered, sleep, result):
     with client() as c:
-        job_id, path = c.call("core.download", "resttest.test_download_slow_pipe", [{"key": "value"}], "file.bin",
+        job_id, path = c.call("core.download", "test.test_download_slow_pipe", [{"key": "value"}], "file.bin",
                               buffered)
 
     time.sleep(sleep)
@@ -42,9 +42,9 @@ def test_buffered_download_from_slow_download_endpoint(buffered, sleep, result):
 
 
 def test_download_duplicate_job():
-    call("core.download", "resttest.test_download_slow_pipe_with_lock", [{"key": "value"}], "file.bin")
+    call("core.download", "test.test_download_slow_pipe_with_lock", [{"key": "value"}], "file.bin")
     with pytest.raises(CallError) as ve:
-        call("core.download", "resttest.test_download_slow_pipe_with_lock", [{"key": "value"}], "file.bin")
+        call("core.download", "test.test_download_slow_pipe_with_lock", [{"key": "value"}], "file.bin")
 
     assert ve.value.errno == errno.EBUSY
 
@@ -58,7 +58,7 @@ def test_download_authorization_ok():
         web_shell=False,
     ) as user:
         with client(auth=(user.username, user.password)) as c:
-            c.call("core.download", "resttest.test_download_slow_pipe", [{"key": "value"}], "file.bin")
+            c.call("core.download", "test.test_download_slow_pipe", [{"key": "value"}], "file.bin")
 
 
 def test_download_authorization_fails():
@@ -71,6 +71,6 @@ def test_download_authorization_fails():
     ) as user:
         with client(auth=(user.username, user.password)) as c:
             with pytest.raises(CallError) as ve:
-                c.call("core.download", "resttest.test_download_slow_pipe", [{"key": "value"}], "file.bin")
+                c.call("core.download", "test.test_download_slow_pipe", [{"key": "value"}], "file.bin")
 
             assert ve.value.errno == errno.EACCES
