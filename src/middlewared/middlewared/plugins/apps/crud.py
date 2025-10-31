@@ -10,7 +10,7 @@ from middlewared.api.current import (
     AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
 )
 from middlewared.service import (
-    CallError, CRUDService, filterable_api_method, InstanceNotFound, job, private, ValidationErrors
+    CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
 )
 from middlewared.utils import filter_list
 
@@ -341,10 +341,10 @@ class AppService(CRUDService):
     @private
     def get_app_volume_ds(self, app_name):
         # This will return volume dataset of app if it exists, otherwise null
-        apps_volume_ds = get_app_parent_volume_ds(self.middleware.call_sync('docker.config')['dataset'], app_name)
-        with contextlib.suppress(InstanceNotFound):
-            return self.middleware.call_sync(
-                'zfs.dataset.get_instance', apps_volume_ds, {
-                    'extra': {'retrieve_children': False, 'retrieve_properties': False}
-                }
-            )['id']
+        docker_ds = self.middleware.call_sync('docker.config')['dataset']
+        apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
+        rv = self.middleware.call_sync(
+            'zfs.resource.query_impl', {'paths': [apps_volume_ds], 'properties': None}
+        )
+        if rv:
+            return rv[0]['name']
