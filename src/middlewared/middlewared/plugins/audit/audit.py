@@ -1,13 +1,9 @@
-import csv
 import errno
 import middlewared.sqlalchemy as sa
 import os
 import shutil
 import time
 import uuid
-import yaml
-
-from truenas_api_client import json as ejson
 
 from .utils import (
     AUDIT_DATASET_PATH,
@@ -222,11 +218,12 @@ class AuditService(ConfigService):
         Supported export_formats are CSV, JSON, and YAML. The endpoint returns a
         local filesystem path where the resulting audit report is located.
         """
+        if data['remote_controller']:
+            raise ValidationError('audit.export.remote_controller',
+                                  'Generating audit reports from remote controller is not currently supported.')
+
         export_format = data.pop('export_format')
         job.set_progress(0, f'Quering data for {export_format} audit report')
-        if not (res := self.middleware.call_sync('audit.query', data)):
-            raise CallError('No entries were returned by query.', errno.ENOENT)
-
         if job.credentials:
             username = job.credentials.user['username']
         else:
@@ -234,29 +231,17 @@ class AuditService(ConfigService):
 
         target_dir = os.path.join(AUDIT_REPORTS_DIR, username)
         os.makedirs(target_dir, mode=0o700, exist_ok=True)
-
         filename = f'{uuid.uuid4()}.{export_format.lower()}'
         destination = os.path.join(target_dir, filename)
-        with open(destination, 'w') as f:
-            job.set_progress(50, f'Writing audit report to {destination}.')
-            match export_format:
-                case 'CSV':
-                    fieldnames = res[0].keys()
-                    writer = csv.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    for entry in res:
-                        if entry.get('service_data'):
-                            entry['service_data'] = ejson.dumps(entry['service_data'])
-                        if entry.get('event_data'):
-                            entry['event_data'] = ejson.dumps(entry['event_data'])
-                        writer.writerow(entry)
-                case 'JSON':
-                    ejson.dump(res, f, indent=4)
-                case 'YAML':
-                    yaml.dump(res, f)
 
-        job.set_progress(100, f'Audit report completed and available at {destination}')
-        return os.path.join(target_dir, destination)
+        export_job_id = self.middleware.call_sync('auditbackend.export_to_file',
+                                                  data['services'][0],
+                                                  export_format,
+                                                  destination,
+                                                  data['query-filters'],
+                                                  data['query-options'])
+
+        return job.wrap_sync(export_job_id)
 
     @api_method(
         AuditDownloadReportArgs,
