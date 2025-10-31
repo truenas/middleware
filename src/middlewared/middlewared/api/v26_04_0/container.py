@@ -123,9 +123,9 @@ class ContainerCreate(ContainerEntry):
     status: Excluded = excluded_field()
     devices: Excluded = excluded_field()
     pool: str | None = None
-    "Pool to use for this container. Leave it null to use container preferred pool instead."
+    """Pool to use for this container. Leave it null to use container preferred pool instead."""
     image: "ContainerCreateImage"
-    "Image to use for container creation."
+    """Image to use for container creation."""
 
 
 class ContainerCreateImage(BaseModel):
