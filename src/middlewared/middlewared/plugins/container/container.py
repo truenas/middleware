@@ -248,6 +248,7 @@ class ContainerService(CRUDService):
         Update a Container.
         """
         old = await self.get_instance(id_)
+        del old['devices']
         new = old.copy()
         new.update(data)
 
