@@ -357,6 +357,14 @@ class NVMetPortService(CRUDService):
                     return choices
                 rdma_netdevs = [link['netdev'] for link in await self.middleware.call('rdma.get_link_choices', True)]
 
+                # Check if any RDMA netdevs are members of a bridge interface
+                # If so, include the bridge interface name as well for IP address lookup
+                for interface in await self.middleware.call('interface.query'):
+                    if interface.get('type') == 'BRIDGE':
+                        bridge_members = interface.get('bridge_members', [])
+                        if any(netdev in bridge_members for netdev in rdma_netdevs):
+                            rdma_netdevs.append(interface['name'])
+
                 if force_ana or (await self.middleware.call('nvmet.global.config'))['ana']:
                     # If ANA is enabled we actually want to show the user the IPs of each node
                     # instead of the VIP so its clear its not going to bind to the VIP even though
@@ -365,9 +373,15 @@ class NVMetPortService(CRUDService):
                     for i in await self.middleware.call('datastore.query', 'network.interfaces', filters):
                         choices[i['int_vip']] = f'{i["int_address"]}/{i["int_address_b"]}'
 
+                    # Build a mapping of interface_id to interface_name for RDMA interfaces
+                    rdma_iface_ids = {iface['id']: iface['int_interface'] 
+                                      for iface in await self.middleware.call('datastore.query', 'network.interfaces',
+                                                                             [('int_interface', 'in', rdma_netdevs)],
+                                                                             {'relationships': False})}
+                    
                     filters = [('alias_vip', 'nin', [None, ''])]
-                    for i in await self.middleware.call('datastore.query', 'network.alias', filters):
-                        if i['alias_interface'].get('int_interface') in rdma_netdevs:
+                    for i in await self.middleware.call('datastore.query', 'network.alias', filters, {'relationships': False}):
+                        if i['alias_interface_id'] in rdma_iface_ids:
                             choices[i['alias_vip']] = f'{i["alias_address"]}/{i["alias_address_b"]}'
                 else:
                     filters = [('name', 'in', rdma_netdevs)]
