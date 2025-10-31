@@ -7,6 +7,7 @@ from middlewared.api.current import (
     PoolSnapshotRenameResult,
 )
 from middlewared.service import CRUDService, filterable_api_method, ValidationError
+from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs, RenameArgs
 
 
@@ -23,7 +24,7 @@ class PoolSnapshotService(CRUDService):
     @api_method(PoolSnapshotCloneArgs, PoolSnapshotCloneResult, roles=['SNAPSHOT_WRITE', 'DATASET_WRITE'])
     def clone(self, data):
         """Clone a given snapshot to a new dataset."""
-        return self.middleware.call_sync(
+        self.middleware.call_sync(
             'zfs.resource.clone',
             CloneArgs(
                 current_name=data['snapshot'],
@@ -31,6 +32,10 @@ class PoolSnapshotService(CRUDService):
                 properties=data['dataset_properties'],
             )
         )
+        self.middleware.call_sync(
+            'zfs.resource.mount', MountArgs(filesystem=data['dataset_dst'])
+        )
+        return True
 
     @api_method(PoolSnapshotRollbackArgs, PoolSnapshotRollbackResult, roles=['SNAPSHOT_WRITE', 'POOL_WRITE'])
     def rollback(self, id_, options):
