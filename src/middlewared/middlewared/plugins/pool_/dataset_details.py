@@ -5,6 +5,7 @@ from middlewared.api.current import (
     PoolDatasetDetailsArgs,
     PoolDatasetDetailsResult,
 )
+from middlewared.plugins.nvmet.constants import NAMESPACE_DEVICE_TYPE
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
 from middlewared.utils.filesystem.stat_x import statx
@@ -79,6 +80,7 @@ class PoolDatasetService(Service):
         dataset['nfs_shares'] = self.get_nfs_shares(dataset, info['nfs'])
         dataset['smb_shares'] = self.get_smb_shares(dataset, info['smb'])
         dataset['iscsi_shares'] = self.get_iscsi_shares(dataset, info['iscsi'])
+        dataset['nvmet_shares'] = self.get_nvmet_shares(dataset, info['nvmet'])
         dataset['vms'] = self.get_vms(dataset, info['vm'])
         dataset['containers'] = self.get_containers(dataset, info['container'])
         dataset['apps'] = self.get_apps(dataset, info['app'])
@@ -127,7 +129,7 @@ class PoolDatasetService(Service):
     @private
     def build_details(self, mntinfo):
         results = {
-            'iscsi': [], 'nfs': [], 'smb': [],
+            'iscsi': [], 'nfs': [], 'nvmet': [], 'smb': [],
             'repl': [], 'snap': [], 'cloud': [],
             'rsync': [], 'vm': [], 'app': [], 'container': [],
             'virt_instance': [],
@@ -154,6 +156,13 @@ class PoolDatasetService(Service):
             for share in self.middleware.call_sync(f'sharing.{key}.query'):
                 share['mount_info'] = self.get_mount_info(share['path'], mntinfo)
                 results[key].append(share)
+
+        # nvmet
+        for ns in self.middleware.call_sync('nvmet.namespace.query'):
+            results['nvmet'].append({
+                'namespace': ns,
+                'mount_info': self.get_mount_info(ns['device_path'], mntinfo),
+            })
 
         # replication
         options = {'prefix': 'repl_'}
@@ -272,6 +281,32 @@ class PoolDatasetService(Service):
                     })
 
         return iscsi_shares
+
+    @private
+    def get_nvmet_shares(self, ds, nvmetshares):
+        nvmet_shares = []
+        for share in nvmetshares:
+            pass
+            if share['namespace']['device_type'] == NAMESPACE_DEVICE_TYPE.ZVOL.api and ds['type'] == 'VOLUME':
+                if zvol_path_to_name(f"/dev/{share['namespace']['device_path']}") == ds['id']:
+                    # we store extent information prefixed with `zvol/` (i.e. zvol/tank/zvol01).
+                    nvmet_shares.append({
+                        'enabled': share['namespace']['enabled'],
+                        'type': 'ZVOL',
+                        'path': f'/dev/{share["namespace"]["device_path"]}',
+                    })
+            elif share['namespace']['device_type'] == NAMESPACE_DEVICE_TYPE.FILE.api and ds['type'] == 'FILESYSTEM':
+                if share['mount_info'].get('mount_source') == ds['id']:
+                    # this isn't common but possible, you can share a "file"
+                    # via nvmet which means it's not a dataset but a file inside
+                    # a dataset so we need to find the source dataset for the file
+                    nvmet_shares.append({
+                        'enabled': share['namespace']['enabled'],
+                        'type': 'FILE',
+                        'path': share['namespace']['device_path'],
+                    })
+
+        return nvmet_shares
 
     @private
     def get_repl_tasks_count(self, ds, repltasks):
