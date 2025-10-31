@@ -5,7 +5,8 @@ from contextlib import suppress
 from middlewared.api.current import ISCSIGlobalSessionsItem
 from middlewared.service import private, Service, filterable_api_method
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import filter_list, run
+from middlewared.utils import run
+from middlewared.utils.filter_list import filter_list
 
 
 class ISCSIGlobalService(Service):

@@ -1,5 +1,5 @@
 <%
-    from middlewared.utils import filter_list
+    from middlewared.utils.filter_list import filter_list
     import re
 
     users = filter_list(render_ctx['user.query'], [['email', 'nin', ['', None]]])

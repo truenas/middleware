@@ -1,6 +1,6 @@
 import enum
 
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.tdb import (
     get_tdb_handle,
     TDBDataType,

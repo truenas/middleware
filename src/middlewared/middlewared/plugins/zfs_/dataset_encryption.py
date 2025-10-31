@@ -1,7 +1,7 @@
 import libzfs
 
 from middlewared.service import CallError, job, Service
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 
 from .utils import unlocked_zvols_fast, zvol_path_to_name

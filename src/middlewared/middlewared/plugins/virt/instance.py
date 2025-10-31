@@ -8,7 +8,7 @@ import aiohttp
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, job, private
 )
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from middlewared.api import api_method
 from middlewared.api.current import (

@@ -1,5 +1,5 @@
 <%
-    from middlewared.utils import filter_list
+    from middlewared.utils.filter_list import filter_list
     graphite_confs = filter_list(middleware.call_sync('reporting.exporters.query'), [['attributes.exporter_type', '=', 'GRAPHITE']])
 %>\
 % for graphite_conf in graphite_confs:

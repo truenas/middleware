@@ -3,7 +3,7 @@ import collections
 from middlewared.api import api_method
 from middlewared.api.current import AppsIxVolumeEntry, AppsIxVolumeExistsArgs, AppsIxVolumeExistsResult
 from middlewared.service import filterable_api_method, Service
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .ix_apps.path import get_app_mounts_ds
 

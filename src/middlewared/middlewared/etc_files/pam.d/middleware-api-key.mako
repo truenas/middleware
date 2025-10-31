@@ -1,5 +1,5 @@
 <%
-    from middlewared.utils import filter_list
+    from middlewared.utils.filter_list import filter_list
     from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
     from middlewared.utils.pam import STANDALONE_ACCOUNT, FAILLOCK_AUTH_FAIL, FAILLOCK_AUTH_SUCC
 

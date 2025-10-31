@@ -21,8 +21,9 @@ from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
+from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl

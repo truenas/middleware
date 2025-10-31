@@ -7,7 +7,7 @@ from middlewared.api.current import (FCHostCreateArgs, FCHostCreateResult, FCHos
                                      FCHostEntry, FCHostUpdateArgs, FCHostUpdateResult)
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from .utils import filter_by_wwpns_hex_string, str_to_naa
 
 

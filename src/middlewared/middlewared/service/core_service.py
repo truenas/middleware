@@ -41,8 +41,9 @@ from middlewared.common.environ import environ_update
 from middlewared.job import Job, JobAccess
 from middlewared.pipe import Pipes
 from middlewared.service_exception import CallError, ValidationErrors, InstanceNotFound
-from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_STARTED_SENTINEL_PATH
+from middlewared.utils import BOOTREADY, MIDDLEWARE_STARTED_SENTINEL_PATH
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
+from middlewared.utils.filter_list import filter_list
 
 from .compound_service import CompoundService
 from .config_service import ConfigService

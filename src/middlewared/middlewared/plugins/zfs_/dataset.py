@@ -3,7 +3,7 @@ import subprocess
 
 import libzfs
 from middlewared.service import CallError, CRUDService, ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from .dataset_utils import flatten_datasets
 from .utils import get_snapshot_count_cached
 

@@ -1,7 +1,7 @@
 import logging
 
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5 import kdc_saf_cache_get
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf

@@ -4,7 +4,7 @@ import libzfs
 
 from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
-from middlewared.utils import filter_list, filter_getattrs
+from middlewared.utils.filter_list import filter_list, filter_getattrs
 
 from .utils import get_snapshot_count_cached
 from .validation_utils import validate_snapshot_name

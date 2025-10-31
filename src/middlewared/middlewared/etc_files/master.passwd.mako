@@ -1,5 +1,5 @@
 <%
-    from middlewared.utils import filter_list
+    from middlewared.utils.filter_list import filter_list
 
     users = filter_list(render_ctx['user.query'], [], {'order_by': ['-builtin', 'uid']})
 %>\

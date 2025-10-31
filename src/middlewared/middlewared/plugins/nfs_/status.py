@@ -14,7 +14,7 @@ from middlewared.api.current import (
 from middlewared.plugins.nfs import NFSServicePathInfo
 from middlewared.service import Service, private, filterable_api_method
 from middlewared.service_exception import CallError
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 class NFSService(Service):

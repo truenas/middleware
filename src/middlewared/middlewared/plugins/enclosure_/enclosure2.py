@@ -8,7 +8,7 @@ from middlewared.api import api_method
 from middlewared.api.current import Enclosure2Entry, Enclosure2SetSlotStatusArgs, Enclosure2SetSlotStatusResult
 from middlewared.service import Service, filterable_api_method
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .constants import SUPPORTS_IDENTIFY_KEY
 from .enums import JbofModels

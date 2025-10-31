@@ -10,7 +10,7 @@ from middlewared.api.current import QueryFilters, QueryOptions
 from middlewared.service import Service, private
 from middlewared.plugins.smb import SMBCmd
 from middlewared.service_exception import CallError
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 class InfoLevel(enum.Enum):

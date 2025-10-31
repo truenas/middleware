@@ -4,7 +4,7 @@ import os
 import enum
 
 from logging import getLogger
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype

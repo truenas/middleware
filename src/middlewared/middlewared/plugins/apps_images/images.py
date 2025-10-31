@@ -4,7 +4,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.apps.ix_apps.docker.images import delete_image, list_images, pull_image
 from middlewared.service import CRUDService, job
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .utils import get_normalized_auth_config, parse_tags
 

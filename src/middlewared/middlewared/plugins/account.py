@@ -52,12 +52,13 @@ from middlewared.api.current import (
 from middlewared.service import CallError, CRUDService, ValidationErrors, pass_app, private, job
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run, filter_list
+from middlewared.utils import run
 from middlewared.utils.account.authenticator import UserPamAuthenticator, AccountFlag
 from middlewared.utils.account.faillock import tally_locked_users, reset_tally
 from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_string, check_unixhash
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping

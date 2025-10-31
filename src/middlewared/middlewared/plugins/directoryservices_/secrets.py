@@ -6,7 +6,7 @@ import subprocess
 from base64 import b64encode, b64decode
 from middlewared.service import Service
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.tdb import (
     get_tdb_handle,
     TDBDataType,

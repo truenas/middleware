@@ -10,7 +10,7 @@ from middlewared.utils.directoryservices.constants import (
     DSType
 )
 from middlewared.job import Job
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.time_utils import utc_now

@@ -1,6 +1,7 @@
 from middlewared.alert.base import Alert, AlertClass, AlertSource, SimpleOneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils import filter_list, ProductType, security
+from middlewared.utils import ProductType, security
+from middlewared.utils.filter_list import filter_list
 
 
 class LocalAccountExpiringAlertClass(AlertClass):

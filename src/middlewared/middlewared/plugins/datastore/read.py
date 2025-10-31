@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import nullsfirst, nullslast
 
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import do_select, validate_filters, validate_options
+from middlewared.utils.filter_list import do_select, validate_filters, validate_options
 from .filter import FilterMixin
 from .schema import SchemaMixin
 

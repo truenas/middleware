@@ -19,7 +19,7 @@ from middlewared.api.current import (
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import filterable_api_method, Service, private
 from middlewared.service_exception import CallError, ValidationError
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.size import format_size
 
 

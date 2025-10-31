@@ -15,7 +15,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
 from middlewared.service.decorators import pass_thread_local_storage
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.plugins.pool_.utils import get_dataset_parents
 try:
     from truenas_pylibzfs import ZFSError, ZFSException

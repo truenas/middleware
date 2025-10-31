@@ -8,7 +8,7 @@ from pydantic.fields import FieldInfo
 from middlewared.api.base import LongString, match_validator, NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.service_exception import ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .pydantic_utils import AbsolutePath, BaseModel, create_length_validated_type, HostPath, IPvAnyAddress, URI
 

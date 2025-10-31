@@ -2,7 +2,7 @@ import errno
 import libzfs
 
 from middlewared.service import CallError, CRUDService, job, ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.zfs import query_imported_fast_impl
 from .pool_utils import convert_topology, find_vdev
 

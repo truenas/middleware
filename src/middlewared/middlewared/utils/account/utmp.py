@@ -16,7 +16,7 @@ from .constants import (
 from dataclasses import asdict, dataclass
 from datetime import datetime, UTC
 from ipaddress import IPv4Address, IPv6Address
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.auth import get_login_uid, AUID_UNSET, AUID_FAULTED
 from middlewared.utils.nss.grp import getgrnam
 from middlewared.utils.nss.pwd import getpwuid
