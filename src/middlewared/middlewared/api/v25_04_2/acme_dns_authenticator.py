@@ -1,11 +1,10 @@
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
-from lexicon.providers.ovh import ENDPOINTS
 from pydantic import BeforeValidator, ConfigDict, Field, FilePath, PlainSerializer, Secret
 
 from middlewared.api.base import (
-    BaseModel, single_argument_args, ForUpdateMetaclass, NonEmptyString,
+    BaseModel, single_argument_args, ForUpdateMetaclass, NonEmptyString, OVHEndpoint,
 )
 
 
@@ -68,7 +67,7 @@ class OVHSchema(BaseModel):
     application_key: NonEmptyString = Field(description='OVH Application Key')
     application_secret: NonEmptyString = Field(description='OVH Application Secret')
     consumer_key: NonEmptyString = Field(description='OVH Consumer Key')
-    endpoint: Literal[tuple(ENDPOINTS.keys())] = Field(description='OVH Endpoint')
+    endpoint: OVHEndpoint = Field(description='OVH Endpoint')
 
 
 @single_argument_args('attributes')

@@ -2,9 +2,7 @@ from typing import Annotated, Self
 
 from pydantic import AfterValidator, model_validator
 
-from middlewared.api.base import BaseModel
-from middlewared.utils import validate_filters, validate_options
-from middlewared.utils.cron import croniter_for_schedule
+from middlewared.api.base import BaseModel, croniter_for_schedule, validate_filters, validate_options
 
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult"]
