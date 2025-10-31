@@ -67,7 +67,7 @@ def test_lock_passphrase_encrypted_pool_with_system_dataset(passphrase_encrypted
         "properties": ["mounted"]
     }
     ds = call("zfs.resource.query_impl", query_args)[0]
-    assert ds["properties"]["mounted"]["value"] == "yes"
+    assert ds["properties"]["mounted"]["raw"] == "yes"
 
     call("systemdataset.update", {"pool": pool}, job=True)
 
