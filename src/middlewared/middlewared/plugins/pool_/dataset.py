@@ -8,6 +8,7 @@ from middlewared.api.current import (
     PoolDatasetDeleteArgs, PoolDatasetDeleteResult, PoolDatasetDestroySnapshotsArgs, PoolDatasetDestroySnapshotsResult,
     PoolDatasetPromoteArgs, PoolDatasetPromoteResult, PoolDatasetRenameArgs, PoolDatasetRenameResult,
 )
+from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
@@ -409,10 +410,18 @@ class PoolDatasetService(CRUDService):
         except Exception as e:
             raise CallError(f"Failed to create dataset {kwargs['name']}: {e}")
 
-        if 'mountpoint' in args.zprops and args.zprops['mountpoint'] == 'legacy':
+        mntpnt = args.zprops.get('mountpoint', '')
+        if mntpnt == 'legacy':
             return
+        elif args.name == CONTAINER_DS_NAME and mntpnt.startswith(f'/{CONTAINER_DS_NAME}'):
+            margs = MountArgs(
+                filesystem=args.name,
+                recursive=args.create_ancestors,
+                mountpoint=f'/mnt{mntpnt}'  # FIXME: altroot not respected cf. NAS-138287
+            )
+        else:
+            margs = MountArgs(filesystem=args.name, recursive=args.create_ancestors)
 
-        margs = MountArgs(filesystem=args.name, recursive=args.create_ancestors)
         self.middleware.call_sync('zfs.resource.mount', margs)
 
     @api_method(
