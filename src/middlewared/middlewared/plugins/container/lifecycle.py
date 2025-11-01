@@ -11,12 +11,28 @@ from middlewared.api.current import (
     ContainerStopArgs, ContainerStopResult,
 )
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, job, private, Service
 
 IDMAP_COUNT = 65536
 
 
 class ContainerService(Service):
+
+    @private
+    async def start_on_boot(self):
+        for container in await self.middleware.call(
+            'container.query', [('autostart', '=', True)], {'force_sql_filters': True}
+        ):
+            try:
+                await self.middleware.call('container.start', container['id'])
+            except Exception as e:
+                self.middleware.logger.error(f'Failed to start {container["name"]!r} container: {e}')
+
+    @private
+    async def handle_shutdown(self):
+        for container in await self.middleware.call('container.query', [('status.state', '=', 'RUNNING')]):
+            await self.middleware.call('container.stop', container['id'], {'force_after_timeout': True})
+
     @api_method(ContainerStartArgs, ContainerStartResult, roles=["CONTAINER_WRITE"])
     def start(self, id_):
         """Start container."""
@@ -27,8 +43,9 @@ class ContainerService(Service):
         self.middleware.libvirt_domains_manager.containers.start(self.pylibvirt_container(container))
 
     @api_method(ContainerStopArgs, ContainerStopResult, roles=["CONTAINER_WRITE"])
-    def stop(self, id_, options):
-        """Start container."""
+    @job(lock=lambda args: f'container_stop_{args[0]}')
+    def stop(self, job, id_, options):
+        """Stop `id` container."""
         container = self.middleware.call_sync("container.get_instance", id_)
         pylibvirt_container = self.pylibvirt_container(container)
 
@@ -102,3 +119,22 @@ class ContainerService(Service):
             container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]
 
         return ContainerDomain(ContainerDomainConfiguration(**container))
+
+
+async def __event_system_ready(middleware, event_type, args):
+    # we ignore the 'ready' event on an HA system since the failover event plugin
+    # is responsible for starting this service, however, the containers still need to be
+    # initialized (which is what the above callers are doing)
+    if await middleware.call('failover.licensed'):
+        return
+
+    middleware.create_task(middleware.call('container.start_on_boot'))
+
+
+async def __event_system_shutdown(middleware, event_type, args):
+    middleware.create_task(middleware.call('container.handle_shutdown'))
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system.ready', __event_system_ready)
+    middleware.event_subscribe('system.shutdown', __event_system_shutdown)
