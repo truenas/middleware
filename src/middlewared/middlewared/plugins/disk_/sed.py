@@ -74,7 +74,7 @@ class DiskService(Service):
             'system.advanced.sed_global_password'
         )
         if not password:
-            verrors.add('disk_sed_setup.password', f'Please specify a password to be used for setting up SED disk')
+            verrors.add('disk_sed_setup.password', 'Please specify a password to be used for setting up SED disk')
 
         verrors.check()
 
