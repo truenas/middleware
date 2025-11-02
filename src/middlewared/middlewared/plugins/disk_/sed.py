@@ -47,12 +47,29 @@ class DiskService(Service):
         # 3) If any of them are uninitialized, try to initialize them using global sed pass
         # 4) If anything fails in 2/3, let's raise an appropriate error
         verrors = ValidationErrors()
-        # TODO: We need to handle failed status here as well
-        sed_disks = await self.middleware.call('disk.query', [
-            ['name', 'in', list(disks)], ['sed', '=', True],
-            ['sed_status', 'in', [SEDStatus.LOCKED, SEDStatus.UNINITIALIZED]]
-        ], {'extra': {'sed_status': True, 'passwords': True, 'real_names': True}})
-        if sed_disks:
+        sed_disks = await self.middleware.call(
+            'disk.query', [['name', 'in', list(disks)], ['sed', '=', True]], {
+                'extra': {'sed_status': True, 'passwords': True, 'real_names': True}, 'force_sql_filters': True
+            }
+        )
+        to_setup_sed_disks = []
+        failed_sed_status_disks = []
+        for sed_disk in sed_disks:
+            if sed_disk['sed_status'] in [SEDStatus.UNINITIALIZED, SEDStatus.LOCKED]:
+                to_setup_sed_disks.append(sed_disk)
+            elif sed_disk['sed_status'] == SEDStatus.FAILED:
+                failed_sed_status_disks.append(sed_disk['name'])
+
+        if failed_sed_status_disks:
+            # Ideally shouldn't happen but if it does, let's add a validation error and raise, no point in going
+            # further
+            verrors.add(
+                schema_name,
+                f'Failed to query status of {", ".join(failed_sed_status_disks)!r} SED disk(s).'
+            )
+            verrors.check()
+
+        if to_setup_sed_disks:
             global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
             if not global_sed_password:
                 verrors.add(
