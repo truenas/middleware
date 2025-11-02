@@ -16,6 +16,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.sed import SEDStatus
 from middlewared.utils.size import format_size
 
 from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
@@ -246,6 +247,19 @@ class PoolService(CRUDService):
         # 2) If any of them is locked, try to unlock with global sed password
         # 3) If any of them are uninitialized, try to initialize them using global sed pass
         # 4) If anything fails in 2/3, let's raise an appropriate error
+
+        sed_disks = await self.middleware.call('disk.query', [
+            ['name', 'in', list(disks)], ['sed', '=', True],
+            ['sed_status', 'in', [SEDStatus.LOCKED, SEDStatus.UNINITIALIZED]]
+        ], {'extra': {'sed_status': True, 'passwords': True, 'real_names': True}})
+        if sed_disks:
+            global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
+            if not global_sed_password:
+                verrors.add(
+                    f'{schema_name}.topology',
+                    'Global SED password must be set when uninitialized or locked SED disks are being used in a pool'
+                )
+                verrors.check()
 
         return disks, vdevs
 
