@@ -238,6 +238,15 @@ class PoolService(CRUDService):
                 )
         verrors.check()
 
+        # At this point, we have validated disks and are ready to proceed to the next step in pool creation
+        # where we format disks and finally create the pool with necessary configuration
+        # What we would like to do at this point now would be to see if we have SED based disks and if yes,
+        # do the following:
+        # 1) We have some disks which are locked but there is no global SED pass - raise validation error
+        # 2) If any of them is locked, try to unlock with global sed password
+        # 3) If any of them are uninitialized, try to initialize them using global sed pass
+        # 4) If anything fails in 2/3, let's raise an appropriate error
+
         return disks, vdevs
 
     async def _validate_topology(self, data, old=None):
