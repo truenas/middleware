@@ -1,3 +1,4 @@
+import logging
 import re
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
@@ -5,7 +6,11 @@ from subprocess import CompletedProcess
 
 from middlewared.utils import run
 
-__all__ = ("unlock_impl", "is_sed_disk", "sed_status", "SEDStatus", "revert_sed_with_psid")
+
+logger = logging.getLogger(__name__)
+
+
+__all__ = ("unlock_impl", "is_sed_disk", "parse_unlock_info", "sed_status", "SEDStatus", "revert_sed_with_psid")
 
 
 RE_INITIALIZED = re.compile(r'LockingEnabled\s*=\s*Y', re.IGNORECASE | re.MULTILINE)
@@ -96,6 +101,48 @@ async def unlock_impl(disk: dict[str, str]) -> UnlockResponses:
     drive must conform to one of the Trusted Computing Group (TCG)
     Enterprise, Opal, Opalite or Pyrite SSC specifications."""
     return await unlock_tcg_opal_pyrite(disk['path'], disk['passwd'])
+
+
+async def parse_unlock_info(info: UnlockResponses, return_failed_error: bool = False):
+    """Purpose of this method is to parse the unlock object
+    since we have to run multiple commands for each disk.
+    This will log the appropriate error message and return
+    the absolute path of the disk that we failed to unlock.
+    """
+    if info.invalid_or_unsupported:
+        # disk doesn't exist, or doesn't even return
+        # properly from the --query command
+        return
+
+    errmsg = None
+    failed = None
+    if info.locked is True:
+        failed = info.disk_path
+        errmsg = f'{info.disk_path!r}'
+        # means disk supports SED and we failed to unlock
+        # the disk (either bad password or unhandled error)
+        if info.query_cp and info.query_cp.returncode:
+            errmsg += f' QUERY ERROR {info.query_cp.returncode}: {info.query_cp.stderr.decode(errors="ignore")!r}'
+        if info.unlock_cp and info.unlock_cp.returncode:
+            errmsg += (
+                f' UNLOCK ERROR {info.unlock_cp.returncode}: {info.unlock_cp.stderr.decode(errors="ignore")!r}'
+            )
+        if not return_failed_error:
+            logger.warning(errmsg)
+
+    if info.mbr_cp and info.mbr_cp.returncode:
+        # if we successfully unlock the disk, we disable
+        # the MBR shadow protection since this is a feature
+        # used by the OS to protect boot partitions. We
+        # dont use this functionality since we're only
+        # locking/unlocking disks used in zpools.
+        logger.warning(
+            '%r MBR ERROR: %r',
+            info.disk_path,
+            info.mbr_cp.stderr.decode(errors="ignore")
+        )
+
+    return errmsg if return_failed_error else failed
 
 
 async def is_sed_disk(disk_name: str) -> bool:
