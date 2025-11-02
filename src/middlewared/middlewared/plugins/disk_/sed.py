@@ -22,7 +22,7 @@ class DiskService(Service):
     @private
     async def common_sed_validation(self, schema, options, status_to_check):
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
-            'extra': {'sed_status': True, 'passwords': True},
+            'extra': {'sed_status': True, 'passwords': True, 'real_names': True},
             'force_sql_filters': True,
         })
         verrors = ValidationErrors()
@@ -51,15 +51,15 @@ class DiskService(Service):
         Setup specified `options.name` SED disk.
         """
         disk, verrors = await self.common_sed_validation('disk_sed_setup', options, SEDStatus.UNINITIALIZED)
-        password = options.get('password') or disk['passwd'] or (
-            await self.middleware.call('system.advanced.sed_global_password')
+        password = options.get('password') or disk['passwd'] or await self.middleware.call(
+            'system.advanced.sed_global_password'
         )
         if not password:
             verrors.add('disk_sed_setup.password', f'Please specify a password to be used for setting up SED disk')
 
         verrors.check()
 
-        status = await self.sed_initial_setup(disk['name'], password)
+        status = await self.sed_initial_setup(disk['real_name'], password)
         if status != 'SUCCESS':
             raise CallError(f'Failed to set up SED disk {disk["name"]!r} (got {status!r} status)')
 
@@ -77,9 +77,46 @@ class DiskService(Service):
         """
         Unlock specified `options.name` SED disk.
         """
-        name = options['name']
-        verrors = ValidationErrors()
+        disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, SEDStatus.LOCKED)
+        global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
+        password = options.get('password') or disk['passwd'] or global_sed_password
+        if not password:
+            verrors.add(
+                'disk_sed_unlock.password', 'Please specify a password to be used for unlocking SED disk'
+            )
+        verrors.check()
 
+        unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
+        if failed_err_msg := await self.parse_unlock_info(unlock_info, True):
+            raise CallError(f'Failed to unlock SED disk {disk["name"]!r} (got {failed_err_msg!r})', errno.EACCES)
+
+        # This means that we have unlocked the SED disk
+        # After discussion with William, the idea behind this method is to cater for those cases
+        # where user inserted a new disk perhaps and it is locked and it's password differs from
+        # the global pasword
+        # In such a case, we would like to update the password in the database to reflect that case
+        # but that would only be done if the password differs from the disk entry and the global sed password
+        # entry
+        if options.get('password'):
+            # If this is set, it means that this was used to unlock the disk and it worked
+            # Let's just see now that if it is same as disk pass or the global pass
+            update_pass = False
+            if disk['passwd']:
+                if options['password'] != disk['passwd']:
+                    update_pass = True
+            elif global_sed_password and options['password'] != global_sed_password:
+                update_pass = True
+
+            if update_pass:
+                await self.middleware.call(
+                    'datastore.update',
+                    'storage_disk',
+                    disk['identifier'],
+                    {'disk_passwd': options['password']},
+                )
+                await self.middleware.call('kmip.sync_sed_keys', [disk['identifier']])
+
+        return True
 
     @private
     async def should_try_unlock(self, force=False):
@@ -109,7 +146,7 @@ class DiskService(Service):
         return disks
 
     @private
-    async def parse_unlock_info(self, info):
+    async def parse_unlock_info(self, info, return_failed_error=False):
         """Purpose of this method is to parse the unlock object
         since we have to run multiple commands for each disk.
         This will log the appropriate error message and return
@@ -120,6 +157,7 @@ class DiskService(Service):
             # properly from the --query command
             return
 
+        errmsg = None
         failed = None
         if info.locked is True:
             failed = info.disk_path
@@ -132,7 +170,8 @@ class DiskService(Service):
                 errmsg += (
                     f' UNLOCK ERROR {info.unlock_cp.returncode}: {info.unlock_cp.stderr.decode(errors="ignore")!r}'
                 )
-            self.logger.warning(errmsg)
+            if not return_failed_error:
+                self.logger.warning(errmsg)
 
         if info.mbr_cp and info.mbr_cp.returncode:
             # if we successfully unlock the disk, we disable
@@ -146,7 +185,7 @@ class DiskService(Service):
                 info.mbr_cp.stderr.decode(errors="ignore")
             )
 
-        return failed
+        return errmsg if return_failed_error else failed
 
     @private
     async def sed_unlock_all(self, force=False):

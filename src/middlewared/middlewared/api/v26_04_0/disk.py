@@ -217,20 +217,16 @@ class DiskWipeResult(BaseModel):
     """Returns `null` when the disk wipe operation is successfully started."""
 
 
+@single_argument_args('disk_sed_unlock')
 class DiskUnlockSedArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to unlock."""
-    password: Secret[NonEmptyString]
+    password: Secret[NonEmptyString] = NotRequired
     """Password for disk to unlock."""
-    new_password: Secret[NonEmptyString] = NotRequired
-    """
-    Optional password attribute to change the disk password if the disk 
-    unlock is successful with the provided password.
-    """
 
 
 class DiskUnlockSedResult(BaseModel):
-    result: bool
+    result: Literal[True]
     """Returns true if the disk unlock was successful."""
 
 
