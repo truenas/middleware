@@ -253,7 +253,7 @@ class DiskService(Service, ServiceChangeMixin):
 
     def _map_device_disk_to_db(self, db_disk, disk):
         only_update_if_true = ('size',)
-        update_keys = ('serial', 'lunid', 'rotationrate', 'type', 'size', 'subsystem', 'number', 'model', 'bus', 'sed')
+        update_keys = ('serial', 'lunid', 'rotationrate', 'type', 'size', 'subsystem', 'number', 'model', 'bus')
         for key in filter(lambda k: k in update_keys and (k not in only_update_if_true or disk[k]), disk):
             db_disk[f'disk_{key}'] = disk[key]
 
