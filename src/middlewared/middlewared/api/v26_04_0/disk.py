@@ -28,6 +28,8 @@ __all__ = (
     "DiskUnlockSedResult",
     "DiskSetupSedArgs",
     "DiskSetupSedResult",
+    "DiskResetSedArgs",
+    "DiskResetSedResult",
 )
 
 
@@ -242,5 +244,18 @@ class DiskSetupSedArgs(BaseModel):
 
 
 class DiskSetupSedResult(BaseModel):
-    result: bool
+    result: Literal[True]
     """Returns true if the disk setup was successful."""
+
+
+@single_argument_args('disk_sed_reset')
+class DiskResetSedArgs(BaseModel):
+    name: NonEmptyString
+    """Name of disk to reset."""
+    psid: NonEmptyString
+    """PID of disk to reset."""
+
+
+class DiskResetSedResult(BaseModel):
+    result: Literal[True]
+    """Returns true if the disk reset was successful."""
