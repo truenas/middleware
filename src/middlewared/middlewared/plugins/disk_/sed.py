@@ -9,7 +9,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, Service, private, ValidationErrors
 from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.sed import is_sed_disk, SEDStatus, unlock_impl
+from middlewared.utils.sed import is_sed_disk, revert_sed_with_psid, SEDStatus, unlock_impl
 
 
 RE_HDPARM_DRIVE_LOCKED = re.compile(r'Security.*\n\s*locked', re.DOTALL)
@@ -19,28 +19,37 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 class DiskService(Service):
 
+    @api_method(DiskResetSedArgs, DiskResetSedResult, roles=['DISK_WRITE'])
+    async def reset_sed(self, options):
+        """
+        Reset SED disk.
+        """
+        disk, verrors = await self.common_sed_validation('disk_reset_sed', options)
+        success, message = await revert_sed_with_psid(disk['real_name'], options['psid'])
+        if not success:
+            raise CallError(f'Failed to reset SED disk {disk["name"]!r} ({message})')
+
+        return True
+
     @private
-    async def get_sed_disk(self, name):
-        return await self.middleware.call('disk.query', [['name', '=', name]], {
+    async def common_sed_validation(self, schema, options, status_to_check=None):
+        disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
             'extra': {'sed_status': True, 'passwords': True, 'real_names': True},
             'force_sql_filters': True,
         })
-
-    @private
-    async def common_sed_validation(self, schema, options, status_to_check):
-        disk = await self.get_sed_disk(options['name'])
         verrors = ValidationErrors()
         if not disk:
             verrors.add(f'{schema}.name', f'{options["name"]!r} is not a valid disk')
 
         verrors.check()
+
         disk = disk[0]
         if disk['sed'] is False:
             verrors.add(f'{schema}.name', f'{options["name"]!r} is not a SED disk')
 
         verrors.check()
 
-        if disk['sed_status'] != status_to_check:
+        if status_to_check is not None and disk['sed_status'] != status_to_check:
             verrors.add(
                 f'{schema}.name',
                 f'{options["name"]!r} SED status is not {status_to_check} (currently is {disk['sed_status']})'
