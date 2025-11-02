@@ -31,6 +31,10 @@ class DiskService(Service):
         if not success:
             raise CallError(f'Failed to reset SED disk {disk["name"]!r} ({message})')
 
+        # Let's please remove the password set on the disk as well at this point
+        await self.middleware.call('datastore.update', 'storage_disk', disk['identifier'], {'disk_passwd': ''})
+        await self.middleware.call('kmip.sync_sed_keys', [disk['identifier']])
+
         return True
 
     @private
