@@ -571,13 +571,13 @@ class PoolService(CRUDService):
         pool = await self.get_instance(id_)
         audit_callback(pool['name'])
 
-        disks = vdevs = None
-        if 'topology' in data:
-            disks, vdevs = await self._process_topology('pool_update', data, pool)
-
         verrors = ValidationErrors()
         dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors, 'pool_update')
         verrors.check()
+
+        disks = vdevs = None
+        if 'topology' in data:
+            disks, vdevs = await self._process_topology('pool_update', data, pool)
 
         if disks and vdevs:
             await self.middleware.call('pool.format_disks', job, disks, 0, 80)
