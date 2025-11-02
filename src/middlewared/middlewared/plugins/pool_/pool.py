@@ -16,7 +16,6 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.sed import SEDStatus
 from middlewared.utils.size import format_size
 
 from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
