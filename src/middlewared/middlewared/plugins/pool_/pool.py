@@ -241,25 +241,8 @@ class PoolService(CRUDService):
 
         # At this point, we have validated disks and are ready to proceed to the next step in pool creation
         # where we format disks and finally create the pool with necessary configuration
-        # What we would like to do at this point now would be to see if we have SED based disks and if yes,
-        # do the following:
-        # 1) We have some disks which are locked but there is no global SED pass - raise validation error
-        # 2) If any of them is locked, try to unlock with global sed password
-        # 3) If any of them are uninitialized, try to initialize them using global sed pass
-        # 4) If anything fails in 2/3, let's raise an appropriate error
-
-        sed_disks = await self.middleware.call('disk.query', [
-            ['name', 'in', list(disks)], ['sed', '=', True],
-            ['sed_status', 'in', [SEDStatus.LOCKED, SEDStatus.UNINITIALIZED]]
-        ], {'extra': {'sed_status': True, 'passwords': True, 'real_names': True}})
-        if sed_disks:
-            global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
-            if not global_sed_password:
-                verrors.add(
-                    f'{schema_name}.topology',
-                    'Global SED password must be set when uninitialized or locked SED disks are being used in a pool'
-                )
-                verrors.check()
+        # We will now try to configure SED disks (if any) automatically
+        await self.middleware.call('disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology')
 
         return disks, vdevs
 
