@@ -2,6 +2,8 @@ import yaml
 
 from middlewared.service import ValidationErrors
 
+from .compose_utils import validate_compose_config
+
 
 def validate_payload(data: dict, schema: str) -> dict:
     verrors = ValidationErrors()
@@ -12,16 +14,36 @@ def validate_payload(data: dict, schema: str) -> dict:
         verrors.add(f'{schema}.custom_compose_config_string', 'Only one of these fields should be provided')
 
     compose_config = data.get('custom_compose_config')
+    compose_yaml_string = None
+
     if data.get('custom_compose_config_string'):
         try:
             compose_config = yaml.safe_load(data['custom_compose_config_string'])
+            compose_yaml_string = data['custom_compose_config_string']
         except yaml.YAMLError:
             verrors.add(f'{schema}.custom_compose_config_string', 'Invalid YAML provided')
         else:
             if not isinstance(compose_config, dict):
                 verrors.add(f'{schema}.custom_compose_config_string', 'YAML must represent a dictionary/object')
-            elif 'services' not in compose_config:
-                verrors.add(f'{schema}.custom_compose_config_string', 'YAML is missing required \"services\" key')
+            elif 'services' not in compose_config and 'include' not in compose_config:
+                verrors.add(
+                    f'{schema}.custom_compose_config_string',
+                    'YAML is missing required "services" key or '
+                    '"include" key which points to a file that has services'
+                )
+    elif compose_config:
+        compose_yaml_string = yaml.safe_dump(compose_config)
+
+    # Validate the compose configuration with docker compose
+    if compose_yaml_string and not verrors:
+        is_valid, error_msg = validate_compose_config(compose_yaml_string)
+        if not is_valid:
+            field_name = (
+                'custom_compose_config_string'
+                if data.get('custom_compose_config_string')
+                else 'custom_compose_config'
+            )
+            verrors.add(f'{schema}.{field_name}', f'Invalid compose configuration: {error_msg}')
 
     verrors.check()
 
