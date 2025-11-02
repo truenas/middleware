@@ -5,7 +5,7 @@ from subprocess import CompletedProcess
 
 from middlewared.utils import run
 
-__all__ = ("unlock_impl", "is_sed_disk", "sed_status", "SEDStatus")
+__all__ = ("unlock_impl", "is_sed_disk", "sed_status", "SEDStatus", "revert_sed_with_psid")
 
 
 RE_INITIALIZED = re.compile(r'LockingEnabled\s*=\s*Y', re.IGNORECASE | re.MULTILINE)
@@ -121,3 +121,57 @@ async def sed_status(disk_name: str):
         # This should not happen as we only handle SED for enterprise systems but still
         # better safe than sorry
         return SEDStatus.FAILED
+
+
+async def revert_sed_with_psid(disk_name: str, psid: str) -> tuple[bool, str]:
+    """
+    Factory reset a SED disk using PSID (Physical Security ID).
+
+    WARNING: This operation will PERMANENTLY ERASE ALL DATA on the disk.
+
+    The PSID is a manufacturer-provided password printed on the disk label,
+    typically a 32-character alphanumeric string. This operation:
+    - Resets the disk to factory defaults
+    - Removes all locking ranges
+    - Erases all data encryption keys
+    - Makes all data on the disk permanently unrecoverable
+
+    Args:
+        disk_name: The disk name (e.g., 'sda', 'nvme0n1')
+        psid: The PSID from the disk label (no dashes/spaces)
+
+    Returns:
+        tuple[bool, str]: (success, error_message)
+            - (True, 'SUCCESS') if revert was successful
+            - (False, error_message) if revert failed
+    """
+    devname = f'/dev/{disk_name}'
+
+    # Enterprise drives need --PSIDrevertAdminSP, others need --PSIDrevert
+    query_cp = await run_sedutil_cmd(['--query', devname])
+    is_enterprise = False
+    if query_cp.returncode == ReturnCodeMappings.SUCCESS:
+        # Look for Enterprise function indicator in query output
+        if b'Enterprise function' in query_cp.stdout or b'0100' in query_cp.stdout:
+            is_enterprise = True
+
+    # Try appropriate command based on drive type
+    if is_enterprise:
+        # TCG-Enterprise drives use --PSIDrevertAdminSP
+        cp = await run_sedutil_cmd(['--PSIDrevertAdminSP', psid, devname])
+
+        # If Enterprise command fails, try regular PSIDrevert as fallback
+        if cp.returncode != ReturnCodeMappings.SUCCESS:
+            cp = await run_sedutil_cmd(['--PSIDrevert', psid, devname])
+    else:
+        cp = await run_sedutil_cmd(['--PSIDrevert', psid, devname])
+
+    if cp.returncode == ReturnCodeMappings.SUCCESS:
+        return True, 'SUCCESS'
+    elif cp.returncode == ReturnCodeMappings.AUTH_FAILED:
+        return False, 'Invalid PSID - authentication failed'
+    elif cp.returncode == ReturnCodeMappings.INVALID_OR_UNSUPPORTED:
+        return False, 'Operation not supported on this disk'
+    else:
+        stderr_msg = cp.stderr.decode(errors='ignore').strip() if cp.stderr else ''
+        return False, f'Revert failed with code {cp.returncode}: {stderr_msg}'
