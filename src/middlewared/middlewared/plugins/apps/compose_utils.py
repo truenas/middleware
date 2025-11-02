@@ -1,5 +1,6 @@
 import itertools
 import logging
+import tempfile
 import typing
 
 from middlewared.service_exception import CallError
@@ -59,3 +60,30 @@ def compose_action(
             err_msg += ' It appears you have reached your pull rate limit. Please try again later.'
         err_msg += ' Please check /var/log/app_lifecycle.log for more details'
         raise CallError(err_msg)
+
+
+def validate_compose_config(compose_yaml: str) -> tuple[bool, str]:
+    """
+    Validate a Docker Compose YAML configuration.
+
+    Args:
+        compose_yaml: YAML string containing the compose configuration
+
+    Returns:
+        A tuple of (is_valid, error_message). If valid, error_message is empty string.
+    """
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=True) as tmp_file:
+        tmp_file.write(compose_yaml)
+        tmp_file.flush()
+
+        cp = run(
+            ['docker', '--config', '/etc/docker', 'compose', '-f', tmp_file.name, 'config'],
+            stdout=None,
+            timeout=30
+        )
+
+        if cp.returncode != 0:
+            error_msg = cp.stderr.strip() if cp.stderr else 'Invalid compose configuration'
+            return False, error_msg
+
+        return True, ''
