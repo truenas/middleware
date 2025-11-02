@@ -20,6 +20,23 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 class DiskService(Service):
 
     @private
+    async def setup_sed_disk_for_pool(self, disk):
+        """
+        Will attempt to setup SED disk for pool by either unlocking it using disk or global pass
+        or alternatively set it up if it is not initialized.
+        It will return true if it succeeded, false otherwise.
+        """
+        password = disk['passwd'] or disk['global_passwd']
+        if disk['sed_status'] is SEDStatus.UNINITIALIZED:
+            return await self.sed_initial_setup(disk['real_name'], password) == 'SUCCESS'
+        elif disk['sed_status'] is SEDStatus.LOCKED:
+            unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
+            # parse unlock info returns string if it failed to unlock and none otherwise
+            return await self.parse_unlock_info(unlock_info) is None
+
+        return False
+
+    @private
     async def setup_sed_disks_for_pool(self, disks, schema_name):
         # This will be called during pool create/update when topology is being manipulated
         # we will be doing some extra steps for SED based disks here
@@ -30,6 +47,7 @@ class DiskService(Service):
         # 3) If any of them are uninitialized, try to initialize them using global sed pass
         # 4) If anything fails in 2/3, let's raise an appropriate error
         verrors = ValidationErrors()
+        # TODO: We need to handle failed status here as well
         sed_disks = await self.middleware.call('disk.query', [
             ['name', 'in', list(disks)], ['sed', '=', True],
             ['sed_status', 'in', [SEDStatus.LOCKED, SEDStatus.UNINITIALIZED]]
