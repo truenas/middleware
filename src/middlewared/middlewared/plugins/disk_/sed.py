@@ -4,7 +4,7 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DiskSetupSedArgs, DiskSetupSedResult, DiskUnlockSedArgs, DiskUnlockSedResult,
+    DiskSetupSedArgs, DiskSetupSedResult, DiskUnlockSedArgs, DiskUnlockSedResult, DiskResetSedArgs, DiskResetSedResult,
 )
 from middlewared.service import CallError, Service, private, ValidationErrors
 from middlewared.utils import run
@@ -20,11 +20,15 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 class DiskService(Service):
 
     @private
-    async def common_sed_validation(self, schema, options, status_to_check):
-        disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
+    async def get_sed_disk(self, name):
+        return await self.middleware.call('disk.query', [['name', '=', name]], {
             'extra': {'sed_status': True, 'passwords': True, 'real_names': True},
             'force_sql_filters': True,
         })
+
+    @private
+    async def common_sed_validation(self, schema, options, status_to_check):
+        disk = await self.get_sed_disk(options['name'])
         verrors = ValidationErrors()
         if not disk:
             verrors.add(f'{schema}.name', f'{options["name"]!r} is not a valid disk')
