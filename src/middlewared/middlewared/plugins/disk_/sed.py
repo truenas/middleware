@@ -9,7 +9,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, Service, private, ValidationErrors
 from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.sed import is_sed_disk, parse_unlock_info, revert_sed_with_psid, SEDStatus, unlock_impl
+from middlewared.utils.sed import is_sed_disk, revert_sed_with_psid, SEDStatus, unlock_impl
 
 
 RE_HDPARM_DRIVE_LOCKED = re.compile(r'Security.*\n\s*locked', re.DOTALL)
@@ -102,7 +102,7 @@ class DiskService(Service):
         verrors.check()
 
         unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
-        if failed_err_msg := await parse_unlock_info(unlock_info, True):
+        if failed_err_msg := await self.parse_unlock_info(unlock_info, True):
             raise CallError(f'Failed to unlock SED disk {disk["name"]!r} (got {failed_err_msg!r})', errno.EACCES)
 
         # This means that we have unlocked the SED disk
@@ -161,6 +161,48 @@ class DiskService(Service):
         return disks
 
     @private
+    async def parse_unlock_info(self, info, return_failed_error=False):
+        """Purpose of this method is to parse the unlock object
+        since we have to run multiple commands for each disk.
+        This will log the appropriate error message and return
+        the absolute path of the disk that we failed to unlock.
+        """
+        if info.invalid_or_unsupported:
+            # disk doesn't exist, or doesn't even return
+            # properly from the --query command
+            return
+
+        errmsg = None
+        failed = None
+        if info.locked is True:
+            failed = info.disk_path
+            errmsg = f'{info.disk_path!r}'
+            # means disk supports SED and we failed to unlock
+            # the disk (either bad password or unhandled error)
+            if info.query_cp and info.query_cp.returncode:
+                errmsg += f' QUERY ERROR {info.query_cp.returncode}: {info.query_cp.stderr.decode(errors="ignore")!r}'
+            if info.unlock_cp and info.unlock_cp.returncode:
+                errmsg += (
+                    f' UNLOCK ERROR {info.unlock_cp.returncode}: {info.unlock_cp.stderr.decode(errors="ignore")!r}'
+                )
+            if not return_failed_error:
+                self.logger.warning(errmsg)
+
+        if info.mbr_cp and info.mbr_cp.returncode:
+            # if we successfully unlock the disk, we disable
+            # the MBR shadow protection since this is a feature
+            # used by the OS to protect boot partitions. We
+            # dont use this functionality since we're only
+            # locking/unlocking disks used in zpools.
+            self.logger.warning(
+                '%r MBR ERROR: %r',
+                info.disk_path,
+                info.mbr_cp.stderr.decode(errors="ignore")
+            )
+
+        return errmsg if return_failed_error else failed
+
+    @private
     async def sed_unlock_all(self, force=False):
         if not await self.should_try_unlock(force):
             return
@@ -173,7 +215,7 @@ class DiskService(Service):
 
         failed_to_unlock = list()
         for i in await asyncio_map(unlock_impl, disks_to_unlock, limit=16):
-            if failed := await parse_unlock_info(i):
+            if failed := await self.parse_unlock_info(i):
                 failed_to_unlock.append(failed)
 
         if failed_to_unlock:
@@ -194,7 +236,7 @@ class DiskService(Service):
             return
 
         info = await unlock_impl(disk[0])
-        failed = await parse_unlock_info(info)
+        failed = await self.parse_unlock_info(info)
 
         return failed is None or not info.locked
 
