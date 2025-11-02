@@ -24,17 +24,17 @@ class DiskService(Service):
         """
         Will attempt to setup SED disk for pool by either unlocking it using disk or global pass
         or alternatively set it up if it is not initialized.
-        It will return true if it succeeded, false otherwise.
+        It will return tuple true if it succeeded, false otherwise with the other value being disk name
         """
         password = disk['passwd'] or disk['global_passwd']
         if disk['sed_status'] is SEDStatus.UNINITIALIZED:
-            return await self.sed_initial_setup(disk['real_name'], password) == 'SUCCESS'
+            return await self.sed_initial_setup(disk['real_name'], password) == 'SUCCESS', disk['name']
         elif disk['sed_status'] is SEDStatus.LOCKED:
             unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
             # parse unlock info returns string if it failed to unlock and none otherwise
-            return await self.parse_unlock_info(unlock_info) is None
+            return await self.parse_unlock_info(unlock_info) is None, disk['name']
 
-        return False
+        return False, disk['name']
 
     @private
     async def setup_sed_disks_for_pool(self, disks, schema_name):
@@ -75,6 +75,21 @@ class DiskService(Service):
                 verrors.add(
                     schema_name,
                     'Global SED password must be set when uninitialized or locked SED disks are being used in a pool'
+                )
+                verrors.check()
+
+            failed_setup_disks = []
+            for success, disk_name in await asyncio_map(
+                self.setup_sed_disk_for_pool, [d | {'global_passwd': global_sed_password} for d in to_setup_sed_disks],
+                limit=16
+            ):
+                if success is False:
+                    failed_setup_disks.append(disk_name)
+
+            if failed_sed_status_disks:
+                verrors.add(
+                    schema_name,
+                    f'Failed to setup {", ".join(failed_sed_status_disks)!r} SED disk(s).'
                 )
                 verrors.check()
 
