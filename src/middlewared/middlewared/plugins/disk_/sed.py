@@ -24,6 +24,8 @@ class DiskService(Service):
         """
         Reset SED disk.
         """
+        # TODO: See if we should have validation or force flag in place to see if a disk
+        #  is part of a zfs pool and to safely then allow resetting it
         disk, verrors = await self.common_sed_validation('disk_reset_sed', options)
         success, message = await revert_sed_with_psid(disk['real_name'], options['psid'])
         if not success:

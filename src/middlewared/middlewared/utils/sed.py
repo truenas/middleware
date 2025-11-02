@@ -105,6 +105,9 @@ async def is_sed_disk(disk_name: str) -> bool:
 
 
 async def sed_status(disk_name: str):
+    # FIXME: We have a problem here, enterprise drives still show lockingenabled = Y
+    #  after a revert with psid which means we will not be flagging them properly
+    #  and that needs to be handled
     cp = await run_sedutil_cmd(['--query', f'/dev/{disk_name}'])
     if cp.returncode != ReturnCodeMappings.SUCCESS:
         return SEDStatus.FAILED
