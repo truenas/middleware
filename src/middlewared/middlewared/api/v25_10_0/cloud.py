@@ -6,7 +6,7 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonE
 from .cloud_credential import CloudCredentialEntry
 from .common import CronModel
 
-__all__ = ["BaseCloudEntry", "CloudTaskAttributes"]
+__all__ = ["BaseCloudEntry", "CloudTaskAttributes", "B2TaskAttributes", "DropboxTaskAttributes"]
 
 
 class CloudCron(CronModel):
@@ -24,15 +24,6 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     bucket_policy_only: bool = False
     """Valid only for GOOGLE_CLOUD_STORAGE provider. Access checks should use bucket-level IAM policies. If you want \
     to upload objects to a bucket with Bucket Policy Only set then you will need to set this."""
-    b2_chunk_size: int = Field(alias="chunk_size", default=96, ge=5)
-    """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
-    memory and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be \
-    split in no more than 10,000 chunks."""
-    dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lt=150)
-    """Valid only for DROPBOX provider. Upload chunk size in MiB. Must fit in memory. Note that these chunks are \
-    buffered in memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business \
-    accounts can have monthly data transfer limits per team per month. By using larger chunk sizes you will decrease \
-    the number of data transfer calls used and you'll be able to transfer more data to your Dropbox Business account."""
     acknowledge_abuse: bool = False
     """Valid only for GOOGLE_DRIVER provider. Allow files which return cannotDownloadAbusiveFile to be downloaded. If \
     downloading a file returns the error "This file has been identified as malware or spam and cannot be downloaded" \
@@ -47,6 +38,21 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     """Valid only for S3 provider. The storage class to use."""
 
 
+class B2TaskAttributes(CloudTaskAttributes):
+    b2_chunk_size: int = Field(alias="chunk_size", default=96, ge=5)
+    """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
+    memory and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be \
+    split in no more than 10,000 chunks."""
+
+
+class DropboxTaskAttributes(CloudTaskAttributes):
+    dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lt=150)
+    """Valid only for DROPBOX provider. Upload chunk size in MiB. Must fit in memory. Note that these chunks are \
+    buffered in memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business \
+    accounts can have monthly data transfer limits per team per month. By using larger chunk sizes you will decrease \
+    the number of data transfer calls used and you'll be able to transfer more data to your Dropbox Business account."""
+
+
 class BaseCloudEntry(BaseModel):
     id: int
     """Unique identifier for this cloud storage configuration."""
@@ -56,7 +62,7 @@ class BaseCloudEntry(BaseModel):
     """The local path to back up beginning with `/mnt` or `/dev/zvol`."""
     credentials: CloudCredentialEntry
     """Cloud credentials to use for each backup."""
-    attributes: CloudTaskAttributes
+    attributes: CloudTaskAttributes | B2TaskAttributes | DropboxTaskAttributes
     """Additional information for each backup, e.g. bucket name."""
     schedule: CloudCron = Field(default_factory=CloudCron)
     """Cron schedule dictating when the task should run."""

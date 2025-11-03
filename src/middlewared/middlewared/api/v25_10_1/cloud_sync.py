@@ -12,10 +12,12 @@ from middlewared.api.base import (
     single_argument_args,
     TimeString,
 )
-from .cloud import BaseCloudEntry, CloudTaskAttributes
+from .cloud import BaseCloudEntry, CloudTaskAttributes, B2TaskAttributes, DropboxTaskAttributes
 
 __all__ = [
     "CloudTaskAttributes",
+    "B2TaskAttributes",
+    "DropboxTaskAttributes",
     "CloudSyncEntry",
     "CloudSyncCreateArgs",
     "CloudSyncCreateResult",
@@ -185,7 +187,7 @@ class CloudSyncListDirectoryArgs(BaseModel):
     """Password for decrypting files and filenames."""
     encryption_salt: Secret[str] = ""
     """Salt value for encryption key derivation."""
-    attributes: CloudTaskAttributes
+    attributes: CloudTaskAttributes | B2TaskAttributes | DropboxTaskAttributes
     """Cloud provider-specific attributes for the listing operation."""
     args: str = ""
     """Additional arguments for the directory listing command."""
