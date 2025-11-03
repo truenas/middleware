@@ -378,7 +378,7 @@ def test__audit_log(request):
         with smb_share(os.path.join('/mnt', ds), 'SMB_AUDIT', {
             'purpose': 'LEGACY_SHARE',
             'options': {'guestok': True},
-            'audit': {'enable': True}
+            'audit': {'enable': True, 'ignore_list': ['root']}
         }) as s:
             events = do_audit_ops(s['name'])
             assert len(events) > 0
