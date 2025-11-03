@@ -285,7 +285,7 @@ class MailService(ConfigService):
                         # (like b'"TrueNAS SCALE<user@domaincom>" <user@domain.com>')
                         # Same byte sequences passed as strings work fine and result in invalid from address being
                         # sanitized properly.
-                        from_addr.encode().decode(),
+                        from_addr if isinstance(from_addr, str) else from_addr.encode().decode(),
                         to,
                         msg.as_string(),
                     )
