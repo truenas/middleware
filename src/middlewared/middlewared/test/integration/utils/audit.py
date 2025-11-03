@@ -6,18 +6,21 @@ import time
 from middlewared.test.integration.utils import client
 
 
+DEFLIMIT = 10000
+
+
 @contextlib.contextmanager
 def expect_audit_log(entries, *, include_logins=False):
     with client() as c:
         time.sleep(5)  # FIXME: proper audit log flush
 
-        existing = c.call("audit.query", {"services": ["MIDDLEWARE"]})
+        existing = c.call("audit.query", {"services": ["MIDDLEWARE"], "query-options": {"limit": DEFLIMIT}})
 
         yield
 
         time.sleep(5)
 
-        new = c.call("audit.query", {"services": ["MIDDLEWARE"]})
+        new = c.call("audit.query", {"services": ["MIDDLEWARE"], "query-options": {"limit": DEFLIMIT}})
 
     assert new[:len(existing)] == existing
 
@@ -71,7 +74,7 @@ def get_audit_entry(service, index=-1):
 
     assert offset > -1
     with client() as c:
-        entry_list = c.call('audit.query', {"services": [svc], "query-options": {"offset": offset}})
+        entry_list = c.call('audit.query', {"services": [svc], "query-options": {"offset": offset, "limit": DEFLIMIT}})
 
     if len(entry_list):
         entry = entry_list[0]
