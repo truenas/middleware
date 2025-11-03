@@ -49,8 +49,9 @@ class CloudTaskServiceMixin:
         if verrors:
             return
 
-        provider = REMOTES[credentials["provider"]["type"]]
-        AttributesModel = {"B2": B2TaskAttributes, "DROPBOX": DropboxTaskAttributes}.get(provider, CloudTaskAttributes)
+        cred_type = credentials["provider"]["type"]
+        provider = REMOTES[cred_type]
+        AttributesModel = {"B2": B2TaskAttributes, "DROPBOX": DropboxTaskAttributes}.get(cred_type, CloudTaskAttributes)
 
         try:
             data["attributes"] = validate_model(
