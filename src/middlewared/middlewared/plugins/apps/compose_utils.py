@@ -1,5 +1,6 @@
 import itertools
 import logging
+import subprocess
 import tempfile
 import typing
 
@@ -78,7 +79,7 @@ def validate_compose_config(compose_yaml: str) -> tuple[bool, str]:
 
         cp = run(
             ['docker', '--config', '/etc/docker', 'compose', '-f', tmp_file.name, 'config'],
-            stdout=None,
+            stdout=subprocess.DEVNULL,
             timeout=30
         )
 
