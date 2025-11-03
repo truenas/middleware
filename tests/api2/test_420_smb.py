@@ -377,6 +377,14 @@ def test__audit_log(request):
         return None
 
     with make_dataset('smb-audit', data={'share_type': 'SMB'}) as ds:
+        with pytest.raises(match='Watch list or ignore list is required'):
+            with smb_share(os.path.join('/mnt', ds), 'SMB_AUDIT', {
+                'purpose': 'LEGACY_SHARE',
+                'options': {'guestok': True},
+                'audit': {'enable': True}
+            }):
+                pass
+
         with smb_share(os.path.join('/mnt', ds), 'SMB_AUDIT', {
             'purpose': 'LEGACY_SHARE',
             'options': {'guestok': True},
