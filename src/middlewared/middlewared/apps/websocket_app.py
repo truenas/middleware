@@ -153,7 +153,7 @@ class WebSocketApplication(RpcWebSocketApp):
             elif isinstance(result, AsyncGeneratorType):
                 result = [i async for i in result]
             else:
-                if lam.returns_model:
+                if await lam.returns_model():
                     result = await lam._dump_result(self, methodobj, result)
                 else:
                     result = self.middleware.dump_result(
