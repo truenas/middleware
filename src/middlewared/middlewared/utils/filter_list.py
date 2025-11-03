@@ -12,6 +12,7 @@ NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'
 REVERSE_CHAR = '-'
 TIMESTAMP_DESIGNATOR = '.$date'
+MAX_LIMIT = 10000  # Sanity check for rows requested by auditing
 
 _T = TypeVar('_T', str, list[str], None)
 _Entry = dict[str, Any]
@@ -310,6 +311,9 @@ class filters:
             raise ValueError(
                 'Invalid options combination. `get` implies a single result.'
             )
+
+        if options.get('limit', 0) > MAX_LIMIT:
+            raise ValueError(f'Options limit must be between 1 and {MAX_LIMIT}')
 
         select = options.get('select', [])
         self.validate_select(select)
