@@ -90,14 +90,16 @@ def generate_audit_table(svc, vers):
 
 def parse_filter(filter_in, filters_out):
     # handle OR
+    requires_python_filtering = False
+
     if len(filter_in) == 2:
         if filter_in[0] != 'OR':
             raise ValueError(f'{filter_in}: invalid filter')
 
         for f in filter_in[1]:
-            parse_filter(f, filters_out)
+            requires_python_filtering |= parse_filter(f, filters_out)
 
-        return
+        return requires_python_filtering
 
     if len(filter_in) != 3:
         raise ValueError(f'{filter_in}: invalid filter')
@@ -109,15 +111,41 @@ def parse_filter(filter_in, filters_out):
         # we're querying. The filter would either have no effect at
         # all or change the query to have no results. Neither option
         # is particularly useful
-        return
+        return False
 
     if filter_in[0] not in SQL_SAFE_FIELDS:
-        raise ValueError(
-            f'{filter_in[0]}: specified filter field may not be '
-            'specified for filtering on audit queries'
-        )
+        requires_python_filtering = True
 
     filters_out.append(filter_in)
+    return requires_python_filtering
+
+
+def filters_require_python(filters):
+    requires_python_filtering = False
+    filters_unused = []
+
+    for f in filters:
+        requires_python_filtering |= parse_filter(f, filters_unused)
+
+    return requires_python_filtering
+
+
+def options_require_python(options):
+    for sel in options.get('select', []):
+        if isinstance(sel, list):
+            return True
+
+        if sel not in SQL_SAFE_FIELDS:
+            return True
+
+    for order in options.get('order_by', []):
+        if order.startswith('-'):
+            order = order[1:]
+
+        if order not in SQL_SAFE_FIELDS:
+            return True
+
+    return False
 
 
 def parse_query_filters(filters: list) -> list:

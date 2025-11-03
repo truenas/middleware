@@ -178,18 +178,7 @@ class AuditService(ConfigService):
         if (select := data['query-options'].get('select')):
             for idx, entry in enumerate(select):
                 if isinstance(entry, list):
-                    verrors.add(
-                        f'audit.query.query-options.select.{idx}',
-                        '"Select as" operations are not supported in audit queries'
-                    )
-                    continue
-
-                if '.' in entry:
-                    verrors.add(
-                        f'audit.query.query-options.select.{idx}',
-                        'Selecting subkeys of audit entry fields is not supported.'
-                    )
-                    continue
+                    entry = entry[0]
 
                 if entry not in (
                     AUDIT_EVENT_MIDDLEWARE_PARAM_SET

@@ -20,8 +20,11 @@ from middlewared.api.base.types import NonEmptyString
 from middlewared.api.current import GenericQueryResult, QueryFilters, QueryOptions
 from middlewared.service import job, periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
-
-from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES, AUDIT_CHUNK_SZ
+from middlewared.plugins.audit.utils import (
+    AUDITED_SERVICES, audit_file_path, AUDIT_TABLES, AUDIT_CHUNK_SZ, filters_require_python,
+    options_require_python
+)
+from middlewared.utils.filter_list import filter_list
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
 from truenas_api_client import ejson
@@ -193,7 +196,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
         return out
 
-    def __fetchall(self, conn, qs, filters, options, retry=True):
+    def __fetchall(self, conn, qs, python_filters, options, use_python_options, retry=True):
         """
         This is a wrapper for retrieving db contents based on the specified sqlalchemy queryset. It is
         consumed ultimately by audit.query. I'm currently passing `filters` here but not using
@@ -207,6 +210,11 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         manage at once.
         """
         data = []
+        pagination_options = {
+            'limit': options.get('limit', 0),
+            'offset': options.get('offset', 0),
+            'order_by': options.get('order_by', []),
+        } if use_python_options else {}
 
         try:
             for batch in conn.fetchall(qs, options.get('select', []), options.get('count', False)):
@@ -214,15 +222,36 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                     # we got the count rather than entries list
                     return batch
 
-                # This should only happen once. PyList_Extend() will realloc the intial list
-                # size and create new references to items for batch. So O(N), but really fast.
-                # Memory cost is relatively small compared to everything else going on when
-                # we're doing these operations.
-                data.extend(batch)
+                if python_filters or use_python_options:
+                    # This area is a bit gnarly and will eat some memory potentially. We're offloading actual
+                    # filtering and pagination to `filter_list`, and doing it in 10K entry chunks. The first
+                    # filter_list will normalize the entries if `select` is specified. The second filter_list
+                    # on the combined data will incref list elements when creating the new list and should not be
+                    # as memory intensive.
+                    new_data = filter_list(batch, python_filters, options)
+                    if not new_data:
+                        continue
+
+                    if isinstance(new_data, int):
+                        # We handling request for "count" based on some annoyingly complex filters
+                        if not isinstance(data, int):
+                            data = new_data
+                        else:
+                            data += new_data
+                    else:
+                        # extend our data, then reapply our pagination options on the extended version
+                        data.extend(new_data)
+                        data = filter_list(data, python_filters, pagination_options)
+                else:
+                    # This should only happen once. PyList_Extend() will realloc the intial list
+                    # size and create new references to items for batch. So O(N), but really fast.
+                    # Memory cost is relatively small compared to everything else going on when
+                    # we're doing these operations.
+                    data.extend(batch)
         except RuntimeError:
             self.logger.critical('Failed to fetch information from audit database', exc_info=True)
             conn.setup()
-            return self.__fetchall(conn, qs, filters, options, retry=False)
+            return self.__fetchall(conn, qs, python_filters, options, use_python_options, retry=False)
 
         return data
 
@@ -292,9 +321,21 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                 'results.', errno.E2BIG
             )
 
-        qs = self.__create_queryset_common(conn, filters, options)
+        do_python_filters = filters_require_python(filters)
+        do_python_options = do_python_filters or options_require_python(options)
 
-        result = self.__fetchall(conn, qs, filters, options)
+        if do_python_filters or do_python_options:
+            python_filters = filters
+        else:
+            python_filters = []
+
+        qs = self.__create_queryset_common(
+            conn,
+            [] if do_python_filters else filters,
+            {'offset': 0, 'limit': 0} if do_python_options else options
+        )
+
+        result = self.__fetchall(conn, qs, python_filters, options, do_python_options)
 
         if options['get']:
             try:
@@ -326,9 +367,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         # file for them by using `tar -cz` command to avoid having extra copies of buffers
         # in the middlewared process during python tarfile operations.
         dest_tar = f'{destination}.tar.gz'
-        for idx, batch in enumerate(conn.fetchall(
-            qs, options.get('select', []), options.get('count', False)
-        )):
+        for idx, batch in enumerate(conn.fetchall(qs, options.get('select', []), False)):
             member_name = os.path.basename(destination.replace(
                 export_format.lower(), f'part_{idx:05d}.{export_format.lower()}'
             ))
