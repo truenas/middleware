@@ -3,7 +3,7 @@ import shlex
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.base.model import model_subset
-from middlewared.api.current import CloudTaskAttributes
+from middlewared.api.current import CloudTaskAttributes, B2TaskAttributes, DropboxTaskAttributes
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs.utils import has_internal_path
@@ -51,10 +51,11 @@ class CloudTaskServiceMixin:
             return
 
         provider = REMOTES[credentials["provider"]["type"]]
+        AttributesModel = {"B2": B2TaskAttributes, "DROPBOX": DropboxTaskAttributes}.get(provider, CloudTaskAttributes)
 
         try:
             data["attributes"] = validate_model(
-                model_subset(CloudTaskAttributes, self.task_attributes(provider)),
+                model_subset(AttributesModel, self.task_attributes(provider)),
                 data["attributes"],
             )
         except ValidationErrors as e:
