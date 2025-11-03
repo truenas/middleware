@@ -1,5 +1,5 @@
 from middlewared.service import filterable_api_method, private, Service
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 class DiskService(Service):

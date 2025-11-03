@@ -33,7 +33,7 @@ from middlewared.utils.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE, p
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import private, CallError, filterable_api_method, Service, job
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
 from middlewared.utils.filesystem.constants import FileType

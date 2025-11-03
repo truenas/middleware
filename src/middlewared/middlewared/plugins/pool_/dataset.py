@@ -19,7 +19,8 @@ from middlewared.service import (
 )
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, BOOT_POOL_NAME_VALID
+from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.filter_list import filter_list
 
 from .dataset_query_utils import generic_query
 from .utils import (

@@ -4,7 +4,7 @@ from base64 import b64encode, b64decode
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
 from middlewared.service import filterable_api_method, periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.security_descriptor import (
     share_acl_to_sd_bytes,
     sd_bytes_to_share_acl,

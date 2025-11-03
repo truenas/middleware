@@ -12,7 +12,7 @@ from middlewared.api.current import (FCPortPortChoicesArgs, FCPortPortChoicesRes
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from .fc.utils import naa_to_int, str_to_naa, wwn_as_colon_hex, wwpn_to_vport_naa
 
 VPORT_SEP_CHAR = '/'

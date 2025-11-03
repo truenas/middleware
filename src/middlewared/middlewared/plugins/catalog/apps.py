@@ -4,7 +4,7 @@ from middlewared.api.current import (
     AppSimilarArgs, AppSimilarResult,
 )
 from middlewared.service import filterable_api_method, Service
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .utils import IX_APP_NAME
 

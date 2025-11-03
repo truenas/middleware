@@ -15,7 +15,7 @@ from middlewared.plugins.service_.services.base import IdentifiableServiceInterf
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
 from middlewared.service import filterable_api_method, CallError, CRUDService, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
-from middlewared.utils import filter_list, filter_getattrs
+from middlewared.utils.filter_list import filter_list, filter_getattrs
 from middlewared.utils.os import terminate_pid
 
 if TYPE_CHECKING:

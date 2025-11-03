@@ -24,7 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, pass_app, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 

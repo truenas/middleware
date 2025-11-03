@@ -9,7 +9,6 @@ import json
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Sequence, TypeVar
 
-from .filter_list import *
 from .prctl import die_with_parent
 from .threading import io_thread_pool_executor
 

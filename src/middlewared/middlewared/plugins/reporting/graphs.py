@@ -9,7 +9,7 @@ from middlewared.api.current import (
     ReportingNetdataGetDataResult,
 )
 from middlewared.service import CallError, filterable_api_method, private, Service, ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 from .netdata import GRAPH_PLUGINS
 from .netdata.graph_base import GraphBase

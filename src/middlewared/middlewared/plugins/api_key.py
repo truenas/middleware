@@ -12,7 +12,7 @@ from middlewared.api.current import (
 from middlewared.service import CRUDService, pass_app, periodic, private, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_pbkdf2_512, generate_string
 from middlewared.utils.privilege import credential_has_full_admin

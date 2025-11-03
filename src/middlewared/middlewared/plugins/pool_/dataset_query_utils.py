@@ -5,8 +5,8 @@ from typing import TypeAlias
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import (
-    BOOT_POOL_NAME_VALID,
+from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.filter_list import (
     filter_list,
     validate_options,
     do_select,

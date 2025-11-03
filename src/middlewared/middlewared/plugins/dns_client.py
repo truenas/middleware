@@ -9,7 +9,7 @@ from middlewared.api import api_method
 from middlewared.api.base import BaseModel, single_argument_args, IPvAnyAddress, Excluded, excluded_field
 from middlewared.api.current import QueryFilters, QueryOptions
 from middlewared.service import private, Service, ValidationError
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 class DNSClientOptions(BaseModel):

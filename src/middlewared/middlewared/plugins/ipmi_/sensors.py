@@ -3,7 +3,7 @@ from subprocess import run
 from time import sleep
 
 from middlewared.service import Service
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 
 def get_sensors_data():

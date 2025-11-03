@@ -12,7 +12,7 @@ from pyroute2.netlink.exceptions import NetlinkError
 from middlewared.api import api_method
 from middlewared.api.current import RouteSystemRoutesItem, RouteIpv4gwReachableArgs, RouteIpv4gwReachableResult
 from middlewared.service import ValidationError, Service, filterable_api_method, private
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 
 RE_RTSOLD_INTERFACE = re.compile(r'Interface (.+)')
 RE_RTSOLD_NUMBER_OF_VALID_RAS = re.compile(r'number of valid RAs: ([0-9]+)')

@@ -55,7 +55,7 @@ from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from socket import htonl, ntohl
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-from middlewared.utils import filter_list
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import (
     lsa_sidtype
 )
