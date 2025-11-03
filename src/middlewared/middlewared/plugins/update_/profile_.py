@@ -70,7 +70,8 @@ class UpdateService(Service):
                 if profile >= UpdateProfiles.GENERAL:
                     profiles[profile.name] = info
             else:
-                profiles[profile.name] = info
+                if profile <= UpdateProfiles.GENERAL:
+                    profiles[profile.name] = info
         return profiles
 
     @private
