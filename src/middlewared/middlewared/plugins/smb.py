@@ -1220,6 +1220,8 @@ class SharingSMBService(SharingService):
                     f'{schema_name}.audit.enable',
                     'SMB auditing is not supported if SMB1 protocol is enabled'
                 )
+
+            has_limit = False
             for key in [share_field.AUDIT_WATCH_LIST, share_field.AUDIT_IGNORE_LIST]:
                 for idx, group in enumerate(data[share_field.AUDIT][key]):
                     try:
@@ -1227,6 +1229,13 @@ class SharingSMBService(SharingService):
                     except KeyError:
                         verrors.add(f'{schema_name}.audit.{key}.{idx}',
                                     f'{group}: group does not exist.')
+
+                    has_limit = True
+
+            if not has_limit:
+                verrors.add(f'{schema_name}.audit.enable',
+                            'Watch list or ignore list is required to enable '
+                            'auditing for an SMB share.')
 
         if data[share_field.OPTS].get(share_field.AFP) and not smb_config['aapl_extensions']:
             verrors.add(
