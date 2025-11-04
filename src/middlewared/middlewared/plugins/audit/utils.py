@@ -129,8 +129,8 @@ def parse_query_filters(filters: list) -> list:
     This method parses the user-provided query-filters and determines
     whether they're safe to pass directly to the SQL backend. Non-safe
     query-fiters will raise a ValueError that call site will change to
-    ValidationError. Filters nested JSON fields will be converted into
-    JSONPath notation and passed to sqlalchemy for optimized query.
+    ValidationError. Filters containing nested JSON fields will be converted
+    into JSONPath notation and passed to sqlalchemy for optimized query.
     """
     filters_out = []
 
