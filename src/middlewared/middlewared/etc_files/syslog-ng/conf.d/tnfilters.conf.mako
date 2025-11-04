@@ -65,7 +65,7 @@ filter f_truenas_exclude {
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_tnaudit_all) and
-  not filter(f_scst)
+  not filter(f_scst);
 };
 
 #####################
