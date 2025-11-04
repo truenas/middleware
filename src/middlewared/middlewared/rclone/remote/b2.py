@@ -15,7 +15,7 @@ class B2RcloneRemote(BaseRcloneRemote):
 
     async def validate_task_basic(self, task, credentials, verrors):
         if not (task["attributes"]["chunk_size"] >= 5):
-            verrors.add("chunk_size", "Must be greater or equal than 5")
+            verrors.add("chunk_size", "Must be greater than or equal to 5")
 
     async def get_task_extra(self, task):
         chunk_size = task["attributes"].get("chunk_size", 96)
