@@ -3,6 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from datetime import datetime
 import os
 import time
 
@@ -31,6 +32,10 @@ class FailoverDatastoreService(Service):
             # We can't query failover.status on `MASTER` node (please see `hook_datastore_execute_write` for
             # explanations). Non-BACKUP nodes are responsible for checking their failover status.
             return
+
+        # TrueNAS API client JSON parser unparses all datetimes as offset-aware. We don't want to store offset-aware
+        # datetimes in the database, so let's strip `tzinfo`.
+        params = [p.replace(tzinfo=None) if isinstance(p, datetime) else p for p in params]
 
         await self.middleware.call('datastore.execute', sql, params)
 
