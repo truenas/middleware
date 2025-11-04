@@ -141,8 +141,8 @@ http {
         ~^${tn_connect_config['tnc_base_url'].rstrip("/")}$ $http_origin;
 % if tn_connect_config['account_service_base_url'].split('.')[1] in ('dev', 'staging'):
         # Make CORS exception for localhost:4200 for internal development environments
-        ~^https?://localhost:4200$ $http_origin;
-        ~^https?://127\.0\.0\.1:4200$ $http_origin;
+        ~^http://localhost:4200$ $http_origin;
+        ~^http://127\.0\.0\.1:4200$ $http_origin;
 % endif
         default "";
     }
