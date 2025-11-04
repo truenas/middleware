@@ -29,6 +29,16 @@ class DestroyArgs(typing.TypedDict):
     not exposed to the public API."""
 
 
+def __rmdir(paths: list[str]):
+    for i in paths:
+        try:
+            os.rmdir(os.path.join("/mnt", i))
+        except Exception:
+            # silently ignore rmdir ops
+            # which mimics upstream zfs
+            continue
+
+
 def destroy_nonrecursive_impl(tls, data: DestroyArgs):
     path = data["path"]
     rsrc = open_resource(tls, data["path"])
