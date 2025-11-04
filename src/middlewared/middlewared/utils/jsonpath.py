@@ -87,6 +87,5 @@ def json_path_parse(str_in: str) -> tuple[str, str]:
     if not str_in.startswith(JSON_PATH_PREFIX):
         raise ValueError(f'{str_in}: not a JSONPath')
 
-
     column, relative_path = str_in[len(JSON_PATH_PREFIX):].split('.', 1)
     return (column, JSON_PATH_PREFIX + relative_path)
