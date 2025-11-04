@@ -346,7 +346,7 @@ class TestAuditOpsHA:
 
         audit_payload = {
             "query-filters": [["event_data.method", "=", event], ["event_data.params", "=", [user_id]]],
-            "query-options": {"select": ["event_data", "success"], "limit": 1000}},
+            "query-options": {"select": ["event_data", "success"], "limit": 1000},
             "remote_controller": True
         }
 
