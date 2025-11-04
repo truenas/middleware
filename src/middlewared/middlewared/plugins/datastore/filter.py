@@ -56,8 +56,8 @@ class FilterMixin(SchemaMixin):
             if len(f) == 3:
                 name, op, value = f
 
-                # Special handling for JSONPath, e.g. $.["foo.bar"] for sqlalchemy JSON data type
-                # Sample filter: [['$.["svc_data"]["username"]', '=', 'mary']]
+                # Special handling for JSONPath, e.g. "$.foo.bar" for sqlalchemy JSON data type
+                # Sample filter: [['$.service_data.origin', '=', '192.168.1.200']]
                 #
                 # WARNING: this capability doesn't exist for encrypted JSON fields.
                 if name.startswith(JSON_PATH_PREFIX):
