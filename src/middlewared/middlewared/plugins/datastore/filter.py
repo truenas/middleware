@@ -1,6 +1,8 @@
 import operator
 
 from .schema import SchemaMixin
+from middlewared.utils.jsonpath import JSON_PATH_PREFIX, json_path_parse
+from sqlalchemy import func
 
 
 def in_(col, value):
@@ -54,7 +56,16 @@ class FilterMixin(SchemaMixin):
             if len(f) == 3:
                 name, op, value = f
 
-                if matched := next((x for x in ['__', '.'] if x in name), False):
+                # Special handling for JSONPath, e.g. "$.foo.bar" for sqlalchemy JSON data type
+                # Sample filter: [['$.service_data.origin', '=', '192.168.1.200']]
+                #
+                # WARNING: this capability doesn't exist for encrypted JSON fields.
+                if name.startswith(JSON_PATH_PREFIX):
+                    name, json_target = json_path_parse(name)
+                    col = self._get_col(table, name, prefix)
+                    # Set up JSON1 operation to extract JSON data for filtering
+                    col = func.json_extract(col, json_target)
+                elif matched := next((x for x in ['__', '.'] if x in name), False):
                     fk, name = name.split(matched, 1)
                     col = self._get_col(aliases[list(self._get_col(table, fk, prefix).foreign_keys)[0]], name, '')
                 else:
