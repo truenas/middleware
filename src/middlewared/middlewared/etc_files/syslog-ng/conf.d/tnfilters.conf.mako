@@ -65,7 +65,7 @@ filter f_truenas_exclude {
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_tnaudit_all) and
-  not filter(f_scst)
+  not filter(f_scst);
 };
 
 #####################
@@ -99,7 +99,11 @@ filter f_cron {
 };
 
 filter f_daemon {
-  facility(daemon) and not filter(f_dbg);
+  facility(daemon) and 
+% if not nfs_conf['mountd_log']:
+  not filter(f_nfs_mountd) and
+% endif
+  not filter(f_dbg);
 };
 
 filter f_kern {

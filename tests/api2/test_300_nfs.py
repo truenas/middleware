@@ -1,7 +1,6 @@
 import contextlib
 import ipaddress
 import os
-import re
 from copy import copy
 from time import sleep
 
@@ -15,7 +14,6 @@ from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
-from middlewared.test.integration.utils.string import random_string
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.failover import wait_for_standby
 from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
@@ -1128,70 +1126,63 @@ class TestNFSops:
         assert len(parsed) == 1, str(parsed)
         assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-    def test_syslog_filters(self, start_nfs, nfs_dataset_and_share):
+    def test_logging_filters(self, start_nfs, nfs_dataset_and_share):
         """
         This test checks the function of the mountd_log setting to filter
         rpc.mountd messages that have priority DEBUG to NOTICE.
-        We performing loopback mounts on the remote TrueNAS server and
-        then check the syslog for rpc.mountd messages.  Outside of SSH_NFS
-        we test the umount case.
+        We perform loopback mounts on the TrueNAS server and
+        then check the syslog and daemon.log for rpc.mountd messages.
+        The mountd filter is applied to syslog and daemon.log.
         """
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
-        test_marker = random_string()
 
         with nfs_config():
-
-            # The effect is much more clear if there are many mountd.
-            # We can force this by configuring many nfsd
+            # Create several rpc.mountd daemons
             call("nfs.update", {"servers": 24})
 
-            # Confirm default setting: mountd logging enabled
+            # Enable rpc.mountd logging
             call("nfs.update", {"mountd_log": True})
 
-            # Add a marker to indicate the expectation of messages
-            ssh(f'logger "====== {test_marker} START_NFS_SYSLOG_FILTER_TEST ======"')
+            # Run test:  rpc.mountd messages should not be present
+            syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
+            daemon_tail = async_SSH_start("tail -n 0 -F /var/log/daemon.log", user, password, truenas_server.ip)
+            # This will log to both syslog and daemon.log
+            ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - expect dmount messages ======"')
 
-            # Mount twice to generate plenty messages
-            ssh('logger "mount once"')
             with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
                          user=user, password=password, ip=truenas_server.ip) as n:
                 n.ls('/')
 
-            ssh('logger "mount twice"')
-            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
-                         user=user, password=password, ip=truenas_server.ip) as n:
-                n.ls('/')
+            ssh('logger -p daemon.notice "====== END_NFS_SYSLOG_FILTER_TEST - expect mount messages ======"')
+            syslog_data, errs = async_SSH_done(syslog_tail, 5)    # 5 second timeout
+            daemon_data, errs = async_SSH_done(daemon_tail, 5)    # 5 second timeout
 
-            # Disable mountd logging
+            assert 'rpc.mountd' in syslog_data, \
+                f"Unexpectedly did not find rpc.mountd messages in syslog:\n{syslog_data}"
+            assert 'rpc.mountd' in daemon_data, \
+                f"Unexpectedly did not find rpc.mountd messages in daemon.log:\n{daemon_data}"
+
+            # Disable rpc.mountd logging
             call("nfs.update", {"mountd_log": False})
 
-            # Add a marker to indicate the expectation of no messages
-            ssh(f'logger "====== {test_marker} END_NFS_SYSLOG_FILTER_TEST ======"')
+            # Run test: rpc.mountd messages should be present
+            syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
+            daemon_tail = async_SSH_start("tail -n 0 -F /var/log/daemon.log", user, password, truenas_server.ip)
+            ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - no mountd messages ======"')
 
-            # Mount twice to generate plenty of opportunity for messages
-            ssh('logger "mount once"')
             with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
                          user=user, password=password, ip=truenas_server.ip) as n:
                 n.ls('/')
 
-            ssh('logger "mount twice"')
-            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
-                         user=user, password=password, ip=truenas_server.ip) as n:
-                n.ls('/')
+            ssh('logger -p daemon.notice "====== END_NFS_SYSLOG_FILTER_TEST - no mountd messages ======"')
+            syslog_data, errs = async_SSH_done(syslog_tail, 5)    # 5 second timeout
+            daemon_data, errs = async_SSH_done(daemon_tail, 5)    # 5 second timeout
 
-            # Add a marker to indicate the end of
-            ssh(f'logger "====== {test_marker} STOP_NFS_SYSLOG_FILTER_TEST ======"')
-
-        # Wait a few seconds for messages to flush
-        sleep(5)
-
-        # Process syslog
-        log_data = ssh("tail -200 /var/log/syslog").replace('\n', '')
-        data_with_msg = re.findall(f"{test_marker} START.*{test_marker} END", log_data)[0]
-        assert 'rpc.mountd in data_with_msg', data_with_msg
-        data_without_msg = re.findall(f"{test_marker} END.*{test_marker} STOP", log_data)[0]
-        assert 'rpc.mountd' not in data_without_msg
+            assert 'rpc.mountd' not in syslog_data, \
+                f"Unexpectedly found rcp.mountd messages in syslog:\n{syslog_data}"
+            assert 'rpc.mountd' not in daemon_data, \
+                f"Unexpectedly found rcp.mountd messages in daemon.log:\n{daemon_data}"
 
     def test_client_status(self, start_nfs, nfs_dataset_and_share):
         """
