@@ -4,6 +4,9 @@ from middlewared.alert.schedule import CrontabSchedule
 from middlewared.service_exception import ValidationErrors
 
 
+ALERT_MAX_QUERY_ENTRIES = 1000
+
+
 def generate_alert_text(auth_log):
     alert_text = {}
     for x in auth_log:
@@ -61,18 +64,25 @@ class SMBLegacyProtocolAlertSource(AlertSource):
                 ['message_timestamp', '>', now - 86400],
                 ['event_data.serviceDescription', '=', 'SMB']
             ],
-            'query-options': {'select': [
-                ['event_data.clientAccount', 'clientAccount'],
-                ['event_data.becameAccount', 'becameAccount'],
-                ['event_data.workstation', 'workstation'],
-                'address'
-            ]}
+            'query-options': {
+                'select': ['event_data', 'address'],
+                'limit': AUDIT_MAX_QUERY_ENTRIES,
+            }
         })):
             return
 
+        parsed = []
+        for entry in auth_log:
+            parsed.append({
+                'address': entry['address'],
+                'clientAccount': entry['event_data'].get('clientAccount'),
+                'becameAccount': entry['event_data'].get('becameAccount'),
+                'workstation': entry['event_data'].get('workstation'),
+            })
+
         return Alert(
             SMBLegacyProtocolAlertClass,
-            {'err': ', '.join(generate_alert_text(auth_log))},
+            {'err': ', '.join(generate_alert_text(parsed))},
             key=None
         )
 
@@ -98,18 +108,25 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
                 ['event_data.serviceDescription', '=', 'SMB'],
                 ['event_data.passwordType', '=', 'NTLMv1']
             ],
-            'query-options': {'select': [
-                ['event_data.clientAccount', 'clientAccount'],
-                ['event_data.becameAccount', 'becameAccount'],
-                ['event_data.workstation', 'workstation'],
-                'address'
-            ]}
+            'query-options': {
+                'select': ['event_data', 'address'],
+                'limit': AUDIT_MAX_QUERY_ENTRIES,
+            }
         })):
             return
 
+        parsed = []
+        for entry in auth_log:
+            parsed.append({
+                'address': entry['address'],
+                'clientAccount': entry['event_data'].get('clientAccount'),
+                'becameAccount': entry['event_data'].get('becameAccount'),
+                'workstation': entry['event_data'].get('workstation'),
+            })
+
         return Alert(
             NTLMv1AuthenticationAlertClass,
-            {'err': ', '.join(generate_alert_text(auth_log))},
+            {'err': ', '.join(generate_alert_text(parsed))},
             key=None
         )
 
