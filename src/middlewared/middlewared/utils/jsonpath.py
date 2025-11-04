@@ -29,7 +29,7 @@ def __escape_field_name(str_in: str) -> str:
     # use json.dumps to escape the quotes / backslashes
     s = dumps(str_in)[1:-1]
     # manually escape brackets
-    s = s.replace('[', '\\[').replace(']', '\\]')
+    s = s.replace('[', f'{FL_ESCAPE_CHAR}[').replace(']', f'{FL_ESCAPE_CHAR}]')
 
     return s
 
@@ -38,7 +38,7 @@ def dot_notation_to_json_path(str_in: str) -> str:
     """ Convert middleware filter dot-notation to a JSONPath string.
     For example: 'foo.bar' -> '$.foo.bar' """
 
-    if not JSON_PATH_DOT_SEGMENT in str_in:
+    if JSON_PATH_DOT_SEGMENT not in str_in:
         # No dot notation and so short-circuit
         return str_in
 
