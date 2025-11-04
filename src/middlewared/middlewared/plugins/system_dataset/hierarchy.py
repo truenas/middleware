@@ -2,6 +2,7 @@ import os
 
 from middlewared.plugins.vm.utils import LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID
 from middlewared.utils.truesearch import TRUESEARCH_UID, TRUESEARCH_GID
+from middlewared.utils.webshare import WEBSHARE_UID, WEBSHARE_GID
 
 from .utils import SYSDATASET_PATH
 
@@ -199,6 +200,25 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                     'gid': LIBVIRT_QEMU_GID
                 },
             ],
+        },
+        {
+            'name': os.path.join(pool_name, '.system/webshare'),
+            'props': {
+                'mountpoint': 'legacy',
+                'readonly': 'off',
+                'snapdir': 'hidden',
+            },
+            'chown_config': {
+                'uid': WEBSHARE_UID,
+                'gid': WEBSHARE_GID,
+                'mode': 0o700,
+            },
+            'post_mount_actions': [
+                {
+                    'method': 'webshare.setup_directories',
+                    'args': [],
+                }
+            ]
         },
         {
             'name': os.path.join(pool_name, f'.system/configs-{uuid}'),

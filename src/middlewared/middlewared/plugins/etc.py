@@ -98,6 +98,11 @@ class EtcService(Service):
         'truesearch': [
             {'type': 'py', 'path': 'truesearch/config.json'},
         ],
+        'webshare': [
+            {'type': 'py', 'path': 'webshare/config.json'},
+            {'type': 'py', 'path': 'webshare-auth/config.json'},
+            {'type': 'py', 'path': 'webshare-link/config.json'},
+        ],
         'truenas_nvdimm': [
             {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
         ],
