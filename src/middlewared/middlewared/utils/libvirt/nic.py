@@ -7,6 +7,10 @@ from .delegate import DeviceDelegate
 
 class NICDelegate(DeviceDelegate):
 
+    @property
+    def nic_choices_endpoint(self):
+        raise NotImplementedError()
+
     @staticmethod
     def random_mac() -> str:
         mac_address = [
@@ -24,7 +28,7 @@ class NICDelegate(DeviceDelegate):
     ) -> None:
         nic = device['attributes'].get('nic_attach')
         if nic:
-            nic_choices = self.middleware.call_sync('vm.device.nic_attach_choices')
+            nic_choices = self.middleware.call_sync(self.nic_choices_endpoint)
             if nic not in nic_choices:
                 verrors.add('attributes.nic_attach', 'Not a valid choice.')
             elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
