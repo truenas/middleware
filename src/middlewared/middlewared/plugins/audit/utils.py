@@ -5,6 +5,7 @@ from sqlalchemy.orm import declarative_base
 from .schema.common import AuditEventParam
 
 import middlewared.sqlalchemy as sa
+from middlewared.utils.jsonpath import query_filters_json_path_parse
 from truenas_verify import mtree_verify
 
 AUDIT_DATASET_PATH = '/audit'
@@ -78,9 +79,9 @@ def generate_audit_table(svc, vers):
         sa.Column('username', sa.String()),
         sa.Column('session', sa.String()),
         sa.Column('service', sa.String()),
-        sa.Column('service_data', sa.JSON(dict), nullable=True),
+        sa.Column('service_data', sa.NativeJSON(), nullable=True),
         sa.Column('event', sa.String()),
-        sa.Column('event_data', sa.JSON(dict), nullable=True),
+        sa.Column('event_data', sa.NativeJSON(), nullable=True),
         sa.Column('success', sa.Boolean())
     )
 
@@ -109,10 +110,11 @@ def parse_filter(filter_in, filters_out):
         return
 
     if filter_in[0] not in SQL_SAFE_FIELDS:
-        raise ValueError(
-            f'{filter_in[0]}: specified filter field may not be '
-            'specified for filtering on audit queries'
-        )
+        if not filter_in[0].startswith(('service_data', 'event_data')):
+            raise ValueError(
+                f'{filter_in[0]}: specified filter field may not be '
+                'specified for filtering on audit queries'
+            )
 
     filters_out.append(filter_in)
 
@@ -124,14 +126,15 @@ def parse_query_filters(filters: list) -> list:
     This method parses the user-provided query-filters and determines
     whether they're safe to pass directly to the SQL backend. Non-safe
     query-fiters will raise a ValueError that call site will change to
-    ValidationError.
+    ValidationError. Filters nested JSON fields will be converted into
+    JSONPath notation and passed to sqlalchemy for optimized query.
     """
     filters_out = []
 
     for f in filters:
         parse_filter(f, filters_out)
 
-    return filters_out
+    return query_filters_json_path_parse(filters_out)
 
 
 AUDIT_TABLES = {svc[0]: generate_audit_table(*svc) for svc in AUDITED_SERVICES}

@@ -5,6 +5,7 @@ from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
     Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
 )  # noqa
+from sqlalchemy import JSON as NativeJSON  # noqa
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship  # noqa
 from sqlalchemy.types import UserDefinedType, TypeDecorator
