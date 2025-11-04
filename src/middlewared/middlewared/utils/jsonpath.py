@@ -4,8 +4,11 @@ Basic parsing functions related to JSONPath specification (RFC9535)
 This is a very minor subset of the functionality located there as supported by json_extract() function in sqlite3.
 Currently the conversion from middleware dot notation is trivial, but there may be requirement in future to
 implement more functionality
+
+NOTE: although the JSONPath RFC describes multiple notation formats such as $.["foo"]["bar"]' and $.foo.bar,
+we are limited here by what is supported by JSON1 in sqlite. Any changes or expansion of functionality here
+will need to be validated against what is supported by the library: https://sqlite.org/json1.html
 """
-import re
 from json import dumps
 
 JSON_PATH_ROOT_NODE_ID = '$'
@@ -21,8 +24,6 @@ FL_OFFSET_L = 0
 FL_OFFSET_OP = 1
 FL_OFFSET_R = 2
 FL_ESCAPE_CHAR = '\\'
-
-RE_JSON_PATH_FIELD = re.compile(r'\["([^"]+)"\](.*)')
 
 
 def __escape_field_name(str_in: str) -> str:
