@@ -11,5 +11,12 @@ class DropboxRcloneRemote(BaseRcloneRemote):
 
     task_attributes = ["dropbox_chunk_size"]
 
+    async def validate_task_basic(self, task, credentials, verrors):
+        if not (task["attributes"]["chunk_size"] >= 5):
+            verrors.add("chunk_size", "Must be greater or equal than 5")
+
+        if not (task["attributes"]["chunk_size"] < 150):
+            verrors.add("chunk_size", "Must be less than than 5")
+
     async def get_task_extra(self, task):
         return {"chunk_size": str(task["attributes"].get("chunk_size", 48)) + "M"}
