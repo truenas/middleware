@@ -265,6 +265,26 @@ ${spaces}gzip off;
             add_header Expires 0;
         }
 
+        location /api/versions {
+            allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
+                        # won't allow us to understand that connection error was due to client IP not being allowlisted.
+% if has_tn_connect:
+            # Allow all internal origins.
+            add_header Access-Control-Allow-Origin $allow_origin always;
+            add_header Access-Control-Allow-Headers "*" always;
+% endif
+            proxy_pass http://127.0.0.1:6000/api;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+% if fips_enabled:
+            ${security_headers_enhanced(indent=12)}
+% endif
+        }
+
         location @index {
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
             add_header Expires 0;
