@@ -429,7 +429,7 @@ class DirectoryServices(ConfigService):
             return
 
         # Check whether forward lookup of our name works
-        dns_name = f'{new["configuration"]["hostname"]}@{new["configuration"]["domain"]}'
+        dns_name = f'{new["configuration"]["hostname"]}.{new["configuration"]["domain"]}'
         try:
             dns_addresses = set(x['address'] for x in self.middleware.call_sync('dnsclient.forward_lookup', {
                 'names': [dns_name],
