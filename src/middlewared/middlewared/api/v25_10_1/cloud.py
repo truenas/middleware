@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from pydantic import Field
 
@@ -6,7 +6,7 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonE
 from .cloud_credential import CloudCredentialEntry
 from .common import CronModel
 
-__all__ = ["BaseCloudEntry", "CloudTaskAttributes", "B2TaskAttributes", "DropboxTaskAttributes"]
+__all__ = ["BaseCloudEntry", "get_attributes_model"]
 
 
 class CloudCron(CronModel):
@@ -39,14 +39,14 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
 
 
 class B2TaskAttributes(CloudTaskAttributes):
-    b2_chunk_size: int = Field(alias="chunk_size", default=96, ge=5)
+    chunk_size: int = Field(default=96, ge=5)
     """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
     memory and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be \
     split in no more than 10,000 chunks."""
 
 
 class DropboxTaskAttributes(CloudTaskAttributes):
-    dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lt=150)
+    chunk_size: int = Field(default=48, ge=5, lt=150)
     """Valid only for DROPBOX provider. Upload chunk size in MiB. Must fit in memory. Note that these chunks are \
     buffered in memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business \
     accounts can have monthly data transfer limits per team per month. By using larger chunk sizes you will decrease \
@@ -84,3 +84,13 @@ class BaseCloudEntry(BaseModel):
     """Information regarding the task's job state, e.g. progress."""
     locked: bool
     """A locked task cannot run."""
+
+
+# Must update this union when adding/removing attribute models
+# Imported and used in cloud_sync.py
+CloudAttributesModel: TypeAlias = CloudTaskAttributes | B2TaskAttributes | DropboxTaskAttributes
+
+
+def get_attributes_model(credential_type: str) -> type[CloudAttributesModel]:
+    """Map credential type (see cloud_sync_providers.py) to its corresponding attributes model."""
+    return {"B2": B2TaskAttributes, "DROPBOX": DropboxTaskAttributes}.get(credential_type, CloudTaskAttributes)

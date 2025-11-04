@@ -11,7 +11,7 @@ class B2RcloneRemote(BaseRcloneRemote):
 
     rclone_type = "b2"
 
-    task_attributes = ["b2_chunk_size"]
+    task_attributes = ["chunk_size"]
 
     async def get_task_extra(self, task):
         chunk_size = task["attributes"].get("chunk_size", 96)

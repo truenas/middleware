@@ -9,7 +9,7 @@ class DropboxRcloneRemote(BaseRcloneRemote):
 
     credentials_oauth = True
 
-    task_attributes = ["dropbox_chunk_size"]
+    task_attributes = ["chunk_size"]
 
     async def get_task_extra(self, task):
         return {"chunk_size": str(task["attributes"].get("chunk_size", 48)) + "M"}
