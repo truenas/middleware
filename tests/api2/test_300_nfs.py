@@ -1147,14 +1147,13 @@ class TestNFSops:
             # Run test:  rpc.mountd messages should not be present
             syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
             daemon_tail = async_SSH_start("tail -n 0 -F /var/log/daemon.log", user, password, truenas_server.ip)
-            ssh('logger "====== START_NFS_LOGGING_FILTER_TEST - expect mount messages ======"')
-            ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - expect mount messages ======"')
+            # This will log to both syslog and daemon.log
+            ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - expect dmount messages ======"')
 
             with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
                          user=user, password=password, ip=truenas_server.ip) as n:
                 n.ls('/')
 
-            ssh('logger "====== END_NFS_SYSLOG_FILTER_TEST - expect mount messages ======"')
             ssh('logger -p daemon.notice "====== END_NFS_SYSLOG_FILTER_TEST - expect mount messages ======"')
             syslog_data, errs = async_SSH_done(syslog_tail, 5)    # 5 second timeout
             daemon_data, errs = async_SSH_done(daemon_tail, 5)    # 5 second timeout
@@ -1170,14 +1169,12 @@ class TestNFSops:
             # Run test: rpc.mountd messages should be present
             syslog_tail = async_SSH_start("tail -n 0 -F /var/log/syslog", user, password, truenas_server.ip)
             daemon_tail = async_SSH_start("tail -n 0 -F /var/log/daemon.log", user, password, truenas_server.ip)
-            ssh('logger "====== START_NFS_LOGGING_FILTER_TEST - no mountd messages ======"')
             ssh('logger -p daemon.notice "====== START_NFS_LOGGING_FILTER_TEST - no mountd messages ======"')
 
             with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
                          user=user, password=password, ip=truenas_server.ip) as n:
                 n.ls('/')
 
-            ssh('logger "====== END_NFS_SYSLOG_FILTER_TEST - no mountd messages ======"')
             ssh('logger -p daemon.notice "====== END_NFS_SYSLOG_FILTER_TEST - no mountd messages ======"')
             syslog_data, errs = async_SSH_done(syslog_tail, 5)    # 5 second timeout
             daemon_data, errs = async_SSH_done(daemon_tail, 5)    # 5 second timeout
