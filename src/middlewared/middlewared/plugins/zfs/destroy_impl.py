@@ -1,4 +1,5 @@
 import errno
+import os
 import typing
 
 from .exceptions import ZFSPathHasClonesException, ZFSPathHasHoldsException
@@ -28,6 +29,16 @@ class DestroyArgs(typing.TypedDict):
     not exposed to the public API."""
 
 
+def __rmdir(paths: list[str]):
+    for i in paths:
+        try:
+            os.rmdir(os.path.join("/mnt", i))
+        except Exception:
+            # silently ignore rmdir ops
+            # which mimics upstream zfs
+            continue
+
+
 def destroy_nonrecursive_impl(tls, data: DestroyArgs):
     path = data["path"]
     rsrc = open_resource(tls, data["path"])
@@ -47,6 +58,8 @@ def destroy_nonrecursive_impl(tls, data: DestroyArgs):
             failed = f"Failed to unmount {path!r}: {e}"
             errnum = e.code
         else:
+            __rmdir([rsrc.name])
+
             try:
                 tls.lzh.destroy_resource(name=path)
             except truenas_pylibzfs.ZFSException as e:
@@ -119,5 +132,7 @@ def destroy_impl(tls, data: DestroyArgs):
             errnum = res["return"]["failed"].get(data["path"], errno.EFAULT)
             if errnum in truenas_pylibzfs.ZFSError:
                 failed += f" ({truenas_pylibzfs.ZFSError(errnum)})"
+    else:
+        __rmdir(list(res["return"]["rmdir_targets"].values()))
 
     return failed, errnum
