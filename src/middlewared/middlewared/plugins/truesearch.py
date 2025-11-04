@@ -110,7 +110,7 @@ class TrueSearchService(Service):
         """
         What directories should it index.
         """
-        return await self.smb_directories()
+        return await self.smb_directories() | await self.webshare_directories()
 
     async def smb_directories(self) -> set[str]:
         """
@@ -126,6 +126,24 @@ class TrueSearchService(Service):
         shares = await self.middleware.call(
             'sharing.smb.query',
             [['enabled', '=', True], ['locked', '=', False], ['path', '!=', 'EXTERNAL']],
+        )
+
+        return {share['path'] for share in shares}
+
+    async def webshare_directories(self) -> set[str]:
+        """
+        What WebShare shares directories should it index.
+        """
+        if not await self.middleware.call('service.started_or_enabled', 'webshare'):
+            return set()
+
+        webshare_config = await self.middleware.call('webshare.config')
+        if not webshare_config['search']:
+            return set()
+
+        shares = await self.middleware.call(
+            'sharing.webshare.query',
+            [['enabled', '=', True], ['locked', '=', False]],
         )
 
         return {share['path'] for share in shares}
