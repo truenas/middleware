@@ -53,6 +53,11 @@ class DropboxTaskAttributes(CloudTaskAttributes):
     the number of data transfer calls used and you'll be able to transfer more data to your Dropbox Business account."""
 
 
+# Must update this union when adding/removing attribute models
+# Imported and used in cloud_sync.py
+CloudAttributesModel: TypeAlias = CloudTaskAttributes | B2TaskAttributes | DropboxTaskAttributes
+
+
 class BaseCloudEntry(BaseModel):
     id: int
     """Unique identifier for this cloud storage configuration."""
@@ -62,7 +67,7 @@ class BaseCloudEntry(BaseModel):
     """The local path to back up beginning with `/mnt` or `/dev/zvol`."""
     credentials: CloudCredentialEntry
     """Cloud credentials to use for each backup."""
-    attributes: CloudTaskAttributes | B2TaskAttributes | DropboxTaskAttributes
+    attributes: CloudAttributesModel
     """Additional information for each backup, e.g. bucket name."""
     schedule: CloudCron = Field(default_factory=CloudCron)
     """Cron schedule dictating when the task should run."""
@@ -84,11 +89,6 @@ class BaseCloudEntry(BaseModel):
     """Information regarding the task's job state, e.g. progress."""
     locked: bool
     """A locked task cannot run."""
-
-
-# Must update this union when adding/removing attribute models
-# Imported and used in cloud_sync.py
-CloudAttributesModel: TypeAlias = CloudTaskAttributes | B2TaskAttributes | DropboxTaskAttributes
 
 
 def get_attributes_model(credential_type: str) -> type[CloudAttributesModel]:
