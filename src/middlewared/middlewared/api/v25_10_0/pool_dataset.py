@@ -661,7 +661,7 @@ class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
 
 class PoolDatasetInsertOrUpdateEncryptedRecordResult(BaseModel):
     result: int | None
-    """Returns inserted record ID or `null` on successful record update."""
+    """Returns inserted or updated record ID, or `null` otherwise."""
 
 
 class PoolDatasetLockArgs(BaseModel):
