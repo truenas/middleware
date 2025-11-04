@@ -16,6 +16,10 @@ from middlewared.utils.libvirt.usb import USBDelegate
 class ContainerNICDelegate(NICDelegate):
 
     @property
+    def nic_choices_endpoint(self):
+        return 'container.device.nic_attach_choices'
+
+    @property
     def schema_model(self):
         return ContainerNICDevice
 

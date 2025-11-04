@@ -30,6 +30,10 @@ class VMDisplayDelegate(DisplayDelegate):
 class VMNICDelegate(NICDelegate):
 
     @property
+    def nic_choices_endpoint(self):
+        return 'vm.device.nic_attach_choices'
+
+    @property
     def schema_model(self):
         return VMNICDevice
 
