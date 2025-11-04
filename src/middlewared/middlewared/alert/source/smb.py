@@ -4,7 +4,7 @@ from middlewared.alert.schedule import CrontabSchedule
 from middlewared.service_exception import ValidationErrors
 
 
-ALERT_MAX_QUERY_ENTRIES = 1000
+AUDIT_MAX_QUERY_ENTRIES = 1000
 
 
 def generate_alert_text(auth_log):
