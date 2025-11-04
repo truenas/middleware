@@ -166,6 +166,11 @@ http {
 
     map $http_origin $allow_origin {
         ~^${tn_connect_config['tnc_base_url'].rstrip("/")}$ $http_origin;
+% if tn_connect_config['account_service_base_url'].split('.')[1] in ('dev', 'staging'):
+        # Make CORS exception for localhost:4200 for internal development environments
+        ~^http://localhost:4200$ $http_origin;
+        ~^http://127\.0\.0\.1:4200$ $http_origin;
+% endif
         default "";
     }
 
@@ -292,6 +297,26 @@ ${spaces}gzip off;
             alias /usr/share/middlewared/docs/${current_api_version};
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
             add_header Expires 0;
+        }
+
+        location /api/versions {
+            allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
+                        # won't allow us to understand that connection error was due to client IP not being allowlisted.
+% if has_tn_connect:
+            # Allow all internal origins.
+            add_header Access-Control-Allow-Origin $allow_origin always;
+            add_header Access-Control-Allow-Headers "*" always;
+% endif
+            proxy_pass http://127.0.0.1:6000/api/versions;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+% if fips_enabled:
+            ${security_headers_enhanced(indent=12)}
+% endif
         }
 
         location @index {
