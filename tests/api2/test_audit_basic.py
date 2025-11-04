@@ -268,11 +268,13 @@ class TestAuditOps:
 
     def test_audit_order_by(self):
         entries_forward = call('audit.query', {'services': ['SMB'], 'query-options': {
-            'order_by': ['audit_id']
+            'order_by': ['audit_id'],
+            'limit': 1000,
         }})
 
         entries_reverse = call('audit.query', {'services': ['SMB'], 'query-options': {
-            'order_by': ['-audit_id']
+            'order_by': ['-audit_id'],
+            'limit': 1000,
         }})
 
         head_forward_id = entries_forward[0]['audit_id']
@@ -344,7 +346,7 @@ class TestAuditOpsHA:
 
         audit_payload = {
             "query-filters": [["event_data.method", "=", event], ["event_data.params", "=", [user_id]]],
-            "query-options": {"select": ["event_data", "success"]},
+            "query-options": {"select": ["event_data", "success"], "limit": 1000}},
             "remote_controller": True
         }
 

@@ -101,7 +101,7 @@ class TestAuditDownload:
 
         init_audit_query = call('audit.query', {
             'query-filters': [['event_data.method', '=', 'audit.download_report']],
-            'query-options': {'select': ['event_data', 'success']}
+            'query-options': {'select': ['event_data', 'success'], 'limit': 1000}
         })
         init_len = len(init_audit_query)
 
@@ -118,7 +118,7 @@ class TestAuditDownload:
 
         post_audit_query = call('audit.query', {
             'query-filters': [['event_data.method', '=', 'audit.download_report']],
-            'query-options': {'select': ['event_data', 'success']}
+            'query-options': {'select': ['event_data', 'success'], 'limit': 1000}
         })
         post_len = len(post_audit_query)
 
@@ -129,7 +129,7 @@ class TestAuditDownload:
             count_down -= 1
             post_audit_query = call('audit.query', {
                 'query-filters': [['event_data.method', '=', 'audit.download_report']],
-                'query-options': {'select': ['event_data', 'success']}
+                'query-options': {'select': ['event_data', 'success'], 'limit': 1000}
             })
             post_len = len(post_audit_query)
 
