@@ -17,7 +17,7 @@ def test_audit_system_escalation():
     count = call('audit.query', payload)
 
     # Get and confirm the event
-    payload['query-options'] = {"offset": count - 1}
+    payload['query-options'] = {"offset": count - 1, "limit": 1000}
     event = call('audit.query', payload)
     assert len(event) == 1
     proctitle = event[0]['event_data']['proctitle']
