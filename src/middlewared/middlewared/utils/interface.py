@@ -13,7 +13,10 @@ def get_default_interface() -> str | None:
         with open('/proc/net/route', 'r') as f:
             for entry in filter(lambda i: len(i) == 11, map(str.split, f.readlines()[1:])):
                 with contextlib.suppress(ValueError):
-                    if int(entry[3], 16) == (RTF_UP | RTF_GATEWAY):
+                    flags = int(entry[3], 16)
+                    # Check if both RTF_UP and RTF_GATEWAY flags are set (bitwise AND)
+                    # Don't require exact match - routes can have additional flags
+                    if (flags & (RTF_UP | RTF_GATEWAY)) == (RTF_UP | RTF_GATEWAY):
                         return entry[0].strip()
 
 
