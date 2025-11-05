@@ -30,6 +30,7 @@ def convert_topology(zfs, vdevs):
                         'draid_parity': int(vdev['type'][-1]),
                         'draid_spare_disks': vdev['draid_spare_disks'],
                         'draid_data_disks': vdev['draid_data_disks'],
+                        'special_vdev': vdev['root'].lower() == 'special',
                     }
                 })
             else:

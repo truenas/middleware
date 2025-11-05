@@ -175,7 +175,7 @@ class PoolCreateEncryptionOptions(BaseModel):
     """A hex-encoded key specified as an alternative to using `passphrase`."""
 
 
-class PoolCreateTopologyDataVdevDRAID(BaseModel):
+class PoolCreateTopologyVdevDRAID(BaseModel):
     type: Literal["DRAID1", "DRAID2", "DRAID3"]
     """Type of distributed RAID configuration."""
     disks: list[str]
@@ -186,24 +186,20 @@ class PoolCreateTopologyDataVdevDRAID(BaseModel):
     """Number of distributed spare disks in the DRAID configuration."""
 
 
-class PoolCreateTopologyDataVdevNonDRAID(BaseModel):
+class PoolCreateTopologyVdevNonDRAID(BaseModel):
     type: Literal["RAIDZ1", "RAIDZ2", "RAIDZ3", "MIRROR", "STRIPE"]
     """Type of vdev configuration."""
     disks: list[str]
     """Array of disk names to use in this vdev."""
 
 
-PoolCreateTopologyDataVdev = Annotated[
-    PoolCreateTopologyDataVdevDRAID | PoolCreateTopologyDataVdevNonDRAID,
+PoolCreateTopologyDataVdev: TypeAlias = Annotated[
+    PoolCreateTopologyVdevDRAID | PoolCreateTopologyVdevNonDRAID,
     Field(discriminator="type")
 ]
 
 
-class PoolCreateTopologySpecialVdev(BaseModel):
-    type: Literal["MIRROR", "STRIPE"]
-    """Type of special vdev configuration for metadata storage."""
-    disks: list[str]
-    """Array of disk names to use in this special vdev."""
+PoolCreateTopologySpecialVdev: TypeAlias = PoolCreateTopologyDataVdev
 
 
 class PoolCreateTopologyDedupVdev(BaseModel):

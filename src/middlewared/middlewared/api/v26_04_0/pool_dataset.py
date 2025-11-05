@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BeforeValidator, ConfigDict, Field, Secret
+from pydantic import BeforeValidator, ConfigDict, Field, model_validator, Secret
 
 from middlewared.api.base import (
     BaseModel, NonEmptyString, NotRequired, single_argument_args, single_argument_result, ForUpdateMetaclass, Excluded,
@@ -224,7 +224,7 @@ class PoolDatasetCreate(BaseModel):
     refreservation: int = NotRequired
     """Minimum disk space guaranteed to this dataset itself in bytes."""
     special_small_block_size: int | Literal["INHERIT"] = NotRequired
-    """Size threshold below which blocks are stored on special vdevs."""
+    """Size threshold below which blocks are stored on special vdevs in bytes."""
     copies: int | Literal["INHERIT"] = "INHERIT"
     """Number of copies of data blocks to maintain for redundancy."""
     snapdir: Literal["DISABLED", "VISIBLE", "HIDDEN", "INHERIT"] = "INHERIT"
@@ -533,8 +533,17 @@ class PoolDatasetCompressionChoicesResult(BaseModel):
 
 
 class PoolDatasetCreateArgs(BaseModel):
-    data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume
+    data: PoolDatasetCreateFilesystem | PoolDatasetCreateVolume = Field(discriminator='type')
     """Configuration data for creating a new ZFS dataset."""
+
+    @model_validator(mode='before')
+    @classmethod
+    def set_default_type(cls, data: Any) -> Any:
+        """Default to FILESYSTEM type if not specified (backward compatibility)"""
+        if isinstance(data, dict) and 'data' in data:
+            if isinstance(data['data'], dict) and 'type' not in data['data']:
+                data['data']['type'] = 'FILESYSTEM'
+        return data
 
 
 class PoolDatasetCreateResult(BaseModel):

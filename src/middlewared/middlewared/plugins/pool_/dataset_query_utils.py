@@ -187,6 +187,7 @@ if truenas_pylibzfs is not None:
             truenas_pylibzfs.ZFSProperty.USEDBYDATASET,
             truenas_pylibzfs.ZFSProperty.USEDBYREFRESERVATION,
             truenas_pylibzfs.ZFSProperty.USEDBYSNAPSHOTS,
+            truenas_pylibzfs.ZFSProperty.SPECIAL_SMALL_BLOCKS,
         }
     )
     BASE_FS_PROPS = BASE_PROPS | frozenset(
@@ -201,7 +202,6 @@ if truenas_pylibzfs is not None:
             truenas_pylibzfs.ZFSProperty.RECORDSIZE,
             truenas_pylibzfs.ZFSProperty.REFQUOTA,
             truenas_pylibzfs.ZFSProperty.SNAPDIR,
-            truenas_pylibzfs.ZFSProperty.SPECIAL_SMALL_BLOCKS,
             truenas_pylibzfs.ZFSProperty.XATTR,
         }
     )
@@ -341,6 +341,7 @@ def normalize_zfs_properties(zprops: dict[str, dict] | None) -> dict[str, dict]:
         "snapshot_limit",
         "filesystem_count",
         "snapshot_count",
+        "special_small_block_size"
     }
 
     # Properties that have nullable integer conversion with special read_null='0' handling
@@ -371,7 +372,6 @@ def normalize_zfs_properties(zprops: dict[str, dict] | None) -> dict[str, dict]:
         "type",
         "mountpoint",
         "pbkdf2iters",
-        "special_small_block_size",
         "encryption_algorithm",
         "key_format",
         "origin",

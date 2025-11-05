@@ -251,15 +251,6 @@ class PoolDatasetService(CRUDService):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
 
-            if (c_value := data.get('special_small_block_size')) is not None:
-                if c_value != 'INHERIT' and not (
-                    (c_value == 0 or 512 <= c_value <= 1048576) and ((c_value & (c_value - 1)) == 0)
-                ):
-                    verrors.add(
-                        f'{schema}.special_small_block_size',
-                        'This field must be zero or a power of 2 from 512B to 1M'
-                    )
-
             if rs := data.get('recordsize'):
                 if rs != 'INHERIT' and rs not in await self.middleware.call(
                     'pool.dataset.recordsize_choices', parent['pool']
@@ -315,6 +306,13 @@ class PoolDatasetService(CRUDService):
                             f'{schema}.volsize',
                             'Volume size should be a multiple of volume block size'
                         )
+
+        if (c_value := data.get('special_small_block_size')) is not None:
+            if c_value != 'INHERIT' and not (0 <= c_value <= 16 * 1048576):
+                verrors.add(
+                    f'{schema}.special_small_block_size',
+                    'This field must be from zero to 16M'
+                )
 
         if mode == 'UPDATE':
             if data.get('user_properties_update') and not data.get('user_properties'):
@@ -467,10 +465,10 @@ class PoolDatasetService(CRUDService):
             if data['create_ancestors']:
                 # If we want to create ancestors, let's just ensure that we have at least one parent which exists
                 while not await self.middleware.call(
-                        'pool.dataset.query',
-                        [['id', '=', parent_name]], {
-                            'extra': {'retrieve_children': False, 'properties': []}
-                        }
+                    'pool.dataset.query',
+                    [['id', '=', parent_name]], {
+                        'extra': {'retrieve_children': False, 'properties': []}
+                    }
                 ):
                     if '/' not in parent_name:
                         # Root dataset / pool does not exist
@@ -635,6 +633,14 @@ class PoolDatasetService(CRUDService):
             'pool_dataset_create.encryption_options',
         ) or encryption_dict
         verrors.check()
+
+        if data['type'] == 'VOLUME':
+            p_special_small_block_size = parent_ds['special_small_block_size']['parsed']
+            if (
+                p_special_small_block_size and data.get('special_small_block_size', 'INHERIT') == 'INHERIT'
+                and ZFS_VOLUME_BLOCK_SIZE_CHOICES[data['volblocksize']] < p_special_small_block_size
+            ):
+                data['special_small_block_size'] = 0
 
         zprops, uprops = {}, {}
         for i in POOL_DS_CREATE_PROPERTIES:

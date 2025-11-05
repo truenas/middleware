@@ -299,9 +299,9 @@ class PoolService(CRUDService):
                         'zfs.pool.validate_draid_configuration', f'{topology_type}.{i}', numdisks, nparity, vdev
                     ))
 
-                    if data['topology'].get('spare'):
+                    if data['topology'].get('spares'):
                         verrors.add(
-                            'topology.spare',
+                            'topology.spares',
                             'Dedicated spare disks should not be used with dRAID.'
                         )
 
@@ -419,7 +419,10 @@ class PoolService(CRUDService):
             **encryption_dict
         }
 
-        if any(topology['type'].startswith('DRAID') for topology in data['topology']['data']):
+        if any(
+            topology['type'].startswith('DRAID')
+            for topology in data['topology']['data'] + data['topology'].get('special', [])
+        ):
             fsoptions['recordsize'] = '1M'
 
         dedup = data.get('deduplication')
@@ -614,7 +617,10 @@ class PoolService(CRUDService):
     @private
     async def is_draid_pool(self, pool_name):
         if pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool_name]]):
-            if any(group['type'] == 'draid' for group in pool[0]['groups']['data']):
+            if any(
+                group['type'] == 'draid'
+                for group in pool[0]['groups']['data'] + pool[0]['groups'].get('special', [])
+            ):
                 return True
 
         return False
