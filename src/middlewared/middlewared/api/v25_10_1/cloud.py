@@ -24,11 +24,11 @@ class CloudTaskAttributes(BaseModel, metaclass=ForUpdateMetaclass):
     bucket_policy_only: bool = False
     """Valid only for GOOGLE_CLOUD_STORAGE provider. Access checks should use bucket-level IAM policies. If you want \
     to upload objects to a bucket with Bucket Policy Only set then you will need to set this."""
-    b2_chunk_size: int = Field(alias="chunk_size", default=96, ge=5)
+    b2_chunk_size: int = Field(alias="chunk_size", default=96)
     """Valid only for B2 provider. Upload chunk size. Must fit in memory. Note that these chunks are buffered in \
     memory and there might be a maximum of `--transfers` chunks in progress at once. Also, your largest file must be \
     split in no more than 10,000 chunks."""
-    dropbox_chunk_size: int = Field(alias="chunk_size", default=48, ge=5, lt=150)
+    dropbox_chunk_size: int = Field(alias="chunk_size", default=48)
     """Valid only for DROPBOX provider. Upload chunk size in MiB. Must fit in memory. Note that these chunks are \
     buffered in memory and there might be a maximum of `--transfers` chunks in progress at once. Dropbox Business \
     accounts can have monthly data transfer limits per team per month. By using larger chunk sizes you will decrease \
