@@ -16,6 +16,7 @@ from .utils import (
     AUDIT_REPORTS_DIR,
     AUDITED_SERVICES,
     parse_query_filters,
+    parse_query_options,
     setup_truenas_verify,
 )
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
@@ -178,18 +179,7 @@ class AuditService(ConfigService):
         if (select := data['query-options'].get('select')):
             for idx, entry in enumerate(select):
                 if isinstance(entry, list):
-                    verrors.add(
-                        f'audit.query.query-options.select.{idx}',
-                        '"Select as" operations are not supported in audit queries'
-                    )
-                    continue
-
-                if '.' in entry:
-                    verrors.add(
-                        f'audit.query.query-options.select.{idx}',
-                        'Selecting subkeys of audit entry fields is not supported.'
-                    )
-                    continue
+                    entry = entry[0]
 
                 if entry not in (
                     AUDIT_EVENT_MIDDLEWARE_PARAM_SET
@@ -206,7 +196,8 @@ class AuditService(ConfigService):
 
         # Validate and possibly reduce filters being passed to backend
         filters = parse_query_filters(data['query-filters'])
-        return await self.middleware.call('auditbackend.query', data['services'][0], filters, data['query-options'])
+        options = parse_query_options(data['query-options'])
+        return await self.middleware.call('auditbackend.query', data['services'][0], filters, options)
 
     @api_method(AuditExportArgs, AuditExportResult, roles=['SYSTEM_AUDIT_READ'], audit='Export Audit Data')
     @job()
@@ -237,12 +228,15 @@ class AuditService(ConfigService):
         destination = os.path.join(target_dir, dirname)  # intermediate directory
         os.makedirs(destination, mode=0o700, exist_ok=True)
 
+        filters = parse_query_filters(data['query-filters'])
+        options = parse_query_options(data['query-options'])
+
         export_job_id = self.middleware.call_sync('auditbackend.export_to_file',
                                                   data['services'][0],
                                                   export_format,
                                                   destination,
-                                                  data['query-filters'],
-                                                  data['query-options'])
+                                                  filters,
+                                                  options)
 
         try:
             result = job.wrap_sync(export_job_id)
