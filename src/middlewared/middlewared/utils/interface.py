@@ -33,22 +33,8 @@ def wait_on_interface_link_state_up(interface: str) -> bool:
 
 
 def wait_for_default_interface_link_state_up() -> tuple[str | None, bool]:
-    # Wait for default route to appear if not immediately available
-    # This handles the race condition where system.ready fires before DHCP
-    # has finished configuring the default route (typically 5-10 seconds)
-    sleep_interval = 1
-    time_waited = 0
-    default_interface = None
-
-    while time_waited < IFACE_LINK_STATE_MAX_WAIT:
-        default_interface = get_default_interface()
-        if default_interface is not None:
-            break
-
-        time.sleep(sleep_interval)
-        time_waited += sleep_interval
-
+    default_interface = get_default_interface()
     if default_interface is None:
-        return None, False
+        return default_interface, False
 
     return default_interface, wait_on_interface_link_state_up(default_interface)

@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import os
 import shutil
@@ -51,11 +52,27 @@ class DockerSetupService(Service):
 
     @private
     async def validate_interfaces(self):
-        default_iface, success = await self.middleware.run_in_thread(wait_for_default_interface_link_state_up)
-        if default_iface is None:
-            raise CallError('Unable to determine default interface')
-        elif not success:
-            raise CallError(f'Default interface {default_iface!r} is not in active state')
+        # Retry for up to 60 seconds to handle race condition where system.ready
+        # fires before DHCP has finished configuring the default route after boot/upgrade
+        max_wait_time = 60
+        sleep_interval = 1
+        time_waited = 0
+
+        while time_waited < max_wait_time:
+            default_iface, success = await self.middleware.run_in_thread(wait_for_default_interface_link_state_up)
+
+            if default_iface is not None:
+                if not success:
+                    raise CallError(f'Default interface {default_iface!r} is not in active state')
+                # Success - interface found and is up
+                return
+
+            # No default interface yet, wait and retry
+            await asyncio.sleep(sleep_interval)
+            time_waited += sleep_interval
+
+        # Exhausted retries
+        raise CallError('Unable to determine default interface')
 
     @private
     async def status_change(self):
