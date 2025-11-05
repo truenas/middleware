@@ -79,6 +79,9 @@ def user_sudo_events(username, count=False):
     }
     if count:
         payload['query-options'] = {'count': True}
+    else:
+        payload['query-options'] = {'limit': 1000}
+
     return call('audit.query', payload)
 
 
