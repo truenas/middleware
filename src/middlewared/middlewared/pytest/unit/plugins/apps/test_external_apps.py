@@ -8,8 +8,6 @@ deployed outside of TrueNAS Apps (via Docker CLI, Portainer, Dockage, etc.)
 import collections
 import unittest
 
-import pytest
-
 from middlewared.plugins.apps.ix_apps.query import list_apps, create_external_app_metadata
 from middlewared.plugins.apps.stats_util import normalize_projects_stats
 
