@@ -24,6 +24,7 @@ from middlewared.utils.itertools import batched
 from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES, AUDIT_CHUNK_SZ
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
+from middlewared.utils.jsonpath import json_path_parse, JSON_PATH_PREFIX
 from truenas_api_client import ejson
 
 
@@ -86,12 +87,17 @@ class SQLConn:
             output = []
             for row in rows:
                 entry = {}
-                for column in self.table.c:
-                    column_name = str(column.name)
-                    if select and column_name not in select:
-                        continue
+                if not select:
+                    for column in self.table.c:
+                        column_name = str(column.name)
+                        entry[column_name] = getattr(row, column_name)
 
-                    entry[column_name] = getattr(row, column_name)
+                else:
+                    for column_name in select:
+                        if isinstance(column_name, list):
+                            column_name = column_name[1]
+
+                        entry[column_name] = getattr(row, column_name)
 
                 output.append(entry)
 
@@ -178,21 +184,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                     svc, exc_info=True
                 )
 
-    def serialize_results(self, results, table, select):
-        out = []
-        for row in results:
-            entry = {}
-            for column in table.c:
-                column_name = str(column.name)
-                if select and column_name not in select:
-                    continue
-
-                entry[column_name] = row[column]
-
-            out.append(entry)
-
-        return out
-
     def __fetchall(self, conn, qs, filters, options, retry=True):
         """
         This is a wrapper for retrieving db contents based on the specified sqlalchemy queryset. It is
@@ -226,16 +217,58 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
         return data
 
+    def __get_audit_column(self, table, name, label):
+        """ Get a column and apply a label to it if required """
+        if name.startswith(JSON_PATH_PREFIX):
+            name, path = json_path_parse(name)
+            raw_column = self._get_col(table, name)
+            if label:
+                column = func.json_extract(raw_column, path).label(label)
+            else:
+                column = func.json_extract(raw_column, path)
+        else:
+            if label:
+                column = self._get_col(table, name).label(label)
+            else:
+                column = self._get_col(table, name)
+
+        return column
+
+    def __create_select_columns(self, table, select):
+        out = {}
+        for i in select:
+            if isinstance(i, list):
+                entry = self.__get_audit_column(table, i[0], i[1])
+                name = i[1]
+            else:
+                entry = self.__get_audit_column(table, i, None)
+                name = i
+
+            out[name] = entry
+
+        return out
+
     def __create_queryset_common(self, conn, filters, options):
         """ common method between query and export to generate a queryset """
         order_by = options.get('order_by', []).copy()
+        do_count = options.get('count', False)
         from_ = conn.table
+        order_by_source = {col.name: col for col in conn.table.c}
 
-        if options.get('count'):
+        if do_count:
             qs = select(func.count('ROW_ID').label('count')).select_from(from_)
         else:
-            columns = list(conn.table.c)
-            qs = select(columns).select_from(from_)
+            to_select = options.get('select', [])
+            if not to_select:
+                # We treat absence of explicit select as ALL
+                columns = list(conn.table.c)
+            else:
+                target_dict = self.__create_select_columns(conn.table, to_select)
+                columns = list(target_dict.values())
+                # We may have created additional fields via SELECT AS
+                order_by_source |= target_dict
+
+            qs = select(*columns).select_from(from_)
 
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, conn.table, None, {})))
@@ -251,9 +284,9 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                     order = order[len('nulls_last:'):]
 
                 if order.startswith('-'):
-                    order_by[i] = self._get_col(conn.table, order[1:], None).desc()
+                    order_by[i] = order_by_source[order[1:]].desc()
                 else:
-                    order_by[i] = self._get_col(conn.table, order, None)
+                    order_by[i] = order_by_source[order]
 
                 if wrapper is not None:
                     order_by[i] = wrapper(order_by[i])

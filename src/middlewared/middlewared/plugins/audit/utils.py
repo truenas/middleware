@@ -5,7 +5,9 @@ from sqlalchemy.orm import declarative_base
 from .schema.common import AuditEventParam
 
 import middlewared.sqlalchemy as sa
-from middlewared.utils.jsonpath import query_filters_json_path_parse
+from middlewared.utils.jsonpath import (
+    query_filters_json_path_parse, query_select_json_path_parse
+)
 from truenas_verify import mtree_verify
 
 AUDIT_DATASET_PATH = '/audit'
@@ -139,6 +141,12 @@ def parse_query_filters(filters: list) -> list:
         parse_filter(f, filters_out)
 
     return query_filters_json_path_parse(filters_out)
+
+
+def parse_query_options(options: dict) -> dict:
+    out = options.copy()
+    out['select'] = query_select_json_path_parse(options.get('select', []))
+    return out
 
 
 AUDIT_TABLES = {svc[0]: generate_audit_table(*svc) for svc in AUDITED_SERVICES}
