@@ -23,7 +23,7 @@ class DeviceMixin:
         id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data
         )
-        await self.__reorder_devices(id_, data[self._service_type], data['order'])
+        await self.__reorder_devices(id_, data[self._service_type], data.get('order'))
 
         return await self.get_instance(id_)
 
@@ -38,7 +38,7 @@ class DeviceMixin:
         new = await self._update_device(new, device)
 
         await self.middleware.call('datastore.update', self._config.datastore, id_, new)
-        await self.__reorder_devices(id_, device[self._service_type], new['order'])
+        await self.__reorder_devices(id_, device[self._service_type], new.get('order'))
 
         return await self.get_instance(id_)
 

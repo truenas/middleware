@@ -7,12 +7,10 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerDeviceEntry, ContainerDeviceDiskChoicesArgs, ContainerDeviceDiskChoicesResult,
-    ContainerDeviceIotypeChoicesArgs, ContainerDeviceIotypeChoicesResult,
     ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult,
     ContainerDeviceCreateArgs, ContainerDeviceCreateResult,
     ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
     ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult,
-    ContainerDeviceUsbControllerChoicesArgs, ContainerDeviceUsbControllerChoicesResult,
     ContainerDeviceUsbDeviceArgs, ContainerDeviceUsbDeviceResult,
     ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
     ContainerDevicePciDeviceArgs, ContainerDevicePciDeviceResult,
@@ -21,7 +19,6 @@ from middlewared.api.current import (
 from middlewared.service import CRUDService, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
-from middlewared.utils.libvirt.usb import USB_CONTROLLER_CHOICES
 
 
 class ContainerDeviceModel(sa.Model):
@@ -30,7 +27,6 @@ class ContainerDeviceModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     attributes = sa.Column(sa.JSON(encrypted=True))
     container_id = sa.Column(sa.ForeignKey('container_container.id'), index=True)
-    order = sa.Column(sa.Integer(), nullable=True)
 
 
 class ContainerDeviceService(CRUDService, DeviceMixin):
@@ -55,15 +51,6 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
     async def extend_device(self, device):
         if device['container']:
             device['container'] = device['container']['id']
-
-        if not device['order']:
-            if device['attributes']['dtype'] == 'CDROM':
-                device['order'] = 1000
-            elif device['attributes']['dtype'] in ('DISK', 'RAW'):
-                device['order'] = 1001
-            else:
-                device['order'] = 1002
-        # FIXME: We need to fix order for VMs/containers
         return device
 
     @api_method(ContainerDeviceCreateArgs, ContainerDeviceCreateResult)
@@ -103,13 +90,6 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         """
         return await self._disk_choices()
 
-    @api_method(ContainerDeviceIotypeChoicesArgs, ContainerDeviceIotypeChoicesResult, roles=['CONTAINER_DEVICE_READ'])
-    async def iotype_choices(self):
-        """
-        IO-type choices for storage devices.
-        """
-        return self._iotype_choices()
-
     @api_method(
         ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult, roles=['CONTAINER_DEVICE_READ']
     )
@@ -121,16 +101,6 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         return (await self.middleware.call('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})) | {
             container_bridge: container_bridge
         }
-
-    @api_method(
-        ContainerDeviceUsbControllerChoicesArgs, ContainerDeviceUsbControllerChoicesResult,
-        roles=['CONTAINER_DEVICE_READ']
-    )
-    async def usb_controller_choices(self):
-        """
-        Retrieve USB controller type choices
-        """
-        return {k: k for k in USB_CONTROLLER_CHOICES if 'qemu' not in k}
 
     @api_method(
         ContainerDeviceUsbDeviceArgs, ContainerDeviceUsbDeviceResult,

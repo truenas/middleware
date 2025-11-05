@@ -13,10 +13,8 @@ __all__ = [
     'ContainerDiskDevice', 'ContainerUSBDevice', 'ContainerDeviceType', 'ContainerFilesystemDevice',
     'ContainerDeviceEntry', 'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
     'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
-    'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceIotypeChoicesArgs',
-    'ContainerDeviceIotypeChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
-    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbControllerChoicesArgs',
-    'ContainerDeviceUsbControllerChoicesResult', 'ContainerDeviceUsbDeviceArgs',
+    'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
+    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbDeviceArgs',
     'ContainerDeviceUsbDeviceResult', 'ContainerDeviceUsbChoicesArgs',
     'ContainerDeviceUsbChoicesResult', 'ContainerDevicePciDeviceArgs',
     'ContainerDevicePciDeviceResult', 'ContainerDevicePciDeviceChoicesArgs',
@@ -62,18 +60,8 @@ class ContainerRAWDevice(BaseModel):
     """Disk controller interface type. AHCI for compatibility, VIRTIO for performance."""
     exists: bool = False
     """Whether the disk file already exists or should be created."""
-    boot: bool = False
-    """Whether this disk should be marked as bootable."""
     size: int | None = None
     """Size of the disk in bytes. Required if creating a new disk file."""
-    logical_sectorsize: Literal[None, 512, 4096] | None = None
-    """Logical sector size for the disk. `null` for default."""
-    physical_sectorsize: Literal[None, 512, 4096] | None = None
-    """Physical sector size for the disk. `null` for default."""
-    iotype: Literal['NATIVE', 'THREADS', 'IO_URING'] = 'THREADS'
-    """I/O backend type for disk operations."""
-    serial: NonEmptyString | None = None
-    """Serial number to assign to the virtual disk. `null` for auto-generated."""
 
 
 class ContainerDiskDevice(BaseModel):
@@ -89,14 +77,6 @@ class ContainerDiskDevice(BaseModel):
     """Name for the new ZFS volume. Required if `create_zvol` is true."""
     zvol_volsize: int | None = None
     """Size of the new ZFS volume in bytes. Required if `create_zvol` is true."""
-    logical_sectorsize: Literal[None, 512, 4096] | None = None
-    """Logical sector size for the disk. `null` for default."""
-    physical_sectorsize: Literal[None, 512, 4096] | None = None
-    """Physical sector size for the disk. `null` for default."""
-    iotype: Literal['NATIVE', 'THREADS', 'IO_URING'] = 'THREADS'
-    """I/O backend type for disk operations."""
-    serial: NonEmptyString | None = None
-    """Serial number to assign to the virtual disk. `null` for auto-generated."""
 
     @model_validator(mode='after')
     def validate_attrs(self):
@@ -122,11 +102,6 @@ class ContainerUSBDevice(BaseModel):
     """Device type identifier for USB devices."""
     usb: USBAttributes | None = None
     """USB device attributes for identification. `null` for USB host controller only."""
-    controller_type: Literal[
-        'piix3-uhci', 'piix4-uhci', 'ehci', 'ich9-ehci1',
-        'vt82c686b-uhci', 'pci-ohci', 'nec-xhci'
-    ] = 'nec-xhci'
-    """USB controller type for the virtual machine."""
     device: NonEmptyString | None = None
     """Host USB device path to pass through. `null` for controller only."""
 
@@ -146,13 +121,9 @@ class ContainerDeviceEntry(BaseModel):
     """Device-specific configuration attributes."""
     container: int
     """ID of the container this device belongs to."""
-    order: int | None = None  # FIXME: This needs to be fixed for both vms/containers
-    """Boot order priority for this device (lower numbers boot first)."""
 
 
 class ContainerDeviceCreate(ContainerDeviceEntry):
-    order: int | None = None
-    """Boot order priority for this device. `null` for automatic assignment."""
     id: Excluded = excluded_field()
 
 
@@ -218,20 +189,6 @@ class ContainerDeviceDiskChoicesResult(BaseModel):
     """Available disk devices and storage volumes for container attachment."""
 
 
-class ContainerDeviceIotypeChoicesArgs(BaseModel):
-    pass
-
-
-@single_argument_result
-class ContainerDeviceIotypeChoicesResult(BaseModel):
-    NATIVE: str = 'NATIVE'
-    """Native asynchronous I/O for best performance with NVME."""
-    THREADS: str = 'THREADS'
-    """Thread-based I/O suitable for most storage types."""
-    IO_URING: str = 'IO_URING'
-    """Linux io_uring interface for high-performance async I/O."""
-
-
 class ContainerDeviceNicAttachChoicesArgs(BaseModel):
     pass
 
@@ -240,15 +197,6 @@ class ContainerDeviceNicAttachChoicesArgs(BaseModel):
 class ContainerDeviceNicAttachChoicesResult(BaseModel):
     model_config = ConfigDict(extra='allow')
     """Available network interfaces and bridges for Container NIC attachment."""
-
-
-class ContainerDeviceUsbControllerChoicesArgs(BaseModel):
-    pass
-
-
-class ContainerDeviceUsbControllerChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Available USB controller types for containers."""
 
 
 class USBCapability(BaseModel):

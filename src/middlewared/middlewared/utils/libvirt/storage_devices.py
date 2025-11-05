@@ -5,7 +5,6 @@ from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.service_exception import ValidationErrors
-from middlewared.utils.crypto import generate_string
 
 from .delegate import DeviceDelegate
 from .utils import disk_uniqueness_integrity_check
@@ -30,15 +29,6 @@ class StorageDelegate(DeviceDelegate):
                 'attributes.path',
                 f'{instance["name"]} has "{identity}" already configured'
             )
-
-        if update is False:
-            device['attributes']['serial'] = generate_string(8)
-        elif not device['attributes'].get('serial'):
-            # As this is a json field, ensure that some consumer does not remove this value, in that case
-            # we preserve the original value
-            device['attributes']['serial'] = old['attributes']['serial']
-        elif device['attributes']['serial'] != old['attributes']['serial']:
-            verrors.add('attributes.serial', 'This field is read-only.')
 
 
 class RAWDelegate(StorageDelegate):
