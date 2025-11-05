@@ -327,7 +327,8 @@ class VirtGlobalService(ConfigService):
         except Exception:
             ds = None
         if not ds:
-            await self.middleware.call('pool.dataset.create_impl',
+            await self.middleware.call(
+                'pool.dataset.create_impl',
                 CreateImplArgs(
                     name=ds_name,
                     ztype='FILESYSTEM',
