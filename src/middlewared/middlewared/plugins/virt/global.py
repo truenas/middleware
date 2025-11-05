@@ -22,6 +22,7 @@ from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 from middlewared.utils.zfs import query_imported_fast_impl
+from middlewared.plugins.pool_.utils import CreateImplArgs
 from .utils import (
     VirtGlobalStatus, incus_call, VNC_PASSWORD_DIR, TRUENAS_STORAGE_PROP_STR, INCUS_BRIDGE, INCUS_STORAGE
 )
@@ -326,17 +327,20 @@ class VirtGlobalService(ConfigService):
         except Exception:
             ds = None
         if not ds:
-            await self.middleware.call('zfs.dataset.create', {
-                'name': ds_name,
-                'properties': {
-                    'aclmode': 'discard',
-                    'acltype': 'posix',
-                    'exec': 'on',
-                    'casesensitivity': 'sensitive',
-                    'atime': 'off',
-                    TRUENAS_STORAGE_PROP_STR: pool_name,
-                },
-            })
+            await self.middleware.call('pool.dataset.create_impl',
+                CreateImplArgs(
+                    name=ds_name,
+                    ztype='FILESYSTEM',
+                    zprops={
+                        'aclmode': 'discard',
+                        'acltype': 'posix',
+                        'exec': 'on',
+                        'casesensitivity': 'sensitive',
+                        'atime': 'off',
+                    },
+                    uprops={TRUENAS_STORAGE_PROP_STR: pool_name},
+                )
+            )
         else:
             if ds['encrypted'] and not ds['key_loaded']:
                 self.logger.info('Dataset %r not unlocked, skipping virt setup.', ds['name'])
@@ -522,7 +526,8 @@ class VirtGlobalService(ConfigService):
                 {'paths': [new_ds_parent], 'properties': None},
             ):
                 await self.middleware.call(
-                    'zfs.dataset.create', {'name': new_ds_parent, 'type': 'FILESYSTEM'}
+                    'pool.dataset.create_impl',
+                    CreateImplArgs(name=new_ds_parent, ztype='FILESYSTEM')
                 )
 
             # Caching this now to avoid querying zfs again if this parent ds exists or not
