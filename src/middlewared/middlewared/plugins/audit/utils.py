@@ -143,7 +143,7 @@ def parse_query_filters(filters: list) -> list:
 
 
 def parse_query_options(options: dict) -> dict:
-    out = options.copy() 
+    out = options.copy()
     out['select'] = query_select_json_path_parse(options.get('select', []))
     return out
 
