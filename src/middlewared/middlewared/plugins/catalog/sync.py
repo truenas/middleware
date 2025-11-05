@@ -75,6 +75,18 @@ class CatalogService(Service):
             self.middleware.create_task(self.middleware.call('app.check_upgrade_alerts'))
 
     @private
-    def update_git_repository(self, location, repository, branch):
+    async def update_git_repository(self, location, repository, branch):
         self.middleware.call_sync('network.general.will_perform_activity', 'catalog')
+
+        # Check GitHub connectivity
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            try:
+                async with session.get('https://api.github.com', allow_redirects=True) as response:
+                    response.raise_for_status()
+            except Exception as e:
+                raise Exception(
+                    f'Failed to connect to GitHub: {e}. '
+                    'Please check your network configuration.'
+                )
+
         return pull_clone_repository(repository, location, branch)
