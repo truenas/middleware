@@ -46,6 +46,7 @@ class VMDeviceModel(sa.Model):
     attributes = sa.Column(sa.JSON(encrypted=True))
     vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
     order = sa.Column(sa.Integer(), nullable=True)
+    # TODO: This needs to be fixed for VMs as order is not used in pylibvirt atm
 
 
 class VMDeviceService(CRUDService, DeviceMixin):

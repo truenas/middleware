@@ -13,20 +13,24 @@ def get_device(device: dict, delegate: DeviceDelegate) -> Device:
         case 'DISK':
             return DiskStorageDevice(
                 type_=StorageDeviceType(device['attributes']['type']),
-                logical_sectorsize=device['attributes']['logical_sectorsize'],
-                physical_sectorsize=device['attributes']['physical_sectorsize'],
-                iotype=StorageDeviceIoType(device['attributes']['iotype']),
-                serial=device['attributes']['serial'],
+                logical_sectorsize=device['attributes'].get('logical_sectorsize'),
+                physical_sectorsize=device['attributes'].get('physical_sectorsize'),
+                iotype=StorageDeviceIoType(
+                    device['attributes']['iotype']
+                ) if device['attributes'].get('iotype') else None,
+                serial=device['attributes'].get('serial'),
                 path=device['attributes'].get('path') or zvol_name_to_path(device['attributes']['zvol_name']),
                 device_delegate=delegate,
             )
         case 'RAW':
             return RawStorageDevice(
                 type_=StorageDeviceType(device['attributes']['type']),
-                logical_sectorsize=device['attributes']['logical_sectorsize'],
-                physical_sectorsize=device['attributes']['physical_sectorsize'],
-                iotype=StorageDeviceIoType(device['attributes']['iotype']),
-                serial=device['attributes']['serial'],
+                logical_sectorsize=device['attributes'].get('logical_sectorsize'),
+                physical_sectorsize=device['attributes'].get('physical_sectorsize'),
+                iotype=StorageDeviceIoType(
+                    device['attributes']['iotype']
+                ) if device['attributes'].get('iotype') else None,
+                serial=device['attributes'].get('serial'),
                 path=device['attributes'].get('path'),
                 device_delegate=delegate,
             )
@@ -60,7 +64,7 @@ def get_device(device: dict, delegate: DeviceDelegate) -> Device:
                 vendor_id=device['attributes']['usb']['vendor_id'] if device['attributes']['usb'] else None,
                 product_id=device['attributes']['usb']['product_id'] if device['attributes']['usb'] else None,
                 device=device['attributes']['device'],
-                controller_type=device['attributes']['controller_type'],
+                controller_type=device['attributes'].get('controller_type'),
                 device_delegate=delegate,
             )
         case 'DISPLAY':

@@ -5,12 +5,31 @@ from truenas_pylibvirt.device import (
 from middlewared.api.current import (
     VMCDROMDevice, VMDisplayDevice, VMNICDevice, VMPCIDevice, VMDiskDevice, VMRAWDevice, VMUSBDevice,
 )
+from middlewared.service_exception import ValidationErrors
+from middlewared.utils.crypto import generate_string
 from middlewared.utils.libvirt.cdrom import CDROMDelegate
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 from middlewared.utils.libvirt.pci import PCIDelegate
 from middlewared.utils.libvirt.storage_devices import DiskDelegate, RAWDelegate
 from middlewared.utils.libvirt.usb import USBDelegate
+
+
+def validate_serial_field(
+    device: dict,
+    verrors: ValidationErrors,
+    old: dict | None = None,
+    instance: dict | None = None,
+    update: bool = True,
+) -> None:
+    if update is False:
+        device['attributes']['serial'] = generate_string(8)
+    elif not device['attributes'].get('serial'):
+        # As this is a json field, ensure that some consumer does not remove this value, in that case
+        # we preserve the original value
+        device['attributes']['serial'] = old['attributes']['serial']
+    elif device['attributes']['serial'] != old['attributes']['serial']:
+        verrors.add('attributes.serial', 'This field is read-only.')
 
 
 class VMCDROMDelegate(CDROMDelegate):
@@ -51,12 +70,34 @@ class VMRAWDelegate(RAWDelegate):
     def schema_model(self):
         return VMRAWDevice
 
+    def validate_middleware(
+        self,
+        device: dict,
+        verrors: ValidationErrors,
+        old: dict | None = None,
+        instance: dict | None = None,
+        update: bool = True,
+    ) -> None:
+        super().validate_middleware(device, verrors, old, instance, update)
+        validate_serial_field(device, verrors, old, instance, update)
+
 
 class VMDiskDelegate(DiskDelegate):
 
     @property
     def schema_model(self):
         return VMDiskDevice
+
+    def validate_middleware(
+        self,
+        device: dict,
+        verrors: ValidationErrors,
+        old: dict | None = None,
+        instance: dict | None = None,
+        update: bool = True,
+    ) -> None:
+        super().validate_middleware(device, verrors, old, instance, update)
+        validate_serial_field(device, verrors, old, instance, update)
 
 
 class VMUSBDelegate(USBDelegate):
