@@ -348,7 +348,7 @@ class TestExternalAppStatsNormalization:
                 assert external_app['memory'] == 134217728
 
     def test_normalize_stats_external_with_stopped_truenas_app(self):
-        """Test that stopped TrueNAS apps get zero stats while external apps show real stats."""
+        """Test that only running apps show stats; stopped TrueNAS apps are not included."""
         all_stats = {
             'portainer': {
                 'cpu_usage': 50000000000,
@@ -372,25 +372,19 @@ class TestExternalAppStatsNormalization:
 
         with unittest.mock.patch('middlewared.plugins.apps.stats_util.get_collective_metadata') as mock_metadata:
             with unittest.mock.patch('middlewared.plugins.apps.stats_util.cpu_info') as mock_cpu:
-                # TrueNAS app exists in metadata but not in running stats
+                # TrueNAS app exists in metadata but not in running stats (stopped)
                 mock_metadata.return_value = TRUENAS_APP_METADATA
                 mock_cpu.return_value = {'core_count': 4}
 
                 result = normalize_projects_stats(all_stats, old_stats, interval=2)
 
-                # Should have 2 entries: 1 external running + 1 TrueNAS stopped
-                assert len(result) == 2
+                # Should only have stats for running containers
+                assert len(result) == 1
 
                 # External app should have real stats
-                external_app = next(r for r in result if r['app_name'] == 'portainer')
+                external_app = result[0]
+                assert external_app['app_name'] == 'portainer'
                 assert external_app['memory'] == 134217728
-
-                # Stopped TrueNAS app should have zero stats
-                stopped_app = next(r for r in result if r['app_name'] == 'actual-budget')
-                assert stopped_app['memory'] == 0
-                assert stopped_app['cpu_usage'] == 0
-                assert stopped_app['networks'] == []
-                assert stopped_app['blkio'] == {'read': 0, 'write': 0}
 
 
 class TestExternalAppStatesAndEdgeCases:

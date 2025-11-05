@@ -116,10 +116,7 @@ class AppEntry(BaseModel):
     migrated: bool
     """Whether this application has been migrated from kubernetes."""
     source: Literal['truenas', 'external'] = 'truenas'
-    """
-    Source of the application: 'truenas' for apps managed by TrueNAS,
-    'external' for containers deployed outside TrueNAS.
-    """
+    """Source of the application: 'truenas' for managed apps, 'external' for unmanaged containers."""
     human_version: NonEmptyString
     """Human-readable version string for display purposes."""
     version: NonEmptyString
