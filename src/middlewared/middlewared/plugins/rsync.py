@@ -350,7 +350,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                             f'Remote Path could not be validated. An exception was raised. {exception_reason}'
                         )
                 else:
-                    if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
+                    if not connect_kwargs['known_hosts'].match(connect_kwargs['host'], '', None)[0]:
                         verrors.add(
                             f'{schema}.remotehost',
                             f'Host key not found in {known_hosts_path}',
