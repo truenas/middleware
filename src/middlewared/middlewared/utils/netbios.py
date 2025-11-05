@@ -19,13 +19,15 @@ MS_RESERVED_WORDS = frozenset([
     'ENTERPRISE'.casefold(),
     'INTERACTIVE'.casefold(),
     'INTERNET'.casefold(),
-    'LOCAL'.casefold(),
+    # DITTO for LOCAL
+    # 'LOCAL'.casefold(),
     'NETWORK'.casefold(),
     'NULL'.casefold(),
     'PROXY'.casefold(),
     'RESTRICTED'.casefold(),
     'SELF'.casefold(),
-    'SERVER'.casefold(),
+    # DITTO for server
+    # 'SERVER'.casefold(),
     'USERS'.casefold(),
     'WORLD'.casefold()
 ])
