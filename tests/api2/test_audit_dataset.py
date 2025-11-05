@@ -10,7 +10,7 @@ def test_dataset_audit():
     try:
         with expect_audit_method_calls([{
             'method': 'pool.dataset.create',
-            'params': [payload],
+            'params': [payload | {'type': 'FILESYSTEM'}],
             'description': f'Pool dataset create {DS_NAME}',
         }]):
             call('pool.dataset.create', payload)
