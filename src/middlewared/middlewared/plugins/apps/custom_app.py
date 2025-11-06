@@ -74,9 +74,9 @@ class AppCustomService(Service):
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
             if logs := collect_logs(app_name, version):
-                job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}')
+                job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}'.encode())
             else:
-                job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n')
+                job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n'.encode())
 
             update_progress(
                 80,

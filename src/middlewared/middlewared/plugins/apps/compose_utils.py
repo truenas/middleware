@@ -99,9 +99,12 @@ def collect_logs(app_name: str, app_version: str) -> str:
 
     args = ['-p', f'{PROJECT_PREFIX}{app_name}', 'logs', '--no-color', '--timestamps']
 
-    cp = run(['docker', '--config', '/etc/docker', 'compose'] + compose_files + args, timeout=60, check=False)
+    cp = run(
+        ['docker', '--config', '/etc/docker', 'compose'] + compose_files + args,
+        timeout=60, check=False, stderr=subprocess.STDOUT,
+    )
     if cp.returncode != 0:
-        logger.error('Failed to collect logs for %r app: %s', app_name, cp.stderr)
+        logger.error('Failed to collect logs for %r app: %s', app_name, cp.stdout)
         return ''
 
     return cp.stdout

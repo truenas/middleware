@@ -187,9 +187,9 @@ class AppService(CRUDService):
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
             if logs := collect_logs(app_name, version):
-                job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}')
+                job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}'.encode())
             else:
-                job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n')
+                job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n'.encode())
             # We only want to remove app volume ds if it did not exist before the installation
             # and was created during this installation process
             self.remove_failed_resources(app_name, version, app_volume_ds_exists is False)
