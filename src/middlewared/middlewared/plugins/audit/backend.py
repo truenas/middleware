@@ -1,5 +1,6 @@
 import csv
 import errno
+import json
 import os
 import subprocess
 import threading
@@ -95,9 +96,21 @@ class SQLConn:
                 else:
                     for column_name in select:
                         if isinstance(column_name, list):
+                            # handling SELECT ... AS results data can be regular string, NULL, int, or even JSON
                             column_name = column_name[1]
-
-                        entry[column_name] = getattr(row, column_name)
+                            if (data := getattr(row, column_name)) is None:
+                                entry[column_name] = None
+                            elif isinstance(data, str):
+                                # Majority of time these will probably be JSON objects extracted
+                                # via json_extract()
+                                try:
+                                    entry[column_name] = ejson.loads(data)
+                                except json.decoder.JSONDecodeError:
+                                    entry[column_name] = data
+                            else:
+                                entry[column_name] = data
+                        else:
+                            entry[column_name] = getattr(row, column_name)
 
                 output.append(entry)
 
@@ -377,10 +390,10 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                         writer.writeheader()
 
                         for entry in batch:
-                            if entry.get('service_data'):
-                                entry['service_data'] = ejson.dumps(entry['service_data'])
-                            if entry.get('event_data'):
-                                entry['event_data'] = ejson.dumps(entry['event_data'])
+                            for key in fieldnames:
+                                if isinstance(entry[key], dict):
+                                    entry[key] = ejson.dumps(entry[key])
+
                             writer.writerow(entry)
                     case 'YAML':
                         yaml.dump(batch, f)
