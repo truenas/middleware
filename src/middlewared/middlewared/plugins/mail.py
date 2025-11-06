@@ -300,7 +300,16 @@ class MailService(ConfigService):
                 raise CallError(
                     f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EPERM
                 )
-            self.logger.warning('Failed to send email', exc_info=True)
+            # NAS-137666: Email addresses are considered Personally Identifiable
+            # Information (PII) under GDPR. Prevent displaying them in logs.
+            if isinstance(e, smtplib.SMTPSenderRefused):
+                e.sender = '[sender redacted]'
+                e.args = (e.smtp_code, e.smtp_error, e.sender)
+            elif isinstance(e, smtplib.SMTPRecipientsRefused):
+                e.recipients = '[recipient info redacted]'
+                e.args = (e.recipients,)
+
+            self.logger.warning('Failed to send email', exc_info=e)
             if message['queue']:
                 with self.mail_queue as mq:
                     mq.append(msg)
