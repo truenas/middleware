@@ -1,4 +1,5 @@
 import dns
+import dns.resolver
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
