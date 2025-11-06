@@ -6,7 +6,7 @@ from truenas_pylibvirt.utils.usb import find_usb_device_by_libvirt_name, get_all
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ContainerDeviceEntry, ContainerDeviceDiskChoicesArgs, ContainerDeviceDiskChoicesResult,
+    ContainerDeviceEntry,
     ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult,
     ContainerDeviceCreateArgs, ContainerDeviceCreateResult,
     ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
@@ -57,13 +57,6 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
     async def do_create(self, data):
         """
         Create a new device for the container of id `container`.
-
-        If `attributes.dtype` is the `RAW` type and a new raw file is to be created, `attributes.exists` will be
-        passed as false. This means the API handles creating the raw file and raises the appropriate exception if
-        file creation fails.
-
-        If `attributes.dtype` is of `DISK` type and a new Zvol is to be created, `attributes.create_zvol` will be
-        passed as true with valid `attributes.zvol_name` and `attributes.zvol_volsize` values.
         """
         return await self._create_impl(data)
 
@@ -71,8 +64,6 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
     async def do_update(self, id_, data):
         """
         Update a container device of `id`.
-
-        Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
         return await self._update_impl(id_, data)
 
@@ -82,13 +73,6 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         Delete a container device of `id`.
         """
         return await self._delete_impl(id_, options)
-
-    @api_method(ContainerDeviceDiskChoicesArgs, ContainerDeviceDiskChoicesResult, roles=['CONTAINER_DEVICE_READ'])
-    async def disk_choices(self):
-        """
-        Returns disk choices for device type "DISK".
-        """
-        return await self._disk_choices()
 
     @api_method(
         ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult, roles=['CONTAINER_DEVICE_READ']
