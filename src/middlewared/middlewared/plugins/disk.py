@@ -93,8 +93,8 @@ class DiskService(CRUDService):
         if context['real_names']:
             disk['real_name'] = context['identifier_to_name'].get(disk['identifier'])
 
-        if context['sed_status'] and disk['sed']:
-            disk['sed_status'] = await sed_status(disk['name'])
+        if context['sed_status']:
+            disk['sed_status'] = await sed_status(disk['name']) if disk['sed'] else None
 
         return disk
 
