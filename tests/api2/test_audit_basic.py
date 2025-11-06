@@ -92,7 +92,7 @@ def initialize_for_smb_tests():
         with smb_share(os.path.join('/mnt', ds), 'AUDIT_BASIC_TEST', {
             'purpose': 'LEGACY_SHARE',
             'options': {'guestok': False},
-            'audit': {'enable': True}
+            'audit': {'enable': True, 'ignore_list': ['root']}
         }) as s:
             with user({
                 'username': SMBUSER,

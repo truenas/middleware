@@ -70,6 +70,7 @@ def test_query_method(legacy_api_client, query_method):
     if (
         version in APIVersions.FT.value + APIVersions.GE.value
         and query_method in (
+            "audit.query",
             "certificate.query",
             "cloudsync.query",
             "container.query",
