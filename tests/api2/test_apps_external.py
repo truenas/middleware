@@ -27,12 +27,15 @@ def external_container():
 
     This creates a simple Alpine container that runs indefinitely,
     simulating an externally deployed container.
+
+    IMPORTANT: This fixture will FAIL the test if the container cannot be
+    created, ensuring that external app functionality is properly tested.
     """
     # Ensure Docker is running
     try:
         ssh('docker info', check=False)
-    except Exception:
-        pytest.skip('Docker service is not running')
+    except Exception as e:
+        pytest.fail(f'Docker service is not running: {e}')
 
     # Clean up any existing test container
     ssh(f'docker rm -f {TEST_CONTAINER_NAME}', check=False, complete_response=True)
@@ -40,7 +43,7 @@ def external_container():
     # Pull the test image
     result = ssh(f'docker pull {TEST_CONTAINER_IMAGE}', complete_response=True)
     if result['result'] is False:
-        pytest.skip(f'Failed to pull test image {TEST_CONTAINER_IMAGE}')
+        pytest.fail(f'Failed to pull test image {TEST_CONTAINER_IMAGE}: {result.get("stderr", "")}')
 
     # Deploy the external container (sleep indefinitely to keep it running)
     result = ssh(
@@ -51,7 +54,7 @@ def external_container():
     )
 
     if result['result'] is False:
-        pytest.skip('Failed to create external test container')
+        pytest.fail(f'Failed to create external test container: {result.get("stderr", "")}')
 
     # Wait for container to be running
     time.sleep(2)
@@ -60,7 +63,7 @@ def external_container():
     result = ssh(f'docker inspect -f "{{{{.State.Running}}}}" {TEST_CONTAINER_NAME}', complete_response=True)
     if 'true' not in result['stdout'].lower():
         ssh(f'docker rm -f {TEST_CONTAINER_NAME}', check=False)
-        pytest.skip('Test container failed to start')
+        pytest.fail(f'Test container failed to start. State: {result.get("stdout", "")}')
 
     yield TEST_CONTAINER_NAME
 
