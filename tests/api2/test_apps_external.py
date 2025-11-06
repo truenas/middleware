@@ -258,39 +258,35 @@ def test_external_app_active_workloads(external_container):
             assert 'state' in container
 
 
-def test_mixed_apps_query():
+def test_mixed_apps_query(external_container):
     """Test querying when both TrueNAS and external apps exist."""
-    from middlewared.test.integration.assets.apps import app
-    from middlewared.test.integration.assets.docker import docker
-    from middlewared.test.integration.assets.pool import another_pool
+    # Query apps with external containers
+    all_apps = call('app.query', [], {'extra': {'include_external': True}})
 
-    # This test requires a running pool and docker
-    try:
-        pools = call('pool.query')
-        if not pools:
-            pytest.skip('No pools available for testing')
+    # Categorize apps
+    truenas_apps = [a for a in all_apps if a.get('source') == 'truenas']
+    external_apps = [a for a in all_apps if a.get('source') == 'external']
 
-        # Query apps with external containers
-        all_apps = call('app.query', [], {'extra': {'include_external': True}})
+    # Should have at least our test external container
+    assert len(external_apps) > 0
 
-        # Categorize apps
-        truenas_apps = [a for a in all_apps if a.get('source') == 'truenas']
-        external_apps = [a for a in all_apps if a.get('source') == 'external']
+    # Verify both types can coexist
+    assert isinstance(truenas_apps, list)
+    assert isinstance(external_apps, list)
 
-        # Verify both types can coexist
-        assert isinstance(truenas_apps, list)
-        assert isinstance(external_apps, list)
+    # Verify no overlap in app names
+    truenas_names = {a['name'] for a in truenas_apps}
+    external_names = {a['name'] for a in external_apps}
 
-        # Verify no overlap in app names (unless explicitly created)
-        truenas_names = {a['name'] for a in truenas_apps}
-        external_names = {a['name'] for a in external_apps}
+    # Each app should have unique identifiers
+    all_names = [a['name'] for a in all_apps]
+    assert len(all_names) == len(set(all_names))  # No duplicates
 
-        # Each app should have unique identifiers
-        all_names = [a['name'] for a in all_apps]
-        assert len(all_names) == len(set(all_names))  # No duplicates
-
-    except Exception as e:
-        pytest.skip(f'Could not set up test environment: {e}')
+    # Verify proper categorization
+    for app in truenas_apps:
+        assert app['source'] == 'truenas'
+    for app in external_apps:
+        assert app['source'] == 'external'
 
 
 def test_external_app_state_accuracy(external_container):
