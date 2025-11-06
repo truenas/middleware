@@ -10,6 +10,9 @@ from middlewared.service import ConfigService, ValidationErrors
 import middlewared.sqlalchemy as sa
 
 
+BRIDGE_AUTO = '[AUTO]'
+
+
 class ContainerConfigModel(sa.Model):
     __tablename__ = "container_config"
 
@@ -38,12 +41,12 @@ class LXCConfigService(ConfigService):
         config = old_config.copy()
         config.update(data)
 
-        if config["bridge"] == "":
+        if config["bridge"] in ("", BRIDGE_AUTO):
             config["bridge"] = None
 
         verrors = ValidationErrors()
 
-        if (config["bridge"] or "") not in await self.bridge_choices():
+        if (config["bridge"] or BRIDGE_AUTO) not in await self.bridge_choices():
             verrors.add("lxc_config_update.bridge", "Invalid bridge")
 
         if config["bridge"] is None and config["v4_network"] is None and config["v6_network"] is None:
@@ -75,7 +78,7 @@ class LXCConfigService(ConfigService):
 
         Empty means it will be managed/created automatically.
         """
-        choices = {"": "Automatic"}
+        choices = {BRIDGE_AUTO: "Automatic"}
         # We do not allow custom bridge on HA because it might have bridge STP issues
         # causing failover problems.
         if not await self.middleware.call("failover.licensed"):
