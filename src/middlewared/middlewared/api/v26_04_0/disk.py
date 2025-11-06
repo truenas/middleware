@@ -223,7 +223,7 @@ class DiskWipeResult(BaseModel):
 class DiskUnlockSedArgs(BaseModel):
     name: NonEmptyString
     """Name of disk to unlock."""
-    password: Secret[NonEmptyString] = NotRequired
+    password: Secret[NonEmptyString | None] = None
     """Password for disk to unlock."""
 
 
