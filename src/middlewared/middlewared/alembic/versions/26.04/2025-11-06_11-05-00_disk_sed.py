@@ -2,8 +2,8 @@
 Add sed column to disks
 
 Revision ID: ff14ac328c3f
-Revises: e794ef384903
-Create Date: 2025-10-26 11:05:35.525174+00:00
+Revises: 32ef531bba38
+Create Date: 2025-11-06 11:05:35.525174+00:00
 
 """
 from alembic import op
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'ff14ac328c3f'
-down_revision = 'e794ef384903'
+down_revision = '32ef531bba38'
 branch_labels = None
 depends_on = None
 
