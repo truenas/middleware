@@ -3,7 +3,9 @@ import shlex
 
 from middlewared.plugins.vm.devices import CDROM, DISK, PCI, RAW, DISPLAY, USB
 from middlewared.plugins.vm.numeric_set import parse_numeric_set
-from middlewared.plugins.vm.utils import SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name
+from middlewared.plugins.vm.utils import (
+    SYSTEM_NVRAM_FOLDER_PATH, SYSTEM_TPM_FOLDER_PATH, get_vm_nvram_file_name, get_vm_tpm_state_dir_name,
+)
 from middlewared.utils import Nid
 
 from .utils import create_element
@@ -184,7 +186,16 @@ def devices_xml(vm_data, context):
     if vm_data['trusted_platform_module']:
         devices.append(create_element(
             'tpm', model='tpm-crb', attribute_dict={
-                'children': [create_element('backend', type='emulator', version='2.0')]
+                'children': [create_element(
+                    'backend', type='emulator', version='2.0', persistent_state='yes',
+                    attribute_dict={
+                        'children': [create_element(
+                            'source',
+                            type='dir',
+                            path=os.path.join(SYSTEM_TPM_FOLDER_PATH, get_vm_tpm_state_dir_name(vm_data)),
+                        )]
+                    },
+                )]
             },
         ))
 

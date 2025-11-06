@@ -50,8 +50,9 @@ Depends: acl,
          snmpd,
          snmp,
          sudo,
-# This is required for TPM device in virt plugin
+# This is required for TPM support in VM plugin
          swtpm,
+         swtpm-tools,
          systemd-coredump,
          tmux,
          truenas-binaries,
