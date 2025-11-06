@@ -15,7 +15,7 @@ from middlewared.utils.libvirt.storage_devices import DiskDelegate, RAWDelegate
 from middlewared.utils.libvirt.usb import USBDelegate
 
 
-def validate_serial_field(
+def validate_storage_fields(
     device: dict,
     verrors: ValidationErrors,
     old: dict | None = None,
@@ -30,6 +30,16 @@ def validate_serial_field(
         device['attributes']['serial'] = old['attributes']['serial']
     elif device['attributes']['serial'] != old['attributes']['serial']:
         verrors.add('attributes.serial', 'This field is read-only.')
+
+    logical_sectorsize = device['attributes'].get('logical_sectorsize')
+    physical_sectorsize = device['attributes'].get('physical_sectorsize')
+    if logical_sectorsize and physical_sectorsize and logical_sectorsize > physical_sectorsize:
+        # https://patchew.org/QEMU/1508343141-31835-1-git-send-email-pbonzini%40redhat.com/1508343141-31835-30
+        # -git-send-email-pbonzini%40redhat.com
+        verrors.add(
+            'attributes.logical_sectorsize',
+            'Logical sector size cannot be greater than physical sector size.'
+        )
 
 
 class VMCDROMDelegate(CDROMDelegate):
@@ -79,7 +89,18 @@ class VMRAWDelegate(RAWDelegate):
         update: bool = True,
     ) -> None:
         super().validate_middleware(device, verrors, old, instance, update)
-        validate_serial_field(device, verrors, old, instance, update)
+        validate_storage_fields(device, verrors, old, instance, update)
+
+        attrs = device['attributes']
+        if update is False and attrs.get('exists', True) is False and attrs.get('size'):
+            # We would be creating the file in this case, so let's validate that
+            # size is a multiple of logical sectorsize or 512
+            logical_sectorsize = attrs.get('logical_sectorsize') or 512
+            if attrs['size'] % logical_sectorsize != 0:
+                verrors.add(
+                    'attributes.size',
+                    f'Size must be a multiple of logical sector size ({logical_sectorsize!r} bytes).'
+                )
 
 
 class VMDiskDelegate(DiskDelegate):
@@ -97,7 +118,7 @@ class VMDiskDelegate(DiskDelegate):
         update: bool = True,
     ) -> None:
         super().validate_middleware(device, verrors, old, instance, update)
-        validate_serial_field(device, verrors, old, instance, update)
+        validate_storage_fields(device, verrors, old, instance, update)
 
 
 class VMUSBDelegate(USBDelegate):
