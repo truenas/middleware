@@ -445,6 +445,7 @@ class DirectoryServices(ConfigService):
                 f'{dns_name}: DNS query for proposed truenas server hostname timed out before it could '
                 'complete. This may indicate a DNS misconfiguration on the TrueNAS server.'
             )
+            return
 
         ips_in_use = set(self.middleware.call_sync('directoryservices.bindip_choices'))
         if not dns_addresses & ips_in_use:
