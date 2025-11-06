@@ -2,7 +2,7 @@ from catalog_reader.custom_app import get_version_details
 
 from middlewared.service import CallError, Service
 
-from .compose_utils import compose_action
+from .compose_utils import collect_logs, compose_action
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_config
 from .ix_apps.metadata import update_app_metadata
@@ -73,6 +73,11 @@ class AppCustomService(Service):
             update_progress(60, msg)
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
+            if logs := collect_logs(app_name, version):
+                job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}')
+            else:
+                job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n')
+
             update_progress(
                 80,
                 'Failure occurred while '

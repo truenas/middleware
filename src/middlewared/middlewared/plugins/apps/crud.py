@@ -101,7 +101,7 @@ class AppService(CRUDService):
         audit_extended=lambda app_name: f'{app_name} to custom app',
         roles=['APPS_WRITE']
     )
-    @job(lock=lambda args: f'app_start_{args[0]}')
+    @job(lock=lambda args: f'app_start_{args[0]}', logs=True)
     async def convert_to_custom(self, job, app_name):
         """
         Convert `app_name` to a custom app.
