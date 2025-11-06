@@ -13,6 +13,9 @@ from middlewared.api.current import (
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, job, private, Service
 
+from .utils import container_instance_dataset_mountpoint
+
+
 IDMAP_COUNT = 65536
 
 
@@ -40,7 +43,7 @@ class ContainerService(Service):
 
         self.middleware.call_sync("container.configure_bridge")
 
-        self.middleware.libvirt_domains_manager.containers.start(self.pylibvirt_container(container))
+        self.middleware.libvirt_domains_manager.containers.start(self.pylibvirt_container(container, True))
 
     @api_method(ContainerStopArgs, ContainerStopResult, roles=["CONTAINER_WRITE"])
     @job(lock=lambda args: f'container_stop_{args[0]}')
@@ -61,19 +64,19 @@ class ContainerService(Service):
             self.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container)
 
     @private
-    def pylibvirt_container(self, container):
+    def pylibvirt_container(self, container, check_ds=False):
         container = container.copy()
         container.pop("id", None)
         container.pop("status", None)
 
         dataset = container.pop("dataset")
-        datasets = self.middleware.call_sync(
-            'zfs.resource.query_impl', {'paths': [dataset], 'properties': ['mountpoint']}
-        )
-        if not datasets:
-            raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
+        pool = dataset.split("/")[0]
+        container["root"] = f"/mnt/{container_instance_dataset_mountpoint(pool, container['name'])}"
+        if check_ds:
+            datasets = self.middleware.call_sync('zfs.resource.query_impl', {'paths': [dataset], 'properties': None})
+            if not datasets:
+                raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
 
-        container["root"] = datasets[0]["properties"]["mountpoint"]["value"]
         container["time"] = Time(container["time"])
         devices = []
         has_nic_device = False
