@@ -6,15 +6,69 @@ outside of TrueNAS Apps (via Docker CLI, Portainer, Dockage, etc.)
 
 Prerequisites:
 - Docker service must be running
-- At least one external Docker container should be running for full test coverage
 """
 
 import pytest
+import subprocess
+import time
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
-def test_query_apps_with_include_external_true():
+# Test container configuration
+TEST_CONTAINER_NAME = 'truenas-test-external-app'
+TEST_CONTAINER_IMAGE = 'alpine:latest'
+
+
+@pytest.fixture(scope='module')
+def external_container():
+    """
+    Deploy an external Docker container for testing.
+
+    This creates a simple Alpine container that runs indefinitely,
+    simulating an externally deployed container.
+    """
+    # Ensure Docker is running
+    try:
+        ssh('docker info', check=False)
+    except Exception:
+        pytest.skip('Docker service is not running')
+
+    # Clean up any existing test container
+    ssh(f'docker rm -f {TEST_CONTAINER_NAME}', check=False, complete_response=True)
+
+    # Pull the test image
+    result = ssh(f'docker pull {TEST_CONTAINER_IMAGE}', complete_response=True)
+    if result['result'] is False:
+        pytest.skip(f'Failed to pull test image {TEST_CONTAINER_IMAGE}')
+
+    # Deploy the external container (sleep indefinitely to keep it running)
+    result = ssh(
+        f'docker run -d --name {TEST_CONTAINER_NAME} '
+        f'--label com.docker.compose.project=test-external '
+        f'{TEST_CONTAINER_IMAGE} sleep infinity',
+        complete_response=True
+    )
+
+    if result['result'] is False:
+        pytest.skip('Failed to create external test container')
+
+    # Wait for container to be running
+    time.sleep(2)
+
+    # Verify container is running
+    result = ssh(f'docker inspect -f "{{{{.State.Running}}}}" {TEST_CONTAINER_NAME}', complete_response=True)
+    if 'true' not in result['stdout'].lower():
+        ssh(f'docker rm -f {TEST_CONTAINER_NAME}', check=False)
+        pytest.skip('Test container failed to start')
+
+    yield TEST_CONTAINER_NAME
+
+    # Cleanup: remove the test container
+    ssh(f'docker rm -f {TEST_CONTAINER_NAME}', check=False)
+
+
+def test_query_apps_with_include_external_true(external_container):
     """Test querying apps with include_external=True returns external containers."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
 
@@ -23,19 +77,21 @@ def test_query_apps_with_include_external_true():
     # Check if we have any external apps
     external_apps = [app for app in apps if app.get('source') == 'external']
 
-    # If there are external apps, verify their structure
-    if external_apps:
-        for app in external_apps:
-            assert app['name'] is not None
-            assert app['source'] == 'external'
-            assert app['custom_app'] is True
-            assert app['metadata']['train'] == 'external'
-            assert 'External Docker container' in app['metadata']['description']
-            assert 'active_workloads' in app
-            assert 'state' in app
+    # We should have at least our test container
+    assert len(external_apps) > 0
+
+    # Verify structure of external apps
+    for app in external_apps:
+        assert app['name'] is not None
+        assert app['source'] == 'external'
+        assert app['custom_app'] is True
+        assert app['metadata']['train'] == 'external'
+        assert 'External Docker container' in app['metadata']['description']
+        assert 'active_workloads' in app
+        assert 'state' in app
 
 
-def test_query_apps_with_include_external_false():
+def test_query_apps_with_include_external_false(external_container):
     """Test querying apps with include_external=False excludes external containers."""
     apps_with_external = call('app.query', [], {'extra': {'include_external': True}})
     apps_without_external = call('app.query', [], {'extra': {'include_external': False}})
@@ -52,7 +108,7 @@ def test_query_apps_with_include_external_false():
     assert external_count_with >= 0
 
 
-def test_query_apps_default_includes_external():
+def test_query_apps_default_includes_external(external_container):
     """Test that app.query includes external apps by default (backward compatibility check)."""
     # Default behavior should match include_external=True for the WebUI
     apps = call('app.query', [])
@@ -60,13 +116,17 @@ def test_query_apps_default_includes_external():
     # Verify the query succeeds
     assert isinstance(apps, list)
 
-    # If there are any apps with 'source' field, verify they're properly categorized
+    # Should have our test container
+    external_apps = [app for app in apps if app.get('source') == 'external']
+    assert len(external_apps) > 0
+
+    # Verify apps are properly categorized
     for app in apps:
         if 'source' in app:
             assert app['source'] in ('truenas', 'external')
 
 
-def test_filter_apps_by_source():
+def test_filter_apps_by_source(external_container):
     """Test filtering apps by source field."""
     # Get all apps including external
     all_apps = call('app.query', [], {'extra': {'include_external': True}})
@@ -89,17 +149,16 @@ def test_filter_apps_by_source():
 
 
 @pytest.mark.parametrize('interval', [2, 5])
-def test_app_stats_includes_external(interval):
+def test_app_stats_includes_external(external_container, interval):
     """Test that app.stats event source includes external container statistics."""
-    import time
     from middlewared.test.integration.utils import client
 
-    # First check if there are any external apps
+    # Get external apps
     apps = call('app.query', [], {'extra': {'include_external': True}})
     external_apps = [a for a in apps if a.get('source') == 'external']
 
-    if not external_apps:
-        pytest.skip('No external Docker containers found, skipping stats test')
+    # Should have our test container
+    assert len(external_apps) > 0
 
     external_app_names = {a['name'] for a in external_apps}
 
@@ -124,30 +183,29 @@ def test_app_stats_includes_external(interval):
     # Check if any external app stats were included
     external_stats = [s for s in stats_received if s['app_name'] in external_app_names]
 
-    if external_apps:
-        # We should have stats for at least some external apps
-        assert len(external_stats) > 0
+    # We should have stats for at least some external apps
+    assert len(external_stats) > 0
 
-        # Verify stats structure
-        for stat in external_stats:
-            assert 'app_name' in stat
-            assert 'cpu_usage' in stat
-            assert 'memory' in stat
-            assert 'networks' in stat
-            assert 'blkio' in stat
+    # Verify stats structure
+    for stat in external_stats:
+        assert 'app_name' in stat
+        assert 'cpu_usage' in stat
+        assert 'memory' in stat
+        assert 'networks' in stat
+        assert 'blkio' in stat
 
-            # Stats should be non-negative
-            assert stat['cpu_usage'] >= 0
-            assert stat['memory'] >= 0
+        # Stats should be non-negative
+        assert stat['cpu_usage'] >= 0
+        assert stat['memory'] >= 0
 
 
-def test_external_app_metadata_structure():
+def test_external_app_metadata_structure(external_container):
     """Test that external app metadata has expected synthetic structure."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
     external_apps = [a for a in apps if a.get('source') == 'external']
 
-    if not external_apps:
-        pytest.skip('No external Docker containers found')
+    # Should have our test container
+    assert len(external_apps) > 0
 
     for app in external_apps:
         # Verify synthetic metadata structure
@@ -168,13 +226,13 @@ def test_external_app_metadata_structure():
         assert app['custom_app'] is True
 
 
-def test_external_app_active_workloads():
+def test_external_app_active_workloads(external_container):
     """Test that external apps have proper active_workloads data."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
     running_external = [a for a in apps if a.get('source') == 'external' and a['state'] == 'RUNNING']
 
-    if not running_external:
-        pytest.skip('No running external Docker containers found')
+    # Should have our test container running
+    assert len(running_external) > 0
 
     for app in running_external:
         workloads = app['active_workloads']
@@ -232,13 +290,13 @@ def test_mixed_apps_query():
         pytest.skip(f'Could not set up test environment: {e}')
 
 
-def test_external_app_state_accuracy():
+def test_external_app_state_accuracy(external_container):
     """Test that external app states are accurately reported."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
     external_apps = [a for a in apps if a.get('source') == 'external']
 
-    if not external_apps:
-        pytest.skip('No external Docker containers found')
+    # Should have our test container
+    assert len(external_apps) > 0
 
     for app in external_apps:
         # Verify state is one of the valid states
@@ -255,18 +313,15 @@ def test_external_app_state_accuracy():
             assert len(running_containers) > 0
 
 
-def test_query_specific_external_app():
+def test_query_specific_external_app(external_container):
     """Test querying a specific external app by name."""
-    # First get all external apps
+    # Get our test container app
     all_apps = call('app.query', [], {'extra': {'include_external': True}})
-    external_apps = [a for a in all_apps if a.get('source') == 'external']
+    test_app = [a for a in all_apps if a.get('name') == 'test-external']
 
-    if not external_apps:
-        pytest.skip('No external Docker containers found')
-
-    # Pick the first external app
-    target_app = external_apps[0]
-    app_name = target_app['name']
+    # Should find our test container
+    assert len(test_app) == 1
+    app_name = test_app[0]['name']
 
     # Query for this specific app
     specific_app = call('app.query', [['name', '=', app_name]], {'extra': {'include_external': True}})
@@ -276,17 +331,17 @@ def test_query_specific_external_app():
     assert specific_app[0]['source'] == 'external'
 
 
-def test_external_apps_not_in_delete_validation():
+def test_external_apps_not_in_delete_validation(external_container):
     """Test that attempting operations on external apps is handled properly."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
-    external_apps = [a for a in apps if a.get('source') == 'external']
+    test_app = [a for a in apps if a.get('name') == 'test-external']
 
-    if not external_apps:
-        pytest.skip('No external Docker containers found')
+    # Should find our test container
+    assert len(test_app) == 1
 
     # External apps should be queryable but TrueNAS app management operations
     # may have different behavior - this test verifies the system doesn't crash
-    target_app = external_apps[0]['name']
+    target_app = test_app[0]['name']
 
     # Just verify we can query app config without errors
     # (whether it returns data or raises a specific error is implementation-dependent)
