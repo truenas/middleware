@@ -1,4 +1,5 @@
 import dns
+import dns.resolver
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
@@ -438,6 +439,13 @@ class DirectoryServices(ConfigService):
         except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
             # No entries for this DNS name. This probably just means we've
             # never joined the domain before
+            return
+        except dns.resolver.LifetimeTimeout:
+            verrors.add(
+                f'{SCHEMA}.timeout',
+                f'{dns_name}: DNS query for proposed truenas server hostname timed out before it could '
+                'complete. This may indicate a DNS misconfiguration on the TrueNAS server.'
+            )
             return
 
         ips_in_use = set(self.middleware.call_sync('directoryservices.bindip_choices'))
