@@ -120,7 +120,8 @@ class SQLConn:
                 if not str(e.orig).startswith('no such table'):
                     raise
 
-                return []
+                yield 0 if is_count else []
+                return
 
             try:
                 if is_count:
