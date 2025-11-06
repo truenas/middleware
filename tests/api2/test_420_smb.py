@@ -363,7 +363,7 @@ def do_audit_ops(svc):
         c.close(fd, True)
 
     sleep(AUDIT_WAIT)
-    return call('auditbackend.query', 'SMB', [['event', '!=', 'AUTHENTICATION']])
+    return call('auditbackend.query', 'SMB', [['event', '!=', 'AUTHENTICATION']], {'limit': 1000})
 
 
 def test__audit_log(request):
