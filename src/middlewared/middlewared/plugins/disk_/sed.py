@@ -39,11 +39,16 @@ class DiskService(Service):
 
     @private
     async def common_sed_validation(self, schema, options, status_to_check=None):
+        verrors = ValidationErrors()
+        if not await self.middleware.call('system.is_enterprise'):
+            verrors.add(f'{schema}.name', f'This operation is only available on Enterprise systems')
+
+        verrors.check()
+
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
             'extra': {'sed_status': True, 'passwords': True, 'real_names': True},
             'force_sql_filters': True,
         })
-        verrors = ValidationErrors()
         if not disk:
             verrors.add(f'{schema}.name', f'{options["name"]!r} is not a valid disk')
 
