@@ -42,7 +42,7 @@ def dot_notation_to_json_path(str_in: str) -> str:
     """ Convert middleware filter dot-notation to a JSONPath string.
     For example: 'foo.bar' -> '$.foo.bar' """
     if not isinstance(str_in, str):
-        raise TypeError(f'{str_in}: not a stirng')
+        raise TypeError(f'{str_in}: not a string')
 
     if JSON_PATH_DOT_SEGMENT not in str_in:
         # No dot notation and so short-circuit
@@ -137,7 +137,7 @@ def query_select_json_path_parse(select_in: list) -> list:
                 # out the syntax for this (which involves directing JSON1 to create new
                 # JSON objects) would be quite error-prone. So raise a ValueError here.
                 raise ValueError(
-                    f'{parsed_dst}: SELECT cannot be a JSONPath. If you want to extract '
+                    f'{parsed}: SELECT cannot be a JSONPath. If you want to extract '
                     'JSON data from a field, it must be done in a way to assign a new '
                     'label to the extracted data rather than building a new JSON object.'
                     'For example: {"select": [["user.email", "email"]]}'
