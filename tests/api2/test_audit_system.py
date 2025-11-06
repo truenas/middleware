@@ -11,9 +11,11 @@ def test_audit_system_escalation():
     # Using SYSTEM filters, find the event
     payload = {
         "services": ["SYSTEM"],
-        "query-filters": [["event", "=", "ESCALATION"], ["event_data.syscall.AUID", "=", "root"]],
+        "query-filters": [
+            ["event", "=", "ESCALATION"],
+            ["event_data.syscall.AUID", "=", "root"],
+            ["event_data.proctitle", "=", cmd]
+        ],
         "query-options": {"order_by": ["-message_timestamp"], "limit": 1, "get": True}
     }
     event = call('audit.query', payload)
-    proctitle = event['event_data']['proctitle']
-    assert proctitle == cmd, f"Expected {cmd!r} but found {proctitle!r}"

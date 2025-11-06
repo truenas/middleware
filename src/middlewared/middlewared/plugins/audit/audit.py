@@ -144,7 +144,7 @@ class AuditService(ConfigService):
                 'Querying more than one audit database in a single request is not supported'
             )
 
-        if not data['query-options']['limit'] and not data['query-options']['count']:
+        if not any([data['query-options']['limit'], data['query-options']['count'], data['query-options']['get']]):
             raise ValidationError(
                 'audit.query.query-options',
                 'query-options must be set to either gather row count or contain a limit on the rows returned.'
