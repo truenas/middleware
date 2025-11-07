@@ -51,10 +51,18 @@ def misc_methods() -> list[tuple[tuple, str]]:
     Remove methods from this list if they are removed from the current API version.
 
     """
-    return [(("fcport.status",), APIVersions.FT.value[0])]
+    return [
+        (("fcport.status",), APIVersions.FT.value[0]),
+        (("audit.query", [{"query-options": {"count": True}}]), APIVersions.GE.value[0]),
+    ]
 
 
-def test_query_method(legacy_api_client, query_method):
+@pytest.fixture(scope="module")
+def misc_method_names(misc_methods) -> list[str]:
+    return [m[0][0] for m in misc_methods]
+
+
+def test_query_method(legacy_api_client, query_method, misc_method_names):
     client, version = legacy_api_client
     # Methods that do not exist in the previous API versions
     if (
@@ -65,6 +73,9 @@ def test_query_method(legacy_api_client, query_method):
             "zfs.resource.query"
         )
     ):
+        return
+
+    if query_method in misc_method_names:
         return
 
     if (
@@ -103,11 +114,7 @@ def test_query_method(legacy_api_client, query_method):
     ):
         return
 
-    match query_method:
-        case "audit.query":
-            client.call(query_method, {"query-options": {"count": True}})
-        case _:
-            client.call(query_method)
+    client.call(query_method)
 
 
 def test_config_method(legacy_api_client, config_method):
