@@ -1,15 +1,14 @@
 from truenas_pylibvirt.device import (
-    NICDevice, PCIDevice, DiskStorageDevice, FilesystemDevice, RawStorageDevice, USBDevice,
+    NICDevice, PCIDevice, FilesystemDevice, USBDevice,
 )
 
 from middlewared.api.current import (
-    ContainerNICDevice, ContainerPCIDevice, ContainerDiskDevice,
-    ContainerRAWDevice, ContainerUSBDevice, ContainerFilesystemDevice,
+    ContainerNICDevice, ContainerPCIDevice,
+    ContainerUSBDevice, ContainerFilesystemDevice,
 )
 from middlewared.utils.libvirt.filesystem import FilesystemDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 from middlewared.utils.libvirt.pci import PCIDelegate
-from middlewared.utils.libvirt.storage_devices import DiskDelegate, RAWDelegate
 from middlewared.utils.libvirt.usb import USBDelegate
 
 
@@ -31,20 +30,6 @@ class ContainerPCIDelegate(PCIDelegate):
         return ContainerPCIDevice
 
 
-class ContainerRAWDelegate(RAWDelegate):
-
-    @property
-    def schema_model(self):
-        return ContainerRAWDevice
-
-
-class ContainerDiskDelegate(DiskDelegate):
-
-    @property
-    def schema_model(self):
-        return ContainerDiskDevice
-
-
 class ContainerUSBDelegate(USBDelegate):
 
     @property
@@ -61,8 +46,6 @@ class ContainerFilesystemDelegate(FilesystemDelegate):
 
 async def setup(middleware):
     for device_key, device_klass, delegate_klass in (
-        ('DISK', DiskStorageDevice, ContainerDiskDelegate),
-        ('RAW', RawStorageDevice, ContainerRAWDelegate),
         ('NIC', NICDevice, ContainerNICDelegate),
         ('USB', USBDevice, ContainerUSBDelegate),
         ('PCI', PCIDevice, ContainerPCIDelegate),
