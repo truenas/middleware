@@ -18,7 +18,7 @@ class PoolService(Service):
         async def unlock_and_format_disk(arg):
             nonlocal formatted, current_percentage
             disk, config = arg
-            if await self.middleware.call('disk.sed_unlock', disk, True) is False:
+            if await self.middleware.call('disk.sed_unlock_impl', disk, True) is False:
                 # returns None or boolean, None we can safely ignore
                 raise CallError(f"Failed to unlock {disk!r}. Check /var/log/middlewared.log")
             await self.middleware.call('disk.format', disk, config.get('size'))
