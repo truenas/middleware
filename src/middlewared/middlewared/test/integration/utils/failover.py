@@ -7,12 +7,12 @@ try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
     from auto_config import ha as ha_enabled
+    from functions import async_SSH_start, async_SSH_done
 except ImportError:
     ha_enabled = False
 
 from .call import call
 from .ha import settle_ha
-from .ssh import ssh
 
 __all__ = ["disable_failover", "do_failover"]
 
@@ -45,7 +45,9 @@ def do_failover(delay=5, settle_retries=180, description='', abusive=False):
     assert not call('failover.disabled.reasons')
 
     if abusive:
-        ssh('echo 1 > /proc/sys/kernel/sysrq && echo b > /proc/sysrq-trigger', check=False)
+        p = async_SSH_start('echo 1 > /proc/sys/kernel/sysrq && echo b > /proc/sysrq-trigger')
+        sleep(10)
+        async_SSH_done(p, 5)
     else:
         call('system.reboot', f'do_failover(): {description}')
 
