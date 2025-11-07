@@ -145,20 +145,21 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             )
         except CallError as e:
             verrors.add(f'{schema}.ssh_credentials', e.errmsg)
-        else:
-            cred_attrs = ssh_credentials['attributes']
-            ssh_keypair = await self.middleware.call(
-                'keychaincredential.get_of_type',
-                cred_attrs['private_key'],
-                'SSH_KEY_PAIR',
-            )
-            return {
-                "host": cred_attrs['host'],
-                "port": cred_attrs['port'],
-                'username': cred_attrs['username'],
-                'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
-                'known_hosts': asyncssh.SSHKnownHosts(get_host_key_file_contents_from_ssh_credentials(cred_attrs))
-            }
+            return
+
+        cred_attrs = ssh_credentials['attributes']
+        ssh_keypair = await self.middleware.call(
+            'keychaincredential.get_of_type',
+            cred_attrs['private_key'],
+            'SSH_KEY_PAIR',
+        )
+        return {
+            "host": cred_attrs['host'],
+            "port": cred_attrs['port'],
+            'username': cred_attrs['username'],
+            'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
+            'known_hosts': asyncssh.SSHKnownHosts(get_host_key_file_contents_from_ssh_credentials(cred_attrs))
+        }
 
     @staticmethod
     @private
