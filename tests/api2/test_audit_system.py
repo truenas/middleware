@@ -1,3 +1,4 @@
+from time import sleep
 from middlewared.test.integration.utils import call, ssh
 
 
@@ -7,6 +8,9 @@ def test_audit_system_escalation():
     # Run an ESCALATION command as root
     cmd = "systemctl status nfs-server"
     ssh(cmd, check=False)
+
+    # We need to allow some time for audit message to flush via syslog to DB
+    sleep(5)
 
     # Using SYSTEM filters, find the event
     payload = {

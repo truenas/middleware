@@ -103,7 +103,11 @@ def test_query_method(legacy_api_client, query_method):
     ):
         return
 
-    client.call(query_method)
+    match query_method:
+        case "audit.query":
+            client.call(query_method, {"query-options": {"count": True}})
+        case _:
+            client.call(query_method)
 
 
 def test_config_method(legacy_api_client, config_method):
