@@ -254,14 +254,15 @@ class ZFSResourceService(Service):
     def destroy_impl(self, tls, data: DestroyArgs):
         schema = "zfs.resource.destroy"
         path = data["path"]
+        data.setdefault("recursive", False)
+        data.setdefault("bypass", False)
+        data.setdefault("all_snapshots", False)
         if os.path.isabs(path):
             raise ValidationError(
                 schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL
             )
         elif path.endswith("/"):
-            raise ValidationError(
-                schema, "Path must not end with a forward-slash.", errno.EINVAL
-            )
+            raise ValidationError(schema, "Path must not end with a forward-slash.", errno.EINVAL)
         elif not data["bypass"] and has_internal_path(path):
             # NOTE: `bypass` is a value only exposed to
             # internal callers and not to our public API.
@@ -269,9 +270,7 @@ class ZFSResourceService(Service):
 
         tmp = path.split("/")
         if len(tmp) == 1 or tmp[-1] == "":
-            raise ValidationError(
-                schema, "Destroying the root filesystem is not allowed.", errno.EINVAL
-            )
+            raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
 
         a_snapshot = "@" in path
         if a_snapshot and data["all_snapshots"]:
