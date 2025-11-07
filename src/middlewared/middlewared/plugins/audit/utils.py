@@ -146,7 +146,7 @@ def parse_query_filters(filters: list) -> list:
 def parse_query_options(options: dict) -> dict:
     out = options.copy()
     out['select'] = query_select_json_path_parse(options.get('select', []))
-    if out['get']:
+    if out.get('get'):
         # If we're only getting a single result then we can place an SQL
         # LIMIT for a single result in the statement we generate
         out['limit'] = 1
