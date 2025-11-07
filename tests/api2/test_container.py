@@ -149,7 +149,7 @@ def started_ubuntu_container(ubuntu_container):
 
 
 def test_container_stop(started_ubuntu_container):
-    call("container.stop", started_ubuntu_container["id"])
+    call("container.stop", started_ubuntu_container["id"], job=True)
 
     container = call("container.get_instance", started_ubuntu_container["id"])
     assert container["status"]["state"] == "STOPPED"
@@ -167,7 +167,7 @@ def test_container_update(started_ubuntu_container):
     container = call("container.get_instance", started_ubuntu_container["id"])
     assert "/sbin/init" in ssh(f"ps -p {container['status']['pid']} -o args")
 
-    call("container.stop", started_ubuntu_container["id"])
+    call("container.stop", started_ubuntu_container["id"], job=True)
 
     call("container.start", started_ubuntu_container["id"])
 
@@ -184,11 +184,11 @@ def test_container_stop_force_after_timeout(ubuntu_container):
     container = call("container.get_instance", container["id"])
     assert container["status"]["state"] == "RUNNING"
 
-    call("container.stop", container["id"])
+    call("container.stop", container["id"], job=True)
     container = call("container.get_instance", container["id"])
     assert container["status"]["state"] == "RUNNING"  # Process with PID=1 ignores SIGTERM if it is not init
 
-    call("container.stop", container["id"], {"force_after_timeout": True})
+    call("container.stop", container["id"], {"force_after_timeout": True}, job=True)
     container = call("container.get_instance", container["id"])
     assert container["status"]["state"] == "STOPPED"
 
@@ -201,7 +201,7 @@ def test_container_shell(started_ubuntu_container):
     try:
         ws.send(json.dumps({
             "token": token,
-            "options": {"container_id": started_ubuntu_container["id"], "command": ["ls", "/mnt"]}
+            "options": {"container_id": started_ubuntu_container["id"], "command": "ls /mnt"}
         }))
         _, msg = ws.recv_data()
         assert json.loads(msg.decode())["msg"] == "connected", msg
