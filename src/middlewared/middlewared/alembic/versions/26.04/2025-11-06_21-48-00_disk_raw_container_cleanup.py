@@ -2,7 +2,7 @@
 Cleanup disk/raw devices from containers
 
 Revision ID: 6041af215ccd
-Revises: 32ef531bba38
+Revises: ff14ac328c3f
 Create Date: 2025-11-06 21:48:28.600327+00:00
 """
 import json
@@ -15,7 +15,7 @@ from middlewared.utils.pwenc import decrypt
 
 # revision identifiers, used by Alembic.
 revision = '6041af215ccd'
-down_revision = '32ef531bba38'
+down_revision = 'ff14ac328c3f'
 branch_labels = None
 depends_on = None
 
