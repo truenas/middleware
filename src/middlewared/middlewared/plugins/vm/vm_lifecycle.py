@@ -11,7 +11,7 @@ from middlewared.service import CallError, item_method, job, private, Service
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .vm_domain import VmDomain, VmDomainConfiguration
-from .utils import get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
+from .utils import get_vm_tpm_state_dir_name, get_vm_nvram_file_name, SYSTEM_TPM_FOLDER_PATH, SYSTEM_NVRAM_FOLDER_PATH
 
 
 class VMService(Service):
@@ -162,6 +162,7 @@ class VMService(Service):
                 'id': vm['id'],
                 'name': vm['name'],
             })),
+            'tpm_path': os.path.join(SYSTEM_TPM_FOLDER_PATH, get_vm_tpm_state_dir_name(vm)),
             'devices': devices,
         })
 
