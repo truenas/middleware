@@ -93,7 +93,8 @@ def SSH_TEST(command, username, passwrd, host=None, timeout=120):
             'result': process.returncode == 0}
 
 
-def async_SSH_start(command, username, passwrd, host):
+def async_SSH_start(command, username=user, passwrd=password, host=None):
+    target = host or get_host_ip(SRVTarget.DEFAULT)
     cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
     cmd += [
         "ssh",
@@ -105,7 +106,7 @@ def async_SSH_start(command, username, passwrd, host):
         "VerifyHostKeyDNS=no",
         "-o",
         "LogLevel=quiet",
-        f"{username}@{host}",
+        f"{username}@{target}",
         command
     ]
     return Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
