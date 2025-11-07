@@ -1,6 +1,26 @@
+import asyncio
+import base64
+import collections
+import configparser
+import enum
+import json
+import logging
+import os
+import re
+import shlex
+import subprocess
+import tempfile
+
+import aiorwlock
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 from middlewared.alert.base import (
-    Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass,
+    Alert,
+    AlertCategory,
+    AlertClass,
+    AlertLevel,
+    OneShotAlertClass,
+    SimpleOneShotAlertClass,
 )
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -42,27 +62,11 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
 
-import aiorwlock
-import asyncio
-import base64
-from collections import namedtuple
-import configparser
-import enum
-import json
-import logging
-import os
-import re
-import shlex
-import subprocess
-import tempfile
-
 RE_TRANSF1 = re.compile(r"Transferred:\s*(?P<progress_1>.+), (?P<progress>[0-9]+)%$")
 RE_TRANSF2 = re.compile(r"Transferred:\s*(?P<progress_1>.+, )(?P<progress>[0-9]+)%, (?P<progress_2>.+)$")
 RE_CHECKS = re.compile(r"Checks:\s*(?P<checks>[0-9 /]+)(, (?P<progress>[0-9]+)%)?$")
-
 OAUTH_URL = "https://www.truenas.com/oauth"
-
-RcloneConfigTuple = namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
+RcloneConfigTuple = collections.namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +74,7 @@ logger = logging.getLogger(__name__)
 class RcloneConfig:
     def __init__(self, cloud_sync):
         self.cloud_sync = cloud_sync
-
         self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]["type"]]
-
         self.config = None
         self.tmp_file = None
         self.tmp_file_filter = None
