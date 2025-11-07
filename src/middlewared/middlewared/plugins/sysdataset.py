@@ -20,6 +20,7 @@ from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.zfs.utils import get_encryption_info
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 from middlewared.utils import MIDDLEWARE_RUN_DIR, BOOT_POOL_NAME_VALID
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
@@ -522,7 +523,9 @@ class SystemDatasetService(ConfigService):
                 )
             elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
-                    await self.middleware.call('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
+                    await self.middleware.call(
+                        'zfs.resource.destroy_impl', DestroyArgs(path=dataset, recursive=True)
+                    )
                     await self.middleware.call(
                         'pool.dataset.create_impl', CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props)
                     )

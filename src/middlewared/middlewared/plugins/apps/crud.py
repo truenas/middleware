@@ -13,8 +13,9 @@ from middlewared.service import (
     CallError, CRUDService, filterable_api_method, job, private, ValidationErrors
 )
 from middlewared.utils.filter_list import filter_list
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 
-from .compose_utils import compose_action
+from .compose_utils import collect_logs, compose_action
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_portals
@@ -101,7 +102,7 @@ class AppService(CRUDService):
         audit_extended=lambda app_name: f'{app_name} to custom app',
         roles=['APPS_WRITE']
     )
-    @job(lock=lambda args: f'app_start_{args[0]}')
+    @job(lock=lambda args: f'app_start_{args[0]}', logs=True)
     async def convert_to_custom(self, job, app_name):
         """
         Convert `app_name` to a custom app.
@@ -114,7 +115,7 @@ class AppService(CRUDService):
         audit_extended=lambda data: data['app_name'],
         roles=['APPS_WRITE']
     )
-    @job(lock=lambda args: f'app_create_{args[0].get("app_name")}')
+    @job(lock=lambda args: f'app_create_{args[0].get("app_name")}', logs=True)
     def do_create(self, job, data):
         """
         Create an app with `app_name` using `catalog_app` with `train` and `version`.
@@ -186,6 +187,10 @@ class AppService(CRUDService):
                 compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
+            if logs := collect_logs(app_name, version):
+                job.logs_fd.write(f'App installation logs for {app_name}:\n{logs}'.encode())
+            else:
+                job.logs_fd.write(f'No logs could be retrieved for {app_name!r} installation failure\n'.encode())
             # We only want to remove app volume ds if it did not exist before the installation
             # and was created during this installation process
             self.remove_failed_resources(app_name, version, app_volume_ds_exists is False)
@@ -207,7 +212,10 @@ class AppService(CRUDService):
 
         if apps_volume_ds and remove_ds:
             try:
-                self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
+                self.middleware.call_sync(
+                    'zfs.resource.destroy_impl',
+                    DestroyArgs(path=apps_volume_ds, recursive=True, bypass=True),
+                )
             except Exception:
                 self.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
 
@@ -326,9 +334,8 @@ class AppService(CRUDService):
         shutil.rmtree(get_installed_app_path(app_name))
         if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
             self.middleware.call_sync(
-                'zfs.dataset.delete', apps_volume_ds, {
-                    'recursively_remove_dependents' if options.get('force_remove_ix_volumes') else 'recursive': True,
-                }
+                'zfs.resource.destroy_impl',
+                DestroyArgs(path=apps_volume_ds, recursive=True, bypass=True)
             )
 
         if options.get('send_event', True):

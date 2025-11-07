@@ -3,7 +3,9 @@ from typing import Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Excluded, excluded_field
+from middlewared.api.base import (
+    BaseModel, NonEmptyString, NotRequired, ForUpdateMetaclass, Excluded, excluded_field, single_argument_args,
+)
 from .alert import Alert
 
 __all__ = (
@@ -22,6 +24,12 @@ __all__ = (
     "DiskUpdateResult",
     "DiskWipeArgs",
     "DiskWipeResult",
+    "DiskUnlockSedArgs",
+    "DiskUnlockSedResult",
+    "DiskSetupSedArgs",
+    "DiskSetupSedResult",
+    "DiskResetSedArgs",
+    "DiskResetSedResult",
 )
 
 
@@ -77,6 +85,10 @@ class DiskEntry(BaseModel):
     """Disk encryption password (masked for security)."""
     kmip_uid: str | None = NotRequired
     """KMIP (Key Management Interoperability Protocol) unique identifier or `null`."""
+    sed: bool | None
+    """Whether the disk is SED (Self-Encrypting Drive) capable. `null` if not yet determined."""
+    sed_status: str | None = NotRequired
+    """SED Status of the disk. `null` if not yet determined."""
 
 
 class DiskDetails(BaseModel):
@@ -205,3 +217,45 @@ class DiskWipeArgs(BaseModel):
 class DiskWipeResult(BaseModel):
     result: None
     """Returns `null` when the disk wipe operation is successfully started."""
+
+
+@single_argument_args('disk_sed_unlock')
+class DiskUnlockSedArgs(BaseModel):
+    name: NonEmptyString
+    """Name of disk to unlock."""
+    password: Secret[NonEmptyString | None] = None
+    """Password for disk to unlock."""
+
+
+class DiskUnlockSedResult(BaseModel):
+    result: Literal[True]
+    """Returns true if the disk unlock was successful."""
+
+
+@single_argument_args('disk_sed_setup')
+class DiskSetupSedArgs(BaseModel):
+    name: NonEmptyString
+    """Name of disk to setup."""
+    password: Secret[NonEmptyString | None] = None
+    """
+    Password to use to setup the disk. If this is not set, first if a password on disk is set,
+    it will be used else global configured SED password will be used.
+    """
+
+
+class DiskSetupSedResult(BaseModel):
+    result: Literal[True]
+    """Returns true if the disk setup was successful."""
+
+
+@single_argument_args('disk_sed_reset')
+class DiskResetSedArgs(BaseModel):
+    name: NonEmptyString
+    """Name of disk to reset."""
+    psid: NonEmptyString
+    """PID of disk to reset."""
+
+
+class DiskResetSedResult(BaseModel):
+    result: Literal[True]
+    """Returns true if the disk reset was successful."""

@@ -1,7 +1,6 @@
 import os.path
 
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .utils import container_dataset
@@ -58,19 +57,16 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
 
         for device in await self.middleware.call('datastore.query', 'container.device'):
             if (
-                device['attributes']['dtype'] not in ('DISK', 'RAW', 'FILESYSTEM')
+                device['attributes']['dtype'] != 'FILESYSTEM'
                 or device['container']['id'] in ignored_or_seen_containers
             ):
                 continue
 
-            disk = device['attributes'].get('path') or device['attributes'].get('source')
-            if not disk:
+            source = device['attributes'].get('source')
+            if not source:
                 continue
 
-            if disk.startswith('/dev/zvol'):
-                disk = os.path.join('/mnt', zvol_path_to_name(disk))
-
-            if await self.middleware.call('filesystem.is_child', disk, path):
+            if await self.middleware.call('filesystem.is_child', source, path):
                 containers_attached.append({
                     'id': device['container']['id'],
                     'name': device['container']['name'],

@@ -2,10 +2,14 @@ import errno
 import re
 import subprocess
 
-from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.service import CallError, Service, private
+from middlewared.api import api_method
+from middlewared.api.current import (
+    DiskSetupSedArgs, DiskSetupSedResult, DiskUnlockSedArgs, DiskUnlockSedResult, DiskResetSedArgs, DiskResetSedResult,
+)
+from middlewared.service import CallError, Service, private, ValidationErrors
 from middlewared.utils import run
-from middlewared.utils.sed import unlock_impl
+from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.sed import is_sed_disk, revert_sed_with_psid, SEDStatus, unlock_impl
 
 
 RE_HDPARM_DRIVE_LOCKED = re.compile(r'Security.*\n\s*locked', re.DOTALL)
@@ -14,6 +18,128 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 
 class DiskService(Service):
+
+    @api_method(DiskResetSedArgs, DiskResetSedResult, roles=['DISK_WRITE'])
+    async def reset_sed(self, options):
+        """
+        Reset SED disk.
+        """
+        # TODO: See if we should have validation or force flag in place to see if a disk
+        #  is part of a zfs pool and to safely then allow resetting it
+        disk, verrors = await self.common_sed_validation('disk_reset_sed', options)
+        success, message = await revert_sed_with_psid(disk['real_name'], options['psid'])
+        if not success:
+            raise CallError(f'Failed to reset SED disk {disk["name"]!r} ({message})')
+
+        # Let's please remove the password set on the disk as well at this point
+        await self.middleware.call('datastore.update', 'storage_disk', disk['identifier'], {'disk_passwd': ''})
+        await self.middleware.call('kmip.sync_sed_keys', [disk['identifier']])
+
+        return True
+
+    @private
+    async def common_sed_validation(self, schema, options, status_to_check=None):
+        verrors = ValidationErrors()
+        if not await self.middleware.call('system.is_enterprise'):
+            verrors.add(f'{schema}.name', 'This operation is only available on Enterprise systems')
+        verrors.check()
+
+        disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
+            'extra': {'sed_status': True, 'passwords': True, 'real_names': True},
+            'force_sql_filters': True,
+        })
+        if not disk:
+            verrors.add(f'{schema}.name', f'{options["name"]!r} is not a valid disk')
+
+        verrors.check()
+
+        disk = disk[0]
+        if disk['sed'] is False:
+            verrors.add(f'{schema}.name', f'{options["name"]!r} is not a SED disk')
+
+        verrors.check()
+
+        if status_to_check is not None and disk['sed_status'] != status_to_check:
+            verrors.add(
+                f'{schema}.name',
+                f'{options["name"]!r} SED status is not {status_to_check} (currently is {disk['sed_status']})'
+            )
+
+        verrors.check()
+        return disk, verrors
+
+    @api_method(DiskSetupSedArgs, DiskSetupSedResult, roles=['DISK_WRITE'])
+    async def setup_sed(self, options):
+        """
+        Setup specified `options.name` SED disk.
+        """
+        disk, verrors = await self.common_sed_validation('disk_sed_setup', options, SEDStatus.UNINITIALIZED)
+        password = options.get('password') or disk['passwd'] or await self.middleware.call(
+            'system.advanced.sed_global_password'
+        )
+        if not password:
+            verrors.add('disk_sed_setup.password', 'Please specify a password to be used for setting up SED disk')
+
+        verrors.check()
+
+        status = await self.sed_initial_setup(disk['real_name'], password)
+        if status != 'SUCCESS':
+            raise CallError(f'Failed to set up SED disk {disk["name"]!r} (got {status!r} status)')
+
+        # If a user had provided password, we would like to save that to the disk now
+        if options.get('password'):
+            await self.middleware.call('datastore.update', 'storage_disk', disk['identifier'], {
+                'disk_passwd': options['password'],
+            })
+            await self.middleware.call('kmip.sync_sed_keys', [disk['identifier']])
+
+        return True
+
+    @api_method(DiskUnlockSedArgs, DiskUnlockSedResult, roles=['DISK_WRITE'])
+    async def unlock_sed(self, options):
+        """
+        Unlock specified `options.name` SED disk.
+        """
+        disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, SEDStatus.LOCKED)
+        global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
+        password = options.get('password') or disk['passwd'] or global_sed_password
+        if not password:
+            verrors.add(
+                'disk_sed_unlock.password', 'Please specify a password to be used for unlocking SED disk'
+            )
+        verrors.check()
+
+        unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
+        if failed_err_msg := await self.parse_unlock_info(unlock_info, True):
+            raise CallError(f'Failed to unlock SED disk {disk["name"]!r} (got {failed_err_msg!r})', errno.EACCES)
+
+        # This means that we have unlocked the SED disk
+        # After discussion with William, the idea behind this method is to cater for those cases
+        # where user inserted a new disk perhaps and it is locked and it's password differs from
+        # the global pasword
+        # In such a case, we would like to update the password in the database to reflect that case
+        # but that would only be done if the password differs from the disk entry and the global sed password
+        # entry
+        if options.get('password'):
+            # If this is set, it means that this was used to unlock the disk and it worked
+            # Let's just see now that if it is same as disk pass or the global pass
+            update_pass = False
+            if disk['passwd']:
+                if options['password'] != disk['passwd']:
+                    update_pass = True
+            elif global_sed_password and options['password'] != global_sed_password:
+                update_pass = True
+
+            if update_pass:
+                await self.middleware.call(
+                    'datastore.update',
+                    'storage_disk',
+                    disk['identifier'],
+                    {'disk_passwd': options['password']},
+                )
+                await self.middleware.call('kmip.sync_sed_keys', [disk['identifier']])
+
+        return True
 
     @private
     async def should_try_unlock(self, force=False):
@@ -43,7 +169,7 @@ class DiskService(Service):
         return disks
 
     @private
-    async def parse_unlock_info(self, info):
+    async def parse_unlock_info(self, info, return_failed_error=False):
         """Purpose of this method is to parse the unlock object
         since we have to run multiple commands for each disk.
         This will log the appropriate error message and return
@@ -54,6 +180,7 @@ class DiskService(Service):
             # properly from the --query command
             return
 
+        errmsg = None
         failed = None
         if info.locked is True:
             failed = info.disk_path
@@ -66,7 +193,8 @@ class DiskService(Service):
                 errmsg += (
                     f' UNLOCK ERROR {info.unlock_cp.returncode}: {info.unlock_cp.stderr.decode(errors="ignore")!r}'
                 )
-            self.logger.warning(errmsg)
+            if not return_failed_error:
+                self.logger.warning(errmsg)
 
         if info.mbr_cp and info.mbr_cp.returncode:
             # if we successfully unlock the disk, we disable
@@ -80,7 +208,7 @@ class DiskService(Service):
                 info.mbr_cp.stderr.decode(errors="ignore")
             )
 
-        return failed
+        return errmsg if return_failed_error else failed
 
     @private
     async def sed_unlock_all(self, force=False):
@@ -107,7 +235,7 @@ class DiskService(Service):
         return True
 
     @private
-    async def sed_unlock(self, disk_name, force=False):
+    async def sed_unlock_impl(self, disk_name, force=False):
         if not await self.should_try_unlock(force):
             return
 
@@ -119,6 +247,10 @@ class DiskService(Service):
         failed = await self.parse_unlock_info(info)
 
         return failed is None or not info.locked
+
+    @private
+    async def is_sed(self, disk_name):
+        return await is_sed_disk(disk_name)
 
     @private
     async def sed_initial_setup(self, disk_name, password):

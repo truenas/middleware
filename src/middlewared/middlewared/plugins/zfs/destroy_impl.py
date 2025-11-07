@@ -1,4 +1,6 @@
 import errno
+import os
+import typing
 
 from .exceptions import ZFSPathHasClonesException, ZFSPathHasHoldsException
 from .utils import open_resource
@@ -8,13 +10,31 @@ try:
 except ImportError:
     truenas_pylibzfs = None
 
-__all__ = ("destroy_impl",)
+__all__ = ("destroy_impl", "DestroyArgs")
 
 
-def destroy_nonrecursive_impl(tls, data):
+class DestroyArgs(typing.TypedDict):
+    path: str
+    """The path of the zfs resource to destroy."""
+    recursive: bool
+    """Recursively destroy all descedants as well as
+    release any holds and destroy any clones or snapshots."""
+    all_snapshots: bool
+    """If true, will delete all snapshots ONLY for the
+    given zfs resource. Will not delete the resource itself."""
+    bypass: bool
+    """If true, will bypass the safety checks that prevent
+    deleting zfs resources that are "protected".
+    NOTE: This is only ever set by internal callers and is
+    not exposed to the public API."""
+
+
+def destroy_nonrecursive_impl(tls, data: DestroyArgs):
     path = data["path"]
     rsrc = open_resource(tls, data["path"])
-    if rsrc == truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT:
+    a_snapshot = rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT
+    failed, errnum = None, None
+    if a_snapshot:
         holds = rsrc.get_holds()
         if holds:
             raise ZFSPathHasHoldsException(path, holds)
@@ -22,22 +42,29 @@ def destroy_nonrecursive_impl(tls, data):
         if clones:
             raise ZFSPathHasClonesException(path, clones)
 
-    failed, errnum = None, None
-    if "@" not in path:
+        try:
+            truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=(path,))
+        except truenas_pylibzfs.ZFSException as e:
+            failed = f"Failed to destroy {path!r}: {e}"
+            errnum = e.code
+    elif rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
         try:
             rsrc.unmount()
         except truenas_pylibzfs.ZFSException as e:
             failed = f"Failed to unmount {path!r}: {e}"
             errnum = e.code
         else:
-            try:
-                tls.lzh.destroy_resource(name=path)
-            except truenas_pylibzfs.ZFSException as e:
-                failed = f"Failed to destroy {path!r}: {e}"
-                errnum = e.code
-    else:
+            mntpnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
+            if mntpnt.mountpoint.value != "legacy":
+                try:
+                    os.rmdir(mntpnt.mountpoint.value)
+                except Exception:
+                    # silently ignore rmdir ops
+                    # which mimics upstream zfs
+                    pass
+
         try:
-            truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=(path,))
+            tls.lzh.destroy_resource(name=path)
         except truenas_pylibzfs.ZFSException as e:
             failed = f"Failed to destroy {path!r}: {e}"
             errnum = e.code
@@ -45,7 +72,7 @@ def destroy_nonrecursive_impl(tls, data):
     return failed, errnum
 
 
-def destroy_impl(tls, data):
+def destroy_impl(tls, data: DestroyArgs):
     recursive = data.get("recursive", False)
     all_snaps = data.get("all_snapshots", False)
     if not recursive and not all_snaps:
@@ -62,6 +89,7 @@ def destroy_impl(tls, data):
         },
         "readonly": False,
     }
+    mntpnts = list()
     if "@" in data["path"]:
         rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
         rcpa["script_arguments_dict"].update({"pattern": data["path"].split("@")[-1]})
@@ -69,7 +97,11 @@ def destroy_impl(tls, data):
         rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
     else:
         rsrc = open_resource(tls, data["path"])
-        rsrc.unmount(recursive=recursive)
+        if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
+            mnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
+            if mnt.mountpoint.value != "legacy":
+                mntpnts.append(mnt)
+            rsrc.unmount(recursive=recursive)
         rcpa["script"] = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES
 
     try_again = False
@@ -83,7 +115,11 @@ def destroy_impl(tls, data):
         for clone, err in res["return"]["clones"].items():
             if err == errno.EBUSY:
                 rsrc = open_resource(name=clone)
-                rsrc.unmount(recursive=recursive)
+                if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
+                    mnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
+                    if mnt.mountpoint.value != "legacy":
+                        mntpnts.append(mnt)
+                    rsrc.unmount(recursive=recursive)
             # TODO: else raise ZFSException(err) if not EBUSY??
 
     if try_again:
@@ -102,5 +138,13 @@ def destroy_impl(tls, data):
             errnum = res["return"]["failed"].get(data["path"], errno.EFAULT)
             if errnum in truenas_pylibzfs.ZFSError:
                 failed += f" ({truenas_pylibzfs.ZFSError(errnum)})"
+    else:
+        for i in mntpnts:
+            try:
+                os.rmdir(i.mountpoint.value)
+            except Exception:
+                # silently ignore rmdir ops
+                # which mimics upstream zfs
+                pass
 
     return failed, errnum

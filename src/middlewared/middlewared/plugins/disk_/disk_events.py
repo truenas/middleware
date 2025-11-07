@@ -3,7 +3,7 @@ from middlewared.utils.disks import DISKS_TO_IGNORE
 
 async def added_disk(middleware, disk_name):
     await middleware.call('disk.sync', disk_name)
-    await middleware.call('disk.sed_unlock', disk_name)
+    await middleware.call('disk.sed_unlock_impl', disk_name)
     if await middleware.call('failover.status') == 'MASTER':
         for i in await middleware.call('disk.get_disks', [disk_name]):
             try:
