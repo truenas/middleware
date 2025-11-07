@@ -133,20 +133,257 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         }
 
     @private
-    async def validate_rsync_task(self, data, schema):
+    async def get_ssh_credentials_connnect_kwargs(
+        self, verrors: ValidationErrors, cred_id: int, schema: str
+    ) -> dict | None:
+        """Return None if the keychain credential with id `cred_id` cannot be retrieved."""
+        try:
+            ssh_credentials = await self.middleware.call(
+                'keychaincredential.get_of_type',
+                cred_id,
+                'SSH_CREDENTIALS',
+            )
+        except CallError as e:
+            verrors.add(f'{schema}.ssh_credentials', e.errmsg)
+        else:
+            cred_attrs = ssh_credentials['attributes']
+            ssh_keypair = await self.middleware.call(
+                'keychaincredential.get_of_type',
+                cred_attrs['private_key'],
+                'SSH_KEY_PAIR',
+            )
+            return {
+                "host": cred_attrs['host'],
+                "port": cred_attrs['port'],
+                'username': cred_attrs['username'],
+                'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
+                'known_hosts': asyncssh.SSHKnownHosts(get_host_key_file_contents_from_ssh_credentials(cred_attrs))
+            }
+
+    @staticmethod
+    @private
+    def get_connect_kwargs(verrors: ValidationErrors, data: dict, schema: str, pw_dir: str) -> dict | None:
+        """Return None if there are no valid private key files in the home directory `pw_dir`."""
+        remote_host, remote_port = data['remotehost'], data['remoteport']
+
+        if not remote_host:
+            verrors.add(f'{schema}.remotehost', 'This field is required')
+
+        if not remote_port:
+            verrors.add(f'{schema}.remoteport', 'This field is required')
+
+        search = os.path.join(pw_dir, '.ssh', 'id_[edr]*')
+        exclude_from_search = os.path.join(pw_dir, '.ssh', 'id_[edr]*pub')
+        key_files = set(glob.glob(search)) - set(glob.glob(exclude_from_search))
+
+        if not key_files:
+            verrors.add(
+                f'{schema}.user',
+                'In order to use rsync over SSH you need a user with a private key (DSA/ECDSA/RSA) set up in home dir.'
+            )
+            return
+
+        for file in set(key_files):
+            # file holds a private key and it's permissions should be 600
+            if os.stat(file).st_mode & 0o077 != 0:
+                verrors.add(
+                    f'{schema}.user',
+                    f'Permissions {str(oct(os.stat(file).st_mode & 0o777))[2:]} for {file} are too open. '
+                    f'Please correct them by running chmod 600 {file}'
+                )
+                key_files.discard(file)
+
+        if not key_files:
+            return
+
+        if '@' in remote_host:
+            remote_username, remote_host = remote_host.rsplit('@', 1)
+        else:
+            remote_username = data['user']
+
+        return {
+            'host': remote_host,
+            'port': remote_port,
+            'username': remote_username,
+            'client_keys': key_files,
+        }
+
+    @private
+    async def get_known_hosts(
+        self,
+        verrors: ValidationErrors,
+        schema: str,
+        known_hosts_path: pathlib.Path,
+        ssh_dir_path: pathlib.Path,
+        ssh_keyscan: bool,
+        host: str,
+        port: str,
+        pw_uid: int,
+        pw_gid: int
+    ) -> asyncssh.SSHKnownHosts | None:
+        try:
+            try:
+                known_hosts_text = await self.middleware.run_in_thread(known_hosts_path.read_text)
+            except FileNotFoundError:
+                known_hosts_text = ''
+
+            known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+        except Exception as e:
+            verrors.add(
+                f'{schema}.remotehost',
+                f'Failed to load {known_hosts_path}: {e}',
+            )
+            return
+
+        if not ssh_keyscan or known_hosts.match(host, '', None)[0]:
+            return known_hosts
+
+        if known_hosts_text and not known_hosts_text.endswith("\n"):
+            known_hosts_text += '\n'
+
+        known_hosts_text += (await run(
+            ['ssh-keyscan', '-p', port, host],
+            encoding='utf-8',
+            errors='ignore',
+        )).stdout
+
+        # If for whatever reason the dir does not exist, let's create it
+        # An example of this is when we run rsync tests we nuke the directory
+        def handle_ssh_dir():
+            with contextlib.suppress(FileExistsError):
+                ssh_dir_path.mkdir(0o700)
+
+            os.chown(ssh_dir_path.absolute(), pw_uid, pw_gid)
+            known_hosts_path.write_text(known_hosts_text)
+            os.chown(known_hosts_path.absolute(), pw_uid, pw_gid)
+
+        await self.middleware.run_in_thread(handle_ssh_dir)
+
+        return asyncssh.SSHKnownHosts(known_hosts_text)
+
+    @staticmethod
+    @private
+    async def validate_remote_path(
+        verrors: ValidationErrors, schema: str, connect_kwargs: dict, remote_path: str
+    ) -> None:
+        try:
+            async with await asyncssh.connect(
+                **connect_kwargs,
+                options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
+            ) as conn:
+                print(await conn.run(f'test -d {shlex.quote(remote_path)}', check=True))
+        except asyncio.TimeoutError:
+            verrors.add(
+                f'{schema}.remotehost',
+                'SSH timeout occurred. Remote path cannot be validated.'
+            )
+        except OSError as e:
+            if e.errno == 113:
+                verrors.add(
+                    f'{schema}.remotehost',
+                    f'Connection to the remote host {connect_kwargs["host"]} on port '
+                    f'{connect_kwargs["port"]} failed.'
+                )
+            else:
+                verrors.add(
+                    f'{schema}.remotehost',
+                    e.__str__()
+                )
+        except asyncssh.HostKeyNotVerifiable as e:
+            verrors.add(
+                f'{schema}.remotehost',
+                f'Failed to verify remote host key: {e.reason}',
+                CallError.ESSLCERTVERIFICATIONERROR,
+            )
+        except asyncssh.DisconnectError as e:
+            verrors.add(
+                f'{schema}.remotehost',
+                f'Disconnect Error [error code {e.code}: {e.reason}] was generated when trying to '
+                f'communicate with remote host {connect_kwargs["host"]} and remote user '
+                f'{connect_kwargs["username"]}.'
+            )
+        except asyncssh.ProcessError as e:
+            if e.code == 1:
+                verrors.add(
+                    f'{schema}.remotepath',
+                    'The Remote Path you specified does not exist or is not a directory. '
+                    'Either create one yourself on the remote machine or uncheck the '
+                    'validate_rpath field'
+                )
+            else:
+                verrors.add(
+                    f'{schema}.remotepath',
+                    f'Connection to Remote Host was successful but failed to verify '
+                    f'Remote Path. {e.__str__()}'
+                )
+        except asyncssh.Error as e:
+            if e.__class__.__name__ in e.__str__():
+                exception_reason = e.__str__()
+            else:
+                exception_reason = e.__class__.__name__ + ' ' + e.__str__()
+            verrors.add(
+                f'{schema}.remotepath',
+                f'Remote Path could not be validated. An exception was raised. {exception_reason}'
+            )
+
+    @private
+    async def validate_ssh_task(self, verrors: ValidationErrors, data: dict, schema: str, user: dict) -> None:
+        if data['ssh_credentials']:
+            connect_kwargs = await self.get_ssh_credentials_connnect_kwargs(verrors, data['ssh_credentials'], schema)
+        else:
+            connect_kwargs = self.get_connect_kwargs(verrors, data, schema, user['pw_dir'])
+
+        remote_path = data.get('remotepath')
+        if not remote_path:
+            verrors.add(f'{schema}.remotepath', 'This field is required')
+
+        if not (data['enabled'] and connect_kwargs):
+            return
+
+        ssh_dir_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh'))
+        known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, 'known_hosts'))
+
+        if 'known_hosts' not in connect_kwargs:
+            if known_hosts := await self.get_known_hosts(
+                verrors,
+                schema,
+                known_hosts_path,
+                ssh_dir_path,
+                data['ssh_keyscan'],
+                connect_kwargs['host'],
+                str(connect_kwargs['port']),
+                user['pw_uid'],
+                user['pw_gid']
+            ):
+                connect_kwargs['known_hosts'] = known_hosts
+
+        verrors.check()
+
+        if data['validate_rpath']:
+            await self.validate_remote_path(verrors, schema, connect_kwargs, remote_path)
+        elif not connect_kwargs['known_hosts'].match(connect_kwargs['host'], '', None)[0]:
+            verrors.add(
+                f'{schema}.remotehost',
+                f'Host key not found in {known_hosts_path}',
+                CallError.ESSLCERTVERIFICATIONERROR,
+            )
+
+    @private
+    async def validate_rsync_task(self, data: dict, schema: str) -> tuple[ValidationErrors, dict]:
         verrors = ValidationErrors()
 
         # Windows users can have spaces in their usernames
         # http://www.freebsd.org/cgi/query-pr.cgi?pr=164808
 
-        username = data.get('user')
+        username = data['user']
         if ' ' in username:
             verrors.add(f'{schema}.user', 'User names cannot have spaces')
             raise verrors
 
-        user = None
-        with contextlib.suppress(KeyError):
+        try:
             user = await self.middleware.call('user.get_user_obj', {'username': username})
+        except KeyError:
+            user = None
 
         if not user:
             verrors.add(f'{schema}.user', f'Provided user "{username}" does not exist')
@@ -160,202 +397,19 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         except ValueError as e:
             verrors.add(f'{schema}.extra', f'Please specify valid value: {e}')
 
-        if data['mode'] == 'MODULE':
-            if not data['remotehost']:
-                verrors.add(f'{schema}.remotehost', 'This field is required')
-
-            if not data['remotemodule']:
-                verrors.add(f'{schema}.remotemodule', 'This field is required')
-
-            if data['ssh_credentials']:
-                verrors.add(f'{schema}.ssh_credentials', "SSH credentials can't be used when mode is MODULE")
-
-        if data['mode'] == 'SSH':
-            connect_kwargs = None
-            if data['ssh_credentials']:
-                try:
-                    ssh_credentials = await self.middleware.call(
-                        'keychaincredential.get_of_type',
-                        data['ssh_credentials'],
-                        'SSH_CREDENTIALS',
-                    )
-                except CallError as e:
-                    verrors.add(f'{schema}.ssh_credentials', e.errmsg)
-                else:
-                    ssh_keypair = await self.middleware.call(
-                        'keychaincredential.get_of_type',
-                        ssh_credentials['attributes']['private_key'],
-                        'SSH_KEY_PAIR',
-                    )
-                    connect_kwargs = {
-                        "host": ssh_credentials['attributes']['host'],
-                        "port": ssh_credentials['attributes']['port'],
-                        'username': ssh_credentials['attributes']['username'],
-                        'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
-                        'known_hosts': asyncssh.SSHKnownHosts(get_host_key_file_contents_from_ssh_credentials(
-                            ssh_credentials['attributes'],
-                        ))
-                    }
-            else:
+        match data['mode']:
+            case 'MODULE':
                 if not data['remotehost']:
                     verrors.add(f'{schema}.remotehost', 'This field is required')
 
-                if not data['remoteport']:
-                    verrors.add(f'{schema}.remoteport', 'This field is required')
+                if not data['remotemodule']:
+                    verrors.add(f'{schema}.remotemodule', 'This field is required')
 
-                search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*')
-                exclude_from_search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*pub')
-                key_files = set(glob.glob(search)) - set(glob.glob(exclude_from_search))
-                if not key_files:
-                    verrors.add(
-                        f'{schema}.user',
-                        'In order to use rsync over SSH you need a user'
-                        ' with a private key (DSA/ECDSA/RSA) set up in home dir.'
-                    )
-                else:
-                    for file in set(key_files):
-                        # file holds a private key and it's permissions should be 600
-                        if os.stat(file).st_mode & 0o077 != 0:
-                            verrors.add(
-                                f'{schema}.user',
-                                f'Permissions {str(oct(os.stat(file).st_mode & 0o777))[2:]} for {file} are too open. '
-                                f'Please correct them by running chmod 600 {file}'
-                            )
-                            key_files.discard(file)
+                if data['ssh_credentials']:
+                    verrors.add(f'{schema}.ssh_credentials', "SSH credentials can't be used when mode is MODULE")
 
-                    if key_files:
-                        if '@' in data['remotehost']:
-                            remote_username, remote_host = data['remotehost'].rsplit('@', 1)
-                        else:
-                            remote_username = username
-                            remote_host = data['remotehost']
-
-                        connect_kwargs = {
-                            'host': remote_host,
-                            'port': data['remoteport'],
-                            'username': remote_username,
-                            'client_keys': key_files,
-                        }
-
-            remote_path = data.get('remotepath')
-            if not remote_path:
-                verrors.add(f'{schema}.remotepath', 'This field is required')
-
-            if data['enabled'] and connect_kwargs:
-                ssh_dir_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh'))
-                known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, 'known_hosts'))
-
-                if 'known_hosts' not in connect_kwargs:
-                    try:
-                        try:
-                            known_hosts_text = await self.middleware.run_in_thread(known_hosts_path.read_text)
-                        except FileNotFoundError:
-                            known_hosts_text = ''
-
-                        known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
-                    except Exception as e:
-                        verrors.add(
-                            f'{schema}.remotehost',
-                            f'Failed to load {known_hosts_path}: {e}',
-                        )
-                    else:
-                        if data['ssh_keyscan']:
-                            if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
-                                if known_hosts_text and not known_hosts_text.endswith("\n"):
-                                    known_hosts_text += '\n'
-
-                                known_hosts_text += (await run(
-                                    ['ssh-keyscan', '-p', str(connect_kwargs['port']), connect_kwargs['host']],
-                                    encoding='utf-8',
-                                    errors='ignore',
-                                )).stdout
-
-                                # If for whatever reason the dir does not exist, let's create it
-                                # An example of this is when we run rsync tests we nuke the directory
-                                def handle_ssh_dir():
-                                    with contextlib.suppress(FileExistsError):
-                                        ssh_dir_path.mkdir(0o700)
-
-                                    os.chown(ssh_dir_path.absolute(), user['pw_uid'], user['pw_gid'])
-                                    known_hosts_path.write_text(known_hosts_text)
-                                    os.chown(known_hosts_path.absolute(), user['pw_uid'], user['pw_gid'])
-
-                                await self.middleware.run_in_thread(handle_ssh_dir)
-
-                                known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
-
-                    if not verrors:
-                        connect_kwargs['known_hosts'] = known_hosts
-
-                verrors.check()
-
-                if data['validate_rpath']:
-                    try:
-                        async with await asyncssh.connect(
-                            **connect_kwargs,
-                            options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
-                        ) as conn:
-                            print(await conn.run(f'test -d {shlex.quote(remote_path)}', check=True))
-                    except asyncio.TimeoutError:
-                        verrors.add(
-                            f'{schema}.remotehost',
-                            'SSH timeout occurred. Remote path cannot be validated.'
-                        )
-                    except OSError as e:
-                        if e.errno == 113:
-                            verrors.add(
-                                f'{schema}.remotehost',
-                                f'Connection to the remote host {connect_kwargs["host"]} on port '
-                                f'{connect_kwargs["port"]} failed.'
-                            )
-                        else:
-                            verrors.add(
-                                f'{schema}.remotehost',
-                                e.__str__()
-                            )
-                    except asyncssh.HostKeyNotVerifiable as e:
-                        verrors.add(
-                            f'{schema}.remotehost',
-                            f'Failed to verify remote host key: {e.reason}',
-                            CallError.ESSLCERTVERIFICATIONERROR,
-                        )
-                    except asyncssh.DisconnectError as e:
-                        verrors.add(
-                            f'{schema}.remotehost',
-                            f'Disconnect Error [error code {e.code}: {e.reason}] was generated when trying to '
-                            f'communicate with remote host {connect_kwargs["host"]} and remote user '
-                            f'{connect_kwargs["username"]}.'
-                        )
-                    except asyncssh.ProcessError as e:
-                        if e.code == 1:
-                            verrors.add(
-                                f'{schema}.remotepath',
-                                'The Remote Path you specified does not exist or is not a directory. '
-                                'Either create one yourself on the remote machine or uncheck the '
-                                'validate_rpath field'
-                            )
-                        else:
-                            verrors.add(
-                                f'{schema}.remotepath',
-                                f'Connection to Remote Host was successful but failed to verify '
-                                f'Remote Path. {e.__str__()}'
-                            )
-                    except asyncssh.Error as e:
-                        if e.__class__.__name__ in e.__str__():
-                            exception_reason = e.__str__()
-                        else:
-                            exception_reason = e.__class__.__name__ + ' ' + e.__str__()
-                        verrors.add(
-                            f'{schema}.remotepath',
-                            f'Remote Path could not be validated. An exception was raised. {exception_reason}'
-                        )
-                else:
-                    if not connect_kwargs['known_hosts'].match(connect_kwargs['host'], '', None)[0]:
-                        verrors.add(
-                            f'{schema}.remotehost',
-                            f'Host key not found in {known_hosts_path}',
-                            CallError.ESSLCERTVERIFICATIONERROR,
-                        )
+            case 'SSH':
+                await self.validate_ssh_task(verrors, data, schema, user)
 
         data.pop('validate_rpath', None)
         data.pop('ssh_keyscan', None)
