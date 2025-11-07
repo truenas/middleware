@@ -281,6 +281,9 @@ class ContainerService(CRUDService):
         except DomainDoesNotExistError:
             pass
 
+        for device in container['devices']:
+            self.middleware.call_sync('datastore.delete', 'container.device', device['id'])
+
         self.middleware.call_sync('datastore.delete', 'container.container', id_)
         self.middleware.call_sync('zfs.resource.destroy', DestroyArgs(path=container['dataset']))
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
