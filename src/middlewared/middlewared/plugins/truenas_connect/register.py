@@ -86,6 +86,7 @@ class TrueNASConnectService(Service):
             'model': (await self.middleware.call('truenas.get_chassis_hardware')).removeprefix('TRUENAS-'),
             'system_id': await self.middleware.call('system.global.id'),
             'token': claim_token,
+            'port': (await self.middleware.call('system.general.config'))['ui_httpsport']
         }
 
         # Add license information if valid license exists
