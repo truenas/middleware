@@ -10,6 +10,7 @@ from middlewared.plugins.cloud_backup.restic import get_restic_config, run_resti
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs
 from middlewared.service import CallError, Service, item_method, job, private
 from middlewared.utils import run
@@ -110,7 +111,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
         if clone is not None:
             try:
-                await middleware.call("zfs.dataset.delete", clone)
+                await middleware.call("zfs.resource.destroy", DestroyArgs(path=clone))
             except Exception as e:
                 middleware.logger.warning(f"Error deleting cloned dataset {clone}: {e!r}")
 
@@ -159,7 +160,6 @@ class CloudBackupService(Service):
 
             if "id" in cloud_backup:
                 await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", cloud_backup["id"])
-            
             job.set_progress(description="Done")
         except Exception:
             if "id" in cloud_backup:
