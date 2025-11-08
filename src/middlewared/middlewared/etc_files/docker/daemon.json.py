@@ -39,6 +39,10 @@ def render(service, middleware):
             } if http_proxy else {}
         )
     }
+    if config['ipv4gateway']:
+        base['default-gateway'] = config['ipv4gateway']
+    if config['ipv6gateway']:
+        base['default-gateway-v6'] = config['ipv6gateway']
 
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):
