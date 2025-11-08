@@ -2,7 +2,7 @@ import os
 from typing import Annotated, Literal
 
 from pydantic import (
-    AfterValidator, AnyUrl, BeforeValidator, ConfigDict, DirectoryPath, FilePath, PlainSerializer,
+    AfterValidator, AnyUrl, BeforeValidator, ConfigDict, PlainSerializer,
 )
 
 from middlewared.api.base import BaseModel as PydanticBaseModel, IPvAnyAddress  # noqa: F401
@@ -29,6 +29,19 @@ def _validate_absolute_path(value: str) -> str:
     return os.path.normpath(value.rstrip('/'))
 
 
+def _validate_host_path(value: str) -> str:
+    """
+    Validate that a host path exists
+    """
+    if value == '':
+        return value
+
+    if not os.path.exists(value):
+        raise ValueError('Path does not exist')
+
+    return str(value)
+
+
 def create_length_validated_type(base_type, min_length: int | None = None, max_length: int | None = None):
     """Create a type with length validation applied before the base type validation"""
 
@@ -51,8 +64,8 @@ AbsolutePath = Annotated[
     AfterValidator(_validate_absolute_path),
 ]
 HostPath = Annotated[
-    Literal[''] | FilePath | DirectoryPath,
-    PlainSerializer(lambda x: str(x), return_type=str)
+    str,
+    AfterValidator(_validate_host_path),
 ]
 URI = Annotated[
     Literal[''] | AnyUrl,
