@@ -198,9 +198,11 @@ class DockerService(ConfigService):
         if old_config != config:
             address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
             pool_changed = config['pool'] != old_config['pool']
-            registry_mirrors_changed = (
+            registry_mirrors_or_gateway_changed = (
                 config.get('secure_registry_mirrors', []) != old_config.get('secure_registry_mirrors', []) or
-                config.get('insecure_registry_mirrors', []) != old_config.get('insecure_registry_mirrors', [])
+                config.get('insecure_registry_mirrors', []) != old_config.get('insecure_registry_mirrors', []) or
+                config.get('ipv4gateway') != old_config.get('ipv4gateway') or
+                config.get('ipv6gateway') != old_config.get('ipv6gateway')
             )
             if pool_changed:
                 # We want to clear upgrade alerts for apps at this point
@@ -218,7 +220,7 @@ class DockerService(ConfigService):
 
             nvidia_changed = old_config['nvidia'] != config['nvidia']
 
-            if pool_changed or address_pools_changed or nvidia_changed or registry_mirrors_changed:
+            if pool_changed or address_pools_changed or nvidia_changed or registry_mirrors_or_gateway_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await (await self.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
@@ -254,7 +256,7 @@ class DockerService(ConfigService):
                     # we will like to make sure that collective app config / metadata files
                     # exist so that operations like backup work as desired
                     await self.middleware.call('app.metadata.generate')
-            elif config['pool'] and (address_pools_changed or nvidia_changed or registry_mirrors_changed):
+            elif config['pool'] and (address_pools_changed or nvidia_changed or registry_mirrors_or_gateway_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
                 if catalog_sync_job:
