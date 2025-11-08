@@ -73,6 +73,8 @@ class DockerService(ConfigService):
         if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
             verrors.add(f'{schema}.pool', 'Pool not found.')
 
+        await self.middleware.call('network.configuration.validate_gateways', verrors, config, schema)
+
         if config['address_pools'] != old_config['address_pools']:
             validate_address_pools(
                 await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
