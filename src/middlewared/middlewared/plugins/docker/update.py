@@ -33,6 +33,8 @@ class DockerModel(sa.Model):
     ])
     secure_registry_mirrors = sa.Column(sa.JSON(list), default=[])
     insecure_registry_mirrors = sa.Column(sa.JSON(list), default=[])
+    ipv4gateway = sa.Column(sa.String(128), default=None, nullable=True)
+    ipv6gateway = sa.Column(sa.String(128), default=None, nullable=True)
 
 
 class DockerService(ConfigService):
