@@ -243,6 +243,11 @@ class DockerService(ConfigService):
             if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
+                if config['pool']:
+                    # So we for example here had null before and now we set it to some pool
+                    # we will like to make sure that collective app config / metadata files
+                    # exist so that operations like backup work as desired
+                    await self.middleware.call('app.metadata.generate')
             elif config['pool'] and (address_pools_changed or nvidia_changed or registry_mirrors_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
