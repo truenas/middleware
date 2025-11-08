@@ -4,7 +4,8 @@ from urllib.parse import urlparse
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl,
+    IPvAnyAddress, NonEmptyString, single_argument_args,
 )
 
 
@@ -57,6 +58,10 @@ class DockerEntry(BaseModel):
     """Array of secure (HTTPS) registry mirror URLs."""
     insecure_registry_mirrors: list[HttpUrl]
     """Array of insecure (HTTP) registry mirror URLs."""
+    ipv4gateway: IPvAnyAddress | None
+    """Used instead of the default gateway for apps."""
+    ipv6gateway: IPvAnyAddress | None
+    """IPv6 default gateway address to be used for apps."""
 
 
 @single_argument_args('docker_update')
