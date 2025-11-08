@@ -111,7 +111,10 @@ class DockerStatusArgs(BaseModel):
 class StatusResult(BaseModel):
     description: str
     """Human-readable description of the current Docker service status."""
-    status: Literal['PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED', 'FAILED']
+    status: Literal[
+        'PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED',
+        'FAILED', 'MIGRATING', 'MIGRATION_FAILED'
+    ]
     """Current state of the Docker service."""
 
 
