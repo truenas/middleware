@@ -411,7 +411,7 @@ class PoolDatasetService(CRUDService):
             raise CallError(f"Failed to create dataset {kwargs['name']}: {e}")
 
         mntpnt = args.zprops.get('mountpoint', '')
-        if mntpnt == 'legacy':
+        if mntpnt == 'legacy' or args.zprops.get('canmount', 'on') != 'on':
             return
         elif args.name == CONTAINER_DS_NAME and mntpnt.startswith(f'/{CONTAINER_DS_NAME}'):
             margs = MountArgs(
