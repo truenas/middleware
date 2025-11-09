@@ -80,17 +80,17 @@ class DockerService(ConfigService):
         # Validate registry mirrors
         seen_registries = set()
         for idx, registry in enumerate(config.get('registry_mirrors', [])):
-            if registry.url in seen_registries:
+            if registry['url'] in seen_registries:
                 verrors.add(
                     f'{schema}.registry_mirrors.{idx}',
-                    f'Duplicate registry mirror: {registry.url}'
+                    f'Duplicate registry mirror: {registry["url"]}'
                 )
-            if urlparse(registry.url).scheme == 'http' and not registry.insecure:
+            if urlparse(registry['url']).scheme == 'http' and not registry.get('insecure'):
                 verrors.add(
                     f'{schema}.registry_mirrors.{idx}',
                     'Registry mirror URL that starts with "http://" must be marked as insecure.'
                 )
-            seen_registries.add(registry.url)
+            seen_registries.add(registry['url'])
 
         if config.pop('migrate_applications', False):
             if config['pool'] == old_config['pool']:
