@@ -193,6 +193,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                     'uid': LIBVIRT_QEMU_UID,
                     'gid': LIBVIRT_QEMU_GID
                 },
+                {
+                    'path': '/var/db/system/vm/tpm',
+                    'uid': LIBVIRT_QEMU_UID,
+                    'gid': LIBVIRT_QEMU_GID
+                },
             ],
         },
         {
