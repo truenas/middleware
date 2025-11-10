@@ -3,6 +3,8 @@ from datetime import datetime
 
 from middlewared.service import CallError, private, Service
 from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
+from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 
 from .state_utils import DatasetDefaults, Status
 from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
@@ -86,7 +88,13 @@ class DockerService(Service):
                 raise CallError(f'Failed to migrate {old_ds} to {new_ds}: {migrate_job.error}')
 
         finally:
-            await self.middleware.call('zfs.snapshot.delete', snap_details['id'], {'recursive': True})
+            await self.middleware.call(
+                'zfs.resource.destroy', DestroyArgs(path=snap_details['id'], recursive=True)
+            )
             snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
-            if await self.middleware.call('zfs.resource.snapshot_exists', snap_name):
-                await self.middleware.call('zfs.snapshot.delete', snap_name, {'recursive': True})
+            try:
+                await self.middleware.call(
+                    'zfs.resource.destroy', DestroyArgs(path=snap_name, recursive=True)
+                )
+            except ZFSPathNotFoundException:
+                pass

@@ -11,6 +11,8 @@ from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
+from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -139,8 +141,12 @@ class AppService(Service):
 
             if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
                 snap_name = f'{app_volume_ds}@{app["version"]}'
-                if self.middleware.call_sync('zfs.resource.snapshot_exists', snap_name):
-                    self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
+                try:
+                    self.middleware.call_sync(
+                        'zfs.resource.destroy', DestroyArgs(path=snap_name, recursive=True)
+                    )
+                except ZFSPathNotFoundException:
+                    pass
 
                 self.middleware.call_sync(
                     'zfs.snapshot.create', {

@@ -117,7 +117,7 @@ async def restic_backup(middleware, job, cloud_backup: dict, dry_run: bool = Fal
 
         if snapshot is not None:
             try:
-                await middleware.call("zfs.snapshot.delete", snapshot)
+                await middleware.call("zfs.resource.destroy", DestroyArgs(path=snapshot))
             except Exception as e:
                 middleware.logger.warning(f"Error deleting snapshot {snapshot}: {e!r}")
 
