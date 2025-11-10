@@ -320,6 +320,7 @@ class AlertSource:
     products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     failover_related = False
     run_on_backup_node = True
+    require_stable_peer = False
 
     def __init__(self, middleware):
         self.middleware = middleware

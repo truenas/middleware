@@ -57,6 +57,8 @@ DEFAULT_POLICY = "IMMEDIATELY"
 ALERT_SOURCES = {}
 ALERT_SERVICES_FACTORIES = {}
 SEND_ALERTS_ON_READY = False
+# The below value come from observation from support of how long a M-series boot can take.
+FAILOVER_ALERTS_BACKOFF_SECS = 900
 
 AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
@@ -67,6 +69,7 @@ class AlertFailoverInfo:
     other_node: str
     run_on_backup_node: bool
     run_failover_related: bool
+    stable_peer: bool
 
 
 class AlertModel(sa.Model):
@@ -654,7 +657,7 @@ class AlertService(Service):
 
     async def __get_failover_info(self):
         this_node, other_node = "A", "B"
-        run_on_backup_node = run_failover_related = False
+        run_on_backup_node = run_failover_related = stable_peer = False
         run_failover_related = await self.middleware.call("failover.licensed")
         if run_failover_related:
             if await self.middleware.call("failover.node") != "A":
@@ -662,25 +665,48 @@ class AlertService(Service):
 
             run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
             if run_failover_related:
+                args = ([], {"connect_timeout": 2})
+
+                # Do not run on backup if there is a software version mismatch
                 try:
-                    args = ([], {"connect_timeout": 2})
                     rem_ver = await self.middleware.call("failover.call_remote", "system.version", *args)
-                    rem_state = await self.middleware.call("failover.call_remote", "system.state", *args)
-                    rem_fstat = await self.middleware.call("failover.call_remote", "failover.status", *args)
+                    run_on_backup_node = (await self.middleware.call("system.version")) == rem_ver
                 except Exception:
                     pass
-                else:
-                    run_on_backup_node = all((
-                        await self.middleware.call("system.version") == rem_ver,
-                        rem_state == "READY",
-                        rem_fstat == "BACKUP",
-                    ))
+
+                # Do not run on backup if the other node is not READY
+                if run_on_backup_node:
+                    try:
+                        run_on_backup_node = (await self.middleware.call(
+                            "failover.call_remote", "system.state", *args
+                        )) == "READY"
+                    except Exception:
+                        pass
+
+                # Do not run on backup if the other node is not BACKUP
+                if run_on_backup_node:
+                    try:
+                        run_on_backup_node = (await self.middleware.call(
+                            "failover.call_remote", "system.status", *args
+                        )) == "BACKUP"
+                    except Exception:
+                        pass
+
+                # Maintain a flag indicating whether the failover
+                # node is stable (has been booted for long enough).
+                try:
+                    stable_peer = (await self.middleware.call(
+                        "failover.call_remote", "system.time_info", *args
+                    ))['uptime_seconds'] > FAILOVER_ALERTS_BACKOFF_SECS
+                except Exception:
+                    pass
 
         return AlertFailoverInfo(
             this_node=this_node,
             other_node=other_node,
             run_on_backup_node=run_on_backup_node,
-            run_failover_related=run_failover_related
+            run_failover_related=run_failover_related,
+            stable_peer=stable_peer
         )
 
     async def __handle_locked_alert_source(self, name, this_node, other_node):
@@ -735,6 +761,9 @@ class AlertService(Service):
                 continue
 
             if alert_source.failover_related and not fi.run_failover_related:
+                continue
+
+            if alert_source.require_stable_peer and not fi.stable_peer:
                 continue
 
             if not alert_source.schedule.should_run(utc_now(), self.alert_source_last_run[alert_source.name]):
@@ -835,8 +864,7 @@ class AlertService(Service):
 
     @private
     async def block_failover_alerts(self):
-        # This values come from observation from support of how long a M-series boot can take.
-        self.blocked_failover_alerts_until = time.monotonic() + 900
+        self.blocked_failover_alerts_until = time.monotonic() + FAILOVER_ALERTS_BACKOFF_SECS
 
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
