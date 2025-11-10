@@ -29,6 +29,7 @@ class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
 class FailoverNetworkCardsAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
     failover_related = True
+    require_stable_peer = True
     run_on_backup_node = False
 
     async def check(self):
