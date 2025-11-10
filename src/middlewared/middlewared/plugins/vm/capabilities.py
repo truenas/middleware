@@ -1,9 +1,12 @@
-from collections import defaultdict
-from xml.etree import ElementTree as etree
+import re
 
 from middlewared.api import api_method
 from middlewared.api.current import VMGuestArchitectureAndMachineChoicesArgs, VMGuestArchitectureAndMachineChoicesResult
 from middlewared.service import private, Service
+from middlewared.utils import run
+
+
+RE_MACHINE_TYPE_CHOICES = re.compile(r'^\s*(?!none\s)(\S+)(?=\s{2,})', flags=re.M)
 
 
 class VMService(Service):
@@ -11,18 +14,25 @@ class VMService(Service):
     CAPABILITIES = None
 
     @private
-    def update_capabilities_cache(self):
-        self._check_setup_connection()
-        xml = etree.fromstring(self.LIBVIRT_CONNECTION.getCapabilities())
-        supported_archs = defaultdict(list)
-        for guest in xml.findall('guest'):
-            arch = guest.find('arch')
-            if not arch or not arch.get('name'):
-                continue
-            arch_name = arch.get('name')
+    async def update_capabilities_cache(self):
+        """
+        Query QEMU binaries directly to get supported architectures and machine types.
+        """
+        supported_archs = {}
 
-            for machine_type in filter(lambda m: m.text, arch.findall('machine')):
-                supported_archs[arch_name].append(machine_type.text)
+        cp = await run(['/usr/bin/qemu-system-x86_64', '-machine', 'help'], check=False, encoding='utf-8')
+        if cp.returncode:
+            self.logger.warning(f'Failed to query machine types for x86_64: {cp.stderr}')
+        else:
+            if machine_types := RE_MACHINE_TYPE_CHOICES.findall(cp.stdout):
+                supported_archs['x86_64'] = machine_types
+
+        cp = await run(['/usr/bin/qemu-system-i386', '-machine', 'help'], check=False, encoding='utf-8')
+        if cp.returncode:
+            self.logger.warning(f'Failed to query machine types for i686: {cp.stderr}')
+        else:
+            if machine_types := RE_MACHINE_TYPE_CHOICES.findall(cp.stdout):
+                supported_archs['i686'] = machine_types
 
         self.CAPABILITIES = supported_archs
 
@@ -34,8 +44,6 @@ class VMService(Service):
         Keys in the response would be supported guest architecture(s) on the host and their respective values would
         be supported machine type(s) for the specific architecture on the host.
         """
-        raise Exception('I am broken atm')
-        # TODO: Remove the libvirt dependency here please
         if not self.CAPABILITIES:
             await self.middleware.call('vm.update_capabilities_cache')
         return self.CAPABILITIES
