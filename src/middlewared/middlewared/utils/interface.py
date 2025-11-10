@@ -33,8 +33,27 @@ def wait_on_interface_link_state_up(interface: str) -> bool:
 
 
 def wait_for_default_interface_link_state_up() -> tuple[str | None, bool]:
-    default_interface = get_default_interface()
-    if default_interface is None:
-        return default_interface, False
+    """
+    Wait for default interface to appear and come up.
 
-    return default_interface, wait_on_interface_link_state_up(default_interface)
+    Retries for up to IFACE_LINK_STATE_MAX_WAIT seconds to handle race conditions where
+    the default route hasn't been configured yet (e.g., DHCP still in progress).
+
+    Returns:
+        tuple: (interface_name, success) where interface_name is None if no default
+               interface is found, and success indicates if the interface is up.
+    """
+    sleep_interval = 1
+    time_waited = 0
+
+    while time_waited < IFACE_LINK_STATE_MAX_WAIT:
+        default_interface = get_default_interface()
+        if default_interface is not None:
+            # Found default interface, now wait for it to be up
+            return default_interface, wait_on_interface_link_state_up(default_interface)
+
+        time.sleep(sleep_interval)
+        time_waited += sleep_interval
+
+    # No default interface found after max wait time
+    return None, False

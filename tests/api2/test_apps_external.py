@@ -78,7 +78,7 @@ def test_query_apps_with_include_external_true(external_container):
     assert isinstance(apps, list)
 
     # Check if we have any external apps
-    external_apps = [app for app in apps if app.get('source') == 'external']
+    external_apps = [app for app in apps if app.get('source') == 'EXTERNAL']
 
     # We should have at least our test container
     assert len(external_apps) > 0
@@ -86,7 +86,7 @@ def test_query_apps_with_include_external_true(external_container):
     # Verify structure of external apps
     for app in external_apps:
         assert app['name'] is not None
-        assert app['source'] == 'external'
+        assert app['source'] == 'EXTERNAL'
         assert app['custom_app'] is True
         assert app['metadata']['train'] == 'external'
         assert 'External Docker container' in app['metadata']['description']
@@ -100,8 +100,8 @@ def test_query_apps_with_include_external_false(external_container):
     apps_without_external = call('app.query', [], {'extra': {'include_external': False}})
 
     # Count apps by source
-    external_count_with = len([a for a in apps_with_external if a.get('source') == 'external'])
-    external_count_without = len([a for a in apps_without_external if a.get('source') == 'external'])
+    external_count_with = len([a for a in apps_with_external if a.get('source') == 'EXTERNAL'])
+    external_count_without = len([a for a in apps_without_external if a.get('source') == 'EXTERNAL'])
 
     # When include_external=False, there should be no external apps
     assert external_count_without == 0
@@ -120,13 +120,13 @@ def test_query_apps_default_includes_external(external_container):
     assert isinstance(apps, list)
 
     # Should have our test container
-    external_apps = [app for app in apps if app.get('source') == 'external']
+    external_apps = [app for app in apps if app.get('source') == 'EXTERNAL']
     assert len(external_apps) > 0
 
     # Verify apps are properly categorized
     for app in apps:
         if 'source' in app:
-            assert app['source'] in ('truenas', 'external')
+            assert app['source'] in ('TRUENAS', 'EXTERNAL')
 
 
 def test_filter_apps_by_source(external_container):
@@ -135,20 +135,20 @@ def test_filter_apps_by_source(external_container):
     all_apps = call('app.query', [], {'extra': {'include_external': True}})
 
     # Filter for TrueNAS apps only
-    truenas_apps = call('app.query', [['source', '=', 'truenas']], {'extra': {'include_external': True}})
+    truenas_apps = call('app.query', [['source', '=', 'TRUENAS']], {'extra': {'include_external': True}})
 
     # Filter for external apps only
-    external_apps = call('app.query', [['source', '=', 'external']], {'extra': {'include_external': True}})
+    external_apps = call('app.query', [['source', '=', 'EXTERNAL']], {'extra': {'include_external': True}})
 
     # Verify all apps are accounted for
     assert len(all_apps) >= len(truenas_apps) + len(external_apps)
 
     # Verify filtering worked correctly
     for app in truenas_apps:
-        assert app.get('source') == 'truenas'
+        assert app.get('source') == 'TRUENAS'
 
     for app in external_apps:
-        assert app.get('source') == 'external'
+        assert app.get('source') == 'EXTERNAL'
 
 
 @pytest.mark.parametrize('interval', [2, 5])
@@ -158,7 +158,7 @@ def test_app_stats_includes_external(external_container, interval):
 
     # Get external apps
     apps = call('app.query', [], {'extra': {'include_external': True}})
-    external_apps = [a for a in apps if a.get('source') == 'external']
+    external_apps = [a for a in apps if a.get('source') == 'EXTERNAL']
 
     # Should have our test container
     assert len(external_apps) > 0
@@ -205,7 +205,7 @@ def test_app_stats_includes_external(external_container, interval):
 def test_external_app_metadata_structure(external_container):
     """Test that external app metadata has expected synthetic structure."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
-    external_apps = [a for a in apps if a.get('source') == 'external']
+    external_apps = [a for a in apps if a.get('source') == 'EXTERNAL']
 
     # Should have our test container
     assert len(external_apps) > 0
@@ -232,7 +232,7 @@ def test_external_app_metadata_structure(external_container):
 def test_external_app_active_workloads(external_container):
     """Test that external apps have proper active_workloads data."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
-    running_external = [a for a in apps if a.get('source') == 'external' and a['state'] == 'RUNNING']
+    running_external = [a for a in apps if a.get('source') == 'EXTERNAL' and a['state'] == 'RUNNING']
 
     # Should have our test container running
     assert len(running_external) > 0
@@ -264,8 +264,8 @@ def test_mixed_apps_query(external_container):
     all_apps = call('app.query', [], {'extra': {'include_external': True}})
 
     # Categorize apps
-    truenas_apps = [a for a in all_apps if a.get('source') == 'truenas']
-    external_apps = [a for a in all_apps if a.get('source') == 'external']
+    truenas_apps = [a for a in all_apps if a.get('source') == 'TRUENAS']
+    external_apps = [a for a in all_apps if a.get('source') == 'EXTERNAL']
 
     # Should have at least our test external container
     assert len(external_apps) > 0
@@ -284,15 +284,15 @@ def test_mixed_apps_query(external_container):
 
     # Verify proper categorization
     for app in truenas_apps:
-        assert app['source'] == 'truenas'
+        assert app['source'] == 'TRUENAS'
     for app in external_apps:
-        assert app['source'] == 'external'
+        assert app['source'] == 'EXTERNAL'
 
 
 def test_external_app_state_accuracy(external_container):
     """Test that external app states are accurately reported."""
     apps = call('app.query', [], {'extra': {'include_external': True}})
-    external_apps = [a for a in apps if a.get('source') == 'external']
+    external_apps = [a for a in apps if a.get('source') == 'EXTERNAL']
 
     # Should have our test container
     assert len(external_apps) > 0
@@ -327,7 +327,7 @@ def test_query_specific_external_app(external_container):
 
     assert len(specific_app) == 1
     assert specific_app[0]['name'] == app_name
-    assert specific_app[0]['source'] == 'external'
+    assert specific_app[0]['source'] == 'EXTERNAL'
 
 
 def test_external_apps_not_in_delete_validation(external_container):

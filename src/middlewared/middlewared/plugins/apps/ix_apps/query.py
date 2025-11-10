@@ -63,7 +63,7 @@ def get_config_of_app(app_data: dict, collective_config: dict, retrieve_config: 
         return {}
 
     # External apps don't have config files, return empty config
-    if app_data.get('source') == 'external':
+    if app_data.get('source') == 'EXTERNAL':
         return {'config': {}}
 
     return {
@@ -105,7 +105,7 @@ def create_external_app_metadata(app_name: str, container_details: list[dict]) -
         'notes': f'This is an external container deployed outside of TrueNAS Apps. Image: {primary_image}',
         'custom_app': True,
         'migrated': False,
-        'source': 'external',
+        'source': 'EXTERNAL',
     }
 
 
@@ -171,7 +171,7 @@ def list_apps(
         upgrade_available, latest_version = upgrade_available_for_app(train_to_apps_version_mapping, app_metadata)
 
         # Determine app source
-        app_source = app_metadata.get('source', 'truenas' if is_truenas_app else 'external')
+        app_source = app_metadata.get('source', 'TRUENAS' if is_truenas_app else 'EXTERNAL')
 
         app_data = {
             'name': app_name,
@@ -217,7 +217,7 @@ def list_apps(
                 'upgrade_available': upgrade_available,
                 'latest_version': latest_version,
                 'image_updates_available': False,
-                'source': app_metadata.get('source', 'truenas'),
+                'source': app_metadata.get('source', 'TRUENAS'),
                 **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
             }
             apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))

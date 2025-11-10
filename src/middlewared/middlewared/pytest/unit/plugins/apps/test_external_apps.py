@@ -70,7 +70,7 @@ class TestCreateExternalAppMetadata:
         assert metadata['metadata']['name'] == 'portainer'
         assert metadata['metadata']['title'] == 'portainer'
         assert metadata['metadata']['train'] == 'external'
-        assert metadata['source'] == 'external'
+        assert metadata['source'] == 'EXTERNAL'
         assert metadata['custom_app'] is True
         assert metadata['human_version'] == 'portainer/portainer-ce:latest'
         assert 'External Docker container' in metadata['metadata']['description']
@@ -130,7 +130,7 @@ class TestListAppsWithExternalContainers:
 
         assert len(result) == 1
         assert result[0]['name'] == 'portainer'
-        assert result[0]['source'] == 'external'
+        assert result[0]['source'] == 'EXTERNAL'
         assert result[0]['metadata']['train'] == 'external'
         assert result[0]['custom_app'] is True
 
@@ -194,8 +194,8 @@ class TestListAppsWithExternalContainers:
         assert len(result) == 3
 
         # Find each app type
-        truenas_apps = [a for a in result if a.get('source') == 'truenas']
-        external_apps = [a for a in result if a.get('source') == 'external']
+        truenas_apps = [a for a in result if a.get('source') == 'TRUENAS']
+        external_apps = [a for a in result if a.get('source') == 'EXTERNAL']
 
         assert len(truenas_apps) == 1
         assert len(external_apps) == 2
@@ -243,7 +243,7 @@ class TestListAppsWithExternalContainers:
         # Should only have TrueNAS apps
         assert len(result) == 1
         assert result[0]['name'] == 'actual-budget'
-        assert result[0].get('source') == 'truenas'
+        assert result[0].get('source') == 'TRUENAS'
 
 
 class TestExternalAppStatsNormalization:
