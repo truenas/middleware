@@ -152,7 +152,7 @@ class VMService(Service):
         vm.pop("status", None)
 
         devices = []
-        for device in vm["devices"]:
+        for device in sorted(vm["devices"], key=lambda x: (x['order'], x['id'])):
             devices.append(self.middleware.call_sync('vm.device.get_pylibvirt_device', device))
 
         vm.update({
