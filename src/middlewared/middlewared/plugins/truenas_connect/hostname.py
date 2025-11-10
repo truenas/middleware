@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from truenas_connect_utils.exceptions import CallError as TNCCallError
-from truenas_connect_utils.hostname import hostname_config, register_update_ips
+from truenas_connect_utils.hostname import hostname_config, register_update_ips, register_system_config
 
 from middlewared.service import CallError, Service
 
@@ -34,6 +34,15 @@ class TNCHostnameService(Service):
             ips = tnc_config['ips'] + tnc_config.get('interfaces_ips', [])
         try:
             return await register_update_ips(tnc_config, ips, create_wildcard)
+        except TNCCallError as e:
+            raise CallError(str(e))
+
+    async def register_system_config(self, websocket_port: int) -> dict:
+        """Register system configuration with TrueNAS Connect, including websocket port."""
+        tnc_config = await self.middleware.call('tn_connect.config_internal')
+
+        try:
+            return await register_system_config(tnc_config, websocket_port)
         except TNCCallError as e:
             raise CallError(str(e))
 
