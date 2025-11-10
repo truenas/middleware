@@ -12,6 +12,7 @@ from middlewared.async_validators import validate_port
 from middlewared.service import ConfigService, private
 from middlewared.utils import run
 from middlewared.utils.service.settings import SettingsHelper
+from truenas_connect_utils.status import Status
 
 settings = SettingsHelper()
 
@@ -53,6 +54,7 @@ class SystemGeneralService(ConfigService):
         super().__init__(*args, **kwargs)
         self._original_datastore = {}
         self._rollback_timer = None
+        self._original_https_port = None
 
     @private
     async def general_system_extend(self, data):
@@ -227,6 +229,15 @@ class SystemGeneralService(ConfigService):
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam_middleware')
 
+        if config['ui_httpsport'] != new_config['ui_httpsport']:
+            if (await self.middleware.call('tn_connect.config'))['status'] == Status.CONFIGURED:
+                try:
+                    await self.middleware.call('tn_connect.hostname.register_system_config', new_config['ui_httpsport'])
+                    if self._original_https_port is None:
+                        self._original_https_port = config['ui_httpsport']
+                except Exception as e:
+                    self.logger.warning('Failed to register HTTPS port with TrueNAS Connect: %s', e)
+
         await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
 
         if rollback_timeout is not None:
@@ -276,6 +287,7 @@ class SystemGeneralService(ConfigService):
 
         self._rollback_timer = None
         self._original_datastore = {}
+        self._original_https_port = None
 
     @private
     async def rollback(self):
@@ -288,5 +300,17 @@ class SystemGeneralService(ConfigService):
             )
             await self.middleware.call('system.general.ui_restart', 0)
 
+            if self._original_https_port is not None:
+                if (await self.middleware.call('tn_connect.config'))['status'] == Status.CONFIGURED:
+                    try:
+                        await self.middleware.call(
+                            'tn_connect.hostname.register_system_config', self._original_https_port
+                        )
+                    except Exception as e:
+                        self.logger.warning(
+                            'Failed to re-register original HTTPS port with TrueNAS Connect during rollback: %s', e
+                        )
+
             self._rollback_timer = None
             self._original_datastore = {}
+            self._original_https_port = None
