@@ -15,7 +15,7 @@ CACHE_POOLS_STATUSES = 'system.system_health_pools'
 SCAN_THREADS = {}
 
 
-class ScanWatch(object):
+class ScanWatch:
 
     def __init__(self, middleware, pool):
         self.middleware = middleware
@@ -37,7 +37,8 @@ class ScanWatch(object):
         if not scan:
             with libzfs.ZFS() as zfs:
                 scan = zfs.get(self.pool).scrub.asdict()
-        self.middleware.send_event('zfs.pool.scan', 'CHANGED', fields={
+
+        self.middleware.send_event('pool.scan', 'CHANGED', fields={
             'scan': scan,
             'name': self.pool,
         })
@@ -222,7 +223,6 @@ async def remove_outdated_alerts_on_boot(middleware, data):
 
 
 async def setup(middleware):
-    middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.', roles=['POOL_SCRUB_READ'])
     middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
 
     # middleware does not receive `sysevent.fs.zfs.pool_import` or `sysevent.fs.zfs.config_sync` events on the boot pool

@@ -7,6 +7,7 @@ from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, match_validator, NonEmptyString, single_argument_args,
     LongString, ForUpdateMetaclass,
 )
+from .pool_scrub import PoolScan
 
 
 __all__ = [
@@ -63,22 +64,7 @@ class PoolEntry(BaseModel):
     """Current status of the pool."""
     path: str
     """Filesystem path where the pool is mounted."""
-    scan: Annotated[
-        dict,
-        Field(examples=[{
-            'function': None,
-            'state': None,
-            'start_time': None,
-            'end_time': None,
-            'percentage': None,
-            'bytes_to_process': None,
-            'bytes_processed': None,
-            'bytes_issued': None,
-            'pause': None,
-            'errors': None,
-            'total_secs_left': None,
-        }])
-    ] | None
+    scan: PoolScan | None
     """Information about any active scrub or resilver operation. `null` if no operation is running."""
     expand: Annotated[
         dict,
