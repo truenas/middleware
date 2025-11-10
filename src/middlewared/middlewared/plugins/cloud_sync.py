@@ -49,6 +49,7 @@ from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.service import (
@@ -250,8 +251,8 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
         if snapshot:
             try:
-                await middleware.call("zfs.snapshot.delete", snapshot)
-            except CallError as e:
+                await middleware.call("zfs.resource.destroy", DestroyArgs(path=snapshot))
+            except Exception as e:
                 middleware.logger.warning(f"Error deleting ZFS snapshot on cloud sync finish: {e!r}")
 
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]["type"]].refresh_credentials

@@ -4,6 +4,7 @@ import time
 
 from truenas_api_client import ValidationErrors
 
+from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service_exception import CallError, InstanceNotFound, MatchNotFound
 from middlewared.test.integration.utils import call, fail, pool, ssh
 from middlewared.test.integration.utils.disk import retry_get_parts_on_disk
@@ -113,8 +114,8 @@ def snapshot(dataset, name, **kwargs):
             yield id_
     finally:
         try:
-            call("zfs.snapshot.delete", id_, {"recursive": True})
-        except InstanceNotFound:
+            call("zfs.resource.destroy", {"path": id_, "recursive": True})
+        except ZFSPathNotFoundException:
             pass
 
 
