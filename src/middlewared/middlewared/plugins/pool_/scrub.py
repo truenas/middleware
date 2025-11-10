@@ -3,11 +3,11 @@ import asyncio
 import re
 import shlex
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     PoolScrubEntry, PoolScrubCreateArgs, PoolScrubCreateResult, PoolScrubUpdateArgs, PoolScrubUpdateResult,
     PoolScrubDeleteArgs, PoolScrubDeleteResult, PoolScrubScrubArgs, PoolScrubScrubResult, PoolScrubRunArgs,
-    PoolScrubRunResult
+    PoolScrubRunResult, PoolScanChangedEvent,
 )
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -47,6 +47,16 @@ class PoolScrubService(CRUDService):
         cli_namespace = 'storage.scrub'
         role_prefix = 'POOL_SCRUB'
         entry = PoolScrubEntry
+        events = [
+            Event(
+                name='pool.scan',
+                description='Progress of pool resilver/scrub.',
+                roles=['POOL_SCRUB_READ'],
+                models={
+                    'CHANGED': PoolScanChangedEvent,
+                },
+            ),
+        ]
 
     @private
     async def pool_scrub_extend(self, data):
