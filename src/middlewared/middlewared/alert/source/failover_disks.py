@@ -29,6 +29,7 @@ class DisksAreNotPresentOnActiveNodeAlertClass(AlertClass):
 class FailoverDisksAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
     failover_related = True
+    require_stable_peer = True
     run_on_backup_node = False
 
     async def check(self):
