@@ -3108,6 +3108,87 @@ def test_construct_schema_with_hostpath():
     assert 'optional_path' not in result['new_values']
 
 
+def test_construct_schema_with_hostpath_special_devices():
+    """
+    Test hostpath field with special device files like /dev/null.
+
+    This is a regression test for the pydantic migration. The original implementation
+    (pre-pydantic) accepted any existing path including character/block devices.
+
+    After the pydantic migration (commit 8b4b7a0f43), HostPath was defined as:
+        Literal[''] | FilePath | DirectoryPath
+
+    This broke /dev/null support because:
+    - FilePath requires os.path.isfile() == True (regular files only)
+    - DirectoryPath requires os.path.isdir() == True (directories only)
+    - /dev/null is a character device, so both validators reject it
+
+    Real-world use case: Apps may use /dev/null as a hostpath for discarding output.
+    Example error from user:
+        storage.recordings.host_path_config.path: Path does not point to a directory
+    """
+    item_version_details = {
+        'schema': {
+            'questions': [
+                {
+                    'variable': 'storage',
+                    'schema': {
+                        'type': 'dict',
+                        'attrs': [
+                            {
+                                'variable': 'recordings',
+                                'schema': {
+                                    'type': 'dict',
+                                    'attrs': [
+                                        {
+                                            'variable': 'host_path_config',
+                                            'schema': {
+                                                'type': 'dict',
+                                                'attrs': [
+                                                    {
+                                                        'variable': 'path',
+                                                        'schema': {
+                                                            'type': 'hostpath',
+                                                            'required': True
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+
+    # Test /dev/null - this is a character device, not a file or directory
+    # This SHOULD pass but currently FAILS with pydantic's FilePath/DirectoryPath validators
+    result = construct_schema(
+        item_version_details,
+        {
+            'storage': {
+                'recordings': {
+                    'host_path_config': {
+                        'path': '/dev/null'
+                    }
+                }
+            }
+        },
+        False
+    )
+
+    # This assertion will FAIL with current implementation, demonstrating the bug
+    assert len(result['verrors'].errors) == 0, (
+        f"Expected /dev/null to be accepted as a valid hostpath, but got errors: "
+        f"{[f'{e.attribute}: {e.errmsg}' for e in result['verrors'].errors]}"
+    )
+    assert result['new_values']['storage']['recordings']['host_path_config']['path'] == '/dev/null'
+
+
 def test_construct_schema_with_path():
     """Test absolute path field validation through construct_schema"""
     item_version_details = {
