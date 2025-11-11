@@ -24,10 +24,7 @@ def list_resources_by_project_internal(
 ) -> dict[str, dict[str, list]]:
     with get_docker_client() as client:
         if include_external:
-            # List all containers without filtering by PROJECT_KEY label
             containers = client.containers.list(all=True, sparse=False)
-            # For external containers, we still want to filter networks/volumes by project
-            # to avoid showing system networks/volumes
             networks = []
             volumes = []
         else:
