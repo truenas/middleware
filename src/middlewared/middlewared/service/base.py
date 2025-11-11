@@ -108,6 +108,26 @@ def validate_api_method_schema_class_names(klass):
         )
 
 
+def validate_event_schema_class_names(klass):
+    errors = []
+    for event in klass._config.events:
+        for event_type, model in event.models.items():
+            model_name = ''.join(
+                word.capitalize()
+                for word in event.name.replace('.', '_').split('_') + [event_type, 'Event']
+            )
+            if model.__name__ != model_name:
+                errors.append(
+                    f"Event {event.name!r} has incorrect {event_type} model class name. "
+                    f"Expected {model_name}, got {model.__name__}."
+                )
+
+    if errors:
+        raise RuntimeError(
+            f"Service {klass.__name__} has API method schema class name validation errors:\n" + '\n'.join(errors)
+        )
+
+
 class ServiceBase(type):
     """
     Metaclass of all services
@@ -157,5 +177,7 @@ class ServiceBase(type):
 
         # Validate API method argument class names
         validate_api_method_schema_class_names(klass)
+        # Validate event schemas class names
+        validate_event_schema_class_names(klass)
 
         return klass

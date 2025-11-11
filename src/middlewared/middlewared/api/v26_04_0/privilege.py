@@ -5,7 +5,8 @@ from .group import GroupEntry
 __all__ = ["PrivilegeEntry", "PrivilegeRolesEntry",
            "PrivilegeCreateArgs", "PrivilegeCreateResult",
            "PrivilegeUpdateArgs", "PrivilegeUpdateResult",
-           "PrivilegeDeleteArgs", "PrivilegeDeleteResult"]
+           "PrivilegeDeleteArgs", "PrivilegeDeleteResult",
+           "UserWebUiLoginDisabledAddedEvent"]
 
 
 class UnmappedGroupEntry(BaseModel):
@@ -90,3 +91,15 @@ class PrivilegeRolesEntry(BaseModel):
     """Whether this is a built-in system role."""
     stig: STIGType | None
     """STIG compliance type for this role. `null` if not STIG-related."""
+
+
+class UserWebUiLoginDisabledAddedEvent(BaseModel):
+    id: None
+    """Always `null`."""
+    fields: "UserWebUiLoginDisabledAddedEventFields"
+    """Event data."""
+
+
+class UserWebUiLoginDisabledAddedEventFields(BaseModel):
+    usernames: list[str]
+    """Local administrator accounts that can be used instead."""
