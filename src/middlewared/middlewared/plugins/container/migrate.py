@@ -1,7 +1,5 @@
 import yaml
 
-import humanfriendly
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerMigrateArgs, ContainerMigrateResult,
@@ -63,18 +61,10 @@ class ContainerService(Service):
 
                 config = manifest["container"]["config"]
 
-                try:
-                    memory = int(
-                        humanfriendly.parse_size(config["limits.memory"]) / (1024 ** 2) + 0.5
-                    )
-                except (KeyError, humanfriendly.InvalidSize):
-                    memory = None
-
                 await self.middleware.call(
                     "container.create_with_dataset",
                     {
                         "name": name,
-                        "memory": memory,
                         "autostart": config.get("user.autostart") == "true",
                         "dataset": f"{dataset['name']}/rootfs",
                         "init": "/sbin/init",
