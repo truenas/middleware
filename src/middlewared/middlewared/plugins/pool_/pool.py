@@ -241,7 +241,9 @@ class PoolService(CRUDService):
         # At this point, we have validated disks and are ready to proceed to the next step in pool creation
         # where we format disks and finally create the pool with necessary configuration
         # We will now try to configure SED disks (if any) automatically
-        await self.middleware.call('disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology')
+        await self.middleware.call(
+            'disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology', data.pop('all_sed', False)
+        )
 
         return disks, vdevs
 
