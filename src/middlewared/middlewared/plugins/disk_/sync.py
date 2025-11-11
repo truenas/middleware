@@ -45,7 +45,7 @@ class DiskService(Service, ServiceChangeMixin):
 
         self._map_device_disk_to_db(disk, disks[name])
 
-        if await self.middleware.call('system.is_enterprise') and (new or disk.get('disk_sed') is None):
+        if await self.middleware.call('system.sed_enabled') and (new or disk.get('disk_sed') is None):
             # If system is enterprise, we would like to make sure SED status is correctly reflected
             disk['disk_sed'] = await self.middleware.call('disk.is_sed', name)
 
@@ -116,7 +116,7 @@ class DiskService(Service, ServiceChangeMixin):
         opts.setdefault('zfs_guid', False)
 
         job.set_progress(10, 'Enumerating system disks')
-        enterprise_system = self.middleware.call_sync('system.is_enterprise')
+        sed_enabled_system = self.middleware.call_sync('system.sed_enabled')
         sys_disks = self.middleware.call_sync('device.get_disks', True)
         number_of_disks = self.log_disk_info(sys_disks)
 
@@ -165,7 +165,7 @@ class DiskService(Service, ServiceChangeMixin):
                     dif_formatted_disks.append(name)
 
                 self._map_device_disk_to_db(disk, sys_disks[name])
-                if enterprise_system and disk['disk_sed'] is None:
+                if sed_enabled_system and disk['disk_sed'] is None:
                     disk['disk_sed'] = self.middleware.call_sync('disk.is_sed', name)
 
             if name not in sys_disks and not disk['disk_expiretime']:
@@ -198,7 +198,7 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
             disk['disk_name'] = name
             self._map_device_disk_to_db(disk, sys_disks[name])
-            if enterprise_system and (new or disk.get('disk_sed') is None):
+            if sed_enabled_system and (new or disk.get('disk_sed') is None):
                 disk['disk_sed'] = self.middleware.call_sync('disk.is_sed', name)
 
             if sys_disks[name]['dif']:

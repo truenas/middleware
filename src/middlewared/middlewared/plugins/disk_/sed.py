@@ -114,8 +114,8 @@ class DiskService(Service):
     @private
     async def common_sed_validation(self, schema, options, status_to_check=None):
         verrors = ValidationErrors()
-        if not await self.middleware.call('system.is_enterprise'):
-            verrors.add(f'{schema}.name', 'This operation is only available on Enterprise systems')
+        if not await self.middleware.call('system.sed_enabled'):
+            verrors.add(f'{schema}.name', 'System is not licensed for SED functionality.')
         verrors.check()
 
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
