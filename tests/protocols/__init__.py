@@ -1,5 +1,6 @@
 import contextlib
 
+from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call
 from .ftp_proto import ftp_connect, ftp_connection, ftps_connect, ftps_connection  # noqa
 from .iscsi_proto import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connect, iscsi_scsi_connection  # noqa
@@ -27,7 +28,8 @@ def smb_share(path: str, options: dict | None = None):
     try:
         yield share_id
     finally:
-        call("sharing.smb.delete", share_id)
+        with contextlib.suppress(InstanceNotFound):
+            call("sharing.smb.delete", share_id)
 
 
 @contextlib.contextmanager
@@ -37,7 +39,8 @@ def nfs_share(path: str, options: dict | None = None):
     try:
         yield share_id
     finally:
-        call("sharing.nfs.delete", share_id)
+        with contextlib.suppress(InstanceNotFound):
+            call("sharing.nfs.delete", share_id)
 
 
 @contextlib.contextmanager
