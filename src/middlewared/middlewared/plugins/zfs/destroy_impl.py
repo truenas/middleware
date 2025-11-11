@@ -68,6 +68,12 @@ def destroy_nonrecursive_impl(tls, data: DestroyArgs):
         except truenas_pylibzfs.ZFSException as e:
             failed = f"Failed to destroy {path!r}: {e}"
             errnum = e.code
+    elif rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME:
+        try:
+            tls.lzh.destroy_resource(name=path)
+        except truenas_pylibzfs.ZFSException as e:
+            failed = f"Failed to destroy {path!r}: {e}"
+            errnum = e.code
 
     return failed, errnum
 
