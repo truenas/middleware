@@ -8,7 +8,7 @@ __all__ = ["getmntinfo", "getmnttree"]
 
 def __mntent_dict(line):
     mnt_id, parent_id, maj_min, root, mp, opts, extra = line.split(" ", 6)
-    fstype, mnt_src, super_opts = extra.strip().split('- ')[1].split()
+    fstype, mnt_src, super_opts = extra.strip().split('- ', 1)[1].split()
 
     major, minor = maj_min.split(':')
     devid = os.makedev(int(major), int(minor))
