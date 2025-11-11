@@ -102,9 +102,15 @@ class PoolService(CRUDService):
             if info['properties']['health']['value'] == 'SUSPENDED':
                 status = 'SUSPENDED'
 
+            # Normalize scan field: if there's no scan data, libzfs returns a dict with None values
+            # but the API expects either None or a valid PoolScan object with all required fields
+            scan = info['scan']
+            if scan and scan['state'] is None:
+                scan = None
+
             rv.update({
                 'status': status,
-                'scan': info['scan'],
+                'scan': scan,
                 'expand': info['expand'],
                 'topology': await self.middleware.call('pool.transform_topology', info['groups']),
                 'healthy': info['healthy'],

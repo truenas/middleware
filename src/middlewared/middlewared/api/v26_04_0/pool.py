@@ -65,7 +65,7 @@ class PoolEntry(BaseModel):
     path: str
     """Filesystem path where the pool is mounted."""
     scan: PoolScan | None
-    """Information about any active scrub or resilver operation. `null` if no operation is running."""
+    """Information about the most recent scrub or resilver operation. `null` if no scan data is available."""
     expand: Annotated[
         dict,
         Field(examples=[{
