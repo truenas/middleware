@@ -87,6 +87,23 @@ def test__mntinfo_spaces():
     assert mntent['super_opts'] == ['RW', 'XATTR', 'POSIXACL']
 
 
+def test__mntinfo_dashes():
+    line = r'868 842 0:85 / /mnt/stdpool-backup/stdpool-0/shares/--- ro,noatime shared:448 - zfs stdpool-backup/stdpool-0/shares/--- ro,xattr,posixacl,caseinsensitive'  # noqa
+    data = {}
+    __parse_to_mnt_id(line, data)
+    assert 868 in data
+    mntent = data[868]
+    assert mntent['mount_id'] == 868
+    assert mntent['parent_id'] == 842
+    assert mntent['device_id'] == {'major': 0, 'minor': 85, 'dev_t': 85}
+    assert mntent['root'] == '/'
+    assert mntent['mountpoint'] == '/mnt/stdpool-backup/stdpool-0/shares/---'
+    assert mntent['mount_opts'] == ['RO', 'NOATIME']
+    assert mntent['fs_type'] == 'zfs'
+    assert mntent['mount_source'] == 'stdpool-backup/stdpool-0/shares/---'
+    assert mntent['super_opts'] == ['RO', 'XATTR', 'POSIXACL', 'CASEINSENSITIVE']
+
+
 def test__getmntinfo():
     def __rebuild_device_info(e):
         return f'{e["mount_id"]} {e["parent_id"]} {e["device_id"]["major"]}:{e["device_id"]["minor"]} {e["root"]}'
@@ -173,8 +190,8 @@ def test__mountinfo_tree_miss():
     for line in fake_mntinfo.splitlines():
         __parse_to_mnt_id(line, data)
 
-    with pytest.raises(KeyError) as e:
-        root = __create_tree(data, 8675309)
+    with pytest.raises(KeyError):
+        __create_tree(data, 8675309)
 
 
 def test__mountinfo_missing_optional_fields():
