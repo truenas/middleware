@@ -88,7 +88,8 @@ class AppService(Service):
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
-        if app['custom_app'] or app['metadata']['name'] == IX_APP_NAME:
+        is_ix_app = app['metadata']['name'] == IX_APP_NAME
+        if app['custom_app'] or is_ix_app:
             job.set_progress(20, 'Pulling app images')
             try:
                 self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
@@ -101,15 +102,22 @@ class AppService(Service):
                     self.middleware.call_sync('app.update_app_upgrade_alert')
 
             self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
-            job.set_progress(100, 'App successfully upgraded and redeployed')
-            return app
 
-        job.set_progress(0, f'Retrieving versions for {app_name!r} app')
+            # For ix-app, if upgrade is still available after pulling images, it means there's a catalog
+            # version upgrade available. Proceed with the catalog upgrade flow.
+            if is_ix_app and app['upgrade_available']:
+                job.set_progress(30, 'Upgrading catalog version')
+                # Continue to the normal catalog upgrade flow below instead of returning
+            else:
+                job.set_progress(100, 'App successfully upgraded and redeployed')
+                return app
+
+        job.set_progress(35, f'Retrieving versions for {app_name!r} app')
         versions_config = self.middleware.call_sync('app.get_versions', app, options)
         upgrade_version = versions_config['specified_version']
 
         job.set_progress(
-            20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
+            40, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
         )
         self.take_snapshot_of_hostpath_and_stop_app(app, options['snapshot_hostpaths'])
         # In order for upgrade to complete, following must happen
@@ -135,7 +143,7 @@ class AppService(Service):
             )
             update_app_config(app_name, upgrade_version['version'], new_values)
 
-            job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
+            job.set_progress(60, f'Configuration updated for {app_name!r}, upgrading app')
 
             if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
                 snap_name = f'{app_volume_ds}@{app["version"]}'
@@ -148,7 +156,7 @@ class AppService(Service):
                     }
                 )
 
-                job.set_progress(50, 'Created snapshot for upgrade')
+                job.set_progress(70, 'Created snapshot for upgrade')
 
         try:
             compose_action(
