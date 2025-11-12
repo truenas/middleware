@@ -2,6 +2,7 @@
 
 mkdir -p /var/trash
 for file in \
+    /etc/apparmor.d/libvirt/TEMPLATE.qemu \
     /etc/nsswitch.conf \
     /etc/zsh/zshenv \
     /usr/lib/netdata/conf.d/python.d.conf \

@@ -5,6 +5,7 @@ from xml.etree import ElementTree as etree
 
 ACTIVE_STATES = ['RUNNING', 'SUSPENDED']
 SYSTEM_NVRAM_FOLDER_PATH = '/var/db/system/vm/nvram'
+SYSTEM_TPM_FOLDER_PATH = '/var/db/system/vm/tpm'
 LIBVIRT_QEMU_UID = 986
 LIBVIRT_QEMU_GID = 986
 LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
@@ -28,6 +29,10 @@ def get_virsh_command_args():
 
 def convert_pci_id_to_vm_pci_slot(pci_id: str) -> str:
     return f'pci_{pci_id.replace(".", "_").replace(":", "_")}'
+
+
+def get_vm_tpm_state_dir_name(vm_data: dict) -> str:
+    return f'{vm_data["id"]}_{vm_data["name"]}_tpm_state'
 
 
 def get_vm_nvram_file_name(vm_data: dict) -> str:
