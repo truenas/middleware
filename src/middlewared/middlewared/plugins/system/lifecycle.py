@@ -80,7 +80,6 @@ class SystemService(Service):
         SystemRebootArgs,
         SystemRebootResult,
         pass_app=True,
-        pass_app_rest=True,
         roles=["FULL_ADMIN"],
     )
     @job()
@@ -103,7 +102,6 @@ class SystemService(Service):
         SystemShutdownArgs,
         SystemShutdownResult,
         pass_app=True,
-        pass_app_rest=True,
         roles=["FULL_ADMIN"],
     )
     @job()

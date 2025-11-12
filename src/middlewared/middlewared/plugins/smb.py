@@ -21,7 +21,7 @@ from middlewared.api.current import (
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.service import job, pass_app, private, SharingService
+from middlewared.service import job, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.constants import (
@@ -463,8 +463,7 @@ class SMBService(ConfigService):
                     f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
                 )
 
-    @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration')
-    @pass_app(rest=True)
+    @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration', pass_app=True)
     async def do_update(self, app, data):
         """
         Update SMB Service Configuration.
@@ -659,7 +658,6 @@ class SharingSMBService(SharingService):
         audit='SMB share create',
         audit_extended=lambda data: data['name'],
         pass_app=True,
-        pass_app_rest=True
     )
     async def do_create(self, app, data):
         audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get(share_field.AUDIT)
@@ -768,7 +766,6 @@ class SharingSMBService(SharingService):
         audit='SMB share update',
         audit_callback=True,
         pass_app=True,
-        pass_app_rest=True
     )
     async def do_update(self, app, audit_callback, id_, data):
         old = await self.get_instance(id_)

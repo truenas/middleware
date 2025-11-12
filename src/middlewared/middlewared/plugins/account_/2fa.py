@@ -9,7 +9,7 @@ from middlewared.api.current import (
     UserTwofactorConfigEntry, UserUnset2faSecretArgs, UserUnset2faSecretResult,
     UserRenew2faSecretArgs, UserRenew2faSecretResult
 )
-from middlewared.service import CallError, pass_app, private, Service
+from middlewared.service import CallError, private, Service
 from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user
 
@@ -161,9 +161,9 @@ class UserService(Service):
         UserRenew2faSecretResult,
         audit='Renew two-factor authentication secret:',
         audit_extended=lambda username, options: username,
-        authorization_required=False
+        authorization_required=False,
+        pass_app=True,
     )
-    @pass_app()
     async def renew_2fa_secret(self, app, username, twofactor_options):
         """
         Renew `username` user's two-factor authentication secret.

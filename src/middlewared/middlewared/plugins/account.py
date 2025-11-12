@@ -49,7 +49,7 @@ from middlewared.api.current import (
     UserUpdateArgs,
     UserUpdateResult,
 )
-from middlewared.service import CallError, CRUDService, ValidationErrors, pass_app, private, job
+from middlewared.service import CallError, CRUDService, ValidationErrors, private, job
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -762,8 +762,7 @@ class UserService(CRUDService):
 
         return self.middleware.call_sync('user.query', [['id', '=', pk]], {'get': True}) | {'password': password}
 
-    @api_method(UserUpdateArgs, UserUpdateResult, audit='Update user', audit_callback=True)
-    @pass_app()
+    @api_method(UserUpdateArgs, UserUpdateResult, audit='Update user', audit_callback=True, pass_app=True)
     def do_update(self, app, audit_callback, pk, data):
         """
         Update attributes of an existing user.
@@ -1015,8 +1014,7 @@ class UserService(CRUDService):
                     'options': {'stripacl': True},
                 }).wait_sync(raise_error=True)
 
-    @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True)
-    @pass_app(rest=True)
+    @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True, pass_app=True)
     def do_delete(self, app, audit_callback, pk, options):
         """
         Delete user `id`.
@@ -1292,9 +1290,9 @@ class UserService(CRUDService):
     @api_method(
         UserSetupLocalAdministratorArgs, UserSetupLocalAdministratorResult,
         audit='Set up local administrator',
-        authentication_required=False
+        authentication_required=False,
+        pass_app=True,
     )
-    @pass_app()
     async def setup_local_administrator(self, app, username, password, options):
         """
         Set up local administrator (this method does not require authentication if local administrator is not already
@@ -1751,8 +1749,8 @@ class UserService(CRUDService):
 
     @api_method(UserSetPasswordArgs, UserSetPasswordResult,
                 audit='Set account password', audit_extended=lambda data: data['username'],
-                authorization_required=False)
-    @pass_app(require=True)
+                authorization_required=False,
+                pass_app=True, pass_app_require=True)
     async def set_password(self, app, data):
         """
         Set the password of the specified `username` to the `new_password`

@@ -163,9 +163,9 @@ class ApiKeyService(CRUDService):
         ApiKeyCreateResult,
         audit='Create API key',
         audit_extended=lambda data: data['name'],
-        roles=['READONLY_ADMIN', 'API_KEY_WRITE']
+        roles=['READONLY_ADMIN', 'API_KEY_WRITE'],
+        pass_app=True,
     )
-    @pass_app(rest=True)
     def do_create(self, app, data: dict) -> dict:
         """
         Creates API Key.
@@ -236,9 +236,9 @@ class ApiKeyService(CRUDService):
         ApiKeyUpdateResult,
         audit='Update API key',
         audit_callback=True,
-        roles=['READONLY_ADMIN', 'API_KEY_WRITE']
+        roles=['READONLY_ADMIN', 'API_KEY_WRITE'],
+        pass_app=True,
     )
-    @pass_app(rest=True)
     def do_update(self, app, audit_callback: callable, id_: int, data: dict) -> dict:
         """
         Update API Key `id`.
@@ -289,9 +289,9 @@ class ApiKeyService(CRUDService):
         ApiKeyDeleteResult,
         audit='Delete API key',
         audit_callback=True,
-        roles=['READONLY_ADMIN', 'API_KEY_WRITE']
+        roles=['READONLY_ADMIN', 'API_KEY_WRITE'],
+        pass_app=True,
     )
-    @pass_app(rest=True)
     async def do_delete(self, app, audit_callback: callable, id_: int) -> Literal[True]:
         """
         Delete API Key `id`.
@@ -362,7 +362,7 @@ class ApiKeyService(CRUDService):
     @private
     @pass_app(require=True)
     async def authenticate(self, app, key: str) -> dict | None:
-        """ Wrapper around auth.authenticate for REST API """
+        """Wrapper around `auth.authenticate` for file upload endpoint."""
         try:
             key_id = int(key.split('-', 1)[0])
         except ValueError:
@@ -393,8 +393,8 @@ class ApiKeyService(CRUDService):
         await self.middleware.call('etc.generate', 'pam_middleware')
         await self.check_status()
 
-    @api_method(ApiKeyMyKeysArgs, ApiKeyMyKeysResult, roles=['READONLY_ADMIN', 'API_KEY_READ'])
-    @pass_app(require=True)
+    @api_method(ApiKeyMyKeysArgs, ApiKeyMyKeysResult, roles=['READONLY_ADMIN', 'API_KEY_READ'],
+                pass_app=True, pass_app_require=True)
     async def my_keys(self, app) -> list:
         """ Get the existing API keys for the currently-authenticated user """
         if not app.authenticated_credentials.is_user_session:

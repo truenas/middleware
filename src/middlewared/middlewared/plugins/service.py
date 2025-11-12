@@ -117,7 +117,6 @@ class ServiceService(CRUDService):
         audit='Update service configuration',
         audit_callback=True,
         pass_app=True,
-        pass_app_rest=True,
     )
     async def do_update(self, app, audit_callback, id_or_name, data):
         """
@@ -148,7 +147,6 @@ class ServiceService(CRUDService):
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE',
                'SHARING_FTP_WRITE', 'SHARING_NVME_TARGET_WRITE'],
         pass_app=True,
-        pass_app_rest=True,
         audit='Service Control:',
         audit_extended=lambda verb, service: f'{verb} {service}',
     )
