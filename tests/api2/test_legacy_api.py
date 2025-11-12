@@ -53,7 +53,7 @@ def misc_methods() -> list[tuple[tuple, str]]:
     """
     return [
         (("fcport.status",), APIVersions.FT.value[0]),
-        (("audit.query", [{"query-options": {"count": True}}]), APIVersions.GE.value[0]),
+        (("audit.query", {"query-options": {"count": True}}), APIVersions.GE.value[0]),
     ]
 
 

@@ -1,3 +1,4 @@
+import json
 import operator
 
 from .schema import SchemaMixin
@@ -55,6 +56,7 @@ class FilterMixin(SchemaMixin):
                 raise ValueError('Filter must be a list or tuple: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
+                is_json_extract = False
 
                 # Special handling for JSONPath, e.g. "$.foo.bar" for sqlalchemy JSON data type
                 # Sample filter: [['$.service_data.origin', '=', '192.168.1.200']]
@@ -65,6 +67,7 @@ class FilterMixin(SchemaMixin):
                     col = self._get_col(table, name, prefix)
                     # Set up JSON1 operation to extract JSON data for filtering
                     col = func.json_extract(col, json_target)
+                    is_json_extract = True
                 elif matched := next((x for x in ['__', '.'] if x in name), False):
                     fk, name = name.split(matched, 1)
                     col = self._get_col(aliases[list(self._get_col(table, fk, prefix).foreign_keys)[0]], name, '')
@@ -73,6 +76,11 @@ class FilterMixin(SchemaMixin):
 
                 if op not in opmap:
                     raise ValueError('Invalid operation: {0}'.format(op))
+
+                # When filtering on json_extract results, we need to serialize list/dict values
+                # to JSON strings for proper comparison, since json_extract returns JSON strings
+                if is_json_extract and isinstance(value, (list, dict)):
+                    value = json.dumps(value, separators=(',', ':'), sort_keys=True)
 
                 q = opmap[op](col, value)
                 rv.append(q)
