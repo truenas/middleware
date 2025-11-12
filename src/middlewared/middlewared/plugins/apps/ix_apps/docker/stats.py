@@ -32,13 +32,19 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict:
 def list_resources_stats_by_project_internal(project_name: str | None = None) -> dict:
     projects = get_default_stats()
     with get_docker_client() as client:
-        label_filter = {'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY}
-        for container in client.containers.list(all=True, filters=label_filter, sparse=False):
-            stats = container.stats(stream=False, decode=None, one_shot=True)
-            project = container.labels.get(PROJECT_KEY)
+        # List all containers to include external apps
+        # If a specific project_name is requested, we'll filter below
+        for container in client.containers.list(all=True, sparse=False):
+            # Get project key from label, or use container name for external containers
+            project = container.labels.get(PROJECT_KEY, container.attrs.get('Name', '').lstrip('/'))
             if not project:
                 continue
 
+            # If a specific project was requested, filter to only that project
+            if project_name and project != project_name:
+                continue
+
+            stats = container.stats(stream=False, decode=None, one_shot=True)
             blkio_container_stats = stats.get('blkio_stats', {}).get('io_service_bytes_recursive') or {}
             project_stats = projects[project]
             project_stats['cpu_usage'] += stats.get('cpu_stats', {}).get('cpu_usage', {}).get('total_usage', 0)

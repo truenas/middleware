@@ -115,6 +115,8 @@ class AppEntry(BaseModel):
     """Whether this is a custom application (`true`) or from a catalog (`false`)."""
     migrated: bool
     """Whether this application has been migrated from kubernetes."""
+    source: Literal['TRUENAS', 'EXTERNAL'] = 'TRUENAS'
+    """Source of the application: 'TRUENAS' for managed apps, 'EXTERNAL' for unmanaged containers."""
     human_version: NonEmptyString
     """Human-readable version string for display purposes."""
     version: NonEmptyString

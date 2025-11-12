@@ -1,7 +1,7 @@
 from middlewared.utils.cpu import cpu_info
 
 from .ix_apps.metadata import get_collective_metadata
-from .ix_apps.utils import get_app_name_from_project_name
+from .ix_apps.utils import get_app_name_from_project_name, PROJECT_PREFIX
 
 NANO_SECOND = 1000000000
 
@@ -10,10 +10,14 @@ def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval
     normalized_projects_stats = []
     all_configured_apps = get_collective_metadata()
     for project, data in all_projects_stats.items():
-        app_name = get_app_name_from_project_name(project)
-        if app_name not in all_configured_apps:
+        # Check if this is a TrueNAS app (starts with PROJECT_PREFIX) or external app
+        is_truenas_app = project.startswith(PROJECT_PREFIX)
+        app_name = get_app_name_from_project_name(project) if is_truenas_app else project
+
+        # For TrueNAS apps, verify they're in metadata. For external apps, include them regardless
+        if is_truenas_app and app_name not in all_configured_apps:
             continue
-        else:
+        elif is_truenas_app:
             all_configured_apps.pop(app_name)
 
         normalized_data = {
