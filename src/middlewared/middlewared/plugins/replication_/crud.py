@@ -11,7 +11,6 @@ class ReplicationService(Service):
         roles=["REPLICATION_TASK_WRITE"],
         pass_app=True,
         pass_app_require=True,
-        pass_app_rest=True,
     )
     async def restore(self, app, id_, data):
         """

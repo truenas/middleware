@@ -63,7 +63,6 @@ def api_method(
     authorization_required: bool = True,
     pass_app: bool = False,
     pass_app_require: bool = False,
-    pass_app_rest: bool = False,
     pass_thread_local_storage: bool = False,
     skip_args: int | None = None,
     removed_in: str | None = None,
@@ -117,7 +116,6 @@ def api_method(
             func._pass_app = {
                 'message_id': False,
                 'require': pass_app_require,
-                'rest': pass_app_rest,
             }
         if pass_thread_local_storage:
             func._pass_thread_local_storage = True

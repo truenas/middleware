@@ -1194,19 +1194,6 @@ class AlertClassesService(ConfigService):
     async def do_update(self, data):
         """
         Update default Alert settings.
-
-        .. examples(rest)::
-
-        Set ClassName's level to LEVEL and policy to POLICY. Reset settings for other alert classes.
-
-        {
-            "classes": {
-                "ClassName": {
-                    "level": "LEVEL",
-                    "policy": "POLICY",
-                }
-            }
-        }
         """
         old = await self.config()
 

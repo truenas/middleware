@@ -14,15 +14,9 @@ PeriodicTaskDescriptor = namedtuple('PeriodicTaskDescriptor', ['interval', 'run_
 THREADING_LOCKS = defaultdict(threading.Lock)
 
 
-def cli_private(fn):
-    """Do not expose method in CLI"""
-    fn._cli_private = True
-    return fn
-
-
 def filterable_api_method(
     *, roles=None, item=None, private=False, cli_private=False, authorization_required=True, pass_app=False,
-    pass_app_require=False, pass_app_rest=False, pass_thread_local_storage=False,
+    pass_app_require=False, pass_thread_local_storage=False,
 ):
     def filterable_internal(fn):
         register_models = []
@@ -50,7 +44,7 @@ def filterable_api_method(
         wrapped = api_method(
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
             authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
-            pass_app_rest=pass_app_rest, pass_thread_local_storage=pass_thread_local_storage,
+            pass_thread_local_storage=pass_thread_local_storage,
         )(fn)
         wrapped._register_models = register_models
         return wrapped
@@ -182,13 +176,12 @@ def no_authz_required(fn):
     return fn
 
 
-def pass_app(*, message_id=False, require=False, rest=False):
+def pass_app(*, message_id=False, require=False):
     """Pass the application instance as parameter to the method."""
     def wrapper(fn):
         fn._pass_app = {
             'message_id': message_id,
             'require': require,
-            'rest': rest,
         }
         return fn
     return wrapper

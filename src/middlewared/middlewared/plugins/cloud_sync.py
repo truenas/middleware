@@ -772,7 +772,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
             if provider.readonly:
                 verrors.add(f"{name}.direction", "This remote is read-only")
 
-    @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, pass_app=True, pass_app_rest=True)
+    @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, pass_app=True)
     async def do_create(self, app, cloud_sync):
         """
         Creates a new cloud_sync entry.
@@ -794,7 +794,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         return await self.get_instance(cloud_sync["id"])
 
-    @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, pass_app=True, pass_app_rest=True)
+    @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, pass_app=True)
     async def do_update(self, app, id_, data):
         """
         Updates the cloud_sync entry `id` with `data`.
