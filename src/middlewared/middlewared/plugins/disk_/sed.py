@@ -20,7 +20,7 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 class DiskService(Service):
 
     @private
-    async def setup_sed_disk_for_pool(self, disk):
+    async def setup_sed_disk(self, disk):
         """
         Will attempt to setup SED disk for pool by either unlocking it using disk or global pass
         or alternatively set it up if it is not initialized.
@@ -94,7 +94,7 @@ class DiskService(Service):
 
             failed_setup_disks = []
             for success, disk_name in await asyncio_map(
-                self.setup_sed_disk_for_pool, [d | {'global_passwd': global_sed_password} for d in to_setup_sed_disks],
+                self.setup_sed_disk, [d | {'global_passwd': global_sed_password} for d in to_setup_sed_disks],
                 limit=16
             ):
                 if success is False:
@@ -150,7 +150,7 @@ class DiskService(Service):
         if status_to_check is not None and disk['sed_status'] != status_to_check:
             verrors.add(
                 f'{schema}.name',
-                f'{options["name"]!r} SED status is not {status_to_check} (currently is {disk['sed_status']})'
+                f'{options["name"]!r} SED status is not {status_to_check} (currently is {disk["sed_status"]})'
             )
 
         verrors.check()

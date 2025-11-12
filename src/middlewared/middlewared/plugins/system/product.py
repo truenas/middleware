@@ -74,7 +74,7 @@ class SystemService(Service):
 
     @private
     async def sed_enabled(self):
-        return await self.is_enterprise() and (await self.feature_enabled('SED') or True)
+        return await self.is_enterprise() and await self.feature_enabled('SED')
 
     @api_method(
         SystemVersionShortArgs,
