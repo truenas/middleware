@@ -10,6 +10,7 @@ def render(service, middleware):
         raise FileShouldNotExist()
 
     config = middleware.call_sync("webshare.config")
+    tn_connect_hostname_config = middleware.call_sync("tn_connect.hostname.config")
 
     os.makedirs("/etc/webshare-auth", exist_ok=True, mode=0o700)
     return json.dumps({
@@ -53,8 +54,11 @@ def render(service, middleware):
             "mode": "disable",
             "rp_name": "TrueNAS WebShare",
             "rp_display_name": "TrueNAS WebShare",
-            "rp_id": "localhost",
-            "rp_origins": ["https://localhost", "https://your-truenas.local"],
+            "rp_id": "truenas.direct",
+            "rp_origins": [
+                f"https://{hostname}:755"
+                for hostname in tn_connect_hostname_config["hostname_details"].keys()
+            ],
             "timeout": 60000,
             "rate_limit": {
                 "max_attempts_per_hour": 10,

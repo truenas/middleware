@@ -15,16 +15,11 @@ USERNAME = 'alex'
 PASSWORD = 'password'
 SHARE_NAME = 'alex'
 
-# pytestmark = pytest.mark.skip('Skip until we manage to add test systems to TrueNAS Connect')
+pytestmark = pytest.mark.skip('Skip until we manage to add test systems to TrueNAS Connect')
 
 
 @pytest.fixture(scope='module')
-def make_available():
-    pass
-
-
-@pytest.fixture(scope='module')
-def share(make_available):
+def share():
     call('webshare.update', {'search': True})
     call('service.control', 'START', 'webshare', job=True)
     try:
@@ -54,7 +49,7 @@ def share(make_available):
 
                         time.sleep(1)
                     else:
-                        assert False, processes
+                        pytest.fail(str(processes))
 
     finally:
         call('service.control', 'STOP', 'webshare', job=True)
