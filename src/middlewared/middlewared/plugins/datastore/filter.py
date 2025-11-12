@@ -1,4 +1,4 @@
-import json
+from truenas_api_client import ejson as json
 import operator
 
 from .schema import SchemaMixin
