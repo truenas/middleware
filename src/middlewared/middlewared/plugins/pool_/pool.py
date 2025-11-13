@@ -238,6 +238,16 @@ class PoolService(CRUDService):
                 )
         verrors.check()
 
+        # At this point, we have validated disks and are ready to proceed to the next step in pool creation
+        # where we format disks and finally create the pool with necessary configuration
+        # We will now try to configure SED disks (if any) automatically
+        all_sed = data.pop('all_sed', False)
+        if old or all_sed:
+            # We will only want to do SED magic on zpool create if consumer has explicitly set that flag
+            await self.middleware.call(
+                'disk.setup_sed_disks_for_pool', list(disks), f'{schema_name}.topology', all_sed
+            )
+
         return disks, vdevs
 
     async def _validate_topology(self, data, old=None):
@@ -565,13 +575,13 @@ class PoolService(CRUDService):
         pool = await self.get_instance(id_)
         audit_callback(pool['name'])
 
-        disks = vdevs = None
-        if 'topology' in data:
-            disks, vdevs = await self._process_topology('pool_update', data, pool)
-
         verrors = ValidationErrors()
         dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors, 'pool_update')
         verrors.check()
+
+        disks = vdevs = None
+        if 'topology' in data:
+            disks, vdevs = await self._process_topology('pool_update', data, pool)
 
         if disks and vdevs:
             await self.middleware.call('pool.format_disks', job, disks, 0, 80)
