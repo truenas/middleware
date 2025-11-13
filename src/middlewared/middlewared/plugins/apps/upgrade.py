@@ -89,22 +89,22 @@ class AppService(Service):
             raise CallError(f'No upgrade available for {app_name!r}')
 
         if app['custom_app'] or app['metadata']['name'] == IX_APP_NAME:
-            job.set_progress(20, 'Pulling app images')
+            job.set_progress(10, 'Pulling app images')
             try:
                 self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
             finally:
                 app = self.middleware.call_sync('app.get_instance', app_name)
-                if app['upgrade_available'] is False:
+                if app['upgrade_available'] is False or app['custom_app']:
                     # This conditional is for the case that maybe pull was successful but redeploy failed,
                     # so we make sure that when we are returning from here, we don't have any alert left
                     # if the image has actually been updated
                     self.middleware.call_sync('app.update_app_upgrade_alert')
 
-            self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
-            job.set_progress(100, 'App successfully upgraded and redeployed')
-            return app
+                    self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
+                    job.set_progress(100, 'App successfully upgraded and redeployed')
+                    return app
 
-        job.set_progress(0, f'Retrieving versions for {app_name!r} app')
+        job.set_progress(15, f'Retrieving versions for {app_name!r} app')
         versions_config = self.middleware.call_sync('app.get_versions', app, options)
         upgrade_version = versions_config['specified_version']
 
