@@ -9,11 +9,13 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType', 'ContainerFilesystemDevice',
+    'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType',
+    'ContainerFilesystemDevice', 'ContainerGPUDevice',
     'ContainerDeviceEntry', 'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
     'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
     'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
     'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult',
+    'ContainerDeviceGpuChoicesArgs', 'ContainerDeviceGpuChoicesResult',
 ]
 
 
@@ -24,6 +26,14 @@ class ContainerFilesystemDevice(BaseModel):
     """Target must not contain braces."""
     source: NonEmptyString = Field(pattern=r'^[^{}]*$')
     """Source must not contain braces, and not start with /mnt/."""
+
+
+class ContainerGPUDevice(BaseModel):
+    dtype: Literal['GPU']
+    """Device type identifier for GPU devices."""
+    gpu_type: Literal['AMD']
+    """GPU device type."""
+    pci_address: NonEmptyString
 
 
 class ContainerNICDevice(BaseModel):
@@ -56,7 +66,7 @@ class ContainerUSBDevice(BaseModel):
 
 
 ContainerDeviceType: TypeAlias = Annotated[
-    ContainerNICDevice | ContainerFilesystemDevice | ContainerUSBDevice,
+    ContainerFilesystemDevice | ContainerGPUDevice | ContainerNICDevice | ContainerUSBDevice,
     Field(discriminator='dtype')
 ]
 
@@ -179,3 +189,12 @@ class ContainerDeviceUsbChoicesArgs(BaseModel):
 class ContainerDeviceUsbChoicesResult(BaseModel):
     result: dict[str, USBPassthroughDevice]
     """Object of available USB devices for passthrough with their detailed information."""
+
+
+class ContainerDeviceGpuChoicesArgs(BaseModel):
+    pass
+
+
+class ContainerDeviceGpuChoicesResult(BaseModel):
+    result: dict
+    """Available GPU(s) for container attachment."""

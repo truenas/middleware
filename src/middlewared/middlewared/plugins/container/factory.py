@@ -1,9 +1,10 @@
-from truenas_pylibvirt.device import NICDevice, FilesystemDevice, USBDevice
+from truenas_pylibvirt.device import FilesystemDevice, GPUDevice, NICDevice, USBDevice
 
 from middlewared.api.current import (
-    ContainerNICDevice, ContainerUSBDevice, ContainerFilesystemDevice,
+    ContainerFilesystemDevice, ContainerGPUDevice, ContainerNICDevice, ContainerUSBDevice,
 )
 from middlewared.utils.libvirt.filesystem import FilesystemDelegate
+from middlewared.utils.libvirt.gpu import GPUDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 from middlewared.utils.libvirt.usb import USBDelegate
 
@@ -33,10 +34,18 @@ class ContainerFilesystemDelegate(FilesystemDelegate):
         return ContainerFilesystemDevice
 
 
+class ContainerGPUDelegate(GPUDelegate):
+
+    @property
+    def schema_model(self):
+        return ContainerGPUDevice
+
+
 async def setup(middleware):
     for device_key, device_klass, delegate_klass in (
+        ('FILESYSTEM', FilesystemDevice, ContainerFilesystemDelegate),
+        ('GPU', GPUDevice, ContainerGPUDelegate),
         ('NIC', NICDevice, ContainerNICDelegate),
         ('USB', USBDevice, ContainerUSBDelegate),
-        ('FILESYSTEM', FilesystemDevice, ContainerFilesystemDelegate),
     ):
         await middleware.call('container.device.register_pylibvirt_device', device_key, device_klass, delegate_klass)
