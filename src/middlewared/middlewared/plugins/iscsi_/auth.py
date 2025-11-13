@@ -2,7 +2,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.alert.source.discovery_auth import UPGRADE_ALERTS
 from middlewared.api import api_method
 from middlewared.api.current import (iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, iSCSITargetAuthCredentialDeleteArgs,
-                                     iSCSITargetAuthCredentialDeleteResult, IscsiAuthEntry, iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult)
+                                     iSCSITargetAuthCredentialDeleteResult, iSCSITargetAuthCredentialEntry, iSCSITargetAuthCredentialUpdateArgs, iSCSITargetAuthCredentialUpdateResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from .utils import IscsiAuthType
 
@@ -38,7 +38,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         datastore_prefix = 'iscsi_target_auth_'
         cli_namespace = 'sharing.iscsi.target.auth_credential'
         role_prefix = 'SHARING_ISCSI_AUTH'
-        entry = IscsiAuthEntry
+        entry = iSCSITargetAuthCredentialEntry
 
     @api_method(iSCSITargetAuthCredentialCreateArgs, iSCSITargetAuthCredentialCreateResult, audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
     async def do_create(self, data):

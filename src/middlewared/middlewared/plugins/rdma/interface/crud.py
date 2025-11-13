@@ -9,7 +9,7 @@ from middlewared.service import CallError, CRUDService
 import middlewared.sqlalchemy as sa
 
 
-class RdmaInterfaceEntry(BaseModel):
+class RDMAInterfaceEntry(BaseModel):
     id: int
     node: str = ''
     ifname: str
@@ -23,7 +23,7 @@ class RdmaInterfaceCreateCheck(BaseModel):
     ping_mac: str
 
 
-class RdmaInterfaceCreate(RdmaInterfaceEntry):
+class RdmaInterfaceCreate(RDMAInterfaceEntry):
     id: Excluded = excluded_field()
     check: Optional[RdmaInterfaceCreateCheck] = None
 
@@ -37,7 +37,7 @@ class RdmaInterfaceCreateArgs(BaseModel):
 
 
 class RdmaInterfaceCreateResult(BaseModel):
-    result: RdmaInterfaceEntry | None
+    result: RDMAInterfaceEntry | None
     """`None` indicates that the RDMA interface failed to be created."""
 
 
@@ -47,7 +47,7 @@ class RdmaInterfaceUpdateArgs(BaseModel):
 
 
 class RdmaInterfaceUpdateResult(BaseModel):
-    result: RdmaInterfaceEntry
+    result: RDMAInterfaceEntry
 
 
 class RdmaInterfaceDeleteArgs(BaseModel):
@@ -92,7 +92,7 @@ class RDMAInterfaceService(CRUDService):
         datastore = 'rdma.interface'
         datastore_prefix = "rdmaif_"
         role_prefix = 'NETWORK_INTERFACE'
-        entry = RdmaInterfaceEntry
+        entry = RDMAInterfaceEntry
 
     async def compress(self, data):
         if 'check' in data:

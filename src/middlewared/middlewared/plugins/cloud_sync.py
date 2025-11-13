@@ -4,7 +4,7 @@ from middlewared.alert.base import (
 )
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CloudCredentialEntry,
+    CredentialsEntry,
     CredentialsCreateArgs, CredentialsCreateResult,
     CredentialsUpdateArgs, CredentialsUpdateResult,
     CredentialsDeleteArgs, CredentialsDeleteResult,
@@ -542,7 +542,7 @@ class CredentialsService(CRUDService):
 
         role_prefix = "CLOUD_SYNC"
 
-        entry = CloudCredentialEntry
+        entry = CredentialsEntry
 
     @private
     async def extend(self, data):

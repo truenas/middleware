@@ -7,7 +7,7 @@ from .common import CronModel
 
 
 __all__ = [
-    "PoolSnapshotTaskEntry", "PeriodicSnapshotTaskCreateArgs", "PeriodicSnapshotTaskCreateResult",
+    "PeriodicSnapshotTaskEntry", "PeriodicSnapshotTaskCreateArgs", "PeriodicSnapshotTaskCreateResult",
     "PeriodicSnapshotTaskUpdateArgs", "PeriodicSnapshotTaskUpdateResult", "PeriodicSnapshotTaskDeleteArgs",
     "PeriodicSnapshotTaskDeleteResult", "PeriodicSnapshotTaskMaxCountArgs", "PeriodicSnapshotTaskMaxCountResult",
     "PeriodicSnapshotTaskMaxTotalCountArgs", "PeriodicSnapshotTaskMaxTotalCountResult", "PeriodicSnapshotTaskRunArgs",
@@ -47,7 +47,7 @@ class PoolSnapshotTaskDeleteOptions(BaseModel):
     fixate_removal_date: bool = False
 
 
-class PoolSnapshotTaskEntry(PoolSnapshotTaskCreate):
+class PeriodicSnapshotTaskEntry(PoolSnapshotTaskCreate):
     id: int
     vmware_sync: bool
     state: Any
@@ -58,7 +58,7 @@ class PeriodicSnapshotTaskCreateArgs(BaseModel):
 
 
 class PeriodicSnapshotTaskCreateResult(BaseModel):
-    result: PoolSnapshotTaskEntry
+    result: PeriodicSnapshotTaskEntry
 
 
 class PeriodicSnapshotTaskUpdateArgs(BaseModel):
@@ -67,7 +67,7 @@ class PeriodicSnapshotTaskUpdateArgs(BaseModel):
 
 
 class PeriodicSnapshotTaskUpdateResult(BaseModel):
-    result: PoolSnapshotTaskEntry
+    result: PeriodicSnapshotTaskEntry
 
 
 class PeriodicSnapshotTaskDeleteArgs(BaseModel):

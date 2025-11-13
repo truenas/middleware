@@ -22,12 +22,12 @@ from middlewared.utils.smb import SMBUnixCharset, SMBSharePurpose, validate_smb_
 __all__ = [
     'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
     'SharingSMBSetaclArgs', 'SharingSMBSetaclResult',
-    'SmbServiceEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
+    'SMBEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
     'SMBUnixcharsetChoicesArgs', 'SMBUnixcharsetChoicesResult',
     'SMBBindipChoicesArgs', 'SMBBindipChoicesResult',
     'SharingSMBPresetsArgs', 'SharingSMBPresetsResult',
     'SharingSMBSharePrecheckArgs', 'SharingSMBSharePrecheckResult',
-    'SmbShareEntry', 'SharingSMBCreateArgs', 'SharingSMBCreateResult',
+    'SharingSMBEntry', 'SharingSMBCreateArgs', 'SharingSMBCreateResult',
     'SharingSMBUpdateArgs', 'SharingSMBUpdateResult',
     'SharingSMBDeleteArgs', 'SharingSMBDeleteResult',
 ]
@@ -130,7 +130,7 @@ class SharingSMBGetaclResult(SharingSMBSetaclResult):
 SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
 
 
-class SmbServiceEntry(BaseModel):
+class SMBEntry(BaseModel):
     """ TrueNAS SMB server configuration. """
     id: int
     """Unique identifier for the SMB service configuration."""
@@ -212,12 +212,12 @@ class SmbServiceEntry(BaseModel):
 
 
 @single_argument_args('smb_update')
-class SMBUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
+class SMBUpdateArgs(SMBEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
 class SMBUpdateResult(BaseModel):
-    result: SmbServiceEntry
+    result: SMBEntry
     """The updated SMB service configuration."""
 
 
@@ -500,7 +500,7 @@ SmbShareOptions = Annotated[
 ]
 
 
-class SmbShareEntry(BaseModel):
+class SharingSMBEntry(BaseModel):
     """ SMB share entry on the TrueNAS server. """
     id: int
     """Unique identifier for this SMB share."""
@@ -668,7 +668,7 @@ class SmbShareEntry(BaseModel):
         return new
 
 
-class SmbShareCreate(SmbShareEntry):
+class SmbShareCreate(SharingSMBEntry):
     id: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
@@ -725,7 +725,7 @@ class SharingSMBCreateArgs(BaseModel):
 
 
 class SharingSMBCreateResult(BaseModel):
-    result: SmbShareEntry
+    result: SharingSMBEntry
     """The created SMB share configuration."""
 
 
@@ -741,7 +741,7 @@ class SharingSMBUpdateArgs(BaseModel):
 
 
 class SharingSMBUpdateResult(BaseModel):
-    result: SmbShareEntry
+    result: SharingSMBEntry
     """The updated SMB share configuration."""
 
 

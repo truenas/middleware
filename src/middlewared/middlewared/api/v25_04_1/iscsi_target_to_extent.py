@@ -3,7 +3,7 @@ from typing import Literal
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    "IscsiTargetToExtentEntry",
+    "iSCSITargetToExtentEntry",
     "iSCSITargetToExtentCreateArgs",
     "iSCSITargetToExtentCreateResult",
     "iSCSITargetToExtentUpdateArgs",
@@ -13,14 +13,14 @@ __all__ = [
 ]
 
 
-class IscsiTargetToExtentEntry(BaseModel):
+class iSCSITargetToExtentEntry(BaseModel):
     id: int
     target: int
     lunid: int
     extent: int
 
 
-class IscsiTargetToExtentCreate(IscsiTargetToExtentEntry):
+class IscsiTargetToExtentCreate(iSCSITargetToExtentEntry):
     id: Excluded = excluded_field()
     lunid: int | None = None
 
@@ -30,10 +30,10 @@ class iSCSITargetToExtentCreateArgs(BaseModel):
 
 
 class iSCSITargetToExtentCreateResult(BaseModel):
-    result: IscsiTargetToExtentEntry
+    result: iSCSITargetToExtentEntry
 
 
-class IscsiTargetToExtentUpdate(IscsiTargetToExtentEntry, metaclass=ForUpdateMetaclass):
+class IscsiTargetToExtentUpdate(iSCSITargetToExtentEntry, metaclass=ForUpdateMetaclass):
     pass
 
 
@@ -43,7 +43,7 @@ class iSCSITargetToExtentUpdateArgs(BaseModel):
 
 
 class iSCSITargetToExtentUpdateResult(BaseModel):
-    result: IscsiTargetToExtentEntry
+    result: iSCSITargetToExtentEntry
 
 
 class iSCSITargetToExtentDeleteArgs(BaseModel):

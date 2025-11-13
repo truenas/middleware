@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (iSCSITargetAuthorizedInitiatorCreateArgs, iSCSITargetAuthorizedInitiatorCreateResult, iSCSITargetAuthorizedInitiatorDeleteArgs,
-                                     iSCSITargetAuthorizedInitiatorDeleteResult, IscsiInitiatorEntry, iSCSITargetAuthorizedInitiatorUpdateArgs,
+                                     iSCSITargetAuthorizedInitiatorDeleteResult, iSCSITargetAuthorizedInitiatorEntry, iSCSITargetAuthorizedInitiatorUpdateArgs,
                                      iSCSITargetAuthorizedInitiatorUpdateResult)
 from middlewared.service import CRUDService, private
 
@@ -37,7 +37,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         datastore_extend = 'iscsi.initiator.extend'
         cli_namespace = 'sharing.iscsi.target.authorized_initiator'
         role_prefix = 'SHARING_ISCSI_INITIATOR'
-        entry = IscsiInitiatorEntry
+        entry = iSCSITargetAuthorizedInitiatorEntry
 
     @api_method(
         iSCSITargetAuthorizedInitiatorCreateArgs,

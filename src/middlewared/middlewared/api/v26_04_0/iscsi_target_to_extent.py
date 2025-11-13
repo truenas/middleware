@@ -3,7 +3,7 @@ from typing import Literal
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    "IscsiTargetToExtentEntry",
+    "iSCSITargetToExtentEntry",
     "iSCSITargetToExtentCreateArgs",
     "iSCSITargetToExtentCreateResult",
     "iSCSITargetToExtentUpdateArgs",
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-class IscsiTargetToExtentEntry(BaseModel):
+class iSCSITargetToExtentEntry(BaseModel):
     id: int
     """Unique identifier for the target-to-extent association."""
     target: int
@@ -24,7 +24,7 @@ class IscsiTargetToExtentEntry(BaseModel):
     """ID of the iSCSI extent to associate with the target."""
 
 
-class IscsiTargetToExtentCreate(IscsiTargetToExtentEntry):
+class IscsiTargetToExtentCreate(iSCSITargetToExtentEntry):
     id: Excluded = excluded_field()
     lunid: int | None = None
     """LUN ID to assign or `null` to auto-assign the next available LUN."""
@@ -36,11 +36,11 @@ class iSCSITargetToExtentCreateArgs(BaseModel):
 
 
 class iSCSITargetToExtentCreateResult(BaseModel):
-    result: IscsiTargetToExtentEntry
+    result: iSCSITargetToExtentEntry
     """The created target-to-extent association."""
 
 
-class IscsiTargetToExtentUpdate(IscsiTargetToExtentEntry, metaclass=ForUpdateMetaclass):
+class IscsiTargetToExtentUpdate(iSCSITargetToExtentEntry, metaclass=ForUpdateMetaclass):
     pass
 
 
@@ -52,7 +52,7 @@ class iSCSITargetToExtentUpdateArgs(BaseModel):
 
 
 class iSCSITargetToExtentUpdateResult(BaseModel):
-    result: IscsiTargetToExtentEntry
+    result: iSCSITargetToExtentEntry
     """The updated target-to-extent association."""
 
 

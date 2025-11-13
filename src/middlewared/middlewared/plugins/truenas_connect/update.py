@@ -8,7 +8,7 @@ from truenas_connect_utils.urls import get_account_service_url
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    TNCEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
+    TrueNASConnectEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
     TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult,
 )
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
@@ -56,7 +56,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         datastore_extend = 'tn_connect.config_extend'
         cli_private = True
         namespace = 'tn_connect'
-        entry = TNCEntry
+        entry = TrueNASConnectEntry
         role_prefix = 'TRUENAS_CONNECT'
 
     @private
