@@ -13,6 +13,7 @@ __all__ = [
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
+    'DockerEventsAddedEvent', 'DockerStateChangedEvent',
 ]
 
 
@@ -205,3 +206,15 @@ class DockerBackupToPoolArgs(BaseModel):
 class DockerBackupToPoolResult(BaseModel):
     result: None
     """Returns `null` when the pool backup is successfully started."""
+
+
+class DockerEventsAddedEvent(BaseModel):
+    id: str
+    """App name."""
+    fields: dict
+    """Event fields."""
+
+
+class DockerStateChangedEvent(BaseModel):
+    fields: StatusResult
+    """Event fields."""
