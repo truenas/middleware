@@ -4,7 +4,7 @@ import os
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
-from middlewared.service import CallError, private
+from middlewared.service import CallError, private, ValidationErrors
 from middlewared.utils import run
 
 from .storage_devices import IOTYPE_CHOICES
@@ -140,6 +140,11 @@ class DeviceMixin:
 
     async def _validate_device(self, device, old=None, update=True):
         svc_instance = await self.middleware.call(f'{self._service_type}.get_instance', device[self._service_type])
+        verrors = ValidationErrors()
+        if old and old['attributes']['dtype'] != device['attributes']['dtype']:
+            verrors.add('attributes.dtype', 'Device type cannot be changed')
+        verrors.check()
+
         device_adapter = self.device_factory.get_device_adapter(device)
         await self.middleware.run_in_thread(device_adapter.validate, old, svc_instance, update)
         return device
