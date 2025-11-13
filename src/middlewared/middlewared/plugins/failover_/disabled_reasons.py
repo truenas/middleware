@@ -4,8 +4,10 @@
 # See the file LICENSE.IX for complete terms and conditions
 import truenas_pynetif as netif
 
-from middlewared.api import api_method
-from middlewared.api.current import FailoverDisabledReasonsReasonsArgs, FailoverDisabledReasonsReasonsResult
+from middlewared.api import api_method, Event
+from middlewared.api.current import (
+    FailoverDisabledReasonsReasonsArgs, FailoverDisabledReasonsReasonsResult, FailoverDisabledReasonsChangedEvent,
+)
 from middlewared.service import Service, private
 from middlewared.utils.zfs import query_imported_fast_impl
 from .enums import DisabledReasonsEnum
@@ -15,6 +17,14 @@ class FailoverDisabledReasonsService(Service):
     class Config:
         cli_namespace = "system.failover.disabled"
         namespace = "failover.disabled"
+        events = [
+            Event(
+                name="failover.disabled.reasons",
+                description="Sent when failover status reasons change.",
+                roles=["FAILOVER_READ"],
+                models={"CHANGED": FailoverDisabledReasonsChangedEvent},
+            ),
+        ]
 
     LAST_DISABLED_REASONS = None
     SYSTEM_DATASET_SETUP_IN_PROGRESS = False
@@ -213,9 +223,4 @@ async def systemdataset_setup_hook(middleware, data):
 
 
 async def setup(middleware):
-    middleware.event_register(
-        "failover.disabled.reasons",
-        "Sent when failover status reasons change.",
-        roles=['FAILOVER_READ']
-    )
     middleware.register_hook("sysdataset.setup", systemdataset_setup_hook)

@@ -1096,20 +1096,8 @@ class FailoverEventsService(Service):
 
 
 async def vrrp_fifo_hook(middleware, data):
-    ifname = data['ifname']
-    event = data['event']
-    middleware.send_event(
-        'failover.vrrp_event',
-        'CHANGED',
-        fields={
-            'ifname': ifname,
-            'event': event,
-        }
-    )
-
-    await middleware.call('failover.events.event', ifname, event)
+    await middleware.call('failover.events.event', data['ifname'], data['event'])
 
 
 def setup(middleware):
-    middleware.event_register('failover.vrrp_event', 'Sent when a VRRP state changes.')
     middleware.register_hook('vrrp.fifo', vrrp_fifo_hook)
