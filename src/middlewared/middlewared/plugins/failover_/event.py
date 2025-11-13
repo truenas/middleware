@@ -383,7 +383,7 @@ class FailoverEventsService(Service):
             logger.exception('Unexpected failure setting up iscsi')
         return (suspended, cleaned)
 
-    @job(lock=FAILOVER_LOCK_NAME)
+    @job(lock=FAILOVER_LOCK_NAME, read_roles=['READONLY_ADMIN'])
     def vrrp_master(self, job, fobj, ifname, event):
 
         # vrrp does the "election" for us. If we've gotten this far
@@ -803,7 +803,7 @@ class FailoverEventsService(Service):
 
         return self.FAILOVER_RESULT
 
-    @job(lock=FAILOVER_LOCK_NAME)
+    @job(lock=FAILOVER_LOCK_NAME, read_roles=['READONLY_ADMIN'])
     def vrrp_backup(self, job, fobj, ifname, event):
 
         # we need to check a couple things before we stop fenced
