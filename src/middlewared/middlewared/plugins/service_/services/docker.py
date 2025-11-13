@@ -1,8 +1,12 @@
 import asyncio
 
+from middlewared.plugins.docker.state_management import DOCKER_START_TIMEOUT
 from middlewared.plugins.docker.state_utils import Status
 
 from .base import SimpleService
+
+# Time to sleep between checks
+DOCKER_STATUS_CHECK_INTERVAL = 2
 
 
 class DockerService(SimpleService):
@@ -24,14 +28,14 @@ class DockerService(SimpleService):
     async def start(self):
         try:
             await super().start()
-            # We have a timeout for docker to start within 15 minutes of the above call, if that doesn't happen
+            # We have a timeout for docker to start within 16 minutes of the above call, if that doesn't happen
             # then we get into a failed start that docker failed to start. This has been necessary because
             # HDDs have been notorious and can take quite some time for docker to start on boot.
-            timeout = 8 * 60  # We do 8 because we sleep for 2 secs - so in total it is 16 minutes
+            timeout = DOCKER_START_TIMEOUT
             while timeout > 0:
                 if not await self.middleware.call('service.started', 'docker'):
-                    await asyncio.sleep(2)
-                    timeout -= 2
+                    await asyncio.sleep(DOCKER_STATUS_CHECK_INTERVAL)
+                    timeout -= DOCKER_STATUS_CHECK_INTERVAL
                 else:
                     break
         finally:
