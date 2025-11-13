@@ -7,7 +7,7 @@ import pam
 import time
 from typing import TYPE_CHECKING
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
     AuthLoginArgs, AuthLoginResult,
@@ -24,6 +24,7 @@ from middlewared.api.current import (
     AuthTerminateSessionArgs, AuthTerminateSessionResult,
     AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult,
     AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
+    AuthSessionsAddedEvent, AuthSessionsRemovedEvent,
 )
 from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
                               ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
@@ -267,6 +268,17 @@ class AuthService(Service):
 
     class Config:
         cli_namespace = "auth"
+        events = [
+            Event(
+                name='auth.sessions',
+                description='Notification of new and removed sessions.',
+                roles=['FULL_ADMIN'],
+                models={
+                    'ADDED': AuthSessionsAddedEvent,
+                    'REMOVED': AuthSessionsRemovedEvent,
+                }
+            )
+        ]
 
     session_manager = SessionManager()
 
@@ -1357,5 +1369,4 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
 
 
 def setup(middleware: Middleware):
-    middleware.event_register('auth.sessions', 'Notification of new and removed sessions.', roles=['FULL_ADMIN'])
     middleware.register_hook('core.on_connect', check_permission)
