@@ -20,7 +20,7 @@ from .ix_apps.upgrade import upgrade_config
 from .ix_apps.utils import dump_yaml
 from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
-from .utils import get_upgrade_snap_name
+from .utils import get_upgrade_snap_name, upgrade_summary_info
 
 
 logger = logging.getLogger('app_lifecycle')
@@ -177,16 +177,20 @@ class AppService(Service):
             raise CallError(f'No upgrade available for {app_name!r}')
 
         if app['custom_app']:
-            return {
-                'latest_version': app['version'],
-                'latest_human_version': app['human_version'],
-                'upgrade_version': app['version'],
-                'upgrade_human_version': app['human_version'],
-                'changelog': 'Image updates are available for this app',
-                'available_versions_for_upgrade': [],
-            }
+            return upgrade_summary_info(app)
 
-        versions_config = await self.get_versions(app, options)
+        try:
+            versions_config = await self.get_versions(app, options)
+        except ValidationErrors:
+            # We want to safely handle the case where ix-app has only image updates available
+            # but not a version upgrade of compose files
+            # If we come at this point for an ix-app, it means that version upgrade was not available
+            # and only image updates were available for ix-app
+            if app['metadata']['name'] == IX_APP_NAME and app['image_updates_available']:
+                return upgrade_summary_info(app)
+
+            raise
+
         return {
             'latest_version': versions_config['latest_version']['version'],
             'latest_human_version': versions_config['latest_version']['human_version'],
