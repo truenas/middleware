@@ -115,9 +115,23 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
             tnc_config = await self.middleware.call('tn_connect.config_internal')
 
     async def payload(self, disk_mapping=None):
+        stats = await self.middleware.call('reporting.realtime.stats', disk_mapping)
+        # We would like to add app/vm stats here as well now
+        apps = await self.middleware.call('app.query')
+        vms = await self.middleware.call('vm.query')
+        stats.update({
+            'apps': {
+                'total': len(apps),
+                'running': len([app for app in apps if app['state'] == 'RUNNING']),
+            },
+            'vms': {
+                'total': len(vms),
+                'running': len([vm for vm in vms if vm['status']['state'] == 'RUNNING']),
+            },
+        })
         return {
             'alerts': await self.middleware.call('alert.list'),
-            'stats': await self.middleware.call('reporting.realtime.stats', disk_mapping),
+            'stats': stats,
         }
 
 
