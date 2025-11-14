@@ -10,7 +10,7 @@ import stat
 import time
 from functools import partial
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     FailoverBecomePassiveArgs,
     FailoverBecomePassiveResult,
@@ -31,6 +31,7 @@ from middlewared.api.current import (
     FailoverUpdateResult,
     FailoverUpgradeArgs,
     FailoverUpgradeResult,
+    FailoverStatusChangedEvent,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.service import (
@@ -82,6 +83,14 @@ class FailoverService(ConfigService):
         cli_private = True
         role_prefix = 'FAILOVER'
         entry = FailoverEntry
+        events = [
+            Event(
+                name='failover.status',
+                description='Sent when failover status changes.',
+                roles=['FAILOVER_READ'],
+                models={'CHANGED': FailoverStatusChangedEvent},
+            )
+        ]
 
     @private
     async def failover_extend(self, data):
@@ -1266,8 +1275,6 @@ def mismatch_nics(
 
 
 async def setup(middleware):
-    middleware.event_register('failover.setup', 'Sent when failover is being setup.', roles=['FAILOVER_READ'])
-    middleware.event_register('failover.status', 'Sent when failover status changes.', roles=['FAILOVER_READ'])
     middleware.event_subscribe('system.ready', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
