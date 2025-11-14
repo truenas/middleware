@@ -15,6 +15,7 @@ __all__ = [
     'AuthMechanismChoicesArgs', 'AuthMechanismChoicesResult', 'AuthLogoutArgs', 'AuthLogoutResult',
     'AuthSetAttributeArgs', 'AuthSetAttributeResult', 'AuthTerminateOtherSessionsArgs',
     'AuthTerminateOtherSessionsResult', 'AuthTerminateSessionArgs', 'AuthTerminateSessionResult',
+    'AuthSessionsAddedEvent', 'AuthSessionsRemovedEvent',
 ]
 
 
@@ -336,3 +337,18 @@ class AuthTerminateSessionArgs(BaseModel):
 class AuthTerminateSessionResult(BaseModel):
     result: bool
     """Returns `true` if the session was successfully terminated, `false` otherwise."""
+
+
+class AuthSessionsAddedEvent(BaseModel):
+    fields: AuthSessionsEntry
+    """Event fields."""
+
+
+class AuthSessionsRemovedEvent(BaseModel):
+    fields: "AuthSessionsRemovedEventFields"
+    """Event fields."""
+
+
+class AuthSessionsRemovedEventFields(BaseModel):
+    id: str
+    """Unique identifier for the authentication session."""
