@@ -16,6 +16,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.sed import SEDStatus
 from middlewared.utils.size import format_size
 
 from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
@@ -65,7 +66,7 @@ class PoolService(CRUDService):
         return await self.pool_normalize_info_impl(pool_name)
 
     @private
-    async def pool_normalize_info_impl(self, pool_name, sed_enabled=None, disks=None):
+    async def pool_normalize_info_impl(self, pool_name, sed_enabled=None, locked_sed_disks=None):
         rv = {
             'name': pool_name,
             'path': '/' if pool_name in BOOT_POOL_NAME_VALID else f'/mnt/{pool_name}',
@@ -138,7 +139,15 @@ class PoolService(CRUDService):
             # If system is licensed for SED and we have SED disks which are locked, we would like to
             # update status detail attr to say that it is possible because of locked disks, the pool
             # did not import
-            pass
+            sed_enabled = await self.middleware.call('system.sed_enabled') if sed_enabled is None else sed_enabled
+            if sed_enabled:
+                locked_sed_disks = {disk['name'] for disk in await self.middleware.call('disk.query', [
+                    ['sed', '=', True],
+                    ['sed_status', '=', SEDStatus.LOCKED]
+                ], {'extra': {'sed_status': True}})} if locked_sed_disks is None else locked_sed_disks
+                if locked_sed_disks:
+                    rv['status_detail'] = ('Pool might have failed to import because of '
+                                           f'{", ".join(locked_sed_disks)!r} SED disk(s) being locked')
 
         return rv
 
