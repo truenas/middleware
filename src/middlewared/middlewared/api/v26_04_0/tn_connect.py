@@ -10,6 +10,7 @@ __all__ = [
     'TrueNASConnectGenerateClaimTokenArgs',
     'TrueNASConnectGenerateClaimTokenResult',
     'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
+    'TrueNASConnectConfigChangedEvent',
 ]
 
 
@@ -86,3 +87,8 @@ class TrueNASConnectIpChoicesArgs(BaseModel):
 class TrueNASConnectIpChoicesResult(BaseModel):
     result: dict[str, str]
     """Object of available IP addresses and their associated interface descriptions."""
+
+
+class TrueNASConnectConfigChangedEvent(BaseModel):
+    fields: TrueNASConnectEntry
+    """Event data."""

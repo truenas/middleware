@@ -3,12 +3,12 @@ from typing import Annotated, Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_args
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
 
 
 __all__ = [
     'TRUECOMMAND_CONNECTING_STATUS_REASON', 'TruecommandStatus', 'TruecommandStatusReason',
-    'TruecommandEntry', 'TruecommandUpdateArgs', 'TruecommandUpdateResult',
+    'TruecommandEntry', 'TruecommandUpdateArgs', 'TruecommandUpdateResult', 'TruecommandConfigChangedEvent',
 ]
 
 TRUECOMMAND_CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
@@ -70,3 +70,11 @@ class TruecommandUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
 class TruecommandUpdateResult(BaseModel):
     result: TruecommandEntry
     """The updated TrueCommand configuration with current connection status."""
+
+
+class TruecommandConfigChangedEvent(BaseModel):
+    fields: "TruecommandConfigChangedEventFields"
+
+
+class TruecommandConfigChangedEventFields(TruecommandEntry):
+    api_key: Excluded = excluded_field()
