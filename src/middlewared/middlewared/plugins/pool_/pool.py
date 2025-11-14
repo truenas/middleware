@@ -16,6 +16,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.sed import SEDStatus
 from middlewared.utils.size import format_size
 
 from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
@@ -28,6 +29,7 @@ class PoolPoolNormalizeInfo(PoolEntry):
 
 class PoolPoolNormalizeInfoArgs(BaseModel):
     pool_name: str
+    sed_cache: dict | None = None
 
 
 class PoolPoolNormalizeInfoResult(BaseModel):
@@ -55,7 +57,7 @@ class PoolService(CRUDService):
         entry = PoolEntry
 
     @api_method(PoolPoolNormalizeInfoArgs, PoolPoolNormalizeInfoResult, private=True)
-    async def pool_normalize_info(self, pool_name):
+    async def pool_normalize_info(self, pool_name, sed_cache=None):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
 
@@ -130,6 +132,28 @@ class PoolService(CRUDService):
                 'dedup_table_quota': info['properties']['dedup_table_quota']['parsed'],
                 'dedup_table_size': info['properties']['dedup_table_size']['parsed'],
             })
+        else:
+            # If system is licensed for SED and we have SED disks which are locked, we would like to
+            # update status detail attr to say that it is possible because of locked disks, the pool
+            # did not import
+            sed_cache = {} if sed_cache is None else sed_cache
+            # Reason for having this explicit dict cache workflow is so that in pool extend context, we
+            # avoid querying SED disks at all and this code path only gets triggered if there is actually
+            # a zpool which failed to import and locked SED disks might be to blame
+            if not sed_cache:
+                sed_enabled = await self.middleware.call('system.sed_enabled')
+                locked_sed_disks = {disk['name'] for disk in await self.middleware.call('disk.query', [
+                    ['sed_status', '=', SEDStatus.LOCKED]
+                ], {'extra': {'sed_status': True}})} if sed_enabled else set()
+                sed_cache.update({
+                    'sed_enabled': sed_enabled,
+                    'locked_sed_disks': locked_sed_disks,
+                })
+
+            if sed_cache['sed_enabled']:
+                if sed_cache['locked_sed_disks']:
+                    rv['status_detail'] = ('Pool might have failed to import because of '
+                                           f'{", ".join(sed_cache["locked_sed_disks"])!r} SED disk(s) being locked')
 
         return rv
 
@@ -137,6 +161,7 @@ class PoolService(CRUDService):
     def pool_extend_context(self, rows, extra):
         return {
             "extra": extra,
+            "sed_cache": dict(),
         }
 
     @private
@@ -145,7 +170,7 @@ class PoolService(CRUDService):
             pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 
         # WebUI expects the same data as in `boot.get_state`
-        pool |= self.middleware.call_sync('pool.pool_normalize_info', pool['name'])
+        pool |= self.middleware.call_sync('pool.pool_normalize_info', pool['name'], context["sed_cache"])
         return pool
 
     async def __convert_topology_to_vdevs(self, topology):
