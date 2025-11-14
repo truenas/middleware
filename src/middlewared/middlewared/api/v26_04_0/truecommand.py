@@ -74,6 +74,7 @@ class TruecommandUpdateResult(BaseModel):
 
 class TruecommandConfigChangedEvent(BaseModel):
     fields: "TruecommandConfigChangedEventFields"
+    """Event fields."""
 
 
 class TruecommandConfigChangedEventFields(TruecommandEntry):
