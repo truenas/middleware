@@ -1,13 +1,13 @@
 from middlewared.api.base import BaseModel
 
 
-__all__ = ["FailoverDisabledReasonsReasonsArgs", "FailoverDisabledReasonsReasonsResult"]
+__all__ = ["FailoverDisabledReasonsArgs", "FailoverDisabledReasonsResult"]
 
 
-class FailoverDisabledReasonsReasonsArgs(BaseModel):
+class FailoverDisabledReasonsArgs(BaseModel):
     pass
 
 
-class FailoverDisabledReasonsReasonsResult(BaseModel):
+class FailoverDisabledReasonsResult(BaseModel):
     result: list[str]
     """Array of reasons why failover is currently disabled."""
