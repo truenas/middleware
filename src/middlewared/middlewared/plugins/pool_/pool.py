@@ -62,6 +62,10 @@ class PoolService(CRUDService):
         Common method for `pool.pool_extend` and `boot.get_state` returning a uniform
         data structure for its consumers.
         """
+        return await self.pool_normalize_info_impl(pool_name)
+
+    @private
+    async def pool_normalize_info_impl(self, pool_name, sed_enabled=None, disks=None):
         rv = {
             'name': pool_name,
             'path': '/' if pool_name in BOOT_POOL_NAME_VALID else f'/mnt/{pool_name}',
