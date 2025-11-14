@@ -23,6 +23,8 @@ class Service(metaclass=ServiceBase):
                 event.description,
                 private=event.private,
                 models=event.models,
+                no_auth_required=not event.authentication_required,
+                no_authz_required=not event.authorization_required,
                 roles=event.roles,
             )
 

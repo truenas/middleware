@@ -16,7 +16,7 @@ from remote_pdb import RemotePdb
 
 import middlewared.main
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
     CoreGetServicesArgs, CoreGetServicesResult,
@@ -35,6 +35,7 @@ from middlewared.api.current import (
     CoreSetOptionsArgs, CoreSetOptionsResult,
     CoreSubscribeArgs, CoreSubscribeResult,
     CoreUnsubscribeArgs, CoreUnsubscribeResult,
+    CoreGetJobsAddedEvent, CoreGetJobsChangedEvent,
     QueryArgs,
 )
 from middlewared.common.environ import environ_update
@@ -63,6 +64,15 @@ class CoreService(Service):
 
     class Config:
         cli_private = True
+        events = [
+            Event(
+                name='core.get_jobs',
+                description='Updates on job changes.',
+                roles=None,
+                models={'ADDED': CoreGetJobsAddedEvent, 'CHANGED': CoreGetJobsChangedEvent},
+                authorization_required=False,
+            )
+        ]
 
     @api_method(CoreResizeShellArgs, CoreResizeShellResult, authorization_required=False)
     async def resize_shell(self, id_, cols, rows):
