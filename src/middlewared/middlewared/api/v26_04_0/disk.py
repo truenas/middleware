@@ -30,6 +30,9 @@ __all__ = (
     "DiskSetupSedResult",
     "DiskResetSedArgs",
     "DiskResetSedResult",
+    "DiskQueryAddedEvent",
+    "DiskQueryChangedEvent",
+    "DiskQueryRemovedEvent",
 )
 
 
@@ -259,3 +262,22 @@ class DiskResetSedArgs(BaseModel):
 class DiskResetSedResult(BaseModel):
     result: Literal[True]
     """Returns true if the disk reset was successful."""
+
+
+class DiskQueryAddedEvent(BaseModel):
+    id: str
+    """Disk identifier."""
+    fields: DiskEntry
+    """Event fields."""
+
+
+class DiskQueryChangedEvent(BaseModel):
+    id: str
+    """Disk identifier."""
+    fields: DiskEntry
+    """Event fields."""
+
+
+class DiskQueryRemovedEvent(BaseModel):
+    id: str
+    """Disk identifier."""
