@@ -3,9 +3,9 @@ from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 
 def test_network_globalconfig_audit():
-    '''
+    """
     Test the auditing of network global configuration changes
-    '''
+    """
     initial_network_config = call('network.configuration.config')
     try:
         # UPDATE
