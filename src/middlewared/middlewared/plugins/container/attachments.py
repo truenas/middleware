@@ -21,13 +21,25 @@ class LXCFSAttachmentDelegate(FSAttachmentDelegate):
             if query_ds == container_pool or query_ds.startswith(container_dataset(container_pool)):
                 results.append({'id': container_pool})
                 break
+
+        if not results and query_ds == (await self.middleware.call('lxc.config'))['preferred_pool']:
+            results.append({'id': query_ds})
+
         return results
 
     async def get_attachment_name(self, attachment):
         return attachment['id']
 
     async def delete(self, attachments):
-        pass
+        lxc_config = await self.middleware.call('lxc.config')
+        if (preferred_pool := lxc_config['preferred_pool']) and any(
+            attachment['id'] == preferred_pool for attachment in attachments
+        ):
+            # We use datastore directly here as we do not want export to fail because for example some
+            # bridge device or anything does not exist and validation in lxc.update fails because of that
+            await self.middleware.call('datastore.update', 'container.config', lxc_config['id'], {
+                'preferred_pool': None,
+            })
 
     async def toggle(self, attachments, enabled):
         pass
