@@ -1,5 +1,7 @@
-from middlewared.api import api_method
-from middlewared.api.current import DiskEntry, DiskUpdateArgs, DiskUpdateResult
+from middlewared.api import api_method, Event
+from middlewared.api.current import (
+    DiskEntry, DiskUpdateArgs, DiskUpdateResult, DiskQueryAddedEvent, DiskQueryChangedEvent, DiskQueryRemovedEvent,
+)
 from middlewared.service import filterable_api_method, private, CRUDService
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductType
@@ -46,6 +48,18 @@ class DiskService(CRUDService):
         cli_namespace = 'storage.disk'
         role_prefix = 'DISK'
         entry = DiskEntry
+        events = [
+            Event(
+                name='disk.query',
+                description='Sent on disk changes.',
+                roles=['READONLY_ADMIN'],
+                models={
+                    'ADDED': DiskQueryAddedEvent,
+                    'CHANGED': DiskQueryChangedEvent,
+                    'REMOVED': DiskQueryRemovedEvent,
+                }
+            )
+        ]
 
     @filterable_api_method(item=DiskEntry)
     async def query(self, filters, options):
