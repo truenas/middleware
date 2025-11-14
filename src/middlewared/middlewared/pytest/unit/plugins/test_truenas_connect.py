@@ -10,8 +10,7 @@ from truenas_connect_utils.status import Status
 @pytest.fixture
 def tnc_service():
     """Create a mock TrueNASConnectService instance."""
-    service = TrueNASConnectService(None)
-    service.middleware = MagicMock()
+    service = TrueNASConnectService(MagicMock())
     return service
 
 
@@ -582,8 +581,7 @@ class TestTNCHostnameService:
     @pytest.mark.asyncio
     async def test_sync_interface_ips_use_all_interfaces_true(self):
         """Test that sync_interface_ips uses all interfaces when use_all_interfaces=True."""
-        service = TNCHostnameService(None)
-        service.middleware = MagicMock()
+        service = TNCHostnameService(MagicMock())
 
         # Track which methods were called
         get_all_called = False
@@ -627,8 +625,7 @@ class TestTNCHostnameService:
     @pytest.mark.asyncio
     async def test_sync_interface_ips_use_all_interfaces_false(self):
         """Test that sync_interface_ips uses configured interfaces when use_all_interfaces=False."""
-        service = TNCHostnameService(None)
-        service.middleware = MagicMock()
+        service = TNCHostnameService(MagicMock())
 
         # Track which methods were called
         get_all_called = False
@@ -675,8 +672,7 @@ class TestTNCHostnameService:
         """Test that register_update_ips uses combined IPs when no IPs provided."""
         from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 
-        service = TNCHostnameService(None)
-        service.middleware = MagicMock()
+        service = TNCHostnameService(MagicMock())
         service.middleware.call = AsyncMock(return_value={
             'ips': ['192.168.1.10'],
             'interfaces_ips': ['10.0.0.10', '172.16.0.10'],
@@ -699,8 +695,7 @@ class TestTNCHostnameService:
         """Test that register_update_ips uses provided IPs when specified."""
         from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 
-        service = TNCHostnameService(None)
-        service.middleware = MagicMock()
+        service = TNCHostnameService(MagicMock())
         service.middleware.call = AsyncMock(return_value={
             'ips': ['192.168.1.10'],
             'interfaces_ips': ['10.0.0.10'],
