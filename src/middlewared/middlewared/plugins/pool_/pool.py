@@ -29,6 +29,7 @@ class PoolPoolNormalizeInfo(PoolEntry):
 
 class PoolPoolNormalizeInfoArgs(BaseModel):
     pool_name: str
+    sed_cache: dict | None = None
 
 
 class PoolPoolNormalizeInfoResult(BaseModel):
@@ -56,17 +57,13 @@ class PoolService(CRUDService):
         entry = PoolEntry
 
     @api_method(PoolPoolNormalizeInfoArgs, PoolPoolNormalizeInfoResult, private=True)
-    async def pool_normalize_info(self, pool_name):
+    async def pool_normalize_info(self, pool_name, sed_cache=None):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
 
         Common method for `pool.pool_extend` and `boot.get_state` returning a uniform
         data structure for its consumers.
         """
-        return await self.pool_normalize_info_impl(pool_name)
-
-    @private
-    async def pool_normalize_info_impl(self, pool_name, sed_cache=None):
         rv = {
             'name': pool_name,
             'path': '/' if pool_name in BOOT_POOL_NAME_VALID else f'/mnt/{pool_name}',
@@ -173,7 +170,7 @@ class PoolService(CRUDService):
             pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 
         # WebUI expects the same data as in `boot.get_state`
-        pool |= self.middleware.call_sync('pool.pool_normalize_info_impl', pool['name'], context["sed_cache"])
+        pool |= self.middleware.call_sync('pool.pool_normalize_info', pool['name'], context["sed_cache"])
         return pool
 
     async def __convert_topology_to_vdevs(self, topology):
