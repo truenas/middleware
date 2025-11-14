@@ -8,7 +8,7 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "IscsiExtentEntry",
+    "iSCSITargetExtentEntry",
     "iSCSITargetExtentCreateArgs",
     "iSCSITargetExtentCreateResult",
     "iSCSITargetExtentUpdateArgs",
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class IscsiExtentEntry(BaseModel):
+class iSCSITargetExtentEntry(BaseModel):
     id: int
     """Unique identifier for the iSCSI extent."""
     name: Annotated[NonEmptyString, StringConstraints(max_length=64)]
@@ -68,7 +68,7 @@ class IscsiExtentEntry(BaseModel):
     """
 
 
-class IscsiExtentCreate(IscsiExtentEntry):
+class IscsiExtentCreate(iSCSITargetExtentEntry):
     id: Excluded = excluded_field()
     naa: Excluded = excluded_field()
     vendor: Excluded = excluded_field()
@@ -81,7 +81,7 @@ class iSCSITargetExtentCreateArgs(BaseModel):
 
 
 class iSCSITargetExtentCreateResult(BaseModel):
-    result: IscsiExtentEntry
+    result: iSCSITargetExtentEntry
     """The created iSCSI extent configuration."""
 
 
@@ -97,7 +97,7 @@ class iSCSITargetExtentUpdateArgs(BaseModel):
 
 
 class iSCSITargetExtentUpdateResult(BaseModel):
-    result: IscsiExtentEntry
+    result: iSCSITargetExtentEntry
     """The updated iSCSI extent configuration."""
 
 

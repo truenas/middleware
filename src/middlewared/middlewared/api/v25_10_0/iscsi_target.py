@@ -10,7 +10,7 @@ from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, Iscsi
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 
 __all__ = [
-    "IscsiTargetEntry",
+    "iSCSITargetEntry",
     "iSCSITargetValidateNameArgs",
     "iSCSITargetValidateNameResult",
     "iSCSITargetCreateArgs",
@@ -42,7 +42,7 @@ class IscsiTargetParameters(BaseModel):
     """
 
 
-class IscsiTargetEntry(BaseModel):
+class iSCSITargetEntry(BaseModel):
     id: int
     """Unique identifier for the iSCSI target."""
     name: Annotated[NonEmptyString,
@@ -87,7 +87,7 @@ class iSCSITargetValidateNameResult(BaseModel):
     """Error message if name is invalid or `null` if name is valid."""
 
 
-class IscsiTargetCreate(IscsiTargetEntry):
+class IscsiTargetCreate(iSCSITargetEntry):
     id: Excluded = excluded_field()
     rel_tgt_id: Excluded = excluded_field()
 
@@ -98,7 +98,7 @@ class iSCSITargetCreateArgs(BaseModel):
 
 
 class iSCSITargetCreateResult(BaseModel):
-    result: IscsiTargetEntry
+    result: iSCSITargetEntry
     """The created iSCSI target configuration."""
 
 
@@ -114,7 +114,7 @@ class iSCSITargetUpdateArgs(BaseModel):
 
 
 class iSCSITargetUpdateResult(BaseModel):
-    result: IscsiTargetEntry
+    result: iSCSITargetEntry
     """The updated iSCSI target configuration."""
 
 

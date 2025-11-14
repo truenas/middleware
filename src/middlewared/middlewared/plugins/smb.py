@@ -10,12 +10,12 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     SharingSMBGetaclArgs, SharingSMBGetaclResult,
     SharingSMBSetaclArgs, SharingSMBSetaclResult,
-    SmbServiceEntry, SMBUpdateArgs, SMBUpdateResult,
+    SMBEntry, SMBUpdateArgs, SMBUpdateResult,
     SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult,
     SMBBindipChoicesArgs, SMBBindipChoicesResult,
     SharingSMBPresetsArgs, SharingSMBPresetsResult,
     SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult,
-    SmbShareEntry, SharingSMBCreateArgs, SharingSMBCreateResult,
+    SharingSMBEntry, SharingSMBCreateArgs, SharingSMBCreateResult,
     SharingSMBUpdateArgs, SharingSMBUpdateResult,
     SharingSMBDeleteArgs, SharingSMBDeleteResult,
 )
@@ -94,7 +94,7 @@ class SMBService(ConfigService):
         datastore_prefix = 'cifs_srv_'
         cli_namespace = 'service.smb'
         role_prefix = 'SHARING_SMB'
-        entry = SmbServiceEntry
+        entry = SMBEntry
 
     @private
     def is_configured(self):
@@ -651,7 +651,7 @@ class SharingSMBService(SharingService):
         datastore_extend = 'sharing.smb.extend'
         cli_namespace = 'sharing.smb'
         role_prefix = 'SHARING_SMB'
-        entry = SmbShareEntry
+        entry = SharingSMBEntry
 
     @api_method(
         SharingSMBCreateArgs, SharingSMBCreateResult,

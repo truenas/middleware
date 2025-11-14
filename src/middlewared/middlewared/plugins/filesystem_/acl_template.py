@@ -1,6 +1,6 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    AclTemplateEntry,
+    ACLTemplateEntry,
     ACLTemplateByPathArgs, ACLTemplateByPathResult,
     ACLTemplateCreateArgs, ACLTemplateCreateResult,
     ACLTemplateUpdateArgs, ACLTemplateUpdateResult,
@@ -43,7 +43,7 @@ class ACLTemplateService(CRUDService):
         datastore_extend = 'filesystem.acltemplate.extend'
         namespace = 'filesystem.acltemplate'
         cli_private = True
-        entry = AclTemplateEntry
+        entry = ACLTemplateEntry
         role_prefix = 'FILESYSTEM_ATTRS'
 
     @private

@@ -17,7 +17,7 @@ from typing import Literal, Self
 __all__ = [
     'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
     'SharingSMBSetaclArgs', 'SharingSMBSetaclResult',
-    'SmbServiceEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
+    'SMBEntry', 'SMBUpdateArgs', 'SMBUpdateResult',
     'SMBUnixcharsetChoicesArgs', 'SMBUnixcharsetChoicesResult',
     'SMBBindipChoicesArgs', 'SMBBindipChoicesResult',
     'SharingSMBPresetsArgs', 'SharingSMBPresetsResult',
@@ -108,7 +108,7 @@ class SharingSMBGetaclResult(SharingSMBSetaclResult):
 SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
 
 
-class SmbServiceEntry(BaseModel):
+class SMBEntry(BaseModel):
     id: int
     netbiosname: NetbiosName
     """ Netbios name of this server """
@@ -171,12 +171,12 @@ class SmbServiceEntry(BaseModel):
 
 
 @single_argument_args('smb_update')
-class SMBUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
+class SMBUpdateArgs(SMBEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
 class SMBUpdateResult(BaseModel):
-    result: SmbServiceEntry
+    result: SMBEntry
 
 
 class SMBUnixcharsetChoicesArgs(BaseModel):

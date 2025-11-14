@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (ISCSIPortalCreateArgs, ISCSIPortalCreateResult, ISCSIPortalDeleteArgs,
-                                     ISCSIPortalDeleteResult, IscsiPortalEntry, ISCSIPortalListenIpChoicesArgs,
+                                     ISCSIPortalDeleteResult, ISCSIPortalEntry, ISCSIPortalListenIpChoicesArgs,
                                      ISCSIPortalListenIpChoicesResult, ISCSIPortalUpdateArgs, ISCSIPortalUpdateResult)
 from middlewared.service import CRUDService, private, ValidationErrors
 
@@ -46,7 +46,7 @@ class ISCSIPortalService(CRUDService):
         namespace = 'iscsi.portal'
         cli_namespace = 'sharing.iscsi.portal'
         role_prefix = 'SHARING_ISCSI_PORTAL'
-        entry = IscsiPortalEntry
+        entry = ISCSIPortalEntry
 
     @private
     async def config_extend_context(self, rows, extra):

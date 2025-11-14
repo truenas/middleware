@@ -5,7 +5,7 @@ import os
 from contextlib import suppress
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SnmpEntry,
+    SNMPEntry,
     SNMPUpdateArgs, SNMPUpdateResult
 )
 
@@ -44,7 +44,7 @@ class SNMPService(SystemServiceService):
         datastore = 'services.snmp'
         datastore_prefix = 'snmp_'
         cli_namespace = 'service.snmp'
-        entry = SnmpEntry
+        entry = SNMPEntry
         role_prefix = 'SYSTEM_GENERAL'
 
     @private

@@ -4,7 +4,7 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 
 
 __all__ = [
-    "IscsiGlobalEntry",
+    "ISCSIGlobalEntry",
     "ISCSIGlobalUpdateArgs",
     "ISCSIGlobalUpdateResult",
     "ISCSIGlobalAluaEnabledArgs",
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class IscsiGlobalEntry(BaseModel):
+class ISCSIGlobalEntry(BaseModel):
     id: int
     """Unique identifier for the global iSCSI configuration."""
     basename: str
@@ -39,12 +39,12 @@ class IscsiGlobalEntry(BaseModel):
 
 
 @single_argument_args('iscsi_update')
-class ISCSIGlobalUpdateArgs(IscsiGlobalEntry, metaclass=ForUpdateMetaclass):
+class ISCSIGlobalUpdateArgs(ISCSIGlobalEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
 class ISCSIGlobalUpdateResult(BaseModel):
-    result: IscsiGlobalEntry
+    result: ISCSIGlobalEntry
     """The updated global iSCSI configuration."""
 
 

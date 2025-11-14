@@ -5,7 +5,7 @@ import socket
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (ISCSIGlobalAluaEnabledArgs, ISCSIGlobalAluaEnabledResult, IscsiGlobalEntry,
+from middlewared.api.current import (ISCSIGlobalAluaEnabledArgs, ISCSIGlobalAluaEnabledResult, ISCSIGlobalEntry,
                                      ISCSIGlobalIserEnabledArgs, ISCSIGlobalIserEnabledResult, ISCSIGlobalUpdateArgs,
                                      ISCSIGlobalUpdateResult)
 from middlewared.async_validators import validate_port
@@ -41,7 +41,7 @@ class ISCSIGlobalService(SystemServiceService):
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
         role_prefix = 'SHARING_ISCSI_GLOBAL'
-        entry = IscsiGlobalEntry
+        entry = ISCSIGlobalEntry
 
     @private
     def port_is_listening(self, host, port, timeout=5):

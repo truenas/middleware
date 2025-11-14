@@ -7,7 +7,7 @@ from .common import CronModel
 
 
 __all__ = [
-    "PoolSnapshotTaskDBEntry", "PoolSnapshotTaskEntry", "PeriodicSnapshotTaskCreateArgs",
+    "PoolSnapshotTaskDBEntry", "PeriodicSnapshotTaskEntry", "PeriodicSnapshotTaskCreateArgs",
     "PeriodicSnapshotTaskCreateResult", "PeriodicSnapshotTaskUpdateArgs", "PeriodicSnapshotTaskUpdateResult",
     "PeriodicSnapshotTaskDeleteArgs", "PeriodicSnapshotTaskDeleteResult", "PeriodicSnapshotTaskMaxCountArgs",
     "PeriodicSnapshotTaskMaxCountResult", "PeriodicSnapshotTaskMaxTotalCountArgs",
@@ -68,7 +68,7 @@ class PoolSnapshotTaskDBEntry(PoolSnapshotTaskCreate):
     """Current state of the task."""
 
 
-class PoolSnapshotTaskEntry(PoolSnapshotTaskDBEntry):
+class PeriodicSnapshotTaskEntry(PoolSnapshotTaskDBEntry):
     vmware_sync: bool
     """Whether VMware VMs are synced before taking snapshots."""
     state: Any
@@ -81,7 +81,7 @@ class PeriodicSnapshotTaskCreateArgs(BaseModel):
 
 
 class PeriodicSnapshotTaskCreateResult(BaseModel):
-    result: PoolSnapshotTaskEntry
+    result: PeriodicSnapshotTaskEntry
     """The newly created periodic snapshot task configuration."""
 
 
@@ -93,7 +93,7 @@ class PeriodicSnapshotTaskUpdateArgs(BaseModel):
 
 
 class PeriodicSnapshotTaskUpdateResult(BaseModel):
-    result: PoolSnapshotTaskEntry
+    result: PeriodicSnapshotTaskEntry
     """The updated periodic snapshot task configuration."""
 
 

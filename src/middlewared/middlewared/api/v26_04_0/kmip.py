@@ -7,13 +7,13 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'KmipEntry', 'KMIPKmipSyncPendingArgs', 'KMIPKmipSyncPendingResult',
+    'KMIPEntry', 'KMIPKmipSyncPendingArgs', 'KMIPKmipSyncPendingResult',
     'KMIPSyncKeysArgs', 'KMIPSyncKeysResult', 'KMIPClearSyncPendingKeysArgs',
     'KMIPClearSyncPendingKeysResult', 'KMIPUpdateArgs', 'KMIPUpdateResult'
 ]
 
 
-class KmipEntry(BaseModel):
+class KMIPEntry(BaseModel):
     id: int
     """Unique identifier for the KMIP configuration."""
     enabled: bool
@@ -35,7 +35,7 @@ class KmipEntry(BaseModel):
 
 
 @single_argument_args('kmip_update')
-class KMIPUpdateArgs(KmipEntry, metaclass=ForUpdateMetaclass):
+class KMIPUpdateArgs(KMIPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     enabled: bool
     """Whether to enable KMIP functionality."""
@@ -48,7 +48,7 @@ class KMIPUpdateArgs(KmipEntry, metaclass=ForUpdateMetaclass):
 
 
 class KMIPUpdateResult(BaseModel):
-    result: KmipEntry
+    result: KMIPEntry
     """The updated KMIP configuration."""
 
 
