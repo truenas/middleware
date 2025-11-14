@@ -130,6 +130,11 @@ class PoolService(CRUDService):
                 'dedup_table_quota': info['properties']['dedup_table_quota']['parsed'],
                 'dedup_table_size': info['properties']['dedup_table_size']['parsed'],
             })
+        else:
+            # If system is licensed for SED and we have SED disks which are locked, we would like to
+            # update status detail attr to say that it is possible because of locked disks, the pool
+            # did not import
+            pass
 
         return rv
 
