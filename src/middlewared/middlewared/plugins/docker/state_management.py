@@ -1,3 +1,5 @@
+from middlewared.api.base import Event
+from middlewared.api.current import DockerStateChangedEvent
 from middlewared.service import CallError, periodic, Service
 
 from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
@@ -12,6 +14,14 @@ class DockerStateService(Service):
     class Config:
         namespace = 'docker.state'
         private = True
+        events = [
+            Event(
+                name='docker.state',
+                description='Docker state events',
+                roles=['DOCKER_READ'],
+                models={'CHANGED': DockerStateChangedEvent},
+            )
+        ]
 
     STATUS = APPS_STATUS(Status.PENDING, STATUS_DESCRIPTIONS[Status.PENDING])
 
@@ -144,7 +154,6 @@ async def handle_license_update(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
-    middleware.event_register('docker.state', 'Docker state events', roles=['DOCKER_READ'])
     middleware.event_subscribe('system.ready', _event_system_ready)
     middleware.event_subscribe('system.shutdown', _event_system_shutdown)
     await middleware.call('docker.state.initialize')

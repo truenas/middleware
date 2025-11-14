@@ -124,7 +124,7 @@ def validate_event_schema_class_names(klass):
 
     if errors:
         raise RuntimeError(
-            f"Service {klass.__name__} has API method schema class name validation errors:\n" + '\n'.join(errors)
+            f"Service {klass.__name__} has API event schema class name validation errors:\n" + '\n'.join(errors)
         )
 
 
