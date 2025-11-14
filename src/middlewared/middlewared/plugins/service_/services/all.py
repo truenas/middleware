@@ -18,6 +18,7 @@ from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
+from .webshare import WebShareService
 
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
@@ -86,4 +87,5 @@ all_services = [
     TruecommandService,
     TruesearchService,
     UserService,
+    WebShareService,
 ]

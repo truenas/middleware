@@ -123,6 +123,7 @@ from .virt_volume import *
 from .vm import *
 from .vm_device import *
 from .vmware import *
+from .webshare import *
 from .webui_crypto import *
 from .webui_enclosure import *
 from .webui_main_dashboard import *
