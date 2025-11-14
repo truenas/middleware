@@ -320,7 +320,6 @@ async def setup(middleware):
     await middleware.call("disk.init_datastore_events_processor")
 
     await middleware.call("datastore.register_event", {
-        "description": "Sent on disk changes.",
         "datastore": "storage.disk",
         "plugin": "disk",
         "prefix": "disk_",

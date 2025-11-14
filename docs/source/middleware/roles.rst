@@ -74,11 +74,20 @@ Roles for methods that are decorated with `@filterable_api_method` may be specif
 Subscribable event roles
 ========================
 
-Roles for subscribable events may be specified using the `roles` parameter when `event_register` is called:
+Roles for subscribable events may be specified using the `roles` parameter in the `Event` constructor:
 
 .. code-block:: python
 
-   middleware.event_register("alert.list", "Sent on alert changes.", roles=["ALERT_LIST_READ"])
+    Event(
+        name="alert.list",
+        description="Sent on alert changes.",
+        roles=["ALERT_LIST_READ"],
+        models={
+            "ADDED": AlertListAddedEvent,
+            "CHANGED": AlertListChangedEvent,
+            "REMOVED": AlertListRemovedEvent,
+        },
+    ),
 
 `SERVICE_READ` roles will have access to the corresponding `service.query` event. `READONLY_ADMIN` will have access to
 all `service.query` events for all CRUD services.
