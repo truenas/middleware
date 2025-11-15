@@ -9,6 +9,7 @@ from middlewared.api.current import (
     ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult,
     ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult,
     ContainerDeviceUsbChoicesArgs, ContainerDeviceUsbChoicesResult,
+    ContainerDeviceGpuChoicesArgs, ContainerDeviceGpuChoicesResult,
 )
 from middlewared.service import CRUDService, private
 from middlewared.utils.libvirt.device_factory import DeviceFactory
@@ -89,3 +90,17 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         Available choices for USB passthrough devices.
         """
         return get_all_usb_devices()
+
+    @api_method(
+        ContainerDeviceGpuChoicesArgs, ContainerDeviceGpuChoicesResult,
+        roles=['CONTAINER_DEVICE_READ']
+    )
+    async def gpu_choices(self):
+        """
+        Available choices for GPU devices.
+        """
+        return {
+            gpu['addr']['pci_slot']: gpu['vendor']
+            for gpu in await self.middleware.call('device.get_gpus')
+            if gpu['vendor'] in ('AMD',)
+        }

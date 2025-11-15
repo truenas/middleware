@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from truenas_pylibvirt.utils.gpu import get_nvidia_gpus
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppContainerIdsArgs, AppContainerIdsResult, AppContainerConsoleChoicesArgs, AppContainerConsoleChoicesResult,
@@ -10,7 +12,6 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import private, Service
-from middlewared.utils.gpu import get_nvidia_gpus
 
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices

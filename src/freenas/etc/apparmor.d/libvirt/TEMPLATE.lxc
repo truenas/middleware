@@ -1,0 +1,21 @@
+#
+# This profile is for the domain whose UUID matches this file.
+#
+
+#include <tunables/global>
+
+profile LIBVIRT_TEMPLATE flags=(attach_disconnected) {
+  #include <abstractions/libvirt-lxc>
+
+  # Globally allows everything to run under this profile
+  # These can be narrowed depending on the container's use.
+  file,
+  capability,
+  network,
+
+  # AMD GPU access for LXC containers
+  /dev/dri/renderD* rw,
+  /dev/kfd rw,
+  /sys/class/drm/** r,
+  /sys/class/kfd/kfd/** r,
+}
