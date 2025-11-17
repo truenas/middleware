@@ -5,7 +5,7 @@ from unittest.mock import ANY, AsyncMock
 import pytest
 
 from middlewared.plugins.interface.link_address import InterfaceService, setup as link_address_setup
-from middlewared.pytest.unit.plugins.datastore.test_datastore import Model, datastore_test
+from middlewared.pytest.unit.plugins.test_datastore import Model, datastore_test
 import middlewared.sqlalchemy as sa
 
 logger = logging.getLogger(__name__)
