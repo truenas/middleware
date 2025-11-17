@@ -10,7 +10,7 @@ from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, Iscsi
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
 
 __all__ = [
-    "IscsiTargetEntry",
+    "iSCSITargetEntry",
     "iSCSITargetValidateNameArgs",
     "iSCSITargetValidateNameResult",
     "iSCSITargetCreateArgs",
@@ -33,7 +33,7 @@ class IscsiTargetParameters(BaseModel):
     QueuedCommands: Literal[32, 128] | None = None
 
 
-class IscsiTargetEntry(BaseModel):
+class iSCSITargetEntry(BaseModel):
     id: int
     name: Annotated[NonEmptyString,
                     AfterValidator(
@@ -60,7 +60,7 @@ class iSCSITargetValidateNameResult(BaseModel):
     result: str | None
 
 
-class IscsiTargetCreate(IscsiTargetEntry):
+class IscsiTargetCreate(iSCSITargetEntry):
     id: Excluded = excluded_field()
     rel_tgt_id: Excluded = excluded_field()
 
@@ -70,7 +70,7 @@ class iSCSITargetCreateArgs(BaseModel):
 
 
 class iSCSITargetCreateResult(BaseModel):
-    result: IscsiTargetEntry
+    result: iSCSITargetEntry
 
 
 class IscsiTargetUpdate(IscsiTargetCreate, metaclass=ForUpdateMetaclass):
@@ -83,7 +83,7 @@ class iSCSITargetUpdateArgs(BaseModel):
 
 
 class iSCSITargetUpdateResult(BaseModel):
-    result: IscsiTargetEntry
+    result: iSCSITargetEntry
 
 
 class iSCSITargetDeleteArgs(BaseModel):

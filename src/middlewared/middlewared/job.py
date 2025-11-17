@@ -15,7 +15,6 @@ import traceback
 import threading
 import typing
 
-from middlewared.api.current import CoreGetJobsAddedEvent, CoreGetJobsChangedEvent
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs, credential_has_full_admin
@@ -114,13 +113,6 @@ class JobsQueue:
 
         # Shared lock (JobSharedLock) dict
         self.job_locks: dict[str, JobSharedLock] = {}
-
-        self.middleware.event_register(
-            'core.get_jobs',
-            'Updates on job changes.',
-            no_authz_required=True,
-            models={"ADDED": CoreGetJobsAddedEvent, "CHANGED": CoreGetJobsChangedEvent},
-        )
 
     def __getitem__(self, item: int) -> Job:
         return self.deque[item]

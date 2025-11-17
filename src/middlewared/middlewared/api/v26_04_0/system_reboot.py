@@ -1,6 +1,6 @@
 from middlewared.api.base import BaseModel
 
-__all__ = ["SystemRebootInfoArgs", "RebootInfo", "SystemRebootInfoResult"]
+__all__ = ["SystemRebootInfoArgs", "RebootInfo", "SystemRebootInfoResult", "SystemRebootInfoChangedEvent"]
 
 
 class SystemRebootInfoArgs(BaseModel):
@@ -24,3 +24,10 @@ class RebootInfo(BaseModel):
 class SystemRebootInfoResult(BaseModel):
     result: RebootInfo
     """Information about the current boot session and reboot requirements."""
+
+
+class SystemRebootInfoChangedEvent(BaseModel):
+    id: None
+    """Always `null`."""
+    fields: RebootInfo
+    """Event fields."""

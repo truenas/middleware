@@ -7,10 +7,11 @@ from dataclasses import asdict, dataclass
 import errno
 import time
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     FailoverRebootInfoArgs, FailoverRebootInfoResult,
     FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult,
+    FailoverRebootInfoChangedEvent,
 )
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.service import CallError, job, private, Service
@@ -28,6 +29,14 @@ class FailoverRebootService(Service):
     class Config:
         cli_namespace = 'system.failover.reboot'
         namespace = 'failover.reboot'
+        events = [
+            Event(
+                name='failover.reboot.info',
+                description='Sent when a system reboot is required.',
+                roles=['FAILOVER_READ'],
+                models={'CHANGED': FailoverRebootInfoChangedEvent},
+            )
+        ]
 
     remote_reboot_reasons_key: str
     remote_reboot_reasons: dict[str, RemoteRebootReason]
@@ -307,8 +316,6 @@ def remote_reboot_info(middleware, *args, **kwargs):
 
 async def setup(middleware):
     await middleware.call('failover.reboot.load_remote_reboot_reasons')
-
-    middleware.event_register('failover.reboot.info', 'Sent when a system reboot is required.', roles=['FAILOVER_READ'])
 
     middleware.event_subscribe('system.reboot.info', system_reboot_info_handler)
     await middleware.call('failover.remote_on_connect', remote_reboot_info)

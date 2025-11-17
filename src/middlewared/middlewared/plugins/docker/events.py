@@ -1,3 +1,5 @@
+from middlewared.api.base import Event
+from middlewared.api.current import DockerEventsAddedEvent
 from middlewared.plugins.apps.ix_apps.docker.utils import get_docker_client, PROJECT_KEY
 from middlewared.service import Service
 
@@ -7,6 +9,14 @@ class DockerEventService(Service):
     class Config:
         namespace = 'docker.events'
         private = True
+        events = [
+            Event(
+                name='docker.events',
+                description='Docker container events',
+                roles=['DOCKER_READ'],
+                models={'ADDED': DockerEventsAddedEvent},
+            )
+        ]
 
     def setup(self):
         if not self.middleware.call_sync('docker.state.validate', False):
@@ -42,6 +52,5 @@ class DockerEventService(Service):
 
 
 async def setup(middleware):
-    middleware.event_register('docker.events', 'Docker container events', roles=['DOCKER_READ'])
     # We are going to check in setup docker events if setting up events is relevant or not
     middleware.create_task(middleware.call('docker.events.setup'))

@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString
-from .cloud_credential import CloudCredentialEntry
+from .cloud_credential import CredentialsEntry
 from .common import CronModel
 
 __all__ = ["BaseCloudEntry", "CloudTaskAttributes"]
@@ -54,7 +54,7 @@ class BaseCloudEntry(BaseModel):
     """The name of the task to display in the UI."""
     path: str
     """The local path to back up beginning with `/mnt` or `/dev/zvol`."""
-    credentials: CloudCredentialEntry
+    credentials: CredentialsEntry
     """Cloud credentials to use for each backup."""
     attributes: CloudTaskAttributes
     """Additional information for each backup, e.g. bucket name."""

@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, LongString, single_argument_args
 from middlewared.api.current import (
-    ACMEDNSAuthenticatorEntry, DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult,
+    DNSAuthenticatorEntry, DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult,
     DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult, DNSAuthenticatorDeleteArgs,
     DNSAuthenticatorDeleteResult,
 )
@@ -228,7 +228,7 @@ class DNSAuthenticatorService(CRUDService):
         namespace = 'acme.dns.authenticator'
         datastore = 'system.acmednsauthenticator'
         cli_namespace = 'system.acme.dns_auth'
-        entry = ACMEDNSAuthenticatorEntry
+        entry = DNSAuthenticatorEntry
         role_prefix = 'NETWORK_INTERFACE'
 
     @private

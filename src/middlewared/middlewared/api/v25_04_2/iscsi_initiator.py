@@ -3,7 +3,7 @@ from typing import Literal
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    "IscsiInitiatorEntry",
+    "iSCSITargetAuthorizedInitiatorEntry",
     "iSCSITargetAuthorizedInitiatorCreateArgs",
     "iSCSITargetAuthorizedInitiatorCreateResult",
     "iSCSITargetAuthorizedInitiatorUpdateArgs",
@@ -13,13 +13,13 @@ __all__ = [
 ]
 
 
-class IscsiInitiatorEntry(BaseModel):
+class iSCSITargetAuthorizedInitiatorEntry(BaseModel):
     id: int
     initiators: list[str] = []
     comment: str = ''
 
 
-class IscsiInitiatorCreate(IscsiInitiatorEntry):
+class IscsiInitiatorCreate(iSCSITargetAuthorizedInitiatorEntry):
     id: Excluded = excluded_field()
 
 
@@ -28,10 +28,10 @@ class iSCSITargetAuthorizedInitiatorCreateArgs(BaseModel):
 
 
 class iSCSITargetAuthorizedInitiatorCreateResult(BaseModel):
-    result: IscsiInitiatorEntry
+    result: iSCSITargetAuthorizedInitiatorEntry
 
 
-class IscsiInitiatorUpdate(IscsiInitiatorEntry, metaclass=ForUpdateMetaclass):
+class IscsiInitiatorUpdate(iSCSITargetAuthorizedInitiatorEntry, metaclass=ForUpdateMetaclass):
     pass
 
 
@@ -41,7 +41,7 @@ class iSCSITargetAuthorizedInitiatorUpdateArgs(BaseModel):
 
 
 class iSCSITargetAuthorizedInitiatorUpdateResult(BaseModel):
-    result: IscsiInitiatorEntry
+    result: iSCSITargetAuthorizedInitiatorEntry
 
 
 class iSCSITargetAuthorizedInitiatorDeleteArgs(BaseModel):

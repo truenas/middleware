@@ -1,6 +1,6 @@
 from truenas_pylibvirt.device import (
     Device, CDROMDevice, DisplayDevice, DisplayDeviceType, FilesystemDevice, NICDevice, NICDeviceType, NICDeviceModel,
-    PCIDevice, DiskStorageDevice, RawStorageDevice, StorageDeviceType, StorageDeviceIoType, USBDevice
+    PCIDevice, DiskStorageDevice, GPUDevice, RawStorageDevice, StorageDeviceType, StorageDeviceIoType, USBDevice
 )
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
@@ -88,6 +88,12 @@ def get_device(device: dict, delegate: DeviceDelegate) -> Device:
             return FilesystemDevice(
                 target=device['attributes']['target'],
                 source=device['attributes']['source'],
+                device_delegate=delegate,
+            )
+        case 'GPU':
+            return GPUDevice(
+                gpu_type=device['attributes']['gpu_type'],
+                pci_address=device['attributes']['pci_address'],
                 device_delegate=delegate,
             )
         case _:

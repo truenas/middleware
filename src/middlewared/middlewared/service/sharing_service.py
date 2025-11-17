@@ -131,7 +131,7 @@ class SharingTaskService(CRUDService):
             'alert.oneshot_delete', self.locked_alert_class, f'"{self.share_task_type}_{share_task_id}"'
         )
 
-    @pass_app(message_id=True, rest=True)
+    @pass_app(message_id=True)
     async def update(self, app, audit_callback, message_id, id_, data):
         rv = await super().update(app, audit_callback, message_id, id_, data)
         if not rv[self.enabled_field] or not rv[self.locked_field]:
@@ -140,7 +140,7 @@ class SharingTaskService(CRUDService):
 
     update.audit_callback = True
 
-    @pass_app(message_id=True, rest=True)
+    @pass_app(message_id=True)
     async def delete(self, app, audit_callback, message_id, id_, *args):
         rv = await super().delete(app, audit_callback, message_id, id_, *args)
         await self.remove_locked_alert(id_)

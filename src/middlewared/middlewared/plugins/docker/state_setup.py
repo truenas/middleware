@@ -51,15 +51,10 @@ class DockerSetupService(Service):
 
     @private
     async def validate_interfaces(self):
-        # wait_for_default_interface_link_state_up handles retries internally
-        # to handle race condition where system.ready fires before DHCP has
-        # finished configuring the default route after boot/upgrade
         default_iface, success = await self.middleware.run_in_thread(wait_for_default_interface_link_state_up)
-
         if default_iface is None:
             raise CallError('Unable to determine default interface')
-
-        if not success:
+        elif not success:
             raise CallError(f'Default interface {default_iface!r} is not in active state')
 
     @private

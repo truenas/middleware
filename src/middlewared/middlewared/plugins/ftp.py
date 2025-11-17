@@ -4,7 +4,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    FtpEntry,
+    FTPEntry,
     FTPUpdateArgs, FTPUpdateResult
 )
 
@@ -63,7 +63,7 @@ class FTPService(SystemServiceService):
         datastore_extend = "ftp.ftp_extend"
         cli_namespace = "service.ftp"
         role_prefix = "SHARING_FTP"
-        entry = FtpEntry
+        entry = FTPEntry
 
     @private
     async def ftp_extend(self, data):

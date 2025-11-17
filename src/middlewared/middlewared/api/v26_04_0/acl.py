@@ -24,7 +24,7 @@ from middlewared.utils.filesystem.acl import (
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    'AclTemplateEntry',
+    'ACLTemplateEntry',
     'ACLTemplateByPathArgs', 'ACLTemplateByPathResult',
     'ACLTemplateCreateArgs', 'ACLTemplateCreateResult',
     'ACLTemplateUpdateArgs', 'ACLTemplateUpdateResult',
@@ -371,7 +371,7 @@ class FilesystemSetaclResult(FilesystemGetaclResult):
     pass
 
 
-class AclTemplateEntry(BaseModel):
+class ACLTemplateEntry(BaseModel):
     id: int
     """Unique identifier for the ACL template."""
     builtin: bool
@@ -386,7 +386,7 @@ class AclTemplateEntry(BaseModel):
     """Optional descriptive comment about the template's purpose."""
 
 
-class AclTemplateCreate(AclTemplateEntry):
+class AclTemplateCreate(ACLTemplateEntry):
     id: Excluded = excluded_field()
     builtin: Excluded = excluded_field()
 
@@ -397,7 +397,7 @@ class ACLTemplateCreateArgs(BaseModel):
 
 
 class ACLTemplateCreateResult(BaseModel):
-    result: AclTemplateEntry
+    result: ACLTemplateEntry
     """The created ACL template configuration."""
 
 
@@ -413,7 +413,7 @@ class ACLTemplateUpdateArgs(BaseModel):
 
 
 class ACLTemplateUpdateResult(BaseModel):
-    result: AclTemplateEntry
+    result: ACLTemplateEntry
     """The updated ACL template configuration."""
 
 
@@ -456,5 +456,5 @@ class ACLTemplateByPathArgs(BaseModel):
 
 
 class ACLTemplateByPathResult(BaseModel):
-    result: list[AclTemplateEntry]
+    result: list[ACLTemplateEntry]
     """Array of ACL templates matching the query criteria."""

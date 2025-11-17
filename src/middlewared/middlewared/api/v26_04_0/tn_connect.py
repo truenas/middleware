@@ -4,16 +4,17 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, HttpsOnlyURL, No
 
 
 __all__ = [
-    'TNCEntry', 'TrueNASConnectGetRegistrationUriArgs',
+    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
     'TrueNASConnectGetRegistrationUriResult',
     'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
     'TrueNASConnectGenerateClaimTokenArgs',
     'TrueNASConnectGenerateClaimTokenResult',
     'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
+    'TrueNASConnectConfigChangedEvent',
 ]
 
 
-class TNCEntry(BaseModel):
+class TrueNASConnectEntry(BaseModel):
     id: int
     """Unique identifier for the TrueNAS Connect configuration."""
     enabled: bool
@@ -57,7 +58,7 @@ class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
 
 
 class TrueNASConnectUpdateResult(BaseModel):
-    result: TNCEntry
+    result: TrueNASConnectEntry
     """The updated TrueNAS Connect configuration."""
 
 
@@ -86,3 +87,8 @@ class TrueNASConnectIpChoicesArgs(BaseModel):
 class TrueNASConnectIpChoicesResult(BaseModel):
     result: dict[str, str]
     """Object of available IP addresses and their associated interface descriptions."""
+
+
+class TrueNASConnectConfigChangedEvent(BaseModel):
+    fields: TrueNASConnectEntry
+    """Event data."""

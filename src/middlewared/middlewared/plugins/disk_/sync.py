@@ -45,7 +45,7 @@ class DiskService(Service, ServiceChangeMixin):
 
         self._map_device_disk_to_db(disk, disks[name])
 
-        if await self.middleware.call('system.is_enterprise') and (new or disk.get('disk_sed') is None):
+        if await self.middleware.call('system.sed_enabled') and (new or disk.get('disk_sed') is None):
             # If system is enterprise, we would like to make sure SED status is correctly reflected
             disk['disk_sed'] = await self.middleware.call('disk.is_sed', name)
 
@@ -116,7 +116,7 @@ class DiskService(Service, ServiceChangeMixin):
         opts.setdefault('zfs_guid', False)
 
         job.set_progress(10, 'Enumerating system disks')
-        enterprise_system = self.middleware.call_sync('system.is_enterprise')
+        sed_enabled_system = self.middleware.call_sync('system.sed_enabled')
         sys_disks = self.middleware.call_sync('device.get_disks', True)
         number_of_disks = self.log_disk_info(sys_disks)
 
@@ -125,6 +125,7 @@ class DiskService(Service, ServiceChangeMixin):
 
         options = {'send_events': False, 'ha_sync': False}
         seen_disks = {}
+        added = set()
         changed = set()
         deleted = set()
         dif_formatted_disks = []
@@ -145,7 +146,7 @@ class DiskService(Service, ServiceChangeMixin):
                     self.middleware.call_sync(
                         'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
                     )
-                    changed.add(disk['disk_identifier'])
+                    deleted.add(disk['disk_identifier'])
                 elif disk['disk_expiretime'] < utc_now():
                     # Disk expire time has surpassed, go ahead and remove it
                     if disk['disk_kmip_uid']:
@@ -154,7 +155,6 @@ class DiskService(Service, ServiceChangeMixin):
                             background=True
                         )
                     self.middleware.call_sync('datastore.delete', 'storage.disk', disk['disk_identifier'], options)
-                    deleted.add(disk['disk_identifier'])
                 continue
             else:
                 disk['disk_expiretime'] = None
@@ -165,7 +165,7 @@ class DiskService(Service, ServiceChangeMixin):
                     dif_formatted_disks.append(name)
 
                 self._map_device_disk_to_db(disk, sys_disks[name])
-                if enterprise_system and disk['disk_sed'] is None:
+                if sed_enabled_system and disk['disk_sed'] is None:
                     disk['disk_sed'] = self.middleware.call_sync('disk.is_sed', name)
 
             if name not in sys_disks and not disk['disk_expiretime']:
@@ -198,7 +198,7 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
             disk['disk_name'] = name
             self._map_device_disk_to_db(disk, sys_disks[name])
-            if enterprise_system and (new or disk.get('disk_sed') is None):
+            if sed_enabled_system and (new or disk.get('disk_sed') is None):
                 disk['disk_sed'] = self.middleware.call_sync('disk.is_sed', name)
 
             if sys_disks[name]['dif']:
@@ -212,7 +212,7 @@ class DiskService(Service, ServiceChangeMixin):
                     changed.add(disk['disk_identifier'])
             else:
                 self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
-                changed.add(disk['disk_identifier'])
+                added.add(disk['disk_identifier'])
                 qs.append(disk)
 
         if dif_formatted_disks:
@@ -220,13 +220,15 @@ class DiskService(Service, ServiceChangeMixin):
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'DifFormatted', None)
 
-        if changed or deleted:
+        if added or changed or deleted:
             job.set_progress(92, 'Restarting necessary services')
             self.middleware.call_sync('disk.restart_services_after_sync')
 
             # we query the db again since we've made changes to it
             job.set_progress(94, 'Emitting disk events')
             disks = {i['disk_identifier']: i for i in self.middleware.call_sync('datastore.query', 'storage.disk')}
+            for add in added:
+                self.middleware.send_event('disk.query', 'ADDED', id=add, fields=disks[add])
             for change in changed:
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:

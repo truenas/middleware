@@ -7,11 +7,11 @@ from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
 )
 
-__all__ = ["SnmpEntry",
+__all__ = ["SNMPEntry",
            "SNMPUpdateArgs", "SNMPUpdateResult"]
 
 
-class SnmpEntry(BaseModel):
+class SNMPEntry(BaseModel):
     location: str
     contact: EmailStr | Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')]
     traps: bool
@@ -29,9 +29,9 @@ class SnmpEntry(BaseModel):
 
 
 @single_argument_args('snmp_update')
-class SNMPUpdateArgs(SnmpEntry, metaclass=ForUpdateMetaclass):
+class SNMPUpdateArgs(SNMPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
 class SNMPUpdateResult(BaseModel):
-    result: SnmpEntry
+    result: SNMPEntry

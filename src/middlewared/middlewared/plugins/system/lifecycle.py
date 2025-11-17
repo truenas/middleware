@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     SystemBootIdArgs,
     SystemBootIdResult,
@@ -12,6 +12,9 @@ from middlewared.api.current import (
     SystemShutdownResult,
     SystemStateArgs,
     SystemStateResult,
+    SystemReadyAddedEvent,
+    SystemRebootAddedEvent,
+    SystemShutdownAddedEvent,
 )
 from middlewared.service import job, private, Service
 from middlewared.utils import run
@@ -19,6 +22,35 @@ from .utils import lifecycle_conf, RE_KDUMP_CONFIGURED
 
 
 class SystemService(Service):
+
+    class Config:
+        events = [
+            Event(
+                name='system.ready',
+                description='Finished boot process',
+                roles=['SYSTEM_GENERAL_READ'],
+                models={
+                    'ADDED': SystemReadyAddedEvent,
+                },
+            ),
+            Event(
+                name='system.reboot',
+                description='Started reboot process',
+                roles=['SYSTEM_GENERAL_READ'],
+                models={
+                    'ADDED': SystemRebootAddedEvent,
+                },
+            ),
+            Event(
+                name='system.shutdown',
+                description='Started shutdown process',
+                roles=['SYSTEM_GENERAL_READ'],
+                models={
+                    'ADDED': SystemShutdownAddedEvent,
+                },
+            ),
+        ]
+
     @private
     async def first_boot(self):
         return lifecycle_conf.SYSTEM_FIRST_BOOT
@@ -80,7 +112,6 @@ class SystemService(Service):
         SystemRebootArgs,
         SystemRebootResult,
         pass_app=True,
-        pass_app_rest=True,
         roles=["FULL_ADMIN"],
     )
     @job()
@@ -103,7 +134,6 @@ class SystemService(Service):
         SystemShutdownArgs,
         SystemShutdownResult,
         pass_app=True,
-        pass_app_rest=True,
         roles=["FULL_ADMIN"],
     )
     @job()

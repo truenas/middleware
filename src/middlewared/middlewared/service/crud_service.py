@@ -169,7 +169,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                 'datastore.query', self._config.datastore, filters, options,
             )
 
-    @pass_app(message_id=True, rest=True)
+    @pass_app(message_id=True)
     async def create(self, app, audit_callback, message_id, data):
         return await self.middleware._call(
             f'{self._config.namespace}.create', self, await self._get_crud_wrapper_func(
@@ -179,7 +179,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 
     create.audit_callback = True
 
-    @pass_app(message_id=True, rest=True)
+    @pass_app(message_id=True)
     async def update(self, app, audit_callback, message_id, id_, data):
         return await self.middleware._call(
             f'{self._config.namespace}.update', self, await self._get_crud_wrapper_func(
@@ -189,7 +189,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 
     update.audit_callback = True
 
-    @pass_app(message_id=True, rest=True)
+    @pass_app(message_id=True)
     async def delete(self, app, audit_callback, message_id, id_, *args):
         return await self.middleware._call(
             f'{self._config.namespace}.delete', self, await self._get_crud_wrapper_func(

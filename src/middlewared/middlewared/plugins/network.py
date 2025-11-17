@@ -22,7 +22,7 @@ from middlewared.api.current import (
     InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, InterfaceWebsocketLocalIpArgs,
     InterfaceWebsocketLocalIpResult, InterfaceXmitHashPolicyChoicesArgs, InterfaceXmitHashPolicyChoicesResult
 )
-from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, pass_app, private
+from middlewared.service import CallError, CRUDService, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 from .interface.interface_types import InterfaceType
@@ -1388,8 +1388,8 @@ class InterfaceService(CRUDService):
 
         return oid
 
-    @api_method(InterfaceWebsocketLocalIpArgs, InterfaceWebsocketLocalIpResult, roles=['NETWORK_INTERFACE_READ'])
-    @pass_app()
+    @api_method(InterfaceWebsocketLocalIpArgs, InterfaceWebsocketLocalIpResult, roles=['NETWORK_INTERFACE_READ'],
+                pass_app=True)
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
         try:
@@ -1397,8 +1397,8 @@ class InterfaceService(CRUDService):
         except AttributeError:
             pass
 
-    @api_method(InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, roles=['NETWORK_INTERFACE_READ'])
-    @pass_app()
+    @api_method(InterfaceWebsocketInterfaceArgs, InterfaceWebsocketInterfaceResult, roles=['NETWORK_INTERFACE_READ'],
+                pass_app=True)
     async def websocket_interface(self, app):
         """
         Returns the interface this websocket is connected to.

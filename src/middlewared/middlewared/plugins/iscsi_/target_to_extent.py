@@ -3,7 +3,7 @@ import asyncio
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
-    IscsiTargetToExtentEntry,
+    iSCSITargetToExtentEntry,
     iSCSITargetToExtentCreateArgs,
     iSCSITargetToExtentCreateResult,
     iSCSITargetToExtentUpdateArgs,
@@ -38,7 +38,7 @@ class iSCSITargetToExtentService(CRUDService):
         datastore_extend = 'iscsi.targetextent.extend'
         cli_namespace = 'sharing.iscsi.target.extent'
         role_prefix = 'SHARING_ISCSI_TARGETEXTENT'
-        entry = IscsiTargetToExtentEntry
+        entry = iSCSITargetToExtentEntry
 
     @api_method(
         iSCSITargetToExtentCreateArgs,

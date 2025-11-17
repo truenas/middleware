@@ -8,7 +8,7 @@ from truenas_crypto_utils.validation import validate_cert_with_chain
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
-from middlewared.api.current import KmipEntry, KMIPUpdateArgs, KMIPUpdateResult
+from middlewared.api.current import KMIPEntry, KMIPUpdateArgs, KMIPUpdateResult
 from middlewared.async_validators import validate_port
 from middlewared.service import CallError, ConfigService, job, private, ValidationErrors
 
@@ -33,7 +33,7 @@ class KMIPService(ConfigService):
         datastore_extend = 'kmip.kmip_extend'
         cli_namespace = 'system.kmip'
         role_prefix = 'KMIP'
-        entry = KmipEntry
+        entry = KMIPEntry
 
     @private
     async def kmip_extend(self, data):

@@ -208,9 +208,10 @@ if __name__ == "__main__":
     if root != "/":
         sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages"))
 
+    from truenas_pylibvirt.utils.gpu import get_gpus
+
     from middlewared.service_exception import CallError
     from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
-    from middlewared.utils.gpu import get_gpus
     from middlewared.utils.rootfs import ReadonlyRootfsManager
 
     with ReadonlyRootfsManager(root) as readonly_rootfs:

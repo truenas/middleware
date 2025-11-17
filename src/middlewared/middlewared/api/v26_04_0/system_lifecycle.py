@@ -15,6 +15,9 @@ __all__ = [
     "SystemShutdownResult",
     "SystemStateArgs",
     "SystemStateResult",
+    "SystemReadyAddedEvent",
+    "SystemRebootAddedEvent",
+    "SystemShutdownAddedEvent",
 ]
 
 
@@ -77,3 +80,21 @@ class SystemStateArgs(BaseModel):
 class SystemStateResult(BaseModel):
     result: Literal["BOOTING", "READY", "SHUTTING_DOWN"]
     """Current system state indicating boot status or shutdown process."""
+
+
+class SystemReadyAddedEvent(BaseModel):
+    pass
+
+
+class SystemRebootAddedEvent(BaseModel):
+    fields: "SystemRebootAddedEventFields"
+    """Event fields."""
+
+
+class SystemRebootAddedEventFields(BaseModel):
+    reason: str
+    """Reason for the system reboot."""
+
+
+class SystemShutdownAddedEvent(BaseModel):
+    pass
