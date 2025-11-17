@@ -74,6 +74,9 @@ class PoolService(Service):
 
         verrors.check()
 
+        # Let's run some magic to ensure that if a SED disk is being added, it gets handled appropriately
+        await self.middleware.call('disk.setup_sed_disks_for_pool', [disk['devname']], 'options.disk')
+
         sibling_sizes = []
         for vdev in found[2]:
             if vdev.get('device'):

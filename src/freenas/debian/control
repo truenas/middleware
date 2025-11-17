@@ -9,7 +9,7 @@ Rules-Requires-Root: binary-targets
 
 Package: truenas-files
 Architecture: any
-Depends: python3-all, snmp-mibs-downloader, zsh, ${misc:Depends}, ${shlibs:Depends}
+Depends: python3-all, libvirt-daemon-driver-lxc, libvirt-daemon-driver-qemu, snmp-mibs-downloader, zsh, ${misc:Depends}, ${shlibs:Depends}
 Description: Extra files for TrueNAS
  This package is supposed to hold all the extra files required
  to build TrueNAS, including utilities, extra plugins and whatever else

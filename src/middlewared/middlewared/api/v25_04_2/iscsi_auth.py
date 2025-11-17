@@ -5,7 +5,7 @@ from pydantic import Secret
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IscsiAuthType
 
 __all__ = [
-    "IscsiAuthEntry",
+    "iSCSITargetAuthCredentialEntry",
     "iSCSITargetAuthCredentialCreateArgs",
     "iSCSITargetAuthCredentialCreateResult",
     "iSCSITargetAuthCredentialUpdateArgs",
@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class IscsiAuthEntry(BaseModel):
+class iSCSITargetAuthCredentialEntry(BaseModel):
     id: int
     tag: int
     user: str
@@ -25,7 +25,7 @@ class IscsiAuthEntry(BaseModel):
     discovery_auth: IscsiAuthType = 'NONE'
 
 
-class IscsiAuthCreate(IscsiAuthEntry):
+class IscsiAuthCreate(iSCSITargetAuthCredentialEntry):
     id: Excluded = excluded_field()
 
 
@@ -34,7 +34,7 @@ class iSCSITargetAuthCredentialCreateArgs(BaseModel):
 
 
 class iSCSITargetAuthCredentialCreateResult(BaseModel):
-    result: IscsiAuthEntry
+    result: iSCSITargetAuthCredentialEntry
 
 
 class IscsiAuthUpdate(IscsiAuthCreate, metaclass=ForUpdateMetaclass):
@@ -47,7 +47,7 @@ class iSCSITargetAuthCredentialUpdateArgs(BaseModel):
 
 
 class iSCSITargetAuthCredentialUpdateResult(BaseModel):
-    result: IscsiAuthEntry
+    result: iSCSITargetAuthCredentialEntry
 
 
 class iSCSITargetAuthCredentialDeleteArgs(BaseModel):

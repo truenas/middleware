@@ -25,6 +25,7 @@ __all__ = [
     'DirectoryServicesEntry', 'DirectoryServicesUpdateArgs', 'DirectoryServicesUpdateResult',
     'DirectoryServicesLeaveArgs', 'DirectoryServicesLeaveResult',
     'DirectoryServicesCertificateChoicesArgs', 'DirectoryServicesCertificateChoicesResult',
+    'DirectoryServicesStatusChangedEvent',
 ]
 
 IdmapId = Annotated[int, Field(ge=TRUENAS_IDMAP_MIN, le=TRUENAS_IDMAP_MAX)]
@@ -37,8 +38,7 @@ class DirectoryServicesStatusArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class DirectoryServicesStatusResult(BaseModel):
+class DirectoryServicesStatus(BaseModel):
     dstype: DSType | None = Field(alias='type')
     """ The type of enabled directory service. """
     status: DSStatus | None = None
@@ -47,6 +47,10 @@ class DirectoryServicesStatusResult(BaseModel):
     status_msg: LongNonEmptyString | None = None
     """ This field shows the reason why the directory service is FAULTED after a failed health check. If the directory \
     service is not faulted, the field is null. """
+
+
+class DirectoryServicesStatusResult(BaseModel):
+    result: DirectoryServicesStatus
 
 
 class DirectoryServicesCacheRefreshArgs(BaseModel):
@@ -650,3 +654,8 @@ class DirectoryServicesCertificateChoicesArgs(BaseModel):
 class DirectoryServicesCertificateChoicesResult(BaseModel):
     result: dict[NonEmptyString, NonEmptyString]
     """IDs of certificates mapped to their names."""
+
+
+class DirectoryServicesStatusChangedEvent(BaseModel):
+    fields: DirectoryServicesStatus
+    """Event fields."""

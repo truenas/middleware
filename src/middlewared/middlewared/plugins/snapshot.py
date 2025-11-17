@@ -3,7 +3,7 @@ import os
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult, PeriodicSnapshotTaskUpdateArgs,
+    PeriodicSnapshotTaskEntry, PeriodicSnapshotTaskCreateArgs, PeriodicSnapshotTaskCreateResult, PeriodicSnapshotTaskUpdateArgs,
     PeriodicSnapshotTaskUpdateResult, PeriodicSnapshotTaskDeleteArgs, PeriodicSnapshotTaskDeleteResult,
     PeriodicSnapshotTaskMaxCountArgs, PeriodicSnapshotTaskMaxCountResult, PeriodicSnapshotTaskMaxTotalCountArgs,
     PeriodicSnapshotTaskMaxTotalCountResult, PeriodicSnapshotTaskRunArgs, PeriodicSnapshotTaskRunResult
@@ -46,7 +46,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         datastore_extend_context = 'pool.snapshottask.extend_context'
         namespace = 'pool.snapshottask'
         cli_namespace = 'task.snapshot'
-        entry = PoolSnapshotTaskEntry
+        entry = PeriodicSnapshotTaskEntry
         role_prefix='SNAPSHOT_TASK'
 
     @private

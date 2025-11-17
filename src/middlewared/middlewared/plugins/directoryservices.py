@@ -1,10 +1,11 @@
 import struct
 
 from base64 import b64decode
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     DirectoryServicesStatusArgs, DirectoryServicesStatusResult,
     DirectoryServicesCacheRefreshArgs, DirectoryServicesCacheRefreshResult,
+    DirectoryServicesStatusChangedEvent,
 )
 from middlewared.plugins.directoryservices_.util_cache import check_cache_version
 from middlewared.service import Service, private, job
@@ -21,6 +22,16 @@ class DirectoryServices(Service):
         datastore = "directoryservices"
         datastore_extend = "directoryservices.extend"
         role_prefix = "DIRECTORY_SERVICE"
+        events = [
+            Event(
+                name='directoryservices.status',
+                description='Sent on directory service state changes.',
+                roles=['DIRECTORY_SERVICE_READ'],
+                models={
+                    'CHANGED': DirectoryServicesStatusChangedEvent,
+                }
+            )
+        ]
 
     @api_method(
         DirectoryServicesStatusArgs, DirectoryServicesStatusResult,
@@ -165,13 +176,8 @@ async def __init_directory_services(middleware, event_type, args):
 
 async def setup(middleware):
     middleware.event_subscribe('system.ready', __init_directory_services)
-    middleware.event_register(
-        'directoryservices.status',
-        'Sent on directory service state changes.',
-        roles=['DIRECTORY_SERVICE_READ']
-    )
-    truenas_version = await middleware.call('system.version_short')
 
+    truenas_version = await middleware.call('system.version_short')
     try:
         await middleware.run_in_thread(check_cache_version, truenas_version)
     except Exception:

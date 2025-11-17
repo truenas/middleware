@@ -1,4 +1,4 @@
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field
 from typing import Annotated, Literal, TypeAlias
 
 
@@ -9,16 +9,13 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ContainerNICDevice', 'ContainerPCIDevice', 'ContainerRAWDevice',
-    'ContainerDiskDevice', 'ContainerUSBDevice', 'ContainerDeviceType', 'ContainerFilesystemDevice',
+    'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType',
+    'ContainerFilesystemDevice', 'ContainerGPUDevice',
     'ContainerDeviceEntry', 'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
     'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
     'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
-    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbDeviceArgs',
-    'ContainerDeviceUsbDeviceResult', 'ContainerDeviceUsbChoicesArgs',
-    'ContainerDeviceUsbChoicesResult', 'ContainerDevicePciDeviceArgs',
-    'ContainerDevicePciDeviceResult', 'ContainerDevicePciDeviceChoicesArgs',
-    'ContainerDevicePciDeviceChoicesResult',
+    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult',
+    'ContainerDeviceGpuChoicesArgs', 'ContainerDeviceGpuChoicesResult',
 ]
 
 
@@ -29,6 +26,14 @@ class ContainerFilesystemDevice(BaseModel):
     """Target must not contain braces."""
     source: NonEmptyString = Field(pattern=r'^[^{}]*$')
     """Source must not contain braces, and not start with /mnt/."""
+
+
+class ContainerGPUDevice(BaseModel):
+    dtype: Literal['GPU']
+    """Device type identifier for GPU devices."""
+    gpu_type: Literal['AMD']
+    """GPU device type."""
+    pci_address: NonEmptyString
 
 
 class ContainerNICDevice(BaseModel):
@@ -42,52 +47,6 @@ class ContainerNICDevice(BaseModel):
     """Host network interface or bridge to attach to. `null` for no attachment."""
     mac: str | None = Field(default=None, pattern='^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$')
     """MAC address for the virtual network interface. `null` for auto-generation."""
-
-
-class ContainerPCIDevice(BaseModel):
-    dtype: Literal['PCI']
-    """Device type identifier for PCI passthrough devices."""
-    pptdev: NonEmptyString
-    """Host PCI device identifier to pass through to the container."""
-
-
-class ContainerRAWDevice(BaseModel):
-    dtype: Literal['RAW']
-    """Device type identifier for raw disk devices."""
-    path: NonEmptyString = Field(pattern='^[^{}]*$', description='Path must not contain "{", "}" characters.')
-    """Filesystem path to the raw disk device or image file."""
-    type_: Literal['AHCI', 'VIRTIO'] = Field(alias='type', default='AHCI')
-    """Disk controller interface type. AHCI for compatibility, VIRTIO for performance."""
-    exists: bool = False
-    """Whether the disk file already exists or should be created."""
-    size: int | None = None
-    """Size of the disk in bytes. Required if creating a new disk file."""
-
-
-class ContainerDiskDevice(BaseModel):
-    dtype: Literal['DISK']
-    """Device type identifier for virtual disk devices."""
-    path: NonEmptyString | None = None
-    """Path to existing disk file or ZFS volume. `null` if creating a new ZFS volume."""
-    type_: Literal['AHCI', 'VIRTIO'] = Field(alias='type', default='AHCI')
-    """Disk controller interface type. AHCI for compatibility, VIRTIO for performance."""
-    create_zvol: bool = False
-    """Whether to create a new ZFS volume for this disk."""
-    zvol_name: str | None = None
-    """Name for the new ZFS volume. Required if `create_zvol` is true."""
-    zvol_volsize: int | None = None
-    """Size of the new ZFS volume in bytes. Required if `create_zvol` is true."""
-
-    @model_validator(mode='after')
-    def validate_attrs(self):
-        if self.path is not None and self.create_zvol is True:
-            raise ValueError('Path should not be provided if create_zvol is set')
-        if self.path is None and self.create_zvol is None:
-            raise ValueError('Either `path` or `create_zvol` should be set')
-        if self.path is None and self.create_zvol is False:
-            raise ValueError('Path must be specified if create_zvol is not set')
-
-        return self
 
 
 class USBAttributes(BaseModel):
@@ -106,9 +65,8 @@ class ContainerUSBDevice(BaseModel):
     """Host USB device path to pass through. `null` for controller only."""
 
 
-# TODO: DISK/PCI/RAW devices are not being added for now
 ContainerDeviceType: TypeAlias = Annotated[
-    ContainerNICDevice | ContainerFilesystemDevice | ContainerUSBDevice,
+    ContainerFilesystemDevice | ContainerGPUDevice | ContainerNICDevice | ContainerUSBDevice,
     Field(discriminator='dtype')
 ]
 
@@ -213,11 +171,6 @@ class USBCapability(BaseModel):
     """USB device number on bus. `null` if not available."""
 
 
-class ContainerDeviceUsbDeviceArgs(BaseModel):
-    device: NonEmptyString
-    """USB device identifier to get passthrough information for."""
-
-
 class USBPassthroughDevice(BaseModel):
     capability: USBCapability
     """USB device capability and identification information."""
@@ -229,11 +182,6 @@ class USBPassthroughDevice(BaseModel):
     """Human-readable description of the USB device."""
 
 
-class ContainerDeviceUsbDeviceResult(BaseModel):
-    result: USBPassthroughDevice
-    """Detailed information about the specified USB passthrough device."""
-
-
 class ContainerDeviceUsbChoicesArgs(BaseModel):
     pass
 
@@ -243,78 +191,10 @@ class ContainerDeviceUsbChoicesResult(BaseModel):
     """Object of available USB devices for passthrough with their detailed information."""
 
 
-class ContainerDevicePciDeviceArgs(BaseModel):
-    device: NonEmptyString
-    """PCI device identifier to get passthrough information for."""
-
-
-class ContainerDeviceCapability(BaseModel):
-    class_: str | None = Field(alias='class')
-    """PCI device class identifier. `null` if not available."""
-    domain: str | None
-    """PCI domain number. `null` if not available."""
-    bus: str | None
-    """PCI bus number. `null` if not available."""
-    slot: str | None
-    """PCI slot number. `null` if not available."""
-    function: str | None
-    """PCI function number. `null` if not available."""
-    product: str | None
-    """Product name of the PCI device. `null` if not available."""
-    vendor: str | None
-    """Vendor name of the PCI device. `null` if not available."""
-
-
-class ContainerDeviceIOMMUGroupAddress(BaseModel):
-    domain: str
-    """PCI domain number for this IOMMU group address."""
-    bus: str
-    """PCI bus number for this IOMMU group address."""
-    slot: str
-    """PCI slot number for this IOMMU group address."""
-    function: str
-    """PCI function number for this IOMMU group address."""
-
-
-class ContainerDeviceIOMMUGroup(BaseModel):
-    number: int
-    """IOMMU group number for device isolation."""
-    addresses: list[ContainerDeviceIOMMUGroupAddress]
-    """Array of PCI addresses in this IOMMU group."""
-
-
-class ContainerDevicePassthroughDevice(BaseModel):
-    capability: ContainerDeviceCapability
-    """PCI device capability information."""
-    controller_type: str | None
-    """Type of controller this device provides. `null` if not a controller."""
-    iommu_group: ContainerDeviceIOMMUGroup | None = None
-    """IOMMU group information for device isolation. `null` if IOMMU not available."""
-    available: bool
-    """Whether the device is available for passthrough to virtual machines."""
-    drivers: list[str]
-    """Array of kernel drivers currently bound to this device."""
-    error: str | None
-    """Error message if the device cannot be used for passthrough. `null` if no error."""
-    reset_mechanism_defined: bool
-    """Whether the device supports proper reset mechanisms for passthrough."""
-    description: str
-    """Human-readable description of the PCI device."""
-    critical: bool
-    """Whether this device is critical to host system operation."""
-    device_path: str | None
-    """Device filesystem path. `null` if not available."""
-
-
-class ContainerDevicePciDeviceResult(BaseModel):
-    result: ContainerDevicePassthroughDevice
-    """Detailed information about the specified PCI passthrough device."""
-
-
-class ContainerDevicePciDeviceChoicesArgs(BaseModel):
+class ContainerDeviceGpuChoicesArgs(BaseModel):
     pass
 
 
-class ContainerDevicePciDeviceChoicesResult(BaseModel):
-    result: dict[str, ContainerDevicePassthroughDevice]
-    """Object of available PCI devices for passthrough with their detailed information."""
+class ContainerDeviceGpuChoicesResult(BaseModel):
+    result: dict
+    """Available GPU(s) for container attachment."""

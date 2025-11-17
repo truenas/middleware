@@ -13,7 +13,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ConfigSaveArgs, ConfigSaveResult, ConfigUploadArgs, ConfigUploadResult, ConfigResetArgs, ConfigResetResult
 )
-from middlewared.service import CallError, Service, job, pass_app, private
+from middlewared.service import CallError, Service, job, private
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
@@ -85,9 +85,8 @@ class ConfigService(Service):
         method = self.save_db_only if not any(options.values()) else self.save_tar_file
         await self.middleware.run_in_thread(method, options, job)
 
-    @api_method(ConfigUploadArgs, ConfigUploadResult, roles=['FULL_ADMIN'])
+    @api_method(ConfigUploadArgs, ConfigUploadResult, roles=['FULL_ADMIN'], pass_app=True)
     @job(pipes=["input"])
-    @pass_app(rest=True)
     def upload(self, app, job):
         """
         Accepts a configuration file via job pipe.
@@ -192,9 +191,8 @@ class ConfigService(Service):
         self._handle_failover(job, 'uploaded', send_to_remote, UPLOADED_DB_PATH, True,
                               CONFIGURATION_UPLOAD_REBOOT_REASON)
 
-    @api_method(ConfigResetArgs, ConfigResetResult, roles=['FULL_ADMIN'])
+    @api_method(ConfigResetArgs, ConfigResetResult, roles=['FULL_ADMIN'], pass_app=True)
     @job(lock='config_reset', logs=True)
-    @pass_app(rest=True)
     def reset(self, app, job, options):
         """
         Reset database to configuration defaults.

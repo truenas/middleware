@@ -3,16 +3,15 @@ import os
 import subprocess
 
 from urllib.parse import urlparse
+from truenas_pylibvirt.utils.gpu import get_gpus
 
 import middlewared.sqlalchemy as sa
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult, DockerNvidiaPresentArgs,
     DockerNvidiaPresentResult,
 )
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
-from middlewared.utils.gpu import get_gpus
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.plugins.zfs.utils import get_encryption_info
 

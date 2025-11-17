@@ -5,6 +5,7 @@ import re
 import uuid
 
 from truenas_pylibvirt import DomainDoesNotExistError
+from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
@@ -35,12 +36,8 @@ class ContainerModel(sa.Model):
     uuid = sa.Column(sa.Text())
     name = sa.Column(sa.Text())
     description = sa.Column(sa.Text())
-    vcpus = sa.Column(sa.Integer(), nullable=True)
-    memory = sa.Column(sa.Integer(), nullable=True)
     autostart = sa.Column(sa.Boolean())
     time = sa.Column(sa.Text())
-    cores = sa.Column(sa.Integer(), nullable=True)
-    threads = sa.Column(sa.Integer(), nullable=True)
     cpuset = sa.Column(sa.Text(), nullable=True)
     shutdown_timeout = sa.Column(sa.Integer())
     dataset = sa.Column(sa.Text())
@@ -158,6 +155,16 @@ class ContainerService(CRUDService):
                             break
 
                     data['idmap']['slice'] = idmap_slice
+
+        # Validate cpuset format if provided
+        if data.get('cpuset'):
+            try:
+                parse_numeric_set(data['cpuset'])
+            except ValueError as e:
+                verrors.add(
+                    f'{schema_name}.cpuset',
+                    f'Invalid cpuset format: {e}'
+                )
 
         filters = [('name', '=', data['name'])]
         if old:

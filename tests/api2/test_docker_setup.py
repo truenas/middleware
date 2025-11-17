@@ -25,7 +25,7 @@ DOCKER_DATASET_PROPS = {
     'overlay': 'on',
     'setuid': 'on',
     'snapdir': 'hidden',
-    'xattr': 'on',
+    'xattr': 'sa',
     'mountpoint': None,  # will be filled in dynamically
 }
 

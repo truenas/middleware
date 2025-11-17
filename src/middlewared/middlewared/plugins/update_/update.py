@@ -9,7 +9,7 @@ from middlewared.api.current import (
     UpdateManualArgs, UpdateManualResult,
     UpdateRunArgs, UpdateRunResult,
 )
-from middlewared.service import job, private, CallError, Service, pass_app
+from middlewared.service import job, private, CallError, Service
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
 
 SYSTEM_UPGRADE_REBOOT_REASON = 'System upgrade'
@@ -17,9 +17,8 @@ SYSTEM_UPGRADE_REBOOT_REASON = 'System upgrade'
 
 class UpdateService(Service):
 
-    @api_method(UpdateRunArgs, UpdateRunResult, roles=['SYSTEM_UPDATE_WRITE'])
+    @api_method(UpdateRunArgs, UpdateRunResult, roles=['SYSTEM_UPDATE_WRITE'], pass_app=True)
     @job(lock='update')
-    @pass_app(rest=True)
     async def run(self, app, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.

@@ -62,16 +62,8 @@ class ContainerEntry(BaseModel):
     """Container description."""
     devices: list[ContainerDeviceEntry] = []
     """Container's devices."""
-    vcpus: int | None = Field(ge=1, default=None)
-    """How many CPUs container can use."""
-    cores: int | None = Field(ge=1, default=None)
-    """How many cores does each CPU have."""
-    threads: int | None = Field(ge=1, default=None)
-    """How many threads does each CPU core have."""
-    cpuset: str | None = None  # TODO: Add validation for numeric set
+    cpuset: str | None = None
     """List of physical CPU numbers that domain process and virtual CPUs can be pinned to by default."""
-    memory: int | None = Field(ge=20, default=None)
-    """Memory available to container (in megabytes)."""
     autostart: bool = True
     """Automatically start the container on boot."""
     time: Literal["LOCAL", "UTC"] = "LOCAL"

@@ -10,10 +10,10 @@ from middlewared.api.base import (
     TcpPort, exclude_tcp_ports
 )
 
-__all__ = ["NfsEntry",
+__all__ = ["NFSEntry",
            "NFSUpdateArgs", "NFSUpdateResult",
            "NFSBindipChoicesArgs", "NFSBindipChoicesResult",
-           "NfsShareEntry",
+           "SharingNFSEntry",
            "SharingNFSCreateArgs", "SharingNFSCreateResult",
            "SharingNFSUpdateArgs", "SharingNFSUpdateResult",
            "SharingNFSDeleteArgs", "SharingNFSDeleteResult"]
@@ -26,7 +26,7 @@ EXCLUDED_PORTS = [NFS_RDMA_DEFAULT_PORT]
 NfsTcpPort: TypeAlias = Annotated[TcpPort | None, AfterValidator(exclude_tcp_ports(EXCLUDED_PORTS))]
 
 
-class NfsEntry(BaseModel):
+class NFSEntry(BaseModel):
     id: int
     servers: Annotated[int | None, Field(ge=1, le=256)]
     """ Specify the number of nfsd. Default: Number of nfsd is equal number of CPU. """
@@ -64,7 +64,7 @@ class NfsEntry(BaseModel):
 
 
 @single_argument_args('nfs_update')
-class NFSUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
+class NFSUpdateArgs(NFSEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     managed_nfsd: Excluded = excluded_field()
     v4_krb_enabled: Excluded = excluded_field()
@@ -72,7 +72,7 @@ class NFSUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
 
 
 class NFSUpdateResult(BaseModel):
-    result: NfsEntry
+    result: NFSEntry
 
 
 class NFSBindipChoicesArgs(BaseModel):
@@ -84,7 +84,7 @@ class NFSBindipChoicesResult(BaseModel):
     result: dict[str, str]
 
 
-class NfsShareEntry(BaseModel):
+class SharingNFSEntry(BaseModel):
     id: int
     path: NonEmptyString
     """ Local path to be exported. """
@@ -123,7 +123,7 @@ class NfsShareEntry(BaseModel):
     """
 
 
-class NfsShareCreate(NfsShareEntry):
+class NfsShareCreate(SharingNFSEntry):
     id: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
@@ -133,7 +133,7 @@ class SharingNFSCreateArgs(BaseModel):
 
 
 class SharingNFSCreateResult(BaseModel):
-    result: NfsShareEntry
+    result: SharingNFSEntry
 
 
 class NfsShareUpdate(NfsShareCreate, metaclass=ForUpdateMetaclass):
@@ -146,7 +146,7 @@ class SharingNFSUpdateArgs(BaseModel):
 
 
 class SharingNFSUpdateResult(BaseModel):
-    result: NfsShareEntry
+    result: SharingNFSEntry
 
 
 class SharingNFSDeleteArgs(BaseModel):

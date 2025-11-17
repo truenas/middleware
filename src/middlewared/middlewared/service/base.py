@@ -44,6 +44,14 @@ def service_config(klass, config):
     return type('Config', (), config_attrs)
 
 
+def get_service_name(klass):
+    service_name = klass.__name__
+    if service_name.endswith('Service'):
+        service_name = service_name[:-7]
+
+    return service_name
+
+
 def validate_api_method_schema_class_names(klass):
     """
     Validate that API method argument class names follow the required format:
@@ -51,9 +59,7 @@ def validate_api_method_schema_class_names(klass):
     - returns class should be named f"{ServiceName}{MethodName}Result"
     where MethodName is the method name converted from snake_case to CamelCase
     """
-    service_name = klass.__name__
-    if service_name.endswith('Service'):
-        service_name = service_name[:-7]
+    service_name = get_service_name(klass)
 
     errors = []
     for name, method in inspect.getmembers(klass, predicate=inspect.isfunction):
@@ -108,6 +114,49 @@ def validate_api_method_schema_class_names(klass):
         )
 
 
+def validate_entry_schema_class_names(klass):
+    service_name = get_service_name(klass)
+    if klass._config.entry is not None:
+        model = klass._config.entry
+        model_name = f'{service_name}Entry'
+        if model.__name__ != model_name:
+            raise RuntimeError(
+                f"Service {klass.__name__} has incorrect entry schema class name. Expected {model_name}, "
+                f"got {model.__name__}."
+            )
+
+
+def validate_event_schema_class_names(klass):
+    service_name = get_service_name(klass)
+
+    errors = []
+    for event in klass._config.events:
+        for event_type, model in event.models.items():
+            prefix = f'{klass._config.namespace}.'
+            if event.name.startswith(prefix):
+                model_name = service_name + ''.join(
+                    word.capitalize()
+                    for word in event.name.removeprefix(prefix).replace('.', '_').split('_') + [event_type, 'Event']
+                )
+            else:
+                # We allow events to be defined outside its parent service namespace
+                model_name = ''.join(
+                    word.capitalize()
+                    for word in event.name.replace('.', '_').split('_') + [event_type, 'Event']
+                )
+
+            if model.__name__ != model_name:
+                errors.append(
+                    f"Event {event.name!r} has incorrect {event_type} model class name. "
+                    f"Expected {model_name}, got {model.__name__}."
+                )
+
+    if errors:
+        raise RuntimeError(
+            f"Service {klass.__name__} has API event schema class name validation errors:\n" + '\n'.join(errors)
+        )
+
+
 class ServiceBase(type):
     """
     Metaclass of all services
@@ -157,5 +206,9 @@ class ServiceBase(type):
 
         # Validate API method argument class names
         validate_api_method_schema_class_names(klass)
+        # Validate entry schema class names
+        validate_entry_schema_class_names(klass)
+        # Validate event schemas class names
+        validate_event_schema_class_names(klass)
 
         return klass

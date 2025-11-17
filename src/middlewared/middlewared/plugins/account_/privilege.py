@@ -2,10 +2,10 @@ import enum
 import errno
 import wbclient
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     PrivilegeEntry, PrivilegeCreateArgs, PrivilegeCreateResult, PrivilegeUpdateArgs,
-    PrivilegeUpdateResult, PrivilegeDeleteArgs, PrivilegeDeleteResult
+    PrivilegeUpdateResult, PrivilegeDeleteArgs, PrivilegeDeleteResult, UserWebUiLoginDisabledAddedEvent,
 )
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
@@ -49,6 +49,16 @@ class PrivilegeService(CRUDService):
         cli_namespace = "auth.privilege"
         entry = PrivilegeEntry
         role_prefix = 'PRIVILEGE'
+        events = [
+            Event(
+                name='user.web_ui_login_disabled',
+                description='Sent when root user login to the Web UI is disabled.',
+                roles=['FULL_ADMIN'],
+                models={
+                    'ADDED': UserWebUiLoginDisabledAddedEvent,
+                }
+            )
+        ]
 
     @private
     async def item_extend_context(self, rows, extra):
@@ -465,11 +475,3 @@ class PrivilegeService(CRUDService):
                     local_administrators = [root_user]
 
         return local_administrators
-
-
-async def setup(middleware):
-    middleware.event_register(
-        'user.web_ui_login_disabled',
-        'Sent when root user login to the Web UI is disabled.',
-        roles=['FULL_ADMIN']
-    )

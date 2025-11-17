@@ -34,7 +34,7 @@ class AppService(CRUDService):
         role_prefix = 'APPS'
         entry = AppEntry
 
-    @filterable_api_method(item=AppEntry, pass_app=True, pass_app_rest=True)
+    @filterable_api_method(item=AppEntry, pass_app=True)
     def query(self, app, filters, options):
         """
         Query all apps with `query-filters` and `query-options`.

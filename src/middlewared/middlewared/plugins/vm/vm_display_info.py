@@ -5,7 +5,7 @@ from middlewared.api.current import (
     VMPortWizardArgs, VMPortWizardResult, VMResolutionChoicesArgs, VMResolutionChoicesResult, VMGetDisplayDevicesArgs,
     VMGetDisplayDevicesResult, VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult,
 )
-from middlewared.service import pass_app, private, Service
+from middlewared.service import private, Service
 from middlewared.utils.libvirt.display import DisplayDelegate, NGINX_PREFIX
 
 
@@ -58,8 +58,7 @@ class VMService(Service):
             devices.append(device)
         return devices
 
-    @api_method(VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult, roles=['VM_READ'])
-    @pass_app()
+    @api_method(VMGetDisplayWebUriArgs, VMGetDisplayWebUriResult, roles=['VM_READ'], pass_app=True)
     async def get_display_web_uri(self, app, id_, host, options):
         """
         Retrieve Display URI for a given VM or appropriate error if there is no display device available

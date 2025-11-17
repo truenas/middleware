@@ -7,6 +7,7 @@ from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, match_validator, NonEmptyString, single_argument_args,
     LongString, ForUpdateMetaclass,
 )
+from .pool_scrub import PoolScan
 
 
 __all__ = [
@@ -63,23 +64,8 @@ class PoolEntry(BaseModel):
     """Current status of the pool."""
     path: str
     """Filesystem path where the pool is mounted."""
-    scan: Annotated[
-        dict,
-        Field(examples=[{
-            'function': None,
-            'state': None,
-            'start_time': None,
-            'end_time': None,
-            'percentage': None,
-            'bytes_to_process': None,
-            'bytes_processed': None,
-            'bytes_issued': None,
-            'pause': None,
-            'errors': None,
-            'total_secs_left': None,
-        }])
-    ] | None
-    """Information about any active scrub or resilver operation. `null` if no operation is running."""
+    scan: PoolScan | None
+    """Information about the most recent scrub or resilver operation. `null` if no scan data is available."""
     expand: Annotated[
         dict,
         Field(examples=[{
@@ -275,6 +261,8 @@ class PoolCreate(BaseModel):
     """Physical layout and configuration of vdevs in the pool."""
     allow_duplicate_serials: bool = False
     """Whether to allow disks with duplicate serial numbers in the pool."""
+    all_sed: bool = False
+    """When set, all disks in the pool must be SED based."""
 
 
 class PoolDetachOptions(BaseModel):

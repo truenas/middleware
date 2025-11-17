@@ -19,6 +19,94 @@ RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
 
 class DiskService(Service):
 
+    @private
+    async def setup_sed_disk(self, disk):
+        """
+        Will attempt to setup SED disk for pool by either unlocking it using disk or global pass
+        or alternatively set it up if it is not initialized.
+        It will return tuple true if it succeeded, false otherwise with the other value being disk name
+        """
+        password = disk['passwd'] or disk['global_passwd']
+        if disk['sed_status'] is SEDStatus.UNINITIALIZED:
+            return await self.sed_initial_setup(disk['real_name'], password) == 'SUCCESS', disk['name']
+        elif disk['sed_status'] is SEDStatus.LOCKED:
+            unlock_info = await unlock_impl({'path': f'/dev/{disk["real_name"]}', 'passwd': password})
+            # parse unlock info returns string if it failed to unlock and none otherwise
+            return await self.parse_unlock_info(unlock_info) is None, disk['name']
+
+        return False, disk['name']
+
+    @private
+    async def setup_sed_disks_for_pool(self, disks, schema_name, validate_all_disks_are_sed=False):
+        # This will be called during pool create/update when topology is being manipulated
+        # we will be doing some extra steps for SED based disks here
+        # What we would like to do at this point would be to see if we have SED based disks and if yes,
+        # do the following:
+        # 1) We have some disks which are locked but there is no global SED pass - raise validation error
+        # 2) If any of them is locked, try to unlock with global sed password
+        # 3) If any of them are uninitialized, try to initialize them using global sed pass
+        # 4) If anything fails in 2/3, let's raise an appropriate error
+        verrors = ValidationErrors()
+        filters = [['name', 'in', list(disks)]]
+        if validate_all_disks_are_sed is False:
+            filters.append(['sed', '=', True])
+
+        disks_to_check = await self.middleware.call(
+            'disk.query', filters, {
+                'extra': {'sed_status': True, 'passwords': True, 'real_names': True}, 'force_sql_filters': True
+            }
+        )
+        to_setup_sed_disks = []
+        failed_sed_status_disks = []
+        non_sed_disks = []
+        for disk in disks_to_check:
+            if validate_all_disks_are_sed and disk['sed'] is False:
+                non_sed_disks.append(disk['name'])
+            if disk['sed_status'] in [SEDStatus.UNINITIALIZED, SEDStatus.LOCKED]:
+                to_setup_sed_disks.append(disk)
+            elif disk['sed_status'] == SEDStatus.FAILED:
+                failed_sed_status_disks.append(disk['name'])
+
+        if non_sed_disks:
+            verrors.add(
+                schema_name,
+                f'Following disk(s) are not SED: {", ".join(non_sed_disks)!r}',
+            )
+
+        if failed_sed_status_disks:
+            # Ideally shouldn't happen but if it does, let's add a validation error and raise, no point in going
+            # further
+            verrors.add(
+                schema_name,
+                f'Failed to query status of {", ".join(failed_sed_status_disks)!r} SED disk(s).'
+            )
+
+        verrors.check()
+
+        if to_setup_sed_disks:
+            global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
+            if not global_sed_password:
+                verrors.add(
+                    schema_name,
+                    'Global SED password must be set when uninitialized or locked SED disks are being used in a pool'
+                )
+                verrors.check()
+
+            failed_setup_disks = []
+            for success, disk_name in await asyncio_map(
+                self.setup_sed_disk, [d | {'global_passwd': global_sed_password} for d in to_setup_sed_disks],
+                limit=16
+            ):
+                if success is False:
+                    failed_setup_disks.append(disk_name)
+
+            if failed_sed_status_disks:
+                verrors.add(
+                    schema_name,
+                    f'Failed to setup {", ".join(failed_sed_status_disks)!r} SED disk(s).'
+                )
+                verrors.check()
+
     @api_method(DiskResetSedArgs, DiskResetSedResult, roles=['DISK_WRITE'])
     async def reset_sed(self, options):
         """
@@ -40,8 +128,8 @@ class DiskService(Service):
     @private
     async def common_sed_validation(self, schema, options, status_to_check=None):
         verrors = ValidationErrors()
-        if not await self.middleware.call('system.is_enterprise'):
-            verrors.add(f'{schema}.name', 'This operation is only available on Enterprise systems')
+        if not await self.middleware.call('system.sed_enabled'):
+            verrors.add(f'{schema}.name', 'System is not licensed for SED functionality.')
         verrors.check()
 
         disk = await self.middleware.call('disk.query', [['name', '=', options['name']]], {
@@ -62,7 +150,7 @@ class DiskService(Service):
         if status_to_check is not None and disk['sed_status'] != status_to_check:
             verrors.add(
                 f'{schema}.name',
-                f'{options["name"]!r} SED status is not {status_to_check} (currently is {disk['sed_status']})'
+                f'{options["name"]!r} SED status is not {status_to_check} (currently is {disk["sed_status"]})'
             )
 
         verrors.check()

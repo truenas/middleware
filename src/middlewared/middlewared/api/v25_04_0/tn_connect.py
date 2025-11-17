@@ -4,12 +4,12 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, HttpsOnlyURL, No
 
 
 __all__ = [
-    'TNCEntry', 'TrueNASConnectGetRegistrationUriArgs', 'TrueNASConnectGetRegistrationUriResult', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
+    'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs', 'TrueNASConnectGetRegistrationUriResult', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
     'TrueNASConnectGenerateClaimTokenArgs', 'TrueNASConnectGenerateClaimTokenResult', 'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
 ]
 
 
-class TNCEntry(BaseModel):
+class TrueNASConnectEntry(BaseModel):
     id: int
     enabled: bool
     registration_details: dict
@@ -34,7 +34,7 @@ class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
 
 
 class TrueNASConnectUpdateResult(BaseModel):
-    result: TNCEntry
+    result: TrueNASConnectEntry
 
 
 class TrueNASConnectGetRegistrationUriArgs(BaseModel):

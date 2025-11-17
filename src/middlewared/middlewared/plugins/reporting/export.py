@@ -3,7 +3,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
-    ReportingExporterEntry, ReportingExportsCreateArgs, ReportingExportsCreateResult, ReportingExportsUpdateArgs,
+    ReportingExportsEntry, ReportingExportsCreateArgs, ReportingExportsCreateResult, ReportingExportsUpdateArgs,
     ReportingExportsUpdateResult, ReportingExportsDeleteArgs, ReportingExportsDeleteResult,
     ReportingExportsExporterSchemasArgs, ReportingExportsExporterSchemasResult,
 )
@@ -28,7 +28,7 @@ class ReportingExportsService(CRUDService):
         datastore = 'reporting.exporters'
         cli_namespace = 'reporting.exporters'
         role_prefix = 'REPORTING'
-        entry = ReportingExporterEntry
+        entry = ReportingExportsEntry
 
     def __init__(self, *args, **kwargs):
         super(ReportingExportsService, self).__init__(*args, **kwargs)

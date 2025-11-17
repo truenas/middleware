@@ -1,7 +1,7 @@
 import enum
 
-from middlewared.api import api_method
-from middlewared.api.current import SystemRebootInfoArgs, SystemRebootInfoResult
+from middlewared.api import api_method, Event
+from middlewared.api.current import SystemRebootInfoArgs, SystemRebootInfoResult, SystemRebootInfoChangedEvent
 from middlewared.service import private, Service
 
 
@@ -16,6 +16,16 @@ class SystemRebootService(Service):
     class Config:
         cli_namespace = 'system.reboot_required'
         namespace = 'system.reboot'
+        events = [
+            Event(
+                name='system.reboot.info',
+                description='Sent when a system reboot is required.',
+                roles=['SYSTEM_GENERAL_READ'],
+                models={
+                    'CHANGED': SystemRebootInfoChangedEvent,
+                },
+            ),
+        ]
 
     reboot_reasons : dict[str, str] = {}
 
@@ -77,8 +87,3 @@ class SystemRebootService(Service):
 
     async def _send_event(self):
         self.middleware.send_event('system.reboot.info', 'CHANGED', id=None, fields=await self.info())
-
-
-async def setup(middleware):
-    middleware.event_register('system.reboot.info', 'Sent when a system reboot is required.',
-                              roles=['SYSTEM_GENERAL_READ'])

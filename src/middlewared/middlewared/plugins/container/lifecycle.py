@@ -121,6 +121,16 @@ class ContainerService(Service):
         if container["capabilities_policy"]:
             container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]
 
+        # We add this to configuration because for cpu related attrs, we need them if cpuset on
+        # container is actually set
+        # For memory, lxc does not respect it but libvirt requires it in the xml to be defined
+        container.update({
+            'vcpus': None,
+            'cores': None,
+            'threads': None,
+            'memory': None,
+        })
+
         return ContainerDomain(ContainerDomainConfiguration(**container))
 
 

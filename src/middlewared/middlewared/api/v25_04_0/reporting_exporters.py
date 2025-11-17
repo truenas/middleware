@@ -8,7 +8,7 @@ from middlewared.api.base import (
 
 
 __all__ = [
-    'ReportingExporterEntry', 'ReportingExportsCreateArgs', 'ReportingExportsCreateResult', 'GraphiteExporter',
+    'ReportingExportsEntry', 'ReportingExportsCreateArgs', 'ReportingExportsCreateResult', 'GraphiteExporter',
     'ReportingExportsUpdateArgs', 'ReportingExportsUpdateResult', 'ReportingExportsDeleteArgs',
     'ReportingExportsDeleteResult', 'ReportingExportsExporterSchemasArgs', 'ReportingExportsExporterSchemasResult',
 ]
@@ -33,7 +33,7 @@ ExporterType: TypeAlias = Annotated[GraphiteExporter, Field(discriminator='expor
 
 # Reporting Exporter Service
 
-class ReportingExporterEntry(BaseModel):
+class ReportingExportsEntry(BaseModel):
     id: int
     enabled: bool
     attributes: ExporterType = Field(description='Specific attributes for the exporter')
@@ -41,15 +41,15 @@ class ReportingExporterEntry(BaseModel):
 
 
 @single_argument_args('reporting_exporter_create')
-class ReportingExportsCreateArgs(ReportingExporterEntry):
+class ReportingExportsCreateArgs(ReportingExportsEntry):
     id: Excluded = excluded_field()
 
 
 class ReportingExportsCreateResult(BaseModel):
-    result: ReportingExporterEntry
+    result: ReportingExportsEntry
 
 
-class ReportingExporterUpdate(ReportingExporterEntry, metaclass=ForUpdateMetaclass):
+class ReportingExporterUpdate(ReportingExportsEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
@@ -59,7 +59,7 @@ class ReportingExportsUpdateArgs(BaseModel):
 
 
 class ReportingExportsUpdateResult(BaseModel):
-    result: ReportingExporterEntry
+    result: ReportingExportsEntry
 
 
 class ReportingExportsDeleteArgs(BaseModel):

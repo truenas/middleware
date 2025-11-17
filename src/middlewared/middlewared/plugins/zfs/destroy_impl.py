@@ -47,6 +47,7 @@ def destroy_nonrecursive_impl(tls, data: DestroyArgs):
         except truenas_pylibzfs.ZFSException as e:
             failed = f"Failed to destroy {path!r}: {e}"
             errnum = e.code
+        return failed, errnum
     elif rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
         try:
             rsrc.unmount()
@@ -63,11 +64,12 @@ def destroy_nonrecursive_impl(tls, data: DestroyArgs):
                     # which mimics upstream zfs
                     pass
 
-        try:
-            tls.lzh.destroy_resource(name=path)
-        except truenas_pylibzfs.ZFSException as e:
-            failed = f"Failed to destroy {path!r}: {e}"
-            errnum = e.code
+    # Both ZFS_TYPE_FILESYSTEM and ZFS_TYPE_VOLUME
+    try:
+        tls.lzh.destroy_resource(name=path)
+    except truenas_pylibzfs.ZFSException as e:
+        failed = f"Failed to destroy {path!r}: {e}"
+        errnum = e.code
 
     return failed, errnum
 

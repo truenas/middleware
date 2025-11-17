@@ -1,8 +1,10 @@
 # -*- coding=utf-8 -*-
+import functools
 import tempfile
 
 import json
 import logging
+import multiprocessing
 import os
 import re
 import shutil
@@ -194,6 +196,32 @@ def docs_filename(version: str):
     return f"truenas-{version}-docs.zip"
 
 
+def build_api(output_dir: str, api: APIDump):
+    rst_dir = f"{output_dir}/rst/{api.version}"
+    DocumentationGenerator(api, rst_dir).generate()
+
+    with open(f"{rst_dir}/index.rst") as f:
+        index = f.read()
+
+    index = index.replace("<download URL>", f"<{docs_filename(api.version)}>")
+
+    with open(f"{rst_dir}/index.rst", "w") as f:
+        f.write(index)
+
+    build_dir = f"{output_dir}/html/{api.version}"
+    subprocess.run(
+        [
+            os.path.join(os.path.dirname(sys.executable), "sphinx-build"),
+            "-M", "html",
+            rst_dir,
+            build_dir,
+        ],
+        check=True,
+    )
+
+    shutil.move(f"{build_dir}/html", f"{output_dir}/{api.version}")
+
+
 def main(output_dir):
     data = json.loads(
         subprocess.run(
@@ -204,30 +232,8 @@ def main(output_dir):
         ).stdout
     )
     apis = [APIDump.model_validate(api_dump) for api_dump in data["versions"]]
-    for api in apis:
-        rst_dir = f"{output_dir}/rst/{api.version}"
-        DocumentationGenerator(api, rst_dir).generate()
-
-        with open(f"{rst_dir}/index.rst") as f:
-            index = f.read()
-
-        index = index.replace("<download URL>", f"<{docs_filename(api.version)}>")
-
-        with open(f"{rst_dir}/index.rst", "w") as f:
-            f.write(index)
-
-        build_dir = f"{output_dir}/html/{api.version}"
-        subprocess.run(
-            [
-                os.path.join(os.path.dirname(sys.executable), "sphinx-build"),
-                "-M", "html",
-                rst_dir,
-                build_dir,
-            ],
-            check=True,
-        )
-
-        shutil.move(f"{build_dir}/html", f"{output_dir}/{api.version}")
+    with multiprocessing.Pool() as p:
+        p.map(functools.partial(build_api, output_dir), apis)
 
     shutil.rmtree(f"{output_dir}/rst")
     shutil.rmtree(f"{output_dir}/html")

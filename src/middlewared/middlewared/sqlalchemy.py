@@ -3,7 +3,7 @@ import datetime
 import isodate
 from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
-    Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
+    Boolean, CHAR, DateTime as _DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
 )  # noqa
 from sqlalchemy import JSON as NativeJSON  # noqa
 from sqlalchemy.orm import declarative_base
@@ -116,6 +116,23 @@ class MultiSelectField(UserDefinedType):
 
     def result_processor(self, dialect, coltype):
         return self._result_processor
+
+
+class DateTime(TypeDecorator):
+    impl = _DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None and getattr(value, "tzinfo", None):
+            return value.replace(tzinfo=None)
+
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None and getattr(value, "tzinfo", None):
+            return value.replace(tzinfo=None)
+
+        return value
 
 
 class Time(UserDefinedType):

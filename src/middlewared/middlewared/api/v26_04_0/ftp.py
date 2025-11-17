@@ -11,7 +11,7 @@ from middlewared.api.base import (
     UnixPerm
 )
 
-__all__ = ["FtpEntry",
+__all__ = ["FTPEntry",
            "FTPUpdateArgs", "FTPUpdateResult"]
 
 TLS_PolicyOptions = Literal[
@@ -19,7 +19,7 @@ TLS_PolicyOptions = Literal[
 ]
 
 
-class FtpEntry(BaseModel):
+class FTPEntry(BaseModel):
     id: int
     """Placeholder identifier.  Not used as there is only one."""
     port: Annotated[int, Field(ge=1, le=65535)]
@@ -118,9 +118,9 @@ class FtpEntry(BaseModel):
 
 
 @single_argument_args('ftp_update')
-class FTPUpdateArgs(FtpEntry, metaclass=ForUpdateMetaclass):
+class FTPUpdateArgs(FTPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
 class FTPUpdateResult(BaseModel):
-    result: FtpEntry
+    result: FTPEntry

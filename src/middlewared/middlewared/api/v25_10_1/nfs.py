@@ -16,12 +16,12 @@ from middlewared.api.base import (
 __all__ = [
     "NFSGetNfs3ClientsEntry",
     "NFSGetNfs4ClientsEntry",
-    "NfsEntry",
+    "NFSEntry",
     "NFSBindipChoicesArgs",
     "NFSBindipChoicesResult",
     "NFSClientCountArgs",
     "NFSClientCountResult",
-    "NfsShareEntry",
+    "SharingNFSEntry",
     "SharingNFSCreateArgs",
     "SharingNFSCreateResult",
     "SharingNFSUpdateArgs",
@@ -56,7 +56,7 @@ class NFSGetNfs4ClientsEntry(BaseModel):
     """Array of client state information including open files and locks."""
 
 
-class NfsEntry(BaseModel):
+class NFSEntry(BaseModel):
     id: int
     """Placeholder identifier.  Not used as there is only one."""
     servers: Annotated[int | None, Field(ge=1, le=256)]
@@ -95,7 +95,7 @@ class NfsEntry(BaseModel):
 
 
 @single_argument_args("nfs_update")
-class NFSUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
+class NFSUpdateArgs(NFSEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     managed_nfsd: Excluded = excluded_field()
     v4_krb_enabled: Excluded = excluded_field()
@@ -103,7 +103,7 @@ class NFSUpdateArgs(NfsEntry, metaclass=ForUpdateMetaclass):
 
 
 class NFSUpdateResult(BaseModel):
-    result: NfsEntry
+    result: NFSEntry
     """The updated NFS service configuration."""
 
 
@@ -127,7 +127,7 @@ class NFSClientCountResult(BaseModel):
     """Current number of connected NFS clients."""
 
 
-class NfsShareEntry(BaseModel):
+class SharingNFSEntry(BaseModel):
     id: int
     """Unique identifier for the NFS share."""
     path: NonEmptyString
@@ -173,7 +173,7 @@ class NfsShareEntry(BaseModel):
     """
 
 
-class NfsShareCreate(NfsShareEntry):
+class NfsShareCreate(SharingNFSEntry):
     id: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
@@ -184,7 +184,7 @@ class SharingNFSCreateArgs(BaseModel):
 
 
 class SharingNFSCreateResult(BaseModel):
-    result: NfsShareEntry
+    result: SharingNFSEntry
     """The created NFS share configuration."""
 
 
@@ -200,7 +200,7 @@ class SharingNFSUpdateArgs(BaseModel):
 
 
 class SharingNFSUpdateResult(BaseModel):
-    result: NfsShareEntry
+    result: SharingNFSEntry
     """The updated NFS share configuration."""
 
 

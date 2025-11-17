@@ -7,7 +7,7 @@ import pam
 import time
 from typing import TYPE_CHECKING
 
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
     AuthLoginArgs, AuthLoginResult,
@@ -24,6 +24,7 @@ from middlewared.api.current import (
     AuthTerminateSessionArgs, AuthTerminateSessionResult,
     AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult,
     AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
+    AuthSessionsAddedEvent, AuthSessionsRemovedEvent,
 )
 from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
                               ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
@@ -33,7 +34,7 @@ from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionMa
 from middlewared.plugins.account_.constants import MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
 from middlewared.service import (
     Service, filterable_api_method, filter_list,
-    pass_app, private, cli_private, CallError,
+    pass_app, private, CallError,
 )
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -267,6 +268,17 @@ class AuthService(Service):
 
     class Config:
         cli_namespace = "auth"
+        events = [
+            Event(
+                name='auth.sessions',
+                description='Notification of new and removed sessions.',
+                roles=['FULL_ADMIN'],
+                models={
+                    'ADDED': AuthSessionsAddedEvent,
+                    'REMOVED': AuthSessionsRemovedEvent,
+                }
+            )
+        ]
 
     session_manager = SessionManager()
 
@@ -276,8 +288,7 @@ class AuthService(Service):
         super(AuthService, self).__init__(middleware)
         self.session_manager.middleware = middleware
 
-    @filterable_api_method(item=AuthSessionsEntry, roles=['AUTH_SESSIONS_READ'])
-    @pass_app(require=True)
+    @filterable_api_method(item=AuthSessionsEntry, roles=['AUTH_SESSIONS_READ'], pass_app=True, pass_app_require=True)
     def sessions(self, app, filters, options):
         """
         Returns list of active auth sessions.
@@ -339,8 +350,8 @@ class AuthService(Service):
         await session.app.ws.close()
         return True
 
-    @api_method(AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult, roles=['AUTH_SESSIONS_WRITE'])
-    @pass_app()
+    @api_method(AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult, roles=['AUTH_SESSIONS_WRITE'],
+                pass_app=True)
     async def terminate_other_sessions(self, app):
         """
         Terminates all other sessions (except the current one).
@@ -366,9 +377,10 @@ class AuthService(Service):
     @api_method(
         AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
         roles=['ACCOUNT_WRITE'],
-        audit='Generate onetime password for user'
+        audit='Generate onetime password for user',
+        pass_app=True,
+        pass_app_require=True,
     )
-    @pass_app(require=True)
     def generate_onetime_password(self, app, data):
         """
         Generate a password for the specified username that may be used only a single time to authenticate
@@ -407,9 +419,9 @@ class AuthService(Service):
     @api_method(
         AuthGenerateTokenArgs, AuthGenerateTokenResult,
         audit='Generate authentication token for session',
-        authorization_required=False
+        authorization_required=False,
+        pass_app=True,
     )
-    @pass_app(rest=True)
     def generate_token(self, app, ttl, attrs, match_origin, single_use):
         """
         Generate a token to be used for authentication.
@@ -537,9 +549,7 @@ class AuthService(Service):
             'username': root_credentials.user['username'],
         }
 
-    @cli_private
-    @api_method(AuthLoginArgs, AuthLoginResult, authentication_required=False)
-    @pass_app()
+    @api_method(AuthLoginArgs, AuthLoginResult, cli_private=True, authentication_required=False, pass_app=True)
     async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
@@ -654,8 +664,7 @@ class AuthService(Service):
                 errno.EOPNOTSUPP
             )
 
-    @api_method(AuthMechanismChoicesArgs, AuthMechanismChoicesResult, authentication_required=False)
-    @pass_app()
+    @api_method(AuthMechanismChoicesArgs, AuthMechanismChoicesResult, authentication_required=False, pass_app=True)
     async def mechanism_choices(self, app) -> list:
         """ Get list of available authentication mechanisms available for auth.login_ex """
         aal = CURRENT_AAL.level
@@ -673,9 +682,8 @@ class AuthService(Service):
 
         return choices
 
-    @cli_private
-    @api_method(AuthLoginExContinueArgs, AuthLoginExContinueResult, authentication_required=False)
-    @pass_app()
+    @api_method(AuthLoginExContinueArgs, AuthLoginExContinueResult, cli_private=True, authentication_required=False,
+                pass_app=True)
     async def login_ex_continue(self, app, data):
         """
         Continue in-progress authentication attempt. This endpoint should be
@@ -1185,9 +1193,8 @@ class AuthService(Service):
 
         return resp | {'otp_required': otp_required, 'otpw_used': otpw_used}
 
-    @cli_private
-    @api_method(AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult, authentication_required=False)
-    @pass_app()
+    @api_method(AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult, cli_private=True, authentication_required=False,
+                pass_app=True)
     async def login_with_api_key(self, app, api_key):
         """
         Authenticate session using API Key.
@@ -1221,9 +1228,8 @@ class AuthService(Service):
 
         return resp['response_type'] == AuthResp.SUCCESS
 
-    @cli_private
-    @api_method(AuthLoginWithTokenArgs, AuthLoginWithTokenResult, authentication_required=False)
-    @pass_app()
+    @api_method(AuthLoginWithTokenArgs, AuthLoginWithTokenResult, cli_private=True, authentication_required=False,
+                pass_app=True)
     async def login_with_token(self, app, token_str):
         """
         Authenticate session using token generated with `auth.generate_token`.
@@ -1235,9 +1241,7 @@ class AuthService(Service):
         })
         return resp['response_type'] == AuthResp.SUCCESS
 
-    @cli_private
-    @api_method(AuthLogoutArgs, AuthLogoutResult, authorization_required=False)
-    @pass_app()
+    @api_method(AuthLogoutArgs, AuthLogoutResult, cli_private=True, authorization_required=False, pass_app=True)
     async def logout(self, app):
         """
         Deauthenticates an app and if a token exists, removes that from the
@@ -1247,8 +1251,7 @@ class AuthService(Service):
         await self.session_manager.logout(app)
         return True
 
-    @api_method(AuthMeArgs, AuthMeResult, authorization_required=False)
-    @pass_app(require=True)
+    @api_method(AuthMeArgs, AuthMeResult, authorization_required=False, pass_app=True, pass_app_require=True)
     async def me(self, app):
         """
         Returns currently logged-in user.
@@ -1268,8 +1271,7 @@ class AuthService(Service):
 
         return {**user, 'attributes': attributes, 'two_factor_config': twofactor_config}
 
-    @api_method(AuthSetAttributeArgs, AuthSetAttributeResult, authorization_required=False)
-    @pass_app()
+    @api_method(AuthSetAttributeArgs, AuthSetAttributeResult, authorization_required=False, pass_app=True)
     async def set_attribute(self, app, key, value):
         """
         Set current user's `attributes` dictionary `key` to `value`.
@@ -1367,5 +1369,4 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
 
 
 def setup(middleware: Middleware):
-    middleware.event_register('auth.sessions', 'Notification of new and removed sessions.', roles=['FULL_ADMIN'])
     middleware.register_hook('core.on_connect', check_permission)

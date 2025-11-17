@@ -13,7 +13,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (iSCSITargetCreateArgs, iSCSITargetCreateResult, iSCSITargetDeleteArgs,
-                                     iSCSITargetDeleteResult, IscsiTargetEntry, iSCSITargetUpdateArgs,
+                                     iSCSITargetDeleteResult, iSCSITargetEntry, iSCSITargetUpdateArgs,
                                      iSCSITargetUpdateResult, iSCSITargetValidateNameArgs,
                                      iSCSITargetValidateNameResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
@@ -75,7 +75,7 @@ class iSCSITargetService(CRUDService):
         datastore_extend = 'iscsi.target.extend'
         cli_namespace = 'sharing.iscsi.target'
         role_prefix = 'SHARING_ISCSI_TARGET'
-        entry = IscsiTargetEntry
+        entry = iSCSITargetEntry
 
     @private
     async def extend(self, data):

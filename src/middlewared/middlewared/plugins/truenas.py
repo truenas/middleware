@@ -3,7 +3,7 @@ import os
 
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
-from middlewared.service import cli_private, job, private, Service
+from middlewared.service import job, private, Service
 from middlewared.api.current import (
     TrueNASSetProductionArgs, TrueNASSetProductionResult,
     TrueNASIsProductionArgs, TrueNASIsProductionResult,
@@ -59,8 +59,7 @@ class TrueNASService(Service):
         """
         return await self.get_chassis_hardware() != TRUENAS_UNKNOWN
 
-    @api_method(TrueNASGetEulaArgs, TrueNASGetEulaResult, roles=['READONLY_ADMIN'])
-    @cli_private
+    @api_method(TrueNASGetEulaArgs, TrueNASGetEulaResult, cli_private=True, roles=['READONLY_ADMIN'])
     def get_eula(self):
         """
         Returns the TrueNAS End-User License Agreement (EULA).
@@ -71,8 +70,7 @@ class TrueNASService(Service):
         except FileNotFoundError:
             pass
 
-    @api_method(TrueNASIsEulaAcceptedArgs, TrueNASIsEulaAcceptedResult, roles=['READONLY_ADMIN'])
-    @cli_private
+    @api_method(TrueNASIsEulaAcceptedArgs, TrueNASIsEulaAcceptedResult, cli_private=True, roles=['READONLY_ADMIN'])
     def is_eula_accepted(self):
         """
         Returns whether the EULA is accepted or not.

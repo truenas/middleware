@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated, Literal
 
 from pydantic import Field, PositiveInt
@@ -9,7 +10,7 @@ from .common import CronModel
 __all__ = [
     "PoolScrubEntry", "PoolScrubCreateArgs", "PoolScrubCreateResult", "PoolScrubUpdateArgs", "PoolScrubUpdateResult",
     "PoolScrubDeleteArgs", "PoolScrubDeleteResult", "PoolScrubScrubArgs", "PoolScrubScrubResult", "PoolScrubRunArgs",
-    "PoolScrubRunResult"
+    "PoolScrubRunResult", "PoolScanChangedEvent", "PoolScan",
 ]
 
 
@@ -102,3 +103,35 @@ class PoolScrubRunArgs(BaseModel):
 class PoolScrubRunResult(BaseModel):
     result: None
     """Returns `null` on successful scrub start."""
+
+
+class PoolScan(BaseModel):
+    function: Literal["RESILVER", "SCRUB"]
+    """Type of ZFS pool scan."""
+    state: Literal["SCANNING", "FINISHED", "CANCELED"]
+    """Current lifecycle state of the scan."""
+    start_time: datetime
+    """Scan start time."""
+    end_time: datetime | None
+    """Scan end time (`null` while the scan is still running)."""
+    percentage: float
+    """Scan progress (between 0 and 100%)."""
+    bytes_to_process: int
+    """Total bytes located by scanner."""
+    bytes_processed: int
+    """Total bytes to scan."""
+    bytes_issued: int
+    """Issued bytes per scan pass."""
+    pause: datetime | None
+    """Pause time of a scrub pass (`null` if the scan is not paused)."""
+    errors: int
+    """Number of scan errors."""
+    total_secs_left: int | None
+    """Number of seconds left (`null` if the scan is not running)."""
+
+
+class PoolScanChangedEvent(BaseModel):
+    name: str
+    """Pool name."""
+    scan: PoolScan
+    """Scan information."""

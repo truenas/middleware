@@ -6,7 +6,7 @@ from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdate
                                   LongString, NonEmptyString, single_argument_args, single_argument_result)
 from .cloud_sync_providers import CloudCredentialProvider
 
-__all__ = ["CloudCredentialEntry",
+__all__ = ["CredentialsEntry",
            "CredentialsCreateArgs", "CredentialsCreateResult",
            "CredentialsUpdateArgs", "CredentialsUpdateResult",
            "CredentialsDeleteArgs", "CredentialsDeleteResult",
@@ -14,13 +14,13 @@ __all__ = ["CloudCredentialEntry",
            "CloudSyncOneDriveListDrivesArgs", "CloudSyncOneDriveListDrivesResult"]
 
 
-class CloudCredentialEntry(BaseModel):
+class CredentialsEntry(BaseModel):
     id: int
     name: NonEmptyString
     provider: CloudCredentialProvider
 
 
-class CloudCredentialCreate(CloudCredentialEntry):
+class CloudCredentialCreate(CredentialsEntry):
     id: Excluded = excluded_field()
 
 
@@ -33,7 +33,7 @@ class CredentialsCreateArgs(BaseModel):
 
 
 class CredentialsCreateResult(BaseModel):
-    result: CloudCredentialEntry
+    result: CredentialsEntry
 
 
 class CredentialsUpdateArgs(BaseModel):
@@ -42,7 +42,7 @@ class CredentialsUpdateArgs(BaseModel):
 
 
 class CredentialsUpdateResult(BaseModel):
-    result: CloudCredentialEntry
+    result: CredentialsEntry
 
 
 class CredentialsDeleteArgs(BaseModel):
