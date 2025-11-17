@@ -828,6 +828,42 @@ async def test__null_order_by(order_by, result):
         assert [row["id"] for row in await ds.query("test.null", [], {"order_by": order_by})] == result
 
 
+class AuditModel(Model):
+    __tablename__ = 'audit_middleware_0_1'
+
+    ROW_ID = sa.Column(sa.Integer(), primary_key=True)
+    event_data = sa.Column(sa.String())
+    username = sa.Column(sa.String())
+
+
+@pytest.mark.parametrize("filters,expected_ids", [
+    ([['$.event_data.params', '=', [38]]], [1]),
+    ([['$.event_data.nested', '=', {'key': 'value1'}]], [1]),
+    ([['$.event_data.params', '=', [40, 41]]], [3]),
+    ([['username', '=', 'admin']], [1, 2]),
+    ([['username', '=', 'admin'], ['$.event_data.params', '=', [38]]], [1]),
+    ([['$.event_data.method', '=', 'user.delete']], [1, 3]),
+])
+@pytest.mark.asyncio
+async def test__json_path_filters(filters, expected_ids):
+    async with datastore_test() as ds:
+        ds.execute(
+            "INSERT INTO audit_middleware_0_1 VALUES (1, "
+            "'{\"method\": \"user.delete\", \"params\": [38], \"nested\": {\"key\": \"value1\"}}', 'admin')"
+        )
+        ds.execute(
+            "INSERT INTO audit_middleware_0_1 VALUES (2, "
+            "'{\"method\": \"user.create\", \"params\": [39], \"nested\": {\"key\": \"value2\"}}', 'admin')"
+        )
+        ds.execute(
+            "INSERT INTO audit_middleware_0_1 VALUES (3, "
+            "'{\"method\": \"user.delete\", \"params\": [40, 41], \"nested\": {\"key\": \"value3\"}}', 'root')"
+        )
+
+        result = await ds.query("audit.middleware_0_1", filters)
+        assert [row["ROW_ID"] for row in result] == expected_ids
+
+
 class LinkedToModel(Model):
     __tablename__ = 'test_linkedto'
 
@@ -843,7 +879,7 @@ class LinkedFromModel(Model):
     linkedfrom_value = sa.Column(sa.Integer())
 
 
-@pytest.mark.parametrize("extend_fk_attrs, filter, options, expected_result", [
+@pytest.mark.parametrize("extend_fk_attrs, filter_, options, expected_result", [
     pytest.param(
         {},
         [],
@@ -1034,7 +1070,7 @@ class LinkedFromModel(Model):
 
 ])
 @pytest.mark.asyncio
-async def test__extend_fk(extend_fk_attrs, filter, options, expected_result):
+async def test__extend_fk(extend_fk_attrs, filter_, options, expected_result):
     def multiply(times):
         def by(data):
             if curval := data.get('value', None):
@@ -1055,5 +1091,5 @@ async def test__extend_fk(extend_fk_attrs, filter, options, expected_result):
         await ds.insert("test.linkedfrom", {"linkedfrom_value": 142, "linkedfrom_linkedto_id": 2})
         await ds.insert("test.linkedfrom", {"linkedfrom_value": 143, "linkedfrom_linkedto_id": 3})
 
-        query_result = await ds.query("test.linkedfrom", filter, options)
+        query_result = await ds.query("test.linkedfrom", filter_, options)
         assert query_result == expected_result
