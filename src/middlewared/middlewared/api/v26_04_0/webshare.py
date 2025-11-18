@@ -8,14 +8,14 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    "WebshareServiceEntry", "WebshareUpdateArgs", "WebshareUpdateResult",
-    "WebshareShareEntry", "SharingWebshareCreateArgs", "SharingWebshareCreateResult",
+    "WebshareEntry", "WebshareUpdateArgs", "WebshareUpdateResult",
+    "SharingWebshareEntry", "SharingWebshareCreateArgs", "SharingWebshareCreateResult",
     "SharingWebshareUpdateArgs", "SharingWebshareUpdateResult",
     "SharingWebshareDeleteArgs", "SharingWebshareDeleteResult",
 ]
 
 
-class WebshareServiceEntry(BaseModel):
+class WebshareEntry(BaseModel):
     """TrueNAS Webshare server configuration. """
     id: int
     """Unique identifier for the Webshare service configuration."""
@@ -24,16 +24,16 @@ class WebshareServiceEntry(BaseModel):
 
 
 @single_argument_args("webshare_update")
-class WebshareUpdateArgs(WebshareServiceEntry, metaclass=ForUpdateMetaclass):
+class WebshareUpdateArgs(WebshareEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
 class WebshareUpdateResult(BaseModel):
-    result: WebshareServiceEntry
+    result: WebshareEntry
     """The updated Webshare service configuration."""
 
 
-class WebshareShareEntry(BaseModel):
+class SharingWebshareEntry(BaseModel):
     """Webshare share entry on the TrueNAS server. """
     id: int
     """Unique identifier for this Webshare share."""
@@ -54,7 +54,7 @@ class WebshareShareEntry(BaseModel):
     """
 
 
-class WebshareShareCreate(WebshareShareEntry):
+class WebshareShareCreate(SharingWebshareEntry):
     id: Excluded = excluded_field()
     locked: Excluded = excluded_field()
 
@@ -65,7 +65,7 @@ class SharingWebshareCreateArgs(BaseModel):
 
 
 class SharingWebshareCreateResult(BaseModel):
-    result: WebshareShareEntry
+    result: SharingWebshareEntry
     """The created Webshare share configuration."""
 
 
@@ -81,7 +81,7 @@ class SharingWebshareUpdateArgs(BaseModel):
 
 
 class SharingWebshareUpdateResult(BaseModel):
-    result: WebshareShareEntry
+    result: SharingWebshareEntry
     """The updated Webshare share configuration."""
 
 

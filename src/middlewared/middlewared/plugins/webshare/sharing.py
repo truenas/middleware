@@ -2,7 +2,7 @@ import errno
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    WebshareShareEntry, SharingWebshareCreateArgs, SharingWebshareCreateResult,
+    SharingWebshareEntry, SharingWebshareCreateArgs, SharingWebshareCreateResult,
     SharingWebshareUpdateArgs, SharingWebshareUpdateResult,
     SharingWebshareDeleteArgs, SharingWebshareDeleteResult,
 )
@@ -32,7 +32,7 @@ class SharingWebshareService(SharingService):
         datastore = 'sharing.webshare_share'
         cli_namespace = 'sharing.webshare'
         role_prefix = 'SHARING_WEBSHARE'
-        entry = WebshareShareEntry
+        entry = SharingWebshareEntry
 
     @api_method(
         SharingWebshareCreateArgs, SharingWebshareCreateResult,
