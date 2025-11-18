@@ -126,9 +126,11 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
                         return
 
                     fd = bus.get_fd()
+                    poller = select.poll()
+                    poller.register(fd, select.POLLIN)
                     while True:
-                        fds = select.select([fd], [], [], timeout)
-                        if not any(fds):
+                        events = poller.poll(timeout * 1000)  # timeout in milliseconds
+                        if not events:
                             break
 
                         bus.process()
