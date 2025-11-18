@@ -48,9 +48,24 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                 sleep_error = True
             else:
                 match resp['status_code']:
-                    case 202 | 200:
+                    case 200 | 202:
                         # Just keeping this here for valid codes, we don't need to do anything
                         pass
+                    case 205:
+                        if (new_token := resp['headers'].get('X-New-Token')) is not None:
+                            logger.debug('TNC Heartbeat: Received new token')
+
+                            await self.middleware.call(
+                                'datastore.update',
+                                'truenas_connect',
+                                tnc_config['id'],
+                                {
+                                    'jwt_token': new_token,
+                                },
+                            )
+                            tnc_config['jwt_token'] = new_token
+                        else:
+                            logger.warning('TNC Heartbeat: Received 205 status but no X-New-Token header')
                     case 400:
                         logger.debug('TNC Heartbeat: Received 400')
                         sleep_error = True
