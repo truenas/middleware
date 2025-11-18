@@ -34,6 +34,7 @@ class ContainerGPUDevice(BaseModel):
     gpu_type: Literal['AMD']
     """GPU device type."""
     pci_address: NonEmptyString
+    """PCI address of the GPU device on the host system."""
 
 
 class ContainerNICDevice(BaseModel):
