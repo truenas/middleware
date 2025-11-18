@@ -638,7 +638,7 @@ class UserService(CRUDService):
         if data['sshpubkey'] and not data['home'].startswith('/mnt'):
             verrors.add(
                 'user_create.sshpubkey',
-                'The home directory is not writable. Leave this field blank.'
+                f'{data["home"]}: the user home directory must be set to a writable path located within a data pool.'
             )
 
         verrors.check()
