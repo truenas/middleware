@@ -6,7 +6,6 @@ from middlewared.service import Service
 
 @dataclass(slots=True, kw_only=True)
 class DatastoreRegisterEventArgs:
-    description: str
     datastore: str
     plugin: str
     prefix: str = ""
@@ -25,7 +24,6 @@ class DatastoreService(Service):
     async def register_event(self, options: dict) -> None:
         options = asdict(DatastoreRegisterEventArgs(**options))
         self.events[options["datastore"]].append(options)
-        self.middleware.event_register(f"{options['plugin']}.query", options["description"], roles=["READONLY_ADMIN"])
 
     async def send_insert_events(self, datastore, row):
         for options in self.events[datastore]:

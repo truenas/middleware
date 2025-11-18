@@ -129,7 +129,7 @@ class DiskService(Service, ServiceChangeMixin):
         changed = set()
         deleted = set()
         dif_formatted_disks = []
-        increment = round((40 - 20) / number_of_disks, 3)  # 20% of the total percentage
+        increment = round((40 - 20) / max(number_of_disks, 1), 3)  # 20% of the total percentage
         progress_percent = 40
         for idx, disk in enumerate(db_disks, start=1):
             progress_percent += increment
@@ -226,7 +226,7 @@ class DiskService(Service, ServiceChangeMixin):
 
             # we query the db again since we've made changes to it
             job.set_progress(94, 'Emitting disk events')
-            disks = {i['disk_identifier']: i for i in self.middleware.call_sync('datastore.query', 'storage.disk')}
+            disks = {i['identifier']: i for i in self.middleware.call_sync('disk.query')}
             for add in added:
                 self.middleware.send_event('disk.query', 'ADDED', id=add, fields=disks[add])
             for change in changed:
@@ -320,7 +320,6 @@ async def setup(middleware):
     await middleware.call("disk.init_datastore_events_processor")
 
     await middleware.call("datastore.register_event", {
-        "description": "Sent on disk changes.",
         "datastore": "storage.disk",
         "plugin": "disk",
         "prefix": "disk_",
