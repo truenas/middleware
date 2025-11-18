@@ -11,6 +11,7 @@ Tests failover behavior across multiple dimensions:
 Total: 2 x 2 x 2 x 2 x 2 = 32 tests
 """
 import contextlib
+import os
 import threading
 import time
 from functools import cache
@@ -559,9 +560,22 @@ class TestFailover:
         - 2 I/O states (active, idle)
 
         Total: 32 test combinations
+
+        Quick subset (4 tests - runs by default):
+        - All implementations and modes
+        - namespace_count=1, failure_type='orderly', io_active=True
+
+        Full matrix (32 tests - requires RUN_FULL_MATRIX=1):
+        - All parameter combinations
         """
         subsys_nqn = configured_subsystem['nqn']
         namespace_count = configured_subsystem['namespace_count']
+
+        # Quick subset: run only specific combinations unless RUN_FULL_MATRIX is set
+        if os.getenv('RUN_FULL_MATRIX', '0') != '1':
+            # Skip if not in quick subset
+            if namespace_count != 1 or failure_type != 'orderly' or io_active is not True:
+                pytest.skip("Skipping full matrix test (set RUN_FULL_MATRIX=1 to run all 32 tests)")
 
         print(f"\n{'='*70}")
         print("Test Configuration:")
