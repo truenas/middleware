@@ -1,9 +1,9 @@
 """
 Docker registry mirrors unification
 
-Revision ID: 22e5d14badf6
+Revision ID: 2fa51c5099b0
 Revises: e41efceeeb41
-Create Date: 2025-11-18 08:54:53.390171+00:00
+Create Date: 2025-11-18 15:11:56.149783+00:00
 """
 import json
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "22e5d14badf6"
-down_revision = "e41efceeeb41"
+revision = '2fa51c5099b0'
+down_revision = 'e41efceeeb41'
 branch_labels = None
 depends_on = None
 
