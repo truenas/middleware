@@ -39,6 +39,13 @@ class AddressPool(BaseModel):
         return self
 
 
+class RegistryMirror(BaseModel):
+    url: HttpUrl
+    """URL of the registry mirror."""
+    insecure: bool
+    """Whether the registry mirror uses an insecure (HTTP) connection."""
+
+
 class DockerEntry(BaseModel):
     id: int
     """Unique identifier for the Docker configuration."""
@@ -54,10 +61,8 @@ class DockerEntry(BaseModel):
     """Array of network address pools for container networking."""
     cidr_v6: str
     """IPv6 CIDR block for Docker container networking."""
-    secure_registry_mirrors: list[HttpUrl]
-    """Array of secure (HTTPS) registry mirror URLs."""
-    insecure_registry_mirrors: list[HttpUrl]
-    """Array of insecure (HTTP) registry mirror URLs."""
+    registry_mirrors: list[RegistryMirror]
+    """Array of registry mirrors."""
 
 
 @single_argument_args('docker_update')
@@ -70,10 +75,8 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     """IPv6 CIDR block for Docker container networking."""
     migrate_applications: bool
     """Whether to migrate existing applications when changing pools."""
-    secure_registry_mirrors: list[HttpUrl]
-    """Array of secure (HTTPS) registry mirror URLs."""
-    insecure_registry_mirrors: list[HttpUrl]
-    """Array of insecure (HTTP) registry mirror URLs."""
+    registry_mirrors: list[RegistryMirror]
+    """Array of registry mirrors."""
 
     @field_validator('cidr_v6')
     @classmethod
@@ -84,13 +87,14 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
             raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
         return v
 
-    @field_validator('secure_registry_mirrors')
+    @field_validator('registry_mirrors')
     @classmethod
-    def validate_secure_registries(cls, v):
-        for url in v:
-            parsed = urlparse(url)
-            if parsed.scheme == 'http':
-                raise ValueError(f'Secure registry mirror {url} cannot use HTTP protocol.')
+    def validate_registry_mirrors(cls, v):
+        for mirror in v:
+            if urlparse(mirror.url).scheme == 'http' and not mirror.insecure:
+                raise ValueError(
+                    f'Registry mirror URL that starts with "http://" must be marked as insecure: {mirror.url}'
+                )
         return v
 
     @model_validator(mode='after')

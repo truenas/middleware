@@ -12,14 +12,17 @@ from middlewared.pytest.unit.middleware import Middleware
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': ['https://mirror1.example.com', 'https://mirror2.example.com'],
-            'insecure_registry_mirrors': ['http://insecure1.example.com', 'http://insecure2.example.com'],
+            'registry_mirrors': [
+                {'url': 'https://mirror1.example.com', 'insecure': False},
+                {'url': 'https://mirror2.example.com', 'insecure': False},
+                {'url': 'http://insecure1.example.com', 'insecure': True},
+                {'url': 'http://insecure2.example.com', 'insecure': True},
+            ],
         },
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': [],
-            'insecure_registry_mirrors': [],
+            'registry_mirrors': [],
         },
         []
     ),
@@ -27,46 +30,48 @@ from middlewared.pytest.unit.middleware import Middleware
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': ['https://mirror1.example.com', 'https://mirror1.example.com'],
-            'insecure_registry_mirrors': [],
+            'registry_mirrors': [
+                {'url': 'https://mirror1.example.com', 'insecure': False},
+                {'url': 'https://mirror1.example.com', 'insecure': False},
+            ],
         },
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': [],
-            'insecure_registry_mirrors': [],
+            'registry_mirrors': [],
         },
-        ['Duplicate secure registry mirror.']
+        ['Duplicate registry mirror: https://mirror1.example.com']
     ),
     (
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': [],
-            'insecure_registry_mirrors': ['http://insecure1.example.com', 'http://insecure1.example.com'],
+            'registry_mirrors': [
+                {'url': 'http://insecure1.example.com', 'insecure': True},
+                {'url': 'http://insecure1.example.com', 'insecure': True},
+            ],
         },
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': [],
-            'insecure_registry_mirrors': [],
+            'registry_mirrors': [],
         },
-        ['Duplicate insecure registry mirror.']
+        ['Duplicate registry mirror: http://insecure1.example.com']
     ),
     (
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': ['https://mirror1.example.com'],
-            'insecure_registry_mirrors': ['https://mirror1.example.com'],
+            'registry_mirrors': [
+                {'url': 'http://insecure1.example.com', 'insecure': False},
+            ],
         },
         {
             'pool': 'tank',
             'address_pools': [],
-            'secure_registry_mirrors': [],
-            'insecure_registry_mirrors': [],
+            'registry_mirrors': [],
         },
-        ['Registry mirror https://mirror1.example.com cannot be in both secure and insecure lists.']
+        ['Registry mirror URL that starts with "http://" must be marked as insecure.']
     ),
 ])
 @pytest.mark.asyncio
