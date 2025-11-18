@@ -19,9 +19,9 @@ class CronJobCreate(BaseModel):
     enabled: bool = True
     """Whether the cron job is active and will be executed."""
     stderr: bool = False
-    """Whether to redirect standard error output to email."""
+    """Whether to IGNORE standard error (if `false`, it will be added to email)."""
     stdout: bool = True
-    """Whether to redirect standard output to email."""
+    """Whether to IGNORE standard output (if `false`, it will be added to email)."""
     schedule: CronJobSchedule = CronJobSchedule()
     """Cron schedule configuration for when the job runs."""
     command: str

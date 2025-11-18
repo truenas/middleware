@@ -110,7 +110,7 @@ def upgrade():
 
             conn.execute("INSERT INTO tasks_cronjob (cron_minute, cron_hour, cron_daymonth, cron_month, cron_dayweek, "
                          "cron_user, cron_command, cron_description, cron_enabled, cron_stdout, cron_stderr) VALUES ("
-                         "'00', ?, ?, ?, ?, 'root', ?, ?, 1, 0, 0)", [hour, daymonth, month, dayweek, command,
+                         "'00', ?, ?, ?, ?, 'root', ?, ?, 1, 1, 1)", [hour, daymonth, month, dayweek, command,
                                                                       description])
         except Exception:
             raise
