@@ -10,6 +10,7 @@ import pysnmp.hlapi  # noqa
 import pysnmp.smi
 
 from truenas_api_client import Client
+from middlewared.utils.disk_temperatures import get_disks_temperatures_for_snmp
 
 
 def get_kstat():
@@ -301,37 +302,16 @@ class DiskTempThread(threading.Thread):
         self.interval = interval
         self.temperatures = {}
 
-        self.initialized = False
-        self.disks = []
-
     def run(self):
         while True:
-            if not self.initialized:
-                try:
-                    with Client() as c:
-                        self.disks = c.call("disk.disks_for_temperature_monitoring")
-                except Exception as e:
-                    print(f"Failed to query disks for temperature monitoring: {e!r}")
-                else:
-                    self.initialized = True
-
-            if not self.initialized:
-                time.sleep(self.interval)
-                continue
-
-            if not self.disks:
-                return
-
             try:
                 with Client() as c:
-                    self.temperatures = {
-                        disk: temperature * 1000
-                        for disk, temperature in c.call("disk.temperatures", self.disks, "NEVER").items()
-                        if temperature is not None
-                    }
+                    netdata_metrics = c.call('netdata.get_all_metrics')
             except Exception as e:
-                print(f"Failed to collect disks temperatures: {e!r}")
+                print(f"Failed to query netdata metrics: {e!r}")
                 self.temperatures = {}
+            else:
+                self.temperatures = get_disks_temperatures_for_snmp(netdata_metrics)
 
             time.sleep(self.interval)
 
@@ -430,7 +410,9 @@ if __name__ == "__main__":
             zilstat_5_thread.start()
             zilstat_10_thread.start()
 
-    disk_temp_thread = DiskTempThread(300)
+    # Netdata's disk plugin updates every 5 minutes.
+    # Increase the timeout to ensure values are refreshed after the plugin interval.
+    disk_temp_thread = DiskTempThread(310)
     disk_temp_thread.start()
 
     agent.start()
