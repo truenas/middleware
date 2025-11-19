@@ -1,4 +1,3 @@
-import pam
 import re
 from typing import TYPE_CHECKING
 
@@ -9,12 +8,12 @@ from middlewared.utils.account.authenticator import (
     DEFAULT_LOGIN_FAIL, DEFAULT_LOGIN_SUCCESS,
     DEFAULT_LOGOUT_FAIL, DEFAULT_LOGOUT_SUCCESS,
     UserPamAuthenticator, ApiKeyPamAuthenticator, UnixPamAuthenticator,
-    TrueNASAuthenticatorResponse,
+    TokenPamAuthenticator, TrueNASAuthenticatorResponse,
 )
 from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.auth import AuthMech, AuthenticatorAssuranceLevel
-from middlewared.utils.crypto import ssl_uuid4
 from time import monotonic
+from truenas_pypam import PAMCode
 
 if TYPE_CHECKING:
     from middlewared.plugins.auth import TokenManager, Token
@@ -34,7 +33,7 @@ class SessionManagerCredentials:
             cls.__name__.replace("SessionManagerCredentials", "")
         ).lstrip("_").upper()
 
-    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
+    def login(self) -> TrueNASAuthenticatorResponse:
         # Default to failure. This method should not be hit
         return DEFAULT_LOGIN_FAIL
 
@@ -94,10 +93,18 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
             self.expiry = now + self.assurance.max_session_age
             self.inactivity_timeout = self.assurance.max_inactivity
 
-    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
-        resp = self.authenticator.login(session_id)
+    def login(self) -> TrueNASAuthenticatorResponse:
+        resp = self.authenticator.login()
         self.login_at = self.authenticator.login_at
-        self.login_id = str(ssl_uuid4())
+        if self.authenticator.session_uuid:
+            self.login_id = str(self.authenticator.session_uuid)
+        else:
+            # Issue in PAM stack logged as an error message. Failure to
+            # set UUID here is not terrible. It's used for audit
+            # tracking rather. We have a separate middleware session
+            # uuid.
+            self.login_id = '<ERROR: see /var/log/middlewared.log>'
+
         return resp
 
     def logout(self) -> TrueNASAuthenticatorResponse:
@@ -210,7 +217,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self,
         token_manager: 'TokenManager',
         token: 'Token',
-        authenticator: UnixPamAuthenticator,
+        authenticator: TokenPamAuthenticator,
         origin: ConnectionOrigin,
     ):
         self.root_credentials = token.root_credentials()
@@ -244,8 +251,8 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         assert self.pam_authenticated is False
 
         username = self.user['username'] if self.is_user_session else 'root'
-        pam_resp = self.authenticator.authenticate(username, self.origin)
-        self.pam_authenticated = pam_resp.code == pam.PAM_SUCCESS
+        pam_resp = self.authenticator.authenticate(username)
+        self.pam_authenticated = pam_resp.code == PAMCode.PAM_SUCCESS
         return pam_resp
 
     def is_valid(self):
@@ -269,10 +276,10 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.root_credentials.notify_used()
         self.token.notify_used()
 
-    def login(self, session_id: str) -> TrueNASAuthenticatorResponse:
-        resp = self.authenticator.login(session_id)
+    def login(self) -> TrueNASAuthenticatorResponse:
+        resp = self.authenticator.login()
         self.login_at = self.authenticator.login_at
-        self.login_id = str(ssl_uuid4())
+        self.login_id = str(self.authenticator.session_uuid)
         return resp
 
     def logout(self) -> TrueNASAuthenticatorResponse:

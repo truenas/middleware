@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import binascii
-import pam
 from typing import Literal, TypeAlias, TypedDict, Union, TYPE_CHECKING
 import urllib.parse
 
@@ -19,6 +18,7 @@ from middlewared.utils.account.authenticator import ApiKeyPamAuthenticator, Unix
 from middlewared.utils.auth import AA_LEVEL1, CURRENT_AAL
 from middlewared.utils.origin import ConnectionOrigin
 from truenas_api_client import json
+from truenas_pypam import PAMCode
 
 if TYPE_CHECKING:
     from aiohttp import BodyPartReader
@@ -161,7 +161,7 @@ async def authenticate(
                 credentials['credentials_data']['password'],
                 app=app
             )
-            if resp['pam_response']['code'] != pam.PAM_SUCCESS:
+            if resp['pam_response']['code'] != PAMCode.PAM_SUCCESS:
                 raise web.HTTPUnauthorized(text='Bad username or password')
 
             return LoginPasswordSessionManagerCredentials(
