@@ -1,113 +1,50 @@
-import os
-
-from base64 import b64encode
+import truenas_api_key.keyring as api_keyring
 from dataclasses import dataclass
-from struct import pack
-from uuid import uuid4
-from .tdb import (
-    TDBDataType,
-    TDBHandle,
-    TDBOptions,
-    TDBPathType,
-)
-
-
-PAM_TDB_DIR = '/var/run/pam_tdb'
-PAM_TDB_FILE = os.path.join(PAM_TDB_DIR, 'pam_tdb.tdb')
-PAM_TDB_DIR_MODE = 0o700
-PAM_TDB_VERSION = 1
-PAM_TDB_MAX_KEYS = 10  # Max number of keys per user. Also defined in pam_tdb.c
-
-PAM_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+from truenas_api_key.constants import UserApiKey
+from middlewared.utils.pwenc import encrypt
 
 
 @dataclass(frozen=True)
-class UserApiKey:
-    expiry: int
-    dbid: int
-    userhash: str
-
-
-@dataclass(frozen=True)
-class PamTdbEntry:
+class UserKeyringEntry:
     keys: list[UserApiKey]
     username: str
 
 
-def _setup_pam_tdb_dir() -> None:
-    os.makedirs(PAM_TDB_DIR, mode=PAM_TDB_DIR_MODE, exist_ok=True)
-    os.chmod(PAM_TDB_DIR, PAM_TDB_DIR_MODE)
-
-
-def _pack_user_api_key(api_key: UserApiKey) -> bytes:
+def flush_user_api_keys(api_key_entries: list[UserKeyringEntry]) -> None:
     """
-    Convert UserApiKey object to bytes for TDB insertion.
-    This is packed struct with expiry converted into signed 64 bit
-    integer, the database id (32-bit unsigned), and the userhash (pascal string)
+    Insert the list of API keys into the pam keyring.
+
+    Persistent Keyring (for UID 0)
+    └── PAM_TRUENAS
+        ├── username_1/
+        │   ├── API_KEYS/
+        │   │   ├── API Key (dbid: 123)
+        │   │   ├── API Key (dbid: 124)
+        │   │   └── ...
+        │   ├── SESSIONS/
+        │   └── FAILLOG/
+        ├── username_2/
+        │   ├── API_KEYS/
+        │   │   ├── API Key (dbid: 456)
+        │   │   ├── API Key (dbid: 457)
+        │   │   └── ...
+        │   ├── SESSIONS/
+        │   └── FAILLOG/
+        └── ...
     """
-    if not isinstance(api_key, UserApiKey):
-        raise TypeError(f'{type(api_key)}: not a UserApiKey')
+    for entry in api_key_entries:
+        api_keyring.commit_user_entry(entry.username, entry.keys, encrypt)
 
-    userhash = api_key.userhash.encode() + b'\x00'
-    return pack(f'<qI{len(userhash)}p', api_key.expiry, api_key.dbid, userhash)
+    usernames = {entry.username for entry in api_key_entries}
 
+    # remove API keys for any user that isn't in our users list
+    pam_keyring = api_keyring.get_pam_keyring()
+    for entry in pam_keyring.iter_keyring_contents(unlink_expired=True, unlink_revoked=True):
+        if entry.key.key_type != 'keyring':
+            continue
 
-def write_entry(hdl: TDBHandle, entry: PamTdbEntry) -> None:
-    """
-    Convert PamTdbEntry object into a packed struct and insert
-    into tdb file.
+        # the description for entries in pam keyring is the username
+        if entry.key.description in usernames:
+            continue
 
-    key: username
-    value: uint32_t (version) + uint32_t (cnt of keys)
-    """
-    if not isinstance(entry, PamTdbEntry):
-        raise TypeError(f'{type(entry)}: expected PamTdbEntry')
-
-    key_cnt = len(entry.keys)
-    if key_cnt > PAM_TDB_MAX_KEYS:
-        raise ValueError(f'{key_cnt}: count of entries exceeds maximum')
-
-    entry_bytes = pack('<II', PAM_TDB_VERSION, len(entry.keys))
-    parsed_cnt = 0
-    for key in entry.keys:
-        entry_bytes += _pack_user_api_key(key)
-        parsed_cnt += 1
-
-    # since we've already packed struct with array length
-    # we need to rigidly ensure we don't exceed it.
-    assert parsed_cnt == key_cnt
-    hdl.store(entry.username, b64encode(entry_bytes))
-
-
-def flush_user_api_keys(pam_entries: list[PamTdbEntry]) -> None:
-    """
-    Write a PamTdbEntry object to the pam_tdb file for user
-    authentication. This method first writes to temporary file
-    and then renames over pam_tdb file to ensure flush is atomic
-    and reduce risk of lock contention while under a transaction
-    lock.
-
-    raises:
-        TypeError - not PamTdbEntry
-        AssertionError - count of entries changed while generating
-            tdb payload
-        RuntimeError - TDB library error
-    """
-    _setup_pam_tdb_dir()
-
-    if not isinstance(pam_entries, list):
-        raise TypeError('Expected list of PamTdbEntry objects')
-
-    tmp_path = os.path.join(PAM_TDB_DIR, f'tmp_{uuid4()}.tdb')
-
-    with TDBHandle(tmp_path, PAM_TDB_OPTIONS) as hdl:
-        hdl.keys_null_terminated = False
-
-        try:
-            for entry in pam_entries:
-                write_entry(hdl, entry)
-        except Exception:
-            os.remove(tmp_path)
-            raise
-
-    os.rename(tmp_path, PAM_TDB_FILE)
+        api_keyring.clear_user_keyring(entry.key.description)

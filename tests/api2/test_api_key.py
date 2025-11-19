@@ -105,55 +105,6 @@ def test_api_key_session(sharing_admin_user, endpoint):
                 c.call('system.info')
 
 
-def test_legacy_api_key_upgrade():
-    """We should automatically upgrade old hashes on successful login"""
-    with api_key():
-        key_id = call('api_key.query', [['username', '=', 'root']], {'get': True})['id']
-        call('datastore.update', 'account.api_key', key_id, {
-            'key': LEGACY_ENTRY_HASH,
-            'user_identifier': 'LEGACY_API_KEY'
-        })
-        call('etc.generate', 'pam_middleware')
-
-        with client(auth=None) as c:
-            resp = c.call('auth.login_ex', {
-                'mechanism': 'API_KEY_PLAIN',
-                'username': 'root',
-                'api_key': f'{key_id}-{LEGACY_ENTRY_KEY}'
-            })
-            assert resp['response_type'] == 'SUCCESS'
-
-            # We should have replaced hash on auth
-            updated = call('api_key.query', [['username', '=', 'root']], {'get': True})
-            assert updated['keyhash'] != LEGACY_ENTRY_HASH
-            assert updated['keyhash'].startswith('$pbkdf2-sha512')
-
-        # verify we still have access
-        with client(auth=None) as c:
-            resp = c.call('auth.login_ex', {
-                'mechanism': 'API_KEY_PLAIN',
-                'username': 'root',
-                'api_key': f'{key_id}-{LEGACY_ENTRY_KEY}'
-            })
-            assert resp['response_type'] == 'SUCCESS'
-
-
-def test_legacy_api_key_reject_nonroot(sharing_admin_user):
-    """Old hash style should be rejected for non-root user."""
-    with api_key(sharing_admin_user.username):
-        key_id = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['id']
-        call('datastore.update', 'account.api_key', key_id, {'key': LEGACY_ENTRY_HASH})
-        call('etc.generate', 'pam_middleware')
-
-        with client(auth=None) as c:
-            resp = c.call('auth.login_ex', {
-                'mechanism': 'API_KEY_PLAIN',
-                'username': sharing_admin_user.username,
-                'api_key': LEGACY_ENTRY_KEY
-            })
-            assert resp['response_type'] == 'AUTH_ERR'
-
-
 def test_api_key_expired(sharing_admin_user):
     """Expired keys should fail with expected response type"""
     with api_key(sharing_admin_user.username) as key:
