@@ -1,0 +1,9 @@
+# Base PAM session configuration for truenas This file should only be consumed during first boot.
+# It will be replaced when middleware issues its first etc.generate
+
+auth		sufficient	pam_access.so
+account		[success=1 new_authtok_reqd=done default=ignore]	pam_unix.so
+account 	requisite	pam_deny.so
+account		required	pam_permit.so
+password	required	pam_deny.so
+@include middleware-session

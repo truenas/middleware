@@ -2,7 +2,6 @@ import errno
 import glob
 import json
 import os
-import pam
 import shlex
 import shutil
 import stat
@@ -84,6 +83,7 @@ from middlewared.plugins.idmap_.idmap_constants import (
 from middlewared.plugins.idmap_ import idmap_winbind
 from middlewared.plugins.idmap_ import idmap_sss
 from threading import Lock
+from truenas_pypam import PAMCode
 
 
 SYNC_NEXT_UID_LOCK = Lock()
@@ -301,7 +301,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['uid'] == ADMIN_UID)
-        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
+        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'].get(user['id']))
 
         if user['userns_idmap'] == USERNS_IDMAP_DIRECT:
             user['userns_idmap'] = 'DIRECT'
@@ -1887,11 +1887,11 @@ class UserService(CRUDService):
                 # Create a temporary authentication context. Calling into auth.libpam_authenticate
                 # would try to re-authenticate under the current session's authentication context,
                 # which would fail.
-                pam_hdl = UserPamAuthenticator()
+                pam_hdl = UserPamAuthenticator(username=username, origin=app.origin)
                 pam_resp = await self.middleware.run_in_thread(
-                    pam_hdl.authenticate, username, data['old_password'], origin=app.origin
+                    pam_hdl.authenticate, username, data['old_password']
                 )
-                if pam_resp.code != pam.PAM_SUCCESS:
+                if pam_resp.code != PAMCode.PAM_SUCCESS:
                     verrors.add(
                         'user.set_password.old_password',
                         f'{username}: failed to validate password.'

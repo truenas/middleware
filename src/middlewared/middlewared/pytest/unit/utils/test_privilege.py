@@ -4,6 +4,7 @@ import types
 from middlewared.auth import UserSessionManagerCredentials
 from middlewared.utils.account.authenticator import UserPamAuthenticator
 from middlewared.utils.auth import AA_LEVEL1
+from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.privilege import (
     app_credential_full_admin_or_user,
     credential_has_full_admin,
@@ -11,9 +12,11 @@ from middlewared.utils.privilege import (
     privilege_has_webui_access,
 )
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
+from socket import AF_UNIX
 
 
-pam_hdl = UserPamAuthenticator()
+origin = ConnectionOrigin(family=AF_UNIX, pid=1, uid=0, gid=0, loginuid=0)
+pam_hdl = UserPamAuthenticator(username='test', origin=origin)
 
 
 @pytest.mark.parametrize('privilege,expected', [
