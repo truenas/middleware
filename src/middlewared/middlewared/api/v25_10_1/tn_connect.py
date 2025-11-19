@@ -1,6 +1,6 @@
-from pydantic import IPvAnyAddress
-
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
+from middlewared.api.base import (
+    BaseModel, ForUpdateMetaclass, IPvAnyAddress, NonEmptyString, single_argument_args,
+)
 from middlewared.api.base.types import HttpsOnlyURL
 
 
