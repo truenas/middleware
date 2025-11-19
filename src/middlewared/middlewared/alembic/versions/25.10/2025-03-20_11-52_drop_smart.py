@@ -113,7 +113,7 @@ def upgrade():
             conn.execute(
                 text("INSERT INTO tasks_cronjob (cron_minute, cron_hour, cron_daymonth, cron_month, cron_dayweek, "
                      "cron_user, cron_command, cron_description, cron_enabled, cron_stdout, cron_stderr) VALUES "
-                     "('00', :hour, :daymonth, :month, :dayweek, 'root', :command, :description, 1, 0, 0)"), 
+                     "('00', :hour, :daymonth, :month, :dayweek, 'root', :command, :description, 1, 1, 1)"),
                 {
                     "hour": hour, "daymonth": daymonth, "month": month, "dayweek": dayweek, 
                     "command": command, "description": description
