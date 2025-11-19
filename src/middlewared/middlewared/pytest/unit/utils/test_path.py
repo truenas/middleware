@@ -22,6 +22,7 @@ def setup_mnt(tmpdir):
 @pytest.mark.parametrize("path,should_raise", [
     ('/tmp', True),
     ('EXTERNAL://smb_server.local/SHARE', True),
+    ('/mnt', True),
     ('/mnt/does_not_exist', True),
     ('/mnt/foo', True),
     ('/mnt/pool/foo', False),
