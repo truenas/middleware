@@ -253,7 +253,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'pam.d/middleware-api-key'},
                 {'type': 'mako', 'path': 'pam.d/middleware-session'},
                 {'type': 'mako', 'path': 'pam.d/middleware-unix'},
-                {'type': 'py', 'path': 'pam_tdb'},
+                {'type': 'py', 'path': 'pam_keyring'},
             ]
         },
         'ftp': {
