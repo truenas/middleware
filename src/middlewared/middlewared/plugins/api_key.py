@@ -1,4 +1,3 @@
-import pam
 import errno
 
 from typing import Literal
@@ -19,6 +18,7 @@ from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
 from middlewared.utils.user_api_key import PAM_TDB_MAX_KEYS
 from middlewared.utils.time_utils import utc_now
+from truenas_pypam import PAMCode
 
 
 class APIKeyModel(sa.Model):
@@ -373,7 +373,7 @@ class ApiKeyService(CRUDService):
                                           entry['username'],
                                           key, app=app)
 
-        if resp['pam_response']['code'] != pam.PAM_SUCCESS:
+        if resp['pam_response']['code'] != PAMCode.PAM_SUCCESS:
             return None
 
         return (resp['user_data'], {
