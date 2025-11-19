@@ -3,7 +3,6 @@ import asyncio
 import random
 from datetime import timedelta
 import errno
-import pam
 import time
 from typing import TYPE_CHECKING
 
@@ -39,14 +38,15 @@ from middlewared.service import (
 from middlewared.service_exception import MatchNotFound, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.account.authenticator import (
-    ApiKeyPamAuthenticator, UnixPamAuthenticator, UserPamAuthenticator, AccountFlag
+    ApiKeyPamAuthenticator, UnixPamAuthenticator, TokenPamAuthenticator, UserPamAuthenticator, AccountFlag
 )
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
-    AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS, OTPW_MANAGER,
+    AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, OTPW_MANAGER,
 )
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
+from truenas_pypam import PAMCode
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
@@ -152,9 +152,7 @@ class SessionManager:
 
     async def login(self, app: RpcWebSocketApp, credentials: SessionManagerCredentials) -> None:
         if app.authenticated:
-            await self.middleware.run_in_thread(credentials.login, app.session_id)
-            # If previous credential had associated utmp entry then it will be automatically
-            # cleared when old credentials object is garbage collected
+            await self.middleware.run_in_thread(credentials.login)
             self.sessions[app.session_id].credentials = credentials
             app.authenticated_credentials = credentials
             await self.middleware.log_audit_message(app, "AUTHENTICATION", {
@@ -163,15 +161,8 @@ class SessionManager:
             }, True)
             return
 
-        # Generate utmp entry for logged in session
-        resp = await self.middleware.run_in_thread(credentials.login, app.session_id)
-        if resp.code == pam.PAM_ABORT:
-            # Special response for case where we had to scavenge IDs
-            self.middleware.logger.error('Available utmp session ids exhausted, scavenged stale sessions.')
-            # Now that we've complained, try it again
-            resp = await self.middleware.run_in_thread(credentials.login, app.session_id)
-
-        if resp.code != pam.PAM_SUCCESS:
+        resp = await self.middleware.run_in_thread(credentials.login)
+        if resp.code != PAMCode.PAM_SUCCESS:
             raise CallError(f'Login with credentials failed: {resp.reason}')
 
         session = Session(self, credentials, app)
@@ -520,7 +511,7 @@ class AuthService(Service):
 
         cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
         pam_resp = cred.pam_authenticate()
-        if pam_resp.code != pam.PAM_SUCCESS:
+        if pam_resp.code != PAMCode.PAM_SUCCESS:
             raise CallError(f'Failed to get token for action: {pam_resp.reason}')
 
         return cred
@@ -835,7 +826,7 @@ class AuthService(Service):
                 # Both of these mechanisms are de-factor username + password
                 # combinations and pass through libpam.
                 cred_type = 'LOGIN_PASSWORD'
-                auth_ctx.pam_hdl = UserPamAuthenticator()
+                auth_ctx.pam_hdl = UserPamAuthenticator(username=data['username'], origin=app.origin)
                 resp = await self.get_login_user(
                     app,
                     data['username'],
@@ -846,10 +837,9 @@ class AuthService(Service):
                     # A one-time password is required for this user account and so
                     # we should request it from API client.
                     auth_ctx.next_mech = AuthMech.OTP_TOKEN
-                    auth_ctx.auth_data = {'cnt': 0, 'user': resp['user_data']}
                     return {
                         'response_type': AuthResp.OTP_REQUIRED,
-                        'username': resp['user_data']['username']
+                        'username': data['username']
                     }
                 elif resp['otpw_used']:
                     cred_type = 'ONETIME_PASSWORD'
@@ -888,7 +878,7 @@ class AuthService(Service):
                     return response
 
                 match resp['pam_response']['code']:
-                    case pam.PAM_SUCCESS:
+                    case PAMCode.PAM_SUCCESS:
                         if cred_type == 'ONETIME_PASSWORD':
                             cred = LoginOnetimePasswordSessionManagerCredentials(
                                 resp['user_data'],
@@ -903,7 +893,7 @@ class AuthService(Service):
                             )
 
                         await login_fn(app, cred)
-                    case pam.PAM_AUTH_ERR:
+                    case PAMCode.PAM_AUTH_ERR:
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
                                 'credentials': cred_type,
@@ -924,13 +914,13 @@ class AuthService(Service):
                 # API key that we receive over wire is concatenation of the
                 # datastore `id` of the particular key with the key itself,
                 # delimited by a dash. <id>-<key>.
-                auth_ctx.pam_hdl = ApiKeyPamAuthenticator()
+                auth_ctx.pam_hdl = ApiKeyPamAuthenticator(username=data['username'], origin=app.origin)
                 resp = await self.get_login_user(
                     app,
                     data['username'],
                     data['api_key'],
                 )
-                if resp['pam_response']['code'] == pam.PAM_AUTHINFO_UNAVAIL:
+                if resp['pam_response']['code'] == PAMCode.PAM_AUTHINFO_UNAVAIL:
                     # This is a special error code that means we need to
                     # etc.generate because we somehow got garbage in the file.
                     # It should not happen, but we must try to recover.
@@ -954,19 +944,18 @@ class AuthService(Service):
                     key_id = int(data['api_key'].split('-')[0])
                     key = await self.middleware.call(
                         'api_key.query', [['id', '=', key_id]],
-                        {'get': True, 'select': ['id', 'name', 'keyhash', 'expired']}
+                        {'get': True, 'select': ['id', 'name', 'expired']}
                     )
-                    thehash = key.pop('keyhash')
                 except Exception:
                     key = None
 
-                if resp['pam_response']['code'] == pam.PAM_CRED_EXPIRED:
+                if resp['pam_response']['code'] == PAMCode.PAM_CRED_EXPIRED:
                     # Give more precise reason for login failure for audit trails
                     # because we need to differentiate between key and account
                     # being expired.
                     resp['pam_response']['reason'] = 'Api key is expired.'
 
-                if resp['pam_response']['code'] == pam.PAM_SUCCESS:
+                if resp['pam_response']['code'] == PAMCode.PAM_SUCCESS:
                     if not app.origin.secure_transport:
                         # Per NEP if plain API key auth occurs over insecure transport
                         # the key should be automatically revoked.
@@ -988,12 +977,6 @@ class AuthService(Service):
                         auth_ctx.pam_hdl.end()
                         return response
 
-                    if thehash.startswith('$pbkdf2-sha256'):
-                        # Legacy API key with insufficient iterations. Since we
-                        # know that the plain-text we have here is correct, we can
-                        # use it to update the hash in backend.
-                        await self.middleware.call('api_key.update_hash', data['api_key'])
-
                     cred = ApiKeySessionManagerCredentials(resp['user_data'], key, CURRENT_AAL.level, auth_ctx.pam_hdl)
                     await login_fn(app, cred)
                 else:
@@ -1014,25 +997,14 @@ class AuthService(Service):
                 # context has user information. We don't re-request username from the
                 # client as this would open possibility of user trivially bypassing
                 # 2FA.
-                otp_ok = await self.middleware.call(
-                    'user.verify_twofactor_token',
-                    auth_ctx.auth_data['user']['username'],
-                    data['otp_token'],
+                resp = await self.middleware.run_in_thread(
+                    auth_ctx.pam_hdl.authenticate_oath,
+                    data['otp_token']
                 )
-                resp = {
-                    'pam_response': {
-                        'code': pam.PAM_SUCCESS if otp_ok else pam.PAM_AUTH_ERR,
-                        'reason': None
-                    }
-                }
                 # get reference to auth data
                 auth_data = auth_ctx.auth_data
 
-                # reset the auth_ctx state
-                auth_ctx.next_mech = None
-                auth_ctx.auth_data = None
-
-                if otp_ok:
+                if resp.code == PAMCode.PAM_SUCCESS:
                     # Per feedback to NEP-053 it was decided to only request second
                     # factor for password-based logins (not user-linked API keys).
                     # Hence we don't have to worry about whether this is based on
@@ -1044,7 +1016,6 @@ class AuthService(Service):
                 else:
                     # Add a sleep like pam_delay() would add for pam_oath
                     await asyncio.sleep(CURRENT_AAL.get_delay_interval())
-
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'LOGIN_TWOFACTOR',
@@ -1056,8 +1027,8 @@ class AuthService(Service):
                     }, False)
 
                     # Give the user a few attempts to recover a fat-fingered OTP cred
-                    if auth_data['cnt'] < MAX_OTP_ATTEMPTS:
-                        auth_data['cnt'] += 1
+                    if resp.code == PAMCode.PAM_CONV_AGAIN:
+                        # Module says that we still have a few attempts remaining
                         auth_ctx.auth_data = auth_data
                         auth_ctx.next_mech = AuthMech.OTP_TOKEN
 
@@ -1101,11 +1072,11 @@ class AuthService(Service):
                     return response
 
                 # Use the AF_UNIX style authenticator with username from base auth
-                auth_ctx.pam_hdl = UnixPamAuthenticator()
+                auth_ctx.pam_hdl = TokenPamAuthenticator(origin=app.origin)
 
-                cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl, app.origin)
+                cred = TokenSessionManagerCredentials(self.token_manager, token, auth_ctx.pam_hdl)
                 pam_resp = await self.middleware.run_in_thread(cred.pam_authenticate)
-                if pam_resp.code != pam.PAM_SUCCESS:
+                if pam_resp.code != PAMCode.PAM_SUCCESS:
                     # Account may have gotten locked between when token originally generated and when it was used.
                     # Alternatively we may have hit session limits.
                     await asyncio.sleep(CURRENT_AAL.get_delay_interval())
@@ -1127,7 +1098,7 @@ class AuthService(Service):
 
                 resp = {
                     'pam_response': {
-                        'code': pam.PAM_SUCCESS,
+                        'code': PAMCode.PAM_SUCCESS,
                         'reason': None
                     }
                 }
@@ -1138,7 +1109,7 @@ class AuthService(Service):
                 raise CallError(f'{mechanism}: unexpected authentication mechanism')
 
         match resp['pam_response']['code']:
-            case pam.PAM_SUCCESS:
+            case PAMCode.PAM_SUCCESS:
                 response['response_type'] = AuthResp.SUCCESS
                 if data['login_options']['user_info']:
                     response['user_info'] = await self.me(app)
@@ -1151,11 +1122,11 @@ class AuthService(Service):
                 # the SessionManagerCredential is deallocated or logout() explicitly called
                 auth_ctx.pam_hdl = None
 
-            case pam.PAM_AUTH_ERR | pam.PAM_USER_UNKNOWN:
+            case PAMCode.PAM_AUTH_ERR | PAMCode.PAM_USER_UNKNOWN:
                 # We have to squash AUTH_ERR and USER_UNKNOWN into a generic response
                 # to prevent unauthenticated remote clients from guessing valid usernames.
                 response['response_type'] = AuthResp.AUTH_ERR
-            case pam.PAM_ACCT_EXPIRED | pam.PAM_NEW_AUTHTOK_REQD | pam.PAM_CRED_EXPIRED:
+            case PAMCode.PAM_ACCT_EXPIRED | PAMCode.PAM_NEW_AUTHTOK_REQD | PAMCode.PAM_CRED_EXPIRED:
                 response['response_type'] = AuthResp.EXPIRED.name
             case _:
                 # This is unexpected and so we should generate a debug message
@@ -1183,11 +1154,12 @@ class AuthService(Service):
             username, password,
             app=app
         )
-        if resp['pam_response']['code'] == pam.PAM_SUCCESS:
+        if resp['pam_response']['code'] == PAMCode.PAM_SUCCESS:
             if AccountFlag.OTPW in resp['user_data']['account_attributes']:
                 otpw_used = True
-            elif AccountFlag.TWOFACTOR in resp['user_data']['account_attributes']:
-                otp_required = True
+
+        elif resp['pam_response']['code'] == PAMCode.PAM_CONV_AGAIN:
+            otp_required = True
 
         return resp | {'otp_required': otp_required, 'otpw_used': otpw_used}
 
@@ -1329,41 +1301,40 @@ class AuthService(Service):
 async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None:
     """Authenticates connections coming from loopback and from root user."""
     origin = app.origin
-    if origin is None:
+    if origin is None or not origin.is_unix_family:
         return
 
-    authenticator = UnixPamAuthenticator()
+    if origin.uid == 0 and not origin.session_is_interactive:
+        # We can bypass more complex privilege composition for internal root sessions
+        authenticator = UnixPamAuthenticator(username='root', origin=origin)
+        user = await middleware.call('auth.authenticate_root')
+        resp = await middleware.run_in_thread(authenticator.authenticate, 'root')
+        if resp.code != PAMCode.PAM_SUCCESS:
+            middleware.logger.error('root: AF_UNIX authentication for user failed: %s', resp.reason)
+    else:
+        # We first have to convert the UID to a username to send to PAM. The PAM
+        # authenticator will handle retrieving group membership and setting account flags
+        try:
+            user_info = await middleware.call('user.get_user_obj', {'uid': origin.uid})
+        except KeyError:
+            # User does not exist
+            return
 
-    if origin.is_unix_family:
-        if origin.uid == 0 and not origin.session_is_interactive:
-            # We can bypass more complex privilege composition for internal root sessions
-            user = await middleware.call('auth.authenticate_root')
-            resp = await middleware.run_in_thread(authenticator.authenticate, 'root', app.origin)
-            if resp.code != pam.PAM_SUCCESS:
-                middleware.logger.error('root: AF_UNIX authentication for user failed: %s', resp.reason)
-        else:
-            # We first have to convert the UID to a username to send to PAM. The PAM
-            # authenticator will handle retrieving group membership and setting account flags
-            try:
-                user_info = await middleware.call('user.get_user_obj', {'uid': origin.uid})
-            except KeyError:
-                # User does not exist
-                return
+        authenticator = UnixPamAuthenticator(username=user_info['pw_name'], origin=origin)
+        resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'])
+        if resp.code != PAMCode.PAM_SUCCESS:
+            middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
+                                    user_info['pw_name'], resp.reason)
+            return
 
-            resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'], app.origin)
-            if resp.code != pam.PAM_SUCCESS:
-                middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
-                                        user_info['pw_name'], resp.reason)
-                return
+        # Use the user_info from the authenticator (contains more information than user.get_user_obj)
+        # to generate the credentials dict that will be inserted as the SessionManagerCredentials.
+        user = await middleware.call('auth.authenticate_user', resp.user_info)
+        if user is None:
+            # User may not have privileges to TrueNAS
+            return
 
-            # Use the user_info from the authenticator (contains more information than user.get_user_obj)
-            # to generate the credentials dict that will be inserted as the SessionManagerCredentials.
-            user = await middleware.call('auth.authenticate_user', resp.user_info)
-            if user is None:
-                # User may not have privileges to TrueNAS
-                return
-
-        await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user, authenticator))
+    await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user, authenticator))
 
 
 def setup(middleware: Middleware):
