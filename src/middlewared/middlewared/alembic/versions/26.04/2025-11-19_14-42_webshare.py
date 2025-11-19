@@ -1,7 +1,7 @@
 """Webshare service
 
 Revision ID: d5ccdbe6479f
-Revises: e41efceeeb41
+Revises: 2fa51c5099b0
 Create Date: 2025-10-24 10:42:18.331279+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'd5ccdbe6479f'
-down_revision = 'e41efceeeb41'
+down_revision = '2fa51c5099b0'
 branch_labels = None
 depends_on = None
 
