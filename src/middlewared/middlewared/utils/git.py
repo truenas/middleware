@@ -39,7 +39,7 @@ def checkout_repository(destination: str, branch: str) -> None:
 def update_repo(destination: str, branch: str) -> None:
     # Always reset to ensure working directory matches the repository state
     # This handles cases where files are missing, modified, or corrupted
-    cp = subprocess.run(['git', '-C', destination, 'reset', '--hard'], capture_output=True)
+    cp = subprocess.run(['git', '-C', destination, 'reset', '--hard', f'origin/{branch}'], capture_output=True)
     if cp.returncode:
         error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
