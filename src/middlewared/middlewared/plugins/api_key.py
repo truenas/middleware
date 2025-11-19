@@ -1,4 +1,3 @@
-import pam
 import errno
 
 from typing import Literal
@@ -9,16 +8,18 @@ from middlewared.api.current import (
     ApiKeyEntry, ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs, ApiKeyUpdateResult,
     ApiKeyDeleteArgs, ApiKeyDeleteResult, ApiKeyMyKeysArgs, ApiKeyMyKeysResult,
 )
-from middlewared.service import CRUDService, pass_app, periodic, private, ValidationErrors
+from middlewared.service import CRUDService, pass_app, private, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.account.authenticator import ApiKeyPamAuthenticator
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
-from middlewared.utils.crypto import generate_pbkdf2_512, generate_string
+from middlewared.utils.crypto import generate_api_key_auth_data, generate_string
+from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
-from middlewared.utils.user_api_key import PAM_TDB_MAX_KEYS
 from middlewared.utils.time_utils import utc_now
+from truenas_pypam import PAMCode
 
 
 class APIKeyModel(sa.Model):
@@ -27,7 +28,10 @@ class APIKeyModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(200))
     user_identifier = sa.Column(sa.String(200))
-    key = sa.Column(sa.Text())
+    iterations = sa.Column(sa.Integer())
+    salt = sa.Column(sa.EncryptedText())
+    server_key = sa.Column(sa.EncryptedText())
+    stored_key = sa.Column(sa.EncryptedText())
     created_at = sa.Column(sa.DateTime())
     expiry = sa.Column(sa.Integer())
     revoked_reason = sa.Column(sa.Text(), nullable=True)
@@ -81,11 +85,9 @@ class ApiKeyService(CRUDService):
         """
         user_identifier = item['user_identifier']
         expiry = item.pop('expiry')
-        thehash = item.pop('key')
 
         item.update({
             'username': None,
-            'keyhash': thehash,
             'local': True,
             'expires_at': None,
             'revoked': False
@@ -144,15 +146,11 @@ class ApiKeyService(CRUDService):
         if out.get('revoked'):
             out['expiry'] = -1
 
-        thehash = out.pop('keyhash')
-        if thehash:
-            out['key'] = thehash
-
         for key in [
             'username',
             'revoked',
-            'keyhash',
             'local',
+            'client_key',
         ]:
             out.pop(key, None)
 
@@ -192,13 +190,6 @@ class ApiKeyService(CRUDService):
         if user and not user[0]['roles']:
             verrors.add('api_key_create', 'User lacks privilege role membership.')
 
-        if user and self.middleware.call_sync('api_key.query', [
-            ["username", "=", user[0]['username']]
-        ], {'count': True}) >= PAM_TDB_MAX_KEYS:
-            verrors.add(
-                'api_key_create.username',
-                f'User already meets or exceeds maximum per-user API key limit of {PAM_TDB_MAX_KEYS}'
-            )
         verrors.check()
 
         if user[0]['local']:
@@ -210,9 +201,10 @@ class ApiKeyService(CRUDService):
             # to our synthesized DB ID (which is derived
             # from the UID of user)
             user_identifier = str(user[0]['id'])
-
         key = generate_string(string_size=64)
-        data['keyhash'] = generate_pbkdf2_512(key)
+        auth_data = generate_api_key_auth_data(key)
+        data.update(auth_data)
+
         data['created_at'] = utc_now()
         data['user_identifier'] = user_identifier
         data['id'] = self.middleware.call_sync(
@@ -267,7 +259,8 @@ class ApiKeyService(CRUDService):
         key = None
         if reset:
             key = generate_string(string_size=64)
-            new['keyhash'] = generate_pbkdf2_512(key)
+            auth_data = generate_api_key_auth_data(key)
+            new.update(auth_data)
             new['revoked'] = False
 
         self.middleware.call_sync(
@@ -343,37 +336,32 @@ class ApiKeyService(CRUDService):
             )
 
     @private
-    def update_hash(self, old_key: str):
-        """We have some legacy keys that have hashes generated with
-        insufficient iterations. This method refreshes the hash we're storing
-        with higher iterations and different algorithm"""
-
-        id_, key = old_key.split('-', 1)
-        newhash = generate_pbkdf2_512(key)
-
-        self.middleware.call_sync(
-            "datastore.update",
-            self._config.datastore,
-            int(id_),
-            {'key': newhash}
-        )
-        self.middleware.call_sync('etc.generate', 'pam_middleware')
-
-    @private
     @pass_app(require=True)
-    async def authenticate(self, app, key: str) -> dict | None:
+    async def authenticate(self, app, key: str, origin: ConnectionOrigin) -> dict | None:
         """Wrapper around `auth.authenticate` for file upload endpoint."""
         try:
             key_id = int(key.split('-', 1)[0])
         except ValueError:
             return None
 
+
+        auth_ctx = app.authentication_context
+        if not auth_ctx:
+            raise CallError('Authentication context was not initialized')
+
+
+        if auth_ctx.pam_hdl:
+            raise CallError(f'{auth_ctx.pam_hdl}: Unexpected existing authenticator')
+
         entry = await self.get_instance(key_id)
+
+        auth_ctx.pam_hdl = ApiKeyPamAuthenticator(username=entry['username'] or 'root', origin=origin)
+
         resp = await self.middleware.call('auth.authenticate_plain',
                                           entry['username'],
                                           key, app=app)
 
-        if resp['pam_response']['code'] != pam.PAM_SUCCESS:
+        if resp['pam_response']['code'] != PAMCode.PAM_SUCCESS:
             return None
 
         return (resp['user_data'], {

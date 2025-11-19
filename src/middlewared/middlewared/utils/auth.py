@@ -6,7 +6,6 @@ from time import monotonic
 from .crypto import generate_string, sha512_crypt, check_unixhash
 
 LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
-MAX_OTP_ATTEMPTS = 3
 AUID_UNSET = 2 ** 32 - 1
 AUID_FAULTED = 2 ** 32 - 2
 
@@ -16,6 +15,7 @@ class AuthMech(enum.StrEnum):
     PASSWORD_PLAIN = 'PASSWORD_PLAIN'
     TOKEN_PLAIN = 'TOKEN_PLAIN'
     OTP_TOKEN = 'OTP_TOKEN'
+    SCRAM = 'SCRAM'
 
 
 class AuthResp(enum.StrEnum):
@@ -24,6 +24,7 @@ class AuthResp(enum.StrEnum):
     EXPIRED = 'EXPIRED'
     OTP_REQUIRED = 'OTP_REQUIRED'
     REDIRECT = 'REDIRECT'
+    SCRAM_RESPONSE = 'SCRAM_RESPONSE'
 
 
 # NIST SP 800-63B provides documentation Authenticator Assurance Levels (AAL)
@@ -75,6 +76,7 @@ AA_LEVEL1 = AuthenticatorAssuranceLevel(
         AuthMech.API_KEY_PLAIN,
         AuthMech.TOKEN_PLAIN,
         AuthMech.PASSWORD_PLAIN,
+        AuthMech.SCRAM
     ),
     otp_mandatory=False,
     min_fail_delay=1
@@ -94,7 +96,7 @@ AA_LEVEL1 = AuthenticatorAssuranceLevel(
 AA_LEVEL2 = AuthenticatorAssuranceLevel(
     max_session_age=12 * 60 * 60,
     max_inactivity=30 * 60,
-    mechanisms=(AuthMech.PASSWORD_PLAIN,),
+    mechanisms=(AuthMech.PASSWORD_PLAIN, AuthMech.SCRAM),
     otp_mandatory=True,
     min_fail_delay=4
 )

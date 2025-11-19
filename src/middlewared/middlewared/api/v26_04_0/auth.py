@@ -132,6 +132,49 @@ class AuthPasswordPlain(BaseModel):
     """Additional options for the authentication process."""
 
 
+class AuthSCRAM(BaseModel):
+    mechanism: Literal["SCRAM"]
+    """Authentication mechanism that implements SHA512-based RFC5802 authentication.
+    The authentication mechanism provides replay resistence and capability for
+    mutual validation of server and client sessions.
+
+    The authentication mechanism is currently limited to API key credentials, but
+    at a future point will be expanded to cover local user authentication.
+
+    Channel binding support is also a planned enhancement of the authentication
+    mechanism.
+
+    C and python libraries to for managing the client-side portion of the authentication
+    exchanges are provided at https://github.com/truenas/truenas_scram
+    """
+    scram_type: Literal["CLIENT_FIRST_MESSAGE", "CLIENT_FINAL_MESSAGE"]
+    """Scram message type from client. The scram types indicate the message type that is represented by the \
+    rfc_str` field.
+    CLIENT_FIRST_MESSAGE - this corresponds with the client-first-message as defined in RFC5802.\
+    CLIENT_FINAL_MESSAGE - this corresponds with the client-final-message as defined
+    in RFC5802."""
+    rfc_str: str = Field(examples=[
+        "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL",
+        "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
+    ])
+    """This field contains the SCRAM authentication exchange message as defined in RFC5802.
+    The expected format and contents depends on the `scram_type`.\
+    CLIENT_FIRST_MESSAGE: `n,,n=user:10,r=fyko+d2lbbFgONRv9qkxdawL`\
+    The `n,,` component indicates that client does not support channel bindings.
+    `n=user:10` specifies the username and API key id (separated by `:` character).
+    `r=fyko+d2lbbFgONRv9qkxdawL` specifies a base64-encoded nonce generated client-side.\
+
+    CLIENT_FINAL_MESSAGE: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,
+    p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=\
+    `c=biws` contains channel binding information. In this example it's the base64-encoded
+    string `n,,` (no channel binding support).
+    `r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j` contains the combined client and server
+    nonce as returned by the response to the CLIENT_FIRST_MESSAGE.
+    `p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=` contains the base64-encoded client proof generated
+    based on client-side key material and client + server nonce.
+    """
+
+
 class AuthRespAuthErr(BaseModel):
     response_type: Literal["AUTH_ERR"]
     """Authentication response type indicating authentication failure."""
@@ -174,6 +217,22 @@ class AuthRespSuccess(BaseModel):
     """Authenticated user information or `null` if not available."""
     authenticator: Literal['LEVEL_1', 'LEVEL_2']
     """Authentication level achieved (LEVEL_1 for password, LEVEL_2 for two-factor)."""
+
+
+class AuthRespScram(BaseModel):
+    response_type: Literal["SCRAM_RESPONSE"]
+    """Authentication response type indicating a SCRAM server response."""
+    scram_type: Literal["SERVER_FIRST_RESPONSE", "SERVER_FINAL_RESPONSE"]
+    """The type of server response. The SERVER_FIRST_RESPONSE will contain nonce, salt,\
+    and iterations. The SERVER_FINAL_RESPONSE will contain the server verification proof\
+    for client mutual validation."""
+    rfc_str: str = Field(examples=[
+        "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=500000",
+        "v=rmF9pqV8S7suAoZWja4dJRkFsKQ="
+    ])
+    """Server authentication response containing string per RFC5802."""
+    user_info: AuthUserInfo | None
+    """Authenticated user information on SERVER_FINAL_RESPONSE or null on SERVER_FIRST_RESPONSE."""
 
 
 class AuthTokenPlain(BaseModel):
@@ -237,13 +296,16 @@ class AuthLoginResult(BaseModel):
 
 
 class AuthLoginExArgs(BaseModel):
-    login_data: AuthApiKeyPlain | AuthPasswordPlain | AuthTokenPlain | AuthOTPToken = Field(discriminator='mechanism')
+    login_data: Union[
+        AuthApiKeyPlain, AuthPasswordPlain, AuthTokenPlain, AuthOTPToken, AuthSCRAM
+    ] = Field(discriminator='mechanism')
     """Authentication data specifying mechanism and credentials."""
 
 
 class AuthLoginExResult(BaseModel):
     result: Union[
-        AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect
+        AuthRespSuccess, AuthRespAuthErr, AuthRespExpired, AuthRespOTPRequired, AuthRespAuthRedirect,
+        AuthRespScram
     ] = Field(discriminator='response_type')
     """Authentication response indicating success, failure, or additional steps required."""
 
