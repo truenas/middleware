@@ -1,5 +1,6 @@
 import itertools
 import logging
+import os
 import subprocess
 import tempfile
 import typing
@@ -7,6 +8,7 @@ import typing
 from middlewared.service_exception import CallError
 
 from .ix_apps.lifecycle import get_rendered_templates_of_app
+from .ix_apps.path import get_installed_app_rendered_dir_path
 from .utils import PROJECT_PREFIX, run
 
 
@@ -92,7 +94,11 @@ def validate_compose_config(compose_yaml: str) -> tuple[bool, str]:
 
 def collect_logs(app_name: str, app_version: str) -> str:
     compose_files = list(itertools.chain(
-        *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
+        *(
+            [
+                ('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)
+            ] if os.path.exists(get_installed_app_rendered_dir_path(app_name, app_version)) else []
+        )
     ))
     if not compose_files:
         return f'No compose files found for app {app_name!r}'
