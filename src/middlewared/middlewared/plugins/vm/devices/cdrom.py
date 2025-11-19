@@ -51,6 +51,9 @@ class CDROM(Device):
             )
 
         if not verrors:
+            if self.middleware.call_sync('filesystem.statfs', path)['dest'].count('/') < 3:
+                verrors.add('attributes.path', 'The path must be a dataset or a directory within a dataset.')
+                return
             # We would like to check now if libvirt will actually be able to read the iso file
             # How this works is that if libvirt user is not able to read the file, libvirt automatically changes
             # ownership of the iso file to the libvirt user so that it is able to read however there are cases where
