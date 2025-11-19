@@ -1,19 +1,30 @@
 """
 NVMe-oF HA Failover Testing
 
-Tests failover behavior across multiple dimensions:
+test_failover: Basic failover tests across multiple dimensions
 - Target implementation: kernel vs SPDK
 - Failover mode: ANA vs IP takeover
 - Failure type: orderly vs crash
 - I/O state: active vs idle
 - Namespace count: 1 vs 3
-
 Total: 2 x 2 x 2 x 2 x 2 = 32 tests
+
+test_failover_scale: Large-scale failover tests
+- Target implementation: kernel vs SPDK
+- Failover mode: ANA vs IP takeover
+- Failure type: orderly vs crash
+- Scale: 51 subsystems (50 single-namespace + 1 with 20 namespaces) = 70 total namespaces
+- Verifies unique data patterns per namespace survive failover
+- Measures failover timing (must complete within MAX_FAILOVER_TIME seconds)
+Total: 2 x 2 x 2 = 8 tests
+
+Combined Total: 40 tests
 """
 import contextlib
 import os
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from functools import cache
 
 import pytest
@@ -33,8 +44,6 @@ from middlewared.test.integration.utils.failover import do_failover
 from middlewared.test.integration.utils.ha import settle_ha
 
 # Import the nvmeof_client library
-# import sys
-# sys.path.insert(0, '/home/brian/claude/nvme/truenas_pynvmeof_client/src')
 from nvmeof_client import NVMeoFClient
 from nvmeof_client.models import ANAState
 
@@ -44,6 +53,13 @@ SERVICE_NAME = 'nvmet'
 ZVOL_COUNT = 3
 ZVOL_MB = 100
 SUBSYS_NAME = 'ha_failover_test'
+
+# Scale test configuration
+SCALE_SINGLE_NS_SUBSYSTEMS = 50  # Number of subsystems with 1 namespace each
+SCALE_MULTI_NS_COUNT = 20        # Number of namespaces in multi-namespace subsystem
+SCALE_ZVOL_MB = 20               # Size of each ZVOL in MB (smaller for faster testing)
+MAX_FAILOVER_TIME = 60           # Maximum acceptable failover time in seconds
+# Total scale: 51 subsystems, 70 namespaces
 
 
 @cache
@@ -930,3 +946,395 @@ class TestFailover:
                     pass
             # Give system time to fully release resources
             time.sleep(1)
+
+
+class TestFailoverScale:
+    """Large-scale HA failover tests with many subsystems/namespaces.
+
+    Tests failover with:
+    - SCALE_SINGLE_NS_SUBSYSTEMS subsystems with 1 namespace each
+    - 1 subsystem with SCALE_MULTI_NS_COUNT namespaces
+    - Total: (SCALE_SINGLE_NS_SUBSYSTEMS + 1) subsystems, (SCALE_SINGLE_NS_SUBSYSTEMS + SCALE_MULTI_NS_COUNT) namespaces
+
+    Quick subset (2 tests - runs by default):
+    - kernel-ana-orderly
+    - spdk-ip_takeover-crash
+
+    Full matrix (8 tests - requires RUN_FULL_MATRIX=1):
+    - 2 implementations x 2 modes x 2 failure types = 8 tests
+    """
+
+    @pytest.fixture(scope='class')
+    def many_zvols_scale(self):
+        """Create ZVOLs for scale testing."""
+        total_zvols = SCALE_SINGLE_NS_SUBSYSTEMS + SCALE_MULTI_NS_COUNT
+        zvol_names = []
+
+        # Create all ZVOLs using ExitStack
+        with contextlib.ExitStack() as es:
+            for i in range(total_zvols):
+                zvol_name = f'ha_scale_{i}'
+                zvol_names.append(zvol_name)
+                es.enter_context(zvol(zvol_name, SCALE_ZVOL_MB, pool_name))
+            yield zvol_names
+
+    @pytest.fixture(params=['kernel', 'spdk'], scope='class')
+    def implementation_scale(self, request):
+        """Set NVMet implementation for scale tests."""
+        with nvmet_implementation(request.param):
+            yield request.param
+
+    @pytest.fixture(scope='class')
+    def fixture_nvmet_running_scale(self, implementation_scale):
+        """Ensure NVMet service is running for scale tests."""
+        with ensure_service_enabled(SERVICE_NAME):
+            with ensure_service_started(SERVICE_NAME, 3):
+                yield implementation_scale
+
+    @pytest.fixture(params=['ana', 'ip_takeover'], scope='class')
+    def failover_mode_scale(self, request):
+        """Configure failover mode for scale tests."""
+        if request.param == 'ana':
+            # Enable ANA for this test class
+            with nvmet_ana(True):
+                yield request.param
+        else:
+            # IP takeover - no configuration change
+            yield request.param
+
+    @pytest.fixture(scope='class')
+    def configured_subsystems_scale(self, request, many_zvols_scale, failover_mode_scale,
+                                    fixture_nvmet_running_scale):
+        """Set up multiple subsystems with namespaces for scale testing.
+
+        Returns:
+            List of dicts with keys: 'subnqn', 'namespace_count', 'nsids'
+        """
+        # Initialize node IPs if needed
+        if truenas_server.nodea_ip is None:
+            init_truenas_server()
+
+        subsystems = []
+        zvol_index = 0
+
+        # Create port once for all subsystems
+        with nvmet_port(truenas_server.ip) as port:
+            with contextlib.ExitStack() as stack:
+                # Create single-namespace subsystems
+                for i in range(SCALE_SINGLE_NS_SUBSYSTEMS):
+                    subsys_name = f'scale_single_{i}'
+                    subsys = stack.enter_context(
+                        nvmet_subsys(subsys_name, allow_any_host=True)
+                    )
+                    stack.enter_context(nvmet_port_subsys(subsys['id'], port['id']))
+
+                    # Add one namespace
+                    zvol_name = many_zvols_scale[zvol_index]
+                    zvol_index += 1
+                    zvol_path = f'zvol/{pool_name}/{zvol_name}'
+                    ns = stack.enter_context(
+                        nvmet_namespace(subsys['id'], zvol_path)
+                    )
+
+                    subsystems.append({
+                        'subnqn': subsys['subnqn'],
+                        'namespace_count': 1,
+                        'nsids': [ns['nsid']]
+                    })
+
+                # Create multi-namespace subsystem
+                subsys_name = 'scale_multi'
+                subsys = stack.enter_context(
+                    nvmet_subsys(subsys_name, allow_any_host=True)
+                )
+                stack.enter_context(nvmet_port_subsys(subsys['id'], port['id']))
+
+                nsids = []
+                for j in range(SCALE_MULTI_NS_COUNT):
+                    zvol_name = many_zvols_scale[zvol_index]
+                    zvol_index += 1
+                    zvol_path = f'zvol/{pool_name}/{zvol_name}'
+                    ns = stack.enter_context(
+                        nvmet_namespace(subsys['id'], zvol_path)
+                    )
+                    nsids.append(ns['nsid'])
+
+                subsystems.append({
+                    'subnqn': subsys['subnqn'],
+                    'namespace_count': SCALE_MULTI_NS_COUNT,
+                    'nsids': nsids
+                })
+
+                # Double settle pattern for stability
+                settle_ha()
+                time.sleep(5)
+                settle_ha()
+
+                print(f"\n[SCALE] Created {len(subsystems)} subsystems with "
+                      f"{sum(s['namespace_count'] for s in subsystems)} total namespaces")
+
+                yield subsystems
+
+                # Cleanup happens via context managers
+
+        # After all context managers have exited
+        print("[FIXTURE] Scale test teardown - sleeping for services to settle...")
+        time.sleep(5)
+
+    @pytest.mark.timeout(900)  # 15 minutes for large-scale tests (70 ZVOLs + test + cleanup)
+    @pytest.mark.parametrize('failure_type', ['orderly', 'crash'])
+    def test_failover_scale(self, fixture_nvmet_running_scale, failover_mode_scale,
+                            configured_subsystems_scale, failure_type):
+        """Test failover with multiple subsystems/namespaces.
+
+        Quick subset (2 tests - runs by default):
+        - kernel-ana-orderly
+        - spdk-ip_takeover-crash
+
+        Full matrix (8 tests - requires RUN_FULL_MATRIX=1):
+        - All parameter combinations (2x2x2 = 8 tests)
+        """
+        # Get implementation and mode from fixtures
+        implementation = fixture_nvmet_running_scale
+        failover_mode = failover_mode_scale
+
+        # Quick subset: only run specific combinations unless RUN_FULL_MATRIX is set
+        quick_combinations = [
+            ('kernel', 'ana', 'orderly'),
+            ('spdk', 'ip_takeover', 'crash'),
+        ]
+
+        if os.getenv('RUN_FULL_MATRIX', '0') != '1':
+            if (implementation, failover_mode, failure_type) not in quick_combinations:
+                pytest.skip("Skipping full scale test (set RUN_FULL_MATRIX=1 to run all 8 tests)")
+
+        total_namespaces = sum(s['namespace_count'] for s in configured_subsystems_scale)
+
+        print(f"\n{'='*70}")
+        print("Scale Test Configuration:")
+        print(f"  Implementation: {implementation}")
+        print(f"  Mode: {failover_mode}")
+        print(f"  Subsystems: {len(configured_subsystems_scale)}")
+        print(f"  Total Namespaces: {total_namespaces}")
+        print(f"  Failure: {failure_type}")
+        print(f"{'='*70}")
+
+        # Determine which node is currently active
+        orig_master_node = call('failover.node')
+        if orig_master_node == 'A':
+            primary_ip = truenas_server.nodea_ip
+            secondary_ip = truenas_server.nodeb_ip
+        else:
+            primary_ip = truenas_server.nodeb_ip
+            secondary_ip = truenas_server.nodea_ip
+
+        # For IP takeover mode, always use the VIP (floating IP)
+        # For ANA mode, use per-node IPs
+        if failover_mode == 'ip_takeover':
+            floating_ip = truenas_server.ip
+            connect_ip = floating_ip
+            print(f"Active node: {orig_master_node}, Floating IP: {floating_ip}")
+        else:
+            connect_ip = primary_ip
+            print(f"Active node: {orig_master_node}, Primary IP: {primary_ip}, Secondary IP: {secondary_ip}")
+
+        # Pre-failover: Connect to all subsystems and write unique patterns (parallel)
+        print("\n[SCALE] Pre-failover: Connecting to all subsystems in parallel...")
+
+        def connect_and_write_pattern(subsys_info, subsys_index):
+            """Connect to subsystem, write unique patterns to ALL namespaces, and disconnect immediately."""
+            subsys_nqn = subsys_info['subnqn']
+            client = None
+            try:
+                client = NVMeoFClient(connect_ip, subsys_nqn)
+                connect_with_retry(client, connect_ip, max_attempts=30, retry_delay=1.0)
+
+                # Write unique pattern to EVERY namespace in this subsystem
+                patterns = []
+                for nsid in subsys_info['nsids']:
+                    # Create unique pattern: test params + subsystem index + namespace ID + subsystem NQN
+                    pattern_str = (f"SCALE_{implementation}_{failover_mode}_{failure_type}_"
+                                   f"SUBSYS_{subsys_index}_NSID_{nsid}_{subsys_nqn}")
+                    pattern = pattern_str.encode().ljust(512, b'\0')
+                    client.write_data(nsid=nsid, lba=0, data=pattern)
+                    patterns.append((nsid, pattern))
+
+                print(f"  [OK] Connected to {subsys_nqn} ({subsys_info['namespace_count']} namespaces)")
+                return (subsys_nqn, patterns)
+            except Exception as e:
+                raise AssertionError(f"Failed to connect/write to {subsys_nqn}: {e}")
+            finally:
+                # Disconnect immediately after writing patterns
+                if client:
+                    try:
+                        client.disconnect()
+                    except Exception:
+                        pass
+
+        # Use ThreadPoolExecutor for parallel connections (max 10 workers to avoid overwhelming target)
+        all_patterns = []  # List of (subsys_nqn, nsid, pattern) tuples
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(connect_and_write_pattern, subsys, i)
+                       for i, subsys in enumerate(configured_subsystems_scale)]
+
+            # Collect results
+            for future in futures:
+                subsys_nqn, ns_patterns = future.result()
+                # Flatten namespace patterns into single list
+                for nsid, pattern in ns_patterns:
+                    all_patterns.append((subsys_nqn, nsid, pattern))
+
+        num_subsystems = len(configured_subsystems_scale)
+        print(f"[SCALE] All {num_subsystems} subsystems had {len(all_patterns)} namespace patterns "
+              f"written (and disconnected)")
+
+        # Trigger failover
+        print(f"\n[SCALE] Triggering failover (abusive={failure_type == 'crash'})...")
+        failover_start_time = time.time()
+        do_failover(settle=False, abusive=(failure_type == 'crash'))
+
+        # Note: Pre-failover connections already disconnected immediately after writing patterns
+
+        # Wait for new controller to become accessible (measure service interruption window)
+        # For ANA mode: check path is OPTIMIZED (not INACCESSIBLE) before attempting I/O
+        # For IP takeover: reconnect to floating IP
+        print("[SCALE] Waiting for new active controller to become accessible...")
+
+        path_accessible_time = None
+        if failover_mode == 'ana':
+            # For ANA mode: Wait for path to become OPTIMIZED
+            # Note: SPDK closes connections during failover, kernel sends ANA change events
+            # We handle both by reconnecting each attempt
+            max_attempts = 60
+            test_client = None
+            for attempt in range(max_attempts):
+                try:
+                    # Create fresh client each attempt (handles SPDK connection closure)
+                    if test_client:
+                        try:
+                            test_client.disconnect()
+                        except Exception:
+                            pass
+                    test_client = NVMeoFClient(secondary_ip, configured_subsystems_scale[0]['subnqn'])
+                    test_client.connect()
+
+                    # Check if path is OPTIMIZED
+                    if is_ana_state_optimized(test_client):
+                        path_accessible_time = time.time()
+                        print(f"[SCALE] Path became OPTIMIZED after {path_accessible_time - failover_start_time:.2f}s")
+                        break
+
+                    # Not optimized yet, disconnect and retry
+                    test_client.disconnect()
+                    time.sleep(1)
+                except Exception as e:
+                    if attempt < max_attempts - 1:
+                        time.sleep(1)
+                    else:
+                        raise AssertionError(f"Path did not become OPTIMIZED after {max_attempts}s: {e}")
+
+            if test_client:
+                try:
+                    test_client.disconnect()
+                except Exception:
+                    pass
+        else:
+            # For IP takeover mode: reconnect to floating IP
+            # Wait for IP to move to avoid connecting to old node before it crashes/reboots
+            print("[SCALE] Waiting for IP to move...")
+            time.sleep(10)
+
+            test_client = NVMeoFClient(floating_ip, configured_subsystems_scale[0]['subnqn'])
+            try:
+                connect_with_retry(test_client, floating_ip, max_attempts=60, retry_delay=1.0)
+                path_accessible_time = time.time()
+                print(f"[SCALE] Floating IP reconnected after {path_accessible_time - failover_start_time:.2f}s")
+            except Exception as e:
+                raise AssertionError(f"Failed to reconnect to floating IP after 60s: {e}")
+            finally:
+                test_client.disconnect()
+
+        time_to_accessible = path_accessible_time - failover_start_time
+
+        # Verify failover time is within acceptable limits
+        if time_to_accessible > MAX_FAILOVER_TIME:
+            raise AssertionError(
+                f"Failover time {time_to_accessible:.2f}s exceeds maximum acceptable time of {MAX_FAILOVER_TIME}s"
+            )
+
+        # Determine which IP to use for post-failover verification
+        # For IP takeover: still use floating_ip (same VIP, different node)
+        # For ANA: use secondary_ip (the new active controller)
+        verify_ip = floating_ip if failover_mode == 'ip_takeover' else secondary_ip
+
+        # Post-failover: Verify I/O and data integrity on ALL namespaces (parallel)
+        print(f"\n[SCALE] Verifying I/O and data patterns on all {len(all_patterns)} namespaces in parallel...")
+
+        def verify_pattern(subsys_nqn, nsid, expected_pattern):
+            """Reconnect to subsystem on new controller and verify unique pattern for specific namespace."""
+            client = None
+            try:
+                client = NVMeoFClient(verify_ip, subsys_nqn)
+                connect_with_retry(client, verify_ip, max_attempts=5, retry_delay=1.0)
+
+                # Read data from specific namespace
+                data = client.read_data(nsid=nsid, lba=0, block_count=1)
+
+                # Verify pattern matches
+                if data != expected_pattern:
+                    raise AssertionError(
+                        f"Data pattern mismatch for {subsys_nqn} nsid={nsid}. "
+                        f"Expected pattern starts with: {expected_pattern[:50]}, "
+                        f"Got: {data[:50]}"
+                    )
+
+                print(f"  [OK] {subsys_nqn} nsid={nsid} - I/O verified and data pattern matched")
+                return (subsys_nqn, nsid, True, None)
+            except Exception as e:
+                return (subsys_nqn, nsid, False, str(e))
+            finally:
+                # Always disconnect, even on error
+                if client:
+                    try:
+                        client.disconnect()
+                    except Exception:
+                        pass  # Ignore disconnect errors
+
+        # Use ThreadPoolExecutor for parallel verification of ALL namespaces
+        failed_namespaces = []
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(verify_pattern, subsys_nqn, nsid, pattern)
+                       for subsys_nqn, nsid, pattern in all_patterns]
+
+            # Collect results
+            for future in futures:
+                subsys_nqn, nsid, success, error = future.result()
+                if not success:
+                    print(f"  [FAIL] {subsys_nqn} nsid={nsid} FAILED: {error}")
+                    failed_namespaces.append((subsys_nqn, nsid, error))
+
+        io_verified_time = time.time()
+        time_to_io = io_verified_time - path_accessible_time
+        total_time = io_verified_time - failover_start_time
+
+        # Print timing summary
+        print("\n[SCALE] Timing Summary:")
+        print(f"  Failover trigger -> Path accessible: {time_to_accessible:.2f}s")
+        print(f"  Path accessible -> All I/O verified: {time_to_io:.2f}s")
+        print(f"  Total time: {total_time:.2f}s")
+        print(f"[SCALE] Subsystems tested: {num_subsystems}")
+        print(f"[SCALE] Namespaces tested: {len(all_patterns)}")
+
+        if failed_namespaces:
+            raise AssertionError(
+                f"Failover failed for {len(failed_namespaces)} namespaces: {failed_namespaces}"
+            )
+
+        print(f"[SCALE] [OK] All {num_subsystems} subsystems ({len(all_patterns)} namespaces) "
+              "verified on new controller")
+
+        # Now wait for HA to reach steady state (not part of client-visible timing)
+        print("\n[SCALE] Waiting for HA to reach steady state...")
+        settle_ha()
+        time.sleep(5)
+        settle_ha()
