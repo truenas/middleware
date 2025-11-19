@@ -1,9 +1,9 @@
 import os
-import pam
 
 from middlewared.service import Service, pass_app, private
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.account.oath import OATH_FILE
+from truenas_pypam import PAMCode
 
 
 class AuthService(Service):
@@ -16,11 +16,11 @@ class AuthService(Service):
     async def authenticate_plain(self, app, username, password):
         user_token = None
         pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password, app=app)
-        if pam_resp['code'] == pam.PAM_SUCCESS:
+        if pam_resp['code'] == PAMCode.PAM_SUCCESS:
             user_token = await self.authenticate_user(pam_resp['user_info'])
             if user_token is None:
                 # Some error occurred when trying to generate our user token
-                pam_resp['code'] = pam.PAM_AUTH_ERR
+                pam_resp['code'] = PAMCode.PAM_AUTH_ERR
                 pam_resp['reason'] = 'Failed to generate user token'
 
         return {'pam_response': pam_resp, 'user_data': user_token}
@@ -48,20 +48,20 @@ class AuthService(Service):
         # Protect against the PAM service file not existing. By default PAM will fallthrough
         # if the service file doesn't exist. We want to try to etc.generate, and if that fails,
         # error out cleanly.
-        if not os.path.exists(auth_ctx.pam_hdl.truenas_state.service):
+        if not os.path.exists(os.path.join('/etc/pam.d/', auth_ctx.pam_hdl.state.service)):
             self.logger.error('PAM service file is missing. Attempting to regenerate')
             self.middleware.call_sync('etc.generate', 'pam_middleware')
-            if not os.path.exists(auth_ctx.pam_hdl.truenas_state.service):
+            if not os.path.exists(os.path.join('/etc/pam.d/', auth_ctx.pam_hdl.state.service)):
                 self.logger.error(
                     '%s: Unable to generate PAM service file for middleware. Denying '
                     'access to user.', username
                 )
-                return {'code': pam.PAM_ABORT, 'reason': 'Failed to generate PAM service file', 'user_info': None}
+                return {'code': PAMCode.PAM_ABORT, 'reason': 'Failed to generate PAM service file', 'user_info': None}
 
         if not os.path.exists(OATH_FILE):
             self.middleware.call_sync('etc.generate', 'user')
 
-        resp = auth_ctx.pam_hdl.authenticate(username, password, app.origin)
+        resp = auth_ctx.pam_hdl.authenticate(username, password)
         return {'code': resp.code, 'reason': resp.reason, 'user_info': resp.user_info}
 
     @private
