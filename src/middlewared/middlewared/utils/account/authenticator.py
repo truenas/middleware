@@ -1,20 +1,8 @@
-# middlewared python pam authenticator
-#
-# WARNING:
-# We have to reimplement much of python-pam correctly here because the upstream library
-# defines the python function that is passed by reference as the pam_conv callback function
-# within the scope of authenticate() call. This means any PAM module attempting to continue
-# conversation outside of scope of authenticate() will trigger a NULL dereference and crash
-# the middlewared process.
-
-import ctypes
 import enum
 import os
-import pam
-import threading
-from dataclasses import dataclass
-from datetime import datetime, UTC
-from ipaddress import ip_address
+import truenas_pyscram
+from json import dumps
+from uuid import UUID
 from middlewared.plugins.account_.constants import ADMIN_UID
 from middlewared.utils.auth import OTPW_MANAGER, OTPWResponseCode
 from middlewared.utils.directoryservices.constants import DSType
@@ -23,30 +11,12 @@ from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.nss.grp import getgrgid
 from middlewared.utils.nss.pwd import getpwnam
 from middlewared.utils.origin import ConnectionOrigin
-from pam.__internals import PamHandle, PamConv, conv_func, my_conv
-from socket import AF_UNIX
+from truenas_authenticator import UserPamAuthenticator as TrueNASUserPamAuthenticator
+from truenas_authenticator import AuthenticatorStage as TrueNASAuthenticatorStage
+from truenas_authenticator import AuthenticatorResponse as TrueNASAuthenticatorResponse
+from truenas_pypam import MSGStyle, PAMCode, PAMError
+from socket import AF_INET, AF_INET6, AF_UNIX
 from .faillock import is_tally_locked
-from .oath import iter_oath_users
-from .utmp import login, logout, PyUtmpEntry, PyUtmpExit, PyUtmpType, UTMP_LOCK, utmp_query
-
-MIDDLEWARE_HOST_PREFIX = 'tn-mw'
-UTMP_MAX_SESSIONS = 10000
-libc = ctypes.CDLL('libc.so.6', use_errno=True)
-try:
-    PAM_REF = pam.pam()  # dlopen PAM libraries and define ctypes
-except AttributeError:
-    # The dlopen may fail when this file is imported into python script running
-    # in squashfs filesystem during upgrades. We'll just initialize PAM_REF to None
-    # here since the upgrade doesn't need to create authenticated middleware sessions
-    PAM_REF = None
-
-
-# utmp is basically treated as a key-value store based on the tn_line field. We
-# populate it with, for instance, "wss/<id>", but the total buffer size for this
-# string is small (32 bytes) this means that we'll keep a set of available ids
-# and pop them off on login, and add back on logout. Using cryptographic method
-# here would expose us to the birthday problem and possible collisions.
-AVAILABLE_SESSION_IDS = set(range(1, UTMP_MAX_SESSIONS))
 
 
 class MiddlewarePamFile(enum.StrEnum):
@@ -62,15 +32,6 @@ class MiddlewarePamFile(enum.StrEnum):
     @property
     def service(self):
         return os.path.basename(self.value)
-
-
-class TrueNASAuthenticatorStage(enum.StrEnum):
-    START = 'START'
-    AUTH = 'AUTH'
-    OPEN_SESSION = 'OPEN_SESSION'
-    CLOSE_SESSION = 'CLOSE_SESSION'
-    LOGIN = 'LOGIN'
-    LOGOUT = 'LOGOUT'
 
 
 class AccountFlag(enum.StrEnum):
@@ -89,121 +50,63 @@ class AccountFlag(enum.StrEnum):
     PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED'  # Password change for account is required
 
 
-class MiddlewareTTYName(enum.StrEnum):
-    """ Names for the ut_id and ut_line fields """
-    WEBSOCKET = 'ws'
-    WEBSOCKET_SECURE = 'wss'
-    WEBSOCKET_UNIX = 'wsu'
-
-
-@dataclass(slots=True)
-class PamConvCallbackState:
-    username: bytes
-    password: bytes
-    messages: list
-    encoding: str = 'utf-8'
-
-
-@dataclass(slots=True)
-class TrueNASAuthenticatorState:
-    service: MiddlewarePamFile = MiddlewarePamFile.DEFAULT
-    """ pam service file path to be used for handle. This currently differentiates
-    between API key authentication and regular username / password authentication.
-    In future we can expand to also have a module that uses pam_oath for twofactor
-    conversation."""
-    stage: TrueNASAuthenticatorStage = TrueNASAuthenticatorStage.START
-    """ Stage of PAM session / conversation. This is used to inform of next steps
-    and validate whether method being called is valid. """
-    otpw_possible: bool = True
-    """ The authenticator supports authentication using single-use passwords. """
-    twofactor_possible: bool = True
-    """ The authenticator supports two-factor authentication """
-    utmp_entry: PyUtmpEntry | None = None
-    """ Utmp entry for the login. This is used to log out the account. """
-    login_at: datetime | None = None
-    """ Time at which session performed actual login """
-    passwd: dict | None = None
-    """ passwd dict entry for user """
-    utmp_session_id: int | None = None
-    """ The identifier for this particular conversation. It is popped from the
-    AVAILABLE_SESSION_IDS set defined above, and re-added on deallocation. """
-    libpam_state: PamConvCallbackState | None = None
-    """ State passed into pam_conv(3) """
-    origin: ConnectionOrigin | None = None
-    """ Initialized ConnectionOrigin provided during authenticate() call """
-
-    def __del__(self):
-        if self.utmp_session_id:
-            AVAILABLE_SESSION_IDS.add(self.utmp_session_id)
-            self.utmp_session_id = None
-
-
-@dataclass(frozen=True, slots=True)
-class TrueNASAuthenticatorResponse:
-    stage: TrueNASAuthenticatorStage
-    code: int  # PAM response code (pam.PAM_SUCCESS, pam.PAM_AUTH_ERR, etc)
-    reason: str | None  # reason for non-success
-    user_info: dict | None = None  # passwd dict (only populated on authenticate calls)
-
-
 DEFAULT_LOGIN_SUCCESS = TrueNASAuthenticatorResponse(
-    TrueNASAuthenticatorStage.LOGIN, pam.PAM_SUCCESS, None
+    TrueNASAuthenticatorStage.LOGIN, PAMCode.PAM_SUCCESS, None
 )
 
 DEFAULT_LOGIN_FAIL = TrueNASAuthenticatorResponse(
-    TrueNASAuthenticatorStage.LOGIN, pam.PAM_SYSTEM_ERR, 'Unexpected Session Manager'
+    TrueNASAuthenticatorStage.LOGIN, PAMCode.PAM_SYSTEM_ERR, 'Unexpected Session Manager'
 )
 
 DEFAULT_LOGOUT_SUCCESS = TrueNASAuthenticatorResponse(
-    TrueNASAuthenticatorStage.LOGOUT, pam.PAM_SUCCESS, None
+    TrueNASAuthenticatorStage.LOGOUT, PAMCode.PAM_SUCCESS, None
 )
 
 DEFAULT_LOGOUT_FAIL = TrueNASAuthenticatorResponse(
-    TrueNASAuthenticatorStage.LOGOUT, pam.PAM_SYSTEM_ERR, 'Unexpected Session Manager'
+    TrueNASAuthenticatorStage.LOGOUT, PAMCode.PAM_SYSTEM_ERR, 'Unexpected Session Manager'
 )
 
 
-@conv_func
-def _conv(n_messages, messages, p_response, app_data):
-    pyob = ctypes.cast(app_data, ctypes.py_object).value
-
-    msg_list = pyob.messages
-    password = pyob.password
-    encoding = pyob.encoding
-
-    return my_conv(n_messages, messages, p_response, libc, msg_list, password, encoding)
-
-
-class UserPamAuthenticator(pam.PamAuthenticator):
-    """
-    TrueNAS authenticator object. These are allocated per middleware session and hold an
+class UserPamAuthenticator(TrueNASUserPamAuthenticator):
+    """ TrueNAS authenticator object. These are allocated per middleware session and hold an
     open pam handle with state information about the particular session. This includes the
-    utmp entry generated for the authenticated user. Thread-safety for the individual PAM
-    handle is ensured by using a threading lock on a per-authenticator basis (global mutex
-    is not required). login and logoff methods provided by utmp.py are protected by a
-    separate global threading lock.
-    """
-    def __init__(self):
-        # We intentionally don't super().init() here because we python-pam will
-        # search for libraries every time the object is created. We just use references
-        # to ctype functions that we looked up once
-        self.truenas_state = TrueNASAuthenticatorState()
-        self.TRUENAS_LOCK = threading.Lock()
-        self.truenas_pam_conv = None  # reference to initialized pam_conv object
-        self.libc = libc
-        self.handle = None
-        self.pam_start = PAM_REF.pam_start
-        self.pam_acct_mgmt = PAM_REF.pam_acct_mgmt
-        self.pam_set_item = PAM_REF.pam_set_item
-        self.pam_setcred = PAM_REF.pam_setcred
-        self.pam_strerror = PAM_REF.pam_strerror
-        self.pam_authenticate = PAM_REF.pam_authenticate
-        self.pam_open_session = PAM_REF.pam_open_session
-        self.pam_close_session = PAM_REF.pam_close_session
-        self.pam_putenv = PAM_REF.pam_putenv
-        self.pam_misc_setenv = PAM_REF.pam_misc_setenv
-        self.pam_getenv = PAM_REF.pam_getenv
-        self.pam_getenvlist = PAM_REF.getenvlist
+    utmp entry generated for the authenticated user. """
+
+    def _get_pam_session_info(self, origin: ConnectionOrigin) -> None:
+        """ Set the connection origin and other middleware-session metadata into
+        pam environmental variable `pam_truenas_session_data`. This will then be inserted
+        into our sessions keyring that is used for tracking sessions in general. """
+
+        if origin.family == AF_UNIX:
+            session_data = {
+                'origin_family': 'AF_UNIX',
+                'origin': {
+                    'pid': origin.pid,
+                    'uid': origin.uid,
+                    'gid': origin.gid,
+                    'loginuid': origin.loginuid,
+                    'sec': 'unconfined',
+                },
+                'extra': {
+                    'secure_transport': origin.secure_transport
+                }
+            }
+        elif origin.family == AF_INET or origin.family == AF_INET6:
+            session_data = {
+                'origin_family': 'AF_INET' if origin.family == AF_INET else 'AF_INET6',
+                'origin': {
+                    'loc_addr': str(origin.loc_addr),
+                    'loc_port': origin.loc_port,
+                    'rem_addr': str(origin.rem_addr),
+                    'rem_port': origin.rem_port,
+                    'ssl': origin.ssl
+                },
+                'extra': {
+                    'secure_transport': origin.secure_transport
+                }
+            }
+
+        return session_data
 
     def _get_user_obj(self, username):
         # populate our internal passwd reference. This should only be called once during authentication
@@ -220,12 +123,13 @@ class UserPamAuthenticator(pam.PamAuthenticator):
 
             grouplist.append(grp)
 
-        self.truenas_state.passwd = passwd | {
+        self.passwd = passwd | {
             'grouplist': tuple(grouplist),
             'local': passwd['source'] == NssModule.FILES.name,
             'account_attributes': []
         }
-        passwd = self.truenas_state.passwd
+
+        passwd = self.passwd
 
         # Swap out the NSS module name with strings middleware expects and begin populating account flags
         match passwd['source']:
@@ -244,11 +148,11 @@ class UserPamAuthenticator(pam.PamAuthenticator):
                 else:
                     passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.LDAP]
 
-        if self.truenas_state.service is MiddlewarePamFile.API_KEY:
+        if self.state.service == MiddlewarePamFile.API_KEY.service:
             passwd['account_attributes'].append(AccountFlag.API_KEY)
 
         # Compare normalized username from NSS with usernames in the /etc/users.oath file
-        elif self.truenas_state.twofactor_possible and any(user == passwd['pw_name'] for user in iter_oath_users()):
+        if self.twofactor_user:
             passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
 
         if passwd['pw_uid'] in (0, ADMIN_UID):
@@ -259,426 +163,389 @@ class UserPamAuthenticator(pam.PamAuthenticator):
         # Retrieve via property getter to ensure we're returning a proper copy
         return self.truenas_user_obj
 
+    def __init__(self, *, username: str, origin: ConnectionOrigin, service=MiddlewarePamFile.DEFAULT):
+        # NOTE: we are limiting ourselves to non-blocking calls here because these objects are
+        # created potentially in async co-routines. This means we input the username as sent by client.
+        # We can later normalize when processing authentication requests.
+        session_info = self._get_pam_session_info(origin)
+        self._twofactor_user = False
+        self._service = service
+
+        super().__init__(
+            username=username,
+            service=service.service,
+            rhost=str(origin),
+            pam_env={'pam_truenas_session_data': dumps(session_info)}
+        )
+        self.otpw_possible = True
+        self._session_uuid = None
+
+    def login(self) -> TrueNASAuthenticatorResponse:
+        resp = super().login()
+        if resp.code == PAMCode.PAM_SUCCESS:
+            # On successful session open, pam_truenas will set a pam environmental variable containing the
+            # session_uuid it assigned the session in the user keyring.
+            #
+            # This will fail with FileNotFoundError if for some reason the environmental variable wasn't
+            # properly set by the PAM module. This is a very unexpected error and so we are intentionally
+            # not attempting to handle it here.
+            try:
+                uuid_str = self.ctx.get_env('pam_truenas_session_uuid')
+                self._session_uuid = UUID(uuid_str)
+            except Exception as exc:
+                # PAM stack is misconfigured (pam_truenas possibly omitted). We don't
+                # want to raise an exception here because it will make recovery impossible
+                # because middleware auth will be broken.
+                self.session_error = str(exc)
+
+        return resp
+
+    @property
+    def session_uuid(self) -> UUID | None:
+        return self._session_uuid
+
     @property
     def truenas_user_obj(self):
         """ Create a copy of the stored passwd dict for user. """
-        if self.truenas_state.passwd is None:
+        if not getattr(self, 'passwd') or self.passwd is None:
             raise ValueError('passwd entry not set')
 
-        out = self.truenas_state.passwd.copy()
+        out = self.passwd.copy()
         out['account_attributes'] = out['account_attributes'].copy()
         return out
-
-    def truenas_check_stage(self, expected: TrueNASAuthenticatorStage):
-        if self.truenas_state.stage is not expected:
-            raise RuntimeError(
-                f'{self.truenas_state.stage}: unexpected authenticator run state. Expected: {expected}'
-            )
-
-    def start(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
-        """ This function assumes self.TRUENAS_LOCK held """
-        self.truenas_check_stage(TrueNASAuthenticatorStage.START)
-
-        self.handle = PamHandle()
-        if len(username) == 0:
-            raise ValueError('username is required')
-
-        self.truenas_state.libpam_state = PamConvCallbackState(
-            username=username.encode(),
-            password=password.encode(),
-            messages=[]
-        )
-
-        # Get pointer to the libpam state dataclass and recast to void for pam_conv(3)
-        p_libpam_state = ctypes.c_void_p.from_buffer(ctypes.py_object(self.truenas_state.libpam_state))
-        self.truenas_pam_conv = PamConv(_conv, p_libpam_state)
-        reason = None
-        retval = self.pam_start(
-            self.truenas_state.service.encode(),
-            username.encode(),
-            ctypes.byref(self.truenas_pam_conv),
-            ctypes.byref(self.handle)
-        )
-        if retval == pam.PAM_SUCCESS:
-            origin = str(self.truenas_state.origin).encode()
-            self.truenas_state.stage = TrueNASAuthenticatorStage.AUTH
-            # pam_set_item(3) interally performs strdup on string and so we don't have
-            # to worry about ctypes deallocating the string once it's outside of scope
-            #
-            # This sets the rhost internally in the pam handle to our ConnectionOrigin string.
-            # The pam rhost appears as the source of authentication failures in pam_faillock tally
-            # file and associated audit entries.
-            self.pam_set_item(self.handle, pam.PAM_RHOST, ctypes.c_char_p(origin))
-        else:
-            reason = self.pam_strerror(self.handle, retval).decode()
-
-        return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.START, retval, reason)
-
-    def _pam_start_account_no_password(self, username: str, do_acct_mgmt=True) -> TrueNASAuthenticatorResponse:
-        """ This function assumes self.TRUENAS_LOCK held """
-        try:
-            passwd = self._get_user_obj(username)
-        except KeyError:
-            return TrueNASAuthenticatorResponse(
-                TrueNASAuthenticatorStage.AUTH,
-                pam.PAM_USER_UNKNOWN,
-                f'{username}: User does not exist'
-            )
-
-        pam_resp = self.start(passwd['pw_name'], '')
-        if pam_resp.code != pam.PAM_SUCCESS:
-            return pam_resp
-
-        # Verify that account not disabled / expired
-        if do_acct_mgmt:
-            retval = self.pam_acct_mgmt(self.handle, 0)
-        else:
-            # If someone user has managed to totally break the root account we don't want the
-            # backend middleware processes to break
-            retval = pam.PAM_SUCCESS
-
-        reason = None
-        if retval == pam.PAM_SUCCESS:
-            self.truenas_state.passwd = passwd
-            self.truenas_state.stage = TrueNASAuthenticatorStage.LOGIN
-        else:
-            reason = self.pam_strerror(self.handle, retval).decode()
-
-        return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.AUTH, retval, reason, passwd)
 
     def __otpw_authenticate(self, password, passwd_entry):
         """ When autenticated uses may generate a single-use password for an account. If
         regular PAM auth fails for non-api-key case, we should check it against our single-use
         passwords. """
-        if not self.truenas_state.otpw_possible:
+        if not self.otpw_possible:
             return
 
         otpw_resp = OTPW_MANAGER.authenticate(passwd_entry['pw_uid'], password)
         match otpw_resp.code:
             case OTPWResponseCode.SUCCESS:
-                self.truenas_state.passwd['account_attributes'].append(AccountFlag.OTPW)
+                self.passwd['account_attributes'].append(AccountFlag.OTPW)
                 # PASSWORD_CHANGE_REQUIRED can only be set for local accounts. We don't allow
                 # password changes through middleware currently for directory services.
                 if otpw_resp.data['password_set_override'] and passwd_entry['source'] == 'LOCAL':
-                    self.truenas_state.passwd['account_attributes'].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
+                    self.passwd['account_attributes'].append(AccountFlag.PASSWORD_CHANGE_REQUIRED)
 
-                code = pam.PAM_SUCCESS
+                code = PAMCode.PAM_SUCCESS
                 reason = None
             case OTPWResponseCode.EXPIRED:
-                code = pam.PAM_CRED_EXPIRED
+                code = PAMCode.PAM_CRED_EXPIRED
                 reason = 'Onetime password is expired'
             case OTPWResponseCode.NO_KEY:
                 # Indicate to caller to send original PAM response
                 return
             case _:
-                code = pam.PAM_AUTH_ERR
+                code = PAMCode.PAM_AUTH_ERR
                 reason = f'Onetime password authentication failed: {otpw_resp.code}'
 
         return code, reason
 
-    def authenticate(
-        self,
-        username: str,
-        password: str,
-        origin: ConnectionOrigin,
-    ) -> TrueNASAuthenticatorResponse:
+    def pam_authenticate_simple(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
+        """ Simple version of authentication is user / password (with possibly request for 2FA token) """
+        self.username = username  # ensure that PAM context is created with the provided username
+        self._twofactor_user = False  # reset any old 2FA flag
+
+        resp = self.auth_init()
+        match resp.code:
+            case PAMCode.PAM_SUCCESS:
+                # Unix authentication will succeed immmediately
+                return resp
+            case PAMCode.PAM_CONV_AGAIN:
+                # The service module has requested some information from the client
+                # we'll handle exchange below
+                pass
+            case PAMCode.PAM_AUTHINFO_UNAVAIL:
+                # This may be request for API key authentication for a revoked or expired key
+                return resp
+            case _:
+                # Something very unexpected
+                return resp
+
+        while resp.code == PAMCode.PAM_CONV_AGAIN:
+            if resp.reason:
+                # Auto-respond to prompts based on username / password combination
+                responses = []
+                for msg in resp.reason:
+                    if msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_OFF:
+                        # Check for pam_oath prompt
+                        # pam_oath response here is a message with
+                        # msg[0].msg_style == PAM_PROMPT_ECHO_OFF
+                        # msg[0].msg = "One-time password (OATH) for `%s': "
+                        if "(OATH)" in msg.msg:
+                            # We return PAM_AUTH_AGAIN response to the middleware caller
+                            # so that it in turn can pass a client message that second factor
+                            # is required.
+                            self._twofactor_in_progress = True
+                            self._twofactor_user = True
+                            resp.reason = msg.msg
+                            return resp
+
+                        responses.append(password)
+                    elif msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_ON:
+                        responses.append(username)
+                    else:
+                        responses.append(None)
+
+                resp = self.auth_continue(responses)
+            else:
+                # No messages, wait for next state
+                resp = self.auth_continue([])
+
+        return resp
+
+    @property
+    def twofactor_user(self):
+        return self._twofactor_user
+
+    def authenticate_oath(self, twofactor_token: str) -> TrueNASAuthenticatorResponse:
         stage = TrueNASAuthenticatorStage.AUTH
-        self.truenas_state.origin = origin
+
+        if not self.twofactor_user:
+            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, 'User does not support two-factor auth')
+
+        resp = self.auth_continue([twofactor_token])
+        if resp.code == PAMCode.PAM_SUCCESS:
+            # Grab fresh copy since account flags may have changed due to OTPW login
+            pw = self.truenas_user_obj
+            assert pw['pw_name'] == resp.user_info['pw_name']
+            resp.user_info = pw
+
+        return resp
+
+    def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
+        stage = TrueNASAuthenticatorStage.AUTH
 
         try:
             pw = self._get_user_obj(username)
         except KeyError:
-            return TrueNASAuthenticatorResponse(stage, pam.PAM_AUTH_ERR, f'{username}: user does not exist')
+            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, f'{username}: user does not exist')
 
         code = None
         reason = None
 
         # Compare normalized username from NSS with usernames in the /etc/users.oath file
-        if not os.path.exists(self.truenas_state.service):
+        if not os.path.exists(self._service):
             # Explicitly raise an exception if our service file doesn't exist. If we proceed
             # then PAM will fallback to using defaults. We want caller to catch this error and
             # regenerate pam configuraiton.
-            raise FileNotFoundError(self.truenas_state.service)
+            raise FileNotFoundError(self._service)
 
-        with self.TRUENAS_LOCK:
-            # Authenticate using normalized name rather than user-provided name so that we ensure PAM_USER
-            # is set consistently. In AD case bob@acme.internal and ACME\\Bob both resolve to ACME\\bob
-            pam_resp = self.start(pw['pw_name'], password)
-            if pam_resp.code != pam.PAM_SUCCESS:
-                # failure to pam_start() is a auto-failure
-                return pam_resp
+        if self._service.service != self.state.service:
+            raise RuntimeError(f'{self.state.service}: unexpected PAM service. Expected: {self._service.service}')
 
-            code = self.pam_authenticate(self.handle, 0)
-            # pam_faillock changes pam_authenticate() responses to either PAM_SUCCESS or PAM_PERM_DENIED
-            if code == pam.PAM_PERM_DENIED:
-                # Convert to AUTH_ERR to normalize responses
-                code = pam.PAM_AUTH_ERR
+        # pass the normalized name to the PAM stack when authenticating
+        resp = self.pam_authenticate_simple(pw['pw_name'], password)
+        if resp.code != PAMCode.PAM_SUCCESS:
+            if resp.code == PAMCode.PAM_AUTH_ERR and self.state.service == MiddlewarePamFile.DEFAULT.service:
+                # This is possibly due to tally lock. In this case we'll change PAM code to reflect locked
+                # status
+                if is_tally_locked(pw['pw_name']):
+                    resp.code = PAMCode.PAM_PERM_DENIED
+                    resp.reason = 'Account is locked due to failed login attempts.'
+                else:
+                    otpw_resp = self.__otpw_authenticate(password, pw)
+                    if otpw_resp:
+                        code, reason = otpw_resp
+                        if code == PAMCode.PAM_SUCCESS:
+                            # swap out our pam service with UNIX to properly initialize
+                            # underlying PAM context.
+                            self.state.service = MiddlewarePamFile.UNIX.service
+                            resp = self.pam_authenticate_simple(pw['pw_name'], '')
+                            resp.user_info = pw
+                        else:
+                            resp.code = code
+                            resp.reason = reason
 
-            if code != pam.PAM_SUCCESS:
-                reason = self.pam_strerror(self.handle, code).decode()
-                # pam_faillock changes pam_authenticate() responses to eihter PAM_SUCCESS or PAM_PERM_DENIED
-                if code == pam.PAM_AUTH_ERR and self.truenas_state.service is MiddlewarePamFile.DEFAULT:
-                    # This is possibly due to faillock. In this case we'll change PAM code to reflect locked
-                    # status
-                    if is_tally_locked(pw['pw_name']):
-                        code = pam.PAM_PERM_DENIED
-                        reason = 'Account is locked due to failed login attempts.'
-                    else:
-                        resp = self.__otpw_authenticate(password, pw)
-                        if resp:
-                            code, reason = resp
+        if resp.code == PAMCode.PAM_SUCCESS:
+            # pam_acct_mgmt(3) determines whether the user's account is valid. This
+            # includes things like account expiration and access restrictions. Failure
+            # here is considered an overall authentication failure, exact PAM response
+            # depends on the PAM modules implementing pam_sm_acct_mgmt().
+            acct_resp = self.account_management()
 
-            if code == pam.PAM_SUCCESS:
-                # pam_acct_mgmt(3) determines whether the user's account is valid. This
-                # includes things like account expiration and access restrictions. Failure
-                # here is considered an overall authentication failure, exact PAM response
-                # depends on the PAM modules implementing pam_sm_acct_mgmt().
-                code = self.pam_acct_mgmt(self.handle, 0)
-                if code != pam.PAM_SUCCESS:
-                    reason = self.pam_strerror(self.handle, code).decode()
-                    match code:
-                        case pam.PAM_AUTH_ERR:
-                            # pam_unix will fail with PAM_AUTH_ERR for expired passwords due to password aging
-                            # If password is expired, convert to PAM_EXPIRED
-                            pam_messages = self.truenas_state.libpam_state.messages
-                            if any([msg.startswith('Your account has expired') for msg in pam_messages]):
-                                code = pam.PAM_ACCT_EXPIRED
-                                reason = 'Account expired due to aging rules'
+            if acct_resp.code != PAMCode.PAM_SUCCESS:
+                # pam_unix will fail with PAM_AUTH_ERR for expired passwords due to password aging
+                # If password is expired, convert to PAM_EXPIRED
+                resp.code = acct_resp.code
+                resp.reason = acct_resp.reason
+                if acct_resp.code == PAMCode.PAM_AUTH_ERR:
+                    pam_messages = self.ctx.messages()
+                    if pam_messages and any([m.msg.startswith('Your account has expired') for m in pam_messages[-1]]):
+                        resp.code = PAMCode.PAM_ACCT_EXPIRED
+                        resp.reason = 'Account expired due to aging rules'
 
-                        case _:
-                            pass
+        if resp.code == PAMCode.PAM_SUCCESS:
+            # Grab fresh copy since account flags may have changed due to OTPW login
+            pw = self.truenas_user_obj
+            assert pw['pw_name'] == resp.user_info['pw_name']
+            resp.user_info = pw
 
-            if code == pam.PAM_SUCCESS:
-                self.truenas_state.stage = TrueNASAuthenticatorStage.LOGIN
-                # Grab fresh copy since account flags may have changed due to OTPW login
-                pw = self.truenas_user_obj
-            else:
-                # Authentication failure and so we should close our PAM handle
-                self.end()
-
-        return TrueNASAuthenticatorResponse(stage, code, reason, pw)
-
-    def open_session(self) -> TrueNASAuthenticatorResponse:
-        self.truenas_check_stage(TrueNASAuthenticatorStage.LOGIN)
-        with self.TRUENAS_LOCK:
-            # In some situations we may have pam_limits enabled. The PAM module
-            # interacts with the utmp file in pam_sm_open_session() and so we need
-            # to acquire a global middleware lock on the utmp file before opening
-            # the session
-            with UTMP_LOCK:
-                resp = super().open_session()
-
-        reason = self.pam_strerror(self.handle, resp).decode()
-        return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.OPEN_SESSION, resp, reason)
-
-    def close_session(self) -> TrueNASAuthenticatorResponse:
-        self.truenas_check_stage(TrueNASAuthenticatorStage.LOGOUT)
-        with self.TRUENAS_LOCK:
-            resp = super().close_session()
-
-        reason = self.pam_strerror(self.handle, resp).decode()
-        return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.CLOSE_SESSION, resp, reason)
-
-    def end(self) -> None:
-        super().end()
-        # Clear state
-        self.state = TrueNASAuthenticatorState()
-        self.truenas_pam_conv = None
-
-    def logout(self) -> TrueNASAuthenticatorResponse:
-        self.truenas_check_stage(TrueNASAuthenticatorStage.LOGOUT)
-        # Close the open PAM session
-        self.close_session()
-
-        try:
-            with self.TRUENAS_LOCK:
-                logout(self.truenas_state.utmp_entry)
-        except Exception as exc:
-            # In case of error session id will be recovered when object deallocated
-            code = pam.PAM_SYSTEM_ERR
-            reason = str(exc)
-        else:
-            # Immediately return the session id to the pool
-            if self.truenas_state.utmp_session_id:
-                AVAILABLE_SESSION_IDS.add(self.truenas_state.utmp_session_id)
-                self.truenas_state.utmp_session_id = None
-
-            code = pam.PAM_SUCCESS
-            reason = None
-
-        self.end()
-        return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGOUT, code, reason)
-
-    def __recover_ids(self):
-        entries = utmp_query([['ut_type_str', '=', 'USER_PROCESS'], ['ut_line', '^', 'ws']])
-        consumed_ids = set([int(entry['ut_line'].split('/')[1]) for entry in entries])
-        AVAILABLE_SESSION_IDS.update(set(range(1, UTMP_MAX_SESSIONS)) - consumed_ids)
-
-    def login(self, middleware_session_id: str) -> TrueNASAuthenticatorResponse:
-        """ create utmp + wtmp entry and call pam_open_session() """
-        self.truenas_check_stage(TrueNASAuthenticatorStage.LOGIN)
-        origin = self.truenas_state.origin
-
-        resp = self.open_session()
-        if resp.code != pam.PAM_SUCCESS:
-            self.end()
-            return resp
-
-        pid = os.getpid()
-        if origin.family == AF_UNIX:
-            ut_id = MiddlewareTTYName.WEBSOCKET_UNIX.value
-            # Append PID to ut_host so that it's clearer which process is to blame
-            ut_host = f'{MIDDLEWARE_HOST_PREFIX}.{middleware_session_id}.PID{origin.pid}'
-            addr = ip_address('0.0.0.0')
-        else:
-            if origin.ssl:
-                ut_id = MiddlewareTTYName.WEBSOCKET_SECURE.value
-            else:
-                ut_id = MiddlewareTTYName.WEBSOCKET.value
-
-            if origin.rem_addr is None:
-                raise ValueError(f'{str(origin)}: invalid remote address')
-
-            addr = ip_address(origin.rem_addr)
-            ut_host = f'{MIDDLEWARE_HOST_PREFIX}.{middleware_session_id}.IP{origin.rem_addr}'
-
-        with self.TRUENAS_LOCK:
-            with UTMP_LOCK:
-                try:
-                    utmp_sid = AVAILABLE_SESSION_IDS.pop()
-                except KeyError:
-                    # We possibly have a leak of session IDs (bug in the code somewhere). Attempt scavenging,
-                    # but in a noisy way to caller.
-                    self.__recover_ids()
-                    # avoid extra checks for login state so that we can cleanly restart a pam_open_session call
-                    super().close_session()
-                    utmp_sid = None
-
-        if utmp_sid is None:
-            # Return to caller that we're dealing with an issue.
-            return TrueNASAuthenticatorResponse(
-                TrueNASAuthenticatorStage.LOGIN, pam.PAM_ABORT, 'Exhausted available session ids'
-            )
-
-        # Notes about utmp entry for login
-        # ut_id and ut_line: ut_id should be an empty string. If it is set then pututline(3) will matched based on it
-        # rather than ut_line
-        #
-        # Some applications (like proftpd) use the pid as component of ut_line in order to uniquely identify
-        # separate logins
-        utmp_entry = PyUtmpEntry(
-            ut_type=PyUtmpType.USER_PROCESS,
-            ut_pid=pid,
-            ut_line=f'{ut_id}/{utmp_sid}',
-            ut_id='',  # Yes, this should be an empty string. See comment above
-            ut_user=self.truenas_state.passwd['pw_name'][:31],
-            ut_host=ut_host,
-            ut_exit=PyUtmpExit(0, 0),
-            ut_tv=datetime.now(UTC),
-            ut_session=os.getsid(pid),
-            ut_addr=addr,
-        )
-
-        try:
-            with self.TRUENAS_LOCK:
-                login(utmp_entry)
-        except Exception as exc:
-            # clean up our pam handle
-            self.end()
-            code = pam.PAM_SYSTEM_ERR
-            reason = str(exc)
-            # We encountered an error inserting the utmp entry and
-            # so we'll add it back to the pool
-            AVAILABLE_SESSION_IDS.add(utmp_sid)
-        else:
-            self.truenas_state.utmp_entry = utmp_entry
-            self.truenas_state.login_at = utmp_entry.ut_tv
-            code = pam.PAM_SUCCESS
-            reason = None
-            self.truenas_state.utmp_session_id = utmp_sid
-            self.truenas_state.stage = TrueNASAuthenticatorStage.LOGOUT
-
-        return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGIN, code, reason)
-
-    @property
-    def login_at(self) -> datetime:
-        return self.truenas_state.login_at
-
-    def __del__(self):
-        # Catchall to remove our utmp entry when we're garbage collected
-        if self.truenas_state.stage is TrueNASAuthenticatorStage.LOGOUT:
-            try:
-                self.logout()
-            except Exception:
-                pass
-
-        # decref our state object to trigger release of the utmp session id
-        self.state = None
+        return resp
 
 
 class ApiKeyPamAuthenticator(UserPamAuthenticator):
-    def __init__(self):
-        super().__init__()
-        self.truenas_state = TrueNASAuthenticatorState(
-            otpw_possible=False,
-            twofactor_possible=False,
-            service=MiddlewarePamFile.API_KEY
+    """ Authenticator for exchanges involving plain API key. SCRAM authentication with API
+    is handled With ScramPamAuthenticator. """
+    def __init__(self, *, username: str, origin: ConnectionOrigin):
+        if not origin.is_tcp_ip_family:
+            raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
+
+        super().__init__(username=username, origin=origin, service=MiddlewarePamFile.API_KEY)
+        self.otpw_possible = False
+
+    def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
+        """ Split up API key into DBID and actual key material then pass to backend """
+        try:
+            dbid, key = password.split('-', 1)
+        except ValueError:
+            # Not a valid API key, but let the backend do the erroring out
+            return super().authenticate(username, password)
+
+        self.dbid = dbid
+        return super().authenticate(username, key)
+
+
+class ScramPamAuthenticator(UserPamAuthenticator):
+    def __init__(self, *, client_first_message: str, origin: ConnectionOrigin):
+        try:
+            self.client_first = truenas_pyscram.ClientFirstMessage(rfc_string=client_first_message)
+        except Exception as exc:
+            self.scram_error = exc
+            return
+        else:
+            self.scram_error = None
+
+        if not origin.is_tcp_ip_family:
+            raise TypeError(f'{origin}: unexpected origin for ApiKeyPamAuthenticator')
+
+        super().__init__(
+            username=self.client_first.username, origin=origin, service=MiddlewarePamFile.API_KEY
         )
+        self.sent_server_first = False
+        self.sent_server_final = False
+        self.otpw_possible = False
+        self.dbid = self.client_first.api_key_id
 
+    def authenticate(self, username: str, password: str):
+        raise NotImplementedError("Plain authentication is not supported for SCRAM authentication")
 
-class UnixPamAuthenticator(UserPamAuthenticator):
-    def __init__(self):
-        super().__init__()
-        self.truenas_state = TrueNASAuthenticatorState(
-            otpw_possible=False,
-            twofactor_possible=False,
-            service=MiddlewarePamFile.UNIX
-        )
+    def handle_first_message(self) -> TrueNASAuthenticatorResponse:
+        """ handle the ClientFirstMessage from the initialization and generate ServerFirstMessage. """
+        stage = TrueNASAuthenticatorStage.AUTH
 
-    def skip(self):
-        """ return whether PAM operations and login should be skipped for this session """
-        if not self.truenas_state.origin.session_is_interactive:
-            # This is a middleware worker or backend job
-            return True
+        if self.scram_error:
+            # We had some sort of parsing error on the client-provided RFC string. We'll convert it
+            # to a PAM response here
+            return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, str(self.scram_error))
 
-        if self.truenas_state.origin.is_ha_connection:
-            # This is an HA connection from other controller. We don't need utmp
-            # entry for it (session still subject to normal middleware logging)
-            return True
+        if self.sent_server_first:
+            raise RuntimeError('Already sent server first response')
 
-        return False
-
-    def authenticate(self, username: str, origin: ConnectionOrigin) -> TrueNASAuthenticatorResponse:
-        """
-        Authentication for our unix socket is somewhat different. We just simply
-        verify username exists and set up pam handle
-        """
-        self.truenas_state.origin = origin
-        if self.skip():
-            passwd = self._get_user_obj(username)
+        try:
+            self._get_user_obj(self.username)
+        except KeyError:
             return TrueNASAuthenticatorResponse(
-                stage=TrueNASAuthenticatorStage.AUTH,
-                code=pam.PAM_SUCCESS,
-                reason=None,
-                user_info=passwd
+                stage, PAMCode.PAM_AUTH_ERR, f'{self.username}: user does not exist'
             )
 
-        return super().authenticate(username, '', origin)
+        resp = self.auth_init()
+        if resp.code != PAMCode.PAM_CONV_AGAIN:
+            return TrueNASAuthenticatorResponse(
+                stage, PAMCode.PAM_AUTH_ERR,
+                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+            )
 
-    def logout(self):
-        """ If we have a non-interactive session then bypass normal logout. This is differentiated
-        from an unitialized state where truenas_interactive_session is None. In latter case we want
-        the logout to fail with exception that account was not logged in. """
-        if self.skip():
-            self.end()
-            return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGOUT, pam.PAM_SUCCESS, None)
+        client_resp = []
+        for msg in resp.reason:
+            if msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_OFF:
+                if 'Send SCRAM ClientFirst message' not in msg.msg:
+                    raise RuntimeError(f'{msg.msg}: unexpected PAM response')
 
-        return super().logout()
+                client_resp.append(str(self.client_first))
+            elif msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_ON:
+                client_resp.append(self.username)
+            else:
+                raise RuntimeError(f'{msg}: unexpected PAM respones')
 
-    def login(self, middleware_session_id: str) -> TrueNASAuthenticatorResponse:
-        if self.skip():
-            self.truenas_state.login_at = datetime.now(UTC)
-            self.truenas_state.stage = TrueNASAuthenticatorStage.LOGOUT
-            return TrueNASAuthenticatorResponse(TrueNASAuthenticatorStage.LOGIN, pam.PAM_SUCCESS, None)
+        # now time to get the ServerFirstResponse
+        resp = self.auth_continue(client_resp)
+        if resp.code != PAMCode.PAM_CONV_AGAIN:
+            return TrueNASAuthenticatorResponse(
+                stage, PAMCode.PAM_AUTH_ERR,
+                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+            )
 
-        return super().login(middleware_session_id)
+        if len(resp.reason) != 1:
+            raise RuntimeError(f'{resp.reason}: unexpected PAM response')
+
+        self.sent_server_first = True
+        return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_CONV_AGAIN, resp.reason[0].msg)
+
+    def handle_final_message(self, rfc_string: str) -> TrueNASAuthenticatorResponse:
+        stage = TrueNASAuthenticatorStage.AUTH
+        if self.sent_server_final:
+            raise RuntimeError('Already sent ServerFinalMessage')
+
+        if not self.sent_server_first:
+            raise RuntimeError('Did not send ServerFirstMessage')
+
+        resp = self.auth_continue([rfc_string])
+        if resp.code != PAMCode.PAM_CONV_AGAIN:
+            return TrueNASAuthenticatorResponse(
+                stage, PAMCode.PAM_AUTH_ERR,
+                f'{resp.code}: unexpected response code. Expected [PAM_CONV_AGAIN]'
+            )
+
+        msg = resp.reason[0]
+        if msg.msg_style != MSGStyle.PAM_TEXT_INFO:
+            raise RuntimeError('{msg}: unexpected PAM message')
+
+        passwd = self.truenas_user_obj
+        if self.dbid:
+            passwd['account_attributes'].append(AccountFlag.API_KEY)
+
+        # send final message to close out the authentcation
+        self.auth_continue([''])
+
+        return TrueNASAuthenticatorResponse(
+            stage=stage,
+            code=PAMCode.PAM_SUCCESS,
+            reason=msg.msg,
+            user_info=passwd
+        )
+
+
+class InternalPamAuthenticator(UserPamAuthenticator):
+    """ Authenticator for handling AF_UNIX connections, API token authentication, and HA connections. """
+    def __init__(self, *, username: str, origin: ConnectionOrigin):
+        super().__init__(username=username, origin=origin, service=MiddlewarePamFile.UNIX)
+        self.otpw_possible = False
+
+    def authenticate(self, username: str) -> TrueNASAuthenticatorResponse:
+        """ Authentication for our unix socket is somewhat different. We just simply
+        verify username exists and set up pam handle
+
+        In TrueNAS 25.10 and earlier this would be optionally skipped in case of
+        internal sessions. Performance with the new cpython extensions and PAM module design
+        should be good enough to generate proper sessions for everything going through middleware. """
+        return super().authenticate(username, '')
+
+
+class UnixPamAuthenticator(InternalPamAuthenticator):
+    def __init__(self, *, username: str, origin: ConnectionOrigin):
+        if not origin.is_unix_family:
+            raise TypeError(f'{origin}: unexpected origin for UnixPamAuthenticator')
+
+        super().__init__(username=username, origin=origin)
+
+
+class TokenPamAuthenticator(InternalPamAuthenticator):
+    def __init__(self, *, username: str, origin: ConnectionOrigin):
+        # Tokens have an unusual authenticator flow that's inside the TokenSessionManagerCredentials
+        # object. So we'll initially set them up for a totally unprivileged user and then
+        # rely on the subsequent authenticate call to handle the rest.
+        super().__init__(username=username, origin=origin)

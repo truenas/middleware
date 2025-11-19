@@ -13,7 +13,8 @@ domain or bound to an LDAP server. In the context of TrueNAS accounts, these mod
 group(5) entries on the server as exposed in cpython by the pwd and grp modules, and in the TrueNAS middleware by
 `utils/nss/pwd` and `utils/nss/grp`. The configured identity providers in TrueNAS control the implementation of
 of authorization of authenticated middlewared sessions. Authentication itself is provided by Linux Pluggable
-Authentication Modules (PAM), which is covered in a separate document.
+Authentication Modules (PAM). See `docs/source/middleware/session.rst` for details on authentication and session
+management.
 
 
 Configuration

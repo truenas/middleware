@@ -46,4 +46,9 @@ def test_pam_line(svc, control, module, module_args, expected):
 
 @pytest.mark.parametrize('pam_module', pam.PAMModule)
 def test_map_module_exists(pam_module):
-    assert os.path.exists(f'/usr/lib/x86_64-linux-gnu/security/{pam_module}')
+    if pam_module == 'pam_truenas.so':
+        libpath = '/usr/lib/security'
+    else:
+        libpath = '/usr/lib/x86_64-linux-gnu/security'
+
+    assert os.path.exists(os.path.join(libpath, pam_module))

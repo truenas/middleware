@@ -1,45 +1,45 @@
-import ctypes
 import ipaddress
 import os
-import pam
+import pyotp
 import pytest
 import socket
-import uuid
+import truenas_pam_session
 
 from contextlib import contextmanager
-from datetime import datetime, UTC
-from middlewared.utils.account import utmp, authenticator, faillock
+from middlewared.utils.account import authenticator, faillock
 from middlewared.utils.auth import AUID_UNSET, OTPW_MANAGER
 from middlewared.utils.origin import ConnectionOrigin
 from time import sleep
 from truenas_api_client import Client
-
-UTMP_SESSION_ID = str(uuid.uuid4())
-DEFAULT_UTMP_ENTRY = {
-    'ut_type': utmp.PyUtmpType.USER_PROCESS,
-    'ut_pid': os.getpid(),
-    'ut_id': '',
-    'ut_user': 'root',
-    'ut_line': f'{authenticator.MiddlewareTTYName.WEBSOCKET.value}/1000',
-    'ut_host': f'{authenticator.MIDDLEWARE_HOST_PREFIX}.{UTMP_SESSION_ID}',
-    'ut_exit': None,
-    'ut_tv': datetime.now(UTC),
-    'ut_session': os.getsid(os.getpid()),
-    'ut_addr': ipaddress.ip_address('169.254.20.20'),
-}
+from truenas_pypam import PAMCode
+import truenas_pam_session
 
 
-v4_origin = ConnectionOrigin(family=socket.AF_INET, rem_addr=ipaddress.ip_address('169.254.20.30'))
-v6_origin = ConnectionOrigin(family=socket.AF_INET6, rem_addr=ipaddress.ip_address('fe80::1ff:fe23:4567:890a'))
-ssl_origin = ConnectionOrigin(family=socket.AF_INET, rem_addr=ipaddress.ip_address('169.254.20.30'), ssl=True)
-unix_origin_noninteractive = ConnectionOrigin(family=socket.AF_UNIX, pid=8675, loginuid=AUID_UNSET)
-unix_origin_interactive = ConnectionOrigin(family=socket.AF_UNIX, pid=8675, loginuid=3000)
+v4_origin = ConnectionOrigin(
+    family=socket.AF_INET,
+    rem_addr=ipaddress.ip_address('169.254.20.30'),
+    rem_port=8675,
+    loc_addr=ipaddress.ip_address('169.254.20.40'),
+    loc_port=8676
+)
+v6_origin = ConnectionOrigin(
+    family=socket.AF_INET6,
+    rem_addr=ipaddress.ip_address('fe80::1ff:fe23:4567:890a'),
+    rem_port=8675,
+    loc_addr=ipaddress.ip_address('fe80::1ff:fe23:4567:890b'),
+    loc_port=8676
+)
+ssl_origin = ConnectionOrigin(
+    family=socket.AF_INET,
+    rem_addr=ipaddress.ip_address('169.254.20.30'),
+    rem_port=8675,
+    loc_addr=ipaddress.ip_address('169.254.20.40'),
+    loc_port=8676,
+    ssl=True
+)
+unix_origin_noninteractive = ConnectionOrigin(family=socket.AF_UNIX, uid=0, pid=8675, loginuid=AUID_UNSET)
+unix_origin_interactive = ConnectionOrigin(family=socket.AF_UNIX, uid=3000, pid=8675, loginuid=3000)
 assert unix_origin_noninteractive.session_is_interactive is False
-
-
-@pytest.fixture(scope='function')
-def fake_session_id():
-    return str(uuid.uuid4())
 
 
 @pytest.fixture(scope='function')
@@ -60,44 +60,56 @@ def pam_stig():
             c.call('etc.generate', 'ssh')
 
 
+@pytest.fixture(scope='function')
+def enable_2fa():
+    with Client() as c:
+        twofactor_config = c.call('auth.twofactor.update', {'enabled': True})
+        try:
+            yield twofactor_config
+        finally:
+            c.call('auth.twofactor.update', {'enabled': False})
+
+
 @contextmanager
-def unix_pam_authenticator(username: str, origin: ConnectionOrigin, session: str):
-    pam_hdl = authenticator.UnixPamAuthenticator()
+def unix_pam_authenticator(username: str, origin: ConnectionOrigin):
+    # Constructor now takes username and origin
+    pam_hdl = authenticator.UnixPamAuthenticator(username=username, origin=origin)
 
-    # First authenticate
-    pam_resp = pam_hdl.authenticate(username, origin)
-    assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
+    # Authenticate (no origin parameter)
+    pam_resp = pam_hdl.authenticate(username)
+    assert pam_resp.code == PAMCode.PAM_SUCCESS, pam_resp.reason
 
-    # Now login
-    pam_resp = pam_hdl.login(session)
-    assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
+    # Login (no session parameter)
+    pam_resp = pam_hdl.login()
+    assert pam_resp.code == PAMCode.PAM_SUCCESS, pam_resp.reason
 
     try:
         yield pam_hdl
     finally:
         pam_resp = pam_hdl.logout()
 
-    assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
+    assert pam_resp.code == PAMCode.PAM_SUCCESS, pam_resp.reason
 
 
 @contextmanager
-def user_pam_authenticator(username: str, password: str, origin: ConnectionOrigin, session: str):
-    pam_hdl = authenticator.UserPamAuthenticator()
+def user_pam_authenticator(username: str, password: str, origin: ConnectionOrigin):
+    # Constructor now takes username and origin
+    pam_hdl = authenticator.UserPamAuthenticator(username=username, origin=origin)
 
-    # First authenticate
-    pam_resp = pam_hdl.authenticate(username, password, origin)
-    assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
+    # Authenticate (no origin parameter)
+    pam_resp = pam_hdl.authenticate(username, password)
+    assert pam_resp.code == PAMCode.PAM_SUCCESS, pam_resp.reason
 
-    # Now login
-    pam_resp = pam_hdl.login(session)
-    assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
+    # Login (no session parameter)
+    pam_resp = pam_hdl.login()
+    assert pam_resp.code == PAMCode.PAM_SUCCESS, pam_resp.reason
 
     try:
         yield pam_hdl
     finally:
         pam_resp = pam_hdl.logout()
 
-    assert pam_resp.code == pam.PAM_SUCCESS, pam_resp.reason
+    assert pam_resp.code == PAMCode.PAM_SUCCESS, pam_resp.reason
 
 
 @contextmanager
@@ -125,118 +137,136 @@ def admin_user():
             yield u
 
 
-def test__utmp_conversion():
-    """ Test conversion to / from ctype struct """
-    py_entry = utmp.PyUtmpEntry(**DEFAULT_UTMP_ENTRY)
-    ctype_entry = py_entry.to_ctype()
-    converted = utmp.__parse_utmp_entry(ctypes.pointer(ctype_entry))
-    assert py_entry == converted
+@pytest.fixture(scope='function')
+def oath_admin_user(admin_user):
+    with Client() as c:
+        c.call('user.renew_2fa_secret', admin_user['username'], {})
+        user_2fa_config = c.call(
+            'datastore.query', 'account.twofactor_user_auth',
+            [['user_id', '=', admin_user['id']]], {'get': True}
+        )
+        try:
+            yield admin_user | {
+                'twofactor_secret': user_2fa_config['secret'],
+                'interval': user_2fa_config['interval'],
+                'digits': user_2fa_config['otp_digits']
+            }
+        finally:
+            c.call('user.unset_2fa_secret', admin_user['username'])
 
 
-def test__login_logout():
-    py_entry = utmp.PyUtmpEntry(**DEFAULT_UTMP_ENTRY)
-    utmp.login(py_entry)
-    result = utmp.utmp_query([['ut_line', '=', py_entry.ut_line]], {'get': True})
-    result.pop('ut_type_str')
-    result.pop('loginuid')
-    result.pop('passwd')
-    result['ut_addr'] = ipaddress.ip_address(result['ut_addr'])
-    new = utmp.PyUtmpEntry(**result)
-    assert py_entry == new
-
-    utmp.logout(py_entry)
-    result = utmp.utmp_query([['ut_line', '=', py_entry.ut_line]], {'get': True})
-    assert result['ut_type_str'] == 'DEAD_PROCESS'
+def get_totp_token(secret, interval, digits):
+    return pyotp.TOTP(secret, interval=interval, digits=digits).now()
 
 
-def test__interactive_unix_login(fake_session_id):
-    """ interactive unix sessions should generate a utmp entry and be properly identified """
-    with unix_pam_authenticator('root', unix_origin_interactive, fake_session_id) as hdl:
-        ut_line = hdl.truenas_state.utmp_entry.ut_line
-        entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-        assert entry['ut_user'] == 'root'
-        assert entry['ut_pid'] == os.getpid()
-        assert entry['ut_type_str'] == 'USER_PROCESS'
-        assert entry['ut_host'].endswith('PID8675')
-        assert fake_session_id in entry['ut_host']
-        assert hdl.truenas_state.utmp_session_id is not None
-        assert hdl.truenas_state.utmp_session_id not in authenticator.AVAILABLE_SESSION_IDS
-        session_id = hdl.truenas_state.utmp_session_id
-
-    entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-    assert entry['ut_type_str'] == 'DEAD_PROCESS'
-    assert session_id in authenticator.AVAILABLE_SESSION_IDS
+# test__utmp_conversion and test__login_logout removed - utmp functionality
+# is now managed internally by pam_truenas module
 
 
-def test__noninteractive_unix_login(fake_session_id):
-    """ Non-interactive sessions shouldn't generate a utmp entry. """
-    with unix_pam_authenticator('root', unix_origin_noninteractive, fake_session_id) as hdl:
-        assert hdl.truenas_state.utmp_session_id is None
-        assert hdl.truenas_state.utmp_entry is None
+def test__interactive_unix_login():
+    """ interactive unix sessions should generate a session keyring entry """
+    with unix_pam_authenticator('root', unix_origin_interactive) as hdl:
+        # Verify session UUID was set
+        assert hdl.session_uuid is not None
+
+        # Query session from keyring
+        session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
+        assert session is not None
+        assert session.username == 'root'
+        assert session.service == 'middleware-unix'
+        assert session.origin_family == 'AF_UNIX'
+        assert session.origin.pid == unix_origin_interactive.pid
+        assert session.origin.uid == unix_origin_interactive.uid
+        assert session.origin.loginuid == unix_origin_interactive.uid
+
+        session_uuid = hdl.session_uuid
+
+    # Verify session is removed after logout
+    session = truenas_pam_session.get_session_by_id(str(session_uuid))
+    assert session is None
 
 
-def test__ipv4_login(fake_session_id, admin_user):
-    with user_pam_authenticator(admin_user['username'], admin_user['password'], v4_origin, fake_session_id) as hdl:
-        ut_line = hdl.truenas_state.utmp_entry.ut_line
-        entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-        assert entry['ut_user'] == admin_user['username']
-        assert entry['ut_pid'] == os.getpid()
-        assert entry['ut_type_str'] == 'USER_PROCESS'
-        assert entry['ut_host'].endswith(f'IP{v4_origin.rem_addr}')
-        assert entry['ut_addr'] == str(v4_origin.rem_addr)
-        assert fake_session_id in entry['ut_host']
-        assert hdl.truenas_state.utmp_session_id is not None
-        assert hdl.truenas_state.utmp_session_id not in authenticator.AVAILABLE_SESSION_IDS
-        session_id = hdl.truenas_state.utmp_session_id
+def test__noninteractive_unix_login():
+    """ Non-interactive sessions should still generate a session keyring entry. """
+    with unix_pam_authenticator('root', unix_origin_noninteractive) as hdl:
+        # Verify session UUID was set
+        assert hdl.session_uuid is not None
 
-    entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-    assert entry['ut_type_str'] == 'DEAD_PROCESS'
-    assert session_id in authenticator.AVAILABLE_SESSION_IDS
+        # Query session from keyring
+        session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
+        assert session is not None
+        assert session.username == 'root'
+        assert session.origin_family == 'AF_UNIX'
+        assert session.origin.pid == 8675
+        assert session.origin.loginuid == AUID_UNSET  # non-interactive
 
 
-def test__ipv6_login(fake_session_id, admin_user):
-    with user_pam_authenticator(admin_user['username'], admin_user['password'], v6_origin, fake_session_id) as hdl:
-        ut_line = hdl.truenas_state.utmp_entry.ut_line
-        entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-        assert entry['ut_line'].startswith('ws/')
-        assert entry['ut_user'] == admin_user['username']
-        assert entry['ut_pid'] == os.getpid()
-        assert entry['ut_type_str'] == 'USER_PROCESS'
-        assert entry['ut_host'].endswith(f'IP{v6_origin.rem_addr}')
-        assert entry['ut_addr'] == str(v6_origin.rem_addr)
-        assert fake_session_id in entry['ut_host']
-        assert hdl.truenas_state.utmp_session_id is not None
-        assert hdl.truenas_state.utmp_session_id not in authenticator.AVAILABLE_SESSION_IDS
-        session_id = hdl.truenas_state.utmp_session_id
+def test__ipv4_login(admin_user):
+    with user_pam_authenticator(admin_user['username'], admin_user['password'], v4_origin) as hdl:
+        # Verify session UUID was set
+        assert hdl.session_uuid is not None
 
-    entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-    assert entry['ut_type_str'] == 'DEAD_PROCESS'
-    assert session_id in authenticator.AVAILABLE_SESSION_IDS
+        # Query session from keyring
+        session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
+        assert session is not None
+        assert session.username == admin_user['username']
+        assert session.service == 'middleware'
+        assert session.origin_family == 'AF_INET'
+        assert str(session.origin.remote_addr) == str(v4_origin.rem_addr)
+        assert session.origin.ssl is False
 
+        session_uuid = hdl.session_uuid
 
-def test__wss_login(fake_session_id, admin_user):
-    with user_pam_authenticator(admin_user['username'], admin_user['password'], ssl_origin, fake_session_id) as hdl:
-        ut_line = hdl.truenas_state.utmp_entry.ut_line
-        entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-        assert entry['ut_line'].startswith('wss/')
-        assert entry['ut_user'] == admin_user['username']
-        assert entry['ut_pid'] == os.getpid()
-        assert entry['ut_type_str'] == 'USER_PROCESS'
-        assert entry['ut_host'].endswith(f'IP{ssl_origin.rem_addr}')
-        assert entry['ut_addr'] == str(ssl_origin.rem_addr)
-        assert fake_session_id in entry['ut_host']
-        assert hdl.truenas_state.utmp_session_id is not None
-        assert hdl.truenas_state.utmp_session_id not in authenticator.AVAILABLE_SESSION_IDS
-        session_id = hdl.truenas_state.utmp_session_id
-
-    entry = utmp.utmp_query([['ut_line', '=', ut_line]], {'get': True})
-    assert entry['ut_type_str'] == 'DEAD_PROCESS'
-    assert session_id in authenticator.AVAILABLE_SESSION_IDS
+    # Verify session is removed after logout
+    session = truenas_pam_session.get_session_by_id(str(session_uuid))
+    assert session is None
 
 
-def test__session_limits(fake_session_id, admin_user, pam_stig):
+def test__ipv6_login(admin_user):
+    with user_pam_authenticator(admin_user['username'], admin_user['password'], v6_origin) as hdl:
+        # Verify session UUID was set
+        assert hdl.session_uuid is not None
+
+        # Query session from keyring
+        session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
+        assert session is not None
+        assert session.username == admin_user['username']
+        assert session.service == 'middleware'
+        assert session.origin_family == 'AF_INET6'
+        assert str(session.origin.remote_addr) == str(v6_origin.rem_addr)
+        assert session.origin.ssl is False
+
+        session_uuid = hdl.session_uuid
+
+    # Verify session is removed after logout
+    session = truenas_pam_session.get_session_by_id(str(session_uuid))
+    assert session is None
+
+
+def test__wss_login(admin_user):
+    with user_pam_authenticator(admin_user['username'], admin_user['password'], ssl_origin) as hdl:
+        # Verify session UUID was set
+        assert hdl.session_uuid is not None
+
+        # Query session from keyring
+        session = truenas_pam_session.get_session_by_id(str(hdl.session_uuid))
+        assert session is not None
+        assert session.username == admin_user['username']
+        assert session.service == 'middleware'
+        assert session.origin_family == 'AF_INET'
+        assert str(session.origin.remote_addr) == str(ssl_origin.rem_addr)
+        assert session.origin.ssl is True
+
+        session_uuid = hdl.session_uuid
+
+    # Verify session is removed after logout
+    session = truenas_pam_session.get_session_by_id(str(session_uuid))
+    assert session is None
+
+
+def test__session_limits(admin_user, pam_stig):
     # max logins is 10
-    args = [admin_user['username'], admin_user['password'], v4_origin, fake_session_id]
+    args = [admin_user['username'], admin_user['password'], v4_origin]
     with (
         user_pam_authenticator(*args),
         user_pam_authenticator(*args),
@@ -249,40 +279,45 @@ def test__session_limits(fake_session_id, admin_user, pam_stig):
         user_pam_authenticator(*args),
         user_pam_authenticator(*args),
     ):
-        with pytest.raises(Exception, match='Permission denied'):
+        with pytest.raises(Exception, match='PAM_PERM_DENIED'):
             with user_pam_authenticator(*args):
                 pass
 
 
-def test__session_login_fail_unlock_middleware(fake_session_id, admin_user, pam_stig):
-    # Sanity check that our pasword works
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v6_origin)
-    assert resp.code == pam.PAM_SUCCESS
+def test__session_login_fail_unlock_middleware(admin_user, pam_stig):
+    # Sanity check that our password works
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v6_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    assert resp.code == PAMCode.PAM_SUCCESS
 
     # First should be an AUTH_ERR
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v6_origin)
-    assert resp.code == pam.PAM_AUTH_ERR
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v6_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    assert resp.code == PAMCode.PAM_AUTH_ERR
 
     # So should be second
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v6_origin)
-    assert resp.code == pam.PAM_AUTH_ERR
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v6_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    assert resp.code == PAMCode.PAM_AUTH_ERR
+
+    # So should third
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v6_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    assert resp.code == PAMCode.PAM_AUTH_ERR
 
     # This time the PAM code changes to PAM_PERM_DENIED to indicate that account is locked
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v6_origin)
-    assert resp.code == pam.PAM_PERM_DENIED
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v6_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], 'canary')
+    assert resp.code == PAMCode.PAM_PERM_DENIED
     assert resp.reason == 'Account is locked due to failed login attempts.'
 
     # Account is now tally locked
     assert faillock.is_tally_locked(admin_user['username'])
 
     # Auth attempt with correct password should fail
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v6_origin)
-    assert resp.code == pam.PAM_PERM_DENIED
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v6_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    assert resp.code == PAMCode.PAM_PERM_DENIED
 
     with Client() as c:
         entry = c.call('user.query', [['username', '=', admin_user['username']]], {'get': True})
@@ -300,90 +335,55 @@ def test__session_login_fail_unlock_middleware(fake_session_id, admin_user, pam_
         assert not entry['locked']
 
     # Auth attempt with correct password should succeed after unlock
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v6_origin)
-    assert resp.code == pam.PAM_SUCCESS
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v6_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
+    assert resp.code == PAMCode.PAM_SUCCESS
 
 
-def test__session_login_fail_unlock_time(fake_session_id, admin_user, pam_stig):
-    # Sanity check that our pasword works
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v4_origin)
-    assert resp.code == pam.PAM_SUCCESS
-
-    # First should be an AUTH_ERR
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v4_origin)
-    assert resp.code == pam.PAM_AUTH_ERR
-
-    # So should be second
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v4_origin)
-    assert resp.code == pam.PAM_AUTH_ERR
-
-    # This time the PAM code changes to PAM_PERM_DENIED to indicate that account is locked
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], 'canary', v4_origin)
-    assert resp.code == pam.PAM_PERM_DENIED
-    assert resp.reason == 'Account is locked due to failed login attempts.'
-
-    # Account is now tally locked
-    assert faillock.is_tally_locked(admin_user['username'])
-
-    # Auth attempt with correct password should fail
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v4_origin)
-    assert resp.code == pam.PAM_PERM_DENIED
-
-    # rewrite pam middleware file so that we don't have to wait 15 minutes
-    for path in ('/etc/pam.d/middleware', '/etc/pam.d/common-auth-unix'):
-        fd = os.open(path, os.O_RDWR)
-        try:
-            data = os.pread(fd, os.fstat(fd).st_size, 0)
-            data = data.replace(f'unlock_time={faillock.UNLOCK_TIME}'.encode(), b'unlock_time=5')
-        finally:
-            os.close(fd)
-
-        with open(path, 'wb') as f:
-            f.write(data)
-            f.flush()
-
-    sleep(5)
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'], v4_origin)
-    assert resp.code == pam.PAM_SUCCESS
-
-
-def test__otpw_login_admin_otp(fake_session_id, admin_user):
+def test__otpw_login_admin_otp(admin_user):
     # When an admin user generates an OTPW for an account we set a special account flag
     password = OTPW_MANAGER.generate_for_uid(admin_user['uid'], True)
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], password, v4_origin)
-    assert resp.code == pam.PAM_SUCCESS
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v4_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], password)
+    assert resp.code == PAMCode.PAM_SUCCESS
     assert authenticator.AccountFlag.OTPW in resp.user_info['account_attributes']
     assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED in resp.user_info['account_attributes']
 
 
-def test__otpw_login_nonadmin_otp(fake_session_id, admin_user):
+def test__otpw_login_nonadmin_otp(admin_user):
     password = OTPW_MANAGER.generate_for_uid(admin_user['uid'])
-    pam_hdl = authenticator.UserPamAuthenticator()
-    resp = pam_hdl.authenticate(admin_user['username'], password, v4_origin)
-    assert resp.code == pam.PAM_SUCCESS
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v4_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], password)
+    assert resp.code == PAMCode.PAM_SUCCESS
     assert authenticator.AccountFlag.OTPW in resp.user_info['account_attributes']
     assert authenticator.AccountFlag.PASSWORD_CHANGE_REQUIRED not in resp.user_info['account_attributes']
 
 
-def test__pam_oath(admin_user, pam_stig):
-    # Set a twofactor secret. We don't actually need to know it since we're checking for change in
-    # PAM conversation
-    with Client() as c2:
-        c2.call('user.renew_2fa_secret', admin_user['username'], {})
+def test__pam_oath_no2fa(admin_user, enable_2fa):
+    pam_hdl = authenticator.UserPamAuthenticator(username=admin_user['username'], origin=v4_origin)
+    resp = pam_hdl.authenticate(admin_user['username'], admin_user['password'])
 
-    p = pam.pam()
-    ok = p.authenticate(admin_user['username'], admin_user['password'], service='sshd')
-    # python pam can't handle a proper PAM conversation and so fails, but it's sufficient
-    # to validate we're getting prompted for OTP to cover NAS-136065
-    assert not ok
-    assert len(p.messages) == 2
+    # We should have user_unknown=ignore in pam config so accounts missing from users.oath file
+    # will retrieve last PAM status (success hopefully).
+    assert resp.code == PAMCode.PAM_SUCCESS
 
-    assert 'One-time password (OATH)' in p.messages[1]
+
+def test__pam_oath_2fa(oath_admin_user, enable_2fa):
+    pam_hdl = authenticator.UserPamAuthenticator(username=oath_admin_user['username'], origin=v4_origin)
+    resp = pam_hdl.authenticate(oath_admin_user['username'], oath_admin_user['password'])
+
+    # Should get PAM_CONV_AGAIN indicating 2FA is required
+    assert resp.code == PAMCode.PAM_CONV_AGAIN
+
+    # Verify the message contains OATH prompt
+    assert resp.reason is not None
+    assert 'One-time password (OATH)' in resp.reason
+
+    otp_token = get_totp_token(
+        secret=oath_admin_user['twofactor_secret'],
+        interval=oath_admin_user['interval'],
+        digits=oath_admin_user['digits']
+    )
+
+    resp = pam_hdl.authenticate_oath(otp_token)
+    assert resp.code == PAMCode.PAM_SUCCESS

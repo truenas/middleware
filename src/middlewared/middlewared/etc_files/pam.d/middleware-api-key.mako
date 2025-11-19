@@ -14,7 +14,7 @@
 %>\
 # Pam configuration for API key authentication
 
-auth		[success=1 default=die]		pam_tdb.so ${truenas_admin_string}
+auth		[success=1 default=die]		pam_truenas.so	allow_password_auth
 @include common-auth-unix
 %if ds_auth:
 @include common-account
