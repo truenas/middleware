@@ -582,6 +582,7 @@ class TestTNCHostnameService:
     async def test_sync_interface_ips_use_all_interfaces_true(self):
         """Test that sync_interface_ips uses all interfaces when use_all_interfaces=True."""
         service = TNCHostnameService(MagicMock())
+        service.config = AsyncMock()
 
         # Track which methods were called
         get_all_called = False
@@ -616,6 +617,7 @@ class TestTNCHostnameService:
                 return None
 
         service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+        service.middleware.call_hook = AsyncMock()
 
         await service.sync_interface_ips()
 
@@ -626,6 +628,7 @@ class TestTNCHostnameService:
     async def test_sync_interface_ips_use_all_interfaces_false(self):
         """Test that sync_interface_ips uses configured interfaces when use_all_interfaces=False."""
         service = TNCHostnameService(MagicMock())
+        service.config = AsyncMock()
 
         # Track which methods were called
         get_all_called = False
@@ -661,6 +664,7 @@ class TestTNCHostnameService:
                 return None
 
         service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+        service.middleware.call_hook = AsyncMock()
 
         await service.sync_interface_ips()
 
