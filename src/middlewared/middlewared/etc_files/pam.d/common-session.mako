@@ -8,7 +8,10 @@
 
 <%
     from middlewared.utils.directoryservices.constants import DSType
-    from middlewared.utils.pam import TTY_AUDIT_LINE, STANDALONE_SESSION, AD_SESSION, SSS_SESSION
+    from middlewared.utils.pam import (
+        TTY_AUDIT_LINE, STANDALONE_SESSION, AD_SESSION, SSS_SESSION,
+        TRUENAS_SESSION_LIMIT, TRUENAS_SESSION_NO_LIMIT
+    )
 
     tty_audit_line = None
 
@@ -25,10 +28,14 @@
 
     if render_ctx['system.security.config']['enable_gpos_stig']:
         tty_audit_line = TTY_AUDIT_LINE
+        truenas_session_line = TRUENAS_SESSION_LIMIT
+    else:
+        truenas_session_line = TRUENAS_SESSION_NO_LIMIT
 %>\
 % if tty_audit_line:
 ${TTY_AUDIT_LINE.as_conf()}
 % endif
+${truenas_session_line.as_conf()}
 % if conf.primary:
 ${'\n'.join(line.as_conf() for line in conf.primary)}
 % endif

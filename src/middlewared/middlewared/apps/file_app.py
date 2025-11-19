@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import binascii
-import pam
 from typing import Literal, TypeAlias, TypedDict, Union, TYPE_CHECKING
 import urllib.parse
 
@@ -19,6 +18,7 @@ from middlewared.utils.account.authenticator import ApiKeyPamAuthenticator, Unix
 from middlewared.utils.auth import AA_LEVEL1, CURRENT_AAL
 from middlewared.utils.origin import ConnectionOrigin
 from truenas_api_client import json
+from truenas_pypam import PAMCode
 
 if TYPE_CHECKING:
     from aiohttp import BodyPartReader
@@ -126,12 +126,12 @@ async def authenticate(
     method: 'HttpVerb',
     resource: str
 ) -> SessionManagerCredentials:
+    origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
+
     match credentials['credentials']:
         case 'TOKEN':
-            origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
             # We are using the UnixPamAuthenticator here because we are generating a
             # fresh login based on the username in base token's credentials
-            app.authentication_context.pam_hdl = UnixPamAuthenticator()
             try:
                 token = await middleware.call(
                     'auth.get_token_for_action',
@@ -154,14 +154,17 @@ async def authenticate(
             if twofactor_auth['enabled']:
                 raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
-            app.authentication_context.pam_hdl = UserPamAuthenticator()
+            app.authentication_context.pam_hdl = UserPamAuthenticator(
+                username=credentials['credentials_data']['username'],
+                origin=origin
+            )
             resp = await middleware.call(
                 'auth.authenticate_plain',
                 credentials['credentials_data']['username'],
                 credentials['credentials_data']['password'],
                 app=app
             )
-            if resp['pam_response']['code'] != pam.PAM_SUCCESS:
+            if resp['pam_response']['code'] != PAMCode.PAM_SUCCESS:
                 raise web.HTTPUnauthorized(text='Bad username or password')
 
             return LoginPasswordSessionManagerCredentials(
@@ -176,8 +179,7 @@ async def authenticate(
                     text='API key authentication is not permitted by server authentication security level'
                 )
 
-            app.authentication_context.pam_hdl = ApiKeyPamAuthenticator()
-            api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], app=app)
+            api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'], origin, app=app)
             if api_key is None:
                 raise web.HTTPUnauthorized(text='Invalid API key')
 
