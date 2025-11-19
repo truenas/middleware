@@ -28,6 +28,7 @@ class SMBService(Service):
             return query_passdb_entries(filters or [], options or {})
         except PassdbMustReinit as err:
             self.logger.warning(err.errmsg)
+            os.unlink(PASSDB_PATH)
             self.synchronize_passdb(True).wait_sync(raise_error=True)
             return query_passdb_entries(filters or [], options or {})
 
