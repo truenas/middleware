@@ -68,6 +68,7 @@ class ContainerService(Service):
         container = container.copy()
         container.pop("id", None)
         container.pop("status", None)
+        container.pop('autostart', None)
 
         dataset = container.pop("dataset")
         pool = dataset.split("/")[0]

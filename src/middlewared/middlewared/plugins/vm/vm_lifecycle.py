@@ -150,6 +150,7 @@ class VMService(Service):
         vm = vm.copy()
         vm.pop("display_available", None)
         vm.pop("status", None)
+        vm.pop('autostart', None)
 
         devices = []
         for device in sorted(vm["devices"], key=lambda x: (x['order'], x['id'])):
