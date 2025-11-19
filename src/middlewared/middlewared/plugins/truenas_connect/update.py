@@ -125,7 +125,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         verrors.check()
 
-    @api_method(TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult)
+    @api_method(TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult, audit='TrueNAS Connect: Updating configuration')
     async def do_update(self, data):
         """
         Update TrueNAS Connect configuration.
