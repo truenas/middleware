@@ -115,9 +115,9 @@ class iSCSITargetService(Service):
     def activate_extent(self, extent_name, extenttype, path):
         if pathlib.Path(path).exists():
             if extenttype == 'DISK':
-                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_blockio/{extent_name}/active')
+                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_blockio/{sanitize_extent(extent_name)}/active')
             else:
-                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_fileio/{extent_name}/active')
+                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_fileio/{sanitize_extent(extent_name)}/active')
             try:
                 p.write_text('1\n')
                 return True
@@ -131,13 +131,15 @@ class iSCSITargetService(Service):
         pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'del {lun}\n')
 
     def replace_iscsi_lun(self, iqn, extent, lun):
-        pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'replace {extent} {lun}\n')
+        mgmt_path = f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt'
+        pathlib.Path(mgmt_path).write_text(f'replace {sanitize_extent(extent)} {lun}\n')
 
     def delete_fc_lun(self, wwpn, lun):
         pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(f'del {lun}\n')
 
     def replace_fc_lun(self, wwpn, extent, lun):
-        pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(f'replace {extent} {lun}\n')
+        mgmt_path = pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt')
+        mgmt_path.write_text(f'replace {sanitize_extent(extent)} {lun}\n')
 
     def set_node_optimized(self, node):
         """Update which node is reported as being the active/optimized path."""
