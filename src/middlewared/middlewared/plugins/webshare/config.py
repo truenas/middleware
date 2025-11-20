@@ -70,12 +70,13 @@ def hostnames_from_config(tn_connect_hostname_config):
 
 
 async def tn_connect_hostname_updated(middleware, tn_connect_hostname_config):
-    if not await middleware.call("service.started", "webshare"):
-        # We do not want to reload webshare if it's not running
-        return
-
     hostnames = hostnames_from_config(tn_connect_hostname_config)
     await middleware.call("keyvalue.set", HOSTNAMES_KEY, hostnames)
+    if not await middleware.call("service.started", "webshare"):
+        # We do not want to reload webshare if it's not running
+        # but we still however do want the hostnames key to be set
+        return
+
     await middleware.call("service.control", "RELOAD", "webshare")
 
 
