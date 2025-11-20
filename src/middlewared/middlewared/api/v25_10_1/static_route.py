@@ -1,7 +1,5 @@
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
 
-from pydantic import IPvAnyAddress, IPvAnyNetwork
-
 
 __all__ = [
     "StaticRouteEntry",
@@ -27,10 +25,6 @@ class StaticRouteEntry(BaseModel):
 
 class StaticRouteCreate(StaticRouteEntry):
     id: Excluded = excluded_field()
-    destination: IPvAnyNetwork
-    """Destination network (CIDR notation) for this static route."""
-    gateway: IPvAnyAddress
-    """Gateway IP address for this static route."""
 
 
 class StaticRouteCreateArgs(BaseModel):

@@ -1,4 +1,4 @@
-from ipaddress import ip_interface
+from ipaddress import ip_interface, ip_address
 
 import truenas_pynetif as netif
 
@@ -14,7 +14,7 @@ from middlewared.api.current import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.service import CRUDService, private
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import ValidationErrors
 
 
 class StaticRouteModel(sa.Model):
@@ -43,7 +43,9 @@ class StaticRouteService(CRUDService):
 
         `description` is an optional attribute for any notes regarding the static route.
         """
-        self._validate('staticroute_create', data)
+        verrors = ValidationErrors()
+        self._validate('staticroute_create', verrors, data)
+        verrors.check()
 
         id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
@@ -62,7 +64,9 @@ class StaticRouteService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        self._validate('staticroute_update', new)
+        verrors = ValidationErrors()
+        self._validate('staticroute_update', verrors, new)
+        verrors.check()
 
         await self.middleware.call(
             'datastore.update', self._config.datastore, id_, new,
@@ -115,17 +119,28 @@ class StaticRouteService(CRUDService):
             except Exception:
                 self.logger.exception('Failed to add route')
 
-    def _validate(self, schema_name, data):
+    def _validate(self, schema_name, verrors, data):
         dst, gw = data.pop('destination'), data.pop('gateway')
-        dst, gw = ip_interface(dst), ip_interface(gw)
+        # Validate destination: CIDR notation
+        try:
+            dst = ip_interface(dst)
+        except ValueError as ve:
+            verrors.add(f'{schema_name}.destination', str(ve))
+
+        # Validate gateway: IP address (not CIDR)
+        try:
+            gw = ip_address(gw)
+        except ValueError as ve:
+            verrors.add(f'{schema_name}.gateway', str(ve))
+
         if dst.version != gw.version:
-            raise ValidationError(
+            verrors.add(
                 f'{schema_name}.destination',
                 'Destination and gateway address families must match'
             )
         else:
             data['destination'] = dst.exploded
-            data['gateway'] = gw.ip.exploded
+            data['gateway'] = gw.exploded
 
     def _netif_route(self, staticroute):
         ip_info = ip_interface(staticroute['destination'])
