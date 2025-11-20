@@ -89,7 +89,7 @@ class ZFSResourceService(Service):
             raise ValidationError(schema, e.message, errno.ENOENT)
 
     @private
-    @pass_threatd_local_storage
+    @pass_thread_local_storage
     def unmount(self, tls, data: UnmountArgs) -> None:
         schema = "zfs.resource.unmount"
         try:
