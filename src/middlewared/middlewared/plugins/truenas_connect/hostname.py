@@ -32,6 +32,11 @@ class TNCHostnameService(Service):
         # If no IPs provided, use combined IPs from config (direct IPs + interface IPs)
         if ips is None:
             ips = tnc_config['ips'] + tnc_config.get('interfaces_ips', [])
+
+        if await self.middleware.call('system.is_ha_capable'):
+            # For HA based systems, we want to ensure that VIP(s) always get added
+            ips = (await self.middleware.call('tn_connect.ha_vips')) + ips
+
         try:
             return await register_update_ips(tnc_config, ips, create_wildcard)
         except TNCCallError as e:
