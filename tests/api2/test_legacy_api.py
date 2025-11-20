@@ -107,9 +107,10 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "rsynctask.query",
             "service.query",
             "sharing.smb.query",
+            "sharing.webshare.query",
             "tunable.query",
             "vmware.query",
-            "zfs.resource.query"
+            "zfs.resource.query",
         )
     ):
         return
@@ -152,6 +153,7 @@ def test_config_method(legacy_api_client, config_method):
         version in APIVersions.GE.value
         and config_method in {
             "lxc.config",
+            "webshare.config",
         }
     ):
         return
