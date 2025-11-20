@@ -69,7 +69,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         return config
 
     @private
-    async def ha_vip(self):
+    async def ha_vips(self):
         vips = []
         for interface in await self.middleware.call('interface.query'):
             for vip_entry in interface.get('failover_virtual_aliases', []):
@@ -84,7 +84,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 # In case of HA, we want to ensure following:
                 # 1) We have VIP available
                 # 2) User has not specified interfaces/use all interfaces
-                if not await self.ha_vip():
+                if not await self.ha_vips():
                     verrors.add(
                         'tn_connect_update.enabled',
                         'HA systems must be in a healthy state to enable TNC ensuring we have VIP available'
