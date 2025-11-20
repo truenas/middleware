@@ -64,6 +64,22 @@ class DockerEntry(BaseModel):
     registry_mirrors: list[RegistryMirror]
     """Array of registry mirrors."""
 
+    @classmethod
+    def from_previous(cls, value):
+        value["registry_mirrors"] = [
+            {"url": url, "insecure": True} for url in value.pop("insecure_registry_mirrors")
+        ] + [
+            {"url": url, "insecure": False} for url in value.pop("secure_registry_mirrors")
+        ]
+        return value
+
+    @classmethod
+    def to_previous(cls, value):
+        registry_mirrors = value.pop("registry_mirrors")
+        value["insecure_registry_mirrors"] = [m["url"] for m in registry_mirrors if m["insecure"]]
+        value["secure_registry_mirrors"] = [m["url"] for m in registry_mirrors if not m["insecure"]]
+        return value
+
 
 @single_argument_args('docker_update')
 class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
