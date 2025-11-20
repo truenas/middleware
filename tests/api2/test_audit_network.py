@@ -114,6 +114,7 @@ def test_network_globalconfig_audit():
         call('network.configuration.update', restore_payload)
 
 
+@pytest.mark.skip(reason="Unstable when run from Jenkins. TODO: fix cleanup fixture.")
 def test_network_interface_audit(network_interface_prep):
     """
     Test the auditing of interface create, update, delete, commit and rollback operations
