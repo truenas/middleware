@@ -167,7 +167,7 @@ class PoolSnapshotRollbackOptions(BaseModel):
 class PoolSnapshotUserPropertyUpdate(BaseModel):
     key: UserPropertyKey
     """The property name in namespace:property format."""
-    value: str
+    value: LongString
     """The new value to assign to the user property."""
 
 
