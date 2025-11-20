@@ -227,9 +227,10 @@ async def test__interfaces_service__lagg_update_members_invalid(attr_val):
     m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).do_update('em0', {
-            attr_val[0]: attr_val[1],
-        })
+        await create_service(m, InterfaceService).do_update(
+            Mock(),  # audit_callback
+            'em0', {attr_val[0]: attr_val[1]}
+        )
     assert f'interface_update.{attr_val[0]}' in ve.value
 
 
@@ -297,9 +298,10 @@ async def test__interfaces_service__update_vlan_mtu_bigger_parent():
     m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).do_update(INTERFACES_WITH_VLAN[-1]['id'], {
-            'mtu': 9000,
-        })
+        await create_service(m, InterfaceService).do_update(
+            Mock(),  # audit_callback
+            INTERFACES_WITH_VLAN[-1]['id'], {'mtu': 9000}
+        )
     assert 'interface_update.mtu' in ve.value
 
 
@@ -320,6 +322,7 @@ async def test__interfaces_service__update_two_dhcp():
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_update(
+            Mock(),  # audit_callback
             update_interface['id'], {
                 'ipv4_dhcp': True,
             },
@@ -345,6 +348,7 @@ async def test__interfaces_service__update_two_same_network():
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_update(
+            Mock(),  # audit_callback
             update_interface['id'], {
                 'aliases': [{'address': '192.168.5.3', 'netmask': 24}],
             },
@@ -366,6 +370,7 @@ async def test__interfaces_service__update_mtu_options():
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_update(
+            Mock(),  # audit_callback
             update_interface['id'], {
                 'options': 'mtu 1550',
             },
