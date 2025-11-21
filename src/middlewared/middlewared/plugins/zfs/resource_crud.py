@@ -268,11 +268,13 @@ class ZFSResourceService(Service):
             # internal callers and not to our public API.
             raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
-        tmp = path.split("/")
-        if len(tmp) == 1 or tmp[-1] == "":
-            raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
-
         a_snapshot = "@" in path
+
+        if not a_snapshot:
+            tmp = path.split("/")
+            if len(tmp) == 1 or tmp[-1] == "":
+                raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
+
         if a_snapshot and data["all_snapshots"]:
             raise ValidationError(
                 schema,
