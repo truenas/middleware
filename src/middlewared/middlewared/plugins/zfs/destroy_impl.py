@@ -82,7 +82,7 @@ def destroy_impl(tls, data: DestroyArgs):
 
     target = data["path"].split("@")[0]
     rcpa = {
-        "pool_name": data["path"].split("/")[0],
+        "pool_name": target.split("/")[0],
         "script": None,
         "script_arguments_dict": {
             "recursive": recursive,
