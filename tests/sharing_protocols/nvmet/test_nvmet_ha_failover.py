@@ -1211,6 +1211,11 @@ class TestFailoverScale:
                     client.write_data(nsid=nsid, lba=0, data=pattern)
                     patterns.append((nsid, pattern))
 
+                # For crash failover, flush to ensure data reaches stable storage
+                if failure_type == 'crash':
+                    for nsid in subsys_info['nsids']:
+                        client.send_flush(nsid=nsid)
+
                 print(f"  [OK] Connected to {subsys_nqn} ({subsys_info['namespace_count']} namespaces)")
                 return (subsys_nqn, patterns)
             except Exception as e:
@@ -1327,7 +1332,7 @@ class TestFailoverScale:
             client = None
             try:
                 client = NVMeoFClient(verify_ip, subsys_nqn)
-                connect_with_retry(client, verify_ip, max_attempts=5, retry_delay=1.0)
+                connect_with_retry(client, verify_ip, max_attempts=60, retry_delay=1.0)
 
                 # Read data from specific namespace
                 data = client.read_data(nsid=nsid, lba=0, block_count=1)
@@ -1513,6 +1518,7 @@ class TestFailback:
         client = NVMeoFClient(initial_connect_ip, subsys_nqn)
         connect_with_retry(client, initial_connect_ip, max_attempts=30, retry_delay=1.0)
         client.write_data(nsid=nsid, lba=0, data=pattern1)
+        client.send_flush(nsid=nsid)  # Ensure data survives crash failover
         client.disconnect()
         print("[FAILBACK] Initial data written and connection closed")
 
