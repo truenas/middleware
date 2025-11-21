@@ -48,26 +48,41 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
             device['container'] = device['container']['id']
         return device
 
-    @api_method(ContainerDeviceCreateArgs, ContainerDeviceCreateResult)
+    @api_method(
+        ContainerDeviceCreateArgs,
+        ContainerDeviceCreateResult,
+        audit='Container device create',
+        audit_extended=lambda data: f'{data["attributes"]["dtype"]}',
+    )
     async def do_create(self, data):
         """
         Create a new device for the container of id `container`.
         """
         return await self._create_impl(data)
 
-    @api_method(ContainerDeviceUpdateArgs, ContainerDeviceUpdateResult)
-    async def do_update(self, id_, data):
+    @api_method(
+        ContainerDeviceUpdateArgs,
+        ContainerDeviceUpdateResult,
+        audit='Container device update',
+        audit_callback=True,
+    )
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a container device of `id`.
         """
-        return await self._update_impl(id_, data)
+        return await self._update_impl(id_, data, audit_callback)
 
-    @api_method(ContainerDeviceDeleteArgs, ContainerDeviceDeleteResult)
-    async def do_delete(self, id_, options):
+    @api_method(
+        ContainerDeviceDeleteArgs,
+        ContainerDeviceDeleteResult,
+        audit='Container device delete',
+        audit_callback=True,
+    )
+    async def do_delete(self, audit_callback, id_, options):
         """
         Delete a container device of `id`.
         """
-        return await self._delete_impl(id_, options)
+        return await self._delete_impl(id_, options, audit_callback)
 
     @api_method(
         ContainerDeviceNicAttachChoicesArgs, ContainerDeviceNicAttachChoicesResult, roles=['CONTAINER_DEVICE_READ']

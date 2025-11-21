@@ -238,7 +238,8 @@ class VMDeviceService(CRUDService, DeviceMixin):
     @api_method(
         VMDeviceConvertArgs,
         VMDeviceConvertResult,
-        roles=['VM_DEVICE_WRITE']
+        roles=['VM_DEVICE_WRITE'],
+        audit='Converting disk image',
     )
     @job(lock='vm.device.convert', lock_queue_size=1)
     def convert(self, job, data):
@@ -357,7 +358,11 @@ class VMDeviceService(CRUDService, DeviceMixin):
             )
         }
 
-    @api_method(VMDeviceCreateArgs, VMDeviceCreateResult)
+    @api_method(
+        VMDeviceCreateArgs, VMDeviceCreateResult,
+        audit='VM device create',
+        audit_extended=lambda data: f'{data["attributes"]["dtype"]}',
+    )
     async def do_create(self, data):
         """
         Create a new device for the VM of id `vm`.
@@ -371,21 +376,29 @@ class VMDeviceService(CRUDService, DeviceMixin):
         """
         return await self._create_impl(data)
 
-    @api_method(VMDeviceUpdateArgs, VMDeviceUpdateResult)
-    async def do_update(self, id_, data):
+    @api_method(
+        VMDeviceUpdateArgs, VMDeviceUpdateResult,
+        audit='VM device update',
+        audit_callback=True,
+    )
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a VM device of `id`.
 
         Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
-        return await self._update_impl(id_, data)
+        return await self._update_impl(id_, data, audit_callback)
 
-    @api_method(VMDeviceDeleteArgs, VMDeviceDeleteResult)
-    async def do_delete(self, id_, options):
+    @api_method(
+        VMDeviceDeleteArgs, VMDeviceDeleteResult,
+        audit='VM device delete',
+        audit_callback=True,
+    )
+    async def do_delete(self, audit_callback, id_, options):
         """
         Delete a VM device of `id`.
         """
-        return await self._delete_impl(id_, options)
+        return await self._delete_impl(id_, options, audit_callback)
 
     @private
     async def validate_display_devices(self, verrors, vm_instance):
