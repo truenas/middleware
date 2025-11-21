@@ -200,13 +200,14 @@ class SessionManager:
             del self.sessions[app.session_id]
             app.authentication_context = None
             app.authenticated_credentials = None
+            app.authenticated = False
 
             await self.middleware.run_in_thread(session.credentials.logout)
 
             if not internal_session:
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
-
-        app.authenticated = False
+        else:
+            app.authenticated = False
 
     async def _app_on_message(self, app: App, message) -> None:
         session = self.sessions.get(app.session_id)
