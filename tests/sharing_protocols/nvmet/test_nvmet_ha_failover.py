@@ -18,7 +18,14 @@ test_failover_scale: Large-scale failover tests
 - Measures failover timing (must complete within MAX_FAILOVER_TIME seconds)
 Total: 2 x 2 x 2 = 8 tests
 
-Combined Total: 40 tests
+test_failover_and_failback: Failover + failback cycle tests
+- Target implementation: kernel vs SPDK
+- Failover mode: ANA vs IP takeover
+- Pattern: crash failover -> orderly failback
+- Verifies data integrity survives complete cycle back to original node
+Total: 2 x 2 = 4 tests
+
+Combined Total: 44 tests
 """
 import contextlib
 import os
@@ -35,8 +42,12 @@ from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import ha, pool_name
 from middlewared.test.integration.assets.nvmet import (
-    NVME_DEFAULT_TCP_PORT, nvmet_ana, nvmet_namespace,
-    nvmet_port, nvmet_port_subsys, nvmet_subsys
+    NVME_DEFAULT_TCP_PORT,
+    nvmet_ana,
+    nvmet_namespace,
+    nvmet_port,
+    nvmet_port_subsys,
+    nvmet_subsys
 )
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server, host as init_truenas_server
@@ -67,6 +78,47 @@ def basenqn():
     return call('nvmet.global.config')['basenqn']
 
 
+@pytest.fixture(scope='module', autouse=True)
+def restore_original_master():
+    """Ensure the original master node is restored after all tests complete.
+
+    Records which node is active on entry, then restores it on exit if needed.
+    This ensures the test module leaves the system in the same state it found it.
+    """
+    # Entry: record which node is currently active
+    orig_master_node = call('failover.node')
+    print(f"[FIXTURE] Original master node at module start: {orig_master_node}")
+
+    yield
+
+    # Exit: restore if needed
+    current_master_node = call('failover.node')
+    if current_master_node != orig_master_node:
+        print(f"\n[FIXTURE] Restoring master to original node {orig_master_node} (currently {current_master_node})...")
+
+        # Ensure HA is settled and ready for failover
+        settle_ha()
+
+        # Perform orderly failover back to original master
+        do_failover(settle=True, abusive=False)
+
+        # Double settle for full stabilization
+        time.sleep(5)
+        settle_ha()
+
+        # Verify restoration succeeded
+        final_master_node = call('failover.node')
+        if final_master_node == orig_master_node:
+            print(f"[FIXTURE] Successfully restored master to {orig_master_node}")
+        else:
+            print(
+                "[FIXTURE] WARNING: Failed to restore original master: "
+                f"expected {orig_master_node}, got {final_master_node}"
+            )
+    else:
+        print(f"\n[FIXTURE] Master node unchanged ({orig_master_node}), no restoration needed")
+
+
 @pytest.fixture(scope='module')
 def many_zvols():
     """Create multiple ZVOLs for namespace testing."""
@@ -79,14 +131,14 @@ def many_zvols():
         yield config
 
 
-@pytest.fixture(params=['kernel', 'spdk'], scope='module')
+@pytest.fixture(params=['kernel', 'spdk'], scope='class')
 def implementation(request):
     """Set NVMet implementation (kernel or SPDK) before service starts."""
     with nvmet_implementation(request.param):
         yield request.param
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='class')
 def fixture_nvmet_running(implementation):
     """Ensure NVMet service is running with the configured implementation."""
     with ensure_service_enabled(SERVICE_NAME):
@@ -1335,6 +1387,310 @@ class TestFailoverScale:
 
         # Now wait for HA to reach steady state (not part of client-visible timing)
         print("\n[SCALE] Waiting for HA to reach steady state...")
+        settle_ha()
+        time.sleep(5)
+        settle_ha()
+
+
+class TestFailback:
+    """Test failover followed by failback to original node.
+
+    Tests the complete HA cycle:
+    - Crash failover: active node -> standby node (unplanned)
+    - Orderly failback: standby node -> original active node (planned return)
+    - Verifies data integrity survives complete cycle
+
+    Does not assume which node starts active - handles either node.
+
+    Tests: 2 implementations x 2 modes = 4 tests
+    """
+
+    @pytest.fixture(scope='class')
+    def single_zvol_failback(self):
+        """Create single ZVOL for failback testing."""
+        with zvol('ha_failback', ZVOL_MB, pool_name):
+            yield 'ha_failback'
+
+    @pytest.fixture(params=['kernel', 'spdk'], scope='class')
+    def implementation_failback(self, request):
+        """Set NVMet implementation for failback tests."""
+        with nvmet_implementation(request.param):
+            yield request.param
+
+    @pytest.fixture(scope='class')
+    def fixture_nvmet_running_failback(self, implementation_failback):
+        """Ensure NVMet service is running for failback tests."""
+        with ensure_service_enabled(SERVICE_NAME):
+            with ensure_service_started(SERVICE_NAME, 3):
+                yield implementation_failback
+
+    @pytest.fixture(params=['ana', 'ip_takeover'], scope='class')
+    def failover_mode_failback(self, request):
+        """Configure failover mode for failback tests."""
+        if request.param == 'ana':
+            # Enable ANA for this test class
+            with nvmet_ana(True):
+                yield request.param
+        else:
+            # IP takeover - no configuration change
+            yield request.param
+
+    @pytest.fixture(scope='class')
+    def configured_subsystem_failback(self, single_zvol_failback, failover_mode_failback,
+                                      fixture_nvmet_running_failback):
+        """Set up single subsystem with one namespace for failback testing."""
+        # Initialize node IPs if needed
+        if truenas_server.nodea_ip is None:
+            init_truenas_server()
+
+        subsys_name = 'failback_test'
+        zvol_path = f'zvol/{pool_name}/{single_zvol_failback}'
+
+        with nvmet_port(truenas_server.ip) as port:
+            with nvmet_subsys(subsys_name, allow_any_host=True) as subsys:
+                with nvmet_port_subsys(subsys['id'], port['id']):
+                    with nvmet_namespace(subsys['id'], zvol_path) as ns:
+                        # Double settle pattern for stability
+                        settle_ha()
+                        time.sleep(5)
+                        settle_ha()
+
+                        yield {
+                            'subnqn': subsys['subnqn'],
+                            'nsid': ns['nsid']
+                        }
+
+        # Cleanup
+        time.sleep(5)
+
+    def test_failover_and_failback(self, fixture_nvmet_running_failback, failover_mode_failback,
+                                   configured_subsystem_failback):
+        """Test crash failover followed by orderly failback.
+
+        Flow:
+        1. Determine currently active node (A or B)
+        2. Write data on active node
+        3. Crash failover: active -> standby
+        4. Verify data on new active node (former standby)
+        5. Orderly failback: current active -> original active
+        6. Verify data on original active node
+        """
+        implementation = fixture_nvmet_running_failback
+        failover_mode = failover_mode_failback
+        subsys_nqn = configured_subsystem_failback['subnqn']
+        nsid = configured_subsystem_failback['nsid']
+
+        print(f"\n{'='*70}")
+        print("Failback Test Configuration:")
+        print(f"  Implementation: {implementation}")
+        print(f"  Mode: {failover_mode}")
+        print("  Pattern: crash -> orderly")
+        print(f"{'='*70}")
+
+        # Determine which node is currently active
+        orig_master_node = call('failover.node')
+        if orig_master_node == 'A':
+            active_ip = truenas_server.nodea_ip
+            standby_ip = truenas_server.nodeb_ip
+        else:
+            active_ip = truenas_server.nodeb_ip
+            standby_ip = truenas_server.nodea_ip
+
+        # For IP takeover mode, use VIP (floating IP)
+        if failover_mode == 'ip_takeover':
+            floating_ip = truenas_server.ip
+            initial_connect_ip = floating_ip
+        else:
+            initial_connect_ip = active_ip
+
+        print(f"\n[FAILBACK] Currently active node: {orig_master_node}")
+        print(f"[FAILBACK] Active IP: {active_ip}, Standby IP: {standby_ip}")
+
+        # Phase 1: Write data on current active node
+        print("\n[FAILBACK] Phase 1: Writing initial data pattern on active node...")
+        pattern1 = f"FAILBACK_{implementation}_{failover_mode}_INITIAL".encode().ljust(512, b'\0')
+
+        client = NVMeoFClient(initial_connect_ip, subsys_nqn)
+        connect_with_retry(client, initial_connect_ip, max_attempts=30, retry_delay=1.0)
+        client.write_data(nsid=nsid, lba=0, data=pattern1)
+        client.disconnect()
+        print("[FAILBACK] Initial data written and connection closed")
+
+        # Phase 2: Crash failover (active -> standby)
+        print(f"\n[FAILBACK] Phase 2: Triggering CRASH failover ({orig_master_node} -> standby)...")
+        failover_start = time.time()
+        do_failover(settle=False, abusive=True)
+
+        # Wait for standby node to become accessible as new active
+        print("[FAILBACK] Waiting for standby node to become new active controller...")
+        path_accessible_time = None
+
+        if failover_mode == 'ana':
+            # ANA mode: Wait for standby path to become OPTIMIZED
+            max_attempts = 60
+            test_client = None
+            for attempt in range(max_attempts):
+                try:
+                    if test_client:
+                        try:
+                            test_client.disconnect()
+                        except Exception:
+                            pass
+                    test_client = NVMeoFClient(standby_ip, subsys_nqn)
+                    test_client.connect()
+
+                    if is_ana_state_optimized(test_client):
+                        path_accessible_time = time.time()
+                        print(f"[FAILBACK] Path became OPTIMIZED after "
+                              f"{path_accessible_time - failover_start:.2f}s")
+                        break
+
+                    test_client.disconnect()
+                    time.sleep(1)
+                except Exception as e:
+                    if attempt < max_attempts - 1:
+                        time.sleep(1)
+                    else:
+                        raise AssertionError(f"Path did not become OPTIMIZED after {max_attempts}s: {e}")
+
+            if test_client:
+                try:
+                    test_client.disconnect()
+                except Exception:
+                    pass
+        else:
+            # IP takeover mode: reconnect to floating IP (now points to standby node)
+            time.sleep(10)
+            test_client = NVMeoFClient(floating_ip, subsys_nqn)
+            try:
+                connect_with_retry(test_client, floating_ip, max_attempts=60, retry_delay=1.0)
+                path_accessible_time = time.time()
+                print(f"[FAILBACK] Floating IP reconnected after "
+                      f"{path_accessible_time - failover_start:.2f}s")
+            except Exception as e:
+                raise AssertionError(f"Failed to reconnect to floating IP after 60s: {e}")
+            finally:
+                test_client.disconnect()
+
+        # Check crash failover timing
+        time_to_accessible = path_accessible_time - failover_start
+        if time_to_accessible > MAX_FAILOVER_TIME:
+            raise AssertionError(
+                f"Crash failover time {time_to_accessible:.2f}s exceeds maximum acceptable time of {MAX_FAILOVER_TIME}s"
+            )
+        print(f"[FAILBACK] Crash failover completed in {time_to_accessible:.2f}s (within {MAX_FAILOVER_TIME}s limit)")
+
+        # Verify data on new active node (former standby)
+        print("[FAILBACK] Verifying data on new active controller (former standby)...")
+        verify_ip = floating_ip if failover_mode == 'ip_takeover' else standby_ip
+        client = NVMeoFClient(verify_ip, subsys_nqn)
+        connect_with_retry(client, verify_ip, max_attempts=30, retry_delay=1.0)
+        data = client.read_data(nsid=nsid, lba=0, block_count=1)
+        if data != pattern1:
+            raise AssertionError("Data pattern mismatch after first failover")
+        client.disconnect()
+        print("[FAILBACK] [OK] Data verified on new active controller")
+
+        new_master_node = call('failover.node')
+        assert new_master_node != orig_master_node, f"Failover failed: still on {orig_master_node}"
+        print(f"[FAILBACK] New active node: {new_master_node}")
+
+        # Wait for HA to stabilize before attempting failback
+        print("\n[FAILBACK] Waiting for HA to stabilize after crash failover...")
+        settle_ha()
+        time.sleep(5)
+        settle_ha()
+        print("[FAILBACK] HA stabilized, ready for failback")
+
+        # Phase 3: Orderly failback (current active -> original active)
+        print(f"\n[FAILBACK] Phase 3: Triggering ORDERLY failback ({new_master_node} -> "
+              f"{orig_master_node})...")
+        failback_start = time.time()
+        do_failover(settle=False, abusive=False)
+
+        # Wait for original active node to become accessible again
+        print("[FAILBACK] Waiting for original active node to become accessible...")
+        path_accessible_time = None
+
+        if failover_mode == 'ana':
+            # ANA mode: Wait for original active path to become OPTIMIZED
+            max_attempts = 60
+            test_client = None
+            for attempt in range(max_attempts):
+                try:
+                    if test_client:
+                        try:
+                            test_client.disconnect()
+                        except Exception:
+                            pass
+                    test_client = NVMeoFClient(active_ip, subsys_nqn)
+                    test_client.connect()
+
+                    if is_ana_state_optimized(test_client):
+                        path_accessible_time = time.time()
+                        print(f"[FAILBACK] Path became OPTIMIZED after "
+                              f"{path_accessible_time - failback_start:.2f}s")
+                        break
+
+                    test_client.disconnect()
+                    time.sleep(1)
+                except Exception as e:
+                    if attempt < max_attempts - 1:
+                        time.sleep(1)
+                    else:
+                        raise AssertionError(f"Path did not become OPTIMIZED after {max_attempts}s: {e}")
+
+            if test_client:
+                try:
+                    test_client.disconnect()
+                except Exception:
+                    pass
+        else:
+            # IP takeover mode: reconnect to floating IP (now back on original node)
+            time.sleep(10)
+            test_client = NVMeoFClient(floating_ip, subsys_nqn)
+            try:
+                connect_with_retry(test_client, floating_ip, max_attempts=60, retry_delay=1.0)
+                path_accessible_time = time.time()
+                print(f"[FAILBACK] Floating IP reconnected after "
+                      f"{path_accessible_time - failback_start:.2f}s")
+            except Exception as e:
+                raise AssertionError(f"Failed to reconnect to floating IP after 60s: {e}")
+            finally:
+                test_client.disconnect()
+
+        # Check orderly failback timing
+        time_to_accessible = path_accessible_time - failback_start
+        if time_to_accessible > MAX_FAILOVER_TIME:
+            raise AssertionError(
+                f"Orderly failback time {time_to_accessible:.2f}s exceeds maximum acceptable time "
+                f"of {MAX_FAILOVER_TIME}s"
+            )
+        print(
+            f"[FAILBACK] Orderly failback completed in {time_to_accessible:.2f}s "
+            f"(within {MAX_FAILOVER_TIME}s limit)"
+        )
+
+        # Verify data back on original active node
+        print("[FAILBACK] Verifying data on original active controller...")
+        verify_ip = floating_ip if failover_mode == 'ip_takeover' else active_ip
+        client = NVMeoFClient(verify_ip, subsys_nqn)
+        connect_with_retry(client, verify_ip, max_attempts=30, retry_delay=1.0)
+        data = client.read_data(nsid=nsid, lba=0, block_count=1)
+        if data != pattern1:
+            raise AssertionError("Data pattern mismatch after failback")
+        client.disconnect()
+        print("[FAILBACK] [OK] Data verified on original active controller")
+
+        final_master_node = call('failover.node')
+        assert final_master_node == orig_master_node, \
+            f"Failback incomplete: expected {orig_master_node}, got {final_master_node}"
+
+        print(f"[FAILBACK] [OK] Complete cycle verified: {orig_master_node} -> {new_master_node} -> "
+              f"{orig_master_node}")
+
+        # Final settle
+        print("\n[FAILBACK] Waiting for HA to stabilize...")
         settle_ha()
         time.sleep(5)
         settle_ha()
