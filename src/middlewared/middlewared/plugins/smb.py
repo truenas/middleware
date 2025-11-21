@@ -444,14 +444,15 @@ class SMBService(ConfigService):
         if not new['aapl_extensions']:
             filters = [['OR', [
                 ['options.afp', '=', True], ['options.timemachine', '=', True],
-                ['purpose', '=', 'TIMEMACHINE_SHARE']
+                ['purpose', '=', 'TIMEMACHINE_SHARE'],
+                ['purpose', '=', 'FCP_SHARE'],
             ]]]
             if await self.middleware.call(
                 'sharing.smb.query', filters, {'count': True, 'select': ['purpose']}
             ):
                 verrors.add(
                     'smb_update.aapl_extensions',
-                    'This option must be enabled when AFP or time machine shares are present'
+                    'This option must be enabled when AFP, time machine, or Final Cut Pro shares are present'
                 )
 
         if new['enable_smb1']:
@@ -1269,6 +1270,13 @@ class SharingSMBService(SharingService):
                 'This feature may be enabled in the general SMB server configuration.'
             )
 
+        if data[share_field.PURPOSE] == SMBSharePurpose.FCP_SHARE and not smb_config['aapl_extensions']:
+            verrors.add(
+                f'{schema_name}.purpose',
+                'Apple SMB2/3 protocol extension support is required by this parameter. '
+                'This feature may be enabled in the general SMB server configuration.'
+            )
+
         if data[share_field.PURPOSE] == SMBSharePurpose.LEGACY_SHARE:
             await self.legacy_share_validate(data, schema_name, verrors, old)
 
@@ -1323,7 +1331,7 @@ class SharingSMBService(SharingService):
         out[share_field.OPTS] = {}
 
         match out[share_field.PURPOSE]:
-            case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE:
+            case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.MULTIPROTOCOL_SHARE | SMBSharePurpose.FCP_SHARE:
                 out[share_field.OPTS][share_field.AAPL_MANGLING] = data[share_field.AAPL_MANGLING]
             case SMBSharePurpose.TIMEMACHINE_SHARE:
                 out[share_field.OPTS] = {
