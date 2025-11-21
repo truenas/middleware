@@ -33,7 +33,11 @@ class StaticRouteService(CRUDService):
         entry = StaticRouteEntry
         role_prefix = 'NETWORK_INTERFACE'
 
-    @api_method(StaticRouteCreateArgs, StaticRouteCreateResult)
+    @api_method(
+        StaticRouteCreateArgs,
+        StaticRouteCreateResult,
+        audit='Static route create'
+    )
     async def do_create(self, data):
         """
         Create a Static Route.
@@ -54,7 +58,11 @@ class StaticRouteService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(StaticRouteUpdateArgs, StaticRouteUpdateResult)
+    @api_method(
+        StaticRouteUpdateArgs,
+        StaticRouteUpdateResult,
+        audit='Static route update'
+    )
     async def do_update(self, id_, data):
         """
         Update Static Route of `id`.
@@ -75,7 +83,11 @@ class StaticRouteService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(StaticRouteDeleteArgs, StaticRouteDeleteResult)
+    @api_method(
+        StaticRouteDeleteArgs,
+        StaticRouteDeleteResult,
+        audit='Static route delete'
+    )
     def do_delete(self, id_):
         """
         Delete Static Route of `id`.
