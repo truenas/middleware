@@ -10,5 +10,6 @@ websocket-client>=1.4.2
 wheel
 cython-iscsi @ git+https://github.com/truenas/cython-iscsi.git@tester
 PYSCSI @ git+https://github.com/truenas/python-scsi.git@tester
+nvmeof-client @ git+https://github.com/truenas/truenas_pynvmeof_client.git
 zeroconf
 pyotp
