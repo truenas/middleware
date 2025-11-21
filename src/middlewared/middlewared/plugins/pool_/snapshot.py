@@ -114,7 +114,6 @@ class PoolSnapshotService(CRUDService):
                 'zfs.resource.destroy',
                 DestroyArgs(
                     path=id_,
-                    defer=options['defer'],  # TODO: unused (unnecessary)
                     recursive=options['recursive'],
                 )
             )
