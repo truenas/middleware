@@ -175,7 +175,7 @@ def __apply_purpose_and_options(
     opts = config_in[share_field.OPTS]
 
     match config_in[share_field.PURPOSE]:
-        case SMBSharePurpose.DEFAULT_SHARE:
+        case SMBSharePurpose.DEFAULT_SHARE | SMBSharePurpose.FCP_SHARE:
             vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
             vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
             out['posix locking'] = False

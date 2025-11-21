@@ -486,6 +486,17 @@ class ExternalOpt(BaseModel):
         return remote_path
 
 
+class FCPStorageOpt(BaseModel):
+    """ These configuration options apply to shares with the `FCP_SHARE` purpose as a storage location
+    for Final Cut Pro data. """
+    purpose: Literal[SMBSharePurpose.FCP_SHARE] = Field(exclude=True, repr=False)
+    aapl_name_mangling: Literal[True] = True  # This is just added for visibility of what feature actually does
+    """ Illegal NTFS characters commonly used by MacOS clients are stored with their native values on the SMB \
+    server's local filesystem.
+
+    NOTE: Files with illegal NTFS characters in their names may not be accessible to non-MacOS SMB clients. """
+
+
 class VeeamRepositoryOpt(BaseModel):
     """ These configuration options apply to shares with the `VEEAM_REPOSITORY_SHARE` purpose. """
     purpose: Literal[SMBSharePurpose.VEEAM_REPOSITORY_SHARE] = Field(exclude=True, repr=False)
@@ -494,7 +505,7 @@ class VeeamRepositoryOpt(BaseModel):
 SmbShareOptions = Annotated[
     Union[
         LegacyOpt, DefaultOpt, TimeMachineOpt, MultiprotocolOpt, TimeLockedOpt, PrivateDatasetOpt, ExternalOpt,
-        VeeamRepositoryOpt,
+        VeeamRepositoryOpt, FCPStorageOpt,
     ],
     Field(discriminator='purpose')
 ]
@@ -512,7 +523,8 @@ class SharingSMBEntry(BaseModel):
         SMBSharePurpose.TIME_LOCKED_SHARE,
         SMBSharePurpose.PRIVATE_DATASETS_SHARE,
         SMBSharePurpose.EXTERNAL_SHARE,
-        SMBSharePurpose.VEEAM_REPOSITORY_SHARE
+        SMBSharePurpose.VEEAM_REPOSITORY_SHARE,
+        SMBSharePurpose.FCP_SHARE
     ] = SMBSharePurpose.DEFAULT_SHARE.value
     """ This parameter sets the purpose of the SMB share. It controls how the SMB share behaves and what features are \
     available through options. The DEFAULT_SHARE setting is best for most applications, and should be used, unless \
@@ -545,6 +557,12 @@ class SharingSMBEntry(BaseModel):
 
     * `VEEAM_REPOSITORY_SHARE`: The SMB share is a repository for Veeam Backup & Replication and supports Fast Clone.
       NOTE: This feature is available only for TrueNAS Enterprise customers.
+
+    * `FCP_SHARE`: The SMB share is a used for Final Cut Pro storage. This feature automatically configures the share \
+      to provide storage according to Apple support guidelines described in https://support.apple.com/en-ca/101919. \
+      NOTE: `aapl_extensions` must be set in the global `smb.config`. \
+      WARNING: This feature forcibly enables `aapl_name_mangling` on the SMB share which may cause unexpected behavior \
+      for data that was written without this feature enabled.
     """
     name: SmbShareName = Field(examples=['SHARE', 'Macrodata_refinement'])
     """ SMB share name. SMB share names are case-insensitive and must be unique, and are subject \
@@ -708,6 +726,8 @@ class SmbShareCreate(SharingSMBEntry):
                     raise ValueError('External shares require explicit options configuration')
                 case SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
                     opt_model = VeeamRepositoryOpt
+                case SMBSharePurpose.FCP_SHARE:
+                    opt_model = FCPStorageOpt
                 case _:
                     raise ValueError(f'{self.purpose}: unexpected share purpose')
 
