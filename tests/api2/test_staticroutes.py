@@ -2,6 +2,7 @@ import pytest
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 ROUTE = {
     "destination": "127.1.1.1",
@@ -11,7 +12,19 @@ ROUTE = {
 BAD_ROUTE = {"destination": "fe80:aaaa:bbbb:cccc::1/64", "gateway": ROUTE["gateway"]}
 
 
-def test_staticroute():
+@pytest.fixture()
+def cleanup_test():
+    init_ids = set([d['id'] for d in call("staticroute.query")])
+    try:
+        yield
+    finally:
+        final_ids = set([d['id'] for d in call("staticroute.query")])
+        # Delete any newly created static routes
+        for id in (final_ids - init_ids):
+            call("staticroute.delete", id)
+
+
+def test_staticroute(cleanup_test):
     """
     1. try to create invalid route
     2. create valid route
@@ -19,13 +32,24 @@ def test_staticroute():
     4. try to update valid route with invalid data
     5. delete route
     6. validate route was removed from OS
+    NOTE: On create, update and delete we also validate audit entries
     """
     # try to create bad route
-    with pytest.raises(ValidationErrors):
-        call("staticroute.create", BAD_ROUTE)
+    with expect_audit_method_calls([{
+        'method': 'staticroute.create',
+        'params': [BAD_ROUTE],
+        'description': 'Static route create'
+    }]):
+        with pytest.raises(ValidationErrors):
+            call("staticroute.create", BAD_ROUTE)
 
     # now create valid one
-    id_ = call("staticroute.create", ROUTE)["id"]
+    with expect_audit_method_calls([{
+        'method': 'staticroute.create',
+        'params': [ROUTE],
+        'description': 'Static route create'
+    }]):
+        id_ = call("staticroute.create", ROUTE)["id"]
 
     # validate query
     qry = call("staticroute.query", [["id", "=", id_]], {"get": True})
@@ -38,11 +62,22 @@ def test_staticroute():
     assert f"{ROUTE['destination']} via {ROUTE['gateway']}" in results["stdout"]
 
     # update it with bad data
-    with pytest.raises(ValidationErrors):
-        call("staticroute.update", id_, {"destination": BAD_ROUTE["destination"]})
+    with expect_audit_method_calls([{
+        'method': 'staticroute.update',
+        'params': [id_, {"destination": BAD_ROUTE["destination"]}],
+        'description': 'Static route update'
+    }]):
+        with pytest.raises(ValidationErrors):
+            call("staticroute.update", id_, {"destination": BAD_ROUTE["destination"]})
 
     # now delete
-    assert call("staticroute.delete", id_)
+    with expect_audit_method_calls([{
+        'method': 'staticroute.delete',
+        'params': [id_],
+        'description': 'Static route delete'
+    }]):
+        assert call("staticroute.delete", id_)
+
     assert not call("staticroute.query", [["id", "=", id_]])
 
     # validate route was removed from OS
