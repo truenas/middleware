@@ -11,10 +11,10 @@ def setup_state(request):
     The hope was that both 'backend' and 'setup' one-shot tests would be similar, however
     the 'setup' test ended up requiring 'with mock'
     """
-    path = '/audit'
+    audit_path = '/audit'
     alert_key = request.param[0]
     if alert_key is not None:
-        path += f"/{alert_key}.db"
+        path = f"{audit_path}/{alert_key}.db"
     alert_class = request.param[1]
     try:
         # Remove any pre-existing alert cruft
@@ -25,8 +25,8 @@ def setup_state(request):
         assert len(class_alerts) == 0, class_alerts
         match alert_class:
             case 'AuditBackendSetup':
-                ssh(f"mv {path} {path}.save")
-                ssh(f"echo 'Corrupted DB' > {path}")
+                ssh(f"mv {path} /tmp/{alert_key}.save")
+                ssh(f'chattr +i {audit_path}')
             case 'AuditDatasetCleanup':
                 call(
                     "pool.dataset.update_impl",
@@ -41,7 +41,8 @@ def setup_state(request):
     finally:
         match alert_class:
             case 'AuditBackendSetup':
-                ssh(f"mv {path}.save {path}")
+                ssh(f'chattr -i {audit_path}')
+                ssh(f"mv /tmp/{alert_key}.save {path}")
                 assert ssh(f"head -c 15 {path}") == "SQLite format 3"
                 # Restore backend file descriptors and dismiss alerts
                 call('auditbackend.setup')
