@@ -492,7 +492,7 @@ class ExternalOpt(BaseModel):
 
 
 class FCPStorageOpt(BaseModel):
-    """ These configuration options apply to shares with the `FCP_SHARE` purpose as a storage location
+    """ These configuration options apply to shares with the `FCP_SHARE` purpose as a storage location \
     for Final Cut Pro data. """
     purpose: Literal[SMBSharePurpose.FCP_SHARE] = Field(exclude=True, repr=False)
     aapl_name_mangling: Literal[True] = True  # This is just added for visibility of what feature actually does
