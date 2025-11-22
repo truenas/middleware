@@ -384,11 +384,16 @@ class TestAuditOpsHA:
         assert standby_audit_event
         username = standby_audit_event['username']
         report_path_active = call('audit.export', {'export_format': 'CSV'}, job=True)
-        report_path_standby = call('audit.export', {'export_format': 'CSV', 'remote_controller': True}, job=True)
+        report_path_standby = ""
+        # NOTE: Collecting the audit db from the remote contoller is temporarily disabled
+        with pytest.raises(Exception, match='remote controller is not currently supported'):
+            report_path_standby = call('audit.export', {'export_format': 'CSV', 'remote_controller': True}, job=True)
 
         # Confirm entry NOT in active controller audit DB
         with pytest.raises(AssertionError):
             check_audit_download(report_path_active, 'CSV', f"Delete user {username}")
 
-        # Confirm entry IS in standby controller audit DB
-        check_audit_download(report_path_standby, 'CSV', f"Delete user {username}")
+        # Confirm entry IS in standby controller audit DB ()
+        # See note above regarding the remote controller
+        with pytest.raises(AssertionError):
+            check_audit_download(report_path_standby, 'CSV', f"Delete user {username}")
