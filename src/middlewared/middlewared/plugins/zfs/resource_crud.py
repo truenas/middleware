@@ -11,7 +11,7 @@ from middlewared.api.current import (
     ZFSResourceQueryResult,
 )
 from middlewared.service import Service, private
-from middlewared.service_exception import InstanceNotFound, ValidationError
+from middlewared.service_exception import InstanceNotFound, ValidationErrors, ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .destroy_impl import destroy_impl, DestroyArgs
@@ -363,7 +363,15 @@ class ZFSResourceService(Service):
         data["bypass"] = False
         try:
             failed, errnum = self.middleware.call_sync("zfs.resource.destroy_impl", data)
-        except (ZFSPathHasClonesException, ZFSPathHasHoldsException) as e:
+        except ZFSPathHasClonesException as e:
+            ve = ValidationErrors()
+            ve.add(
+                "options.defer",
+                f"Please set this attribute as '{e.path}' snapshot has dependent clones: {', '.join(e.clones)}",
+                errno.EINVAL
+            )
+            raise ve
+        except ZFSPathHasHoldsException as e:
             raise ValidationError(schema, e.message, errno.ENOTEMPTY)
         except ZFSPathNotFoundException as e:
             raise InstanceNotFound(e.message)

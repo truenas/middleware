@@ -15,8 +15,9 @@ class ZFSPathAlreadyExistsException(Exception):
 
 class ZFSPathHasClonesException(Exception):
     def __init__(self, path, clones):
-        self.message = f"{path!r} has the following clones: {','.join(clones)}"
-        super().__init__(self.message)
+        self.path = path
+        self.clones = clones
+        super().__init__(f"{path!r} has the following clones: {','.join(clones)}")
 
 
 class ZFSPathHasHoldsException(Exception):
