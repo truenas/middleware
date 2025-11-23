@@ -257,6 +257,7 @@ class ZFSResourceService(Service):
         data.setdefault("recursive", False)
         data.setdefault("bypass", False)
         data.setdefault("all_snapshots", False)
+        data.setdefault("defer", False)
         if os.path.isabs(path):
             raise ValidationError(
                 schema, "Absolute path is invalid. Must be in form of <pool>/<resource>.", errno.EINVAL

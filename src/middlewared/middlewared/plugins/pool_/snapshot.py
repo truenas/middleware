@@ -112,6 +112,7 @@ class PoolSnapshotService(CRUDService):
             DestroyArgs(
                 path=id_,
                 recursive=options['recursive'],
+                defer=options['defer'],
             )
         )
 
