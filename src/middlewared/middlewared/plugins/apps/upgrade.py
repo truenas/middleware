@@ -12,8 +12,8 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
-from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service import CallError, job, private, Service, ValidationErrors
+from middlewared.service_exception import InstanceNotFound
 
 from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
@@ -145,7 +145,7 @@ class AppService(Service):
                     self.middleware.call_sync(
                         'zfs.resource.destroy', DestroyArgs(path=snap_name, recursive=True)
                     )
-                except ZFSPathNotFoundException:
+                except InstanceNotFound:
                     pass
 
                 self.middleware.call_sync(
