@@ -135,6 +135,8 @@ class PoolSnapshotCreateWithSchema(PoolSnapshotCreateTemplate):
 
 
 class PoolSnapshotDeleteOptions(BaseModel):
+    defer: bool = False
+    """Defer deletion of the snapshot."""
     recursive: bool = False
     """Whether to recursively delete child snapshots."""
 
