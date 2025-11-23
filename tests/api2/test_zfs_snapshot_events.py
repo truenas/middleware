@@ -71,4 +71,4 @@ def test_delete_nonexistent_snapshot():
             with pytest.raises(InstanceNotFound) as e:
                 c.call("pool.snapshot.delete", f"{ds}@testing")
 
-            assert str(e.value) == f"[ENOENT] None: Snapshot {ds}@testing not found"
+            assert str(e.value) == f"[ENOENT] None: '{ds}@testing' not found"
