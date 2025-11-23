@@ -11,7 +11,7 @@ from middlewared.api.current import (
     ZFSResourceQueryResult,
 )
 from middlewared.service import Service, private
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import InstanceNotFound, ValidationError
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .destroy_impl import destroy_impl, DestroyArgs
@@ -366,7 +366,7 @@ class ZFSResourceService(Service):
         except (ZFSPathHasClonesException, ZFSPathHasHoldsException) as e:
             raise ValidationError(schema, e.message, errno.ENOTEMPTY)
         except ZFSPathNotFoundException as e:
-            raise ValidationError(schema, e.message, errno.ENOENT)
+            raise InstanceNotFound(e.message)
         else:
             if failed:
                 # this is the channel program execution path and so when an

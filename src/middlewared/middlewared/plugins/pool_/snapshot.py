@@ -109,16 +109,13 @@ class PoolSnapshotService(CRUDService):
         if '@' not in id_:
             raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')
 
-        try:
-            self.middleware.call_sync(
-                'zfs.resource.destroy',
-                DestroyArgs(
-                    path=id_,
-                    recursive=options['recursive'],
-                )
+        self.middleware.call_sync(
+            'zfs.resource.destroy',
+            DestroyArgs(
+                path=id_,
+                recursive=options['recursive'],
             )
-        except ZFSPathNotFoundException as e:
-            raise InstanceNotFound(e.message)
+        )
 
         # TODO: Events won't be sent for child snapshots in recursive delete
         self.middleware.send_event(
