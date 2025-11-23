@@ -2,9 +2,9 @@ import os
 from datetime import datetime
 
 from middlewared.service import CallError, private, Service
+from middlewared.service_exception import InstanceNotFound
 from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
-from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 
 from .state_utils import DatasetDefaults, Status
 from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
@@ -96,5 +96,5 @@ class DockerService(Service):
                 await self.middleware.call(
                     'zfs.resource.destroy', DestroyArgs(path=snap_name, recursive=True)
                 )
-            except ZFSPathNotFoundException:
+            except InstanceNotFound:
                 pass
