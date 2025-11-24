@@ -61,7 +61,7 @@ class DockerFilesystemManageService(Service):
 
         # If the mount point is not at the expected location, fix it
         if ds[0]['properties']['mountpoint']['value'] != IX_APPS_MOUNT_PATH:
-            mp = docker_dataset_custom_props(docker_ds.split('/')[-1]['mountpoint'])
+            mp = docker_dataset_custom_props(docker_ds.split('/')[-1])['mountpoint']
             await self.middleware.call(
                 'pool.dataset.update_impl',
                 UpdateImplArgs(name=docker_ds, zprops={'mountpoint': mp})
