@@ -145,6 +145,7 @@ def test_config_method(legacy_api_client, config_method):
             "truecommand.config",
             "update.config",
             "ups.config",
+            "webshare.config",
         )
     ):
         return
