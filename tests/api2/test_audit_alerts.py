@@ -11,10 +11,12 @@ def setup_state(request):
     The hope was that both 'backend' and 'setup' one-shot tests would be similar, however
     the 'setup' test ended up requiring 'with mock'
     """
-    path = '/audit'
+    audit_path = '/audit'
     alert_key = request.param[0]
+    # This should never happen as it gets passed in on the call.
+    assert alert_key is not None
     if alert_key is not None:
-        path += f"/{alert_key}.db"
+        path = f"{audit_path}/{alert_key}.db"
     alert_class = request.param[1]
     restore_data = None
     try:
@@ -26,11 +28,10 @@ def setup_state(request):
         assert len(class_alerts) == 0, class_alerts
         match alert_class:
             case 'AuditBackendSetup':
-                # A file in the dataset: set it immutable
-                ssh(f'chattr +i {path}')
-                lsattr = ssh(f'lsattr {path}')
-                assert lsattr[4] == 'i', lsattr
-                restore_data = path
+                # Generate the conditions for a setup failure:
+                #     Remove the DB and make the directory immutable
+                ssh(f"mv {path} /tmp/{alert_key}.save")
+                ssh(f'chattr +i {audit_path}')
             case 'AuditDatasetCleanup':
                 # Directly tweak the zfs settings
                 call(
@@ -44,11 +45,9 @@ def setup_state(request):
     finally:
         match alert_class:
             case 'AuditBackendSetup':
-                # Remove immutable flag from file
-                assert restore_data != ""
-                ssh(f'chattr -i {restore_data}')
-                lsattr = ssh(f'lsattr {restore_data}')
-                assert lsattr[4] == '-', lsattr
+                ssh(f'chattr -i {audit_path}')
+                ssh(f"mv /tmp/{alert_key}.save {path}")
+                assert ssh(f"head -c 15 {path}") == "SQLite format 3"
                 # Restore backend file descriptors and dismiss alerts
                 call('auditbackend.setup')
             case 'AuditSetup':
