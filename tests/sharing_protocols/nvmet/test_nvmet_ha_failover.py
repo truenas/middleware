@@ -29,6 +29,7 @@ Combined Total: 44 tests
 """
 import contextlib
 import os
+import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -1023,12 +1024,16 @@ class TestFailoverScale:
         zvol_names = []
 
         # Create all ZVOLs using ExitStack
+        print(f"[FIXTURE] Creating {total_zvols} ZVOLs for scale testing...")
         with contextlib.ExitStack() as es:
             for i in range(total_zvols):
                 zvol_name = f'ha_scale_{i}'
                 zvol_names.append(zvol_name)
                 es.enter_context(zvol(zvol_name, SCALE_ZVOL_MB, pool_name))
+            print(f"[FIXTURE] {total_zvols} ZVOLs created")
             yield zvol_names
+            print(f"[FIXTURE] About to destroy {total_zvols} ZVOLs...")
+        print(f"[FIXTURE] {total_zvols} ZVOLs destroyed")
 
     @pytest.fixture(params=['kernel', 'spdk'], scope='class')
     def implementation_scale(self, request):
@@ -1039,9 +1044,28 @@ class TestFailoverScale:
     @pytest.fixture(scope='class')
     def fixture_nvmet_running_scale(self, implementation_scale):
         """Ensure NVMet service is running for scale tests."""
+        print("[FIXTURE] Ensuring NVMet service is enabled and started...")
         with ensure_service_enabled(SERVICE_NAME):
             with ensure_service_started(SERVICE_NAME, 3):
+                print(f"[FIXTURE] NVMet service running with implementation: {implementation_scale}")
                 yield implementation_scale
+                print("[FIXTURE] About to stop NVMet service...")
+        print("[FIXTURE] NVMet service stop command completed")
+
+        # Verify service state after stop
+        service_state = call('service.query', [['service', '=', SERVICE_NAME]])[0]
+        print(f"[FIXTURE] Service state after stop: {service_state['state']}")
+
+        # Check if NVMe-oF port (4420) is still in use
+        result = subprocess.run(['ss', '-tln'], capture_output=True, text=True)
+        if ':4420' in result.stdout:
+            print("[FIXTURE] WARNING: Port 4420 still in use after service stop!")
+            # Show which process
+            port_info = [line for line in result.stdout.split('\n') if ':4420' in line]
+            for line in port_info:
+                print(f"[FIXTURE]   {line}")
+        else:
+            print("[FIXTURE] Port 4420 released successfully")
 
     @pytest.fixture(params=['ana', 'ip_takeover'], scope='class')
     def failover_mode_scale(self, request):
@@ -1128,10 +1152,20 @@ class TestFailoverScale:
                 yield subsystems
 
                 # Cleanup happens via context managers
+                print("[FIXTURE] Scale test teardown - namespaces/subsystems being destroyed...")
 
-        # After all context managers have exited
-        print("[FIXTURE] Scale test teardown - sleeping for services to settle...")
-        time.sleep(5)
+        # After all context managers have exited (namespaces/subsystems destroyed)
+        print("[FIXTURE] Namespaces/subsystems destroyed, checking service state...")
+
+        # Verify service state before proceeding
+        service_state = call('service.query', [['service', '=', SERVICE_NAME]])[0]
+        print(f"[FIXTURE] Service '{SERVICE_NAME}' state: {service_state['state']}")
+
+        # Sleep to allow kernel/SPDK to release ZVOL references
+        print("[FIXTURE] Sleeping 15s for backend to release ZVOL references...")
+        time.sleep(15)
+
+        print("[FIXTURE] About to exit configured_subsystems_scale (ZVOLs will be destroyed next)")
 
     @pytest.mark.timeout(900)  # 15 minutes for large-scale tests (70 ZVOLs + test + cleanup)
     @pytest.mark.parametrize('failure_type', ['orderly', 'crash'])
@@ -1214,7 +1248,7 @@ class TestFailoverScale:
                 # For crash failover, flush to ensure data reaches stable storage
                 if failure_type == 'crash':
                     for nsid in subsys_info['nsids']:
-                        client.send_flush(nsid=nsid)
+                        client.flush_namespace(nsid=nsid)
 
                 print(f"  [OK] Connected to {subsys_nqn} ({subsys_info['namespace_count']} namespaces)")
                 return (subsys_nqn, patterns)
@@ -1334,8 +1368,18 @@ class TestFailoverScale:
                 client = NVMeoFClient(verify_ip, subsys_nqn)
                 connect_with_retry(client, verify_ip, max_attempts=60, retry_delay=1.0)
 
-                # Read data from specific namespace
-                data = client.read_data(nsid=nsid, lba=0, block_count=1)
+                # Retry read operation in case namespace isn't ready for I/O yet
+                max_read_attempts = 60
+                data = None
+                for attempt in range(max_read_attempts):
+                    try:
+                        data = client.read_data(nsid=nsid, lba=0, block_count=1)
+                        break  # Success
+                    except Exception:
+                        if attempt < max_read_attempts - 1:
+                            time.sleep(1)
+                        else:
+                            raise  # Final attempt failed, re-raise exception
 
                 # Verify pattern matches
                 if data != expected_pattern:
@@ -1518,7 +1562,7 @@ class TestFailback:
         client = NVMeoFClient(initial_connect_ip, subsys_nqn)
         connect_with_retry(client, initial_connect_ip, max_attempts=30, retry_delay=1.0)
         client.write_data(nsid=nsid, lba=0, data=pattern1)
-        client.send_flush(nsid=nsid)  # Ensure data survives crash failover
+        client.flush_namespace(nsid=nsid)  # Ensure data survives crash failover
         client.disconnect()
         print("[FAILBACK] Initial data written and connection closed")
 
