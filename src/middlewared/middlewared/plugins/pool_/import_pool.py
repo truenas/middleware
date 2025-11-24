@@ -6,7 +6,6 @@ import subprocess
 from middlewared.api import api_method
 from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
-from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs.mount_unmount_impl import UnmountArgs
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
@@ -69,11 +68,6 @@ class PoolService(Service):
                 await self.middleware.call(
                     'pool.dataset.update_impl',
                     UpdateImplArgs(name=i['name'], zprops={'mountpoint': container_mnt})
-                )
-            elif i['name'] == f'{pool_name}/ix-apps' and mntpnt != f'/{IX_APPS_DIR_NAME}':
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(name=i['name'], zprops={'mountpoint': f'/{IX_APPS_DIR_NAME}'})
                 )
             elif mntpnt != f'/mnt/{i["name"]}':
                 to_inherit.append(i["name"])
