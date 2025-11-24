@@ -8,6 +8,10 @@ class IdmapService(SimpleService):
 
     systemd_unit = "winbind"
 
+    async def identify(self, procname):
+        # winbindd spawns child processes with names like wb-TRUENAS, wb-idmap, wbTRUENAS, etc.
+        return procname == "winbindd" or procname.startswith("wb")
+
     async def healthy(self):
         return await self.middleware.call("smb.configure_wait")
 

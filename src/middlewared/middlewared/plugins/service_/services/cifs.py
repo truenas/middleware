@@ -9,6 +9,9 @@ class CIFSService(SimpleService):
 
     systemd_unit = "smbd"
 
+    async def identify(self, procname):
+        return procname == "smbd"
+
     async def start(self):
         if not await self.middleware.call("smb.configure_wait"):
             return
