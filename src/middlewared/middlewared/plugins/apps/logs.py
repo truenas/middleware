@@ -2,6 +2,7 @@ import errno
 
 import docker.errors
 from dateutil.parser import parse, ParserError
+from docker.api.client import APIClient
 
 from middlewared.api.current import (
     AppContainerLogsFollowTailEventSourceArgs, AppContainerLogsFollowTailEventSourceEvent,
@@ -11,6 +12,21 @@ from middlewared.service import CallError, Service
 
 from .ix_apps.utils import AppState
 from .ix_apps.docker.utils import get_docker_client
+
+
+def _fixed_stream_raw_result(self, response, chunk_size=None, decode=True):
+    """
+    Original docker-py bug: chunk_size defaults to 1, causing character-by-character
+    streaming for TTY-enabled containers. This fix changes the default to None,
+    which allows the underlying requests library to use proper buffering.
+    """
+    self._raise_for_status(response)
+    socket = self._get_raw_response_socket(response)
+    self._disable_socket_timeout(socket)
+    yield from response.iter_content(chunk_size, decode)
+
+
+APIClient._stream_raw_result = _fixed_stream_raw_result
 
 
 class AppContainerLogsFollowTailEventSource(EventSource):
