@@ -13,6 +13,8 @@ def setup_state(request):
     """
     audit_path = '/audit'
     alert_key = request.param[0]
+    # This should never happen as it gets passed in on the call.
+    assert alert_key is not None
     if alert_key is not None:
         path = f"{audit_path}/{alert_key}.db"
     alert_class = request.param[1]
@@ -25,6 +27,8 @@ def setup_state(request):
         assert len(class_alerts) == 0, class_alerts
         match alert_class:
             case 'AuditBackendSetup':
+                # Generate the conditions for a setup failure:
+                #     Remove the DB and make the directory immutable
                 ssh(f"mv {path} /tmp/{alert_key}.save")
                 ssh(f'chattr +i {audit_path}')
             case 'AuditDatasetCleanup':
