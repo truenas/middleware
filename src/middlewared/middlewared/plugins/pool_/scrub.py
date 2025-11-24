@@ -259,7 +259,7 @@ class PoolScrubService(CRUDService):
             if pool['status'] == 'OFFLINE':
                 raise ScrubError(f'Pool {name} is offline, not running scrub')
 
-        if pool['scan']['state'] == 'SCANNING':
+        if pool['scan'] and pool['scan']['state'] == 'SCANNING':
             return False
 
         last_scrubs = (await run(
