@@ -185,13 +185,13 @@ class SystemGeneralService(ConfigService):
         the new settings were correct and no rollback is necessary.
         """
         rollback_timeout = data.pop('rollback_timeout', None)
-        ui_restart_delay = data.pop('ui_restart_delay', None)
+        ui_restart_delay = data.pop('ui_restart_delay')
 
-        if rollback_timeout is not None and ui_restart_delay is not None and rollback_timeout <= ui_restart_delay:
+        if rollback_timeout is not None and rollback_timeout <= ui_restart_delay:
             verrors = ValidationErrors()
             verrors.add(
                 'system_general_update',
-                'rollback_timeout must be strictly greater than ui_restart_delay if both are passed.'
+                'rollback_timeout must be strictly greater than ui_restart_delay.'
             )
             raise verrors
 

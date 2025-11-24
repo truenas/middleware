@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, Secret
+from pydantic import Field, PositiveInt, Secret
 
 from middlewared.api.base import (
     BaseModel,
@@ -73,10 +73,10 @@ class SystemGeneralUpdateArgs(SystemGeneralEntry, metaclass=ForUpdateMetaclass):
     created by the system."""
     wizardshown: Excluded = excluded_field()
     usage_collection_is_set: Excluded = excluded_field()
-    ui_restart_delay: int | None
-    """Delay in seconds before restarting the UI after configuration changes. `null` to use default."""
-    rollback_timeout: int | None
-    """Timeout in seconds for automatic rollback of UI changes. `null` for no timeout."""
+    ui_restart_delay: int = Field(ge=0, le=30, default=30)
+    """Delay in seconds before restarting the UI after configuration changes."""
+    rollback_timeout: PositiveInt | None
+    """Timeout in seconds for automatic rollback of UI changes. `null` for no rollback."""
 
 
 class SystemGeneralUpdateResult(BaseModel):
