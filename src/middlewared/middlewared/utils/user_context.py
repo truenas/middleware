@@ -10,7 +10,12 @@ import middlewared.api
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["run_command_with_user_context", "run_with_user_context", "run_with_user_context_manager", "set_user_context"]
+__all__ = [
+    "run_command_with_user_context",
+    "run_with_user_context",
+    "run_with_user_context_manager",
+    "set_user_context"
+]
 
 
 def set_user_context(user_details: dict) -> None:
@@ -32,10 +37,14 @@ def set_user_context(user_details: dict) -> None:
     new_uids = os.getresuid()
 
     if new_gids != gids:
-        raise Exception(f'{user_details["pw_name"]}: Unable to set gids for user context received {new_gids}, expected {gids}')
+        raise RuntimeError(
+            f'{user_details["pw_name"]}: Unable to set gids for user context received {new_gids}, expected {gids}'
+        )
 
     if new_uids != uids:
-        raise Exception(f'{user_details["pw_name"]}: Unable to set uids for user context received {new_uids}, expected {uids}')
+        raise RuntimeError(
+            f'{user_details["pw_name"]}: Unable to set uids for user context received {new_uids}, expected {uids}'
+        )
 
     try:
         os.chdir(user_details['pw_dir'])
