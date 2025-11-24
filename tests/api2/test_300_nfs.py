@@ -2018,12 +2018,12 @@ class TestNFSops:
         current_alerts = [entry for entry in alerts if entry['klass'] == "NFSHostListExcessive"]
         assert len(current_alerts) == 0, f"Unexpectedly found NFS share alert.\n{current_alerts}"
 
-        with nfs_dataset('nfs') as ds:
-            with nfs_share(NFS_PATH, {
-            }) as nfsid:
+        with nfs_dataset('nfs_temp') as ds:
+            nfs_share_path = f"/mnt/{ds}"
+            with nfs_share(nfs_share_path) as nfsid:
                 alerts = call('alert.list')
-                current_alerts = [entry for entry in alerts if entry['key'] == f"/mnt/{ds}"]
-                assert len(current_alerts) == 0, f"Unexpectedly found NFS share alert for key '/mnt/{ds}'\n{alerts}"
+                current_alerts = [entry for entry in alerts if entry['key'] == nfs_share_path]
+                assert len(current_alerts) == 0, f"Unexpectedly found alert for key '{nfs_share_path}'\n{alerts}"
 
                 allowed_client_list = [f"192.168.50.{i}" for i in range(1, 101)]
                 call('sharing.nfs.update', nfsid, {'hosts': allowed_client_list})
