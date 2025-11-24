@@ -87,6 +87,7 @@ class AccountFlag(enum.StrEnum):
     API_KEY = 'API_KEY'  # Account authenticated by API key
     OTPW = 'OTPW'  # Account authenticated by a single-use password
     PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED'  # Password change for account is required
+    DEBUG_COLLECTION = 'DEBUG_COLLECTION'
 
 
 class MiddlewareTTYName(enum.StrEnum):

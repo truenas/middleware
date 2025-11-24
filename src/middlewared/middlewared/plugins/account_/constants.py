@@ -1,5 +1,6 @@
 ADMIN_UID = 950
 ADMIN_GID = 950
+READONLY_ADMINS_GID = 951
 MIN_AUTO_XID = 3000  # See NAS-117892 - purpose is to avoid collision with apps uids/gids
 SKEL_PATH = '/etc/skel/'  # TODO evaluate whether this is still needed
 
