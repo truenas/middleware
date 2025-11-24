@@ -2,13 +2,14 @@ import contextlib
 import threading
 import typing
 
-from middlewared.test.integration.assets.crypto import get_cert_params, certificate_signing_request
+from middlewared.test.integration.assets.crypto import certificate_signing_request
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import client
 
 
 def event_thread(event_endpoint: str, context: dict, expected_collection_type: str | None = None):
+    call('rate.limit.cache_clear')
     with client(py_exceptions=False) as c:
         def cb(mtype, **message):
             if not all(
