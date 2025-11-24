@@ -31,3 +31,9 @@ class GPUDelegate(DeviceDelegate):
                 'attribute.pci_address',
                 'GPU is not available to host for consumption'
             )
+
+        if gpu_type == 'NVIDIA' and self.middleware.call_sync('system.advanced.config')['nvidia'] is False:
+            verrors.add(
+                'attribute.gpu_type',
+                'NVIDIA drivers must be enabled in system advanced settings before using nvidia gpu for containers'
+            )
