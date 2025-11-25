@@ -195,7 +195,6 @@ class Application(App):
     def __init__(self, origin: ConnectionOrigin, authenticated_credentials: SessionManagerCredentials | None):
         super().__init__(origin)
         self.session_id = None
-        self.authenticated = authenticated_credentials is not None
         self.authenticated_credentials = authenticated_credentials
 
 
