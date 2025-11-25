@@ -6,6 +6,7 @@ import enum
 from logging import getLogger
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.io import get_io_uring_enabled
@@ -629,20 +630,28 @@ def generate_smb_conf_dict(
         # IPA SMB config is stored in remote IPA server and so we don't let
         # users override the config. If this is a problem it should be fixed on
         # the other end.
-        domain_short = ds_config['configuration']['smb_domain']['name']
-        range_low = ds_config['configuration']['smb_domain']['range_low']
-        range_high = ds_config['configuration']['smb_domain']['range_high']
-        domain_name = ds_config['configuration']['smb_domain']['domain_name']
 
-        smbconf.update({
-            'server role': 'member server',
-            'kerberos method': 'dedicated keytab',
-            'dedicated keytab file': 'FILE:/etc/ipa/smb.keytab',
-            'workgroup': domain_short,
-            'realm': domain_name.upper(),
-            f'idmap config {domain_short} : backend': 'sss',
-            f'idmap config {domain_short} : range': f'{range_low} - {range_high}',
-        })
+        # We can only apply IPA configuration to samba if we've properly created
+        # the SMB keytab and SPN entries, and updated our secrets.tdb file.
+        # If we don't skip configuration here, we may hit internal SMB_ASSERT
+        # in SMB server.
+        if middleware.call_sync('kerberos.keytab.query', [[
+            'name', '=', IpaConfigName.IPA_SMB_KEYTAB.value
+        ]]):
+            domain_short = ds_config['configuration']['smb_domain']['name']
+            range_low = ds_config['configuration']['smb_domain']['range_low']
+            range_high = ds_config['configuration']['smb_domain']['range_high']
+            domain_name = ds_config['configuration']['smb_domain']['domain_name']
+
+            smbconf.update({
+                'server role': 'member server',
+                'kerberos method': 'dedicated keytab',
+                'dedicated keytab file': 'FILE:/etc/ipa/smb.keytab',
+                'workgroup': domain_short,
+                'realm': domain_name.upper(),
+                f'idmap config {domain_short} : backend': 'sss',
+                f'idmap config {domain_short} : range': f'{range_low} - {range_high}',
+            })
 
     # Add relevant auxiliary parameters
     __parse_aux_param_list(smbconf, smb_service_config['smb_options'].splitlines())
