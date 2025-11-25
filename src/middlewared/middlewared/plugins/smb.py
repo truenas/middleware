@@ -135,7 +135,7 @@ class SMBService(ConfigService):
             # the SMB keytab and SPN entries, and updated our secrets.tdb file.
             # If we don't skip configuration here, we may hit internal SMB_ASSERT
             # in SMB server.
-            if not middleware.call_sync('kerberos.keytab.query', [[
+            if not self.middleware.call_sync('kerberos.keytab.query', [[
                 'name', '=', IpaConfigName.IPA_SMB_KEYTAB.value
             ]]):
                 ds_config['configuration']['smb_domain'] = None
