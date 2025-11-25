@@ -96,6 +96,10 @@ class TNCHostnameService(Service):
         Handle IP address changes for TrueNAS Connect.
         This method is called when an IP address change event occurs.
         """
+        if not await self.middleware.call('failover.is_single_master_node'):
+            # We only want this to happen on master/single nodes
+            return
+
         tnc_config = await self.middleware.call('tn_connect.config')
 
         # Skip if interface is None (can happen in some edge cases)
