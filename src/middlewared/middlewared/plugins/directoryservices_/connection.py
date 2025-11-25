@@ -1,5 +1,6 @@
 import errno
 import ipaddress
+import socket
 
 from .activedirectory_join_mixin import ADJoinMixin
 from .ipa_join_mixin import IPAJoinMixin
@@ -146,6 +147,112 @@ class DomainConnection(
                 })
 
         return payload
+
+    def dns_lookup_kdcs(self) -> list[str]:
+        """ This method uses DNS to find KDCs for the currently configured kerberos realm. If
+        TrueNAS is joined to active directory then we will try to find site-specific ones so that
+        we don't walk off to a domain controller on the other side of the world. At most three
+        KDCs are returned. Results are cached for up to 24 hours.
+
+        Args:
+            None
+        Returns:
+            list of IP addresses for KDCs in our site
+
+        Raises:
+            None (in case of error returns an empty list)
+        """
+        config = self.middleware.call_sync('directoryservices.config')
+        kdcs_out = []
+        if not config['enable']:
+            return kdcs_out
+
+        # Construct our query
+        realm = config['kerberos_realm']
+        site = None
+
+        ds_type = DSType(config['service_type'])
+
+        match ds_type:
+            case DSType.IPA:
+                # We may be in early setup process and so if realm isn't available in configuration
+                # we'll use the provided IPA domain name
+                if not realm:
+                    realm = config['configuration']['domain']
+            case DSType.AD:
+                if not realm:
+                    realm = config['configuration']['domain']
+
+                site = config['configuration']['site']
+            case _:
+                pass
+
+        if not realm:
+            # Somehow we don't have a proper configuration. Perhaps this is openldap bind
+            # without realm configuration.
+            return kdcs_out
+
+        if site:
+            query_name = f'_kerberos._tcp.{site}._sites.{realm}.'
+        else:
+            query_name = f'_kerberos._tcp.{realm}.'
+
+        try:
+            return self.middleware.call_sync('cache.get', query_name)
+        except KeyError:
+            pass
+
+        # SRV records get us names. We'll artificially limit ourselves to 20 of them here
+        try:
+            results = self.middleware.call_sync('dnsclient.forward_lookup', {
+                'names': [query_name],
+                'record_types': ['SRV'],
+                'query-options': {'order_by': ['priority', 'weight'], 'limit': 20},
+                'dns_client_options': {'timeout': config['timeout']}
+            })
+        except Exception:
+            self.logger.error('%s: failed to look up KDCs for realm [%s]',
+                              query_name, realm, exc_info=True)
+            return kdcs_out
+
+        # now resolve the names to addresses
+        try:
+            results = self.middleware.call_sync('dnsclient.forward_lookup', {
+                'names': [entry['target'] for entry in results],
+                'record_types': ['A', 'AAAA'],
+                'query-options': {'order_by': ['priority', 'weight']},
+                'dns_client_options': {'timeout': config['timeout']}
+            })
+        except Exception:
+            self.logger.error('%s: failed to look up KDCs for realm [%s]',
+                              query_name, realm, exc_info=True)
+            return kdcs_out
+
+        # Complex environments will have potentially many KDCs and some of them
+        # will inevitably be down. We need to walk the list and find a few that
+        # are actually connectable.
+        for entry in results:
+            with socket.socket(
+                family=socket.AF_INET if entry['type'] == 'A' else socket.AF_INET6,
+                type=socket.SOCK_STREAM
+            ) as s:
+                s.settimeout(1)
+                try:
+                    s.connect((entry['address'], 88))
+                except Exception:
+                    self.logger.debug('%s: connection to kdc failed. Omitting from list',
+                                      entry['address'], exc_info=True)
+                    continue
+
+                kdcs_out.append(entry['address'])
+                if len(kdcs_out) == 3:
+                    break
+
+        if kdcs_out:
+            # Store our results for up to 24 hours
+            self.middleware.call_sync('cache.put', query_name, kdcs_out, 86400)
+
+        return kdcs_out
 
     @kerberos_ticket
     def register_dns(self, fqdn: str, do_ptr: bool = False):
