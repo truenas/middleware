@@ -4,6 +4,8 @@ from truenas_connect_utils.status import Status
 
 from middlewared.service import Service
 
+from .utils import CONFIGURED_TNC_STATES
+
 
 logger = logging.getLogger('truenas_connect')
 
@@ -35,3 +37,6 @@ class TrueNASConnectStateService(Service):
         elif tnc_config['status'] == Status.CERT_RENEWAL_IN_PROGRESS.name:
             logger.debug('Middleware started and cert renewal is in progress, initiating process')
             self.middleware.create_task(self.middleware.call('tn_connect.acme.renew_cert'))
+
+        if tnc_config['status'] in CONFIGURED_TNC_STATES:
+            self.middleware.create_task(self.middleware.call('tn_connect.heartbeat.start'))
