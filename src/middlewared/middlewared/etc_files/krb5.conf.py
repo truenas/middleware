@@ -93,7 +93,7 @@ def generate_krb5_conf(
                 realm['kdc'] = middleware.call_sync('directoryservices.connection.dns_lookup_kdcs')
 
             if realm['kdc']:
-                # We've hard-coded some KDCs in the configuration and so we don't want to have krb5 try
+                # We've specified some KDCs in the configuration and so we don't want to have krb5 try
                 # to look them up.
                 libdefaults.update({
                     str(KRB_LibDefaults.DNS_LOOKUP_KDC): 'false',
