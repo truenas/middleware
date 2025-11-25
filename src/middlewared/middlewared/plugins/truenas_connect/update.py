@@ -10,7 +10,7 @@ from middlewared.api import api_method, Event
 from middlewared.api.current import (
     TrueNASConnectEntry, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
     TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult,
-    TrueNASConnectConfigChangedEvent,
+    TrueNASConnectConfigChangedEvent, TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult,
 )
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
@@ -306,6 +306,18 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             ip['address']: ip['address']
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': False})
         }
+
+    @api_method(
+        TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult, roles=['TRUENAS_CONNECT_READ']
+    )
+    async def ips_with_hostnames(self):
+        """
+        Returns current mapping of ips configured with truenas connect against their hostnames.
+        """
+        hostname_config = await self.middleware.call('tn_connect.hostname.config')
+        return {
+            v: k for k, v in hostname_config['hostname_details'].items()
+        } if hostname_config['error'] is None and hostname_config['hostname_configured'] else {}
 
     @private
     async def set_status(self, new_status, db_payload=None):
