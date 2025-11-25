@@ -230,7 +230,9 @@ async def check_status(middleware):
 
 
 async def _event_system_ready(middleware, event_type, args):
-    await check_status(middleware)
+    if not await middleware.call('system.is_ha_capable'):
+        # For HA systems, failover logic will handle this
+        await check_status(middleware)
 
 
 async def setup(middleware):
