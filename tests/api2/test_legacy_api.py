@@ -8,7 +8,7 @@ from middlewared.test.integration.utils import client, session, url
 
 class APIVersions(enum.Enum):
     FT = ("25.04.0", "25.04.1", "25.04.2",)
-    GE = ("25.10.0", "25.10.1",)
+    GE = ("25.10.0", "25.10.1", "25.10.2",)
 
 
 def get_api_versions():
