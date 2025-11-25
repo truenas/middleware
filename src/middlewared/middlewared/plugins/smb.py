@@ -46,6 +46,7 @@ from middlewared.plugins.smb_.utils import get_share_name, is_time_machine_share
 from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
@@ -130,6 +131,16 @@ class SMBService(ConfigService):
             smb_shares = []
 
         ds_config = self.middleware.call_sync('directoryservices.config')
+        if ds_config['enable'] and ds_config['service_type'] == 'IPA':
+            # We can only apply IPA configuration to samba if we've properly created
+            # the SMB keytab and SPN entries, and updated our secrets.tdb file.
+            # If we don't skip configuration here, we may hit internal SMB_ASSERT
+            # in SMB server.
+            if not middleware.call_sync('kerberos.keytab.query', [[
+                'name', '=', IpaConfigName.IPA_SMB_KEYTAB.value
+            ]]):
+                ds_config['configuration']['smb_domain'] = None
+
         smb_config = self.middleware.call_sync('smb.config')
         smb_shares = self.middleware.call_sync('sharing.smb.query', [
             [share_field.ENABLED, '=', True], [share_field.LOCKED, '=', False]
