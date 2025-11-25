@@ -151,13 +151,19 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
 
 
 async def check_status(middleware):
-    tnc_config = await middleware.call('tn_connect.config')
-    if tnc_config['status'] in CONFIGURED_TNC_STATES:
-        middleware.create_task(middleware.call('tn_connect.heartbeat.start'))
+    if await middleware.call('failover.is_single_master_node'):
+        # We only want this to happen if system is not HA capable OR the system is a HA master node
+        # middleware restarts do not guarantee master becoming standby, so in that case if it is still
+        # master, we should start heartbeat for TNC assuming it is configured
+        tnc_config = await middleware.call('tn_connect.config')
+        if tnc_config['status'] in CONFIGURED_TNC_STATES:
+            middleware.create_task(middleware.call('tn_connect.heartbeat.start'))
 
 
 async def _event_system_ready(middleware, event_type, args):
-    await check_status(middleware)
+    if not await middleware.call('system.is_ha_capable'):
+        # For HA systems, failover logic will handle this
+        await check_status(middleware)
 
 
 async def setup(middleware):
