@@ -496,7 +496,7 @@ class AuditService(ConfigService):
             rc = await setup_truenas_verify(self.middleware, current_version)
             if rc:
                 self.logger.warning(
-                    'Did not get clean result from truenas_verify initial setup. See %s'
+                    'Did not get clean result from truenas_verify initial setup. See %s',
                     f'{AUDIT_LOG_PATH_NAME}.{current_version}.log'
                 )
         except Exception:
