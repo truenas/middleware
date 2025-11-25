@@ -53,6 +53,7 @@ class SystemGeneralService(ConfigService):
         super().__init__(*args, **kwargs)
         self._original_datastore = {}
         self._rollback_timer = None
+        self._changed_https_port = False, -1
 
     @private
     async def general_system_extend(self, data):
@@ -227,6 +228,8 @@ class SystemGeneralService(ConfigService):
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam_middleware')
 
+        self._changed_https_port = config['ui_httpsport'] != new_config['ui_httpsport'], new_config['ui_httpsport']
+
         await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
 
         if rollback_timeout is not None:
@@ -290,3 +293,7 @@ class SystemGeneralService(ConfigService):
 
             self._rollback_timer = None
             self._original_datastore = {}
+
+    @private
+    async def https_port_changed(self) -> tuple[bool, int]:
+        return self._changed_https_port

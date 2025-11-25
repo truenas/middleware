@@ -1,3 +1,4 @@
+from truenas_connect_utils.status import Status
 from middlewared.plugins.service_.services.base import SimpleService, systemd_unit
 from middlewared.plugins.service_.services.base_interface import ServiceInterface
 from middlewared.plugins.service_.services.base_state import ServiceState
@@ -59,13 +60,25 @@ class HttpService(PseudoServiceBase):
     restartable = True
     reloadable = True
 
+    async def _register_new_port(self):
+        """Send the new HTTPS port to TNC if configured."""
+        port_changed, new_port = await self.middleware.call("system.general.https_port_changed")
+        if port_changed and (await self.middleware.call("tn_connect.config"))["status"] == Status.CONFIGURED:
+            await self.middleware.call('tn_connect.hostname.register_system_config', new_port)
+
     async def restart(self):
         await self.middleware.call("system.general.update_ui_allowlist")
         await systemd_unit("nginx", "restart")
 
+    async def after_restart(self):
+        await self._register_new_port()
+
     async def reload(self):
         await self.middleware.call("system.general.update_ui_allowlist")
         await systemd_unit("nginx", "reload")
+
+    async def after_reload(self):
+        await self._register_new_port()
 
 
 class NetworkService(PseudoServiceBase):
