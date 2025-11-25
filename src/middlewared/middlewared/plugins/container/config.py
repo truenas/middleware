@@ -32,7 +32,11 @@ class LXCConfigService(ConfigService):
         role_prefix = "LXC_CONFIG"
         entry = LXCConfigEntry
 
-    @api_method(LXCConfigUpdateArgs, LXCConfigUpdateResult)
+    @api_method(
+        LXCConfigUpdateArgs,
+        LXCConfigUpdateResult,
+        audit='LXC configuration update'
+    )
     async def do_update(self, data):
         """
         Update container config.
