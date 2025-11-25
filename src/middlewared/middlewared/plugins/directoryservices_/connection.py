@@ -221,7 +221,7 @@ class DomainConnection(
                 'names': [entry['target'] for entry in results],
                 'record_types': ['A', 'AAAA'],
                 'query-options': {'order_by': ['priority', 'weight']},
-                'dns_client_options': {'timeout': config['timeout'], raise_error='NEVER'}
+                'dns_client_options': {'timeout': config['timeout'], 'raise_error': 'NEVER'}
             })
         except Exception:
             self.logger.error('%s: failed to look up KDCs for realm [%s]',
