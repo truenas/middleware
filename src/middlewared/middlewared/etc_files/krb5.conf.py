@@ -79,21 +79,29 @@ def generate_krb5_conf(
             # LDAP does not require special handling
             pass
 
-    if kdc_override and default_realm:
-        # Possibly sysvol replication in progress. We'll hard-code kdc used for join
-        libdefaults.update({
-            str(KRB_LibDefaults.DNS_LOOKUP_KDC): 'false',
-        })
-
+    if default_realm:
         for realm in realms:
             if realm['realm'] != default_realm:
                 continue
 
-            realm['kdc'] = [kdc_override]
+            if kdc_override:
+                realm['kdc'] = [kdc_override]
+
+            elif not realm['kdc']:
+                # Use DNS / socket APIs to find some connectable KDCs. We only do this if the user hasn't hardcoded
+                # any of them.
+                realm['kdc'] = middleware.call_sync('directoryservices.connection.dns_lookup_kdcs')
+
+            if realm['kdc']:
+                # We've specified some KDCs in the configuration and so we don't want to have krb5 try
+                # to look them up.
+                libdefaults.update({
+                    str(KRB_LibDefaults.DNS_LOOKUP_KDC): 'false',
+                })
 
     krbconf.add_realms(realms)
 
-    if directory_service['type'] == DSType.IPA.value:
+    if directory_service['type'] in (DSType.IPA.value, DSType.AD.value):
         libdefaults.update({
             str(KRB_LibDefaults.RDNS): 'false',
             str(KRB_LibDefaults.DNS_CANONICALIZE_HOSTNAME): 'false',
