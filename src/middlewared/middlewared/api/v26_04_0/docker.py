@@ -2,6 +2,7 @@ from typing import Annotated, Literal
 from urllib.parse import urlparse
 
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
+from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString, single_argument_args,
@@ -55,7 +56,7 @@ class DockerEntry(BaseModel):
     """ZFS dataset used for Docker data storage or `null`."""
     pool: NonEmptyString | None
     """Storage pool used for Docker or `null` if not configured."""
-    nvidia: bool
+    nvidia: SkipJsonSchema[bool]
     """Whether NVIDIA GPU support is enabled for containers."""
     address_pools: list[dict]
     """Array of network address pools for container networking."""

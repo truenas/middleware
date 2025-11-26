@@ -117,5 +117,5 @@ class ContainerDeviceService(CRUDService, DeviceMixin):
         return {
             gpu['addr']['pci_slot']: gpu['vendor']
             for gpu in await self.middleware.call('device.get_gpus')
-            if gpu['vendor'] in ('AMD', 'INTEL')
+            if gpu['vendor'] in ('AMD', 'INTEL', 'NVIDIA')
         }

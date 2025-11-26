@@ -51,6 +51,7 @@ class SystemAdvancedModel(sa.Model):
     adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
     adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(), default=[])
     adv_kernel_extra_options = sa.Column(sa.Text(), default='', nullable=False)
+    adv_nvidia = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemAdvancedService(ConfigService):
@@ -147,6 +148,26 @@ class SystemAdvancedService(ConfigService):
             #  foot-shooting
             verrors.add('kernel_extra_options', f'Modifying {invalid_param!r} is not allowed')
 
+    @settings.fields_validator('nvidia')
+    async def _validate_nvidia(self, verrors, nvidia):
+        # Only validate when nvidia is being disabled
+        if nvidia is True:
+            return
+
+        container_ids = {
+            device['container'] for device in await self.middleware.call(
+                'container.device.query', [['attributes.dtype', '=', 'GPU'], ['attributes.gpu_type', '=', 'NVIDIA']]
+            )
+        }
+        if containers := await self.middleware.call(
+            'container.query', [['id', 'in', container_ids], ['status.state', '=', 'RUNNING']]
+        ):
+            verrors.add(
+                'nvidia',
+                f'NVIDIA GPU support cannot be disabled while the following containers are using '
+                f'NVIDIA GPUs: {", ".join(c["name"] for c in containers)}. Please stop these containers first.'
+            )
+
     def _syslogd_changes(self, orig_config: dict, new_config: dict) -> bool:
         """Return `True` if syslogd should be restarted to apply the new configuration."""
         if (
@@ -230,6 +251,9 @@ class SystemAdvancedService(ConfigService):
 
             if original_data['debugkernel'] != config_data['debugkernel']:
                 generate_grub = True
+
+            if original_data['nvidia'] != config_data['nvidia']:
+                await self.middleware.call('system.advanced.handle_nvidia_toggle')
 
             await self.middleware.call('system.advanced.configure_tty', original_data, config_data, generate_grub)
 

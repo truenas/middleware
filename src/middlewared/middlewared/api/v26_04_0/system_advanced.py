@@ -92,6 +92,8 @@ class SystemAdvancedEntry(BaseModel):
     """List of GPU PCI IDs to isolate from the host system for VM passthrough."""
     kernel_extra_options: str
     """Additional kernel boot parameters to pass to the Linux kernel."""
+    nvidia: bool
+    """Whether NVIDIA GPU support is enabled."""
 
 
 class SystemAdvancedUpdate(SystemAdvancedEntry, metaclass=ForUpdateMetaclass):
