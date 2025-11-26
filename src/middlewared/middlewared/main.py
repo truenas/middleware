@@ -159,6 +159,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__audit_logger = setup_audit_logging()
         self.external_method_calls = defaultdict(int)  # Track external API method calls
         self.libvirt_domains_manager = create_pylibvirt_domains_manager(self)
+        self.dump_result_allow_fallback = True
 
     @typing.overload
     def get_method(
@@ -856,7 +857,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         app: App | None,
         result: dict | str | int | list | None | Job,
         *,
-        new_style_returns_model: BaseModel | None = None,
+        new_style_returns_model: type[BaseModel] | None = None,
         expose_secrets: bool = True,
     ):
         """
@@ -909,7 +910,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 new_style_returns_model = methodobj.new_style_returns
 
         if new_style_returns_model:
-            return serialize_result(new_style_returns_model, result, expose_secrets)
+            return serialize_result(new_style_returns_model, result, expose_secrets, self.dump_result_allow_fallback)
         else:
             return result
 

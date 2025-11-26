@@ -13,5 +13,5 @@ def test_dump_by_alias():
     class AliasModelResult(BaseModel):
         result: AliasModel
 
-    result = serialize_result(AliasModelResult, {'field1': 1, 'field2': 'two'}, True)
+    result = serialize_result(AliasModelResult, {'field1': 1, 'field2': 'two'}, True, False)
     assert result == {'field1': 1, 'field2': 'two', 'field3': False}
