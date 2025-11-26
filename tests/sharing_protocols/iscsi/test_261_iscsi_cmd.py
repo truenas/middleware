@@ -3330,6 +3330,7 @@ def test__target_iscsi_parameters(iscsi_running):
             assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS
 
 
+@pytest.mark.timeout(600)
 def test__target_extent_special_characters(iscsi_running):
     """
     Validate that we can create a target using dot, dash & colon, and an extent
