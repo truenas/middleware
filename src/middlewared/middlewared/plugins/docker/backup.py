@@ -8,12 +8,17 @@ import yaml
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DockerBackupArgs, DockerBackupResult, DockerListBackupsArgs, DockerListBackupsResult,
-    DockerDeleteBackupArgs, DockerDeleteBackupResult,
+    DockerBackupArgs,
+    DockerBackupResult,
+    DockerListBackupsArgs,
+    DockerListBackupsResult,
+    DockerDeleteBackupArgs,
+    DockerDeleteBackupResult,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.apps.ix_apps.utils import dump_yaml
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.service import CallError, job, Service
 
 from .state_utils import backup_apps_state_file_path, backup_ds_path, datasets_to_skip_for_snapshot_on_backup
@@ -152,7 +157,10 @@ class DockerService(Service):
         if not backup:
             raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
 
-        self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'], {'recursive': True})
+        self.middleware.call_sync(
+            'zfs.resource.destroy',
+            DestroyArgs(path=backup['snapshot_name'], recursive=True)
+        )
         shutil.rmtree(backup['backup_path'], True)
 
 

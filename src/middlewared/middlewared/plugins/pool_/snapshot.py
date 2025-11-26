@@ -1,12 +1,25 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    PoolSnapshotEntry, PoolSnapshotCloneArgs, PoolSnapshotCloneResult, PoolSnapshotCreateArgs,
-    PoolSnapshotCreateResult, PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult, PoolSnapshotHoldArgs,
-    PoolSnapshotHoldResult, PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, PoolSnapshotRollbackArgs,
-    PoolSnapshotRollbackResult, PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult, PoolSnapshotRenameArgs,
+    PoolSnapshotEntry,
+    PoolSnapshotCloneArgs,
+    PoolSnapshotCloneResult,
+    PoolSnapshotCreateArgs,
+    PoolSnapshotCreateResult,
+    PoolSnapshotDeleteArgs,
+    PoolSnapshotDeleteResult,
+    PoolSnapshotHoldArgs,
+    PoolSnapshotHoldResult,
+    PoolSnapshotReleaseArgs,
+    PoolSnapshotReleaseResult,
+    PoolSnapshotRollbackArgs,
+    PoolSnapshotRollbackResult,
+    PoolSnapshotUpdateArgs,
+    PoolSnapshotUpdateResult,
+    PoolSnapshotRenameArgs,
     PoolSnapshotRenameResult,
 )
 from middlewared.service import CRUDService, filterable_api_method, ValidationError
+from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.mount_unmount_impl import MountArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs, RenameArgs
 
@@ -91,14 +104,23 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):
-        result = self.middleware.call_sync('zfs.snapshot.delete', id_, options)
+        if '@' not in id_:
+            raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')
+
+        self.middleware.call_sync(
+            'zfs.resource.destroy',
+            DestroyArgs(
+                path=id_,
+                recursive=options['recursive'],
+                defer=options['defer'],
+            )
+        )
+
+        # TODO: Events won't be sent for child snapshots in recursive delete
         self.middleware.send_event(
-            f'{self._config.namespace}.query',
-            'REMOVED',
-            id=id_,
-            recursive=options['recursive']
-        )  # TODO: Events won't be sent for child snapshots in recursive delete
-        return result
+            f'{self._config.namespace}.query', 'REMOVED', id=id_, recursive=options['recursive']
+        )
+        return True
 
     @api_method(
         PoolSnapshotRenameArgs,

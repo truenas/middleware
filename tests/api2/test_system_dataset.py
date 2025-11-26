@@ -21,11 +21,12 @@ def passphrase_encrypted_pool(passphrase_encrypted_pool_session):
     config = call("systemdataset.config")
     assert config["pool"] == pool
 
-    try:
-        call("pool.dataset.delete", passphrase_encrypted_pool_session, {"recursive": True})
-    except CallError as e:
-        if e.errno != errno.ENOENT:
-            raise
+    for dataset in call("pool.dataset.query", [["name", "^", f"{passphrase_encrypted_pool_session}/"]]):
+        try:
+            call("pool.dataset.delete", dataset, {"recursive": True})
+        except CallError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
     # If root dataset is locked, let's unlock it here
     # It can be locked if some test locks it but does not unlock it later on and we should have
