@@ -1,13 +1,14 @@
 import time
 import os
 import errno
+import re
 
 import pytest
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from auto_config import interface, ha, netmask
 from middlewared.test.integration.utils.client import client, truenas_server
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
 @pytest.fixture(scope="module")
@@ -70,8 +71,30 @@ def test_001_check_ipvx(request):
     running, _ = call("interface.dhclient_status", interface)
     assert running is True
 
-    # Check that our proc entry is set to its default 1.
-    assert int(call("tunable.get_sysctl", f"net.ipv6.conf.{interface}.autoconf")) == 1
+    # Some explanation of IPv6 routing...
+    # IPv6 Routing Mechanism: IPv6 typically uses a different mechanism for hosts
+    # to discover default gateways and configure addresses.
+    # This is primarily done through the Neighbor Discovery Protocol (NDP),
+    # specifically Router Solicitation (RS) and Router Advertisement (RA) messages.
+    # For IPv6, dpcpcd sets the interface autoconf value based on the sensed
+    # routing capability.
+    # NOTE: The 'equivalent' IPv4 proto setting is 'dhcp'
+    interface_ipv6_autoconf = int(call("tunable.get_sysctl", f"net.ipv6.conf.{interface}.autoconf"))
+
+    # Get the route settings for this interfadce
+    ip6_route_show = ssh(f"ip -6 route show dev {interface}")
+
+    # The output looks like: 'fe80::/64 proto kernel metric 256 pref medium'
+    # We are interested in the 'proto' setting
+    match = re.search(r'\b' + 'proto' + r'\s+(\w+)\b', ip6_route_show)
+    if match.group(1) == 'ra':
+        # 'ra' means the router is dishing out IPv6 addresses and is routable.
+        # In this condition, autoconf should be '1'.
+        assert interface_ipv6_autoconf == 1
+    else:
+        # The usual other value is 'kernel' which means an address cobbled together usually
+        # based on the IPv4 address and is NOT routable.
+        assert interface_ipv6_autoconf == 0
 
 
 def test_002_configure_interface(request, ws_client, get_payload):
