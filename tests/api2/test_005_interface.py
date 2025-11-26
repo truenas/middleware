@@ -68,11 +68,11 @@ def get_payload(ws_client):
 # Make sure that our initial conditions are met
 def test_001_check_ipvx(request):
     # Verify that DHCP is running
-    print(f"\nMCG DEBUG: interface={interface}")
+    ssh(f"logger 'MCG DEBUG: interface={interface}'")
     proto_data = ssh(f'ip route show dev {interface}')
     dhcpcd_status = ssh(f'systemctl is-active ix-dhcpcd@{interface}.service', check=False)
-    print(f"MCG DEBUG: --- proto_data {interface} ---\n{proto_data}")
-    print(f"MCG DEBUG: dhcpcd_status {interface} - {dhcpcd_status}")
+    ssh(f"logger 'MCG DEBUG: proto_data {interface} - {proto_data}'")
+    ssh(f"logger 'MCG DEBUG: dhcpcd_status {interface} - {dhcpcd_status}'")
     running, _ = call("interface.dhclient_status", interface)
     assert running is True
 
