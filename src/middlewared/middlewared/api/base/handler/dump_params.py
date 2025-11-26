@@ -1,12 +1,9 @@
 import itertools
-import typing
 
-from pydantic import Secret
-
-from middlewared.api.base import BaseModel, SECRET_VALUE
+from middlewared.api.base import BaseModel
 from middlewared.service_exception import ValidationErrors
 from .accept import accept_params
-from .inspect import model_field_is_model, model_field_is_list_of_models
+from .remove_secrets import remove_secrets
 
 __all__ = ["dump_params"]
 
@@ -28,24 +25,3 @@ def dump_params(model: type[BaseModel], args: list, expose_secrets: bool) -> lis
             remove_secrets(field.annotation, arg) if field is not None else arg
             for field, arg in itertools.zip_longest(model.model_fields.values(), args, fillvalue=None)
         ]
-
-
-def remove_secrets(model: type[BaseModel], value):
-    """
-    Removes `Secret` values from a model value.
-    :param model: `BaseModel` that corresponds to `value`.
-    :param value: value that potentially contains `Secret` data.
-    :return: `value` with `Secret` parameters replaced with a placeholder.
-    """
-    if isinstance(value, dict) and (nested_model := model_field_is_model(model)):
-        return {
-            k: remove_secrets(v.annotation, value[k])
-            for k, v in nested_model.model_fields.items()
-            if k in value
-        }
-    elif isinstance(value, list) and (nested_model := model_field_is_list_of_models(model)):
-        return [remove_secrets(nested_model, v) for v in value]
-    elif typing.get_origin(model) is Secret:
-        return SECRET_VALUE
-    else:
-        return value

@@ -18,8 +18,13 @@ def model_field_is_model(model, value_hint=None, name_hint=None) -> type[BaseMod
     """
     if isinstance(model, type) and issubclass(model, BaseModel):
         return model
-    if typing.get_origin(model) is types.UnionType:
-        for member in model.__args__:
+    # Handle both typing.Union and types.UnionType (|)
+    origin = typing.get_origin(model)
+    if origin is types.UnionType or origin is typing.Union:
+        for member in typing.get_args(model):
+            # Skip None type in Optional/Union
+            if member is type(None):
+                continue
             if result := model_field_is_model(member):
                 if value_hint is not None:
                     try:
@@ -45,7 +50,31 @@ def model_field_is_list_of_models(model) -> type[BaseModel] | None:
     """
     if typing.get_origin(model) is list and len(args := typing.get_args(model)) == 1:
         return args[0]
-    if typing.get_origin(model) is types.UnionType:
-        for member in model.__args__:
+    # Handle both typing.Union and types.UnionType (|)
+    origin = typing.get_origin(model)
+    if origin is types.UnionType or origin is typing.Union:
+        for member in typing.get_args(model):
+            if member is type(None):
+                continue
             if result := model_field_is_list_of_models(member):
+                return result
+
+
+def model_field_is_dict_of_models(model) -> type[BaseModel] | None:
+    """
+    If `model` represents a dict of API models (dict[str, X]), then it will return that model X.
+    Does the same with the first matching union member if `model` is a union.
+    Otherwise, returns `None`.
+    :param model: potentially, a model that represents a dict of API models.
+    :return: nested API model or `None`
+    """
+    if typing.get_origin(model) is dict and len(args := typing.get_args(model)) == 2:
+        return args[1]  # Return value type, not key type
+    # Handle both typing.Union and types.UnionType (|)
+    origin = typing.get_origin(model)
+    if origin is types.UnionType or origin is typing.Union:
+        for member in typing.get_args(model):
+            if member is type(None):
+                continue
+            if result := model_field_is_dict_of_models(member):
                 return result
