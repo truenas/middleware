@@ -35,6 +35,9 @@ class DiskService(Service):
     @private
     async def details_impl(self, data):
         # see `self.details` for arguments and their meaning
+        db_disks = {
+            disk['name']: disk for disk in await self.middleware.call('disk.query', [], {'extra': {'sed_status': True}})
+        }
         in_use_disks_imported = {}
         for in_use_disk, info in (
             await self.middleware.call('zpool.status', {'real_paths': True})
@@ -74,6 +77,12 @@ class DiskService(Service):
             i['partitions'] = []
             if data['join_partitions']:
                 i['partitions'] = await self.middleware.call('disk.list_partitions', i['name'])
+
+            db_disk = db_disks.get(i['name'], {})  # Should always be there but better safe then sorry
+            i.update({
+                'sed': db_disk.get('sed'),
+                'sed_status': db_disk.get('sed_status'),
+            })
 
             # TODO: UI needs to remove dependency on `devname` since `name` is sufficient
             i['devname'] = i['name']
