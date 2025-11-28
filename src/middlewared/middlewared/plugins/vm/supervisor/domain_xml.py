@@ -8,7 +8,7 @@ from middlewared.plugins.vm.utils import (
 )
 from middlewared.utils import Nid
 
-from .utils import create_element
+from .utils import create_element, get_ovmf_vars_file
 
 
 def domain_children(vm_data, context):
@@ -281,7 +281,11 @@ def os_xml(vm_data):
             ),
             create_element('nvram', attribute_dict={
                 'text': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(vm_data)),
-            })
+            }, **(
+                {'template': template_file} if (
+                    template_file := get_ovmf_vars_file(vm_data['bootloader_ovmf'])
+                ) else {}
+            ))
         ])
 
     return create_element('os', attribute_dict={'children': children})
