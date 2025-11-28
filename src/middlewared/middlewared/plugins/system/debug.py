@@ -1,13 +1,16 @@
 import contextlib
 import io
 import os
+import queue
 import requests
 import shutil
 import tarfile
 import time
+from multiprocessing import Manager
 
 from middlewared.api import api_method
 from middlewared.api.current import SystemDebugArgs, SystemDebugResult
+from middlewared.utils.user_context import run_with_user_context_manager
 from middlewared.service import CallError, job, private, Service
 
 from ixdiagnose.config import conf
@@ -15,6 +18,44 @@ from ixdiagnose.event import event_callbacks
 from ixdiagnose.run import generate_debug
 
 from .utils import DEBUG_MAX_SIZE, get_debug_execution_dir
+
+
+def generate_debug_user_context(system_dataset_path, progress_queue):
+    """ This function generates our debug file from wihtin the context of a
+    temporary process with reduced privileges for API calls. Local filesystem
+    operation within debug files collection will still be performed as uid 0 """
+
+    i = 0
+    while True:
+        execution_dir = get_debug_execution_dir(system_dataset_path, i)
+        dump = os.path.join(execution_dir, "ixdiagnose.tgz")
+
+        # Be extra safe in case we have left over from previous run
+        try:
+            with contextlib.suppress(FileNotFoundError):
+                shutil.rmtree(execution_dir, ignore_errors=False)
+        except Exception as e:
+            i += 1
+            if i >= 5:
+                raise CallError(f"Failed to generate ixdiagnose debug: {e!r}")
+        else:
+            break
+
+    conf.apply(
+        {
+            "compress": True,
+            "debug_path": os.path.join(execution_dir, "debug"),
+            "clean_debug_path": True,
+            "compressed_path": dump,
+        }
+    )
+
+    def progress_callback(percent, desc):
+        progress_queue.put({'percent': percent, 'description': desc})
+
+    event_callbacks.clear()
+    event_callbacks.register(progress_callback)
+    return generate_debug()
 
 
 class SystemService(Service):
@@ -28,42 +69,49 @@ class SystemService(Service):
         """
         system_dataset_path = self.middleware.call_sync("systemdataset.config")["path"]
 
-        i = 0
-        while True:
-            execution_dir = get_debug_execution_dir(system_dataset_path, i)
-            dump = os.path.join(execution_dir, "ixdiagnose.tgz")
-
-            # Be extra safe in case we have left over from previous run
-            try:
-                with contextlib.suppress(FileNotFoundError):
-                    shutil.rmtree(execution_dir, ignore_errors=False)
-            except Exception as e:
-                i += 1
-                if i >= 5:
-                    raise CallError(f"Failed to generate ixdiagnose debug: {e!r}")
-                else:
-                    self.logger.warning(
-                        "Failed to generate ixdiagnose debug: %r", str(e)
-                    )
-            else:
-                break
-
-        conf.apply(
-            {
-                "compress": True,
-                "debug_path": os.path.join(execution_dir, "debug"),
-                "clean_debug_path": True,
-                "compressed_path": dump,
-            }
-        )
-
-        def progress_callback(percent, desc):
-            job.set_progress(percent, desc)
-
-        event_callbacks.register(progress_callback)
-
         try:
-            return generate_debug()
+            with Manager() as manager:
+                # Drop our effective privileges to READONLY_ADMIN for client sessions
+                # when generating the debug. We do this by running within a temporary
+                # child process where we setreuid / setregid to a restricted admin.
+                # This ensures that we redact fields marked as Secret in the API
+                #
+                # We're using a queue to pass the debug status updates back out of the
+                # child process.
+                progress_queue = manager.Queue()
+
+                with run_with_user_context_manager(
+                    func=generate_debug_user_context,
+                    user_details={
+                        'pw_uid': 0,
+                        'pw_gid': 951,
+                        'pw_name': 'debug_user',
+                        'pw_dir': '/var/empty',
+                        'grouplist': []
+                    },
+                    func_kwargs={
+                        'system_dataset_path': system_dataset_path,
+                        'progress_queue': progress_queue
+                    }
+                ) as future:
+                    while not future.done():
+                        try:
+                            progress = progress_queue.get(timeout=0.1)
+                            job.set_progress(progress['percent'], progress['description'])
+                        except queue.Empty:
+                            pass
+
+                    # Drain any remaining queue entries
+                    while True:
+                        try:
+                            progress = progress_queue.get_nowait()
+                            job.set_progress(progress['percent'], progress['description'])
+                        except queue.Empty:
+                            break
+
+                    # Get the result
+                    return future.result()
+
         except Exception as e:
             raise CallError(f"Failed to generate debug: {e!r}")
 

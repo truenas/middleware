@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.role import ROLES
+from middlewared.utils.account.authenticator import AccountFlag
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.auth import SessionManagerCredentials
@@ -96,7 +97,15 @@ def credential_is_limited_to_own_jobs(credential: 'SessionManagerCredentials | N
     if credential is None or not credential.is_user_session:
         return False
 
-    return not credential_has_full_admin(credential)
+    if credential_has_full_admin(credential):
+        return False
+
+    # We may be collecting debug information. In this case we need to see the full jobs list
+    # in order for developers to have useful information.
+    if AccountFlag.DEBUG_COLLECTION in credential.authenticator.truenas_user_obj['account_attributes']:
+        return False
+
+    return True
 
 
 def credential_is_root_or_equivalent(credential: 'SessionManagerCredentials | None') -> bool:

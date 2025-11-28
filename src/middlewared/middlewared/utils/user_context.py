@@ -1,4 +1,5 @@
 import concurrent.futures
+import contextlib
 import functools
 import logging
 import os
@@ -9,7 +10,12 @@ import middlewared.api
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["run_command_with_user_context", "run_with_user_context", "set_user_context"]
+__all__ = [
+    "run_command_with_user_context",
+    "run_with_user_context",
+    "run_with_user_context_manager",
+    "set_user_context"
+]
 
 
 def set_user_context(user_details: dict) -> None:
@@ -31,10 +37,14 @@ def set_user_context(user_details: dict) -> None:
     new_uids = os.getresuid()
 
     if new_gids != gids:
-        raise Exception(f'{user_details["pw_name"]}: Unable to set gids for user context received {new_gids}, expected {gids}')
+        raise RuntimeError(
+            f'{user_details["pw_name"]}: Unable to set gids for user context received {new_gids}, expected {gids}'
+        )
 
     if new_uids != uids:
-        raise Exception(f'{user_details["pw_name"]}: Unable to set uids for user context received {new_uids}, expected {uids}')
+        raise RuntimeError(
+            f'{user_details["pw_name"]}: Unable to set uids for user context received {new_uids}, expected {uids}'
+        )
 
     try:
         os.chdir(user_details['pw_dir'])
@@ -52,13 +62,38 @@ def run_with_user_context_initializer(user_details: dict):
     set_user_context(user_details)
 
 
-def run_with_user_context(func: Callable, user_details: dict, func_args: Optional[list] = None) -> Any:
+def run_with_user_context(
+    func: Callable,
+    user_details: dict,
+    func_args: Optional[list] = None,
+    func_kwargs: Optional[dict] = None
+) -> Any:
     assert {'pw_uid', 'pw_gid', 'pw_dir', 'pw_name', 'grouplist'} - set(user_details) == set()
 
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=1, initializer=functools.partial(run_with_user_context_initializer, user_details)
     ) as exc:
-        return exc.submit(func, *(func_args or [])).result()
+        return exc.submit(func, *(func_args or []), **(func_kwargs or {})).result()
+
+
+@contextlib.contextmanager
+def run_with_user_context_manager(
+    func: Callable,
+    user_details: dict,
+    func_args: Optional[list] = None,
+    func_kwargs: Optional[dict] = None
+):
+    """
+    Context manager version of run_with_user_context that yields the future object.
+    This allows the caller to poll for progress updates while waiting for completion.
+    """
+    assert {'pw_uid', 'pw_gid', 'pw_dir', 'pw_name', 'grouplist'} - set(user_details) == set()
+
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=1, initializer=functools.partial(run_with_user_context_initializer, user_details)
+    ) as exc:
+        future = exc.submit(func, *(func_args or []), **(func_kwargs or {}))
+        yield future
 
 
 def run_command_with_user_context(

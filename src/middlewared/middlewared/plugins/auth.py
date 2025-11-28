@@ -31,7 +31,9 @@ from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionMa
                               LoginTwofactorSessionManagerCredentials, AuthenticationContext,
                               TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
                               LoginOnetimePasswordSessionManagerCredentials, dump_credentials)
-from middlewared.plugins.account_.constants import MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
+from middlewared.plugins.account_.constants import (
+    MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE, READONLY_ADMINS_GID
+)
 from middlewared.service import (
     Service, filterable_api_method, filter_list,
     pass_app, private, CallError,
@@ -1335,17 +1337,27 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
     authenticator = UnixPamAuthenticator()
 
     if origin.is_unix_family:
-        if origin.uid == 0 and not origin.session_is_interactive:
+        # Use the SO_PEERCRED uid to determine the credential for middleware authentication
+        # There is a special case where the origin.uid is 0 (root) and gid is 951 (truenas_readonly_admins)
+        # In this case we *reduce* the effective permissions for the middleware session to
+        # from FULL_ADMIN to READONLY_ADMIN. uid 0 + gid 951 happens when we are generating a
+        # system debug.
+        if origin.uid == 0 and not origin.session_is_interactive and origin.gid != READONLY_ADMINS_GID:
             # We can bypass more complex privilege composition for internal root sessions
             user = await middleware.call('auth.authenticate_root')
             resp = await middleware.run_in_thread(authenticator.authenticate, 'root', app.origin)
             if resp.code != pam.PAM_SUCCESS:
                 middleware.logger.error('root: AF_UNIX authentication for user failed: %s', resp.reason)
         else:
+            uid = origin.uid
+            if uid == 0 and origin.gid == READONLY_ADMINS_GID:
+                # This is a debug-generating session so we'll downgrade from uid 0 (root) to 1 (daemon)
+                uid = 1
+
             # We first have to convert the UID to a username to send to PAM. The PAM
             # authenticator will handle retrieving group membership and setting account flags
             try:
-                user_info = await middleware.call('user.get_user_obj', {'uid': origin.uid})
+                user_info = await middleware.call('user.get_user_obj', {'uid': uid})
             except KeyError:
                 # User does not exist
                 return
@@ -1355,6 +1367,12 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
                 middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
                                         user_info['pw_name'], resp.reason)
                 return
+
+            if user_info['pw_uid'] == 1 and origin.gid == READONLY_ADMINS_GID:
+                # ensure that our grouplist contains the gid for truenas_readonly_admins
+                resp.user_info['grouplist'] = [951]
+                # allow the credential to retrieve the full jobs history
+                authenticator.truenas_state.passwd['account_attributes'].append(AccountFlag.DEBUG_COLLECTION)
 
             # Use the user_info from the authenticator (contains more information than user.get_user_obj)
             # to generate the credentials dict that will be inserted as the SessionManagerCredentials.
