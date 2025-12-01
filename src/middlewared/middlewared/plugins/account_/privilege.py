@@ -486,6 +486,9 @@ class PrivilegeService(CRUDService):
         pass_app_require=True
     )
     async def become_readonly(self, app):
+        """ Reduce the privileges of the current user credentials to `READONLY_ADMINS`.
+        This action prevents the session from making configuration changes. It also redacts
+        sensitive data in API output. """
         if not app.authenticated_credentials.is_user_session:
             raise CallError(f'{app.authenticated_credentials.class_name}: unexpected credential type')
 
