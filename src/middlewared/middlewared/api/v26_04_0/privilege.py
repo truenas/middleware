@@ -6,6 +6,7 @@ __all__ = ["PrivilegeEntry", "PrivilegeRolesEntry",
            "PrivilegeCreateArgs", "PrivilegeCreateResult",
            "PrivilegeUpdateArgs", "PrivilegeUpdateResult",
            "PrivilegeDeleteArgs", "PrivilegeDeleteResult",
+           "PrivilegeBecomeReadonlyArgs", "PrivilegeBecomeReadonlyResult",
            "UserWebUiLoginDisabledAddedEvent"]
 
 
@@ -103,3 +104,13 @@ class UserWebUiLoginDisabledAddedEvent(BaseModel):
 class UserWebUiLoginDisabledAddedEventFields(BaseModel):
     usernames: list[str]
     """Local administrator accounts that can be used instead."""
+
+class PrivilegeBecomeReadonlyArgs(BaseModel):
+    """ Reduce the privileges of the currently user credentials to `READONLY_ADMINS`.
+    This action prevents the session from making configuration changes. It also redacts
+    sensitive data in API output. """
+    pass
+
+
+class PrivilegeBecomeReadonlyResult(BaseModel):
+    result: None

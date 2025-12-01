@@ -6,6 +6,7 @@ from middlewared.api import api_method, Event
 from middlewared.api.current import (
     PrivilegeEntry, PrivilegeCreateArgs, PrivilegeCreateResult, PrivilegeUpdateArgs,
     PrivilegeUpdateResult, PrivilegeDeleteArgs, PrivilegeDeleteResult, UserWebUiLoginDisabledAddedEvent,
+    PrivilegeBecomeReadonlyArgs, PrivilegeBecomeReadonlyResult,
 )
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
@@ -15,6 +16,7 @@ from middlewared.utils.privilege import (
     privilege_has_webui_access,
     privileges_group_mapping
 )
+from middlewared.utils.allowlist import Allowlist
 from middlewared.utils.security import system_security_config_to_stig_type
 import middlewared.sqlalchemy as sa
 
@@ -475,3 +477,21 @@ class PrivilegeService(CRUDService):
                     local_administrators = [root_user]
 
         return local_administrators
+
+    @api_method(PrivilegeBecomeReadonlyArgs, PrivilegeBecomeReadonlyResult,
+                roles=['READONLY_ADMIN'], pass_app=True, pass_app_require=True)
+    async def become_readonly(self, app):
+        if not app.authenticated_credentials.is_user_session:
+            raise CallError(f'{app.authenticated_credentials.class_name}: unexpected credential type')
+
+        # Compose a privilege based on only the READONLY_ADMINISTRATOR builtin privilege
+        ro_admin = await self.query(
+            [['builtin_name', '=', BuiltinPrivileges.READONLY_ADMINISTRATOR.value]],
+            {'get': True}
+        )
+        composed_privilege = await self.compose_privilege([ro_admin])
+
+        # Set the current credential allowlist based on this privilege
+        allowlist = Allowlist(composed_privilege['allowlist'])
+        app.authenticated_credentials.allowlist = allowlist
+        app.authenticated_credentials.user['privilege'] = composed_privilege
