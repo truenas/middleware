@@ -478,8 +478,13 @@ class PrivilegeService(CRUDService):
 
         return local_administrators
 
-    @api_method(PrivilegeBecomeReadonlyArgs, PrivilegeBecomeReadonlyResult,
-                roles=['READONLY_ADMIN'], pass_app=True, pass_app_require=True)
+    @api_method(
+        PrivilegeBecomeReadonlyArgs,
+        PrivilegeBecomeReadonlyResult,
+        roles=['READONLY_ADMIN'],
+        pass_app=True,
+        pass_app_require=True
+    )
     async def become_readonly(self, app):
         if not app.authenticated_credentials.is_user_session:
             raise CallError(f'{app.authenticated_credentials.class_name}: unexpected credential type')

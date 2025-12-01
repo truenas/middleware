@@ -107,7 +107,7 @@ class UserWebUiLoginDisabledAddedEventFields(BaseModel):
 
 
 class PrivilegeBecomeReadonlyArgs(BaseModel):
-    """ Reduce the privileges of the currently user credentials to `READONLY_ADMINS`.
+    """ Reduce the privileges of the current user credentials to `READONLY_ADMINS`.
     This action prevents the session from making configuration changes. It also redacts
     sensitive data in API output. """
     pass
