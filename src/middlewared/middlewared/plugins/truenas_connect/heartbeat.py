@@ -4,8 +4,10 @@ import datetime
 import logging
 
 from truenas_connect_utils.config import get_account_id_and_system_id
+from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.status import Status
-from truenas_connect_utils.urls import get_heartbeat_url
+from truenas_connect_utils.token_rotation import get_jti_from_token
+from truenas_connect_utils.urls import get_heartbeat_url, get_token_ack_url
 
 from middlewared.service import CallError, Service
 from middlewared.utils.disks_.disk_class import iterate_disks
@@ -48,9 +50,41 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                 sleep_error = True
             else:
                 match resp['status_code']:
-                    case 202 | 200:
+                    case 200 | 202:
                         # Just keeping this here for valid codes, we don't need to do anything
                         pass
+                    case 205:
+                        if (new_token := resp['headers'].get('X-New-Token')) is not None:
+                            # Extract JTI from new token
+                            try:
+                                jti = get_jti_from_token(new_token)
+                            except TNCCallError as e:
+                                logger.error(f'TNC Heartbeat: Failed to extract JTI from new token: {e}')
+                            else:
+                                logger.debug('TNC Heartbeat: Acknowledging new token')
+
+                                # Call ack endpoint
+                                response = await self.call(
+                                    get_token_ack_url(tnc_config, jti),
+                                    'post',
+                                )
+
+                                if response.get('error'):
+                                    logger.error(f'TNC Heartbeat: Failed to acknowledge new token: {response["error"]}')
+                                else:
+                                    # On success, complete token rotation
+                                    logger.info('TNC Heartbeat: New token acknowledged successfully')
+                                    await self.middleware.call(
+                                        'datastore.update',
+                                        'truenas_connect',
+                                        tnc_config['id'],
+                                        {
+                                            'jwt_token': new_token,
+                                        },
+                                    )
+                                    tnc_config['jwt_token'] = new_token
+                        else:
+                            logger.warning('TNC Heartbeat: Received 205 status but no X-New-Token header')
                     case 400:
                         logger.debug('TNC Heartbeat: Received 400')
                         sleep_error = True
