@@ -195,3 +195,39 @@ def test_removed_user(setup_smb_share):
     assert acl['share_acl'][0]['ae_who_sid'] == sid
     assert acl['share_acl'][0]['ae_who_id'] is None
     assert acl['share_acl'][0]['ae_who_str'] is None
+
+
+def test_restore_via_synchronize(setup_smb_share):
+    with create_user({
+        'username': 'delme',
+        'full_name': 'delme',
+        'smb': True,
+        'group_create': True,
+        'password': 'test1234',
+    }) as u:
+        sid = u['sid']
+        call('sharing.smb.setacl', {
+            'share_name': setup_smb_share['name'],
+            'share_acl': [{
+                'ae_who_sid': u['sid'],
+                'ae_perm': 'FULL',
+                'ae_type': 'ALLOWED'
+            }]
+        })
+
+        acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+        assert acl['share_acl'][0]['ae_who_sid'] == sid
+
+        # Remove and be very certain share_info.tdb file is removed
+        ssh('rm /var/db/system/samba4/share_info.tdb')
+        assert call('smb.sharesec.entries') == []
+
+        acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+        assert acl['share_acl'][0]['ae_who_sid'] == 'S-1-1-0'
+
+        # trigger ACL sync to rebuild
+        call('smb.sharesec.synchronize_acls')
+
+        # Verify we got it back
+        acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+        assert acl['share_acl'][0]['ae_who_sid'] == sid
