@@ -316,6 +316,13 @@ class SMBService(ConfigService):
         await pdb_job.wait()
         await grp_job.wait()
 
+        # Our share_info.tdb file should already be synchronized with the configuration
+        # database since the former resides in persistent storage on the system dataset.
+        #
+        # Flushing here carries some minor risk that changes via SMB protocol by a system
+        # administrator will be lost, but this is significantly less than the risk that
+        # other circumstances are causing our share ACL to get mismatchy.
+        await self.middleware.call('smb.sharesec.flush_share_info')
         await self.middleware.call('smb.set_configured')
         """
         It is possible that system dataset was migrated or an upgrade
