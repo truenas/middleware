@@ -105,6 +105,7 @@ class UserWebUiLoginDisabledAddedEventFields(BaseModel):
     usernames: list[str]
     """Local administrator accounts that can be used instead."""
 
+
 class PrivilegeBecomeReadonlyArgs(BaseModel):
     """ Reduce the privileges of the currently user credentials to `READONLY_ADMINS`.
     This action prevents the session from making configuration changes. It also redacts
