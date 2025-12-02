@@ -157,6 +157,7 @@ class PoolService(CRUDService):
 
             if all_sed_pool and sed_cache['sed_enabled']:
                 if sed_cache['locked_sed_disks']:
+                    rv['status_code'] = 'LOCKED_SED_DISKS'
                     rv['status_detail'] = ('Pool might have failed to import because of '
                                            f'{", ".join(sed_cache["locked_sed_disks"])!r} SED disk(s) being locked')
 
