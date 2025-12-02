@@ -42,6 +42,7 @@ class PoolModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     vol_name = sa.Column(sa.String(120), unique=True)
     vol_guid = sa.Column(sa.String(50))
+    vol_all_sed = sa.Column(sa.Boolean(), default=False)
 
 
 class PoolService(CRUDService):
