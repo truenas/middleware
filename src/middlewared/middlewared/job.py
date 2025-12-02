@@ -28,7 +28,7 @@ if typing.TYPE_CHECKING:
     from middlewared.auth import SessionManagerCredentials
     from middlewared.main import Middleware
     from middlewared.service import Service
-    from middlewared.types import EventType, ExcInfo
+    from middlewared.utils.types import EventType, ExcInfo
 
 
 logger = logging.getLogger(__name__)

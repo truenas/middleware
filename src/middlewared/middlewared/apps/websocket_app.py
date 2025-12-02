@@ -22,10 +22,10 @@ from middlewared.service_exception import (
     ValidationErrors,
     get_errname,
 )
-from middlewared.types import OptExcInfo
 from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin
+from middlewared.utils.types import OptExcInfo
 from truenas_api_client import json
 if TYPE_CHECKING:
     from aiohttp.web import WebSocketResponse, Request

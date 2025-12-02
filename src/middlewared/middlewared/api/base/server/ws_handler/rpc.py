@@ -30,7 +30,7 @@ from ..method import Method
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
-    from middlewared.types import ExcInfo
+    from middlewared.utils.types import ExcInfo
 
 
 class RpcWebSocketAppEvent(enum.Enum):
