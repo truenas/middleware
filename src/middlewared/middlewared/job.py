@@ -39,6 +39,9 @@ LOGS_DIR = '/var/log/jobs'
 def send_job_event(
     middleware: Middleware, event_type: EventType, job: Job, fields: dict
 ) -> None:
+    if job.options['transient']:
+        return
+
     middleware.send_event(
         'core.get_jobs',
         event_type,
