@@ -1,5 +1,5 @@
 """
-Move nvidia driver configuration to sys adv
+Allow marking all SED based pools in db
 
 Revision ID: d2c5ab6398b3
 Revises: bf646ce959c5
