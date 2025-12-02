@@ -67,7 +67,6 @@ def call_method(ws, method, params, *, call_id=None):
     while True:
         resp_opcode, msg = ws.recv_data()
         result = json.loads(msg.decode())
-        print(result)
         if result.get("id") == call_id:
             break
 

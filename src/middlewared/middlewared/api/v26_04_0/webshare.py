@@ -44,6 +44,8 @@ class SharingWebshareEntry(BaseModel):
     ZFS pool."""
     enabled: bool = True
     """If unset, the Webshare share is not available."""
+    is_home_base: bool = False
+    """If set, this share is used as the base path for user home directories. Only one share can have this enabled."""
     locked: bool | None
     """Read-only value indicating whether the share is located on a locked dataset.
 
