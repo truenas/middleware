@@ -79,6 +79,7 @@ class PoolDatasetService(Service):
         dataset['thick_provisioned'] = any((dataset['reservation']['value'], dataset['refreservation']['value']))
         dataset['nfs_shares'] = self.get_nfs_shares(dataset, info['nfs'])
         dataset['smb_shares'] = self.get_smb_shares(dataset, info['smb'])
+        dataset['webshare_shares'] = self.get_webshare_shares(dataset, info['webshare'])
         dataset['iscsi_shares'] = self.get_iscsi_shares(dataset, info['iscsi'])
         dataset['nvmet_shares'] = self.get_nvmet_shares(dataset, info['nvmet'])
         dataset['vms'] = self.get_vms(dataset, info['vm'])
@@ -129,7 +130,7 @@ class PoolDatasetService(Service):
     @private
     def build_details(self, mntinfo):
         results = {
-            'iscsi': [], 'nfs': [], 'nvmet': [], 'smb': [],
+            'iscsi': [], 'nfs': [], 'nvmet': [], 'smb': [], 'webshare': [],
             'repl': [], 'snap': [], 'cloud': [],
             'rsync': [], 'vm': [], 'app': [], 'container': [],
             'virt_instance': [],
@@ -151,8 +152,8 @@ class PoolDatasetService(Service):
                 'mount_info': self.get_mount_info(e[i['extent']]['path'], mntinfo),
             })
 
-        # nfs and smb
-        for key in ('nfs', 'smb'):
+        # nfs, smb and webshare
+        for key in ('nfs', 'smb', 'webshare'):
             for share in self.middleware.call_sync(f'sharing.{key}.query'):
                 share['mount_info'] = self.get_mount_info(share['path'], mntinfo)
                 results[key].append(share)
@@ -281,6 +282,19 @@ class PoolDatasetService(Service):
                     })
 
         return iscsi_shares
+
+    @private
+    def get_webshare_shares(self, ds, webshareshares):
+        webshare_shares = []
+        for share in webshareshares:
+            if share['path'] == ds['mountpoint'] or share['mount_info'].get('mount_source') == ds['id']:
+                webshare_shares.append({
+                    'enabled': share['enabled'],
+                    'path': share['path'],
+                    'share_name': share['name']
+                })
+
+        return webshare_shares
 
     @private
     def get_nvmet_shares(self, ds, nvmetshares):
