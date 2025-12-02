@@ -9,7 +9,7 @@ from middlewared.service import ValidationErrors
 if typing.TYPE_CHECKING:
     from middlewared.api.base import BaseModel
     from middlewared.main import Middleware
-    from middlewared.types import EventType
+    from middlewared.utils.types import EventType
 
 
 class Events:
