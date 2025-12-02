@@ -4,6 +4,7 @@ import os
 import re
 import uuid
 
+from ixhardware.chassis import TRUENAS_UNKNOWN
 from truenas_pylibvirt import DomainDoesNotExistError
 from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
 
@@ -139,6 +140,12 @@ class ContainerService(CRUDService):
 
     @private
     async def validate(self, verrors, schema_name, data, old=None):
+        if not await self.license_active():
+            verrors.add(
+                f'{schema_name}.name',
+                'System is not licensed to use containers.'
+            )
+
         if data['uuid'] is None:
             data['uuid'] = str(uuid.uuid4())
 
@@ -335,3 +342,22 @@ class ContainerService(CRUDService):
                 pools[ds['name']] = ds['name']
 
         return pools
+
+    @private
+    async def license_active(self):
+        """
+        If this is iX enterprise hardware and has NOT been licensed to run containers
+        then this will return False, otherwise this will return true.
+        """
+        system_chassis = await self.middleware.call('truenas.get_chassis_hardware')
+        if system_chassis == TRUENAS_UNKNOWN or 'MINI' in system_chassis:
+            # 1. if it's not iX branded hardware
+            # 2. OR if it's a MINI, then allow containers/vms
+            return True
+
+        license_ = await self.middleware.call('system.license')
+        if license_ is None:
+            # it's iX branded hardware but has no license
+            return False
+
+        return 'JAILS' in license_['features']
