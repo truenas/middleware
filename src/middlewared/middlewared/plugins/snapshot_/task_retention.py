@@ -5,7 +5,7 @@ from middlewared.api.current import (
     PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs, PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
     PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult
 )
-from middlewared.service import item_method, Service
+from middlewared.service import Service
 
 
 class PeriodicSnapshotTaskService(Service):
@@ -13,7 +13,6 @@ class PeriodicSnapshotTaskService(Service):
     class Config:
         namespace = "pool.snapshottask"
 
-    @item_method
     @api_method(PeriodicSnapshotTaskUpdateWillChangeRetentionForArgs, PeriodicSnapshotTaskUpdateWillChangeRetentionForResult,
 		roles=['SNAPSHOT_TASK_READ'])
     async def update_will_change_retention_for(self, id_, data):
@@ -36,7 +35,6 @@ class PeriodicSnapshotTaskService(Service):
 
         return result
 
-    @item_method
     @api_method(PeriodicSnapshotTaskDeleteWillChangeRetentionForArgs, PeriodicSnapshotTaskDeleteWillChangeRetentionForResult,
 		roles=['SNAPSHOT_TASK_READ'])
     async def delete_will_change_retention_for(self, id_):

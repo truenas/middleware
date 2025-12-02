@@ -7,7 +7,7 @@ from middlewared.api.current import (
     PoolDetachArgs, PoolDetachResult, PoolOfflineArgs, PoolOfflineResult,
     PoolOnlineArgs, PoolOnlineResult, PoolRemoveArgs, PoolRemoveResult
 )
-from middlewared.service import CallError, item_method, job, Service, ValidationErrors
+from middlewared.service import CallError, job, Service, ValidationErrors
 
 
 class PoolService(Service):
@@ -16,7 +16,6 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
-    @item_method
     @api_method(
         PoolDetachArgs,
         PoolDetachResult,
@@ -70,7 +69,6 @@ class PoolService(Service):
 
         return True
 
-    @item_method
     @api_method(
         PoolOfflineArgs,
         PoolOfflineResult,
@@ -114,7 +112,6 @@ class PoolService(Service):
 
         return True
 
-    @item_method
     @api_method(
         PoolOnlineArgs,
         PoolOnlineResult,
@@ -159,7 +156,6 @@ class PoolService(Service):
 
         return True
 
-    @item_method
     @api_method(
         PoolRemoveArgs,
         PoolRemoveResult,

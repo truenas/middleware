@@ -52,14 +52,6 @@ def filterable_api_method(
     return filterable_internal
 
 
-def item_method(fn):
-    """Flag method as an item method.
-    That means it operates over a single item in the collection,
-    by an unique identifier."""
-    fn._item_method = True
-    return fn
-
-
 def job(
     lock=None, lock_queue_size=5, logs=False, process=False, pipes=None, check_pipes=True, transient=False,
     description=None, abortable=False, read_roles: list[str] | None = None,

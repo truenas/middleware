@@ -12,7 +12,7 @@ from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
 from middlewared.plugins.zfs.rename_promote_clone_impl import CloneArgs
-from middlewared.service import CallError, Service, item_method, job, private
+from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 from middlewared.utils.time_utils import utc_now
 
@@ -128,7 +128,6 @@ class CloudBackupService(Service):
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
 
-    @item_method
     @api_method(CloudBackupSyncArgs, CloudBackupSyncResult, roles=['CLOUD_BACKUP_WRITE'])
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
     async def sync(self, job, id_, options):
@@ -169,7 +168,6 @@ class CloudBackupService(Service):
                 })
             raise
 
-    @item_method
     @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=['CLOUD_BACKUP_WRITE'])
     async def abort(self, id_):
         """
