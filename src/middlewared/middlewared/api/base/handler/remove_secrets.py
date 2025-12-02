@@ -1,3 +1,4 @@
+import types
 import typing
 
 from pydantic import Discriminator, Secret
@@ -76,7 +77,7 @@ def _get_discriminated_union_model_from_field(field, value: dict) -> type[BaseMo
                 break
 
     # If no discriminator found and this is a Union, check if any member is an Annotated type with Discriminator
-    if not discriminator and origin in (typing.Union, type(typing.Union)):
+    if not discriminator and (origin is types.UnionType or origin is typing.Union):
         for member in typing.get_args(annotation):
             if typing.get_origin(member) is typing.Annotated:
                 # Check metadata of the Annotated member
