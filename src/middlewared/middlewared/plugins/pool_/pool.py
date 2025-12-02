@@ -30,6 +30,7 @@ class PoolPoolNormalizeInfo(PoolEntry):
 class PoolPoolNormalizeInfoArgs(BaseModel):
     pool_name: str
     sed_cache: dict | None = None
+    all_sed_pool: bool = False
 
 
 class PoolPoolNormalizeInfoResult(BaseModel):
@@ -58,7 +59,7 @@ class PoolService(CRUDService):
         entry = PoolEntry
 
     @api_method(PoolPoolNormalizeInfoArgs, PoolPoolNormalizeInfoResult, private=True)
-    async def pool_normalize_info(self, pool_name, sed_cache=None):
+    async def pool_normalize_info(self, pool_name, sed_cache=None, all_sed_pool=False):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
 
@@ -141,7 +142,10 @@ class PoolService(CRUDService):
             # Reason for having this explicit dict cache workflow is so that in pool extend context, we
             # avoid querying SED disks at all and this code path only gets triggered if there is actually
             # a zpool which failed to import and locked SED disks might be to blame
-            if not sed_cache:
+            #
+            # We only want to initialize sed cache here if system is licensed for it and the pool in qeustion
+            # is actually an all sed based pool
+            if all_sed_pool and not sed_cache:
                 sed_enabled = await self.middleware.call('system.sed_enabled')
                 locked_sed_disks = {disk['name'] for disk in await self.middleware.call('disk.query', [
                     ['sed_status', '=', SEDStatus.LOCKED]
@@ -151,7 +155,7 @@ class PoolService(CRUDService):
                     'locked_sed_disks': locked_sed_disks,
                 })
 
-            if sed_cache['sed_enabled']:
+            if all_sed_pool and sed_cache['sed_enabled']:
                 if sed_cache['locked_sed_disks']:
                     rv['status_detail'] = ('Pool might have failed to import because of '
                                            f'{", ".join(sed_cache["locked_sed_disks"])!r} SED disk(s) being locked')
@@ -171,7 +175,9 @@ class PoolService(CRUDService):
             pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 
         # WebUI expects the same data as in `boot.get_state`
-        pool |= self.middleware.call_sync('pool.pool_normalize_info', pool['name'], context["sed_cache"])
+        pool |= self.middleware.call_sync(
+            'pool.pool_normalize_info', pool['name'], context['sed_cache'], pool['all_sed'],
+        )
         return pool
 
     async def __convert_topology_to_vdevs(self, topology):
