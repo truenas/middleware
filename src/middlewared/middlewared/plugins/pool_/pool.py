@@ -267,7 +267,7 @@ class PoolService(CRUDService):
         # At this point, we have validated disks and are ready to proceed to the next step in pool creation
         # where we format disks and finally create the pool with necessary configuration
         # We will now try to configure SED disks (if any) automatically
-        all_sed = data.pop('all_sed', False)
+        all_sed = data.get('all_sed', False)
         if old or all_sed:
             # We will only want to do SED magic on zpool create if consumer has explicitly set that flag
             await self.middleware.call(
@@ -504,6 +504,7 @@ class PoolService(CRUDService):
             pool = {
                 'name': data['name'],
                 'guid': z_pool['guid'],
+                'all_sed': data['all_sed'],
             }
             pool_id = await self.middleware.call(
                 'datastore.insert',
