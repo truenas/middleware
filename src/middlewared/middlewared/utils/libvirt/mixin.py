@@ -1,6 +1,7 @@
 import copy
 import os
 
+from middlewared.api.base.handler.accept import validate_model
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs.destroy_impl import DestroyArgs
@@ -28,13 +29,21 @@ class DeviceMixin:
 
         return await self.get_instance(id_)
 
-    async def _update_impl(self, id_, data):
+    async def _update_impl(self, id_, data, audit_callback):
         device = await self.get_instance(id_)
         new = copy.deepcopy(device)
         new_attrs = data.pop('attributes', {})
         new.update(data)
         new['attributes'].update(new_attrs)
+        audit_callback(new["attributes"]["dtype"])
 
+        # We have to do this specially because of how we want to allow to optionally
+        # update attributes dict
+        # In the pydantic model, we have -> attributes: dict
+        # This means that someone can send something wrong here and when we try
+        # to make libvirt device out of it, it will error out before we actually validate
+        # device itself
+        validate_model(self._config.entry, new)
         new = await self._validate_device(new, device)
         new = await self._update_device(new, device)
 
@@ -43,8 +52,9 @@ class DeviceMixin:
 
         return await self.get_instance(id_)
 
-    async def _delete_impl(self, id_, options):
+    async def _delete_impl(self, id_, options, audit_callback):
         device = await self.get_instance(id_)
+        audit_callback(device["attributes"]["dtype"])
         status = (
             await self.middleware.call(f'{self._service_type}.get_instance', device[self._service_type])
         )['status']

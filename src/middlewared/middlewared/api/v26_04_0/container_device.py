@@ -31,7 +31,7 @@ class ContainerFilesystemDevice(BaseModel):
 class ContainerGPUDevice(BaseModel):
     dtype: Literal['GPU']
     """Device type identifier for GPU devices."""
-    gpu_type: Literal['AMD', 'INTEL']
+    gpu_type: Literal['AMD', 'INTEL', 'NVIDIA']
     """GPU device type."""
     pci_address: NonEmptyString
     """PCI address of the GPU device on the host system."""

@@ -177,9 +177,7 @@ class SessionManager:
         session = Session(self, credentials, app)
         self.sessions[app.session_id] = session
 
-        app.authenticated = True
         app.authenticated_credentials = credentials
-
         app.register_callback(RpcWebSocketAppEvent.MESSAGE, self._app_on_message)
         app.register_callback(RpcWebSocketAppEvent.CLOSE, self._app_on_close)
 
@@ -199,20 +197,19 @@ class SessionManager:
 
             del self.sessions[app.session_id]
             app.authentication_context = None
-            app.authenticated_credentials = None
-            app.authenticated = False
+            app.authenticated_credentials = None  # Must happen before awaiting
 
             await self.middleware.run_in_thread(session.credentials.logout)
 
             if not internal_session:
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
         else:
-            app.authenticated = False
+            app.authenticated_credentials = None
 
     async def _app_on_message(self, app: App, message) -> None:
         session = self.sessions.get(app.session_id)
         if session is None:
-            app.authenticated = False
+            app.authenticated_credentials = None
             return
 
         if not session.credentials.is_valid():

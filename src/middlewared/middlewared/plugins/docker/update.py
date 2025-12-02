@@ -1,6 +1,4 @@
 import errno
-import os
-import subprocess
 
 from urllib.parse import urlparse
 from truenas_pylibvirt.utils.gpu import get_gpus
@@ -26,7 +24,6 @@ class DockerModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
-    nvidia = sa.Column(sa.Boolean(), default=False)
     cidr_v6 = sa.Column(sa.String(), default='fdd0::/64', nullable=False)
     address_pools = sa.Column(sa.JSON(list), default=[
         {'base': '172.17.0.0/12', 'size': 24},
@@ -47,6 +44,7 @@ class DockerService(ConfigService):
     @private
     async def config_extend(self, data):
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
+        data['nvidia'] = (await self.middleware.call('system.advanced.config'))['nvidia']
         return data
 
     @private
@@ -175,6 +173,10 @@ class DockerService(ConfigService):
         config['cidr_v6'] = str(config['cidr_v6'])
         migrate_apps = config.get('migrate_applications', False)
 
+        nvidia_changed = old_config['nvidia'] != config['nvidia']
+        new_nvidia = config.pop('nvidia')
+        old_config.pop('nvidia')
+
         await self.validate_data(old_config, config)
 
         if migrate_apps:
@@ -199,9 +201,7 @@ class DockerService(ConfigService):
                         'core.bulk', 'app.stop', [[app['name']] for app in apps[i:i + batch_size]]
                     )).wait()
 
-            nvidia_changed = old_config['nvidia'] != config['nvidia']
-
-            if pool_changed or address_pools_changed or nvidia_changed or registry_mirrors_changed:
+            if pool_changed or address_pools_changed or registry_mirrors_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await (await self.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
@@ -226,9 +226,6 @@ class DockerService(ConfigService):
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
 
-            if nvidia_changed:
-                await self.middleware.call('docker.configure_nvidia')
-
             if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
@@ -237,7 +234,7 @@ class DockerService(ConfigService):
                     # we will like to make sure that collective app config / metadata files
                     # exist so that operations like backup work as desired
                     await self.middleware.call('app.metadata.generate')
-            elif config['pool'] and (address_pools_changed or nvidia_changed or registry_mirrors_changed):
+            elif config['pool'] and (address_pools_changed or registry_mirrors_changed):
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
                 if catalog_sync_job:
@@ -253,8 +250,21 @@ class DockerService(ConfigService):
                     ]
                 )
 
+        if nvidia_changed:
+            job.set_progress(97, 'Applying requested nvidia configuration changes')
+            await self.middleware.call('system.advanced.update', {'nvidia': new_nvidia})
+
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()
+
+    @private
+    async def restart_svc(self):
+        """
+        This is an internal method called when we change nvidia configuration
+        so docker picks up the new configuration changes on restart
+        """
+        await (await self.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
+        await (await self.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)
 
     @api_method(DockerStatusArgs, DockerStatusResult, roles=['DOCKER_READ'])
     async def status(self):
@@ -275,37 +285,3 @@ class DockerService(ConfigService):
                 return True
 
         return False
-
-    @private
-    def configure_nvidia(self):
-        config = self.middleware.call_sync('docker.config')
-        nvidia_sysext_path = '/run/extensions/nvidia.raw'
-        if config['nvidia'] and not os.path.exists(nvidia_sysext_path):
-            os.makedirs('/run/extensions', exist_ok=True)
-            os.symlink('/usr/share/truenas/sysext-extensions/nvidia.raw', nvidia_sysext_path)
-            refresh = True
-        elif not config['nvidia'] and os.path.exists(nvidia_sysext_path):
-            os.unlink(nvidia_sysext_path)
-            refresh = True
-        else:
-            refresh = False
-
-        if refresh:
-            subprocess.run(['systemd-sysext', 'refresh'], capture_output=True, check=True, text=True)
-            subprocess.run(['ldconfig'], capture_output=True, check=True, text=True)
-
-        if config['nvidia']:
-            cp = subprocess.run(
-                ['modprobe', '-a', 'nvidia', 'nvidia_drm', 'nvidia_modeset'],
-                capture_output=True,
-                text=True
-            )
-            if cp.returncode != 0:
-                self.logger.error('Error loading nvidia driver: %s', cp.stderr)
-
-
-async def setup(middleware):
-    try:
-        await middleware.call('docker.configure_nvidia')
-    except Exception:
-        middleware.logger.error('Unhandled exception configuring nvidia', exc_info=True)

@@ -1,3 +1,4 @@
+import errno
 import subprocess
 
 from base64 import b64decode
@@ -61,10 +62,28 @@ class ADHealthMixin:
             'password': b64decode(account_password).decode(),
         }
 
-        kinit_with_cred(cred, ccache=krb5ccache.TEMP.value)
+        try:
+            kinit_with_cred(cred, ccache=krb5ccache.TEMP.value)
+        except CallError as exc:
+            if exc.errno != errno.ENOENT:
+                raise
+
+            # This is a spurious error raised because of issues with python-gssapi
+            # kinit_with_cred attempts to return details from the generated ccache.
+            # We get a CallError with ENOENT if the kinit was *successful* but the
+            # subsequent attempt to read the ccache failed. This happens periodically
+            # during the health check and is hard to predict. Since the error occurs
+            # after a successful kinit, we can safely ignore here because the goal
+            # is to simply validate credentials.
+            pass
 
         # remove our ticket
-        self.middleware.call_sync('kerberos.kdestroy', {'ccache': 'TEMP'})
+        try:
+            self.middleware.call_sync('kerberos.kdestroy', {'ccache': 'TEMP'})
+        except Exception:
+            # This ccache path is not world-readable and so worst-case we have an
+            # extra file on tmpfs
+            self.logger.debug('Failed to destroy temporary ccache', exc_info=True)
 
         # regenerate krb5.conf
         self.middleware.call_sync('etc.generate', 'kerberos')

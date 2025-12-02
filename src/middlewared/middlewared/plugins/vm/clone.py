@@ -79,8 +79,10 @@ class VMService(Service):
         return clone_dst
 
     @item_method
-    @api_method(VMCloneArgs, VMCloneResult, roles=['VM_WRITE'])
-    async def clone(self, id_, name):
+    @api_method(
+        VMCloneArgs, VMCloneResult, roles=['VM_WRITE'], audit='VM clone', audit_callback=True
+    )
+    async def clone(self, audit_callback, id_, name):
         """
         Clone the VM `id`.
 
@@ -101,6 +103,7 @@ class VMService(Service):
         if name is not None:
             vm['name'] = name
 
+        audit_callback(f'{origin_name} to {vm["name"]}')
         # In case we need to rollback
         created_snaps = []
         created_clones = []
